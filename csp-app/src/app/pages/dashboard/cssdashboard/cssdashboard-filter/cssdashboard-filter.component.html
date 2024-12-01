@@ -1,0 +1,86 @@
+<div style="margin-left: 1%;" class="row">
+  <table>
+    <tr>
+      <td>
+        <mat-form-field style="width: 120% !important;">
+          <mat-select multiple name="ddCustomer" placeholder="Account" [(ngModel)]='customerIdsa'
+            [disabled]="_loading" (selectionChange)="selectedPeriod_OnChange()" #mySel>
+            <mat-option [value]="-1" (click)="toggleSelectionForCustomer()" #allCustomerSelected>All</mat-option>
+            <mat-option *ngFor="let c of customer" (click)="customerTosslePerOne()" [value]="c.cusT_ID"
+              [title]="c.cusT_NM">
+              {{ c.cusT_NM}}
+            </mat-option>
+
+          </mat-select>
+        </mat-form-field>
+      </td>
+      <td style="padding-left: 3%;">
+        <mat-form-field style="width: 80% !important;">
+          <mat-select name='CSM' multiple [(ngModel)]="csmIdsa" placeholder="CSM" #myCSM>
+            <mat-option [value]="-1" (click)="toggleSelectionForCSM()" #allCSMSelected>All</mat-option>
+            <mat-option [value]="c.csM_ID" (click)="csmTosslePerOne()" *ngFor="let c of CSMList" [title]="c.csm">{{c.csm}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+      <td style="padding-left: 5px;">
+        <mat-form-field style="width: 70px !important;">
+          <mat-select name='tableYear' (selectionChange)="selectedPeriod_OnChange()" [(ngModel)]="selectedYear"
+            placeholder="Financial Year" [disabled]="_loading">
+            <mat-option [value]="bb" *ngFor="let bb of ddyear" [title]="bb">{{bb}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+      <td style="padding-left: 5px;">
+        <mat-form-field style="Width:70px !important;">
+          <mat-select name='tableMonth' (selectionChange)="selectedPeriod_OnChange()" [(ngModel)]="selectedQuarter"
+            placeholder="Period" [disabled]="_loading">
+            <mat-option value='Q1'>Q1</mat-option>
+            <mat-option value='Q2'>Q2</mat-option>
+            <mat-option value='Q3'>Q3</mat-option>
+            <mat-option value='Q4'>Q4</mat-option>
+            <mat-option value='Select Period' *ngIf="IsPremier()">Select Period</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+      <td style="padding-left: 3%;">
+        <div style="float: left;display: inline-flex;margin-left:-6%">
+          <mat-form-field style="margin-right:2%;width:35% !important;">
+            <input [(ngModel)]="fromDate" matInput [matDatepicker]="picker1" matInput placeholder="From"
+              [disabled]="selectedQuarter == 'Select Period'?'false' : 'true'">
+            <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+            <mat-datepicker #picker1></mat-datepicker>
+          </mat-form-field>
+          <mat-form-field style="width:37% !important;">
+            <input [(ngModel)]="toDate" matInput [matDatepicker]="picker2" placeholder="To"
+              [disabled]="selectedQuarter == 'Select Period'?'false' : 'true'" matInput>
+            <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+            <mat-datepicker #picker2></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </td>
+
+      <td style="padding-left: 3%;">
+        <div style="margin-left: -87%;">
+          <mat-form-field>
+            <mat-select name='tableTrend' (selectionChange)="selectedPeriod_OnChange()" [(ngModel)]="trendQuarter"
+              placeholder="Show Data" [disabled]="_loading">
+              <mat-option [value]="1">For Specific Period </mat-option>
+              <mat-option [value]="2">Till Chosen Period </mat-option>
+              <mat-option [value]="3">For Last 4 Quarters </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </td>
+      <td style="padding-right: 5%;">
+        <div style="float:right;display: inline-flex;margin-top: -12%;">
+          <button class="btn btn-primary" style="float: left;border:none;margin-right: 7%;width:50%" mat-raised-button
+            (click)="emitChanges()" [disabled]="_loading">Apply</button>
+          <button class="btn btn-warning" style="border:none;float:right;width:50%" mat-raised-button (click)="reset()"
+            [disabled]="_loading">Reset</button>
+          <button class="btn btn-primary" mat-raised-button style="border:none;float:right;width:50%;margin-left: 7%;"
+            mat-raised-button (click)="ViewCSSDetails()">View Details</button>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>

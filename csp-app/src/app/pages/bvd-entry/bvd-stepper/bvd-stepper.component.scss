@@ -1,0 +1,41 @@
+ 
+
+ .stepper {
+    top: 96px;
+    left: 402px;
+    width: 1063px;
+    height: 43px;
+    opacity: 1;
+    margin-left: 300px;
+ }
+
+ .fa .fa-check {
+
+    background-color: #54AF4C;
+ }
+
+//  ::ng-deep .stepper .mat-stepper-horizontal-line {
+//     border-top-style: solid;
+//  }
+ 
+//  ::ng-deep .stepper .mat-horizontal-stepper-header {
+//  &[aria-selected='false'] + .mat-stepper-horizontal-line {
+//    background: red
+//  }
+ 
+//  &[aria-selected='true'] + .mat-stepper-horizontal-line {
+//    background: green
+//  }
+//  }
+
+// ::ng-deep .stepper .mat-step-header .mat-step-label {
+//     display: inline-block;
+//     white-space: nowrap;
+//     overflow: hidden;
+//     text-overflow: ellipsis;
+//     min-width: 50px;
+//     vertical-align: middle;
+//     position: fixed;
+//     margin-top: 50px;
+//     margin-left: -25px;
+// }

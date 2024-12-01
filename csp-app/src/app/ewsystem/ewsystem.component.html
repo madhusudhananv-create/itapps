@@ -1,0 +1,193 @@
+<!-- <div style="width: 40%">
+    <h3>Early Warning Signal</h3>
+</div> -->
+<div >
+    <div (mouseenter)="enablestatus()"(mouseleave)="disablestatus()" class="color_swatch"></div>
+    <div *ngIf="legend" style="width:100px;float: left;z-index:1;position:absolute;">
+    <table style="width: 100%" border="1" class=" bordered-table bordered_content">
+        <th>Legend</th>
+        <tr>
+            <div style="padding-left: 5px">
+                <p style="font-weight: 600">Status</p>
+            </div>
+            <div > 
+                <img style="width: 14px;float:left;margin-left: 3px;margin-right: 4px;" src="assets/images/under_control.png">   
+            </div>
+            <div> Under Control </div>
+        </tr>
+        <tr>
+            <div >
+                <img style="width: 14px;float:left;margin-left: 3px;margin-right: 4px;" src="assets/images/need_focus.png">
+            </div>
+            <div> Needs focus </div>
+        </tr>
+        <div style="height: 1px;background:#ccc"> </div>
+        <tr>
+            <div style="padding-left: 5px;">
+                <p style="font-weight: 600">Severity</p>
+            </div>
+            <div class="redicon"></div>
+            <div>High</div>
+            <div class="ambericon"></div>
+            <div>Medium</div>
+            <div class="yellowicon"></div>
+            <div>Low</div>
+            <div class="greenicon"></div>
+            <div>No Issues</div>
+        </tr>
+    </table>
+</div>
+    <table border="1" class=" bordered-table bordered_content" style="width:100%;background: white;margin-left: 15px;">
+        <tr style="height: 70px;">
+            <th ><div style="transform: rotate(-90deg);text-align: right;">Sponser</div></th>
+            <td style="width:28%">
+                <div *ngFor="let h of ewsData">
+                    <div *ngIf="(h.severity=='green' && h.level=='sponser' && h.prJ_NM !=null )">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div *ngFor="let h of ewsData">
+                    <div *ngIf="(h.severity=='amber' && h.level=='sponser' && h.prJ_NM !=null )">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div *ngFor="let h of ewsData">
+
+                    <div *ngIf="(h.severity=='red' && h.level=='sponser' && h.prJ_NM !=null )">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+
+                    </div>  
+                </div>  
+            </td>
+        </tr>
+        <tr style="height: 70px;">
+            <th><div style="transform: rotate(-90deg);text-align: right;">BU&nbsp;Head</div></th>
+            <td>
+                <div *ngFor="let h of ewsData">
+
+                    <div *ngIf="(h.severity=='green' && h.level=='buhead' && h.prJ_NM !=null )">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div *ngFor="let h of ewsData">
+
+                    <div *ngIf="(h.severity=='amber' && h.level=='buhead'  && h.prJ_NM !=null)">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div *ngFor="let h of ewsData">
+
+                    <div *ngIf="(h.severity=='red' && h.level=='buhead'  && h.prJ_NM !=null )">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr style="height: 70px;">
+            <th ><div style="transform: rotate(-90deg);text-align:right">PM</div></th>
+            <td>
+                <div *ngFor="let h of ewsData">
+
+                    <div *ngIf="(h.severity=='green' && h.level=='pm'  && h.prJ_NM !=null )">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div *ngFor="let h of ewsData">
+
+                    <div *ngIf="(h.severity=='amber' && h.level=='pm'  && h.prJ_NM !=null)">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div *ngFor="let h of ewsData">
+
+                    <div *ngIf="(h.severity=='red' && h.level=='pm'  && h.prJ_NM !=null)">
+                        <div class="icon" [ngStyle]="{'background': h.rag}"></div>
+                        <div *ngIf="h.isNeedFocus == false">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/under_control.png">
+                        </div>
+                        <div *ngIf="h.isNeedFocus == true">
+                            <img style="width: 14px;float:left;margin-right: 4px;" src="assets/images/need_focus.png">
+                        </div>
+                        <div (click)="GetIssues(h.proJ_ID)" style="font-size: 11px;font-weight: 600;margin: 2px;cursor: pointer;">{{h.prJ_NM}}</div>
+
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tfoot>
+            <td></td>
+            <td style="border-bottom: 4px solid #3c763d;font-size: 11px">No Issues</td>
+            <td style="border-bottom: 4px solid #ffd740;font-size: 11px">1 or 2 Low/Medium Issues</td>
+            <td style="border-bottom: 4px solid #f44336;font-size: 11px">a) >= 1 High Issue b) >2 Low/Medium Issue</td>
+        </tfoot>
+    </table>
+</div>

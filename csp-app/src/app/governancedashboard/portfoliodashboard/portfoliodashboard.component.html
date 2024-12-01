@@ -1,0 +1,438 @@
+<!-- <div class="row" style="background-color: #f1f1f1"> -->
+<!-- Pie Chart Label -->
+<div class="row" style="background-color: white">
+  <div id="container">
+    <div id="left">
+      <!-- <a class="link" [routerLink]="['/dashboard']" title="Go to Home Page">
+        <i class="fa fa-home" style="font-size: 31px;color: #99999ac9;"></i>
+      </a> -->
+      <div *ngIf="_util.IsGAVS()" class="backbuttonlink" [routerLink]="['/newdashboard/custm']"> 
+        <img src="assets/images/back_round.png">
+      </div>
+    </div>
+    <div id="center">
+      <span style="font-size: 20px;color: #7cb5ec;">Customer Success Goal KPI Performance
+        <span style="color:#aba8a8;font-size:18px">({{DateSelection1.period}})</span>
+      </span>
+    </div>
+    <div id="right" matTooltip="Change Period" style="text-align: right;padding: 6px 10px 0 0;">
+      <i class="fa fa-filter link" (click)="ShowDateSelection1()" style="color:steelblue;font-size:20px"></i>
+      <!-- <button (click)="ShowDateSelection1()">Change Period
+          <i class="fa fa-filter"></i>
+        </button> -->
+    </div>
+  </div>
+</div>
+
+<!-- Date Selection -->
+<div class="row" style="background-color: #eff8ff" *ngIf="bShowDateSelection1">
+  <!-- <div style="float: left;margin :6px 10px 0 14px">
+      <a class="link" [routerLink]="['/dashboard']" title="Go to Home Page">
+        <i class="fa fa-home" style="font-size: 31px;color: #99999ac9;"></i>
+      </a>
+    </div> -->
+  <div style="float: left;margin:15px 10px 0 5px">
+    <input name="currentMonth1" type="radio" [(ngModel)]="DateSelection1.checkedValue" (change)="GetStartandEndDate(DateSelection1)"
+      value="currentMonth"> Current Month
+  </div>
+  <div *ngIf="DateSelection1.checkedValue == 'currentMonth'" style="float :left;margin :15px 10px 0 0;">
+    <select name='tableMonth1' (change)="saveDates(DateSelection1)" [(ngModel)]="DateSelection1.selectedStartMonth" required style="width :65px;margin-right: 5px;">
+      <option value="Jan">JAN</option>
+      <option value="Feb">FEB</option>
+      <option value="Mar">MAR</option>
+      <option value='Apr'>APR</option>
+      <option value="May">MAY</option>
+      <option value="Jun">JUN</option>
+      <option value="Jul">JUL</option>
+      <option value="Aug">AUG</option>
+      <option value="Sep">SEP</option>
+      <option value="Oct">OCT</option>
+      <option value="Nov">NOV</option>
+      <option value="Dec">DEC</option>
+    </select>
+    <select name='tableYear1' (change)="saveDates(DateSelection1)" [(ngModel)]="DateSelection1.selectedStartYear" required style="width :65px;margin-right:5px;">
+      <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{bb}}</option>
+    </select>
+  </div>
+  <div style="float: left;margin :15px 10px 0 0">
+    <input name="finacialYear" type="radio" [(ngModel)]="DateSelection1.checkedValue" (change)="GetStartandEndDate(DateSelection1)"
+      value="finacialYear"> Financial Year – April to Mar
+  </div>
+  <div style="float: left;margin :15px 10px 0 0">
+    <input name="checkByMonth" type="radio" [(ngModel)]="DateSelection1.checkedValue" (change)="GetStartandEndDate(DateSelection1)"
+      value="checkByMonth"> Custom Duration
+  </div>
+  <div *ngIf="DateSelection1.checkedValue == 'finacialYear' ||DateSelection1.checkedValue == 'checkByMonth' " style="float :left;margin :15px 10px 0 0;">
+    <select name='tableMonth' (change)="saveDates(DateSelection1)" [(ngModel)]="DateSelection1.selectedStartMonth" required style="width :65px;margin-right: 5px;">
+      <option value="Jan">JAN</option>
+      <option value="Feb">FEB</option>
+      <option value="Mar">MAR</option>
+      <option value='Apr'>APR</option>
+      <option value="May">MAY</option>
+      <option value="Jun">JUN</option>
+      <option value="Jul">JUL</option>
+      <option value="Aug">AUG</option>
+      <option value="Sep">SEP</option>
+      <option value="Oct">OCT</option>
+      <option value="Nov">NOV</option>
+      <option value="Dec">DEC</option>
+    </select>
+    <select name='tableYear' (change)="saveDates(DateSelection1)" [(ngModel)]="DateSelection1.selectedStartYear" required style="width :65px;margin-right:5px;">
+      <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{bb}}</option>
+    </select>
+  </div>
+  <div style="float :left;margin :15px 10px 0 0;" *ngIf="DateSelection1.checkedValue == 'finacialYear' ||DateSelection1.checkedValue == 'checkByMonth' ">
+    <select name='tableMonth' (change)="saveDates(DateSelection1)" [(ngModel)]="DateSelection1.selectedEndMonth" required style="width :65px;margin-right:5px;">
+      <option value="Jan">JAN</option>
+      <option value="Feb">FEB</option>
+      <option value="Mar">MAR</option>
+      <option value='Apr'>APR</option>
+      <option value="May">MAY</option>
+      <option value="Jun">JUN</option>
+      <option value="Jul">JUL</option>
+      <option value="Aug">AUG</option>
+      <option value="Sep">SEP</option>
+      <option value="Oct">OCT</option>
+      <option value="Nov">NOV</option>
+      <option value="Dec">DEC</option>
+    </select>
+    <select name='tableYear' (change)="saveDates(DateSelection1)" [(ngModel)]="DateSelection1.selectedEndYear" required style="width :65px;margin-right:5px;">
+      <option [value]="bb" *ngFor="let bb of _util.Years_Financial(3)">{{bb}}</option>
+    </select>
+  </div>
+  <div style="float: left;">
+    <app-project-selector-singletomultiple (onChange)="project_onChange($event)"></app-project-selector-singletomultiple>
+  </div>
+  <div style="float: left;margin: 10px">
+    <button type="button" class="btn btn-light" (click)="LoadData1(DateSelection1)">
+      Go
+    </button>
+  </div>
+  <div style="float: right;padding-right: 10px;">
+    <mat-icon class="link" (click)="CloseDateSelection1()" style="padding-top:16px">close</mat-icon>
+    <!-- <button type="button" class="btn btn-light" (click)="CloseDateSelection()">
+          <mat-icon>close</mat-icon>
+        </button> -->
+  </div>
+</div>
+
+<!-- Perspective pie chart -->
+<div class="row">
+  <div class="col-lg-2 col-md-2 col-sm-3">
+    <mat-card style="padding: 0px;width: 100%;height: 200px">
+      <!-- <highcharts-chart *ngIf="OverallScoreGaugeChart" style="width: 100%; height: 200px; display: block;" [Highcharts]="Highcharts" [options]="OverallScoreGaugeChart">
+      </highcharts-chart> -->
+      <div class="row">
+        <div style="font-family: 'Lucida Sans Unicode';font-size: 12px;text-align: center;margin-top: 5%;">Overall Health Index</div>
+      </div>
+      <div class="row" style="padding: 20px 0 0 41px">
+        <div style="width: 130px;height: 130px;border: solid 10px #5cc9fffc;border-radius: 75px;padding: 35px 0 0 23px;font-size: 30px;font-weight: bold;color: grey;">
+          <span>{{OverallScoreGaugeChart}}%</span>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+  <div class="col-lg-2 col-md-2 col-sm-3">
+    <mat-card style="width: 100%;padding: 0px;height: 200px;">
+      <highcharts-chart *ngIf="overAllpieChart;else other1" style="width: 100%; height: 200px; display: block;" [Highcharts]="Highcharts"
+        [options]="overAllpieChart">
+      </highcharts-chart>
+      <ng-template #other1>
+        <div class="row">
+          <div style="font-family: 'Lucida Sans Unicode';font-size: 12px;text-align: center;margin-top: 5%;">Overall Health Index</div>
+        </div>
+        <div class="row" style="text-align: center">
+          <mat-icon style="font-size: 65px;color:#bfbfbf;margin: 50px 0 0 -38px;">
+            error
+          </mat-icon>
+        </div>
+      </ng-template>
+    </mat-card>
+  </div>
+  <div class="col-lg-2 col-md-2 col-sm-3">
+    <mat-card style="width: 100%;padding: 0px;height: 200px;">
+      <highcharts-chart *ngIf="complianceChart;else other2" style="width: 100%; height: 200px; display: block;" [Highcharts]="Highcharts"
+        [options]="complianceChart">
+      </highcharts-chart>
+      <ng-template #other2>
+        <div class="row">
+          <div style="font-family: 'Lucida Sans Unicode';font-size: 12px;text-align: center;margin-top: 5%;">Compliance</div>
+        </div>
+        <div class="row" style="text-align: center">
+          <mat-icon style="font-size: 65px;color:#bfbfbf;margin: 50px 0 0 -38px;">
+            error
+          </mat-icon>
+        </div>
+      </ng-template>
+    </mat-card>
+  </div>
+  <div class="col-lg-2 col-md-2 col-sm-3">
+    <mat-card style="width: 100%;padding: 0px;height: 200px;">
+      <highcharts-chart *ngIf="valueChart;else other4" style="width: 100%; height: 200px; display: block;" [Highcharts]="Highcharts"
+        [options]="valueChart">
+      </highcharts-chart>
+      <ng-template #other4>
+        <div class="row">
+          <div style="font-family: 'Lucida Sans Unicode';font-size: 12px;text-align: center;margin-top: 5%;">Value</div>
+        </div>
+        <div class="row" style="text-align: center">
+          <mat-icon style="font-size: 65px;color:#bfbfbf;margin: 50px 0 0 -38px;">
+            error
+          </mat-icon>
+        </div>
+      </ng-template>
+    </mat-card>
+  </div>
+  <div class="col-lg-2 col-md-2 col-sm-3">
+    <mat-card style="width: 100%;padding: 0px;height: 200px;">
+      <highcharts-chart *ngIf="performanceChart;else other3" style="width: 100%; height: 200px; display: block;" [Highcharts]="Highcharts"
+        [options]="performanceChart">
+      </highcharts-chart>
+      <ng-template #other3>
+        <div class="row">
+          <div style="font-family: 'Lucida Sans Unicode';font-size: 12px;text-align: center;margin-top: 5%;">Performance</div>
+        </div>
+        <div class="row" style="text-align: center">
+          <mat-icon style="font-size: 65px;color:#bfbfbf;margin: 50px 0 0 -38px;">
+            error
+          </mat-icon>
+        </div>
+      </ng-template>
+    </mat-card>
+  </div>
+  <div class="col-lg-2 col-md-2 col-sm-3">
+    <mat-card style="width: 100%;padding: 0px;height: 200px;">
+      <highcharts-chart *ngIf="qualityChart;else other5" style="width: 100%; height: 200px; display: block;" [Highcharts]="Highcharts"
+        [options]="qualityChart">
+      </highcharts-chart>
+      <ng-template #other5>
+        <div class="row">
+          <div style="font-family: 'Lucida Sans Unicode';font-size: 12px;text-align: center;margin-top: 5%;">Quality</div>
+        </div>
+        <div class="row" style="text-align: center">
+          <mat-icon style="font-size: 65px;color:#bfbfbf;margin: 50px 0 0 -38px;">
+            error
+          </mat-icon>
+        </div>
+      </ng-template>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Perspective pie chart KPI Details TABLE-->
+<div class="row" *ngIf="bShowKPIDetails" style="background-color: rgba(0, 0, 0, 0.11)">
+  <div class="col-lg-12 col-md-12 col-sm-12">
+    <div class="row">
+      <div style="float: left;">
+        KPI Details -
+        <span [style.background-color]="selectedChartColor">{{selectedChartTitle}}</span>
+      </div>
+      <div style="float: right;">
+        <mat-icon class="link" (click)="CloseKPIDetails()">close</mat-icon>
+      </div>
+    </div>
+    <div class="tableFixHead">
+      <table class="table table-bordered" style="background-color: white;font-size:11px;margin-bottom: 0px">
+        <thead>
+          <tr>
+            <th style="text-align: center;" rowspan="2">Customer</th>
+            <th style="text-align: center;" rowspan="2">Project</th>
+            <th style="text-align: center;" rowspan="2">Perspective</th>
+            <th style="text-align: center;" rowspan="2">Goal</th>
+            <th style="text-align: center;" rowspan="2">Work Group / KPI Area</th>
+            <th style="text-align: center;" rowspan="2">KPI Desc</th>
+            <th style="text-align: center;" rowspan="2">Priority</th>
+            <th style="text-align: center;" rowspan="2">Support Window</th>
+            <th style="text-align: center;" rowspan="2">Period</th>
+            <th style="text-align: center;" colspan="4">Target</th>
+            <th style="text-align: center;" rowspan="2">Actual</th>
+          </tr>
+          <tr>
+            <th style="text-align: center;height:4px;padding:0px!important;background-color:#f60000;border-color:transparent"></th>
+            <th style="text-align: center;height:4px;padding:0px!important;background-color:#f9a400;border-color:transparent"></th>
+            <th style="text-align: center;height:4px;padding:0px!important;background-color:#237f00;border-color:transparent"></th>
+            <th style="text-align: center;height:4px;padding:0px!important;background-color:#00bfff;border-color:transparent"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of KPIDetails_PIEDrildown">
+            <td *ngFor="let cell of row" [rowSpan]="cell.rowSpan" [noWrap]="cell.noWrap">
+              <div style="float: left;text-align:center" *ngIf="cell.color">
+                <mat-icon [matTooltip]='cell.toolTip' style="font-size:15px;height:15px;width:15px;" [style.color]="cell.color">fiber_manual_record</mat-icon>
+              </div>
+              <span *ngIf="!cell.data">{{cell.text}}</span>
+              <a *ngIf="cell.data" class="link" (click)="showKpiCharts(cell)">
+                <div style="margin:auto;border-radius:50px;width: 42px;height: 42px;border-radius: 50px;font-weight: bold;padding:10px 0 0 6px;"
+                  [style.backgroundColor]="cell.color">{{cell.text}}
+                </div>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Project wise Perspective scores TABLE-->
+<!-- <div class="row">
+  <div class="col-lg-12 col-md-12 col-sm-12">
+    <div class="tableFixHead">
+      <table class="table table-bordered" style="background-color: white;font-size:11px;margin-bottom: 0px">
+        <thead>
+          <tr>
+            <th style="width:20%;text-align: center;">Customer</th>
+            <th style="width:30%;text-align: center;">Project</th>
+            <th style="width:10%;text-align: center;">Overall</th>
+            <th style="width:10%;text-align: center;">Compliance</th>
+            <th style="width:10%;text-align: center;">Value</th>
+            <th style="width:10%;text-align: center;">Performance</th>
+            <th style="width:10%;text-align: center;">Quality</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of TreeHealthReport">
+            <td *ngFor="let col of row" [rowSpan]="col.rowSpan">
+              <span *ngIf="!col.data">{{col.text}}</span>
+              <a *ngIf="col.data" class="link" (click)="showKpiCharts(col)">
+                <div style="margin:auto;border-radius:50px;width: 42px;height: 42px;border-radius: 50px;font-weight: bold;padding-top:13px;text-align: center;"
+                  [style.backgroundColor]="col.color">{{col.text}}
+                </div>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div> -->
+
+<!-- Line charts Label -->
+<div class="row" style="background-color: white">
+  <div id="container">
+    <div id="left">
+      <!-- <a class="link" [routerLink]="['/dashboard']" title="Go to Home Page">
+          <i class="fa fa-home" style="font-size: 31px;color: #99999ac9;"></i>
+        </a> -->
+    </div>
+    <div id="center">
+      <span style="font-size: 20px;color: #7cb5ec;">Customer Success Goal KPI Performance Trend
+        <span style="color:#aba8a8;font-size:18px">({{DateSelection2.period}})</span>
+      </span>
+    </div>
+    <div id="right" matTooltip="Change Period" style="text-align: right;padding: 6px 10px 0 0;">
+      <i class="fa fa-filter link" (click)="ShowDateSelection2()" style="color:steelblue;font-size:20px"></i>
+      <!-- <button (click)="ShowDateSelection2()">Change Period
+          <i class="fa fa-filter"></i>
+        </button> -->
+    </div>
+  </div>
+</div>
+
+<!-- Date Selection -->
+<div class="row" style="background-color: #eff8ff" *ngIf="bShowDateSelection2">
+  <div style="float: left;margin:15px 10px 0 0">
+    <input name="currentMonth2" type="radio" [(ngModel)]="DateSelection2.checkedValue" (change)="GetStartandEndDate(DateSelection2)"
+      value="currentMonth"> Current Month
+  </div>
+  <div *ngIf="DateSelection2.checkedValue == 'currentMonth'" style="float :left;margin :15px 10px 0 0;">
+    <select name='tableMonth2' (change)="saveDates(DateSelection2)" [(ngModel)]="DateSelection2.selectedStartMonth" required style="width :65px;margin-right: 5px;">
+      <option value="Jan">JAN</option>
+      <option value="Feb">FEB</option>
+      <option value="Mar">MAR</option>
+      <option value='Apr'>APR</option>
+      <option value="May">MAY</option>
+      <option value="Jun">JUN</option>
+      <option value="Jul">JUL</option>
+      <option value="Aug">AUG</option>
+      <option value="Sep">SEP</option>
+      <option value="Oct">OCT</option>
+      <option value="Nov">NOV</option>
+      <option value="Dec">DEC</option>
+    </select>
+    <select name='tableYear2' (change)="saveDates(DateSelection2)" [(ngModel)]="DateSelection2.selectedStartYear" required style="width :65px;margin-right:5px;">
+      <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{bb}}</option>
+    </select>
+  </div>
+  <div style="float: left;margin :15px 10px 0 0">
+    <input name="tdfinacialYear" type="radio" [(ngModel)]="DateSelection2.checkedValue" (change)="GetStartandEndDate(DateSelection2)"
+      value="finacialYear"> Financial Year – April to Mar
+  </div>
+  <div style="float: left;margin :15px 10px 0 0">
+    <input name="rdcheckByMonth" type="radio" [(ngModel)]="DateSelection2.checkedValue" (change)="GetStartandEndDate(DateSelection2)"
+      value="checkByMonth"> Custom Duration
+  </div>
+  <div style="float :left;margin :15px 10px 0 0;" *ngIf="DateSelection2.checkedValue == 'finacialYear' ||DateSelection2.checkedValue == 'checkByMonth' ">
+    <select name='ddStartMonth' (change)="saveDates(DateSelection2)" [(ngModel)]="DateSelection2.selectedStartMonth" required
+      style="width :65px;margin-right: 5px;">
+      <option value="Jan">JAN</option>
+      <option value="Feb">FEB</option>
+      <option value="Mar">MAR</option>
+      <option value='Apr'>APR</option>
+      <option value="May">MAY</option>
+      <option value="Jun">JUN</option>
+      <option value="Jul">JUL</option>
+      <option value="Aug">AUG</option>
+      <option value="Sep">SEP</option>
+      <option value="Oct">OCT</option>
+      <option value="Nov">NOV</option>
+      <option value="Dec">DEC</option>
+    </select>
+    <select name='ddStartYear' (change)="saveDates(DateSelection2)" [(ngModel)]="DateSelection2.selectedStartYear" required style="width :65px;margin-right:5px;">
+      <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{bb}}</option>
+    </select>
+  </div>
+  <div style="float :left;margin :15px 10px 0 0;" *ngIf="DateSelection2.checkedValue == 'finacialYear' ||DateSelection2.checkedValue == 'checkByMonth' ">
+    <select name='ddEndMonth' (change)="saveDates(DateSelection2)" [(ngModel)]="DateSelection2.selectedEndMonth" required style="width :65px;margin-right:5px;">
+      <option value="Jan">JAN</option>
+      <option value="Feb">FEB</option>
+      <option value="Mar">MAR</option>
+      <option value='Apr'>APR</option>
+      <option value="May">MAY</option>
+      <option value="Jun">JUN</option>
+      <option value="Jul">JUL</option>
+      <option value="Aug">AUG</option>
+      <option value="Sep">SEP</option>
+      <option value="Oct">OCT</option>
+      <option value="Nov">NOV</option>
+      <option value="Dec">DEC</option>
+    </select>
+    <select name='ddEndYear' (change)="saveDates(DateSelection2)" [(ngModel)]="DateSelection2.selectedEndYear" required style="width :65px;margin-right:5px;">
+      <option [value]="bb" *ngFor="let bb of _util.Years_Financial(3)">{{bb}}</option>
+    </select>
+  </div>
+  <div style="float: left;">
+    <app-project-selector-singletomultiple (onChange)="project_onChange($event)"></app-project-selector-singletomultiple>
+  </div>
+  <div style="float: left;margin: 10px">
+    <button type="button" class="btn btn-light" (click)="LoadData2(DateSelection2)">
+      Go
+    </button>
+  </div>
+  <div style="float: right;padding-right: 10px;">
+    <mat-icon class="link" (click)="CloseDateSelection2()" style="padding-top:16px">close</mat-icon>
+    <!-- <button type="button" class="btn btn-light" (click)="CloseDateSelection()">
+            <mat-icon>close</mat-icon>
+          </button> -->
+  </div>
+</div>
+
+<!-- overall and Perspective line charts -->
+<div class="row">
+  <div class="col-lg-4 col-md-4 col-sm-12">
+    <mat-card style="padding: 0px;">
+      <mat-card-content>
+        <highcharts-chart style="display: block;" *ngIf="overallChart" [Highcharts]="Highcharts" [options]="overallChart">
+        </highcharts-chart>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <div class="col-lg-8 col-md-8 col-sm-12">
+    <mat-card style="padding: 0px;">
+      <highcharts-chart style="width: 100%;display: block;" *ngIf="lineChartData" [Highcharts]="Highcharts" [options]="lineChartData">
+      </highcharts-chart>
+    </mat-card>
+  </div>
+</div>
+
+<!-- </div> -->

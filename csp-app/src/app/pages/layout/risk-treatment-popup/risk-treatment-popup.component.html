@@ -1,0 +1,38 @@
+<div class="panel panel-primary" style="min-width: 80%;">
+  <div class="panel-heading">Risk Treatment Plan Details</div>
+  <mat-progress-bar *ngIf="isLoading"></mat-progress-bar>
+  <table class="table table-bordered" style="font-size:12px">
+    <thead>
+      <tr>
+        <th style="text-align:left;width: 25%;">Description</th>
+        <th style="text-align:left;width: 15%;">Owner</th>
+        <th style="text-align:left;width: 10%;">Identified Date</th>
+        <th style="text-align:left;width: 10%;">Target Date </th>
+        <th style="text-align:left;width: 10%;">Risk Treatment Strategy</th>
+        <th style="text-align:left;width: 15%;">Status</th>
+        <th style="text-align:left;width: 10%;">Priority</th>
+      </tr>
+    </thead>
+    <tbody *ngIf="data==null || data.length==0">
+
+      <tr>
+        <td colspan="6" style="text-align: center;"> Loading...</td>
+      </tr>
+    </tbody>
+
+    <tbody *ngIf="data!=null && data.length>0">
+      <tr style="text-align:left" *ngFor="let d of data">
+        <td>{{d.description}}</td>
+        <td>{{d.owner}}</td>
+        <td>{{d.identifieD_DATE|date:'dd-MMM-yyyy'}}</td>
+        <td>{{d.targeT_DATE|date:'dd-MMM-yyyy'}}</td>
+        <td>{{dialogData.element.risK_TREATMENT_STRATEGY}}</td>
+        <td>{{d.status}}</td>
+        <td>{{d.priority}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div style="text-align:center;padding-bottom:2px">
+  <button mat-button mat-dialog-close (click)="closeDialog()">Close</button>
+</div>

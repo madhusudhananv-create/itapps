@@ -1,0 +1,203 @@
+<div  style="background-color: white!important;">
+<div style="position:absolute !important;top:0px !important;width:100% !important;">
+  <app-navbar-new [ShowMenu]="false" (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+</div>
+<div *ngIf="selectedCust" style="background-color: white!important;">
+
+  <div class="row" style="margin-top: 40px;">
+    <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+      <!-- [routerLink]="['/newdashboard/cust',selectedCust, reset]" -->
+      <div *ngIf="_util.IsGAVS()" class="backbuttonlink" (click)="resetValues()">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px" src="assets/images/{{selectedCust}}.png"
+        onerror="this.src='assets/images/CustomerLogo.png'">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: left">
+      <label
+        style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px; color: #4e5882">Ideas
+        and Improvements</label>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: right">
+      <button (click)="addNewIdea()"
+        style="width: 105px;height: 30px;background: #4B4EB1 0% 0% no-repeat padding-box;border-radius: 5px;opacity: 1;font: normal normal medium 14px/17px Lato;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">+
+        Add New</button>
+    </div>
+  </div>
+  <div class="row" *ngIf="bShowFilter" style="margin-bottom: 10px;" >
+    <app-table-filter [data]="ideas" tableName='IDEA' (onChange)="Filter_onChange($event)" (OnAdd)="showAll($event)"
+      [custId]="selectedCust"></app-table-filter>
+  </div>
+  <div style="float: right;margin-right: 35px;margin-top: -50px;" >
+    <mat-checkbox class="example-margin" color="blue" [(ngModel)]="forApproval" (ngModelChange)="showFilteredRows()">
+      Pending - For Approval</mat-checkbox>
+  </div>
+  <div *ngIf="!_bvdService.ideas" style="text-align: center; height: 100px; line-height: 100px;">
+    <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+  </div>
+
+  <div class="row" style="text-align: right" *ngIf="_util.IsCSM()">
+
+    <label class="control-label">Action</label>
+
+    <mat-select [(value)]="ideaAction"
+      style="width: 150px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;margin-right: 5px;text-align: left; margin-right: 3em">
+      <mat-option [value]="4">Approve</mat-option>
+      <mat-option [value]="5">Reject</mat-option>
+    </mat-select>
+
+
+    <button class="submit" (click)="btnSubmit_Click()">Submit</button>
+  </div>
+  <div style="width: 97%; margin-left: auto; margin-right: auto">
+    <table mat-table [dataSource]="dataSource" class="table mat-elevation-z0" *ngIf="_bvdService.ideas">
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
+            [indeterminate]="selection.hasValue() && !isAllSelected()"></mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row">
+          <mat-checkbox
+            [disabled]="row.ideA_STATUS_ID === 1 || row.ideA_STATUS_ID === 4 || row.ideA_STATUS_ID === 3 || row.ideA_STATUS_ID === 5"
+            (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(row) : null"
+            [checked]="selection.isSelected(row)"></mat-checkbox>
+        </td>
+
+      </ng-container>
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Problem Description</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.description}}</td>
+      </ng-container>
+      <ng-container matColumnDef="potentiaL_SOLUTION_DESCRIPTION">
+        <th mat-header-cell *matHeaderCellDef>Description of Idea/Proposed Solution</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.potentiaL_SOLUTION_DESCRIPTION}}</td>
+      </ng-container>
+      <ng-container matColumnDef="identifieD_DATE">
+        <th mat-header-cell *matHeaderCellDef>Identified Date</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.identifieD_DATE | date :'dd-MMM-yyyy'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="projecT_NAME">
+        <th mat-header-cell *matHeaderCellDef>Project</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.projecT_NAME}}</td>
+      </ng-container>
+      <ng-container matColumnDef="identified_By">
+        <th mat-header-cell *matHeaderCellDef>Identified By</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.identified_By}}</td>
+      </ng-container>
+      <!-- <ng-container matColumnDef="responsible">
+        <th mat-header-cell *matHeaderCellDef>Responsible</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.responsible}}</td>
+      </ng-container> -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let listIdeas" [ngClass]="{'Completed': listIdeas.ideA_STATUS_ID === 8,'Planned':listIdeas.ideA_STATUS_ID === 7,
+      'On-Hold': listIdeas.ideA_STATUS_ID === 6,'Rejected': listIdeas.ideA_STATUS_ID === 5,
+      'Approved': listIdeas.ideA_STATUS_ID === 4,'Implemented': listIdeas.ideA_STATUS_ID === 3,
+      'Submitted': listIdeas.ideA_STATUS_ID === 2,'Draft':listIdeas.ideA_STATUS_ID ===1}">
+          {{getStatus(listIdeas.ideA_STATUS_ID)}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef>Type</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.type}}</td>
+      </ng-container>
+      <ng-container matColumnDef="targeT_DATE">
+        <th mat-header-cell *matHeaderCellDef>Target Date</th>
+        <td mat-cell *matCellDef="let listIdeas">{{listIdeas.targeT_DATE | date :'dd-MMM-yyyy' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let listIdeas">
+          <a class="delLink" style="margin-left: 10px"
+            (click)="deleteIdeaById(listIdeas.id,listIdeas.ideA_STATUS_ID)"><img src="assets/images/bin.svg"
+              title="Delete"></a>
+        </td>
+      </ng-container>
+      <!-- openDialog(Edit,listIdeas) -->
+
+      <!-- <ng-container matColumnDef="ellipsis">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef>
+        
+        <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="approval">
+          <mat-icon style="margin-top:-20px;margin-left:-20px">more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item>
+            <mat-icon style="color: green">check_circle</mat-icon>
+            <span style="width: 45px;height: 15px;text-align: left;font: normal normal medium 12px/15px Lato;letter-spacing: 0px;color: #7E7E7E;opacity: 1;">Approve</span>
+          </button>
+          <hr style="background: #FFFFFF 0% 0% no-repeat padding-box;border: 1px solid #D3D3D3;opacity: 1;">
+          <button mat-menu-item>
+            <mat-icon style="color: red">highlight_off</mat-icon>
+            <span style="width: 33px;height: 15px;text-align: left;font: normal normal medium 12px/15px Lato;letter-spacing: 0px;color: #7E7E7E;opacity: 1;">Reject</span>
+          </button>
+        </mat-menu>
+      </td>
+    </ng-container> -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+        (click)="getIdeasDetailsById(row.id)"
+        [ngClass]="{'isClicked': isSelectedRow === row.id}"
+        style="cursor: pointer;">
+      </tr>
+    </table>
+    <div #paginator>
+      <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+    </div>
+  </div>
+
+  <!-- <ng-template #Edit>
+    <div mat-dialog-container style="width: 700px;overflow-x: hidden">
+      <div mat-dialog-content>
+        <div class="row" style="margin-top: 25px">
+          <div class="col-lg-3 col-md-3 col-sm-3">
+            <label style=" height: 15px;text-align: left;font: normal normal normal 12px/15px Lato;letter-spacing: 0px;opacity: 1;size: 12px">Responsible</label>
+            <span class="Mandatory" style="color: red">*</span>
+          </div>
+            <div class="col-lg-6 col-md-6 col-sm-6">
+                <mat-form-field floatLabel="never" class="no-line" style="width: 100%;margin-top: -15px;">
+                    <mat-label class="placeholder" style="text-align: left;font:
+                    normal normal normal 12px/15px Lato;letter-spacing: 0px;color: #666666;opacity: 1;">Enter Responsible person details</mat-label>
+                  <mat-select [(ngModel)]="responsiblePerson" style="padding:2px 2px 2px 2px;top:665px;margin-top: -15px !important;margin-left: -5px !important;left: 34px;width: 297px;height: 35px;
+                  background: #FFFFFF 0% 0% no-repeat padding-box;border: 0.5px solid #BCBCBC;border-radius: 2px;opacity: 1;">
+                    <mat-option *ngFor="let res of Resources" [value]="res.emP_ID.toString()">{{res.frsT_NM}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-3 col-md-3 col-sm-3">
+                <label style=" height: 15px;text-align: left;font: normal normal normal 12px/15px Lato;letter-spacing: 0px;opacity: 1;size: 12px">Service Tower</label>
+                <span class="Mandatory" style="color: red">*</span>
+            <span class="info fa fa-info-circle " matTooltip="Select the Service Tower where the problem exist and that would be solved by the proposed Idea/Improvement/Potential Solution"></span>
+              </div>
+              <div class="col-lg-6 col-md-6 col-sm-6">
+                <mat-form-field floatLabel="never" class="no-line" style="width: 100%;margin-top: -15px;">
+                    <mat-label class="placeholder" style="text-align: left;font:
+                    normal normal normal 12px/15px Lato;letter-spacing: 0px;color: #666666;opacity: 1;">Enter Service Tower</mat-label>
+                  <mat-select [(ngModel)]="serviceArea" style="padding:2px 2px 2px 2px;top:665px;margin-top: -15px !important;margin-left: -5px !important;left: 34px;width: 297px;height: 35px;
+                  background: #FFFFFF 0% 0% no-repeat padding-box;border: 0.5px solid #BCBCBC;border-radius: 2px;opacity: 1;">
+                    <mat-option *ngFor="let sa of serviceAreaList" [value]="sa.id">{{sa.title}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+        </div>
+        
+      </div>
+      <div mat-dialog-actions align="end" style="margin-top: 50px;margin-bottom: 10px">
+        <button (click)="closeDialog()" style="margin-right: 20px;height: 30px;border-radius: 2px;opacity: 1;">Close</button>
+        <button mat-button (click)="Save()" style="height: 30px;background: #7192FF 0% 0% no-repeat padding-box;border-radius: 2px;
+        opacity: 1;color: #FFFFFF;margin-right: 2em;">Save</button>
+      </div>
+    </div>
+    
+  </ng-template> -->
+
+  <!-- <div *ngIf="loading" style="text-align: center; height: 100px; line-height: 100px;">
+    <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+  </div> -->
+</div>
+</div>

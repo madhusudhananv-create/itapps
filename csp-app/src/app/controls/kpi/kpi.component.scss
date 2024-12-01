@@ -1,0 +1,49 @@
+.link {
+ cursor: pointer;
+ text-decoration: none;
+ vertical-align: middle;
+ text-align: center;
+ font-size:20px;
+}
+mat-form-field{
+ width:100%;
+}
+.navbar-fixed-top{
+z-index: 1000 !important;
+}
+nav{
+ z-index: 1000 !important;   
+}
+.row{
+ padding:0px;
+ margin:0px;
+}
+
+///Mat tab css - start
+mat-tab-group{
+    background-color: white;
+}
+::ng-deep mat-tab-body{
+    border:solid 1px grey !important;
+}
+::ng-deep .mat-tab-labels{
+    background-color:#eaeaea;
+}
+
+::ng-deep .mat-tab-label{
+    // border-top:solid 1px grey !important;
+    // border-left:solid 1px grey !important;
+    // border-right:solid 1px grey !important; //rebeccapurple
+}
+::ng-deep .mat-tab-label-active{
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-top:solid 1px grey !important;
+    border-left:solid 1px grey !important;
+    border-right:solid 1px grey !important;
+    background-color: white;
+}
+::ng-deep .mat-tab-header mat-ink-bar {
+    background-color: unset !important;
+}
+///Mat tab css - end

@@ -1,0 +1,45 @@
+<div>
+  <div class="panel panel-primary">
+    <div style="height: 45px;" class="panel-heading">
+      <div style="float: left; font-size: 14px;">Issues</div>
+      <div style="text-align:center;padding-bottom:2px;float: right;">
+        <button style="height: 28px;background: #fa7973;width: 50px!important;" mat-dialog-close (click)="closeDialog()">
+          <i style="color: white;margin-bottom: 8px;" class="material-icons">
+            close
+          </i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="height: 625px;overflow: scroll" *ngIf="IssuesArray.length > 0">
+  <table class="table table-bordered" style="font-size:12px">
+    <thead>
+      <tr style="text-align:left !important">
+        <th style="text-align:left">No.</th>
+        <th style="text-align:left">Project Name</th>
+        <th style="text-align:left">Identified On</th>
+        <th style="text-align:left">Issue Description</th>
+        <th style="text-align:left">Business Impact</th>
+        <th style="text-align:left">Issue Owner</th>
+        <th style="text-align:left">Status</th>
+        <th style="text-align:left">Issue Action Plan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let issue of IssuesArray;let i = index" style="text-align:left">
+        <td>{{i + 1}}</td>
+        <td>{{issue.rag}}</td>
+        <td>{{issue.identifieD_DATE|date:'dd-MMM-yyyy'}}</td>
+        <td>{{issue.description}}</td>
+        <td>{{issue.impacT_SUMMARY}}</td>
+        <td>{{issue.identifieD_BY}}</td>
+        <td>{{issue.status}}</td>
+        <td>{{issue.actioN_PLAN}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div style="height: 250px;text-align: center; vertical-align: middle">
+  No Data to display..
+</div>

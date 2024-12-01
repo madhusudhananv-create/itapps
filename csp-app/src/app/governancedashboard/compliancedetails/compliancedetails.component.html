@@ -1,0 +1,61 @@
+<div class="panel panel-primary" style="height: 550px;margin-bottom: 3px;overflow: scroll;">
+  <div class="panel-heading">Project Compliance Details </div>
+  <!-- <table class="table table-bordered" style="font-size:12px">
+          <tr>
+              <th style="text-align:left;background: #337ab730;">Project Description</th>
+              <th style="text-align:left;background: #337ab730;">Employee Name</th>           
+              <th style="text-align:left;background: #337ab730;">Status- Failed/Not Completed </th>
+              <th style="text-align:left;background: #337ab730;">Statsus </th>
+            </tr>
+        <tbody *ngFor="let h of data.info" >
+          <tr>
+              <td>{{h.proJ_NM}}</td>
+              <td>{{h.emP_NAME}}</td>
+              <td>{{h.titlE_NAME}}</td>
+              <td>{{h.imporT_DATE | date :'dd-MMM-yyyy'}}</td>
+          </tr>
+        </tbody>
+        <div style="margin: 5px;" *ngIf="data.info.length == 0">No Data to display </div> 
+      </table> -->
+  <mat-accordion>
+    <mat-expansion-panel *ngFor="let k of data.info;let m = index">
+      <mat-expansion-panel-header>
+        <mat-panel-title style="font-family: calibri;font-weight: 600" >
+          {{k.proJ_NM}} - {{k.projecT_COMPLIANCE.length}} Members ({{k.compliancE_PERCENT}} %)
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <table class="table table-bordered" *ngIf="k.projecT_COMPLIANCE.length > 0">
+        <tbody>
+          <tr>
+            <th>Employee Name</th>
+            <th *ngIf = "data.status == 'fail'">Status- Failed/Not Completed</th>
+            <th *ngIf = "data.status == 'pass'">Status- Passed</th>
+            <th>Status as On</th>
+          </tr>
+          <tr *ngFor="let b of k.projecT_COMPLIANCE;let i = index">
+            <td>
+              {{b.emP_NAME}}
+            </td>
+            <td>
+              <table class ="table table-bordered">
+                <tr *ngFor="let m of b.result">
+                  <td>{{m.titlE_NAME}}</td>
+                </tr>
+              </table>
+            </td>
+            <td>
+                <table class ="table table-bordered">
+                    <tr *ngFor="let m of b.result">
+                      <td>{{m.imporT_DATE | date :'dd-MMM-yyyy'}}</td>
+                    </tr>
+                  </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </mat-expansion-panel>
+  </mat-accordion>
+</div>
+<div style="text-align:center;padding-bottom:2px">
+  <button mat-button mat-dialog-close>Close</button>
+</div>

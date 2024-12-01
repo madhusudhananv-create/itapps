@@ -1,0 +1,114 @@
+<div class="sliding-up-content" [class.show]="showContractStatusViewdetails">
+
+  <div class="row" mat-dialog-title style="height: 40px;background: #EBEBEB 0% 0% no-repeat padding-box;opacity: 1;">
+    <label
+      style="height: 17px;text-align: left;font-size: 14px;letter-spacing: 0.2px;color: #2b2a2a;opacity: 1;margin-left: 15px;margin-top: 10px;font-weight: 500 ;">Contract Status - Resources</label>
+    <a class="close-button" (click)="onClose()"
+      style="margin-left: 85%;margin-top: 5px;color:#333333;cursor: pointer;position: absolute;">
+      <mat-icon class="close-icon">close</mat-icon>
+    </a>
+  </div>
+  <br />
+  <div class="row">
+    <div class="col-lg-12" style=" color:rgb(73, 72, 72)">
+
+      <label>Account</label>
+
+      <select class="drpdown" style="border:0cap ;margin-left: 5px;" name="selectedCust" [(ngModel)]="selectedCust"
+        (ngModelChange)="toggleCustomerSelection($event)">
+
+        <option value="{{item}}" *ngFor="let item of _cooDashboardCommon.popupCusts">{{item}}</option>
+      </select>
+      <label style="margin-left: 8px;"
+        *ngIf="_cooDashboardCommon.popupPortfolios!=null && _cooDashboardCommon.popupPortfolios.length>1">Portfolio</label>
+      <select class="drpdown" style="border:0cap ;margin-left: 5px;" name="selectedPortfolio"
+        [(ngModel)]="selectedPortfoliovalue"
+        *ngIf="_cooDashboardCommon.popupPortfolios!=null && _cooDashboardCommon.popupPortfolios.length>1">
+
+        <option value="{{item}}" *ngFor="let item of _cooDashboardCommon.popupPortfolios">{{item}}</option>
+      </select>
+
+      <label style="margin-left: 8px;">Project</label>
+      <select class="drpdown" style="border:0cap ;margin-left: 5px;" name="selectedProject"
+        [(ngModel)]="selectedProject">
+
+        <option value="{{item}}" *ngFor="let item of _cooDashboardCommon.popupProjects">{{item}}</option>
+      </select>
+      <button type="button" class="btn btn-primary" (click)="Apply()" style="margin-left: 15px;">Apply</button>
+      <button type="button" class="btn" (click)="Reset()" style="margin-left: 5px;">Reset</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-6" style="">
+      <h5 class="staticunderline marginbottom5px" style="margin-top: 10px; margin-left: -3px;"> CSAT Details
+      </h5>
+    </div>
+    <div class="col-lg-6" style="">
+      <div style="margin-left:60%;">
+        <input type="text" style="font-size: 12px;width: 200px;border: #d1cccc 1px solid;height: 23px;"
+          placeholder="Search" [(ngModel)]="ipSearch" (keyup)="Search()">
+        <button mat-icon-button matSuffix class="search-icon" (click)="Search()" style="vertical-align: middle;
+    height: 25px;
+    margin-left: -30px;
+    margin-top: -2px;
+    width: 30px;
+    padding: 2px;
+    background-color: transparent;">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <br />
+  <div class="row tableFixHead"
+    style="width:  98%; height:280px; overflow-x: hidden ;  overflow-y: auto;margin-top: 25px;">
+
+
+    <div
+      *ngIf="_cooDashboardCommon.vwcustomerSuccessSurvey==undefined || _cooDashboardCommon.vwcustomerSuccessSurvey==null ||  _cooDashboardCommon.vwcustomerSuccessSurvey.length==0">
+      <div class="row">
+        <div class="col-lg-12">
+          No data available
+        </div>
+      </div>
+    </div>
+    <table class="table" id="tblviewdetails"
+      *ngIf="_cooDashboardCommon.vwcustomerSuccessSurvey!=undefined && _cooDashboardCommon.vwcustomerSuccessSurvey!=null && _cooDashboardCommon.vwcustomerSuccessSurvey.length>0"
+      style="width: 100%;margin-top: 20px;">
+      <thead>
+        <tr class="header-row">
+          <th class="header col-lg-12 fixed-header" style="width: 98%;">
+            <div class="row">
+              <div class="col-lg-2 smalltextblack" style="margin-top:30px">Account Name </div>
+              <div class="col-lg-2 smalltextblack" style="margin-top:30px">Project Name</div>
+              <div class="col-lg-2 smalltextblack" style="margin-top:30px">Respondent Name</div>
+              <div class="col-lg-1 smalltextblack" style="margin-top:15px">Enabling Success</div>
+              <div class="col-lg-1 smalltextblack" style="margin-top:30px">Value Adds</div>
+              <div class="col-lg-1 smalltextblack" style="margin-top:15px">Overall Quality of Deliverables</div>
+              <div class="col-lg-1 smalltextblack" style="">Likey to Recommend GAVS</div>
+              <div class="col-lg-2 smalltextblack" style="margin-top:30px">Comments</div>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row custrow" *ngFor="let proj of _cooDashboardCommon.vwcustomerSuccessSurvey">
+          <td class="col-lg-2 smalltextblack">{{proj.customeR_NAME}}</td>
+          <td class="col-lg-2 smalltextblack">
+            {{proj.projecT_NAME}}
+          </td>
+          <td class="col-lg-2 smalltextblack">
+            {{proj.respondenT_NAME}}
+          </td>
+          <td class="col-lg-1 smalltextblack" style="text-align: center !important;">{{proj.valuE_ADDS}}</td>
+          <td class="col-lg-1 smalltextblack" style="text-align: center !important;">{{proj.enablinG_SUCCESS}}</td>
+          <td class="col-lg-1 smalltextblack" style="text-align: center !important;">
+            {{proj.overalL_QUALITY_OF_DELIVERABLE}}</td>
+          <td class="col-lg-1 smalltextblack" style="text-align: center !important;">{{proj.miN_SCORE}}</td>
+          <td class="col-lg-2 smalltextblack" style="">{{proj.comments}}</td>
+        </tr>
+    </table>
+  </div>
+</div>

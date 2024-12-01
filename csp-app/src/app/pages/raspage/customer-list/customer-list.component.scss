@@ -1,0 +1,43 @@
+.container {
+    background-color:white;
+    height: calc(100vh - 57px);
+    width:250px;
+    overflow: auto;
+    text-align: left;
+    margin-left:0px;
+    padding-right:0px;
+    padding-left:0px;
+}
+.customer{
+    padding:10px;
+}
+.link {
+    cursor: pointer;
+    text-decoration: none;
+    font-size:12px;
+    color:steelblue;
+    vertical-align: middle;
+}
+.row{
+    margin: 0px !important;
+  }
+  .col-lg-2, .col-md-2, .col-sm-2 {
+    margin: 0px !important;
+    padding:0px;
+  }
+  .col-lg-3, .col-md-3, .col-sm-3 {
+    margin: 0px !important;
+    padding:0px;
+  }
+  .col-lg-4, .col-md-4, .col-sm-4 {
+    margin: 0px !important;
+    padding:0px;
+  }
+  .col-lg-6, .col-md-6, .col-sm-6 {
+    margin: 0px !important;
+    padding:0px;
+  }
+  .col-lg-10, .col-md-10, .col-sm-10 {
+  margin: 0px !important;
+  padding:0px;
+  }

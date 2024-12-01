@@ -1,0 +1,185 @@
+ <!--<div class="pageborder">
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+    <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none" [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+      <img src="assets/images/back_round.png">
+    </div>
+    <img class="image" style="height:45px;padding:5px" src="assets/images/{{_layoutService.selectedCust}}.png" onerror="this.src ='assets/images/CustomerLogo.png'">
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6 col-md-6 col-sm-6" style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px; color: #4e5882">
+
+    <div style="display: inline-block; ">
+      Project Data Migration
+    </div>
+  </div>
+</div>  -->
+
+ <!-- <div class="row">
+          <table style="width: 80%; background:white;margin: 30px">
+            <tr>
+              <td class="topicarea">
+                <p>
+                  <b>Old Project</b>
+                </p>
+                <p style="white-space:pre-wrap;">
+                  <mat-select placeholder="Select Old Project" [(ngModel)]="input_oldprojectid" (selectionChange)="onProjectChange('old')"
+        style="margin-left:15px; width:260px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;">
+        <mat-option *ngFor="let proj of oldProjNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">{{proj.proJ_NM}}</mat-option>
+      </mat-select>
+                </p>
+              </td>
+              <td class="topicarea">
+                <p>
+                  <b>New Project</b>
+                </p>
+                <p style="white-space:pre-wrap;">
+                  <mat-select placeholder="Select New Project" [(ngModel)]="input_newprojectid" (selectionChange)="onProjectChange('new')"
+        style="margin-left:15px; width:260px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;">
+        <mat-option *ngFor="let proj of newProjNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">{{proj.proJ_NM}}</mat-option>
+      </mat-select>
+                </p>
+              </td>
+              <td class="topicareabutton">
+                 
+                 <button mat-raised-button color="primary" (click)="MigrateProjectData()">Migrate</button>
+                 
+              </td>
+            </tr>
+            <tr>
+              <td class="topicarea">
+                <div *ngIf="input_oldprojectid">
+                <table style="width: 80%; background:white;margin: 20px" >
+                  <tr><td>Project Id</td><td>{{input_oldprojectid}}</td></tr>
+                  <tr><td>Start Date</td><td>{{oldProjDetails.starT_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+                  <tr><td>End Date</td><td>{{oldProjDetails.enD_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+                  <tr><td>Project Status</td><td>{{oldProjDetails.proJ_STATUS}}</td></tr>
+                </table>
+                </div>
+              </td>
+              <td class="topicarea">                
+              <div *ngIf="input_newprojectid">
+              <table style="width: 80%; background:white;margin: 20px;">
+                  <tr><td>Project Id</td><td>{{input_newprojectid}}</td></tr>
+                  <tr><td>Start Date</td><td>{{newProjDetails.starT_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+                  <tr><td>End Date</td><td>{{newProjDetails.enD_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+                  <tr><td>Project Status</td><td>{{newProjDetails.proJ_STATUS}}</td></tr>
+                </table>
+              </div>
+                </td>
+              <td class="topicareabutton">
+              </td>
+            </tr>
+            <tr>
+              <td colspan="3" class="topicareaSuccessArea">
+                <span [ngStyle]="errorStatus === 1 ? {'color':'green'} : {'color': 'red'}">{{successMessage}}</span>
+              </td>
+            </tr>
+          </table> -->
+          <div class="pageborder">
+            <div class="row">
+              <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+                <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none" [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+                  <img src="assets/images/back_round.png">
+                </div>
+                <img class="image" style="height:45px;padding:5px" src="assets/images/{{_layoutService.selectedCust}}.png" onerror="this.src ='assets/images/CustomerLogo.png'">
+              </div>
+            </div>
+
+      <div class="row">
+      <div class="col-lg-6 col-md-6 col-sm-6" style="font-size: 14px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px;color: #080808;">
+
+  <div class= "Titlename" >
+    Project Data Migration
+  </div>
+      </div>
+    </div>
+  <div class="row">
+    <div class="col-lg-8 col-md-8 col-sm-8">
+        <mat-select placeholder="Select Old Project" [(ngModel)]="input_oldprojectid" (selectionChange)="onProjectChange('old')"
+          style="margin-left:15px; width: 260px;background-color: white;border: solid #d0d0d0 1px;padding:5px; margin-right:20px;height: 30px;">
+          <mat-option *ngFor="let proj of oldProjNames" [value]="proj.proJ_ID">{{proj.proJ_NM}}</mat-option>
+        </mat-select>
+        <mat-select placeholder="Select New Project" [(ngModel)]="input_newprojectid" (selectionChange)="onProjectChange('new')"
+        style="margin-right:20px; width:260px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;height:30px ;">
+        <mat-option *ngFor="let proj of newProjNames" [value]="proj.proJ_ID">{{proj.proJ_NM}}</mat-option>
+      </mat-select>
+      
+    </div>
+  </div>
+
+   
+  <table class="table table-bordered projmigration" style="width: 80%;margin: 20px;background-color:#ffffff;text-align:center;">
+    <thead>    
+      <tr style="height: 30px;margin:20px;background-color:rgb(216, 212, 212)">
+        <td style="background-color: #f1f1f1;width:40%">Old project Details </td>
+        <td style="background-color: #ededf7;width:40%">New Project Details</td>
+     </tr>
+   </thead>
+    <tbody>
+       <tr *ngIf="input_oldprojectid">
+          <td class="topicarea" >
+            <div >
+            <table style="width: 70%; background:white;margin-left: 100px;text-align: left;margin-right:20px;line-height:25px;padding-right:10px  ;" >
+              <tr > <td colspan="2"> {{oldProjDetails.proJ_NM}}</td> </tr>
+              <tr><td>Project Id : </td><td style="margin-left:110px;">{{input_oldprojectid}}</td></tr>
+              <tr><td>Start Date : </td><td>{{oldProjDetails.starT_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+              <tr><td>End Date : </td><td>{{oldProjDetails.enD_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+              <tr><td>Project Status : </td><td>{{oldProjDetails.proJ_STATUS}}</td></tr>
+            </table>
+            </div>
+          </td>
+          <td class="topicarea">       
+          <div >
+          <table style="width: 70%; background:white;margin-left:150px;text-align:left;line-height:25px ;">
+              <tr><td colspan="2">{{newProjDetails.proJ_NM}}</td></tr>
+              <tr><td>Project Id : </td><td>{{input_newprojectid}}</td></tr>
+              <tr><td>Start Date : </td><td>{{newProjDetails.starT_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+              <tr><td>End Date : </td><td>{{newProjDetails.enD_DATE | date:'dd-MMM-yyyy'}}</td></tr>
+              <tr><td>Project Status : </td><td>{{newProjDetails.proJ_STATUS}}</td></tr>
+            </table>
+          </div>
+            </td>
+           
+        </tr>
+        <!-- <tr>
+          <td colspan="3" class="topicareaSuccessArea">
+            <span [ngStyle]="errorStatus === 1 ? {'color':'green'} : {'color': 'red'}">{{successMessage}}</span>
+          </td>
+        </tr> -->
+        </tbody> 
+      </table>
+    <div class ="row" *ngIf="input_oldprojectid && !showMessage">
+      <div class="col-lg-12 col-md-12 col-sm-12">
+     <button mat-raised-button color="primary" style="background-color: #4b4eb1; margin-right:10px;margin-left:970px;
+    color:white;border-radius:5px;width:100px;height:30px;size: 15px;border:none;text-decoration: none;outline:none;margin-bottom:50px;" (click)="MigrateProjectData()">Migrate Data</button>
+    
+    </div>
+    </div>
+
+    <div *ngIf="showMessage" style="display: flex; margin-top: 20px; border-radius: 3px;margin-left: 30px; box-shadow: 1px 2px 3px 1px lightgrey;
+    height: 50px;
+    line-height: 50px;
+    padding-left: 15px;">
+      <div style="margin-right: 20px;font-size: 25px;">&#9989;</div>
+      <div style="font-size: 16px;vertical-align: middle;">Project data of {{oldProjDetails.proJ_NM}} is successfully migrated to project {{newProjDetails.proJ_NM}}</div>
+    </div>
+     
+    
+    <!-- <table class="table table-bordered projmigration" style="width: 60%;height:40px;margin: 30px ;background-color:#ffffff;border:none;text-align:center;">
+      <thead>    
+     <td style="color:grey">Project data of IPSOS-HHCAHPS is successfully migrated to project IPSOS-Viewscast 24/7 Support </td>
+     </thead>
+     <img src="image/migrated.png" style="height:40px;width:40px"> -->
+   
+  
+   
+    
+      
+  
+
+    
+  
+  

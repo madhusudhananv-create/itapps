@@ -1,0 +1,194 @@
+<div class="sliding-up-content" [class.show]="showCustomersuccessgoalkpiperformance">
+    <div class="row" mat-dialog-title style="height: 40px;background: #EBEBEB 0% 0% no-repeat padding-box;opacity: 1;">
+        <label
+            style="height: 16px;text-align: left;font-size: 13px;letter-spacing: 0.2px;color: #2b2a2a;opacity: 1;margin-left: 15px;margin-top: 10px;font-weight: 600 ;">
+            Customer Success Goal & KPI Performance </label>
+        <a class="close-button" (click)="onClose()"
+            style="margin-left: 75%;margin-top: 5px;color:#333333;cursor: pointer;position: absolute;">
+            <mat-icon class="close-icon">close</mat-icon>
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12" style=" color:rgb(73, 72, 72)">
+
+            <div class="col-lg-5 col-md-5 col-sm-5">
+                <app-project-selector-multiple (onChange)="getCustomerAndProjects($event)" [allcust]="allcust"
+                    [allproj]="allproj">
+                </app-project-selector-multiple>
+            </div>
+
+            <button type="button" class="btn btn-primary" [disabled]="_cooDashboardCommon.progressPopup" (click)="Apply()" style="margin-left: 15px;">Apply</button>
+            <button type="button" class="btn" [disabled]="_cooDashboardCommon.progressPopup" (click)="Reset()" style="margin-left: 5px;">Reset</button>
+        </div>
+    </div>
+
+    <mat-progress-bar *ngIf="_cooDashboardCommon.progressPopup" mode="indeterminate"></mat-progress-bar>
+    <div class="table-container row" style="height: 425px;overflow: auto;margin: 12px;margin-top:2px;">
+        <div class="mainDiv" style="padding: 20px;opacity: 1;">
+            
+            <div *ngIf="showMetrics && isProdView"
+                style="height: 100px; text-align: center;line-height: 100px; font-size: 17px;">
+                No Service Level Achievements available for this Period.
+            </div>
+            <div *ngIf="_cooDashboardCommon.goalDetails?.length > 1 && !isProdView">
+                <label style="margin-right: 10px; font-size: 13px; color: #5461a2">View by :</label>
+                <mat-radio-group style="display: inline-block;" aria-label="Select an option" name="selGroupBy"
+                    [(ngModel)]="selGroupBy">
+                    <mat-radio-button (click)="changeGroupBy('2')" value="2">Customer
+                        Success Goal</mat-radio-button> &nbsp;&nbsp;
+                    <mat-radio-button (click)="changeGroupBy('3')" value="3">Work Group / KPI Area</mat-radio-button>
+                    &nbsp;&nbsp;
+                    <mat-radio-button (click)="changeGroupBy('1')" value="1">Service
+                        Tower</mat-radio-button>
+                </mat-radio-group>
+                <table class="contentTable" id="tblviewdetails" style="width: 99%;">
+                    <thead>
+                        <tr>
+                            <th *ngIf="selGroupBy == 1" class="col-lg-7" style="padding-left: 13px;">Service Tower</th>
+                            <th *ngIf="selGroupBy == 2" class="col-lg-7" style="padding-left: 13px;">Customer Success
+                                Goal</th>
+                            <th *ngIf="selGroupBy == 3" class="col-lg-7" style="padding-left: 13px;">Work Group / KPI Area</th>
+                            <th class="col-lg-2">Achievement</th>
+                            <th class="col-lg-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody *ngFor="let goal of _cooDashboardCommon.goalDetails | slice:1; let i = index">
+                        <tr class="custrow" (click)="ShowKPIDetails(i)">
+
+                            <td *ngIf="selGroupBy == 2"
+                                style="width: 255px;max-width: 255px; padding-left: 13px; padding-right: 15px; white-space: nowrap;overflow-x: hidden; text-overflow: ellipsis">
+                                &nbsp;&nbsp;&nbsp; <span><span *ngIf="i!= this.KPIIndex" class="btn btn-white "> +
+                                    </span><span *ngIf="i== this.KPIIndex" class="btn btn-white "> -
+                                    </span>&nbsp;&nbsp;&nbsp; {{goal.goal.split('|')[0]}}</span>
+                            </td>
+
+                            <td *ngIf="selGroupBy == 3"
+                                style="width: 255px;max-width: 255px; padding-left: 13px; padding-right: 15px; white-space: nowrap;overflow-x: hidden; text-overflow: ellipsis">
+                                &nbsp;&nbsp;&nbsp; <span><span *ngIf="i!= this.KPIIndex" class="btn btn-white "> +
+                                    </span><span *ngIf="i== this.KPIIndex" class="btn btn-white "> -
+                                    </span>&nbsp;&nbsp;&nbsp; {{goal.kpiArea.split('|')[0]}}</span>
+                            </td>
+
+                            <td *ngIf="selGroupBy == 1"
+                                style="width: 255px;max-width: 255px; padding-left: 13px; padding-right: 15px; white-space: nowrap;overflow-x: hidden; text-overflow: ellipsis">
+                                &nbsp;&nbsp;&nbsp; <span><span *ngIf="i!= this.KPIIndex" class="btn btn-white "> +
+                                    </span><span *ngIf="i== this.KPIIndex" class="btn btn-white "> -
+                                    </span>&nbsp;&nbsp;&nbsp; {{goal.kpiArea.split('|')[0]}}</span>
+                            </td>
+
+                            <td style="width: 255px;max-width: 255px;padding-left: 43px !important;">
+                                {{goal.goal.split('|')[2] }}
+                            </td>
+
+                            <td style="cursor: pointer;padding-right: 22px;">
+                                <div [innerHTML]="getStatus(goal.goal.split('|')[2] )"></div>
+                            </td>
+                        </tr>
+                        <tr class="projrow" *ngIf="KPIIndex === i">
+                            <td colspan="3">
+                                <table style="width :100%; margin: 0px !important" class="KPITable table">
+                                    <thead>
+                                        <tr class="projrow">
+                                            <th style="vertical-align:middle" [rowSpan]="col.rowSpan"
+                                                [colSpan]="col.colSpan"
+                                                *ngFor="let col of _cooDashboardCommon.goalDetails[0].details[0] | slice:1">
+                                                {{col.text}}
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th style="height:4px;padding:0px!important"
+                                                [style.border-color]="col.color" [style.background-color]="col.color"
+                                                *ngFor="let col of _cooDashboardCommon.goalDetails[0].details[1]"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="projrow" *ngFor="let row of goal.details"
+                                            style="vertical-align: middle;">
+                                            <td *ngFor="let cell of row | slice:1" [rowSpan]="cell.rowSpan"
+                                                [colSpan]="cell.colSpan">
+                                                <div style="float: left;margin-right: 5px;" *ngIf="cell.color">
+                                                    <mat-icon [matTooltip]='cell.toolTip' style="font-size:15px"
+                                                        [style.color]="cell.color">fiber_manual_record</mat-icon>
+                                                </div>
+                                                <span *ngIf="cell.celltype != 'link'" [matTooltip]="cell.text">{{
+                                                    cell.text}}</span>
+                                                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                                                <a (click)="showkpitrendbygoalpopup(cell.text,goal.goal)"
+                                                    *ngIf="cell.celltype == 'link' && selGroupBy== 1" class="link"
+                                                    style="float:right;"><svg xmlns="http://www.w3.org/2000/svg"
+                                                        width="16" height="16" fill="#aeb0b1"
+                                                        class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+                                                        <path
+                                                            d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z" />
+                                                    </svg>
+                                                </a>
+                                                <a (click)="showkpitrendbygoalpopup(cell.text,goal.goal)"
+                                                    *ngIf="cell.celltype == 'link' && selGroupBy== 2" class="link"
+                                                    style="float:right;"><svg xmlns="http://www.w3.org/2000/svg"
+                                                        width="16" height="16" fill="#aeb0b1"
+                                                        class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+                                                        <path
+                                                            d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z" />
+                                                    </svg>
+                                                </a>
+                                                <a (click)="showkpitrendbygoalpopup(cell.text,goal.goal)"
+                                                    *ngIf="cell.celltype == 'link' && selGroupBy== 3" class="link"
+                                                    style="float:right;"><svg xmlns="http://www.w3.org/2000/svg"
+                                                        width="16" height="16" fill="#aeb0b1"
+                                                        class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+                                                        <path
+                                                            d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z" />
+                                                    </svg>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div *ngIf="_cooDashboardCommon.goalDetails?.length == 1 || _cooDashboardCommon.goalDetails?.length == 0 && !isProdView"
+                style="height: 100px; text-align: center;line-height: 100px; font-size: 17px;">
+                No goals defined / KPI achievement details not updated for the period
+            </div>
+            <div *ngIf="!_cooDashboardCommon.goalDetails && !isProdView"
+                style="text-align: center; height: 100px; line-height: 100px;">
+                <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+            </div>
+        </div>
+    </div>
+
+    <!-- <table  class="table" id="tblachievements"
+        *ngIf="_cooDashboardCommon.achievementsByCustomerSuccessGoal!=undefined && _cooDashboardCommon.achievementsByCustomerSuccessGoal.length>0">
+        <tr class="row custrow" *ngFor="let goal of _cooDashboardCommon.achievementsByCustomerSuccessGoal  ">
+          <td class="col-lg-7 smalltextblack" > <div style="
+            white-space: nowrap;
+            max-width: 275px;
+            overflow: hidden;
+            text-overflow: ellipsis; margin-left: 8px;" title="{{goal.goaL_NAME}}">{{goal.goaL_NAME}}</div></td>
+          <td class="col-lg-3  smalltextblack" style="text-align: center;">
+              <div [innerHTML]="getStatus(goal.score)"></div>
+
+          </td>
+          <td class="col-lg-2  smalltextblack" style="text-align: center !important;white-space: nowrap;">
+            <a class="link"  (click)="ViewBatch_onClick(goal)">
+              KPI
+            </a> &nbsp;&nbsp;&nbsp; <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#aeb0b1" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+              <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+            </svg>
+
+          </td>
+        </tr>
+      </table>
+      <table  class="table"
+        *ngIf="_cooDashboardCommon.achievementsByCustomerSuccessGoal==undefined || _cooDashboardCommon.achievementsByCustomerSuccessGoal.length==0">
+        <tr>
+          <td class="col-lg-12 smalltextblack"  style=" text-align: center;">
+            No Data Found
+          </td>
+        </tr>
+      </table> -->
+</div>

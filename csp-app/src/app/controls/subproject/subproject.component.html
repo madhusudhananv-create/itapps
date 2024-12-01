@@ -1,0 +1,236 @@
+<mat-tab-group>
+  <mat-tab label="Milestones &amp; Tasks">
+    <div class="card">
+      <div class="card-header text-center font-weight-bold py-4">Key milestones / Tasks</div>
+      <div class="card-body">
+        <div id="table" class="table-editable" style="background-color: white">
+          <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-4">
+              <select name="ddSubProjectFilter" [(ngModel)]="SubProjectId" style="height:25px;width:100%" (change)="SubProjectFilter_onChange()">
+                <option [value]='0'>-- All SubProjects --</option>
+                <option *ngFor="let subproj of subProjects" [value]='subproj.id'>{{subproj.subprojecT_NM}}</option>
+              </select>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-6">
+
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2" style="text-align: right">
+              <!-- <button class="btn" type="button" name="btnPeriod" (click)="AddSubProject_onClick()">Add Subproject</button> -->
+              <a class="text-success link" (click)="AddTask_onClick()">
+                <mat-icon matTooltip="Add Milestone/task">add</mat-icon>
+              </a>
+            </div>
+
+          </div>
+
+          <table class="table table-bordered table-responsive-md table-striped text-center" style="font-size:.9em">
+            <tr>
+              <th class="text-center width_3per" rowspan="2">No.</th>
+              <th class="text-center width_2per" rowspan="2">
+                <mat-icon matTooltip="Milestone">flag</mat-icon>
+              </th>
+              <th class="text-center width_2per" rowspan="2">
+                <mat-icon matTooltip="Show in Success journey Map">show_chart</mat-icon>
+              </th>
+              <th class="text-center width_10per" rowspan="2">SubProject</th>
+              <!-- <th class="text-center" rowspan="2" style="width:10%">Short Desc</th> -->
+              <th class="text-center width_20per" rowspan="2">Description</th>
+              <th class="text-center width_10per" rowspan="2">Responsibility</th>
+              <th class="text-center" colspan="2">Planned</th>
+              <th class="text-center" colspan="2">Actual</th>
+              <th class="text-center width_10per" rowspan="2">Status</th>
+              <th class="text-center width_3per" style="white-space: normal !important;" rowspan="2">Completion %</th>
+              <th class="text-center width_3per" rowspan="2"></th>
+              <th class="text-center width_2per" rowspan="2"></th>
+            </tr>
+            <tr>
+              <th class="text-center td_date width_10per">Start Date</th>
+              <th class="text-center td_date width_10per">End Date</th>
+              <th class="text-center td_date width_10per">Start Date</th>
+              <th class="text-center td_date width_10per">End Date</th>
+            </tr>
+            <tr *ngFor="let task of filteredProjectTasks; let id = index" [ngStyle]="{'background-color':id == iEditIndex ? '#d9e2ec' : 'transparent' }">
+              <td class="index">
+                {{id + 1}}
+              </td>
+
+              <td *ngIf="id != iEditIndex" class="index" required>
+                <mat-icon *ngIf="task.ismilestone" matTooltip="Milestone" style="color:#ff9800">flag</mat-icon>
+              </td>
+              <td *ngIf="id == iEditIndex" class="index">
+                <input name="chkMilestone[{{id}}]" type="checkbox" [(ngModel)]="task.ismilestone">
+              </td>
+              <td *ngIf="id != iEditIndex" class="index" required>
+                <mat-icon *ngIf="task.shoW_IN_CHART" matTooltip="Show in Success journey Map" style="color:#03a9f4">show_chart</mat-icon>
+              </td>
+              <td *ngIf="id == iEditIndex" class="index">
+                <input name="chkChart[{{id}}]" type="checkbox" [(ngModel)]="task.shoW_IN_CHART">
+              </td>
+              <td *ngIf="id != iEditIndex" required>
+                {{GetSubProjectName(task.subprojecT_ID)}}
+              </td>
+              <td *ngIf="id == iEditIndex">
+                <select [(ngModel)]="task.subprojecT_ID" style="height:25px">
+                  <option *ngFor="let subproj of subProjects" [value]="subproj.id">{{subproj.subprojecT_NM}}</option>
+                </select>
+              </td>
+              <!-- <td *ngIf="id != iEditIndex" required>
+                                        {{task.shorT_DESC}}
+                                    </td>
+                                    <td *ngIf="id == iEditIndex">
+                                        <input class="input" type="text" [(ngModel)]='task.shorT_DESC' name="txtShortDesc[{{id}}]">
+                                    </td> -->
+              <td *ngIf="id != iEditIndex" style="width:25%">
+                {{task.description}}
+              </td>
+              <td *ngIf="id == iEditIndex" style="width:25%">
+                <textarea class="input" style="height:32px;width:100%" [(ngModel)]='task.description' name="txtDescription[{{id}}]"></textarea>
+              </td>
+              <!-- <td *ngIf="id != iEditIndex" style="width:25%">
+                {{task.responsibility}}
+              </td> -->
+              <td   style="width:25%">
+
+                <mat-select *ngIf="task.responsibility!=null || id == iEditIndex" [disabled]="id != iEditIndex" name="txtresponsibility[{{id}}]" [(ngModel)]="task.responsibility" placeholder="Select Responsibility">
+                  <mat-option *ngFor="let resp of responsibilityList" [value]="resp.emP_ID" [title]="resp.name">
+                    {{resp.name}}
+                  </mat-option>
+                </mat-select>
+              </td>
+              <td *ngIf="id != iEditIndex">
+                {{task.expecteD_START_DATE|date:'dd-MMM-yyyy'}}
+              </td>
+              <td *ngIf="id == iEditIndex">
+                <mat-form-field class="datePicker">
+                  <input name='dtExpStartDate' [(ngModel)]='task.expecteD_START_DATE' matInput [matDatepicker]="pickerExpStartDate" placeholder="Start Date">
+                  <mat-datepicker-toggle matSuffix [for]="pickerExpStartDate"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerExpStartDate></mat-datepicker>
+                </mat-form-field>
+              </td>
+              <td *ngIf="id != iEditIndex">
+                {{task.expecteD_END_DATE|date:'dd-MMM-yyyy'}}
+              </td>
+              <td *ngIf="id == iEditIndex">
+                <mat-form-field class="datePicker">
+                  <input name='dtExpEndDate' [disabled]="!task.expecteD_START_DATE" [min]="task.expecteD_START_DATE" [(ngModel)]='task.expecteD_END_DATE'
+                    matInput [matDatepicker]="pickerExpEndDate" placeholder="End Date">
+                  <mat-datepicker-toggle matSuffix [for]="pickerExpEndDate"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerExpEndDate></mat-datepicker>
+                </mat-form-field>
+              </td>
+              <td *ngIf="id != iEditIndex">
+                {{task.actuaL_START_DATE|date:'dd-MMM-yyyy'}}
+              </td>
+              <td *ngIf="id == iEditIndex">
+                <mat-form-field class="datePicker">
+                  <input name='dtActStartDate' [disabled]="!task.expecteD_START_DATE" [min]="task.expecteD_START_DATE" [(ngModel)]='task.actuaL_START_DATE'
+                    matInput [matDatepicker]="pickerActStartDate" placeholder="Start Date">
+                  <mat-datepicker-toggle matSuffix [for]="pickerActStartDate"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerActStartDate></mat-datepicker>
+                </mat-form-field>
+              </td>
+              <td *ngIf="id != iEditIndex">
+                {{task.actuaL_END_DATE|date:'dd-MMM-yyyy'}}
+              </td>
+              <td *ngIf="id == iEditIndex">
+                <mat-form-field class="datePicker">
+                  <input name='dtActEndDate' [disabled]="!task.expecteD_START_DATE" [min]="task.actuaL_START_DATE" [max]="_util.Today()" [(ngModel)]='task.actuaL_END_DATE'
+                    matInput [matDatepicker]="pickerActEndDate" placeholder="End Date">
+                  <mat-datepicker-toggle matSuffix [for]="pickerActEndDate"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerActEndDate></mat-datepicker>
+                </mat-form-field>
+              </td>
+              <td *ngIf="id != iEditIndex">
+                {{task.status}}
+              </td>
+              <td *ngIf="id == iEditIndex">
+                <mat-form-field class="datePicker">
+                  <mat-select #ddStatus name='ddStatus' [(ngModel)]="task.status" placeholder="Status" required>
+                    <mat-option value='Identified'>Identified</mat-option>
+                    <mat-option value='Planned'>Planned</mat-option>
+                    <mat-option value='In-Process'>In-Progress</mat-option>
+                    <mat-option value='Completed'>Completed</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </td>
+              <td *ngIf="id != iEditIndex" style="width:20px">
+                {{task.completioN_PERCENT}}
+              </td>
+              <td *ngIf="id == iEditIndex">
+                <input style="width:50px" type="number" [max]="100" [(ngModel)]="task.completioN_PERCENT">
+              </td>
+              <td *ngIf="id != iEditIndex" nowrap>
+                <a class="text-success link">
+                  <mat-icon style="color:transparent">save</mat-icon>
+                </a>
+                <a class="text-success link" (click)="EditTask_onClick(id)">
+                  <mat-icon>edit</mat-icon>
+                </a>
+              </td>
+              <td *ngIf="id === iEditIndex" nowrap>
+                <a class="text-success link" (click)="SaveTask_onClick(task)">
+                  <mat-icon>save</mat-icon>
+                </a>
+                <a class="text-success link" (click)="CancelTask_onClick()">
+                  <mat-icon>close</mat-icon>
+                </a>
+              </td>
+              <td>
+                <a class="text-success link" (click)="DeleteTask_onClick(task)">
+                  <mat-icon>delete</mat-icon>
+                </a>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </mat-tab>
+  <mat-tab label="SubProjects">
+    <div class="row row-box">
+      <div class="col-lg-6 col-md-11 col-sm-11" style="padding:0px">
+        <div class="row">
+          <div class="col-lg-4 col-md-4 col-sm-12" style="text-align:right;padding:0 15px 5px">SubProject Name*</div>
+          <div class="col-lg-8 col-md-8 col-sm-12" style="padding-bottom:5px">
+            <mat-form-field style="width:100%" *ngIf="!bShowAddSubProject">
+              <mat-select name="ddGoals" [(ngModel)]="newSubProject" (ngModelChange)="SubProject_onChange($event)" placeholder="Select SubProject">
+                <mat-option *ngFor="let subproj of subProjects" [value]="subproj" [title]="subproj.subprojecT_NM">
+                  {{subproj.subprojecT_NM}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <!-- <select *ngIf="!bShowAddSubProject" ngModel="#dd" name="ddSubProjectFilter" [(ngModel)]="newSubProject" style="height:25px;width:100%" (change)="SubProject_onChange(#dd)">
+                                    <option *ngFor="let subproj of subProjects" [value]="subproj">{{subproj.subprojecT_NM}}</option>
+                                </select> -->
+            <!-- <select style="height:25px;width:100%" (ngModelChange)="SubProject_onChange($event)">
+                                    <option *ngFor="let subproj of subProjects" [value]="subproj">{{subproj.subprojecT_NM}}</option>
+                                </select> -->
+            <input *ngIf="bShowAddSubProject" maxlength="100"[(ngModel)]="newSubProject.subprojecT_NM" type="text" style="width:100%">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-4 col-md-4 col-sm-12" style="text-align:right;padding:0 15px 5px">Owner*</div>
+          <div class="col-lg-8 col-md-8 col-sm-12" style="padding-bottom:5px">
+            <select [(ngModel)]="newSubProject.owneR_ID" style="width:100%;height:25px">
+              <option *ngFor="let resource of projectResource" [value]="resource.emP_ID">{{resource.frsT_NM}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-4 col-md-4 col-sm-12" style="text-align:right;padding:0 15px 5px">Objectives*</div>
+          <div class="col-lg-8 col-md-8 col-sm-12" style="padding-bottom:5px">
+            <textarea maxlength="255" [(ngModel)]="newSubProject.objectives" style="width:100%">{{newSubProject.objectives}}</textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-12 col-md-12 col-sm-12" style="text-align:center;padding:5px">
+
+            <button (click)="SaveSubProject_onclick()" style="margin-right:25px">Save</button>
+            <button *ngIf="!bShowAddSubProject" (click)="AddSubProject_onClick()">New</button>
+            <button *ngIf="bShowAddSubProject" (click)="CancelSubProject_onclick()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-tab>
+</mat-tab-group>

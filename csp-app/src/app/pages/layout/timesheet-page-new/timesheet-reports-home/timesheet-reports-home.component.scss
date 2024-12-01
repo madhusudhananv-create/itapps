@@ -1,0 +1,439 @@
+
+    .font-regular{
+      font-family: "RobotoRegular"
+    }
+    
+    .font-medium{
+      font-family: "RobotoMedium";
+    }
+
+    .back-to-timesheet
+    {
+      display: inline-block;      
+      padding-right: 40px;
+      padding-top: 15px;
+    }
+
+    ::ng-deep .mat-button-toggle-label-content {
+      line-height: 0px !important;
+      vertical-align: -webkit-baseline-middle !important; 
+      padding: 8px 10px 10px 7px !important
+    }
+
+    // .row{
+    //     margin:0px !important;      
+    // }    
+
+    .status-col{
+      text-align:left;
+      width: 15%;
+    }
+    .select-project-align{
+      padding-top: 5px; 
+    }
+    .table > thead > tr > th {
+      border-bottom: none; 
+      text-align: left;
+    }
+    .table tr{
+      border: none;
+    }    
+    
+    
+
+    .table.summaryTable {
+      table-layout: fixed;
+      margin-left: 15px;    
+      border: 1px solid #D0D0D0;
+      border-radius: 7px;
+      width: 97.6%;
+    }
+
+    .table.summaryTable > tbody > tr > td{      
+      padding-left: 15px;
+    }
+    .table.summaryTable > thead > tr > th{
+      background-color: #F1F1F1;
+      padding-left: 15px;
+    }
+    .table.detailedTable > tbody > tr > td{
+      padding:4px; 
+      border-top: none;
+      vertical-align: middle;      
+    }
+
+    .table.detailedNameTable > tbody > tr > td{
+      padding:4px; 
+      border-top: none;
+      vertical-align: middle;
+    }
+
+    .col-sm-2half{
+      position: relative;
+      min-height: 1px;      
+      padding-left: 15px; 
+    }
+
+    @media(min-width:768px){
+      .col-sm-2half{
+        float: left;
+        width: 16%;
+      }
+    }
+    
+    .table.detailedTotalTable > tbody > tr > td{
+      padding:4px; 
+      border-top: none;
+      vertical-align: middle;
+    }
+    td.white-border{
+      border-left: 4px white solid;
+      border-top: 4px white solid;
+      border-bottom: 4px white solid;   
+      border-collapse: separate;   
+    }
+    
+    // td.white-right-border{
+    //   border-right: 4px white solid;
+    //   border-top: 4px white solid;
+    //   border-bottom: 4px white solid;      
+    // }
+
+    .task-name{      
+      background-color:#edf8fd;
+    }
+   span.name{
+    width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    //display: inline-block;
+   } 
+   .total-row{
+     display: inline-block;
+     height: 21px;
+     padding: 2px;
+   }
+   .weekDate{
+      width: 56px;
+      height: 39px;
+      padding: 7px;
+      border-radius: 5px;
+      text-align: center;      
+      color: white;      
+      font-family: "RobotoMedium";      
+      font-weight: normal;
+    }
+
+    .weekDaysColor{
+      background-color: #96abdf;      
+    }
+
+    .weekEndsColor{
+      background-color: #f8c875;
+    }
+    
+    .first-col {
+      position: absolute;
+      width: 5em;
+      margin-left: -5em;
+    }
+
+    .table-wrapper {
+      overflow-x: scroll;
+      width: 100%;
+      margin: 0 auto;
+  }
+
+    .detailedTotal{
+      border-right: 1px gray solid;
+    }
+
+    .task-type{      
+      background-color:#edf8fd;
+    }
+    
+    .search-employee{
+      border: 1px solid;
+      height: 32px;
+      border-radius: 5px;
+      padding-left: 5px;
+    }
+
+  .footer{
+    float: right;
+    width: 500px;
+  }
+
+  .footer-inner-div{
+    display: inline-block;
+    width: 70px;
+  }
+
+  .footer-yellow-orange{
+    display: inline-block;
+    width: 80px;
+  }
+
+  .statusAlign{
+    margin-left: 20%;
+  }
+
+  .total-status{
+    display: inline-block;
+    padding-left: 4px;
+    width: 16.36px;
+  }
+  .hypen{
+    bottom: 2px;
+    position: relative;
+  }
+  .total-status-padding-summary{
+    display: inline-block;
+    padding-right: 35px;
+  }
+  .total-status-padding{
+    display: inline-block;
+    padding-right: 15px;
+  }
+  .dot-green {
+    height: 10px;
+    width: 10px;
+    background-color: #3AB376;
+    border-radius: 50%;
+    display: inline-block;
+  }  
+
+  .dot-red {
+    height: 10px;
+    width: 10px;
+    background-color: #FF0109;
+    border-radius: 50%;
+    display: inline-block;    
+  }
+
+  .dot-yellow {
+    height: 10px;
+    width: 10px;
+    background-color: #D99D34;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-orange {
+    height: 10px;
+    width: 10px;
+    background-color: #FF6F00;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .detailedStatus{
+   display: inline;
+  }
+
+  .mat-button-toggle-group {
+    box-shadow: none;
+  }
+  
+  mat-button-toggle {
+      border: 1px transparent solid !important;
+      margin-top: 5px !important;
+      padding: 0 5px !important;
+      z-index: 3 !important;
+      background-color: #dee5ff !important;
+      color: grey;      
+  }
+  
+  mat-button-toggle:hover {
+      background-color: #4e5882 !important;        
+      color: white;
+  }
+
+  .mat-button-toggle-checked {
+    background-color: #4e5882 !important;
+    color: white;
+  }
+  
+  .mat-button-toggle-summary {
+    //box-shadow: 0 0 30px #000 !important;
+    border: 1px #4e5882 solid !important;
+    border-top-left-radius: 5px !important;
+    border-bottom-left-radius: 5px !important;    
+    background-color: #4e5882 !important;
+    color: white;
+  }
+
+  .mat-button-toggle-detailed {
+    //box-shadow: 0 0 30px #000 !important;
+    border: 1px #dee5ff solid !important;
+    border-top-right-radius: 5px !important;
+    border-bottom-right-radius: 5px !important;     
+    background-color: #dee5ff !important;
+    color: grey;
+  }
+
+  .mat-button-toggle-input {
+      background-color: none !important;
+      padding-left: 32px !important;
+  }
+
+  .dropdown {
+    width: 100%;
+    height: 350px;
+    position: absolute;
+    background: white; 
+    border: 1px gray solid;
+    border-radius: 5px;
+    margin-top: 1%;
+    z-index: 99;
+    overflow: scroll;    
+  }
+
+  /* width */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+  .selectProject{
+    border: 1px gray solid;
+    border-radius: 5px;
+    padding: 3px;
+    width: 100%;
+  }
+
+  .project-name{
+    width: 85%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    padding-top: 2px;
+  }
+  .filter-project{
+    padding-left:2%;
+    width:100%;
+  }
+
+  textarea:focus, input:focus{
+    outline: none;
+  }
+
+  .month-select{
+    width:9%;
+    padding-left:0.3%;
+  }
+
+  .year-select{
+    width: 10%;
+    padding-left: 0.7%
+  }
+
+  .date-range-select{
+    width: 32%;
+    padding-left: 0.9%;
+  }
+
+  .col-sm-4.div-reporting-period{
+    padding-left: 1%;
+
+  }
+
+  .btn {
+    background: #4e5882;
+    border-radius: 7px;
+    opacity: 1;
+    color: white;
+    border-color: #4e5882;
+    margin-left: 1.5%;
+    height: 25px;
+    width: 100px;
+    font-size: 12px;
+    font-family: "RobotoRegular";
+    padding: 0;
+  }
+
+  button.btn[disabled]{
+      background: #707070;
+      border-radius: 7px;
+      opacity: 1;
+      color: white;
+      border-color: #707070;
+      margin-left: 1.5%;
+      height: 25px;
+      width: 100px;
+      font-size: 12px;
+      font-family: "RobotoRegular";
+      padding: 0;
+  }
+
+  span.material-icons.arrow {
+    position: relative;
+    //left: 150px;
+    float: right;
+    //top: 8px;
+  }
+
+  span.material-icons.arrow:hover {
+    cursor: pointer;
+  }
+
+  .exportToExcel{
+    padding-top: 10px;
+    float: right;
+    padding-left: 20%;
+  }
+
+  .div-content{
+    float: right;
+  }
+ 
+  .cellWidth{
+    width: 20px;
+  }
+
+  .tooltip{
+    background-color: darkgrey;
+    color: white;
+  }
+
+  .proj-total-hours{
+    padding-top: 1%;    
+    padding-left: 1%;
+  }
+  
+  .total-hours{
+    text-align: center;
+    background-color:#edf8fd;    
+  }
+
+  .tast-name-text{
+    padding-left: 15px;
+    padding-top: 8px;
+    position: relative;
+    display: inline-block;
+  }
+
+  .legend{
+    float: right;
+    width: 360px;
+    padding: 10px;
+    margin-right: 24px;
+    margin-top: 10px;
+  }

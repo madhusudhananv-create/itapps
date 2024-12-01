@@ -1,0 +1,21 @@
+<div style="text-align: center">
+  <div class="row" style="border: solid 1px #e0e0e0; background-color:white;padding:5px">
+    <div class="col-lg-4 col-md-4 col-sm-12">
+      <select name="ddProject" [(ngModel)]="projId" (ngModelChange)="ddProject_onChange()"
+        style="width:85%;height:25px">
+        <option *ngFor="let p of Projects" [value]="p.proJ_ID">
+          {{ p.proJ_NM}}
+        </option>
+      </select>
+      <div class="col-lg-5  col-md-5 col-sm-5">
+        <app-monthandyearpicker (onChange)='monthandyearpicker_onChange($event)'></app-monthandyearpicker>
+      </div>
+      <button style="margin: 0 0 0 10px;" class="btn" type="button" name="btnPeriod"
+        (click)="LoadTimelineChart()">Go</button>
+    </div>
+
+
+    <highcharts-chart *ngIf="chart3" [Highcharts]="Highcharts" [options]="chart3">
+    </highcharts-chart>
+
+  </div>

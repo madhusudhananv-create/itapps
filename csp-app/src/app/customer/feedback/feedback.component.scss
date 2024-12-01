@@ -1,0 +1,57 @@
+/////// Table 
+table {
+    border-collapse: collapse;
+    border-radius: 5px;
+    border: 1px solid #a4b7c1;
+    overflow: hidden;
+
+  }
+  .table-outline {
+    border: 1px solid #a4b7c1;
+  }
+  .table .thead-light th {
+    background: #4d8bbf;
+    color: white;
+    border-color: #a4b7c1;
+  }
+  .table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #a4b7c1;
+  }
+  .table th, .table td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #a4b7c1;
+  }
+  .text-center {
+    text-align: center !important;
+    font-size:11px
+  }
+  th {
+    text-align: inherit;
+  
+  }
+  .row{
+    margin:0 !important;
+  }
+  
+  .fa{
+    font-size:15px;
+  }
+
+  //Mat-card
+  .example-card {
+    max-width: 400px;
+  }
+  
+  .example-header-image {
+    background-image: url('https://material.angular.io/assets/img/examples/shiba1.jpg');
+    background-size: cover;
+  }
+  .mat-card-header .mat-card-title {
+    font-size: 20px;
+}
+.mat-card-content, .mat-card-subtitle, .mat-card-title {
+  display: block;
+  margin-bottom: 0px;
+}

@@ -1,0 +1,24 @@
+<div class="row">
+  <div class="col-lg-6 col-md-6">
+    <mat-form-field>
+      <mat-select name="ddCustomer" [(ngModel)]='custId' (ngModelChange)="ddCustomer_Onchange($event)" placeholder="Customer" >
+        <mat-option [value]="-1">All</mat-option>
+        <mat-option *ngFor="let c of Customer" [value]="c.cusT_ID" [title]="c.cusT_NM">
+          {{ c.cusT_NM}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="col-lg-6 col-md-6">
+    <form [formGroup]="searchUserForm">
+      <mat-form-field>
+        <mat-select formControlName="userType" multiple placeholder="Project" [(ngModel)]="projectIds">
+          <mat-option *ngIf="custId != '-1' && Project.length > 1" #allSelected (click)="toggleAllSelection()" [value]="0">All</mat-option>
+          <mat-option *ngFor="let p of Project" [value]="p.proJ_ID" (click)="tosslePerOne(allSelected?.viewValue)" [title]="p.proJ_NM">
+            {{ p.proJ_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,156 @@
+<div class="col-lg-2 col-md-2 col-sm-2 header">
+    <a class="link" style="font-size: 20px" matTooltip="Edit Project Scope" (click)="EditonClick()">
+        <i class="fa fa-edit"></i>
+    </a>
+</div>
+<div class="col-lg-12 col-md-12 col-sm-12" *ngIf="scope_read">
+    <mat-tab-group dynamicHeight>
+        <mat-tab label="Project Description">
+            <br>
+            <div>
+                <div class="row">
+                    <div class="col-lg-2 col-md-2 col-sm-2"><label>Description</label> </div>
+                    <div class="col-lg-10 col-md-10 col-sm-10">{{selectedDatanew?.description}}</div>
+                </div>
+            </div>
+        </mat-tab>
+        <mat-tab label="Scope">
+
+            <div>
+                <div *ngFor="let section of sections" class="row">
+                    <br>
+                    <div class="col-lg-2 col-md-2 col-sm-2"><label>{{ section.title }}</label></div>
+                    <div class="col-lg-10 col-md-10 col-sm-10">{{ selectedDatanew ? selectedDatanew[section.property] :
+                        ''}}</div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-lg-2 col-md-2 col-sm-2" style="padding-top: 20px;"><label>In-Scope&nbsp;</label><i class="fa fa-info-circle"
+                            style="font-size:16px;cursor : pointer" matTooltipClass="custom-tooltip"
+                            matTooltip="Please configure Services applicable for this project using project specific process definition (PSPD). If required you can contact Service Delivery Excellence Partner."></i>
+                    </div>
+                </div>
+                <br>
+                <div class="table-container" style="padding: 10px;">
+                    <table mat-table [dataSource]="dataSource" class="table-bordered table-hover mat-elevation-z8">
+                        <ng-container *ngFor="let column of displayedColumns_read" [matColumnDef]="column">
+                            <th mat-header-cell *matHeaderCellDef>{{ columnDisplayNames_read[column] || column }}</th>
+                            <td mat-cell *matCellDef="let row" [ngStyle]="{ 'width': columnWidths[column] }">{{
+                                row[column] }}</td>
+                        </ng-container>
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns_read"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns_read;"></tr>
+                    </table>
+                </div>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</div>
+<div class="col-lg-12 col-md-12 col-sm-12" *ngIf="scope_edit">
+    <mat-tab-group dynamicHeight>
+        <mat-tab label="Project Description">
+            <br>
+            <div>
+                <div class="row">
+                    <div class="col-lg-2 col-md-2 col-sm-2"><label>Description*</label> </div>
+                    <mat-form-field class="col-lg-10 col-md-10 col-sm-10">
+                        <textarea matInput placeholder="" [(ngModel)]="selectedDatanew.description" required></textarea>
+                    </mat-form-field>
+                </div>
+            </div>
+        </mat-tab>
+        <mat-tab label="Scope">
+            <br>
+            <div>
+                <div *ngFor="let field of fields" class="row">
+                    <div class="col-lg-2 col-md-2 col-sm-2"><label>{{ field.label }}</label></div>
+                    <mat-form-field class="col-lg-10 col-md-10 col-sm-10">
+                        <ng-container *ngIf="field.type === 'select'">
+                            <mat-select ngModel name="{{ field.key }}" [(ngModel)]="selectedDatanew[field.key]"
+                                [required]="field.required">
+                                <mat-option *ngFor="let option of field.options" [value]="option"
+                                    [style.color]="option">{{ option }}</mat-option>
+                            </mat-select>
+                        </ng-container>
+                        <ng-container *ngIf="field.type === 'textarea'">
+                            <textarea matInput placeholder="" [(ngModel)]="selectedDatanew[field.key]"></textarea>
+                        </ng-container>
+                    </mat-form-field>
+                </div>
+                <div class="row">
+                    <div class="col-lg-2 col-md-2 col-sm-2"  style="padding-top: 20px;"><label>In-Scope&nbsp;</label><i class="fa fa-info-circle"
+                            style="font-size:16px;cursor : pointer" matTooltipClass="custom-tooltip"
+                            matTooltip="Please configure Services applicable for this project using project specific process definition (PSPD). If required you can contact Service Delivery Excellence Partner."></i>
+                    </div>
+                   
+                        <!-- <mat-select name="ddServiceArea" [(ngModel)]="selectedDatanew.serviceTower">
+                            <mat-option *ngFor="let c of ServiceAreaList" [value]="c.id"
+                                [title]="c.title">{{c.title}}</mat-option>
+                        </mat-select> -->
+                        <div class="col-lg-3 col-md-3 col-sm-12" style="padding-top: 15px;">
+                            <app-dropdown-filter                             
+                              [title]="'title'"
+                              (selectionChange)="onSelectionChange($event)"
+                              [itemList]="ServiceAreaList"
+                              [selectedValue]="selectedServiceAreaToAdd"
+                              [placeholder]="'Select service tower'">
+                            </app-dropdown-filter>
+                          </div>    
+
+                    <mat-form-field class="col-lg-3 col-md-3 col-sm-3">
+                        <input matInput placeholder="" [(ngModel)]="selectedDatanew.tools" />
+                        <mat-hint>Tools</mat-hint>
+                    </mat-form-field>
+                    <mat-form-field class="col-lg-3 col-md-3 col-sm-3">
+                        <input matInput placeholder="" [(ngModel)]="selectedDatanew.technologY_USED" />
+                        <mat-hint>Technology</mat-hint>
+                    </mat-form-field>
+                    <div style="padding-top: 15px;">
+                        <button  
+                        (click)="AddInScope(selectedServiceAreaToAdd.id,selectedDatanew.tools ,selectedDatanew.technologY_USED)">
+                        <i class="fa fa-plus"></i></button>
+                    </div>
+
+                </div>
+                <br>
+
+                <div class="table-container" style="padding: 10px;">
+                    <table mat-table class="table-bordered table-hover mat-elevation-z8" [dataSource]="dataSource">
+                        <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">
+                            <th mat-header-cell *matHeaderCellDef>
+                                {{ columnDisplayNames[column] || column }}
+                            </th>
+                            <td mat-cell *matCellDef="let row; let i = index"    [ngClass]="{ 'fixed-width-action': column === 'Action' }" [ngStyle]="{ 'width': columnWidths[column] }">                              
+                                <ng-container *ngIf="column !== 'Action'">
+                                    <span *ngIf="!isEditing[i]">{{ row[column] }}</span>
+                                    <input *ngIf="isEditing[i] && column !== 'ServiceTower'" type="text" [(ngModel)]="row[column]">
+                                    <span *ngIf="isEditing[i] && column === 'ServiceTower'">{{ row[column] }}</span>
+                                </ng-container>
+                                <ng-container *ngIf="column === 'Action'">
+                                    <button mat-icon-button color="primary" *ngIf="!isEditing[i]" (click)="toggleEditMode(i)">
+                                        <i class="fa fa-edit"></i>
+                                    </button> 
+                                    <button mat-icon-button color="primary" *ngIf="isEditing[i]" (click)="toggleEditMode(i)">
+                                        <i class="fa fa-save"></i>
+                                    </button> &nbsp;
+                                    <button mat-icon-button color="warn" (click)="DeleteRow_onClick(row)">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </ng-container>
+                            </td>
+                        </ng-container>
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                    </table>
+                </div>
+                
+                <br>
+               
+            </div>
+            <div style="text-align: center; padding-bottom: 10px;">
+                <button class="btn btn-primary" (click)="SaveScope(selectedDatanew)">Save</button> &nbsp;
+                <button class="btn btn-primary" (click)="ResetScope()">Cancel</button>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</div>

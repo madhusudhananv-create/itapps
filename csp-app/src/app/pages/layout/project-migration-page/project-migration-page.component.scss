@@ -1,0 +1,156 @@
+.topicarea{
+    width:150px;
+    height:50px;
+    align-content: center;
+    vertical-align:middle ;
+    border: 1px solid lightgray;    
+    padding:1em;
+    line-height:1.375;
+  }
+
+  .topicareaSuccessArea{
+    width:400px;
+    height:25px;
+    align-content: left;
+    vertical-align: top;
+    border: 1px solid lightgray;    
+    padding:1em;
+    line-height:1.375;
+  }
+
+  .topicareabutton{
+    width:100px;
+    height:100px;
+    align-content: center;
+    vertical-align:middle;
+    border: 1px solid lightgray;    
+    padding:1em;
+    line-height:1.375;
+  }
+
+  
+  .tabheader{
+    text-align: center;
+  }
+  textarea
+  {
+    background: white;
+      width:80%;
+      height:50px;
+  }
+  .Edit_textarea
+  {
+      width:100%;
+      height:48px;
+  }
+  h2{
+    margin-top:0 !important;
+    color: #008e89;
+  }
+  h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #008e89;
+      font-size: 24px;
+      line-height: 34px;
+      font-weight: 300;
+    }
+   
+    .header{
+      text-align:right;
+      padding:10px 30px 0 0;
+    }
+  .box {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100px;
+  border: 2px solid steelblue;
+  //display: table-cell; 
+  vertical-align: middle; 
+  text-align: center; 
+  padding: 20px 0 0 0;
+  }
+  .box_Edit {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100px;
+    border: 2px solid steelblue;
+    //display: table-cell; 
+    vertical-align: middle; 
+    text-align: center; 
+    }
+  
+  
+  .title {
+      text-align: center; 
+      font-weight: bold;
+      margin: 20px 0 0 0;
+      }
+  .link {
+          cursor: pointer;
+          text-decoration: none;
+          font-size:20px;
+          color:steelblue;
+          vertical-align: middle;
+          text-align: center;
+        }
+  
+        .mat-progress-bar {
+          display: block;
+          height: 1px;
+          overflow: hidden;
+          position: relative;
+          transform: translateZ(0);
+          transition: opacity 250ms linear;
+          width: 100%;
+        }
+        .row{
+          padding-bottom: 0px;
+          margin-right: 0px !important;
+      }
+
+  // table {
+  //   border-collapse: collapse;
+  //   border-radius: 6px;
+  //   overflow: hidden;
+  // }
+  // .table-outline {
+  //   border: 1px solid #a4b7c1;
+  // }
+  // .table .thead-light th {
+  //   color: #ffffff;
+  //   background-color: #4d8bbf;
+  //   border-color: #a4b7c1;
+  // }
+  // .table thead th {
+  //   vertical-align: bottom;
+  //   border-bottom: 2px solid #a4b7c1;
+  // }
+  // .table th, .table td {
+  //   padding: 0.75rem;
+  //   vertical-align: top;
+  //   border-top: 1px solid #a4b7c1;
+  // }
+  .text-center {
+    text-align: center !important;
+    font-size:11px
+  }
+  th {
+    text-align: inherit;
+  }
+  .row{
+    margin:0 !important;
+  }
+  
+  .fa{
+    font-size:15px;
+  }
+  
+  .projmigration tr{
+    border : 1px grey;
+    text-align: middle;
+  }
+
+  body {     
+     font-family: 'Roboto', sans-serif !important;
+     }

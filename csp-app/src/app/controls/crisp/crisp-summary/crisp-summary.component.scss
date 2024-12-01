@@ -1,0 +1,48 @@
+.circle {
+    border-radius: 20px;
+    color: white;
+    height: 20px;
+    font-weight: bold;
+    font-size:12px;
+    width: 20px;
+    display: table;
+    //margin: 20px auto;
+    text-align: center;
+}
+.circle p {
+    padding-top:2px;
+    vertical-align: middle;
+    display: table-cell;
+}
+.bgred{
+    background-color: red;
+}
+.bg-amber{
+    background-color: orange;
+}
+.bg-green{
+    background-color: green;
+}
+
+.mat-card{
+    //padding:8px !important;
+}
+
+.link {
+    cursor: pointer;
+    text-decoration: none;
+    vertical-align: middle;
+    text-align: center;
+    font-size:14px;
+    color:black;
+}
+
+.mat-progress-bar {
+    display: block;
+    height: 1px;
+    overflow: hidden;
+    position: relative;
+    transform: translateZ(0);
+    transition: opacity 250ms linear;
+    width: 100%;
+  }

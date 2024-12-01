@@ -1,0 +1,841 @@
+<div *ngIf="readonlymode" style="padding: 15px;">
+  <div class="row" style="margin-bottom: 10px;">
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: left;">
+        <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none" [routerLink]="['/newdashboard/cust', selectedCust, false]">
+          <img src="assets/images/back_round.png">
+        </div>
+        <img class="image" style="height:45px;padding:5px" src="assets/images/{{selectedCust}}.png" onerror="this.src ='assets/images/CustomerLogo.png'">
+  </div>
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:right">
+        <button class="flatbutton" *ngIf="_util.IsQuality()" (click)="showIdeaMatrix()">View Ideas/Innovations from Other Projects</button>
+        <a id="filter" class="maticonbutton" title="{{ toggle}} Filter" (click)="ToggleFilter_onClick()">
+          <mat-icon style="vertical-align: middle">filter_list</mat-icon>
+        </a>
+        <a class="maticonbutton" title="Add Ideas" (click)="Edit_onClick()" *ngIf="_access.IsAllowed(9, 2, '', '')">
+          <mat-icon style="vertical-align: middle">add</mat-icon>
+        </a>
+    </div>
+</div>
+<div style="margin-bottom: 10px;">
+  <div class="row">
+      <div class="col-lg-6 col-md-6 col-sm-6" *ngIf="bShowFilter" style="text-align: left;">
+            <!-- <mat-select *ngIf="_util.IsPremier(selectedCust)" placeholder="Filter by Portfolio" [(ngModel)]="selectedPortfolio" (selectionChange)="Portfolio_OnClick()" style="width:260px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;">
+              <mat-option *ngFor="let port of portfolio" [value]="port">{{port}}</mat-option>
+            </mat-select>
+            <mat-select placeholder="Filter by Project" [(ngModel)]="selectedProject" (selectionChange)="Project_OnClick()" style="width:260px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;">
+              <mat-option *ngFor="let proj of projects" [value]="proj">{{proj}}</mat-option>
+            </mat-select> -->
+            
+            
+            
+            <app-portfolio-project-selector [custId]="_layoutService.selectedCust" [portinput]="_shared.selectedPortfolios" [projinput]="_shared.selectedProjects" [allproj]="false" (projectsSelected)="projectSelected($event)">
+            </app-portfolio-project-selector>
+      </div>
+      <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: left; vertical-align: middle;padding-top: 20px;">
+        <label class="openItemsFilter">Status :</label>
+        <mat-checkbox class="example-margin" color="blue" [(ngModel)]="AllChecked" 
+              (ngModelChange)="showFilteredRows()" (click)="uncheckOthers()">All</mat-checkbox>
+        <mat-checkbox class="example-margin" color="blue" [(ngModel)]="PastDueChecked" [disabled]="AllChecked"
+              (ngModelChange)="showFilteredRows()">Open - Past Due Date</mat-checkbox>
+        <mat-checkbox class="example-margin" color="blue" [(ngModel)]="DueClosureChecked" [disabled]="AllChecked"
+              (ngModelChange)="showFilteredRows()">Open - Due For Closure</mat-checkbox>
+  </div>
+  </div>
+</div>
+<!-- <div class="row tabheader" style="margin-bottom: 10px;">
+  <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:left;vertical-align:middle" *ngIf="_access.IsAllowed(3, 3, '', input_projectid)">
+    <mat-select class="mat-dropdown-plain" #ragSelected placeholder="RAG" [value]="_util.getRAG(input_rag, 'innovation')" required>
+      <mat-option value="green" style="color:green">Green</mat-option>
+      <mat-option value="orange" style="color:orange">Amber</mat-option>
+      <mat-option value="red" style="color:red">Red</mat-option>
+    </mat-select>
+    <a class="iconbutton" (click)="SaveRAG_onClick(ragSelected.value)">
+      <i class="fa fa-save" style="font-size:15px;"></i>
+    </a>
+    <button class="flatbutton" *ngIf="_util.IsQuality()" (click)="showIdeaMatrix()">View Ideas/Innovations from Other Projects</button>
+   
+  </div>
+</div> -->
+
+  <div class="row" *ngIf="bShowFilter">
+    <app-table-filter [data]="ideasdata" tableName='PROJECT_INNOVATION' (onChange)="Filter_onChange($event)"></app-table-filter>
+  </div>
+  
+<div class="row">
+  
+  <div class="col-lg-6 col-md-6 col-sm-6" style="display: inline-block;font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin-bottom: 15px;color: #4e5882">
+        
+      Ideas & Innovations
+    
+</div>
+
+<div class="col-lg-6 col-md-6 col-sm-6">
+  <span>View By : </span>
+  <mat-radio-group class="viewBy-radio-group" [(ngModel)]="viewType" (ngModelChange)="DoApplicable()" [ngModelOptions]="{standalone: true}" >    
+    <mat-radio-button value="details">Details</mat-radio-button> 
+    &nbsp;&nbsp;&nbsp;
+    <mat-radio-button value="benefits">Net Benefits</mat-radio-button>                        
+  </mat-radio-group>
+</div>
+
+</div>
+
+<div *ngIf="_access.IsAllowed(3, 1, '', '')">
+  <div *ngIf="ideasdata?.length == 0" style="text-align: center;height: 100px; line-height: 100px; font-size: 16px; font-weight: 600;;">
+    No Ideas registered for the Projects assigned to you..
+  </div>
+</div>  
+<div *ngIf="_access.IsAllowed(3, 1, '', '')">
+  <div *ngIf="!ideasdata" style="text-align: center; height: 100px; line-height: 100px;">
+      <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+  </div>
+</div>
+  <div *ngIf="_access.IsAllowed(3, 1, '', '')">
+    <table class="table" mat-table style="border-radius: 5px;overflow: hidden;" #table [dataSource]="dataSource" matSort style="width: 100%"  *ngIf="ideasdata?.length > 0">
+      <ng-container matColumnDef="index">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</th>
+        <td mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index"> {{element + 1}} </td>
+      </ng-container>
+      <ng-container matColumnDef="identifieD_DATE">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'dateWidth'" *matHeaderCellDef
+          mat-sort-header>Identified Date</th>
+        <td mat-cell [ngClass]="'dateWidth'" *matCellDef="let innovation">{{innovation.identifieD_DATE|date:'dd-MMM-yyyy'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="description">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'descWidth'" *matHeaderCellDef
+          mat-sort-header>Idea Description</th>
+        <td mat-cell [ngClass]="'descWidth'" *matCellDef="let innovation">{{innovation.description}}</td>
+      </ng-container>
+      <ng-container matColumnDef="portfoliO_NM">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'portWidth'" *matHeaderCellDef
+          mat-sort-header>Portfolio Name</th>
+        <td mat-cell [ngClass]="'portWidth'" *matCellDef="let innovation">{{innovation.portfoliO_NM}}</td>
+      </ng-container>
+      <ng-container matColumnDef="proJ_NM">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'projWidth'" *matHeaderCellDef
+          mat-sort-header>Project Name</th>
+        <td mat-cell [ngClass]="'projWidth'" *matCellDef="let innovation">{{innovation.proJ_NM}}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header [ngClass]="{'statusWidth': !isBenefitsView, 
+                 'personhourWidth': isBenefitsView}">Status</th>
+        <td mat-cell *matCellDef="let innovation" [ngClass]="{'statusWidth': !isBenefitsView, 
+                 'personhourWidth': isBenefitsView}"> {{innovation.status}} </td>
+      </ng-container>
+      <ng-container matColumnDef="targeT_DATE">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header [ngClass]="'targetWidth'">Target Date</th>
+        <td mat-cell *matCellDef="let innovation" [ngClass]="'targetWidth'"> {{innovation.targeT_DATE|date:'dd-MMM-yyyy'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="actuaL_DATE">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header [ngClass]="'actualWidth'">Actual Date</th>
+        <td mat-cell *matCellDef="let innovation" [ngClass]="'actualWidth'"> {{innovation.actuaL_DATE|date:'dd-MMM-yyyy'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="responsible">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'resWidth'" *matHeaderCellDef
+          mat-sort-header>Responsible</th>
+        <td mat-cell [ngClass]="'resWidth'" *matCellDef="let innovation"> {{innovation.responsible}} </td>
+      </ng-container>
+      <ng-container matColumnDef="area">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'areaWidth'" *matHeaderCellDef mat-sort-header>Area</th>
+        <td mat-cell *matCellDef="let innovation" [ngClass]="'areaWidth'"> {{innovation.area}} </td>
+      </ng-container>
+      <ng-container matColumnDef="approach">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Approach</th>
+        <td mat-cell *matCellDef="let innovation"> {{innovation.approach}} </td>
+      </ng-container>
+      <ng-container matColumnDef="comments">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Comments</th>
+        <td mat-cell *matCellDef="let innovation"> {{innovation.comments}} </td>
+      </ng-container>
+      <ng-container matColumnDef="internaL_SAVINGS">
+          <th mat-header-cell style="font-family: calibri;"  [ngClass]="'internalWidth'" *matHeaderCellDef mat-sort-header>Savings per year(USD)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'internalWidth'"> {{innovation.internaL_SAVINGS}} </td>
+      </ng-container>
+      <ng-container matColumnDef="customeR_PERSONHOUR_SAVINGS">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef mat-sort-header>Person hour savings(per year)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.customeR_PERSONHOUR_SAVINGS}} </td>
+      </ng-container>
+
+     <ng-container matColumnDef="qualitY_REDUCTION_OF_ERRORS">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef >Quality - Reduction of Errors(%)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.qualitY_REDUCTION_OF_ERRORS}} </td>
+      </ng-container>
+
+
+      <ng-container matColumnDef="reductioN_IN_LEAD_TIME">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Reduction In Lead Time</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.reductioN_IN_LEAD_TIME}} </td>
+      </ng-container> 
+
+     <ng-container matColumnDef="reductioN_IN_LEAD_TIME_DATA">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Reduction In Lead Time</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.reductioN_IN_LEAD_TIME_DATA}} </td>
+      </ng-container>      
+
+
+      <ng-container matColumnDef="reductioN_IN_CYCLE_TIME">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Reduction In Cycle Time</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.reductioN_IN_CYCLE_TIME}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="reductioN_IN_CYCLE_TIME_DATA">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Reduction In Cycle Time</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.reductioN_IN_CYCLE_TIME_DATA}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="savinG_PER_YEAR_EFFORT">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Effort Saved Per Year (In Person Hours)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.savinG_PER_YEAR_EFFORT}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="automatioN_INDEX">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Automation Index</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.automatioN_INDEX}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="savingS_IN_USD">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Savings Per Year (In USD)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.savingS_IN_USD}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="harD_BENEFITS">          
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Savings Per Year (In USD)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.harD_BENEFITS}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="customeR_BUSINESS_VALUE">          
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Business Value And Outcomes</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.customeR_BUSINESS_VALUE}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="revenue">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Revenue (In USD)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.revenue}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="operatinG_COST">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Operating Cost (In USD)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.operatinG_COST}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="profitability">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'personhourWidth'" *matHeaderCellDef>Profitability (In USD)</th>
+          <td mat-cell *matCellDef="let innovation" [ngClass]="'personhourWidth'"> {{innovation.profitability}} </td>
+      </ng-container>
+
+     
+  <ng-container matColumnDef="header-row-first-group" >
+    <th mat-header-cell *matHeaderCellDef 
+        [ngClass]="HeaderRowAlignment"
+        [attr.colspan]="colspan" style="border-right:1px solid #c7c7c7"> 
+      
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-second-group" >
+    <th mat-header-cell *matHeaderCellDef 
+        [ngClass]="HeaderRowAlignment"
+        [attr.colspan]="6" style="border-right:1px solid #c7c7c7"> 
+      Internal Business Process 
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-third-group" >
+    <th mat-header-cell *matHeaderCellDef 
+        [attr.colspan]="2" [ngClass]="HeaderRowAlignment" style="border-right:1px solid #c7c7c7"> 
+      Customer 
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-fourth-group" >
+    <th mat-header-cell *matHeaderCellDef 
+        [ngClass]="HeaderRowAlignment"
+        [attr.colspan]="3" style="border-right:1px solid #c7c7c7"> 
+        GS Lab | GAVS Financial 
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-fifth-group" >
+    <th mat-header-cell *matHeaderCellDef 
+        [ngClass]="HeaderRowAlignment"
+        [attr.colspan]="2" > 
+       
+    </th>
+  </ng-container>
+ 
+
+
+      <ng-container matColumnDef="edit">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+          <div *ngIf="_access.IsAllowed(3, 3, '', '')"></div>
+        </th>
+        <td mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+          <a class="link" (click)="EditRow_onClick(element)" *ngIf="_access.IsAllowed(3, 3, '', '')" style="cursor: pointer; font-size: 16px;">
+            <i class="fa fa-edit"></i>
+          </a>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="delete">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'deleteWidth'" *matHeaderCellDef>
+          <div *ngIf="_access.IsAllowed(3, 4, '', '')"></div>
+        </th>
+        <td mat-cell [ngClass]="'deleteWidth'" *matCellDef="let element">
+          <a class="link" (click)="DeleteRow_onClick(element)" *ngIf="_access.IsAllowed(3, 4, '', '')" style="cursor: pointer; font-size: 16px;">
+            <i class="fa fa-trash"></i>
+          </a>
+        </td>
+      </ng-container>
+      <tr [class.hidden]="!isBenefitsView" mat-header-row *matHeaderRowDef="['header-row-first-group', 'header-row-second-group','header-row-third-group','header-row-fourth-group','header-row-fifth-group']"></tr>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns" class="mat-elevation-z5"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="mat-elevation-z5"></tr>
+    </table>
+    <mat-paginator #paginatorInnovation [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+  </div>
+</div>
+<div *ngIf="editmode" style="padding: 15px;">
+  <form style="background: white;padding-left: 10px;padding-bottom: 10px;overflow: -webkit-paged-x;" #innovationForm="ngForm"
+    (ngSubmit)="SubmitForm(innovationForm.valid)">
+    <div class="row tabheader">
+      <div class="col-lg-10 col-md-10 col-sm-10">
+      </div>
+      <div class="col-lg-2 col-md-2 col-sm-2 header">
+        <button class="link_button" type="submit" style="cursor: pointer; margin-right: 10px;" [disabled]="disableSave">
+          <i class="fa fa-save"></i>
+        </button>
+        <a class="link" (click)="Cancel_onClick()" style="cursor: pointer;">
+          <i class="fa fa-times"></i>
+        </a>
+      </div>
+    </div>
+    <div style="width: 50%;float: left;">
+      <div class="row">
+        <span class="labelStyle">Project Name</span>
+        <mat-form-field style="width:calc(100% - 20px)">
+            <mat-select name="ddProjectName" [(ngModel)]="EditInnovation.projecT_ID" required (ngModelChange)="getPortfolioName()">
+                <mat-option [value]="p.proJ_ID"  *ngFor="let p of projNames" [title]="p.proJ_NM">
+                    {{ p.proJ_NM }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+      </div>
+      <div clas="row">
+        <span class="labelStyle">Identified Date</span><br/>
+        <mat-form-field>
+          <input [max]="_util.Today()" matInput name="dtIdentifiedDate" [(ngModel)]='EditInnovation.identifieD_DATE' [matDatepicker]="pickerInnoIdentifiedDate"
+             required>
+          <mat-datepicker-toggle matSuffix [for]="pickerInnoIdentifiedDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInnoIdentifiedDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <span class="labelStyle">Process Area</span>
+        <mat-form-field style="width:calc(100% - 20px)">
+          <!-- <textarea name="txtArea" maxlength="225" [(ngModel)]="EditInnovation.area" matInput placeholder="Area"></textarea> -->
+          <mat-select name="txtArea"  [(ngModel)]="EditInnovation.area" (ngModelChange)="GetFilteredIdeas($event)"
+            required>
+            <mat-option [value]="area" *ngFor="let area of processArea" [title]="area">{{area}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div clas="row">
+        <span class="labelStyle">Description</span>
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name="txtDescription" [(ngModel)]="EditInnovation.description" matInput required></textarea>
+        </mat-form-field>
+      </div>
+      <div clas="row">
+        <span class="labelStyle">Approach</span>
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name="txtApproach" [(ngModel)]="EditInnovation.approach" matInput  ></textarea>
+        </mat-form-field>
+      </div>
+      <div clas="row">
+        <span class="labelStyle">Status
+
+        <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="statusToolTip" ></i>
+
+
+        </span>
+        <mat-form-field style="width:calc(100% - 20px)">
+          <mat-select name="txtStatus"  [(ngModel)]="EditInnovation.status" 
+              required>
+            <mat-option value="Identified">Identified</mat-option>
+            <mat-option value="Planning">Planning</mat-option>
+            <mat-option value="Execution">Execution</mat-option> 
+            <mat-option value="Completed" [disabled]="setDisabled()">Completed</mat-option>
+            <mat-option value="Cancelled">Cancelled</mat-option> 
+            <mat-option value="Suspended">Suspended</mat-option> 
+          </mat-select>          
+        </mat-form-field>
+      </div>
+      <div clas="row">
+        <span class="labelStyle">Target Date</span><br/>
+        <mat-form-field>
+          <input [min]="EditInnovation.identifieD_DATE" matInput name="dtTargetDate" [(ngModel)]='EditInnovation.targeT_DATE' [matDatepicker]="pickerInnoTargetDate"
+             required>
+          <mat-datepicker-toggle matSuffix [for]="pickerInnoTargetDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInnoTargetDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div clas="row">
+        <span class="labelStyle">Actual Date</span><br/>
+        <mat-form-field>
+          <input [min]="EditInnovation.identifieD_DATE" [max]="_util.Today()" matInput name="dtActualDate" [(ngModel)]='EditInnovation.actuaL_DATE' [matDatepicker]="pickerInnoActualDate"
+           >
+          <mat-datepicker-toggle matSuffix [for]="pickerInnoActualDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInnoActualDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <span class="labelStyle">Responsible</span>
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name="txtResponsible" maxlength="50" [(ngModel)]="EditInnovation.responsible" matInput ></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">Internal Process</div>
+
+      <div class="row">
+        <mat-checkbox #OneTime style="font-size: 12px" name="chkOneTime" (change)="DoOneTime($event)" [(ngModel)]="EditInnovation.iS_ONETIME"> Is this idea / Improvement / Innovation gives onetime benefit? </mat-checkbox>    
+      </div>
+
+
+      <div class="row" style="background-color:#5bb5e94a;padding:5px; margin-bottom:15px;box-shadow: 1px 2px 3px 1px #c7c7c7;"> <b> Current State / Before implementation </b>
+        <div class="row">
+          <span class="labelStyle">Quality - Reduction of Errors(%)</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtBeforeError" [(ngModel)]="EditInnovation.beforE_ERROR" >
+          </mat-form-field>
+        </div>
+        <div class="row">
+
+          <span class="labelStyle">Cycle Time <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="cycleTimeToolTip" ></i></span>
+          
+        <br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtBeforeCycleTime" [(ngModel)]="EditInnovation.beforE_CYCLE_TIME" >            
+          </mat-form-field>
+          
+          <mat-select class="mat-dropdown-plain" style="width: 100px !important;background-color:#5bb5e94a !important" name="ddBCTUOM" [(ngModel)]="EditInnovation.beforE_CYCLE_TIME_UOM">
+                <mat-option *ngFor="let c of UOMList"  [value]="c.optionS_ID" [title]="c.options">{{c.options}}</mat-option>
+          </mat-select>
+
+        </div>
+
+        <div class="row">
+
+          <span class="labelStyle">Lead Time <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="leadTimeToolTip"></i></span>
+          
+        <br/>
+
+          <mat-form-field>
+            <input type="number" matInput name="txtBeforeLeadTime" [(ngModel)]="EditInnovation.beforE_LEAD_TIME" >            
+          </mat-form-field>
+          
+          <mat-select class="mat-dropdown-plain" style="width: 100px !important;background-color:#5bb5e94a !important" name="ddBLTUOM" 
+          [(ngModel)]="EditInnovation.beforE_LEAD_TIME_UOM">
+              <mat-option *ngFor="let c of UOMList" [value]="c.optionS_ID" [title]="c.options">{{c.options}} </mat-option>
+          </mat-select>
+
+        </div>
+
+        <b>Effort Optimization</b> <br/><br/>
+
+        <div class="row">
+          <table>
+          <tr>                         
+          <td>
+          <span class="labelStyle">{{phCases}}</span><br/>
+          <mat-form-field style="width:250px !important ;margin-right: 10px">
+            <input type="number" matInput name="txtbeforecasescount" [(ngModel)]="EditInnovation.beforE_CASES_COUNT">
+          </mat-form-field>
+          </td> 
+          
+          <td>
+
+          <span class="labelStyle" *ngIf="!EditInnovation.iS_ONETIME">No. of cases / instances in a  year (12 months) 
+            <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="ciyToolTip" ></i>
+
+            </span><br/>
+          <mat-form-field style="width:250px !important" *ngIf="!EditInnovation.iS_ONETIME">
+            <input type="number" matInput name="txtbeforE_OCCOURANCE_COUNT" [(ngModel)]="EditInnovation.beforE_OCCOURANCE_COUNT">
+          </mat-form-field>
+
+          </td>
+          </tr>
+          </table>
+        </div>
+        
+        <div class="row">
+          
+          <span class="labelStyle">Time taken per instance / case</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtBeforeTimeTaken" [(ngModel)]="EditInnovation.beforE_TIME_TAKEN" >            
+          </mat-form-field>
+
+          <mat-select class="mat-dropdown-plain"
+          style="width: 100px !important;background-color:#5bb5e94a !important" name="ddBTTUOM" [(ngModel)]="EditInnovation.beforE_TIME_TAKEN_UOM">
+                <mat-option *ngFor="let c of UOMList" [value]="c.optionS_ID" [title]="c.options">{{c.options}}</mat-option>
+          </mat-select>
+        </div>
+        <div class="row">
+          <span class="labelStyle">FTE cost per hour(USD)</span><br/>
+          <mat-form-field style="margin-right: 7px">
+            <input type="number" matInput name="txtBeforeFTEHour"  [(ngModel)]="EditInnovation.beforE_FTECOST_HOUR" >
+            <!-- <textarea name="txtBeforeEffort" maxlength="225" [(ngModel)]="EditInnovation.beforE_EFFORT" matInput placeholder="Effort Per Month in Minutes"></textarea> -->
+          </mat-form-field>
+          <br/>
+          <span class="labelStyle">{{phFTEPersonHours}}</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtBeforeFTEMonth"  [(ngModel)]="EditInnovation.beforE_FTECOST_MONTH">
+            <!-- <textarea name="txtBeforeEffort" maxlength="225" [(ngModel)]="EditInnovation.beforE_EFFORT" matInput placeholder="Effort Per Month in Minutes"></textarea> -->
+          </mat-form-field>
+        </div>
+        
+        <table style="width: 100% !important">
+          <tr *ngIf="!EditInnovation.iS_ONETIME">
+            <th width="30%"></th>
+            <th width="35%">Per Month</th>
+            <th width="35%">Per Year</th>
+          </tr>
+          
+          <tr>
+            <td width="30%"> <label style=" margin-right: 7px"> {{phEffort}} :- </label></td>
+            <td width="35%"> <label> {{ setBeforeEffort() ? setBeforeEffort() : 0 }} </label></td>
+            <td width="35%" [style.display]="!EditInnovation.iS_ONETIME ? 'inline' : 'none'"> 
+              <label> {{ setBeforeEffortPerYear() ? setBeforeEffortPerYear() : 0 }} </label></td>
+              <!-- EditInnovation.beforE_EFFORT ? EditInnovation.beforE_EFFORT : 0}}</label></td> -->
+          </tr>
+          <tr>
+            <td><label style=" margin-right: 7px"> {{phCost}} :- </label></td>
+            <td><label style="margin-right: 7px">{{ setBeforeCost() ? setBeforeCost() : 0 }} $ </label></td>
+               <td [style.display]="!EditInnovation.iS_ONETIME ? 'inline' : 'none'"> 
+              <label> {{ setBeforeCostPerYear() ? setBeforeCostPerYear() : 0 }} $</label></td>
+               <!-- EditInnovation.beforE_COST ? EditInnovation.beforE_COST : 0 }} $</label></td> -->
+          </tr>
+          <tr>
+            <td><label style="margin-right: 7px"> {{phFTESpent}} :- </label></td>
+            <td><label style="margin-right: 7px">{{ setBeforeFTESpent() ? setBeforeFTESpent() : 0 }} </label></td>
+              <!-- EditInnovation.beforE_FTESPENT_MONTH ? EditInnovation.beforE_FTESPENT_MONTH : 0 }}</label></td> -->
+          <td [style.display]="!EditInnovation.iS_ONETIME ? 'inline' : 'none'"> 
+              <label> {{ setBeforeFTESpentYear() ? setBeforeFTESpentYear() : 0 }} </label></td>
+          </tr>
+        </table>
+      </div>
+      <div class="row" style="background-color:#8aadc04a;padding:5px; margin-bottom:15px; box-shadow: 1px 2px 3px 1px #c7c7c7;"> <b>Future State / After implementation </b>
+        
+        
+        
+        
+        <div class="row">
+          <span class="labelStyle">Quality - Reduction of Errors(%)</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtAfterError" [(ngModel)]="EditInnovation.afteR_ERROR">
+            <!-- <textarea name="txtAfterError" maxlength="225" [(ngModel)]="EditInnovation.afteR_ERROR" matInput placeholder="Error %"></textarea> -->
+          </mat-form-field>
+        </div>
+        <div class="row">
+          
+          <span class="labelStyle">Cycle Time <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="cycleTimeToolTip"></i></span>
+          
+        <br/>
+
+          <mat-form-field>
+            <input type="number" matInput name="txtAfterCycleTime" [(ngModel)]="EditInnovation.afteR_CYCLE_TIME">
+            <!-- <textarea name="txtAfterCycleTime" maxlength="225" [(ngModel)]="EditInnovation.afteR_CYCLE_TIME" matInput placeholder="Cycle Time in Mins"></textarea> -->
+          </mat-form-field>
+
+          
+        
+          <mat-select class="mat-dropdown-plain" style="width: 100px !important;background-color:#8aadc04a !important" name="ddACTUOM" [(ngModel)]="EditInnovation.afteR_CYCLE_TIME_UOM">
+                <mat-option *ngFor="let c of UOMList" [value]="c.optionS_ID" [title]="c.options">{{c.options}}</mat-option>
+          </mat-select>
+         
+        </div>
+ 
+        <div class="row">
+          <span class="labelStyle">Lead Time
+          <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="leadTimeToolTip"></i></span>
+          <br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtafteR_LEAD_TIME" [(ngModel)]="EditInnovation.afteR_LEAD_TIME" >            
+          </mat-form-field>
+          
+          <mat-select class="mat-dropdown-plain" style="width: 100px !important;background-color:#8aadc04a !important" name="ddALTUOM" [(ngModel)]="EditInnovation.afteR_LEAD_TIME_UOM">
+                <mat-option *ngFor="let c of UOMList" [value]="c.optionS_ID" [title]="c.options">{{c.options}}</mat-option>
+          </mat-select>
+
+        </div>
+
+        <b>Effort Optimization</b><br/><br/>
+
+        <div class="row">
+          
+          <table>
+          <tr>                         
+          <td>
+          
+          <span class="labelStyle">{{phCases}}</span><br/>
+          <mat-form-field style="width:250px !important;margin-right: 10px">
+            <input type="number" matInput name="txtaftercasescount" [(ngModel)]="EditInnovation.afteR_CASES_COUNT" 
+             >
+          </mat-form-field>
+
+          </td> 
+          
+          <td>
+
+          <span class="labelStyle" *ngIf="!EditInnovation.iS_ONETIME">No. of cases / instances in a  year (12 months) 
+            <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="ciyToolTip" ></i>
+
+            </span><br/>
+          <mat-form-field style="width:250px !important" *ngIf="!EditInnovation.iS_ONETIME">
+            <input type="number" matInput name="txtafteR_OCCOURANCE_COUNT" [(ngModel)]="EditInnovation.afteR_OCCOURANCE_COUNT" 
+            >
+          </mat-form-field>
+        
+            </td>
+          </tr>
+          </table>
+          
+        </div>
+       
+        <div class="row">
+          <span class="labelStyle">Time taken per instance / case</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtAfterTimeTaken" [(ngModel)]="EditInnovation.afteR_TIME_TAKEN" 
+             >            
+          </mat-form-field>
+          
+          <mat-select class="mat-dropdown-plain" style="width: 100px !important;background-color:#8aadc04a !important" name="ddATTUOM" [(ngModel)]="EditInnovation.afteR_TIME_TAKEN_UOM">
+                <mat-option *ngFor="let c of UOMList" [value]="c.optionS_ID" [title]="c.options">{{c.options}}</mat-option>
+          </mat-select>
+
+        </div>
+       
+        <!-- <div class="row">
+          <mat-form-field style="width: calc(100% - 370px)">
+            <input type="number" matInput name="txtAfterEffort" [(ngModel)]="EditInnovation.afteR_EFFORT" placeholder="Effort Per Month in Person hour">
+             <textarea name="txtAfterEffort" maxlength="225" [(ngModel)]="EditInnovation.afteR_EFFORT" matInput placeholder="Effort Per Month in Minutes"></textarea> 
+          </mat-form-field>
+        </div> -->
+        
+        <!-- <label style="font-weight: normal !important; margin-right: 7px"> Effort Per Month in Person hour :- </label>
+        <label style="margin-right: 7px">{{EditInnovation.afteR_EFFORT ? EditInnovation.afteR_EFFORT : 0 }}</label> -->
+        <div class="row">
+          <span class="labelStyle">FTE cost per hour(USD)</span><br/>
+          <mat-form-field style="margin-right: 7px">
+            <input type="number" matInput name="txtAfterFEThour"  [(ngModel)]="EditInnovation.afteR_FTECOST_HOUR" >
+            <!-- <textarea name="txtBeforeEffort" maxlength="225" [(ngModel)]="EditInnovation.beforE_EFFORT" matInput placeholder="Effort Per Month in Minutes"></textarea> -->
+          </mat-form-field>
+          <br/>
+          <span class="labelStyle">{{phFTEPersonHours}}</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtAfterFTEMonth"  [(ngModel)]="EditInnovation.afteR_FTECOST_MONTH" >
+            <!-- <textarea name="txtBeforeEffort" maxlength="225" [(ngModel)]="EditInnovation.beforE_EFFORT" matInput placeholder="Effort Per Month in Minutes"></textarea> -->
+          </mat-form-field>
+        </div>
+        <table style="width: 100% !important">
+         <tr *ngIf="!EditInnovation.iS_ONETIME">
+            <th width="30%"></th>
+            <th width="35%">Per Month</th>
+            <th width="35%">Per Year</th>
+          </tr>
+          <tr>
+            <td width="30%"> <label style="margin-right: 7px"> {{phEffort}} :- </label></td>
+            <td width="35%"><label style="margin-right: 7px">{{setAfterEffort() ? setAfterEffort() : 0 }}</label></td>
+            <td width="35%" [style.display]="!EditInnovation.iS_ONETIME ? 'inline' : 'none'">
+              <label style="margin-right: 7px">{{setAfterEffortPerYear() ? setAfterEffortPerYear() : 0 }}</label></td>
+          </tr>
+          <tr>
+            <td><label style="margin-right: 7px"> {{phCost}} :- </label></td>
+            <td><label style="margin-right: 7px">{{setAfterCost() ? setAfterCost() : 0 }} $</label></td>
+            <td [style.display]="!EditInnovation.iS_ONETIME ? 'inline' : 'none'">
+              <label style="margin-right: 7px">{{setAfterCostPerYear() ? setAfterCostPerYear() : 0 }} $</label></td>
+          </tr>
+          <tr>
+            <td><label style="margin-right: 7px">{{phFTESpent}} :- </label></td>
+            <td><label style="margin-right: 7px">{{setAfterFTESpent() ? setAfterFTESpent() : 0}} </label></td>
+            <td [style.display]="!EditInnovation.iS_ONETIME ? 'inline' : 'none'">
+              <label style="margin-right: 7px">{{setAfterFTESpentYear() ? setAfterFTESpentYear() : 0 }}</label></td>
+          </tr>
+        </table>
+        <!-- <div>
+          <label style="margin-right: 7px"> Effort Per Month in Person hour :- </label>
+          <label style="margin-right: 7px">{{EditInnovation.afteR_EFFORT ? EditInnovation.afteR_EFFORT : 0 }}</label>
+        </div>
+        <div style="margin-bottom: 7px">
+          <label style="margin-right: 7px"> Cost per month :- </label>
+          <label style="margin-right: 7px">{{EditInnovation.afteR_COST ? EditInnovation.afteR_COST : 0 }} $</label>
+        </div>
+        <div>
+            <label style="margin-right: 7px">FTE spent per month :- </label>
+            <label style="margin-right: 7px">{{EditInnovation.afteR_FTESPENT_MONTH ? EditInnovation.afteR_FTESPENT_MONTH : 0 }} </label>
+        </div> -->
+      </div>
+      <div class="row" style="background-color:#9999ff;padding:5px; margin-bottom:15px; box-shadow: 1px 2px 3px 1px #c7c7c7;">
+        <div style="margin-bottom: 5px"><b>Savings</b></div>
+        <!-- <div class="row">
+            <label style="margin-right: 7px; font-weight: normal !important"> Savings in USD per year :-</label>
+             <b>{{ getinteralsavingsperyear() ? getinteralsavingsperyear() : 0}} $</b>
+        </div>
+        <div class="row">
+            <label style="margin-right: 7px; font-weight: normal !important"> Person hours per year :-</label>
+            <b>{{ getpersonhoursperyear() ? getpersonhoursperyear() : 0}} </b>
+        </div> -->
+        <table style="width: 60% !important">
+          <tr>
+            <td><label style="margin-right: 7px; font-weight: normal !important"> Savings in USD per year :-</label></td>
+            <td><b>{{ !EditInnovation.iS_ONETIME ? getinteralsavingsperyear() : getinteralsavingsperyearonetime() }} $</b></td>
+          </tr>
+          <tr>
+            <td><label style="margin-right: 7px; font-weight: normal !important"> Person hours per year :-</label></td>
+            <td><b>{{ !EditInnovation.iS_ONETIME ? getpersonhoursperyear() : getpersonhoursperyearonetime() }} </b></td>
+          </tr>
+        </table>
+      </div>
+      <div class="row" style="margin-bottom: 15px; padding: 5px; 
+      box-shadow: 1px 2px 3px 1px #c7c7c7;"> <b> Customer </b>
+      <div class="row">
+      <span class="labelStyle">Savings in USD per Year</span><br/>
+        <mat-form-field>
+          <input type="number" matInput name="txtCustomerSavings" [(ngModel)]="EditInnovation.customeR_SAVINGS" >
+          <!-- <textarea name="txtCustomerSavings" maxlength="225" [(ngModel)]="EditInnovation.customeR_SAVINGS" matInput placeholder="Savings in USD per Year"></textarea> -->
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <span class="labelStyle">Business value and outcomes</span><br/>
+        <mat-form-field style="width: calc(100% - 350px)">
+          <input matInput name="txtCustomerBusinessValue" [(ngModel)]="EditInnovation.customeR_BUSINESS_VALUE" >
+          <!-- <textarea name="txtCustomerSavings" maxlength="225" [(ngModel)]="EditInnovation.customeR_SAVINGS" matInput placeholder="Savings in USD per Year"></textarea> -->
+        </mat-form-field>
+      </div>
+    </div>
+      
+      <div class="row" style="background-color:#0080004a;padding:5px; margin-bottom: 15px; 
+      box-shadow: 1px 2px 3px 1px #c7c7c7;"> <b>Financial</b>
+        <div class="row">
+          <span class="labelStyle">Revenue</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtFinancialRevenue" [(ngModel)]="EditInnovation.financiaL_REVENUE" >
+            <!-- <textarea name="txtFinancialRevenue" maxlength="225" [(ngModel)]="EditInnovation.financiaL_REVENUE" matInput placeholder="Revenue"></textarea> -->
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <span class="labelStyle">Operating Cost</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtFinancialOperatingCost" [(ngModel)]="EditInnovation.financiaL_OPERATING_COST">
+            <!-- <textarea name="txtFinancialOperatingCost" maxlength="225" [(ngModel)]="EditInnovation.financiaL_OPERATING_COST" matInput
+              placeholder="Operating Cost"></textarea> -->
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <span class="labelStyle">Profitability</span><br/>
+          <mat-form-field>
+            <input type="number" matInput name="txtFinancialProfitability" [(ngModel)]="EditInnovation.financiaL_PROFITABILITY" >
+            <!-- <textarea name="txtFinancialProfitability" maxlength="225" [(ngModel)]="EditInnovation.financiaL_PROFITABILITY" matInput
+              placeholder="Profitability"></textarea> -->
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="row">
+        <!-- <textarea name="txtFinancialProfitability" maxlength="225" [(ngModel)]="EditInnovation.financiaL_PROFITABILITY" matInput
+          placeholder="Profitability"></textarea> -->
+        <mat-checkbox #automate style="font-size: 12px" name="txtAutomate" [(ngModel)]="EditInnovation.automate">Is this an automation? </mat-checkbox>
+        <mat-checkbox #innova style="font-size: 12px" name="txtisinnovation" [(ngModel)]="EditInnovation.isinnovation">Is this an Innovation? </mat-checkbox>
+        <mat-checkbox #process style="font-size: 12px" name="txtprocessimprovement" [(ngModel)]="EditInnovation.isprocessimprovement">Is this a Process Impovement? </mat-checkbox>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)" *ngIf="EditInnovation.automate == true">
+          <textarea name="txttoolUsed" maxlength="300" [(ngModel)]="EditInnovation.tooL_USED" matInput placeholder="Automation Description/Tool Proposed/Used"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)" *ngIf="EditInnovation.isinnovation == true">
+          <textarea name="txttoolUsed" maxlength="300" [(ngModel)]="EditInnovation.innovatioN_DESCRIPTION" matInput placeholder="Innovation Description"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)" *ngIf="EditInnovation.isprocessimprovement == true">
+          <textarea name="txttoolUsed" maxlength="300" [(ngModel)]="EditInnovation.procesS_IMPROVEMENT_DESCRIPTION" matInput placeholder="Process Improvement Description"></textarea>
+        </mat-form-field>
+      </div>
+      <div style="font-size: 12px;font-family: calibri">
+        <div class="row"><span class="labelStyle">Services Implemented</span></div>
+        <div *ngIf="EditInnovation != undefined && EditInnovation.gavS_SERVICE.length > 0">
+          <mat-checkbox *ngFor="let g of gavsServices;let i= index" name="service[{{i}}]" [(ngModel)]="EditInnovation.gavS_SERVICE[i].iS_CHECKED">
+            <img style="width: 86px;" src="assets/gavsServices/{{i+1}}.png">
+          </mat-checkbox>
+          <!-- <mat-checkbox name= "gcare" [(ngModel)]="EditInnovation.gavsService.gcare"><img style="width: 86px;" src="assets/images/gavsServices/gcare_logo.png"></mat-checkbox>
+          <mat-checkbox name= "zman" [(ngModel)]="EditInnovation.gavsService.zman"><img style="width: 86px;" src="assets/images/gavsServices/zman_logo-1.png"></mat-checkbox>
+          <mat-checkbox name= "zdesk" [(ngModel)]="EditInnovation.gavsService.zdesk"><img style="width: 86px;" src="assets/images/gavsServices/zdesk_logo-1.png"></mat-checkbox>
+          <mat-checkbox name= "zirrus" [(ngModel)]="EditInnovation.gavsService.zirrus"><img style="width: 86px;" src="assets/images/gavsServices/zirrus_logo.png"></mat-checkbox> -->
+        </div>
+      </div>
+      <div class="row">
+        <span class="labelStyle">Comments</span><br/>
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name="txtComments" [(ngModel)]="EditInnovation.comments" matInput></textarea>
+        </mat-form-field>
+      </div>
+      <div clas="row" >
+        <button type="submit" class="btn btn-success" [disabled]="disableSave">Save</button>
+      </div>
+    </div>
+    <div *ngIf="filteredIdeas.length > 0" style="width: 50%;float: right;">
+      <div class="row">Similar Ideas/Innovations available.Do you want to use it?</div>
+      <div>
+        <table class="table table-bordered" mat-table #table [dataSource]="dataSource2" matSort>
+          <ng-container matColumnDef="index">
+            <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</th>
+            <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index"> {{element + 1}} </td>
+          </ng-container>
+          <ng-container matColumnDef="identifieD_DATE">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Identified Date</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation">{{innovation.identifieD_DATE|date:'dd-MMM-yyyy'}}</td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Idea description</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation">{{innovation.description}}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Status</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation"> {{innovation.status}} </td>
+          </ng-container>
+          <ng-container matColumnDef="targeT_DATE">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Target Date</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation"> {{innovation.targeT_DATE|date:'dd-MMM-yyyy'}} </td>
+          </ng-container>
+          <ng-container matColumnDef="actuaL_DATE">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Actual Date</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation"> {{innovation.actuaL_DATE|date:'dd-MMM-yyyy'}} </td>
+          </ng-container>
+          <ng-container matColumnDef="responsible">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Responsible</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation"> {{innovation.responsible}} </td>
+          </ng-container>
+          <ng-container matColumnDef="area">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Area</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation"> {{innovation.area}} </td>
+          </ng-container>
+          <ng-container matColumnDef="comments">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Comments</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let innovation"> {{innovation.comments}} </td>
+          </ng-container>
+          <ng-container matColumnDef="use">
+            <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+              <div *ngIf="_access.IsAllowed(18, 3, '','')"></div>
+            </th>
+            <td mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+              <a class="link" (click)="Use_Element(element)">
+                Use
+              </a>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns1"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns1;"></tr>
+
+        </table>
+      </div>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,49 @@
+@import '../layout.tables.style.scss';
+
+.col-lg-12, .col-md-12, .col-sm-12, .col-lg-5, .col-md-5, .col-sm-5, .col-lg-6, .col-md-6, .col-sm-6
+{
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+}
+.indexWidth{
+    width: 7%;
+}
+
+.editWidth{
+    width: 1%;
+}
+
+
+.deleteWidth{
+    width: 1%;
+}
+
+.descriptionWidth{
+   width: 20%;
+}
+
+.emailWidth{
+  width: 20%;
+}
+
+.statusWidth{
+  width: 15%;
+}
+.remarksWidth{
+  width: 20%;
+}
+
+.dateWidth{
+  width: 12%;
+}
+.mat-cell
+{
+  word-break: break-word;
+}
+.mat-column-description {
+  width: 30% !important;
+}
+
+.row{
+  margin-right: 0px !important;
+}

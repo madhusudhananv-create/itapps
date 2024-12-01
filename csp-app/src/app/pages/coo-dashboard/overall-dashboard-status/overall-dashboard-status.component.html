@@ -1,0 +1,613 @@
+<div class="sliding-up-content" [class.show]="showViewDashboard">
+  <mat-progress-bar *ngIf="_cooDashboardCommon.progressPopup" mode="indeterminate"></mat-progress-bar>
+  <!-- <div *ngIf="showCustomersuccessgoalkpiperformance">  -->
+  <app-customersuccessgoal-kpiperformance
+    [showCustomersuccessgoalkpiperformance]="showCustomersuccessgoalkpiperformance"></app-customersuccessgoal-kpiperformance>
+  <app-actionitems-viewdetails [showActionitemsViewdetails]="showActionitemsViewdetails"></app-actionitems-viewdetails>
+  <app-risk-issue-viewdetails [showRiskIssueViewdetails]="showRiskIssueViewdetails"></app-risk-issue-viewdetails>
+  <app-contract-status-viewdetails
+    [showContractStatusViewdetails]="showContractStatusViewdetails"></app-contract-status-viewdetails>
+  <app-kpi-trend-by-goal [kpiId]="kpiId" [goalName]="goalName" [projIds]="projIds"
+    [showkpitrendbygoal]="_cooDashboardCommon.showkpitrendbygoal"></app-kpi-trend-by-goal>
+  <!-- </div> -->
+  <div class="row">
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      <!-- <mat-form-field style="font-size: 12px !important;">
+    <mat-select name="ddCustomer" [(ngModel)]='custId' (ngModelChange)="ddCustomer_Onchange($event)"
+      >
+      <mat-option [value]="-1">All</mat-option>
+      <mat-option *ngFor="let c of Customer" [value]="c.cusT_ID" [title]="c.cusT_NM">
+        {{ c.cusT_NM}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field> -->
+    </div>
+
+
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      <!-- <mat-form-field style="font-size: 12px !important;">    <mat-select name="ddProject" [(ngModel)]='projId' (ngModelChange)="ddProject_Onchange($event)"
+      placeholder="Project">
+      <mat-option [value]="-1">All</mat-option>
+      <mat-option value="{{p.proJ_ID}}" *ngFor="let p of Project" title="p.proJ_NM">
+        {{p.proJ_NM}}
+       
+      </mat-option>
+    </mat-select>
+  </mat-form-field>  -->
+    </div>
+    <div class="col-lg-6"></div>
+    <div class="col-lg-1">
+    </div>
+  </div>
+  <div class="row" style="height: 510px;overflow-y: auto;">
+    <div class="col-lg-12">
+      <mat-tab-group class="goalTabGrp" [selectedIndex]="0">
+
+        <mat-tab label="Overall Status">
+          <div class="col-lg-1" style="position: absolute; right: -15px;">
+            <a class="close-button" (click)="onClose()">
+              <mat-icon class="close-icon">close</mat-icon>
+            </a>
+          </div>
+          <h6>{{selectedCustomerName }} - Overall Status</h6>
+          <div class="row ">
+            <div class="col-lg-9 col-md-12 col-sm-12">
+              <div class="portfolioCard">
+                <h6 class="widgetheading staticunderline col-lg-4">My Success Goal / KPI Performance</h6>
+                <div class="col-lg-2"> </div>
+
+                <div class="col-lg-4 marginbottom5px qlinks">
+                  <a [ngClass]="selectedQPeriod ==='CP'? 'verysmalltext nowrap underline' : 'verysmalltextblack nowrap'"
+                    (click)="getDataForselectedQPeriod('CP')"> Current Period</a>
+                  <a [ngClass]="selectedQPeriod ==='LQ'? 'verysmalltext nowrap underline' : 'verysmalltextblack nowrap'"
+                    (click)="getDataForselectedQPeriod('LQ')"> Last Quarter</a>
+                  <a [ngClass]="selectedQPeriod ==='YT'? 'verysmalltext nowrap underline' : 'verysmalltextblack nowrap'"
+                    (click)="getDataForselectedQPeriod('YT')"> Year to Date</a>
+                </div>
+                <div class="col-lg-1"> </div>
+                <div class="row">
+                  <!-- <div style="min-width: 200px; height: 180px; max-width: 350px; margin-left: 1px;"
+                    [chart]="donutChart">
+                  </div> -->
+                  <div class="col-lg-5" style="
+                  margin-top: -12px;
+              ">
+                    <div class="row">
+                      <div class="col-lg-6">
+                        <h6 class="marginbottom2px" style="text-align: center;">
+                          My Success Goal Score <br />
+                          <span class="verysmalltextblack">{{selectedPeriod}}: {{qStartMonth}} {{qStartYear % 100}} to
+                            {{qEndMonth}} {{qEndYear % 100}} </span>
+                        </h6>
+                        <app-customer-successgoal-chart [customerSuccessGoalScore]="customerSuccessGoalScore"
+                          [YTMScore]="CSGYTMScore" [LastQtrScore]="CSGLastQtrScore"
+                          [chartStyle]="'smallchart'"></app-customer-successgoal-chart>
+                      </div>
+                      <div class="col-lg-6" style="text-align: center;">
+                        <h6 class="marginbottom2px" style="margin-left: 20px;"> KPI Perspective <i
+                            class="fa fa-info-circle"></i></h6><app-kpi-perspectives-widget
+                          [customerSuccessGoalScore]="customerSuccessGoalScore"></app-kpi-perspectives-widget>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-7">
+                    <app-achievementby-customersuccessgoal [isvisible]="'true'"></app-achievementby-customersuccessgoal>
+                  </div>
+                </div>
+                <br />
+
+                <div class="row">
+                  <div class="col-lg-10">
+
+                  </div>
+                  <div class="col-lg-2" style="margin-top: -64px;text-align: right;">
+                    <a class="verysmalltext" style="white-space: nowrap; margin-top: -2%;"
+                      (click)="showcsgkpiperformance(null)"> View Details
+                      ></a>
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
+            <div class="col-lg-3 col-md-12 col-sm-12">
+              <div class="portfolioCard smalltextblack">
+                <h6 class="widgetheading staticunderline">Contract Status</h6>
+                <div class="row">
+                  <div class="contractCard" [style.margin-top.px]="_util.IsPremier(customerId) ? 0 : -15">
+                    <div class="row">
+                      <br />
+
+                      <label style="margin-left: 50px; margin-top: 17px;">No. Of Talents releasing in 3 Months</label>
+                    </div>
+                    <div *ngIf="projectforecast" class="row" style="text-align: center;  font-weight: 300;">
+                      <div class="col-lg-4 col-md-4 col-sm-4" style="height: 39px;opacity: 1;">
+                        <span>{{pmCount}}</span>
+                        <div>Project Managers</div>
+                      </div>
+                      <div class="col-lg-4 col-md-4 col-sm-4" style="height: 39px;opacity: 1;">
+                        <span>{{projectforecast.projresrc.length}}</span>
+                        <div>Team Members</div>
+                      </div>
+                      <div class="col-lg-4 col-md-4 col-sm-4" style="height: 39px;opacity: 1;left: -20px;">
+                        <span>{{qualityCount}}</span>
+                        <div>Quality</div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div *ngIf="isProjectStatusEmpty">
+                        <span class="verysmalltextblack" style="display: block;padding-top: 20px;text-align: center">
+                          No Projects/Contracts to start or close in next 3 months
+                        </span>
+                      </div>
+                      <div *ngIf="!isProjectStatusEmpty && projectforecast" style="position: relative;">
+                        <div style="position: relative; margin-top: 5px;">
+                          <div class="row">
+                            <div class="col-lg-6 col-md-6 col-sm-6"
+                              style="text-align:-webkit-center;padding-bottom: 0px !important;">
+                              <div class="circle1"><span
+                                  style="text-align: center;">{{projectforecast.projectend.length}}</span></div>
+                              <div class="vertical1"
+                                style="border-left: 2px solid #E6AC0C;width: 1px;height: 15px;opacity:1;"></div>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-6"
+                              style="text-align:-webkit-center;padding-bottom: 0px !important;">
+                              <div class="circle2"><span
+                                  style="color: #000000;text-align: center;">{{projectforecast.projectstart.length}}</span>
+                              </div>
+                              <div class="vertical2"
+                                style="border-left: 2px solid #54AF4C;width: 1px;height: 15px;opacity:1;"></div>
+                            </div>
+
+                          </div>
+                          <hr style="width: 250px;height: 5px;margin-top: -25px;
+                            background: transparent linear-gradient(90deg, #F7B370 0%, #C9B358 27%, #99B874 65%, #9EE396 100%) 0% 0% no-repeat padding-box;
+                            opacity: 1;">
+                          <div class="row">
+                            <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: center;">
+                              <label class="projects">Projects</label><br>
+                              <label class="prjStatus">Closing in 3 Months</label>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: center;">
+                              <label class="projects">Projects</label><br>
+                              <label class="prjStatus">Starts in 3 Months</label>
+                            </div>
+                          </div>
+                          <!-- <div class="centreLabel">
+                              {{totalProjects}}
+                            </div> -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+
+
+
+                <div class="row">
+                  <div class="col-lg-8">
+
+                  </div>
+                  <div class="col-lg-4" style="text-align: right;margin-top: 17px;">
+                    <a class="verysmalltext" (click)="showContractStatusViewdetailsPopup()"
+                      style="white-space: nowrap;"> View Details
+                      ></a>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="row ">
+            <div class="col-lg-9 col-md-12 col-sm-12">
+              <div class="portfolioCard">
+                <h6 class="widgetheading staticunderline">Risk & Issues</h6>
+                <div class="row">
+                  <div class="riskIssueCard">
+                    <div class="row">
+                      <div class="col-lg-5 col-md-5 col-sm-12">
+                        <div *ngIf="isRisksEmpty" style="height:85px; width: 170px;color:black; display: none;">
+                          <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                            No Risks
+                          </span>
+                        </div>
+                        <div style="position: relative;">
+                          <div style="position: relative">
+                            <div class="col-lg-6 col-md-6 col-sm-12">
+                              <div style="height: 85px; width: 170px;">
+                                <google-chart #chart2 [type]="typeR" [data]="dataR" [columnNames]="columnNamesR"
+                                  [options]="optionsR" [width]="widthR" [height]="heightR">
+                                </google-chart>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-12">
+                              <div class="totalLabel verysmalltextblack">
+                                {{totalRisks}} Total Risks
+                              </div>
+                              <div style="margin-top:75px;">
+                                <table style="border-collapse: separate;border-spacing: 2px">
+                                  <tr>
+                                    <td
+                                      style="background-color: #FF8383; text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                      <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                        {{riskHigh}}
+                                      </span>
+                                    </td>
+                                    <td
+                                      style="background-color: #EDB51D;text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                      <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                        {{riskMedium}}
+                                      </span>
+                                    </td>
+                                    <td
+                                      style="background-color: #7BD173; text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                      <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                        {{riskLow}}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                  <tr style="font-size: 10px">
+                                    <td style="text-align: center">High</td>
+                                    <td style="text-align: center">Med</td>
+                                    <td style="text-align: center">Low</td>
+                                  </tr>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row smalltext">
+                          <div class="col-lg-6 col-md-6 col-sm-12 " style="top:-30px;left:5px">
+                            <div *ngIf="!isRiskAreaEmpty" style="height:85px; width: 170px;font-size: 13px;color:black">
+                              <span class="verysmalltextblack"
+                                style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                                No Risks Identified in Last 6 Months
+                              </span>
+                            </div>
+                            <div *ngIf="isRiskAreaEmpty">
+                              <google-chart #chart2 [type]="riskTypeArea" [data]="riskDataArea"
+                                [columnNames]="riskColumnNamesArea" [options]="riskOptionsArea" [width]="riskAreaWidth"
+                                [height]="riskAreaHeight">
+                              </google-chart>
+                            </div>
+                            <div *ngIf="isRiskAreaEmpty">
+                              <label class="verysmalltextblack">
+                                Risks Identified in Last 6 Months</label>
+                            </div>
+                          </div>
+                          <div class="col-lg-6 col-md-6 col-sm-12 smalltext">
+                            <i class="fa fa-info-circle"></i>
+                            <a class="verysmalltext" style="cursor: pointer;text-align: left;letter-spacing: 0px;color: #4B4EB1;opacity: 1;" 
+                              href="/assets/images/risk_rating.png" target="_blank">Click here to view Risk Rating</a>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-lg-2 col-md-2 col-sm-12">
+                        <div class="portfolioCardgrey smallcard">
+                          <div class="row">
+                            <div class="col-lg-3" style="padding-top: 10px;padding-left: 5px;">
+                              <div
+                                style="padding: 5px;background-color: white;color: #4e51b2;border: 1px #f1f1f1 solid;min-width: 30px;text-align: center;font-weight: 600;">
+                                {{dueRisks}}</div>
+                            </div>
+                            <div class="col-lg-9" style="padding-top: 8px"><span
+                                style="color: #4e51b2;font-weight: 500;">Risks Due</span>
+                              <br />
+                              Risk Treatment Plan
+                            </div>
+                          </div>
+
+                        </div>
+                        <div class="portfolioCardgrey smallcard">
+                          <div class="row">
+                            <div class="col-lg-3" style="padding-top: 10px;padding-left: 5px;">
+                              <div
+                                style="padding: 5px;background-color: white;color: #4e51b2;border: 1px #f1f1f1 solid;min-width: 30px;text-align: center;font-weight: 600;">
+                                {{totalIssues}}</div>
+                            </div>
+                            <div class="col-lg-9" style="padding-top: 8px"><span
+                                style="color: #4e51b2;font-weight: 500;">Issues</span>
+                              <br />
+                              Potential risk
+                            </div>
+                          </div>
+
+                        </div>
+                        <div class="portfolioCardgrey smallcard">
+                          <div class="row">
+                            <div class="col-lg-3" style="padding-top: 10px;padding-left: 5px;">
+                              <div
+                                style="padding: 5px;background-color: white;color: #4e51b2;border: 1px #f1f1f1 solid;min-width: 30px;text-align: center;font-weight: 600;">
+                                {{totalRisks}}</div>
+                            </div>
+                            <div class="col-lg-9" style="padding-top: 8px"><span
+                                style="color: #4e51b2;font-weight: 500;"> Risks </span>
+                              <br />
+                              Likely to become issue
+                            </div>
+                          </div>
+
+                          <div class="col-lg-2" style="text-align: right;margin-top: 15px;">
+                            <a class="verysmalltext" (click)="showRiskViewdetailsPopup()"
+                              style="white-space: nowrap;"> View Risks
+                            </a>
+                          </div>
+
+                        </div>
+                      </div>
+                      <div class="col-lg-5 col-md-5 col-sm-12">
+                        <div *ngIf="isIssuesEmpty" style="height:85px; width: 170px;color:black;display: none; ">
+                          <span class="verysmalltextblack"
+                            style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                            No Issues
+                          </span>
+                        </div>
+                        <div style="position: relative">
+                          <div style="position: relative">
+                            <div class="col-lg-6 col-md-6 col-sm-12">
+                              <div style="height: 85px; width: 170px;">
+                                <google-chart #chart2 [type]="typeI" [data]="dataI" [columnNames]="columnNamesI"
+                                  [options]="optionsI" [width]="widthI" [height]="heightI">
+                                </google-chart>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-12">
+                              <div class="totalLabel verysmalltextblack">
+                                {{totalIssues}} Total Issues
+                              </div>
+                              <div style="margin-top:75px;">
+                                <table style="border-collapse: separate;border-spacing: 2px">
+                                  <tr>
+                                    <td
+                                      style="background-color: #FF8383; text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                      <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                        {{issueHigh}}
+                                      </span>
+                                    </td>
+                                    <td
+                                      style="background-color: #EDB51D;text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                      <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                        {{issueMedium}}
+                                      </span>
+                                    </td>
+                                    <td
+                                      style="background-color: #7BD173; text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                      <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                        {{issueLow}}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                  <tr style="font-size: 10px">
+                                    <td style="text-align: center">High</td>
+                                    <td style="text-align: center">Med</td>
+                                    <td style="text-align: center">Low</td>
+                                  </tr>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="row smalltext">
+                            <div class="col-lg-6 col-md-6 col-sm-12" style="top:-30px;left:5px">
+                              <div *ngIf="!isIssueAreaEmpty" style="height:85px; width: 170px;color:black">
+                                <span class="verysmalltextblack"
+                                  style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                                  No Issues Closed in Last 6 Months
+                                </span>
+                              </div>
+                              <div *ngIf="isIssueAreaEmpty">
+                                <google-chart #chart2 [type]="issueTypeArea" [data]="issueDataArea"
+                                  [columnNames]="issueColumnNamesArea" [options]="issueOptionsArea"
+                                  [width]="issueAreaWidth" [height]="issueAreaHeight">
+                                </google-chart>
+                              </div>
+                              <div *ngIf="isIssueAreaEmpty">
+                                <label class="verysmalltextblack"
+                                  style="margin-left:20px;height: 30px;text-align: center;letter-spacing: 0px;color: #000000;opacity: 1;">Resolved
+                                  Issues Closed in Last 6 Months</label>
+                              </div>
+                            </div>
+                            <!-- <div class="col-lg-6 col-md-6 col-sm-12 smalltext">
+                              <i class="fa fa-info-circle"></i>
+                              <a (click)="openIssuePopUp()" class="verysmalltext"
+                                style="text-align: left;letter-spacing: 0px;color: #4B4EB1;opacity: 1;cursor: pointer;">View
+                                Issue Progress Status</a>
+                            </div> -->
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-10">
+
+                            </div>
+                            <div class="col-lg-2" style="text-align: right;margin-top: -57px;">
+                              <a class="verysmalltext" (click)="showIssueViewdetailsPopup()"
+                                style="white-space: nowrap;"> View Issues
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                    <!--     <div class="row smalltext">
+                   <div class="col-lg-4 col-md-4 col-sm-4 " style="top:-30px;left:5px">
+                      <div *ngIf="!isRiskAreaEmpty" style="height:85px; width: 170px;font-size: 13px;color:black">
+                        <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                          No Risks Identified in Last 6 Months
+                        </span>
+                      </div>
+                      <div *ngIf="isRiskAreaEmpty">
+                        <google-chart #chart2 [type]="riskTypeArea" [data]="riskDataArea"
+                          [columnNames]="riskColumnNamesArea" [options]="riskOptionsArea" [width]="riskAreaWidth"
+                          [height]="riskAreaHeight">
+                        </google-chart>
+                      </div>
+                      <div *ngIf="isRiskAreaEmpty">
+                        <label
+                          style="margin-left:20px;height: 30px;text-align: center;letter-spacing: 0px;color: #000000;opacity: 1;"
+                          class="smalltext">
+                          Risks Identified in Last 6 Months</label>
+                      </div>
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 smalltext">
+                      <i class="fa fa-info-circle"></i>
+                      <a (click)="openRiskPopUp()"
+                        style="text-align: left;letter-spacing: 0px;color: #4B4EB1;opacity: 1;cursor: pointer;">View
+                        Risk Heat Map</a>
+                    </div>
+                  </div> -->
+                    <!-- <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-6" class="verysmalltextblack">
+                      <a style="cursor: pointer; text-decoration: none" (click)="changflagPath()"
+                        [routerLink]="['/layout/risk', customerId]">
+                        <u>View Details</u>
+                      </a>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-6" class="verysmalltextblack">
+                      <a style="cursor: pointer; text-decoration: none" (click)="changflagPath()"
+                        [routerLink]="['/layout/issues', customerId]">
+                        <u>View Details</u>
+                      </a>
+                    </div>
+                  </div> -->
+
+
+                  </div>
+                </div>
+                <br />
+
+                <!-- <div class="row">
+                  <div class="col-lg-8">
+  
+                  </div>
+                  <div class="col-lg-4">
+                      <a (click)="openAccountHealthViewdetails()" style="font-weight: 400; font-size: 12px;"> View Details
+                          ></a>
+                  </div>
+              </div> -->
+              </div>
+
+
+            </div>
+            <div class="col-lg-3 col-md-12 col-sm-12">
+              <div class="portfolioCard">
+                <h6 class="widgetheading staticunderline">Action Items</h6>
+                <div class="row">
+                  <div class="containerCard">
+                    <div style="margin-bottom: 20px; height: 130px;">
+                      <div class="row" *ngIf="isActionItemsEmpty"
+                        style="height:85px; width: 170px;color:black;display: none;">
+                        <span class="verysmalltextblack"
+                          style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                          No Action Items
+                        </span>
+                      </div>
+                      <div *ngIf ="actionItemsData != undefined" style="position: relative">
+                        <div style="position: relative;">
+                          <div style="height: 85px; width: 100%;">
+                            <div class="totalLabel verysmalltextblack" style="text-align: right;margin-right: 10px;">
+                              {{actionItemsData.length}} Total Action Items
+                            </div>
+                            <google-chart #chart2 [type]="type6" [data]="data6" [columnNames]="columnNames6"
+                              [options]="options6" [width]="width6" [height]="height6">
+                            </google-chart>
+
+                            <div style="margin-right: 10px;margin-top:10px;float:right;">
+                              <table style="border-collapse: separate;border-spacing: 2px">
+                                <tr>
+                                  <td
+                                    style="background-color: #FF8383; text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                    <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                      {{actionItemHigh.length}}
+                                    </span>
+                                  </td>
+                                  <td
+                                    style="background-color: #EDB51D;text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                    <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                      {{actionItemMedium.length}}
+                                    </span>
+                                  </td>
+                                  <td
+                                    style="background-color: #7BD173; text-align: center; height: 20px;width: 30px;border-radius: 2px;">
+                                    <span style="text-align: left;letter-spacing: 0px;color: #FFFFFF;opacity: 1;">
+                                      {{actionItemLow.length}}
+                                    </span>
+                                  </td>
+                                </tr>
+                                <tr style="font-size: 10px">
+                                  <td style="text-align: center">High</td>
+                                  <td style="text-align: center">Med</td>
+                                  <td style="text-align: center">Low</td>
+                                </tr>
+                              </table>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-8 col-md-8 col-sm-8" style="top: -52px;left:5px">
+                          <div class="row" *ngIf="!isActionAreaItemsEmpty"
+                            style="height:85px; width: 170px;color:black">
+                            <span class="verysmalltextblack"
+                              style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                              No Action Items Closed in Last 6 Months
+                            </span>
+                          </div>
+                          <div *ngIf="isActionAreaItemsEmpty">
+                            <google-chart #chart2 [type]="typeArea1" [data]="dataArea1" [columnNames]="columnNamesArea1"
+                              [options]="optionsArea1" [width]="AreaWidth1" [height]="AreaHeight1">
+                            </google-chart>
+                          </div>
+                          <div *ngIf="isActionAreaItemsEmpty">
+                            <label class="verysmalltextblack">Resolved
+                              Action Items in Last 6 Months</label>
+                          </div>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4"
+                          style="top: 38px;font-size: 9px; color: #94d3f1; float: right; ">
+                          <a style="cursor: pointer; text-decoration: none;white-space: nowrap; float:right"
+                            class="verysmalltext" (click)="showActionitemsViewdetailsPopup()">
+                            View Details >
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+
+
+
+                <!-- <div class="row">
+                  <div class="col-lg-8">
+
+                  </div>
+                  <div class="col-lg-4">
+                    <a class="verysmalltext"   style="white-space: nowrap;"> View Details
+                      ></a>
+                  </div>
+                </div> -->
+              </div>
+
+            </div>
+
+          </div>
+
+        </mat-tab>
+
+        <!-- <mat-tab label="Strategic KPIs" style="display: none;">
+
+        </mat-tab> -->
+
+      </mat-tab-group>
+    </div>
+    <!-- <div class="row">
+  <h6 class="widgetheading staticunderline">My Success Goal / KPI Performance</h6> 
+  <div style="min-width: 200px; height: 180px; max-width: 350px; margin-left: 1px;" [chart]="donutChart">
+  </div>
+ 
+  </div> -->
+
+
+  </div>

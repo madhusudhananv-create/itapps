@@ -1,0 +1,339 @@
+<div *ngIf="showMapScreen" class="row" style="padding: 10px">
+  <div class="col-lg-6 col-md-6 col-sm6" style="text-align: left;">
+    <mat-select class="mat-dropdown-plain" [(ngModel)]="selectedRisk" style="width: 350px !important;" name="ddRiskList" required 
+     placeholder="Choose a Risk to Map" >
+      <mat-option *ngFor="let risk of riskList" [value]="risk"  [ngStyle]="{'color' : risk.isMapped ? 'green' : 'red'}" [title]="risk.title">
+        {{risk.title}}
+      </mat-option>
+    </mat-select>
+  </div>
+  <div  class="col-lg-6 col-md-6 col-sm6" style="text-align: right;">
+    <a class="link"  (click)="CloseMapScreen_OnClick()" style="cursor: pointer;">
+      <i class="fa fa-times" style="font-size: 18px; cursor: pointer;padding: 5px" matTooltip="Close Panel"></i>
+   </a>
+  </div>
+  <table mat-table [dataSource]="dataSource" class="table-bordered table-responsive-md table-striped text-center" matSort style="width:100%">
+    <ng-container matColumnDef="index">
+      <th class="index" mat-header-cell *matHeaderCellDef> No. </th>
+      <td class="index" mat-cell *matCellDef="let element = index"> {{element + 1}} </td>
+    </ng-container>
+    <ng-container matColumnDef="title">
+      <th mat-header-cell *matHeaderCellDef> Objective Title </th>
+      <td mat-cell *matCellDef="let element;" style="padding:0px !important">
+        <span>{{element.title}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="description">
+      <th mat-header-cell *matHeaderCellDef> Objective Description </th>
+      <td mat-cell *matCellDef="let element" style="padding:0px !important">
+        <span  class="index">{{element.description}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="edit">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef>
+      </th>
+      <td mat-cell *matCellDef="let element;let id=index">
+        <mat-checkbox [(ngModel)]="element.bSelected"></mat-checkbox>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+  <div>
+    <mat-paginator  #paginator [pageSize]="10" (page)="setPaginator1($event)" [pageSizeOptions]="[5, 10, 20]" ></mat-paginator>
+  </div>
+  <div>
+      <button type="button" class="btn btn-primary" (click)="saveRiskMapping_OnClick()" style="margin-right:10px; margin-left: 5px;">Save</button>
+      <button type="button" class="btn btn-primary" (click)="ClearData()"> Clear </button>
+  </div>
+</div>
+<!-- <div *ngIf="showAddScreen" style="margin-bottom: 10px;">
+  <table class="table-bordered" style="width :400px; float: right;">
+    <tr style="text-align: right;">
+      <a class="link"  (click)="CloseAddRisk_OnClick()">
+        <i class="fa fa-times" style="font-size: 18px; cursor: pointer;padding: 5px" matTooltip="Close Panel"></i>
+     </a>
+    </tr>
+    <tr  style="text-align: center">
+      <mat-form-field style="width: 300px;">
+        <input matInput [(ngModel)]="title" name="ddtitle" placeholder="Risk Title" required>
+      </mat-form-field>
+    </tr>
+    <tr  style="text-align: center">
+      <mat-form-field style="width: 300px;">
+        <input matInput [(ngModel)]="description" name="dddescription" placeholder="Risk Description" required>
+      </mat-form-field>
+    </tr>
+    <tr style="text-align: center">
+      <mat-form-field style="width: 300px;">
+        <mat-label>Risk Category Level 1</mat-label>
+          <mat-select [(ngModel)]="selectedRisk1"  name="ddRisk1Lists" (selectionChange)="filterCategory2(selectedRisk1)" required>
+            <mat-option *ngFor="let risk1 of riskList1" [value]="risk1.id">
+              {{risk1.title}}
+            </mat-option>
+          </mat-select>
+      </mat-form-field>
+    </tr>
+    <tr  style="text-align: center">
+      <mat-form-field  style="width: 300px;">
+      <mat-label>Risk Category Level 2</mat-label>
+        <mat-select [(ngModel)]="selectedRisk2" style="width: 300px;" name="ddRisk2Lists" required
+          (selectionChange)="filterCategory3(selectedRisk2)"> 
+          <mat-option *ngFor="let risk2 of riskList2" [value]="risk2.id">
+            {{risk2.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </tr>
+    <tr  style="text-align: center">
+      <mat-form-field style="width: 300px;">
+      <mat-label>Risk Category Level 3</mat-label>
+        <mat-select [(ngModel)]="selectedRisk3" style="width: 300px;" name="ddRisk2Lists" required>
+          <mat-option *ngFor="let risk3 of riskList3" [value]="risk3.id">
+            {{risk3.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </tr>
+    <tr  style="text-align: center">
+      <mat-form-field style="width: 300px;">
+        <mat-label>Risk Owner</mat-label>
+        <mat-select [(ngModel)]="selectedOwner" style="width: 300px;" name="ddRiskOwner" required>
+          <mat-option *ngFor="let owner of riskOwnerList" [value]="owner">
+            {{owner.title}}
+          </mat-option>
+        </mat-select>
+    </mat-form-field>
+    </tr>
+    <tr style="text-align: center">
+      <button type="button" class="btn btn-primary" (click)="saveRisk_OnClick()" style="margin-right:10px; margin-left: 5px;">Save</button>
+      <button type="button" class="btn btn-primary" (click)="ClearInputs()"> Clear </button>
+    </tr>
+  </table>
+</div> -->
+
+<div *ngIf="viewMode">
+  <div class="row" style="padding: 5px;">
+    <div class="col-lg-6 col-md-6 col-sm-6">
+      <button style="margin-left:5px;margin-right: 5px;margin-top: 2px;margin-bottom: 2px" 
+        class="btn btn-primary" (click)="openMapScreen()">Map Risk</button>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: right;">  
+      <button style="margin-left:5px;margin-right: 5px;margin-top: 2px;margin-bottom: 2px" 
+        class="btn btn-primary" (click)="openAddRiskScreen()">Add new Risk</button>
+        <div *ngIf="showAddScreen" style="margin-bottom: 10px;">
+          <table class="table-bordered" style="width :400px; float: right;">
+            <tr style="text-align: right;">
+              <a class="link"  (click)="CloseAddRisk_OnClick()">
+                <i class="fa fa-times" style="font-size: 18px; cursor: pointer;padding: 5px" matTooltip="Close Panel"></i>
+             </a>
+            </tr>
+            <tr  style="text-align: center">
+              <mat-form-field style="width: 300px;">
+                <input matInput [(ngModel)]="title" name="ddtitle" placeholder="Risk Title" required>
+              </mat-form-field>
+            </tr>
+            <tr  style="text-align: center">
+              <mat-form-field style="width: 300px;">
+                <input matInput [(ngModel)]="description" name="dddescription" placeholder="Risk Description" required>
+              </mat-form-field>
+            </tr>
+            <tr style="text-align: center">
+              <mat-form-field style="width: 300px;">
+                <mat-label>Risk Category Level 1</mat-label>
+                  <mat-select [(ngModel)]="selectedRisk1"  name="ddRisk1Lists" (selectionChange)="filterCategory2(selectedRisk1)" required>
+                    <mat-option *ngFor="let risk1 of riskList1" [value]="risk1.id" [title]="risk1.title">
+                      {{risk1.title}}
+                    </mat-option>
+                  </mat-select>
+              </mat-form-field>
+            </tr>
+            <tr  style="text-align: center">
+              <mat-form-field  style="width: 300px;">
+              <mat-label>Risk Category Level 2</mat-label>
+                <mat-select [(ngModel)]="selectedRisk2" style="width: 300px;" name="ddRisk2Lists" required
+                  (selectionChange)="filterCategory3(selectedRisk2)"> 
+                  <mat-option *ngFor="let risk2 of riskList2" [value]="risk2.id" [title]="risk2.title">
+                    {{risk2.title}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </tr>
+            <tr  style="text-align: center">
+              <mat-form-field style="width: 300px;">
+              <mat-label>Risk Category Level 3</mat-label>
+                <mat-select [(ngModel)]="selectedRisk3" style="width: 300px;" name="ddRisk2Lists" required>
+                  <mat-option *ngFor="let risk3 of riskList3" [value]="risk3.id" [title]="risk3.title">
+                    {{risk3.title}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </tr>
+            <tr  style="text-align: center">
+              <mat-form-field style="width: 300px;">
+                <mat-label>Risk Owner</mat-label>
+                <mat-select [(ngModel)]="selectedOwner" style="width: 300px;" name="ddRiskOwner" required>
+                  <mat-option *ngFor="let owner of riskOwnerList" [value]="owner" [title]="owner.title">
+                    {{owner.title}}
+                  </mat-option>
+                </mat-select>
+            </mat-form-field>
+            </tr>
+            <tr style="text-align: center">
+              <button type="button" class="btn btn-primary" (click)="saveRisk_OnClick()" style="margin-right:10px; margin-left: 5px;">Save</button>
+              <button type="button" class="btn btn-primary" (click)="ClearInputs()"> Clear </button>
+            </tr>
+          </table>
+        </div>
+    </div>
+  </div>
+
+<div class="row">
+  <table mat-table [dataSource]="dataSource1" class="table-bordered table-responsive-md table-striped text-align:left" matSort style="width:100%">
+    <ng-container matColumnDef="index">
+      <th style="text-align: left;color:black" class="index" mat-header-cell *matHeaderCellDef><strong>S.No</strong></th>
+      <td class="index" mat-cell *matCellDef="let element = index"> {{element + 1}} </td>
+    </ng-container>
+    <ng-container matColumnDef="risK_TITLE">
+      <th style="text-align: left;color:black" mat-header-cell *matHeaderCellDef><strong>Risk Title</strong></th>
+      <td mat-cell *matCellDef="let element;let id = index" style="padding:0px !important">
+        <span>{{element.procesS_MODEL_RISKS_NEW.title}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="risK_DESCRIPTION">
+      <th style="text-align: left;color:black" mat-header-cell *matHeaderCellDef><strong>Risk Description</strong></th>
+      <td mat-cell *matCellDef="let element" style="padding:0px !important">
+        <span>{{element.procesS_MODEL_RISKS_NEW.description}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="obJ_LIST">
+      <th style="text-align: left;color:black" mat-header-cell *matHeaderCellDef><strong>Objectives List</strong></th>
+      <td mat-cell *matCellDef="let element" style="padding:0px !important">
+        <span>{{displayAsString(element.procesS_MODEL_OBJECTIVES_NEW)}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="risK_CATEGORY_LEVEL1">
+      <th style="text-align: left;color:black" mat-header-cell *matHeaderCellDef><strong>Risk Category 1</strong></th>
+      <td mat-cell *matCellDef="let element" style="padding:0px !important">
+        <span>{{getRiskCategory1Name(element.procesS_MODEL_RISKS_NEW.risK_CATEGORY_LEVEL1)}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="risK_CATEGORY_LEVEL2">
+      <th style="text-align: left;color:black" mat-header-cell *matHeaderCellDef><strong>Risk Category 2</strong></th>
+      <td mat-cell *matCellDef="let element" style="padding:0px !important">
+        <span>{{getRiskCategory2Name(element.procesS_MODEL_RISKS_NEW.risK_CATEGORY_LEVEL2)}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="risK_CATEGORY_LEVEL3">
+      <th style="text-align: left;color:black" mat-header-cell *matHeaderCellDef><strong>Risk Category 3</strong></th>
+      <td mat-cell *matCellDef="let element" style="padding:0px !important">
+        <span>{{getRiskCategory3Name(element.procesS_MODEL_RISKS_NEW.risK_CATEGORY_LEVEL3)}}</span>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="action">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef>
+      </th>
+      <td mat-cell *matCellDef="let element;let id=index">
+        &nbsp;
+      <a class="icon" (click)="EditRow_onClick(element)">
+        <i class="fa fa-edit"></i>
+      </a>
+        &nbsp;
+        &nbsp;   
+      <a class="icon" (click)="DeleteRow_onClick(element)" style="color:red">
+        <i class="fa fa-trash"></i>
+      </a>
+      </td>
+    </ng-container>
+    
+    <tr mat-header-row *matHeaderRowDef="displayedColumns1"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns1;"></tr>
+  </table>
+</div>
+<div>
+  <mat-paginator  #paginator1 [pageSize]="10" (page)="setPaginator1($event)" [pageSizeOptions]="[5, 10, 20]" ></mat-paginator>
+</div>
+</div>
+
+<!-- <div *ngIf="editMode">
+  <div class="row">
+    <div class="col-lg-6 col-md-6 col-sm6" style="text-align: right;">
+      <a class="link"  (click)="CloseEditMode_OnClick()">
+        <i class="fa fa-times" style="font-size: 22px; cursor: pointer;" matTooltip="Close Panel"></i>
+     </a>
+    </div>
+  </div>
+  <form #riskForm="ngForm" (ngSubmit)="SubmitModelForm(riskForm)" style="padding: 10px">
+    <div class="row">
+      <mat-form-field style="width: 350px;">
+        <input matInput [(ngModel)]="title" name="ddtitle" placeholder="Risk Title" required>
+      </mat-form-field>
+    </div>
+    <div class="row">
+      <mat-form-field style="width: 350px;">
+        <input matInput [(ngModel)]="description" name="dddescription" placeholder="Risk Description" required>
+      </mat-form-field>
+    </div>
+    <div class="row">
+      <mat-form-field style="width: 350px;">
+        <mat-select name="ddServiceArea" [(ngModel)]="ServiceArea" placeholder="Service Tower List" (selectionChange)="filterObjectivesByServiceId(ServiceArea.id)">
+          <mat-option *ngFor="let area of ServiceAreas" [value]="area">
+            {{area.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="row">
+      <mat-form-field style="width: 255px;">
+        <mat-select name="ddObjective" multiple [(ngModel)]="Objectives" placeholder="Objectives List">
+          <mat-option *ngFor="let obj of ObjectivesList" [value]="obj">
+            {{obj.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="row">
+      <mat-form-field style="width: 255px"> 
+        <mat-label>Risk Category Level 1</mat-label>
+        <mat-select [(ngModel)]="selectedRisk1" name="ddRisk1Lists" (selectionChange)="filterCategory2(selectedRisk1.id)" required>
+          <mat-option *ngFor="let risk1 of riskList1" [value]="risk1">
+            {{risk1.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="row">
+      <mat-form-field style="width: 255px">
+        <mat-label>Risk Category Level 2</mat-label>
+        <mat-select [(ngModel)]="selectedRisk2" name="ddRisk2Lists" required>
+          (selectionChange)="filterCategory3(selectedRisk2)"> 
+          <mat-option *ngFor="let risk2 of riskList2" [value]="risk2">
+            {{risk2.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="row">
+      <mat-form-field style="width: 255px">
+        <mat-label>Risk Category Level 3</mat-label>
+        <mat-select [(ngModel)]="selectedRisk3" name="ddRisk2Lists" required>
+          <mat-option *ngFor="let risk3 of riskList3" [value]="risk3">
+            {{risk3.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="row">
+      <mat-form-field style="width: 255px">
+        <mat-label>Risk Owner</mat-label>
+        <mat-select [(ngModel)]="selectedOwner" name="ddRiskOwner" required>
+          <mat-option *ngFor="let owner of riskOwnerList" [value]="owner">
+            {{owner.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-right:10px; margin-left: 5px;">Save</button>
+    <button type="button" class="btn btn-primary" (click)="ClearInputs()"> Clear </button>
+  </form>
+</div> -->

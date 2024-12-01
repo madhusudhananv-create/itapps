@@ -1,0 +1,28 @@
+                <div>
+                    <span style="font-size: 14px;text-align: left">Appreciations Received</span>
+                    <span style="text-align: right"></span>
+                  </div>
+                  <div class="row" *ngIf="isAppreciationsEmpty"
+                    style="height:85px; width: 200px;font-size: 13px;color:black">
+                    <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                      No Appreciations
+                    </span>
+                  </div>
+                  <div *ngIf="!isAppreciationsEmpty" style="position: relative">
+                    <div style="position: relative;">
+                      <div style="height: 90px; width: 200px;">
+                        <google-chart #chartA [type]="typeA" [data]="dataA" [columnNames]="columnNamesA"
+                          [options]="optionsA" [width]="widthA" [height]="heightA">
+                        </google-chart>
+                      </div>
+                      <div class="centreLabel" style="position:absolute; margin-left: 46%;top: 30%;">
+                        {{totalAppreciation}}
+                      </div>
+                    </div>
+                  </div>
+                  <div style="font-size: 9px; color: #94d3f1; text-align: right; ">
+                    <a style="cursor: pointer; text-decoration: none"
+                      [routerLink]="['/layout/appreciation', custId]">
+                      <u>View Details</u>
+                    </a>
+                  </div>

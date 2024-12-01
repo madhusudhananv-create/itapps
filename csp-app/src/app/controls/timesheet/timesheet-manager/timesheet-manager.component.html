@@ -1,0 +1,89 @@
+<div style="background-color:white">
+    <div class="row">
+      <div class="col-lg-12" style="text-align:center">Time Sheets Approval</div>
+    </div>
+    <div class="row">
+      Select Project:
+      <mat-form-field style="width:300px">
+        <mat-select name="ddProjects" [(ngModel)]="selectedProject">
+          <mat-option *ngFor="let proj of projects" [value]="proj" [title]="proj.proJ_NM">
+            {{ proj.proJ_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      &nbsp;&nbsp;Reporting Period:
+      <mat-form-field style="width:60px;padding-left:10px">
+        <mat-select name='tableMonth' [(ngModel)]="tableMonth">
+          <mat-option value='Jan'>JAN</mat-option>
+          <mat-option value='Feb'>FEB</mat-option>
+          <mat-option value='Mar'>MAR</mat-option>
+          <mat-option value='Apr'>APR</mat-option>
+          <mat-option value='May'>MAY</mat-option>
+          <mat-option value='Jun'>JUN</mat-option>
+          <mat-option value='Jul'>JUL</mat-option>
+          <mat-option value='Aug'>AUG</mat-option>
+          <mat-option value='Sep'>SEP</mat-option>
+          <mat-option value='Oct'>OCT</mat-option>
+          <mat-option value='Nov'>NOV</mat-option>
+          <mat-option value='Dec'>DEC</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:80px;padding-left:10px">
+        <mat-select name='tableYear' [(ngModel)]="tableYear">
+          
+          <mat-option *ngFor="let year of _util.Years(3)" [value]="year" [title]="year">{{year}}</mat-option>
+<!--<mat-option [value]='2019'>2019</mat-option>
+          <mat-option [value]='2020'>2020</mat-option> -->
+        </mat-select>
+        
+      </mat-form-field>
+      <button type="button" name="btnPeriod" (click)="GetTimesheetData()" style="border-radius:4px">Go</button>
+    </div>
+  </div>
+  <div class="row" style="padding:5px">
+    <mat-progress-bar *ngIf="bProgress" mode="indeterminate"></mat-progress-bar>
+    <div style="text-align:center;padding:25px" *ngIf="projectTimesheets.employees.length === 0">No timesheets available for approval</div>
+    <table class="table table-bordered">
+      <tr *ngIf="projectTimesheets.employees.length > 0">
+        <th style="font-size:smaller">Name</th>
+        <th style="text-align:center" *ngFor="let t of projectTimesheets.employees[0].timesheet; let i = index">{{i+1}}</th>
+        <th>Total</th>
+        <th>Status</th>
+        <th>Comments</th>
+      </tr>
+      <tr *ngFor="let t of projectTimesheets.employees">
+        <td style="font-size:smaller">{{t.frsT_NM}}</td>
+        <td *ngFor="let entry of t.timesheet" [style.background]="GetBackground(entry)">
+          <input #input name="input{{entry.ID}}" matInput type="text" [disabled]="disableEntry(entry.timE_ENTRY_STATUS)" class="inputbox" [(ngModel)]="entry.clockeD_MINS"
+            (change)="valuechange(t)"
+            (keypress)="_keyPress(input, $event)"
+            (focus)="_focus(input)">
+        </td>
+        <!-- <td *ngFor="let entry of t.timesheet">
+          {{entry.clockeD_MINS}}
+        </td> -->
+        <td style="text-align:center">
+          <b>{{t.total}}</b>
+        </td>
+        <td style="text-align:center;font-size:x-small;font-weight:bold">{{t.status}}</td>
+        <td style="text-align:center">
+          <textarea [disabled]="disableEntry(t.status)" [(ngModel)]="t.comments">{{t.comments}}</textarea>
+        </td>
+      </tr>
+    </table>
+    <table *ngIf="projectTimesheets.employees.length > 0">
+      <tr>
+        <td style="height:30px;width:50px;background-color:#f3f37e;padding-right:10px"></td>
+        <td>Weekends</td>
+      </tr>
+    </table>
+  </div>
+  <div *ngIf="projectTimesheets.employees.length > 0" class="row">
+    <div class="row" style="text-align:center;vertical-align:middle">
+      <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Submit" (click)='Approve_onClick()'>Approve</button>
+      <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Reject" (click)='CustomerReject_onClick()'>Reject</button>
+    </div>
+    <div class="row" style="text-align:center;vertical-align:middle">
+      <textarea style="font-size:smaller;width:250px;height:80px;" [(ngModel)]="comments" placeholder="Approval/Reject comments">{{comments}}</textarea>
+    </div>
+  </div>

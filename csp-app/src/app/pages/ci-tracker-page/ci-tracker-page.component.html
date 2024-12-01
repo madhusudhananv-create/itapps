@@ -1,0 +1,387 @@
+<!--<div  style="background-color: #eaeaea;">
+  <app-navbar-new [ShowMenu]="false" (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav-content style="background-color:#eaeaea">-->
+
+  <app-navbar-new [ShowMenu]="false" (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+
+  <div class="mainDiv">
+    <div style="font-size: 16px; color:#5461a2; margin: 10px; font-weight: bold;">
+      Continual Improvement Leader Board
+    </div>
+    <div *ngIf="displayText != ''">
+      <span style="font-size: 14px;font-family: Lato">Note : {{displayText}}</span>
+    </div>
+
+    <!-- <div *ngIf="displayText != ''">
+      <span style="font-size: 14px;font-family: Lato">Note : {{displayText}}</span>
+    </div> -->
+
+  <div style="border: 1px solid #f5f5f5 !important;border-radius:9px;height: 75px !important; 
+  width:1235px !important;margin-left:30px !important;background-color: #E5E5E5 !important">
+  
+    <div class="col-lg-4 col-md-4 col-sm-4" style="margin-top: 10px !important">
+      <app-project-selector-singletomultiple  style="width:40%" [allcust]="false" [allproj]="true" (onChange)="project_onChange($event)"></app-project-selector-singletomultiple>
+    </div> 
+  
+    <div class="col-lg-3 col-md-3 col-sm-3" style="text-align:center;margin-top: 5px !important">
+        <span>Period : </span><br />
+        <select name="ddStartMonth" (change)="saveDates()" [(ngModel)]="DateSelection.selectedStartMonth" required
+          style="margin-right: 5px;background-color:#E5E5E5">
+          <option value="Jan">JAN</option>
+          <option value="Feb">FEB</option>
+          <option value="Mar">MAR</option>
+          <option value="Apr">APR</option>
+          <option value="May">MAY</option>
+          <option value="Jun">JUN</option>
+          <option value="Jul">JUL</option>
+          <option value="Aug">AUG</option>
+          <option value="Sep">SEP</option>
+          <option value="Oct">OCT</option>
+          <option value="Nov">NOV</option>
+          <option value="Dec">DEC</option>
+        </select>
+        <select name="ddStartYear" (change)="saveDates()" [(ngModel)]="DateSelection.selectedStartYear" required
+          style="margin-right: 5px;background-color:#E5E5E5">
+          <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{
+            bb
+          }}</option>
+        </select>
+        
+        <select name="ddEndMonth" (change)="saveDates()" [(ngModel)]="DateSelection.selectedEndMonth" required
+          style="margin-right: 5px;background-color:#E5E5E5">
+          <option value="Jan">JAN</option>
+          <option value="Feb">FEB</option>
+          <option value="Mar">MAR</option>
+          <option value="Apr">APR</option>
+          <option value="May">MAY</option>
+          <option value="Jun">JUN</option>
+          <option value="Jul">JUL</option>
+          <option value="Aug">AUG</option>
+          <option value="Sep">SEP</option>
+          <option value="Oct">OCT</option>
+          <option value="Nov">NOV</option>
+          <option value="Dec">DEC</option>
+        </select>
+        <select name="ddEndYear" (change)="saveDates()" [(ngModel)]="DateSelection.selectedEndYear" required
+          style="margin-right: 5px;background-color:#E5E5E5">
+          <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{
+            bb
+          }}</option>
+        </select>    
+
+    </div>
+
+    <div class="col-lg-5 col-md-5 col-sm-5" style="margin-top: 10px !important">
+        <mat-form-field style="width:150px !important;">
+              <mat-select placeholder="CI Category" multiple #select  [(ngModel)]="ciCategory"
+                (selectionChange)="OnCategorychange()">
+                <mat-option [value]="0" #allSelected (click)="toggleSelection()">All</mat-option>
+                <mat-option [value]="1" (click)="tosslePerOne()">Automation</mat-option>
+                <mat-option [value]="2" (click)="tosslePerOne()">Innovation</mat-option>
+                <mat-option [value]="3" (click)="tosslePerOne()">Improvement</mat-option>
+                <mat-option [value]="4" (click)="tosslePerOne()">Value/Value-Add to Customer</mat-option>
+              </mat-select>
+        </mat-form-field>
+        <!--&nbsp;&nbsp;&nbsp;
+        <mat-form-field style="width:100px !important;">
+              <mat-select placeholder="View By" #selectViewBy  [(ngModel)]="ddlviewBy"
+                (selectionChange)="OnViewByChange()" >                
+                <mat-option [value]="0">Identified Date</mat-option>
+                <mat-option [value]="1">Completed Date</mat-option>                
+              </mat-select>
+        </mat-form-field>-->
+        &nbsp;&nbsp;&nbsp;
+        <mat-form-field style="width:150px !important;">
+              <mat-select placeholder="Status" multiple #selectStatus  [(ngModel)]="ddlstatus"
+              (selectionChange)="OnStatusChange()">                
+                <mat-option [value]="1">Identified</mat-option>
+                <mat-option [value]="2">Planning</mat-option>     
+                <mat-option [value]="3">Execution</mat-option>  
+                <mat-option [value]="4" #statusDefaultSelected>Completed</mat-option>             
+              </mat-select>
+        </mat-form-field>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" class="btn btn-primary" (click)="btnApply()">Apply</button>
+    </div>
+  </div>
+  
+  <div class="col-lg-12 col-md-12 col-sm-12" style="padding-left:30px; margin-bottom: 7px; margin-top: 5px">
+    <b>Note:-</b> Click on Customer Name to view the details of Business Value and Value-Add
+  </div>
+
+  
+  
+  <table class="CitableHeader table" style="border:1px solid #BFBFBF;width: 95%;  border-spacing: 0 5px;margin-bottom:0px !important;
+    margin-left:auto; margin-right: auto;border-collapse:separate;">
+    <thead>
+
+      <tr style=" height: 10px; font-size: 10px !important;">
+        
+        <th [attr.colspan]="5" style="border-right:1px solid #BFBFBF !important;padding:0px !important;"></th>        
+        <th [attr.colspan]="10" style="font-size: 12px;padding:0px !important;">Net Benefits</th>
+        
+      </tr>
+
+      <tr style=" height: 43px; font-size: 12px;box-shadow: -1.5px 2px 3px 1px lightgrey;
+      font-weight: 600;">
+        
+        <th [attr.colspan]="3" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;"></th>
+        <th [attr.colspan]="2" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;">No of Improvements</th>
+        <th [attr.colspan]="6" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;">Internal Business Process</th>
+        <th [attr.colspan]="1" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;">Customer</th>
+        <th [attr.colspan]="3" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;">GAVS Financial</th>
+      </tr>
+
+      <tr  style=" height: 40px;box-shadow : -1.5px 2px 3px 1px lightgray; background-color: #FFFFFF; font-size: 12px; ">
+      
+        <th *ngFor="let item of WeightageList;let i=index" class="ThirdHeader"
+        [ngStyle]="{'border-right': i === 2 || i == 4 || i == 10 || i == 11  ? '1px solid #BFBFBF' : '0px' }">            
+           <span  *ngIf="item.optionS_ID > 0">{{item.optionS_ID}}%</span> 
+           <span  *ngIf="item.optionS_ID == 0"></span>
+           <span  *ngIf="item.optionS_ID == 0 && i == 1">Weightage</span>                      
+        </th> 
+         
+      </tr>
+      <tr style=" height: 43px;box-shadow : -1.5px 2px 3px 1px lightgray; background-color: #FFFFFF; font-size: 12px; ">
+        <th class="SecondHeader">&nbsp;</th>
+        <th class="SecondHeader">Customer</th>
+        <th class="SecondHeader" style="border-right:1px solid #BFBFBF !important;">
+          Position <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="positionToolTip"></i></th>
+        <th class="SecondHeader">Completed</th>
+        <th class="SecondHeader" style="border-right:1px solid #BFBFBF !important;">In Progress</th>
+        <th class="SecondHeader">Quality - Reduction of Errors(%)</th>
+        <th class="SecondHeader">Reduction In Lead Time</th>
+        <th class="SecondHeader">Reduction In Cycle Time</th>
+        <th class="SecondHeader">Effort Saved Per Year</th>
+        <th class="SecondHeader">Automation Index(%)
+          <i style="font-size:16px;cursor : pointer" class="fa fa-question-circle" [matTooltip]="automationIndexToolTip"></i>
+        </th>
+        <th class="SecondHeader" style="border-right:1px solid #BFBFBF !important;">Savings Per Year (In USD)</th>
+        <th class="SecondHeader" style="border-right:1px solid #BFBFBF !important;">Savings Per Year (In USD)</th>        
+        <th class="SecondHeader">Revenue (In USD)</th>
+        <th class="SecondHeader">Operating Cost (In USD)</th>
+        <th class="SecondHeader">Profitability (In USD)</th>
+		    
+      </tr>
+      
+      <tr style="height: 40px;box-shadow : -1.5px 2px 3px 1px lightgray; background-color: #FFFFFF; font-size: 12px; ">
+        <th class="ThirdHeader">&nbsp;</th>
+        <th class="ThirdHeader">Total</th>
+        <th class="ThirdHeader" style="border-right:1px solid #BFBFBF !important;text-align:right !important;">&nbsp;</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.completed | number: '1.0-0'}}</th>
+        <th class="ThirdHeader" style="border-right:1px solid #BFBFBF !important;text-align:right !important;">{{CITrackerList?.inprogress | number: '1.0-0'}}</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.qualitY_REDUCTION_OF_ERRORS | number: '1.0-0'}}</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.reductioN_IN_LEAD_TIME_DISPLAY}}</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.reductioN_IN_CYCLE_TIME_DISPLAY}}</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.savinG_PER_YEAR_EFFORT_DISPLAY}}</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.automatioN_INDEX | number: '1.0-0'}}
+          <i style="font-size: 13px; cursor: pointer;margin-left: 3px;" class="fa" [matTooltip]="CITrackerList?.automatioN_SPLIT">&#xf05a;</i>
+        </th>
+        <th class="ThirdHeader" style="border-right:1px solid #BFBFBF !important;text-align:right !important;">{{CITrackerList?.savingS_IN_USD | currency:'USD' : 'symbol':'1.0-0'}}</th>
+        <th class="ThirdHeader" style="border-right:1px solid #BFBFBF !important;text-align:right !important;">{{CITrackerList?.harD_BENEFITS | currency:'USD' : 'symbol':'1.0-0'}}</th>
+        
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.revenue | number: '1.0-0'}}</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.operatinG_COST | number: '1.0-0'}}</th>
+        <th class="ThirdHeader" style="text-align:right !important;">{{CITrackerList?.profitability | number: '1.0-0'}}</th>
+        
+        
+      </tr>
+    </thead>
+    
+    <tbody>
+      <ng-container *ngFor="let cust of CITrackerList?.ctB_CUSTOMER_GROUPING; let i = index">
+        <tr style="height: 43px; box-shadow: -1.5px 2px 3px 1px lightgray; background-color: #ECECFA;  
+        font-size: 12px; outline: none; text-decoration: none; cursor: pointer;padding-bottom:5px"  >
+          <td><img class="expand" id="img{{i}}" src="/assets/images/plus.svg"  type="button" (click)="setProjectIndex(i,$event.target)" /></td>
+          <td style="text-align:left; outline: none; text-decoration: none" ><a (click)="setProjectIDS(cust?.cI_TRACKER_PROJECT_GROUPING)" target="_blank" [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}">{{cust?.cusT_NM}}</a></td>
+          <td style="text-align:right;border-right:1px solid #BFBFBF;">{{cust.cI_CUST_PROPERTIES?.position  | number: '1.0-0'}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.completed | number: '1.0-0'}}</td>          
+          <td style="border-right:1px solid #BFBFBF;text-align:right">{{cust.cI_CUST_PROPERTIES?.inprogress | number: '1.0-0'}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.qualitY_REDUCTION_OF_ERRORS | number: '1.0-0'}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.reductioN_IN_LEAD_TIME_DISPLAY}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.reductioN_IN_CYCLE_TIME_DISPLAY}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.savinG_PER_YEAR_EFFORT_DISPLAY}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.automatioN_INDEX | number: '1.0-0'}}                      
+            <i style="font-size: 13px; cursor: pointer;" class="fa" [matTooltip]="cust.cI_CUST_PROPERTIES?.automatioN_SPLIT">&#xf05a;</i>
+          </td>
+          <td style="border-right:1px solid #BFBFBF;text-align:right">{{cust.cI_CUST_PROPERTIES?.savingS_IN_USD | currency:'USD' : 'symbol':'1.0-0'}}</td>
+          <td style="border-right:1px solid #BFBFBF;text-align:right">{{cust.cI_CUST_PROPERTIES?.harD_BENEFITS | currency:'USD' : 'symbol':'1.0-0'}}</td>
+          <!-- <td style="border-right:1px solid #dde7ed;text-align:right">{{cust.cI_CUST_PROPERTIES?.sofT_BENEFITS }}</td> -->
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.revenue | number: '1.0-0'}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.operatinG_COST | number: '1.0-0'}}</td>
+          <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.profitability | number: '1.0-0'}}</td> 
+               
+          
+        </tr>
+
+        <tr *ngIf="cust.cI_TRACKER_PORTFOLIO_GOUPING?.length == 0 && projDisplayIndex == i" style="font-size: 12px">
+          <td [attr.colspan]="15" style="padding: 0px !important">
+            <table  class="projtable table" style="border-spacing: 0 5px;border:1px solid #dde7ed">
+              <thead class="DetailHeader">
+                  <th style="width:1% !important"></th>
+                  <th colspan="3" style="text-align: center">Project</th>
+                  <th class="alignclass">Completed</th>
+                  <th class="alignclass">In Progress</th>
+                  <th class="alignclass">Quality - Reduction of Errors(%)</th>
+                  <th class="alignclass">Reduction in Lead Time</th>
+                  <th class="alignclass">Reduction in Cycle Time</th>
+                  <th class="alignclass">Effort Saved Per Year (In Person Hours)</th>
+                  <th class="alignclass">Automation Index</th>
+                  <th class="alignclass">Savings Per Year (In USD)</th>
+                  <th class="alignclass">Savings Per Year (In USD)</th>                  
+                  <th class="alignclass">Revenue (In USD)</th>
+                  <th class="alignclass">Operating Cost (In USD)</th>
+                  <th class="alignclass">Profitability (In USD)</th>
+                  
+              </thead>
+              <tbody>
+                <tr *ngFor="let proj of cust.cI_TRACKER_PROJECT_GROUPING; let projindex = index" style="height: 40px; box-shadow: -1.5px 2px 3px 1px lightgray; 
+                  background-color: white;font-size: 12px; outline: none; text-decoration: none;">
+                  <td style="width:1% !important"></td>
+                  <td colspan="3"  (click)="setProjectId(proj.proJ_ID)" style="text-align: left;  border-right:1px solid #dde7ed;outline: none; text-decoration: none;cursor:pointer" target="_blank" [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}">{{proj.proJ_NM}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.completed | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.inprogress | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.qualitY_REDUCTION_OF_ERRORS | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.reductioN_IN_LEAD_TIME_DISPLAY}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.reductioN_IN_CYCLE_TIME_DISPLAY}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.savinG_PER_YEAR_EFFORT_DISPLAY}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.automatioN_INDEX | number: '1.0-0'}}
+                    <i style="font-size: 13px; cursor: pointer;" class="fa" [matTooltip]="proj.cI_PROJECT_PROPERTIES?.automatioN_SPLIT">&#xf05a;</i>
+                  </td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.savingS_IN_USD | currency:'USD' : 'symbol':'1.0-0'}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.harD_BENEFITS | currency:'USD' : 'symbol':'1.0-0'}}</td>                  
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.revenue | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.operatinG_COST | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.profitability | number: '1.0-0'}}</td>
+                  
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        <tr *ngIf="cust.cI_TRACKER_PORTFOLIO_GOUPING?.length > 0 && projDisplayIndex == i" style="font-size: 12px; ">
+          <td [attr.colspan]="15" style="padding: 0px !important">
+            <table  class="projtable table">
+              <thead class="DetailHeader">
+                <tr>
+                  <th style="width:1% !important"></th>
+                  <th colspan="3" style="text-align: center;border-right:1px solid #dde7ed;" >Portfolio</th>
+                  
+                  <th class="alignclass">Completed</th>
+                  <th class="borderclass">In progress</th>
+                  <th class="alignclass">Quality - Reduction of Errors(%)</th>
+                  <th class="alignclass">Reduction In Lead Time</th>
+                  <th class="alignclass">Reduction In Cycle Time</th>
+                  <th class="alignclass">Effort Saved Per Year (In Person Hours)</th>
+                  <th class="alignclass">Automation Index</th>
+                  <th class="borderclass">Savings Per Year (In USD)</th>
+                  <th class="borderclass">Savings Per Year (In USD)</th>                  
+                  <th class="alignclass">Revenue (In USD)</th>
+                  <th class="alignclass">Operating Cost (In USD)</th>
+                  <th class="alignclass">Profitability (In USD)</th>    
+                  
+                </tr>
+              </thead>
+              <tbody *ngFor="let port of cust.cI_TRACKER_PORTFOLIO_GOUPING; let portindex = index">
+                <tr style="height: 40px; box-shadow: -1.5px 2px 3px 1px lightgray; 
+                   background-color: white;  font-size: 12px; outline: none; text-decoration: none;cursor: pointer;"
+                  >
+                  <td style="width:1% !important">
+                  
+                  <img class="expand" id="Pimg{{i}}" src="/assets/images/plus.svg" 
+     type="button" (click)="showProjectsForPortfolio(portindex,$event.target)" />
+
+                  </td>
+                  <td colspan="2" style="text-align: left;outline: none; text-decoration: none;cursor:pointer;" (click)="setPortfolio(port)" target="_blank" [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}" >{{port.portfoliO_NM}}</td>
+                  <td class="borderclass" style="border-right:1px solid #dde7ed;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.completed | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.inprogress | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.qualitY_REDUCTION_OF_ERRORS | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.reductioN_IN_LEAD_TIME_DISPLAY}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.reductioN_IN_CYCLE_TIME_DISPLAY}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.savinG_PER_YEAR_EFFORT_DISPLAY}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.automatioN_INDEX | number: '1.0-0'}}
+                    <i style="font-size: 13px; cursor: pointer;" class="fa" [matTooltip]="port.cI_PORTFOLIO_PROPERTIES?.automatioN_SPLIT">&#xf05a;</i>
+                  </td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.savingS_IN_USD | currency:'USD' : 'symbol':'1.0-0'}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.harD_BENEFITS | currency:'USD' : 'symbol':'1.0-0'}}</td>                  
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.revenue | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.operatinG_COST | number: '1.0-0'}}</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.profitability | number: '1.0-0'}}</td>                  
+                </tr>
+                <tr *ngIf="portindex == showPortprojIndex">
+                  <td [attr.colspan]="16">
+                    <table class="projtable table" style="border:1px solid #ECECFA">
+                      <thead class="DetailHeader">
+                        <tr style="background-color: #f5f5f5 !important;">                            
+                  <th style="width:1% !important"></th>
+                  <th colspan="2" style="text-align: center;border-right:1px solid #dde7ed;">Project</th>                  
+                  <th class="alignclass">Completed</th>
+                  <th class="borderclass">In progress</th>
+                  <th class="alignclass">Quality - Reduction of Errors(%)</th>
+                  <th class="alignclass">Reduction In Lead Time</th>
+                  <th class="alignclass">Reduction In Cycle Time</th>
+                  <th class="alignclass">Effort Saved Per Year (In Person Hours)</th>
+                  <th class="alignclass">Automation Index</th>
+                  <th class="borderclass">Savings Per Year (In USD)</th>
+                  <th class="borderclass">Savings Per Year (In USD)</th>                  
+                  <th class="alignclass">Revenue (In USD)</th>
+                  <th class="alignclass">Operating Cost (In USD)</th>
+                  <th class="alignclass">Profitability (In USD)</th>                       
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let proj of port.cI_TRACKER_PROJECT_GROUPING" style="background-color:#ffffff">
+                            <td style="width:1% !important"></td>
+                            <td colspan="2" (click)="setProjectId(proj.proJ_ID,port)" style="text-align: left;  border-right:1px solid #dde7ed;outline: none; text-decoration: none;cursor:pointer" target="_blank"  [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}">{{proj.proJ_NM}}</td>                            
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.completed | number: '1.0-0'}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.inprogress | number: '1.0-0'}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.qualitY_REDUCTION_OF_ERRORS | number: '1.0-0'}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.reductioN_IN_LEAD_TIME_DISPLAY}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.reductioN_IN_CYCLE_TIME_DISPLAY}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.savinG_PER_YEAR_EFFORT_DISPLAY}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.automatioN_INDEX | number: '1.0-0'}}
+                              <i style="font-size: 13px; cursor: pointer;" class="fa" [matTooltip]="proj.cI_PROJECT_PROPERTIES?.automatioN_SPLIT">&#xf05a;</i>
+                            </td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.savingS_IN_USD | currency:'USD' : 'symbol':'1.0-0'}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.harD_BENEFITS | currency:'USD' : 'symbol':'1.0-0'}}</td>                            
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.revenue | number: '1.0-0'}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.operatinG_COST | number: '1.0-0'}}</td>
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.profitability | number: '1.0-0'}}</td>
+                            
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+      </ng-container>
+    </tbody>
+    
+
+  </table>
+   
+   
+  <!-- <div *ngIf="CITrackerList?.ctB_CUSTOMER_GROUPING?.length == 0" style="height: 100px; line-height: 100px;font-family: 'Roboto', sans-serif;
+      color: #4e5882;font-size: 17px;font-weight: bold;text-align: center;">
+        No Data available for the selected filter
+  </div> -->
+
+  <div *ngIf="!CITrackerList" style="text-align: center; height: 100px; line-height: 100px;">
+    <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+  </div>
+
+  </div>
+
+    <!--</mat-sidenav-content>
+
+  </mat-sidenav-container>
+
+</div>-->
+ 

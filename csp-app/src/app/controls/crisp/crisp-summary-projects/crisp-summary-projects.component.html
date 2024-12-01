@@ -1,0 +1,22 @@
+<mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+<table width="100%" class="table table-bordered">
+  <tr style="font-size: 12px;">
+    <th>Projects</th>
+    <th>C</th>
+    <th>R</th>
+    <th>I</th>
+    <th>S</th>
+    <th>P</th>
+    <th style="font-size:12px">Total</th>
+  </tr>
+  <!-- <tr class="link" *ngFor="let proj of summary" (click)="ShowCrispDetails(proj)"> -->
+  <tr class="link" *ngFor="let proj of summary">
+    <td style="padding:2px;font-size:10px;width:58%" (click)="ShowProjectCrispDetails(proj, cat)" >{{proj.projecT_NAME}}</td>
+    <td *ngFor="let cat of proj.categories" [style.background-color]="cat.rag" style="padding:2px;width:6%;text-align:center">
+      <span (click)="ShowCrispDetails(proj, cat)" style="display:block;width:100%;height:100%" >
+      {{cat.score}}
+    </span>
+    </td>
+    <td style="padding:2px;width:6%;text-align:center" (click)="ShowProjectCrispDetails(proj)"  [style.background-color]="proj.rag">{{proj.score}}</td>
+  </tr>
+</table>

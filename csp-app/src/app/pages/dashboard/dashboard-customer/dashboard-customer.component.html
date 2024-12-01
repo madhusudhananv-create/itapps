@@ -1,0 +1,830 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav-content style="background-color:#FFFFFF;width: 100%;height: 100%;overflow: hidden;">
+      <div *ngIf="selectedCustomer" class="mainDiv" style="width:99%">
+        <div class="row" style="margin-bottom: 20px;">
+          <div class="col-lg-2 col-md-2 col-sm-2"
+            style="width:57%;   color: #4e5882;font-size: 15px;    font-weight: 700;">
+            <!-- <div class="backbutton"> -->
+            <div *ngIf="_util.IsGAVS()" class="backbuttonlink" [routerLink]="['/newdashboard/custm']"
+              (click)="resetValues()">
+              <img src="assets/images/back_round.png">
+            </div>
+
+            <img class="image" style="height:45px;padding:5px" src="assets/images/{{selectedCustomer.cusT_ID}}.png"
+              onerror="this.src='assets/images/CustomerLogo.png';">
+            {{selectedCustomer.cusT_NM}}
+          </div>
+          <div class="col-lg-5 col-md-5 col-sm-5"></div>
+          <div class="col-lg-5 col-md-5 col-sm-5" style="text-align:right">
+            <div style="padding:0 15px">
+              <a *ngIf="!_util.IsGAVS()" class="link" [routerLink]="['/layout/feedback-page', selectedCustomer.cusT_ID]"
+                style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer" matTooltip="Feedback"
+                [matTooltipPosition]="'before'">
+                <img style="width: 20px" src="assets/images/feedback.png">
+              </a>
+              <i class="fa fa-filter link" (click)="showFilter = !showFilter"
+                style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer"></i>
+              <button [disabled]="currIndex == 0" (click)="onPrev()"
+                style="background-color: white;font-size: 12px;margin-right: 20px;border:none">
+                <i class="fa fa-arrow-left"></i>&nbsp;Previous</button>
+              <button [disabled]="(currIndex == 2 && !isBaseMeasureEnabled) || (currIndex == 3 && isBaseMeasureEnabled)"
+                (click)="onNext()" style="background-color: white;font-size: 12px;border:none">
+                Next&nbsp;<i class="fa fa-arrow-right"></i></button>
+              <!-- [disabled]="(isBaseMeasureEnabled && currIndex == 2) || (!isBaseMeasureEnabled && currIndex == 1)"-->
+              <!-- <button *ngIf="!_util.IsGAVS()" class="btn btn-warning" style="margin: 2px;">
+                <a style="margin-right: 7px; text-decoration: none; color: white;" class="link"
+                  [routerLink]="['/dashboard']">Link to old CSM Portal</a>
+              </button> -->
+              <!-- <button *ngIf="!_util.IsGAVS() && _util.IsPremier(selectedCustomer.cusT_ID)" class="btn btn-warning"
+                style="margin: 2px;">
+                <a style="margin-right: 7px;margin-left: 7px; text-decoration: none; color: white;" class="link"
+                  [routerLink]="['/layout/timesheetnewhome', selectedCustomer.cusT_ID]">Time Sheets</a>
+              </button> -->
+
+              <img *ngIf="progress" class="image" style="height:20px;padding:0px"
+                src="assets/images/loading_spinner.gif">
+              <a *ngIf="!progress" (click)="Refresh_Onclick()" style="cursor: pointer">
+                <mat-icon style="vertical-align: middle;color:#e0dbdb">refresh</mat-icon>
+              </a>
+              <!-- <a *ngIf="_util.IsPremier(selectedCustomer.cusT_ID)" [routerLink]="['/newdashboard/port', selectedCustomer.cusT_ID]">
+                <img class="image" style="height:40px" src="assets/images/portfolio_view.png">
+              </a> -->
+            </div>
+          </div>
+        </div>
+        <div style="padding-left: 20px; padding-right: 20px; margin-bottom: 10px" *ngIf="showFilter">
+          <div style="position: relative;background-color: #eff8ff">
+            <app-portfolio-project-selector [custId]="selectedCustomer?.cusT_ID" [allproj]="false"
+              [portinput]="_shared.selectedPortfolios" [projinput]="_shared.selectedProjects"
+              [prodinput]="_shared.selectedProducts" (projectsSelected)="getSelectedProjectsList($event)"
+              (prodSelected)="getSelectedProdList($event)">
+            </app-portfolio-project-selector>
+          </div>
+          <div (click)="showFilter = false"
+            style="position:absolute; right: 40px; top: 90px; text-align: right;cursor: pointer;">
+            <mat-icon class="link" (click)="showFilter = false">close</mat-icon>
+          </div>
+        </div>
+
+        <div class="row" *ngIf="(isBaseMeasureEnabled && currIndex == 1) || (!isBaseMeasureEnabled && currIndex == 0)"
+          style="display: flex; gap: 1rem;">
+          <!-- For Multiple Projects -->
+          <!-- [style.width.px]="_util.IsPremier(selectedCustomer.cusT_ID) ? 610 : 1245" -->
+          <div id="goalPerformance" style="position: relative; width: 80%;
+          height: 280px;   ">
+            <div style="position: absolute" class="qualityHelp" *ngIf="showQualityHelp">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Quality</b>
+                </div>
+                <div style="float: right" (click)="closePopup('QualityHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure the outcome of service & delivery from Quality aspect (how free it is of errors).
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Percentage of User stories accepted without defect in every release
+                <br /><br />
+                2) Percentage of Incidents / Service requests re-opened by user
+                <br /><br />
+                3) Percentage / No of defects delivered per user story
+                <br />
+              </div>
+            </div>
+            <div style="position: absolute" class="qualityHelp" *ngIf="showPerformanceHelp">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Performance</b>
+                </div>
+                <div style="float: right" (click)="closePopup('PerformanceHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure how fast or slow is service / delivery.
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Percentage of incidents responded & resolved within agreed SLA
+                <br /><br />
+                2) Percentage of User stories accepted as committed
+                <br /><br />
+                3) Percentage of projects / initiatives progressing / completed within timeline
+                <br />
+              </div>
+            </div>
+            <div style="position: absolute" class="qualityHelp" *ngIf="showValueHelp">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Value</b>
+                </div>
+                <div style="float: right" (click)="closePopup('ValueHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure service & delivery on business outcome achieved, customer’s preferences and customer’s
+                perception.
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Business outcome achieved – Cost – saved / avoided
+                <br /><br />
+                2) User satisfaction after implementing project(s) in live / production
+                <br /><br />
+                3) Customer Satisfaction survey feedback 4. Percentage of incidents resolved prior to business impact
+                <br />
+              </div>
+            </div>
+            <div style="position: absolute" class="qualityHelp" *ngIf="showComplianceHelp">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Complaince</b>
+                </div>
+                <div style="float: right" (click)="closePopup('ComplianceHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure if the service delivery comply as per compliance requirements, policies, procedures &
+                standards
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Percentage of Services complied as per contractual requirements including Security, Clean room
+                requirements.
+                <br /><br />
+                2) Percentage of User stories delivered as per quality & security standards
+                <br /><br />
+              </div>
+            </div>
+            <div style="position: absolute" class="successGoalFilter" *ngIf="showSuccessGoalFilter">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 170px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Filter</b>
+                </div>
+                <div style="float: right" (click)="closeNav()">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px; margin-bottom: 3px;">
+                <b>Month</b>
+              </div>
+              <div style="margin-bottom: 12px; font-size: 12px;">
+                <select name='tableMonth' [(ngModel)]="_dashboardUtil.csG_FILTER_MONTH" required
+                  style="width: 170px !important; height: 25px;">
+                  <option value='Jan'>JAN</option>
+                  <option value='Feb'>FEB</option>
+                  <option value='Mar'>MAR</option>
+                  <option value='Apr'>APR</option>
+                  <option value='May'>MAY</option>
+                  <option value='Jun'>JUN</option>
+                  <option value='Jul'>JUL</option>
+                  <option value='Aug'>AUG</option>
+                  <option value='Sep'>SEP</option>
+                  <option value='Oct'>OCT</option>
+                  <option value='Nov'>NOV</option>
+                  <option value='Dec'>DEC</option>
+                </select>
+              </div>
+              <div style="font-size: 13px; margin-bottom: 3px;">
+                <b>Year</b>
+              </div>
+              <div style="font-size: 12px; margin-bottom: 55px;">
+                <select name='tableYear' [(ngModel)]="_dashboardUtil.csG_FILTER_YEAR" required
+                  style="width: 170px !important; height: 25px;">
+                  <option *ngFor="let year of _util.Years(3)" [value]="year">{{year}}</option>
+                  <!--<option [value]='2019'>2019</option>
+                <option [value]='2020'>2020</option>-->
+                </select>
+              </div>
+              <div class="row" style="font-size: 12px; text-align: center" *ngIf="projectScores">
+                <!-- <div class="row" style="font-size: 12px; text-align: center"> -->
+                <button type="button" class="btn btn-primary"
+                  style="height: 25px; margin-right: 12px; text-align: center; background-color: #00004d; padding-top: 2px;"
+                  (click)="btnApplyMultiProjects_OnClick()">Apply</button>
+                <button type="button" class="btn btn-primary"
+                  style="height: 25px; padding-left : 4px;text-align: center; padding-top: 2px; width: 59px;background-color: #262626"
+                  (click)="closeNav()">Cancel</button>
+              </div>
+              <div class="row" style="font-size: 12px; text-align: center" *ngIf="successGoalScores">
+                <button type="button" class="btn btn-primary"
+                  style="height: 25px; margin-right: 12px; text-align: center; background-color: #00004d; padding-top: 2px;"
+                  (click)="btnApplySingleProject_OnClick()">Apply</button>
+                <button type="button" class="btn btn-primary"
+                  style="height: 25px; padding-left : 4px;text-align: center; padding-top: 2px; width: 59px;background-color: #262626"
+                  (click)="closeNav()">Cancel</button>
+              </div>
+            </div>
+            <div class="row" style="padding-left: 10px; font-size: 14px;margin-bottom: 12px;">
+              <div style="float: left;">
+                Performance of Success Goal ({{ sMonth + '-' + iYear }})
+              </div>
+              <div style="float: right; cursor: pointer; text-decoration: none;">
+                <a *ngIf="isFrontier && _access.IsAllowed(103, 1, '', '')" style="margin-right: 8px;">
+                  <i class="fa fa-upload" title="Upload File" (click)="UploadProjectFile()"></i>
+                </a>
+                <a (click)="changKPIflag()" *ngIf="_access.IsAllowed(12, 3, '', '')" style="margin-right: 5px;"
+                  class="link" title="Edit KPI" [routerLink]="['/kpi', customerid]">
+                  <i class="fa fa-edit"></i>
+                </a>
+                <i (click)="showSuccessGoalFilter = !showSuccessGoalFilter" style="font-size:16px;"
+                  class="fa">&#xf013;</i>
+              </div>
+            </div>
+            <div class="row">
+
+              <div class="col-lg-12 col-md-12 col-sm-12" *ngIf="projectScores?.length > 0">
+                <table class="successgoalTable">
+                  <thead>
+                    <tr *ngIf="isCBH">
+                      <th style="width: 60%!important;padding-left: 5px;">Project</th>
+                      <th style="width: 20%!important;text-align: left;">Lead</th>
+                      <th style="text-align: left; width: 15%">Transition</th>
+                      <th style="width: 5%; text-align: left; ">Action</th>
+                    </tr>
+                    <tr *ngIf="!isCBH && !isFrontier">
+                      <th style="width: 25%;padding-left: 5px;">Project</th>
+                      <th style="width: 15%; text-align: right; ">Achievement</th>
+                      <th style="width: 20%; text-align: center;">Customer contact</th>
+                      <th style="width: 20%; text-align: right; ">Trend</th>
+                      <th style="width:15%;text-align: center;padding-left: 45px; ">Transition</th>
+                      <th style="width: 5%; text-align: center; ">Action</th>
+                    </tr>
+                    <tr *ngIf="isFrontier">
+                      <th style="width: 15%;padding-left: 5px;">Portfolio</th>
+                      <th style="width: 5%;padding-left: 5px;">Total Workgroups</th>
+                      <th style="width: 10%;padding-left: 10px;">SLA Compliance</th>
+                      <th style="width: 10%; text-align: center; ">Achievement</th>
+                      <th style="width: 5%;text-align: left; ">KM</th>
+                      <th style="width: 10%; text-align: left;">Customer contact</th>
+                      <th style="width: 3%; text-align: left; ">Trend</th>
+                      <th style="width: 5%; text-align: right; ">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size: 12px;">
+                    <tr *ngFor="let proj of projectScores"
+                      style="border-left: 3px solid; box-shadow: -1.5px 2px 2.5px 1px lightgray!important"
+                      [style.border-color]="proj.color">
+                      <td *ngIf="isCBH"
+                        style="width: 110px;max-width: 110px !important;cursor: pointer;font-size:11px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0"
+                        [routerLink]="['/layout/delivery/202100110',proj.proJ_ID]" [matTooltip]='proj.proJ_NM'>
+                        {{proj.proJ_NM}}
+                      </td>
+                      <td *ngIf="!isCBH"
+                        style="width: 110px;max-width: 110px !important;cursor: pointer;font-size:11px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0"
+                        [routerLink]="['/successgoal/goals', proj.cusT_ID, proj.proJ_ID, sMonth, iYear]"
+                        [matTooltip]='proj.proJ_NM'>
+                        {{proj.proJ_NM}}
+                      </td>
+                      <td *ngIf="isFrontier"
+                        style="width: 80px;max-width: 80px !important; overflow-x: hidden;text-align: center;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;">
+                        {{proj.totaL_KPI_AREA}}
+                      </td>
+                      <td *ngIf="isFrontier"
+                        style="width: 80px;max-width: 80px !important; overflow-x: hidden;text-align: center;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;">
+                        {{proj.meT_KPIS + '/' + proj.totaL_KPIS}}
+                      </td>
+                      <td *ngIf="!isCBH"
+                        style="color: black; font-weight: 900;text-align: center; overflow: visible; width: 80px !important;max-width: 80px !important;">
+                        {{proj.score }}
+                      </td>
+                      <td *ngIf="isFrontier && _access.IsAllowed(103, 1, '', '')"
+                        style="width: 2%;cursor: pointer; text-align: center;">
+                        <a>
+                          <i class="fa fa-upload" title="Upload File" (click)="UploadProjectFile(proj.proJ_ID)"></i>
+                        </a>
+                      </td>
+                      <td
+                        style="width: 80px;max-width: 80px !important; overflow-x: hidden;text-align: center;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;">
+                        {{proj.customeR_NM}}
+                      </td>
+                      <td *ngIf="!isCBH"
+                        style="color: black; font-weight: 900;text-align: center; overflow: visible; width: 80px !important;max-width: 80px !important;">
+                        <a style="margin-left: 10px;">
+                          <i class="fa fa-line-chart" title="View Trend"
+                            (click)="openAchievementtrendScreen(proj.proJ_ID)"></i>
+                        </a>
+                      </td>
+                      <td *ngIf="!isFrontier" style="cursor: pointer;text-align: center;
+                    cursor: pointer;width: 30px !important;max-width: 110px !important;">
+                        <a class="link" href="{{proj.projecT_PLAN_URL}}" target="_blank">
+                          <i class="fa fa-exchange" title="Transition"></i>
+                        </a>
+                      </td>
+                      <td
+                        style="color: black; cursor: pointer; font-weight: 900;text-align: center; overflow: visible; width: 20px !important;max-width: 80px !important;">
+                        <a style="margin-left: 10px;">
+                          <i class="fa fa-edit" title="View heads" (click)="viewQSPOC(proj.proJ_ID,proj.proJ_NM)"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div *ngIf="IsProjectEmpty()" style="height: 150px; line-height: 150px;">
+                  No Projects Under this Portfolio
+                </div>
+              </div>
+
+
+
+              <div class="col-lg-8 col-md-8 col-sm-8"
+                *ngIf="successGoalScores?.length > 0 && _util.IsPremier(selectedCustomer.cusT_ID)">
+                <table class="successgoalTable1">
+                  <thead>
+                    <tr>
+                      <th style="width: 230px;max-width: 230px;text-align: center;box-sizing: border-box">Customer
+                        Success Goal</th>
+                      <th style="width: 130px;max-width: 130px;text-align: center;padding-left: 23px;">Period</th>
+                      <th style="width: 75px;max-width: 75px;text-align: center">Achievement</th>
+                      <th style="width: 70px;max-width: 70px;text-align: center">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size: 12px;box-sizing: border-box;">
+                    <tr style="box-shadow: -2px 2px 2.5px gray !important;color: gray;; "
+                      *ngFor="let goal of successGoalScores">
+
+                      <td
+                        style="width: 230px;max-width: 230px;padding-left: 7px;box-sizing: border-box; overflow-x: hidden !important;
+                    white-space: nowrap; text-overflow: ellipsis;box-shadow: -2px 0px 0px gray;border-left: 3px solid green;">
+                        {{ goal.goaL_NAME}}
+                      </td>
+                      <td style="width: 130px;max-width: 130px;text-align: center;">{{ sMonth + ', ' + iYear }}</td>
+                      <td style="width: 75px;max-width: 75px;text-align: center">
+
+                        {{goal.score}}
+
+                      </td>
+                      <td style="width: 70px;max-width: 70px;text-align: center;">
+                        <a style="cursor: pointer; text-decoration: none; color: gray !important"
+                          [routerLink]="['/successgoal/goals', goal?.cusT_ID, goal?.proJ_ID, goal?.goaL_ID, sMonth, iYear ]">
+                          <img src="assets/images/Process Improvements.png" style="width: 15px;">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-lg-8 col-md-8 col-sm-8" *ngIf="successGoalScores?.length > 0">
+                <table class="successgoalTable1">
+                  <thead>
+                    <tr>
+                      <th style="width: 230px;max-width: 230px;text-align: center;box-sizing: border-box">Customer
+                        Success Goal</th>
+                      <th style="width: 130px;max-width: 130px;text-align: center;padding-left: 23px;">Period</th>
+                      <th style="width: 75px;max-width: 75px;text-align: center">Achievement</th>
+                      <th style="width: 70px;max-width: 70px;text-align: center">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size: 12px;box-sizing: border-box;">
+                    <tr style="box-shadow: -2px 2px 2.5px gray !important;color: gray;; "
+                      *ngFor="let goal of successGoalScores">
+
+                      <td
+                        style="width: 230px;max-width: 230px;padding-left: 7px;box-sizing: border-box; overflow-x: hidden !important;
+                    white-space: nowrap; text-overflow: ellipsis;box-shadow: -2px 0px 0px gray;border-left: 3px solid green;">
+                        {{ goal.goaL_NAME}}
+                      </td>
+                      <td style="width: 130px;max-width: 130px;text-align: center;">{{ sMonth + ', ' + iYear }}</td>
+                      <td style="width: 75px;max-width: 75px;text-align: center">
+
+                        {{goal.score}}
+
+                      </td>
+                      <td style="width: 70px;max-width: 70px;text-align: center;">
+                        <a style="cursor: pointer; text-decoration: none; color: gray !important"
+                          [routerLink]="['/successgoal/goals', goal?.cusT_ID, goal?.proJ_ID, goal?.goaL_ID, sMonth, iYear ]">
+                          <img src="assets/images/Process Improvements.png" style="width: 15px;">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div *ngIf="successGoalScores?.length == 0"
+                style="height: 100px; text-align: center;line-height: 100px; font-size: 17px;">
+                No goals defined / KPI achievement details not updated for the period
+              </div>
+            </div>
+          </div>
+          <!-- style="float: right;height: 280px !important;margin-left: 10px;width:222px" -->
+          <div class="separateCard" style="position: relative;width: 200px;
+              height: 280px !important;">
+            <div>
+              <span style="font-size: 14px;text-align: left">Events & Tasks</span>
+              <span style="text-align: right"></span>
+            </div>
+            <div class="row" *ngIf="isTasksEventsEmpty" style="height:85px; width: 190px;font-size: 13px;color:black">
+              <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                No Events & Tasks
+              </span>
+            </div>
+            <div *ngIf="!isTasksEventsEmpty" style="position: relative">
+              <div style="position: relative">
+                <div style="height: 120px; width: 160px;">
+                  <google-chart #charttasksEvents [type]="tasksEventstype" [data]="tasksEventsSummaryData"
+                    [columnNames]="tasksEventsColumnNames" [options]="tasksEventsoptions" [width]="widthE"
+                    [height]="heightE">
+                  </google-chart>
+                </div>
+                <div class="centreLabel">
+                  {{totaltasksEvents}}
+                </div>
+              </div>
+              <div style="left: 10px;">
+                <table id="tbleventsummary" class="successgoalTable">
+                  <thead>
+                    <tr style="font-size: 10px">
+                      <th> Due </th>
+                      <th style="text-align: right">Events</th>
+                      <th style="text-align: center">Tasks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="font-size: 10px" [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'OD']">
+                      <th> Over Due </th>
+                      <td style="text-align: center">{{eventTasksHighValues.overdueEvents +
+                        eventTasksMediumValues.overdueEvents + eventTasksLowValues.overdueEvents}}</td>
+                      <td style="text-align: center">{{eventTasksHighValues.overdueTasks +
+                        eventTasksMediumValues.overdueTasks + eventTasksLowValues.overdueTasks}}</td>
+                    </tr>
+                    <tr style="font-size: 10px" [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'TW']">
+                      <th> This week </th>
+                      <td style="text-align: center">{{eventTasksHighValues.thisWeekEvents +
+                        eventTasksMediumValues.thisWeekEvents + eventTasksLowValues.thisWeekEvents}}</td>
+                      <td style="text-align: center">{{eventTasksHighValues.thisWeekTasks +
+                        eventTasksMediumValues.thisWeekTasks + eventTasksLowValues.thisWeekTasks}}</td>
+                    </tr>
+                    <tr style="font-size: 10px" [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'TM']">
+                      <th> This Month </th>
+                      <td style="text-align: center">{{eventTasksHighValues.thisMonthEvents +
+                        eventTasksMediumValues.thisMonthEvents + eventTasksLowValues.thisMonthEvents}}</td>
+                      <td style="text-align: center">{{eventTasksHighValues.thisMonthTasks +
+                        eventTasksMediumValues.thisMonthTasks + eventTasksLowValues.thisMonthTasks}}</td>
+                    </tr>
+                    <tr style="font-size: 10px" [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'NW']">
+                      <th> Next Week </th>
+                      <td style="text-align: center">{{eventTasksHighValues.nextWeekEvents +
+                        eventTasksMediumValues.nextWeekEvents + eventTasksLowValues.nextWeekEvents}}</td>
+                      <td style="text-align: center">{{eventTasksHighValues.nextWeekTasks +
+                        eventTasksMediumValues.nextWeekTasks + eventTasksLowValues.nextWeekTasks}}</td>
+                    </tr>
+                    <tr style="font-size: 10px" [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'NM']">
+                      <th> Next Month </th>
+                      <td style="text-align: center">{{eventTasksHighValues.nextMonthEvents +
+                        eventTasksMediumValues.nextMonthEvents + eventTasksLowValues.nextMonthEvents}}</td>
+                      <td style="text-align: center">{{eventTasksHighValues.nextMonthTasks +
+                        eventTasksMediumValues.nextMonthTasks + eventTasksLowValues.nextMonthTasks}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div style="font-size: 9px; color: #94d3f1; text-align: right; ">
+              <!-- <a style="cursor: pointer; text-decoration: none" (click)="showIssuesDetails(selectedCustomer.cusT_ID)">
+              <u>View Details</u>
+            </a> -->
+              <a style="cursor: pointer; text-decoration: none"
+                [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'All']">
+                <u>View Details</u>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" *ngIf="(isBaseMeasureEnabled && currIndex == 1) || (!isBaseMeasureEnabled && currIndex == 0)">
+          <div id="containerCard" style="float: left; margin-left: 20px;width: 31%;" class="col-3">
+            <div style="height: 130px" class="col-3">
+              <div class="separateCard col-6" style="float: left;width:195px; margin-left: 8px;">
+                <div>
+                  <span style="font-size: 14px;text-align: left">Action Items</span>
+                  <span style="text-align: right"></span>
+                </div>
+                <div class="row" *ngIf="isActionItemsEmpty"
+                  style="height:85px; width: 200px;font-size: 13px;color:black">
+                  <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                    No Action Items
+                  </span>
+                </div>
+                <div *ngIf="!isActionItemsEmpty" style="position: relative">
+                  <div style="position: relative;">
+                    <div style="height: 90px; width: 200px;">
+                      <google-chart #chart2 [type]="type6" [data]="data6" [columnNames]="columnNames6"
+                        [options]="options6" [width]="width6" [height]="height6">
+                      </google-chart>
+                    </div>
+                    <div class="centreLabel">
+                      {{totalActionItems}}
+                    </div>
+                  </div>
+                  <div style="top: 55px; left: 10px; position: absolute; width: 90px;">
+                    <table style="width : 90px">
+                      <tr style="background-color: #ffe8e9; height: 23px;">
+                        <td style="color: red; text-align: center">{{actionItemHigh}}</td>
+                        <td style="color: orange;text-align: center">{{actionItemMedium}}</td>
+                        <td style="color: green; text-align: center">{{actionItemLow}}</td>
+                      </tr>
+                      <tr style="font-size: 10px">
+                        <td style="text-align: center">High</td>
+                        <td style="text-align: center">Med</td>
+                        <td style="text-align: center">Low</td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+                <div style="font-size: 9px; color: #94d3f1; text-align: right; ">
+                  <a style="cursor: pointer; text-decoration: none" [routerLink]="['/layout/actionitems', customerid]">
+                    <u>View Details</u>
+                  </a>
+                </div>
+              </div>
+              <div class="separateCard col-6" style="float: left;width:195px; margin-left: 10px;">
+
+                <app-appreciation-widget-source [custId]="customerid"></app-appreciation-widget-source>
+
+              </div>
+            </div>
+            <div style="height: 130px;" class="col-3">
+              <div class="separateCard col-6" style="float: left;width:195px; margin-left: 8px;">
+                <div>
+                  <span style="font-size: 14px;text-align: left">Risks</span>
+                  <span style="text-align: right"></span>
+                </div>
+                <div class="row" *ngIf="isRisksEmpty" style="height:90px; width: 190px;font-size: 13px;color:black">
+                  <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                    No Risks
+                  </span>
+                </div>
+                <div *ngIf="!isRisksEmpty" style="position: relative;">
+                  <div style="position: relative">
+                    <div style="height: 90px; width: 190px;">
+                      <google-chart #chart2 [type]="typeR" [data]="dataR" [columnNames]="columnNamesR"
+                        [options]="optionsR" [width]="widthR" [height]="heightR">
+                      </google-chart>
+                    </div>
+                    <div class="centreLabel">
+                      {{totalRisks}}
+                    </div>
+                  </div>
+                  <div style="top: 55px; left: 10px; position: absolute; width: 90px;">
+                    <table style="width : 90px">
+                      <tr style="background-color: #ffe8e9; height: 23px;">
+                        <td style="color: red; text-align: center">{{riskHigh}}</td>
+                        <td style="color: orange;text-align: center">{{riskMedium}}</td>
+                        <td style="color: green; text-align: center">{{riskLow}}</td>
+                      </tr>
+                      <tr style="font-size: 10px">
+                        <td style="text-align: center">High</td>
+                        <td style="text-align: center">Med</td>
+                        <td style="text-align: center">Low</td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+                <div style="font-size: 9px; color: #94d3f1; text-align: right; ">
+                  <!-- <a style="cursor: pointer; text-decoration: none" (click)="showRiskDetails(selectedCustomer.cusT_ID)">
+                  <u>View Details</u>
+                </a> -->
+                  <a style="cursor: pointer; text-decoration: none" [routerLink]="['/layout/risk', customerid]">
+                    <u>View Details</u>
+                  </a>
+                </div>
+              </div>
+
+              <div class="separateCard col-6" style="float: left;width:195px;margin-left: 10px">
+                <div>
+                  <span style="font-size: 14px;text-align: left">Issues</span>
+                  <span style="text-align: right"></span>
+                </div>
+                <div class="row" *ngIf="isIssuesEmpty" style="height:85px; width: 170px;font-size: 13px;color:black">
+                  <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center">
+                    No Issues
+                  </span>
+                </div>
+                <div *ngIf="!isIssuesEmpty" style="position: relative">
+                  <div style="position: relative">
+                    <div style="height: 90px; width: 190px;">
+                      <google-chart #chart2 [type]="typeI" [data]="dataI" [columnNames]="columnNamesI"
+                        [options]="optionsI" [width]="widthI" [height]="heightI">
+                      </google-chart>
+                    </div>
+                    <div class="centreLabel">
+                      {{totalIssues}}
+                    </div>
+                  </div>
+                  <div style="top: 55px; left: 10px; position: absolute; width: 90px;">
+                    <table style="width : 90px">
+                      <tr style="background-color: #ffe8e9; height: 23px;">
+                        <td style="color: red; text-align: center">{{issueHigh}}</td>
+                        <td style="color: orange;text-align: center">{{issueMedium}}</td>
+                        <td style="color: green; text-align: center">{{issueLow}}</td>
+                      </tr>
+                      <tr style="font-size: 10px">
+                        <td style="text-align: center">High</td>
+                        <td style="text-align: center">Med</td>
+                        <td style="text-align: center">Low</td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+                <div style="font-size: 9px; color: #94d3f1; text-align: right; ">
+                  <!-- <a style="cursor: pointer; text-decoration: none" (click)="showIssuesDetails(selectedCustomer.cusT_ID)">
+                  <u>View Details</u>
+                </a> -->
+                  <a style="cursor: pointer; text-decoration: none" [routerLink]="['/layout/issues', customerid]">
+                    <u>View Details</u>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+            <div style="height: 130px;" class="col-3">
+              <div class="separateCard" style="float: left;width:195px;margin-left: 9px;margin-bottom: 10px">
+                <div>
+                  <span style="font-size: 14px;text-align: left">Contracts Status</span>
+                  <span style="text-align: right"></span>
+                </div>
+                <div style="font-size: 10px;color: dark gray">(Next 3 months)</div>
+                <div *ngIf="isProjectStatusEmpty" style="height:50px;font-size: 12px;color:black">
+                  <span style="display: block;padding-top: 20px;text-align: center">
+                    No Projects/Contracts to start or close in next 3 months
+                  </span>
+                </div>
+                <div *ngIf="!isProjectStatusEmpty" style="position: relative;">
+                  <div style="position: relative; margin-bottom: 0px;">
+                    <div style="height: 70px; width: 190px;">
+                      <google-chart #chart2 [type]="type5" [data]="data5" [columnNames]="columnNames5"
+                        [options]="options5" [width]="width5" [height]="height5">
+                      </google-chart>
+                    </div>
+                    <div class="centreLabel">
+                      {{totalProjects}}
+                    </div>
+                  </div>
+                  <div style="font-size: 10px; color: #94d3f1; left: 102px; position: absolute ">
+                    <a style="cursor: pointer; text-decoration: none"
+                      (click)="GetProjectForecast(selectedCustomer.cusT_ID)">
+                      <u>View Details</u>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="journeyMap" class="journeyMap" style="width:20%;" class="col-3">
+            <div style="margin-bottom: 30px;">
+              <div style="margin-bottom: 10px; font-size: 14px; float: left;width: 43.5%;">Key Highlights
+                ({{_dashboardUtil.csG_FILTER_MONTH + ' - ' + _dashboardUtil.csG_FILTER_YEAR}})</div>
+              <mat-form-field style="padding-left:20px; text-align: left;width:35%">
+                <mat-select (selectionChange)="weekChange($event.value)" name='Week' [(ngModel)]="SelectedWeek"
+                  placeholder="Period">
+                  <mat-option [value]=0>Month</mat-option>
+                  <mat-option [value]=1>Week 1</mat-option>
+                  <mat-option [value]=2>Week 2</mat-option>
+                  <mat-option [value]=3>Week 3</mat-option>
+                  <mat-option [value]=4>Week 4</mat-option>
+                  <mat-option [value]=5>Week 5</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <div style="float: right; cursor: pointer;" (click)="showKPINotesForCustomer(selectedCustomer.cusT_ID)">
+                <a *ngIf="_access.IsAllowed(13, 3, '', '')">
+                  <i class="fa fa-edit"></i>
+                </a>
+              </div>
+            </div>
+
+            <div class="journeyMapContent"
+              style="max-height: 78%; overflow-y: scroll; overflow-x: hidden ;position: relative;bottom: 13%;">
+              <div *ngIf="!highlights" style="text-align: center; height: 100px; line-height: 100px;">
+                <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 21px;"></i>Loading...
+              </div>
+              <ul class="a" *ngIf="highlights">
+                <li
+                  style="padding: 5px;white-space: normal; word-wrap:break-word; width:98%;font-size: 12px;font-family: sans-serif;color: #808080"
+                  *ngFor="let h of highlights">
+                  {{h.description}}
+                </li>
+              </ul>
+              <div *ngIf="highlights?.length == 0"
+                style="text-align: center; height: 150px; line-height: 150px; font-size: 13px; color: black;">
+                No Highlights for this Period
+              </div>
+              <div style="font-size: 11px; color: #94d3f1; text-align: right ">
+                <a style="margin-left: auto">
+                  <!-- <u>View More</u> -->
+                </a>
+              </div>
+            </div>
+            <div class="journeyMapFooter" style="height: 20px;">
+
+            </div>
+          </div>
+          <div id="journeyMap" class="journeyMap" style="width: 44.5%;margin-left: 11px;" class="col-6">
+            <div style="margin-bottom: 55px;">
+              <div style="margin-bottom: 10px; font-size: 14px; float: left">Service Improvement Plan ({{
+                sMonth + '-' + iYear }})</div>
+              <!-- <a>
+                <div style="float: right; cursor: pointer;">
+                  <i class="fa fa-edit"></i>
+                </div>
+              </a> -->
+            </div>
+
+            <div class="journeyMapContent" style="max-height: 78%; position: relative;bottom: 13%;padding-top: 10px;">
+
+              <table class="prodKPITable">
+                <thead style="color: black; margin-bottom: 5px;">
+                  <br>
+                  <tr style="font-weight: 500; font-size: 12px;">
+                    <th style="width: 205px;max-width: 225px !important;padding-left: 5px;">Entered Projects
+                      <!-- ({{countOfProds}}) -->
+                    </th>
+                    <th style="width: 10%; max-width: 80px !important;text-align:center;"
+                      matTooltip="No of KPIs Target Not Met">
+                      Not Met</th>
+                    <th colspan="5" style="width: 80px; max-width: 80px !important;text-align: center; ">Corrective
+                      Action Plan Stages
+                    </th>
+                  </tr>
+                  <tr style="font-size: 10px;font-weight: 500;">
+                    <td style="height:5px;width: 40%;"></td>
+                    <td style="height:5px;text-align: center;width: 10%;"></td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Submission</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Review</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for QA Approval</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Implementation</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Verification</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Closed</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let CAPA of projectCAPACount"
+                    style="border-left: 3px solid; box-shadow: -1.5px 2px 2.5px 1px lightgray!important">
+                    <td [matTooltip]='CAPA.projecT_TITLE'
+                      style="width:35%;max-width: 90px;cursor: pointer;font-size:12px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0">
+                      {{CAPA.projecT_TITLE}}</td>
+                    <td style="color: black;text-align: center;font-size: 12px;width: 10%">
+                      {{CAPA.noT_MET}}
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%;">
+                      {{CAPA.duE_FOR_SUBMISSION}}
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      {{CAPA.duE_FOR_REVIEW}}
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      {{CAPA.duE_FOR_QA_APPROVAL}}
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      {{CAPA.duE_FOR_IMPLEMENTATION}}
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      {{CAPA.duE_FOR_VERIFICATION}}
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      {{CAPA.closed}}
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+              <div *ngIf="projectCAPACount?.length == 0"
+                style="height: 100px; text-align: center;line-height: 100px; font-size: 17px;">
+                No Service Improvement Plan defined for this Period.
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="row" *ngIf="(isBaseMeasureEnabled && currIndex == 2) || (!isBaseMeasureEnabled && currIndex == 1) "
+          style="width:100%;height: 100%;">
+          <app-dashboard-customer-next-page [customerId]="customerid" [projectArray]="projArray"
+            [month]="_dashboardUtil.csG_FILTER_MONTH" [year]="_dashboardUtil.csG_FILTER_YEAR">
+          </app-dashboard-customer-next-page>
+        </div>
+        <div class="row" *ngIf="currIndex == 0 && isBaseMeasureEnabled">
+          <app-dashboard-premier [projectArray]="projArray" [productArray]="prodArray" [portArray]="portArray">
+          </app-dashboard-premier>
+        </div>
+        <div class="row" *ngIf="(currIndex == 2 && !isBaseMeasureEnabled) || (currIndex == 3 && isBaseMeasureEnabled)">
+          <app-dashboard-success-journey [custId]="customerid"></app-dashboard-success-journey>
+        </div>
+
+      </div>
+      <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: right;font-size:12px;color:grey;padding-top:10px">
+          Page refresh in {{timeLeft}} sec..</div>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

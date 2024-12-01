@@ -1,0 +1,251 @@
+<div class="row bg1">
+  <div style="text-align: center;" class="col-lg-12 col-md-12 col-sm-12 bg0">
+    Planner &nbsp;&nbsp;&nbsp;
+    <mat-radio-group style="display: inline; font-size: smaller;" name="View" [(ngModel)]="selectView">
+      <mat-radio-button (click)="changeView('1')" value="1" [checked]="selectView === '1'">Calendar
+        View</mat-radio-button> &nbsp;&nbsp;
+      <mat-radio-button (click)="changeView('2')" value="2" [checked]="selectView === '2'">List View
+      </mat-radio-button>
+    </mat-radio-group>
+    <span class="element-to-right"style="font-size: smaller;padding: 5px;">Number of Audits planned({{ _taskService.plannedAuditsCount }})</span>
+  </div>
+
+</div>
+
+<div clas s="row bg1" style="padding-bottom: 5px">
+  <div class="col-lg-12 col-md-12 col-sm-12">
+    Type:
+    <mat-select class="mat-dropdown-plain" style="width:50px !important" name="ddType" [(ngModel)]="selectedTaskType"
+      (selectionChange)="ddTaskType_OnChange()" required>
+      <mat-option *ngFor="let item of TaskTypeList" [value]="item.id" [title]="item.title">
+        {{item.title}}
+      </mat-option>
+    </mat-select>
+    Category:
+    <mat-select class="mat-dropdown-plain" style="width:120px !important" name="ddCategory"
+      [(ngModel)]="selectedTaskCategory" (openedChange)="resetCategoryFilterValue($event)" multiple required
+      #selectCategory>
+      <mat-form-field class="filter-category" style="width: 100%;">
+        <input matInput #categorySearchInput (keyup)="applyFilterForCategory(categorySearchInput.value)" (keydown)="$event.stopPropagation()"
+          style="text-indent: 10px;" placeholder="Search Task Category">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <mat-option value="-1" (click)="toggleSelectionForCategory()" #allCategorySelected>All</mat-option>
+      <mat-option *ngFor="let item of TaskCategoryList" [value]="item.id" [title]="item.title"
+        (click)="categoryTosslePerOne()">
+        {{item.title}}
+      </mat-option>
+    </mat-select>
+    Customer:
+    <mat-select class="mat-dropdown-plain" style="width:150px !important" name="ddCustomer"
+      [(ngModel)]="selectedCustomer" (openedChange)="resetCustomerFilterValue($event)"
+      (selectionChange)="ddCustomer_OnChange()" multiple required #selectCustomer>
+      <mat-form-field class="filter-category" style="width: 100%;">
+        <input matInput #customerSearchInput (keyup)="applyFilterForCustomer(customerSearchInput.value)" (keydown)="$event.stopPropagation()"
+           style="text-indent: 10px;" placeholder="Search Customer">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <mat-option value="-1" (click)="toggleSelectionForCustomer()" #allCustomerSelected>All</mat-option>
+      <mat-option *ngFor="let item of CustomerList" [value]="item.customerId" [title]="item.customerName"
+        (click)="customerTosslePerOne()">
+        {{item.customerName}}
+      </mat-option>
+    </mat-select>
+    Project:
+    <mat-select class="mat-dropdown-plain" style="width:150px !important" name="ddProject" [(ngModel)]="selectedProject"
+      (openedChange)="resetProjectFilterValue($event)" multiple required #selectProject>
+      <mat-form-field class="filter-category" style="width: 100%;">
+        <input matInput #projectSearchInput (keyup)="applyFilterForProject(projectSearchInput.value)" (keydown)="$event.stopPropagation()"
+           style="text-indent: 10px;" placeholder="Search Project">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <mat-option value="-1" (click)="toggleSelectionForProject()" #allProjectSelected>All</mat-option>
+      <mat-option *ngFor="let item of ProjectList" [value]="item.proJ_ID" [title]="item.proJ_NM"
+        (click)="projectTosslePerOne()">
+        {{item.proJ_NM}}
+      </mat-option>
+    </mat-select>
+
+    <span style="vertical-align:middle;padding-right:5px">
+      <a style="cursor:pointer">
+        <mat-icon (click)="MovePreviousYear()" style="vertical-align:middle">arrow_left</mat-icon>
+      </a>
+      {{currentYear}}
+      <a style="cursor:pointer">
+        <mat-icon (click)="MoveNextYear()" style="vertical-align:middle">arrow_right</mat-icon>
+      </a>
+    </span>
+    <mat-form-field style="width: 50px;" *ngIf="selectedPeriod =='Monthly'">
+      <mat-select (selectionChange)="MonthChange()" [(ngModel)]="selectedMonth" required placeholder="Month">
+        <mat-option *ngFor="let month of months" [value]='month.value'
+          [title]='month.title'>{{month.title}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field style="width: 50px;" *ngIf="selectedPeriod =='Quarterly'">
+      <mat-select name='tableMonth' (selectionChange)="QuarterChange()" [(ngModel)]="selectedQuarter" required
+        placeholder="Quarter">
+        <mat-option value='Q1'>Q1</mat-option>
+        <mat-option value='Q2'>Q2</mat-option>
+        <mat-option value='Q3'>Q3</mat-option>
+        <mat-option value='Q4'>Q4</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-button-toggle-group *ngIf="selectView == '1'" [(ngModel)]="selectedPeriod" appearance="legacy" name="fontStyle"
+      aria-label="Font Style" style="margin-left:5px;text-align: right">
+      <mat-button-toggle (click)="changePeriod()" value="Yearly">Yearly</mat-button-toggle>
+      <mat-button-toggle (click)="changePeriod()" value="Quarterly">Quarterly</mat-button-toggle>
+      <mat-button-toggle (click)="changePeriod()" value="Monthly">Monthly</mat-button-toggle>
+      <mat-button-toggle [disabled]="true" value="Weekly">Weekly</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <button class="btn btn-primary" style="margin-left:5px;margin-right: 5px;margin-top: 2px;margin-bottom: 2px"
+      [disabled]="_taskService.bProgress" (click)="getOverallTaskDetails()">Go</button>
+    <button class="btn btn-primary" style="margin-left:5px;margin-right: 5px;margin-top: 2px;margin-bottom: 2px"
+      [disabled]="_taskService.bProgress" (click)="btnClear_OnClick()">Clear</button>
+    <a style="position: absolute;right: 0%;" *ngIf="selectView == '2'" class="iconbutton" title="Export to Excel"
+      (click)="ExportToExcel()">
+      <i style="color: #207346;" class="fa fa-file-excel-o"></i>
+    </a>
+  </div>
+</div>
+<br><br>
+<mat-progress-bar *ngIf="_taskService.bProgress" mode="indeterminate"></mat-progress-bar>
+<div *ngIf="selectView == '1'" class="table-container">
+  <div class="table-wrapper">
+    <!-- Monthly Table -->
+    <table class="table table-bordered monthly-table" *ngIf="selectedPeriod =='Monthly' && !_taskService.bProgress">
+      <thead>
+        <tr>
+          <th><b>Project</b></th>
+          <th *ngFor="let date of _taskService.taskGroups?.dates">
+            <b>{{date.split('#')[1]}}{{date.split('#')[0]}}</b>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let proj of _taskService.taskGroups?.projects">
+          <td>{{proj.projectName}}</td>
+          <td *ngFor="let month of proj.groups">
+            <div class="task" *ngFor="let task of month.tasks" (mouseover)="showSummary(task)"
+              (mouseout)="closeDialog()"
+              [ngStyle]="{'background-color': task.coloR_BG ? task.coloR_BG : '#cde6f7', 'border-left': task.coloR_MG ? '5px solid ' + task.coloR_MG : '5px solid #99c8e9'}">
+              <a title={{getTooltip(task)}} style="cursor:pointer" (click)="Task_OnClick(task)">
+                <span [style.background-color]="getStatusColor(task.status)"
+                  class="badge">{{getStatusAbr(task.status)}}</span>
+                <b style="padding-left:2px">{{task.tasK_TYPE}}</b> - {{task.tasK_CATEGORY}}<br>
+                St Dt: <span [style.color]="getDateColor(task.status)"> {{getDayPart(task.scheduleD_START_DATE)}}</span>
+                |
+                Due Dt: <span [style.color]="getDateColor(task.status)">{{getDayPart(task.duE_DATE)}}</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Quarterly Table -->
+    <table class="table table-bordered quarterly-table" *ngIf="selectedPeriod =='Quarterly' && !_taskService.bProgress">
+      <thead>
+        <tr>
+          <th><b>Project</b></th>
+          <th *ngFor="let date of _taskService.taskGroups?.dates">
+            <b><span>Week-{{date.split('#')[0]}}</span><br /><span
+                title="{{date.split('#')[1]}}">{{date.split('#')[1]}}</span></b>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let proj of _taskService.taskGroups?.projects">
+          <td>{{proj.projectName}}</td>
+          <td *ngFor="let month of proj.groups">
+            <div class="task" *ngFor="let task of month.tasks" (mouseover)="showSummary(task)"
+              (mouseout)="closeDialog()"
+              [ngStyle]="{'background-color': task.coloR_BG ? task.coloR_BG : '#cde6f7', 'border-left': task.coloR_MG ? '5px solid ' + task.coloR_MG : '5px solid #99c8e9'}">
+              <a title={{getTooltip(task)}} style="cursor:pointer" (click)="Task_OnClick(task)">
+                <span [style.background-color]="getStatusColor(task.status)"
+                  class="badge">{{getStatusAbr(task.status)}}</span>
+                <b style="padding-left:2px">{{task.tasK_TYPE}}</b> - {{task.tasK_CATEGORY}}<br>
+                St Dt: <span [style.color]="getDateColor(task.status)"> {{getDayPart(task.scheduleD_START_DATE)}}</span>
+                |
+                Due Dt: <span [style.color]="getDateColor(task.status)">{{getDayPart(task.duE_DATE)}}</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Yearly Table -->
+    <table class="table table-bordered yearly-table" *ngIf="selectedPeriod =='Yearly' && !_taskService.bProgress">
+      <thead>
+        <tr>
+          <th><b>Project</b></th>
+          <th *ngFor="let date of _taskService.taskGroups?.dates">
+            <b>{{date}}</b>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let proj of _taskService.taskGroups?.projects">
+          <td>{{proj.projectName}}</td>
+          <td *ngFor="let month of proj.groups">
+            <div class="task" *ngFor="let task of month.tasks" (mouseover)="showSummary(task)"
+              (mouseout)="closeDialog()"
+              [ngStyle]="{'background-color': task.coloR_BG ? task.coloR_BG : '#cde6f7', 'border-left': task.coloR_MG ? '5px solid ' + task.coloR_MG : '5px solid #99c8e9'}">
+              <a title={{getTooltip(task)}} style="cursor:pointer" (click)="Task_OnClick(task)">
+                <span [style.background-color]="getStatusColor(task.status)"
+                  class="badge">{{getStatusAbr(task.status)}}</span>
+                <b style="padding-left:2px">{{task.tasK_TYPE}}</b> - {{task.tasK_CATEGORY}}<br>
+                St Dt: <span [style.color]="getDateColor(task.status)"> {{getDayPart(task.scheduleD_START_DATE)}}</span>
+                |
+                Due Dt: <span [style.color]="getDateColor(task.status)">{{getDayPart(task.duE_DATE)}}</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+</div>
+
+<div *ngIf="selectView == '2'" style="overflow-x: scroll;">
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Project Name</th>
+          <th>ISO Standard</th>
+          <th>Certification Scope</th>
+          <th>No Of Employees allocated to project</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Audit Title</th>
+          <th>Last Audited Date</th>
+          <th>Audit Status</th>
+          <th>Frequency</th>
+          <th>Audits Planned</th>
+          <th>Audits Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let task of overallTaskDetails">
+          <td [matTooltip]='task.cusT_NM'>{{task.proJ_NM}}</td>
+          <td>{{task.isO_STANDARDS}}</td>
+          <td>{{task.certificatioN_SCOPES}}</td>
+          <td>{{task.headcount}}</td>
+          <td>{{task.starT_DATE}}</td>
+          <td>{{task.enD_DATE}}</td>
+          <td>{{task.audiT_TITLE}}</td>
+          <td>{{task.lasT_AUDITED_DATE}}</td>
+          <td>{{task.audiT_STATUS}}</td>
+          <td>{{task.frequency}}</td>
+          <td>{{task.auditS_PLANNED}}</td>
+          <td>{{task.auditS_COMPLETED}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+
+</div>

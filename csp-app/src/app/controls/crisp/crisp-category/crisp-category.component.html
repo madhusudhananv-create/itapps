@@ -1,0 +1,57 @@
+<form #categoryForm="ngForm" (ngSubmit)="SubmitForm_category(categoryForm)">
+  <div class="row">
+    <div class="col-lg-6">
+      <div clasS="row">
+        <mat-form-field style="width:calc(100% - 20px)">
+          <input name="txtCategoryName" maxlength="50" [(ngModel)]="category.categorY_NAME" matInput placeholder="Category Name" required>
+        </mat-form-field>
+        <mat-form-field style="width:calc(100% - 20px)">
+          <input name="txtComments" [(ngModel)]="category.comments" matInput placeholder="Comments">
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a type="button" (click)="formreset(categoryForm)"class="btn btn-primary">Cancel</a>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <mat-table #table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="index">
+          <mat-header-cell [ngClass]="'indexWidth'" *matHeaderCellDef>No.</mat-header-cell>
+          <mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index;"> {{ (element + 1) + (paginator.pageIndex) * paginator.pageSize  }} </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="categorY_NAME">
+          <mat-header-cell *matHeaderCellDef mat-sort-header>Category Name</mat-header-cell>
+          <mat-cell *matCellDef="let category">{{category.categorY_NAME}}</mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="comments">
+          <mat-header-cell *matHeaderCellDef mat-sort-header>Comments</mat-header-cell>
+          <mat-cell *matCellDef="let category"> {{category.comments}} </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="edit">
+          <mat-header-cell [ngClass]="'editWidth'" *matHeaderCellDef>
+            <div *ngIf="_util.IsEditable()"></div>
+          </mat-header-cell>
+          <mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+            <a class="link" (click)="EditRow_onClick(element)" *ngIf="_util.IsEditable()">
+              <i class="fa fa-edit"></i>
+            </a>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="delete">
+          <mat-header-cell [ngClass]="'deleteWidth'" *matHeaderCellDef>
+            <div *ngIf="_util.IsEditable()"></div>
+          </mat-header-cell>
+          <mat-cell [ngClass]="'deleteWidth'" *matCellDef="let element">
+            <a class="link" (click)="DeleteRow_onClick(element)" *ngIf="_util.IsEditable()">
+              <i class="fa fa-trash"></i>
+            </a>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+      </mat-table>
+      <mat-paginator #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+    </div>
+  </div>
+</form>

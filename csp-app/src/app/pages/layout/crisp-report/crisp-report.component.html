@@ -1,0 +1,185 @@
+<div class="pageborder" style="padding-bottom: 20px;background-color: #FFFFFF;font-family: proxima-nova, sans-serif;">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+      <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px" src="assets/images/{{_layoutService.selectedCust}}.png"
+        onerror="this.src ='assets/images/CustomerLogo.png'">
+
+
+    </div>
+  </div>
+  
+  <div class="row" style="padding-left:5px;font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 10px; color: #4e5882">
+    <div  style="display: inline-block; ">
+     Overall CRISP Scores 
+    </div>
+
+  </div>
+
+  <div class="row" style="padding-left: 2%;">
+
+    <table style="vertical-align: middle;padding-left: 2%;">
+      <tr>
+        <td> &nbsp;&nbsp;
+          <span style="font-size: 12px;">Month</span>
+          &nbsp;&nbsp;
+          <mat-select name='tableMonth' [(ngModel)]="month" required
+            style="width:65px;font-size: 12px;text-align: center;border-radius: 2px;border: 0.5px solid #C3C3C3;padding: 1px;">
+            <mat-option value='Jan' style="font-size: 12px;text-align: center;">JAN</mat-option>
+            <mat-option value='Feb' style="font-size: 12px;text-align: center;">FEB</mat-option>
+            <mat-option value='Mar' style="font-size: 12px;text-align: center;">MAR</mat-option>
+            <mat-option value='Apr' style="font-size: 12px;text-align: center;">APR</mat-option>
+            <mat-option value='May' style="font-size: 12px;text-align: center;">MAY</mat-option>
+            <mat-option value='Jun' style="font-size: 12px;text-align: center;">JUN</mat-option>
+            <mat-option value='Jul' style="font-size: 12px;text-align: center;">JUL</mat-option>
+            <mat-option value='Aug' style="font-size: 12px;text-align: center;">AUG</mat-option>
+            <mat-option value='Sep' style="font-size: 12px;text-align: center;">SEP</mat-option>
+            <mat-option value='Oct' style="font-size: 12px;text-align: center;">OCT</mat-option>
+            <mat-option value='Nov' style="font-size: 12px;text-align: center;">NOV</mat-option>
+            <mat-option value='Dec' style="font-size: 12px;text-align: center;">DEC</mat-option>
+          </mat-select>
+          &nbsp;&nbsp;
+          <!-- </td> -->
+          <span style="font-size: 12px;">Year</span>
+
+          &nbsp;&nbsp;
+          <mat-select name="tableYear" [(ngModel)]="year" required
+            style="width:65px;font-size: 12px;text-align: center;border-radius: 2px;border: 0.5px solid #C3C3C3;padding: 1px;">
+
+            <mat-option *ngFor="let year of _util.Years(3)" [value]="year" [title]="year" style="text-align: center;">
+              {{year}}</mat-option>
+            <!--<mat-option [value]='2019'>2019</mat-option>
+                  <mat-option [value]='2020'>2020</mat-option>-->
+          </mat-select>
+
+          &nbsp;&nbsp;
+
+          <mat-select placeholder="Select Project(s)" [(ngModel)]="input_projectid" multiple
+            style="width:225px;font-size: 12px;text-align: center;border-radius: 2px;border: 0.5px solid #C3C3C3;padding: 1px;">
+            <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">{{proj.proJ_NM}}
+            </mat-option>
+          </mat-select>
+
+          &nbsp;&nbsp;
+          <button type="button" class="flatbutton" style="background-color: #4e5882;color:white;font-weight: 300;" [disabled]="_loading" (click)="ApplyFilter()">Apply</button>
+          &nbsp;&nbsp;
+          <!-- <button type="button" style="width: 75px;height: 25px;color:#4B4EB1;background: #FFFFFF;border: none;letter-spacing: 0px;"  (click)="Reset()">Reset</button> -->
+          <span
+            style="width: 30px;height: 25px;color:#4B4EB1;background: #FFFFFF;border: none;letter-spacing: 0px;cursor: pointer;"
+            (click)="Reset()">Reset</span>
+            &nbsp;&nbsp;  <button type="button" class="flatbutton" style="background-color: #4e5882;color:white;font-weight: 300;" [disabled]="_loading" (click)="Refresh()">Recalculate</button>
+        </td>
+      </tr>
+      <!-- </tr> -->
+    </table>
+    <!-- </div> -->
+  </div>
+  <div style="margin-top: 10px; margin-bottom: 10px">
+    <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+  </div>
+ 
+
+  <div style="padding-left: 2%;padding-right: 2%;text-align: center;padding-bottom: 3px;">
+
+
+  </div>
+  <div style="padding-left: 2%;padding-right: 5%;text-align: center;">
+    <mat-accordion *ngFor="let proj of summary;let i =index" style="font-size:12px;padding: 0%;margin: 0%;">
+      <mat-expansion-panel hideToggle style="padding: 0%;" (opened)="panelExpand[i] = true" (closed)="panelExpand[i] = false">
+        <mat-expansion-panel-header style="border: 1px solid #E5E5E5;height: 30px;" [ngStyle]="{'background-color': panelExpand[i] ? '#ECECFA' : '#FAFAFA' }">
+
+          <mat-panel-title style="font-size: 12px;padding:0%;width: 35%">
+            <div style="display: flex;flex-direction: column;">
+              <!-- <span style="color: #000000;font-size: 12px;font-weight: 500;" *ngIf="i==0">Project</span>
+              <span style="color: #FAFAFA;" *ngIf="i!=0">Project</span> -->
+              <span [ngStyle]="{'color': panelExpand[i] ? '#ECECFA' : '#FAFAFA' }">Project</span>
+              <div>
+
+                <table>
+                  <tr>
+                    <td>
+                      <span *ngIf="!panelExpand[i]"
+                        style="text-align: left;padding:0px 3px 1px 3px;width: 17px;height: 17px;border: 1px solid #E5E5E5;">
+                        <img src="assets/images/plus.svg">
+                      </span>
+                      <span *ngIf="panelExpand[i]"
+                        style="text-align: left;background:  0% 0% no-repeat padding-box;width: 17px;height: 17px;border: 1px solid #E5E5E5;">
+                        <img src="assets/images/minus.png">
+                      </span>
+                    </td>
+                    <td style="padding-left: 2px;text-align: left;">
+                      {{proj.projecT_NAME}} -
+                      <span *ngIf="proj.score >= 98" style="color: darkgreen; font-weight: bold">Under Control</span>
+                      <span *ngIf="proj.score >= 90" style="color: orange; font-weight: bold">Need Focus</span>
+                      <span *ngIf="proj.score < 90" style="color: red;font-weight: bold">Need Immediate Attention</span>
+                    </td>
+                  </tr>
+                </table>
+
+              </div>
+            </div>
+          </mat-panel-title>
+          <mat-panel-description style="font-size: 12px;width: 65%">
+            <table>
+              <tr style="font-size: 12px;font-weight: 700;" *ngIf="i==0">
+                <td style="color: #4e5882; width: 16%">Overall CRISP Score</td>
+                <td style="color: #4e5882; width: 16%">Customer Success (30)</td>
+                <td style="color: #4e5882 ; width: 16%">Risks & Issues (15)</td>
+                <td style="color: #4e5882 ; width: 16%">Ideas & innovations (20)</td>
+                <td style="color: #4e5882; width: 16%">Success Survey (20)</td>
+                <td style="color: #4e5882; width: 16%">Process Compliance (15)</td>
+              </tr>
+              <tr [ngStyle]="{'color': panelExpand[i] ? '#ECECFA' : '#FAFAFA' }" *ngIf="i!=0">
+               
+                <td>Overall Crisp Score</td>
+                <td>Customer Success</td>
+                <td>Risks & Issues</td>
+                <td>Ideas & innovations</td>
+                <td>Success Survey</td>
+                <td>Process Compliance</td>
+              </tr>
+              <tr style="color: #000000;font-weight: 700;vertical-align:middle;">
+                <td style="width: 16%">{{proj.score}}</td>
+                <td style="width: 16%" *ngFor="let cat of proj.categories">
+                  <!-- <span (click)="ShowCrispDetails(proj, cat)" style="display:block;width:100%;height:100%"> -->
+                  {{cat.score}}
+                  <!-- </span> -->
+                </td>
+
+
+
+              </tr>
+            </table>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <table class="table table-bordered" style="border: 1px solid #E5E5E5;background: #FFFFFF;padding: 0%;margin: 0%;" >
+          <tr style="height: 30px;border:none;color: #000000;font-size: 12px;font-weight: 500;">
+            <th width="10%">Category</th>
+            <th width="10%">Criteria</th>
+            <th width="50%">Check Points</th>
+            <th width="5%">Target</th>
+            <th width="5%">Actual</th>
+
+          </tr>
+          <tr *ngFor="let det of getCategoryDetails(proj.projecT_ID)" style="text-align: left;" style="height: 30px;color: #000000;font-size: 12px;">
+            <td width="10%" style="text-align: left;"><a  style="margin-top: 1px;cursor: pointer ;" (click)="navigate(proj, det)">{{det.categorY_NAME}}</a></td>
+            <td width="10%" style="text-align: left;">{{det.criteriA_NAME}}</td>
+            <td width="50%" style="text-align: left;">{{det.validatioN_NAME}}</td>
+            <td width="5%">{{det.eligible}}</td>
+            <td width="5%">{{det.score}}</td>
+
+          </tr>
+        </table>
+
+      </mat-expansion-panel>
+
+
+    </mat-accordion>
+
+  </div>
+
+</div>

@@ -1,0 +1,44 @@
+<div style="padding-bottom: 20px;">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+      <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none"
+        [routerLink]="['/serviceleveldashboard/cust', custId, true]">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px" src="assets/images/{{custId}}.png"
+        onerror="this.src ='assets/images/CustomerLogo.png'">
+    </div>
+  </div>
+  
+  <div class="col-lg-6 col-md-6 col-sm-6"
+    style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px; color: #4e5882">  
+    <div style="display: inline-block; ">
+      Manage KPI Products
+    </div>
+  </div>  
+</div>
+<mat-horizontal-stepper style="padding-top: 35px;" linear #stepper labelPosition="bottom" class="stepper">
+  <mat-step>
+    <form>
+      <ng-template matStepLabel>Products</ng-template>
+      <app-manageproduct>[custId]="custId"</app-manageproduct>
+    </form>
+  </mat-step>
+  <mat-step>
+    <form>
+      <ng-template matStepLabel>Product Responsible Person</ng-template>
+      <app-product-responsible [IsBackButtonEnabled]="false"></app-product-responsible>
+    </form>
+  </mat-step>
+  <mat-step>
+    <form>
+      <ng-template matStepLabel>Service Level Metrics</ng-template>
+      <app-manage-kpi-metrics [custId]="custId"></app-manage-kpi-metrics>
+    </form>
+  </mat-step>
+  <!-- <mat-step>
+    <form>
+        <ng-template matStepLabel>Base Measure Config</ng-template>
+    </form>
+</mat-step> -->
+</mat-horizontal-stepper>

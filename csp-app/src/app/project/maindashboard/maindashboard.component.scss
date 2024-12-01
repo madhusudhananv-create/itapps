@@ -1,0 +1,331 @@
+.link {
+    cursor: pointer;
+    color:steelblue;
+    font-size:14px;
+    width: 100%;
+    height: 20px;
+    padding-right: 10px;
+    text-align: center;
+    text-align: right;
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+google-chart > div > table {
+    margin:unset !important;
+}
+
+.google-chart > div > table {
+    margin:unset !important;
+}
+mat-card{
+    padding: 5px !important;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 1px -2px rgba(0,0,0,.8), 0 0px 2px 0 rgba(0,0,0,0.54), 0 0px 5px 0 rgba(0,0,0,.12);
+}
+// .app-window .mat-card{
+//     width: 100%;
+//     height: 100%;
+//     box-sizing: border-box;
+//   }
+.matdiv{
+    display: inline-block;
+    vertical-align: top;
+    margin:5px;
+}
+.headercard{
+  margin-top: 0px;
+  margin-right: 5px;
+  box-shadow: none!important;
+  color: #000;
+  background-color: #f3f2f2;
+  font-family: calibri;
+}
+h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  //text-align: center;
+  padding-left: 15px;
+  font-family: calibri;
+ display: block;
+ padding-bottom: 5px;
+ position: relative;
+}
+h3:before{
+    content: "";
+    position: absolute;
+    width: 8%;
+    height: 1px;
+    bottom: 0;
+    left: 1.6%;
+    border-bottom: 2px solid #097bde;
+}
+
+.trenddiv{
+    background-color: green;
+    display: inline-block;
+    width:400px;
+    height:400px;
+    background-color:white;
+    text-align:center;
+    vertical-align:middle;
+}
+.tablediv{
+    display: inline-block;
+    width:600px;
+    //height:275px;
+    background-color:white;
+    text-align:center;
+    vertical-align:middle;
+}
+.issueCombineddiv{
+    display: inline-block;
+    width:500px;
+    height:275px;
+    background-color:white;
+    text-align:center;
+    vertical-align:middle;
+}
+.highlightsdiv{
+    display: inline-block;
+    width:350px;
+    height:400px;
+    background-color:white;
+    text-align:center;
+    vertical-align:middle;  
+}
+.radardiv{
+    display: inline-block;
+    width:300px;
+    height:275px;
+    background-color:white;
+    text-align:center;
+    vertical-align:middle;
+}
+.issuediv{
+    display: inline-block;
+    width:300px;
+    height:275px;
+    background-color:white;
+    text-align:center;
+    vertical-align:middle;
+}
+.riskdiv{
+    display: inline-block;
+    width:371px;
+    height:275px;
+    background-color:white;
+    text-align:center;
+    vertical-align:middle;
+}
+
+.sticky {
+    background: white;
+    position: fixed;
+    top: 100px;
+    right: 0;
+  }
+  .mat-progress-bar {
+    display: block;
+    height: 1px;
+    overflow: hidden;
+    position: relative;
+    transform: translateZ(0);
+    transition: opacity 250ms linear;
+    width: 100%;
+  }
+//--------------------------------
+.navbar-default .navbar-nav > .active > a,
+// .navbar-default .navbar-nav > .active > a:hover,
+// .navbar-default .navbar-nav > .active > a:focus
+{
+    background-color: #f8f8f8
+}
+button{
+    background-color: #f8f8f8
+}
+.dropbtn {
+    //background-color: #4CAF50;
+    //color: white;
+    //height:100%;
+    padding: 14px;
+    font-size: 16px;
+    border: none;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    margin-right:200px;
+    background-color: #f1f1f1;
+    min-width: 200px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {background-color: #ddd}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
+    //background-color: grey;
+}
+
+.navbar-brand{
+    padding: 9px 15px !important;
+}
+ul{
+    padding-top: 25px;
+}
+
+//MAT DatePicker
+.example-month-picker .mat-calendar-period-button {
+    pointer-events: none;
+  }
+
+  .example-month-picker .mat-calendar-arrow {
+    display: none;
+  }
+
+
+   .col-lg-8 .col-lg-7 .col-lg-5 .col-lg-4 {
+       padding: 5px !important;
+   }
+   .col-md-8, .col-md-7 .col-md-5 .col-md-4 {
+    padding: 5px;
+}
+
+
+@media (min-width: 1200px){
+    .col-lg-8, .col-lg-7, .col-lg-5, .col-lg-4 {
+        padding:5px;
+    }
+}
+
+.row{
+    padding-bottom: 0px;
+    margin-right: 0px !important;
+}
+
+
+.row {
+    //margin-left: 15px!important;
+  }
+
+  .navbar-nav{
+    margin:0px !important;
+    }
+
+    
+    .green_border{
+        border-bottom: solid 3px #237f00;
+    }
+    .orange_border{
+        border-bottom: solid 3px #f9a400;
+    }
+    .red_border{
+        border-bottom: solid 3px #f60000;
+    }
+    .blue_border{
+        border-bottom: solid 3px #00bfff;
+    }
+
+.risk_orange
+{
+    background: url(/assets/images/risk-orange.png) no-repeat;
+    width: 15px;
+    height: 15px;
+    float: left;
+}
+.issues_orange
+{
+    background: url(/assets/images/issues-orange.png) no-repeat;
+    width: 15px;
+    height: 15px;
+    float: left;
+}
+.iteam_orange
+{
+    background: url(/assets/images/iteam-orange.png) no-repeat;
+    width: 15px;
+    height: 15px;
+    float: left;
+}
+
+.left, .right, .arrow-right {
+    display:inline-block;
+}
+
+.left {
+    background-color: #97e29e;
+    line-height: 32px;
+    margin: 0;
+    padding-right: 5px;
+    //padding-top: 8px;
+    vertical-align: middle;
+    padding-left:10px;
+    font-weight: bold;
+}
+.arrow-right {
+	width: 0; 
+	height: 0; 
+	border-top: 20px solid transparent;
+	border-bottom: 20px solid transparent;
+	margin-left:-4px;
+    border-left: 20px solid #97e29e;
+    vertical-align: middle;
+}
+.right{
+    font-size:18px;
+}
+
+.left_sm, .right_sm, .arrow-right_sm {
+    display:inline-block;
+}
+
+.left_sm {
+    background-color: #97e29e;
+    line-height: 24px;
+    margin: 0;
+    padding-right: 5px;
+    //padding-top: 8px;
+    vertical-align: middle;
+    padding-left:5px;
+    font-weight: bold;
+}
+.arrow-right_sm {
+	width: 0; 
+	height: 0; 
+	border-top: 19px solid transparent;
+	border-bottom: 17px solid transparent;
+	margin-left:-4px;
+    border-left: 18px solid #97e29e;
+    vertical-align: middle;
+}
+.right_sm{
+    font-size:14px;
+    font-weight: bold;
+}
+
+.col-sm-6, .col-md-6, .col-lg-4{
+    padding:5px;
+}
+
+.mat-icon{
+    width:15px;
+}

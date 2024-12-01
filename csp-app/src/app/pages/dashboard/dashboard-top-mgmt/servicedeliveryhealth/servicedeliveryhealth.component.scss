@@ -1,0 +1,49 @@
+.servicedelivery{
+    width : 100%;
+    display: block;
+    max-height : 240px;
+    overflow-y: scroll;
+    padding: 10px;
+    background-color: #F5F5F5;
+    border-collapse:separate; 
+    border-spacing:0 12px; 
+    margin-top: -16px;
+}
+
+.servicedelivery thead tr th :nth-child(1){
+   min-width: 60%; 
+}
+
+.servicedelivery thead tr th :nth-child(2){
+    min-width: 20%; 
+ }
+
+.servicedelivery thead tr th:nth-child(3){
+    min-width: 20%; 
+    text-align: right;
+ }
+
+ .servicedelivery tbody tr td :nth-child(1){
+    min-width: 60%; 
+ }
+ 
+ .servicedelivery tbody tr td :nth-child(2){
+    min-width: 20%; 
+  }
+ 
+ .servicedelivery tbody tr td :nth-child(3){
+     min-width: 20%; 
+     text-align: right;
+  }
+
+  .deliverytitle{
+    font-size: 15px; 
+    font-family : 'Roboto';
+    padding-left: 10px; 
+    height: 50px;
+    vertical-align: middle;
+    color: #4E5882;
+    line-height: 50px;
+    font-weight : 600;
+    background-color: #F5F5F5;
+  }

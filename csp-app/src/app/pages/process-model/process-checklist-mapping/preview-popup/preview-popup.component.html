@@ -1,0 +1,52 @@
+<div style="margin: 20px">
+  <div style="display: flex">
+      <div class="col-lg-6 col-md-6 col-sm-6" style="font-weight: bold; margin-bottom: 5px;  text-align: left;">
+          Checklist Name:-<u> {{ checklistname +' - '+ version }} </u> <br>
+          Checklist Effective from:-<u> {{effectivefrom | date: 'dd-MMM-yyyy'}} </u>
+      </div>
+      <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: right; font-weight: bold; margin-right: 5px; font-size: 15px; cursor: pointer"
+      (click)="closepopup()">
+          &#10005;
+      </div>
+  </div>
+  
+<div *ngFor="let sa of previewData">
+  <div style="margin-bottom: 5px; width: 100%; background-color: #999690; font-weight: bold">
+    Service Tower :- {{sa.servicE_AREA_NAME}}
+  </div>
+  <div *ngFor="let pa of sa.questionS_BY_PROCESS_AREA " style="margin-left: 10px">
+    <div style="margin-bottom: 5px;width: 100%; background-color: #bab6af; font-weight: bold">
+      Process Area :- {{pa.procesS_AREA_NAME}}
+    </div>
+    <div *ngFor="let p of pa.questionS_BY_PROCESS" style="margin-left: 10px">
+      <div style="margin-bottom: 5px;width: 100%; background-color: #d6d3ce; font-weight: bold">
+        Process :- {{p.procesS_NAME}}
+      </div>
+        <table style="width: 100%" class="table table-bordered">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Question name</th>
+              <th [hidden]="!isweightageApplicable">Weightage</th>
+              <!-- <th [hidden]="!isweightageApplicable">Weightage Score</th> -->
+              <th>Category</th>
+              <th [hidden]="!ismaturityApplicable">Maturity Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let question of p.questions; let id = index">
+              <tr>
+                <td>{{id+1}}</td>
+                <td style="white-space: pre-wrap">{{question.question}}</td>              
+                <td [hidden]="!isweightageApplicable">{{question.weightage + ' (' + question.weightagE_SCORE + ')'}} </td>
+                <!-- <td [hidden]="!isweightageApplicable">{{question.weightagE_SCORE}}</td> -->
+                <td>{{question.category}}</td>
+                <td [hidden]="!ismaturityApplicable">{{question.maturitY_LEVEL}}</td>
+              </tr>
+          </ng-container>
+          </tbody>
+        </table>
+    </div>
+  </div>
+</div>
+</div>

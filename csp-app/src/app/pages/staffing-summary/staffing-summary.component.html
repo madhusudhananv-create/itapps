@@ -1,0 +1,159 @@
+<div style="height: 100%; padding: 10px;">
+  <!-- <div class="panel panel-primary">
+      <div style="height: 45px;" class="panel-heading">
+      <div style="float: left; font-size: 15px;">Projects to Start</div>
+      <div style="text-align:center;padding-bottom:2px;float: right;">
+          <button style="height: 28px;background: #fa7973;width: 50px!important;" mat-dialog-close (click)="closeDialog()" >
+            <i style="color: white;margin-bottom: 8px;" class="material-icons">
+              close
+            </i>
+          </button>
+      </div>
+      </div>
+  </div> -->
+  <div class="row tabheader">
+    <div class="col-lg-10 col-md-10 col-sm-10">
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-2 header" style="text-align: right;" >
+
+      <a class="link" (click)="closeDialog()" style="text-align: right; padding-right: 2px;">
+        <i class="fa fa-times"></i>
+      </a>
+    </div>
+  </div>
+<!-- <div *ngIf="_util.IsGAVS()" class="backbuttonlink" [routerLink]="['/newdashboard/cust', input_customerId, true]">
+  <img src="assets/images/back_round.png">
+</div> -->
+
+<div class="row">
+  <table style="width: 75%;" class="table table-bordered">    
+      <thead class="thead-light">
+        <tr>
+        <th style="font-weight: 600">Engagement Staffing Summary</th>
+        <th style="font-weight: 600"></th>
+      </tr>
+    </thead>
+    <tbody style="background: white;">
+      <tr>
+        <td class="col-sm-6 col-md-6 col-lg-6">
+
+          <!--  col-sm-6 col-md-6 col-lg-6-->
+          <highcharts-chart *ngIf="summaryResData" style="width: 500px; height: 200px; display: block;" [Highcharts]="Highcharts" [options]="summaryResData">
+          </highcharts-chart>
+        </td>
+        <td class="col-sm-6 col-md-6 col-lg-6">
+          <highcharts-chart *ngIf="summaryBillData" style="width: 500px; height: 200px; display: block;" [Highcharts]="Highcharts"
+            [options]="summaryBillData">
+          </highcharts-chart>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="row">
+  <table style="width: 70%;" class="table table-bordered">
+      <thead class="thead-light">
+      <tr>
+        <th style="font-weight: 600">Portfolio Summary</th>
+      </tr>
+    </thead>
+    <tbody style="background: white;">
+      <tr>
+        <td class="col-sm-6 col-md-6 col-lg-6">
+          <div class="example-container mat-elevation-z8">
+            <table class="table table-bordered" mat-table style="border-radius: 3px;overflow: hidden " #table [dataSource]="resourceDataSource"
+              matSort>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+                <td mat-cell *matCellDef="let element">
+                  <a class="link" (click)="ViewRow_onClick(element,'Portfolio')">
+                    {{element.name}}
+                  </a>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="projecT_NAME">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Project Name</th>
+                <td mat-cell *matCellDef="let element"> {{element.projecT_NAME}} </td>
+              </ng-container>
+              <ng-container matColumnDef="offshore">
+                <th mat-header-cell *matHeaderCellDef>Total OffShore</th>
+                <td mat-cell *matCellDef="let element"> {{element.offshore}} </td>
+              </ng-container>
+              <ng-container matColumnDef="onsite">
+                <th mat-header-cell *matHeaderCellDef> Total Onsite </th>
+                <td mat-cell *matCellDef="let element"> {{element.onsite}} </td>
+              </ng-container>
+              <ng-container matColumnDef="total">
+                <th mat-header-cell *matHeaderCellDef> Grand Total </th>
+                <td mat-cell *matCellDef="let element"> {{element.total}} </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="resourceSummaryColumns; sticky: true"></tr>
+              <tr mat-row *matRowDef="let row; columns: resourceSummaryColumns;"></tr>
+            </table>
+            <mat-paginator #resPaginator [pageSize]="20" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="row">
+  <table style="width: 70%"  class="table table-bordered">
+      <thead class="thead-light">
+      <tr>
+        <th style="font-weight: 600">Project Summary</th>
+      </tr>
+    </thead>
+    <tbody style="background: white;">
+      <tr>
+        <td class="col-sm-6 col-md-6 col-lg-6">
+          <div class="example-container mat-elevation-z8">
+            <table class="table table-bordered" mat-table style="border-radius: 3px;overflow: hidden " #table [dataSource]="dataSource"
+              matSort>
+              <ng-container matColumnDef="projecT_NAME">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Project Name</th>
+                <td mat-cell *matCellDef="let element">
+                  <a class="link" (click)="ViewRow_onClick(element,'Project')">
+                    {{element.projecT_NAME}}
+                  </a>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="offshorE_BILLED">
+                <th mat-header-cell *matHeaderCellDef> Offshore Billed </th>
+                <td mat-cell *matCellDef="let element">
+                  {{element.offshorE_BILLED}}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="offshorE_UNBILLED">
+                <th mat-header-cell *matHeaderCellDef>Offshore Unbilled </th>
+                <td mat-cell *matCellDef="let element"> {{element.offshorE_UNBILLED}} </td>
+              </ng-container>
+              <ng-container matColumnDef="onshorE_BILLED">
+                <th mat-header-cell *matHeaderCellDef> Onsite Billed </th>
+                <td mat-cell *matCellDef="let element"> {{element.onshorE_BILLED}} </td>
+              </ng-container>
+              <ng-container matColumnDef="onshorE_UNBILLED">
+                <th mat-header-cell *matHeaderCellDef> Onsite UnBilled </th>
+                <td mat-cell *matCellDef="let element"> {{element.onshorE_UNBILLED}} </td>
+              </ng-container>
+              <ng-container matColumnDef="billed">
+                <th mat-header-cell *matHeaderCellDef>Total Billed </th>
+                <td mat-cell *matCellDef="let element"> {{element.billed}} </td>
+              </ng-container>
+              <ng-container matColumnDef="unbilled">
+                <th mat-header-cell *matHeaderCellDef> Total UnBilled </th>
+                <td mat-cell *matCellDef="let element"> {{element.unbilled}} </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="projectSummaryColumns; sticky: true"></tr>
+              <tr mat-row *matRowDef="let row; columns: projectSummaryColumns;"></tr>
+            </table>
+            <mat-paginator #projPaginator [pageSize]="20" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
+

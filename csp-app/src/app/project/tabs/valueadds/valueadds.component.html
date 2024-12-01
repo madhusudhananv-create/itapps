@@ -1,0 +1,173 @@
+<div *ngIf="readonlymode">
+    <div class="row tabheader">
+        <div class="col-lg-2 col-md-2 col-sm-2" style="text-align:left;vertical-align:middle" *ngIf="_util.IsEditable()">
+            <mat-form-field style="width:80px">
+                <mat-select #ragSelected placeholder="RAG" [value]="_util.getRAG(input_rag, 'valueadds')">
+                    <mat-option value="green" style="color:green">Green</mat-option>
+                    <mat-option value="orange" style="color:orange">Amber</mat-option>
+                    <mat-option value="red" style="color:red">Red</mat-option>
+                </mat-select>
+            </mat-form-field>&nbsp;&nbsp;
+            <a class="link_small" (click)="SaveRAG_onClick(ragSelected.value)">
+                <i class="fa fa-save" style="font-size:12px;"></i>
+            </a>
+        </div>
+        <div class="col-lg-8 col-md-8 col-sm-8">
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-2 header" *ngIf="_util.IsEditable()">
+            <a class="link" (click)="Edit_onClick()">
+                <i class="fa fa-plus"></i>
+            </a>
+        </div>
+    </div>
+    <div>
+        <!-- <table border="1" class="table table-responsive-sm table-hover table-outline mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th>No.</th>
+                    <th>Value Add Summary</th>
+                    <th>Benefits</th>
+                    <th>Identified by</th>
+                    <th>Status</th>
+                    <th *ngIf="_util.IsEditable()">Action</th>
+                </tr>
+            </thead>
+            <tbody *ngIf="input.length > 0">
+                <tr *ngFor="let valueadd of input;let i = index">
+                    <td>{{i + 1}}</td>
+                    <td>{{valueadd.description}}</td>
+                    <td>{{valueadd.benefits}}</td>
+                    <td>{{valueadd.valueadD_BY}}</td>
+                    <td>{{valueadd.status}}</td>
+                    <td *ngIf="_util.IsEditable()">
+                        <a class="link" (click)="EditRow_onClick(valueadd)">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <a class="link" (click)="DeleteRow_onClick(valueadd)">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+            <tbody *ngIf="input.length == 0">
+                <tr>
+                    <td *ngIf="_util.IsEditable()" colspan="6">No records found</td>
+                    <td *ngIf="!_util.IsEditable()" colspan="5">No records found</td>
+                </tr>
+            </tbody>
+        </table> -->
+        <mat-table style="border-radius: 5px;overflow:hidden" #table [dataSource]="dataSource" matSort>
+            <ng-container matColumnDef="index">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</mat-header-cell>
+                <mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index"> {{element + 1}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="description">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" *matHeaderCellDef mat-sort-header>Value Add Summary</mat-header-cell>
+                <mat-cell *matCellDef="let valueadd">{{valueadd.description}}</mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="benefits">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" *matHeaderCellDef mat-sort-header>Benefits</mat-header-cell>
+                <mat-cell *matCellDef="let valueadd"> {{valueadd.benefits}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="valueadD_BY">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" *matHeaderCellDef mat-sort-header>Identified by</mat-header-cell>
+                <mat-cell *matCellDef="let valueadd"> {{valueadd.valueadD_BY}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="actioN_PLAN">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" *matHeaderCellDef mat-sort-header>Action Plan</mat-header-cell>
+                <mat-cell *matCellDef="let valueadd"> {{valueadd.actioN_PLAN}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="targeT_DATE">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" *matHeaderCellDef mat-sort-header>Target date</mat-header-cell>
+                <mat-cell *matCellDef="let valueadd">{{valueadd.targeT_DATE| date: 'dd-MMM-yyy'}}</mat-cell>
+                <!-- <mat-cell *matCellDef="let valueadd">{{valueadd.targeT_DATE !== undefined) ? (valueadd.targeT_DATE | date: 'dd/MM/yyyy') : ""}}</mat-cell> -->
+              </ng-container>
+            <ng-container matColumnDef="status">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" *matHeaderCellDef mat-sort-header>Status</mat-header-cell>
+                <mat-cell *matCellDef="let valueadd"> {{valueadd.status}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="edit">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+                    <div *ngIf="_util.IsEditable()"></div>
+                </mat-header-cell>
+                <mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+                    <a class="link" (click)="EditRow_onClick(element)" *ngIf="_util.IsEditable()">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="delete">
+                <mat-header-cell style="color:white!important;background: #4d8bbf;font-family: calibri;" [ngClass]="'deleteWidth'" *matHeaderCellDef>
+                    <div *ngIf="_util.IsEditable()"></div>
+                </mat-header-cell>
+                <mat-cell [ngClass]="'deleteWidth'" *matCellDef="let element">
+                    <a class="link" (click)="DeleteRow_onClick(element)" *ngIf="_util.IsEditable()">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                </mat-cell>
+            </ng-container>
+            <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+        </mat-table>
+        <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+    </div>
+</div>
+<div *ngIf="editmode">
+    <form  style="background: white;padding-left: 10px;padding-bottom: 10px;" #valueaddForm="ngForm" (ngSubmit)="SubmitForm(valueaddForm.valid)">
+        <div class="row tabheader">
+            <div class="col-lg-10 col-md-10 col-sm-10">
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2 header">
+                <button class="link_button" type="submit">
+                    <i class="fa fa-save"></i>
+                </button>
+                <a class="link" (click)="Cancel_onClick()">
+                    <i class="fa fa-times"></i>
+                </a>
+            </div>
+        </div>
+        <div>
+            <div clas="row">
+                <mat-form-field style="width:calc(100% - 20px)">
+                    <textarea name='txtDescription' maxlength="2000" [(ngModel)]="EditValueadd.description" matInput placeholder="Value Add Summary" required></textarea>
+                </mat-form-field>
+            </div>
+            <div clas="row">
+                <mat-form-field style="width:calc(100% - 20px)">
+                    <textarea name='txtBenefits' maxlength="2000" [(ngModel)]="EditValueadd.benefits" matInput placeholder="Benefits" required></textarea>
+                </mat-form-field>
+            </div>
+            <div clas="row">
+                <mat-form-field style="width:calc(100% - 20px)">
+                    <textarea name='txtValueaddBy' maxlength="50"  [(ngModel)]="EditValueadd.valueadD_BY" matInput placeholder="Identified by" required></textarea>
+                </mat-form-field>
+            </div>
+            <div clas="row">
+                <mat-form-field style="width:calc(100% - 20px)">
+                    <textarea name='txtActionPlan' maxlength="250"  [(ngModel)]="EditValueadd.actioN_PLAN" matInput placeholder="Action plan"></textarea>
+                </mat-form-field>
+            </div>
+            <div class="row">
+                <mat-form-field>
+                  <input name='dtTargetDate' [(ngModel)]='EditValueadd.targeT_DATE' matInput [matDatepicker]="pickerValueaddTargetDate" placeholder="Target Date">
+                  <mat-datepicker-toggle matSuffix [for]="pickerValueaddTargetDate"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerValueaddTargetDate></mat-datepicker>
+                </mat-form-field>
+              </div>
+            <div clas="row">
+                <mat-form-field style="width:calc(100% - 20px)">
+                    <!-- <textarea name='txtStatus' [(ngModel)]="EditValueadd.status" matInput placeholder="Status" required></textarea> -->
+                    <mat-select name='ddStatus' [(ngModel)]="EditValueadd.status" placeholder="Status" required>
+                        <mat-option value='Identified'>Identified</mat-option>
+                        <mat-option value='In-progress'>In-progress</mat-option>
+                        <mat-option value='Discarded'>Discarded</mat-option>
+                        <mat-option value='Closed'>Closed</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div clas="row">
+                <button type="submit" class="btn btn-success">Save</button>
+            </div>
+        </div>
+    </form>
+</div>

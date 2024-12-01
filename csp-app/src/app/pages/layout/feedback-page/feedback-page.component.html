@@ -1,0 +1,205 @@
+<div class="pageborder" style="padding: 5px;">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+      <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px" src="assets/images/{{_layoutService.selectedCust}}.png"
+        onerror="this.src ='assets/images/CustomerLogo.png'">
+
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6"
+      style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px; color: #4e5882">
+
+      <div style="display: inline-block; ">
+        Feedback
+      </div>
+    </div>
+    <div style="padding-top:0%;margin-top:0%;padding-bottom: 10px;padding-left: 15px;padding-right: 15px;">
+      <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+
+    </div>
+  </div>
+  <!-- <div class="row" *ngIf="bShowFilter" style="margin-bottom: 10px;"> -->
+    <div class="row" style="margin-bottom: 10px;padding-left: 15px;" *ngIf="showTable">
+    <app-table-filter [data]="feedbacks" tableName='CUSTOMER_FEEDBACK' 
+    (onChange)="Filter_onChange($event)">
+
+    </app-table-filter>
+  </div>
+  <div class="row" style="padding-right: 30px;padding-bottom: 10px;" *ngIf="showTable">
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:left;vertical-align:middle">
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:right">
+    <a class="maticonbutton" title="Add Feedback" (click)="AddFeedback_onClick()"
+      *ngIf="!_util.IsGAVS()">
+      <mat-icon style="vertical-align: middle">add</mat-icon>
+    </a>
+  </div>
+    <!-- <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:right">
+      <button class="flatbutton" style="color:  #4e5882;" title="Add Feedback" (click)="AddFeedback_onClick()"
+        *ngIf="!_util.IsGAVS()">
+        Add Feedback
+      </button>
+    </div> -->
+  </div>
+  <div class="row" *ngIf="editmode">
+    <div *ngIf="!_util.IsGAVS()" style="padding-left: 30%;">
+      <div  style="width: 50%;">
+        <form #feedbackForm="ngForm" (ngSubmit)="SubmitForm(feedbackForm.valid)">
+          <mat-card class="example-card" style="text-align: center; margin-bottom:15px">
+            <mat-card-header style="text-align:center">
+              <div mat-card-avatar>
+                <mat-icon>feedback</mat-icon>
+              </div>
+              <mat-card-title>Feedback</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="row" style="padding-top:15px">
+                <mat-form-field style="width:300px;height:200px">
+                  <textarea style="border:solid 1px grey" name='txtfeedback' matTextareaAutosize matAutosizeMinRows="10"
+                    matAutosizeMaxRows="10" [(ngModel)]="newFeedback.feedback" matInput required></textarea>
+                </mat-form-field>
+              </div>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-button type="submit">SEND</button>
+              <span style="padding-right: 10px;"></span>
+              <button mat-button (click)="ClientCancel_OnClick()"
+                style="padding-left: 10px;cursor: pointer;">CANCEL</button>
+            </mat-card-actions>
+          </mat-card>
+        </form>
+      </div>
+    </div>
+    <div *ngIf="_util.IsGAVS()">
+      <div *ngIf="editmode">
+        <form #remarksForm="ngForm" (ngSubmit)="SubmitForm(remarksForm.valid)" style="padding: 0px 15px;">
+          <div class="row" style="padding-top:15px;background: white;">
+            <div class="col-lg-6, col-md-6">
+              <div class="row" style="font-weight: bold">
+                Feedback
+              </div>
+              <p style="white-space:pre-wrap;">{{newFeedback.feedback}}</p>
+            </div>
+            <div class="col-lg-6, col-md-6">
+              <div class="row" style="font-weight: bold">
+                Remarks
+              </div>
+              <mat-form-field style="width:300px;height:200px">
+                <textarea name='txtComments' matTextareaAutosize matAutosizeMinRows="10" matAutosizeMaxRows="10"
+                  [(ngModel)]="newFeedback.comments" matInput placeholder="Type your remarks" required></textarea>
+              </mat-form-field>
+              <div class="row">
+                <mat-form-field>
+                  <mat-select name='status' [(ngModel)]="newFeedback.status" placeholder="Status" required>
+                    <!-- <mat-option value='New'>New</mat-option> -->
+                    <!-- <mat-option value='Open'>Open</mat-option>
+                    <mat-option value='Closed'>Closed</mat-option> -->
+                    <mat-option value='New'>New</mat-option>
+                    <mat-option value='Submitted'>Submitted</mat-option>
+                    <mat-option value='Work-in-Progress'>Work-in-Progress</mat-option>
+                    <mat-option value='Resolved'>Resolved</mat-option>
+                    <mat-option value='Closed'>Closed</mat-option>
+
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="row">
+                <mat-form-field>
+                  <input matInput name="dtTargetDate" [(ngModel)]='newFeedback.targeT_DATE' [min]="mindate"
+                    [matDatepicker]="pickerTargetDate" placeholder="Target Date" required>
+                  <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+                  <mat-datepicker #pickerTargetDate></mat-datepicker>
+                </mat-form-field>
+              </div>
+              <div class="row">
+                <button style="background-color:#4d8bbf; border:none;border-radius:5px;color:white;"
+                  type="submit">Save</button>
+                <span style="padding-left: 10px;"></span>
+                <button style="background-color:#4d8bbf; border:none;border-radius:5px;color:white;"
+                  (click)="Cancel_onClick()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="row" style="margin-bottom: 5px;">
+    <div *ngIf="!feedbacks" style="text-align: center; height: 100px; line-height: 100px;">
+      <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+    </div>
+    <div *ngIf="feedbacks?.length == 0"
+      style="text-align: center;height: 100px; line-height: 100px; font-size: 16px; font-weight: 600;;">
+      No Feedbacks are available...
+    </div>
+  </div> -->
+
+  <div class="example-container" style="padding: 0px 15px;" *ngIf="showTable">
+    <table class="table" mat-table #table [dataSource]="dataSource" matSort>
+      <ng-container matColumnDef="tickeT_ID">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>Ticket ID</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let fdback">
+          {{fdback.tickeT_ID}} </td>
+      </ng-container>
+      <ng-container matColumnDef="customeR_EMAILID">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'emailWidth'"  *matHeaderCellDef mat-sort-header>Email
+        </th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'emailWidth'"  *matCellDef="let fdback">
+          {{fdback.customeR_EMAILID}}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="feedback">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'descriptionWidth'"  *matHeaderCellDef mat-sort-header>Description
+        </th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'descriptionWidth'"  *matCellDef="let fdback">{{fdback.feedback}}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'statusWidth'" *matHeaderCellDef mat-sort-header>Status</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'statusWidth'"  *matCellDef="let fdback"> {{fdback.status}}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="comments">
+        <th mat-header-cell style="font-family: calibri;"  [ngClass]="'remarksWidth'"  *matHeaderCellDef mat-sort-header>Remarks</th>
+        <td style="font-family: calibri;" mat-cell  [ngClass]="'remarksWidth'"  *matCellDef="let fdback"> {{fdback.comments}}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="createD_DATE">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'dateWidth'"  *matHeaderCellDef mat-sort-header>Feedback Date</th>
+        <td style="font-family: calibri;" mat-cell   [ngClass]="'dateWidth'" *matCellDef="let fdback">
+          {{fdback.createD_DATE |date:'dd-MMM-yyyy'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="targeT_DATE">
+        <th mat-header-cell style="font-family: calibri;"  [ngClass]="'dateWidth'" *matHeaderCellDef mat-sort-header>Target Date</th>
+        <td style="font-family: calibri;" mat-cell  [ngClass]="'dateWidth'" *matCellDef="let fdback">
+          {{fdback.targeT_DATE |date:'dd-MMM-yyyy'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="action">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+          <div *ngIf="_access.IsAllowed(22, 3, '', '')"></div>
+          Action
+        </th>
+        <td mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+          <a class="link" (click)="EditRow_onClick(element)" *ngIf="_access.IsAllowed(22, 3, '', '')">
+            <i class="fa fa-edit"></i>
+          </a>
+        </td>
+      </ng-container>
+
+      <!-- <tr mat-header-row *matHeaderRowDef="displayedColumns" class="mat-elevation-z5"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="mat-elevation-z5"></tr> -->
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns" class="mat-elevation-z5"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="mat-elevation-z5"
+        style="margin-bottom: 5px; box-sizing: border-box"></tr>
+
+      <!-- <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr> -->
+    </table>
+    <mat-paginator #tabpaginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+  </div>
+</div>

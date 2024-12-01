@@ -1,0 +1,83 @@
+
+<div class="voc" style="position: relative;">
+  <div class="headerRow">
+    <div class="vocttitle">Voice of Customer</div>
+    <!-- <div class="statusdd">
+      <select style="border-radius: 7px; width: 80px; font-size: 12px;outline: none !important;" #statusSelect [(ngModel)]="selectedOption"
+      (change)="getOpenEscalationsForWeekByCustomer(this.CustomerIds, this.StartDate, this.EndDate, this.selectedOption)">
+        <option selected="selected" value="Open">Open</option>
+        <option value="Closed">Closed</option>
+      </select>
+    </div> -->
+    <!-- <div class="settings" (click)="showFilterWindow = !showFilterWindow">
+        <i style="font-size:16px;" class="fa">&#xf013;</i>
+    </div> -->
+  </div>
+  <div style="border-right: 1px solid #cccccc;">
+      <div style="height: 23px; vertical-align: middle; line-height: 23px; margin-bottom: 10px;">
+          <div style="float: left;"  class="subtitle">Issues ({{this.date1}}) - ({{ this.date2}})</div>
+          <div style="float: right;" class="settings" (click)="showFilterWindow = !showFilterWindow">
+            <i style="font-size:16px;" class="fa">&#xf013;</i>
+          </div>
+      </div>
+      <div class="statusdd">
+        <select style="border-radius: 7px; width: 80px; font-size: 12px;outline: none !important;" #statusSelect [(ngModel)]="selectedOption"
+        (change)="getOpenEscalationsForWeekByCustomer(this.CustomerIds, this.StartDate, this.EndDate, this.selectedOption)">
+          <option selected="selected" value="Open">Open</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+      <!-- <div class="thisWeek">
+      <div class="label">Last 7 Days</div>
+      </div> -->
+      <!-- <div class="thisWeek">
+        ({{this.date1}}) - ({{ this.date2}})
+      </div> -->
+      <div class="chartArea">
+        <google-chart #vocAreaChart [type]="type" [data]="data" [columnNames]="columnNames" [options]="options" [width]="width" [height]="height">
+        </google-chart>
+      </div>
+  </div>
+  <div style="font-size: 11px; color: #94d3f1; margin-left: 38px; font-weight: 600;" (click)="showEscalationdetails()">
+    <a style="cursor: pointer; text-decoration: none">
+      <u>View Details</u>
+    </a>
+  </div>
+</div>
+<div class="dateFilter" *ngIf="showFilterWindow">
+  <div class="row" style="border-bottom: 1px solid lightgray;padding-bottom: 5px;padding-left: 10px; padding-top: 10px">
+    <div style="float: left; ">
+      <b>Settings</b>
+    </div>
+    <div style="float: right; padding-right: 5px;" (click)="showFilterWindow = false">
+      <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+    </div>
+  </div>
+  <div style="padding-left: 10px; padding-top: 10px; ">
+    <div style="font-size: 12px;">
+      <b> Date</b>
+    </div>
+    <div class="row">
+      <input style="border-radius: 5px; width: 130px;" name="dtEnd" [(ngModel)]="EndDate" [matDatepicker]="picker1" placeholder="Select Date"
+        required>
+      <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+      <mat-datepicker #picker1></mat-datepicker>
+    </div>
+    <!-- <div style="font-size: 12px;">
+      <b>End Date</b>
+    </div>
+    <div class="row">
+        <input style="border-radius: 5px; width: 130px;" name="dtEnddate" [(ngModel)]="EndDate" [matDatepicker]="picker2" placeholder="End Date"
+          required>
+        <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+        <mat-datepicker #picker2></mat-datepicker>
+    </div> -->
+</div>
+<div class="row" style="padding-left: 10px; padding-top: 10px; text-align: center; font-size: 12px;">
+  <button type="button" class="btn btn-primary" (click)="Applyfilter()"
+    style="height: 23px; margin-right: 10px; text-align: center;  background-color: #00004d; padding-top: 1px;" >
+    Apply</button>
+  <button type="button" class="btn btn-primary" style="height: 23px; padding-left : 4px;text-align: center; padding-top: 1px; width: 56px;background-color: #262626" >Cancel</button>
+</div>
+</div>
+

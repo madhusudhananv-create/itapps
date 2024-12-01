@@ -1,0 +1,90 @@
+<mat-sidenav-container class="example-container">
+  <mat-sidenav #sidenav mode="side" class="sideNav">
+
+
+
+    <div class="row" style="margin-left: 25px;margin-top:10px">
+      <span style="color: #4b4eb1">Menu</span>
+      <button mat-button (click)="closeSideNav()" style="float: right;border: none;background: none;margin-right: 15px">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <ul>
+      <li>
+        <a href="#">
+          <img class="svg-image" src="/assets/images/Contacts.png" alt="" /> Contacts
+        </a>
+      </li>
+      <li>
+        <a href="#">
+          <img class="svg-image" src="/assets/images/file.png" alt="" /> FMEA
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/Timesheets.png" alt="" /> Timesheet
+        </a>
+      </li>
+      <li>
+        <a href="#">
+          <img class="svg-image" src="/assets/images/Insights.png" alt="" /> Insights
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/hands.png" alt="" /> Lessons Learnt
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/circle (1).png" alt="" /> Overview
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/weapons.png" alt="" /> Success Goals
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/maps-and-location.png" alt="" /> Journey Map
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/men.png" alt="" /> People
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/idea-svgrepo-com.png" alt="" /> Ideas & Improvements
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/book.png" alt="" /> User Guide
+        </a>
+      </li>
+      <li>
+
+        <a href="#">
+          <img class="svg-image" src="/assets/images/symbol.png" alt="" /> Settings
+        </a>
+      </li>
+    </ul>
+
+
+
+  </mat-sidenav>
+   <mat-sidenav-content>
+      <button mat-button *ngIf="btnShow" (click)="openSideNav()" style="border: none;background: none;"><mat-icon>menu</mat-icon></button>
+    </mat-sidenav-content>
+</mat-sidenav-container>

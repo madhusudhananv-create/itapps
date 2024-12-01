@@ -1,0 +1,178 @@
+table td .mat-checkbox-inner-container, table .mat-radio-container, table .mat-radio-outer-circle, table .mat-radio-inner-circle {
+    height: 10px!important;;
+    width: 10px!important;
+  }
+  ::ng-deep .mat-checkbox .mat-checkbox-inner-container {
+    height: 12px!important;;
+    width: 12px!important;
+  }
+  .round
+  {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;;
+    float: left;
+    margin-right: 3px;
+    margin-top: 1px;
+  }
+  .fixedheight
+  {
+    height: 50px;
+    overflow: auto;
+  }
+  .color_swatch {
+    background: url("/assets/images/color_swatch.png") no-repeat;
+    width: 14px;
+    height: 14px;
+    margin-top: -17px;
+    margin-bottom: 3px;
+    float: right;
+    cursor: pointer;
+    margin-right: 95%;
+  }
+.legend{
+  font-size:12px;
+  width:450;
+  vertical-align:middle;
+  border: solid 1px grey;
+}
+  table.legend td{
+    padding: 2px;border: solid 1px #d6d0d0;
+  }
+
+  .matrix{
+    font-size:.8em; 
+    padding:10px;
+  }
+  // .matrixtd1{
+  //   padding:5px;
+  //   width:210px;
+  //   vertical-align:top;
+  // }
+  // .matrixtd{
+  //   padding:5px;
+  //   width:50px;
+  //   vertical-align:top;
+  //   text-align:center;
+  // }
+
+//------------------------------
+//Fixed column table
+//------------------------------
+.view {
+	margin: auto;
+    //width: 600px;
+}
+
+.wrapper {
+	position: relative;
+	overflow: auto;
+   	//border: 1px solid black;
+  	//white-space: nowrap;
+}
+
+.sticky-col {
+    position: sticky;
+    position: -webkit-sticky;    
+    background-color: white;
+    vertical-align:top;
+}
+  
+.first-col {
+	width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+  left: 0px;    
+  padding: 5px;
+}
+.all-col{
+  padding:5px;
+  width:50px !important;
+  vertical-align:top;
+  text-align:center;
+}
+
+// .second-col {
+// 	width: 100px;
+//     min-width: 100px;
+//     max-width: 100px;
+// 	left: 50px;    
+// }
+
+//-----------------------
+//check box styles
+//-----------------------
+.main { 
+  //display: block; 
+  position: relative; 
+  //padding-left: 35px; 
+  //margin-bottom: 15px; 
+  cursor: pointer; 
+  //font-size: 20px; 
+  margin-left:-2px;
+  margin-top:4px
+} 
+
+/* Hide the default checkbox */ 
+input[type=checkbox] { 
+  visibility: hidden; 
+} 
+
+/* Creating a custom checkbox 
+based on demand */ 
+.geekmark { 
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  height: 20px; 
+  width: 20px; 
+  /*background-color: black; */
+  border: solid 3px #ffcccc;
+} 
+
+/* Specify the background color to be 
+shown when hovering over checkbox */ 
+/*.main:hover input ~ .geekmark { 
+  background-color: yellow; 
+} */
+
+/* Specify the background color to be 
+shown when checkbox is active */ 
+/*.main input:active ~ .geekmark { 
+  background-color: red; 
+}*/ 
+
+/* Specify the background color to be 
+shown when checkbox is checked */ 
+.main input:checked ~ .geekmark { 
+  background-color: #fca4a4; 
+} 
+
+/* Checkmark to be shown in checkbox */ 
+/* It is not be shown when not checked */ 
+.geekmark:after { 
+  content: ""; 
+  position: absolute; 
+  display: none; 
+} 
+
+/* Display checkmark when checked */ 
+.main input:checked ~ .geekmark:after { 
+  display: block; 
+} 
+
+/* Styling the checkmark using webkit */ 
+/* Rotated the rectangle by 45 degree and  
+showing only two border to make it look 
+like a tickmark */ 
+.main .geekmark:after { 
+  left: 5px; 
+  bottom: 4px; 
+  width: 6px; 
+  height: 10px; 
+  border: solid white; 
+  border-width: 0 3px 3px 0; 
+  -webkit-transform: rotate(45deg); 
+  -ms-transform: rotate(45deg); 
+  transform: rotate(45deg); 
+} 

@@ -1,0 +1,29 @@
+<div class="container">
+  <div class="row">
+    <div col="col-lg-6">
+      <table class="table table-hover table-bordered">
+        <tr>
+          <td>Customer Id:</td>
+          <td>{{_rasUtil.selectedCustomer.cusT_ID}}</td>
+        </tr>
+        <tr>
+          <td>Customer Name:</td>
+          <td>{{_rasUtil.selectedCustomer.cusT_NM}}</td>
+        </tr>
+        <tr>
+          <td>Industry Type:</td>
+          <td>{{_rasUtil.selectedCustomer.industrY_TYPE}}</td>
+        </tr>
+        <tr>
+          <td>Url:</td>
+          <td>{{_rasUtil.selectedCustomer.url}}</td>
+        </tr>
+        <tr>
+        </tr>
+      </table>
+    </div>
+    <div col="col-lg-6">
+      <app-project-list [CustId]="_rasUtil.selectedCustomer.cusT_ID"></app-project-list>
+    </div>
+  </div>
+</div>

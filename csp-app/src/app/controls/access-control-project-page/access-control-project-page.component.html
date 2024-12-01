@@ -1,0 +1,88 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+  <app-navbar-new [ShowMenu]="false"></app-navbar-new>
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'" [fixedInViewport]="mobileQuery.matches" fixedTopGap="56">
+      side nav
+    </mat-sidenav>
+    <mat-sidenav-content style="padding:2px;">
+      <mat-tab-group>
+        <mat-tab label="Resource wise Projects">
+          <app-access-control-project></app-access-control-project>
+        </mat-tab>
+        <mat-tab label="Project wise resource">
+          <app-access-control-project-resource></app-access-control-project-resource>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
+  <!-- <mat-toolbar class="example-toolbar"> -->
+    <!-- If Desktop -->
+    <!-- <div class="header">
+      <div class="left-toolbar">
+        <a class="navbar-brand" [routerLink]="['/dashboard']">
+          <span class="gavs_logo"></span>
+        </a>
+        <button mat-icon-button (click)="snav.toggle()" style="padding-top:5px">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+      <div class="right-toolbar">
+        <span class="user_options">
+          <span *ngIf="_util.IsLoggedIn()">{{_util.AppSettings.displayname}}&nbsp;&nbsp;</span>
+          <i class="fa fa-user user_img fa_fnt"></i>
+        </span>
+        <span class="user_options"> -->
+          <!-- <button mat-button [matMenuTriggerFor]="menu">Menu</button> -->
+          <!-- <i class="fa fa-cog fa_fnt link" mat-button [matMenuTriggerFor]="menu" matTooltip="Settings" [matTooltipPosition]="'before'"></i>
+          <mat-menu #menu="matMenu" sytle="position: absolute;left: 44px;top: 35px;">
+            <button mat-menu-item [routerLink]="['/customerinvite']">Customer Details</button>
+            <button mat-menu-item [routerLink]="['/projecttracker']">Project Tracker</button>
+          </mat-menu> -->
+          <!-- <a [routerLink]="['/customerinvite']" style="color:#000;" matTooltip="Settings" [matTooltipPosition]="'before'">
+                  <i class="fa fa-cog fa_fnt"></i>
+                </a> -->
+        <!-- </span>
+        <span class="user_options">
+          <a class="link" (click)='logout()' style="color:#000;" matTooltip="Sign out" [matTooltipPosition]="'before'">
+            <i class="fa fa-power-off fa_fnt"></i>
+          </a>
+        </span>
+      </div>
+    </div> -->
+    <!-- If mobile -->
+    <!-- <div class="header-mobile">
+      <div class="left-toolbar" style="padding-top:10px">
+        <button mat-icon-button (click)="snav.toggle()">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+      <div class="center-toolbar">
+        <a class="navbar-brand" [routerLink]="['/dashboard']">
+          <span class="gavs_logo" style="padding-top:18px"></span>
+        </a>
+      </div>
+      <div class="right-toolbar">
+        <i class="fa fa-user user_img fa_fnt link" mat-button [matMenuTriggerFor]="menu"></i>
+        <mat-menu #menu="matMenu" sytle="position: absolute;left: 44px;top: 35px;">
+          <app-navbar-menu></app-navbar-menu>
+        </mat-menu>
+      </div>
+    </div>
+  </mat-toolbar>
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'" [fixedInViewport]="mobileQuery.matches" fixedTopGap="56">
+      side nav
+    </mat-sidenav>
+    <mat-sidenav-content style="padding:2px;">
+      <mat-tab-group>
+        <mat-tab label="Resource wise Projects">
+          <app-access-control-project></app-access-control-project>
+        </mat-tab>
+        <mat-tab label="Project wise resource">
+          <app-access-control-project-resource></app-access-control-project-resource>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-sidenav-content>
+  </mat-sidenav-container> -->
+<!-- </div> -->

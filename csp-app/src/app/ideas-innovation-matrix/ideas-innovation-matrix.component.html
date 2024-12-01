@@ -1,0 +1,328 @@
+<div class="row" style="margin-top: 6px;">
+  <div style="float: left;padding: 16px;font-family: calibri;font-size: 15px;">Filter by Date:</div>
+  <mat-form-field style="width: 90px;margin-right:15px ">
+    <input matInput [(ngModel)]="startDate" name="dateStart" [matDatepicker]="pickerStartDate" placeholder="Start Date">
+    <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+    <mat-datepicker #pickerStartDate></mat-datepicker>
+  </mat-form-field>
+  <mat-form-field style="width: 90px;margin-left: 15px">
+    <input matInput [(ngModel)]="endDate" name="dateEnd" [matDatepicker]="pickerEndDate" placeholder="End Date">
+    <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+    <mat-datepicker #pickerEndDate></mat-datepicker>
+  </mat-form-field>
+  <mat-form-field style="width: 150px;margin-left: 15px">
+    <mat-select [(ngModel)]="ideasType" name="ddIdeaType" placeholder="Choose Category">
+      <mat-option *ngFor="let type of ddideatype" [value]="type" [title]="type"> {{type}}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field style="width: 150px;margin-left: 15px">
+    <mat-select [(ngModel)]="input_processarea" name="ddProcess" placeholder="Choose Process Area">
+      <mat-option *ngFor="let type of ddProcessArea" [value]="type" [title]="type"> {{type}}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <button (click)="getIdeasInnovation()" style="margin-left: 15px;" mat-raised-button>Apply</button>
+  <div style="float: left;margin-left: 7px;" (mouseenter)="enablestatus()" (mouseleave)="disablestatus()" class="color_swatch"></div>
+<div *ngIf="legend" style="float: left;margin: 10px;z-index:2;position:absolute;background-color: #fff!important">
+  <table style="font-size: 10px;" class="table table-bordered">
+      <tr>
+          <td style="padding: 3px;font-weight: 700;" colspan="2">Legend</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px">
+            <div style="background-color:#aeafaf;height: 10px;width: 10px;border-radius: 50%;"></div>
+          </td>
+          <td style="padding: 1px;">Identified</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px">
+            <div style="background-color:#feeb84;height: 10px;width: 10px;border-radius: 50%;"></div>
+          </td>
+          <td style="padding: 1px;">Planning</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px">
+            <div style="background-color:#3db1e7;height: 10px;width: 10px;border-radius: 50%;"></div>
+          </td>
+          <td style="padding: 1px;">Execution</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px">
+            <div style="background-color:#44c444;height: 10px;width: 10px;border-radius: 50%;"></div>
+          </td>
+          <td style="padding: 1px;">Completed</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px">
+            <div style="background-color:#242323;height: 10px;width: 10px;border-radius: 50%;"></div>
+          </td>
+          <td style="padding: 1px;">Not Applicable</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px">
+            <div style="background-color:#f03d3d;height: 10px;width: 10px;border-radius: 50%;"></div>
+          </td>
+          <td style="padding: 1px;">Not Implemented</td>
+        </tr>
+  </table>
+</div>
+</div>
+<mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+<div>
+  <mat-tab-group name="fontStyle" aria-label="Industry Vertical" [(selectedIndex)]="itVertical" (focusChange)="selectedTab($event)">
+    <mat-tab label="IMS">
+      <div>
+        <table class="table table-bordered" style="font-size: 10px;margin: 5px;width:calc(100% - 20px)" *ngIf="matrixdata.length > 0 ">
+          <tr>
+            <th rowspan='2'>Ideas/innovations</th>
+            <th style="text-align: center" *ngIf="matrixdata[0].matrix.length > 0" [attr.colspan]='matrixdata[0].matrix.length'>Status</th>
+          </tr>
+          <tr>
+            <!-- <td *ngFor="let m of matrixdata[0].matrix"> {{GetProjName(m.proJ_ID)}}</td> -->
+            <td>Identified</td>
+            <td>Planning</td>
+            <td>Execution</td>
+            <td>Completed</td>
+            <td>Not Applicable</td>
+            <td>Not Implemented</td>
+          </tr>
+          <tr *ngFor="let bp of matrixdata| paginate: { itemsPerPage: 2, currentPage: p }; let i = index">
+            <td style="padding: 3px;">{{bp.innovation}}</td>
+            <td style="padding: 0px;">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Identified'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Planning'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Execution'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+              <!-- <mat-checkbox (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox> -->
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Completed'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+              <!-- <mat-checkbox (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox> -->
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Not Applicable'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Not Implemented'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <div *ngIf="_util.IsEditable()">
+                        <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)"
+                          *ngIf="mat.status == 'Not Implemented'"></mat-checkbox>
+                      </div>
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+              <!-- <mat-checkbox (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox> -->
+            </td>
+          </tr>
+        </table>
+      </div>
+      <pagination-controls *ngIf="matrixdata.length > 2" style="float: right" (pageChange)="p = $event"></pagination-controls>
+    </mat-tab>
+    <mat-tab label="ADM">
+      <div>
+        <table class="table table-bordered" style="font-size: 10px;margin: 5px;width:calc(100% - 20px)" *ngIf="matrixdata.length > 0 ">
+          <tr>
+            <th rowspan='2'>Ideas/Innovations</th>
+            <th style="text-align: center" *ngIf="matrixdata[0].matrix.length > 0" [attr.colspan]='matrixdata[0].matrix.length'>Status</th>
+          </tr>
+          <tr>
+            <!-- <td *ngFor="let m of matrixdata[0].matrix"> {{GetProjName(m.proJ_ID)}}</td> -->
+            <td>Identified</td>
+            <td>Planning</td>
+            <td>Execution</td>
+            <td>Completed</td>
+            <td>Not Applicable</td>
+            <td>Not Implemented</td>
+          </tr>
+          <tr *ngFor="let bp of matrixdata| paginate: { itemsPerPage: 2, currentPage: p }; let i = index">
+            <td style="padding: 3px;">{{bp.innovation}}</td>
+            <td style="padding: 0px;">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Identified'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Planning'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Execution'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+              <!-- <mat-checkbox (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox> -->
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Completed'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <!-- <mat-checkbox  style="float:left;margin: 2px" title="Scope for Implementation" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox> -->
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+              <!-- <mat-checkbox (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox> -->
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Not Applicable'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <div *ngIf="_util.IsEditable()">
+                        <mat-checkbox style="float:left;margin: 2px" title="Select" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox>
+                      </div>
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+              <!-- <mat-checkbox (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox> -->
+            </td>
+            <td style="padding: 0px">
+              <div class="fixedheight">
+                <table *ngFor="let mat of bp.matrix;let index= j">
+                  <tr *ngIf="mat.status == 'Not Implemented'">
+                    <div class="row" style="margin: 5px;margin-bottom: 0px;">
+                      <div class="round" [style.background-color]="GetColor(mat.status)">
+                      </div>
+                      <div *ngIf="_util.IsEditable()">
+                        <mat-checkbox style="float:left;margin: 2px" title="Select" (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'"></mat-checkbox>
+                      </div>
+                      <div style="white-space: pre;">{{GetProjName(mat.proJ_ID)}}</div>
+                    </div>
+                  </tr>
+                </table>
+              </div>
+              <!-- <mat-checkbox (change)="OnChange(bp,mat,$event)" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox> -->
+            </td>
+          </tr>
+        </table>
+      </div>
+      <pagination-controls *ngIf="matrixdata.length > 2" style="float: right" (pageChange)="p = $event"></pagination-controls>
+
+      <!-- <table class="table table-bordered" style="font-size: 10px;margin: 5px;" *ngIf="matrixdata.length > 0 ">
+              <tr>
+                <th rowspan='2'>Best Practice</th>
+                <th style="text-align: center" *ngIf="matrixdata[0].matrix.length > 0" [attr.colspan]='matrixdata[0].matrix.length'>Status</th>
+              </tr>
+              <tr>
+                <td *ngFor="let m of matrixdata[0].matrix"> {{GetProjName(m.proJ_ID)}}</td>
+              </tr>
+              <tr *ngFor="let bp of matrixdata">
+                <td style="padding: 3px;">{{bp.bestPractice}}</td>
+                <td style="padding: 0px" [style.background-color]="GetColor(mat.status)" *ngFor="let mat of bp.matrix">
+                  <mat-checkbox (change)="OnChange(bp,mat,$event)" name="scopeforimplementation" *ngIf="mat.status == 'Not Implemented'">Scope for Implementation</mat-checkbox>
+                </td>
+              </tr>
+            </table> -->
+    </mat-tab>
+  </mat-tab-group>
+</div>
+<div *ngIf="matrixdata.length > 0" style="font-size: 10px">
+  <mat-radio-group [(ngModel)]="statusChange" *ngIf="_util.IsEditable()">
+    <mat-radio-button #rad1 style="padding: 5px" value="Planning">Mark as Scope for Implementation</mat-radio-button>
+    <mat-radio-button #rad2 value="Not Applicable">Mark as Not Applicable</mat-radio-button>
+  </mat-radio-group>
+</div>
+<div style="text-align: center;">
+  <button *ngIf="statusCheck()" style="margin:5px" class="mat-raised-button mat-primary" (click)="SaveStatus(matrixdata)">Save</button>
+  <button class="mat-raised-button" (click)="CancelOnClick()">Close</button>
+</div>

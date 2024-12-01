@@ -1,0 +1,195 @@
+<div class="container">
+  <div class="row">
+
+    <div col="col-lg-6">             
+      <!-- <p *ngIf="isProjectEditBtnClicked then DefaultEditTable else showAddProjectTable"></p> -->
+      <span *ngIf="isProjectEditBtnClicked">
+      <!-- <ng-template #DefaultEditTable>           edit project table -->
+          <h5>&nbsp;<b>Update Project</b></h5>
+      <table class="table table-hover table-bordered">
+        <tr>
+          <td>ProjectName:</td>          
+          <td><input type="text" style='width: 40%' id="projectname" name="projectname" [(ngModel)]="projects1.proJ_NM" ></td>                                  
+        </tr>
+        <tr>
+          <td>Start Date:</td>                
+          <td><input type="date" id="startDate" name="startDate" [(ngModel)]="projects1.starT_DATE" ></td>
+        </tr>
+        <tr>
+          <td>End Date:</td>                    
+          <td><input type="date" id="endDate" name="endDate" [(ngModel)]="projects1.enD_DATE"></td>
+        </tr>
+        <tr>
+          <td>Alias Name:</td>
+          <td>            
+            <!-- <div *ngIf="!boolaliasnameupdate">{{selectedProject.proJ_ALIAS_NM}}  -->
+            
+              <!-- <div *ngIf="!boolaliasnameupdate">{{projAliasName}}   
+              &nbsp; &nbsp; 
+                <button (click)="toggle()">
+                    Edit
+                  </button>  
+              </div> -->              
+              <!-- <div *ngIf="boolaliasnameupdate"><input id="txtalias" type="text" [(ngModel)]="projAliasName">
+                &nbsp; &nbsp; 
+                 <button (click)="updateProjectALiasName()">
+                    Update
+                  </button>  
+              </div>         -->
+              <input type="text" id="projaliasname" name="projaliasname" [(ngModel)]="projects1.proJ_ALIAS_NM">              
+          </td>
+        </tr>
+        <tr>
+          <td>Project Id:</td>                    
+          <td><input type="text" id="projid" name="projid" disabled=true [(ngModel)]="projects1.proJ_ID"></td>
+        </tr>
+        <tr>
+          <td>Biling Type:</td>                              
+          <td>              
+                  <select name="procType" id="procType" [(ngModel)]="projects1.proC_TYPE">                  
+                  <option value="Daily FB">Daily FB</option>
+                  <option value="Fixed Bid">Fixed Bid</option>
+                  <option value="Fixed Billing">Fixed Billing</option>
+                  <option value="Internal">Internal</option>
+                  <option value="Milestone">Milestone</option>
+                  <option value="Monthly FB">Monthly FB</option>
+                  <option value="Sup Ticket">Sup Ticket</option>
+                  <option value="T&M">T&M</option>
+                </select>
+          </td>
+        </tr>
+        <tr>
+          <td>Customerid</td>          
+          <td><input type="text" id="customerid" disabled=true name="customerid" [(ngModel)]="projects1.cusT_ID"></td>       
+        </tr>       
+        <tr>
+            <td>Parent Project Id</td>                      
+            <td>
+              <span *ngIf="ppByDefault">
+                <input type="text" disabled=true id="parent_projID" name="parent_projID" [(ngModel)]="projects1.parenT_PROJ_ID">
+              </span>
+              <span *ngIf="ppFromDropDwn">
+                <input type="text" disabled=true id="parent_projIDfromDD" name="parent_projIDfromDD" [(ngModel)]="projects1.parenT_PROJ_ID">
+              </span>
+                &nbsp;
+                <select id="projpid" name ="projpid" [(ngModel)]="projects1.parenT_PROJ_ID" (change)="dd_parentOnChange($event.target.value)">                                  
+                  <option *ngFor="let p of projects" [value]="p.proJ_ID">{{p.proJ_NM}}</option>
+                </select>
+                <!-- &nbsp;&nbsp;                
+                  <button class="btn btn-sm" (click)="ClearSelectedDropDown()">Clear</button>                 -->
+            </td>
+        </tr>   
+        <tr>             
+            <mat-checkbox name="chkShareToAll" style="text-align: left;font-family: calibri;font-size: 14px; color:blueviolet; "
+            [(ngModel)]="projects1.bP_SHARE_TO_All"  >
+              Best Practice to be shared to public (all project of GAVS in same Service Tower)
+            </mat-checkbox> 
+        </tr>
+        <tr><td colspan="2">
+              <div align="left">                 
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp;  
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp;   
+              <button class="btn" (click)="UpdateProject(projects1)">Update</button> &nbsp;&nbsp;&nbsp;&nbsp;              
+              <!-- <button class="btn" (click)="clearfields(projects1)">Cancel</button> &nbsp;&nbsp;&nbsp; -->
+              <button class="btn" (click)="GoBackToCustomers()">Back</button>
+              </div>                      
+            </td>
+        </tr>
+      </table>
+    <!-- </ng-template>    -->
+    </span>
+
+    <!-- <ng-template #showAddProjectTable> -->
+      <span *ngIf="isAddProjectBtnClicked">
+      <h5>&nbsp;<b>Add Project</b></h5>
+      <table class="table table-hover table-bordered">
+          <tr>
+              <td>Project ID:</td>
+              <td><input type="text" id="projectid" name="projectId" [(ngModel)]="AddselectedProject.proJ_ID">
+                <!-- <span *ngIf="!ProjectIdAlreadyExist" class="NotifyText">  Ex:123A456789-01</span>   -->
+                <span class="NotifyText">  Ex:123A456789-01</span>  
+                <span *ngIf="ProjectIdAlreadyExist" class="projectAlert">   Project ID Already Exists!</span>
+              </td>
+          </tr>          
+          <tr>
+              <td>Project Name:</td>
+              <td><input type="text" id="projectname" name="projectname" [(ngModel)]="AddselectedProject.proJ_NM"><span *ngIf="ProjectNameAlreadyExist" class="projectAlert">   Project Name Already Exists!</span></td>              
+          </tr>
+          <tr>
+              <td>Start Date:</td>
+              <td><input type="date" id="startDate" name="startDate" [(ngModel)]="AddselectedProject.starT_DATE"></td>
+          </tr>
+          <tr>
+              <td>End Date:</td>
+              <td><input type="date" id="endDate" name="endDate" [(ngModel)]="AddselectedProject.enD_DATE"></td>
+          </tr>
+          <tr>
+              <td>PROC Type:</td>              
+              <td>
+                  <select name="procType" disabled=true id="procType" [(ngModel)]="AddselectedProject.proC_TYPE">
+                    <option value="Daily FB">Daily FB</option>
+                    <option value="Fixed Bid">Fixed Bid</option>
+                    <option value="Fixed Billing">Fixed Billing</option>
+                    <option value="Internal">Internal</option>
+                    <option value="Milestone">Milestone</option>
+                    <option value="Monthly FB">Monthly FB</option>
+                    <option value="Sup Ticket">Sup Ticket</option>
+                    <option value="T&M">T&M</option>
+                  </select>
+              </td>
+          </tr>
+          <tr>
+              <td>Customer ID:</td>
+              <td><input type="text" disabled=true id="CUSTID" name="CUSTID" [(ngModel)]="AddselectedProject.cusT_ID"></td>
+          </tr>
+          <tr>
+              <td>Parent Project ID:</td>              
+              <td>
+                <span *ngIf="ppByDefault">
+                <input type="text" disabled=true id="parent_projID" name="parent_projID" [(ngModel)]="AddselectedProject.proJ_ID">
+                </span>
+                <span *ngIf="ppFromDropDwn">
+                <input type="text" disabled=true id="parent_projIDfromDD" name="parent_projIDfromDD" [(ngModel)]="AddselectedProject.parenT_PROJ_ID"></span>
+                &nbsp;
+                <select id="projpid" name ="projpid" [(ngModel)]="SelectedParentProjId" (change)="dd_parentOnChange($event.target.value)">                                  
+                  <option *ngFor="let p of projects" [value]="p.proJ_ID">{{p.proJ_NM}}</option>
+                </select>
+                &nbsp;&nbsp;                
+                  <button class="btn btn-sm" (click)="ClearSelectedDropDown()">Clear</button>                
+              </td>
+          </tr>
+          <tr>
+              <td>Project Alias Name:</td>
+              <td><input type="text" id="projAliasName" name="projAliasName" [(ngModel)]="AddselectedProject.proJ_ALIAS_NM"></td>
+          </tr>                 
+          <tr><td colspan="2">
+            <div align="left">               
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp;  
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+              &nbsp;&nbsp;&nbsp;&nbsp; 
+            <button class="btn" (click)="InsertProject()">Add</button>&nbsp;&nbsp;&nbsp;&nbsp;
+            <button class="btn" (click)="CancelAddProject()">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;
+            <button class="btn" (click)="GoBackToCustomers()">Back</button>
+            </div>                      
+          </td>
+          </tr>          
+      </table>              
+    <!-- </ng-template>     -->
+  </span>  
+      </div>
+    </div>    

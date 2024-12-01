@@ -1,0 +1,292 @@
+<div class="dashboardMenu">
+  <table class="menuList" style="margin-left: -9px !important; font-family:Helvetica Neue,Helvetica,Arial,sans-serif !important; border-collapse: separate;
+             border-spacing: 7px 12px;margin-top: -9px !important ; ">
+
+
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Contacts.png">
+            </td>
+            <td style="width: 150px" [routerLink]="['/newdashboard/csmdashboard']">CSM Dashboard</td>
+          </tr> -->
+
+
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/overview', custid]">
+        Overview
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/customerobjectivesnew', custid]">
+        Project Scope
+      </td>
+    </tr>
+
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/people', custid]">
+        People
+      </td>
+    </tr>
+
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/process', custid]">
+        Process
+      </td>
+    </tr>
+
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/delivery', custid]">
+        Delivery
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/successgoals', custid]">
+        Success Goals
+      </td>
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(58, 1, '','')">
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/surveyfeedback', custid]">
+        Voice of Customer
+      </td>
+    </tr>
+
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/lessons-learnt', custid]">
+        Lessons Learnt
+      </td>
+    </tr>
+
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/best-practices', custid]">
+        Best Practices
+      </td>
+    </tr>
+
+    <tr>
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/feedback-page', custid]">
+        Feedback
+      </td>
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(86, 1, '','')">
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/appreciation', custid]">
+        Appreciation
+      </td>
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(100, 1, '', '')">
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/managekpiproduct', custid]">
+        Manage KPI Products
+      </td>
+    </tr>
+
+    <tr>
+      <td style="width: 30px">
+        <img src="assets/images/Contacts.png">
+      </td>
+      <td style="width: 150px" [routerLink]="['/layout/contacts', custid]">Contacts</td>
+    </tr>
+
+    <!-- <tr *ngIf="!_util.IsPremier(custid) && _util.IsTimeSheetApplicable(custid)">
+      <td style="width: 30px">
+        <img src="assets/images/Timesheets.png">
+      </td>
+      <td style="width: 150px" [routerLink]="['/layout/timesheet', custid]">Timesheets</td>
+    </tr>
+
+    <tr *ngIf="_util.IsPremier(custid) && _util.IsTimeSheetApplicable(custid)">
+      <td style="width: 30px">
+        <img src="assets/images/Timesheets.png">
+      </td>
+      <td style="width: 150px" [routerLink]="['/layout/timesheetnewhome', custid]">Timesheets</td>
+    </tr> -->
+
+
+    <tr>
+      <td style="width: 30px;">
+        <img src="assets/images/Contacts.png">
+      </td>
+      <td style="width: 150px;" [routerLink]="['/sqamanagement/planner', custid]">
+        Planner
+      </td>
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(44, 1, '','')">
+      <td style="width: 30px">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px" [routerLink]="['/layout/projectmigration', custid]">Project Data Migration</td>
+    </tr>
+
+    <!-- <tr *ngIf="_access.IsAllowed(51, 1, '','')">
+      <td style="width: 30px">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px" [routerLink]="['/layout/mandatorytrainingreport', custid]">Mandatory Training Compliance</td>
+    </tr> -->
+
+    <tr *ngIf="_access.IsAllowed(52, 1, '','')">
+      <td style="width: 30px">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px" [routerLink]="['/layout/crisp-report', custid]">CRISP</td>
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(49, 1, '','')">
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/checklistassessment', custid]">
+        Checklist Assessment
+      </td>
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(50, 1, '','')">
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/checklistfindings', custid]">
+        Asessment Findings
+      </td>
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(55, 1, '','')">
+      <td style="width: 30px">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px">
+        <a class="aclass" href="#" [routerLink]="['/layout/fmea', custid]">FMEA Project Setup</a>
+      </td>
+
+    </tr>
+
+    <tr *ngIf="_access.IsAllowed(48, 1, '','')">
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/layout/projectdataconfiguration', custid]">
+        Project Data Configuration
+      </td>
+    </tr>
+    <!-- <tr *ngIf="_access.IsAllowed(113,1,'','')">
+      <td style="width: 30px;">
+        <i class="fa fa-list" style="color:#ffd000"></i>
+      </td>
+      <td style="width: 150px;" [routerLink]="['/complianceinsights', custid]">
+        Compliance Insights
+      </td>
+    </tr> -->
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Reports.png">
+            </td>
+            <td style="width: 150px">Reports</td>
+          </tr> *ngIf="_access.IsAllowed(23, 1 ,custid,'')" -->
+
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Insights.png">
+            </td>
+            <td style="width: 150px">Insights</td>
+          </tr> -->
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Best Practises.png">
+            </td>
+            <td style="width: 150px">Feedback</td>
+          </tr> -->
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Contacts.png">
+            </td>
+
+            <td style="width: 150px" [routerLink]="['/layout/bestpractice', custid]">Best Practices</td>
+          </tr> -->
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Contacts.png">
+            </td>
+            <td style="width: 150px">Overview</td>
+          </tr> -->
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Contacts.png">
+            </td>
+            <td style="width: 150px" [routerLink]="['/layout/issues', selectedCustomer.cusT_ID]">Issues</td>
+          </tr> -->
+    <!-- <tr>
+            <td style="width: 30px">
+              <img src="assets/images/Contacts.png">
+            </td>
+            <td style="width: 150px" [routerLink]="['/layout/actionitems', selectedCustomer.cusT_ID]">Action Items</td>
+          </tr> -->
+
+
+    <!-- <tr>
+            <td style="width: 30px;">
+              <i class="fa fa-list" style="color:#ffd000"></i>
+            </td>
+            <td style="width: 150px;" [routerLink]="['/newdashboard/enterpriseview']" >
+              Balaji Dashboard
+            </td>
+          </tr> -->
+
+    <!-- <tr>
+            <td style="width: 30px;">
+              <i class="fa fa-list" style="color:#ffd000"></i>
+            </td>
+            <td style="width: 150px;" [routerLink]="['/layout/mom']" >
+              Minutes of Meeting
+            </td>
+          </tr> -->
+
+
+
+    <!-- <tr>
+            <td style="width: 30px;">
+              <i class="fa fa-list" style="color:#ffd000"></i>
+            </td>
+            <td style="width: 150px;" [routerLink]="['/layout/llearnt', custid]" >
+              Lessons Learnt
+            </td>
+          </tr> -->
+
+  </table>
+</div>

@@ -1,0 +1,97 @@
+.modeldiv {
+    margin: 5px;
+    text-align: center;
+    box-shadow: 1px 2px 2px #ccc;
+    border-radius: 2px;
+    font-size: 17px;
+    width: 100%;
+    background-color: #67809E
+}
+
+.areaDiv {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+    text-align: center;
+    box-shadow: 1px 2px 2px #ccc;
+    border-radius: 2px;
+    font-size: 14px;
+    width: 80%;
+    background-color: #67809E;
+    color: white
+}
+
+.processDiv {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+    text-align: center;
+    box-shadow: 1px 2px 2px #ccc;
+    border-radius: 2px;
+    width: 50%;
+    background-color: #E0E0E0;
+}
+
+.border {
+    border: 1px solid black;
+}
+
+
+.example-radio-group {
+    display: grid !important;
+}
+
+::ng-deep.mat-radio-button.mat-accent .mat-radio-inner-circle {
+    background-color: #59a3fd !important;
+    color: #59a3fd !important;
+}
+
+::ng-deep.mat-radio-button.mat-accent.mat-radio-checked .mat-radio-outer-circle {
+    border-color: #59a3fd !important
+}
+
+::ng-deep.mat-form-field {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    line-height: 1.125 !important;
+    font-family: Roboto, "Helvetica Neue", sans-serif !important;
+}
+
+.serviceareadd {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.serviceareadd mat-option {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.link {
+    cursor: pointer;
+    text-decoration: none;
+    color: #337ab7;
+
+}
+
+.mat-tab-labels {
+    color: black;
+    font-family: calibri;
+    background-color: #ccc;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    margin: 1px;
+}
+
+.mat-tab-label-active {
+    color: black;
+    font-family: calibri;
+    font-weight: 600;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: #59a3fd;
+}
+
+.mat-tab-label {
+    height: 30px !important;
+}

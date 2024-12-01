@@ -1,0 +1,18 @@
+<app-navbar style="z-index:1000 !important"></app-navbar>
+
+<!-- <div class="parentdiv">
+  <div class="leftdiv">
+    <app-customer-list (onClick)="customer_onChange($event)"></app-customer-list>
+  </div>
+  <div class="rightdiv">
+    <app-customer-details [customer]="selectedCustomer"></app-customer-details>
+  </div>
+</div> -->
+<div class="row">
+  <div class="col-lg-2 col-md-2 col-sm-4">
+    <app-customer-list (onClick)="customer_onChange($event)"></app-customer-list>
+  </div>
+  <div class="col-lg-10 col-md-10 col-sm-8">
+    <app-customer-details></app-customer-details>
+  </div>
+</div>

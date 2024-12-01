@@ -1,0 +1,459 @@
+<mat-sidenav-container class="example-container">
+  <mat-sidenav #sidenav mode="side"  class="sideNav" style="margin-left: 15px">
+    <div class="row">
+      <label style="margin-left:5px">Accounts/Portfolios/Projects</label>
+      <button mat-button (click)="sidenav.toggle()" style="float: right;border: none;background: none;margin-right: 15px;">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <!-- <div [class.active] = "isallActive" class="row"  style="margin-left: 10px;width: 396px;height: 30px;border: 1px solid #E5E5E5;opacity: 1;margin-bottom: 10px">
+      <ul>
+        <a class="link_h3" (click)="allAccounts()"><li><span style="height: 17px;text-align: left;font-size: 14px;margin-left:10px;font-family: Proxima Nova;letter-spacing: 0px;color: #000000;opacity: 1;">All Accounts</span> </li></a> 
+      </ul>
+    </div> -->
+    <ul *ngFor="let cust of _layoutService.custGroup;let i = index">
+      <div [class.active] = "i == isActive" style="margin-left: 10px;width: 396px;height: 115px;border: 1px solid;background: transparent linear-gradient(180deg, #FFFFFF 0%, #F0F0F0 100%) 0% 0% no-repeat padding-box;border: 1px solid #E5E5E5;opacity: 1;">
+        <div class="row">
+          <div class="col-lg-2 col-md-2 col-sm-2">
+            <img class="expand" id="img{{i}}" *ngIf="editIndex == -1" src="/assets/images/plus.svg" type="button" (click)="setProjectIndex(i,$event.target)">
+            <img class="expand" id="img{{i}}" *ngIf="editIndex == i" src="/assets/images/minus.png" type="button" (click)="setProjectIndex1()">
+          </div>
+          <div class="col-lg-5 col-md-5 col-sm-5">
+            <a (click)="Client_OnClick(i,cust.cusT_ID)" class="link_h3">
+              <li style="margin-left: -45px;">
+                <span style="height: 17px;text-align: left;font-size: 14px;margin-left:10px;font-family:Proxima Nova;letter-spacing: 0px;color: #000000;opacity: 1;">{{cust.cusT_NM}}</span>
+              </li>
+            </a>
+          </div>
+
+        </div>
+
+
+        <div class="row" style="margin-top: 2px">
+          <div class="col-lg-3 col-md-3 col-sm-3">
+            <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">CRISP:
+              <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">78%</span>
+            </label>
+          </div>
+
+          <div class="col-lg-2 col-md-2 col-sm-2">
+            <label style="white-space: nowrap;height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Success Goal:
+              <!-- <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</span> -->
+            </label>
+          </div>
+          <div class="col-lg-1 col-md-1 col-sm-1">
+            <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</label>
+          </div>
+
+          <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: right">
+            <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Risks:</label>
+          </div>
+          <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: center;margin-left: -25px;">
+            <table style="border-collapse: separate;border-spacing: 2px">
+              <tr>
+                <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                  <span style="height: 12px;text-align: left;font-size: 10px;font-family:Proxima Nova;letter-spacing: 0px;color: #E84141;opacity: 1;">10</span>
+                </td>
+                <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                  <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #EDB51D;opacity: 1;">120</span>
+                </td>
+                <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                  <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #54AF4C;opacity: 1;">02</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div class="row" style="margin-top: 2px">
+          <div class="col-lg-1 col-md-1 col-sm-1">
+            <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Issues:</label>
+          </div>
+          <div class="col-lg-3 col-md-3 col-sm-3">
+            <table style="border-collapse: separate;border-spacing: 2px">
+              <tr>
+                <td style="background-color: #FF7676; border-radius: 2px;height: 18px;width: 20px;color:#FFFFFF;font-size: 10px;font-family:Lato;text-align: center">{{getTitleByCustomerId('RISK_ISSUE_H_TOTAL', cust.cusT_ID)}}</td>
+                <td style="background-color: #EDB51D;border-radius: 2px;height: 18px;width: 20px;color:#FFFFFF;font-size: 10px;font-family:Lato;text-align: center">{{getTitleByCustomerId('RISK_ISSUE_M_TOTAL', cust.cusT_ID)}}</td>
+                <td style="background-color: #54AF4C; border-radius: 2px;height: 18px;width: 20px;color:#FFFFFF;font-size: 10px;font-family:Lato;text-align: center">{{getTitleByCustomerId('RISK_ISSUE_L_TOTAL', cust.cusT_ID)}}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -10px;">
+            <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Survey:</label>
+          </div>
+          <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -15px;">
+            <label style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #54AF4C;">85%</label>
+          </div>
+          <div class="col-lg-3 col-md-3 col-sm-3">
+            <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Process:
+              <span style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #CE9B11;">72%</span>
+            </label>
+          </div>
+
+        </div>
+        <div class="row" style="margin-top: 2px">
+          <div class="col-lg-1 col-md-1 col-sm-1">
+            <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">KPI:</label>
+          </div>
+          <div class="col-lg-2 col-md-2 col-sm-2" style="white-space: nowrap;">
+            <label style="font-size: 12px;font-family: Proxima Nova;height: 15px;letter-spacing: 0px;color: #666666">3 Months -
+              <span style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #CE9B11;">72%</span>
+              / YTD -
+              <span style="font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #E84141;">69%</span>
+            </label>
+          </div>
+          <div class="col-lg-1 col-md-1 col-sm-1" style="margin-left: 145px">
+            <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Ideas:</label>
+          </div>
+          <div class="col-lg-3 col-md-3 col-sm-3">
+            <table style="border-collapse: separate;border-spacing: 2px">
+              <tr>
+                <td style="width: 20px;text-align: center;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                  <span style="height: 12px;font-size: 10px;font-family:Lato;letter-spacing: 0px;color: #54AF4C;opacity: 1;">{{getTitleByCustomerId('IDEAS_AUTOMATIONS', cust.cusT_ID)}}</span>
+                </td>
+                <td style="width: 20px;text-align: center;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                  <span style="height: 12px;font-size: 10px;font-family:  Lato;letter-spacing: 0px;color: #FF742B;opacity: 1;">{{getTitleByCustomerId('IDEAS_INNOVATIONS', cust.cusT_ID)}}</span>
+                </td>
+                <td style="width: 20px;text-align: center;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                  <span style="height: 12px;font-size: 10px;font-family:  Lato;letter-spacing: 0px;color: #4394E3;opacity: 1;">{{getTitleByCustomerId('IDEAS_IMPROVEMENTS', cust.cusT_ID)}}</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+     <ng-container *ngIf="cust.projecT_INFO.length > 0">
+      <ul *ngFor="let p of cust.projecT_INFO;" class="project">
+        <div [class.active] = "i == isProjActive" *ngIf='i == editIndex' style="margin-left: 10px;width: 396px;height: 115px;border: 1px solid;background: lightgrey;border: 1px solid #E5E5E5;opacity: 1;">
+          <a (click)="Project_OnClick(i,p.proJ_ID,cust.cusT_ID)" class="link">
+            <li style="margin-left: 25px;height: 17px;text-align: left;font-size:14px;font-family:  Proxima Nova;letter-spacing: 0px;color: #000000;opacity: 1;">
+              <i class="" [id]="p.proJ_ID"></i>&nbsp;{{_util.GetProjectName(p)}}
+            </li>
+          </a>
+          <div class="row" style="margin-top: 2px">
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">CRISP:
+                <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">78%</span>
+              </label>
+            </div>
+
+            <div class="col-lg-2 col-md-2 col-sm-2">
+              <label style="white-space: nowrap;height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Success Goal:
+                <!-- <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</span> -->
+              </label>
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-1">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</label>
+            </div>
+
+            <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: right">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Risks:</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: center;margin-left: -25px;">
+              <table style="border-collapse: separate;border-spacing: 2px">
+                <tr>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:Proxima Nova;letter-spacing: 0px;color: #E84141;opacity: 1;">10</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #EDB51D;opacity: 1;">120</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #54AF4C;opacity: 1;">02</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div class="row" style="margin-top: 2px">
+            <div class="col-lg-1 col-md-1 col-sm-1">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Issues:</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <table style="border-collapse: separate;border-spacing: 2px">
+                <tr>
+                  <td style="background-color: #FF7676; border-radius: 2px;height: 18px;width: 20px;">12</td>
+                  <td style="background-color: #EDB51D;border-radius: 2px;height: 18px;width: 20px;">01</td>
+                  <td style="background-color: #54AF4C; border-radius: 2px;height: 18px;width: 20px;">02</td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -10px;">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Survey:</label>
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -15px;">
+              <label style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #54AF4C;">85%</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Process:
+                <span style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #CE9B11;">72%</span>
+              </label>
+            </div>
+
+          </div>
+          <div class="row" style="margin-top: 2px">
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">CRISP:
+                <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">78%</span>
+              </label>
+            </div>
+
+            <div class="col-lg-2 col-md-2 col-sm-2">
+              <label style="white-space: nowrap;height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Success Goal:
+                <!-- <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</span> -->
+              </label>
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-1">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</label>
+            </div>
+
+            <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: right">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Risks:</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: center;margin-left: -25px;">
+              <table style="border-collapse: separate;border-spacing: 2px">
+                <tr>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:Proxima Nova;letter-spacing: 0px;color: #E84141;opacity: 1;">10</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #EDB51D;opacity: 1;">120</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #54AF4C;opacity: 1;">02</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </ul>
+    </ng-container>
+      <ng-container *ngIf="cust.portfoliO_GROUP.length > 0">
+
+      
+      <ul *ngFor="let portfolio of cust.portfoliO_GROUP;let j = index">
+        <div [class.active] = "j == isPortActive" *ngIf='i == editIndex' style="margin-left: 10px;width: 396px;height: 115px;border: 1px solid;background:#DCDCDC;border: 1px solid #E5E5E5;opacity: 1;">
+          <div class="row">
+            <div class="col-lg-2 col-md-2 col-sm-2">
+              <img class="expand" id="img{{j}}" *ngIf="editPortfolioIndex == -1" src="/assets/images/plus.svg" type="button" (click)="setPortfolioIndex(j,$event.target)">
+              <img class="expand" id="img{{j}}" *ngIf="editPortfolioIndex == j" src="/assets/images/minus.png" type="button" (click)="setPortfolioIndex1()">
+            </div>
+            <div class="col-lg-5 col-md-5 col-sm-5">
+                <!-- "Portfolio_OnClick(j,portfolio.portfoliO_ID,cust.cusT_ID)" -->
+                
+              <a  (click)="Portfolio_OnClick(j,cust.cusT_ID,portfolio)" class="link_h3">
+                <li style="margin-left: -45px;">
+                  <span style="height: 17px;text-align: left;font-size: 14px;margin-left:10px;font-family:Proxima Nova;letter-spacing: 0px;color: #000000;opacity: 1;">{{portfolio.portfoliO_NM}}</span>
+                </li>
+              </a>
+            </div>
+
+          </div>
+
+
+          <div class="row" style="margin-top: 2px">
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">CRISP:
+                <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">78%</span>
+              </label>
+            </div>
+
+            <div class="col-lg-2 col-md-2 col-sm-2">
+              <label style="white-space: nowrap;height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Success Goal:
+                <!-- <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</span> -->
+              </label>
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-1">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</label>
+            </div>
+
+            <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: right">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Risks:</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: center;margin-left: -25px;">
+              <table style="border-collapse: separate;border-spacing: 2px">
+                <tr>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:Proxima Nova;letter-spacing: 0px;color: #E84141;opacity: 1;">10</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #EDB51D;opacity: 1;">120</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #54AF4C;opacity: 1;">02</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div class="row" style="margin-top: 2px">
+            <div class="col-lg-1 col-md-1 col-sm-1">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Issues:</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <table style="border-collapse: separate;border-spacing: 2px">
+                <tr>
+                  <td style="background-color: #FF7676; border-radius: 2px;height: 18px;width: 20px;">12</td>
+                  <td style="background-color: #EDB51D;border-radius: 2px;height: 18px;width: 20px;">01</td>
+                  <td style="background-color: #54AF4C; border-radius: 2px;height: 18px;width: 20px;">02</td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -10px;">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Survey:</label>
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -15px;">
+              <label style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #54AF4C;">85%</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Process:
+                <span style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #CE9B11;">72%</span>
+              </label>
+            </div>
+
+          </div>
+          <div class="row" style="margin-top: 2px">
+            <div class="col-lg-1 col-md-1 col-sm-1">
+              <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">KPI:</label>
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2" style="white-space: nowrap;">
+              <label style="font-size: 12px;font-family: Proxima Nova;height: 15px;letter-spacing: 0px;color: #666666">3 Months -
+                <span style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #CE9B11;">72%</span>
+                / YTD -
+                <span style="font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #E84141;">69%</span>
+              </label>
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-1" style="margin-left: 145px">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Ideas:</label>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <table style="border-collapse: separate;border-spacing: 2px">
+                <tr>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:Proxima Nova;letter-spacing: 0px;color: #E84141;opacity: 1;">10</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #EDB51D;opacity: 1;">120</span>
+                  </td>
+                  <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                    <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #54AF4C;opacity: 1;">02</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <ul *ngFor="let proj of portfolio.projecT_INFO">
+          <div [class.active] = "j == isPortProjActive" *ngIf='j == editPortfolioIndex' style="margin-left: 10px;width: 396px;height: 115px;border: 1px solid;background: lightgrey;border: 1px solid #E5E5E5;opacity: 1;">
+            <a (click)="PortfolioProject_OnClick(j,proj.proJ_ID,cust.cusT_ID,portfolio.portfoliO_ID)" class="link">
+              <li style="margin-left: 25px;height: 17px;text-align: left;font-size:14px;font-family:  Proxima Nova;letter-spacing: 0px;color: #000000;opacity: 1;">
+                <i class=""></i>&nbsp;{{proj.proJ_NM}}
+              </li>
+            </a>
+            <div class="row" style="margin-top: 2px">
+              <div class="col-lg-3 col-md-3 col-sm-3">
+                <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">CRISP:
+                  <span style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">78%</span>
+                </label>
+              </div>
+  
+              <div class="col-lg-2 col-md-2 col-sm-2">
+                <label style="white-space: nowrap;height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Success Goal:
+  
+                </label>
+              </div>
+              <div class="col-lg-1 col-md-1 col-sm-1">
+                <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #e84141">70%</label>
+              </div>
+  
+              <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: right">
+                <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Risks:</label>
+              </div>
+              <div class="col-lg-3 col-md-3 col-sm-3" style="text-align: center;margin-left: -25px;">
+                <table style="border-collapse: separate;border-spacing: 2px">
+                  <tr>
+                    <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                      <span style="height: 12px;text-align: left;font-size: 10px;font-family:Proxima Nova;letter-spacing: 0px;color: #E84141;opacity: 1;">10</span>
+                    </td>
+                    <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                      <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #EDB51D;opacity: 1;">120</span>
+                    </td>
+                    <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                      <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #54AF4C;opacity: 1;">02</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div class="row" style="margin-top: 2px">
+              <div class="col-lg-1 col-md-1 col-sm-1">
+                <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Issues:</label>
+              </div>
+              <div class="col-lg-3 col-md-3 col-sm-3">
+                <table style="border-collapse: separate;border-spacing: 2px">
+                  <tr>
+                    <td style="background-color: #FF7676; border-radius: 2px;height: 18px;width: 20px;">12</td>
+                    <td style="background-color: #EDB51D;border-radius: 2px;height: 18px;width: 20px;">01</td>
+                    <td style="background-color: #54AF4C; border-radius: 2px;height: 18px;width: 20px;">02</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -10px;">
+                <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Survey:</label>
+              </div>
+              <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -15px;">
+                <label style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #54AF4C;">85%</label>
+              </div>
+              <div class="col-lg-3 col-md-3 col-sm-3">
+                <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Process:
+                  <span style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #CE9B11;">72%</span>
+                </label>
+              </div>
+  
+            </div>
+            <div class="row" style="margin-top: 2px">
+              <div class="col-lg-1 col-md-1 col-sm-1">
+                <label style="height: 15px;text-align: left;font-size:11px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">KPI:</label>
+              </div>
+              <div class="col-lg-2 col-md-2 col-sm-2" style="white-space: nowrap;">
+                <label style="font-size: 12px;font-family: Proxima Nova;height: 15px;letter-spacing: 0px;color: #666666">3 Months -
+                  <span style="height: 15px;text-align: left;font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #CE9B11;">72%</span>
+                  / YTD -
+                  <span style="font-size: 12px;font-family: Proxima Nova;letter-spacing: 0px;color: #E84141;">69%</span>
+                </label>
+              </div>
+              <div class="col-lg-1 col-md-1 col-sm-1" style="margin-left: 145px">
+                <label style="height: 15px;text-align: left;font-size:12px;font-family:Proxima Nova;letter-spacing: 0px;color: #333333;">Ideas:</label>
+              </div>
+              <div class="col-lg-3 col-md-3 col-sm-3">
+                <table style="border-collapse: separate;border-spacing: 2px">
+                  <tr>
+                    <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                      <span style="height: 12px;text-align: left;font-size: 10px;font-family:Proxima Nova;letter-spacing: 0px;color: #E84141;opacity: 1;">10</span>
+                    </td>
+                    <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                      <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #EDB51D;opacity: 1;">120</span>
+                    </td>
+                    <td style="width: 20px;height: 18px;border: 1px solid;background: #FFFFFF;border: 1px solid #E5E5E5;border-radius: 2px;opacity: 1;">
+                      <span style="height: 12px;text-align: left;font-size: 10px;font-family:  Proxima Nova;letter-spacing: 0px;color: #54AF4C;opacity: 1;">02</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </ul>
+      </ul>
+    </ng-container>
+    </ul>
+    
+
+
+  </mat-sidenav>
+  <mat-sidenav-content>
+      <button mat-button (click)="sidenav.toggle()" style="border: none;background: none;margin-left: 15px">
+          <img src="assets/images/Menu.svg">
+        </button>
+  </mat-sidenav-content>
+</mat-sidenav-container>

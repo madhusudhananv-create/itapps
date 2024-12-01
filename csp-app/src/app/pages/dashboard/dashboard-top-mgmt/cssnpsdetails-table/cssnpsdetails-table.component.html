@@ -1,0 +1,281 @@
+
+
+
+
+<div style="background-color:lightgrey;height:30px;width:100%">
+<span class="sectionHeader2">{{Category}}</span>
+</div>
+
+<div *ngIf="!isDataAvailable">
+<span class="sectionHeader2">{{NoData}}</span>
+</div>
+
+
+<div *ngIf="isDataAvailable">
+
+<div #TABLE >
+    <table class="ScoreTrend" mat-table #table [dataSource]="dataSource" matSort style="width: 100%" >
+     
+
+      <ng-container matColumnDef="respondant_NAME">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef></th>
+        <td style="font-family: calibri;text-align:left !important;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.respondant_NAME}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="project_NAME">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef></th>
+        <td style="font-family: calibri;text-align:left !important;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.project_NAME}} </td>
+      </ng-container>
+
+       <ng-container matColumnDef="npS1">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'"   *matCellDef="let listNPSViewDetails">
+          
+          <i (click)="ShowNPSTooltip(listNPSViewDetails.id,1)" style="position:relative;cursor:pointer"  >
+          {{listNPSViewDetails.npS1}}
+          </i>
+          
+          </td>
+      </ng-container>
+
+      <ng-container matColumnDef="csS1">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          <i (click)="ShowCSSNPSTooltip(listNPSViewDetails.id,1)" style="position:relative;cursor:pointer"  >{{listNPSViewDetails.csS1}}</i> </td>
+      </ng-container>
+
+
+      <ng-container matColumnDef="csS2">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          <i (click)="ShowCSSNPSTooltip(listNPSViewDetails.id,2)" style="position:relative;cursor:pointer"  >{{listNPSViewDetails.csS2}}</i> </td>
+      </ng-container>      
+
+      <ng-container matColumnDef="npS2">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          <i (click)="ShowNPSTooltip(listNPSViewDetails.id,2)" style="position:relative;cursor:pointer"  >
+          {{listNPSViewDetails.npS2}} 
+          </i>
+          </td>
+      </ng-container>
+      
+
+      <ng-container matColumnDef="csS3">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          <i (click)="ShowCSSNPSTooltip(listNPSViewDetails.id,3)" style="position:relative;cursor:pointer"  >{{listNPSViewDetails.csS3}}</i> </td>
+      </ng-container>
+     
+
+      <ng-container matColumnDef="npS3">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          <i (click)="ShowNPSTooltip(listNPSViewDetails.id,3)" style="position:relative;cursor:pointer"  >
+          {{listNPSViewDetails.npS3}} 
+          </i>
+          </td>
+      </ng-container>
+
+      
+
+      <ng-container matColumnDef="csS4">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          <i (click)="ShowCSSNPSTooltip(listNPSViewDetails.id,4)" style="position:relative;cursor:pointer"  >{{listNPSViewDetails.csS4}}</i> </td>
+      </ng-container>
+
+      <ng-container matColumnDef="npS4">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          <i (click)="ShowNPSTooltip(listNPSViewDetails.id,4)" style="position:relative;cursor:pointer"  >
+          {{listNPSViewDetails.npS4}} 
+          </i>
+          </td>
+      </ng-container>    
+      
+     
+
+  <ng-container matColumnDef="header-row-first-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="2"> 
+      
+    </th>
+  </ng-container>
+
+<ng-container matColumnDef="header-row-second-group" style="text-align:center">
+    <th mat-header-cell *matHeaderCellDef 
+        
+        [attr.colspan]="2"> 
+      {{quarter2}}
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-third-group" style="text-align:center">
+    <th mat-header-cell *matHeaderCellDef 
+        
+        [attr.colspan]="2"> 
+      {{quarter1}} 
+    </th>
+  </ng-container>
+
+
+  <ng-container matColumnDef="header-row-fourth-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="2"> 
+      {{lastQuarter}}
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-fifth-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="2"> 
+      {{currentQuarter}}
+    </th>
+  </ng-container>
+
+
+   <ng-container matColumnDef="header-row0-first-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="left">        
+      Responder
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row0-second-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="left">
+        
+      Project
+    </th>
+  </ng-container>
+
+
+  <ng-container matColumnDef="header-row0-third-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="8"> 
+      Customer Success & NPS Score
+    </th>
+  </ng-container>
+
+
+  
+
+      <tr mat-header-row *matHeaderRowDef="['header-row0-first-group', 'header-row0-second-group','header-row0-third-group']"></tr>
+  
+      <tr mat-header-row *matHeaderRowDef="['header-row-first-group', 'header-row-second-group','header-row-third-group','header-row-fourth-group','header-row-fifth-group']"></tr>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+
+      
+
+
+    </table>
+
+
+     <div style="position: absolute" class="CSSNPSScorePopup" *ngIf="showCSSNPSTooltip">
+             
+              <div style="float: right" (click)="closePopup('showCSSNPSTooltip')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div> 
+
+              <table  border="0" width="100%" height="100%" class="ScoreTrend" >               
+                  <tr>
+                    <td align="left" width="70%"><b>{{this.csatQuestion1}}</b></td>
+                    <td align="right" width="30%"><b>{{this.qualityScore}}</b></td>
+                  </tr>
+                  <tr>
+                    
+                    <td  align="left" width="70%">{{this.cssQualityFeedback}}</td>
+                    <td width="30%"></td>
+                  </tr>
+
+                   <tr>
+                     <td colspan="2"><hr/></td>    
+                   </tr>       
+
+                  <tr>
+                    <td  align="left" width="70%"><b>{{this.csatQuestion2}}</b></td>
+                    <td  align="right" width="30%"><b>{{this.successScore}}</b></td>
+                  </tr>
+                  <tr>
+                  
+                    <td align="left" width="70%">{{this.cssSuccesssFeedback}}</td>
+                    <td width="30%"></td>
+                  </tr>
+
+                  <tr>
+                     <td colspan="2"><hr/></td>    
+                   </tr> 
+
+                  <tr>
+                    <td align="left" width="70%"><b>{{this.csatQuestion3}}</b></td>
+                    <td align="right" width="30%"><b>{{this.valueaddScore}}</b></td>
+                  </tr>
+                   <tr>
+                    
+                    <td  align="left" width="70%">{{this.cssValueaddFeedback}}</td>
+                    <td width="30%"></td>
+                  </tr>
+
+                  <tr>
+                     <td colspan="2"><hr/></td>    
+                   </tr> 
+
+                   <tr>                    
+                    <td  align="left" colspan="2"><b>General Feedback</b></td> 
+
+                  </tr>
+
+                  <tr>                    
+                    <td  align="left" width="70%">{{this.feedback}}</td>
+                    <td width="30%"></td>
+                  </tr>
+
+              </table>
+
+          </div>
+
+
+          <div style="position: absolute" class="NPSScorePopup" *ngIf="showNPSTooltip">
+             
+             <div style="float: right" (click)="closePopup('showNPSTooltip')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div> 
+
+              <table  border="0" width="100%" height="100%" class="ScoreTrend" >
+                  
+                  <tr>
+                    <td align="left"><b>{{this.npsQuestion}}</b></td>                    
+                  </tr>
+                  <tr>
+                    <td align="left">{{this.npsFeedback}}</td>                    
+                  </tr>
+                  <tr>
+                     <td colspan="2"><hr/></td>    
+                   </tr> 
+                    <tr>                    
+                    <td  align="left"><b>General Feedback</b></td>                    
+                  </tr>
+                  <tr>                    
+                    <td  align="left">{{this.feedback}}/td>                    
+                  </tr>
+              </table>
+
+          </div>
+
+</div>
+
+
+
+
+
+</div>

@@ -1,0 +1,19 @@
+<mat-card>
+          <mat-card-content>
+          
+          <table>
+          <tr><td>
+          <span class="sectionHeader1" style="font-weight: bold;">Staffing Summary</span>
+          <google-chart #chart1 [type]="type2" [data]="data2" [columnNames]="columnNames2" [options]="options2" [width]="width2" [height]="height2">
+          </google-chart>
+          </td><td>
+          <div class="sectionHeader1" style="font-weight: bold;">Billing Summary</div>
+          <google-chart #chart2 style="margin-left: 9px;  margin-top: 0px;" [type]="type3" [data]="data3" [columnNames]="columnNames3"
+            [options]="options3" [width]="width3" [height]="height3">
+          </google-chart>
+          </td></tr></table>
+                    </mat-card-content>
+  </mat-card>
+
+
+   

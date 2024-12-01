@@ -1,0 +1,260 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+  <mat-toolbar class="example-toolbar">
+    <!-- If Desktop -->
+    <div class="header">
+      <div class="left-toolbar">
+        <a class="navbar-brand" [routerLink]="['/newdashboard/custm']">
+          <span class="gavs_logo"></span>
+        </a>
+        <!-- <button mat-icon-button (click)="snav.toggle()" style="padding-top:5px">
+            <mat-icon>menu</mat-icon>
+          </button> -->
+        <!-- <span>Customer Success Management</span> -->
+      </div>
+      <div class="right-toolbar">
+        <span class="user_options">
+          <span *ngIf="_util.IsLoggedIn()">{{_util.AppSettings.displayname}}&nbsp;&nbsp;</span>
+          <i class="fa fa-user user_img fa_fnt"></i>
+        </span>
+        <span class="user_options">
+          <!-- <button mat-button [matMenuTriggerFor]="menu">Menu</button> -->
+          <i class="fa fa-cog fa_fnt link" mat-button [matMenuTriggerFor]="menu" matTooltip="Settings" [matTooltipPosition]="'before'"></i>
+
+          <mat-menu #menu="matMenu" sytle="position: absolute;left: 44px;top: 35px;">
+            <button mat-menu-item [routerLink]="['/customerinvite']">Customer Details</button>
+            <button mat-menu-item [routerLink]="['/projecttracker']">Project Tracker</button>
+          </mat-menu>
+
+          <!-- <a [routerLink]="['/customerinvite']" style="color:#000;" matTooltip="Settings" [matTooltipPosition]="'before'">
+              <i class="fa fa-cog fa_fnt"></i>
+            </a> -->
+        </span>
+        <span class="user_options">
+          <a class="link" (click)='logout()' style="color:#000;" matTooltip="Sign out" [matTooltipPosition]="'before'">
+            <i class="fa fa-power-off fa_fnt"></i>
+          </a>
+        </span>
+      </div>
+    </div>
+    <!-- If mobile -->
+    <div class="header-mobile">
+      <div class="left-toolbar" style="padding-top:10px">
+        <button mat-icon-button (click)="snav.toggle()">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+      <div class="center-toolbar">
+        <a class="navbar-brand" [routerLink]="['/newdashboard/custm']">
+          <span class="gavs_logo" style="padding-top:18px"></span>
+        </a>
+      </div>
+      <div class="right-toolbar">
+        <i class="fa fa-user user_img fa_fnt link" mat-button [matMenuTriggerFor]="menu"></i>
+        <mat-menu #menu="matMenu" sytle="position: absolute;left: 44px;top: 35px;">
+          <!-- <button mat-menu-item [routerLink]="['/customerinvite']">
+              <i class="fa fa-street-view"></i>&nbsp;&nbsp;&nbsp;Customer Details</button>
+            <button mat-menu-item [routerLink]="['/projecttracker']">
+              <i class="fa fa-line-chart"></i>&nbsp;&nbsp;&nbsp;Project Tracker</button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)='logout()'>
+              <i class="fa fa-power-off fa_fnt"></i>&nbsp;&nbsp;&nbsp;Sign out</button> -->
+          <app-navbar-menu></app-navbar-menu>
+        </mat-menu>
+
+
+        <!-- <div class="dropdown">
+            <i class="dropbtn" class="fa fa-user user_img fa_fnt dropbtn" style="padding:20px 10px"></i>
+            <div class="dropdown-content">
+              <a *ngIf="_util.IsEditable()" [routerLink]="['/customerinvite']">
+                <i class="fa fa-cog"></i>&nbsp;&nbsp;Settings</a>
+              <span class="divider"></span>
+              <a *ngIf="_util.IsLoggedIn()" (click)='logout()'>
+                <i class="fa fa-power-off"></i>&nbsp;&nbsp;Logout</a>
+  
+            </div>
+          </div> -->
+
+
+      </div>
+    </div>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'" [fixedInViewport]="mobileQuery.matches" fixedTopGap="56">
+      side nav
+    </mat-sidenav>
+    <mat-sidenav-content style="padding:10px;">
+      <mat-horizontal-stepper #stepper>
+        <mat-step [stepControl]="firstFormGroup">
+          <form [formGroup]="firstFormGroup">
+            <ng-template matStepLabel>Assessment Plan</ng-template>
+            <div>
+              <div class="row">
+                <div>
+                  <div style="float: left;margin: 18px;">Period :</div>
+                  <div class="col-sm-2">
+                    From :
+                    <app-monthandyearpicker [min] ="startDate" [max]= "endDate" [date]= "startDate" (onChange)="stDate_onChange($event)"></app-monthandyearpicker>
+                  </div>
+                  <div class="col-sm-2">
+                    To :
+                    <app-monthandyearpicker [min] ="startDate" [max]= "endDate" [date]= "endDate" (onChange)="enDate_onChange($event)"></app-monthandyearpicker>
+                  </div>
+
+                </div>
+              </div>
+              <mat-tab-group>
+                <mat-tab label="Support Function">
+                  <div>
+                    <table class="table table-bordered">
+                      <tr>
+                        <th>No</th>
+                        <th>Functions</th>
+                        <th>Scope of Audit</th>
+                        <th>Type of Audit</th>
+                        <th>Frequency</th>
+                        <th>Effective Date</th>
+                        <th *ngFor="let m of months"> {{m}}</th>
+                      </tr>
+                      <tr *ngFor="let sf of supportFunctions;let i = index">
+                        <td>{{i +1}}</td>
+                        <td>
+                          {{sf.options}}
+                        </td>
+                        <td>
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="f.id" *ngFor="let f of scopeAudit" [title]="f.procesS_MODEL_DESCRIPTION">
+                                {{f.procesS_MODEL_DESCRIPTION}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="f.options" *ngFor="let f of auditType" [title]="f.options">
+                                {{f.options}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td style="width:8%">
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="f.options" *ngFor="let f of frequency" [title]="f.options">
+                                {{f.options}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td style="width:10%">
+                          <mat-form-field class="widthfield">
+                            <input matInput [matDatepicker]="Effectivepicker">
+                            <mat-datepicker-toggle matSuffix [for]="Effectivepicker"></mat-datepicker-toggle>
+                            <mat-datepicker #Effectivepicker></mat-datepicker>
+                          </mat-form-field>
+                        </td>
+                        <td style="width: 5%" *ngFor="let m of months;let i = index">
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="sa.options" *ngFor="let sa of statusAudit" [title]="sa.options">
+                                {{sa.options}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </mat-tab>
+                <mat-tab label="Delivery Function">
+                  <div>
+                    <table class="table table-bordered">
+                      <tr>
+                        <th>Customer &amp; Project</th>
+                        <th>Scope of Audit</th>
+                        <th>Type of Audit</th>
+                        <th>Frequency</th>
+                        <th>Effective Date</th>
+                        <th>Assigned To</th>
+                        <th *ngFor="let m of months"> {{m}}</th>
+                      </tr>
+                      <tr>
+                        <td style="width: 25%">
+                          <app-project-selector [allcust]="true" [allproj]="true"></app-project-selector>
+                        </td>
+                        <td>
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="f.id" *ngFor="let f of scopeAudit" [title]="f.procesS_MODEL_DESCRIPTION">
+                                {{f.procesS_MODEL_DESCRIPTION}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="f.options" *ngFor="let f of auditType" [title]="f.options">
+                                {{f.options}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td style="width:8%">
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="f.options" *ngFor="let f of frequency" [title]="f.options">
+                                {{f.options}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td style="width:10%">
+                          <mat-form-field class="widthfield">
+                            <input matInput [matDatepicker]="Effectivepicker1">
+                            <mat-datepicker-toggle matSuffix [for]="Effectivepicker1"></mat-datepicker-toggle>
+                            <mat-datepicker #Effectivepicker1></mat-datepicker>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <mat-form-field class="widthfield">
+                            <mat-select>
+                              <mat-option [value]="emp.emP_ID" *ngFor="let emp of auditorList" [title]="emp.frsT_NM">
+                                {{emp.frsT_NM}}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td style="width: 5%;" *ngFor="let m of months"> </td>
+                      </tr>
+                    </table>
+                  </div>
+                </mat-tab>
+                <!-- <mat-tab label="Third"> Content 3 </mat-tab> -->
+              </mat-tab-group>
+              <div>
+                <button style="background: #ddd;color: black;font-weight: 600;" mat-button>Save</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+        <mat-step [stepControl]="secondFormGroup">
+          <form [formGroup]="secondFormGroup">
+            <ng-template matStepLabel>Schedule</ng-template>
+          </form>
+        </mat-step>
+        <!-- <mat-step>
+              <ng-template matStepLabel>Done</ng-template>
+              You are now done.
+              <div>
+                <button mat-button matStepperPrevious>Back</button>
+                <button mat-button (click)="stepper.reset()">Reset</button>
+              </div>
+            </mat-step> -->
+      </mat-horizontal-stepper>
+
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

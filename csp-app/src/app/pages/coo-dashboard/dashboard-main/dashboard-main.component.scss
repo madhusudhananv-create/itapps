@@ -1,0 +1,148 @@
+.lblControl{
+    height: 15px;
+text-align: left;
+font-size:12px; 
+letter-spacing: 0px;
+color: #4C4C47;
+opacity: 1;
+position: absolute;
+margin-top: 18px
+}.row {
+  margin-right: 0px !important; 
+   margin-left: 0px;
+ }
+ 
+.portfolioCardgrey  {
+  float: left;
+  height: 200px; 
+  background-color:#f5f5fc;
+  margin-top: 12px;
+  border-radius: 1px;
+  color: #535d85;
+  font-weight: 700;
+  box-shadow: 0px 0.5px 1.5px grey;
+  width: 100%;
+  padding: 0px 10PX;
+  margin: 1px 0px; 
+}
+.portfolioCardgrey .fa{
+  font-size: 13px;
+}
+ .portfolioCard  {
+  float: left; 
+  background-color: white;
+  margin-top: 12px;
+  border-radius: 1px;
+  color: #535d85;
+  font-weight: 700;
+  box-shadow: 0px 0.5px 2.5px grey;
+  background-color: white;
+  width: 100%;
+  padding: 0px 10PX;
+  margin: 1px 0px; 
+}
+.mat-progress-bar
+{
+ //position: absolute;
+//  margin-top: -18px; 
+//  height: 3px;
+//  opacity: 0.7;
+
+margin-top: 0px !important;
+    height: 3px;
+    opacity: 0.7;
+    margin-left: -15px;
+    /* margin-right: -16px; */
+    width: 120%;
+    margin-bottom: -3px;
+}
+::ng-deep .no-line .mat-form-field-underline {
+    display: none;
+  }
+  .drpdown{
+    width: 278px;
+    height: 30px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 0.5px solid #C3C3C3;
+    border-radius: 2px;
+    opacity: 1;
+    line-height: normal;
+    padding-left: 5px;
+  }
+  .drpdown {
+    width: 278px;
+    height: 21px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 0.5px solid #C3C3C3;
+    border-radius: 2px;
+    opacity: 1;
+    line-height: normal;
+    padding-left: 5px;
+    font-size: 11px;
+    padding-top: 2px;
+} 
+.filter-row{ 
+    background-color: white;
+    height: 35px;
+    padding: 6px;
+}
+#selectDateType{
+  width: 100px;
+}
+.btn{
+  height: 25px;padding: 1px 12px;
+  margin-bottom: 0;
+  font-size: 12px;
+}
+  .input{
+    width: 106px;
+    height: 25px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 0.5px solid #C3C3C3;
+    border-radius: 2px;
+    opacity: 1;
+  }
+
+  ::ng-deep .startdatepickers .mat-datepicker-toggle-default-icon {
+    margin-left: -40px !important;
+    margin-top: -10px !important;
+  }
+
+  ::ng-deep .enddatepicker .mat-datepicker-toggle-default-icon {
+     margin-left: -40px !important;
+     margin-top: -10px !important;
+}
+
+ ul.items li {
+  list-style: none;
+  height:50px;
+}
+
+.one-indent{
+  padding-left:40px 
+}
+
+.two-indent{
+  padding-left: 60px
+} 
+h5{
+ // margin-left: 15px;
+  font-weight: bold;
+} 
+ 
+h5{
+  margin-left: 20px;
+}
+:host ::ng-deep .goalTabGrp  .mat-tab-label {
+  height: 28px !important;
+  padding: 0 12px  !important; 
+  font-size: 12px  !important;
+  font-weight: bold  !important;
+  //margin-bottom: 0px;
+}
+::ng-deep .mat-tab-body-content{
+  //margin-left: 15px !important ;
+  width: 100%;
+  overflow: hidden !important;
+  //margin: auto;
+}

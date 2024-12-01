@@ -1,0 +1,99 @@
+<div style="padding:15px">
+  <div class="row">
+    <div class="col-lg-6">
+      <mat-form-field style="width:100%">
+        <mat-select name="ddSelectRoles" [(ngModel)]="selectedRoleId" placeholder="Select Role" (ngModelChange)="ddRoles_Onchange()">
+          <mat-option *ngFor="let role of projectRoles" [value]="role.id" [title]="role.title">
+            {{ role.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <!-- <div class="col-lg-2">
+            <button type="button" (click)="ApplyFilter()" style="margin-top: 12px">Apply</button>
+          </div> -->
+  </div>
+  <mat-table #table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="index">
+      <mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</mat-header-cell>
+      <mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index"> {{element + 1}} </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="resourcE_ID">
+      <mat-header-cell *matHeaderCellDef>Resource Name</mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{_util.GetAppResourceName(element.resourcE_ID)}} </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="rolE_ID">
+      <mat-header-cell *matHeaderCellDef>Role Name</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{_util.GetAppRoleName(element.rolE_ID)}}</mat-cell>
+      <!-- <mat-cell *matCellDef="let element">
+        <mat-select name="ddRoles" [(ngModel)]="element.rolE_ID" >
+          <mat-option *ngFor="let role of projectRoles" [value]="role.id">
+            {{ role.title}}
+          </mat-option>
+        </mat-select>
+      </mat-cell> -->
+    </ng-container>
+    <ng-container matColumnDef="emP_ID">
+      <mat-header-cell *matHeaderCellDef>Emp Ids</mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <input type="text" [(ngModel)]="element.emP_ID" style="height:100%;width:100%">
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="vieW_ACCESS">
+      <mat-header-cell [ngClass]="'boolWidth'" *matHeaderCellDef>View</mat-header-cell>
+      <mat-cell [ngClass]="'boolWidth'" *matCellDef="let element">
+        <input *ngIf="IsAllowed(element, 'VIEW')" type="checkbox" [(ngModel)]="element.vieW_ACCESS">
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="creatE_ACCESS">
+      <mat-header-cell [ngClass]="'boolWidth'" *matHeaderCellDef>Create</mat-header-cell>
+      <mat-cell [ngClass]="'boolWidth'" *matCellDef="let element">
+        <input *ngIf="IsAllowed(element, 'CREATE')" type="checkbox" [(ngModel)]="element.creatE_ACCESS">
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="ediT_ACCESS">
+      <mat-header-cell [ngClass]="'boolWidth'" *matHeaderCellDef>Edit</mat-header-cell>
+      <mat-cell [ngClass]="'boolWidth'" *matCellDef="let element">
+        <input *ngIf="IsAllowed(element, 'EDIT')" type="checkbox" [(ngModel)]="element.ediT_ACCESS">
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="deletE_ACCESS">
+      <mat-header-cell [ngClass]="'boolWidth'" *matHeaderCellDef>Delete</mat-header-cell>
+      <mat-cell [ngClass]="'boolWidth'" *matCellDef="let element">
+        <input *ngIf="IsAllowed(element, 'DELETE')" type="checkbox" [(ngModel)]="element.deletE_ACCESS">
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="save">
+      <mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+        <div></div>
+      </mat-header-cell>
+      <mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+        <a class="link" (click)="SaveRow_onClick(element)">
+          <i class="fa fa-save" style="font-size:15px;color:rgb(0, 162, 255)"></i>
+        </a>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="copy">
+      <mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+        <div></div>
+      </mat-header-cell>
+      <mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+        <a class="link" (click)="CopyRow_onClick(element)">
+          <i class="fa fa-copy" style="font-size:15px;color:rgb(0, 162, 255)"></i>
+        </a>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="delete">
+      <mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+        <div *ngIf="_util.IsEditable()"></div>
+      </mat-header-cell>
+      <mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+        <a class="link" (click)="DeleteRow_onClick(element)">
+          <i class="fa fa-trash" style="font-size:15px;color:orange"></i>
+        </a>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

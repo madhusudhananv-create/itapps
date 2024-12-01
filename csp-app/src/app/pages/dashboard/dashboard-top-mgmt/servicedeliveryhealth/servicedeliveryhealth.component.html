@@ -1,0 +1,44 @@
+<div class="deliverytitle">
+  <span>Service Delivery Health</span>
+  <span style="font-size: 13px; color: #777777">(as of today)</span>
+</div>
+
+<table class="servicedelivery">
+  <thead style="width: 100%;">
+    <tr style="padding-left: 7px; height: 30px;box-shadow : -1.5px 2px 3px 1px lightgray; background-color: #F5F5F5; font-size: 13px; ">
+      <th style="width: 793px; font-size: 13px; padding-left: 7px">Account</th>
+      <th style="width: 300px; font-size: 13px; padding-left: 5px">No.of Projects</th>
+      <th style="width: 200px; font-size: 13px; padding-left: 5px"></th>
+    </tr>
+  </thead>
+  <tbody *ngFor="let client of CustomerProjectsList | slice : 1; let i = index">
+    <tr style="height: 30px; box-shadow: -1.5px 2px 3px 1px lightgray; background-color: white; padding-left: 5px; font-size: 13px; outline: none; text-decoration: none;"
+    >
+      <td style="padding-left: 7px; cursor: pointer;outline: none; text-decoration: none;" [routerLink]="['/newdashboard/cust', client?.cusT_ID, true]" >
+        {{client.cusT_NM }}
+      </td>
+      <td style="padding-left: 5px;outline: none; text-decoration: none;">
+        {{ client?.projects?.length}}
+      </td>
+      <td (click)="showProjectDetails(i)" style="cursor: pointer; padding-left: 5px; outline: none; text-decoration: none;">
+        &#9660;
+      </td>
+    </tr>
+    <tr *ngIf="projectListIndex === i">
+      <table>
+        <thead>
+          <tr>
+            <th>Project Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of client?.projects">
+            <td>
+              {{ p.proJ_NM }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </tr>
+  </tbody>
+</table>

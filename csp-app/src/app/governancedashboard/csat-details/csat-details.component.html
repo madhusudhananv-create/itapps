@@ -1,0 +1,33 @@
+<div class="panel panel-primary" style="height: 550px;margin-bottom: 3px;overflow: scroll;">
+    <div class="panel-heading">CSAT Details </div>
+    <table class="table table-bordered" style="font-size:12px">
+        <tr>
+            <th style="text-align:left;background: #337ab730;">Project Name</th>  
+            <th style="text-align:left;background: #337ab730;">Customer Name</th>  
+            <th style="text-align:left;background: #337ab730;">Respondent Name</th>
+            <th style="text-align:left;background: #337ab730;">Enabling Success</th>
+            <th style="text-align:left;background: #337ab730;">Value Adds</th>
+            <th style="text-align:left;background: #337ab730;">Overall Quality of Deliverables</th>
+            <th style="text-align:left;background: #337ab730;">How likely is that you would recommend GAVS to your friend / acquaintance who wishes toavail IT services?</th>           
+            <th style="text-align:left;background: #337ab730;">NPS Comments</th>
+            <th style="text-align:left;background: #337ab730;">CSAT Feedback</th>
+          </tr>
+      <tbody *ngFor="let h of data.info;let i= index" >
+        <tr>
+            <td>{{h.projecT_ID}}</td>
+            <td *ngIf = "customername != undefined">{{customername[i]}}</td><td *ngIf = "customername == undefined"> - </td>
+            <td>{{h.respondenT_NAME}}</td>
+            <td *ngIf = "h.enablinG_SUCCESS != null">{{h.enablinG_SUCCESS}}</td><td *ngIf = "h.enablinG_SUCCESS == null">-</td>
+            <td *ngIf = "h.overalL_QUALITY_OF_DELIVERABLE != null">{{h.overalL_QUALITY_OF_DELIVERABLE}}</td><td *ngIf = "h.overalL_QUALITY_OF_DELIVERABLE == null">-</td>
+            <td *ngIf = "h.valuE_ADDS != null">{{h.valuE_ADDS}}</td><td *ngIf = "h.valuE_ADDS == null">-</td>
+            <td>{{h.npS_SCORE}}</td>
+            <td>{{h.npS_REMARKS}}</td>
+            <td>{{h.comments}}</td>
+        </tr>
+      </tbody>
+      <div style="margin: 5px;" *ngIf="data.info.length == 0">No Data to display </div>
+    </table>
+  </div>
+  <div style="text-align:center;padding-bottom:2px">
+    <button mat-button mat-dialog-close>Close</button>
+  </div>

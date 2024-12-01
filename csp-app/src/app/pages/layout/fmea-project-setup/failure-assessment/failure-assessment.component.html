@@ -1,0 +1,437 @@
+<div class="example-container" *ngIf="!editMode">
+  <div style="text-align: right; margin-bottom: 5px;margin-top: 5px" (click)="Add_onClick()">
+    <a class="maticonbutton" title="Add Failure">
+      <mat-icon style="vertical-align: middle">add</mat-icon>
+    </a>
+  </div>
+  <table class="table mat-elevation-z5" id="FMEADataStage3" mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="index">
+      <th mat-header-cell [ngClass]="'indexWidth'" *matHeaderCellDef>No</th>
+      <td mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index;"> {{(paginator.pageIndex * paginator.pageSize) + (element + 1)}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="functioN_ACTIVITIES">
+      <th mat-header-cell *matHeaderCellDef>Function/Step/Activity</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.functioN_ACTIVITIES}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="potentiaL_FAILURE_MODE">
+      <th mat-header-cell *matHeaderCellDef>Failure Mode</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.potentiaL_FAILURE_MODE}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="potentiaL_CAUSE_FACTOR">
+      <th mat-header-cell *matHeaderCellDef>Cause Factor</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.potentiaL_CAUSE_FACTOR}}</td>
+    </ng-container>
+
+
+    <ng-container matColumnDef="potentiaL_CAUSE">
+      <th mat-header-cell *matHeaderCellDef>Potential Cause</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.potentiaL_CAUSE}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="futurE_ACTION_TAKEN">
+      <th mat-header-cell *matHeaderCellDef>Action Taken</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.futurE_ACTION_TAKEN}}</td>
+    </ng-container>
+
+
+    <ng-container matColumnDef="futurE_OCCURRENCE_RATING_DEFINITION">
+      <th mat-header-cell *matHeaderCellDef="let definitions">Future Occurrence</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.futurE_OCCURRENCE_RATING_DEFINITION}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="futurE_SEVERITY_RATING_DEFINITION">
+      <th mat-header-cell *matHeaderCellDef>Future Severity</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.futurE_SEVERITY_RATING_DEFINITION}}</td>
+    </ng-container>
+
+
+    <ng-container matColumnDef="futurE_DETECTION_RATING_DEFINITION">
+      <th mat-header-cell *matHeaderCellDef>Future Detection</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.futurE_DETECTION_RATING_DEFINITION}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="futurE_RPN">
+      <th mat-header-cell *matHeaderCellDef>Future RPN</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.futurE_RPN}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="edit">
+      <th [ngClass]="'editWidth'" *matHeaderCellDef>
+        <div></div>
+      </th>
+      <td nowrap mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+        <a class="link" (click)="EditRow_onClick(element)" style="padding-right:5px">
+          <i class="fa fa-edit"></i>
+        </a>
+
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+  </table>
+  <div>
+    <mat-paginator #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 15]"></mat-paginator>
+  </div>
+</div>
+
+
+
+<div *ngIf="editMode">
+  <table border="0" style="width :100% !important;">
+
+    <tr>
+      <td colspan="4">
+        <mat-label class="FormField-Mat-Label">Function/Step/Activity : </mat-label>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <mat-form-field>
+          <input style="border:0px solid #b5b5b5 !important;width:580px !important;" name="txtFFSStage3" matInput [(ngModel)]="selectedParamsStage.potentiaL_FAILURE_MODE"
+            type="text" [disabled]="true">
+        </mat-form-field>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <mat-label class="FormField-Mat-Label">Potential Failure Mode</mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Potential Cause Factor</mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Potential Cause</mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Potential Effect of Failure</mat-label>
+      </td>
+    </tr>
+
+    <tr>
+
+      <td width="25%">
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtPFMStage3" matInput [(ngModel)]="selectedParamsStage.potentiaL_FAILURE_EFFECT" type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+
+      <td width="25%">
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtPCStage3" matInput [(ngModel)]="selectedParamsStage.potentiaL_CAUSE_FACTOR" type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+
+      <td width="25%">
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtPCStage3" matInput [(ngModel)]="selectedParamsStage.potentiaL_CAUSE" type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+      <td width="25%">
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtPEOFStage3" matInput [(ngModel)]="selectedParamsStage.potentiaL_FAILURE_EFFECT" type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <mat-label class="FormField-Mat-Label">Current Detective Control</mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Current Preventive Control</mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Recommended Detective Control</mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Recommended control to reduce occurrence</mat-label>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtRDControlStage3" class="FormField-Size" matInput [(ngModel)]="selectedParamsStage.recommendeD_DETECTIVE_CONTROL"
+            type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+
+      <td>
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtRPControlStage3" class="FormField-Size" matInput [(ngModel)]="selectedParamsStage.recommendeD_PREVENTIVE_CONTROL"
+            type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+
+      <td>
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtRDControlRDCStage3" class="FormField-Size" matInput [(ngModel)]="selectedParamsStage.recommendeD_DETECTIVE_CONTROL_STAGE2"
+            type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+
+      <td>
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtRPControlRDCStage3" class="FormField-Size" matInput [(ngModel)]="selectedParamsStage.recommendeD_PREVENTIVE_CONTROL_STAGE2"
+            type="text" [disabled]="true"></textarea>
+        </mat-form-field>
+      </td>
+
+      <td>&nbsp;</td>
+
+    </tr>
+
+    <tr>
+      <td>
+        <mat-label class="FormField-Mat-Label">Target Date
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Action Planned/Taken
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Action Planned/Taken By
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Action Taken On
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+
+    </tr>
+
+    <tr>
+      <td>
+        <mat-form-field class="FormField-Size">
+          <input style="border:0px solid #b5b5b5 !important;" matInput [(ngModel)]="selectedParamsStage.targeT_DATE" name="dtTARGET_DATE"
+            [matDatepicker]="pickerTargetDate">
+          <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTargetDate></mat-datepicker>
+        </mat-form-field>
+      </td>
+      <td>
+
+        <mat-form-field class="FormField-Size">
+          <textarea name="txtATControl" matInput [(ngModel)]="selectedParamsStage.actioN_TAKEN" type="text" required></textarea>
+        </mat-form-field>
+      </td>
+
+      <td style="vertical-align:top !important;">
+
+        <mat-form-field class="FormField-Size">
+          <mat-select style="border:0px solid #b5b5b5 !important;" name="ddEmployee" [(ngModel)]="selectedParamsStage.actioN_TAKEN_BY"
+            required>
+            <mat-option *ngFor="let emp of employees" [value]="emp.emP_ID">
+              {{ emp.frsT_NM}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+
+      <td style="vertical-align:top !important;">
+
+        <mat-form-field class="FormField-Size">
+          <input style="border:0px solid #b5b5b5 !important;" matInput [(ngModel)]="selectedParamsStage.actioN_TAKEN_ON" [max]="maxValue"
+            name="dtfuturE_ACTION_TAKEN_ON" [matDatepicker]="pickerActionTakenOn" required>
+          <mat-datepicker-toggle matSuffix [for]="pickerActionTakenOn"></mat-datepicker-toggle>
+          <mat-datepicker #pickerActionTakenOn></mat-datepicker>
+        </mat-form-field>
+      </td>
+
+      <td> &nbsp;&nbsp;&nbsp;</td>
+
+    </tr>
+
+    <tr>
+      <td colspan="4">
+        <mat-label class="FormField-Mat-Label">Current</mat-label>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4">&nbsp;</td>
+    </tr>
+
+    <tr>
+      <td>
+        <mat-label class="FormField-Mat-Label">Occurrance Rating
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Severity Rating
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Detection Rating
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">RPN</mat-label>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align:top !important;">
+        <mat-form-field class="FormField-Size">
+          <mat-select class="FormField-Border" name="dd_OCCURRENCE_RatingFactorsList" [(ngModel)]="selectedParamsStage.RF_OCCURRENCE_ID"
+            (selectionChange)="setRating('O', selectedParamsStage.rF_OCCURRENCE_ID, 'occurencE_RATING')" required>
+            <mat-option *ngFor="let c of occuranceRatings" [value]="c.id">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+
+
+      <td style="vertical-align:top !important;">
+        <mat-form-field class="FormField-Size">
+          <mat-select class="FormField-Border" name="ddSEVERITY_RatingFactorsList" [(ngModel)]="selectedParamsStage.RF_SEVERITY_ID"
+            (selectionChange)="setRating('S', selectedParamsStage.rF_SEVERITY_ID, 'severitY_RATING')" required>
+            <mat-option *ngFor="let c of severityRatings" [value]="c.id">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+
+
+      <td style="vertical-align:top !important;">
+        <mat-form-field class="FormField-Size">
+          <mat-select class="FormField-Border" name="ddDETECTION_RatingFactorsList" [(ngModel)]="selectedParamsStage.RF_DETECTION_ID"
+            (selectionChange)="setRating('D', selectedParamsStage.rF_DETECTION_ID, 'detectioN_RATING')" required>
+            <mat-option *ngFor="let c of detectionRatings" [value]="c.id">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+
+      <td>
+        <mat-form-field class="FormField-Size">
+          <input style="border:0px solid #b5b5b5 !important;" name="txt_RPN" matInput [(ngModel)]="selectedParamsStage.rpn" type="text"
+            readonly>
+        </mat-form-field>
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="4">
+        <mat-label class="FormField-Mat-Label">Future</mat-label>
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="4">&nbsp;</td>
+    </tr>
+
+    <tr>
+      <td>
+        <mat-label class="FormField-Mat-Label">Occurrance Rating
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Severity Rating
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">Detection Rating
+          <span style="color:red">*</span>
+        </mat-label>
+      </td>
+      <td>
+        <mat-label class="FormField-Mat-Label">RPN</mat-label>
+      </td>
+    </tr>
+
+
+
+    <tr>
+      <td style="vertical-align:top !important;">
+        <mat-form-field class="FormField-Size">
+          <mat-select class="FormField-Border" name="ddFuture_OCCURRENCE_RatingFactorsList" [(ngModel)]="selectedParamsStage.futurE_RF_OCCURRENCE_ID"
+            (selectionChange)="setRating('O', selectedParamsStage.rF_OCCURRENCE_ID, 'occurencE_RATING')" required>
+            <mat-option *ngFor="let c of occuranceRatings" [value]="c.id">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+
+
+      <td style="vertical-align:top !important;">
+        <mat-form-field class="FormField-Size">
+          <mat-select class="FormField-Border" name="ddFuture_SEVERITY_RatingFactorsList" [(ngModel)]="selectedParamsStage.futurE_RF_SEVERITY_ID"
+            (selectionChange)="setRating('S', selectedParamsStage.rF_SEVERITY_ID, 'severitY_RATING')" required>
+            <mat-option *ngFor="let c of severityRatings" [value]="c.id">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+
+
+      <td style="vertical-align:top !important;">
+        <mat-form-field class="FormField-Size">
+          <mat-select class="FormField-Border" name="ddFuture_DETECTION_RatingFactorsList" [(ngModel)]="selectedParamsStage.futurE_RF_DETECTION_ID"
+            (selectionChange)="setRating('D', selectedParamsStage.rF_DETECTION_ID, 'detectioN_RATING')" required>
+            <mat-option *ngFor="let c of detectionRatings" [value]="c.id">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+
+      <td>
+        <mat-form-field class="FormField-Size">
+          <input style="border:0px solid #b5b5b5 !important;" name="txtFuture_RPN" matInput [(ngModel)]="selectedParamsStage.futurE_RPN"
+            type="text" readonly>
+        </mat-form-field>
+      </td>
+    </tr>
+
+
+    <tr style="text-align:right">
+      <td colspan="5"> &nbsp;&nbsp;&nbsp;
+
+        <div style="position: absolute" class="clRejectionPopupStage2" *ngIf="showRejectionPopupStage3">
+          <div class="row" style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 100%; padding-bottom: 5px;">
+            <div style="float: left">
+              <b>Comments for Rejection</b>
+            </div>
+            <div style="float: right" (click)="closePopup('RejectionStage2')">
+              <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+            </div>
+          </div>
+
+          <table class="table-bordered" style="width :90%;">
+            <tr style="text-align:left">
+              <mat-label class="FormField-Mat-Label">Rejection Comments &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;</mat-label>
+              <mat-form-field class="FormField-Size">
+                <input matInput style="border:0px solid #b5b5b5 !important;" [(ngModel)]="fmea_RejectionComments_Stage3" name="txtRejectionComments"
+                  required>
+              </mat-form-field>
+            </tr>
+
+            <tr style="text-align:right">
+              <button type="button" class="btn btn-primary" (click)="btnSaveRejectionCommentsStage3()">Save</button>
+              &nbsp;&nbsp;&nbsp;
+              <button type="button" class="btn btn-primary" (click)="btnCancelRejectionCommentsStage3()">Cancel</button>
+            </tr>
+
+          </table>
+
+
+        </div>
+
+      </td>
+    </tr>
+    <tr style="text-align:right">
+      <td colspan="5">
+        <button type="button" class="btn btn-primary" (click)="btnCancel()">Cancel</button>
+        &nbsp;&nbsp;&nbsp;
+        <button type="submit" class="btn btn-primary">Save</button>
+        &nbsp;&nbsp;&nbsp;
+        <button type="button" class="btn btn-primary">Submit</button>
+        &nbsp;&nbsp;&nbsp;
+      </td>
+    </tr>
+  </table>
+</div>

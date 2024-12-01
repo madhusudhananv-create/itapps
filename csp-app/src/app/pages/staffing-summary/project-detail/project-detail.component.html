@@ -1,0 +1,40 @@
+<div class="panel panel-primary">
+  <div class="panel-heading"> {{ popupTitle }}
+    <span style="padding-left: 345px"> </span> <button mat-button mat-dialog-close>Close</button>
+  </div>
+  <div class="example-container mat-elevation-z8">
+    <table class="table table-bordered" mat-table style="border-radius: 3px;overflow: hidden " #table
+      [dataSource]="dataSource" matSort>
+      <ng-container matColumnDef="projecT_NAME">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Project Name</th>
+        <td mat-cell *matCellDef="let element"> {{element.projecT_NAME}} </td>
+      </ng-container>
+      <ng-container matColumnDef="emP_NAME">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Employe Name </th>
+        <td mat-cell *matCellDef="let element"> {{element.emP_NAME}} </td>
+      </ng-container>
+      <ng-container matColumnDef="emP_START_DATE">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Start Date </th>
+        <td mat-cell *matCellDef="let element"> {{element.emP_START_DATE}} </td>
+      </ng-container>
+      <ng-container matColumnDef="bilL_FLG">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Billable </th>
+        <td mat-cell *matCellDef="let element" > 
+            <mat-icon *ngIf="element.bilL_FLG == 'YES' ">check_circle_outline</mat-icon> 
+            <mat-icon *ngIf="element.bilL_FLG == 'NO' ">highlight_off</mat-icon>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="iS_ONSITE">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Onsite</th>
+        <td mat-cell *matCellDef="let element">
+            <mat-icon *ngIf="element.iS_ONSITE == 'YES' ">check_circle_outline</mat-icon> 
+            <mat-icon *ngIf="element.iS_ONSITE == 'NO' ">highlight_off</mat-icon>
+           </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="projectDetailColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: projectDetailColumns;"></tr>
+    </table>
+    <mat-paginator #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+  </div>
+</div>

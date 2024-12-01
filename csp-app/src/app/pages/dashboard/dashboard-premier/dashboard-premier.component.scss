@@ -1,0 +1,1577 @@
+.row{
+    padding:0px;
+    margin:0px;
+  }
+  .col-lg-3, .col-md-3, .col-sm-3,
+  .col-lg-4, .col-md-4, .col-sm-4,
+  .col-lg-5, .col-md-5, .col-sm-5,
+  .col-lg-6, .col-md-6, .col-sm-6,
+  .col-lg-8, .col-md-8, .col-sm-8,
+  .col-lg-9, .col-md-9, .col-sm-9
+  {
+    padding:0px !important;
+    margin:0px !important;
+  }
+
+  ::ng-deep .mat-tab-body-content{
+    overflow: hidden !important;
+  }
+
+  .mainDiv{
+    background-color:white;
+    border-radius:9px;
+    display: inline-block;
+    margin: 1px 10px 5px 10px;
+    min-height:500px;
+    height: auto;
+   // height: calc(100vh - 57px);
+    box-shadow: 1px 2px 3px 1px #c7c7c7;
+    width: 95%;
+  }
+
+
+  // Page design css
+
+  ul{
+      list-style-type: none;
+      padding: 0;
+    }
+    li{
+      // padding-left: 0 !important;
+      // padding-right: 0 !important;
+      // padding-top: 5px;
+    }
+
+    .client{
+      //text-decoration: none;
+      //margin-top:10px;
+      // padding:5px;
+      // background-color:#b8b8b8;
+      // box-shadow: 0 12px 20px -10px rgba(224, 218, 217, 0.28), 0 4px 20px 0 rgba(0, 0, 0, 0.12), 0 7px 8px -5px rgba(105, 92, 91, 0.2);
+      // border-radius: 2px;
+      // padding: 5px, 0, 5px, 0;
+    }
+    .client:hover {
+      //background-color:#a09797 !important;
+    }
+    .client_txt {
+      //padding: 15px;
+      padding: 15px 6px 15px 2px;
+    height: 54px;
+    }
+    .project_txt {
+      //padding: 15px;
+      padding: 15px 6px 15px 20px;
+      //padding: 15px 15px 15px 2px;
+    height: 54px;
+    }
+    .rag_colors{
+      border-right: 5px solid;
+    }
+    .project{
+      //text-decoration: none;
+      //margin-top:10px;
+    //  padding:5px;
+    //  background-color:#ffffff;
+      //box-shadow: 0 12px 20px -10px rgba(224, 218, 217, 0.28), 0 4px 20px 0 rgba(0, 0, 0, 0.12), 0 7px 8px -5px rgba(105, 92, 91, 0.2);
+      // border-radius: 2px;
+      // padding: 5px, 0, 5px, 0;
+    }
+    .project:hover{
+      //background-color:#b9b8b8 !important;
+    }
+
+    .login_bg{
+      background-color:white !important;
+      background:url(../../../../assets/images/grey-pattern.png) no-repeat bottom 0 center !important;
+    }
+
+    .mat-progress-bar {
+      display: block;
+      height: 1px;
+      overflow: hidden;
+      position: relative;
+      transform: translateZ(0);
+      transition: opacity 250ms linear;
+      width: 100%;
+    }
+    .proj_status {
+      padding:2px;
+      vertical-align: top;
+    }
+    .proj_green {
+      border-left: green 4px solid;
+
+    }
+    .landing_bg {
+      background: #F3F4F8;
+    }
+    .proj_txts {
+      font-size: 14px;
+    font-family: calibri;
+    color: #6b6969;
+    }
+    .bordered-table th, .bordered-table td{
+      border: none;
+    }
+    .bordered_content {
+      font-size: 12px;
+    font-family: calibri;
+    border: #ccc 1px solid;
+    width: 90%;
+    color: #524f4f;
+    padding: 9px;
+    display: block;
+    background-color: #fff!important;
+    box-shadow: 1px 1px 1px #ccc;
+    margin: 35px 9px;
+    border-radius: 3px;
+    }
+    .bordered_content-arrow {
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-bottom: 5px solid #ccc;
+      top: 20px;
+    left: 11px;
+    position: relative;
+    float: right;
+    }
+
+    .color_swatch {
+      background: url("/assets/images/color_swatch.png") no-repeat;
+      width: 14px;
+      height: 14px;
+      padding-right: 37px;
+      float: right;
+      cursor: pointer;
+    }
+
+    .tab {
+      float: left;
+      border: 1px solid #ccc;
+      background-color: #f1f1f1;
+      width: 15%;
+      height: 300px;
+    }
+
+    /* Style the buttons inside the tab */
+    .tab button {
+      display: block;
+      background-color: inherit;
+      color: black;
+      padding: 22px 16px;
+      width: 100%;
+      border: none;
+      outline: none;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 17px;
+    }
+
+    /* Change background color of buttons on hover */
+    .tab button:hover {
+      background-color: #ddd;
+    }
+
+    /* Create an active/current "tab button" class */
+    .tab button.active {
+      background-color: #ccc;
+    }
+
+    /* Style the tab content */
+    .tabcontent {
+      float: left;
+      padding: 0px 12px;
+      border: 1px solid #ccc;
+      width: 70%;
+      border-left: none;
+      height: 300px;
+    }
+
+    @media only screen and (max-width: 600px) {
+      body {
+        $menudisplay: false;
+      }
+    }
+    ///Testing
+
+    // .example-container {
+    //   display: flex;
+    //   flex-direction: column;
+    //   position: absolute;
+    //   top: 0;
+    //   bottom: 0;
+    //   left: 0;
+    //   right: 0;
+    // }
+
+    .example-is-mobile .example-toolbar {
+      //width:250px;
+      position: fixed;
+      /* Make sure the toolbar will stay on top of the content as it scrolls past. */
+      z-index: 2;
+    }
+
+    h1.example-app-name {
+      margin-left: 8px;
+    }
+
+    .example-sidenav-container {
+      /* When the sidenav is not fixed, stretch the sidenav container to fill the available space. This
+         causes `<mat-sidenav-content>` to act as our scrolling element for desktop layouts. */
+      flex: 1;
+    }
+
+    .example-is-mobile .example-sidenav-container {
+      /* When the sidenav is fixed, don't constrain the height of the sidenav container. This allows the
+         `<body>` to be our scrolling element for mobile layouts. */
+      flex: 1 0 auto;
+    }
+
+    .mat-sidenav{
+      width:250px;
+    }
+
+    .gavs_logo {
+      background: url(/assets/images/GAVS_Logo.png) no-repeat 51px 6px;
+    width: 200px;
+    float: right;
+    background-size: 40%;
+    height: 35px;
+    display: inline-block;
+    }
+
+    .disp_name {
+      padding: 9px 0 0 0;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    mat-toolbar{
+      width: 100%;
+      height:50px;
+      font-size:16px;
+      background-color: #fff;
+      border-bottom: solid silver 2px;
+      padding:0px;
+    }
+
+    .user_options {
+    display: inline-block;
+    text-align: center;
+    padding: 8px 0 0 17px;
+    }
+
+    .clientName{
+      margin-top: 0;
+      // margin-bottom: 10px;
+      // padding-left: 15px;
+      // font-family: calibri;
+      // display: block;
+      padding-bottom: 5px;
+      position: relative;
+    }
+    .clientName::before {
+      content: "";
+      position: absolute;
+      width: 50px;
+      height: 1px;
+      bottom: 0;
+      left: 1.6%;
+      border-bottom: 2px solid #097bde;
+    }
+
+    .navbar-brand{
+    padding: 9px 0 0 0 !important;
+    }
+
+    .mat-icon-button{
+      padding: 0px 0;
+    }
+
+    .header {
+      display: inline-block;
+      width: 100%;
+      text-align:center;
+    }
+    .header-mobile {
+      //display: inline-block;
+      width: 100%;
+      text-align:center;
+      display: none;
+    }
+    .left-toolbar {
+      float: left;
+    }
+    .right-toolbar {
+      float: right;
+      padding-right:10px;
+    }
+    .center-toolbar {
+      display: inline-block;
+      margin:0 auto;
+    }
+
+    @media screen and (max-width: 600px) {
+      .header {
+        display: none;
+      }
+      .header-mobile {
+        display: inline-block;
+        }
+    }
+
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      left: -119px;
+      display: none;
+      position: absolute;
+      background-color: #f1f1f1;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      z-index: 1;
+    }
+
+    .dropdown-content a {
+      color: black;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .dropdown-content a:hover {background-color: #ddd}
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
+    .dropdown:hover .dropbtn {
+      //background-color: grey;
+    }
+
+    .governance{
+      padding:12px;
+      border: 1px grey;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25em 0.4em;
+      font-size: 75%;
+      font-weight: 700;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0px;
+    }
+    .badge-info {
+      color: #151b1e;
+      background-color: #63c2de;
+    }
+    .changecolor{
+      -webkit-animation:colorchange 1s infinite alternate;
+    }
+
+    @-webkit-keyframes colorchange {
+      0% {
+        color: red;
+      }
+      100% {
+
+        color: #f1c40f;
+      }
+    }
+
+    .glow {
+      //font-size: 80px;
+      color: #fff;
+      text-align: center;
+      -webkit-animation: glow 1s ease-in-out infinite alternate;
+      -moz-animation: glow 1s ease-in-out infinite alternate;
+      animation: glow 1s ease-in-out infinite alternate;
+    }
+
+    @-webkit-keyframes glow {
+      from {
+        text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
+      }
+
+      to {
+        text-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6, 0 0 50px #ff4da6, 0 0 60px #ff4da6, 0 0 70px #ff4da6, 0 0 80px #ff4da6;
+      }
+    }
+    //---------------
+  //Dashboard css
+  body
+  {
+      max-width: 1366px;
+      margin-left: auto;
+      margin-right: auto;
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif !important;
+  }
+
+  .container-fluid
+  {
+      margin: 0px;
+      padding: 0px;
+  }
+
+  #Gavs-logo {
+      height: 34px;
+      width: 89px;
+      margin-right: 15px;
+      margin-left: 5px;
+      padding: 6px;
+      margin-top: 0px;
+  }
+
+  #header-text
+  {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 40px;
+      color: #535d85;
+  }
+
+  .panel-heading
+  {
+      padding: 0px;
+      height: 40px;
+      vertical-align: middle;
+  }
+  .panel-body{
+      background-color: #f5f5f5;
+  }
+
+  // #ContentBody{
+  //     background-color: #f5f5f5;
+  //  }
+   #filter{
+       height: 6.4%;
+       width: 100%;
+       background-color: crimson;
+   }
+  #mainContent {
+      background-color: white;
+      margin: 10px;
+      height: 600px;
+      margin-top: 0px;
+      box-shadow: 0px 0.5px 2.5px gray;
+      border-radius: 8px;
+  }
+   #crispScore{
+       height: 34px;
+       width: 110px;
+       background-color: red;
+       color: white;
+       font-weight: 900;
+       text-align: center;
+       vertical-align: middle;
+       margin-left: auto;
+       margin-right: 30px;
+       border-radius: 0px 0px 10px 10px;
+       padding-top: 8px;
+       box-sizing: border-box;
+   }
+
+
+   #customersucess{
+      height: 220px;
+      width: 190px;
+       background-color: white;
+       margin-left: 25px;
+       border-radius: 10px;
+       color: #535d85;
+       padding: 8px;
+       font-weight: 700;
+       box-shadow: 0px 0.5px 2.5px gray;
+       float: left;
+   }
+   #customerPie{
+       margin-top: 0px;
+       height: 100px;
+       margin-left: auto;
+       margin-right: auto;
+       padding-top: 1px;
+   }
+   table{
+       margin-left: auto;
+       margin-right: auto;
+   }
+   .left-column
+   {
+       width: 100px;
+   }
+
+
+   .issuesSplitNo{
+       text-align: center;
+       padding: 3px;
+   }
+
+    #businessProcess{
+      height: 80px;
+      width: 195px;
+   }
+
+
+
+
+   .alignment{
+       text-align: center;
+   }
+   .portfolioTable table  tbody tr  :nth-child(2){
+      color: darkgray;
+      font-size: 13px;
+      font-weight: 300
+   }
+
+   //  CSS for toggle switch
+
+   .switch {
+      position: relative;
+      display: inline-block;
+      width: 170px;
+      height: 32px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #4c567f;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "Engagement";
+      padding-top: 5px;
+      padding-left: 29px;
+      color: white;
+      height: 32px;
+      width: 26px;
+      left: 1px;
+      bottom: 0px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    input:checked + .slider {
+      background-color: #4c567f;
+      color: white;
+    }
+
+    input:checked + .slider :after    {
+      background-color: #4c567f;
+      content: "Portfolio View";
+      color: white;
+      padding-right: 30px;
+      text-align: right
+    }
+
+    input:focus + .slider {
+      box-shadow: 0 0 1px #4c567f;
+    }
+
+    input:checked + .slider:before {
+      -webkit-transform: translateX(140px);
+      -ms-transform: translateX(140px);
+      transform: translateX(140px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+      border-radius: 34px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+
+  //   .onoffswitch1 {
+  //     position: relative; width: 90px;
+  //     -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+  //}
+
+
+  // .onoffswitch1-checkbox {
+  //     display: none;
+  // }
+
+  // .onoffswitch1 {
+  //     position: relative; width: 90px;
+  //     -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+  // }
+
+  // .onoffswitch1-label {
+  //     display: block; overflow: hidden; cursor: pointer;
+  //     border: 2px solid #999999; border-radius: 30px;
+  // }
+
+  // .onoffswitch1 {
+  //     position: relative; width: 90px;
+  //     -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+  // }
+  //--------------------------
+  .onoffswitch1-checkbox {
+      display: none;
+  }
+
+  .onoffswitch1-label {
+      display: block; overflow: hidden; cursor: pointer;
+      border: 2px solid #999999; border-radius: 30px;
+  }
+
+  .onoffswitch1-inner {
+      display: block; width: 200%; margin-left: -100%;
+      -moz-transition: margin 0.3s ease-in 0s; -webkit-transition: margin 0.3s ease-in 0s;
+      -o-transition: margin 0.3s ease-in 0s; transition: margin 0.3s ease-in 0s;
+  }
+
+  .onoffswitch1-inner:before, .onoffswitch1-inner:after {
+      display: block; float: left; width: 50%; height: 22px; padding: 0; line-height: 30px;
+      font-size: 14px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+      -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+      border-radius: 30px;
+      box-shadow: 0px 15px 0px rgba(0,0,0,0.08) inset;
+  }
+
+  .onoffswitch1-inner:before {
+      content: "YES";
+      padding-left: 10px;
+      background-color: #2FCCFF; color: #FFFFFF;
+      border-radius: 30px 0 0 30px;
+  }
+
+  .onoffswitch1-inner:after {
+      content: "NO";
+      padding-right: 10px;
+      background-color: #EEEEEE; color: #999999;
+      text-align: right;
+      border-radius: 0 30px 30px 0;
+  }
+
+  .onoffswitch1-switch {
+      display: block; width: 30px; margin: 0px;
+      background: #FFFFFF;
+      border: 2px solid #999999; border-radius: 30px;
+      position: absolute; top: 0; bottom: 0; right: 56px;
+      -moz-transition: all 0.3s ease-in 0s; -webkit-transition: all 0.3s ease-in 0s;
+      -o-transition: all 0.3s ease-in 0s; transition: all 0.3s ease-in 0s;
+      background-image: -moz-linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 80%);
+      background-image: -webkit-linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 80%);
+      background-image: -o-linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 80%);
+      background-image: linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 80%);
+      box-shadow: 0 1px 1px white inset;
+  }
+
+  .onoffswitch1-checkbox:checked + .onoffswitch1-label .onoffswitch1-inner {
+      margin-left: 0;
+  }
+
+  .onoffswitch1-checkbox:checked + .onoffswitch1-label .onoffswitch1-switch {
+      right: 0px;
+  }
+
+
+  .successgoalTable{
+    height: 21px;
+    width: calc(100% - 5px); /* - 17px because of the scrollbar width */
+    box-sizing: border-box;
+    color : black;
+    font-size: 12px;
+    font-weight: 400;
+    display: table; /* to take the same width as tr */
+
+  }
+  .successgoalTable1{
+    height: 21px;
+    width: calc(100% - 5px); /* - 17px because of the scrollbar width */
+    box-sizing: border-box;
+    color : black;
+    font-size: 12px;
+    font-weight: 400;
+    display: table; /* to take the same width as tr */
+  }
+  .successgoalTable  thead{
+    height: 23px;
+    width: calc(100% - 5px); /* - 17px because of the scrollbar width */
+    box-sizing: border-box;
+    color : black;
+    font-size: 12px;
+    font-weight: 800;
+    display: table; /* to take the same width as tr */
+    margin-bottom: 5px;
+  }
+  .successgoalTable1  thead{
+    height: 23px;
+    width: calc(100% - 5px); /* - 17px because of the scrollbar width */
+    box-sizing: border-box;
+    color : black;
+    font-size: 12px;
+    font-weight: 800;
+    display: table; /* to take the same width as tr */
+    margin-bottom: 5px;
+  }
+
+
+
+  // .successgoalTable thead tr th :not(:first){
+  //     text-align: center;
+  // }
+
+  // .successgoalTable thead tr :nth-child(1)
+  // {
+  //     padding-left: 5px;
+  // }
+  // .successgoalTable  thead tr :nth-child(3)    {
+  //     text-align: center;
+  // }
+
+  .successgoalTable tbody tr{
+    margin-bottom: 3px;
+  }
+
+  // .successgoalTable  tbody tr :nth-child(3)
+  // {
+  //     text-align: center;
+  //     color: black;
+  //     font-weight: 900;
+  // }
+
+  // .successgoalTable  tbody tr :nth-child(1)
+  // {
+  //     width: 220px;
+  //     padding-left: 5px;
+  // }
+
+  // .successgoalTable  tbody tr :nth-child(2)
+  // {
+  //     width: 150px;
+  //     padding-left: 5px;
+  // }
+
+  // .successgoalTable  thead tr :nth-child(1)
+  // {
+  //     width: 220px;
+  //     padding-left: 5px;
+  // }
+
+  // .successgoalTable  thead tr :nth-child(2)
+  // {
+  //     width: 150px;
+  //     padding-left: 5px;
+  // }
+
+
+
+  // .successgoalTable  thead tr :nth-child(2)    {
+  //     width: 150px;
+  // }
+
+  // .successgoalTable  thead tr :nth-child(1)
+  // {
+  //     width: 220px;
+  //     padding-left: 5px;
+  // }
+
+  // .successgoalTable  thead tr :nth-child(2)
+  // {
+  //     width: 150px;
+  //     padding-left: 0px;
+  // }
+
+  .successgoalTable tbody tr {
+      color: #787878;
+      font-size: 13px;
+      font-weight: 400;
+  }
+
+  .successgoalTable tbody tr{
+      height : 32px;
+     // box-shadow: -2px 2px 2.5px gray;
+  }
+
+  .successgoalTable1 tbody tr{
+    height : 35px;
+    box-shadow: -2px 2px 2.5px 0px gray;
+    margin-bottom: 2px;
+  }
+
+  .redborder{
+    border-left: 3px solid red;
+  }
+
+  .greenborder{
+    border-left: 3px solid green;
+  }
+
+  .orangeborder{
+    border-left: 3px solid orange;
+  }
+
+  .successgoalTable td {
+      border-collapse: collapse;
+  }
+
+  .successgoalTable1 td {
+    border-collapse: none
+  }
+
+  .successgoalTable tbody {
+      display: block; /* to enable vertical scrolling */
+      max-height: 140px; /* e.g. */
+      overflow-y: scroll; /* keeps the scrollbar even if it doesn't need it; display purpose */
+    }
+
+    .successgoalTable1 tbody {
+      display: block; /* to enable vertical scrolling */
+      max-height: 140px; /* e.g. */
+      overflow-y: scroll;
+      table-layout:fixed;/* keeps the scrollbar even if it doesn't need it; display purpose */
+    }
+
+    .successgoalTable tr {
+      display: table; /* display purpose; th's border */
+      width: 100%;
+     box-sizing: border-box; /* because of the border (Chrome needs this line, but not FF) */
+    }
+
+    .successgoalTable1 tr {
+      display: table; /* display purpose; th's border */
+      width: 100%;
+     box-sizing: border-box;
+     table-layout:fixed;
+    }
+
+    .successgoalTable ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .successgoalTable  ::-webkit-scrollbar-track {
+      //box-shadow: inset 0 0 5px grey;
+      background: white;
+      border-radius: 10px;
+    }
+    .successgoalTable ::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      height: 0px;
+      background: #888;
+    }
+    .successgoalTable ::-webkit-scrollbar-thumb:vertical{
+        height: 18px;
+    }
+    .successgoalTable ::-webkit-scrollbar-track-piece  :start{
+      background: transparent;
+      margin-top: 80px;
+    }
+
+    .successgoalTable ::-webkit-scrollbar-track-piece:end {
+      background: transparent;
+      //margin-bottom: 80px;
+  }
+  .successgoalTable1 ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .successgoalTable1 ::-webkit-scrollbar-track {
+    //box-shadow: inset 0 0 5px grey;
+    background: white;
+    border-radius: 10px;
+  }
+  .successgoalTable1 ::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    height: 0px;
+    background: #888;
+  }
+  .successgoalTable1 ::-webkit-scrollbar-thumb:vertical{
+      height: 18px;
+  }
+  .successgoalTable1 ::-webkit-scrollbar-track-piece  :start{
+    background: transparent;
+    //margin-top: 80px;
+  }
+
+  .successgoalTable1 ::-webkit-scrollbar-track-piece:end {
+    background: transparent;
+    //margin-bottom: 80px;
+  }
+
+  .portfolioTable thead tr{
+
+       width: calc(100% - 5px);
+
+  }
+
+  //--------- Thead styling for portfolio table-------------------//
+  .portfolioTable thead tr :nth-child(1)
+  {
+      width: 25%;
+      height: 32px;
+  }
+  .portfolioTable thead tr  :nth-child(2)
+  {
+      width: 21%;
+      height: 32px;
+  }
+  .portfolioTable thead tr  :nth-child(3)
+  {
+      width: 15%;
+      height: 32px;
+  }
+  .portfolioTable thead tr :nth-child(4)
+  {
+      width: 24%;
+      height: 32px;
+  }
+
+
+  //----------- Tbody---------------
+
+
+
+
+  .portfolioTable tbody tr :nth-child(1)
+  {
+      width: 25%;
+      height: 5px;
+  }
+  .portfolioTable tbody tr  :nth-child(2)
+  {
+      width: 21%;
+      height: 32px;
+  }
+  .portfolioTable tbody tr  :nth-child(3)
+  {
+      width: 3%;
+      height: 32px;
+  }
+  .portfolioTable tbody tr :nth-child(4)
+  {
+      width: 20%;
+      height: 32px;
+  }
+
+  // Portfolio Table Scroll
+  //-----------------------------------------
+  .portfolioKPITable tbody {
+    display: block; /* to enable vertical scrolling */
+    max-height: 200px; /* e.g. */
+    overflow-y: scroll; /* keeps the scrollbar even if it doesn't need it; display purpose */
+  }
+
+  .portfolioTable tbody {
+      display: block; /* to enable vertical scrolling */
+      max-height: 140px; /* e.g. */
+      overflow-y: scroll; /* keeps the scrollbar even if it doesn't need it; display purpose */
+    }
+    .portfolioTable tr {
+      display: table; /* display purpose; th's border */
+      width: 100%;
+     box-sizing: border-box; /* because of the border (Chrome needs this line, but not FF) */
+    }
+
+    .portfolioTable  thead{
+      // display: table; /* to take the same width as tr */
+     // width: calc(100% - 13px); /* - 17px because of the scrollbar width */
+  }
+
+  .portfolioTable td {
+      border-collapse: collapse;
+  }
+
+  .portfolioTable ::-webkit-scrollbar {
+      width: 5px;
+      height: 2px;
+    }
+    .portfolioTable  ::-webkit-scrollbar-track {
+     // box-shadow: inset 0 0 5px grey;
+      background: white;
+      border-radius: 10px;
+    }
+    .portfolioTable ::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      height: 0px;
+      background: #888;
+    }
+    .portfolioTable ::-webkit-scrollbar-thumb:vertical{
+        height: 18px;
+    }
+    .portfolioTable ::-webkit-scrollbar-track-piece  :start{
+      background: transparent;
+      margin-top: 80px;
+    }
+
+    .portfolioTable ::-webkit-scrollbar-track-piece:end {
+      background: transparent;
+      //margin-bottom: 80px;
+  }
+
+
+  .journeyMapContent::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .journeyMapContent::-webkit-scrollbar-track {
+   // box-shadow: inset 0 0 5px grey;
+    background: white;
+    border-radius: 10px;
+  }
+  .journeyMapContent::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    height: 30px;
+    background: #888;
+  }
+  .journeyMapContent::-webkit-scrollbar-thumb:vertical{
+      height: 18px;
+  }
+  .journeyMapContent::-webkit-scrollbar-track-piece  :start{
+    background: transparent;
+    margin-bottom: 150px;
+  }
+
+  .journeyMapContent::-webkit-scrollbar-track-piece:end {
+    background: transparent;
+    margin-bottom: 25px;
+  }
+
+
+
+
+
+  .journeyTable tr{
+      height: 37px;
+      font-size: 13px;
+      color: #787878;
+      width: 70px
+  }
+  ul.a {
+    list-style-type: circle;
+    padding-left: 10px;
+    font-size: 10px;
+    font-weight: normal;
+  }
+  li{
+    font-size:10px;
+    color:black;
+    padding-bottom: 5px;
+  }
+
+  #portfolios{
+    height: 300px;
+    width: 95%;
+    background-color: white;
+    border-radius: 10px;
+    color: #535d85;
+    padding: 9px;
+    font-weight: 700;
+    box-shadow: 0px 0.5px 2.5px gray;
+    margin-left: 15px;
+    margin-bottom: 10px;
+    float: right;
+  }
+
+  #engagementView{
+    float: left;
+    height: 300px;
+    width: 95%;
+    background-color: white;
+    border-radius: 10px;
+    color: #535d85;
+    padding: 9px;
+    font-weight: 700;
+    box-shadow: 0px 0.5px 2.5px gray;
+    margin-left: 20px;
+    margin-bottom: 10px;
+  }
+
+  #cleverQuality{
+    height: 170px;
+    //width: 195px;
+     background-color: white;
+     color: #535d85;
+     font-weight: 700;
+     float: left;
+  }
+  .cleverQualityCategory{
+     color: grey;
+     font-size: 12px !important;
+     font-weight: 500 !important;
+  }
+
+  #metricPerformance{
+    height: 300px;
+    //width: 640px;
+   background-color: white;
+   border-radius: 10px;
+   color: #535d85;
+   margin-left: 15px;
+   padding: 9px;
+   font-weight: 700;
+   box-shadow: 0px 0.5px 2.5px gray;
+   float: left;
+   margin-bottom: 10px;
+   //margin-top: 18px;
+  // font-family: Helvetica Neue;
+  }
+
+  #goalPerformance{
+      height: 220px;
+      //width: 570px;
+     background-color: white;
+     border-radius: 10px;
+     color: #535d85;
+     margin-left: 20px;
+     padding: 9px;
+     font-weight: 700;
+     box-shadow: 0px 0.5px 2.5px gray;
+     float: left;
+     margin-bottom: 10px;
+     //margin-top: 18px;
+    // font-family: Helvetica Neue;
+  }
+
+  #goalPerformance1{
+    height: 220px;
+    width: 890px;
+   background-color: white;
+   border-radius: 10px;
+   color: #535d85;
+   margin-left: 20px;
+   padding: 9px;
+   font-weight: 700;
+   box-shadow: 0px 0.5px 2.5px gray;
+   float: left;
+   margin-bottom: 10px;
+   //margin-top: 18px;
+  // font-family: Helvetica Neue;
+  }
+  #journeyMap{
+    height: 280px;
+    //width: 180px;
+    background-color: white;
+    border-radius: 10px;
+    color: #535d85;
+    margin-left: 25px;
+    padding: 9px;
+    font-weight: 700;
+    box-shadow: 0px 0.5px 2.5px gray;
+    float: left;
+    margin-bottom: 10px;
+  }
+  #journeyMapPremier{
+    height: 300px;
+    width: 95%;
+    background-color: white;
+    border-radius: 10px;
+    color: #535d85;
+    margin-left: 20px;
+    padding: 9px;
+    font-weight: 700;
+    box-shadow: 0px 0.5px 2.5px gray;
+    float: left;
+    margin-bottom: 10px;
+  }
+
+  #ideas
+  {
+     height: 280px;
+     width: 370px;
+      background-color: white;
+      border-radius: 10px;
+      color: #535d85;
+      padding: 9px;
+      font-weight: 700;
+      box-shadow: 0px 0.5px 2.5px gray;
+      float: left;
+      margin-left: 20px;
+      margin-bottom: 10px;
+  }
+
+  #Risks{
+    height: 260px;
+    width: 190px;
+     background-color: white;
+     border-radius: 10px;
+     color: #535d85;
+     padding: 9px;
+     font-weight: 700;
+     box-shadow: 0px 0.5px 2.5px gray;
+     border: 1px solid red;
+     float: left;
+     margin-left: 20px;
+     margin-bottom: 10px;
+  }
+
+  #staffingSummary{
+    height: 280px;
+    width: 228px;
+    background-color: white;
+     border-radius: 10px;
+     color: #535d85;
+     padding: 9px;
+     font-weight: 700;
+     box-shadow: 0px 0.5px 2.5px gray;
+     float: left;
+     margin-left: 20px;
+     margin-bottom: 10px;
+  }
+
+  #projectStatus{
+    height: 260px;
+    width: 210px;
+     background-color: white;
+     border-radius: 10px;
+     color: #535d85;
+     padding: 9px;
+     font-weight: 700;
+     box-shadow: 0px 0.5px 2.5px gray;
+     float: left;
+     margin-left: 20px;
+     margin-bottom: 10px;
+  }
+
+  .separateCard{
+    height: 130px;
+    width: 180px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 0.5px 2.5px gray;
+    padding: 9px;
+    color: #535d85;
+    font-weight: 700;
+  }
+  .separateCardNew{
+    height: 170px;
+    width: 250px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 0.5px 2.5px gray;
+    padding: 9px;
+    color: #535d85;
+    font-weight: 700;
+  }
+
+  .updatedon{
+    color:grey;
+    font-size:12px;
+  }
+  .centreLabel{
+    position: absolute;
+    width: 44px;
+    font-weight: 700;
+    font-size: 15px;
+    top: 27px;
+    text-align: center;
+    margin-left: 31px;
+  }
+
+  #earlyWarningSignal{
+
+    height: 220px;
+    width: 450px;
+    margin-left: 20px;
+    margin-bottom: 10px;
+    float: left;
+  }
+
+
+  .qualityHelp{
+
+    top : 15px;
+    right : 100px;
+    height: 270px;
+    width: 500px;
+    z-index: 1;
+    background-color: #ffffff;
+    box-shadow: 0px 0.5px 12px gray;
+    padding: 15px 5px 15px 15px;
+    position: fixed;
+    border-radius: 7px;
+  }
+
+  .row{
+    padding:0px;
+    margin:0px;
+  }
+
+
+  .successGoalFilter{
+
+    top : 10px;
+    //right : 0px;
+    left: 1100px;
+    height: 275px;
+    width: 200px;
+    z-index: 1;
+    background-color: #f2f2f2;
+    box-shadow: 0px 0.5px 12px gray;
+    padding: 15px 5px 15px 15px;
+    position: fixed;
+    border-radius: 7px;
+  }
+
+  .dashboardMenu{
+    top : 45px;
+    right : 0px;
+    height: 100%;
+    width: 200px;
+    z-index: 1;
+    background-color: #4e5882;
+    box-shadow: 0px 0.5px 12px #4e5882;
+    padding: 15px 5px 15px 15px;
+    position: fixed;
+  }
+
+  .menuList tr > td{
+    font-size: 14px;
+    color: white;
+  }
+
+  .menuList tr > td > img{
+    filter: brightness(0) invert(1);
+  }
+
+  .menuList tr{
+    cursor: pointer;
+  }
+
+
+  .backbutton{
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Roboto', sans-serif;
+    margin-bottom: 15px;
+    color: #4e5882;
+  }
+
+
+
+
+   .tooltiptext {
+    position: absolute;
+    z-index: 1;
+    visibility: hidden;
+    width: 100px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+
+    /* Position the tooltip */
+
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+  }
+  .fa-thumbs-up{
+    color: green;
+    text-shadow: 1px 1px 1px #ccc;
+      font-size: 1.0em;
+  }
+  .fa-thumbs-down{
+    color: red;
+    text-shadow: 1px 1px 1px #ccc;
+      font-size: 1.0em;
+  }
+  .fa-exclamation-circle
+  {
+    color: orange;
+    text-shadow: 1px 1px 1px #ccc;
+      font-size: 1.0em;
+  }
+
+
+  /////
+  .prodKPITable{
+    height: 21px;
+    width: calc(100% - 5px); /* - 17px because of the scrollbar width */
+    box-sizing: border-box;
+    color : black;
+    font-size: 12px;
+    font-weight: 400;
+    display: table; /* to take the same width as tr */
+
+  }
+
+  .prodKPITable  thead{
+    height: 23px;
+    width: calc(100% - 5px); /* - 17px because of the scrollbar width */
+    box-sizing: border-box;
+    color : black;
+    font-size: 12px;
+    font-weight: 800;
+    display: table; /* to take the same width as tr */
+    margin-bottom: 5px;
+  }
+
+  .prodKPITable tbody tr{
+    margin-bottom: 3px;
+  }
+
+
+  .prodKPITable tbody tr {
+      color: #787878;
+      font-size: 13px;
+      font-weight: 400;
+  }
+
+  .prodKPITable tbody tr{
+      height : 32px;
+     // box-shadow: -2px 2px 2.5px gray;
+  }
+
+
+
+  .prodKPITable td {
+      border-collapse: collapse;
+  }
+
+  .portfolioTableBody{
+    display: block !important; /* to enable vertical scrolling */
+    max-height: 175px !important; /* e.g. */
+    overflow-y: scroll !important; /* keeps the scrollbar even if it doesn't need it; display purpose */
+  }
+  .engageTableBody{
+    display: block !important; /* to enable vertical scrolling */
+    max-height: 175px !important; /* e.g. */
+    overflow-y: scroll !important; /* keeps the scrollbar even if it doesn't need it; display purpose */
+  }
+  .prodKPITable tbody {
+      display: block; /* to enable vertical scrolling */
+      max-height: 175px; /* e.g. */
+      overflow-y: scroll; /* keeps the scrollbar even if it doesn't need it; display purpose */
+    }
+
+
+    .prodKPITable tr {
+      display: table; /* display purpose; th's border */
+      width: 100%;
+     box-sizing: border-box; /* because of the border (Chrome needs this line, but not FF) */
+    }
+
+
+    .prodKPITable ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .prodKPITable  ::-webkit-scrollbar-track {
+      //box-shadow: inset 0 0 5px grey;
+      background: white;
+      border-radius: 10px;
+    }
+    .prodKPITable ::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      height: 0px;
+      background: #888;
+    }
+    .prodKPITable ::-webkit-scrollbar-thumb:vertical{
+        height: 18px;
+    }
+    .prodKPITable ::-webkit-scrollbar-track-piece  :start{
+      background: transparent;
+      margin-top: 80px;
+    }
+
+    .prodKPITable ::-webkit-scrollbar-track-piece:end {
+      background: transparent;
+      //margin-bottom: 80px;
+  }
+  ::ng-deep .custom-tooltip {
+    white-space: pre-line;
+    max-width: 700px !important;
+    //background-color: lightgray;
+    font-size: 13px;
+  }
+  ::ng-deep .custom-tooltip .custom-tooltip .bottom .custom-tooltip.tooltip-arrow {
+    top: 0;
+    left: 50%;
+    margin-left: -5px;
+    border-bottom-color: #000000; /* black */
+    border-width: 0 5px 5px;
+  }
+  .healthCard{
+    float: left;
+    height: 300px;
+    width: 95%;
+    background-color: white;
+    border-radius: 10px;
+    color: #535d85;
+    padding: 9px;
+    font-weight: 700;
+    box-shadow: 0px 0.5px 2.5px gray;
+    margin-left: 20px;
+    margin-bottom: 10px;
+  }
+  .goalTabGrp mat-tab-group{
+    background-color: white;
+
+  }
+  ::ng-deep .goalTabGrp mat-tab-body{
+    //border:solid 1px grey !important;
+  }
+  ::ng-deep .goalTabGrp .mat-tab-labels{
+    background-color:#fff;
+  }
+  ::ng-deep .goalTabGrp .mat-tab-label-active{
+    background-color: white !important;
+  }
+  // solid rgba(0,0,0,.12)
+  ::ng-deep .goalTabGrp .mat-tab-header{
+    border-bottom : 0px;
+  }
+  ::ng-deep .healthCard .goalTabGrp mat-ink-bar {
+    width: 80px !important;
+    height: 2px;
+    background: #4B4EB1 !important;
+    opacity: 1;
+    margin-left: 40px;
+  }
+.red{
+    color: red !important;
+
+}
+
+.capa{
+  height: 300px;
+  background-color: white;
+  border-radius: 10px;
+  color: #535d85;
+  margin-left: 15px;
+  padding: 9px;
+  font-weight: 700;
+  box-shadow: 0px 0.5px 2.5px grey;
+  float: left;
+  margin-bottom: 10px;
+}
+
+#metricPerformance tbody tr:hover{
+  background-color: rgb(241, 241, 241);
+}
+
+.clicked-row{
+  background-color: rgb(214, 214, 214);
+}

@@ -1,0 +1,276 @@
+.needFocus{
+ color: orange;
+}
+.underControl{
+color: green;
+}
+// table.projtable {
+//   width: 100%;
+//   border-spacing: 0;
+//   border: 1px solid black;
+// }
+
+table.projtable tbody,
+table.projtable thead { display: block; }
+
+table .projtable tbody {
+  height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.CitableHeader th
+{
+  border: none;
+  word-wrap: break-word;
+  text-align: center
+}
+
+.CitableHeader td
+{
+  border: none;
+  padding-left: 5px;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.CitableHeader tr{
+  border-radius: 5px;
+}
+
+.fa-thumbs-up{
+  color: green;
+  text-shadow: 1px 1px 1px #ccc;
+    font-size: 1.0em;
+}
+.fa-thumbs-down{
+  color: red;
+  text-shadow: 1px 1px 1px #ccc;
+    font-size: 1.0em;
+}
+
+
+.CitableHeader th:nth-of-type(1)
+{
+  width: 15%;
+}
+
+.CitableHeader th:nth-of-type(2)
+{
+  width: 10% !important;
+}
+
+.CitableHeader th:nth-of-type(3)
+{
+  width: 6%;
+}
+
+.CitableHeader th:nth-of-type(4)
+{
+  width: 5%;
+}
+
+.CitableHeader th:nth-of-type(5)
+{
+  width: 5%;
+}
+
+.CitableHeader th:nth-of-type(6)
+{
+  width: 4%;
+}
+.CitableHeader th:nth-of-type(7)
+{
+  width: 9%;
+}
+.CitableHeader th:nth-of-type(8)
+{
+  width: 9%;
+}
+.CitableHeader th:nth-of-type(9)
+{
+  width: 9%;
+}
+
+.CitableHeader th:nth-of-type(10)
+{
+  width: 9%;
+}
+.CitableHeader th:nth-of-type(11)
+{
+  width: 9%;
+}
+.CitableHeader th:nth-of-type(12)
+{
+  width: 5%;
+}
+
+.CitableHeader th:nth-of-type(13)
+{
+  width: 5%;
+}
+
+.CitableHeader th:nth-of-type(14)
+{
+  width: 5%;
+}
+
+
+.CitableHeader th:nth-of-type(15)
+{
+  width: 5%;
+}
+// .projtable th
+// {
+//   border: 1px solid #dde7ed !important;
+//   word-wrap: break-word;
+//   text-align: center
+// }
+
+// .projtable tr
+// {
+//   border: 1px solid #dde7ed !important;  
+// }
+
+// .projtable th, td{
+//   height: 43px
+// }
+
+.projtable th:nth-of-type(1)
+{
+  width: 18%//30%;
+ 
+}
+
+.projtable th:nth-of-type(2)
+{
+  width: 20% !important;
+
+}
+
+.projtable th:nth-of-type(3)
+{
+  width: 19%;
+  
+}
+
+.projtable th:nth-of-type(4)
+{
+  width: 20%;
+ 
+}
+
+.projtable th:nth-of-type(5)
+{
+  width: 8%;
+  
+}
+
+.projtable th:nth-of-type(6)
+{
+  width: 9%;
+ 
+}
+.projtable th:nth-of-type(7)
+{
+  width: 9%;
+ // border: 1px solid red
+}
+.projtable th:nth-of-type(8)
+{
+  width: 5%;
+ 
+}
+.projtable th:nth-of-type(9)
+{
+  width: 8%;
+  
+}
+
+.projtable th:nth-of-type(10)
+{
+  width: 8%;
+ 
+}
+.projtable th:nth-of-type(11)
+{
+  width: 8%;
+  
+}
+.projtable th:nth-of-type(12)
+{
+  width: 5%;
+  
+}
+
+.projtable th:nth-of-type(13)
+{
+  width: 6%;
+  
+}
+
+.projtable th:nth-of-type(14)
+{
+  width: 6%;
+  
+}
+
+
+
+
+// .projtable tr, td 
+// {
+//   text-align: center;  
+// }
+
+.borderclass{
+  border-right:1px solid #dde7ed !important;
+  text-align : center !important;
+  padding: 8px !important;
+}
+
+// .alignclass{
+//   text-align: center !important;  
+// }
+
+.headertable tr{
+  background-color: #c6ddf9 !important;
+} 
+
+
+
+
+
+
+
+.FirstHeader
+{
+  
+  background-color: #FFFFFF  !important;
+}
+
+
+thead tr:nth-of-type(4) th { position: sticky; top: 0; }
+
+.DetailHeader
+{
+  background-color: #ECECFA  !important;
+}
+
+.expand
+{
+width: 17px;
+height: 17px;
+background: var(--unnamed-color-ffffff) 0% 0% no-repeat padding-box;
+border: 1px solid var(--unnamed-color-e5e5e5);
+background: #FFFFFF 0% 0% no-repeat padding-box;
+border: 1px solid #E5E5E5;
+border-radius: 2px;
+opacity: 1;
+}
+i:hover
+{
+  cursor: pointer;
+}
+
+

@@ -1,0 +1,69 @@
+<div style="width:100% !important;margin-bottom: 10px">
+    <app-navbar-new [ShowMenu]="ShowMenu" (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+     <app-menu [custid]="customerid" *ngIf="menuToggleStatus" ></app-menu>
+</div>
+<div  *ngIf="!slaAvailable" class="row" style="height : 20px !important;background: #FFFFFF 0% 0% no-repeat padding-box;opacity: 1;margin-top: -10px;">
+
+    <mat-tab-group [selectedIndex]="0">
+        <mat-tab label="Operational Dashboard">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-dashboard-customer></app-dashboard-customer>
+                <!-- <app-dashboard-previous-next [currIndex]="0"></app-dashboard-previous-next> -->
+            </ng-template>
+
+            <!-- <app-bvd-dashboard></app-bvd-dashboard> -->
+
+        </mat-tab>
+        <mat-tab label="Business Value Dashboard">
+            <ng-template matTabContent>
+                <app-bvd-dashboard></app-bvd-dashboard>
+            </ng-template>   
+        </mat-tab>
+        <mat-tab *ngIf="_access.IsAllowed(76, 1, '', '')" label="CSAT Insights">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-cssdashboard [custId]="customerid" [currIndex]="0"></app-cssdashboard>
+            </ng-template>
+        </mat-tab>        
+        <mat-tab *ngIf="_access.IsAllowed(78, 1, '', '')" label="QA Governance">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-dashboard-assessment-findings [custId]="customerid"></app-dashboard-assessment-findings>
+            </ng-template>
+        </mat-tab>
+        <mat-tab *ngIf="_access.IsAllowed(99, 1, '', '')" label="Risk Dashboard">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-risk-chart [input]="chartsMonthly" [customerId]="customerid"> </app-risk-chart>
+            </ng-template>
+        </mat-tab>
+    </mat-tab-group>
+
+
+</div>
+<div  *ngIf="slaAvailable" class="row" style="height : 20px !important;background: #FFFFFF 0% 0% no-repeat padding-box;opacity: 1;margin-top: -10px;">
+    <mat-tab-group [selectedIndex]="0">
+        <mat-tab label="Operational Dashboard">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-dashboard-previous-next [currIndex]="0"></app-dashboard-previous-next>
+            </ng-template>
+        </mat-tab>
+        <mat-tab *ngIf="_access.IsAllowed(72, 1, '', '')" label="Business Value Dashboard">
+            <ng-template matTabContent>
+                <app-bvd-dashboard></app-bvd-dashboard>
+            </ng-template>
+        </mat-tab>
+        <mat-tab *ngIf="_access.IsAllowed(76, 1, '', '')" label="CSAT Insights">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-cssdashboard [custId]="customerid" [currIndex]="0"></app-cssdashboard>
+            </ng-template>
+        </mat-tab>   
+        <mat-tab *ngIf="_access.IsAllowed(78, 1, '', '')" label="QA Governance">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-dashboard-assessment-findings [custId]="customerid"></app-dashboard-assessment-findings>
+            </ng-template>
+        </mat-tab>
+        <mat-tab *ngIf="_access.IsAllowed(99, 1, '', '')" label="Risk Dashboard">
+            <ng-template matTabContent style="overflow: hidden;">
+                <app-risk-chart [input]="chartsMonthly" [customerId]="customerid"> </app-risk-chart>
+            </ng-template>
+        </mat-tab>    
+    </mat-tab-group>
+</div>

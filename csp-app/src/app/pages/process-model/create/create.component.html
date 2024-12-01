@@ -1,0 +1,34 @@
+<form #objectiveForm ="ngForm" (ngSubmit)="SubmitObjectiveForm(objectiveForm)">
+
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title">ADD OBJECTIVES</h3>
+        </div>
+        <div class="panel-body">
+            <div class="form-group">
+                <label for="pid">Process-ID</label>
+                <input id="pid" name="pid" type="text" [(ngModel)]="model.process_ID" class="form-control">
+            </div>
+            <div class="form-group">
+                    <label for="title">Tttle</label>
+                    <input id="title" name ="title" [(ngModel)] ="model.title" type="text" class="form-control">
+             </div>
+             <div class="form-group">
+                    <label for="des">Description</label>
+                    <input id="des" name ="des" [(ngModel)]="model.description" type="text" class="form-control">
+            </div>
+            <div class="form-group">
+                    <label for="Ref">Reference Document</label>
+                    <input id="Ref" type="text" name="ref" [(ngModel)]="model.reference_DOCUMENT" class="form-control">
+            </div>
+            <div class="form-group">
+                    <label for="file">File Name Server</label>
+                    <input id="file" type="text" name="file" [(ngModel)]="model.filename_SERVER" class="form-control">
+            </div>
+        </div>
+        <div class="panel-footer">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+    
+    </form>

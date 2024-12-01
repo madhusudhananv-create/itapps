@@ -1,0 +1,32 @@
+
+<app-navbar-new (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+<div class="mainDiv">
+  <div class="row" style="margin-bottom: 10px;">
+    <div class="col-lg-3 col-md-3 col-sm-3" style="margin-right: 20px;">
+      <app-voice-of-customer [type]="type" [columnNames]="columnNames" [data]="data"
+      [options]="options" [width]="width" [height]="height"></app-voice-of-customer>
+    </div> 
+    <div class="col-lg-8 col-md-8 col-sm-8">
+      <app-css-nps-trend></app-css-nps-trend>
+    </div> 
+  </div>
+  <div class="row" style="margin-bottom: 20px;">
+    <div class="col-lg-12 col-md-12 col-sm-12">
+      <app-servicedeliveryhealth></app-servicedeliveryhealth>
+    </div>
+  </div>
+<div class="row">
+    <div class="col-lg-5 col-md-5 col-sm-5">
+      <app-staffing-summary-details></app-staffing-summary-details>
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      <app-dashboardprojectstatus [type5]="type5" [columnNames5]="columnNames5" [data5]="data5"
+        [options5]="options5" [width5]="width5" [height5]="height5">
+        </app-dashboardprojectstatus> 
+    </div> 
+    <div class="col-lg-5 col-md-5 col-sm-5">
+      <app-kaizen-board [type1]="type1" [columnNames1]="columnNames1" [data1]="data1"
+      [options1]="options1" [width1]="width1" [height1]="height1"></app-kaizen-board>
+    </div>
+</div>
+

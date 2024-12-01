@@ -1,0 +1,75 @@
+<div class="sidenav">
+  <div class="row">
+    <div class="col-lg-12">
+      <i class="fa fa-circle"></i>&nbsp;Not Assigned</div>
+  </div>
+  <div class="container-fluid">
+    <div class="scroll-area">
+      <div *ngFor="let c of receivedData; let j = index">
+        <div class="client" style="display:block;height:auto;overflow: auto;">
+          <div style="float:left;">
+            <a (click)="Client_OnClick(c.client_ID)" class="link_h3">
+              <p>{{c.client_NM}}</p>
+            </a>
+          </div>
+          <div style="float:right;">
+            <div *ngIf="_util.IsEditable()" style="float:left">
+              <div class="col" *ngIf="IsReadonlyCust(j, c.client_ID)">
+                <a class="link" (click)="EditCust_onClick(j, c.client_ID)">
+                  &nbsp;
+                  <i class="fa fa-edit"></i>
+                </a>
+              </div>
+              <div *ngIf="!IsReadonlyCust(j, c.client_ID)">
+                <mat-form-field style="width:100px">
+                  <mat-select #ragSelected placeholder="RAG" [value]="c.client_RAG">
+                    <mat-option value="green" style="color:green">Green</mat-option>
+                    <mat-option value="orange" style="color:orange">Amber</mat-option>
+                    <mat-option value="red" style="color:red">Red</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <a class="link" (click)="SaveCust_onClick(c, ragSelected.value)">
+                  <i class="fa fa-save"></i>
+                </a>&nbsp;
+                <a class="link" (click)="CancelCust_onClick()">
+                  <i class="fa fa-times"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div style="float:right;">
+            <i class="fa fa-circle fa-lg" [style.color]="c.client_RAG" style="float:left"></i>
+          </div>
+        </div>
+        <div class=row *ngFor="let p of c.projects; let i = index" style="clear: both;">
+          <i class="fa fa-circle" [style.color]="p.proJ_RAG"></i>
+
+          <a href="/project/{{p.proJ_ID}}" class="link">{{p.proJ_NM}}</a>
+
+          <div class="col" *ngIf="_util.IsEditable()">
+            <div class="col" *ngIf="IsReadonlyProj(i, p.proJ_ID)">
+              <a class="link" (click)="EditProj_onClick(i, p.proJ_ID)">
+                <i class="fa fa-edit"></i>
+              </a>
+            </div>
+            <div *ngIf="!IsReadonlyProj(i, p.proJ_ID)">
+              <mat-form-field style="width:100px">
+                <mat-select #ragSelected placeholder="RAG" [value]="c.proJ_RAG">
+                  <mat-option value="green" style="color:green">Green</mat-option>
+                  <mat-option value="orange" style="color:orange">Amber</mat-option>
+                  <mat-option value="red" style="color:red">Red</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <a class="link" (click)="SaveProj_onClick(p, ragSelected.value)">
+                <i class="fa fa-save"></i>
+              </a>&nbsp;
+              <a class="link" (click)="CancelProj_onClick()">
+                <i class="fa fa-times"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

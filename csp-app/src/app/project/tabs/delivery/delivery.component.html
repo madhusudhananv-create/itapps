@@ -1,0 +1,142 @@
+<mat-button-toggle-group appearance="legacy" #group="matButtonToggleGroup" [value]="selectedOption" (change)="onValChange(group.value)"
+    style="margin-left:15px;">
+    <mat-button-toggle value="4Quadrant">
+        4Quadrant
+    </mat-button-toggle>
+    <mat-button-toggle value="Task">
+        Manage SubProjects
+    </mat-button-toggle>
+</mat-button-toggle-group>
+<div *ngIf="bShow4Quadrant">
+    <div *ngIf="readonlymode" style="align-content:center;">
+        <div class="row tabheader">
+            <div class="col-lg-10 col-md-9 col-sm-12" style="text-align:left">
+
+            </div>
+            <div class="col-lg-2 col-md-3 col-sm-12 header" *ngIf="_access.IsAllowed(8, 3, '', input_projectid)">
+                <a class="link" (click)="Edit_onClick()">
+                    <i class="fa fa-edit"></i>
+                </a>
+            </div>
+        </div>
+        <div class="row" style="padding-bottom: 5px">
+            <a (click)="PreviousWeek()" class="link">
+                <i class="fa fa-arrow-circle-left fa-lg"></i>
+            </a> {{input.daterange.startDate|date:'dd-MMM-yyyy'}} - {{input.daterange.endDate|date:'dd-MMM-yyyy'}}
+            <a (click)="NextWeek()" class="link">
+                <i class="fa fa-arrow-circle-right fa-lg"></i>
+            </a>
+        </div>
+        <div class="row">
+            <table style="background:white;">
+                <tr>
+                    <td colspan="2">
+                        <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="topicarea">
+                        <p>
+                            <b>Accomplishments</b>
+                        </p>
+                        <p style="white-space:pre-wrap;">{{input.delivery.lastweeK_ACHIEVED}}</p>
+                    </td>
+                    <td class="topicarea">
+                        <p>
+                            <b>Upcoming Key Milestones</b>
+                        </p>
+                        <p style="white-space:pre-wrap;">{{input.delivery.nextweeK_MILESTONE}}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="topicarea">
+                        <p>
+                            <b>Key Risks &amp; Issues</b>
+                        </p>
+                        <p style="white-space:pre-wrap;">{{input.delivery.riskS_ISSUES}}</p>
+                    </td>
+                    <td class="topicarea">
+                        <p>
+                            <b>Intervention &amp; Guidance</b>
+                        </p>
+                        <p style="white-space:pre-wrap;">{{input.delivery.customeR_SUPPORT}}</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div *ngIf="editmode">
+        <div class="row tabheader">
+            <div class="col-lg-2 col-md-2 col-sm-2">
+                <mat-form-field style="width:125px">
+                    <!-- <mat-select #ragSelected placeholder="RAG" [value]="_util.getRAG(input_rag, 'delivery')"> -->
+                    <mat-select #ragSelected placeholder="RAG" [value]="input.delivery.rag">
+                        <mat-option value="green" style="color:green">Green</mat-option>
+                        <mat-option value="orange" style="color:orange">Amber</mat-option>
+                        <mat-option value="red" style="color:red">Red</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="col-lg-8 col-md-8 col-sm-8">
+            </div>
+            <div class="col-lg-2 col-md-2 col-sm-2 header">
+                <a class="link" (click)="Save_onClick(ragSelected.value, txtachieved.value, txtmilestone.value, txtrisks.value, txtsupport.value)">
+                    <i class="fa fa-save"></i>
+                </a>
+                <a class="link" (click)="Cancel_onClick()">
+                    <i class="fa fa-times"></i>
+                </a>
+            </div>
+        </div>
+        <div class="row" style="padding-bottom: 5px">
+            <!-- <a (click)="PreviousWeek()">
+            <i class="fa fa-arrow-circle-left fa-lg"></i>
+        </a> -->
+            {{input.daterange.startDate|date:'dd-MMM-yyyy'}} - {{input.daterange.endDate|date:'dd-MMM-yyyy'}}
+            <!-- <a (click)="NextWeek()">
+            <i class="fa fa-arrow-circle-right fa-lg"></i>
+        </a> -->
+        </div>
+        <table>
+            <tr>
+                <td class="topicarea">
+                    <p>
+                        <b>Accomplishments</b>
+                    </p>
+                    <!-- <span *ngFor="let item of input.delivery.lastweeK_ACHIEVED">
+                    <input type="text" [(ngModel)] = "item">
+                </span> -->
+
+                    <textarea #txtachieved class="Edit_textarea" matInput placeholder="Recent Accomplishments" matTextareaAutosize matAutosizeMinRows="2"
+                        matAutosizeMaxRows="5">{{input.delivery.lastweeK_ACHIEVED}}</textarea>
+                </td>
+                <td class="topicarea">
+                    <p>
+                        <b>Upcoming Key Milestones</b>
+                    </p>
+                    <textarea #txtmilestone class="Edit_textarea" matInput placeholder="Upcoming Key Activities" matTextareaAutosize matAutosizeMinRows="2"
+                        matAutosizeMaxRows="5">{{input.delivery.nextweeK_MILESTONE}}</textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="topicarea">
+                    <p>
+                        <b>Key Risks &amp; Issues</b>
+                    </p>
+                    <textarea #txtrisks class="Edit_textarea" matInput placeholder="Key Risks &amp; Issues" matTextareaAutosize matAutosizeMinRows="2"
+                        matAutosizeMaxRows="5">{{input.delivery.riskS_ISSUES}}</textarea>
+                </td>
+                <td class="topicarea">
+                    <p>
+                        <b>Intervention &amp; Guidance</b>
+                    </p>
+                    <textarea #txtsupport class="Edit_textarea" matInput placeholder="Required Decisions &amp; Guidance" matTextareaAutosize
+                        matAutosizeMinRows="2" matAutosizeMaxRows="5">{{input.delivery.customeR_SUPPORT}}</textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div *ngIf="!bShow4Quadrant" style="padding-top: 10px">
+    <app-subproject [ProjectId]="input_projectid" [CustomerId]="input_customerid"></app-subproject>
+</div>

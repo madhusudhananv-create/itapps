@@ -1,0 +1,290 @@
+<!-- <app-navbar></app-navbar> -->
+<div #contentContainer class="row">
+  <div class="col-sm-2 col-lg-2 col-md-9" style="padding:0 0 5px 0">
+
+  </div>
+  <div class="col-sm-9 col-lg-9 col-md-9" style="text-align:center">
+    <span style="font-size:20px">Setup Account / Projects &amp; Access rights for customer contact(s)</span>
+  </div>
+</div>
+
+<form #customerForm="ngForm" (ngSubmit)="SubmitForm(customerForm)">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <mat-progress-bar *ngIf="clientDetails === undefined" mode="indeterminate"></mat-progress-bar>
+          Add/Edit customer &amp; projects
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-6">
+              <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-12">
+                  Customer
+                  <span style="color:red;font-size:20px">* </span>:
+                </div>
+                <div class="col-lg-8 col-md-8 col-sm-12">
+                  <mat-form-field style="width:100%">
+                    <mat-select name="ddCustomer" [(ngModel)]="selectedClient" required
+                      (ngModelChange)="ddCustomer_Onchange(selectedClient)">
+                      <mat-option *ngFor="let client of clientDetails" [value]="client" [title]="client.client_NM">
+                        {{ client.client_NM}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-12">
+                  Projects
+                  <span style="color:red;font-size:20px">*</span>:
+                </div>
+                <div class="col-lg-8 col-md-8 col-sm-12">
+                  <mat-form-field style="width:100%">
+                    <mat-select name="ddProject" [(ngModel)]="selectedProjectsArr" multiple required
+                      (selectionChange)="ddProject_OnChange()">
+                      <mat-option *ngFor="let proj of (selectedClient? selectedClient.projects :[])"
+                        [value]="proj.proJ_ID" [title]="proj.proJ_NM">
+                        {{ proj.proJ_NM }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-12">
+                  Customer Name
+                  <span style="color:red;font-size:20px">*</span>:
+                </div>
+                <div class="col-lg-8 col-md-8 col-sm-12">
+                  <mat-form-field style="width:100%">
+                    <mat-select name="ddContacts" [(ngModel)]="selectedEmailId" required
+                      (ngModelChange)="ddContact_Onchange()">
+                      <mat-option *ngFor="let client of ClientContacts" [value]="client.contacT_EMAILID"
+                        [title]="client.contacT_NAME">
+                        {{ client.contacT_NAME}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <div style="font-size: 12px;" *ngIf="nodata">
+                    <b>Note:</b> Update contacts in Contacts page to get the names in the dropdown.
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-12">
+                  Customer Email
+                  <span style="color:red;font-size:20px">*</span>:
+                </div>
+                <div class="col-lg-8 col-md-8 col-sm-12">
+                  <mat-form-field style="width:100%">
+                    <input name="txtCustomerEmail" matInput [(ngModel)]="customerEmail" [formControl]="email" required>
+                    <mat-error *ngIf="email.invalid">{{getErrorMessage()}}</mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="row" *ngIf="selectedClient && _util.IsPremier(selectedClient.client_ID)">
+                <div class="col-lg-4 col-md-4 col-sm-12">
+                  Specific Survey Opted
+                </div>
+                <div class="col-lg-8 col-md-8 col-sm-12">
+                  <mat-checkbox [(ngModel)]="specificSurveyOpted" name="chkSpecificSurveyOpted"></mat-checkbox>
+                  <span class="verysmalltext"> Opt for Project/Product wise Survey</span>
+                </div>
+              </div>
+              <div class="row" style="padding:5px 0 0 0;">
+                <span style="font-weight:bold">Note : </span>You can select only one customer at a time for granting
+                access rights for multiple projects
+                for a customer contact, ensure you setup access rights for all your customers and projects
+              </div>
+              <div>
+                <span
+                  style="display: inline-block; width: 30px; height: 15px; background-color: #c1edf1; margin-right: 10px;"></span>
+                <span>Denotes Product level Configured Survey</span>
+              </div>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-6">
+              <div class="row">
+                <div class="col-sm-12 col-lg-12 example-container">
+                  <div class="tableFixHead">
+                    <table class="table table-bordered table-responsive-sm table-hover table-outline mb-0"
+                      style="height:150px;font-size:12px" >
+                      <thead class="thead-light">
+                        <tr>
+                          <th colspan="4">Selected Customer :
+                            <span *ngIf="selectedClient">{{selectedClient.client_NM}}</span>
+                          </th>
+                        </tr>
+                        <tr>
+                          <td style="width:75%" rowspan="2">Project Name</td>
+                          <td style="width:25%" colspan="2">Customer Success</td>
+                          <td style="width:25%" rowspan="2">Reporting Manager</td>
+                        </tr>
+                        <tr>
+                          <td style="width:10%">Survey</td>
+                          <td style="width:15%">Frequency</td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let proj of selectedProjects;let i = index">
+                          <td>
+                            {{proj.proJ_NM}}
+                          </td>
+                          <td>
+                            <input type="checkbox" name="ddCSATSurvey[{{i}}]" [(ngModel)]="proj.csaT_SURVEY"
+                              (checked)="proj.csaT_SURVEY">
+                          </td>
+                          <td>
+                            <mat-select name="ddCSATFrequency[{{i}}]" [(ngModel)]="proj.csaT_FREQUENCY"
+                              style="font-size:12px">
+                              <mat-option *ngFor="let f of csaT_FREQUENCY" [value]="f" [title]="f">{{f}}</mat-option>
+                            </mat-select>
+                          </td>
+                          <td>
+                            <input type="checkbox" name="ddReporting[{{i}}]" [(ngModel)]="proj.reporting"
+                              (checked)="proj.reporting">
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div class="row" style="text-align: center">
+                <button
+                  style="width: 100px;background: #4d8bbf;border: none;color: white;border-radius: 2px;margin-right:5px"
+                  type="submit">Save</button>
+                <button style="width: 100px;background: #4d8bbf;border: none;color: white;border-radius: 2px;"
+                  type="submit">Clear</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+          Customer &amp; Project details
+        </div>
+        <div class="card-body">
+          <div class="row" style="margin: 10px;vertical-align:middle;">
+
+            <div class="col-sm-8 col-lg-8">
+              <span> Search:</span>
+              <mat-form-field style="width:25%; margin-left: 5px;margin-right: 5px;">
+                <input name="txtwildcard" matInput [(ngModel)]="searchText" />
+              </mat-form-field>
+              <button
+                style="width: 100px;background: #4d8bbf;border: none;color: white;border-radius: 2px;margin:5px;text-align: center;"
+                type="button" (click)="FilterResults()">Filter</button>
+              <button
+                style="width: 100px;background: #4d8bbf;border: none;color: white;border-radius: 2px;text-align: center;"
+                type="button" (click)="ClearFilter()">Clear</button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-12 col-lg-12 table-container" >
+              <table border="1" class="table table-responsive-sm table-hover table-outline mb-0" style="height:150px">
+                <thead class="thead-light">
+                    <tr>
+                      <th class="text-center">Email Id</th>
+                      <th class="text-center">Customer</th>
+                      <th class="text-center">Projects</th>
+                      <th class="text-center">Access Activated</th>
+                      <th class="text-center" colspan="3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="font-size:10px" *ngFor="let cust of (customerProjects ? customerProjects : [])">
+                      <td>{{cust.emailid}}</td>
+                      <td>{{cust.cusT_NM}}</td>
+                      <td style="padding:0px !important">
+                        <table style="width:100%">
+                          <tbody style="height:100%;width:100%">
+                            <tr *ngFor="let p of cust.customeR_PROJECTS" [ngStyle]="{'background-color': p.id == 0 ? 'rgba(193, 237, 241, 1)' : ''}">
+                              <td style="width:60%;padding:5px !important">{{p.proJ_NM}}</td>
+                              <td style="width:20%;padding:5px !important">
+                                <span *ngIf="p.reporting" style="background-color:#ff7300;border-radius:3px;color:white;padding:3px">Reporting Manager</span>
+                              </td>
+                              <td style="width:8%;padding:5px !important">
+                                <span *ngIf="p.csaT_SURVEY" style="background-color:#3AB376;border-radius:3px;color:white;padding:3px">Survey</span>
+                              </td>
+                              <td style="width:12%;padding:5px !important">
+                                <span *ngIf="p.csaT_SURVEY">{{p.csaT_FREQUENCY}}</span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                      <td style="text-align:center">
+                        <i *ngIf="cust.isverified" class="fa fa-check-circle fa-lg green"></i>
+                        <i *ngIf="!cust.isverified" class="fa fa-times-circle fa-lg orange"></i>
+                      </td>
+                      <td nowrap>
+                        <a *ngIf="!cust.isverified" class="link" (click)="Invite_onClick(cust)">
+                          <i class="fa fa-envelope"></i>
+                        </a>
+                      </td>
+                      <td>
+                        <a *ngIf="isEditVisible(cust)" class="link" (click)="Edit_onClick(cust)">
+                          <i class="fa fa-edit"></i>
+                        </a>
+                      </td>
+                      <td>
+                        <a *ngIf="isEditVisible(cust)" class="link" (click)="Delete_onClick(cust)">
+                          <i class="fa fa-trash red"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+          </div>          
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+
+<!-- <div class="col-lg-6 col-md-6 col-sm-12">
+  <form #employeeForm="ngForm" (ngSubmit)="SubmitEmployeeForm(employeeForm)">
+    <table border="1" class="table table-responsive-sm table-hover table-outline mb-0" style="height:150px">
+      <thead class="thead-light">
+        <tr>
+          <th>No.</th>
+          <th class="text-center">Employee Name</th>
+          <th class="text-center" style="width:40px">Employee Id</th>
+          <th class="text-center" style="width:40px">Edit Access</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="font-size:14px" *ngFor="let emp of employees; let i = index">
+          <td>
+            {{i + 1}}
+          </td>
+          <td>
+            {{emp.frsT_NM}}
+          </td>
+          <td>
+            {{emp.emP_ID}}
+          </td>
+          <td class="text-center">
+            <input type="checkbox" [checked]="!emp.emP_CSP_ROLE==''" (change)="checkbox_OnChange(emp)" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="row" style="text-align: center">
+      <button style="width: 100px;background: #4d8bbf;border: none;color: white;border-radius: 5px;" type="submit" type="submit">Save</button>
+      <button style="width: 100px;background: #4d8bbf;border: none;color: white;border-radius: 5px;" type="submit" type="reset">Clear</button>
+    </div>
+    <div class="row" style="text-align:center;padding:50px"></div>
+  </form>
+</div> -->

@@ -1,0 +1,127 @@
+<div class="container-fluid">
+  <div>
+    <mat-tab-group>
+
+      <mat-tab label="1.New Process Model" *ngIf="_access.IsAllowed(811, 1, '','')">
+        <div style="float: left;width:38%;">
+          <form #roWForm="ngForm" (ngSubmit)="SubmitModelForm(roWForm)">
+            <div class="form-group">
+              <mat-form-field style="width: 100%;">
+                <mat-label>Process Model Description : *</mat-label>
+                <textarea name="description" matInput [(ngModel)]="model.title" type="text" pattern = "[^<|>]+"
+                  #description="ngModel" ></textarea>
+                <div *ngIf="description.errors?.pattern" style="color:red">
+                  Angle brackets not allowed
+                </div>
+              </mat-form-field>
+            </div>
+            <div class="form-group">
+              <mat-form-field style="width: 100%;">
+                <mat-label>Industry Standard Reference :</mat-label>
+                <textarea name="industrystandard" matInput [(ngModel)]="model.description" type="text" pattern = "[^<|>]+"
+                  #industrystandard="ngModel" ></textarea>
+                <div *ngIf="industrystandard.errors?.pattern" style="color:red">
+                  Angle brackets not allowed
+                </div>
+              </mat-form-field>
+            </div>
+            <div class="form-group">
+              <mat-form-field style="width: 100%;">
+                <mat-label>Release version reference :</mat-label>
+                <textarea name="releaseversion" matInput [(ngModel)]="model.releasE_VERSION_REFERENCE" type="text" pattern = "[^<|>]+"
+                  #releaseversion="ngModel" ></textarea>
+                <div *ngIf="releaseversion.errors?.pattern" style="color:red">
+                  Angle brackets not allowed
+                </div>
+              </mat-form-field>
+            </div>
+            <div class="form-group">
+              <mat-form-field style="width: 100%;">
+                <mat-label>Release date : *</mat-label>
+                <input readonly name="releaseDate" [(ngModel)]="model.releasE_DATE" matInput [matDatepicker]="picker2"
+                  placeholder="Release date">
+                <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+                <mat-datepicker #picker2></mat-datepicker>
+              </mat-form-field>
+            </div>
+            <div style="text-align: center;">
+              <button type="submit" class="btn btn-primary" style="margin-right:10px">Save</button>
+              <button type="button" class="btn btn-primary" (click)="ClearInputs(roWForm)"> Clear </button>
+            </div>
+
+          </form>
+        </div>
+        <div class="table-container" style="width: 60%; float: left; margin-left: 2%;">
+          <table class="table table-bordered" id="tblProcessMdl">
+            <thead>
+              <tr>
+                <th style="width: 1%; text-align: left;"><strong>S.No</strong></th>
+                <th style="width: 20%; text-align: left;"><strong>Process Model</strong></th>
+                <th style="width: 25%; text-align: left;"><strong>Industry Standard Reference</strong></th>
+                <th style="width: 10%; text-align: left;"><strong>Release version</strong></th>
+                <th style="width: 10%; text-align: center;"><strong>Release date</strong></th>
+                <th style="width: 8%; text-align: center;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of modelList; let i = index">
+                <td style="width: 1%; text-align: left;">{{i + 1}}</td>
+                <td style="width: 20%; text-align: left;">{{item.title}}</td>
+                <td style="width: 25%; text-align: left;">{{item.description}}</td>
+                <td style="width: 10%; text-align: left;">{{item.releasE_VERSION_REFERENCE}}</td>
+                <td style="width: 10%; text-align: center;">{{item.releasE_DATE | date : 'mediumDate'}}</td>
+                <td style="width: 8%; text-align: center;">
+                  <a (click)="EditRow_onClick(item)" title="Edit" style="cursor: pointer;" class="link">
+                    <i class="fa fa-edit"></i>
+                  </a>
+                  &nbsp;
+                  <a (click)="DeleteRow_onClick(item)" title="Delete" style="cursor: pointer; color: red;" class="link">
+                    <i class="fa fa-trash"></i>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+      </mat-tab>
+      <mat-tab label="2.New Assessment Check-list" *ngIf="_access.IsAllowed(802, 1, '','')">
+        <app-setup-checklist-new></app-setup-checklist-new>
+      </mat-tab>
+      <mat-tab label="3.New Process Area &amp; Process" *ngIf="_access.IsAllowed(812, 1, '','')">
+        <app-process-area></app-process-area>
+      </mat-tab>
+      <mat-tab label="4.Map Service Tower &amp; Process" *ngIf="_access.IsAllowed(816, 1, '','')">
+        <app-process-service-area-mapping [view]="false"></app-process-service-area-mapping>
+      </mat-tab>
+      <mat-tab label="5.View Service Tower &amp; Process" *ngIf="_access.IsAllowed(815, 1, '','')">
+        <app-process-service-area-mapping [view]="true"></app-process-service-area-mapping>
+      </mat-tab>
+      <mat-tab label="6.Map Process Model &amp; Process" *ngIf="_access.IsAllowed(814, 1, '','')">
+        <app-process-process-model-mapping></app-process-process-model-mapping>
+      </mat-tab>
+      <mat-tab label="7.View Process Model &amp; Process" *ngIf="_access.IsAllowed(813, 1, '','')">
+        <app-process-process-model-view></app-process-process-model-view>
+      </mat-tab>
+      <mat-tab label="8.Map Checklist Questions and Process" *ngIf="_access.IsAllowed(803, 1, '','')">
+        <app-process-checklist-mapping></app-process-checklist-mapping>
+      </mat-tab>
+      <mat-tab label="9.PSPD" *ngIf="_access.IsAllowed(806, 1, '','')">
+        <app-pspd></app-pspd>
+      </mat-tab>
+
+      <!-- <mat-tab label="Add/Map Objective" *ngIf="_access.IsAllowed(817, 1, '','')">
+        <app-objective-user></app-objective-user>
+      </mat-tab>
+      <mat-tab label="Add Risk" *ngIf="_access.IsAllowed(818, 1, '','')">
+        <app-risk-user></app-risk-user>
+      </mat-tab>
+      <mat-tab label="Add Control" *ngIf="_access.IsAllowed(819, 1, '','')">
+        <app-control-user></app-control-user>
+      </mat-tab>
+      <mat-tab label="Add Test" *ngIf="_access.IsAllowed(820, 1, '','')">
+        <app-test-user></app-test-user>
+      </mat-tab> -->
+    </mat-tab-group>
+  </div>
+</div>

@@ -1,0 +1,44 @@
+@import '../task.component.scss';
+.mat-dropdown-plain{
+    width:200px !important;
+}
+.row{
+    margin:0px;
+    height:auto;
+}
+.col-lg-2, .col-md-2, .col-sm-2 {
+    margin: 0px !important;
+    padding: 0px !important;
+    vertical-align: middle !important;
+}
+.col-lg-10, .col-md-10, .col-sm-10 {
+    margin: 0px !important;
+    padding: 0px !important;
+    vertical-align: middle !important;
+}
+.col-lg-12, .col-md-12, .col-sm-12 {
+    margin: 0px !important;
+    padding: 0px !important;
+    vertical-align: middle !important;
+  }
+  .mandatory{
+    color:red;
+    padding-left:5px;
+    font-size:15px;
+  }
+  .desc ::-webkit-input-placeholder{
+    font-family: 'Roboto', sans-serif; 
+    font-weight: 600;
+  }
+
+  .desc:-ms-input-placeholder {
+    font-family: 'Roboto', sans-serif; 
+    font-weight: 600;
+  }
+  
+  .desc:-moz-placeholder {
+    font-family: 'Roboto', sans-serif; 
+    font-weight: 600;
+  }
+  
+  

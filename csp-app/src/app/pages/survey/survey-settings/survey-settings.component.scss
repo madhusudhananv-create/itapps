@@ -1,0 +1,60 @@
+tr.mat-header-row {
+  height: 35px;
+  vertical-align: bottom !important;
+  border-bottom: 2px solid #ddd !important;
+  font-size: 16px !important;
+  background-color: #e6e6e6 !important;
+}
+
+tr.mat-row {
+  height: 35px;
+  font-size: 12px !important;
+}
+
+td {
+  font-size: 12px !important;
+}
+
+.example-container {
+  height: 160px !important;
+  overflow: auto !important;
+}
+
+.example-container1 {
+  height: 320px !important;
+  overflow: auto !important;
+}
+
+.row {
+  padding: 0px !important;
+  margin: 0px !important
+}
+
+.col-lg-2,
+.col-md-2,
+.col-sm-2,
+.col-lg-10,
+.col-md-10,
+.col-sm-10 {
+  padding: 0px !important;
+  margin: 0px !important
+}
+
+.mat-icon-refresh {
+  color: grey;
+  cursor: pointer;
+}
+
+::ng-deep .mat-checkbox-inner-container {
+  height: 12px !important;
+  margin: auto;
+  width: 12px !important;
+}
+
+tr.mat-row:hover {
+  background-color: rgb(250, 249, 249);
+}
+
+.selected-row {
+  background-color: lightgrey;
+}

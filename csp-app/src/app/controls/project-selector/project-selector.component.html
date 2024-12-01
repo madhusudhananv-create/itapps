@@ -1,0 +1,34 @@
+<div class="row">
+  <div class="col col-lg-6 col-md-6 col-sm-6">
+    <!-- <mat-form-field> -->
+      <mat-select class="mat-dropdown-plain" name="ddCustomer" [(ngModel)]="custId"
+      (ngModelChange)="ddCustomer_Onchange()" (openedChange)="openedChangeSPAL($event)" placeholder="Select Customer"
+      [disabled]="disabled" style="width:100% !important">
+      <mat-form-field class="filter-processarea" style="width: 100%;">
+        <input matInput (keydown)="$event.stopPropagation()" (keyup)="applyFilterForCustomer($event.target.value)" [(ngModel)]="searchValueCUST"
+          style="text-indent: 10px;" placeholder="Choose a Customer">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+        <mat-option *ngFor="let c of Customer" [value]="c.cusT_ID" [title]="c.cusT_NM">
+          {{ c.cusT_NM}}
+        </mat-option>
+      </mat-select>
+    <!-- </mat-form-field> -->
+  </div>
+  <div class="col col-lg-6 col-md-6 col-sm-6">
+    <!-- <mat-form-field> -->
+      <mat-select class="mat-dropdown-plain" name="ddProject" [(ngModel)]="projId"
+      (ngModelChange)="ddProject_Onchange()" (openedChange)="openedChangePJT($event)"
+      placeholder="Select Project" [disabled]="disabled" style="width:100% !important">
+      <mat-form-field class="filter-processarea" style="width: 100%;">
+        <input matInput (keydown)="$event.stopPropagation()" (keyup)="applyFilterForProject($event.target.value)" [(ngModel)]="searchValuePJT"
+          style="text-indent: 10px;" placeholder="Choose a project">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+        <mat-option *ngFor="let p of Project" [value]="p.proJ_ID" [title] ="p.proJ_NM" >
+          {{ p.proJ_NM}}
+        </mat-option>
+      </mat-select>
+    <!-- </mat-form-field> -->
+  </div>
+</div>

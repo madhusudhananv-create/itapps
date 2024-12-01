@@ -1,0 +1,119 @@
+.sliding-up-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    background-color: white;
+    transition: all 0.3s ease-in-out;
+}
+
+.sliding-up-content.show {
+    height: 75%;
+    width:100%;
+    z-index: 1100;
+    background-color: #FFFFFF;
+}
+.search-icon {
+  width: 20px;
+  height: 20px;
+ border: none;
+  box-shadow: none;
+  outline:none !important;
+}
+
+.rotateimg
+    {rotate:65deg;
+    -webkit-animation: spin1 5s linear; 
+        -webkit-transform-origin: 50% 50%;
+        -moz-transform-origin: 50% 50%;
+        -o-transform-origin: 50% 50%;
+        transform-origin: 50% 50%;
+        // width: 256px;
+        // height: 256px;
+        // width: 187px;
+        // height: 190px;
+        // margin-left: -10px;
+        // margin-top: -13px;
+        width: 154px;
+        height: 154px;
+        margin-left: -6px;
+        margin-top: -14px;
+    
+    } 
+     
+    //  @-webkit-keyframes spin1 {
+    // 0% { -webkit-transform: rotate(70deg);} 
+    // 100% { -webkit-transform: rotate(360deg);}
+    // }  
+::ng-deep .no-line .mat-form-field-underline {
+    display: none;
+  } 
+
+
+.smalltext{
+  font-size: 12px;
+  color: #494a4d;
+  text-decoration: none !important; 
+  font-weight: 500;
+}
+.smalltextblack{
+  font-size: 11px;
+  color: #474646;
+  text-decoration: none !important; 
+  font-weight: 500;
+}
+.smallchart
+{
+  width: 151px;
+  height: 90px;
+}
+.mediumchart{
+  width: 180px;
+  height: 117px;
+}
+.smallchart .rotateimg
+{
+  width: 153px;
+  height: 153px;
+}
+.mediumchart .rotateimg{
+  width: 184px;
+  height: 184px;
+}
+.sumcounts.col-lg-6{
+padding-right: 0px !important;
+padding-left: 0px !important;
+}
+.smallchart1.sumcounts
+{ 
+  margin-left: -15px !important;
+}
+.mediumchart1.sumcounts{
+  margin-left: -26px !important;
+}
+
+.smallchart #score{
+  margin-left: 28%;
+  font-size: 15px;
+  top:103px;
+}
+.mediumchart #score{
+  margin-left: 21%;
+  font-size: 21px; 
+  top:112px;
+}
+.verysmalltextblack{
+  
+  font-size: 11px;
+ color: #5c5b5b;
+  text-decoration: none !important;
+  text-align: center;
+  font-weight: 300;
+}
+.verysmalltext{
+font-size: 11px; 
+  text-decoration: none !important;
+  text-align: center;
+  font-weight: 300;
+}

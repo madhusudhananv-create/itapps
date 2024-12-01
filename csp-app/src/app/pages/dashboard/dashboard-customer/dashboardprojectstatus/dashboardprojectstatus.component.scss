@@ -1,0 +1,33 @@
+.separateCard{
+    width: 203px;
+    height: 239px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 0.5px 2.5px gray;
+    padding: 9px;
+    color: #535d85;
+    font-weight: 700;
+  }
+
+  .centreLabel{
+    position: absolute;
+    width: 44px;
+    font-weight: 700;
+    font-size: 16px;
+    top: 55px;
+    text-align: center;
+    margin-left: 65px;
+  }
+
+  .viewLinkDiv{
+    font-size: 10px; 
+    color: #94d3f1; 
+    left: 119px; 
+    position: absolute;
+     top: 170px;
+  }
+
+  .viewLink{
+    cursor: pointer; 
+    text-decoration: none
+  }

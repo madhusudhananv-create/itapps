@@ -1,0 +1,292 @@
+<div class="row">
+    <mat-progress-bar *ngIf="!_util.chartsMonthly" mode="indeterminate"></mat-progress-bar>
+</div>
+<!-- <h3>KPI Performance for the period {{_util.Month()}} - {{_util.Year()}}</h3> -->
+<div class="row">
+    <mat-accordion>
+        <mat-expansion-panel [expanded]="true" style="display: inline-table;width: 99%;margin:5px">
+            <mat-expansion-panel-header>
+                <mat-panel-title style="font-weight: 600;font-family: calibri;">
+                    <div>Need Focus</div>
+
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="col-lg-4 col-md-6 col-sm-6">
+                <mat-card style="height: 135px;">
+                    <mat-card-header style="font-weight: 600;font-family: calibri;text-align: center">
+                        <div>
+                            <div class="risk_orange"></div>
+                            <!-- <div><i class="fa fa-exclamation-triangle fa-lg" style="color:#f76a25"></i></div> -->
+                            <div style="float: left;margin-left: 2px;font-size: x-large;font-weight: 300;">
+                                Risks
+                            </div>
+                        </div>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <ul style="list-style-type:none;font-size: 11px;padding: 2px">
+                            <li style="margin: 3px;">
+                                <div #div1 id="div1" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div1.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.risK_DUE}} </div> Risk(s) due for Risk Treatment Plan
+                            </li>
+                            <li style="margin: 3px;">
+                                <div #div2 id="div2" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div2.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.risK_NEXT}}</div> Issue(s) with potential risk(s)
+                            </li>
+                            <li style="margin: 3px;">
+                                <div #div8 id="div8" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div8.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.risK_TO_ISSUE}}</div> Risk(s) likely to become issue(s)
+                            </li>
+                        </ul>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-6">
+                <mat-card style="height: 135px;">
+                    <mat-card-header style="font-weight: 600;font-family: calibri;">
+                        <div>
+                            <div class="issues_orange"></div>
+                            <div style="float: left;margin-left: 5px;font-size: x-large;font-weight: 300;">
+                                Issues
+                            </div>
+                        </div>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <ul style="list-style-type:none;font-size: 11px;padding: 2px;">
+                            <li style="margin: 3px;">
+                                <div #div3 id="div3" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div3.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.issuE_DUE}}</div>High/Medium priority issue(s) past due date
+                            </li>
+                            <li style="margin: 3px;">
+                                <div #div4 id="div4" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div4.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.issuE_NO_DUE}}</div> Issue(s) with no due date.
+                            </li>
+                            <li style="margin: 3px;">
+                                <div #div5 id="div5" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div5.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.issuE_NEXT}}</div>High/Medium Priority issue(s) due for closure this week /
+                                next week
+                            </li>
+                        </ul>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-6">
+                <mat-card style="height: 135px;">
+                    <mat-card-header style="font-weight: 600;font-family: calibri;">
+                        <div>
+                            <div class="iteam_orange"></div>
+                            <div style="float: left;margin-left: 5px;font-size: x-large;font-weight: 300;">
+                                Action Items
+                            </div>
+                        </div>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <ul style="list-style-type:none;font-size: 11px;padding: 2px;">
+                            <li style="margin: 3px;">
+                                <div #div6 id="div6" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div6.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.actioN_ITEM_DUE}} </div> High/Medium priority action item(s) not closed and
+                                past due date.
+                            </li>
+                            <li style="margin: 3px;">
+                                <div #div7 id="div7" (click)="GetNeedFocusDetail(issuecount.proJ_ID,div7.id)" style="float: left;font-size: 25px;margin-right: 4px;color: #ff7d4aad;cursor: pointer;">{{issuecount.actioN_ITEM_NEXT}} </div> High/Medium priority action item(s) due for closure
+                                this week / next week
+                            </li>
+                        </ul>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+        </mat-expansion-panel>
+    </mat-accordion>
+</div>
+<div class="row">
+    <div class="col-lg-8">
+        <div *ngIf="_util.chartsMonthly" style="background-color:bisque">
+            <mat-card style="min-height:300px;box-shadow: 0 0 1px -2px rgba(0,0,0,.8), 0 0px 2px 0 rgba(0,0,0,0.54), 0 0px 5px 0 rgba(0,0,0,.12);">
+                <mat-card-header>
+                    <mat-card-title style="text-align:left">Customer success goals performance &nbsp;&nbsp;
+                        <!-- <a *ngIf="_util.IsGAVS()" class="link" title="Edit KPI" [routerLink]="['/kpi', customerId]"> -->
+                        <!-- <a *ngIf="_access.IsAllowed(12, 3, '', '')" (click)="this._appservice.KpiCalledFromNewDashboard = false" class="link" title="Edit KPI" [routerLink]="['/kpi', customerId]">
+                            <i class="fa fa-edit"></i>
+                        </a> -->
+                    </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <div style="font-size:11px;text-align:right;padding-left:10px">
+                        <mat-form-field style="width:200px">
+                            <mat-select name="ddProject" [(ngModel)]="SelectedProjectId" (ngModelChange)="ddProject_Onchange()">
+                                <mat-option *ngFor="let p of Projects" [value]="p.proJ_ID" [title]="p.proJ_NM">
+                                    {{ p.proJ_NM}}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field style="width:70px;padding-left:10px; ">
+                            <mat-select name='tableMonth' [(ngModel)]="_util.tableMonth" (selectionChange)="reloadKPITable()" required>
+                                <mat-option value='Jan'>JAN</mat-option>
+                                <mat-option value='Feb'>FEB</mat-option>
+                                <mat-option value='Mar'>MAR</mat-option>
+                                <mat-option value='Apr'>APR</mat-option>
+                                <mat-option value='May'>MAY</mat-option>
+                                <mat-option value='Jun'>JUN</mat-option>
+                                <mat-option value='Jul'>JUL</mat-option>
+                                <mat-option value='Aug'>AUG</mat-option>
+                                <mat-option value='Sep'>SEP</mat-option>
+                                <mat-option value='Oct'>OCT</mat-option>
+                                <mat-option value='Nov'>NOV</mat-option>
+                                <mat-option value='Dec'>DEC</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field style="width:80px !important;padding-left:10px; border-radius: 4px;">
+                            <mat-select name='tableYear' [(ngModel)]="_util.tableYear" (selectionChange)="reloadKPITable()"
+                                required>
+                                <mat-option *ngFor="let year of _util.Years(3)" [value]="year" [title]="year">{{year}}</mat-option>
+                                <!--<mat-option [value]='2019'>2019</mat-option>
+                                <mat-option [value]='2020'>2020</mat-option>-->
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <table class="table table-bordered" style="font-size:11px">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:center;vertical-align:middle" [rowSpan]="col.rowSpan" [colSpan]="col.colSpan" *ngFor="let col of _util.chartsMonthly.tableChart[0].details[0] | slice:1: _util.chartsMonthly.tableChart[0].details[0].length -1">{{col.text}}</th>
+                                </tr>
+                                <tr>
+                                    <th style="height:4px;padding:0px!important" [style.border-color]="col.color" [style.background-color]="col.color" *ngFor="let col of _util.chartsMonthly.tableChart[0].details[1]"></th>
+                                </tr>
+                            </thead>
+
+                            <tbody *ngFor="let goal of _util.chartsMonthly.tableChart | slice:1; let i = index">
+                                <tr>
+                                    <td [colSpan]="_util.chartsMonthly.tableChart[0].details[0].length -1" style="padding:0px">
+                                        <!-- <b>{{goal.goal}}</b> -->
+                                        <div style="vertical-align: middle">
+                                            <div class="left_sm">Goal {{i + 1}}</div>
+                                            <div class="arrow-right_sm"></div>
+                                            <div class="right_sm">{{goal.goal.split('|')[0]}}</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- <tr *ngFor="let row of goal.details;let isEven=even" [ngStyle]="{'background':isEven?'#f2f2f2':'white'}"> -->
+                                <tr *ngFor="let row of goal.details">
+                                    <td *ngFor="let cell of row | slice: 1: row.length -1" [rowSpan]="cell.rowSpan" style="vertical-align: middle" [matTooltip]='cell.toolTip'>
+                                        <div style="float: left;margin-right: 5px;" *ngIf="cell.color">
+                                            <mat-icon style="font-size:15px" [style.color]="cell.color">fiber_manual_record</mat-icon>
+                                        </div>
+
+                                        <!-- <div style="float: left;margin-right: 5px;" *ngIf="cell.color">
+                                            <i *ngIf="cell.color != '#696969'" class="fa fa-circle" [style.color]="cell.color"></i>
+                                        </div>
+                                        <div style="float: left;margin-right: 5px;" *ngIf="cell.color">
+                                            <i *ngIf="cell.color == '#696969'" [title]="cell.toolTip? cell.toolTip:'Not Applicable'" class="fa fa-circle" [style.color]="cell.color"></i>
+                                        </div> -->
+                                        <span>{{cell.text}}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+        </div>
+    </div>
+    <div class="col-lg-4" style="height:100%">
+        <mat-card style="box-shadow: 0 0 1px -2px rgba(0,0,0,.8), 0 0px 2px 0 rgba(0,0,0,0.54), 0 0px 5px 0 rgba(0,0,0,.12);">
+            <mat-card-header>
+                <mat-card-title>
+                    Notes
+                    <!-- <a *ngIf="_util.IsEditable()" [routerLink]="['/highlight', customerId, SelectedProjectId]"> -->
+                    <a *ngIf="_access.IsAllowed(13, 3, '', '')" [routerLink]="['/highlight', customerId, SelectedProjectId]">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </mat-card-title>
+            </mat-card-header>
+            <mat-card-content style="height:253px;overflow-y: auto">
+                <p *ngIf="!_util.highlights">Loading...</p>
+                <table *ngIf="_util.highlights">
+                    <tr *ngFor="let h of _util.highlights">
+                        <td style="padding: 5px;white-space: pre-line;">{{h.description}}</td>
+                    </tr>
+                </table>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-4" *ngIf="_access.IsAllowed(10, 1, '', '')">
+        <!-- <div class="col-lg-4"> -->
+        <mat-card style="height: 330px;overflow: scroll;padding-top: 12px;padding-left: 0px;">
+            <mat-card-header style="font-family: calibri;font-weight: 600;margin-left: 15px;">
+                Early warning Signal
+            </mat-card-header>
+            <mat-card-content>
+                <app-ewsystem [ProjectIds]="ProjectIds"></app-ewsystem>
+            </mat-card-content>
+        </mat-card>
+    </div>
+    <div class="col-lg-4" *ngIf="_access.IsAllowed(11, 1, '', '')">
+        <!-- <div class="col-lg-4"> -->
+        <mat-card style="height: 330px;overflow: scroll;overflow-x:hidden;overflow-y:auto;padding-top: 12px;padding-left: 0px;">
+            <mat-card-header style="font-family: calibri;font-weight: 600">
+                CRISP Report
+            </mat-card-header>
+            <mat-card-content>
+                <app-crisp-summary-projects [ProjectIds]="ProjectIds" [month]="_util.tableMonth" [year]="_util.tableYear"></app-crisp-summary-projects>
+            </mat-card-content>
+        </mat-card>
+    </div>
+    <div class="col-lg-4" *ngIf="_access.IsAllowed(24, 1, '', '')">
+        <!-- <div class="col-lg-4"> -->
+        <mat-card style="height: 330px;overflow: scroll;overflow-x:hidden;overflow-y:auto;padding-top: 12px;padding-left: 0px;">
+            <mat-card-header style="font-family: calibri;font-weight: 600">
+                Kaizen Summary
+            </mat-card-header>
+            <mat-card-content>
+                <app-kaizen-dashboard [customerId]='customerId' [ProjectIds]="ProjectIds"></app-kaizen-dashboard>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-7">
+        <div *ngIf="_util.chartsMonthly" style="background-color:bisque;box-shadow: 0 0 1px -2px rgba(0,0,0,.8), 0 0px 2px 0 rgba(0,0,0,0.54), 0 0px 5px 0 rgba(0,0,0,.12);">
+            <mat-card style='height:275px' style="box-shadow: 0 0 1px -2px rgba(0,0,0,.8), 0 0px 2px 0 rgba(0,0,0,0.54), 0 0px 5px 0 rgba(0,0,0,.12);">
+                <mat-card-header>
+                    <mat-card-title>Current Issues</mat-card-title>
+                </mat-card-header>
+                <highcharts-chart [Highcharts]="Highcharts" [options]="_util.chartsMonthly.issueChartHighChart" style="width: 100%; height: 225px; display: block;">
+                </highcharts-chart>
+            </mat-card>
+        </div>
+    </div>
+    <div class="col-lg-5" style="min-width:371px">
+        <div *ngIf="_util.chartsMonthly">
+            <mat-card style="box-shadow: 0 0 1px -2px rgba(0,0,0,.8), 0 0px 2px 0 rgba(0,0,0,0.54), 0 0px 5px 0 rgba(0,0,0,.12);">
+                <mat-card-header>
+                    <mat-card-title>Key Risk heat map</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <app-risk-chart [input]='_util.chartsMonthly.riskChart.data' [customerId]='customerId'></app-risk-chart>
+                </mat-card-content>
+            </mat-card>
+        </div>
+    </div>
+</div>
+
+<!-- <div class="row"> -->
+<div class="row" *ngIf="_util.chartsMonthly">
+    <div *ngFor="let group of _util.chartsMonthly.trendHighChartGroup; let i = index">
+        <!-- <div style="padding:10px;font-size:22px">Goal {{i + 1}} : {{group.goalName}}
+        </div> -->
+        <div style="vertical-align: middle">
+            <div class="left">Goal {{i + 1}}</div>
+            <div class="arrow-right"></div>
+            <div class="right">{{group.goalName}}</div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12" *ngFor="let trend of group.trendHighChart" style="padding:5px">
+                <div>KPI Area - {{trend.areaName}}</div>
+                <mat-card style="box-shadow: 0 0 1px -2px rgba(0,0,0,.8), 0 0px 2px 0 rgba(0,0,0,0.54), 0 0px 5px 0 rgba(0,0,0,.12);">
+                    <!-- <mat-card-header>
+                        <mat-card-title></mat-card-title>
+                    </mat-card-header> -->
+                    <mat-card-content>
+                        <div [chart]="trend.trendHighChart"></div>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- </div> -->

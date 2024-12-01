@@ -1,0 +1,115 @@
+<div *ngIf="isVisible('mainDiv')">
+  <div style="background-color: white">
+    <!-- <div class="row">
+          <div style="font-family: calibri;font-size: 15px;margin-top: 17px;padding: 3px;float: left;font-weight: 600;">
+            Select Customer and project :
+          </div>
+          <div style="width: 50%;padding: 3px;" class="col-lg-10">
+            <app-project-selector [allcust]="true" [allproj]="true" (onChange)="project_onChange($event)"></app-project-selector>
+          </div>
+        </div> -->
+    <div class="row" style="padding:25px 0 25px">
+      <div class="col-lg-4 col-md-4 col-sm-6">
+        <mat-card style="height: 220px">
+          <mat-card-content>
+            <div style="float: left;font-family: calibri;width: 70%;height: 120px;font-size: 15px">Analyse your data</div>
+            <div style="float: right;font-size: 45px;color: #09d2de;height: 120px;width: 30%;text-align: center" (click)="ShowParameterTab('ANL')">
+              <i style="padding: 10px;box-shadow: 1px 1px 5px #ada9a9;border-radius: 20%;" class="fa fa-search link"></i>
+            </div>
+          </mat-card-content>
+          <mat-card-footer>
+            <div style="padding: 20px;font-family: calibri;font-size: 17px;width: 100%;height: 100px;font-style: italic;">The easy way to know the unknowns and more about your data</div>
+          </mat-card-footer>
+        </mat-card>
+      </div>
+      <div class="col-lg-4 col-md-4 col-sm-6">
+        <mat-card style="height: 220px">
+          <mat-card-content>
+            <div style="float: left;font-family: calibri;width: 70%;height: 120px;font-size: 15px">Analyse the Process performance &amp; Predictability </div>
+            <div style="float: right;font-size: 45px;color:#ffb300;height: 120px;width: 30%;text-align: center" (click)="ShowParameterTab('Process performance')">
+              <i style="padding: 10px;box-shadow: 1px 1px 5px #ada9a9;border-radius: 20%;" class="fa fa-cogs link"></i>
+            </div>
+          </mat-card-content>
+          <mat-card-footer>
+            <div style="padding: 20px;font-family: calibri;font-size: 17px;width: 100%;height: 100px;font-style: italic;">Get to know the current performance, stability, capability of process for future prediction</div>
+          </mat-card-footer>
+        </mat-card>
+      </div>
+      <div class="col-lg-4 col-md-4 col-sm-6" style="padding:5px">
+        <mat-card style="height: 220px">
+          <mat-card-content>
+            <div style="float: left;font-family: calibri;width: 70%;height: 120px;font-size: 15px">Find patterns and show me where to focus &amp; improve </div>
+            <div style="float: right;font-size: 45px;color: #f44336;height: 120px;width: 30%;text-align: center" (click)="ShowParameterTab('Find patterns')">
+              <i style="padding: 10px;box-shadow: 1px 1px 5px #ada9a9;border-radius: 20%;" class="fa fa-line-chart link"></i>
+            </div>
+          </mat-card-content>
+          <mat-card-footer>
+            <div style="padding: 20px;font-family: calibri;font-size: 17px;width: 100%;height: 100px;font-style: italic;">Enables you to drive your effort in the right direction</div>
+          </mat-card-footer>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="parentDiv" *ngIf="isVisible('analysisDiv')">
+  <button (click)='BackToMainPage_onClick()' class="btn" style="margin:5px">
+    <mat-icon>keyboard_backspace</mat-icon>
+  </button>
+  <app-sqa-management-upload [custId]='custId'></app-sqa-management-upload>
+</div>
+<div class="parentDiv" *ngIf="isVisible('reportsDiv')">
+  <div class="row">
+    <div class="col-lg-1">
+      <button (click)='BackToMainPage_onClick()' class="btn" style="margin:5px">
+        <mat-icon>keyboard_backspace</mat-icon>
+      </button>
+    </div>
+    <div class="col-lg-6">
+      <app-project-selector [allcust]="false" [allproj]="false" (onChange)="project_onChange($event)"></app-project-selector>
+    </div>
+    <div class="col-lg-3 col-md-4 col-sm-4" style="padding:5px">
+      <button class="btn btn-success" value="Generate Chart" (click)='GenerateChart_onClick()' style="margin-right:5px">Generate charts</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="row">
+      <div class="col-lg-1"></div>
+      <div class="col-lg-3 col-md-4 col-sm-4">
+        <mat-form-field class="padding10">
+          <input name='dtStartDate' [(ngModel)]='selectedGroup.starT_DATE' matInput [matDatepicker]="pickerGroupStartDate" placeholder="Start Date"
+            required>
+          <mat-datepicker-toggle matSuffix [for]="pickerGroupStartDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerGroupStartDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-3 col-md-4 col-sm-4">
+        <mat-form-field class="padding10">
+          <input name='dtEndDate' [(ngModel)]='selectedGroup.enD_DATE' matInput [matDatepicker]="pickerGroupEndDate" placeholder="End Date"
+            required>
+          <mat-datepicker-toggle matSuffix [for]="pickerGroupEndDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerGroupEndDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div *ngIf="_loadingCharts" class="col-lg-4 col-md-4 col-sm-4" style="font-size:26px">
+        Loading
+        <span class="countfont">{{iChartCurrent}}</span> of
+        <span class="countfont">{{this.iChartCount}}</span> charts
+      </div>
+    </div>
+    <mat-progress-bar *ngIf="_loadingCharts" mode="indeterminate"></mat-progress-bar>
+    <div class="row" *ngFor="let group of ProjectVisualCharts" style="background-color: #e9ebf0">
+      <div class="row heading">{{group.groupName}}</div>
+      <div class="row">
+        <div *ngFor="let chart of group.charts" class="col-lg-6 col-md-6 col-sm-12">
+          <div style="padding:5px 10px 5px 10px">
+            <highcharts-chart [Highcharts]="Highcharts" [options]="chart" [(update)]="updateFromInput" [oneToOne]=true style="width: 100%; display: block;">
+            </highcharts-chart>
+          </div>
+        </div>
+      </div>
+      <!-- <div *ngFor="let chart of ProjectVisualCharts" class="col-lg-6">
+        <highcharts-chart [Highcharts]="Highcharts" [options]="chart" [(update)]="updateFromInput" [oneToOne]=true style="width: 100%; display: block;">
+        </highcharts-chart>
+      </div> -->
+    </div>
+  </div>

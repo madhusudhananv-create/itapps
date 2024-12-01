@@ -1,0 +1,64 @@
+
+.control-label {
+    height: 15px;
+    text-align: left;
+    font: normal normal normal 12px/15px Lato;
+    letter-spacing: 0px;
+    color: #4C4C47;
+    opacity: 1;
+}
+
+.select .mat-checkbox{
+    width: 12px;
+height: 12px;
+background: #FFFFFF 0% 0% no-repeat padding-box;
+border: 0.5px solid #A7A7A7;
+border-radius: 2px;
+opacity: 1;
+}
+
+.container{
+    width: 1366px;
+height: 767px;
+background: #EDEEF2 0% 0% no-repeat padding-box;
+opacity: 1;
+}
+
+.table{
+    max-width: 750px;
+    margin-bottom: 20px;
+
+}
+.table th {
+    height: 15px;
+text-align: left;
+font: normal normal 600 12px/15px Lato;
+letter-spacing: 0px;
+color: #000000;
+opacity: 1;
+//padding: 4px 4px 8px 6px; 
+font-size: 12px;
+}
+
+  
+   th,
+   td {
+     //width: 100px;
+     text-align: left;
+     //border: 1px solid black;
+     //padding: 3px;
+     font-size: 12px;
+     white-space: nowrap;
+   }
+
+ .Waiting {
+    color: #E83131;
+ }
+
+ .InProgress {
+    color: #DB7F3C;
+}
+
+.Completed {
+    color: #4B4EB1;
+}

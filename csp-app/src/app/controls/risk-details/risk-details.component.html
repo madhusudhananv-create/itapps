@@ -1,0 +1,50 @@
+<div class="panel panel-primary" style="float: left;width: 100%;font-size: 16px;font-weight: bold;position: sticky;top: 0;background: #fff;">
+  <div class="panel-heading">Risk Details
+    <a class="link" style="cursor: pointer;right: 0;;position: absolute;color: white;" (click)="Cancel_onClick()">
+      <i class="fa fa-times"></i>
+    </a>
+  </div> 
+</div>
+<br>
+<br>
+<div style="height: 625px;">
+  <table class="table table-bordered" style="font-size:12px">
+    <thead>
+      <tr style="text-align:left !important">
+        <th style="text-align:left">No.</th>
+        <th style="text-align:left">Customer</th>
+        <th style="text-align:left">Project</th>
+        <th style="text-align:left">Identified On</th>
+        <th style="text-align:left">Description</th>
+        <th style="text-align:left">Business Impact</th>
+        <th style="text-align:left">Owner</th>
+        <th style="text-align:left">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of data.risk;let i = index" style="text-align:left" 
+      [ngClass]="{'isClicked': isSelectedRow === r.link}"
+      (click)="handleRowClick(r.link)"
+      style="cursor: pointer;">
+        <td>{{i + 1}}</td>
+        <td>{{r.cusT_NM}}</td>
+        <td>{{r.proJ_NM}}</td>
+        <td>{{r.identifieD_DATE|date:'dd-MMM-yyyy'}}</td>
+        <td>{{r.description}}</td>
+        <td>{{r.impact}}</td>
+        <td>{{r.owner}}</td>
+        <td>{{r.status}}</td>      
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- </mat-dialog-content>
+      <mat-dialog-actions>
+        <button mat-button mat-dialog-close>Close</button>
+      </mat-dialog-actions> -->
+
+
+<!-- Copyright 2018 Google Inc. All Rights Reserved.
+          Use of this source code is governed by an MIT-style license that
+          can be found in the LICENSE file at http://angular.io/license -->

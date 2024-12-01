@@ -1,0 +1,126 @@
+<div class="dialog" style="box-shadow: 0px -3px 3px #00000029;opacity: 1;overflow-x: hidden; height: 500px;"
+  [ngClass]="{'lenA': KpiData.length == 1,'lenB':KpiData.length == 2,'lenC':KpiData.length > 2}">
+  <div class="row" mat-dialog-title style="height: 40px;background: #EBEBEB 0% 0% no-repeat padding-box;opacity: 1;">
+    <label
+      style="height: 17px;text-align: left;font: normal normal normal 14px/17px Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;margin-left: 15px;margin-top: 5px">Base
+      Measure Data</label>
+
+    <div style="float:right;margin: 5px;">
+      <a class="close-button" (click)="onClose()" style="color:#333333;cursor: pointer;">
+        <mat-icon class="close-icon">close</mat-icon>
+      </a>
+    </div>
+
+  </div>
+  <div class="details" *ngFor="let g of KpiData;let i= index" style="margin-left: 35px;">
+    <table>
+      <tbody style="margin-left: 10px;">
+        <tr>
+          <td style="width: 220px;padding-right: 5px;"><label
+              style="margin-right:5px;font-size: 12px;font-family: Lato;color: gray;">{{g.numeratorDescription}}:</label>
+          </td>
+          <td></td>
+          <td style="padding-right: 50px;align-items:center;"><input [disabled]="isDisabled || isNA"
+              style="text-align: right;vertical-align: middle;width: 120px;" maxlength="14"
+              (keypress)="numberOnly($event)" type="text" (change)="formatDecimal(g.numerator)"
+              [(ngModel)]="g.numerator">
+          </td>
+          <td *ngIf="g.denominatorDescription != 'NA'" style="width: 200px;padding-right: 5px;"><label
+              style="margin-right:5px;font-size: 12px;font-family: Lato;color: gray;">{{g.denominatorDescription}}:</label>
+          </td>
+          <td></td>
+          <td *ngIf="g.denominatorDescription != 'NA'" style="align-items:center;"><input
+              [disabled]="isDisabled || isNA" style="text-align: right;vertical-align: middle;width: 120px;"
+              (keypress)="numberOnly($event)" maxlength="14" type="text" (change)="formatDecimal(g.denominator)"
+              [(ngModel)]="g.denominator">
+          </td>
+        </tr>
+        <br>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-left: 35px;">
+    <mat-checkbox [disabled]="isDisabled || isExclusion" [(ngModel)]="isNA" (ngModelChange)="applyChanges('NA')"
+      style='margin : 5px;font-size:12px;font-family: Lato;'>Not applicable due to no
+      tickets/transactions</mat-checkbox>
+
+    <label *ngIf="isNA" style="margin-left:15px;font-size: 12px;font-family: Lato;">Reason : </label>
+    <mat-form-field *ngIf="isNA" style='margin : 5px'>
+      <textarea [disabled]="isDisabled" [(ngModel)]="remarks" matInput style="height:20px"></textarea>
+    </mat-form-field>
+  </div>
+
+  <div *ngIf="enableExclusion" style="margin-left: 35px;">
+    <mat-checkbox [disabled]="isDisabled || isNA" [(ngModel)]="isExclusion"
+      style='margin : 5px;font-size:14px;font-family: Lato;'><b>Exclusions</b></mat-checkbox>
+  </div>
+
+  <div style="margin-left: 35px;">
+    <label *ngIf="isExclusion" style="font-size: 12px;font-family: Lato;">Justification : </label>
+    <mat-form-field *ngIf="isExclusion" style='margin : 5px'>
+      <textarea rows="5" cols="70" [disabled]="isDisabled || !isExclusion" maxlength="2000"
+        [(ngModel)]="exclusionComment" matInput style="height: 35px; min-width: 400px;"></textarea>
+    </mat-form-field>
+  </div>
+  <div *ngIf="isExclusion" style="margin-left: 35px;">
+    <div class="details" *ngFor="let ex of KpiDataExclusion;let i= index">
+      <table>
+        <tbody style="margin-left: 10px;">
+          <tr>
+            <td style="width: 220px;padding-right: 5px;"><label
+                style="margin-right:5px;font-size: 12px;font-family: Lato;color: gray;">{{ex.numeratorDescription}}:</label>
+            </td>
+            <td></td>
+            <td style="padding-right: 50px;align-items:center;"><input [disabled]="isDisabled ||  isNA || isExNoData"
+                style="text-align: right;vertical-align: middle;width: 120px;" maxlength="14"
+                (keypress)="numberOnly($event)" type="text" (change)="formatDecimal(ex.numerator)"
+                [(ngModel)]="ex.numerator"></td>
+            <td *ngIf="ex.denominatorDescription != 'NA'" style="width: 200px;padding-right: 5px;"><label
+                style="margin-right:5px;font-size: 12px;font-family: Lato;color: gray;">{{ex.denominatorDescription}}:</label>
+            </td>
+            <td></td>
+            <td *ngIf="ex.denominatorDescription != 'NA'" style="align-items:center;"><input
+                [disabled]="isDisabled ||  isNA || isExNoData"
+                style="text-align: right;vertical-align: middle;width: 120px;" (keypress)="numberOnly($event)"
+                maxlength="14" type="text" (change)="formatDecimal(ex.denominator)" [(ngModel)]="ex.denominator"></td>
+          </tr>
+          <br>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <mat-checkbox [disabled]="!isExclusion" [(ngModel)]="isExNoData" (ngModelChange)="applyExChanges('NA')"
+        style='margin : 5px;font-size:12px;font-family: Lato;'>Not applicable due to no
+        tickets/transactions</mat-checkbox>
+      <label *ngIf="isExNoData" style="margin-left:15px;font-size: 12px;font-family: Lato;">Reason : </label>
+      <mat-form-field *ngIf="isExNoData" style='margin : 5px'>
+        <textarea [disabled]="isDisabled" [(ngModel)]="exRemarks" matInput style="height:20px"></textarea>
+      </mat-form-field>
+    </div>
+
+  </div>
+  <mat-progress-bar *ngIf="progress" mode="indeterminate"></mat-progress-bar>
+  <div style="text-align: center;margin-top: 20px;">
+    <button [disabled]="isDisabled || loading" class="btn btn-primary" type="submit"
+      (click)="SaveBaseMeasures()">Save</button> &nbsp;&nbsp;
+    <a *ngIf="_access.IsAllowed(98,1,'','') && isKPIProcessEnabledCustomer && baseMeasureValId != null"
+      class="iconbutton" title="Click here to download details for numerator and denominator"
+      (click)="ExportTOExcel(-1)">
+      <i style="color: #207346;" class="fa fa-file-excel-o"></i>
+    </a>
+    <div style="visibility: hidden;">
+      <div class="mat-elevation-z8" #TABLE style="overflow: auto; height: calc(100vh - 170px);">
+        <table class="table mat-elevation-z8" mat-table [dataSource]="dataSource" matSort>
+          <ng-container *ngFor="let hdr of displayedColumns" [matColumnDef]="hdr">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-weight: bolder;color: black;">{{hdr |
+              uppercase}}</th>
+            <td mat-cell *matCellDef="let element"> {{element[hdr]}} </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

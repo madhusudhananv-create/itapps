@@ -1,0 +1,110 @@
+<div style="height: 100%">
+<div>
+    <div class="panel panel-primary">
+      <div style="height: 45px;" class="panel-heading">
+        <div style="float: left; font-size: 14px;">Ideas - Automations</div>
+        <div style="text-align:center;padding-bottom:2px;float: right;">
+          <button style="height: 28px;background: #fa7973;width: 50px!important;" mat-dialog-close (click)="closeDialog()" >
+            <i style="color: white;margin-bottom: 8px;" class="material-icons">
+              close
+            </i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="height: 250px;overflow: scroll">
+      <table class="table table-bordered" style="font-size:12px">
+        <thead>
+          <tr style="text-align:left !important">
+            <th style="text-align:left">No.</th>
+            <th style="text-align:left">Project Name</th>
+            <th style="text-align:left; width: 150px; max-width: 200px; overflow-x: hidden;white-space: nowrap; text-overflow: ellipsis">Description</th>
+            <th style="text-align:left">Area</th>
+            <th style="text-align:left">Target Date</th>
+            <th style="text-align:left">Actual date</th>
+            <th style="text-align:left">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of AllIdeasData.automations;let i = index" style="text-align:left">
+            <td>{{i + 1}}</td>
+            <td>{{a.proJ_NM }}</td>
+            <td style="width: 150px; max-width: 200px; overflow-x: hidden;white-space: nowrap; text-overflow: ellipsis">{{a.description}}</td>
+            <td>{{a.area}}</td>
+            <td>{{a.targeT_DATE}}</td>
+            <td>{{a.actuaL_DATE}}</td>
+            <td>{{a.status}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="panel panel-primary">
+        <div style="height: 45px;" class="panel-heading">
+          <div style="float: left; font-size: 14px;">Ideas - Innovations</div>
+        </div>
+      </div>
+    </div>
+    <div style="height: 250px;overflow: scroll">
+        <table class="table table-bordered" style="font-size:12px">
+          <thead>
+            <tr style="text-align:left !important">
+              <th style="text-align:left">No.</th>
+              <th style="text-align:left">Project Name</th>
+              <!-- <th style="text-align:left; width: 150px; max-width: 200px; overflow-x: hidden;white-space: nowrap; text-overflow: ellipsis">Description</th> -->
+              <th style="text-align:left">Description</th>
+              <th style="text-align:left">Area</th>
+              <th style="text-align:left">Target Date</th>
+              <th style="text-align:left">Actual date</th>
+              <th style="text-align:left">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of AllIdeasData.innovations;let i = index" style="text-align:left">
+              <td>{{i + 1}}</td>
+              <td>{{a.proJ_NM }}</td>
+              <!-- <td style="width: 150px; max-width: 200px; overflow-x: hidden;white-space: nowrap; text-overflow: ellipsis">{{a.description}}</td> -->
+              <td>{{a.description}}</td>
+              <td>{{a.area}}</td>
+              <td>{{a.targeT_DATE}}</td>
+              <td>{{a.actuaL_DATE}}</td>
+              <td>{{a.status}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="panel panel-primary">
+          <div style="height: 45px;" class="panel-heading">
+            <div style="float: left; font-size: 14px;">Ideas - Improvements</div>
+          </div>
+        </div>
+      </div>
+      <div style="height: 250px;overflow: scroll">
+          <table class="table table-bordered" style="font-size:12px">
+            <thead>
+              <tr style="text-align:left !important">
+                <th style="text-align:left">No.</th>
+                <th style="text-align:left">Project Name</th>
+                <th style="text-align:left; width: 150px; max-width: 200px; overflow-x: hidden;white-space: nowrap; text-overflow: ellipsis">Description</th>
+                <th style="text-align:left">Area</th>
+                <th style="text-align:left">Target Date</th>
+                <th style="text-align:left">Actual date</th>
+                <th style="text-align:left">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of AllIdeasData.automations;let i = index" style="text-align:left">
+                <td>{{i + 1}}</td>
+                <td>{{a.proJ_NM }}</td>
+                <td style="width: 150px; max-width: 200px; overflow-x: hidden;white-space: nowrap; text-overflow: ellipsis">{{a.description}}</td>
+                <td>{{a.area}}</td>
+                <td>{{a.targeT_DATE}}</td>
+                <td>{{a.actuaL_DATE}}</td>
+                <td>{{a.status}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+  </div>

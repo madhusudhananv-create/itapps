@@ -1,0 +1,375 @@
+<app-navbar-new [ShowMenu]="false" (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+<div class="mainDiv">
+  <!-- <div class="conatiner" style="margin-left:30px !important;background-color: #E5E5E5 !important;border: 1px solid #f5f5f5 !important;border-radius:9px;width:1300px !important;height: 140px !important"> -->
+    <div style="font-size: 16px; color:#5461a2; margin: 10px; font-weight: bold;">
+      Continual Improvement Leader Board
+    </div>
+    <div *ngIf="displayText != ''">
+      <span style="font-size: 14px;font-family: Lato">Note : {{displayText}}</span>
+    </div>
+    <div class="row" style="border: 1px solid #f5f5f5 !important;border-radius:9px;height: 75px !important; 
+    width:99% !important;margin-left:10px !important;margin-right:5px !important;background-color: #E5E5E5 !important">
+      <div class="col-lg-3 col-md-3 col-sm-3" style="margin-top: 10px !important;width: 30%;">
+        <app-project-selector-singletomultiple style="width:40%" [allcust]="allcust" [allproj]="allproj" (onChange)="project_onChange($event)"></app-project-selector-singletomultiple>
+      </div>
+      <div class="col-lg-3 col-md-3 col-sm-3" style="text-align:center;margin-top: 5px !important;width: 25%">
+        <span>Period : </span>
+        <br />
+        <select name="ddStartMonth" (change)="saveDates()" [(ngModel)]="DateSelection.selectedStartMonth" required style="margin-right: 5px;background-color:#E5E5E5">
+          <option value="Jan">JAN</option>
+          <option value="Feb">FEB</option>
+          <option value="Mar">MAR</option>
+          <option value="Apr">APR</option>
+          <option value="May">MAY</option>
+          <option value="Jun">JUN</option>
+          <option value="Jul">JUL</option>
+          <option value="Aug">AUG</option>
+          <option value="Sep">SEP</option>
+          <option value="Oct">OCT</option>
+          <option value="Nov">NOV</option>
+          <option value="Dec">DEC</option>
+        </select>
+        <select name="ddStartYear" (change)="saveDates()" [(ngModel)]="DateSelection.selectedStartYear" required style="margin-right: 5px;background-color:#E5E5E5">
+          <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{ bb }}
+          </option>
+        </select>
+
+        <select name="ddEndMonth" (change)="saveDates()" [(ngModel)]="DateSelection.selectedEndMonth" required style="margin-right: 5px;background-color:#E5E5E5">
+          <option value="Jan">JAN</option>
+          <option value="Feb">FEB</option>
+          <option value="Mar">MAR</option>
+          <option value="Apr">APR</option>
+          <option value="May">MAY</option>
+          <option value="Jun">JUN</option>
+          <option value="Jul">JUL</option>
+          <option value="Aug">AUG</option>
+          <option value="Sep">SEP</option>
+          <option value="Oct">OCT</option>
+          <option value="Nov">NOV</option>
+          <option value="Dec">DEC</option>
+        </select>
+        <select name="ddEndYear" (change)="saveDates()" [(ngModel)]="DateSelection.selectedEndYear" required style="margin-right: 5px;background-color:#E5E5E5">
+          <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{ bb }}
+          </option>
+        </select>
+
+      </div>
+      <div class="col-lg-6 col-md-6 col-sm-6" style="margin-top: 10px !important;margin-left: -25px !important;width: 45%">
+        <mat-form-field style="width:135px !important;">
+          <mat-select placeholder="CI Category" multiple #select [(ngModel)]="ciCategory" (selectionChange)="OnCategorychange()">
+            <mat-option [value]="0" #allSelected (click)="toggleSelection()">All</mat-option>           
+            <mat-option *ngFor="let list of ideaImprovementType" [value]="list.id"
+                [title]="list.type" (click)="tosslePerOne()">
+                {{list.type}}               
+              </mat-option>            
+            <!-- <mat-option [value]="7" (click)="tosslePerOne()">Automation</mat-option>
+            <mat-option [value]="6" (click)="tosslePerOne()">Innovation</mat-option>
+            <mat-option [value]="8" (click)="tosslePerOne()">Improvement</mat-option> -->
+            <!-- <mat-option [value]="4" (click)="tosslePerOne()">Value/Value-Add to Customer</mat-option> -->
+          </mat-select>
+        </mat-form-field>
+
+        &nbsp;&nbsp;&nbsp;
+        <mat-form-field style="width:100px !important;">
+          <mat-select placeholder="Status" multiple #selectStatus [(ngModel)]="ddlstatus" (selectionChange)="OnStatusChange()">
+            <mat-option [value]="2">Submitted</mat-option>
+            <mat-option [value]="4">Approved</mat-option>
+            <mat-option [value]="3">Implemented</mat-option>
+            <mat-option [value]="8" #statusDefaultSelected>Completed</mat-option>
+
+          </mat-select>
+        </mat-form-field>
+        &nbsp;&nbsp;&nbsp;
+        <mat-form-field  style="width: 85px !important">
+          <mat-select placeholder="Beneficiary" [(ngModel)]="beneficiary" class="drpdown" (selectionChange)="OnbeneficiaryChange()">
+            <mat-option [value]="1">For Gavs</mat-option>
+            <mat-option [value]="2">For Customer</mat-option>
+
+          </mat-select>
+        </mat-form-field>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <mat-form-field   style="width: 85px !important">
+          <mat-select placeholder="Unit Of Measurement" [(ngModel)]="uom" class="drpdown" (selectionChange)="OnuomChange()">
+            <mat-option *ngFor="let list of uomList" [value]="list.id"
+            [title]="list.title">
+            {{list.title}}               
+          </mat-option>  
+            <!-- <mat-option [value]="1">Cost in $</mat-option>
+            <mat-option [value]="6">Effort In Hours</mat-option> -->
+
+          </mat-select>
+        </mat-form-field>
+        &nbsp;&nbsp;
+        <button type="button" class="btn btn-primary" (click)="btnApply()">Apply</button>
+      </div>
+
+    </div>
+    <!-- <div class="row">
+      <mat-tab-group>
+        <mat-tab label="By Customer"></mat-tab>
+        <mat-tab label="By Individuals"></mat-tab>
+      </mat-tab-group>
+    </div> -->
+  <!-- </div> -->
+
+  <!-- <table class="CitableHeader table" style="border:1px solid #BFBFBF;width: 95%;  border-spacing: 0 5px;margin-bottom:0px !important;
+  margin-left:auto; margin-right: auto;border-collapse:separate;">
+  <thead>
+
+
+    <tr style=" height: 43px;box-shadow : -1.5px 2px 3px 1px lightgray; background-color: #FFFFFF; font-size: 12px; ">
+
+      <th>Customer</th>
+
+      <th>Total Ideas</th>
+
+      <th>Net Benefits</th>
+
+    </tr>
+
+
+  </thead>
+
+  <tbody>
+    <ng-container *ngFor="let cust of CITrackerList?.ctB_CUSTOMER_GROUPING; let i = index">
+      <tr style="height: 43px; box-shadow: -1.5px 2px 3px 1px lightgray; background-color: #ECECFA;
+      font-size: 12px; outline: none; text-decoration: none; cursor: pointer;padding-bottom:5px"  >
+        <td><img class="expand" id="img{{i}}" src="/assets/images/plus.svg"  type="button" (click)="setProjectIndex(i,$event.target)" /></td>
+        <td style="text-align:left; outline: none; text-decoration: none" ><a (click)="setProjectIDS(cust?.cI_TRACKER_PROJECT_GROUPING)" target="_blank" [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}">{{cust?.cusT_NM}}</a></td> 
+
+        
+        <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.totalIdeas | number: '1.0-0'}}</td>
+        <td style="text-align:right">{{cust.cI_CUST_PROPERTIES?.neT_BENEFITS}}</td>
+
+
+      </tr>
+
+       <tr *ngIf="cust.cI_TRACKER_PORTFOLIO_GOUPING?.length == 0 && projDisplayIndex == i" style="font-size: 12px">
+        <td [attr.colspan]="15" style="padding: 0px !important">
+          <table  class="projtable table" style="border-spacing: 0 5px;border:1px solid #dde7ed">
+            <thead class="DetailHeader">
+                <th style="width:1% !important"></th>
+                <th colspan="3" style="text-align: center">Project</th>
+                <th class="alignclass">Total Ideas</th>
+
+                <th class="alignclass">Net Benefits</th>
+
+            </thead>
+            <tbody>
+              <tr *ngFor="let proj of cust.cI_TRACKER_PROJECT_GROUPING; let projindex = index" style="height: 40px; box-shadow: -1.5px 2px 3px 1px lightgray;
+                background-color: white;font-size: 12px; outline: none; text-decoration: none;">
+                <td style="width:1% !important"></td>
+                <td colspan="3"  (click)="setProjectId(proj.proJ_ID)" style="text-align: left;  border-right:1px solid #dde7ed;outline: none; text-decoration: none;cursor:pointer" target="_blank" [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}">{{proj.proJ_NM}}</td>
+
+                
+                <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.totalIdeas}}</td>
+                <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.neT_BENEFITS}}</td>
+
+
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+       <tr *ngIf="cust.cI_TRACKER_PORTFOLIO_GOUPING?.length > 0 && projDisplayIndex == i" style="font-size: 12px; ">
+        <td [attr.colspan]="15" style="padding: 0px !important">
+          <table  class="projtable table">
+            <thead class="DetailHeader">
+              <tr>
+                <th style="width:1% !important"></th>
+                <th colspan="3" style="text-align: center;border-right:1px solid #dde7ed;" >Portfolio</th>
+                <th class="alignclass">Total Ideas</th>
+
+                <th class="alignclass">Net Benefits</th>
+
+
+              </tr>
+            </thead>
+            <tbody *ngFor="let port of cust.cI_TRACKER_PORTFOLIO_GOUPING; let portindex = index">
+              <tr style="height: 40px; box-shadow: -1.5px 2px 3px 1px lightgray;
+                 background-color: white;  font-size: 12px; outline: none; text-decoration: none;cursor: pointer;"
+                >
+                <td style="width:1% !important">
+
+                <img class="expand" id="Pimg{{i}}" src="/assets/images/plus.svg"
+   type="button" (click)="showProjectsForPortfolio(portindex,$event.target)" />
+
+                </td>
+                <td colspan="2" style="text-align: left;outline: none; text-decoration: none;cursor:pointer;" (click)="setPortfolio(port)" target="_blank" [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}" >{{port.portfoliO_NM}}</td>
+                <td class="borderclass" style="border-right:1px solid #dde7ed;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                
+                <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.totalIdeas}}</td>
+                <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.neT_BENEFITS}}</td>
+
+              </tr>
+              <tr *ngIf="portindex == showPortprojIndex">
+                <td [attr.colspan]="16">
+                  <table class="projtable table" style="border:1px solid #ECECFA">
+                    <thead class="DetailHeader">
+                      <tr style="background-color: #f5f5f5 !important;">
+                <th style="width:1% !important"></th>
+                <th colspan="2" style="text-align: center;border-right:1px solid #dde7ed;">Project</th>
+                <th class="alignclass">Total Ideas</th>
+
+                <th class="alignclass">Net Benefits</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let proj of port.cI_TRACKER_PROJECT_GROUPING" style="background-color:#ffffff">
+                          <td style="width:1% !important"></td>
+                          <td colspan="2" (click)="setProjectId(proj.proJ_ID,port)" style="text-align: left;  border-right:1px solid #dde7ed;outline: none; text-decoration: none;cursor:pointer" target="_blank"  [routerLink]="['/layout/ideas', cust?.cusT_ID]" [queryParams]="{showBenefits:'true'}">{{proj.proJ_NM}}</td>
+                          <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.totalIdeas}}</td>
+                          <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.neT_BENEFITS}}</td>
+                          
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr> 
+
+    </ng-container>
+  </tbody>
+
+
+</table> -->
+<table class="CitableHeader table" style="width: 99%;  border-spacing: 0 5px;margin-bottom:0px !important;
+    margin-left:10px; margin-right: 5px;border-collapse:separate;">
+    <thead>
+
+      
+
+      <tr style=" height: 43px; font-size: 12px;box-shadow: -1.5px 2px 3px 1px lightgrey;
+      font-weight: 600;">
+        
+        <!-- <th [attr.colspan]="3" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;"></th> -->
+        <th [attr.colspan]="2" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;">Customer</th>
+        <th [attr.colspan]="1" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;">Total Ideas</th>
+        <th [attr.colspan]="1" class="FirstHeader" style="border-top:1px solid #BFBFBF !important;border-right:1px solid #BFBFBF !important;">Net Benefits</th>
+        
+      </tr>
+    </thead>
+    
+    <tbody>
+      <ng-container *ngFor="let cust of CITrackerList?.ctB_CUSTOMER_GROUPING; let i = index">
+        <tr style="height: 43px; box-shadow: -1.5px 2px 3px 1px lightgray; background-color: #ECECFA;  
+        font-size: 12px; outline: none; text-decoration: none; cursor: pointer;padding-bottom:5px"  >
+          <td><img class="expand" id="img{{i}}" src="/assets/images/plus.svg"  type="button" (click)="setProjectIndex(i,$event.target)" /></td>
+          <td style="text-align: center;  border-right:1px solid #BFBFBF;;outline: none; text-decoration: none;cursor:pointer" ><a (click)="setProjectIDS(cust?.cI_TRACKER_PROJECT_GROUPING)" target="_blank" [routerLink]="['/newdashboard/cust', cust?.cusT_ID,true,'listview']">{{cust?.cusT_NM}}</a></td>
+          <td style="text-align:center;border-right:1px solid #BFBFBF;">{{cust.cI_CUST_PROPERTIES?.totalideas}}</td>
+          <td style="text-align:center">
+            <span *ngIf="uom == 1">{{measurement1}}</span>{{cust.cI_CUST_PROPERTIES?.neT_BENEFITS}}
+            <span *ngIf="uom != 1">{{measurement1}}</span>
+          </td>
+          
+          <!-- <span style="text-align:center" *ngIf="uom==1">$<td style="text-align:center">{{cust.cI_CUST_PROPERTIES?.neT_BENEFITS}}</td> </span>
+          <span style="text-align:center" *ngIf="uom==6"><td style="text-align:center">{{cust.cI_CUST_PROPERTIES?.neT_BENEFITS}}</td>Hrs</span>           
+           -->
+               
+          
+        </tr>
+
+        <tr *ngIf="cust.cI_TRACKER_PORTFOLIO_GOUPING?.length == 0 && projDisplayIndex == i" style="font-size: 12px">
+          <td [attr.colspan]="15" style="padding: 0px !important">
+            <table  class="projtable table" style="border-spacing: 0 5px;border:1px solid #dde7ed">
+              <thead class="DetailHeader">
+                  <th style="width:1% !important"></th>                 
+                  <th colspan="3" style="text-align: center">Project</th>
+                  <th class="alignclass">Total Ideas</th>
+                  <th class="alignclass">Net Benefits</th>
+                  
+              </thead>
+              <tbody>
+                <tr *ngFor="let proj of cust.cI_TRACKER_PROJECT_GROUPING; let projindex = index" style="height: 40px; box-shadow: -1.5px 2px 3px 1px lightgray; 
+                  background-color: white;font-size: 12px; outline: none; text-decoration: none;">
+                  <td style="width:1% !important"></td>                 
+                  <td colspan="3"  (click)="setProjectId(proj.proJ_ID)" style="text-align: center;  border-right:1px solid #dde7ed;outline: none; text-decoration: none;cursor:pointer" target="_blank" [routerLink]="['/newdashboard/cust', cust?.cusT_ID,true,'listview']">{{proj.proJ_NM}}</td>
+                  <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.totalideas}}</td>
+                  
+                  <td class="borderclass">
+                    <span *ngIf="uom == 1">{{measurement1}}</span>{{proj.cI_PROJECT_PROPERTIES?.neT_BENEFITS}}
+                    <span *ngIf="uom != 1">{{measurement1}}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        <tr *ngIf="cust.cI_TRACKER_PORTFOLIO_GOUPING?.length > 0 && projDisplayIndex == i" style="font-size: 12px; ">
+          <td [attr.colspan]="15" style="padding: 0px !important">
+            <table  class="projtable table">
+              <thead class="DetailHeader">
+                <tr>
+                  <th style="width:1% !important"></th>
+                  <th colspan="3" style="text-align: center;border-right:1px solid #dde7ed;" >Portfolio</th>
+                  
+                  <th class="alignclass">Total Ideas</th>
+                  <th class="borderclass">Net Benefits</th>
+                  
+                </tr>
+              </thead>
+              <tbody *ngFor="let port of cust.cI_TRACKER_PORTFOLIO_GOUPING; let portindex = index">
+                <tr style="height: 40px; box-shadow: -1.5px 2px 3px 1px lightgray; 
+                   background-color: white;  font-size: 12px; outline: none; text-decoration: none;cursor: pointer;"
+                  >
+                  <td style="width:1% !important">
+                  
+                  <img class="expand" id="Pimg{{i}}" src="/assets/images/plus.svg" 
+     type="button" (click)="showProjectsForPortfolio(portindex,$event.target)" />
+
+                  </td>
+                  <td colspan="2" style="text-align: center;outline: none; text-decoration: none;cursor:pointer;" (click)="setPortfolio(port)" target="_blank" [routerLink]="['/newdashboard/cust', cust?.cusT_ID,true,'listview']">{{port.portfoliO_NM}}</td>
+                  <td class="borderclass" style="border-right:1px solid #dde7ed;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                  <td class="borderclass">{{port.cI_PORTFOLIO_PROPERTIES?.totalideas}}</td>
+                  
+                  <td class="borderclass">
+                    <span *ngIf="uom == 1">{{measurement1}}</span>{{port.cI_PORTFOLIO_PROPERTIES?.neT_BENEFITS}}
+                    <span *ngIf="uom != 1">{{measurement1}}</span>
+                  </td>
+                </tr>
+                <tr *ngIf="portindex == showPortprojIndex">
+                  <td [attr.colspan]="16">
+                    <table class="projtable table" style="border:1px solid #ECECFA">
+                      <thead class="DetailHeader">
+                        <tr style="background-color: #f5f5f5 !important;">                            
+                  <th style="width:1% !important"></th>
+                  <th colspan="2" style="text-align: center;border-right:1px solid #dde7ed;">Project</th>                  
+                  <th class="alignclass">Total Ideas</th>
+                  <th class="borderclass">Net Benefits</th>
+                  
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let proj of port.cI_TRACKER_PROJECT_GROUPING" style="background-color:#ffffff">
+                            <td style="width:1% !important"></td>
+                            <td colspan="2" (click)="setProjectId(proj.proJ_ID,port)" style="text-align: center;  border-right:1px solid #dde7ed;outline: none; text-decoration: none;cursor:pointer" target="_blank"  [routerLink]="['/newdashboard/cust', cust?.cusT_ID,true,'listview']">{{proj.proJ_NM}}</td>                            
+                            <td class="borderclass">{{proj.cI_PROJECT_PROPERTIES?.totalideas}}</td>
+                            
+                            <td class="borderclass">
+                              <span *ngIf="uom == 1">{{measurement1}}</span>{{proj.cI_PROJECT_PROPERTIES?.neT_BENEFITS}}
+                              <span *ngIf="uom != 1">{{measurement1}}</span>
+                            </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+      </ng-container>
+    </tbody>
+    
+
+  </table>
+  <div *ngIf="!CITrackerList" style="text-align: center; height: 100px; line-height: 100px;">
+    <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+  </div>
+
+
+</div>

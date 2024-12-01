@@ -1,0 +1,28 @@
+.td ,.td , .table {
+font-family: calibri;
+background: white;
+}
+table tr td {
+padding: 0px;
+padding-left: 3px
+} 
+.buttona
+{
+  color: #757272;
+  cursor: pointer;
+  border: 1px solid #cac0c0;
+  border-radius: 4px 4px 0 0;
+  text-align: center;
+  font-family: calibri;
+  margin-right: 15px;
+  box-shadow: 1px 1px 2px #adadad;
+  background: #f3f4f8;
+  float: right;
+}
+::ng-deep .no-line .mat-form-field-underline {
+  display: none;
+}
+.mat-checkbox-inner-container {
+  height: 15px!important;
+  width: 15px!important;
+}

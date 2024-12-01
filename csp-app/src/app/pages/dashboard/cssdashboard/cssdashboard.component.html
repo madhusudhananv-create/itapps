@@ -1,0 +1,39 @@
+<div style="margin-top:0.5%;margin-left: 0%;" class="row">
+  <div class="row">
+    <div class="col-lg-2 col-md-2 col-sm-2" style="float: left;">
+      <div *ngIf="_util.IsGAVS()" class="backbuttonlink" [routerLink]="['/newdashboard/custm']" (click)="resetValues()">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px;margin-top: -20%;margin-left:15%"
+        src="assets/images/{{custId}}.png" onerror="this.src='assets/images/CustomerLogo.png'">
+    </div>
+    <div class="prevNext col-lg-2 col-md-2 col-sm-2" style="float: right;padding-left: 5%;">
+      <button [disabled]="currIndex == 0" (click)="onPrev()" style="font-size: 12px;margin-right: 5%;border:none">
+        <i class="fa fa-arrow-left"></i>&nbsp;Previous</button>
+      <button [disabled]="currIndex == 2" (click)="onNext()" style="font-size: 12px;border:none">
+        Next&nbsp;<i class="fa fa-arrow-right"></i></button>
+    </div>
+  </div>
+</div>
+<div style="margin-left: 0.5%;">
+  <app-cssdashboard-filter [allCust]="allCust" [custId]="customerId" (getCssInputEmitter)="receivedCssInput($event)"
+    style=" float:left"></app-cssdashboard-filter>
+</div>
+
+<div *ngIf="currIndex == 0"
+  style="float: left;margin-top:-11px;width:99%;margin-left: 1%;height:auto"> 
+<app-cssdashboard-css-table class="portfolioCard verysmalltextblack " [cssDashboardInputs]="cssInputs"></app-cssdashboard-css-table> 
+</div>
+
+<div *ngIf="currIndex == 1" style="height: 100%">
+  <app-cssdashboard-next-page1 [customerId]="customerId" [fromDate]="fromDate" [toDate]="toDate"
+    [customerIds]="cssInputs.customeR_IDS" [allCust]="allCust" [frequency]="cssInputs.frequency">
+  </app-cssdashboard-next-page1>
+</div>
+
+<div *ngIf="currIndex == 2" style="height: 100%">
+  <app-cssdashboard-next-page2 [customerId]="customerId" [fromDate]="fromDate" [toDate]="toDate"
+    [customerIds]="cssInputs.customeR_IDS" [allCust]="allCust" [frequency]="cssInputs.frequency"
+    [trendQuarter]="trendQuarter">
+  </app-cssdashboard-next-page2>
+</div>

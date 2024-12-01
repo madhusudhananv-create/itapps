@@ -1,0 +1,21 @@
+<div style="padding:10px">
+  <table width="100%" class="table table-bordered" style="padding:15px">
+    <tr>
+      <th>Projects</th>
+      <th>C</th>
+      <th>R</th>
+      <th>I</th>
+      <th>S</th>
+      <th>P</th>
+      <th style="font-size:12px">Total</th>
+    </tr>
+    <tr *ngFor="let proj of data.summary">
+      <td style="padding:2px;font-size:10px;width:58%">{{proj.projecT_NAME}}</td>
+      <td *ngFor="let cat of proj.categories" [style.background-color]="cat.rag" style="padding:2px;width:6%;text-align:center">{{cat.score}}</td>
+      <td style="padding:2px;width:6%;text-align:center" [style.background-color]="proj.rag">{{proj.score}}</td>
+    </tr>
+  </table>
+  <div style="text-align:center;padding-bottom:2px">
+    <button mat-button mat-dialog-close>Close</button>
+  </div>
+</div>

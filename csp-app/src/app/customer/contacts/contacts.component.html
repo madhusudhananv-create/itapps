@@ -1,0 +1,185 @@
+<div>Test</div>
+<div *ngIf="!editCmode">
+  <div *ngIf="contacts.length == 0">
+    <p>Contacts not updated</p>
+  </div>
+  <div *ngIf="_access.IsAllowed(16, 3, '', '')" style="float:right;" class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12 header ">
+      <a (click)="changemode();" class="link">
+        <i class="fa fa-edit"></i>
+      </a>
+    </div>
+  </div>
+  <div *ngIf="contacts.length > 0">
+    <table style="width: 99%;" class="table table-bordered">
+      <thead class="thead-light">
+        <tr>
+          <th style=" width: 50%; font-weight: 600">GS LAB| GAVS</th>
+          <th style="font-weight: 600">CUSTOMER</th>
+        </tr>
+      </thead>
+      <tbody style="background: white;">
+        <tr>
+          <td>
+            <ul>
+              <li *ngFor="let contact of contacts; let i = index">
+                <mat-card *ngIf="contact.contacT_TYPE=='GAVS'" class="card_info">
+                  <mat-card-title style="font-size: 20px;">
+                    {{ contact.contacT_NAME }}
+                  </mat-card-title>
+                  <mat-card-subtitle style="font-size: 14px;color: #337ab7">
+                    {{ contact.contacT_ROLE }}
+                  </mat-card-subtitle>
+                  <br>
+                  <mat-card-content style="margin-top: -27px;;
+                          font-size: 12px;">
+                    <i style="font-size: 10px;color: #336eb7;" class="fa fa-envelope"></i>&nbsp;
+                    <a href="mailto:{{contact.contacT_EMAILID}}">{{contact.contacT_EMAILID}}</a>
+                    <br>
+                    <i class="fa fa-phone"></i>&nbsp;{{contact.contacT_PHONE}}
+                  </mat-card-content>
+                </mat-card>
+                <!-- <p style="font-weight:bold">{{ contact.contacT_ROLE }}</p>
+                    <p>{{ contact.contacT_NAME }}</p>
+                    <p><i class="fa fa-envelope"></i>&nbsp;<a href="mailto:{{contact.contacT_EMAILID}}">{{contact.contacT_EMAILID}}</a></p>
+                    <p><i class="fa fa-phone"></i>&nbsp;{{contact.contacT_PHONE}}</p>
+                    <br/> -->
+              </li>
+            </ul>
+          </td>
+          <td>
+            <ul>
+              <li *ngFor="let contact of contacts; let i = index">
+                <mat-card *ngIf="contact.contacT_TYPE=='CUSTOMER'" class="card_info">
+                  <mat-card-title style="font-size: 20px;">
+                    {{ contact.contacT_NAME }}
+                  </mat-card-title>
+                  <mat-card-subtitle style="font-size: 14px;color: #337ab7">
+                    {{ contact.contacT_ROLE }}
+                  </mat-card-subtitle>
+                  <br>
+                  <mat-card-content style="margin-top: -27px;;
+                                font-size: 12px;">
+                    <i style="font-size: 10px;color: #336eb7;" class="fa fa-envelope"></i>&nbsp;
+                    <a href="mailto:{{contact.contacT_EMAILID}}">{{contact.contacT_EMAILID}}</a>
+                    <br>
+                    <i class="fa fa-phone"></i>&nbsp;{{contact.contacT_PHONE}}
+                  </mat-card-content>
+                </mat-card>
+                <!-- <p style="font-weight:bold">{{ contact.contacT_ROLE }}</p>
+                      <p>{{ contact.contacT_NAME }}</p>
+                      <p><i class="fa fa-envelope"></i>&nbsp;<a href="mailto:{{contact.contacT_EMAILID}}">{{contact.contacT_EMAILID}}</a></p>
+                      <p><i class="fa fa-phone"></i>&nbsp;{{contact.contacT_PHONE}}</p>
+                      <p style="padding:10px"></p>
+                      <br/> -->
+              </li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div *ngIf="editCmode">
+  <div style="float:right;" class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12 header ">
+      <a (click)="changeeditmode();" class="link">
+        <i class="fa fa-arrow-left"></i>
+      </a>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-6 col-md-12 col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          Add Contacts
+        </div>
+        <div class="card-body">
+          <form #contactsForm="ngForm" (ngSubmit)="SubmitForm(contactsForm)" class="example-form">
+            <div class="row">
+              <mat-form-field>
+                <input style="width:300px" name="txtName" matInput [(ngModel)]="newContacts.contacT_NAME" [pattern]="unamePattern" #uname="ngModel"
+                  placeholder="Name" required>
+              </mat-form-field>
+            </div>
+            <div class="row">
+              <mat-form-field>
+                <input name="txtEmailId" type="email" matInput [(ngModel)]="newContacts.contacT_EMAILID" [pattern]="emailPattern" #emailid="ngModel"
+                  placeholder="Email Id" required>
+                <mat-error *ngIf="emailid.errors" [ngClass]="'error'">
+                  <mat-error *ngIf="emailid.errors.pattern">
+                    email is not valid.
+                  </mat-error>
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div class="row">
+              <mat-form-field>
+                <input name="txtRole" matInput [(ngModel)]="newContacts.contacT_ROLE" placeholder="Role" required>
+              </mat-form-field>
+            </div>
+            <div class="row">
+              <mat-form-field>
+                <input name="txtPhone" matInput [(ngModel)]="newContacts.contacT_PHONE" [pattern]="phonePattern" #phone="ngModel" placeholder="Phone"
+                  required>
+                <mat-error *ngIf="phone.errors" [ngClass]="'error'">
+                  <mat-error *ngIf="phone.errors.pattern">
+                    phone numberis not valid.
+                  </mat-error>
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div class="row">
+              <mat-form-field>
+                <mat-select name="txtType" placeholder="Contact Type" [(ngModel)]="newContacts.contacT_TYPE" required>
+                  <mat-option value="CUSTOMER">CUSTOMER</mat-option>
+                  <mat-option value="GAVS">GS LAB | GAVS</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="row">
+              <button style="color: white;border-radius: 2px;background: #4d8bbf;border: none;" type="submit">Save</button>
+            </div>
+            <!-- <div style="padding:15px"></div> -->
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <table border="1" class="table table-responsive-sm table-hover table-outline mb-0">
+    <thead class="thead-light">
+      <tr>
+        <th style="color:#f3f2f2;background-color: #4d8bbf;border-color:#a4b7c1;">No.</th>
+        <th style="color:#f3f2f2;background-color: #4d8bbf;border-color:#a4b7c1;">Name</th>
+        <th style="color:#f3f2f2;background-color: #4d8bbf;border-color:#a4b7c1;">Role</th>
+        <th style="color:#f3f2f2;background-color: #4d8bbf;border-color:#a4b7c1;">Email Id</th>
+        <th style="color:#f3f2f2;background-color: #4d8bbf;border-color:#a4b7c1;">Phone</th>
+        <th style="color:#f3f2f2;background-color: #4d8bbf;border-color:#a4b7c1;">Type</th>
+        <th style="color:#f3f2f2;background-color: #4d8bbf;border-color:#a4b7c1;">Action</th>
+      </tr>
+    </thead>
+    <tbody *ngIf="contacts.length > 0">
+      <tr style="background: white" *ngFor="let contact of contacts;let i = index">
+        <td>{{i + 1}}</td>
+        <td>{{contact.contacT_NAME}}</td>
+        <td>{{contact.contacT_ROLE}}</td>
+        <td>{{contact.contacT_EMAILID}}</td>
+        <td>{{contact.contacT_PHONE}}</td>
+        <td>{{contact.contacT_TYPE}}</td>
+        <td *ngIf="_util.IsEditable()">
+          <a class="link" (click)="DeleteRow_onClick(contact)">
+            <i class="fa fa-trash"></i>
+          </a>
+          <a class="link" (click)="EditRow_onClick(contact)">
+            <i class="fa fa-edit"></i>
+          </a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody *ngIf="contacts.length == 0">
+      <tr>
+        <td colspan="6">No records found</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

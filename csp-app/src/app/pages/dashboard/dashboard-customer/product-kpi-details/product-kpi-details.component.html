@@ -1,0 +1,66 @@
+<div class="dialog" style="box-shadow: 0px -3px 3px #00000029;opacity: 1;overflow-x: hidden;height: auto;">
+  <div class="row" mat-dialog-title style="height: 40px;background: #EBEBEB 0% 0% no-repeat padding-box;opacity: 1;">
+    <label
+    style="height: 17px;text-align: left;font-size: 14px;font-family: Lato;letter-spacing: 0px;color: #333333;opacity: 1;margin-left: 15px;margin-top: 10px;font-weight: 500 ;">
+      Engagement Level Service Metrics Detail View</label>
+    <a class="close-button" (click)="onClose()"
+      style="margin-left: 26%;margin-top: 7px;color:#333333;cursor: pointer;position: absolute;">
+      <mat-icon class="close-icon">close</mat-icon>
+    </a>
+  </div>
+  <div class="details" style="margin-left: 15px;margin-top: 15px;">
+    <div class="row">
+      <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+    </div>
+    <div class="table" style="overflow-y: auto;overflow-x: hidden;border-radius: 5px;">
+      <table mat-table [dataSource]="dataSource" class="table mat-elevation-z8" style="width: 92%;margin-left: 15px;">
+        <!-- <div *ngIf="!dataSource" style="text-align: center; height: 100px; line-height: 200px;">
+          <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+        </div> -->
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef style="font-size: 14px;font-family: Lato;width: 40%;white-space: nowrap;" class="DetailHeader">Product</th>
+          <td mat-cell *matCellDef="let metricslist">{{metricslist.producT_TITLE}}</td>
+        </ng-container>
+        <ng-container matColumnDef="expectedLevel">
+          <th mat-header-cell *matHeaderCellDef style="font-size: 14px;font-family: Lato;width: 18%;padding-left: 2.5%;" class="DetailHeader">Expected 
+          <!-- <span [ngClass]="{'Percent':metricslist.title != 'Volume of Incidents','Number':metricslist.title == 'Volume of Incidents'}"></span> -->
+          </th>
+          <td mat-cell *matCellDef="let metricslist" style="text-align: center;">{{metricslist.expecteD_SERVICE_LEVEL}} %</td>
+        </ng-container>
+        <ng-container matColumnDef="minLevel">
+          <th mat-header-cell *matHeaderCellDef style="font-size: 14px;font-family: Lato;width: 18%;padding-left: 2.5%;" class="DetailHeader">Minimum</th>
+          <td mat-cell *matCellDef="let metricslist" style="text-align: center;">{{metricslist.minimuM_SERVICE_LEVEL}} %</td>
+        </ng-container>
+        <!-- <ng-container matColumnDef="baseNumDesc">
+          <th mat-header-cell *matHeaderCellDef style="width: 80px;">Minimum Service Level</th>
+          <td mat-cell *matCellDef="let metricslist">{{metricslist.minimuM_SERVICE_LEVEL}} %</td>
+        </ng-container>
+        <ng-container matColumnDef="baseDenoDesc">
+          <th mat-header-cell *matHeaderCellDef style="width: 80px;">Minimum Service Level</th>
+          <td mat-cell *matCellDef="let metricslist">{{metricslist.minimuM_SERVICE_LEVEL}} %</td>
+        </ng-container> -->
+        <ng-container matColumnDef="actuals">
+          <th mat-header-cell *matHeaderCellDef style="font-size: 14px;font-family: Lato;width: 25%;padding-left: 2.5%;" class="DetailHeader">Achievement</th>
+          <td mat-cell *matCellDef="let metricslist" style="text-align: center;">{{metricslist.kpI_ACTUAL}} %</td>
+        </ng-container>
+        <ng-container matColumnDef="slaStatus">
+          <th mat-header-cell *matHeaderCellDef style="font-size: 14px;font-family: Lato;width: 25%;" class="DetailHeader">Status</th>
+          <td mat-cell *matCellDef="let metricslist" style="text-align: center;">{{metricslist.slA_STATUS}}</td>
+        </ng-container>
+        <ng-container matColumnDef="header-row-first-group">
+          <th mat-header-cell *matHeaderCellDef 
+              [style.text-align]="center"
+              [attr.colspan]="1" class="DetailHeader">            
+          </th>
+        </ng-container>
+        
+        <ng-container matColumnDef="header-row-second-group">
+          <th mat-header-cell *matHeaderCellDef [attr.colspan]="4" [style.text-align]="center" style="padding-left: 25%;" class="DetailHeader"> Service Level </th>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="['header-row-first-group','header-row-second-group']"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+  </div>

@@ -1,0 +1,74 @@
+//Mat - Column width
+.indexWidth{
+  flex: 0 0 25px;
+  text-align: center !important;
+}
+.deleteWidth{
+  flex: 0 0 25px;
+}
+//-------------------
+
+.tabheader{
+  text-align: center;
+}
+.header{
+  text-align:right;
+  padding:10px 30px 0 0;
+}
+.link {
+    cursor: pointer;
+    text-decoration: none;
+    font-size:24px;
+    color:steelblue;
+    vertical-align: middle;
+    text-align: center;
+  }
+  .example-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 500px;
+    min-width: 300px;
+  }
+  
+  table {
+    border-collapse: collapse;
+  }
+  .table-outline {
+    border: 1px solid #a4b7c1;
+  }
+  .table .thead-light th {
+    color: #3e515b;
+    background-color: #c2cfd6;
+    border-color: #a4b7c1;
+  }
+  .table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #a4b7c1;
+  }
+  .table th, .table td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #a4b7c1;
+  }
+  .text-center {
+    text-align: center !important;
+    font-size:11px
+  }
+  th {
+    text-align: inherit;
+  }
+  .row{
+    margin:0 !important;
+  }
+  
+  .fa{
+    font-size:15px;
+  }
+  .link_button
+  {
+    background:none;
+    border: none;
+    font-size: 24px;
+    color: steelblue;
+    vertical-align: middle;
+  }

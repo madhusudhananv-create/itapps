@@ -1,0 +1,108 @@
+<html>
+    <head>
+        <title>Premier CSM</title>
+        <link rel="stylesheet" href="./dashboard.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+      
+            function drawChart() {
+      
+            //   var data = google.visualization.arrayToDataTable([
+            //     ['Task', 'Hours per Day'],
+            //     ['Work',     11],
+            //     ['Eat',      2],
+            //     ['Commute',  2],
+            //     ['Watch TV', 2],
+            //     ['Sleep',    7]
+            //   ]);
+
+            var data = google.visualization.arrayToDataTable([
+                ['Name','Percentage'],
+                ['Not Complaint', 10],
+                ['Complaint', 90]
+              ]);
+
+      
+              var options = {   
+                pieHole: 0.567,
+                legend: 'none',
+                colors: ['#ff0109', '#3ab376'],
+                chartArea: {'width': '100%', 'height': '80%', top: 5},
+              };
+      
+              var chart = new google.visualization.PieChart(document.getElementById('customerPie'));
+      
+              chart.draw(data, options);
+            }
+          </script>
+    </head>
+    <body>
+        <div id="header">
+            Customer Success Management Platform 
+        </div>
+        <div id="ContentBody">           
+            <div id="mainContent">
+                <div id="crispScore">
+                     CRISP : 35
+                </div>
+                <div  id="portfolios">
+                    <span style="font-size: 13px;">Portfolios</span>
+                    <div style="margin-top: 35px; margin-bottom: 10px; text-align: center">
+                        <div>
+                            <span style="font-size: 24px; color: red">4</span> <span style="font-size: 13px;">/6</span>
+                        </div>
+                        <div style="padding-left: 0px;">
+                                <span style="font-size: 8px; margin-right: 4px; ">At Risk</span><span style="font-size: 8px; margin-left: 2px;">Portfolios</span>
+                        </div>
+                    </div>    
+                    <span style="font-size: 13px;">Projects</span>
+                    <div style="margin-top: 35px; margin-bottom: 10px; text-align: center">
+                          <div>
+                            <span style="font-size: 24px; color: red">22</span> <span style="font-size: 13px;">/54</span>
+                        </div>
+                        <div style="padding-left: 0px;">
+                            <span style="font-size: 8px; margin-right: 5px;">At Risk</span><span style="font-size: 8px; margin-left: 2px;">Projects</span>
+                        </div>
+                            
+                    </div> 
+                </div>
+                <div id="customersucess">
+                        <div style="color:  #7f86a5; font-size: 14px;">Customer Success Goal</div>
+                        <div id="customerPie">
+
+                        </div>
+                        <div id="tableData">
+                            <table>
+                                <tr>
+                                    <td style=" color: #a8a8a8; font-weight: 900; font-size: 14px;padding-left:0px;">Compliance</td>
+                                    <td style="color: #ff994a;font-weight: 900">45%</td>
+                                </tr>
+                                <tr>
+                                        <td style=" color: #a8a8a8;font-weight: 900; font-size: 14px;padding-left:0">Value</td>
+                                        <td style="color: #67c495;;font-weight: 900">85%</td>
+                                </tr>
+                                <tr>
+                                        <td style=" color: #a8a8a8;font-weight: 900; font-size: 14px;padding-left:0">Performance</td>
+                                        <td style="color: crimson;font-weight: 900">20%</td>
+                                </tr>
+                                <tr>
+                                        <td style=" color: #a8a8a8;font-weight: 900; font-size: 14px;padding-left:0">Quality</td>
+                                        <td style="color: tomato;font-weight: 900">10%</td>
+                                </tr>
+                            </table>
+                        </div>
+                </div>
+                <div id="Risks">
+                    <div>Risks & Issues</div>
+                    <div style="margin-top: 40px;">
+                            <i class="fa fa-warning" style="font-size:20px; color: red;margin-left: 10px;margin-right: 85px;"></i> <span>16</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </body>
+</html>    

@@ -1,0 +1,173 @@
+<app-navbar-new style="font-family: sans-serif;"[ShowMenu]="false"></app-navbar-new>
+<div>
+  <div class="col-lg-6 col-md-6 col-sm-6"
+  style="padding-top:5px;font-size: 18px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 12px; color: #4e5882">
+  <div style="display: inline-block; ">
+    Data Insights
+  </div>
+</div>
+
+  <div>
+    <div class="row" style="padding:0px">
+      <div class="col-lg-1" style="text-align:right;margin-top: 10px;">
+      </div>
+      <div class="col-lg-8" style="padding-left:0px;text-align:left">
+        <app-project-selector (onChange)="project_onChange($event)"></app-project-selector>
+      </div>
+    </div>
+
+    <mat-tab-group style="padding:2px;background-color:white">
+      <mat-tab label="Upload Data">
+        <div style="background-color: white;padding-left:15px">
+          <div class="row">
+            <div class="col col-lg-4 col-md-4 col-sm-6">
+              <mat-form-field style="padding-right:5px;" style="width:80%">
+                <mat-select name="ddReportType" [(ngModel)]="selectedReportType" placeholder="Select Data Dump"
+                  (change)="LoadFieldNames()">
+                  <mat-option *ngFor="let r of reportTypes" [value]="r"
+                    [title]="r.datA_DUMP_NAME">{{r.datA_DUMP_NAME}}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-icon *ngIf="IsToggleView" class="link_add" matTooltip="Add New Data Dump"
+                (click)='AddNewDataDump()'>add_circle</mat-icon>
+              <mat-form-field *ngIf="!IsToggleView" style="width:80%">
+                <input matInput name="type" [(ngModel)]="NewDataDump" placeholder="Enter New Data Dump Name" required>
+              </mat-form-field>
+              <mat-icon *ngIf="!IsToggleView" class="link_add" (click)='SaveNewDataDump()'>save_circle</mat-icon>
+              <mat-icon *ngIf="!IsToggleView" class="link_add"
+                (click)='CancelSavingNewDataDump()'>cancel_circle</mat-icon>
+            </div>
+            <div class="col col-lg-4 col-md-4 col-sm-6">
+              <mat-form-field style="width:100%">
+                <mat-select name="ddFilter" [(ngModel)]="dataDumpType" placeholder="select Data Dump Type">
+                  <mat-option *ngFor="let c of ddDataDumpType" [value]="c" [title]="c">{{c}}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col col-lg-7 col-md-7 col-sm-10">
+              <input type="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                #sampleFileUpload class="form-control" name="single" ng2FileSelect style="width:calc(100% - 20px)" />
+            </div>
+            <div class="col col-lg-1 col-md-1 col-sm-2">
+              <button class="btn btn-success" value="Upload" (click)='UploadFile_onClick(sampleFileUpload)'> Upload
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="padding-top:15px">
+          <div class="col col-lg-12 col-md-12 col-sm-12">
+            <ul>
+              <li>Please upload .xlsx files.</li>
+              <li>If you have .xls file plesae save the file as .xlsx file and upload.</li>
+              <li>If there are date columns in the excel, please make sure the dateformat is either 'dd-mmm-yy' or
+                'mm-dd-yy'</li>
+            </ul>
+          </div>
+        </div>
+        <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+      </mat-tab>
+      <mat-tab label="Map Data">
+        <div class="row">
+          <div class="col col-lg-4">
+            <mat-form-field style="padding-right:5px;" style="width:80%">
+              <mat-select name="ddReportType1" [(ngModel)]="selectedReportType" placeholder="Select Data Dump">
+                <mat-option *ngFor="let r of reportTypes" [value]="r"
+                  [title]="r.datA_DUMP_NAME">{{r.datA_DUMP_NAME}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <!-- 
+          Report Type :
+          <span *ngIf="selectedReportType">{{selectedReportType.reporT_TYPE}}</span> -->
+          </div>
+          <div class="col col-lg-4 col-md-4 col-sm-6">
+            <mat-form-field style="width:100%">
+              <mat-select name="ddFilter" [(ngModel)]="selectedReportType.datA_DUMP_TYPE"
+                placeholder="select Data Dump Type">
+                <mat-option *ngFor="let c of ddDataDumpType" [value]="c" [title]="c">{{c}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="col col-lg-4">
+            <button class="btn btn-success" value="Load Details" (click)='LoadTable_onClick()' style="margin:5px"> Load
+              Table </button>
+            <button class="btn btn-success" value="Create" (click)='SaveTable_onClick()'> Save Table </button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="example-container mat-elevation-z8">
+              <!-- <div class="table table-bordered" style="height:400px"> -->
+              <table mat-table [dataSource]="editFileStructure" class="table table-bordered">
+
+                <ng-container matColumnDef="index">
+                  <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</th>
+                  <td mat-cell *matCellDef="let element = index"> {{element + 1}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="fielD_NAME">
+                  <th mat-header-cell *matHeaderCellDef>Field Name</th>
+                  <td mat-cell *matCellDef="let element"> {{element.fielD_NAME}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="fielD_DISPLAY_NAME">
+                  <th mat-header-cell *matHeaderCellDef>Display Name</th>
+                  <td mat-cell *matCellDef="let element">
+                    <input type="text" [(ngModel)]="element.fielD_DISPLAY_NAME" style="width:150px">
+                </ng-container>
+
+                <ng-container matColumnDef="charT_FIELD_NAME">
+                  <th mat-header-cell *matHeaderCellDef>Chart Field Name</th>
+                  <td mat-cell *matCellDef="let element">
+                    <mat-select [(ngModel)]="element.charT_FIELD_NAME" style="min-width: 80px">
+                      <mat-option *ngFor="let option of ddChartFields" value="{{option}}"
+                        [title]="option">{{option}}</mat-option>
+                    </mat-select>
+                    <!-- <input type="text" [(ngModel)]="element.charT_FIELD_NAME" style="width:150px"> -->
+                </ng-container>
+
+                <ng-container matColumnDef="datA_TYPE">
+                  <th mat-header-cell *matHeaderCellDef>Data Type</th>
+                  <td mat-cell *matCellDef="let element">
+                    <mat-select [(ngModel)]="element.datA_TYPE" style="min-width: 80px">
+                      <mat-option *ngFor="let option of ddDataType"
+                        value="{{option.dataType}}">{{option.displayName}}</mat-option>
+                    </mat-select>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="requireD_FIELD">
+                  <th mat-header-cell *matHeaderCellDef class="CheckboxWidth">Required Field</th>
+                  <td mat-cell *matCellDef="let element">
+                    <mat-checkbox [(ngModel)]="element.requireD_FIELD" class="ctrlPadding"></mat-checkbox>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="dB_INCLUDE">
+                  <th mat-header-cell *matHeaderCellDef class="CheckboxWidth">Store in Database</th>
+                  <td mat-cell *matCellDef="let element">
+                    <mat-checkbox [(ngModel)]="element.dB_INCLUDE" class="ctrlPadding"></mat-checkbox>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+      <mat-tab label="Setup Charts" style="height:400px">
+        <app-sqa-management-setup [projId]='projId' [custId]='custId'></app-sqa-management-setup>
+      </mat-tab>
+      <mat-tab label="View Charts">
+        <app-sqa-management-viewcharts [projId]='projId' [custId]='custId'></app-sqa-management-viewcharts>
+      </mat-tab>
+      <mat-tab label="Analysis">
+        <app-compliance-insights [CustId]="custId" [ProjId]="projId"
+          [reporType]="dataDumpType"></app-compliance-insights>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+</div>

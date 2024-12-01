@@ -1,0 +1,10 @@
+<div class="row" >
+    <div style="text-align: right; margin-right: 18px; cursor: pointer;" (click)="closeDialog()">
+      <i style="font-size:24px; margin-left: auto; margin: 10px;" class="fa">&#xf00d;</i>
+    </div>
+    <div *ngIf="graph" style="margin: 25px;">
+       <div [chart]="graph" style="margin-left: auto; margin-right: auto"></div>
+       <!-- <highcharts-chart [Highcharts]="graph" style="margin-left: auto; margin-right: auto" >
+      </highcharts-chart> -->
+    </div>
+ </div>

@@ -1,0 +1,67 @@
+<ng4-loading-spinner> </ng4-loading-spinner>
+<div id="headerSection">
+  <div id="LogoTopLine">
+    <div id="blue1"></div>
+    <div id="red"></div>
+    <div id="blue2"></div>
+  </div>
+  <img id="Gavs-logo" src="assets/images/GAVS_Logo.png">
+</div>
+<div id="container">
+  <div id="Login_Portal">
+    <div id="LoginHeaderSection">
+      <span id="exp">Experience </span>
+      <span id="cus">Customer Success Management</span>
+    </div>
+    <div id="customerLabel">
+      <label style="font-family: sans-serif;font-weight: 650">Customers:</label>
+    </div>
+    <div id="left">
+      <form #loginform="ngForm" (ngSubmit)="SubmitForm(loginform.valid)">
+        <input type="text" name="uname" id="Username" [(ngModel)]="email" class="textBox" placeholder="Username / Email"
+          required="">
+        <input type="password" name="pwd" id="passwd" [(ngModel)]="password" class="textBox" placeholder="Password">
+        <button type="submit" id="LoginButton">Customer Login</button>
+
+      </form>
+
+      <div id="forgotPassword">
+        <a id="forgotLink" [routerLink]="['/forgotpassword']">Forgot your Password?</a>
+      </div>
+    </div>
+
+    <div id="GavsLabelContainer" style="margin-top: -2%;">
+      <label style="font-family: sans-serif;font-weight: 650;color:grey">&nbsp;&nbsp;&nbsp;&nbsp;Employees:</label>
+    </div>
+    <div id="right">
+      <div id="GavsUsers">
+        <label id="changetxt">Click the button below to login</label>
+      </div>
+
+      <!-- <div style="padding-left: 9px;padding-top:5px;">
+        <span style="font-weight: bold; color: grey; font-size: 16px; position: relative;top: 4px;">GAVS </span>
+        <a class="btn" id="ofcImageContainer">
+          <input type="button" id="Office365" (click)='O365_onclick()'>
+        </a>
+      </div> -->
+
+      <div style="padding-left: 9px; padding-top: 8px;">
+        <span style="font-weight: bold; color: grey; font-size: 16px; position: relative;top: 4px;">GAVS / GS Lab </span>
+        <button class="btn" id="googleImageContainer" (click)="GavsSocialSignIn()">
+          <img src="/assets//images/Google.PNG" alt="Google" id="google">
+        </button>
+      </div>
+<!-- 
+      <div style="padding-left: 9px;padding-top: 8px;">
+        <span style="font-weight: bold; color: grey; font-size: 16px; position: relative;top: 4px;">GSLab</span>
+        <button class="btn" id="googleImageContainer" (click)="GsLabSocialSignIn()">
+          <img src="/assets//images/Google.PNG" alt="Google" id="google">
+        </button>
+       
+      </div> -->
+
+
+
+    </div>
+  </div>
+</div>

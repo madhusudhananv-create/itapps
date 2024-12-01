@@ -1,0 +1,306 @@
+<div class="row">
+  <div class="col-sm-4" style="margin: 10px;float: left;">
+    <div style="font-family: calibri;font-weight: bold;font-size: 14px;float:left;width: 60%;">Select Customer Success Survey Period :</div>
+    <mat-form-field style="width: 110px;">
+      <mat-select name='tableMonth' (selectionChange)="ddChange()" [(ngModel)]="selectedQuarter" required placeholder="Choose Quarter">
+        <mat-option value='Q1'>Q1</mat-option>
+        <mat-option value='Q2'>Q2</mat-option>
+        <mat-option value='Q3'>Q3</mat-option>
+        <mat-option value='Q4'>Q4</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <!-- <mat-form-field style="margin-left: 10px">
+    <mat-select name='tableYear' (selectionChange)="getPieData()" [(ngModel)]="selectedYear" required>
+      <mat-option [value]="bb" *ngFor="let bb of ddyear">{{bb}}</mat-option>
+    </mat-select>
+  </mat-form-field> -->
+  </div>
+  <div class="col-sm-2">
+    <div style="font-family: calibri;float: left;font-size: 14px;margin: 15px;;font-weight: 600;">Select Year :</div>
+    <mat-form-field style="margin-left: 10px;width: 60px;">
+      <mat-select name='tableYear' (selectionChange)="getChartData()" [(ngModel)]="selectedYear" required>
+        <mat-option [value]="bb" *ngFor="let bb of ddyear" [title]="bb">{{bb}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div style="font-family: calibri;font-size:14px;float: left;margin: 10px;font-weight: 600;">(Or)</div>
+  <div style="margin: 10px;float: left;">
+    <div class="row">
+      <div style="font-family: calibri;font-size: 14px;font-weight: 600;float: left;">Select the range of Quarter to view the trend</div>
+      <!-- <mat-slider (input)="onInputChange($event)"style="margin: 15px" class="example-margin" [max]="max" [min]="min" [step]="step" thumbLabel
+  [displayWith]="formatLabel"
+     [(ngModel)]="value" [vertical]="vertical">
+  </mat-slider> -->
+      <span style="font-family: calibri;font-weight: 600;font-size: 12px">Q1</span>
+      <mat-slider (input)="onInputChange($event)" style="margin: 5px;" class="example-margin" [max]="max" [min]="min" tickInterval="5"
+        [step]="step" thumbLabel [displayWith]="formatLabel" [(ngModel)]="value" [vertical]="vertical">
+      </mat-slider>
+      <span style="font-family: calibri;font-weight: 600;font-size: 12px">Q4</span>
+    </div>
+  </div>
+  <div style="text-align:center;padding-bottom:2px;float: right;margin-right: 30px;margin-top: 8px;">
+    <button style="height: 28px;background: #fa7973;width: 50px!important;" class="mat-raised-button" (click)="CancelOnClick()">
+      <i style="color: white;margin-top: 2px;" class="material-icons">
+        close
+      </i>
+    </button>
+  </div>
+</div>
+<div class="col-sm-4" style="float:left;height: 400px;">
+  <highcharts-chart *ngIf="chart1 != undefined" [Highcharts]="Highcharts" [options]="chart1" style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);height:400px">
+  </highcharts-chart>
+  <div style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);height:400px;text-align: center;"
+    *ngIf="chart1 == undefined">
+    <div style="font-family: calibri;font-weight: bold;font-size: 15px">{{GetCSATPeriod(selectedQuarter,selectedYear)}}</div>
+    <i style="font-size: 70px;margin-top: 90px;opacity: 0.6;" class="material-icons md-inactive">warning</i>
+    <div style="font-family: calibri;font-weight: normal;font-size: 18px">No Data found for the Quarter </div>
+  </div>
+</div>
+<div class="col-sm-4" style="float: left;height: 400px;">
+  <highcharts-chart *ngIf="trendChartData != undefined" [Highcharts]="Highcharts" [options]="trendChartData" style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+  </highcharts-chart>
+  <div style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);height:400px;text-align: center;"
+    *ngIf="trendChartData == undefined ">
+    <div style="font-family: calibri;font-weight: bold;font-size: 15px">Customer Success Distribution</div>
+    <i style="font-size: 70px;margin-top: 90px;opacity: 0.6;" class="material-icons md-inactive">warning</i>
+    <div style="font-family: calibri;font-weight: normal;font-size: 18px">No Data found for the Quarter </div>
+  </div>
+</div>
+<div class="col-sm-4" style="float: left;height: 400px;">
+  <highcharts-chart *ngIf="trendChartDataNPS != undefined" [Highcharts]="Highcharts" [options]="trendChartDataNPS" style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+  </highcharts-chart>
+  <div style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);height:400px;text-align: center;"
+    *ngIf="trendChartDataNPS == undefined">
+    <div style="font-family: calibri;font-weight: bold;font-size: 15px">NPS Scores Distribution</div>
+    <i style="font-size: 70px;margin-top: 90px;opacity: 0.6;" class="material-icons md-inactive">warning</i>
+    <div style="font-family: calibri;font-weight: normal;font-size: 18px">No Data found for the Quarter </div>
+  </div>
+</div>
+<div *ngIf="heatMapData != undefined" class="col-sm-4" style="float: left;margin-top: 10px">
+  <div style="height: 400px;overflow: scroll;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+    <table border="1" class=" bordered-table bordered_content" style="width:100%;background: white;">
+      <tr>
+        <th style="height: 160px;max-height: 100%;width: 70px;">
+          <div class="divVer">
+            <div class="vertical">Customer Success Score = 5</div>
+          </div>
+        </th>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE == 5 && h.npS_SCORE < 7)">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE== 5 && (h.npS_SCORE == 7||h.npS_SCORE == 8))">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE== 5 && h.npS_SCORE >= 9)">
+              <div class="divClass">
+                <i class="material-icons greenicon">
+                  sentiment_very_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th style="height: 160px;max-height: 100%;width: 70px;">
+          <div class="divVer">
+            <div class="vertical">Customer Success Score = 4</div>
+          </div>
+        </th>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE== 4 && h.npS_SCORE <= 7)">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE== 4 && (h.npS_SCORE == 7||h.npS_SCORE == 8))">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE == 4 && h.npS_SCORE >= 9)">
+              <div class="divClass">
+                <i class="material-icons greenicon">
+                  sentiment_very_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th style="height: 160px;max-height: 100%;width: 70px;">
+          <div class="divVer">
+            <div class="vertical">Customer Success Score = 3</div>
+          </div>
+        </th>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE== 3 && h.npS_SCORE <= 7)">
+              <div class="divClass">
+                <i class="material-icons redicon">
+                  sentiment_very_dissatisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE== 3 && (h.npS_SCORE == 7||h.npS_SCORE == 8))">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE== 3 && h.npS_SCORE >= 9)">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th style="height: 160px;max-height: 100%;width: 70px;">
+          <div class="divVer">
+            <div class="vertical">Customer Success Score &lt;= 2</div>
+          </div>
+        </th>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE <= 2 && h.npS_SCORE <= 7)">
+              <div class="divClass">
+                <i class="material-icons redicon">
+                  sentiment_very_dissatisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE <= 2 && (h.npS_SCORE == 7||h.npS_SCORE == 8))">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:31%">
+          <div *ngFor="let h of heatMapData">
+            <div *ngIf="(h.miN_SCORE <= 2 && h.npS_SCORE >= 9)">
+              <div class="divClass">
+                <i class="material-icons ambericon">
+                  sentiment_satisfied
+                </i>
+              </div>
+              <div class="name">{{GetProjNm(h.projecT_ID)}}</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tfoot>
+        <tr>
+          <td></td>
+          <td style="border-bottom: 4px solid #f44336;font-size: 13px;font-weight: 600">Detractors (NPS:1 to 6)</td>
+          <td style="border-bottom: 4px solid #ffd740;font-size: 13px;font-weight: 600">Passives (NPS:7 & 8)</td>
+          <td style="border-bottom: 4px solid #3c763d ;font-size: 13px;font-weight: 600">Promoters(NPS:9 & 10)</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+<div *ngIf="csatProjWise != undefined" class="col-sm-4" style="float: left;margin-top: 10px">
+  <div style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);overflow: scroll;height: 400px;">
+    <table style="font-family: calibri;margin-top:3px;width: 424px;margin-left: 15px" class="table-bordered">
+      <tr>
+        <th style="width: 100px;text-align:center">Projects</th>
+        <th style="width: 162px;text-align:center">Customer Success Score</th>
+        <th style="text-align:center">Net Promoter Score</th>
+      </tr>
+    </table>
+    <table style="font-family: calibri;margin-left: 15px" class="table-bordered">
+      <tr *ngFor="let m of csatProjWise">
+        <td style="font-weight:600;font-size: 12px;width: 100px;">{{m.proJ_NM}}</td>
+        <td>
+          <highcharts-chart *ngIf="csatProjWise != undefined" [Highcharts]="Highcharts" [options]="m.chartListCSAT">
+          </highcharts-chart>
+        </td>
+        <td>
+          <highcharts-chart *ngIf="csatProjWise != undefined" [Highcharts]="Highcharts" [options]="m.chartListNPS">
+          </highcharts-chart>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+<div class="col-sm-4" style="float: left;height: 400px;margin-top: 12px">
+  <highcharts-chart *ngIf="surveyData != undefined" [Highcharts]="Highcharts" [options]="surveyData" style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+  </highcharts-chart>
+  <div style="display: block;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);height:400px;text-align: center;"
+    *ngIf="surveyData == undefined ">
+    <div style="font-family: calibri;font-weight: bold;font-size: 15px">Customer Success Distribution</div>
+    <i style="font-size: 70px;margin-top: 90px;opacity: 0.6;" class="material-icons md-inactive">warning</i>
+    <div style="font-family: calibri;font-weight: normal;font-size: 18px">No Data found for the Quarter </div>
+  </div>
+</div>
+<!-- <div class="col-sm-4" style="float: left;margin-top: 10px">
+  <div>
+    <table>
+      <tr>
+          <td><div><div class="vertical">Likeliness to recommend to Other</div></div></td>
+  </table>
+  </div>
+</div> -->

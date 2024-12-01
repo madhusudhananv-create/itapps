@@ -1,0 +1,103 @@
+<div style="margin-left: 2%;">
+  <div>
+    <a class="link" style="cursor: pointer; margin-left: 95%; color: grey;" (click)="Cancel_onClick()">
+      <i class="fa fa-times"></i>
+    </a>
+
+    <div class="row">
+      <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+    </div>
+
+    <mat-form-field style="width: 50%;">
+      <mat-select name="ddCustomer" [(ngModel)]="custname" placeholder="Customer" [disabled]="true">
+        <mat-option [value]="custname" [title]="custname">
+          {{custname}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field style="width: 50%;">
+      <mat-select name="ddProject" [(ngModel)]="projname" placeholder="Project" [disabled]="true">
+        <mat-option [value]="projname" [title]="projname">
+          {{projname}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </div>
+  <div>
+    <mat-form-field style="width: 50%;">
+      <mat-select name="ddBUHEAD" [(ngModel)]="result.buheaD_NAME" placeholder="Bussiness Unit Head" [disabled]="true">
+        <mat-option [value]="result.buheaD_NAME" [title]="result.buheaD_NAME">
+          {{result.buheaD_NAME}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field style="width: 50%;">
+      <mat-select name="ddCSM" [(ngModel)]="csM_NAME" placeholder="Customer Success Manager" [disabled]="true">
+        <mat-option [value]="csM_NAME" [title]="csM_NAME">
+          {{csM_NAME}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field style="width: 50%;">
+      <mat-select name="ddAM" [(ngModel)]="result.acnT_MNGR_NAME" placeholder="Account Manager" [disabled]="true">
+        <mat-option [value]="result.acnT_MNGR_NAME" [title]="result.acnT_MNGR_NAME">
+          {{result.acnT_MNGR_NAME}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field style="width: 50%;">
+      <mat-select name="ddpm" [(ngModel)]="result.pjT_MNGR_NAME" placeholder="Project Manager" [disabled]="true">
+        <mat-option [value]="result.pjT_MNGR_NAME" [title]="result.pjT_MNGR_NAME">
+          {{result.pjT_MNGR_NAME}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div>
+    <mat-form-field style="width: 50%;">
+      <mat-select name="ddname" [(ngModel)]="selectedQA" placeholder="Quality Partner">
+        <mat-option [value]="item.emP_ID" *ngFor="let item of QAEmployeeList"
+          [title]="item.frsT_NM">{{item.frsT_NM}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field style="width:50%;">
+      <mat-select name="isoname" [(ngModel)]="selectedIso" placeholder="ISO Standard" multiple (selectionChange)="filterScopes(selectedIso)">
+        <mat-option [value]="item.id" *ngFor="let item of isoStandardList"
+          [title]="item.standarD_NAME">{{item.standarD_NAME}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field style="width:50%;">
+      <mat-select #selectControl name="scopename" [(ngModel)]="selectedScope" (openedChange)="resetFilterValue($event)" placeholder="Certification Scope" multiple>
+        <mat-form-field class="filter-scope" style="width: 100%;">
+          <input matInput #searchInput (keyup)="applyFilterForScope(searchInput.value)" style="text-indent: 10px;" placeholder="Search Certification Scope">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+        <ng-container *ngFor="let s of OverallScopes">
+          <mat-optgroup *ngIf="s.items && s.items.length > 0" [label]="s.standarD_NAME">
+            <mat-option [value]="item.projecT_SCOPE_ID" *ngFor="let item of s.items"
+              [title]="item.scopE_NAME">{{item.scopE_NAME}}</mat-option>
+          </mat-optgroup>
+        </ng-container>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div>
+    <button (click)="SaveDetails()" [disabled]="isLoading" class="btn btn-success">Save</button>
+  </div>
+
+</div>

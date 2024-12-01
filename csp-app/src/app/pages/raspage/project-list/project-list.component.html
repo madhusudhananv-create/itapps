@@ -1,0 +1,27 @@
+<!-- <div class="container"> -->
+<div class="row">
+  <div col="col-lg-6">    
+
+    <span *ngIf="showAddProjectBtn"><button class="btn" [routerLink]="['/ras/addproject']">Add Project</button></span><br>    
+    <br>
+
+    <table class="table table-hover table-bordered">  
+      <!-- <tr *ngFor="let p of projects">
+        <td [id]="p.proJ_ID" class="customer link" (click)="Project_OnClick( p )">{{p.proJ_NM}}</td>
+      </tr> bak-->
+      <tr *ngFor="let p of projects">          
+          <td [id]="p.proJ_ID" class="customer link">         
+            <button (click)="OnProjectEditbtnClick(p)">edit</button> &nbsp;&nbsp;{{p.proJ_NM}}
+          </td>
+      </tr>
+    </table>  
+
+  </div>
+    
+  <div col="col-lg-6">
+    <app-project-details [CustId]="custId" [selectedProject]="selectedProject"></app-project-details>
+  </div>
+  
+</div>
+
+<router-outlet></router-outlet>

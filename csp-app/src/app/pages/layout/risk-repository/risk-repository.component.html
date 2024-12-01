@@ -1,0 +1,105 @@
+<div
+  style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin-bottom: 15px;color: #4e5882;display: inline-block;padding: 5px;">
+  Risk Repository
+
+  <a class="link" (click)="Cancel_onClick()"
+    style="cursor: pointer; color: grey; position: absolute; top: 5%; right: 0%; padding-right: 15%;">
+    <i class="fa fa-times"></i>
+  </a>
+</div>
+
+<div style="font-size: 15px;font-family: 'Roboto', sans-serif; text-align: center; color: grey;">
+  To view the Risks from the Risk Repository that are applicable for your project specific service towers, please use
+  filter by feature.
+</div>
+
+<div>
+  <app-table-filter [data]="riskData" tableName='RISK_REPOSITORY' (onChange)="Filter_onChange($event)"
+    (OnAdd)="showAll($event)"></app-table-filter>
+</div>
+
+<div style="padding:5px;position: relative;">
+  <button class="btn btn-warning" style="cursor: pointer; position: relative; left: 6px;" mat-raised-button
+    [disabled]="isLoading" (click)="AddRisk()">Add Risk</button>
+  <button class="btn btn-primary" style="cursor: pointer; position: relative; left: 20px;" mat-raised-button
+    (click)="clear()" [disabled]="isLoading">Clear</button>
+</div>
+
+<div
+  style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin-bottom: 15px;color: #4e5882;display: inline-block;padding: 5px;">
+  Choose the Applicable risk from the risk repository and click on "Add Risk". Once the selected risks are added,
+  they will appear as drafts in your risk list, allowing you to edit and save them.
+</div>
+
+<div class="row">
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+</div>
+
+<div *ngIf="showTable" #TABLE style="padding:5px; position: relative; top :20px;">
+  <table class="table" mat-table [dataSource]="dataSource" matSort>
+    <ng-container matColumnDef="isSelected">
+      <th mat-header-cell *matHeaderCellDef style="width: 1%;">
+        <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
+          [indeterminate]="selection.hasValue() && !isAllSelected()">
+        </mat-checkbox>
+      </th>
+
+      <td mat-cell *matCellDef="let risk">
+        <div>
+          <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(risk) : null"
+            [checked]="selection.isSelected(risk)">
+          </mat-checkbox>
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="index">
+      <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>S.No</th>
+      <td mat-cell *matCellDef="let risk; let element = index" [style.border-left-color]="risk.rag"
+        [ngClass]="'borderSolid'">
+        {{element + 1}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="serviceTower">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Service Tower</th>
+      <td mat-cell *matCellDef="let risk" [matTooltip]="risk.servicE_TOWER_TITLE">{{risk.servicE_TOWER_TITLE}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="riskDescription">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Risk Description</th>
+      <td mat-cell *matCellDef="let risk" [matTooltip]="risk.description">{{risk.description}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="riskImpact">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Risk Impact</th>
+      <td mat-cell *matCellDef="let risk" [matTooltip]="risk.impact">{{risk.impact}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="riskStrategy">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Risk Treatment Strategy</th>
+      <td mat-cell *matCellDef="let risk" [matTooltip]="risk.risK_TREATMENT_STRATEGY">{{risk.risK_TREATMENT_STRATEGY}}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="threats">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Threats</th>
+      <td mat-cell *matCellDef="let risk" [matTooltip]="risk.threats">{{risk.threats}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="vulnerabilities">
+      <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Vulnerabilities</th>
+      <td mat-cell *matCellDef="let risk" [matTooltip]="risk.vulnerabilities">{{risk.vulnerabilities}}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns" class="mat-elevation-z5"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="mat-elevation-z5"
+      style="margin-bottom: 5px; box-sizing: border-box"></tr>
+
+  </table>
+  <mat-paginator #paginatorRisk [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+
+</div>
+
+<div *ngIf="!showTable" style="font-size: larger;text-align: center;font-weight: 600;">
+  No risk mapped to the Service Tower for this project.
+</div>

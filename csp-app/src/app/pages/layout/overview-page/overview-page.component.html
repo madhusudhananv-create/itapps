@@ -1,0 +1,126 @@
+
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+      <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px" src="assets/images/{{_layoutService.selectedCust}}.png"
+        onerror="this.src ='assets/images/CustomerLogo.png'">
+
+</div>
+</div>
+
+<div class="col-lg-6 col-md-6 col-sm-6"
+      style="font-size: 22px; font-weight: 700;font-family: 'Roboto', sans-serif; margin-left: 30px; color: #4e5882">
+      <div style="font-weight: 700; display: inline-block; ">
+        Overview
+      </div>
+    </div>
+
+
+<div *ngIf="readonlymode" style="min-height:400px;height:100%">
+       
+       
+        <div class="row">
+          <div class="col-lg-12 col-md-12 col-sm-12 header" *ngIf="_access.IsAllowed(14, 3, '', '')">
+            <a class="link" (click)="Edit_onClick()">
+              <i class="fa fa-edit"></i>
+            </a>
+          </div>
+        </div>
+
+
+    <table style="width: 96%; background:white;margin-left: 25px;margin-bottom: 35px;min-height:250px" >
+<tr><td >
+  <div class="col-sm-6 col-md-6 col-lg-6">
+            <h3 style="font-weight: 700;">{{this.ClientNM}}</h3>
+          </div>
+          </td>
+
+          <td >
+ <div class="col-sm-6 col-md-6 col-lg-6">
+            <h3 style="font-weight: 700;">GS LAB | GAVS</h3>
+          </div>
+        </td>
+</tr>
+
+<tr>
+  <td class="topicarea">
+
+    <div class="col-sm-12 col-md-12 col-lg-12">
+            <p style="white-space: pre-wrap;">{{this.ClientDescription}}</p>
+          </div>
+
+          </td>
+
+          <td class="topicarea">
+ <div class="col-sm-12 col-md-12 col-lg-12">
+            <p style="white-space: pre-wrap;">{{this.GavsDescription}}</p>
+          </div>
+
+          </td>
+</tr>
+    </table>
+
+
+</div>
+
+        
+      
+      <div *ngIf="editmode" style="min-height:400px;">
+        <div class="row">
+          <div class="col-lg-12 col-md-12 col-sm-12 header">
+            <a class="link" (click)="Save_onClick(this.clientId, this.ClientRAG, txtClient.value, txtGavs.value)">
+              <i class="fa fa-save"></i>
+            </a>&nbsp;&nbsp;
+            <a class="link" (click)="Cancel_onClick()">
+              <i class="fa fa-times"></i>
+            </a>
+          </div>
+        </div>
+        
+
+        <table style="width: 96%; background:white;margin-left: 25px;margin-bottom: 35px;min-height:250px" >
+<tr><td >
+  <div class="col-sm-6 col-md-6 col-lg-6">
+            <h3>{{this.ClientNM}}</h3>
+          </div>
+          </td>
+
+          <td >
+ <div class="col-sm-6 col-md-6 col-lg-6">
+            <h3>GS LAB | GAVS</h3>
+          </div>
+        </td>
+</tr>
+
+<tr>
+  <td class="topicarea">
+
+    
+
+             <textarea #txtClient class="Edit_textarea" matInput placeholder="Client Description"
+                matTextareaAutosize matAutosizeMinRows="2"   style="height:250px"
+                matAutosizeMaxRows="5">{{this.ClientDescription}}</textarea>
+
+         
+
+          </td>
+
+          <td class="topicarea">
+ 
+
+<textarea #txtGavs class="Edit_textarea" matInput placeholder="GS LAB | GAVS Description"
+                matTextareaAutosize matAutosizeMinRows="2"   style="height:250px"
+                matAutosizeMaxRows="5">{{this.GavsDescription}}</textarea>
+
+
+
+         
+
+          </td>
+</tr>
+    </table>
+        
+      </div>

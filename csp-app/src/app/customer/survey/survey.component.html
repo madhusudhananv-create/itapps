@@ -1,0 +1,171 @@
+<div *ngIf="questions" style="background-color:white;padding:20px">
+  <p style="font-size:20px;" *ngIf="!displayTemp">
+    <img src="assets/images/GAVS_Logo.png" id="Gavs-logo">&nbsp;&nbsp;&nbsp;Customer Success Survey
+  </p>
+  <table class="table" style="width:auto;background-color:white;border:1px solid #0094ff;min-width: 50%;">
+    <tr *ngIf="!isMonthly">
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
+      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
+      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{proj}}</td>
+    </tr>
+
+    <tr *ngIf="isMonthly && pName==''">
+      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
+      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
+    </tr>
+
+    <tr *ngIf="isMonthly && pName!=''">
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
+      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
+      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{pName}}</td>
+
+    </tr>
+    <tr>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Feedback for the period:</td>
+      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{questions.surveY_PERIOD}}</td>
+      <td style="border:1px solid #0095ffbb;padding: 15px 10px 15px 10px;font-weight:bold">Respondent :</td>
+      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{displayname}}</td>
+    </tr>
+  </table>
+
+  <div *ngIf="showCSSFields">
+    <mat-form-field style="width:20%">
+      <input matInput name="meetingDate" [max]="maxDate" [(ngModel)]="meetingDate" [matDatepicker]="picker1"
+        [disabled]="IsCompleted" placeholder="Date of Meeting" required>
+      <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+      <mat-datepicker #picker1></mat-datepicker>
+    </mat-form-field>
+    &nbsp; &nbsp; &nbsp; &nbsp;
+    <mat-checkbox [(ngModel)]="isCSMNotified" [disabled]="IsCompleted" name="checkCSMNotified"
+      (change)="onCheckboxChange($event)">
+      Customer Success Manager / Delivery Partner is aware of the client feedback
+    </mat-checkbox>
+    &nbsp; &nbsp; &nbsp;
+    <a *ngIf="!IsCompleted" class="link" (click)="viewTemplate('CustomerSuccessSurveyQualitativeFeedback')"
+      style="cursor: pointer;">Click here to view the mail template that will be sent to customer</a>
+
+    <div *ngIf="showTemplate">
+      <app-view-template [templateName]="templateName" [templateHeading]="templateHeading"
+        (onChange)="changeEvent($event)"></app-view-template>
+    </div>
+  </div>
+
+  <p>We would like you to rate GS Lab | GAVS on the aspects mentioned below. </p>
+  <table class="table table-bordered" style="width:auto;background-color:white;">
+    <thead>
+      <tr>
+        <th style="width:25%;font-weight:bold;font-size:16px;text-align:center;background-color: #e3f9f9;">Criteria</th>
+        <th style="width:15%;font-weight:bold;font-size:16px;text-align:center;">Provide your Rating</th>
+        <th style="width:60%;font-weight:bold;font-size:16px;text-align:center;">Remarks <br><span
+            style="font-size: x-small;"><span style="color: red;">*</span> Remarks is required if the rating is less
+            than or equal to three stars</span></th>
+      </tr>
+    </thead>
+    <tbody *ngIf="questions_Criteria">
+      <tr *ngFor="let criteria of questions_Criteria;let i = index">
+        <td class="criteria"><span style="color:red">*</span>{{criteria.question}}
+          <br />
+          {{getDetail( criteria.questioN_DETAIL)}}
+        </td>
+        <td class="starRating" nowrap>
+          <app-star-rating [disabled]="IsCompleted" [rating]="criteria.rating" [starCount]="starCount"
+            [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
+        </td>
+        <td style="padding:0px;">
+          <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
+            style="width:100%;height:95px;padding-top:15px" [disabled]="IsCompleted"
+            [class.highlight]="criteria.rating <= 3 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
+        </textarea>
+        </td>
+      </tr>
+    </tbody>
+
+    <tr *ngIf="questions_NPS">
+      <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 16px;" colspan="3"><span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
+        How likely is that you would recommend GS Lab | GAVS to your friend / acquaintance who wishes to avail IT services?</td>
+    </tr>
+    <tr *ngIf="questions_NPS">
+      <td colspan="2" nowrap style="border-top:0px;padding-bottom:0px;border-bottom:0px; width:auto">
+        <a class="pillStart" (click)="Rating_OnClick('0')"
+          [style.background-color]="npsRating == 0 ? '#0073f7':'#69afff'">0</a>
+        <a class="pill" (click)="Rating_OnClick('1')"
+          [style.background-color]="npsRating == 1 ? '#0073f7':'#69afff'">1</a>
+        <a class="pill" (click)="Rating_OnClick('2')"
+          [style.background-color]="npsRating == 2 ? '#0073f7':'#69afff'">2</a>
+        <a class="pill" (click)="Rating_OnClick('3')"
+          [style.background-color]="npsRating == 3 ? '#0073f7':'#69afff'">3</a>
+        <a class="pill" (click)="Rating_OnClick('4')"
+          [style.background-color]="npsRating == 4 ? '#0073f7':'#69afff'">4</a>
+        <a class="pill" (click)="Rating_OnClick('5')"
+          [style.background-color]="npsRating == 5 ? '#0073f7':'#69afff'">5</a>
+        <a class="pill" (click)="Rating_OnClick('6')"
+          [style.background-color]="npsRating == 6 ? '#0073f7':'#69afff'">6</a>
+        <a class="pill" (click)="Rating_OnClick('7')"
+          [style.background-color]="npsRating == 7 ? '#0073f7':'#69afff'">7</a>
+        <a class="pill" (click)="Rating_OnClick('8')"
+          [style.background-color]="npsRating == 8 ? '#0073f7':'#69afff'">8</a>
+        <a class="pill" (click)="Rating_OnClick('9')"
+          [style.background-color]="npsRating == 9 ? '#0073f7':'#69afff'">9</a>
+        <a class="pillEnd" (click)="Rating_OnClick('10')"
+          [style.background-color]="npsRating == 10 ? '#0073f7':'#69afff'">10</a>
+      </td>
+    </tr>
+    <tr *ngIf="questions_NPS">
+      <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 0 8px">Not at all likely
+      </td>
+      <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 0 8px;text-align: right">
+        Extremely likely</td>
+    </tr>
+    <tr *ngIf="questions_NPS && bShowNpsComments">
+      <td colspan="3" style="border-top:0px;border-bottom:0px">{{NpsCommentsTitle}}
+      </td>
+    </tr>
+    <tr *ngIf="questions_NPS && bShowNpsComments">
+      <td colspan="3" style="border-top:0px;padding:0px;">
+        <span *ngIf="warnNps && !IsCompleted" style ="color: red;font-size:small">Please enter improvement areas in text for the project team to act on.</span>
+        <textarea name="txtNPSDesc" style="width:100%;height:75px" [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)"
+          [disabled]="IsCompleted"></textarea>
+      </td>
+    </tr>
+    <br />
+
+    <tr *ngIf="questions_Others[0]">
+      <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[0].question}}</td>
+    </tr>
+    <tr *ngIf="questions_Others[0]">
+      <td colspan="3" style="padding:0px;">
+        <textarea name="txtOthersDesc0" [(ngModel)]="questions_Others[0].ratinG_DESCRIPTION"
+          style="width:100%;height:75px" [disabled]="IsCompleted"></textarea>
+      </td>
+    </tr>
+
+    <tr *ngIf="questions_Others[1]">
+      <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[1].question}}</td>
+    </tr>
+    <tr *ngIf="questions_Others[1]">
+      <td colspan="3" style="padding:0px;">
+        <textarea name="txtOthersDesc1" [(ngModel)]="questions_Others[1].ratinG_DESCRIPTION"
+          style="width:100%;height:75px" [disabled]="IsCompleted"></textarea>
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="3">
+        <span class="red">*</span> Required information.
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">Thank you very much for taking time to complete this survey. Your feedback is valued and very much
+        appreciated!
+      </td>
+    </tr>
+    <tr *ngIf="!IsCompleted">
+      <td style="text-align:center" colspan="3">
+        <button type="button" (click)="SubmitForm()" class="btn btn-primary"
+          [disabled]="bbtnSubmitDisable">Submit</button>
+      </td>
+    </tr>
+  </table>
+</div>

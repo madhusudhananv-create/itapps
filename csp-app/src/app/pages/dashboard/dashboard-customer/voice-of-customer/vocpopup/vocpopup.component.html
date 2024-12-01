@@ -1,0 +1,52 @@
+<div style="padding : 15px; height: 60px; font-size: 17px; font-weight: 600; color: #4E5882; font-family: 'Roboto';">
+  <div style="float: left; vertical-align: middle;">Escalations & Issues</div>
+  <div style="float: right; font-size: 16px; vertical-align: middle;cursor: pointer;" (click)="this.dialogRef.close()">
+      &#10005;
+  </div>
+</div>
+<div style="width: 100%">
+ <table mat-table [dataSource]="dataSource" style="width: 100%; overflow-y: scroll;" class="escalationTable">
+    <ng-container matColumnDef="cusT_NM">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="'accWidth'" > Account</th>
+      <td mat-cell *matCellDef="let element" [ngClass]="'accWidth'"> {{element.cusT_NM}} </td>
+    </ng-container>
+  
+    <ng-container matColumnDef="proJ_NM">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="'projWidth'"> Project </th>
+      <td mat-cell *matCellDef="let element" [ngClass]="'projWidth'"> {{element.proJ_NM}} </td>
+    </ng-container>
+  
+    <ng-container matColumnDef="description">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="'issueWidth'"> Issue Description </th>
+      <td mat-cell *matCellDef="let element" [ngClass]="'issueWidth'"> {{element.description}} </td>
+    </ng-container>
+  
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="'statWidth'" > Status </th>
+      <td mat-cell *matCellDef="let element" [ngClass]="'statWidth'"> {{element.status}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="identifieD_DATE">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="'idenWidth'"> Identified date </th>
+      <td mat-cell *matCellDef="let element" [ngClass]="'idenWidth'"> {{element.identifieD_DATE |date:'dd-MMM-yyyy'}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="identifieD_BY">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="'idenbyWidth'"> Identified By </th>
+      <td mat-cell *matCellDef="let element" [ngClass]="'idenbyWidth'"> {{element.identifieD_BY |date:'dd-MMM-yyyy'}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="targeT_DATE">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="'targetWidth'"> Target date </th>
+      <td mat-cell *matCellDef="let element" [ngClass]="'targetWidth'"> {{element.targeT_DATE |date:'dd-MMM-yyyy'}} </td>
+    </ng-container>
+
+    <!-- <ng-container matColumnDef="isEscalated">
+      <th mat-header-cell *matHeaderCellDef [ngClass]="accWidth"> Is Escalated </th>
+      <td mat-cell *matCellDef="let element" [ngClass]="accWidth"> {{element.isEscalated}} </td>
+    </ng-container> -->
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns" style="background-color: #cccccc; font-size: 15px;"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>  
+</div>

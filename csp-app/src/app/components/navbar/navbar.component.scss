@@ -1,0 +1,118 @@
+.navbar-default {
+   background-color: #fff;
+   box-shadow: 1px 1px 1px #848484;
+       border-color: #f3f4f8;
+       z-index: 1000;
+ }
+ .fa-2x {
+    font-size: 1.2em;
+}
+.navbar-toggle{
+    padding-top: 12px;
+    border: none;
+    background-color: white;
+    height: 40px;
+}
+
+.navbar-default .navbar-nav > .active > a,
+// .navbar-default .navbar-nav > .active > a:hover,
+// .navbar-default .navbar-nav > .active > a:focus
+{
+    background-color: #f8f8f8
+}
+button{
+    background-color: #f8f8f8
+}
+.dropbtn {
+    //background-color: #4CAF50;
+    //color: white;
+    //height:100%;
+    padding: 14px;
+    font-size: 16px;
+    border: none;
+}
+
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {background-color: #ddd}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
+    //background-color: grey;
+}
+
+.navbar-brand{
+    padding: 9px 15px !important;
+}
+ul{
+    padding-top: 0px;
+}
+.gavs_logo {
+  background: url(/assets/images/GAVS_Logo.png) no-repeat 51px 6px;
+width: 200px;
+float: right;
+background-size: 40%;
+height: 35px;
+display: inline-block;
+}
+.fa-user:before {
+    content: "\F007";
+}
+.user_txt {
+  background-color: #fff;
+  color: #000;
+  font-size: 16px;
+  display: inline-flex;
+  font-family: calibri;
+}
+.user_options {
+  width: 34%;
+display: inline-block;
+text-align: center;
+padding: 0px 24px;
+}
+
+.disp_name {
+  padding: 13px 0 0 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.user_img {
+  vertical-align: middle;
+  //  padding-top: 2px;
+}
+.fa_fnt {
+  font-size: 19px;
+}
+.navbar-nav > li > a{
+    padding-top: 15px;
+    padding-bottom: 0px !important;
+}
+.nav > li > a {
+    position: relative;
+    display: block;
+    padding: 15px 10px 0 0;
+}

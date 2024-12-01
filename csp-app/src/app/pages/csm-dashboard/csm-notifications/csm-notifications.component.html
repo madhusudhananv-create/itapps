@@ -1,0 +1,67 @@
+<div class="row">
+    <div class="col-lg-1 col-md-1 col-sm-1">
+        <!-- <app-test></app-test> -->
+    </div>
+    <div class="col-lg-1 col-md-1 col-sm-1" style="margin-left: -50px">
+      <label style=" height: 15px;margin-top:11px;text-align: left;font-size:12px;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Customers</label>
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-2" style="margin-left: -45px">
+     
+  <mat-select multiple style="width: 278px;height: 25px;background: #FFFFFF 0% 0% no-repeat padding-box;border: 0.5px solid #C3C3C3;border-radius: 2px;opacity: 1;" >
+    <!-- <mat-option value="allAccounts">All Accounts</mat-option>
+    <ng-container *ngFor="let cust of _layoutService.custGroup">
+      <mat-option [value]="cust.cusT_ID">{{cust.cusT_NM}}</mat-option>
+     <ng-container *ngFor="let proj of cust.projecT_INFO">
+       <mat-option [value]="proj.proJ_ID" [ngClass]="'one-indent'">{{proj.proJ_NM}}</mat-option>
+     </ng-container> 
+     <ng-container *ngFor="let portfolio of cust.portfoliO_GROUP">
+       <mat-option [value]="portfolio.portfoliO_ID" [ngClass]="'one-indent'">{{portfolio.portfoliO_NM}}</mat-option> 
+       <ng-container *ngFor="let proj of portfolio.projecT_INFO">
+         <mat-option [value]="proj.proJ_ID" [ngClass]="'two-indent'">{{proj.proJ_NM}}</mat-option>
+       </ng-container>
+     </ng-container>
+    </ng-container> -->
+  </mat-select>
+      
+      
+    </div>
+    <div class="col-lg-1 col-md-1 col-sm-1" style="margin-left: 25px">
+      <label style=" height: 15px;margin-top:11px;text-align: left;font-size:12px;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Show Period</label>
+    </div>
+    <div class="col-lg-1 col-md-1 col-sm-1" style="margin-left: -50px">
+      <mat-form-field floatLabel="never" class="no-line" style="width: 100%;margin-top: -15px">
+        <mat-select   style="width: 103px;height: 25px;background: #FFFFFF 0% 0% no-repeat padding-box;border: 0.5px solid #C3C3C3;border-radius: 2px;opacity: 1;">
+          <mat-option value="asToday">As on Today</mat-option>
+          <mat-option value="periods">Periods</mat-option>
+        </mat-select>
+        
+      </mat-form-field>
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-2"  >
+        <button style="width: 75px;height: 25px;background: #7192FF 0% 0% no-repeat padding-box;border-radius: 2px;opacity: 1;font: normal normal medium 12px/15px Proxima Nova;letter-spacing: 0px;color: #FFFFFF;">Apply</button>
+        <button style="margin-left: 10px">Reset</button>
+    </div>
+    <div class="col-lg-4 col-md-4 col-sm-4"   style="margin-top: -15px;">
+        <ng-container>
+            <label class="lblControl">From</label>
+            <mat-form-field floatLabel="never" class="no-line" style="width:106px;margin-left: 15px">
+              <input name="dateStart" class="input" matInput [matDatepicker]="pickerStartDate">
+              <mat-datepicker-toggle class="startdatepickers" matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerStartDate></mat-datepicker>
+            </mat-form-field>
+            <label class="lblControl">To</label>
+            <mat-form-field floatLabel="never" class="no-line" style="width:106px;margin-left: 15px">
+              <input name="dateEnd" class="input" matInput [matDatepicker]="pickerEndDate">
+                <mat-datepicker-toggle class="enddatepicker" matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerEndDate></mat-datepicker>
+            </mat-form-field>
+          </ng-container>
+          
+          <button style="width: 75px;height: 25px;background: #7192FF 0% 0% no-repeat padding-box;border-radius: 2px;opacity: 1;font: normal normal medium 12px/15px Proxima Nova;letter-spacing: 0px;color: #FFFFFF;">Apply</button>
+              <button style="margin-left: 10px">Reset</button>
+          
+            
+    </div>
+    
+    
+  </div>

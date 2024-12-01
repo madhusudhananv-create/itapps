@@ -1,0 +1,145 @@
+<div style="height: 100%; padding: 10px;">
+  <!-- <div class="panel panel-primary">
+      <div style="height: 45px;" class="panel-heading">
+      <div style="float: left; font-size: 15px;">Projects to Start</div>
+      <div style="text-align:center;padding-bottom:2px;float: right;">
+          <button style="height: 28px;background: #fa7973;width: 50px!important;" mat-dialog-close (click)="closeDialog()" >
+            <i style="color: white;margin-bottom: 8px;" class="material-icons">
+              close
+            </i>
+          </button>
+      </div>
+      </div>
+  </div> -->
+  <div class="row tabheader">
+    <div class="col-lg-10 col-md-10 col-sm-10">
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-2 header" style="text-align: right;" >
+
+      <a class="link" (click)="closeDialog()" style="text-align: right; padding-right: 2px;">
+        <i class="fa fa-times"></i>
+      </a>
+    </div>
+  </div>
+
+  <div style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin-bottom: 15px;color: #4e5882">
+    <div class="row" style="display: inline-block; ">
+      Projects to Start
+    </div>
+    
+  </div>
+  <div style="height: auto; overflow-x: auto" *ngIf="ProjectforeCast.projectstart.length >  0">
+    <table class="table" style="font-size:14px">
+      <tr>
+        <th style="text-align:left;">Customer Name</th>
+        <th style="text-align:left;">Project Name</th>
+        <th style="text-align:left;">Start Date</th>
+        <th style="text-align:left;">End Date</th>
+      </tr>
+      <tbody *ngFor="let h of ProjectforeCast.projectstart">
+        <tr>
+          <td style="text-align:left;">{{customerName}}</td>
+          <td style="text-align:left;">{{h.proJ_NM}}</td>
+          <td style="text-align:left;">{{h.starT_DATE| date :'dd-MMM-yyyy'}}</td>
+          <td style="text-align:left;">{{h.enD_DATE| date :'dd-MMM-yyyy'}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="text-align: center; height:  100px;" *ngIf="ProjectforeCast.projectstart.length == 0">
+    <table class="table" style="font-size:14px">
+      <tr>
+        <th style="text-align:left;">Customer Name</th>
+        <th style="text-align:left;">Project Name</th>
+        <th style="text-align:left;">Start Date</th>
+        <th style="text-align:left;">End Date</th>
+      </tr>
+      <tr>
+        <td colspan="4" style="vertical-align: middle;" >  No Data to display</td>
+      </tr>
+     
+    </table>
+   
+  </div>
+  <div style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin-bottom: 15px;color: #4e5882">
+
+    <div  style="display: inline-block; ">
+      Projects to End
+    </div>
+   
+  </div>
+  <div style="height: auto; overflow-x:auto" *ngIf="ProjectforeCast.projectend.length > 0">
+    <table class="table" style="font-size:14px">
+      <tr>
+        <th style="text-align:left;">Customer Name</th>
+        <th style="text-align:left;">Project Name</th>
+        <th style="text-align:left;">Start Date</th>
+        <th style="text-align:left;">End Date</th>
+      </tr>
+      <tbody *ngFor="let h of ProjectforeCast.projectend">
+        <tr>
+          <td style="text-align:left;">{{customerName}}</td>
+          <td style="text-align:left;">{{h.proJ_NM}}</td>
+          <td style="text-align:left;">{{h.starT_DATE| date :'dd-MMM-yyyy'}}</td>
+          <td style="text-align:left;">{{h.enD_DATE| date :'dd-MMM-yyyy'}}</td>
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+  <div style="text-align: center; height:  100px;" *ngIf="ProjectforeCast.projectend.length == 0">
+    <table class="table" style="font-size:14px">
+      <tr>
+        <th style="text-align:left;">Customer Name</th>
+        <th style="text-align:left;">Project Name</th>
+        <th style="text-align:left;">Start Date</th>
+        <th style="text-align:left;">End Date</th>
+      </tr>
+      <tr>
+        <td colspan="4" style="vertical-align: middle;" >  No Data to display</td>
+      </tr>
+    </table>
+  
+  </div>
+
+
+  <div style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin-bottom: 15px;color: #4e5882">
+
+    <div style="display: inline-block; ">
+      Members to be relesed from Project
+    </div>
+    
+  </div>
+  <div style="height: auto; overflow-x: scroll" *ngIf="ProjectforeCast.projresrc.length > 0">
+    <table class="table" style="font-size:14px">
+      <tr>
+        <th style="text-align:left;">Customer Name</th>
+        <th style="text-align:left;">Project Name</th>
+        <th style="text-align:left;">Employee ID</th>
+        <th style="text-align:left;">Employee Name</th>
+      </tr>
+      <tbody *ngFor="let h of ProjectforeCast.projresrc">
+        <tr>
+          <td style="text-align:left;">{{customerName}}</td>
+          <td style="text-align:left;">{{h.proJ_NM}}</td>
+          <td style="text-align:left;">{{h.emP_ID}}</td>
+          <td style="text-align:left;">{{h.emP_NAME}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="text-align: center; height: 100px;" *ngIf="ProjectforeCast.projresrc.length == 0">
+    <table class="table" style="font-size:14px">
+      <tr>
+        <th style="text-align:left;">Customer Name</th>
+        <th style="text-align:left;">Project Name</th>
+        <th style="text-align:left;">Employee ID</th>
+        <th style="text-align:left;">Employee Name</th>
+      </tr>
+      <tr>
+        <td colspan="4" style="vertical-align: middle;">  No Data to display</td>
+      </tr>
+    </table>
+  
+  </div>
+</div>

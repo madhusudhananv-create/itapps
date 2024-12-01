@@ -1,0 +1,622 @@
+<div>
+  <mat-progress-bar *ngIf="!isSubmit" mode="indeterminate"></mat-progress-bar>
+</div>
+<div class="row bg1" (load)="intialize()">
+  <div class="col-lg-12 col-md-12 col-sm-12 bg0">
+    Manage Event/Task
+  </div>
+</div>
+<div class="row bg1">
+  <div class="col-lg-2 col-md-2 col-sm-2">Type :</div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <mat-select class="mat-dropdown-plain" [disabled]="_taskService.selectedTask.isAllDisabled" name="name1"
+      [(ngModel)]="_taskService.selectedTask.tasK_TYPE_ID" placeholder="Select Type"
+      (selectionChange)="ddTaskType_OnChange()" required>
+      <mat-option *ngFor="let item of TaskTypeList" [value]="item.id" [title]="item.title">
+        {{item.title}}
+      </mat-option>
+    </mat-select>
+    <span class="mandatory"> * </span>
+  </div>
+</div>
+<div class="row bg2">
+  <div class="col-lg-2 col-md-2 col-sm-2">Category :</div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <mat-select class="mat-dropdown-plain" name="name1" [(ngModel)]="_taskService.selectedTask.tasK_CATEGORY_ID"
+      (selectionChange)="ddCategory_OnChange()" placeholder="Select Category"
+      [disabled]="_taskService.selectedTask.isAllDisabled" required>
+      <mat-option *ngFor="let item of TaskCategoryList" [value]="item.id" [title]="item.title">
+        {{item.title}}
+      </mat-option>
+    </mat-select>
+    <span class="mandatory"> * </span>
+  </div>
+</div>
+<div class="row bg1">
+  <div class="col-lg-2 col-md-2 col-sm-2 bg1">Description:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10 bg1">
+    <input style="width: 420px;" type="text" maxlength="200" [(ngModel)]="_taskService.selectedTask.description"
+      [disabled]="_taskService.selectedTask.isAllDisabled">
+    <span class="mandatory"> * </span>
+    <span class="mandatory">(Max 200 Characters)</span>
+  </div>
+</div>
+<div class="row bg2">
+  <div class="col-lg-2 col-md-2 col-sm-2 bg2">Requirement Reference:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10 bg2" style="height: auto;">
+    <textarea style="width: 420px;" name="txtReference" placeholder=""
+      [(ngModel)]="_taskService.selectedTask.requiremenT_REFERENCE" [disabled]="_taskService.selectedTask.isAllDisabled"
+      class="desc"></textarea>
+  </div>
+</div>
+<div class="row bg1">
+  <div class="col-lg-2 col-md-2 col-sm-2">Priority:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <mat-select class="mat-dropdown-plain" style="width:100px" name="name1"
+      [(ngModel)]="_taskService.selectedTask.priority" [disabled]="_taskService.selectedTask.isAllDisabled" required>
+      <mat-option *ngFor="let item of priority" [value]="item.value" [title]="item.viewValue">
+        {{item.viewValue}}
+      </mat-option>
+    </mat-select>
+
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
+      *ngIf="!_taskService.selectedTask.seT_RECURRENCE">
+      <mat-label>Sch Start Date</mat-label>
+      <input [min]="eventStartDate" [max]="eventEndDate" matInput [matDatepicker]="picker1"
+        [(ngModel)]="_taskService.selectedTask.scheduleD_START_DATE"
+        [disabled]="_taskService.selectedTask.isAllDisabled   || _taskService.selectedTask.status.toLowerCase() == 're-schedule'"
+        required>
+      <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+      <mat-datepicker #picker1></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
+      *ngIf="!_taskService.selectedTask.seT_RECURRENCE">
+      <mat-label>Due date</mat-label>
+      <input [min]="getMinDate()" [max]="eventEndDate" matInput [matDatepicker]="dtSheduled"
+        [(ngModel)]="_taskService.selectedTask.duE_DATE"
+        [disabled]="_taskService.selectedTask.isAllDisabled   || _taskService.selectedTask.status.toLowerCase() == 're-schedule'"
+        required>
+      <mat-datepicker-toggle matSuffix [for]="dtSheduled"></mat-datepicker-toggle>
+      <mat-datepicker #dtSheduled color="primary"></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
+      *ngIf="_taskService.selectedTask.seT_RECURRENCE">
+      <mat-label>Sch Start Date</mat-label>
+      <input matInput [matDatepicker]="dtpRStartDate" [(ngModel)]="_taskService.selectedTask.recurrence.starT_DATE"
+        [disabled]="_taskService.selectedTask.isAllDisabled   || _taskService.selectedTask.status.toLowerCase() == 're-schedule'"
+        required>
+      <mat-datepicker-toggle matSuffix [for]="dtpRStartDate"></mat-datepicker-toggle>
+      <mat-datepicker #dtpRStartDate></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
+      *ngIf="_taskService.selectedTask.seT_RECURRENCE">
+      <mat-label>End date</mat-label>
+      <input matInput [matDatepicker]="dtpREndDate" [(ngModel)]="_taskService.selectedTask.recurrence.enD_DATE"
+        [disabled]="_taskService.selectedTask.isAllDisabled   || _taskService.selectedTask.status.toLowerCase() == 're-schedule'"
+        required>
+      <mat-datepicker-toggle matSuffix [for]="dtpREndDate"></mat-datepicker-toggle>
+      <mat-datepicker #dtpREndDate></mat-datepicker>
+    </mat-form-field>
+
+
+    <mat-checkbox #chkRec (click)="recurrenceCheck(chkRec.checked)" style="margin:0 10px 0 10px;"
+      [disabled]="_taskService.selectedTask.isAllDisabled" [(ngModel)]="_taskService.selectedTask.seT_RECURRENCE">
+      Recurrence</mat-checkbox>
+  </div>
+</div>
+
+<div class="row bg2">
+  <div class="col-lg-2 col-md-2 col-sm-2">Status:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <mat-select class="mat-dropdown-plain" [(ngModel)]="_taskService.selectedTask.status"
+      [disabled]="_taskService.selectedTask.isAllDisabled" name="name1">
+      <mat-option *ngFor="let item of status" [value]="item.value" (click)="StatusChange(item.value)"
+        [disabled]="getStatusDisabled(item)" [title]="item.viewValue">
+        {{item.viewValue}}
+      </mat-option>
+    </mat-select>
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
+      *ngIf="_taskService.selectedTask.status.toLowerCase() != 're-schedule'">
+      <mat-label> Actual Start date</mat-label>
+      <input matInput [matDatepicker]="picker3" [(ngModel)]="_taskService.selectedTask.actuaL_START_DATE"
+        [disabled]="_taskService.selectedTask.status.toLowerCase() == 're-schedule'">
+      <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
+      <mat-datepicker #picker3 color="primary"></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
+      *ngIf="_taskService.selectedTask.status.toLowerCase() != 're-schedule'">
+      <mat-label> Actual End date</mat-label>
+      <input [min]="getActualMinDate()" matInput [matDatepicker]="picker4"
+        [disabled]="_taskService.selectedTask.status.toLowerCase() == 're-schedule'"
+        [(ngModel)]="_taskService.selectedTask.actuaL_END_DATE">
+      <mat-datepicker-toggle matSuffix [for]="picker4"></mat-datepicker-toggle>
+      <mat-datepicker #picker4 color="primary"></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
+      *ngIf="_taskService.selectedTask.status.toLowerCase() == 're-schedule'">
+      <mat-label>Re-Schedule Date</mat-label>
+      <input [min]="eventStartDate" matInput [matDatepicker]="dtRestartSheduled"
+        [(ngModel)]="_taskService.selectedTask.reschedulE_DATE" [disabled]="_taskService.selectedTask.isAllDisabled">
+      <mat-datepicker-toggle matSuffix [for]="dtRestartSheduled"></mat-datepicker-toggle>
+      <mat-datepicker #dtRestartSheduled></mat-datepicker>
+    </mat-form-field>
+  </div>
+  <div class="row bg2" *ngIf="_taskService.selectedTask.status == 'CANCELLED'">
+    <div class="col-lg-2 col-md-2 col-sm-2 bg2">Reason For Cancellation</div>
+    <div class="col-lg-10 col-md-10 col-sm-10 bg2" style="height: auto;">
+      <textarea style="width: 420px;" name="txtReference" placeholder=""
+        [(ngModel)]="_taskService.selectedTask.reasoN_FOR_CANCEL" class="desc" required></textarea><span
+        class="mandatory"> * </span>
+    </div>
+  </div>
+  <div class="row" *ngIf="_taskService.selectedTask.status.toLowerCase() == 're-schedule'">
+    <div class="col-lg-2 col-md-2 col-sm-2 bg2">Reason for Re-schedule:</div>
+    <div class="col-lg-10 col-md-10 col-sm-10 bg2" style="height: auto;">
+      <textarea style="width: 420px;" name="txtReference" placeholder=""
+        [(ngModel)]="_taskService.selectedTask.reschedulE_REASON" [disabled]="_taskService.selectedTask.isAllDisabled"
+        class="desc"></textarea> <span class="mandatory"> * </span>
+      <br />
+
+      <select name="selectRequester" [value]="_taskService.selectedTask.reschedulE_REQUESTER" class="mat-dropdown-plain"
+        [(ngModel)]="_taskService.selectedTask.reschedulE_REQUESTER" placeholder="Select Requester" required>
+        <option value="null" disabled> Select Requester </option>
+        <option value="Appraisee"> Appraisee </option>
+        <option value="Appraiser"> Appraiser </option>
+      </select> <span class="mandatory">* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span>
+
+    </div>
+  </div>
+
+</div>
+<div class="row bg1">
+  <div class="col-lg-2 col-md-2 col-sm-2">Customer and Project:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10 ">
+    <div *ngIf="!showServiceTower" style="width:70%">
+      <app-project-selector [allcust]="allCust" [allproj]="allProj" [skipNonAuditProjects]="true"
+        [disabled]="_taskService.selectedTask.isAllDisabled" [custId]='_taskService.selectedTask.cusT_ID'
+        [custNM]="_taskService.selectedTask.cusT_NM" [projNM]="_taskService.selectedTask.proJ_NM"
+        [projId]='_taskService.selectedTask.proJ_ID' (onChange)="project_onChange($event)">
+      </app-project-selector>
+      <span style="position: absolute;top: 0;right: 305px;" class="mandatory">*</span>
+    </div>
+
+    <div *ngIf="showServiceTower" style="width:70%">
+      <app-project-selector-multiple (onChange)="getCustomerAndProjects($event)" [allcust]="allCust" [allproj]="allProj"
+        [skipNonAuditProjects]="true">
+      </app-project-selector-multiple>
+      <span style="position: absolute;top: 0;right: 320px;" class="mandatory">*</span>
+    </div>
+
+    <a *ngIf="!showServiceTower" class="link" style="cursor: pointer;color: royalblue;"
+      (click)="showMultiSelect()">Click here for Multiple Project Selection</a>
+    <a *ngIf="showServiceTower" class="link" style="cursor: pointer;color: royalblue;"
+      (click)="showSingleSelect()">Cancel</a>
+
+  </div>
+</div>
+
+<div class="row bg2">
+  <div class="col-lg-2 col-md-2 col-sm-2">Owner:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10" *ngIf="!_taskService.selectedTask.isNew">
+    <!-- <input type="text" visible="false" style="width:300px" [(ngModel)]="_taskService.selectedTask.owner" disabled> -->
+    {{ _taskService.selectedTask.ownerName}}
+  </div>
+  <div class="col-lg-10 col-md-10 col-sm-10" *ngIf="_taskService.selectedTask.isNew">
+    <!-- <input type="text" visible="false" style="width:300px" [(ngModel)]="_taskService.selectedTask.owner" disabled> -->
+    {{ _util.AppSettings.displayname}}
+  </div>
+
+</div>
+<div class="row bg1" *ngIf="!_taskService.isAuditTask()">
+  <div class="col-lg-2 col-md-2 col-sm-2">Responsible for Execution:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <div style="width: 70%" *ngIf="!_taskService.selectedTask.isEmpSelVisible">
+      {{ _taskService.selectedTask.empName}} &nbsp;
+      <a *ngIf="_taskService.selectedTask.isOwner " style="cursor:pointer" (click)="changeResponsible()">Change..</a>
+    </div>
+    <div style="width: 70%" *ngIf="_taskService.selectedTask.isEmpSelVisible">
+      <app-employee-search (onChange)="employeeSearch_onChange($event)" [multiSelect]="false"
+        [emP_ID]='_taskService.selectedTask.assigneD_TO' style="width:200px"></app-employee-search>
+    </div>
+  </div>
+</div>
+<div *ngIf="_taskService.selectedTask.isTask" class="row bg2" id="divevent">
+  <div class="col-lg-2 col-md-2 col-sm-2">Event :</div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <div style="width: 30%;">
+      <mat-select class="mat-dropdown-plain" name="name1" [(ngModel)]="_taskService.selectedTask.parenT_EVENT_ID"
+        [disabled]="_taskService.selectedTask.isAllDisabled" (selectionChange)="eventChange()"
+        style="width:100% !important" required>
+        <mat-option *ngFor="let item of _taskService.EventList" [value]="item.id">
+          <span>{{ item.description }}</span> (
+          <span>{{ item.scheduleD_START_DATE | date:'shortDate' }}</span> -
+          <span>{{ item.duE_DATE | date:'shortDate' }}</span> )
+        </mat-option>
+      </mat-select>
+    </div>
+  </div>
+</div>
+
+<div class="row bg1">
+  <div class="col-lg-2 col-md-2 col-sm-2">
+    <a style="cursor:pointer" (click)="toggleShow()"> {{_taskService.selectedTask.moreText}}</a>
+  </div>
+</div>
+
+<div *ngIf="_taskService.selectedTask.isMoredetailsShown" class="row container-fluid" id="divshow">
+  <div class="row bg2">
+    <div class="col-lg-12 col-md-12 col-sm-12">
+      <mat-checkbox (click)="reminder_OnClick()" [(ngModel)]="_taskService.selectedTask.seT_REMINDER"
+        [disabled]="_taskService.selectedTask.isAllDisabled">Remind/Notify me</mat-checkbox>
+    </div>
+  </div>
+
+  <div class="row bg1" *ngIf="_taskService.selectedTask.isTask">
+    <div class="col-lg-2 col-md-2 col-sm-2">Scheduled Duration:</div>
+    <div class="col-lg-10 col-md-10 col-sm-10">
+      <input matInput type="number" [(ngModel)]="_taskService.selectedTask.scheduleD_DURATION"
+        class="example-right-align" style="width:80px;background-color:white;border: 1px solid #d2cdcd;"
+        [disabled]="_taskService.selectedTask.isAllDisabled">
+    </div>
+  </div>
+  <div class="row bg2" *ngIf="_taskService.selectedTask.isTask">
+    <div class="col-lg-2 col-md-2 col-sm-2"> Actual Hours Spent:</div>
+    <div class="col-lg-10 col-md-10 col-sm-10">
+      <input matInput type="number" class="example-right-align" [(ngModel)]="_taskService.selectedTask.actuaL_DURATION"
+        style="width:80px;background-color:white;border: 1px solid #d2cdcd;"
+        [disabled]="_taskService.selectedTask.isAllDisabled">
+    </div>
+  </div>
+  <!-- <div class="row bg2">
+  <div class="col-lg-2 col-md-2 col-sm-2">Requirement Reference:</div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <input style="width: 300px;" type="text" [(ngModel)]="_taskService.selectedTask.description">
+  </div>
+</div> -->
+
+  <!-- style="visibility: hidden" -->
+  <div class="row bg1" style="visibility: hidden">
+    <!-- <div class="col-lg-2 col-md-2 col-sm-2">
+
+    <mat-checkbox [(ngModel)]="_taskService.selectedTask.seT_RECURRENCE">Recurrence</mat-checkbox>
+  </div>
+  <div class="col-lg-10 col-md-10 col-sm-10">
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;">
+      <mat-label>Start date</mat-label>
+      <input matInput [matDatepicker]="dtpRStartDate" [(ngModel)]="_taskService.selectedTask.recurrence.starT_DATE">
+      <mat-datepicker-toggle matSuffix [for]="dtpRStartDate"></mat-datepicker-toggle>
+      <mat-datepicker #dtpRStartDate></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;">
+      <mat-label>End date</mat-label>
+      <input matInput [matDatepicker]="dtpREndDate" [(ngModel)]="_taskService.selectedTask.recurrence.enD_DATE">
+      <mat-datepicker-toggle matSuffix [for]="dtpREndDate"></mat-datepicker-toggle>
+      <mat-datepicker #dtpREndDate></mat-datepicker>
+    </mat-form-field>
+  </div> -->
+  </div>
+
+  <!-- frequency -->
+
+  <mat-radio-group *ngIf="_taskService.selectedTask.seT_RECURRENCE"
+    [(ngModel)]="_taskService.selectedTask.recurrence.frequency" (onChange)="ChangeFrequency()">
+    <div style="margin:5px">
+      <div class="row bg0">
+        <div class="col-lg-12 col-md-12 col-sm-12">Recurrence</div>
+      </div>
+      <div class="row bg1">
+        <div class="col-lg-2 col-md-2 col-sm-2">
+          <mat-radio-button value="Daily">Daily</mat-radio-button>
+        </div>
+        <div class="col-lg-10 col-md-10 col-sm-10">
+          <mat-checkbox style="padding:5px;" [disabled]="IsDisabled('Daily')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.dailY_IS_MONDAY" value="Monday">Monday </mat-checkbox>
+          <mat-checkbox style="padding:5px;" [disabled]="IsDisabled('Daily')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.dailY_IS_TUESDAY" value="Tuesday">Tuesday</mat-checkbox>
+          <mat-checkbox style="padding:5px;" [disabled]="IsDisabled('Daily')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.dailY_IS_WEDNESDAY" value="Wednesday">Wednesday
+          </mat-checkbox>
+          <mat-checkbox style="padding:5px;" [disabled]="IsDisabled('Daily')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.dailY_IS_THURSDAY" value="Thursday">Thursday
+          </mat-checkbox>
+          <mat-checkbox style="padding:5px;" [disabled]="IsDisabled('Daily')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.dailY_IS_FRIDAY" value="Friday">Friday </mat-checkbox>
+          <mat-checkbox style="padding:5px;" [disabled]="IsDisabled('Daily')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.dailY_IS_SATURDAY" value="Saturday">Saturday
+          </mat-checkbox>
+          <mat-checkbox style="padding:5px;" [disabled]="IsDisabled('Daily')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.dailY_IS_SUNDAR" value="Sunday">Sunday</mat-checkbox>
+        </div>
+      </div>
+      <div class="row bg2">
+        <div class="col-lg-2 col-md-2 col-sm-2">
+          <mat-radio-button value="Weekly">Weekly</mat-radio-button>
+        </div>
+        <div class="col-lg-10 col-md-10 col-sm-10">
+          <mat-radio-group [(ngModel)]="_taskService.selectedTask.recurrence.weeklY_SELECTED_DAY">
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Weekly')" value="Monday">Monday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Weekly')" value="Tuesday">Tuesday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Weekly')" value="Wednesday">Wednesday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Weekly')" value="Thursday">Thursday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Weekly')" value="Friday">Friday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Weekly')" value="Saturday">Saturday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Weekly')" value="Sunday">Sunday
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+      </div>
+      <div class="row bg1">
+        <div class="col-lg-2 col-md-2 col-sm-2">
+          <mat-radio-button value="Fortnightly">Fortnightly</mat-radio-button>
+          <p>(Once every two weeks)</p>
+        </div>
+        <div class="col-lg-10 col-md-10 col-sm-10">
+          <mat-radio-group [(ngModel)]="_taskService.selectedTask.recurrence.fortnightlY_SELECTED_DAY">
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Fortnightly')" value="Monday">Monday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Fortnightly')" value="Tuesday">Tuesday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Fortnightly')" value="Wednesday">Wednesday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Fortnightly')" value="Thursday">Thursday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Fortnightly')" value="Friday">Friday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Fortnightly')" value="Saturday">Saturday
+            </mat-radio-button>
+            <mat-radio-button style="padding:5px;" [disabled]="IsDisabled('Fortnightly')" value="Sunday">Sunday
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+      </div>
+      <div class="row bg2">
+        <div class="col-lg-2 col-md-2 col-sm-2">
+          <mat-radio-button value="Monthly">Monthly</mat-radio-button>
+        </div>
+        <div class="col-lg-10 col-md-10 col-sm-10">
+          <!-- <mat-radio-button style="padding:5px;" (change)="onChangeBrand2('monthly')" [disabled]="disableMonthly" value="The">The </mat-radio-button> -->
+          The
+          <!-- <mat-radio-group> -->
+          <mat-select [disabled]="IsDisabled('Monthly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.monthlY_SKIP_DAYS" class="mat-dropdown-plain"
+            style="padding:5px;">
+            <mat-option *ngFor="let item of Weeks" [disabled]="IsDisabled('Monthly')" [value]="item.value"
+              [title]="item.viewValue">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <mat-select [disabled]="IsDisabled('Monthly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.monthlY_SELECTED_DAY" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Week Day">
+            <mat-option *ngFor="let item of WeekDays" [disabled]="IsDisabled('Monthly')" [value]="item.value"
+              [title]="item.viewValue">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <!-- </mat-radio-group> -->
+        </div>
+      </div>
+      <div class="row bg1">
+        <div class="col-lg-2 col-md-2 col-sm-2">
+          <mat-radio-button value="Quarterly">Quarterly</mat-radio-button>
+        </div>
+        <div class="col-lg-10 col-md-10 col-sm-10">
+          <!-- <mat-radio-button style="padding:5px;" (change)="onChangeBrand5('Quarterly')" [disabled]="disableQuarterly" value="The">The </mat-radio-button> -->
+          <!-- <mat-radio-group> -->
+          The
+          <mat-select [disabled]="IsDisabled('Quarterly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.quarterlY_SKIP_DAYS" class="mat-dropdown-plain"
+            style="padding:5px;">
+            <mat-option *ngFor="let item of Weeks" [disabled]="IsDisabled('Quarterly')" [value]="item.value"
+              [title]="item.viewValue">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <mat-select [disabled]="IsDisabled('Quarterly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.quarterlY_SELECTED_DAY" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Week Day">
+            <mat-option *ngFor="let item of WeekDays" [disabled]="IsDisabled('Quarterly')" [value]="item.value"
+              [title]="item.viewValue">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <!-- </mat-radio-group> -->
+        </div>
+      </div>
+      <div class="row bg2">
+        <div class="col-lg-2 col-md-2 col-sm-2">
+          <mat-radio-button value="HalfYearly">Half Yearly</mat-radio-button>
+        </div>
+        <div class="col-lg-10 col-md-10 col-sm-10">
+          The
+          <mat-select [disabled]="IsDisabled('HalfYearly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.biannuaL_FIRST_SKIP_DAYS" class="mat-dropdown-plain"
+            style="padding:5px;">
+            <mat-option *ngFor="let item of Weeks" [value]="item.value">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <mat-select [disabled]="IsDisabled('HalfYearly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.biannuaL_FIRST_SELECTED_DAY" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Week Day">
+            <mat-option *ngFor="let item of WeekDays" [value]="item.value">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <!-- <mat-select [disabled]="IsDisabled('HalfYearly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.biannuaL_FIRST_SELECTED_MONTH" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Month">
+            <mat-option *ngFor="let item of Months" [value]="item.value">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <br>
+          The
+          <mat-select [disabled]="IsDisabled('HalfYearly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.biannuaL_SECOND_SKIP_DAYS" class="mat-dropdown-plain"
+            style="padding:5px;">
+            <mat-option *ngFor="let item of Weeks" [value]="item.value">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <mat-select [disabled]="IsDisabled('HalfYearly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.biannuaL_SECOND_SELECTED_DAY" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Week Day">
+            <mat-option *ngFor="let item of WeekDays" [value]="item.value">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <mat-select [disabled]="IsDisabled('HalfYearly')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.biannuaL_SECOND_SELECTED_MONTH" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Month">
+            <mat-option *ngFor="let item of Months" [value]="item.value">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select> -->
+        </div>
+      </div>
+
+      <div class="row bg2">
+        <div class="col-lg-2 col-md-2 col-sm-2">
+          <mat-radio-button value="Annual">Annual</mat-radio-button>
+        </div>
+        <div class="col-lg-10 col-md-10 col-sm-10">
+          The
+          <mat-select [disabled]="IsDisabled('Annual')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.annuaL_SKIP_DAYS" class="mat-dropdown-plain"
+            style="padding:5px;">
+            <mat-option *ngFor="let item of Weeks" [value]="item.value" [title]="item.viewValue">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <mat-select [disabled]="IsDisabled('Annual')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.annuaL_SELECTED_DAY" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Week Day">
+            <mat-option *ngFor="let item of WeekDays" [value]="item.value" [title]="item.viewValue">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select>
+          <!-- <mat-select [disabled]="IsDisabled('Annual')"
+            [(ngModel)]="_taskService.selectedTask.recurrence.annuaL_SELECTED_MONTH" class="mat-dropdown-plain"
+            style="padding:5px;" placeholder="Month">
+            <mat-option *ngFor="let item of Months" [value]="item.value" [title]="item.viewValue">
+              {{item.viewValue}}
+            </mat-option>
+          </mat-select> -->
+        </div>
+      </div>
+    </div>
+  </mat-radio-group>
+
+  <div class="row bg1"
+    *ngIf="_taskService.selectedTask.isAudit && _taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      Service Tower:
+    </div>
+    <div class="col-lg-10 col-md-10 col-sm-10">
+      <div style="width:70%">
+        <mat-select class="mat-dropdown-plain" [(ngModel)]="_taskService.auditSchedule.servicE_AREA_ID"
+          [disabled]="_taskService.selectedTask.isAllDisabled" placeholder="Service Tower" multiple
+          style="width:100% !important">
+          <mat-option *ngFor="let list of _taskService.serviceAreaProjectMappingList" [value]="list.id"
+            [title]="GetServiceAreaTitle(list.id)">
+            {{GetServiceAreaTitle(list.id)}}</mat-option>
+        </mat-select>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="row bg1" *ngIf="_taskService.selectedTask.isAudit">
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      Scheduled date and time:
+    </div>
+    <div class="col-lg-10 col-md-10 col-sm-10">
+      <mat-form-field style="width:100px;padding-right:10px">
+        <input matInput [matDatepicker]="pickerAuditDate" name="dtAuditDate" [(ngModel)]='_taskService.selectedTask.scheduleD_START_DATE'
+          placeholder="Audit Date" required>
+        <mat-datepicker-toggle matSuffix [for]="pickerAuditDate"></mat-datepicker-toggle>
+        <mat-datepicker #pickerAuditDate></mat-datepicker>
+      </mat-form-field>
+      <mat-select class="mat-dropdown-plain" [(ngModel)]='dthours' placeholder="HH" style="width:60px !important">
+        <mat-option *ngFor="let h of hours" [value]="h">
+          {{h}}
+        </mat-option>
+      </mat-select>
+      <mat-select class="mat-dropdown-plain" [(ngModel)]='dtminutes' placeholder="MM" style="width:60px !important">
+        <mat-option *ngFor="let m of minutes" [value]="m">
+          {{m}}
+        </mat-option>
+      </mat-select>
+      <mat-select class="mat-dropdown-plain" [(ngModel)]='dtampm' placeholder="AM/PM" style="width:90px !important">
+        <mat-option value="AM">AM</mat-option>
+        <mat-option value="PM">PM</mat-option>
+      </mat-select>
+    </div>
+  </div> -->
+
+  <div class="row bg2"
+    *ngIf="_taskService.selectedTask.isAudit && _taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      Appraiser & Appraisees:
+    </div>
+    <div>
+      <div class="col-lg-10 col-md-10 col-sm-10">
+        <div style="width:70%">
+          <mat-select class="mat-dropdown-plain" [(ngModel)]='_taskService.auditSchedule.auditoR_EMP_ID'
+            placeholder="Select Appraiser" [disabled]="_taskService.selectedTask.isAllDisabled">
+            <mat-option *ngFor="let emp of Auditors" [value]="emp.emP_ID" [title]="emp.frsT_NM">
+              {{emp.frsT_NM}}
+            </mat-option>
+          </mat-select>
+          <mat-select class="mat-dropdown-plain" [(ngModel)]='_taskService.auditSchedule.auditeE_EMP_ID' multiple
+            placeholder="Select Appraisee" [disabled]="_taskService.selectedTask.isAllDisabled">
+            <mat-option *ngFor="let emp of Auditees" [value]="emp.emP_ID" [title]="emp.frsT_NM">
+              {{emp.frsT_NM}}
+              <b>({{emp.emP_CSP_ROLE}})</b>
+            </mat-option>
+          </mat-select>
+          <span class="mandatory">*</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row bg1" *ngIf="_taskService.selectedTask.isAudit && _taskService.selectedTask.tasK_TYPE_ID==2">
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      Comments:
+    </div>
+    <div class="col-lg-10 col-md-10 col-sm-10" style="text-align: center; width: 70%">
+      <textarea [disabled]="_taskService.selectedTask.isAllDisabled" [(ngModel)]='_taskService.auditSchedule.comments'
+        placeholder="Comments" style="height:75px;width:100%"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="row" *ngIf="_taskService.selectedTask != null">
+  <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: center">
+    <button *ngIf="_taskService.selectedTask.iS_DRAFT || _taskService.selectedTask.isNew" type="button"
+      (click)="SaveRow_onClick(true)" [disabled]="isTaskSubmissionDisabled() || !isSubmit" class="btn btn-primary"
+      style="margin-right: 5px;">Save as Draft</button>
+    <button type="button" (click)="SaveRow_onClick(false)" [disabled]="isTaskSubmissionDisabled() || !isSubmit"
+      class="btn btn-primary" style="margin-right: 5px;">Submit</button>
+    <button class="btn btn-primary" style="margin:5px" [disabled]="!isSubmit" (click)="Cancel_onClick()">Cancel</button>
+  </div>
+
+  <div class="row">
+    <div style="font-family: calibri;width: 50%;float: left;margin-top: 14px;"><b>Note:</b>
+      <br> <b>Save As Draft :</b> Use this option to partially save the data (Data will not be considered for audit
+      purpose).
+      <br> <b>Submit :</b> Use this option to submit the data.
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,20 @@
+<div class="row">
+  <!-- <div class="col-lg-2">
+    <i style=" font-size: 25px;" class="fa fa-home" [routerLink]="['/dashboard']"></i>
+  </div> -->
+  <div class="col-lg-12 col-md-12 col-sm-12" style="text-align:center;font-size:20px">Application Access Control</div>
+  <!-- <div class="col-lg-2"></div> -->
+</div>
+
+<!-- Body -->
+<mat-tab-group style="padding: 5px;border: 1px solid grey;margin: 5px;height:90%">
+  <mat-tab label="Role Level" *ngIf="_util.IsQuality()">
+    <app-access-control-role></app-access-control-role>
+  </mat-tab>
+  <!-- <mat-tab label="Employee Level">
+    <app-access-control-employee></app-access-control-employee>
+  </mat-tab> -->
+  <mat-tab label="Customer Level" *ngIf="_util.IsQuality()">
+    <app-access-control-customer></app-access-control-customer>
+  </mat-tab>
+</mat-tab-group>

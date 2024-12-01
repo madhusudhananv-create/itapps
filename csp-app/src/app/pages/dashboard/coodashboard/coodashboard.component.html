@@ -1,0 +1,634 @@
+<div class="row mainHeaderRow1" style="position:absolute;top:0px">
+  <div class="col-lg-2">
+   <span class="gavs_logo"></span>
+  </div>
+  <div class="col-lg-10">
+  </div>
+</div>
+
+
+<div class="row mainHeaderRow1" style="position:absolute;top:30px">
+  <div class="col-lg-2">
+   <span>Enterprise Dashboard</span>
+  </div>
+  <div class="col-lg-10">
+  </div>
+</div>
+
+<div class="row mainHeaderRow2">
+  <div class="col-lg-9">
+  <mat-card style="margin-top: 6px;height:10px;padding-left:20px;margin-right:-15px;transition: none !important;box-shadow: none !important;">
+     <mat-card-content>
+       <span class="sectionHeader1">Voice of Customer</span>
+     </mat-card-content>
+  </mat-card>
+  </div>
+  
+  <div class="col-lg-3">
+
+    <table width="30%" border="0" style="float:right">
+          <tr>          
+          <td style="text-align:right">
+          <mat-form-field>
+        <mat-select  #select [(ngModel)]='custId' multiple (selectionChange)="ddCustomer_Onchange()" placeholder = "Customer">
+          <mat-option [value]="-1" (click)="toggleSelection()" #allSelected>All</mat-option>
+          <mat-option *ngFor="let c of Customer" [value]="c.cusT_ID" [title]="c.cusT_NM">
+            {{ c.cusT_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+          </td>
+          <td style="text-align:right">
+
+          <i (click)="showQuarterSettings = !showQuarterSettings" style="font-size:16px;cursor : pointer" >
+            <img src="assets\images\settings (10)@2x.png">
+          </i>
+          </td>
+          </tr>
+          </table>
+
+          <div style="position: absolute;" class="QuarterSettings" *ngIf="showQuarterSettings">
+
+<div style="float: right" (click)="closePopup('QuarterSettings')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+</div>
+
+          <table border="1">
+          <tr>
+            <td></td>
+            <td>Year</td>
+            <td>Quarter</td>
+          </tr>
+          <tr><td>From  </td>
+          
+            <td>
+              <mat-form-field style="margin-left: 10px;width: 60px;">
+      <mat-select name='ftableYear' [(ngModel)]='cYear' >
+        <mat-option [value]="bb" *ngFor="let bb of ddyear" [title]="bb">{{bb}}</mat-option>
+      </mat-select>
+    </mat-form-field>  
+            </td>
+
+          <td>
+      <mat-form-field style="width: 110px;">
+      <mat-select name='tableMonthFrom'  [(ngModel)]='lastQuarter'>
+        <mat-option value='Q1'>Q1</mat-option>
+        <mat-option value='Q2'>Q2</mat-option>
+        <mat-option value='Q3'>Q3</mat-option>
+        <mat-option value='Q4'>Q4</mat-option>
+      </mat-select>
+    </mat-form-field>
+          </td>
+          </tr>
+          <tr>
+            
+            <td>To  </td>
+
+            <td>
+              <mat-form-field style="margin-left: 10px;width: 60px;">
+      <mat-select name='ttableYear' [(ngModel)]='cYear' >
+        <mat-option [value]="bb" *ngFor="let bb of ddyear" [title]="bb">{{bb}}</mat-option>
+      </mat-select>
+    </mat-form-field>  
+            </td>
+            <td>
+            <mat-form-field style="width: 110px;">
+      <mat-select name='tableMonthTo'  [(ngModel)]='currentQuarter' >
+        <mat-option value='Q1'>Q1</mat-option>
+        <mat-option value='Q2'>Q2</mat-option>
+        <mat-option value='Q3'>Q3</mat-option>
+        <mat-option value='Q4'>Q4</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+            </td></tr>
+         
+
+          <tr>
+          <td colspan="3">
+
+            <button class="btn" type="button" name="btnApply" (click)="btnApply()">Apply</button>
+            <button class="btn" type="button" name="btnCancel" (click)="btnCancel()">Cancel</button>
+
+          </td>
+
+          </table>
+
+
+
+</div> 
+
+  </div>
+
+</div>
+
+<div class="row mainHeaderRow2">
+  <div class="col-lg-12">
+      <mat-card style="margin-top: 6px;height:160px;margin-left:-15px;margin-right:-15px;transition: none !important;box-shadow: none !important;">
+          <mat-card-content>
+
+  <div class="col-lg-3" style="background-color :white">  
+    
+
+    <mat-card style="margin-top: 6px;height:150px;margin-left:5px;transition: none !important;box-shadow: none !important;">
+                    <mat-card-content style="text-align:left">
+   <span>Escalations</span>
+                    </mat-card-content>
+    </mat-card>
+  </div>  
+ 
+  <div class="col-lg-5" style="background-color:white;">
+  <span class="sectionHeader1">Net Promoter Score Trend</span>
+        
+
+
+          
+
+
+<div style="position: absolute" class="NPSTrendChart" *ngIf="showNPSTrendChart">
+
+<div style="float: right" (click)="closePopup('NPSTrendChart')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div> 
+
+<highcharts-chart *ngIf="trendChartDataNPS != undefined" [Highcharts]="Highcharts" [options]="trendChartDataNPS" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+
+</highcharts-chart>
+
+</div>
+
+
+<div style="position: absolute" class="NPSDetailsView" *ngIf="showNPSDetails">
+
+
+
+<table width="100%" border="0"  style="margin-top:5px">
+  
+   <tr >
+    <td width="90%"><span class="sectionHeader1">Net Promoter Score Trend</span></td>
+    <td width="10%">
+      <div style="float: right" (click)="closePopup('showNPSDetails')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div> 
+    </td>
+  </tr>   
+  <tr>
+    <td colspan="2">&nbsp;</td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <mat-button-toggle-group appearance="legacy" #group="matButtonToggleGroup" [value]="selectedOption" (change)="onValChange(group.value)"
+    >
+    <mat-button-toggle value="NeedFocus">
+        Need Focus
+    </mat-button-toggle>
+    <mat-button-toggle value="UnderControl">
+        Under Control
+    </mat-button-toggle>
+      </mat-button-toggle-group>
+    </td>
+  </tr>
+
+<tr>
+    <td colspan="2">&nbsp;</td>
+  </tr>
+
+
+</table>
+
+<div *ngIf="bNeedFocus" >  
+
+
+
+<div #TABLE >
+    <table class="table" mat-table #table [dataSource]="dataSource" matSort style="width: 100%" >
+     
+
+      <ng-container matColumnDef="respondant_NAME">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef></th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.respondant_NAME}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="project_NAME">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef></th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.project_NAME}} </td>
+      </ng-container>
+
+
+      
+
+      
+       <ng-container matColumnDef="npS1">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'"   *matCellDef="let listNPSViewDetails">
+           
+          
+          <i (click)="showCSSNPSTooltip = !showCSSNPSTooltip" style="position:relative;cursor:pointer"  >{{listNPSViewDetails.npS1}}</i>
+          
+          
+
+          <div style="position: absolute" class="CSSNPSScorePopup" *ngIf="showCSSNPSTooltip">
+             
+
+              <table *ngFor="let csatnps of getSpecificCSSNPSScores(listNPSViewDetails.id)" border="0" width="100%" height="100%" >
+                  <tr>
+                    <td align="left" width="70%">Overall quality of deliverables / services</td>
+                    <td align="right" width="30%">{{csatnps.qualityScore3}}</td>
+                  </tr>
+                  <tr>
+                    
+                    <td  align="left" width="70%">{{csatnps.cssQualityFeedback3}}</td>
+                    <td width="30%"></td>
+                  </tr>
+
+                   <tr>
+                     <td colspan="2"><hr/></td>    
+                   </tr>       
+
+                  <tr>
+                    <td  align="left" width="70%">Enabling your success</td>
+                    <td  align="right" width="30%">{{csatnps.successScore3}}</td>
+                  </tr>
+                  <tr>
+                  
+                    <td align="left" width="70%">{{csatnps.cssSuccesssFeedback3}}</td>
+                    <td width="30%"></td>
+                  </tr>
+
+                  <tr>
+                     <td colspan="2"><hr/></td>    
+                   </tr> 
+
+                  <tr>
+                    <td align="left" width="70%">Value adds / initiatives directly impacting your success</td>
+                    <td align="right" width="30%">{{csatnps.valueaddScore3}}</td>
+                  </tr>
+                   <tr>
+                    
+                    <td  align="left" width="70%">{{csatnps.cssValueaddFeedback3}}</td>
+                    <td width="30%"></td>
+                  </tr>
+              </table>
+
+          </div>
+
+
+          </td>
+
+          
+
+      </ng-container>
+
+      <ng-container matColumnDef="csS1">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.csS1}} </td>
+      </ng-container>
+
+
+      <ng-container matColumnDef="csS2">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.csS2}} </td>
+      </ng-container>
+
+
+      
+
+      <ng-container matColumnDef="npS2">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.npS2}} </td>
+      </ng-container>
+      
+
+      <ng-container matColumnDef="csS3">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.csS3}} </td>
+      </ng-container>
+     
+
+      <ng-container matColumnDef="npS3">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.npS3}} </td>
+      </ng-container>
+
+      
+
+      <ng-container matColumnDef="csS4">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>CSS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.csS4}} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="npS4">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>NPS</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let listNPSViewDetails">
+          {{listNPSViewDetails.npS4}} </td>
+      </ng-container>
+
+      
+      
+     
+
+  <ng-container matColumnDef="header-row-first-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="2"> 
+      
+    </th>
+  </ng-container>
+
+<ng-container matColumnDef="header-row-second-group" style="text-align:center">
+    <th mat-header-cell *matHeaderCellDef 
+        
+        [attr.colspan]="2"> 
+      Q4 (2018)
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-third-group" style="text-align:center">
+    <th mat-header-cell *matHeaderCellDef 
+        
+        [attr.colspan]="2"> 
+      Q1 (2019) 
+    </th>
+  </ng-container>
+
+
+  <ng-container matColumnDef="header-row-fourth-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="2"> 
+      Q2 (2019)
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row-fifth-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="2"> 
+      Q3 (2019)
+    </th>
+  </ng-container>
+
+
+   <ng-container matColumnDef="header-row0-first-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center">
+        
+      Responder
+    </th>
+  </ng-container>
+
+  <ng-container matColumnDef="header-row0-second-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center">
+        
+      Project
+    </th>
+  </ng-container>
+
+
+  <ng-container matColumnDef="header-row0-third-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="8"> 
+      Customer Success & NPS Score
+    </th>
+  </ng-container>
+
+
+  <ng-container matColumnDef="header-rowCategory-first-group">
+    <th mat-header-cell *matHeaderCellDef 
+        [style.text-align]="center"
+        [attr.colspan]="10"> 
+      Passives to Passives
+    </th>
+  </ng-container>
+
+     <tr mat-header-row *matHeaderRowDef="['header-rowCategory-first-group']"></tr>
+
+      <tr mat-header-row *matHeaderRowDef="['header-row0-first-group', 'header-row0-second-group','header-row0-third-group']"></tr>
+  
+      <tr mat-header-row *matHeaderRowDef="['header-row-first-group', 'header-row-second-group','header-row-third-group','header-row-fourth-group','header-row-fifth-group']"></tr>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+</div>
+
+</div>
+
+
+<div *ngIf="!bNeedFocus" >  
+
+
+
+
+
+
+    
+
+</div>
+
+
+</div>
+
+
+      
+
+
+                   <table width="450px" border="0" height="152px" style="border: 1px solid #DEDEDE;border-collapse: collapse;margin-left:15px;border-radius: 15px !important;" >
+                   <tr style="border-bottom:1px solid #DEDEDE;border-collapse: collapse;">
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;">{{this.currentQuarter}}</td>
+                   <td colspan="6" align="center">{{this.lastQuarter}}</td>
+                   </tr>
+                   <tr>
+                   <td colspan="2" style="border-right:1px solid #DEDEDE;border-collapse: collapse;">&nbsp;</td>
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="Promotors">Promotors({{this.promotors}})</span></td>
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="Passives">Passives({{this.passives}})</span></td>
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="Detractors">Detractors({{this.detractors}})</span></td>
+                   </tr> 
+
+                   <tr>                   
+                   <td><span class="Promotors">Promotors</span></td>
+                   <td style="border-right:1px solid #DEDEDE;border-collapse: collapse;">{{this.pqPromotors}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                   <td align="right" >{{this.Propro}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPropro}}.png">
+                   {{this.perPropro}}</td>
+                   <td align="right" >{{this.Propas}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPropas}}.png">
+                   {{this.perPropas}}</td>
+                   <td align="right" >{{this.Prodet}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperProdet}}.png">
+                   {{this.perProdet}}</td>
+                   </tr> 
+
+                   <tr>                   
+                   <td><span class="Passives">Passives</span></td>
+                   <td style="border-right:1px solid #DEDEDE;border-collapse: collapse;">{{this.pqPassives}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                   <td align="right">{{this.Paspro}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPaspro}}.png">
+                   {{this.perPaspro}}</td>
+                   <td align="right">{{this.Paspas}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPaspas}}.png">
+                   {{this.perPaspas}}</td>
+                   <td align="right">{{this.Pasdet}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPasdet}}.png">
+                   {{this.perPasdet}}</td>
+                   </tr> 
+
+                   <tr>                   
+                   <td><span class="Detractors">Detractors</span></td>
+                   <td style="border-right:1px solid #DEDEDE;border-collapse: collapse;">{{this.pqDetractors}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                   <td align="right">{{this.Detpro}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperDetpro}}.png">
+                   {{this.perDetpro}}</td>
+                   <td align="right">{{this.Detpas}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                    <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperDetpas}}.png">
+                   {{this.perDetpas}}</td>
+                   <td align="right">{{this.Detdet}}</td>
+                   <td align="right" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperDetdet}}.png">
+                   {{this.perDetdet}}</td>
+                   </tr> 
+                                    
+                   </table> 
+
+                   <table width="450px">
+                    <tr>
+                     <td colspan="4" align="right">
+                      <i (click)="showNPSTrendChart = !showNPSTrendChart" class="viewDetails">View Details</i>
+                    </td>
+                    <td colspan="4" align="right">
+                      <i (click)="showNPSDetails = !showNPSDetails" class="viewDetails">View Details</i>
+                    </td>
+                    </tr>
+                    </table>
+                 
+  </div>
+
+  <div class="col-lg-4" style="background-color:white">
+    
+    <table border="0" style="padding-left:10px">
+    <tr><td><span class="ScoreTrend">Customer Success Survey</span></td>
+    <td><span class="ScoreTrend">Net Promoter Score</span></td>
+    </tr>
+    <tr><td><span class="ScoreTrend">No. of Respondants</span></td>
+    <td><span class="ScoreTrend">No. of Respondants</span></td>
+    </tr>
+    <tr><td>
+      
+    <google-chart #chart11 [type]="type1" [data]="data1" [columnNames]="columnNames1" [options]="options1" [width]="width1" [height]="height1">
+    </google-chart>
+
+      </td>    
+     <td>
+    <google-chart #chart2 [type]="type5" [data]="data5" [columnNames]="columnNames5" [options]="options5" [width]="width5" [height]="height5">
+    </google-chart>
+     </td>
+    </tr>
+    </table>
+  </div>
+
+<div class="row mainHeaderRow1">
+  <div class="col-lg-12">
+    <mat-card style="margin-top: 2px;height:380px;background-color:#f5f5f5;border-radius: 9px;">
+                    <mat-card-content>
+   
+<div class="col-lg-4">
+    <mat-card style="margin-top: 6px;height:50px;margin-left:5px;transition: none !important;box-shadow: none !important;background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%);border-right:5px solid #f5f5f5;">
+                    <mat-card-content style="text-align:center">
+   Overall Health
+                    </mat-card-content>
+    </mat-card>
+  </div>
+
+  
+ 
+  <div class="col-lg-4">
+    <mat-card style="margin-top: 6px;height:50px;transition: none !important;box-shadow: none !important;background-color: darkgray;border-right:5px solid #f5f5f5;background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%)">
+                    <mat-card-content style="text-align:center">
+    Accounts Health   
+                    </mat-card-content>
+    </mat-card>
+  </div>
+
+ 
+
+  <div class="col-lg-4">
+    <mat-card style="margin-top: 6px;height:50px;margin-right:5px;transition: none !important;box-shadow: none !important;background-color: darkgray;background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%)">
+                    <mat-card-content style="text-align:center">
+   Projects Health
+    </mat-card-content>
+    </mat-card>
+  </div>
+
+
+<div class="row mainHeaderRow1">
+  <div class="col-lg-12">
+    <mat-card style="margin-top:10px;height:100px;background-color:#f5f5f5;transition: none !important;box-shadow: none !important;">
+                    <mat-card-content>
+                      Service Delivery Health
+                    </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+
+<div class="row mainHeaderRow1">
+  <div class="col-lg-4">
+    <mat-card style="height:200px;background-color:white;margin:10px;border-radius: 9px;">
+                    <mat-card-content>
+                      <span style="font-size: 10px;width: 200px; text-align: center;">Kaizen Board</span>
+                    </mat-card-content>
+    </mat-card>
+  </div>
+
+<div class="col-lg-5">
+    <mat-card style="margin-top:10px;height:200px;background-color:white;margin:10px;border-radius: 9px;">
+                    <mat-card-content>
+          
+          <table>
+          <tr><td>
+          <span class="sectionHeader1">Staffing Summary</span>
+          <google-chart #chart1 [type]="type2" [data]="data2" [columnNames]="columnNames2" [options]="options2" [width]="width2" [height]="height2">
+          </google-chart>
+          </td><td>
+          <div style="font-size: 10px;width: 200px; text-align: center;">Billing Summary</div>
+          <google-chart #chart2 style="margin-left: 9px;  margin-top: 0px;" [type]="type3" [data]="data3" [columnNames]="columnNames3"
+            [options]="options3" [width]="width3" [height]="height3">
+          </google-chart>
+          </td></tr></table>
+                    </mat-card-content>
+    </mat-card>
+  </div>
+
+
+<div class="col-lg-3">
+    <mat-card style="margin-top:10px;height:200px;background-color:white;margin:10px;border-radius: 9px;">
+                    <mat-card-content>
+                      Complaince Status
+                    </mat-card-content>
+    </mat-card>
+  </div>
+
+
+
+
+    
+</div>
+

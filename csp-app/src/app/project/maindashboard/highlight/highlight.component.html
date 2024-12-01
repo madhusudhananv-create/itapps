@@ -1,0 +1,99 @@
+<app-navbar></app-navbar>
+<br/>
+<div class="row">
+  <div class="col-sm-2 col-lg-2">
+    <a class="link">
+      <i style=" font-size: 25px; padding-top: 19px; " class="fa fa-home" [routerLink]="['/newdashboard/custm']"></i>
+    </a>
+  </div>
+  <div class="col-lg-8 col-md-8 col-sm-8">
+    <h3 style="text-align: center;">Notes</h3>
+  </div>
+  <div class="col-lg-2 col-md-2 col-sm-2 header" style="padding-top: 10px;padding-left: 170px;padding-bottom: 59px;">
+    <a class="link" title="Add Notes" (click)="AddRow_onClick()">
+      <i class="fa fa-plus"></i>
+    </a>
+  </div>
+</div>
+
+<div *ngIf="editmode">
+  <div class="row">
+    <div class="card">
+      <div class="card-header">
+        Add Notes
+      </div>
+      <div class="card-body">
+        <form #highlightForm="ngForm" (ngSubmit)="SubmitForm(highlightForm)" class="example-form">
+          <div style="float: right;margin-right: -130px;">
+            <button class="link_button" type="submit">
+              <i class="fa fa-save"></i>
+            </button>
+            <a class="link" (click)="Cancel_onClick()">
+              <i class="fa fa-times"></i>
+            </a>
+          </div>
+          <div class="row">
+            <mat-form-field style="width: 500px;">
+              <textarea name="txtDescription" matInput [(ngModel)]="newHighlight.description" placeholder="Notes Description" required></textarea>
+            </mat-form-field>
+          </div>
+          <div class="row" style="width: 500px;">
+            <mat-form-field>
+              <input name="txtdatepicker" matInput [matDatepicker]="picker" placeholder="KPI Performance period" [(ngModel)]="newHighlight.publisH_DATE"
+                required>
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <button style="color: white;border-radius: 2px;background: #4d8bbf;border: none;" type="submit">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="readonlymode">
+  <mat-table style="border-radius: 3px;overflow: hidden;width: 98%;margin-left:1%;" #table [dataSource]="dataSource" matSort>
+    <ng-container matColumnDef="index">
+      <mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</mat-header-cell>
+      <mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index"> {{element + 1}} </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="category">
+      <mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Category</mat-header-cell>
+      <mat-cell *matCellDef="let h">{{h.category}}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="description">
+      <mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Notes Description</mat-header-cell>
+      <mat-cell *matCellDef="let h"> {{h.description}} </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="publisH_DATE">
+      <mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>KPI performance period</mat-header-cell>
+      <mat-cell *matCellDef="let h"> {{h.publisH_DATE|date:'MMM-yyyy'}} </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="edit">
+      <mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+        <div *ngIf="_util.IsEditable()"></div>
+      </mat-header-cell>
+      <mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+        <a class="link" (click)="EditRow_onClick(element)">
+          <i class="fa fa-edit"></i>
+        </a>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="delete">
+      <mat-header-cell style="font-family: calibri;" [ngClass]="'deleteWidth'" *matHeaderCellDef>
+        <div></div>
+      </mat-header-cell>
+      <mat-cell [ngClass]="'deleteWidth'" *matCellDef="let element">
+        <a class="link" (click)="DeleteRow_onClick(element)">
+          <i class="fa fa-trash"></i>
+        </a>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+  <mat-paginator style="width: 98%;margin-left: 1%;" #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+</div>

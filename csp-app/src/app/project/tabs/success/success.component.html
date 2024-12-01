@@ -1,0 +1,99 @@
+<div *ngIf="readonlymode">
+  <div class="row tabheader">
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:left;vertical-align:middle">
+      <mat-select class="mat-dropdown-plain" #ragSelected placeholder="RAG" [value]="_util.getRAG(input_rag, 'success')" *ngIf="_util.IsEditable()">
+        <mat-option value="green" style="color:green">Green</mat-option>
+        <mat-option value="orange" style="color:orange">Amber</mat-option>
+        <mat-option value="red" style="color:red">Red</mat-option>
+      </mat-select>
+      <a class="iconbutton" (click)="SaveRAG_onClick(ragSelected.value)" *ngIf="_util.IsEditable()">
+        <i class="fa fa-save" style="font-size:15px;"></i>
+      </a>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:right" *ngIf="_access.IsAllowed(4, 2, '', input_projectid)">
+      <a class="maticonbutton" (click)="Edit_onClick()">
+        <mat-icon style="vertical-align: middle">add</mat-icon>
+      </a>
+    </div>
+  </div>
+  <table style="border-radius: 5px;overflow:hidden;width:400px" class="table table-bordered">
+    <thead class="thead-light">
+      <tr>
+        <th style="background: #4d8bbf;color:white!important">Customer Success Surveys</th>
+        <th *ngIf="_access.IsAllowed(4, 4, '', input_projectid)" style="background: #4d8bbf;color:white!important;width:5%">Action</th>
+      </tr>
+    </thead>
+    <tbody style="background: white;" *ngIf="input.length > 0">
+      <tr>
+        <td>
+          <a *ngFor="let report of input" (click)='export(report.reporT_TYPE,report.filE_NAME_SERVER, report.filE_TYPE ,report.filE_EXTENSION)'>
+            <i [class]='getIcon(report.filE_EXTENSION)'></i>
+            {{report.reporT_TYPE}} ({{report.publisH_DATE | date :'dd-MMM-yyyy'}})
+            <br/>
+          </a>
+        </td>
+        <td *ngIf="_access.IsAllowed(4, 4, '', input_projectid)">
+          <a *ngFor="let report of input;let i=index;" (click)='DeleteRow_onClick(report,i)'>
+            <i class="fa fa-trash"></i>
+            <br/>
+          </a>
+        </td>
+      </tr>
+    </tbody>
+    <tbody *ngIf="input.length == 0">
+      <tr>
+        <td>No records found</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div *ngIf="editmode">
+  <form style="background: white;padding-left: 10px;" #successForm="ngForm" (ngSubmit)="SubmitForm(successForm, fileUpload)">
+    <div class="row tabheader">
+      <div class="col-lg-10 col-md-10 col-sm-10">
+      </div>
+      <div class="col-lg-2 col-md-2 col-sm-2 header">
+        <button class="link_button" type="submit">
+          <i class="fa fa-save"></i>
+        </button>
+        <a class="link" (click)="Cancel_onClick()">
+          <i class="fa fa-times"></i>
+        </a>
+      </div>
+    </div>
+    <div>
+      <!-- <div class="row fieldheader">
+        <h3>Description</h3>
+      </div> -->
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name="txtReportType" placeholder="Description" maxlength="225" [(ngModel)]="reportType" matInput required></textarea>
+        </mat-form-field>
+      </div>
+      <!-- <div class="row fieldheader">
+        <h3>Report Date</h3>
+      </div> -->
+      <div class="row">
+
+        <mat-form-field>
+          <input [max]="_util.Today()" name="dtPublish" matInput [matDatepicker]="pickerSuccess" placeholder="Report Date" [(ngModel)]="selectedDate"
+            required>
+          <mat-datepicker-toggle matSuffix [for]="pickerSuccess"></mat-datepicker-toggle>
+          <mat-datepicker #pickerSuccess></mat-datepicker>
+        </mat-form-field>
+
+      </div>
+      <!-- <div class="row fieldheader">
+        <h3>File</h3>
+      </div> -->
+      <div class="row">
+        <!-- <input type="file" #fileUpload class="form-control" name="single" ng2FileSelect style="width:calc(100% - 20px)" [(ngModel)]="fileUpload" required/> -->
+        <input type="file" #fileUpload class="form-control" name="single" ng2FileSelect style="width:calc(100% - 20px)" />
+      </div>
+      <div class="row fieldheader">
+        <button type="submit" class="btn btn-success">Upload</button>
+        <!-- <button value="Upload" (click)='Save_onClick(reportType.value, selectedDate, fileUpload)'> Upload </button> -->
+      </div>
+    </div>
+  </form>
+</div>

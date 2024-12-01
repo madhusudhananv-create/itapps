@@ -1,0 +1,333 @@
+  
+       
+
+
+<div style="position: absolute" class="NPSTrendChart" *ngIf="showNPSTrendChart">
+
+<div style="float: right" (click)="closePopup('NPSTrendChart')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div> 
+
+<highcharts-chart *ngIf="trendChartDataNPS != undefined" [Highcharts]="Highcharts" [options]="trendChartDataNPS" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+</highcharts-chart> 
+
+</div>
+
+
+<div style="position: absolute" class="NPSTrendChart" *ngIf="showCSATTrendChart">
+<div style="float: right" (click)="closePopup('showCSATTrendChart')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div> 
+ <highcharts-chart *ngIf="trendChartData != undefined" [Highcharts]="Highcharts" [options]="trendChartData">
+</highcharts-chart>
+</div>
+
+
+<div style="position: absolute" class="NPSDetailsView" *ngIf="showNPSDetails">
+
+
+
+<table width="100%" border="0"  style="margin-top:20px">
+  
+   <tr >
+    <td width="15%"><span class="sectionHeader1">Net Promoter Score Trend</span></td>
+    <td width="75%"></td>
+    <td width="10%">
+      <div style="float: right" (click)="closePopup('showNPSDetails')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div> 
+    </td>
+  </tr>   
+  <tr>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+  <tr>
+    <td colspan="3">
+      <mat-button-toggle-group appearance="legacy" #group="matButtonToggleGroup" [value]="selectedOption" (change)="onValChange(group.value)"
+    >
+    <mat-button-toggle value="NeedFocus">
+        Need Focus
+    </mat-button-toggle>
+    <mat-button-toggle value="UnderControl">
+        Under Control
+    </mat-button-toggle>
+      </mat-button-toggle-group>
+    </td>
+  </tr>
+
+<tr>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+
+
+<tr>
+    <td style="vertical-align:top; border-bottom: 1px solid lightgray;border-top: 1px solid lightgray ; border-left: 1px solid lightgray ;border-right: 1px solid lightgray;">
+
+    <table border="0">
+    <tr><td><span class="sectionHeader2">Customer Success Survey</span></td></tr>
+    <tr><td>
+      
+    <google-chart #vwchart [type]="vwtype1" [data]="vwdata1" [columnNames]="vwcolumnNames1" [options]="vwoptions1" [width]="vwwidth1" [height]="vwheight1">
+    </google-chart>
+      
+      </td></tr>
+    </table>
+    <table border="0" class="ScoreTrend">
+      <tr>
+        <th colspan="4" style="text-align:center"><span class="sectionHeader2">Net Promoter Score</span></th>
+      <tr>
+        <th></th>
+        <th></th>
+        <th style="text-align:left">Score</th>
+        <th style="text-align:left">No. of Projects</th>
+      </tr>
+      <tr *ngFor="let nps of getNPSScores('')" >
+        <td><span class="VerticalText">Detractors</span></td>
+        <td class="detractorsBg"></td>
+        <td style="text-align:center;border-bottom: 1px solid lightgray">{{nps.npsScore}}</td>
+        <td style="text-align:center;border-bottom: 1px solid lightgray">
+          <u (click)="getAllProjectsByNPSScore(nps.npsScore)" style="cursor:pointer">
+          {{nps.projectsCount}}
+          </u>
+          </td>
+      </tr>
+    </table>
+    
+    <table border="1">
+      <tr *ngFor="let nps of getNPSScores('Passives')" >
+        <td rowSpan="10">Promoter</td>
+        <td class="passivesBg"></td>
+        <td style="text-align:center;border-bottom: 1px solid lightgray">{{nps.npsScore}}</td>
+        <td style="text-align:center;border-bottom: 1px solid lightgray">
+          <u (click)="getAllProjectsByNPSScore(nps.npsScore)" style="cursor:pointer">
+          {{nps.projectsCount}}
+          </u>
+          </td>
+      </tr>
+    </table>
+
+    <table>
+      <tr *ngFor="let nps of getNPSScores('Promoters')" >
+        <td></td>
+        <td class="promotersBg"></td>
+        <td style="text-align:center;border-bottom: 1px solid lightgray">{{nps.npsScore}}</td>
+        <td style="text-align:center;border-bottom: 1px solid lightgray">
+          <u (click)="getAllProjectsByNPSScore(nps.npsScore)" style="cursor:pointer">
+          {{nps.projectsCount}}
+          </u>
+          </td>
+      </tr>
+    </table>
+
+    </td>
+    
+    
+    <td colspan="2" style="vertical-align:top; border-bottom: 1px solid lightgray;border-top: 1px solid lightgray ; border-left: 1px solid lightgray ;border-right: 1px solid lightgray;">
+
+       <div *ngIf="bNetPromoterScore" style="border-left: 1px solid lightgray ;border-right: 1px solid lightgray;">
+         <app-cssnpsdetails-table [dataSource]="AllProjectsByNPSScore" [Category]="AllProjectsByNPSScoreCategory" [isDataAvailable]="AllProjectsByNPSScoreisDataAvailable" [NoData]="AllProjectsByNPSScoreNoData"></app-cssnpsdetails-table>
+       </div>
+
+      <div *ngIf="!bNetPromoterScore" style="border-left: 1px solid lightgray ;border-right: 1px solid lightgray;">
+        
+        <div *ngIf="bNeedFocus" >  
+        <app-cssnpsdetails-table [dataSource]="ProdetDataSource" [Category]="ProdetCategory" [isDataAvailable]="ProdetisDataAvailable" [NoData]="ProdetNoData"></app-cssnpsdetails-table>
+        <app-cssnpsdetails-table [dataSource]="PasdetDataSource" [Category]="PasdetCategory" [isDataAvailable]="PasdetisDataAvailable" [NoData]="PasdetNoData"></app-cssnpsdetails-table>
+        </div>
+
+
+        <div *ngIf="!bNeedFocus" style="border-left: 1px solid lightgray ;border-right: 1px solid lightgray;">
+        <app-cssnpsdetails-table [dataSource]="PasproDataSource" [Category]="PasproCategory" [isDataAvailable]="PasproisDataAvailable" [NoData]="PasproNoData"></app-cssnpsdetails-table>
+        <app-cssnpsdetails-table [dataSource]="DetproDataSource" [Category]="DetproCategory" [isDataAvailable]="DetproisDataAvailable" [NoData]="DetproNoData"></app-cssnpsdetails-table>
+        <app-cssnpsdetails-table [dataSource]="PaspasDataSource" [Category]="PaspasCategory" [isDataAvailable]="PaspasisDataAvailable" [NoData]="PaspasNoData"></app-cssnpsdetails-table>
+        </div>
+
+      </div>
+
+    </td>
+    
+  </tr>
+
+</table>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+<div class="dvMainCSSNPS" style="margin-bottom: 20px;">
+
+      <div class="col-lg-6" style="margin-bottom: 20px;">
+     
+  
+          <div class="sectionHeader1">Net Promoter Score Trend</div>   
+
+
+                   <table class="ScoreTrend" width="450px" border="0" height="152px" style="border: 1px solid #DEDEDE;border-collapse: collapse;margin-left:15px;border-radius: 15px !important;" >
+                   <tr style="border-bottom:1px solid #DEDEDE;border-collapse: collapse;">
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="sectionHeader1">{{this.lastQuarter}}</span></td>
+                   <td colspan="6" align="center"><span class="sectionHeader1">{{this.currentQuarter}}</span></td>
+                   </tr>
+                   <tr>
+                   <td colspan="2" style="border-right:1px solid #DEDEDE;border-collapse: collapse;">&nbsp;</td>
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="Promotors">Promoters({{this.promotors}})</span></td>
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="Passives">Passive({{this.passives}})</span></td>
+                   <td colspan="2" align="center" style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="Detractors">Detractors({{this.detractors}})</span></td>
+                   </tr> 
+
+                   <tr>                   
+                   <td><span class="Promotors">Promoters</span></td>
+                   <td style="border-right:1px solid #DEDEDE;border-collapse: collapse;"><span class="ScoreTrend">{{this.pqPromotors}}</span></td>
+                   <td align="right" ><span class="ScoreTrend">{{this.Propro}}</span></td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <span class="ScoreTrend">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPropro}}.png">
+                   {{this.perPropro}}</span></td>
+                   <td align="right" ><span class="ScoreTrend">{{this.Propas}}</span></td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <span class="ScoreTrend">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPropas}}.png">
+                   {{this.perPropas}}</span></td>
+                   <td align="right" ><span class="ScoreTrend">{{this.Prodet}}</span></td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <span class="ScoreTrend">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperProdet}}.png">
+                   {{this.perProdet}}</span></td>
+                   </tr> 
+
+                   <tr>                   
+                   <td><span class="Passives">Passive</span></td>
+                   <td style="border-right:1px solid #DEDEDE;border-collapse: collapse;">{{this.pqPassives}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                   <td align="right">{{this.Paspro}}</td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPaspro}}.png">
+                   {{this.perPaspro}}</td>
+                   <td align="right">{{this.Paspas}}</td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPaspas}}.png">
+                   {{this.perPaspas}}</td>
+                   <td align="right">{{this.Pasdet}}</td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperPasdet}}.png">
+                   {{this.perPasdet}}</td>
+                   </tr> 
+
+                   <tr>                   
+                   <td><span class="Detractors">Detractors</span></td>
+                   <td style="border-right:1px solid #DEDEDE;border-collapse: collapse;">{{this.pqDetractors}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                   <td align="right">{{this.Detpro}}</td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperDetpro}}.png">
+                   {{this.perDetpro}}</td>
+                   <td align="right">{{this.Detpas}}</td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                    <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperDetpas}}.png">
+                   {{this.perDetpas}}</td>
+                   <td align="right">{{this.Detdet}}</td>
+                   <td align="left" style="border-right:1px solid #DEDEDE;border-collapse: collapse;padding-right:5px">
+                   <img class="image" style="margin-left:5px;" src="assets/images/{{this.imgperDetdet}}.png">
+                   {{this.perDetdet}}</td>
+                   </tr> 
+                                    
+                   </table> 
+
+                   
+
+                   <table width="450px">
+                    <tr>
+                     <td colspan="4" align="right">
+                      
+                    </td>
+                    <td colspan="4" align="right">
+                      <i (click)="showNPSDetails = !showNPSDetails" class="viewDetails">View Details</i>
+                    </td>
+                    </tr>
+                    </table>
+
+                    
+
+      </div>
+
+
+                    <div class="col-lg-5" style="margin-left:50px">
+    
+    <table border="0" style="padding-left:10px" width="100%">
+    
+    <tr><td width="50%" align="center"><span class="sectionHeader1">Net Promoter Score</span></td>
+    <td width="50%" align="center"><span class="sectionHeader1">Customer Success Survey</span></td>
+    </tr>
+
+    <tr><td align="center"><span class="sectionHeader1">{{this.currentQuarter}}</span></td>
+    <td align="center"><span class="sectionHeader1">{{this.currentQuarter}}</span></td>
+    </tr>
+    
+    <tr><td align="center"><span class="sectionHeader2">NPS Score - {{this.NPSScore}}%&nbsp;</span>
+    <i (click)="showNPSScoreHelp = !showNPSScoreHelp" style="font-size:16px;cursor : pointer;position:relative" class="fa fa-question-circle"></i>
+    </td>
+    <td><span class="sectionHeader2">&nbsp;</span></td>
+    </tr>
+    
+    <tr><td>
+
+    <google-chart #chart2 [type]="type5" [data]="data5" [columnNames]="columnNames5" [options]="options5" [width]="width5" [height]="height5">
+    </google-chart>
+      
+    
+
+      </td>    
+     <td>
+    
+    <google-chart #chart11 [type]="type1" [data]="data1" [columnNames]="columnNames1" [options]="options1" [width]="width1" [height]="height1">
+    </google-chart>
+
+     </td>
+    </tr>
+
+    <tr>
+    <td align="center">
+      <i (click)="showNPSTrendChart = !showNPSTrendChart" class="viewDetails" style="position:relative">View NPS Trend</i>
+      </td>
+    <td align="center">
+      <i (click)="showCSATTrendChart = !showCSATTrendChart" class="viewDetails" style="position:relative">View CSAT Trend</i>
+      </td>
+    </tr>
+
+    </table>
+
+
+   <div style="position: absolute" class="NPSHelp" *ngIf="showNPSScoreHelp">
+            
+            
+
+            <div style="font-size: 13px;" class="ScoreTrend">              
+              <table>
+                <tr>
+                  <td>-100 to 0</td>
+                  <td>Needs Improvement</td>
+                </tr>
+                <tr>
+                  <td>1 to 30</td>
+                  <td>Good</td>
+                </tr>
+                <tr>
+                  <td>30 to 70</td>
+                  <td>Great</td>
+                </tr>
+                <tr>
+                  <td>70 to 100</td>
+                  <td>Excellent</td>
+                </tr>
+              </table>                
+            </div>
+
+  </div>
+                 
+  </div>
+
+  

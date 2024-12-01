@@ -1,0 +1,96 @@
+<div>
+  <form style="background: white;padding-left: 10px;padding-bottom: 10px;" #actionitemForm="ngForm"
+    (ngSubmit)="SubmitForm(actionitemForm.valid)">
+    <div class="row tabheader">
+      <div class="col-lg-10 col-md-10 col-sm-10">
+      </div>
+      <div class="col-lg-2 col-md-2 col-sm-2 header">
+        <button class="link_button" type="submit" style="margin-left: 40%;position: absolute;">
+          <i class="fa fa-save"></i>
+        </button>
+        <a class="link" (click)="Cancel_onClick()" style="cursor: pointer;margin-left: 60%;position: absolute;">
+          <i class="fa fa-times"></i>
+        </a>
+      </div>
+    </div>
+    <div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 750px)">
+          <textarea name="ddProjectName" maxlength="2000" [(ngModel)]="projectName" [disabled]="true" matInput placeholder="Project Name" required></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name='txtDescription' maxlength="2000" [(ngModel)]="EditActionitem.description" matInput
+            placeholder="Description" required></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name='txtSource' maxlength="100" [(ngModel)]="EditActionitem.source" matInput placeholder="Source"
+            required></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name='txtOwner' maxlength="100" [(ngModel)]="EditActionitem.owner" matInput placeholder="Owner"
+            required></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <mat-select name="ddPriority" [(ngModel)]="EditActionitem.priority" placeholder="Priority" required>
+            <mat-option value="Critical">Critical</mat-option>
+            <mat-option value="High">High</mat-option>
+            <mat-option value="Medium">Medium</mat-option>
+            <mat-option value="Low">Low</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input [max]="_util.Today()" matInput name="dtIdentifiedDate" [(ngModel)]="EditActionitem.identifieD_DATE"
+            [matDatepicker]="picker1" placeholder="Identified Date" required>
+          <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+          <mat-datepicker #picker1></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input [min]="EditActionitem.identifieD_DATE" matInput name="dtTargetDate"
+            [(ngModel)]="EditActionitem.targeT_DATE" [matDatepicker]="picker2" placeholder="Target Date" required>
+          <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+          <mat-datepicker #picker2></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status" placeholder="Status" required>
+            <mat-option value="Planned">Planned</mat-option>
+            <mat-option value="Started">Started</mat-option>
+            <mat-option value="Completed">Completed</mat-option>
+            <mat-option value="Cancelled">Cancelled</mat-option>
+            <mat-option value="Suspended">Suspended</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input matInput name="dtCompletionDate" [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker3"
+            placeholder="Completion Date">
+          <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
+          <mat-datepicker #picker3></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(100% - 20px)">
+          <textarea name="txtComments" maxlength="2000" [(ngModel)]="EditActionitem.comments" matInput
+            placeholder="Comments"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <button type="submit" class="btn btn-success">Save</button>
+      </div>
+    </div>
+  </form>
+</div>

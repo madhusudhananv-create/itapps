@@ -1,0 +1,24 @@
+.row{
+    margin:0px;
+}
+.example-container {
+  height: 400px;
+  overflow: auto;
+  padding: 0 23px 0 23px;
+}
+table {
+  width: 100%;
+  padding:10px;
+}
+.deleteWidth{
+  flex: 0 0 25px !important;
+  border-left:none !important;
+}
+th{
+  font-size: 15px;
+}
+.link {
+  cursor: pointer;
+  text-decoration: none;
+  color:red;
+}

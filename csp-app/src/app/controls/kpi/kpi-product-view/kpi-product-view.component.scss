@@ -1,0 +1,67 @@
+.Red {
+    color: red;
+    font-weight: 100;
+}
+
+.Blue {
+    color: orange;
+    font-weight: 800;
+}
+
+.Green {
+    color: darkgreen;
+    font-weight: 800;
+}
+
+.example-margin{
+    margin: 0 12px;
+  }
+
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 50px white inset;
+    /* Change the color to your own background color */
+    -webkit-text-fill-color: #333;
+}
+
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 50px white inset;
+    /*your box-shadow*/
+    -webkit-text-fill-color: #333;
+
+}
+
+::ng-deep .custom-tooltip {
+    white-space: pre-line;
+    max-width: 700px !important;
+    //background-color: lightgray;
+    font-size: 13px;
+}
+
+::ng-deep .custom-tooltip .custom-tooltip .bottom .custom-tooltip.tooltip-arrow {
+    top: 0;
+    left: 50%;
+    margin-left: -5px;
+    border-bottom-color: #000000;
+    /* black */
+    border-width: 0 5px 5px;
+}
+
+.UOM {
+    margin-left: -30px;
+}
+
+.Number {
+    margin-left: -70px;
+}
+
+.NA {
+    margin-left: -20px;
+}
+
+.draft {
+    color: orange;
+}
+
+.submit {
+    color: green;
+}

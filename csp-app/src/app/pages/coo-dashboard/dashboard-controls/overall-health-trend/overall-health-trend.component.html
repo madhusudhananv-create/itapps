@@ -1,0 +1,74 @@
+<div class="sliding-up-content" [class.show]="isvisible">
+
+  <div class="row" mat-dialog-title style="height: 40px;background: #EBEBEB 0% 0% no-repeat padding-box;opacity: 1;">
+    <label
+      style="height: 17px;text-align: left;font-size: 14px;letter-spacing: 0.2px;color: #2b2a2a;opacity: 1;margin-left: 15px;margin-top: 10px;font-weight: 500 ;">
+      <!-- Customer Success Journey -->
+   Overall Health Index Trend </label>
+    <a class="close-button" (click)="onClose()"
+      style="margin-left: 84%;margin-top: 5px;color:#333333;cursor: pointer;position: absolute;">
+      <mat-icon class="close-icon">close</mat-icon>
+    </a>
+  </div>
+  <mat-progress-bar *ngIf="_cooDashboardCommon.progressPopup" mode="indeterminate"></mat-progress-bar>
+  <br />
+  <div class="row">
+    <div class="col-lg-12" style=" color:rgb(73, 72, 72);display: none;">
+
+      <label>Account</label>
+
+      <select class="drpdown" style="border:0cap ;margin-left: 5px;" name="selectedProject"
+        [(ngModel)]="selectedProject">
+
+        <option value="{{item}}" *ngFor="let item of projectdropdownValues">{{item}}</option>
+      </select>
+      <label style="margin-left: 8px;">Portfolio</label>
+      <select class="drpdown" style="border:0cap ;margin-left: 5px;" name="selectedPortfolio"
+        [(ngModel)]="selectedPortfoliovalue">
+
+        <option value="{{item}}" *ngFor="let item of projectdropdownValues">{{item}}</option>
+      </select>
+
+      <label style="margin-left: 8px;">Project Name</label>
+      <select class="drpdown" style="border:0cap ;margin-left: 5px;" name="selectedPortfolio"
+        [(ngModel)]="selectedprojvalue">
+
+        <option value="{{item}}" *ngFor="let item of projectdropdownValues">{{item}}</option>
+      </select>
+      <!-- <label style="margin-left: 8px;">Year</label>
+      <select class="yeardrpdown" style="border:0cap ;margin-left: 5px" name="selectedYear">
+
+        <option value="{{item}}" *ngFor="let item of range1">{{item}}</option>
+      </select>
+      <label style="margin-left: 8px;">View</label>
+      <select class="yeardrpdown" style="border:0cap ;margin-left: 5px;" name="selectedPortfolio"
+        [(ngModel)]="selectedViewVlaue">
+
+        <option value="{{item}}" *ngFor="let item of projectdropdownValues">{{item}}</option>
+      </select>
+      <label style="margin-left: 8px;">Quarter</label>
+      <select class="yeardrpdown" style="border:0cap ;margin-left: 5px; width:50px" name="selectedPortfolio"
+        [(ngModel)]="selectedQValue">
+
+        <option value="{{item}}" *ngFor="let item of projectdropdownValues">{{item}}</option>
+      </select> -->
+      <button type="button" class="btn btn-primary" style="margin-left: 15px;" (click)="Apply()">Apply</button>&nbsp;
+      <button type="button" class="btn" style="margin-left: 10px;"  (click)="Reset()">Reset</button>
+    </div>
+</div> 
+    <div class="row"> 
+      <div class="col-lg-12" style=" color:rgb(73, 72, 72); text-align: center ; display: none;">
+      <label> 2022  </label>
+      <br/>
+     <label> Q1 - 2022 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Q2 - 2022 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      Q3 - 2022 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;    Q4 - 2022  </label>
+    </div>
+     <div class="col-lg-12" style=" color:rgb(73, 72, 72)">
+      <div style="min-width: 950px; height: 350px; max-width: 1000px; margin: 0 auto" [chart]="_cooDashboardCommon.areaChart">
+      </div>
+    </div>
+    </div>
+    <br />
+    <div class="row"> 
+
+  </div>
+</div>

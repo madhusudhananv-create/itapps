@@ -1,0 +1,23 @@
+.pageborder
+{
+  background-color:white; 
+  border-radius:9px;
+  margin: 5px 10px 5px 10px;
+  min-height:400px;
+  box-shadow: 1px 2px 3px 1px #c7c7c7;
+  padding:5px 15px 15px 15px;
+}
+.backbutton{
+  font-size: 16px; 
+  font-weight: 700;
+  font-family: 'Roboto', sans-serif; 
+  margin-bottom: 15px;
+  color: #4e5882;
+}
+.backbuttonlink{
+  display: inline-block; 
+  margin-right: 10px; 
+  cursor: pointer; 
+  text-decoration: none; 
+  outline: none
+}

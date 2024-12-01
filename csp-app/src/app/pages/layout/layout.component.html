@@ -1,0 +1,10 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+   <app-navbar-new [ShowMenu]="false"></app-navbar-new>
+   <mat-sidenav-container>
+    <mat-sidenav-content style="background-color: #eaeaea">
+    <div style="background-color:white" class="mainDiv">
+      <router-outlet></router-outlet>
+    </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

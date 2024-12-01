@@ -1,0 +1,415 @@
+<div *ngIf = "_util.IsGAVS()">
+  <div class="col-sm-12 col-md-12 col-lg-12" style="text-align: right;padding: 0%;">
+  <!-- <div  class="col-sm-2 col-md-2 col-lg-2" > -->
+    <button id ="closebutton" mat-button mat-dialog-close>
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+  <form style="background: white;padding-left: 10px;padding-bottom: 10px;padding-right: 5px;" #momForm="ngForm">
+    <!-- <div style="margin-left: 20px;margin-top: 10px;">
+      <mat-form-field>
+        <mat-select name="ddselectcleint" [(ngModel)]="selectedclient" placeholder="Select Client" required>
+          <mat-option value="SelectedCustomerProject">Selected Customer &amp; Project</mat-option>
+          <mat-option value="SelectedCustomerAllproject">Selected Customer – All projects</mat-option>
+          <mat-option value="MulticustomerProject">Multi-customer &amp; Project </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div> -->
+    <div style="margin: 20px">
+      <table class="table table-bordered">
+        <tr style="text-align: center;font-weight: bold">
+          <td colspan="4">Minutes of the Meeting :
+            <mat-form-field class="no-line"style="width: 65%;">
+              <input matInput name="description" [(ngModel)]='mom.meetinG_DESCRIPTION' placeholder="Meeting Title" required>
+            </mat-form-field>
+          </td>
+          <td colspan="2">
+            <div style="text-align: center;font-family: calibri;font-weight: 600;float: left;" > View MoMs </div>
+            <div style="float: left;">
+              <mat-form-field class="no-line" style="width:70px;padding-left:10px">
+                <mat-select name='tableMonth' [(ngModel)]="selectedMonth" (selectionChange)="reloadMoMDetail()" placeholder="Month">
+                  <mat-option value='Jan'>JAN</mat-option>
+                  <mat-option value='Feb'>FEB</mat-option>
+                  <mat-option value='Mar'>MAR</mat-option>
+                  <mat-option value='Apr'>APR</mat-option>
+                  <mat-option value='May'>MAY</mat-option>
+                  <mat-option value='Jun'>JUN</mat-option>
+                  <mat-option value='Jul'>JUL</mat-option>
+                  <mat-option value='Aug'>AUG</mat-option>
+                  <mat-option value='Sep'>SEP</mat-option>
+                  <mat-option value='Oct'>OCT</mat-option>
+                  <mat-option value='Nov'>NOV</mat-option>
+                  <mat-option value='Dec'>DEC</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="no-line" style="width:80px;padding-left:10px">
+                  <mat-select name='tableYear' [(ngModel)]="selectedYear" (selectionChange)="reloadMoMDetail()" placeholder="Year" required>
+                      <mat-option [value] = "year" *ngFor = "let year of _util.Years(3)" [title]="year">{{year}}</mat-option>
+                      <!-- <mat-option [value]='2018'>2018</mat-option>
+                      <mat-option [value]='2019'>2019</mat-option> -->
+                  </mat-select>
+              </mat-form-field>
+            </div>
+            <div>
+              <mat-form-field class="no-line" *ngIf="meetings.length > 0" style="width:120px;">
+                <mat-select name="ddResponsibility" [(ngModel)]="selectedMoMId" (selectionChange)="getMoMDetailbyMomId()" placeholder="Date and Time">
+                  <mat-option *ngFor="let m of meetings" [value]="m.moM_ID">{{m.moM_DATE | date :'dd-MMM-yyyy'}} - {{m.moM_TIME}}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </td>
+        </tr>
+        <tr style="font-weight: bold">
+          <td style="font-weight: bold;width: 1%;">Date</td>
+          <td style="font-weight: bold;width: 1%;">Time</td>
+          <td style="font-weight: bold;width: 1%;">Venue</td>
+          <td style="font-weight: bold;width: 1%;">Chairperson</td>
+          <td style="font-weight: bold;width: 15%;">Agenda</td>
+          <td style="font-weight: bold;width: 20%;">Participants</td>
+        </tr>
+        <tr>
+          <td>
+            <mat-form-field class="no-line" style="width: 90px;">
+              <input matInput name="date" [(ngModel)]='mom.meetinG_DATE' [matDatepicker]="pickerDate" placeholder="Date" required>
+              <mat-datepicker-toggle matSuffix [for]="pickerDate"></mat-datepicker-toggle>
+              <mat-datepicker #pickerDate></mat-datepicker>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field style= "width: 70px;" class="no-line">
+              <input matInput name="time" [(ngModel)]='mom.meetinG_TIME' placeholder="Time" required>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field class="no-line">
+              <input matInput name="venue" [(ngModel)]='mom.meetinG_VENUE' placeholder="Venue" required>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field class="no-line">
+              <input matInput name="chairperson" [(ngModel)]='mom.chairperson' placeholder="Chairperson" required>
+            </mat-form-field>
+          </td>
+          <td>
+            <textarea matInput [(ngModel)]="mom.meetinG_AGENDA" name="agendatxtarea"></textarea>
+          </td>
+          <td>
+            <textarea matInput [(ngModel)]="mom.meetinG_PARTICIPANTS" name="participantstxtarea"></textarea>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div *ngIf = "!disablediv"> <mat-checkbox (change)="OnChange($event)" style="font-size: 13px;font-family: calibri;margin-left: 18px;">Hide Customer &amp; Project list</mat-checkbox></div>
+    <!-- <div *ngIf = "!disablediv" title="Delete MoM" class="buttona" style="margin-right: 18px;" (click)="DeleteRow()">
+      <a class ="link"><i class = "fa fa-plus"></i> </a>
+    </div> -->
+    <div >
+      <table class="table table-bordered" style="margin-bottom: 0px">
+        <tr>
+          <td style="font-weight:bold">
+            S.No
+          </td>
+          <td *ngIf = "!allproj" style="font-weight:bold;width: 21%;">
+            Customer &amp; Project *
+          </td>
+          <!-- <td  *ngIf ="show" style="font-weight:bold">
+                Project
+              </td> -->
+          <td style="font-weight:bold">
+            Disscussion Points
+          </td>
+          <td style="font-weight:bold">
+            Action Item
+          </td>
+          <td style="font-weight:bold">
+            Priority
+          </td>
+          <td style="font-weight:bold">
+            Responsibility
+          </td>
+          <td style="font-weight:bold">
+            Target Date
+          </td>
+        </tr>
+        <tr *ngFor="let h of mom.moM_ITEMS;let i = index">
+          <td>
+            {{i+1}}
+          </td>
+          <!-- <td *ngIf = "allproj">
+            <app-project-selector-multiple [allcust]="true" [allproj]="true" [rowId]="i" [projId]="h.projecT_ID" [custId]="h.customeR_ID" (onChange)="project_onChange($event)"></app-project-selector-multiple>
+          </td> -->
+          <td *ngIf = "!allproj">
+              <app-project-selector-multiple [rowId]="i" [projId]="h.projecT_ID" [custId]="h.customeR_ID" (onChange)="project_onChange($event)"></app-project-selector-multiple>
+          </td>
+          <!-- <td *ngIf = "show">
+              <mat-form-field style="width:calc(100% - 20px)">
+                <textarea name="txtCustomer[{{i}}]" maxlength="2000" [(ngModel)]="mom.customeR_ID" matInput placeholder="Customer "
+                  required></textarea>
+              </mat-form-field>
+            </td>
+            <td *ngIf = "show">
+                <mat-form-field style="width:calc(100% - 20px)">
+                  <textarea name="txtProject[{{i}}]" maxlength="2000" [(ngModel)]="mom.projecT_ID" matInput placeholder="Project"
+                    required></textarea>
+                </mat-form-field>
+              </td> -->
+          <td>
+            <mat-form-field class="no-line" style="width:calc(100% - 20px)">
+              <textarea name="txtDisscussion[{{i}}]" maxlength="2000" [(ngModel)]="h.discussioN_POINTS" matInput placeholder="Disscussion"
+                required>{{h.discussioN_POINTS}}</textarea>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field class="no-line" style="width:calc(100% - 20px)">
+              <textarea name="txtActionPlan[{{i}}]" maxlength="2000" [(ngModel)]="h.actioN_ITEM" matInput placeholder="Action Plan / Steps "
+                required>{{h.actioN_ITEM}}</textarea>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field class="no-line" style="width: 75px;">
+              <mat-select name="ddPriority[{{i}}]" [(ngModel)]="h.priority" placeholder="Priority" required>
+                <mat-option value="High">High</mat-option>
+                <mat-option value="Normal">Normal</mat-option>
+                <mat-option value="Low">Low</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field class="no-line" style="width: 115px;">
+              <mat-select name="ddResponsibility[{{i}}]" [(ngModel)]="h.responsibility" placeholder="Responsibility" required>
+                <mat-option *ngFor="let m of empInfo[i]" [value]="m.emP_ID" [title]="m.frsT_NM"> {{m.frsT_NM}} </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field class="no-line" style="width: 100px">
+              <input matInput name="dtTargetDate[{{i}}]" [(ngModel)]='h.targeT_DATE' [matDatepicker]="pickerTargetDate" placeholder="Target Date">
+              <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+              <mat-datepicker #pickerTargetDate></mat-datepicker>
+            </mat-form-field>
+          </td>
+        </tr>
+      </table>
+      <div class="row">
+        <div style="font-family: calibri;width: 50%;float: left;margin-top: 14px;">Note: Clicking on Submit will update the action item in Action Item tab <br> MoM entered in CSM portal will be emailed to your Email address. </div>
+        <!-- <div style="font-family: calibri">MoM entered in CSM portal will be emailed to your Email address. </div> -->
+        <div *ngIf = "!disablediv" title="Add New Row" class="buttona" style="margin-right: 18px;" (click)="AddNewRow()">
+          <a class ="link"><i class = "fa fa-plus"></i> </a>
+        </div>
+      </div>
+      <div *ngIf = "!disablediv" #submit class="row">
+        <!-- <button  *ngIf = "!updatemode" (click)="Getname('save')" type="submit" class="btn btn-success">Save</button>
+        <button *ngIf = "updatemode" (click)="Getname('update')" style="margin-left: 1%;" type="submit" class="btn btn-success">Update</button>
+        <button  (click)="Getname('submit')" style="margin-left: 1%;" type="submit" class="btn btn-success">Submit</button> -->
+        <button  *ngIf = "!updatemode" (click)="SaveMoM(momForm , 'save' )"  class="btn btn-success" style="margin-right: 5px;">Save</button>
+        <button *ngIf = "updatemode" (click)="UpdateMoM(momForm , 'update')" style="margin-left: 1%;" class="btn btn-success" style="margin-right: 5px">Update</button>
+        <button  *ngIf = "!updatemode" (click)="SaveMoM(momForm , 'submit' )"  class="btn btn-success" style="margin-right: 5px">Submit</button>
+        <button *ngIf = "updatemode" (click)="UpdateMoM(momForm , 'submit')" style="margin-left: 1%;" class="btn btn-success" style="margin-right: 5px">Submit</button>
+      </div>
+      <mat-progress-bar *ngIf="_loading"  mode="indeterminate"></mat-progress-bar>
+          <!-- <div style="text-align:center;padding-bottom:2px">
+            <button id ="closebutton" mat-button mat-dialog-close>Close</button>
+          </div> -->
+    </div>
+
+    <!-- <div class="row">
+      <div class = "col-lg-4">
+          <mat-form-field>
+              <input matInput name="date" [(ngModel)]='mom_date' [matDatepicker]="picker1Date" (dateInput)="addEvent('input', $event)" (dateChange)="addEvent('change', $event)" placeholder="Enter MoM Date" >
+              <mat-datepicker-toggle matSuffix [for]="picker1Date"></mat-datepicker-toggle>
+              <mat-datepicker #picker1Date></mat-datepicker>
+          </mat-form-field>
+      </div>
+      <div *ngIf ="ddshow" class = "col-lg-4">
+          <mat-select name="ddResponsibility" [(ngModel)]="mom.responsibe" placeholder="Created By" >
+              <mat-option *ngFor="let m of empInfo" [value]="m.frsT_NM">{{m.frsT_NM}}</mat-option>
+          </mat-select>
+      </div>
+    </div> -->
+  </form>
+</div>
+<div *ngIf = "!_util.IsGAVS()" >
+    <div style="margin: 20px" >
+      <div style="font-size:20px;font-family: calibri;text-align: center">No Minutes of meeting to display</div>
+        <table class="table table-bordered">
+          <tr style="text-align: center;font-weight: bold">
+            <td colspan="4" *ngIf = "updatemode">Minutes of the Meeting :
+              <mat-form-field class="no-line"style="width: 65%;">
+                <input matInput name="description" [(ngModel)]='mom.meetinG_DESCRIPTION' placeholder="Description" required>
+              </mat-form-field>
+            </td>
+            <td colspan="2">
+              <div style="text-align: center;font-family: calibri;font-weight: 600;float: left;" > View Older MoMs </div>
+              <div style="float: left;">
+                <mat-form-field class="no-line" style="width:70px;padding-left:10px">
+                  <mat-select name='tableMonth' [(ngModel)]="_util.tableMonth" (selectionChange)="reloadMoMDetail()">
+                    <mat-option value='Jan'>JAN</mat-option>
+                    <mat-option value='Feb'>FEB</mat-option>
+                    <mat-option value='Mar'>MAR</mat-option>
+                    <mat-option value='Apr'>APR</mat-option>
+                    <mat-option value='May'>MAY</mat-option>
+                    <mat-option value='Jun'>JUN</mat-option>
+                    <mat-option value='Jul'>JUL</mat-option>
+                    <mat-option value='Aug'>AUG</mat-option>
+                    <mat-option value='Sep'>SEP</mat-option>
+                    <mat-option value='Oct'>OCT</mat-option>
+                    <mat-option value='Nov'>NOV</mat-option>
+                    <mat-option value='Dec'>DEC</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div>
+                <mat-form-field class="no-line" *ngIf="meetings.length > 0" style="width:120px;padding-left:10px">
+                  <mat-select name="ddResponsibility" [(ngModel)]="selectedMoMId" (selectionChange)="getMoMDetailbyMomId()" placeholder=" Choose MoM ">
+                    <mat-option *ngFor="let m of meetingscust" [value]="m.moM_ID">{{m.description}} - {{m.moM_DATE | date :'dd-MMM-yyyy'}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </td>
+          </tr>
+          <tr style="font-weight: bold" *ngIf = "updatemode">
+            <td style="font-weight: bold;width: 1%;">Date</td>
+            <td style="font-weight: bold;width: 1%;">Time</td>
+            <td style="font-weight: bold;width: 1%;">Venue</td>
+            <td style="font-weight: bold;width: 1%;">Chairperson</td>
+            <td style="font-weight: bold;width: 15%;">Agenda</td>
+            <td style="font-weight: bold;width: 20%;">Participants</td>
+          </tr>
+          <tr *ngIf = "updatemode">
+            <td>
+              <mat-form-field class="no-line" style="width: 90px;">
+                <input matInput name="date" [(ngModel)]='mom.meetinG_DATE' [matDatepicker]="pickerDate" placeholder="Date" required>
+                <mat-datepicker-toggle matSuffix [for]="pickerDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerDate></mat-datepicker>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field style= "width: 70px;" class="no-line">
+                <input matInput name="time" [(ngModel)]='mom.meetinG_TIME' placeholder="Time" >
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field class="no-line">
+                <input matInput name="venue" [(ngModel)]='mom.meetinG_VENUE' placeholder="Venue" >
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field class="no-line">
+                <input matInput name="chairperson" [(ngModel)]='mom.chairperson' placeholder="Chairperson">
+              </mat-form-field>
+            </td>
+            <td>
+              <textarea matInput [(ngModel)]="mom.meetinG_AGENDA" name="agendatxtarea"></textarea>
+            </td>
+            <td>
+              <textarea matInput [(ngModel)]="mom.meetinG_PARTICIPANTS" name="participantstxtarea"></textarea>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div *ngIf = "updatemode">
+        <table class="table table-bordered" style="margin-bottom: 0px">
+          <tr>
+            <td style="font-weight:bold">
+              S.No
+            </td>
+            <td style="font-weight:bold;width: 21%;">
+              Customer &amp; Project *
+            </td>
+            <!-- <td  *ngIf ="show" style="font-weight:bold">
+                  Project
+                </td> -->
+            <td style="font-weight:bold">
+              Disscussion Points
+            </td>
+            <td style="font-weight:bold">
+              Action Item
+            </td>
+            <td style="font-weight:bold">
+              Priority
+            </td>
+            <td style="font-weight:bold">
+              Responsibility
+            </td>
+            <td style="font-weight:bold">
+              Target Date
+            </td>
+          </tr>
+          <tr *ngFor="let h of mom.moM_ITEMS;let i = index">
+            <td>
+              {{i+1}}
+            </td>
+            <td >
+              <app-project-selector-multiple [allcust]="true" [allproj]="true" [rowId]="i" [projId]="h.projecT_ID" [custId]="h.customeR_ID" (onChange)="project_onChange($event)"></app-project-selector-multiple>
+            </td>
+            <!-- <td *ngIf = "show">
+                <mat-form-field style="width:calc(100% - 20px)">
+                  <textarea name="txtCustomer[{{i}}]" maxlength="2000" [(ngModel)]="mom.customeR_ID" matInput placeholder="Customer "
+                    required></textarea>
+                </mat-form-field>
+              </td>
+              <td *ngIf = "show">
+                  <mat-form-field style="width:calc(100% - 20px)">
+                    <textarea name="txtProject[{{i}}]" maxlength="2000" [(ngModel)]="mom.projecT_ID" matInput placeholder="Project"
+                      required></textarea>
+                  </mat-form-field>
+                </td> -->
+            <td>
+              <mat-form-field class="no-line" style="width:calc(100% - 20px)">
+                <textarea id ="name" name="txtDisscussion[{{i}}]" maxlength="2000" [(ngModel)]="h.discussioN_POINTS" matInput placeholder="Disscussion"
+                  required>{{h.discussioN_POINTS}}</textarea>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field class="no-line" style="width:calc(100% - 20px)">
+                <textarea name="txtActionPlan[{{i}}]" maxlength="2000" [(ngModel)]="h.actioN_ITEM" matInput placeholder="Action Plan / Steps "
+                  >{{h.actioN_ITEM}}</textarea>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field *ngIf ="h.actioN_ITEM != undefined" class="no-line" style="width: 75px;">
+                <mat-select name="ddPriority[{{i}}]" [(ngModel)]="h.priority" placeholder="Priority" >
+                  <mat-option value="High">High</mat-option>
+                  <mat-option value="Normal">Normal</mat-option>
+                  <mat-option value="Low">Low</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field *ngIf ="h.actioN_ITEM != ''|| h.actioN_ITEM != undefined" class="no-line" style="width: 115px;">
+                <mat-select name="ddResponsibility[{{i}}]" [(ngModel)]="h.responsibility" placeholder="Responsibility" >
+                  <mat-option *ngFor="let m of empInfo[i]" [value]="m.emP_ID" [title]="m.frsT_NM"> {{m.frsT_NM}} </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field *ngIf ="h.actioN_ITEM != ''|| h.actioN_ITEM != undefined" class="no-line" style="width: 100px">
+                <input matInput name="dtTargetDate[{{i}}]" [(ngModel)]='h.targeT_DATE' [matDatepicker]="pickerTargetDate" placeholder="Target Date">
+                <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerTargetDate></mat-datepicker>
+              </mat-form-field>
+            </td>
+          </tr>
+        </table>
+        <!-- <div class="row">
+          <div style="font-family: calibri;width: 50%;float: left;margin-top: 14px;">Note: Clicking on Submit will update the action item in Action Item tab <br> MoM entered in CSM portal will be emailed to your Email address. </div> -->
+          <!-- <div style="font-family: calibri">MoM entered in CSM portal will be emailed to your Email address. </div> -->
+          <!-- <div *ngIf = "!disablediv" title="Add New Row" class="buttona" style="margin-right: 18px;" (click)="AddNewRow()">
+            <a class ="link"><i class = "fa fa-plus"></i> </a>
+          </div>
+        </div> -->
+        <!-- <div *ngIf = "!disablediv" #submit class="row"> -->
+          <!-- <button  *ngIf = "!updatemode" (click)="Getname('save')" type="submit" class="btn btn-success">Save</button>
+          <button *ngIf = "updatemode" (click)="Getname('update')" style="margin-left: 1%;" type="submit" class="btn btn-success">Update</button>
+          <button  (click)="Getname('submit')" style="margin-left: 1%;" type="submit" class="btn btn-success">Submit</button> -->
+          <!-- <button  *ngIf = "!updatemode" (click)="SaveMoM(momForm , 'save' )"  class="btn btn-success">Save</button>
+          <button *ngIf = "updatemode" (click)="UpdateMoM(momForm , 'update')" style="margin-left: 1%;" class="btn btn-success">Update</button>
+          <button  *ngIf = "!updatemode" (click)="SaveMoM(momForm , 'submit' )"  class="btn btn-success">Submit</button>
+          <button *ngIf = "updatemode" (click)="UpdateMoM(momForm , 'submit')" style="margin-left: 1%;" class="btn btn-success">Submit</button>
+        </div> -->
+        <mat-progress-bar *ngIf="_loading"  mode="indeterminate"></mat-progress-bar>
+            <div style="text-align:center;padding-bottom:2px">
+              <button id ="closebutton" mat-button mat-dialog-close>Close</button>
+            </div>
+      </div>
+</div>

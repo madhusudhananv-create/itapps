@@ -1,0 +1,100 @@
+<div style="background-color:white">
+  <div class="row">
+    <div class="col-lg-11 col-md-11 col-sm-11" style="text-align:center;font-size:18px">
+      Time Sheets for Approval
+    </div>
+    <div class="col-lg-1 col-md-1 col-sm-1" style="text-align:right">
+      <mat-icon *ngIf="!progress" style="cursor:pointer;color:grey" (click)="Refresh_OnClick()">refresh</mat-icon>
+      <!-- <img *ngIf="progress" class="image" style="height:20px;padding:0px" src="assets/images/loading_spinner.gif"> -->
+    </div>
+  </div>
+</div>
+<div class="row" *ngIf="progress" style="text-align: center">
+  <div class="col-lg-11 col-md-11 col-sm-11" style="text-align:center;font-size:16px">
+    <br/>
+    <img class="image" style="height:20px;padding:0px" src="assets/images/loading_spinner.gif">
+    <p style="text-align:center;">Fetching timesheets for approval</p>
+  </div>
+</div>
+
+<div class="row" *ngIf="multipleProjectTimesheetsGroupedByDaterange.length == 0 && progress==false">
+  <div class="col-lg-11 col-md-11 col-sm-11" style="text-align:center;font-size:18px">
+    <br/>
+    <p style="text-align:center;">No timesheets available for approval</p>
+  </div>
+</div>
+<div style=" overflow-y: auto; height: 380px">
+  <div *ngFor="let ProjectsByDaterange of multipleProjectTimesheetsGroupedByDaterange">
+    <div>
+      <label>Time period: {{ProjectsByDaterange.dtrange.displayName}}</label>
+    </div>
+
+    <div *ngIf="ProjectsByDaterange.multipleProjectTimesheets.length > 0">
+      <table class="table table-bordered" style="background-color:white">
+        <thead>
+          <tr>
+            <th style="text-align:center;padding:3px;vertical-align:middle; width:2%">
+              <mat-checkbox name="chkAll" [(ngModel)]="ProjectsByDaterange.bAllChecked" (change)="chkAll_OnChange( ProjectsByDaterange )"></mat-checkbox>
+            </th>
+            <th style="background-color:#d0d0d0;width:25%;vertical-align:middle;">Name</th>
+            <th style="text-align:center;  width:2%" *ngFor="let d of ProjectsByDaterange.tmpSelectedDates">{{d}}</th>
+            <th style="background-color:#d0d0d0;width:3%;vertical-align:middle;">Total</th>
+            <th style="background-color:#d0d0d0;width:8%;vertical-align:middle;">Status</th>
+            <th style="background-color:#d0d0d0;width:20%;vertical-align:middle;">Comments</th>
+            <th style="background-color:#d0d0d0;width:20%;vertical-align:middle;">Approve/Reject Comments</th>
+          </tr>
+        </thead>
+        <tbody *ngFor="let project of ProjectsByDaterange.multipleProjectTimesheets">
+          <tr>
+            <td style="text-align:center;padding:3px;vertical-align:middle;">
+              <mat-checkbox name="chkAll[{{project.proJ_ID}}]" [(ngModel)]="project.selected" (change)="chkAllProj_OnChange(project)"></mat-checkbox>
+            </td>
+            <td [attr.colspan]="5 + daysInMonth" style="background-color:#ececec;color:#9c27b0">{{_util.GetProjectName(project)}}</td>
+          </tr>
+          <tr *ngIf="project.employees.length == 0">
+            <td></td>
+            <td [attr.colspan]="4 + daysInMonth">No timesheets available for approval</td>
+          </tr>
+          <tr *ngFor="let emp of (project.employees ? project.employees : [])">
+            <td style="text-align: center;padding:3px">
+              <mat-checkbox [(ngModel)]="emp.selected"></mat-checkbox>
+            </td>
+            <td style="font-size:smaller">{{emp.frsT_NM}}</td>
+            <!-- <td *ngFor="let entry of (emp.timesheet ? emp.timesheet : [])" [style.background]="GetBackground(entry)" style="text-align:center;min-width:20px"> -->
+            <td *ngFor="let entry of (emp.timesheet ? emp.timesheet : [])" [style.background]="GetBackground(entry,emp)" style="text-align:center;min-width:20px">  
+              <b>{{entry.clockeD_MINS}}</b>
+            </td>
+            <td style="text-align:center">
+              <b style="text-align:center">{{emp.total}}</b>
+            </td>
+            <td style="text-align:center;font-size:x-small;font-weight:bold">{{emp.status}}</td>
+            <td style="text-align:center">
+              {{emp.comments}}
+            </td>
+            <td style="text-align:center;">
+              <textarea style="font-size:smaller;width:100%;height:40px;" [(ngModel)]="emp.rejecT_DESC" placeholder="Approve/Reject comments">{{emp.rejecT_DESC}}</textarea>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div *ngIf="multipleProjectTimesheetsGroupedByDaterange.length > 0">
+  <div class="row" style="text-align:left;vertical-align:left">
+    <table>
+      <tr>
+        <td style="height:30px;width:50px;" [style.background-color]='_util.ColorShaders.WeekEndShade'></td>
+        <td style="padding-left:10px;width:5px">Weekends</td> &nbsp;
+        <td style="height:30px;width:50px;" [style.background-color]='_util.ColorShaders.LeaveShade'></td>
+        <td style="padding-left:10px;width:5px">Leave</td> &nbsp;
+        <td style="height:30px;width:50px;" [style.background-color]='_util.ColorShaders.HolidayShade'></td>
+        <td style="padding-left:10px;">Holiday</td>
+      </tr>
+    </table>
+  </div>
+  <div class="row" style="text-align:center;vertical-align:middle">
+    <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Submit" (click)='Approve_onClick()'>Approve</button>
+    <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Reject" (click)='CustomerReject_onClick()'>Reject</button>
+  </div>
+</div>

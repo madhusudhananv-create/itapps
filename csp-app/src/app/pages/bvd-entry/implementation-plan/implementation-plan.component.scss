@@ -1,0 +1,116 @@
+.container {
+    padding: 15px;
+    width: 98%;
+    min-height: 176px;
+    max-height: auto;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    box-shadow: -2px 2px 3px #00000007;
+    border: 2px solid #E3E4E9;
+    opacity: 1;
+    margin-left: auto;
+    margin-right: auto
+}
+
+.control-label {
+    height: 15px;
+    text-align: left;
+    font: normal normal normal 12px/15px Lato;
+    letter-spacing: 0px;
+    color: #2D2D2D;
+    opacity: 1;
+}
+
+.input {
+    height: 35px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 0.5px solid #BCBCBC;
+    border-radius: 2px;
+    opacity: 1;
+    padding: 2px 2px 2px 2px;
+    margin-left: -5px;
+    margin-top: -5px;
+}
+
+.mandatory {
+    color: red;
+}
+
+::ng-deep .no-line .mat-form-field-underline {
+    display: none;
+}
+
+.placeholder {
+    height: 15px;
+    text-align: left;
+    font: normal normal normal 12px/15px Lato;
+    letter-spacing: 0px;
+    color: #666666;
+    opacity: 1;
+}
+
+::ng-deep .startdatepicker .mat-datepicker-toggle-default-icon {
+    margin-left: -160px !important;
+    margin-top: -20px !important;
+}
+
+::ng-deep .targetdatepicker .mat-datepicker-toggle-default-icon {
+    margin-left: 80px !important;
+    margin-top: -20px !important;
+}
+
+.mat-option:after {
+    content: '';
+    width: 100%;
+    border-bottom: 0.5px black;
+    //border: 0.25px solid #D3D3D3;
+    position: absolute;
+    left: 0;
+    z-index: 1;
+    top: calc(3em - 2px);
+}
+
+.btnback {
+
+    left: 109px;
+    width: 80px;
+    height: 29px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 1px solid #D5D5D5;
+    border-radius: 5px;
+    opacity: 1;
+    margin-left: 160px;
+}
+
+.btnSave {
+
+    left: 118px;
+    width: 80px;
+    height: 29px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 1px solid #D5D5D5;
+    border-radius: 5px;
+    opacity: 1;
+    //margin-left: 30px
+}
+
+.btnSubmit {
+
+    left: 127px;
+    width: 80px;
+    height: 29px;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    border: 1px solid #D5D5D5;
+    border-radius: 5px;
+    opacity: 1;
+}
+
+.mat-expansion-panel {
+    width: 98% !important;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px !important
+}
+
+.info {
+    font-size: 12px;
+}

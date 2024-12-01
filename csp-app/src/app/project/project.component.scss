@@ -1,0 +1,115 @@
+@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+
+.layout{
+  box-shadow: 1px 5px 5px 1px rgba(0,0,0,.25);
+  border-radius: 5px;
+  //background-color: #f7f7f7;
+  width:100%;
+  height:auto;
+  min-height:400px;
+}
+
+.basic-container {
+  padding: 5px;
+}
+
+.version-info {
+  font-size: 8pt;
+  float: right;
+}
+.mat-tab-label:nth-child(1) {
+  background-color: #E1E8F5;
+}
+.mat-tab-group.mat-primary .mat-tab-label:focus{
+  background-color: red !important;
+}
+color1{
+  color: green;
+}
+mat-tab{
+  position: absolute;
+  min-height: 100% !important;
+  }
+.tabheader{
+  // font-size: 50px;
+  padding-bottom: 20px;
+  text-align: center;
+
+}
+.header{
+  text-align:right;
+  float: right;
+  //padding:10px 30px 0 0;
+}
+h2,h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  //text-align: center;
+  padding-left: 15px;
+  font-family: calibri;
+ display: block;
+ padding-bottom: 5px;
+ position: relative;
+}
+h2:before,h3:before{
+    content: "";
+    position: absolute;
+    width: 8%;
+    height: 1px;
+    bottom: 0;
+    left: 1.6%;
+    border-bottom: 2px solid #097bde;
+}
+p:before{
+  content: "";
+  position: absolute;
+  width: 8%;
+  height: 1px;
+  bottom: 0;
+  left: 1.6%;
+  border-bottom: 2px solid #097bde;
+}
+p{
+  margin: 0 0 0px !important;
+}
+h3 {
+  padding-left: 6px;
+  // margin-top: 0;
+  // margin-bottom: 10px;
+  // color: #008e89;
+  // font-size: 24px;
+  // line-height: 34px;
+  // font-weight: 300;
+}
+.mat-tab-label{
+  background-color: steelblue !important;
+}
+th {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: white !important;
+  border: solid 1px #c6ddf1 !important;
+  background-color: #adcfeb;
+  font-size: 14px;
+  font-weight: 300;
+}
+i {
+  color:rgb(41, 84, 151);
+  font-size: 20px;
+}
+a {
+  cursor: pointer;
+  text-decoration: none;
+  // font-size:24px;
+  color:steelblue;
+  vertical-align: middle;
+  text-align: center;
+}
+.row_desc{
+      font-family: calibri;
+    font-size: 14px; }
+
+    .row{
+      padding-bottom: 0px;
+      margin-right: 0px !important;
+  }

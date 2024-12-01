@@ -1,0 +1,16 @@
+<div class="info-container">
+  <h4 class="info-header">
+    <b>Additional Information - {{header}}</b>
+    <a class="close-button" (click)="closeInfo()">
+      <mat-icon class="close-icon">close</mat-icon>
+    </a>
+  </h4>
+
+  <ul class="info-list">
+    <li><strong>Project:</strong> {{ project }}</li>
+    <li><strong>Created By:</strong> {{ response?.createD_BY }}</li>
+    <li><strong>Created Date:</strong> {{ response?.createD_DATE | date:'dd-MMM-yyyy hh:mm:ss a' }}</li>
+    <li><strong>Updated By:</strong> {{ response?.updateD_BY }}</li>
+    <li><strong>Updated Date:</strong> {{ response?.updateD_DATE | date:'dd-MMM-yyyy hh:mm:ss a' }}</li>
+  </ul>
+</div>

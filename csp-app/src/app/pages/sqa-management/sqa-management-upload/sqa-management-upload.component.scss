@@ -1,0 +1,156 @@
+.row{
+  margin:0px !important;
+  //padding: 5px 0 5px 0;
+}
+.col-lg-8, .col-lg-7, .col-lg-6, .col-lg-4, .col-lg-3, .col-lg-2, .col-lg-1{
+  padding: 2px 0 2px 0 !important;
+}
+.col-md-8, .col-md-7, .col-md-6, .col-md-4, .col-md-3, .col-md-2, .col-md-1{
+  padding: 2px 0 2px 0 !important;
+}
+.col-sm-8, .col-sm-7, .col-sm-6, .col-sm-4, .col-sm-3, .col-sm-2, .col-sm-1{
+  padding: 2px 0 2px 0 !important;
+}
+.example-container {
+  height: 400px;
+  overflow: auto;
+  padding: 0 23px 0 23px;
+}
+// .examplecontainer {
+//   display: flex;
+//   flex-direction: column;
+//   position: absolute;
+//   top: 0;
+//   bottom: 0;
+//   left: 0;
+//   right: 0;
+// }
+table {
+  width: 100%;
+  padding:10px;
+}
+  .deleteWidth{
+    flex: 0 0 25px !important;
+    border-left:none !important;
+  }
+  th{
+    font-size: 15px;
+  }
+
+ 
+   .ctrlPadding{
+    padding:0 2px 0 2px;
+  }
+  
+
+  .CheckboxWidth{
+    width:60px;
+    text-align: center;
+  }
+
+
+  //Mat Table overrides
+  td.mat-cell:first-child{
+    padding-left: 0px;
+  }
+  td.mat-cell:last-child{
+    padding: 0px !important;
+  }
+  
+  tr.mat-row, tr.mat-header-row {
+    height:10px;
+    text-align: center;
+  }
+  
+  .table > tbody > tr > td, .table > thead > tr > th{
+    padding:5px;
+    text-align: center;
+  }
+
+  mat-tab-group{
+    margin: 1px;
+    background-color: #f1f1f1;
+  }
+  .padding10{
+    padding-right:10px;
+    width:100%;
+  } 
+  mat-tab-label{
+    height:35px !important;
+  }
+  .mat-tab-label{
+    height:35px !important;
+  }
+
+.mat-progress-bar {
+  display: block;
+  height: 2px;
+  overflow: hidden;
+  position: relative;
+  transform: translateZ(0);
+  transition: opacity 250ms linear;
+  width: 100%;
+  }
+
+  ::ng-deep mat-expansion-panel-header{
+    height:34px;
+  }
+
+//   .link_add {
+//     cursor: pointer;
+//     text-decoration: none;
+//     vertical-align: middle;
+//     text-align: center;
+//     color:#5cb85c;
+// }
+// .link_remove {
+//   padding-top: 10px;
+//   cursor: pointer;
+//   text-decoration: none;
+//   vertical-align: middle;
+//   text-align: center;
+//   color:#f0ad4e;
+// }
+
+///Mat tab css - start
+mat-tab-group{
+  background-color: white;
+}
+::ng-deep mat-tab-body{
+  border:solid 1px #cccccc !important;
+  height: calc(100vh - 230px) !important;
+}
+::ng-deep .mat-tab-labels{
+  background-color:#eaeaea;
+}
+
+::ng-deep .mat-tab-label{
+  // border-top:solid 1px grey !important;
+  // border-left:solid 1px grey !important;
+  // border-right:solid 1px grey !important; //rebeccapurple
+}
+::ng-deep .mat-tab-label-active{
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-top:solid 1px #cccccc !important;
+  border-left:solid 1px #cccccc !important;
+  border-right:solid 1px #cccccc !important;
+  background-color: white;
+}
+::ng-deep .mat-tab-header mat-ink-bar {
+  background-color: unset !important;
+  border-bottom: 0px solid red !important;
+}
+
+::ng-deep .mat-tab-header {
+  background-color: unset !important;
+  border-bottom: 0px;
+}
+// .analyze
+// {
+//   background-color: #337ab7;
+//   color: white;
+//   font-family: calibri;
+//   font-weight: 600;
+// }
+///Mat tab css - end

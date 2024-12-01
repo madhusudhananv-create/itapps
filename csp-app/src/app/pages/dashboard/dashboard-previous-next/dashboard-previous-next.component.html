@@ -1,0 +1,64 @@
+<div class="row" style="background-color: #fff;">
+  <div class="col-lg-8 col-md-8 col-sm-8" style="width: 57%; color: #4e5882; font-size: 15px;font-weight: 700;">
+    <div *ngIf="_util.IsGAVS()" class="backbuttonlink" [routerLink]="['/newdashboard/custm']"><img
+        src="assets/images/back_round.png">
+    </div>
+    <!-- </div> -->
+    <img class="image" style="height:45px;padding:5px" src="assets/images/{{customerId}}.png"
+      onerror="this.src='assets/images/CustomerLogo.png'">
+
+      {{customerName}}
+  </div>
+
+  <!-- <div  style="padding:0 15px">
+      <i class="fa fa-filter link" (click)="showFilter = !showFilter"
+                  style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer"></i>
+    </div> -->
+
+  <div class="col-lg-4 col-md-4 col-sm-4">
+    <!-- <div  style="padding:0 15px">
+
+  </div> -->
+    <div class="prevNext" style="float: right;margin-right: 40px;">
+        <a *ngIf="!_util.IsGAVS()"  class="link" [routerLink]="['/layout/feedback-page', customerId]"  style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer" matTooltip="Feedback" [matTooltipPosition]="'before'">
+          <img style="width: 20px"   src="assets/images/feedback.png">
+        </a>
+      <i class="fa fa-filter link" (click)="showFilter = !showFilter"
+        style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer"></i>
+      <button [disabled]="currIndex == 0" (click)="onPrev()"
+        style="background-color: white;font-size: 12px;margin-right: 20px;border:none">
+        <i class="fa fa-arrow-left"></i>&nbsp;Previous</button>
+      <button [disabled]="currIndex == 3" (click)="onNext()"
+        style="background-color: white;font-size: 12px;border:none">
+        Next&nbsp;<i class="fa fa-arrow-right"></i></button>
+    </div>
+  </div>
+</div>
+<div style="padding-left: 20px; padding-right: 20px; margin-bottom: 10px" *ngIf="showFilter">
+  <div style="position: relative;background-color: #eff8ff">
+    <app-portfolio-project-selector [custId]="customerId" [allproj]="false" [portinput]="_shared.selectedPortfolios"
+      [projinput]="_shared.selectedProjects" [prodinput]="_shared.selectedProducts"
+      (projectsSelected)="getSelectedProjectsList($event)" (prodSelected)="getSelectedProdList($event)">
+    </app-portfolio-project-selector>
+  </div>
+  <div (click)="showFilter = false"
+    style="position:absolute; right: 40px; top: 40px; text-align: right;cursor: pointer;">
+    <mat-icon class="link" (click)="showFilter = false">close</mat-icon>
+  </div>
+</div>
+
+
+<div class="row" *ngIf="currIndex == 0">
+  <app-dashboard-premier [projectArray]="projArray" [productArray]="prodArray" [portArray]="portArray">
+  </app-dashboard-premier>
+</div>
+<div class="row" *ngIf="currIndex == 1">
+  <app-dashboard-customer-page2 [projectArray]="projArray" [productArray]="prodArray" [portArray]="portArray">
+  </app-dashboard-customer-page2>
+</div>
+<div class="row" *ngIf="currIndex == 2">
+  <app-dashboard-customer-next-page [customerId]="customerId" [projectArray]="projArray"></app-dashboard-customer-next-page>
+</div>
+<div class="row" *ngIf="currIndex == 3">
+  <app-dashboard-success-journey [custId]="customerId"></app-dashboard-success-journey>
+</div>

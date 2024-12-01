@@ -1,0 +1,66 @@
+
+.subTitle {
+    top: 208px;
+    left: 34px;
+    width: 108px;
+    height: 19px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    text-align: left;
+    font: normal normal normal 16px/19px Lato;
+    letter-spacing: 0px;
+    color: #2A397D;
+    opacity: 1;
+    size: 16px;
+    font-weight: 500
+}
+
+.control-label
+{
+    //width: 133px;
+    height: 15px;
+    text-align: left;
+    font: normal normal normal 12px/15px Lato;
+    letter-spacing: 0px;
+    opacity: 1;
+    size: 12px
+}
+
+.container {
+ width: 100%;
+ background: #FFFFFF 0% 0% no-repeat padding-box;
+ box-shadow: -2px 2px 3px #00000007;
+ border: 2px solid #E3E4E9;
+ opacity: 1;
+}
+
+.backbuttonlink{
+    margin-top: 15px;
+    margin-left: 20px; 
+    cursor: pointer; 
+    text-decoration: none; 
+    outline: none;
+    padding-right : 20px;
+  }
+
+::ng-deep .no-line .mat-form-field-underline {
+    display: none;
+  }
+
+  ::ng-deep .PrjName .mat-select-placeholder {
+      display: none;
+  }
+
+  ::ng-deep .mat-focused .placeholder {
+    display: none;
+}
+
+::-webkit-input-placeholder {
+    top: 277px;left: 44px;width: 167px;min-height: 15px;text-align: left;float:none; font: normal normal normal 12px/15px Lato;letter-spacing: 0px;color: #666666;opacity: 1;
+}
+
+.info{
+    font-size: 12px;
+    position: absolute;
+    margin-top: -5px;
+}

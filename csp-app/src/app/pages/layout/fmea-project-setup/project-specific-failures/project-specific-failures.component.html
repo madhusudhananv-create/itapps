@@ -1,0 +1,429 @@
+<div *ngIf="!EditMode">
+  <div style="text-align: left; margin-bottom: 10px">
+    <app-table-filter [data]="projectmapping" tableName='FMEA_PROJECT' (onChange)="Filter_onChange($event)">
+    </app-table-filter>
+  </div>
+  <table class="table mat-elevation-z5" mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="select">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef="let element" style="width:50px !important">
+        <mat-checkbox [(ngModel)]="selectAll" (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
+          [indeterminate]="selection.hasValue() && !isAllSelected()">
+        </mat-checkbox>
+      </th>
+      <td mat-cell *matCellDef="let definitions">
+        <mat-checkbox [(ngModel)]="definitions.isselected" (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(definitions) : null"
+          [checked]="selection.isSelected(definitions)">
+        </mat-checkbox>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="index">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell [ngClass]="'indexWidth'" *matHeaderCellDef>No</th>
+      <td mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index;"> {{(paginator.pageIndex * paginator.pageSize) + (element + 1)}} </td>
+    </ng-container>
+    <ng-container matColumnDef="functioN_ACTIVITIES">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Function/Step/Activity</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.functioN_ACTIVITIES}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="potentiaL_FAILURE_MODE">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Failure Mode</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.potentiaL_FAILURE_MODE}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="potentiaL_CAUSE_FACTOR">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Cause Factor</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.potentiaL_CAUSE_FACTOR}}</td>
+    </ng-container>
+
+
+    <ng-container matColumnDef="potentiaL_CAUSE">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Potential Cause</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.potentiaL_CAUSE}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="occurrencE_RATING_DEFINITION">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef="let definitions">Occurrence Rating</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.rF_OCCURRENCE_ID}}-{{definitions.occurencE_RATING}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="severitY_RATING_DEFINITION">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Severity Rating</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.rF_SEVERITY_ID}}-{{definitions.severitY_RATING}}</td>
+    </ng-container>
+
+
+    <ng-container matColumnDef="detectioN_RATING_DEFINITION">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Detection Rating</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.rF_DETECTION_ID}}-{{definitions.detectioN_RATING}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="rpn">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>RPN</th>
+      <td mat-cell *matCellDef="let definitions">{{definitions.rpn}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="applicable">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Applicable</th>
+      <td mat-cell *matCellDef="let definitions">
+        <span *ngIf="definitions.mappinG_ID > 0 && definitions.isapplicable == 1" style="margin-right: 5px">
+          <img src="assets/images/Applicable.png" style="height: 25px;">
+        </span>
+        <span *ngIf="definitions.mappinG_ID > 0 && definitions.isapplicable == 0" style="margin-right: 5px">
+          <img src="assets/images/Non-Applicable.png" style="height: 25px;">
+        </span>
+        {{getValue(definitions.isapplicable)}}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="approve">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" mat-header-cell *matHeaderCellDef>Approved</th>
+      <td mat-cell *matCellDef="let definitions">
+        <span *ngIf="definitions.isapproved == 1" style="margin-right: 5px">
+          <img src="assets/images/Approve.png" style="height: 25px;">
+        </span>
+        <span *ngIf="definitions.isapproved == 0" style="margin-right: 5px">
+          <img src="assets/images/Rejected.png" style="height: 25px;">
+        </span>
+        {{getValue(definitions.isapproved)}}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="view">
+      <th mat-header-cell style="font-family: calibri;" [hidden]="" [ngClass]="'indexWidth'" *matHeaderCellDef>
+        <div></div>
+      </th>
+      <td mat-cell [ngClass]="'indexWidth'" [hidden]="!element.isapproved" *matCellDef="let element">
+        <a class="link" (click)="viewElement_onClick(element)">
+          <i class="fa fa-eye" style="font-size:20px;cursor: pointer;"></i>
+        </a>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="edit">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" [ngClass]="'editWidth'" *matHeaderCellDef>
+        <div></div>
+      </th>
+      <td nowrap mat-cell [ngClass]="'editWidth'" *matCellDef="let element" [hidden]="element.isapproved">
+        <a class="link" (click)="EditRow_onClick(element)" style="padding-right:5px;cursor: pointer;">
+          <i class="fa fa-edit"></i>
+        </a>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="delete">
+      <th [hidden]="!projectmapping || projectmapping.length == 0" [ngClass]="'editWidth'" *matHeaderCellDef>
+        <div></div>
+      </th>
+      <td nowrap mat-cell [ngClass]="'editWidth'" *matCellDef="let element" [hidden]="element.isapproved">
+        <a class="link" (click)="DeleteRow_onClick(element)" style="padding-right:5px;cursor: pointer;">
+          <i class="fa fa-trash"></i>
+        </a>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumnsStage; sticky: true"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumnsStage;"></tr>
+  </table>
+  <div class="row" style="margin-left: 0px; padding-left: 0px">
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: left;margin-left: 0px; padding-left: 0px">
+      <button class="btn btn-primary" style="margin-right: 7px; outline: none;text-decoration: none" (click)="setApplicable()"
+        *ngIf="_access.IsAllowed(55, 1, '','')">Set Applicable</button>
+      <span *ngIf="_access.IsAllowed(56, 1, '','')" style="display: inline-block">
+        <button class="btn btn-primary" style="margin-right: 7px;outline: none;text-decoration: none" (click)="updateStatus('Approve')">Approve</button>
+        <button class="btn btn-primary" style="outline: none;text-decoration: none" (click)="updateStatus('Reject')">Reject</button>
+      </span>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align: right">
+      <mat-paginator #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 15]"></mat-paginator>
+    </div>
+  </div>
+</div>
+
+<!-- <div style="position: absolute" class="clRejectionPopupStage2All" *ngIf="showRejectionPopupStage2All">
+    <div class="row" style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 100%; padding-bottom: 5px;">
+      <div style="float: left">
+        <b>Comments for Rejection</b>
+      </div>
+      <div style="float: right" (click)="closePopup('RejectionStage2All')">
+        <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+      </div>
+    </div>
+    <table class="table-bordered" style="width :90%;">
+      <tr style="text-align:left">
+        <mat-label class="FormField-Mat-Label">Rejection Comments &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;</mat-label>
+        <mat-form-field class="FormField-Size">
+          <input matInput style="width :200px" [(ngModel)]="fmea_RejectionComments_Stage2All" name="txtRejectionCommentsAll" required>
+        </mat-form-field>
+      </tr>
+
+      <tr style="text-align:right">
+        <button type="button" class="btn btn-primary" (click)="setRequestAll('REJECT',fmea_RejectionComments_Stage2All)">Save</button>
+        &nbsp;&nbsp;&nbsp;
+        <button type="button" class="btn btn-primary" (click)="btnCancelRejectionCommentsStage2All()">Cancel</button>
+      </tr>
+
+    </table>
+  </div> -->
+<div>
+  <mat-progress-bar *ngIf="isSubmitted" mode="indeterminate"></mat-progress-bar>
+</div>
+<div *ngIf="EditMode">
+  <form #roWFormStage2="ngForm" (ngSubmit)="SubmitModelFormStage2(roWFormStage2)">
+    <table style="border:1px solid #b5b5b5 !important;" border="0" style="width :100% !important;">
+      <!-- <tr>
+        <td colspan="4">
+          <mat-label class="FormField-Mat-Label">Function/Step/Activity : </mat-label>
+          &nbsp;&nbsp;&nbsp;
+          <mat-form-field class="FormField-Big">
+            <input style="border:0px solid #b5b5b5 !important;width:580px !important;" name="txtFFS" matInput [(ngModel)]="selectedParamsStage2.potentiaL_FAILURE_MODE"
+              type="text" [disabled]="true">
+          </mat-form-field>
+        </td>
+      </tr> -->
+
+      <tr>
+        <td>
+          <mat-label class="FormField-Mat-Label">Potential Failure Mode</mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">Potential Cause Factor</mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">Potential Cause</mat-label>
+        </td>
+        <td>
+
+          <mat-label class="FormField-Mat-Label">Potential Effect of Failure</mat-label>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="25%">
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtPFM" matInput [(ngModel)]="selectedParamsStage2.potentiaL_FAILURE_MODE" type="text" [disabled]="true"></textarea>
+          </mat-form-field>
+        </td>
+
+        <td width="25%">
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtPC" matInput [readonly]="readOnly" [(ngModel)]="selectedParamsStage2.potentiaL_CAUSE_FACTOR" type="text"></textarea>
+          </mat-form-field>
+        </td>
+
+        <td width="25%">
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtPC" matInput [readonly]="readOnly" [(ngModel)]="selectedParamsStage2.potentiaL_CAUSE" type="text"></textarea>
+          </mat-form-field>
+        </td>
+
+        <td width="25%" style="vertical-align:top !important;">
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtPEOF" matInput [readonly]="readOnly" [(ngModel)]="selectedParamsStage2.potentiaL_FAILURE_EFFECT" type="text"></textarea>
+          </mat-form-field>
+
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <mat-label class="FormField-Mat-Label">Occurrance Rating
+            <span style="color:red">*</span>
+          </mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">Severity Rating
+            <span style="color:red">*</span>
+          </mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">Detection Rating
+            <span style="color:red">*</span>
+          </mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">RPN</mat-label>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="25%">
+          <mat-form-field class="FormField-Size">
+            <mat-select class="FormField-Border" name="ddOCCURRENCE_RatingFactorsList" [(ngModel)]="selectedParamsStage2.rF_OCCURRENCE_ID"
+              (selectionChange)="setRating('O', selectedParamsStage2.rF_OCCURRENCE_ID, 'occurencE_RATING')" required [disabled]="readOnly">
+              <mat-option *ngFor="let c of occuranceRatings" [value]="c.ratinG_FACTORS_RATING">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </td>
+        <td style="vertical-align:top !important;" width="25%">
+          <mat-form-field class="FormField-Size">
+            <mat-select class="FormField-Border" [disabled]="readOnly" name="severityRatings" [(ngModel)]="selectedParamsStage2.rF_SEVERITY_ID"
+              (selectionChange)="setRating('S', selectedParamsStage2.rF_SEVERITY_ID, 'severitY_RATING')" required>
+              <mat-option *ngFor="let c of severityRatings" [value]="c.ratinG_FACTORS_RATING">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </td>
+
+        <td style="vertical-align:top !important;" width="25%">
+          <mat-form-field class="FormField-Size">
+            <mat-select class="FormField-Border" [disabled]="readOnly" name="ddDETECTION_RatingFactorsList" [(ngModel)]="selectedParamsStage2.rF_DETECTION_ID"
+              (selectionChange)="setRating('D', selectedParamsStage2.rF_DETECTION_ID, 'detectioN_RATING')" required>
+              <mat-option *ngFor="let c of detectionRatings" [value]="c.ratinG_FACTORS_RATING">{{c.ratinG_FACTORS_RATING}} - {{c.ratinG_DEFINITION}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </td>
+
+        <td style="vertical-align:top !important;" width="25%">
+          <mat-form-field class="FormField-Size">
+            <input style="border:0px solid #b5b5b5 !important;" name="txtRPN" matInput [(ngModel)]="selectedParamsStage2.rpn" type="number"
+              readonly>
+          </mat-form-field>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <mat-label class="FormField-Mat-Label">Current Detection Control
+            <span *ngIf="isRequired" style="color:red">*</span>
+          </mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">Current Preventive Control
+            <span *ngIf="isRequired" style="color:red">*</span>
+          </mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">Recommended Detective Control
+            <span *ngIf="isRequired" style="color:red">*</span>
+          </mat-label>
+        </td>
+        <td>
+          <mat-label class="FormField-Mat-Label">Recommended control to reduce occurrence
+            <span *ngIf="isRequired" style="color:red">*</span>
+          </mat-label>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtCDControl" matInput [readonly]="readOnly" [(ngModel)]="selectedParamsStage2.currenT_DETECTION_CONTROL"
+              type="text" required></textarea>
+          </mat-form-field>
+        </td>
+
+        <td>
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtCPControl" matInput [readonly]="readOnly" [(ngModel)]="selectedParamsStage2.currenT_PREVENTIVE_CONTROL"
+              type="text" required></textarea>
+          </mat-form-field>
+        </td>
+
+        <td style="vertical-align:top !important;">
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtRDControlRDCStage2" [readonly]="readOnly" class="FormField-Size" matInput [(ngModel)]="selectedParamsStage2.recommendeD_DETECTIVE_CONTROL_STAGE2"
+              type="text" [required]="isRequired"></textarea>
+          </mat-form-field>
+
+        </td>
+        <td style="vertical-align:top !important;">
+
+          <mat-form-field class="FormField-Size">
+            <textarea name="txtRPControlRDCStage2" [readonly]="readOnly" class="FormField-Size" matInput [(ngModel)]="selectedParamsStage2.recommendeD_PREVENTIVE_CONTROL_STAGE2"
+              type="text" [required]="isRequired"></textarea>
+          </mat-form-field>
+        </td>
+
+      </tr>
+      <tr>
+        <td>
+          <mat-label class="FormField-Mat-Label">Resposible
+            <span *ngIf="isRequired" style="color:red">*</span>
+          </mat-label>
+        </td>
+        <!-- <td>
+          <mat-label class="FormField-Mat-Label">Target Date
+            <span *ngIf="isRequired" style="color:red">*</span>
+          </mat-label>
+        </td> -->
+        <td></td>
+        <td></td>
+      </tr>
+
+      <tr>
+
+        <td style="vertical-align:top !important;">
+
+          <mat-form-field class="FormField-Size">
+            <mat-select style="border:0px solid #b5b5b5 !important;" name="ddEmployee" [disabled]="readOnly" [(ngModel)]="selectedParamsStage2.responsible"
+              [required]="isRequired">
+              <mat-option *ngFor="let emp of employees" [value]="emp.emP_ID">
+                {{ emp.frsT_NM}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </td>
+
+
+        <td style="vertical-align:top !important;">
+
+          <!-- <mat-form-field class="FormField-Size">
+            <input style="border:0px solid #b5b5b5 !important;" matInput [(ngModel)]="selectedParamsStage2.targeT_DATE" [max]="maxValue"
+              name="dtTARGET_DATE" [matDatepicker]="pickerTargetDate" [required]="isRequired">
+            <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+            <mat-datepicker #pickerTargetDate></mat-datepicker>
+          </mat-form-field> -->
+        </td>
+
+
+        <td style="vertical-align:top !important;">
+        </td>
+
+        <td>
+        </td>
+
+      </tr>
+
+      <!-- <tr style="text-align:right">
+        <td colspan="4"> &nbsp;&nbsp;&nbsp;
+          <div style="position: absolute" class="clRejectionPopupStage2" *ngIf="showRejectionPopupStage2">
+            <div class="row" style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 100%; padding-bottom: 5px;">
+              <div style="float: left">
+                <b>Comments for Rejection</b>
+              </div>
+              <div style="float: right" (click)="closePopup('RejectionStage2')">
+                <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+              </div>
+            </div>
+            <table class="table-bordered" style="width :90%;">
+              <tr style="text-align:left">
+                <mat-label class="FormField-Mat-Label">Rejection Comments &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;</mat-label>
+                <mat-form-field class="FormField-Size">
+                  <input matInput style="border:0px solid #b5b5b5 !important;" [(ngModel)]="fmea_RejectionComments_Stage2" name="txtRejectionComments"
+                    required>
+                </mat-form-field>
+              </tr>
+
+              <tr style="text-align:right">
+                <button type="button" class="btn btn-primary" (click)="btnSaveRejectionCommentsStage2()">Save</button>
+                &nbsp;&nbsp;&nbsp;
+                <button type="button" class="btn btn-primary" (click)="btnCancelRejectionCommentsStage2()">Cancel</button>
+              </tr>
+
+            </table>
+          </div>
+
+        </td>
+      </tr> -->
+
+      <tr style="text-align:right">
+        <td colspan="5">
+          <button type="button" class="btn btn-primary" (click)="btnCancel()">Cancel</button>
+          &nbsp;&nbsp;&nbsp;
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitted || readOnly" (click)="saveMapping()">Save</button>
+          &nbsp;&nbsp;&nbsp;
+          <button type="button" class="btn btn-primary" (click)="btnApproveStage2()" [disabled]="readOnly">Approve</button>
+          &nbsp;&nbsp;&nbsp;
+          <button type="button" class="btn btn-primary" (click)="btnRejectStage2()" [disabled]="readOnly">Reject</button>
+          &nbsp;&nbsp;&nbsp;
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>

@@ -1,0 +1,792 @@
+<!-- <div class="row">
+  <table style="margin: 5px;width: 70%;font-size: 12px" *ngIf="checkListFindings.length > 0"
+    class="table table-bordered">
+    <tr>
+      <th style="width: 30%;">Look For</th>
+      <th style="width: 30%;">Audit finding</th>
+      <th style="width: 16%">Finding Type</th>
+      <th>Add Action Plan</th>
+      <th style="width :20%">Stage and Status of finding</th>
+    </tr>
+    <tr *ngFor="let check of checkListFindings;let ind = index">
+      <!-- <ng-template *ngIf="check.status == 'No'"> 
+      <td
+        [ngStyle]=" {'font-weight' : (ind == selectedRow) ? 'bold' :'normal','color' : (ind == selectedRow) ? '#337ab7' :'black' ,'font-size' :(ind == selectedRow) ? '14px' : 'normal', 'background-color' : (ind == selectedRow) ? '#c6ddf9' :'white'} ">
+        {{check.looK_FOR}}</td>
+      <td
+        [ngStyle]=" {'font-weight' : (ind == selectedRow) ? 'bold' :'normal','color' : (ind == selectedRow) ? '#337ab7' :'black' ,'font-size' :(ind == selectedRow) ? '14px' : 'normal', 'background-color' : (ind == selectedRow) ? '#c6ddf9' :'white'} "
+        *ngIf="check.status == 'Yes'">{{check.findings?.ofI_DESCRIPTION}}</td>
+      <td *ngIf="check.status == 'No'"
+        [ngStyle]=" {'font-weight' : (ind == selectedRow) ? 'bold' :'normal','color' : (ind == selectedRow) ? '#337ab7' :'black' ,'font-size' :(ind == selectedRow) ? '14px' : 'normal', 'background-color' : (ind == selectedRow) ? '#c6ddf9' :'white'} ">
+        {{check.findings?.findinG_DESCRIPTION}}</td>
+      <td
+        [ngStyle]=" {'font-weight' : (ind == selectedRow) ? 'bold' :'normal','color' : (ind == selectedRow) ? '#337ab7' :'black' ,'font-size' :(ind == selectedRow) ? '14px' : 'normal', 'background-color' : (ind == selectedRow) ? '#c6ddf9' :'white'} ">
+        {{check.findings?.findinG_TYPE}}</td>
+      <td>
+        <a style="cursor: pointer;" (click)="AddActionPlan(check,ind)">
+          <i class="material-icons">
+            library_add
+          </i>
+        </a>
+      </td>
+      <td *ngIf="stageColor != undefined">
+        <i *ngIf="stageColor[ind] != undefined" [style.color]="stageColor[ind][0]" class="material-icons">
+          looks_one
+        </i>
+        <i *ngIf="stageColor[ind] != undefined" [style.color]="stageColor[ind][1]" class="material-icons">
+          looks_two
+        </i>
+        <i *ngIf="stageColor[ind] != undefined" [style.color]="stageColor[ind][2]" class="material-icons">
+          looks_3
+        </i>
+        <i *ngIf="stageColor[ind] != undefined" [style.color]="stageColor[ind][3]" class="material-icons">
+          looks_4
+        </i>
+        <i *ngIf="stageColor[ind] != undefined" [style.color]="stageColor[ind][4]" class="material-icons">
+          looks_5
+        </i>
+      </td>
+      <!-- </ng-template> -->
+<!-- <ng-template *ngIf="check.status == 'Yes' && (check.findings.ofI_DESCRIPTION != undefined || check.findings.ofI_DESCRIPTION != '')">
+        <td>{{check.findings.ofI_DESCRIPTION}}</td>
+        <td></td>
+        <td>
+          <a style="cursor: pointer;" (click)="AddActionPlan(check)">
+            <i class="material-icons">
+              library_add
+            </i>
+          </a>
+        </td>
+      </ng-template> 
+    </tr>
+  </table>
+</div> -->
+<div style="margin-bottom: 5px; display: flex; margin-top: 5px; width: 85%"
+  *ngIf="checkListFindings && checkListFindings.length > 0">
+  <div *ngIf="showCheck || showForQATeam || _access.IsAllowed(108, 1, '', '')" style="line-height: 34px">
+    <mat-checkbox class="example-margin" [(ngModel)]="selectAll" (change)="selectallFindings()">
+    </mat-checkbox>
+  </div>
+  <div *ngIf="showCheck || showForQATeam || _access.IsAllowed(108, 1, '', '')" style="margin-right: 10px">
+    <button type="button" class="btn btn-primary" [disabled]="disableAcceptReject" (click)="SaveResponse('Accept')">
+      Accept </button>
+  </div>
+  <div *ngIf="showCheck || showForQATeam || _access.IsAllowed(108, 1, '', '')">
+    <button type="button" class="btn btn-primary" [disabled]="disableAcceptReject" (click)="SaveResponse('Reject')">
+      Reject </button>
+  </div>
+</div>
+
+<div style="padding: 15px">
+  <table style="width: 100%;margin-bottom: -50px;" class="table table-bordered"
+    *ngFor="let question of checkListFindings;let quesind = index">
+    <thead>
+      <tr style="background-color: #d6d3ce; height: 34px">
+        <th [attr.colspan]="6" style="padding-left: 5px"> Question /Look For :- {{question.looK_FOR}} </th>
+      </tr>
+      <tr>
+
+        <th style="width: 5%"></th>
+        <th style="padding-left: 5px; width: 25%">Finding Description</th>
+        <th style="width: 10%">Finding Type</th>
+        <th style="text-align: center; width: 12%">Add Action Plan</th>
+        <th style="width: 28%">Remarks</th>
+        <th style="text-align: center; width: 25%"> Stage and Status of Finding</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let find of question.findings; let ind = index" style="height: 34px">
+        <ng-container *ngIf="find.findinG_DESCRIPTION.trim().length > 0">
+          <td>
+            <div
+              *ngIf="getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#FF5969,#FF5969,#FF5969'">
+              <mat-checkbox class="example-margin" [(ngModel)]="find.ischecked">
+              </mat-checkbox>
+            </div>
+          </td>
+          <td style="padding-left: 5px"
+            [ngStyle]=" {'font-weight' : (ind == selectedRow && quesind == selectedQuest) ? 'bold' :'normal','font-size' :(ind == selectedRow && quesind == selectedQuest) ? '14px' : 'normal', 'background-color' : (ind == selectedRow && quesind == selectedQuest) ? '#d6d3ce' :'white'} ">
+            {{find.findinG_DESCRIPTION}}</td>
+          <td
+            [ngStyle]=" {'font-weight' : (ind == selectedRow && quesind == selectedQuest) ? 'bold' :'normal' ,'font-size' :(ind == selectedRow && quesind == selectedQuest) ? '14px' : 'normal', 'background-color' : (ind == selectedRow && quesind == selectedQuest) ? '#d6d3ce' :'white'} ">
+            {{find.findinG_TYPE}}</td>
+          <!-- <td *ngIf="find.findinG_CATEGORY == 'MANDATORY'" style="text-align: center" [ngStyle]=" {'font-weight' : (ind == selectedRow && quesind == selectedQuest) ? 'bold' :'normal' ,'font-size' :(ind == selectedRow && quesind == selectedQuest) ? '14px' : 'normal', 'background-color' : (ind == selectedRow && quesind == selectedQuest) ? '#d6d3ce' :'white'} ">
+                <a style="cursor: pointer;" (click)="AddActionPlan(question,find, quesind, ind)">
+                    <i class="material-icons">
+                      library_add
+                    </i>
+                  </a>
+            </td> -->
+          <td style="text-align: center"
+            [ngStyle]=" {'font-weight' : (ind == selectedRow && quesind == selectedQuest) ? 'bold' :'normal' ,'font-size' :(ind == selectedRow && quesind == selectedQuest) ? '14px' : 'normal', 'background-color' : (ind == selectedRow && quesind == selectedQuest) ? '#d6d3ce' :'white'} ">
+            <div style="display: flex; margin-left: 55px">
+              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' 
+                  || (getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376')
+                  || (getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969')"
+                style="margin-right: 4px;">
+                <b>{{getAuditeeResponse(find.id)}}ed </b>
+              </div>
+              <div
+                *ngIf="getAuditeeResponse(find.id)=='Reject' && 
+                (find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969' || find.stagE_COLORS == '#3AB376,#FF5969,#FF5969,#FF5969')"
+                style="margin-right: 4px;">
+                <b></b>
+              </div>
+              <div *ngIf="!getAuditeeResponse(find.id)" style="margin-right: 4px">
+                <mat-checkbox class="example-margin" [(ngModel)]="find.ischecked">
+
+                </mat-checkbox>
+              </div>
+              <!-- <div *ngIf="getAuditeeResponse(find.id)=='Reject' && 
+                  find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969'" style="margin-right: 4px">
+                <mat-checkbox class="example-margin" [(ngModel)]="find.ischecked">
+
+                </mat-checkbox>
+              </div> -->
+              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' && find.findinG_CATEGORY == 'MANDATORY'">
+                <a style="cursor: pointer;" (click)="AddActionPlan(question, find, quesind, ind)">
+                  <i class="material-icons">
+                    library_add
+                  </i>
+                </a>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="getAuditeeResponse(find.id) == 'Accept' 
+              || getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376'
+              ">
+              <mat-form-field style="width: 90%">
+                <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks"
+                  [disabled]="getsubmittedstatus(find)">
+                    </textarea>
+              </mat-form-field>
+            </div>
+            <div
+              *ngIf="getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#FF5969,#FF5969,#FF5969'">
+              <mat-form-field style="width: 90%">
+                <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks"
+                  [disabled]="getsubmittedstatus(find)">
+                    </textarea>
+              </mat-form-field>
+            </div>
+            <div *ngIf="!getAuditeeResponse(find.id) && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969' ||
+              getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969'">
+              <mat-form-field style="width: 90%">
+                <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks">
+                    </textarea>
+              </mat-form-field>
+            </div>
+            <div
+              *ngIf="getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#FF5969,#FF5969,#FF5969'">
+              <mat-form-field style="width: 90%">
+                <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks">
+                    </textarea>
+              </mat-form-field>
+            </div>
+          </td>
+          <td style="text-align: center; width: 40%" *ngIf="find.stagE_COLORS != undefined">
+            <span *ngFor="let stage of find.stagE_COLORS; let i = index">
+              <span [style.background-color]="stage" class="dot">{{i+1}}</span> <span
+                *ngIf="i !=find.stagE_COLORS.length -1 " style="margin-right: 5px">&#8594;</span>
+            </span>
+          </td>
+        </ng-container>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="row" style="width: 1550px;">
+  <div *ngIf="viewCAPA">
+    <mat-horizontal-stepper #stepper>
+      <mat-step>
+        <ng-template matStepLabel>
+          <label> Stage : Corrective Action Plan submission </label>
+          <br>
+          <label>Status : {{findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS}}</label>
+        </ng-template>
+        <div *ngIf="actionPlan != undefined">
+          <div style="margin-top: 10px;">
+            <label> Question/Look For :- <u> {{actionPlanQiestion?.looK_FOR}} </u></label>
+          </div>
+          <div style="margin-left: 12px;">
+            <ul>
+              <div>
+                <li>
+                  <label>Finding type :-</label> {{actionPlan.findinG_TYPE}}
+                </li>
+                <li>
+                  <label>Finding descripton :</label> {{actionPlan.findinG_DESCRIPTION}}
+                </li>
+              </div>
+            </ul>
+          </div>
+          <div *ngIf="findingStatus != undefined && findingStatus.capA_SUBMISSION != undefined">
+            <form>
+              <ng-template matStepLabel>
+                <label>Stage :</label> Corrective Action Plan Submission
+                <br>
+                <label>Status :</label> {{findingStatus.capA_SUBMISSION.status?.stagE_STATUS}}
+              </ng-template>
+              <br>
+              <label style="width: 6%;">Cause :</label>
+              <mat-form-field *ngIf="causeCollection != undefined">
+                <mat-label>Cause and Root Cause</mat-label>
+                <mat-select (selectionChange)="getSelectedVal()"
+                  [disabled]="findingStatus.capA_SUBMISSION.capa.length > 0 && iscapsubmitbutton"
+                  [(ngModel)]="rootCauseIds" name="cause" multiple>
+                  <mat-optgroup *ngFor="let group of causeCollection" [label]="group.causes">
+                    <mat-option *ngFor="let pokemon of group.rooT_CAUSE" [value]="pokemon.id"
+                      [title]="pokemon.rooT_CAUSE">
+                      {{pokemon.rooT_CAUSE}}
+                    </mat-option>
+                  </mat-optgroup>
+                </mat-select>
+              </mat-form-field>
+
+              <a style="float: right;margin-top: 1%;font: normal normal normal 14px/17px Roboto,'Helvetica Neue',sans-serif;"
+                target="_blank" href="../../../../assets/helpfiles/correctiveaction.html">5 Steps Guide to Corrective
+                Action</a>
+              <div class="row">
+                <table style="width: 99%;font-size: 12px" class="table table-bordered"
+                  *ngIf="findingStatus.capA_SUBMISSION.capa.length > 0">
+                  <tr>
+                    <th>S.No</th>
+                    <th style="width: 8%;">Potential Cause</th>
+                    <th style="width: 1%">Is Root Cause</th>
+                    <th>Correction</th>
+                    <th>Corrective Action Plan</th>
+                    <th style="width: 8%;">Target Date</th>
+                    <th style="width: 12%">Responsibility</th>
+                    <th>Plan for verifying effectiveness of Corrective Action Plan</th>
+
+                  </tr>
+                  <tr *ngFor="let st of findingStatus.capA_SUBMISSION.capa;let i = index">
+
+                    <td>{{i+1}}</td>
+                    <td>{{st.cappalist.rooT_CAUSE}}</td>
+                    <td>
+                      <mat-form-field style="width: 50px;">
+                        <mat-select name="rootCause{{i}}" [(ngModel)]="st.cappalist.isrootcause"
+                          [disabled]="st.cappalist.issubmitted">
+                          <mat-option [value]="true">Yes</mat-option>
+                          <mat-option [value]="false">No</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field style="width :98%">
+                        <textarea name="correction{{i}}" matInput [disabled]="st.cappalist.issubmitted"
+                          [(ngModel)]="st.cappalist.correction"></textarea>
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field style="width :98%">
+                        <textarea name="corrective{{i}}" matInput [disabled]="st.cappalist.issubmitted"
+                          [(ngModel)]="st.cappalist.correctivE_ACTION_PLAN"></textarea>
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field style="width: 85px;">
+                        <input [min]="checklistSummaryRec.actuaL_AUDIT_START_DATE" [max]="maxTargetDate"
+                          name="captargetdate{{i}}" [disabled]="st.cappalist.issubmitted"
+                          [(ngModel)]="st.cappalist.caP_TARGET_DATE" matInput [matDatepicker]="picker"
+                          placeholder="Target date">
+                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-datepicker #picker></mat-datepicker>
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field style="width: 100px;">
+                        <mat-select name="responsible{{i}}" [disabled]="st.cappalist.issubmitted"
+                          [(ngModel)]="st.cappalist.responsible" required>
+                          <mat-option *ngFor="let root of empInfo" [value]="root.emP_ID" [title]="root.frsT_NM">
+                            {{root.frsT_NM}}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field style="width :98%">
+                        <textarea name="effectiveplan{{i}}" matInput [disabled]="st.cappalist.issubmitted"
+                          [(ngModel)]="st.cappalist.plaN_FOR_EFFECTIVE_CAP"></textarea>
+                      </mat-form-field>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </form>
+          </div>
+          <div style="text-align: center" class="row" *ngIf="findingStatus?.capA_SUBMISSION?.capa.length > 0">
+            <button *ngIf="showCheck || showForQATeam || _access.IsAllowed(109, 1, '', '')"
+              (click)="SaveCheckListCAPA('Corrective Action Plan Submitted')"
+              [disabled]="iscapsubmitbutton || disablesubmittillSave" class="btn btn-primary"
+              style="margin: 5px">Submit</button>
+          </div>
+          <div>
+            <mat-progress-bar *ngIf="disablesubmittillSave" mode="indeterminate"></mat-progress-bar>
+          </div>
+        </div>
+      </mat-step>
+      <mat-step>
+        <ng-template matStepLabel>
+          <label>Stage : Corrective Action Plan Review </label>
+          <br>
+          <label *ngIf="iscapsubmitbutton && findingStatus.capA_REVIEW?.capa.length > 0">Status :
+            {{findingStatus.capA_REVIEW?.status?.stagE_STATUS}}</label>
+        </ng-template>
+        <form *ngIf="findingStatus != undefined && findingStatus.capA_REVIEW != undefined && iscapsubmitbutton">
+          <div class="row" style="margin-top: 15px">
+            <table style="width: 99%;font-size: 12px" class="table table-bordered"
+              *ngIf="findingStatus.capA_REVIEW?.capa?.length > 0">
+              <tr>
+                <th style="width: 1%">S.No</th>
+                <th style="width: 8%;">Potential Cause</th>
+                <th style="width: 1%">Is Root Cause</th>
+                <th style="width: 15%;">Correction</th>
+                <th style="width: 15%;">Corrective Action Plan</th>
+                <th style="width: 8%;">Target Date</th>
+                <th style="width: 12%">Responsibility</th>
+                <th style="width:15%"> Plan for verifying effectiveness of Corrective Action Plan</th>
+                <!-- <th style="width: 8%;">Target Date</th> -->
+
+                <th>
+                  <!-- <input type="checkbox" #checkAllId [(ngModel)]="isCheck" (click)="checkAll(checkAllId)"
+                      name="checkAll"> -->
+                  Is Approved
+                </th>
+                <th>Remarks</th>
+              </tr>
+              <tr *ngFor="let st of findingStatus.capA_REVIEW.capa;let i = index">
+
+                <td>{{i+1}}</td>
+                <td>{{st.rooT_CAUSE}}</td>
+                <td>
+                  {{getRootCauseVal(st.isrootcause)}}
+                </td>
+                <td>
+                  {{st.correction}}
+                </td>
+                <td>
+                  {{st.correctivE_ACTION_PLAN}}
+                </td>
+                <td>
+                  {{st.caP_TARGET_DATE |date :'mediumDate'}}
+                </td>
+                <td>
+                  {{getEmployeeName(st.responsible)}}
+                </td>
+                <td>
+                  {{ st.plaN_FOR_EFFECTIVE_CAP }}
+                </td>
+                <td>
+                  <mat-form-field style="width: 50px;">
+                    <mat-select name="check{{i}}" [(ngModel)]="st.ischecked" [disabled]="st.issubmitted" name="food"
+                      (ngModelChange)="SendIdtoArray(st)">
+                      <mat-option [value]="true">Yes</mat-option>
+                      <mat-option [value]="false">No</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+                <td>
+                  <mat-form-field>
+                    <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="st.issubmitted"
+                      placeholder="Enter remarks"></textarea>
+                  </mat-form-field>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div style="text-align: center" class="row">
+            <button
+              *ngIf="findingStatus.capA_REVIEW?.capa.length > 0 && (showForAuditor || showForQATeam || _access.IsAllowed(110, 1, '', ''))"
+              class="btn btn-primary" [disabled]="iscapreviewbutton || disabletillreviewSave" (click)="SubmitCap()"
+              style="margin: 5px" mat-raised-button>Submit</button>
+          </div>
+          <div>
+            <mat-progress-bar *ngIf="disabletillreviewSave" mode="indeterminate"></mat-progress-bar>
+          </div>
+        </form>
+      </mat-step>
+      <mat-step>
+        <ng-template matStepLabel>
+          <label>Stage : Corrective Action Plan Implementation </label>
+          <br>
+          <label
+            *ngIf="iscapreviewbutton && findingStatus.caP_IMPLEMENTATION?.capa.length > 0 && findingStatus.capA_REVIEW?.status?.stagE_STATUS == 'Corrective Action Plan Approved'">Status
+            : {{findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS}}</label>
+        </ng-template>
+
+        <div *ngIf="findingStatus != undefined && findingStatus.caP_IMPLEMENTATION != undefined && iscapreviewbutton">
+          <div class="row" style="margin-top: 15px">
+            <table style="width: 99%;font-size: 12px" class="table table-bordered"
+              *ngIf="findingStatus.capA_REVIEW?.capa?.length > 0">
+              <tr>
+                <th style="width: 1%">S.No</th>
+                <th style="width: 8%;">Potential Cause</th>
+                <th style="width: 1%">Is Root Cause</th>
+                <th style="width: 15%;">Correction</th>
+                <th style="width: 15%;">Corrective Action Plan</th>
+                <th style="width: 8%;">Target Date</th>
+                <th style="width: 12%">Responsibility</th>
+                <th style="width:15%">Plan for verifying effectiveness of Corrective Action Plan</th>
+                <!-- <th style="width: 8%;">Target Date</th> -->
+                <th style="width: 2%;">
+                  <!-- <input type="checkbox" #checkAllImplementation [(ngModel)]="isCheckImp"
+                      (click)="checkAllImp(checkAllImplementation)" name="checkAllImp"> -->
+                  Is Implemented
+                </th>
+                <th>Remarks</th>
+              </tr>
+              <tr *ngFor="let st of findingStatus.caP_IMPLEMENTATION.capa;let i = index">
+
+                <td>{{i+1}}</td>
+                <td>{{st.capadata.rooT_CAUSE}}</td>
+                <td>
+                  {{getRootCauseVal(st.capadata.isrootcause)}}
+                </td>
+                <td>
+                  {{st.capadata.correction}}
+                </td>
+                <td>
+                  {{st.capadata.correctivE_ACTION_PLAN}}
+                </td>
+                <td>
+                  {{st.capadata.caP_TARGET_DATE |date :'mediumDate'}}
+                </td>
+                <td>
+                  {{getEmployeeName(st.capadata.responsible)}}
+                </td>
+                <td>
+                  {{ st.capadata.plaN_FOR_EFFECTIVE_CAP }}
+                </td>
+                <td>
+                  <mat-form-field style="width: 50px;">
+                    <mat-select name="check{{i}}" [(ngModel)]="st.isimplemented" name="food"
+                      [disabled]="isimplementbutton">
+                      <mat-option [value]="true">Yes</mat-option>
+                      <mat-option [value]="false">No</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <!-- <input type="checkbox" (click)="SendIdtoArrayImp(st)" [(ngModel)]="st.isimplemented" name="check{{i}}"> -->
+                </td>
+                <td>
+                  <mat-form-field *ngIf="!st.isimplemented">
+                    <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="st.issubmitted"
+                      placeholder="Enter remarks"></textarea>
+                  </mat-form-field>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div style="text-align: center" class="row">
+            <button
+              *ngIf="findingStatus.caP_IMPLEMENTATION?.capa?.length > 0 && (showCheck || showForQATeam || _access.IsAllowed(111, 1, '', ''))"
+              (click)="ImplementCap()" style="margin: 5px" mat-raised-button class="btn btn-primary"
+              [disabled]="isimplementbutton || disabletillSaveImplement">Submit</button>
+          </div>
+          <div>
+            <mat-progress-bar *ngIf="disabletillSaveImplement" mode="indeterminate"></mat-progress-bar>
+          </div>
+        </div>
+      </mat-step>
+      <mat-step>
+        <ng-template matStepLabel>
+          <label> Stage : Corrective Action Plan Verification </label>
+          <br>
+          <label
+            *ngIf="isimplementbutton && findingStatus.caP_VERIFICATION?.capa.length > 0 && findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS == 'Corrective Action Plan Implemented'">Status
+            : {{findingStatus.caP_VERIFICATION?.status?.stagE_STATUS}}</label>
+        </ng-template>
+        <div class="row" *ngIf="findingStatus != undefined" style="margin-top: 15px">
+          <table style="width: 99%;font-size: 12px" class="table table-bordered"
+            *ngIf="findingStatus != undefined && findingStatus.caP_VERIFICATION != undefined && isimplementbutton && findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS == 'Corrective Action Plan Implemented'">
+            <tr>
+
+              <!-- <th>
+                  <input type="checkbox" #checkAllVerification [(ngModel)]="isCheckVeri" (click)="checkAllImp(checkAllVerification)" name="checkAllVeri">
+                </th> -->
+              <th style="width: 1%">S.No</th>
+              <th style="width: 8%;">Potential Cause</th>
+              <th style="width: 1%">Is Root Cause</th>
+              <th style="width: 15%;">Correction</th>
+              <th style="width: 15%;">Corrective Action Plan</th>
+              <th style="width: 8%;">Target Date</th>
+              <th style="width: 12%">Responsibility</th>
+              <th style="width:15%">Plan for verifying effectiveness of Corrective Action Plan</th>
+              <!-- <th style="width: 8%;">Target Date</th> -->
+              <th style="width: 2%;">Is Corrective Action Completed / Closed ?</th>
+              <th>Remarks</th>
+            </tr>
+            <tr *ngFor="let st of findingStatus.caP_VERIFICATION.capa;let i = index">
+
+              <td>{{i+1}}</td>
+              <td>{{st.capadata.rooT_CAUSE}}</td>
+              <td>
+                {{getRootCauseVal(st.capadata.isrootcause)}}
+              </td>
+              <td>
+                {{st.capadata.correction}}
+              </td>
+              <td>
+                {{st.capadata.correctivE_ACTION_PLAN}}
+              </td>
+              <td>
+                {{st.capadata.caP_TARGET_DATE |date :'mediumDate'}}
+              </td>
+              <td>
+                {{ getEmployeeName(st.capadata.responsible)}}
+              </td>
+              <td>
+                {{ st.capadata.plaN_FOR_EFFECTIVE_CAP }}
+              </td>
+              <!-- <td>
+                  {{st.capadata.plaN_TARGET_DATE |date :'mediumDate'}}
+                </td> -->
+              <td>
+                <mat-form-field style="width: 50px;">
+                  <mat-select name="check{{i}}" (selectionChange)="clearrecommendedAction(st)"
+                    [disabled]="isverficationbutton" [(ngModel)]="st.isverified">
+                    <mat-option [value]="true">Yes</mat-option>
+                    <mat-option [value]="false">No</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field style="width: 100px;" *ngIf="!st.isverified">
+                  <mat-select name="capVerification" [(ngModel)]="st.recommendeD_ACTION"
+                    [disabled]="isverficationbutton">
+                    <mat-option value="Resubmit Corrective Action Plan">Re-Submit Corrective Action Plan</mat-option>
+                    <mat-option value="Reimplement Corrective Action Plan">Re-Implement Corrective Action
+                      Plan</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <!-- <input type="checkbox" (click)="SendIdtoArrayImp(st)" [(ngModel)]="st.isimplemented" name="check{{i}}"> -->
+              </td>
+              <td>
+                <mat-form-field>
+                  <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="st.issubmitted"
+                    placeholder="Enter remarks"></textarea>
+                </mat-form-field>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center" class="row">
+            <button [disabled]="isverficationbutton || disableTillSaveVerification"
+              *ngIf="findingStatus.caP_VERIFICATION?.capa?.length > 0 && isimplementbutton && (showForAuditor || showForQATeam || _access.IsAllowed(112, 1, '', ''))"
+              (click)="VerifyCAPImplementation()" style="margin: 5px" mat-raised-button
+              class="btn btn-primary">Submit</button>
+            <!-- <button (click)="RejectCapImplementation()" style="margin: 5px" mat-raised-button>Reject</button> -->
+            <!-- <div *ngIf="rejectImp" style="display: inline-block;">
+                <label>Recommended Action :</label>
+                <mat-form-field>
+                  <mat-select name="capVerification" (change)="verifyChanges($event)">
+                    <mat-option value="resubmitcap">Re-Submit CAP</mat-option>
+                    <mat-option value="reimplementcap">Re-Implement CAP</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div> -->
+          </div>
+        </div>
+
+        <div>
+          <mat-progress-bar *ngIf="disableTillSaveVerification" mode="indeterminate"></mat-progress-bar>
+        </div>
+      </mat-step>
+    </mat-horizontal-stepper>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div *ngIf="viewCAPANew"
+  style=" box-shadow: 6px 6px 6px 6px #ccc;  width: 90%; background-color: whitesmoke ; margin: auto">
+  <div *ngIf="step === 1" id="step1" style="height: 350px;width: 90%;margin: auto; padding-left: 15px; ">
+    <div class="header" style="height: 20%" *ngIf="findingStatus != undefined">
+      <h3>Audit &amp; Report Finding </h3>
+      <br>
+    </div>
+    <div *ngIf="actionPlan != undefined && findingStatus.audiT_REPORTING_FINDING != undefined">
+      <label>Question :</label> {{actionPlan.looK_FOR}}
+      <br>
+      <label>Submitted Date :</label> {{findingStatus.audiT_REPORTING_FINDING.status.createD_DATE |date:'dd-MMM-yyyy'}}
+      <label>Submitted By :</label> {{findingStatus.audiT_REPORTING_FINDING.status.createD_BY }}
+      <br>
+      <br>
+      <div *ngIf="actionPlan.findings.findinG_DESCRIPTION != undefined && actionPlan.findings.findinG_DESCRIPTION != ''"
+        class="row">
+        <label> NC Finding :</label> {{actionPlan.findings.findinG_DESCRIPTION}}
+      </div>
+      <div *ngIf="actionPlan.findings.ofI_DESCRIPTION != undefined && actionPlan.findings.ofI_DESCRIPTION != ''">
+        <label> OFI :</label> {{actionPlan.findings.ofI_DESCRIPTION}}
+      </div>
+      <div
+        *ngIf="actionPlan.findings.besT_PRACTICE_DESCRIPTION != undefined && actionPlan.findings.besT_PRACTICE_DESCRIPTION != ''">
+        <label> Best practice(s) :</label> {{actionPlan.findings.besT_PRACTICE_DESCRIPTION}}
+      </div>
+    </div>
+  </div>
+  <div *ngIf="step === 2" id="step2" style="height: 350px;width: 90%;margin: auto ">
+    <div class="header" style="height: 20%" *ngIf="findingStatus != undefined">
+      <h3> Auditee Acceptance Status </h3>
+    </div>
+    <br>
+    <span style="color: grey; font-size: 16px;">Please see the below findings and choose either Accept or Reject based
+      on your review !!!</span>
+    <br>
+    <br>
+    <div>
+      <!-- <div>
+            <label><u>Findings for {{actionPlan.looK_FOR}} : </u></label>
+        </div>
+        <br> -->
+      <div style="margin-left: 12px;">
+        <ul>
+          <div
+            *ngIf="actionPlan.findings.findinG_DESCRIPTION != undefined && actionPlan.findings.findinG_DESCRIPTION != ''"
+            class="row">
+            <li>
+              <label> NC Finding :</label> {{actionPlan.findings.findinG_DESCRIPTION}}
+            </li>
+          </div>
+          <div *ngIf="actionPlan.findings.ofI_DESCRIPTION != undefined && actionPlan.findings.ofI_DESCRIPTION != ''">
+            <li>
+              <label> OFI :</label> {{actionPlan.findings.ofI_DESCRIPTION}}
+            </li>
+          </div>
+          <div
+            *ngIf="actionPlan.findings.besT_PRACTICE_DESCRIPTION != undefined && actionPlan.findings.besT_PRACTICE_DESCRIPTION != ''">
+            <li>
+              <label> Best practice(s) :</label> {{actionPlan.findings.besT_PRACTICE_DESCRIPTION}}
+            </li>
+          </div>
+        </ul>
+      </div>
+      <br>
+      <div class="row">
+        <button class="btn btn-primary"
+          style="width: 60px; height: 30px;margin-right: 7px;text-align: center; vertical-align: middle">Accept</button>
+        <button class="btn btn-primary"
+          style="width: 60px; height: 30px;text-align: center; vertical-align:middle">Reject</button>
+      </div>
+      <mat-form-field style="width: 220px;">
+        <textarea matInput placeholder="If No,Please enter the remarks"></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+  <div *ngIf="step === 3" id="step2" style="height: 350xpx;width: 90%;margin: auto">
+    <div class="header" style="height: 20%" *ngIf="findingStatus != undefined">
+      <h3> Corrective Action Plan Submission </h3>
+    </div>
+    <div>
+      <mat-form-field *ngIf="causeCollection != undefined">
+        <mat-label>Cause and Root Cause</mat-label>
+        <mat-select (selectionChange)="getSelectedVal()" [(ngModel)]="rootCauseIds" name="cause" multiple>
+          <mat-optgroup *ngFor="let group of causeCollection" [label]="group.causes">
+            <mat-option *ngFor="let pokemon of group.rooT_CAUSE" [value]="pokemon.id" [title]="pokemon.rooT_CAUSE">
+              {{pokemon.rooT_CAUSE}}
+            </mat-option>
+          </mat-optgroup>
+        </mat-select>
+      </mat-form-field>
+      <div class="row">
+        <table style="width: 99%;font-size: 12px" class="table table-bordered"
+          *ngIf="findingStatus.capA_SUBMISSION.capa.length > 0">
+          <tr>
+            <th>S.No</th>
+            <th style="width: 7%;">Potential Cause</th>
+            <th style="width: 1%">Is Root Cause</th>
+            <th style="width: 3%">Correction</th>
+            <th style="width: 3%">Corrective Action Plan</th>
+            <th style="width: 8%;">Target Date</th>
+            <th style="width: 10%">Responsibility</th>
+            <th style="width: 2%"> Plan to Verify effectiveness of Corrective Action Plan</th>
+          </tr>
+          <tr *ngFor="let st of findingStatus.capA_SUBMISSION.capa;let i = index">
+
+            <td>{{i+1}}</td>
+            <td>{{st.cappalist.rooT_CAUSE}}</td>
+            <td>
+              <input name="isroot" type="radio" #isroot (click)="getVal(isroot ,i)">
+            </td>
+            <td>
+              <mat-form-field style="width :98%">
+                <textarea name="correction{{i}}" [disabled]="st.cappalist.issubmitted" matInput
+                  [(ngModel)]="st.cappalist.correction"></textarea>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field style="width :98%">
+                <textarea name="corrective{{i}}" [disabled]="st.cappalist.issubmitted" matInput
+                  [(ngModel)]="st.cappalist.correctivE_ACTION_PLAN"></textarea>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field style="width: 85px;">
+                <input [min]="checkListFindings[0].actuaL_AUDIT_START_DATE" name="captargetdate{{i}}"
+                  [disabled]="st.cappalist.issubmitted" [(ngModel)]="st.cappalist.caP_TARGET_DATE" matInput
+                  [matDatepicker]="picker" placeholder="Target date">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field style="width: 100px;">
+                <mat-select name="responsible{{i}}" [disabled]="st.cappalist.issubmitted"
+                  [(ngModel)]="st.cappalist.responsible" required>
+                  <mat-option *ngFor="let root of empInfo" [value]="root.emP_ID" [title]="root.frsT_NM">
+                    {{root.frsT_NM}}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field style="width :98%">
+                <textarea name="effectiveplan{{i}}" [disabled]="st.cappalist.issubmitted" matInput
+                  [(ngModel)]="st.cappalist.plaN_FOR_EFFECTIVE_CAP"></textarea>
+              </mat-form-field>
+            </td>
+            <!-- <td>
+                  <mat-form-field style="width: 100px;">
+                    <input [min] = "st.cappalist.caP_TARGET_DATE"  name="plantargetdate{{i}}" [disabled]="st.cappalist.issubmitted" [(ngModel)]="st.cappalist.plaN_TARGET_DATE" matInput
+                      [matDatepicker]="picker2" placeholder="Target date">
+                    <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+                    <mat-datepicker #picker2></mat-datepicker>
+                  </mat-form-field>
+                </td> -->
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div style="text-align: center" class="row">
+      <button *ngIf="findingStatus.capA_SUBMISSION.capa.length > 0" (click)="SaveCheckListCAPA('Save')"
+        [disabled]="issubmit" style="margin: 5px" mat-raised-button>Save</button>
+      <button *ngIf="findingStatus.capA_SUBMISSION.capa.length > 0"
+        (click)="SaveCheckListCAPA('Corrective Action Plan Submitted')" [disabled]="issubmit" style="margin: 5px"
+        mat-raised-button>Submit</button>
+    </div>
+  </div>
+  <div class="row" id="footer">
+    <div style="float: left;" (click)="incrementPreviousStep()" class="previous">&laquo; Previous </div>
+    <div style="float: right" (click)="incrementNextStep()" class="next">Next &raquo; </div>
+  </div>
+</div>

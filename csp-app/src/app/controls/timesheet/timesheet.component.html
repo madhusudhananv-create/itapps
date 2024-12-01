@@ -1,0 +1,20 @@
+<mat-tab-group>
+    <mat-tab *ngIf="_util.IsGAVS() === true" label="My Timesheet">
+        <app-timesheet-employee [customerId]="input_custId"></app-timesheet-employee>
+    </mat-tab>
+    <mat-tab *ngIf="_util.IsCustomer() && !IsNYU()" label="Team Timesheet - For Approval">
+        <app-timesheet-customer-forapproval [customerId]="input_custId"></app-timesheet-customer-forapproval>
+    </mat-tab>
+    <mat-tab *ngIf="_util.IsApprover() === true && _util.IsCustomer() == false" label="Team Timesheet">
+        <app-timesheet-team [customerId]="input_custId"></app-timesheet-team>
+    </mat-tab>
+    <mat-tab *ngIf="_util.IsApprover() === true && _util.IsCustomer() === true" label="View/Approve Team Timesheets">
+        <app-timesheet-customer *ngIf="_util.IsCustomer()" [customerId]="input_custId"></app-timesheet-customer>
+    </mat-tab>
+    <mat-tab *ngIf="_util.IsTeamMember() === false && _util.IsCustomer() === false" label="Reports-Reporting Period">
+        <app-timesheet-reports [customerId]="input_custId"></app-timesheet-reports>
+    </mat-tab>
+    <mat-tab *ngIf="_util.IsTeamMember() === false && _util.IsCustomer() === true" label="Reports-Custom Range">
+        <app-timesheet-reports-historical [customerId]="input_custId"></app-timesheet-reports-historical>
+    </mat-tab>
+</mat-tab-group>

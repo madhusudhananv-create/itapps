@@ -1,0 +1,117 @@
+
+  .descWidth{
+    flex: 0 0 15%;
+  }
+  .tabheader{
+      text-align: center;
+    }
+  .header{
+      text-align:right;
+      padding:10px 30px 0 0;
+  }
+  .link {
+      cursor: pointer;
+      text-decoration: none;
+      font-size:24px;
+      color:steelblue;
+      vertical-align: middle;
+      text-align: center;
+  }
+    .mat-cell:nth-child(7),
+    .mat-header-cell:nth-child(7),
+    {
+    flex: 0 0 10%;
+    }
+
+    /////// Table 
+    table {
+      border-collapse: collapse;
+    }
+    .table-outline {
+      border: 1px solid #a4b7c1;
+    }
+    .table .thead-light th {
+      color: #3e515b;
+      background-color: #c2cfd6;
+      border-color: #a4b7c1;
+    }
+    .table thead th {
+      vertical-align: bottom;
+      border-bottom: 2px solid #a4b7c1;
+    }
+    .table th, .table td {
+      padding: 0.75rem;
+      vertical-align: top;
+      border: 1px solid #a4b7c1;
+    }
+    .text-center {
+      text-align: center !important;
+      font-size:11px
+    }
+    th {
+      text-align: inherit;
+    }
+    .row{
+      margin:0 !important;
+    }
+    
+    .fa{
+      font-size:15px;
+    }
+    .link_button
+{
+  background:none;
+  border: none;
+  font-size: 24px;
+  color: steelblue;
+  vertical-align: middle;
+}
+.buttona
+{
+  color: #757272;
+  cursor: pointer;
+  border: 1px solid #e7e5e5;
+  border-radius: 4px 4px 0 0;
+  text-align: center;
+  font-family: calibri;
+  margin: 15px 7px 11px 7px;
+  box-shadow: 1px 1px 2px #adadad;
+  background: #f3f4f8;
+  float: left;
+}
+.mat-dialog-container {
+  max-width: none !important;
+}
+.mat-cell
+{
+  word-break: break-word;
+}
+.mat-column-description {
+  width: 25% !important;
+}
+.mat-column-targeT_DATE,.mat-column-identifieD_DATE,.mat-column-completioN_DATE {
+  width: 8% !important;
+  white-space: nowrap;
+}
+td.mat-cell
+{
+  font-family: 'calibri';
+  font-size:14px
+}
+.mat-column-owner,.mat-column-priority,.mat-column-status {
+  width: 8% !important;
+  word-break: unset
+}
+.mat-column-source {
+  width: 8% !important;
+}
+.mat-column-comments {
+  width: 10% !important;
+}
+.mat-column-edit {
+  width: 2% !important;
+  word-break: unset
+}
+.col-sm-6, .col-md-6, .col-lg-6{
+  padding: 0px;
+}

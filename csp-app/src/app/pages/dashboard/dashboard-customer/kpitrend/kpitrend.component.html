@@ -1,0 +1,59 @@
+<div style="margin: 17px">
+<div class="row" style="margin-bottom: 10px;">
+  <div class="col-lg-9 col-md-9 col-sm-9" style="text-align: left;">
+      <label style="margin-right: 5px;">Duration :</label>
+      <select name='ddStartMonth' (change)="saveDates(DateSelection)" [(ngModel)]="DateSelection.selectedStartMonth" required
+          style="width :65px;margin-right: 5px;">
+          <option value="Jan">JAN</option>
+          <option value="Feb">FEB</option>
+          <option value="Mar">MAR</option>
+          <option value='Apr'>APR</option>
+          <option value="May">MAY</option>
+          <option value="Jun">JUN</option>
+          <option value="Jul">JUL</option>
+          <option value="Aug">AUG</option>
+          <option value="Sep">SEP</option>
+          <option value="Oct">OCT</option>
+          <option value="Nov">NOV</option>
+          <option value="Dec">DEC</option>
+      </select>
+      <select name='ddStartYear' (change)="saveDates(DateSelection)" [(ngModel)]="DateSelection.selectedStartYear" required style="width :65px;margin-right:5px;">
+        <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{bb}}</option>
+      </select>
+      <span style="margin-right: 5px;"><b> - </b> </span>
+      <select name='ddEndMonth' (change)="saveDates(DateSelection)" [(ngModel)]="DateSelection.selectedEndMonth" required
+          style="width :65px;margin-right: 5px;">
+          <option value="Jan">JAN</option>
+          <option value="Feb">FEB</option>
+          <option value="Mar">MAR</option>
+          <option value='Apr'>APR</option>
+          <option value="May">MAY</option>
+          <option value="Jun">JUN</option>
+          <option value="Jul">JUL</option>
+          <option value="Aug">AUG</option>
+          <option value="Sep">SEP</option>
+          <option value="Oct">OCT</option>
+          <option value="Nov">NOV</option>
+          <option value="Dec">DEC</option>
+      </select>
+      <select name='ddEndYear' (change)="saveDates(DateSelection)" [(ngModel)]="DateSelection.selectedEndYear" required style="width :65px;margin-right:5px;">
+        <option [value]="bb" *ngFor="let bb of _util.Years(3)">{{bb}}</option>
+      </select>
+      <button type="button" class="btn btn-primary" style="height: 21px; vertical-align: middle; font-size: 12px;padding-top: 2px; margin-left: 10px;"
+         (click)="Service_GetKPITrendByMonthLine()" >Apply</button>
+  </div>
+  <div class="col-lg-3 col-md-3 col-sm-3" style="text-align:right; cursor: pointer;" (click)="closePopup()" >
+    <i style="font-size:24px; margin-right: 10px;" class="fa">&#xf00d;</i>
+  </div>
+</div>
+<div class="row"  *ngIf="lineGraphData.hasOwnProperty('series') && lineGraphData['series'].length > 0">
+  <highcharts-chart style="width: 80%;display: block; margin-left: auto; margin-right: auto;" [Highcharts]="Highcharts" [options]="lineGraphData">
+  </highcharts-chart>
+</div>
+<div class="row" *ngIf="lineGraphData.hasOwnProperty('series') && lineGraphData['series'].length == 0" style="height: 400px; width: 800px; line-height: 200px; text-align: center;">
+    <b> No KPI Trend available for this Time Range </b>
+</div>
+<div class ="row" *ngIf="!lineGraphData" style="height: 400px; width: 800px; line-height: 200px; text-align: center;">
+  <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+</div>
+</div>

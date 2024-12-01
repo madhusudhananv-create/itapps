@@ -1,0 +1,93 @@
+<nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" (click)="_util.ToggleSideNav()" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" [routerLink]="['/newdashboard/custm']">
+        <span class="gavs_logo"></span>
+      </a> 
+      <!-- <a class="navbar-brand" (click)="home()" routerLinkActive="active">
+        <span class="gavs_logo"></span>
+      </a> -->
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li class="active">
+          <a (click)="_util.ToggleSideNav()">
+            <i class="fa fa-bars fa-2x" style="color:#737070"></i>
+          </a>
+        </li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+          <div class="disp_name">
+            <!-- <span *ngIf="_util.IsLoggedIn()">{{_util.AppSettings.displayname}}&nbsp;&nbsp;</span> -->
+            <i class="fa fa-user user_img fa_fnt"></i>
+          </div>
+        </li>
+        <li>
+          <a href="#">
+            <span class="user_options">
+              <a [routerLink]="['/crispscores']" style="color:#000;">
+                <i class="fa fa-cog fa_fnt"></i>
+              </a>
+            </span>
+
+            <span class="user_options" style="padding: 0px;">
+              <a (click)='logout()' style="color:#000;">
+                <i class="fa fa-power-off fa_fnt"></i>
+              </a>
+            </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+
+
+<!-- <nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container-fluid" style="border:0px;">
+    <div class="navbar-header">
+      <button type="button" (click)="_util.ToggleSideNav()" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+        aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" [routerLink]="['/dashboard']">
+        <span class="gavs_logo"></span>
+      </a>
+    </div>
+    <div class="collapse navbar-collapse" style="padding-top: 14px">
+      <a (click)="_util.ToggleSideNav()">
+        <i class="fa fa-bars fa-2x" style="color:#737070"></i>
+      </a>
+    </div>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <div class="dropdown nav navbar-nav navbar-right">
+        <div class="dropbtn user_txt">
+          <span *ngIf="!_util.IsLoggedIn()">Welcome, </span>
+          <span class="disp_name" *ngIf="_util.IsLoggedIn()">{{_util.AppSettings.displayname}}</span>
+          <i class="fa fa-user user_img fa_fnt"></i>
+          <span class="user_options">
+            <a [routerLink]="['/customerinvite']" style="color:#000;">
+              <i class="fa fa-cog fa_fnt"></i>
+            </a>
+          </span>
+          <span class="user_options" style="padding: 0px;">
+            <a (click)='logout()' style="color:#000;">
+              <i class="fa fa-power-off fa_fnt"></i>
+            </a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav> -->

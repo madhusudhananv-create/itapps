@@ -1,0 +1,292 @@
+<div *ngIf="readonlymode">
+  <div class="row tabheader">
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:left;vertical-align:middle;padding-left:2px !important">
+      <button class="flatbutton" *ngIf="_util.IsQuality()" (click)="showBestPracMatrix()">View Best Practices from Other Projects</button>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:right">
+      <a id="filter" class="maticonbutton" title="Toggle Filter" (click)="ToggleFilter_onClick()">
+        <mat-icon style="vertical-align: middle">filter_list</mat-icon>
+      </a>
+      <a class="maticonbutton" title="Add Best Practice" (click)="Edit_onClick()" *ngIf="_access.IsAllowed(18, 2, '', input_projectid)">
+        <mat-icon style="vertical-align: middle">add</mat-icon>
+      </a>
+    </div>
+  </div>
+  <!-- <div class="row tabheader">
+    <div *ngIf="_util.IsQuality()" style="float: left;">
+      <div (click)="showBestPracMatrix()" class="buttona">View Best Practices from Other Projects</div>
+    </div>
+    <div *ngIf="_access.IsAllowed(18, 2, '', input_projectid)" style="float:right;margin-right: 20px">
+      <a class="link" title="Add Best Practice" (click)="Edit_onClick()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </div>
+  </div> -->
+  <div class="row" *ngIf="bShowFilter">
+    <app-table-filter [data]="bestpracticeData" tableName='PROJECT_BEST_PRACTICES' (onChange)="Filter_onChange($event)"></app-table-filter>
+  </div>
+  <div class="example-container" *ngIf="_access.IsAllowed(18, 1, '', input_projectid)">
+    <table class="table table-bordered" mat-table #table [dataSource]="dataSource1" matSort>
+      <ng-container matColumnDef="index">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</th>
+        <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index"> {{element + 1}} </td>
+      </ng-container>
+      <ng-container matColumnDef="description">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Best Practice description</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice">{{bestpractice.description}}</td>
+      </ng-container>
+      <ng-container matColumnDef="reporteD_BY">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Reported By</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.reporteD_BY}} </td>
+      </ng-container>
+      <ng-container matColumnDef="reporteD_DATE">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Reported Date</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.reporteD_DATE |date:'dd-MMM-yyyy'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="revieweD_BY">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Reviewed By</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.revieweD_BY}} </td>
+      </ng-container>
+      <ng-container matColumnDef="revieweD_DATE">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Reviewed Date</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.revieweD_DATE|date:'dd-MMM-yyyy'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="approveD_BY">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Approved By</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.approveD_BY}} </td>
+      </ng-container>
+      <ng-container matColumnDef="approveD_DATE">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Approved Date</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.approveD_DATE|date:'dd-MMM-yyyy'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="procesS_AREA">
+        <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Process Area</th>
+        <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.procesS_AREA}} </td>
+      </ng-container>
+      <ng-container matColumnDef="edit">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+          <div *ngIf="_access.IsAllowed(18, 3, '', input_projectid)"></div>
+        </th>
+        <td mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+          <a class="link" (click)="EditRow_onClick(element)" *ngIf="_access.IsAllowed(18, 3, '', input_projectid)">
+            <i class="fa fa-edit"></i>
+          </a>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="delete">
+        <th mat-header-cell style="font-family: calibri;" [ngClass]="'deleteWidth'" *matHeaderCellDef>
+          <div *ngIf="_util.IsEditable()"></div>
+        </th>
+        <td mat-cell [ngClass]="'deleteWidth'" *matCellDef="let element">
+          <a class="link" (click)="DeleteRow_onClick(element)" *ngIf="_access.IsAllowed(18, 4, '', input_projectid)">
+            <i class="fa fa-trash"></i>
+          </a>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <mat-paginator style="width: 100%" #bppaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+  </div>
+</div>
+<div *ngIf="editmode">
+  <form style="background: white;padding-left: 10px;padding-bottom: 10px;overflow: -webkit-paged-x;" #bestpractiseForm="ngForm"
+    (ngSubmit)="SubmitForm(bestpractiseForm.valid)">
+    <div class="row tabheader">
+      <div class="col-lg-10 col-md-10 col-sm-10">
+      </div>
+      <div style="float :right;margin-right: 20px">
+        <button class="link_button" type="submit">
+          <i class="fa fa-save"></i>
+        </button>
+        <a class="link" (click)="Cancel_onClick()">
+          <i class="fa fa-times"></i>
+        </a>
+      </div>
+    </div>
+    <div style="width: 50%;float: left;">
+      <div class="row">
+        <div style="font-family: calibri;font-size: 16px;margin-bottom: 15px;">
+          <b>Industry Vertical:</b> {{ddClientITBusiness?.bU_NAME}} </div>
+        <div style="font-family: calibri;font-size: 16px;margin-bottom: 10px;">
+          <b>IT Business Vertical:</b> {{ddIndustryVertical?.depT_NAME}} </div>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <mat-select name="ddServiceArea" [(ngModel)]="editBestPractice.servicE_AREA" (ngModelChange)="GetFilteredBestPractices($event)"
+            placeholder="Service Tower"  >
+            <mat-option *ngFor="let dd of ddServiceArea " [value]="dd" [title]="dd">{{dd}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <mat-select name="ddProcessArea" [(ngModel)]="editBestPractice.procesS_AREA" (ngModelChange)="GetFilteredBestPractices($event)"
+            placeholder="Process Area"  >
+            <mat-option *ngFor="let dd of ddProcessArea " [value]="dd" [title]="dd">{{dd}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(90% - 20px)">
+          <textarea name="txtDescription" maxlength="2000" [(ngModel)]="editBestPractice.description" matInput placeholder="Description"
+            required></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(90% - 20px)">
+          <textarea name="txtreportedname" maxlength="2000" [(ngModel)]="editBestPractice.reporteD_BY" matInput placeholder="Reported By"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input matInput name="dtReportedDate" [(ngModel)]='editBestPractice.reporteD_DATE' [matDatepicker]="pickerReportedDate" placeholder="Reported Date"
+            required>
+          <mat-datepicker-toggle matSuffix [for]="pickerReportedDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerReportedDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(90% - 20px)">
+          <textarea name="txtreviewedname" maxlength="2000" [(ngModel)]="editBestPractice.revieweD_BY" matInput placeholder="Reviewed By"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input matInput [min]="editBestPractice.reporteD_DATE" name="dtReviewedDate" [(ngModel)]='editBestPractice.revieweD_DATE'
+            [matDatepicker]="pickerReviewedDate" placeholder="Reviewed Date">
+          <mat-datepicker-toggle matSuffix [for]="pickerReviewedDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerReviewedDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(90% - 20px)">
+          <textarea name="txtapprovedname" maxlength="2000" [(ngModel)]="editBestPractice.approveD_BY" matInput placeholder="Approved By"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input matInput [min]="editBestPractice.reporteD_DATE" name="dtApprovedDate" [(ngModel)]='editBestPractice.approveD_DATE'
+            [matDatepicker]="pickerApprovedDate" placeholder="Approved Date">
+          <mat-datepicker-toggle matSuffix [for]="pickerApprovedDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerApprovedDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <mat-select name="ddSeverity" [(ngModel)]="editBestPractice.status" placeholder="Status" required>
+            <mat-option *ngFor="let dd of ddstatus " [value]="dd" [title]="dd">{{dd}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input matInput [min]="editBestPractice.reporteD_DATE" name="dtTargetDate" [(ngModel)]='editBestPractice.targeT_DATE' [matDatepicker]="pickerTargetDate"
+            placeholder="Target Date">
+          <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTargetDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field>
+          <input matInput [min]="editBestPractice.reporteD_DATE" name="dtActualDate" [(ngModel)]='editBestPractice.actuaL_DATE' [matDatepicker]="pickerActualDate"
+            placeholder="Actual Date">
+          <mat-datepicker-toggle matSuffix [for]="pickerActualDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerActualDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(90% - 20px)">
+          <textarea name="txtremarks" maxlength="2000" [(ngModel)]="editBestPractice.remarks" matInput placeholder="Remarks"></textarea>
+        </mat-form-field>
+      </div>
+
+      <!-- <div class="row">
+        <mat-form-field style="float: left;"> -->
+      <!-- <input matInput name="dtLocation" [(ngModel)]='editBestPractice.clienT_SERVICE_AREA' placeholder="Client Service Tower"> -->
+      <!-- <mat-select name="dtLocation" [(ngModel)]="editBestPractice.clienT_SERVICE_AREA" placeholder="Client Service Tower" required>
+            <mat-option *ngFor = "let dd of ddClientServiceArea " [value] ="dd" > {{dd}}</mat-option>
+          </mat-select> 
+        </mat-form-field>
+          <mat-form-field style="float: left;">
+          <input matInput name="txtLocation" [(ngModel)]='clientservicearea' placeholder="Enter New Client Service Tower">
+        </mat-form-field>
+        <div style="float: left;"  class="buttona" (click)="AddNewType()">
+          Add Client Service Tower
+      </div>
+      <div style="float: left;"  class="buttona" (click)="ClearType()">
+        Clear Input
+    </div>
+      </div> -->
+      <div class="row">
+        <mat-form-field style="width:calc(90% - 20px)">
+          <textarea name="txtActionPlan" maxlength="2000" [(ngModel)]="editBestPractice.applicablE_FOR" matInput placeholder="Applicable For ">{{editBestPractice.applicablE_FOR}}</textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:calc(90% - 20px)">
+          <textarea name="txtAssignedTo" maxlength="2000" [(ngModel)]="editBestPractice.noT_APPLICABLE_FOR" matInput placeholder="Not Applicable for">{{editBestPractice.noT_APPLICABLE_FOR}}</textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <button type="submit" (click)="sendMailToCSM(bestpractiseForm)" class="btn btn-success">Save</button>
+      </div>
+    </div>
+    <div style="width: 50%;float: right;" *ngIf="filteredBestpractices.length > 0">
+      <div class="row">Similar Best Practices defined.Do you want to use it?</div>
+      <div>
+        <table class="table table-bordered" mat-table #table1 [dataSource]="dataSource2" matSort>
+          <ng-container matColumnDef="index1">
+            <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</th>
+            <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index"> {{element + 1}} </td>
+          </ng-container>
+          <ng-container matColumnDef="description1">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Best Practice description</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice">{{bestpractice.description}}</td>
+          </ng-container>
+          <ng-container matColumnDef="reporteD_BY1">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Reported By</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.reporteD_BY}} </td>
+          </ng-container>
+          <ng-container matColumnDef="reporteD_DATE1">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Reported Date</th>
+            <td [ngStyle]="{'width':'20px'}" style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.reporteD_DATE |date:'dd-MMM-yyyy'}} </td>
+          </ng-container>
+          <ng-container matColumnDef="revieweD_BY1">
+            <th mat-header-cell style="font-family: calibri;width: 10%;" *matHeaderCellDef mat-sort-header>Reviewed By</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.revieweD_BY}} </td>
+          </ng-container>
+          <ng-container matColumnDef="revieweD_DATE1">
+            <th mat-header-cell style="font-family: calibri;width: 10%;" *matHeaderCellDef mat-sort-header>Reviewed Date</th>
+            <td nowrap style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.revieweD_DATE|date:'dd-MMM-yyyy'}} </td>
+          </ng-container>
+          <ng-container matColumnDef="approveD_BY1">
+            <th mat-header-cell style="font-family: calibri;width: 10%;" *matHeaderCellDef mat-sort-header>Approved By</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.approveD_BY}} </td>
+          </ng-container>
+          <ng-container matColumnDef="approveD_DATE1">
+            <th mat-header-cell style="font-family: calibri;width: 10%;" *matHeaderCellDef mat-sort-header>Approved Date</th>
+            <td nowrap style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.approveD_DATE|date:'dd-MMM-yyyy'}} </td>
+          </ng-container>
+          <ng-container matColumnDef="procesS_AREA1">
+            <th mat-header-cell style="font-family: calibri;width: 10%;" *matHeaderCellDef mat-sort-header>Process Area</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let bestpractice"> {{bestpractice.procesS_AREA}} </td>
+          </ng-container>
+          <ng-container matColumnDef="use">
+            <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+              <div *ngIf="_access.IsAllowed(18, 3, '', input_projectid)"></div>
+            </th>
+            <td mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+              <a class="link" (click)="Use_Element(element)">
+                Use
+              </a>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns1"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns1;"></tr>
+
+        </table>
+      </div>
+    </div>
+  </form>
+</div>

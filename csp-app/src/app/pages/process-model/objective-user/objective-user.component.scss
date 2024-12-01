@@ -1,0 +1,129 @@
+
+  .table > tbody > tr > td{
+    padding:0px !important;
+}
+.link {
+    cursor: pointer;
+    text-decoration: none;
+    vertical-align: middle;
+    text-align: center;
+  }
+  .row{
+      margin:0px;
+  }
+
+  table {
+    width: 100%;
+  }
+  
+  tr.example-detail-row {
+    height: 0;
+  }
+  
+  tr.example-element-row:not(.example-expanded-row):hover {
+    background: #f5f5f5;
+  }
+  
+  tr.example-element-row:not(.example-expanded-row):active {
+    background: #efefef;
+  }
+  
+  .example-element-row td {
+    border-bottom-width: 0;
+  }
+  
+  .example-element-detail {
+    overflow: hidden;
+    display: flex;
+  }
+  
+  .example-element-diagram {
+    min-width: 80px;
+    border: 2px solid black;
+    padding: 8px;
+    font-weight: lighter;
+    margin: 8px 0;
+    height: 104px;
+  }
+  
+  .example-element-symbol {
+    font-weight: bold;
+    font-size: 40px;
+    line-height: normal;
+  }
+  
+  .example-element-description {
+    padding: 16px;
+  }
+  
+  .example-element-description-attribution {
+    opacity: 0.5;
+  }
+
+  .index{
+    width:20px;
+  }
+
+  tr .mat-row{
+    height:30px !important;
+   }
+
+   .mat-row{
+    height:30px !important;
+   }
+   td.mat-cell:first-child{
+       padding: 5px !important;
+   }
+   tr.mat-header-row {
+    font-size: 12px;
+    font-weight: bold;
+    background-color: #c6ddf9;
+    height: 30px;
+  }
+
+  
+
+  .mat-header-cell
+ {
+   border:1px solid lightgrey !important ;
+   padding-left: 3px;
+   text-align: left;
+   font-family: Arial, Helvetica, sans-serif;
+   font-size: 14px;
+ }
+ td.mat-cell:first-child, td.mat-footer-cell:first-child, th.mat-header-cell:first-child 
+ {
+  padding-left: 3px; 
+ }
+.mat-cell
+{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  text-align:left;  
+  padding-left: 3px;
+}
+td.mat-cell:last-child, td.mat-footer-cell:last-child, th.mat-header-cell:last-child {
+  padding-right: 0px;
+}
+
+.mat-column-edit
+{
+  width:4%;
+}
+
+.mat-column-index
+{
+  width:2%;
+}
+.mat-column-procesS_AREA_ID
+{
+  width:20%;
+}
+.mat-column-procesS_NAME
+{
+  width:25%;
+}
+.mat-column-procesS_DESCRIPTION
+{
+  width:30%;
+}

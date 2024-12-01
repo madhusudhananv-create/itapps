@@ -1,0 +1,22 @@
+
+
+  .statusFilter ~ .mat-checkbox{
+    margin-left: 12px;
+  }
+
+  ::ng-deep.mat-tab-labels{
+    background-color:#c6ddf9 !important;
+    font-weight: 600
+  }
+
+  .statusFilter ~ .mat-checkbox{
+    margin-left: 5px;
+  }
+
+  .isClicked{
+    background-color: rgb(214, 214, 214);
+  }
+
+  .mat-elevation-z5:hover{
+    background-color: rgb(241, 241, 241);
+  }

@@ -1,0 +1,177 @@
+<div class="pageborder" style="padding-bottom: 20px;">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+      <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px" src="assets/images/{{_layoutService.selectedCust}}.png"
+        onerror="this.src ='assets/images/CustomerLogo.png'">
+
+      <mat-select placeholder="Select Project" [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange()"
+        style="margin-left:15px; width:260px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;">
+        <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">{{proj.proJ_NM}}</mat-option>
+      </mat-select>
+      <!-- selected option: {{input_projectid}} -->
+    </div>
+
+    <div class="col-lg-6 col-md-6 col-sm-6"
+      style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px; color: #4e5882">
+
+      <div style="display: inline-block; ">
+        Lessons Learnt
+      </div>
+    </div>
+
+    <!-- <div class="row" style="padding-top:0%;margin-top:0%;padding-bottom: 10px;padding-left: 10px;padding-right:10px">
+      <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+    </div> -->
+    <div class="col-lg-12 col-md-12 col-sm-12" style="padding-top:0%;margin-top:0%;padding-bottom: 10px">
+      <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+
+    </div>
+  </div>  
+  <div class="table-container" *ngIf="showdetails">
+    <div *ngIf="readonlymode">
+      <div class="row tabheader">
+        <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:left;vertical-align:middle">
+        </div>
+        <div class="col-lg-6 col-md-6 col-sm-6" style="text-align:right">
+          <a class="maticonbutton" title="Add Lessons Learnt" (click)="Edit_onClick()"
+            *ngIf="_access.IsAllowed(19, 2, '', input_projectid)">
+            <mat-icon style="vertical-align: middle">add</mat-icon>
+          </a>
+        </div>
+      </div>
+      <br />
+      <div *ngIf="allLessonsLearnt.length == 0"
+        style="text-align: center;height: 100px; line-height: 100px; font-size: 16px; font-weight: 600;">
+        No Lessons Learnt defined for the selected Project...
+      </div>
+      <div class="example-container" *ngIf="_access.IsAllowed(19, 1, '', input_projectid) && allLessonsLearnt.length>0">
+        <table class="table table-bordered" style="border-radius: 3px;overflow: hidden " mat-table #table
+          [dataSource]="dataSource" matSort>
+          <ng-container matColumnDef="index">
+            <th mat-header-cell style="font-family: calibri;" class="mat-elevation-z5" [ngClass]="'indexWidth'"
+              *matHeaderCellDef>No.</th>
+            <td style="font-family: calibri;" class="mat-elevation-z5" mat-cell [ngClass]="'indexWidth'"
+              *matCellDef="let element = index"> {{element + 1}} </td>
+          </ng-container>
+          <ng-container matColumnDef="categorY_OF_LESSON">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Category of Lesson
+            </th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let lessonslearnt">
+              {{lessonslearnt.categorY_OF_LESSON}}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header> Lessons Learnt
+              Description
+            </th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let lessonslearnt">{{lessonslearnt.description}}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="procesS_AREA">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Process Area</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let lessonslearnt"> {{lessonslearnt.procesS_AREA}}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="publisheD_BY">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Published By</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let lessonslearnt"> {{lessonslearnt.publisheD_BY}}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="publisheD_DATE">
+            <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Published Date</th>
+            <td style="font-family: calibri;" mat-cell *matCellDef="let lessonslearnt">
+              {{lessonslearnt.publisheD_DATE |date:'dd-MMM-yyyy'}} </td>
+          </ng-container>
+          <ng-container matColumnDef="edit">
+            <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+              <div *ngIf="_access.IsAllowed(18, 3, '', input_projectid)"></div>
+            </th>
+            <td mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+              <a class="link" (click)="EditRow_onClick(element)" *ngIf="_access.IsAllowed(19, 3, '', input_projectid)">
+                <i class="fa fa-edit"></i>
+              </a>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="delete">
+            <th mat-header-cell style="font-family: calibri;" [ngClass]="'deleteWidth'" *matHeaderCellDef>
+              <div *ngIf="_util.IsEditable()"></div>
+            </th>
+            <td mat-cell [ngClass]="'deleteWidth'" *matCellDef="let element">
+              <a class="link" (click)="DeleteRow_onClick(element)"
+                *ngIf="_access.IsAllowed(19, 4, '', input_projectid)">
+                <i class="fa fa-trash"></i>
+              </a>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        <mat-paginator #bppaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+      </div>
+    </div>
+
+    <div *ngIf="editmode">
+      <form style="background: white;padding-left: 10px;padding-bottom: 10px;" #lessonLearntForm="ngForm"
+        (ngSubmit)="SubmitForm(lessonLearntForm.valid)">
+        <div class="row tabheader">
+          <div class="col-lg-10 col-md-10 col-sm-10">
+          </div>
+          <div style="float :right;margin-right: 20px">
+            <!-- <button class="link_button" type="submit">
+              <i class="fa fa-save"></i>
+            </button> -->
+            <a class="link" (click)="Cancel_onClick()">
+              <i class="fa fa-times"></i>
+            </a>
+          </div>
+        </div>
+        <div>
+          <div class="row">
+            <mat-form-field>
+              <mat-select name="ddcategoryLesson" [(ngModel)]="editLessonLearnt.categorY_OF_LESSON"
+                placeholder="Category of lesson" required>
+                <mat-option *ngFor="let dd of ddCategoryOfLesson" [value]="dd" [title]="dd">{{dd}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <mat-form-field style="width:calc(100% - 20px)">
+              <textarea name="txtDescription" maxlength="2000" [(ngModel)]="editLessonLearnt.description" matInput
+                placeholder="Description" required></textarea>
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <mat-form-field>
+              <mat-select name="ddSeverity" [(ngModel)]="editLessonLearnt.procesS_AREA" placeholder="Process Area"
+                required>
+                <mat-option *ngFor="let dd of ddProcessArea " [value]="dd" [title]="dd">{{dd}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <mat-form-field style="width:calc(100% - 20px)">
+              <textarea name="txtpublishedname" maxlength="2000" [(ngModel)]="editLessonLearnt.publisheD_BY" matInput
+                placeholder="Published By"></textarea>
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <mat-form-field>
+              <input matInput name="dtPublishedDate" [(ngModel)]='editLessonLearnt.publisheD_DATE' [max]="maxdate"
+                [matDatepicker]="pickerReportedDate" placeholder="Published Date" required>
+              <mat-datepicker-toggle matSuffix [for]="pickerReportedDate"></mat-datepicker-toggle>
+              <mat-datepicker #pickerReportedDate></mat-datepicker>
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn btn-success">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>

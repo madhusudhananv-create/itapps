@@ -1,0 +1,45 @@
+<div class="container">
+  <div class="row">   
+    <h4>Add Portfolio</h4>     
+
+    <table>
+        <tr>
+          <th>Portfolio Title:</th>
+          <td><input type="text" id="pid" name="pname" [(ngModel)]="portfolios.title"></td>
+        </tr>
+        <!-- [(ngModel)]=portfolios.title --> 
+        <tr>
+          <th>Comments:</th>
+          <td><textarea placeholder="Portfolio comments" [(ngModel)]="portfolios.comments"></textarea></td>
+        </tr>
+        <tr>
+          <td><button (click)="AddNewPortfolio()">Add</button></td>
+        </tr>
+      </table>  
+      
+      <div>
+          <ul>
+              <li *ngFor="let c of portfoliosLoadData">{{c.title}}</li>
+          </ul>
+            <!--         
+            <tr *ngFor="let c of portfoliosLoadData">
+              <td [id]="c.cusT_ID">{{c.title}}</td>
+            </tr> -->     
+        </div>
+
+      
+    <div>
+      <h4>Add Portfolio Owner</h4>   
+        <!-- (change)="dd_parentOnChange($event.target.value)" -->
+        <!-- [(ngModel)]="SelectedParentProjId" -->
+        <select id="dd_portfolios" name ="dd_portfolios" [(ngModel)]="selected_portfolio_id">                                  
+          <option *ngFor="let c of portfoliosLoadData" [value]="c.id">{{c.title}}</option>
+        </select>
+        &nbsp;&nbsp;&nbsp;
+        <select id="dd_customerContacts" name ="dd_customerContacts" [(ngModel)]="selected_customerName">                                  
+            <option *ngFor="let d of customerContactsData" [value]="d.customeR_ID">{{d.contacT_NAME}}</option>
+          </select>
+          <!-- <button (click)="AddPortfolioOwner(d)">Add-PO</button>           -->
+    </div>
+  </div>
+</div>

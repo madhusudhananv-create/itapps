@@ -1,0 +1,142 @@
+<div style="background-color:white">
+
+  <div class="row">
+    <div *ngIf="_util.IsPMO() || _util.IsCSM()" class="col-lg-12" style="text-align:center">TimeSheets Review</div>
+    <div *ngIf="_util.IsCustomer()" class="col-lg-12" style="text-align:center">Time Sheets Approval</div>
+  </div>
+  <div class="row">
+    Select Project:
+    <mat-form-field style="width:300px">
+      <mat-select name="ddProjects" [(ngModel)]="selectedProject">
+        <mat-option *ngFor="let proj of projects" [value]="proj" [title]="_util.GetProjectName(proj)">
+          {{_util.GetProjectName(proj)}}
+          <!-- {{ proj.proJ_NM}} -->
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    &nbsp;&nbsp;Reporting Period:
+    <mat-form-field style="width:60px;padding-left:10px">
+      <mat-select name='tableMonth' [(ngModel)]="tableMonth" (selectionChange)="ddMonth_OnChange()">
+        <mat-option value='Jan'>JAN</mat-option>
+        <mat-option value='Feb'>FEB</mat-option>
+        <mat-option value='Mar'>MAR</mat-option>
+        <mat-option value='Apr'>APR</mat-option>
+        <mat-option value='May'>MAY</mat-option>
+        <mat-option value='Jun'>JUN</mat-option>
+        <mat-option value='Jul'>JUL</mat-option>
+        <mat-option value='Aug'>AUG</mat-option>
+        <mat-option value='Sep'>SEP</mat-option>
+        <mat-option value='Oct'>OCT</mat-option>
+        <mat-option value='Nov'>NOV</mat-option>
+        <mat-option value='Dec'>DEC</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field style="width:80px;padding-left:10px">
+      <mat-select name='tableYear' [(ngModel)]="tableYear" (selectionChange)="ddMonth_OnChange()">
+      
+        <mat-option *ngFor="let year of _util.Years(3)" [value]="year" [title]="year"> {{year}} </mat-option>
+        <!--<mat-option [value]='2019'>2019</mat-option>
+        <mat-option [value]='2020'>2020</mat-option>-->
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field *ngIf="timesheetType.period == 0" style="width:200px;padding-left:10px;font-size:13px;">
+      <mat-select name='ddWeek' [(ngModel)]="timesheetType.selectedDateRange" (selectionChange)="ddWeek_OnChange()">
+        <mat-option *ngFor="let w of timesheetType.dateRange" [value]='w' [title]="w.displayName">{{w.displayName}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button type="button" name="btnPeriod" (click)="GetTimesheetData()" style="border-radius:4px">Go</button>&nbsp;&nbsp;
+    <button [disabled]="iscalling" class="btn btn-success" style="margin:5px" (click)='bulkemail()'>Email Reminder</button>
+
+  </div>
+  <div class="tableFixHead">
+    <div class="row" style="padding:5px">
+      <mat-progress-bar *ngIf="bProgress" mode="indeterminate"></mat-progress-bar>
+      <div style="text-align:center;padding:25px" *ngIf="projectTimesheets.employees.length === 0">No timesheets available for approval</div>
+      <table class="table table-bordered">
+        <tr *ngIf="projectTimesheets.employees.length > 0" style="vertical-align:middle;">
+            <th style="text-align:center;padding:3px;vertical-align:middle;">
+                <mat-checkbox name="chkAll" [(ngModel)]="bAllChecked" (change)="chkAll_OnChange( projectTimesheets )"></mat-checkbox>
+              </th>
+          <th style="text-align:center;font-size:smaller">Name</th>
+          <!-- <th style="text-align:center" *ngFor="let t of projectTimesheets.employees[0].timesheet; let i = index">{{t.clndR_DATE|slice:0:2}}</th> -->
+          <th style="text-align:center" *ngFor="let d of tmpSelectedDates">{{d}}</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Comments</th>
+        </tr>
+        <tr *ngFor="let t of projectTimesheets.employees">
+            <td style="text-align:center;padding:3px;vertical-align:middle;">
+                <mat-checkbox name="chkAll[{{t.proJ_ID}}]" [(ngModel)]="t.selected" (change)="chkAllProj_OnChange(t)"></mat-checkbox>
+              </td>
+          <!-- <td *ngIf="t.status !== 'FOR APPROVAL' && t.status !== 'APPROVED' " class="link" tooltip="Click to modify Leave/Holiday" style="font-size:smaller" (click)="updateTimeSheet(t)">{{t.frsT_NM}}
+          </td> -->
+          <td   style="vertical-align:middle;font-size:smaller">{{t.frsT_NM}}
+          </td>
+
+          <!-- <td *ngFor="let entry of t.timesheet" [style.background]="GetBackground(entry)"> -->
+          <td *ngFor="let entry of t.timesheet" [style.background]="GetBackground(entry,t)" style="text-align: center">  
+            <!-- <input #input name="input{{entry.ID}}" matInput type="text" [disabled]="disableEntry(entry.timE_ENTRY_STATUS,entry.proJ_TASK_ID)"
+              class="inputbox" [(ngModel)]="entry.clockeD_MINS" (change)="valuechange(t)" (keypress)="_keyPress(input, $event)"
+              (focus)="_focus(input)"> -->
+              <input #input name="input{{entry.ID}}" matInput type="text" [disabled]="disableEntry(entry.timE_ENTRY_STATUS,entry.proJ_TASK_ID,entry,t)"
+              class="inputbox" [(ngModel)]="entry.clockeD_MINS" [title] ="entry.timE_ENTRY_STATUS" matTooltip="entry.timE_ENTRY_STATUS"  (change)="valuechange(t)" (keypress)="_keyPress(input, $event)"
+              (focus)="_focus(input)">
+          </td>
+          <td style="text-align:center;vertical-align:middle;">
+            <b>{{t.total}}</b>
+          </td>
+          <td style="text-align:center;font-size:x-small;font-weight:bold;vertical-align:middle;">{{t.status}}</td>
+          <td style="text-align:center;vertical-align:middle;">
+            <textarea style="height: 64px;width: 100%;font-size: 12px;" [disabled]="disableEntry(t.status,-1)" [(ngModel)]="t.comments">{{t.comments}}</textarea>
+          </td>
+        </tr>
+      </table>
+      <table *ngIf="projectTimesheets.employees.length > 0">
+        <tr>
+          <td style="height:30px;width:50px;" [style.background-color]= '_util.ColorShaders.WeekEndShade'></td>
+          <td style="padding-left:10px;width:5px">Weekends</td> &nbsp;
+          <td style="height:30px;width:50px;" [style.background-color]='_util.ColorShaders.LeaveShade'></td>
+          <td style="padding-left:10px;width:5px">Leave</td> &nbsp;
+          <td style="height:30px;width:50px;" [style.background-color]= '_util.ColorShaders.HolidayShade'></td>
+          <td style="padding-left:10px">Holiday</td>
+        </tr>
+      </table>
+    </div>
+    <div class="row" style="padding:5px" *ngIf="showAppliedHolidays === true">
+      <mat-progress-bar *ngIf="bProgress" mode="indeterminate"></mat-progress-bar>
+      <table style="width:60%" class="table table-bordered">
+        <tr *ngIf="projectTimesheets.employees.length > 0">
+          <th style="font-size:smaller">Holiday Types</th>
+          <th style="text-align:center" *ngFor="let d of projectTask[0].dates ">{{d.date}}</th>
+        </tr>
+        <tr *ngFor="let t of projectTask;let i=index">
+          <td style="font-size:smaller">{{t.proJ_TASK_NAME}}</td>
+          <td style="text-align: center" *ngFor="let entry of t.dates;let j=index">
+            <input id="{{i}}{{j}}" (click)="holidayChecked(projectTask,i,j,projectTimesheets.employees,$event,t.proJ_TASK_ID)" type="checkbox"
+              [value]="t.proJ_TASK_ID" [checked]="leaveApplied(entry,projectTimesheets.employees)" [disabled]="entry.enable">
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div *ngIf="projectTimesheets.employees.length > 0 && showAppliedHolidays === false " class="row">
+      <div *ngIf="showApproval()" class="row" style="text-align:center">
+        <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Save" (click)='PMOSave_onClick()'>Save</button>
+        <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Submit" (click)='SubmitForApproval_onClick()'>Submit for Approval</button>
+      </div>
+      <div *ngIf="_util.IsCustomer()" class="row" style="text-align:center;vertical-align:middle">
+        <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Submit" (click)='Approve_onClick()'>Approve</button>
+        <button [disabled]="disablebtn" class="btn btn-success" style="margin:5px" value="Reject" (click)='CustomerReject_onClick()'>Reject</button>
+      </div>
+      <div *ngIf="_util.IsCustomer()" class="row" style="text-align:center;vertical-align:middle">
+        <textarea style="font-size:smaller;width:250px;height:80px;" [(ngModel)]="comments" placeholder="Approval/Reject comments">{{comments}}</textarea>
+      </div>
+    </div>
+    <div *ngIf="showAppliedHolidays === true" class="row">
+      <div *ngIf="_util.IsPMO()" class="row" style="text-align:center;vertical-align:middle">
+        <button class="btn btn-success" style="margin:5px" value="Apply" (click)='PMOSave_onClick()'>Apply</button>
+        <button class="btn btn-success" style="margin:5px" value="Cancel" (click)='Cancel_LeaveChanges()'>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+ 

@@ -1,0 +1,23 @@
+<div class="container-fluid">
+  <div style="text-align:right;padding-bottom:2px;margin-top: 8px;">
+    <button style="height: 28px;background: #fa7973;width: 50px!important;" class="mat-raised-button" (click)="CancelOnClick()">
+      <i style="color: white;margin-top: 2px;" class="material-icons">
+        close
+      </i>
+    </button>
+  </div>
+  <div style="height: 580px;" class="table-responsive">
+    <table *ngIf="employeeData != undefined" class="table table-bordered">
+      <tr>
+        <th *ngFor="let empData of employeeData[0].datalist">
+          {{empData.fielD_NAME}}
+        </th>
+      </tr>
+      <tr style="height: 200px;" *ngFor="let data of employeeData">
+        <td *ngFor="let d of data.datalist">
+          <div style="height: 130px;overflow-y: auto">{{d.fielD_VALUE}}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  </div>

@@ -1,0 +1,25 @@
+table {
+  width: 100%;
+  }
+.row {
+  padding:0px;
+  margin:0px;
+  }
+  .table-container {
+    width: 100%;
+    max-height: 400px; /* Adjust the height as needed */
+    overflow-y: auto;
+  }
+  
+  .mat-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #c6ddf9; /* Background color for the header */
+  }
+  
+  .mat-header-cell, .mat-cell {
+    border: 1px solid #ddd; /* Optional: Border for cells */
+    padding: 8px; /* Adjust padding as needed */
+  }
+  

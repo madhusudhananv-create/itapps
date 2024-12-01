@@ -1,0 +1,253 @@
+@import "../../pages/layout/layout.style.scss";
+@import '../../pages/layout/layout.tables.style.scss';
+
+.indexWidth{
+  width: 1%;
+}
+.deleteWidth{
+  width: 1%;
+}
+.viewWidth{
+  width: 1%;
+}
+.editWidth{
+  width: 1%;
+}
+.col-lg-12, .col-md-12, .col-sm-12, .col-lg-5, .col-md-5, .col-sm-5, .col-lg-6, .col-md-6, .col-sm-6
+{
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+}
+
+.mat-cell
+{
+  word-break: break-word;
+}
+
+.mat-column-description {
+  width: 30% !important;
+}
+
+.mat-column-targeT_DATE,.mat-column-identifieD_DATE, .mat-column-actuaL_DATE {
+  width: 8% !important;
+  white-space: nowrap;
+}
+
+.mat-column-Portfolio_Name{
+  width: 18% !important;
+}
+
+.mat-column-proJ_NM{
+  width: 18% !important;
+}
+
+.mat-column-actioN_TAKEN{
+  width: 15% !important;
+}
+
+.mat-column-impact{
+  width: 18% !important;
+}
+
+.mat-radio-button ~ .mat-radio-button {
+  margin-left: 12px;
+}
+::ng-deep .mat-checkbox-checked .mat-checkbox-background, .mat-checkbox-indeterminate .mat-checkbox-background {
+  background-color:#005691!important;
+}
+
+.openItemsFilter ~ .mat-checkbox{
+  margin-left: 12px;
+}
+
+.table th 
+{
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.FormField-Mat-Label
+{
+  font-weight: 700 !important;
+}
+
+.editWidth{
+  width: 4% !important;
+}
+
+.maticonbutton
+{
+  font-size:8px !important;
+}
+
+.applicable-radio-group
+{
+   display: flex;
+   flex-direction: row;
+   float: right;
+}
+
+.btn-grayshadow
+{  
+    color: #000;
+    background-color: #e8e8e8;
+    border-color: #e8e8e8;
+    box-shadow: 0 3px 5px -1px rgba(0,0,0,.2), 0 5px 8px 0 rgba(0,0,0,.14), 0 1px 14px 0 rgba(0,0,0,.12);
+}
+
+.btn
+{
+  
+    display: inline-block;
+    margin-bottom: 0;
+    font-weight: normal;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    touch-action: manipulation;
+    cursor: pointer;
+    background-image: none;
+    border: 1px solid transparent;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    border-radius: 4px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+
+.mat-form-field-appearance-legacy .mat-form-field-underline
+{
+  height: 0px !important;
+}
+
+.FormField-Mat-Label
+{
+  font-weight: 550;
+}
+
+.clServiceLevel{
+
+  top : 5px;
+  right : 15px;
+  height: 300px;
+  width: 400px;
+  z-index: 200;
+  background-color: #ffffff;
+  box-shadow: 0px 0.5px 12px gray;
+  padding: 15px 5px 15px 15px; 
+  position: fixed;
+  border-radius: 7px;
+}
+
+.mat-step-header .mat-step-icon
+{
+      background-color: #005691 !important;
+}
+
+.mat-step-icon-selected {
+    background-color: #005691 !important;    
+}
+
+.btn-primary
+{
+  background-color: #005691 !important;
+}
+
+.mat-horizontal-stepper-header
+{
+  height: 30px !important;
+}
+
+.greenborder{
+  border-left: 5px solid green;
+}
+
+.orangeborder{
+  border-left: 5px solid orange;
+}
+
+.redborder{
+  border-left: 5px solid red;
+}
+
+.mat-column-fmeA_STAGE2_STATUS_DESC {
+    flex: none;
+    width: 100px;
+}
+
+
+.applicableCSS{
+  color:  #005691 !important;
+  font-weight: bold;
+}
+
+.approveCSS{
+  color:  green !important;
+  font-weight: bold;
+}
+
+.rejectCSS{
+  color:  red !important;
+  font-weight: bold;
+}
+
+.notapplicableCSS{
+  color:  #000 !important;
+  font-weight: bold;
+}
+
+
+.mainDiv {
+  background-color: white;
+  border-radius: 9px;
+  display: inline-block;
+  margin: 5px 10px 5px 10px;  
+  min-height: 500px;
+  height: auto;  
+  width: 98%;  
+  box-shadow: 1px 2px 3px 1px #c7c7c7;
+}
+
+
+.clRejectionPopupStage2{
+
+  top : 275px;
+  right : 50px;
+  height: 200px;
+  width: 300px;
+  z-index: 200;
+  background-color: #ffffff;
+  box-shadow: 0px 0.5px 12px gray;
+  padding: 15px 5px 15px 15px; 
+  position: fixed;
+  border-radius: 7px;
+}
+
+
+.clRejectionPopupStage2All{
+
+  top : 200px;
+  right : 50px;
+  height: 200px;
+  width: 300px;
+  z-index: 200;
+  background-color: #ffffff;
+  box-shadow: 0px 0.5px 12px gray;
+  padding: 15px 5px 15px 15px; 
+  position: fixed;
+  border-radius: 7px;
+}
+
+::ng-deep .mat-checkbox-checked .mat-checkbox-background, .mat-checkbox-indeterminate .mat-checkbox-background {
+  background-color:#005691!important;
+}
+
+
+::ng-deep.mat-checkbox-indeterminate.mat-accent .mat-checkbox-background {
+  background-color: #005691!important;
+  }

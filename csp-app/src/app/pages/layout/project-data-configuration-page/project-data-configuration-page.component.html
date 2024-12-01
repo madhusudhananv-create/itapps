@@ -1,0 +1,175 @@
+<div class="pageborder" style="padding-bottom: 20px;padding-left: 5px;padding-right: 10px;">
+  <div class="row" *ngIf="readonlymode">
+    <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+      <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+        <img src="assets/images/back_round.png">
+      </div>
+      <img class="image" style="height:45px;padding:5px" src="assets/images/{{_layoutService.selectedCust}}.png"
+        onerror="this.src ='assets/images/CustomerLogo.png'">
+
+      <mat-select placeholder="Select Project" [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange()"
+        style="margin-left:15px; width:260px;background-color: white;border: solid #d0d0d0 1px;padding: 5px;">
+        <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">{{proj.proJ_NM}}
+        </mat-option>
+      </mat-select>
+    </div>
+
+    <div class="col-lg-6 col-md-6 col-sm-6"
+      style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px; color: #4e5882">
+
+      <div style="display: inline-block; ">
+        Project Data Configuration
+      </div>
+    </div>
+    <div style="padding-top:0%;margin-top:0%;padding-bottom: 10px;padding-left: 10px;padding-right: 20px;">
+      <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+
+    </div>
+  </div>
+  <div *ngIf="readonlymode" style="text-align:right;padding-right: 20px;padding-bottom: 10px;">
+    <a class="maticonbutton" title="Add New" (click)="AddNew_onClick()">
+      <mat-icon style="vertical-align: middle">add</mat-icon>
+    </a>
+  </div>
+  <div *ngIf="readonlymode">
+    <div #TABLE style="padding: 0px 15px 0px 10px;">
+      <table class="table" mat-table #table [dataSource]="dataSource" matSort style="width: 100%">
+        <ng-container matColumnDef="index">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'indexWidth'" *matHeaderCellDef>No.</th>
+          <td style="font-family: calibri;" mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index">
+            {{element + 1}} </td>
+        </ng-container>
+        <ng-container matColumnDef="setting_Name">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'projWidth'" *matHeaderCellDef mat-sort-header>
+            Setting Name</th>
+          <td mat-cell *matCellDef="let tbdata" [matTooltip]="tbdata.settinG_NAME">
+            {{getSettingName(tbdata.configuration_Setting_Id)}}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="settinG_VALUE">
+          <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Setting Value</th>
+          <td mat-cell *matCellDef="let tbdata"> {{getSettingValue(tbdata)}} </td>
+        </ng-container>
+        <ng-container matColumnDef="iS_APPROVED">
+          <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Is Approved</th>
+          <td mat-cell *matCellDef="let tbdata"> {{getisApproved(tbdata.is_Approved)}} </td>
+        </ng-container>
+        <ng-container matColumnDef="approveD_BY">
+          <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>Approved By</th>
+          <td mat-cell *matCellDef="let tbdata"> {{tbdata.approved_By_Name}} </td>
+        </ng-container>
+        <ng-container matColumnDef="enD_DATE">
+          <th mat-header-cell style="font-family: calibri;" *matHeaderCellDef mat-sort-header>End Date</th>
+          <td mat-cell *matCellDef="let tbdata">
+            {{tbdata.end_date |date:'dd-MMM-yyyy'}} </td>
+        </ng-container>
+        <ng-container matColumnDef="edit">
+          <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
+            Edit
+          </th>
+          <td mat-cell [ngClass]="'editWidth'" *matCellDef="let element">
+            <a class="link" (click)="EditRow_onClick(element)" style="font-size: 18px; cursor: pointer;">
+              <i class="fa fa-edit"></i>
+            </a>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="mat-elevation-z5"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="mat-elevation-z5"></tr>
+      </table>
+      <mat-paginator style="width: 100%" #tbpaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+    </div>
+  </div>
+
+  <div *ngIf="editmode" style="padding: 10px 10px;">
+    <form style="background: white;padding-left: 10px;padding-bottom: 10px;" #projectDataForm="ngForm"
+      (ngSubmit)="SubmitForm(projectDataForm.valid)">
+      <div class="row tabheader">
+        <div class="col-lg-10 col-md-10 col-sm-10">
+        </div>
+        <div style="float :right;margin-right: 20px">
+          <a class="link" (click)="Cancel_onClick()">
+            <i class="fa fa-times"></i>
+          </a>
+        </div>
+      </div>
+      <div>
+        <div class="row" *ngIf="!editOnly">
+          <mat-form-field style="width: 25%;">
+            <mat-select name="ddSetting" multiple [(ngModel)]="settingModel" placeholder="Select Setting" required
+              (ngModelChange)="onSettingChange($event)" #selectsetting>
+              <mat-option value="-1" (click)="toggleSelection()" #allsettingSelected>All</mat-option>
+              <mat-option *ngFor="let d of projSettings" [value]="d.id" [title]="d.setting_Name"
+                (click)="TosslePerOne()">
+                {{d.setting_Name}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="row" *ngIf="editOnly">
+          <mat-form-field style="width: 25%;" disa>
+            <mat-select name="ddSetting" [(ngModel)]="editprojectdata.configuration_Setting_Id" [disabled]="true"
+              placeholder="Select Setting" required (ngModelChange)="onSettingChange($event)">
+              <mat-option *ngFor="let dd of projSettings" [value]="dd.id" [title]="dd.setting_Name">{{dd.setting_Name}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <mat-form-field *ngIf="isInteger">
+            <input type="number" matInput name="txtIntValue" [(ngModel)]="editprojectdata.int_Value"
+              placeholder="Enter a numerical value" required>
+          </mat-form-field>
+        </div>
+
+        <div class="row">
+          <mat-form-field *ngIf="isString">
+            <textarea name="txtStringvalue" maxlength="2000" [(ngModel)]="editprojectdata.string_Value" matInput
+              placeholder="Enter a string Value" required></textarea>
+          </mat-form-field>
+        </div>
+        <div class="row" *ngIf="!isInteger && !isString">
+          <label for="rdoGroup" style="display: inline-block;padding-right: 10px;font-weight: normal;">Choose an option
+            * : </label>
+          <mat-radio-group name="rdoGroup" style="display: inline-block;" [(ngModel)]="editprojectdata.bit_Value"
+            required>
+            <mat-radio-button class="example-radio-button" [value]='true'>Yes</mat-radio-button>
+            <mat-radio-button class="example-radio-button" [value]='false'>No</mat-radio-button>
+          </mat-radio-group>
+        </div>
+        <div class="row">
+          <mat-form-field style="width:60%">
+            <textarea name="txtComments" maxlength="2000" [(ngModel)]="editprojectdata.comments" matInput
+              placeholder="Comments"></textarea>
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <mat-form-field>
+            <textarea readonly="readonly" name="txtApprovedBy" readonly="readonly"
+              [(ngModel)]="approverName" matInput placeholder="Approved By"></textarea>
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <mat-form-field *ngIf="isApprover" style="width:calc(100% - 20px)">
+            <textarea readonly="readonly" name="txtApprovalComments" maxlength="2000"
+              [(ngModel)]="editprojectdata.approval_Comments" matInput placeholder="Approve/Reject Comments"></textarea>
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <mat-form-field>
+            <input matInput name="dtEndDate" [(ngModel)]='editprojectdata.end_date' [matDatepicker]="pickerReportedDate"
+              placeholder="End Date">
+            <mat-datepicker-toggle matSuffix [for]="pickerReportedDate"></mat-datepicker-toggle>
+            <mat-datepicker #pickerReportedDate></mat-datepicker>
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <button type="submit" id="btnSubmit" class="btn btn-success">Save</button>
+          &nbsp;&nbsp;
+          <button type="button" class="btn btn-success" (click)="opendialog()"
+            *ngIf="editprojectdata.id > 0 && isApprover">Approve</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

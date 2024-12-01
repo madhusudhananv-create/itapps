@@ -1,0 +1,106 @@
+<div style="padding: 10px">
+  <div style="width: 100%; display: flex;background-color: #d6d3ce">
+    <div style="text-align: left; width: 97%; vertical-align: middle ">
+      <label>Look For :</label> {{checkListdata.looK_FOR}}
+    </div>
+    <div
+      style="text-align: right;margin-right: 10px;cursor: pointer;font-size: 21px;text-decoration: none; outline: none"
+      (click)="CancelOnClick()">
+      <b> &#10006; </b>
+    </div>
+  </div>
+    <div style="margin-bottom: 5px">
+        Note:- Please input description of the problem/failure and evidence where there is a non-conformity / non-fullfilement of requirements
+    </div>
+    <div>
+      <table style="width: 90%">
+        <tr *ngFor="let f of checkListdata.findings; let id = index">
+          <td style="width: 18% !important">
+            <mat-form-field style="width: 90%">
+              <input [disabled]="true" matInput
+                [(ngModel)]="f.findinG_TYPE" name="findingdesc" required>
+            </mat-form-field>
+          </td>
+          <td>:</td>
+          <td>
+            <mat-form-field style="width: 90%">
+              <textarea [disabled]="checkListdata.issubmitted" matInput
+                [(ngModel)]="f.findinG_DESCRIPTION" name="findingdesc" required>
+              </textarea>
+            </mat-form-field>
+          </td>
+        </tr>
+      </table>
+    </div>
+  <div>
+    <div class="row">
+      <button [disabled]="checkListdata.issubmitted" class="btn btn-primary"   (click)="AddNewRow(checkListdata)" mat-raised-button>Add Samples
+        Audited</button>
+    </div>
+    <div>
+      <table *ngIf="checkListdata.checklisT_SAMPLE_AUDITED.length > 0" class="table table-bordered">
+        <tr>
+          <th style="width: 30%;">Employee Name</th>
+          <th style="width: 5%;">No of tickets Audited</th>
+          <th style="width: 5%;">No. of tickets Passed </th>
+          <th style="width: 5%;">No. of tickets failed</th>
+          <th style="width: 10%;">Compliance %</th>
+          <th style="width: 43%;">Comments</th>
+          <th style="width: 2%;">Delete</th>
+        </tr>
+        <tr *ngFor="let samp of checkListdata.checklisT_SAMPLE_AUDITED">
+          <td>
+            <mat-form-field style="width: 100%;">
+              <mat-select [disabled]="checkListdata.issubmitted" name="employee" [(ngModel)]="samp.emP_ID">
+                <mat-option *ngFor="let emp of empList" [value]="emp.emP_ID" [title]="emp.frsT_NM"> {{emp.frsT_NM}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field style="width : 50px">
+              <input [disabled]="checkListdata.issubmitted" matInput type="number"
+                [(ngModel)]="samp.totaL_SAMPLES_AUDITED">
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field style="width : 50px">
+              <input [disabled]="checkListdata.issubmitted" [max]="(samp.totaL_SAMPLES_AUDITED + 1)"
+                (change)="FillNotCompletedData(samp)" matInput type="number" [(ngModel)]="samp.sampleS_COMPLIED">
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field style="width : 50px">
+              <input [disabled]="checkListdata.issubmitted" matInput type="number"
+                [(ngModel)]="samp.sampleS_NOTCOMPLIED">
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field style="width : 70px">
+              <input [disabled]="checkListdata.issubmitted" matInput type="number" [(ngModel)]="samp.percentage">
+              <!-- (click)="CalculatePercentage(samp)" -->
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field style="width: 100%;">
+              <textarea [disabled]="checkListdata.issubmitted" matInput name="comments"
+                [(ngModel)]="samp.comments"></textarea>
+            </mat-form-field>
+          </td>
+          <td>
+            <div>
+              <a (click)="deleteSample(samp)">
+                <i class="material-icons">
+                  delete
+                </i>
+              </a>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: center">
+    <button type="button" (click)="SaveRows_onClick()" [disabled]="checkListdata.issubmitted" style="margin-right: 5px" class="btn btn-primary">Save</button>
+    <button class="btn btn-primary" (click)="CancelOnClick()">Cancel</button>
+  </div>
+</div>

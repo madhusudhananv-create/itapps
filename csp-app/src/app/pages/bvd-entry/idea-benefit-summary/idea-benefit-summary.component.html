@@ -1,0 +1,269 @@
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6 col-md-6 col-sm-6">
+            <label style="top: 248px;margin-bottom: 20px;margin-top: 10px;left: 854px;width: 128px;height: 19px;text-align: left;font: normal normal normal 16px/19px Lato;letter-spacing: 0px;color: #2A397D;opacity: 1;font-weight: 400">Benefits Summary</label>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6 col-md-6 col-sm-6">
+            <label style="height: 15px;font-size: 12px; text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;text-transform: uppercase;opacity: 1;">For Customer</label>
+        </div>
+        <div class="col-lg-6 col-md-6 col-sm-6">
+            <label style="font-size:12px;height: 15px;text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Total:</label>
+            <label id="custtotalHrs" style="font-size:12px;height: 15px;text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;opacity: 1;"></label>
+            <label id="custSpend" style="font-size:12px;height: 15px;text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;opacity: 1;"></label>
+        </div>
+    </div>
+    <hr style="margin-top: 1px;margin-bottom: 20px;border: 0;border-top: 1px solid #2A397D">
+    <!-- <table mat-table [dataSource]="dataSource" class="table mat-elevation-z5">
+        
+        <ng-container matColumnDef="currentState">
+            <th mat-header-cell *matHeaderCellDef scope="col">Current State</th> 
+
+            <tr><th scope="row">People</th></tr>
+            <td mat-cell *matCellDef="let customerbenefitSummary">{{customerbenefitSummary.currentState}}</td>
+         </ng-container>
+         <ng-container matColumnDef="futureState">
+            <th mat-header-cell *matHeaderCellDef>Future State</th> 
+            <td mat-cell *matCellDef="let customerbenefitSummary">{{customerbenefitSummary.futureState}}</td>
+         </ng-container>
+         <ng-container matColumnDef="savingsperMonth">
+            <th mat-header-cell *matHeaderCellDef>Savings Per Month</th> 
+            <td mat-cell *matCellDef="let customerbenefitSummary">{{customerbenefitSummary.savingsperMonth}}</td>
+         </ng-container>
+         <ng-container matColumnDef="savingsperYear">
+            <th mat-header-cell *matHeaderCellDef>Savings Per Year</th> 
+            <td mat-cell *matCellDef="let customerbenefitSummary">{{customerbenefitSummary.savingsperYear}}</td>
+         </ng-container>
+         <ng-container matColumnDef="netBenefit">
+            <th mat-header-cell *matHeaderCellDef>Net Benefit</th> 
+            <td mat-cell *matCellDef="let customerbenefitSummary">{{customerbenefitSummary.netBenefit}}</td>
+         </ng-container>
+         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+         
+      </table>
+      <div class="row">
+        <div class="col-lg-3 col-md-3 col-sm-3">
+            <label>For GAVS</label>
+        </div>
+        <div class="col-lg-3 col-md-3 col-sm-3">
+            <label>Total:</label>
+        </div>
+      </div>
+      <hr style="margin-top: 20px;margin-bottom: 20px;border: 0;border-top: 1px solid #2A397D">
+      <table mat-table [dataSource]="dataSource" class="table mat-elevation-z5">
+        <ng-container matColumnDef="currentState">
+           <th mat-header-cell *matHeaderCellDef>Current State</th> 
+           <td mat-cell *matCellDef="let gavsbenefitSummary"></td>
+        </ng-container>
+        <ng-container matColumnDef="futureState">
+           <th mat-header-cell *matHeaderCellDef>Future State</th> 
+           <td mat-cell *matCellDef="let gavsbenefitSummary"></td>
+        </ng-container>
+        <ng-container matColumnDef="savingsperMonth">
+           <th mat-header-cell *matHeaderCellDef>Savings Per Month</th> 
+           <td mat-cell *matCellDef="let gavsbenefitSummary"></td>
+        </ng-container>
+        <ng-container matColumnDef="savingsperYear">
+           <th mat-header-cell *matHeaderCellDef>Savings Per Year</th> 
+           <td mat-cell *matCellDef="let gavsbenefitSummary"></td>
+        </ng-container>
+        <ng-container matColumnDef="netBenefit">
+           <th mat-header-cell *matHeaderCellDef>Net Benefit</th> 
+           <td mat-cell *matCellDef="let gavsbenefitSummary"></td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+     </table> -->
+    <table>
+        <tr>
+            <th></th>
+            <th scope="col" class="benefitsHeader">Current State</th>
+            <th scope="col" class="benefitsHeader">Future State</th>
+            <th scope="col" class="benefitsHeader">Savings Per Month</th>
+            <th scope="col" class="benefitsHeader">Savings Per Year</th>
+            <th scope="col" class="benefitsHeader">Net Benefit</th>
+        </tr>
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">People</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Process</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Technology</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Facilities</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Assests</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+
+    </table>
+    <div class="row" style="margin-top:5px">
+        <div class="col-lg-6 col-md-6 col-sm-6">
+            <label style="height: 15px;font-size: 12px;text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;text-transform: uppercase;opacity: 1;">For GAVS</label>
+        </div>
+        <div class="col-lg-6 col-md-6 col-sm-6">
+            <label style="font-size:12px;height: 15px;text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Total:</label>
+            <label id="gavstotalHrs" style="font-size:12px;height: 15px;text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;opacity: 1;"></label>
+            <label id="gavsSpend" style="font-size:12px;height: 15px;text-align: left;font: normal normal 600 12px/15px Lato;letter-spacing: 0px;color: #4C4C47;opacity: 1;"></label>
+        </div>
+    </div>
+    <hr style="margin-top: 1px;margin-bottom: 20px;border: 0;border-top: 1px solid #2A397D">
+    <table>
+        <tr>
+            <td></td>
+            <th scope="col" class="benefitsHeader">Current State</th>
+            <th scope="col" class="benefitsHeader">Future State</th>
+            <th scope="col" class="benefitsHeader">Savings Per Month</th>
+            <th scope="col" class="benefitsHeader">Savings Per Year</th>
+            <th scope="col" class="benefitsHeader">Net Benefit</th>
+        </tr>
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">People</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Process</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Technology</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Facilities</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+
+        <tr>
+            <th class="benefits" rowspan="2" scope="row">Assests</th>
+            <td>$ 80</td>
+            <td>$ 100</td>
+            <td>$ 4</td>
+            <td>$ 24</td>
+            <td>$ 20</td>
+        </tr>
+        <tr>
+            <td>20 hrs</td>
+            <td>15 hrs</td>
+            <td>20hrs</td>
+            <td>200 hrs</td>
+            <td>180 hrs</td>
+        </tr>
+    </table>
+</div>

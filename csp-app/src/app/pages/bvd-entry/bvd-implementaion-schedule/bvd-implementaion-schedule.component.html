@@ -1,0 +1,86 @@
+<mat-accordion>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>
+      <label>Implementation Schedule</label>
+    </mat-expansion-panel-header>
+    <div class="row">
+      <table mat-table [dataSource]="dataSource" class="table mat-elevation-z0">
+        <ng-container matColumnDef="milestonetask">
+          <th mat-header-cell *matHeaderCellDef>Milestone & Task</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index">
+            <span>{{listImplementation.milestonetask}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Description</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index" style="white-space: nowrap">
+
+            <span>{{listImplementation.description}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="efforts">
+          <th mat-header-cell *matHeaderCellDef>Efforts</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index">
+
+            <span>{{listImplementation.efforts}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="responsible">
+          <th mat-header-cell *matHeaderCellDef>Responsible</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index" style="white-space: nowrap">
+
+
+            <span>{{listImplementation.responsible}}</span>
+          </td>
+
+        </ng-container>
+        <ng-container matColumnDef="comments">
+          <th mat-header-cell *matHeaderCellDef>Comments</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index">
+            <span>{{listImplementation.comments}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="estimatedDates">
+          <th mat-header-cell *matHeaderCellDef>Estimated Dates</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index" style="white-space: nowrap">
+            <span>Start:{{listImplementation.estimatedDates}}</span>
+            <br/>
+            <span>End: {{listImplementation.estimatedEndDate}}</span>
+          </td>
+
+        </ng-container>
+        <ng-container matColumnDef="actualDate">
+          <th mat-header-cell *matHeaderCellDef>Actual Date</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index" style="white-space: nowrap">
+            <span>Start:{{listImplementation.actualDate}}</span>
+            <br/>
+            <span>End: {{listImplementation.actualEndDate}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let listImplementation;let id = index" [ngClass]="{'Planned':listImplementation.status == 'Planned'}">
+
+            <span>{{listImplementation.status}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell [ngClass]="'editWidth'" *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let listImplementation;let id=index" style="text-align: center">
+
+            <a class="link">
+              <img src="assets/images/edit.svg">
+            </a>
+
+            <a class="link">
+              <img src="assets/images/bin.svg" style="padding-left: 10px">
+            </a>
+          </td>
+
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+  </mat-expansion-panel>
+</mat-accordion>
