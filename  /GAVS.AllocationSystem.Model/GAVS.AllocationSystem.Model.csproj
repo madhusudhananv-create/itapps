@@ -1,0 +1,431 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6A613CE9-0313-4276-9C88-924F015749A9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GAVS.AllocationSystem.Model</RootNamespace>
+    <AssemblyName>GAVS.AllocationSystem.Model</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Activities" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AllSys\SP\AuditorQualityStandardSummary.cs" />
+    <Compile Include="AllSys\SP\AvanirKPIModel.cs" />
+    <Compile Include="AllSys\SP\CONFIGEXTDETAILS.cs" />
+    <Compile Include="AllSys\SP\CSS_Readiness_Info.cs" />
+    <Compile Include="AllSys\SP\CUST_EMP_INFO.cs" />
+    <Compile Include="AllSys\SP\EmployeeListfromCustomer.cs" />
+    <Compile Include="AllSys\SP\GetCAPAStage.cs" />
+    <Compile Include="AllSys\SP\ProductPortfolioDetails.cs" />
+    <Compile Include="AllSys\SP\MandatoryTrainingReport.cs" />
+    <Compile Include="AllSys\SP\PortfolioDetails.cs" />
+    <Compile Include="AllSys\SP\ProductResponsibleDetails.cs" />
+    <Compile Include="AllSys\SP\StaffingSummaryForAllCustomers.cs" />
+    <Compile Include="AllSys\Tables\API_RESPONSE_DURATION.cs" />
+    <Compile Include="AllSys\Tables\AUDITOR_QUALIFIED_STANDARDS.cs" />
+    <Compile Include="AllSys\Tables\EMP_INFO_FOR_CUSTOMER.cs" />
+    <Compile Include="AllSys\Tables\EXTERNAL_KPI_DATA_MASTER.cs" />
+    <Compile Include="AllSys\Tables\EXTERNAL_KPI_FORMULAS.cs" />
+    <Compile Include="AllSys\Tables\EXTERNAL_KPI_DATA.cs" />
+    <Compile Include="AllSys\Tables\KPI_KEYWORDS.cs" />
+    <Compile Include="AllSys\Tables\LMS_COURSE.cs" />
+    <Compile Include="AllSys\Tables\LMS_COURSE_COMPLETION.cs" />
+    <Compile Include="AllSys\Tables\LMS_COURSE_ENROLLMENT.cs" />
+    <Compile Include="AllSys\Tables\PROCESS_MODEL_AUDITOR.cs" />
+    <Compile Include="AllSys\Tables\PSA_TIMESHEET_SYNC.cs" />
+    <Compile Include="AllSys\Tables\REPORTS_SP_DETAILS.cs" />
+    <Compile Include="AllSys\SP\ProjectTask.cs" />
+    <Compile Include="AllSys\Tables\REPORTS_PARAMS.cs" />
+    <Compile Include="AllSys\SP\StaffingProject.cs" />
+    <Compile Include="AllSys\SP\StaffingSummary.cs" />
+    <Compile Include="AllSys\SP\TimesheetDetailsMonthly.cs" />
+    <Compile Include="AllSys\Tables\BU_INFO.cs" />
+    <Compile Include="AllSys\Tables\CONFIGURATION_EXT.cs" />
+    <Compile Include="AllSys\Tables\DEPT_INFO.cs" />
+    <Compile Include="AllSys\Tables\PROJECT_COURSE_MAPPING.cs" />
+    <Compile Include="AllSys\Tables\PROJ_RESRC_TIME_ENTRY.cs" />
+    <Compile Include="AllSys\Tables\TIMESHEET_SETTINGS.cs" />
+    <Compile Include="Base\EntityBase.cs" />
+    <Compile Include="Charts\ActivityGauge.cs" />
+    <Compile Include="Charts\DashboardSearchParams.cs" />
+    <Compile Include="Charts\OverallAccountHealth.cs" />
+    <Compile Include="CSP\iBatchCustomer.cs" />
+    <Compile Include="CSP\SP\Models.cs">
+      <DependentUpon>Models.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="CSP\SP\KPI_REFERENCES_PRODUCT.cs" />
+    <Compile Include="CSP\SP\ContractStatusDetails.cs" />
+    <Compile Include="CSP\SP\ActionItemsDetails.cs" />
+    <Compile Include="CSP\SP\ActionItemsViewDetails.cs" />
+    <Compile Include="CSP\SP\AllIssuesData.cs" />
+    <Compile Include="CSP\SP\APPRECIATIONDETAILS.cs" />
+    <Compile Include="CSP\SP\ASSESSMENT_FINDINGS.cs" />
+    <Compile Include="CSP\SP\AuditeesFindings.cs" />
+    <Compile Include="CSP\SP\AUDIT_CHECKLIST_PROJECT_EXECUTION_EXTENDED.cs" />
+    <Compile Include="CSP\SP\AUDIT_CONTROL_TEST_COUNT.cs" />
+    <Compile Include="CSP\SP\AUDIT_EXECUTION_REPORT.cs" />
+    <Compile Include="CSP\SP\AUDIT_PROCESS_TESTS.cs" />
+    <Compile Include="CSP\SP\BenefitQualitativeDetails.cs" />
+    <Compile Include="CSP\SP\BESTPRACTICE_MATRIX.cs" />
+    <Compile Include="CSP\SP\CSS_VIEW_DETAILS.cs" />
+    <Compile Include="CSP\SP\GET_REQ_STAGE_STATUS.cs" />
+    <Compile Include="CSP\SP\ReminderRecord.cs" />
+    <Compile Include="CSP\SP\ChartDataMonthly.cs" />
+    <Compile Include="AllSys\SP\ProjectResourceByEmpId.cs" />
+    <Compile Include="AllSys\SP\Projects.cs" />
+    <Compile Include="AllSys\SP\CSM_LIST.cs" />
+    <Compile Include="AllSys\SP\CustomerProjectDetails.cs" />
+    <Compile Include="CSP\SP\CRISP.cs" />
+    <Compile Include="CSP\SP\CustomerProjectData.cs" />
+    <Compile Include="CSP\SP\CUSTOMER_PROJECT_PORTFOLIO.cs" />
+    <Compile Include="CSP\SP\FindingsForCustomer.cs" />
+    <Compile Include="CSP\SP\FMEADataModelStage2.cs" />
+    <Compile Include="CSP\SP\GlobalKPIData.cs" />
+    <Compile Include="CSP\SP\IdeasAndInnovationsData.cs" />
+    <Compile Include="CSP\SP\IdeasDetailsForViewDetails.cs" />
+    <Compile Include="CSP\SP\IdeaStatusCount.cs" />
+    <Compile Include="CSP\SP\INNOVATIONS_MATRIX.cs" />
+    <Compile Include="CSP\SP\INSIGHTS_FILTER.cs" />
+    <Compile Include="CSP\SP\IssuesForCustomer.cs" />
+    <Compile Include="CSP\SP\CI_TRACKER.cs" />
+    <Compile Include="CSP\SP\KIAZEN_DASHBOARD.cs" />
+    <Compile Include="CSP\SP\KpiTargetDetails.cs" />
+    <Compile Include="CSP\SP\MonthDetails.cs" />
+    <Compile Include="CSP\SP\ProcessDetails.cs" />
+    <Compile Include="CSP\SP\PROCESS_DESCRIPTION.cs" />
+    <Compile Include="CSP\SP\ProjectSpecificFailures.cs" />
+    <Compile Include="CSP\SP\ProjectStatusDetails.cs" />
+    <Compile Include="CSP\SP\ProjectStatusViewDetails.cs" />
+    <Compile Include="CSP\SP\PROJECT_BEST_PRACTICES_EXT.cs" />
+    <Compile Include="CSP\SP\RisksIssuesForProject.cs" />
+    <Compile Include="CSP\SP\SUCCESS_GOALS_SCORES.cs" />
+    <Compile Include="CSP\SP\TasksEventsDetails.cs" />
+    <Compile Include="CSP\SP\TasksEventsSummary.cs" />
+    <Compile Include="CSP\SP\TASK_DETAILS.cs" />
+    <Compile Include="CSP\SP\TestControlsMapping.cs" />
+    <Compile Include="CSP\SP\_Overrides.cs" />
+    <Compile Include="CSP\Tables\APPRECIATION.cs" />
+    <Compile Include="CSP\Tables\APP_ACCESS_CONTROLS_DETAILS.cs" />
+    <Compile Include="CSP\Tables\AUDITEE_ACCEPTANCE.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_EXECUTION_DETAILS.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_EXECUTION_SUMMARY.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_PROJECT_EXECUTION.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_PROJECT_FINDINGS.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_PROJECT_SAMPLES_AUDITED.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_QUESTIONS.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_QUESTION_CLAUSES_MAPPING.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_STATUS_LIST.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_STATUS_LIST_VALUES.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_STATUS_MAPPING.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_WEIGHTAGE.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_WEIGHTAGE_SCORES.cs" />
+    <Compile Include="CSP\Tables\AUDIT_CHECKLIST_WEIGHT_NC_TABLE.cs" />
+    <Compile Include="CSP\Tables\AUDIT_EXECUTION_AUDITEE_DETAILS.cs" />
+    <Compile Include="CSP\Tables\AUDIT_EXECUTION_MODEL.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDINGS_CAPA.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDINGS_CAPA_REVIEW_EXTENDED.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDING_CAPA_IMPLEMENTATION.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDING_CAPA_REVIEW.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDING_CAPA_STATUS_HISTORY.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDING_CAPA_VERIFICATION.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDING_STAGES.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINDING_STAGES_MAPPING.cs" />
+    <Compile Include="CSP\Tables\AUDIT_FINIDINGS_CAPA_CAUSE_MAPPING.cs" />
+    <Compile Include="CSP\Tables\AUDIT_MANAGEMENT_CAUSES.cs" />
+    <Compile Include="CSP\Tables\AUDIT_MANAGEMENT_ROOTCAUSES.cs" />
+    <Compile Include="CSP\Tables\AUDIT_SCHEDULE.cs" />
+    <Compile Include="CSP\Tables\AUDIT_SCHEDULE_REF.cs" />
+    <Compile Include="CSP\Tables\BASE_MEASURE.cs" />
+    <Compile Include="CSP\Tables\BASE_MEASURE_FORMULA_TYPE.cs" />
+    <Compile Include="CSP\Tables\BENEFIT_DETAILS_QUALITATIVE.cs" />
+    <Compile Include="CSP\Tables\BENEFIT_DETAILS_QUANTITATIVE.cs" />
+    <Compile Include="CSP\Tables\CHECKLIST_EXECUTION_AUDITEE_DETAILS.cs" />
+    <Compile Include="CSP\Tables\CHECKLIST_EXECUTION_CC_DETAILS.cs" />
+    <Compile Include="CSP\Tables\CHECKLIST_SCORES_BY_AUDIT.cs" />
+    <Compile Include="CSP\Tables\CSAT_SURVEY_DATA.cs" />
+    <Compile Include="CSP\Tables\CSS_BATCHES.cs" />
+    <Compile Include="CSP\Tables\CSS_BATCH_CUSTOMERS.cs" />
+    <Compile Include="CSP\Tables\CSS_BATCH_CUSTOMER_MONTHLY.cs" />
+    <Compile Include="CSP\Tables\CSS_BATCH_MONTHLY.cs" />
+    <Compile Include="CSP\Tables\CSS_QUESTION_REPLIES.cs" />
+    <Compile Include="CSP\Tables\CSS_QUESTION_MASTER.cs" />
+    <Compile Include="CSP\Tables\CSS_QUESTION_MODELS.cs" />
+    <Compile Include="CSP\Tables\CSS_SURVEY_ITERATION.cs" />
+    <Compile Include="CSP\Tables\CUSTOMER_CAPA_APPROVAL.cs" />
+    <Compile Include="CSP\Tables\CUSTOMER_CAPA_APPROVAL_STATUS.cs" />
+    <Compile Include="CSP\Tables\CUST_REQ_REF.cs" />
+    <Compile Include="CSP\Tables\CUST_REQ_REF_VM.cs" />
+    <Compile Include="CSP\Tables\CUST_REQ_STAGE_STATUS.cs" />
+    <Compile Include="CSP\Tables\CUST_REQ_STATUS.cs" />
+    <Compile Include="CSP\Tables\DASHBOARD_DETAILS.cs" />
+    <Compile Include="CSP\Tables\EXECUTION_IMPACT_MAPPING.cs" />
+    <Compile Include="CSP\Tables\FAILURE_ASSESSMENT.cs" />
+    <Compile Include="CSP\Tables\Failure_Master.cs" />
+    <Compile Include="CSP\Tables\FILTER_PREFERENCE.cs" />
+    <Compile Include="CSP\Tables\FINDINGSTYPE.cs" />
+    <Compile Include="CSP\Tables\FINDINGSTYPE_VALUES.cs" />
+    <Compile Include="CSP\Tables\FMEADataModel.cs" />
+    <Compile Include="CSP\Tables\FMEAModel.cs" />
+    <Compile Include="CSP\Tables\FMEA_DATA_STAGE2_MODEL.cs" />
+    <Compile Include="CSP\Tables\FMEA_Rating_Factors_Model.cs" />
+    <Compile Include="CSP\Tables\FMEA_Task_Model.cs" />
+    <Compile Include="CSP\Tables\GAVS_SERVICE.cs" />
+    <Compile Include="CSP\Tables\GAVS_SERVICE_AREA.cs" />
+    <Compile Include="CSP\Tables\GLOBAL_KPI_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\GLOBAL_PERSPECTIVE.cs" />
+    <Compile Include="CSP\Tables\GLOBAL_PERSPECTIVE_KPI_CATEGORY_MAPPING.cs" />
+    <Compile Include="CSP\Tables\IDEA.cs" />
+    <Compile Include="CSP\Tables\IDEA_BENEFIT_SUMMARY.cs" />
+    <Compile Include="CSP\Tables\IDEA_IMPLEMENTATION_PLAN.cs" />
+    <Compile Include="CSP\Tables\IDEA_IMPROVEMENT_TYPE.cs" />
+    <Compile Include="CSP\Tables\IDEA_STAGE_STATUS.cs" />
+    <Compile Include="CSP\Tables\IDEA_STATUS.cs" />
+    <Compile Include="AllSys\Tables\KPI_SERVICETOWER_MAPPING.cs" />
+    <Compile Include="CSP\Tables\KPI2PRODUCT_SERVICE_LEVEL_METRICS.cs" />
+    <Compile Include="CSP\Tables\KPI_BASE_MEASURE_VALUE.cs" />
+    <Compile Include="CSP\Tables\KPI_DETAILS_EXTENDED.cs" />
+    <Compile Include="CSP\Tables\NOTES.cs" />
+    <Compile Include="CSP\Tables\PORTFOLIO_PRODUCT.cs" />
+    <Compile Include="CSP\Tables\POTENTIAL_SOLUTION_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\CONTACT_ROLES.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_AUDITOR_DATA.cs" />
+    <Compile Include="CSP\Tables\PRODUCTS_SERVICE_AREA.cs" />
+    <Compile Include="CSP\Tables\PRODUCTS_SERVICE_LEVEL_MODE.cs" />
+    <Compile Include="CSP\Tables\PRODUCTS_SERVICE_LEVEL_TYPE.cs" />
+    <Compile Include="CSP\Tables\PRODUCTS_SLA_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\PRODUCT_RESPONSIBLE.cs" />
+    <Compile Include="CSP\Tables\PRODUCT_MODE_MAPPING.cs" />
+    <Compile Include="CSP\Tables\PRODUCT_RESPONSIBLE_MANAGEMENT_TYPE.cs" />
+    <Compile Include="CSP\Tables\PRODUCT_SERVICE_LEVEL_METRICS.cs" />
+    <Compile Include="CSP\Tables\PRODUCT_TIER.cs" />
+    <Compile Include="CSP\Tables\PROJECT_FAILURES_MAPPING.cs" />
+    <Compile Include="CSP\Tables\REFERENCE_MASTER.cs" />
+    <Compile Include="CSP\Tables\SERVICE_LEVEL_MEASUREMENT_2_BASE_MEASURE_CONFIG.cs" />
+    <Compile Include="CSP\Tables\SLA_REJECTION.cs" />
+    <Compile Include="CSP\Tables\SLA_REJECTION_KPI_DETAILS.cs" />
+    <Compile Include="CSP\Tables\SLA_REJECTION_STATUS.cs" />
+    <Compile Include="CSP\Tables\TASK_STATUS_HISTORY.cs" />
+    <Compile Include="CSP\Tables\SLA_REJECTION_STATUS_HISTORY.cs" />
+    <Compile Include="CSP\Tables\SUPPORT_VALUE_REQUEST.cs" />
+    <Compile Include="CSP\Tables\SUPPORT_VALUE_TYPE.cs" />
+    <Compile Include="CSP\Tables\TIMEFORMAT_CONFIG.cs" />
+    <Compile Include="CSP\Tables\PM_CHECKLIST.cs" />
+    <Compile Include="CSP\Tables\PM_CHECKLIST_QUESTIONS.cs" />
+    <Compile Include="CSP\Tables\PM_MATURITYLEVEL_MAPPING.cs" />
+    <Compile Include="CSP\Tables\PM_MATURITY_LEVEL.cs" />
+    <Compile Include="CSP\Tables\PM_PROCESS_CHECKLIST_MAPPING.cs" />
+    <Compile Include="CSP\Tables\PM_PROCESS_QUESTIONS_MAPPING.CS" />
+    <Compile Include="CSP\Tables\PM_PROJECT_SERVICE_AREA_PROCESS_MAPPING.cs" />
+    <Compile Include="CSP\Tables\PORTFOLIO.cs" />
+    <Compile Include="CSP\Tables\PORTFOLIOS.cs" />
+    <Compile Include="CSP\Tables\PORTFOLIOS_OWNERS.cs" />
+    <Compile Include="CSP\Tables\PORTFOLIOS_OWNERS_PROJECT.cs" />
+    <Compile Include="CSP\Tables\PROCESS.cs" />
+    <Compile Include="CSP\Tables\PROCESS_AREA.cs" />
+    <Compile Include="CSP\Tables\PROCESS_CLAUSE_MODEL.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_CLAUSES.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_CONTROL.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_OBJECTIVES.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_OBJECTIVES_NEW.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_PROCESS.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_PROCESS_MAPPING.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_PROJECT_CONFIG.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_TESTS_NEW.cs" />
+    <Compile Include="CSP\Tables\PROCESS_OBJECTIVE_MAPPING.cs" />
+    <Compile Include="CSP\Tables\PROCESS_SERVICE_AREA_PROJECT_MAPPING.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_QUESTIONS.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_RISKS.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL_TESTS.cs" />
+    <Compile Include="CSP\Tables\PROCESS_SERVICE_AREA.cs" />
+    <Compile Include="CSP\Tables\INNOVATION_SERVICE_MAPPING.cs" />
+    <Compile Include="CSP\Tables\KPI_TARGETS.cs" />
+    <Compile Include="CSP\Tables\PARAMETER_TABLE.cs" />
+    <Compile Include="CSP\Tables\PROCESS_MODEL.cs" />
+    <Compile Include="CSP\Tables\PROJECT_BEST_PRACTICES.cs" />
+    <Compile Include="CSP\Tables\PROJECT_CONFIGURATION_DATA.cs" />
+    <Compile Include="CSP\Tables\PROJECT_CONFIGURATION_SETTING.cs" />
+    <Compile Include="CSP\Tables\PROJECT_INNOVATIONEXT.cs" />
+    <Compile Include="CSP\Tables\PROJECT_ISSUEEXT.cs" />
+    <Compile Include="CSP\Tables\PROJECT_LESSON_LEARNT.cs" />
+    <Compile Include="CSP\Tables\REQ_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\REQ_CAT_MAPPING.cs" />
+    <Compile Include="CSP\Tables\REQ_LEVEL.cs" />
+    <Compile Include="CSP\Tables\REQ_LEVEL_MAPPING.cs" />
+    <Compile Include="CSP\Tables\SERVICE_LEVEL_IDENTIFIER.cs" />
+    <Compile Include="CSP\Tables\SQA_CHART_FILTER.cs" />
+    <Compile Include="CSP\Tables\SQA_CHART_GROUPS.cs" />
+    <Compile Include="CSP\Tables\SQA_DATA_REPOSITORY.cs" />
+    <Compile Include="CSP\Tables\SQA_PROJECT_CHART_PARAMS.cs" />
+    <Compile Include="CSP\Tables\SQA_PROJECT_REPORTS_STRUCT.cs" />
+    <Compile Include="CSP\SP\KPI_DetailMonthAndWeekly.cs" />
+    <Compile Include="AllSys\SP\NeedFocusData.cs" />
+    <Compile Include="AllSys\SP\PROJECT_COMPLIANCE_INFO.cs" />
+    <Compile Include="AllSys\SP\PROJECT_CSAT_COUNT.cs" />
+    <Compile Include="AllSys\SP\Resource.cs" />
+    <Compile Include="AllSys\SP\UserInfo.cs" />
+    <Compile Include="AllSys\Tables\ACTIVITY_LOGS.cs" />
+    <Compile Include="AllSys\Tables\COMPLIANCE_TRAINING_ASSESSMENT_HEADER.cs" />
+    <Compile Include="AllSys\Tables\COMPLIANCE_TRAINING_ASSESSMENT_RESULT.cs" />
+    <Compile Include="AllSys\Tables\CSM_TITLES.cs" />
+    <Compile Include="AllSys\Tables\EMP_INFO.cs" />
+    <Compile Include="AllSys\Tables\PROJECT.cs" />
+    <Compile Include="AllSys\Tables\PROJECT_PREFERENCE.cs" />
+    <Compile Include="AllSys\Tables\PROJECT_RESOURCE.cs" />
+    <Compile Include="AllSys\Tables\PROJMGT_ITERATION.cs" />
+    <Compile Include="AllSys\Tables\PROJMGT_RELEASE.cs" />
+    <Compile Include="AllSys\Tables\PROJMGT_USERSTORY.cs" />
+    <Compile Include="CSP\Charts.cs" />
+    <Compile Include="CSP\CSPMODEL.cs" />
+    <Compile Include="CSP\HighCharts.cs" />
+    <Compile Include="CSP\MetaData.cs" />
+    <Compile Include="CSP\SP\CustomerProjects.cs" />
+    <Compile Include="AllSys\Tables\ProjectIssues.cs" />
+    <Compile Include="CSP\SP\MOM_Details.cs" />
+    <Compile Include="CSP\SP\ProjectPeopleDetails.cs" />
+    <Compile Include="CSP\SP\ProjectScope.cs" />
+    <Compile Include="CSP\SP\PROJECT_PROCESS_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\APP_ACCESS_CONTROLS.cs" />
+    <Compile Include="CSP\Tables\APP_CONTROLS.cs" />
+    <Compile Include="CSP\Tables\APP_CONTROL_FEATURES.cs" />
+    <Compile Include="CSP\Tables\CONTACTS.cs" />
+    <Compile Include="CSP\Tables\CRISP_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\CRISP_CRITERIA.cs" />
+    <Compile Include="CSP\Tables\CRISP_PROJECT_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\CRISP_PROJECT_CRITERIA.cs" />
+    <Compile Include="CSP\Tables\CRISP_PROJECT_VALIDATIONS.cs" />
+    <Compile Include="CSP\Tables\CRISP_SCORES_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\CRISP_SCORES_CRITERIA.cs" />
+    <Compile Include="CSP\Tables\CRISP_SCORES_PROJECT.cs" />
+    <Compile Include="CSP\Tables\CRISP_SCORES_VALIDATIONS.cs" />
+    <Compile Include="CSP\Tables\CRISP_VALIDATIONS.cs" />
+    <Compile Include="CSP\Tables\CUSTOMER_FEEDBACK.cs" />
+    <Compile Include="CSP\Tables\CUSTOMER_MOM_DETAILS.cs" />
+    <Compile Include="CSP\Tables\CUSTOMER_PROJECTS.cs" />
+    <Compile Include="CSP\Tables\CUSTOMER_REPORTS.cs" />
+    <Compile Include="CSP\Tables\ENGAGEMENT_OVERVIEW.cs" />
+    <Compile Include="CSP\Tables\SQA_REPORT_FILES.cs" />
+    <Compile Include="CSP\Tables\HIGHLIGHTS.cs" />
+    <Compile Include="CSP\Tables\KPI.cs" />
+    <Compile Include="CSP\Tables\KPI_DETAILS.cs" />
+    <Compile Include="CSP\Tables\KPI_GOALS.cs" />
+    <Compile Include="CSP\Tables\LAST_UPDATED_DETAILS.cs" />
+    <Compile Include="CSP\Tables\PROJECT_ACTIONITEM.cs" />
+    <Compile Include="CSP\Tables\PROJECT_CSAT_DATA.cs" />
+    <Compile Include="CSP\Tables\PROJECT_INNOVATION.cs" />
+    <Compile Include="CSP\Tables\PROJECT_ISSUE.cs" />
+    <Compile Include="CSP\Tables\PROJECT_RAGS.cs" />
+    <Compile Include="CSP\Tables\PROJECT_DELIVERY.cs" />
+    <Compile Include="CSP\Tables\PROJECT_PEOPLE.cs" />
+    <Compile Include="CSP\Tables\PROJECT_PROCESS.cs" />
+    <Compile Include="CSP\Tables\PROJECT_RISK.cs" />
+    <Compile Include="CSP\Tables\PROJECT_SCOPE.cs" />
+    <Compile Include="CSP\Tables\PROJECT_SUCCESS.cs" />
+    <Compile Include="CSP\Tables\PROJECT_VALUEADDS.cs" />
+    <Compile Include="AllSys\SP\ResourceDetails.cs" />
+    <Compile Include="AllSys\SP\TeamTimesheetDetails.cs" />
+    <Compile Include="AllSys\SP\TimesheetDetails.cs" />
+    <Compile Include="AllSys\SP\TimesheetWeekly.cs" />
+    <Compile Include="AllSys\SP\TimesheetDatewise.cs" />
+    <Compile Include="AllSys\Tables\Customer.cs" />
+    <Compile Include="AllSys\MetaData.cs" />
+    <Compile Include="CSP\Tables\SQA_PROJECT_REPORTS.cs" />
+    <Compile Include="CSP\Tables\SUBPROJECT.cs" />
+    <Compile Include="CSP\Tables\SUBPROJECT_TASK.cs" />
+    <Compile Include="CSP\Tables\EMAIL_LOG.cs" />
+    <Compile Include="CSP\Tables\TASK.cs" />
+    <Compile Include="CSP\Tables\TASK_CATEGORY.cs" />
+    <Compile Include="CSP\Tables\TASK_EXTENDED.cs" />
+    <Compile Include="CSP\Tables\TASK_RECURRENCE.cs" />
+    <Compile Include="CSP\Tables\TASK_TYPE.cs" />
+    <Compile Include="CSP\ViewModels\AllIdeaDetails.cs" />
+    <Compile Include="CSP\ViewModels\CSATInsightsInputHolder.cs" />
+    <Compile Include="CSP\ViewModels\FailureModeFilters.cs" />
+    <Compile Include="CSP\ViewModels\FINDING_STAGE_DATA.cs" />
+    <Compile Include="CSP\ViewModels\IdeaBenefits.cs" />
+    <Compile Include="CSP\ViewModels\IdeaStages.cs" />
+    <Compile Include="CSP\ViewModels\IDEA_STAGE_ACTION.cs" />
+    <Compile Include="CSP\ViewModels\QAGovernanceDashboardInputHolder.cs" />
+    <Compile Include="CSP\ViewModels\QualitativeBenefits.cs" />
+    <Compile Include="CSP\ViewModels\QuantitativeBenefits.cs" />
+    <Compile Include="CSP\ViewModels\ReviewerResponse.cs" />
+    <Compile Include="Entities.cs">
+      <DependentUpon>Entities.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="EWSDetails.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="AllSys\SP\ProjectDetails.cs" />
+    <Compile Include="AllSys\SP\ReportingDetails.cs" />
+    <Compile Include="AllSys\Token.cs" />
+    <Compile Include="TableItem.cs" />
+    <Compile Include="_overrides.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CSP\Tables\CUSTOMER_USERS.CS" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Models.json" />
+    <None Include="packages.config" />
+    <None Include="T4.FileManager.VisualStudio.ttinclude" />
+    <None Include="T4.FileManager.VisualStudio19.ttinclude" />
+    <None Include="Tables.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="CSP\SP\Models.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Models.cs</LastGenOutput>
+    </Content>
+    <Content Include="Entities.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Entities.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

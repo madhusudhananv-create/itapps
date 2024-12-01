@@ -1,0 +1,37 @@
+﻿USE BAS
+GO
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='GetEmpIdsForCustomerAccount' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[GetEmpIdsForCustomerAccount]
+END
+GO
+CREATE  PROCEDURE      
+GetEmpIdsForCustomerAccount     
+@custId varchar(max)      
+AS     
+BEGIN     
+      
+SELECT EI.EMP_ID, EI.FRST_NM FROM PROJ_RESOURCE PR       
+INNER JOIN PROJECT P ON PR.PROJ_ID = P.PROJ_ID AND PR.END_DATE >= GETDATE() AND PR.CURR_INDC = 'Y' AND PR.ID IS NOT NULL AND PR.BILL_FLG = 1
+INNER JOIN EMP_INFO EI ON PR.EMP_ID = EI.EMP_ID AND EI.DOR IS NULL      
+WHERE P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@custId,','))     
+ORDER BY EI.FRST_NM    
+      
+END  
+GO
+
+IF not exists(SELECT 1 FROM REPORTS_SP_DETAILS where [SP_DISPLAY_NAME] ='All Assessment Findings')
+BEGIN
+	INSERT INTO REPORTS_SP_DETAILS VALUES ('reports_getAllAssessmentFindings', 'All Assessment Findings', 'BAS');
+END
+
+GO
+
+IF not exists(SELECT 1 FROM REPORTS_PARAMS where [REPORT_SP_ID] =18)
+BEGIN
+	 INSERT INTO REPORTS_PARAMS VALUES (18, 'StartDate', 'DATE', '2020-04-01');
+     INSERT INTO REPORTS_PARAMS VALUES (18, 'EndDate', 'DATE', '2021-03-31');
+END
+
+GO

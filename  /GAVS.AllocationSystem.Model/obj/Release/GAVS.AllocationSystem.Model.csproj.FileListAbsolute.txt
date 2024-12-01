@@ -1,0 +1,6 @@
+C:\CSP\SourceCode\Dev\Gavs.AllocationSystem\GAVS.AllocationSystem.Model\bin\Release\GAVS.AllocationSystem.Model.dll
+C:\CSP\SourceCode\Dev\Gavs.AllocationSystem\GAVS.AllocationSystem.Model\bin\Release\GAVS.AllocationSystem.Model.pdb
+C:\CSP\SourceCode\Dev\Gavs.AllocationSystem\GAVS.AllocationSystem.Model\obj\Release\GAVS.AllocationSystem.Model.csprojAssemblyReference.cache
+C:\CSP\SourceCode\Dev\Gavs.AllocationSystem\GAVS.AllocationSystem.Model\obj\Release\GAVS.AllocationSystem.Model.csproj.CoreCompileInputs.cache
+C:\CSP\SourceCode\Dev\Gavs.AllocationSystem\GAVS.AllocationSystem.Model\obj\Release\GAVS.AllocationSystem.Model.dll
+C:\CSP\SourceCode\Dev\Gavs.AllocationSystem\GAVS.AllocationSystem.Model\obj\Release\GAVS.AllocationSystem.Model.pdb

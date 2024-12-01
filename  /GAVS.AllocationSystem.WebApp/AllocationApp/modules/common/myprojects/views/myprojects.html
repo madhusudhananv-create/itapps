@@ -1,0 +1,174 @@
+﻿
+<br/>
+<h2>{{projectDetails.proJ_NM}}</h2>
+<!--<div class="row">
+    <div class="col-lg-12">
+        <input id="dtStart1" rm-datepicker rm-config="rmConfig1" type="text" ng-model="dtStart1" readonly>
+        <input id="dtEnd1" rm-datepicker type="text" ng-model="dtEnd1">
+        <input type="button" value="View" ng-click="btnView_click()" />
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-12">
+        <div id="gridinfraList" ui-grid="gridOptions" ></div>
+    </div>
+</div>-->
+
+<div class="mytab">
+    <ul class="mynav-tabs">
+        <li id="th1">
+            <a href="" ng-class="{active: isSet('t1')}" ng-click="selectTab('t1');" >Project Details</a>
+        </li>
+        <li id="th2">
+            <a href="" ng-class="{active: isSet('t2')}" ng-click="selectTab('t2');">Reporting Details</a>
+        </li>
+        <li id="th3">
+            <a href="" ng-class="{active: isSet('t3')}" ng-click="selectTab('t3');" >Timesheet</a>
+        </li>
+        <li id="th4">
+            <a href="" ng-class="{active: isSet('t4')}" ng-click="selectTab('t4');">Resource Details</a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="t1">
+            <div class="row">
+                    <div class="col-md-3">Project Id: </div>
+                    <div class="col-md-3">{{projectDetails.proJ_ID}}</div>
+                    <div class="col-md-3">Client Id: </div>
+                    <div class="col-md-3">{{projectDetails.cusT_ID}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Project Name: </div>
+                <div class="col-md-3">{{projectDetails.proJ_NM}}</div>
+                <div class="col-md-3">Client Name: </div>
+                <div class="col-md-3">{{projectDetails.cusT_NM}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Start Date: </div>
+                <div class="col-md-3">{{projectDetails.starT_DATE}}</div>
+                <div class="col-md-3">End Date: </div>
+                <div class="col-md-3">{{projectDetails.enD_DATE}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Vertical BU: </div>
+                <div class="col-md-3">{{projectDetails.vbu}}</div>
+                <div class="col-md-3">Horizontal BU: </div>
+                <div class="col-md-3">{{projectDetails.hbu}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Billability: </div>
+                <div class="col-md-3">{{projectDetails.bilL_TYPE}}</div>
+                <div class="col-md-3">Location: </div>
+                <div class="col-md-3">{{projectDetails.cntrY_NM}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Project Manager: </div>
+                <div class="col-md-3">{{projectDetails.pm}}</div>
+                <div class="col-md-3">Delivery Manager: </div>
+                <div class="col-md-3">{{projectDetails.dm}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Account Manager: </div>
+                <div class="col-md-3">{{projectDetails.am}}</div>
+                <div class="col-md-3">BU Head: </div>
+                <div class="col-md-3">{{projectDetails.bu}}</div>
+            </div>
+        </div>
+        <div class="tab-pane inactive" id="t2">
+            <div class="row">
+                <div class="col-md-3">Reporting Manager ID: </div>
+                <div class="col-md-3">{{reportingDetails.repm}}</div>
+                <div class="col-md-3">Reviewing Manager ID: </div>
+                <div class="col-md-3">{{reportingDetails.repmid}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Reporting Manager Name: </div>
+                <div class="col-md-3">{{reportingDetails.revm}}</div>
+                <div class="col-md-3">Reviewing Manager Name: </div>
+                <div class="col-md-3">{{reportingDetails.revmid}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Start Date: </div>
+                <div class="col-md-3">{{reportingDetails.starT_DATE}}</div>
+                <div class="col-md-3">End Date: </div>
+                <div class="col-md-3">{{reportingDetails.enD_DATE}}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">Billability: </div>
+                <div class="col-md-3">{{reportingDetails.bilL_FLG}}</div>
+                <div class="col-md-3">Allocation (%): </div>
+                <div class="col-md-3">{{reportingDetails.allcT_PCT}}%</div>
+            </div>
+        </div>
+        <div class="tab-pane inactive" id="t3">
+            <div class="row">
+                <div class="col-md-4"><input type="radio" name="rdTimesheet" ng-model="myVar" value="myTS">My Timesheet</div>
+                <div class="col-md-4"><input type="radio" name="rdTimesheet" ng-model="myVar" value="approvalTS" ng-click="approvalTS_click()">Team Timesheet (Approval)</div>
+                <div class="col-md-4"><input type="radio" name="rdTimesheet" ng-model="myVar" value="TeamTS">Team Timesheet (Detailed)</div>
+            </div>
+            <div ng-switch="myVar">
+                <div ng-switch-when="myTS">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-4">Start Date: <input id="dtStart1" rm-datepicker rm-config="rmConfig1" type="text" ng-model="dtStart1" readonly> </div>
+                        <div class="col-md-4 col-lg-4">End Date: <input id="dtEnd1" rm-datepicker type="text" ng-model="dtEnd1"></div>
+                        <div class="col-md-4 col-lg-4"><input type="button" value="View" ng-click="btnMyTimesheet_click()" /></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div id="grid_MyTimesheet" ui-grid="gridOptions_MyTimesheet" ></div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-switch-when="approvalTS">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div id="grid_TeamTimesheetApproval" ui-grid="gridOptions_TeamTimesheetApproval"></div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-switch-when="TeamTS">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-4">Start Date:<input id="dtStart2" rm-datepicker rm-config="rmConfig1" type="text" ng-model="dtStart2" readonly></div>
+                        <div class="col-md-4 col-lg-4">End Date: <input id="dtEnd2" rm-datepicker type="text" ng-model="dtEnd2"></div>
+                        <div class="col-md-4 col-lg-4">
+                            <select ng-model="res" ng-options="x.emP_ID as x.emP_NAME for x in resourceDetailsDropdown"></select>
+                            <input type="button" value="View" ng-click="btnTeamTimesheetDetails_click()" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div id="grid_TeamTimesheetDetails" ui-grid="gridOptions_TeamTimesheetDetails"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane inactive" id="t4">
+            <div class="row">
+                <div class="col-lg-12" style="font-size:13px">
+                    <div id="grid_ResourceDetails" ui-grid="grid_ResourceDetails"></div>
+                </div>
+            </div>
+            <div ng-show="true">
+                <div class="row" ng-repeat="x in resourceDetails">
+                    <div class="col-lg-1">{{x.emP_ID}}</div>
+                    <div class="col-lg-1">{{x.emP_NAME}}</div>
+                    <div class="col-lg-1">{{x.level}}</div>
+                    <div class="col-lg-1">{{x.empL_TYPE}}</div>
+                    <div class="col-lg-1">{{x.cntrY_NM}}</div>
+                    <div class="col-lg-1">{{x.bilL_FLG}}</div>
+                    <div class="col-lg-1">{{x.emp_ReportingManager}}</div>
+                    <div class="col-lg-1">{{x.emp_ReviewingManager}}</div>
+                    <div class="col-lg-1">{{x.allocation}}</div>
+                    <div class="col-lg-1">{{x.startdate}}</div>
+                    <div class="col-lg-1">{{x.enddate}}</div>
+                    <div class="col-lg-1">{{x.comments}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--References:
+date Picker: http://plnkr.co/edit/d72lMp?p=preview-->
