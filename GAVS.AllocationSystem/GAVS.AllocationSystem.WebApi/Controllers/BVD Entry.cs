@@ -807,8 +807,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private void SendEmail_IdeaSubmitted(int Ideaid)
         {
             var idea = CSPdb.AppRepo.GetImplementedIdea(Ideaid);
+            if (idea == null) return;
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == idea.PROJECT_ID);
-
+             
             //spliting to email address
             string csmMails = helper.GetCSMMailsFromProject(project);
             string pmMails = helper.GetPMMailsFromProject(project);

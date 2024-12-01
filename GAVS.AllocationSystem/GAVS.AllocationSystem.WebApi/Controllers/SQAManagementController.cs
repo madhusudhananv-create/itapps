@@ -308,7 +308,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(processArea);
         }
 
-        [POST("s")]
+        [POST("UpdateProcessNew")]
         [ActionName("UpdateProcessNew")]
         [HttpPost]
         public IHttpActionResult UpdateProcessNew([FromBody] PROCESS results)

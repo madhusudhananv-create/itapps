@@ -168,13 +168,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private string GetOldEMPId(string newEmpId)
         {
             if (string.IsNullOrWhiteSpace(newEmpId)) return string.Empty;
-            var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID_NEW == newEmpId);
+            var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID_NEW == newEmpId && x.DOR == null);
             if (empInfo != null)
             {
                 return empInfo.EMP_ID;
             }
             return newEmpId;
         }
+
+
 
         [POST("AddNewProject")]
         [ActionName("AddNewProject")]
@@ -378,7 +380,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("DEPARTMENT", string.IsNullOrWhiteSpace(project.DEPARTMENT) ? "" : project.DEPARTMENT);
 
             string mailContent = helper.GetEmailContent("NewProjectNotification.htm", EmailContentValues);
-            var cclist = new List<string> { Constants.QUALITY_MAIL, Constants.PEX_MAIL };
+            var cclist = new List<string> { Constants.QUALITY_MAIL, Constants.PEX_MAIL , Constants.DEVX_MAIL};
             var ccMail = string.Join(",", cclist);
             //todo: move email to template
             var ep = new EmailProvider(Cldb, CSPdb);
@@ -642,7 +644,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 UpdateCSMTitle(employee);
 
-                var existing = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => t.EMP_ID == employee.EMP_ID || t.EMP_ID_NEW == employee.EMP_ID);
+                var existing = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => t.EMP_ID == employee.EMP_ID);
                 if (existing != null)
                     //return GetResult<EMP_INFO>(null, $"Emp Id {employee.EMP_ID} already exists.");
                     return UpdateEmployee(request);
@@ -652,8 +654,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newEMP.EMP_ID = employee.EMP_ID;
 
                     newEMP.BASE_CNTRY_ID = employee.BASE_CNTRY_ID;
-                    newEMP.MANAGER_EMP_ID = GetOldEMPId( employee.MANAGER_EMP_ID);
-                    newEMP.REVIEWER_EMP_ID = GetOldEMPId( employee.REVIEWER_EMP_ID);
+                    newEMP.MANAGER_EMP_ID = GetOldEMPId(employee.MANAGER_EMP_ID);
+                    newEMP.REVIEWER_EMP_ID = GetOldEMPId(employee.REVIEWER_EMP_ID);
                     newEMP.EMPL_TYPE = employee.EMPL_TYPE;
                     newEMP.FRST_NM = employee.FRST_NM;
                     //existingRow.NAME_IN_US_FORMAT = employee.NAME_IN_US_FORMAT;
@@ -737,7 +739,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-                var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID || t.EMP_ID_NEW == employee.EMP_ID) && t.EMAIL_ID == employee.EMAIL_ID);
+                var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID)  );
+                if (existingRow == null)
+                    existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID_NEW == employee.EMP_ID && t.DOR != null) && t.EMAIL_ID == employee.EMAIL_ID);
+
+                if (existingRow == null)
+                    existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => t.EMP_ID_NEW == employee.EMP_ID && t.EMAIL_ID == employee.EMAIL_ID);
                 if (existingRow != null)
                 {
                     // existingRow.EMP_ID = employee.EMP_ID;
@@ -1029,7 +1036,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LogRequest(content: jsonContent);
             if (resource != null)
             {
-                if (string.IsNullOrWhiteSpace( resource.EMP_ID ) || string.IsNullOrWhiteSpace (resource.PROJ_ID))
+                if (string.IsNullOrWhiteSpace(resource.EMP_ID) || string.IsNullOrWhiteSpace(resource.PROJ_ID))
                 {
                     return GetResult<PROJECT_RESOURCE>(null, $"Please make sure both Project Id and Employee Id are filled.");
                 }

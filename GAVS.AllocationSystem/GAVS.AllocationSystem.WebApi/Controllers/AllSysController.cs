@@ -1914,8 +1914,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var cust in cust_user)
             {
                 cust.CUSTOMER_PROJECTS = custProjects.Where(t => t.CUSTOMER_USER_ID == cust.ID && t.CUST_ID == cust.CUST_ID).ToList();
-                 
-                cust.CUSTOMER_PROJECTS.AddRange(csatMappedProjects.Where(t => t.CUSTOMER_USER_ID == cust.ID && t.CUST_ID == cust.CUST_ID ).ToList());
+
+                cust.CUSTOMER_PROJECTS.AddRange(csatMappedProjects.Where(t => t.CUSTOMER_USER_ID == cust.ID && t.CUST_ID == cust.CUST_ID).ToList());
             }
             FillResponseTime(stopwatch);
             return Ok(cust_user);
@@ -11259,7 +11259,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 CSPdb.PROCESS_SERVICE_AREA_PROJECT_MAPPING.Add(results);
                 CSPdb.Commit(CanCommit);
-            
+
                 var inscopeDetails = Cldb.PROJECT_INSCOPE_DETAILS.GetAll().Where(x => x.PROJECT_ID == results.PROJ_ID && x.ISACTIVE).ToList();
                 if (!inscopeDetails.Any(x => x.SERVICE_AREA_ID == results.SERVICE_AREA_ID))
                 {
@@ -11920,7 +11920,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 auditrec.ID = key.Key;
                 auditrec.DESCRIPTION = firstItem.DESCRIPTION;
-                auditrec.STATUS = firstItem.STATUS;
+                auditrec.STATUS = firstItem.STATUS.ToLower() == "in progress" && firstItem.ISSUBMITTED.GetValueOrDefault() ? "Findings Submitted" : firstItem.STATUS;
                 auditrec.PRIORITY = firstItem.PRIORITY;
                 auditrec.CUST_ID = firstItem.CUST_ID;
                 auditrec.PROJ_ID = firstItem.PROJ_ID;

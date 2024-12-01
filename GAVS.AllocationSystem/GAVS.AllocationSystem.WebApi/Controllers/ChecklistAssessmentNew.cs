@@ -2292,7 +2292,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             try
             {
-                findings = results.SelectMany(x => x.FINDINGS).ToList();
+                findings = results.SelectMany(x => x.FINDINGS).Distinct().ToList();
             }
             catch (Exception)
             {
@@ -2316,8 +2316,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     List<AUDIT_FINDING_STAGES_MAPPING> mapp = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().Where(t => t.FINDING_ID == finding.ID && t.ISACTIVE).ToList();
 
                     //stage1
-                    var stage1 = mapp.FirstOrDefault(t => t.STAGE_ID == 1)?.ISCOMPLETE;
-                    if (stage1.HasValue && stage1.Value)
+
+                    var stage1 = mapp.FirstOrDefault(t => t.STAGE_ID == 1 && t.STAGE_STATUS.ToLower() != "auditee rejected")?.ISCOMPLETE;
+                    if (stage1.HasValue && stage1.Value  )
                         color.Add("#3AB376");
                     else
                         color.Add("#FF5969");

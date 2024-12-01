@@ -67,6 +67,8 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public decimal? CURRENT_PROCESS_COMPLIANCE {get; set;}
         public DateTime? ACTUAL_AUDIT_START_DATE {get; set;}
         public DateTime? ACTUAL_AUDIT_END_DATE {get; set;}
+
+        public bool? ISSUBMITTED { get; set; }
     }
 
     public partial class PlannedAuditsConsolidated  

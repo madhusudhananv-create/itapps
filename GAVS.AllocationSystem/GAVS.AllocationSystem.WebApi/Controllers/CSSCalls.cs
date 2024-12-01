@@ -400,7 +400,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             CSS_BATCHES batch = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
 
-            List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && (t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT") && t.ISACTIVE).ToList();
+            List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && (t.STATUS == "MAIL SENT"  ) && t.ISACTIVE).ToList();
             batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
             bool hasAnyCustomerNotVerified = batchCustomers.Any(x => !x.IS_VERIFIED);
             if (hasAnyCustomerNotVerified)

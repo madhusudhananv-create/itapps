@@ -230,7 +230,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             lstParams.Add(new REPORTS_PARAMS
             {
                 PARAM_TYPE = "Date",
-                PARAM_VALUE = startDate.ToString("yyyy-MM-dd"),
+                PARAM_VALUE = endDate.ToString("yyyy-MM-dd"),
                 PARAM_NAME = "EndDate"
             });
 
