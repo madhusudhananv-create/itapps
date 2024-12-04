@@ -166,11 +166,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
 
                 }
-                if (criteriaRatings.Count > 1 && criteriaRatings.Count == highRatings.Count)
-                {
-                    var cssScore = highRatings.TrueForAll(x => x.RATING == 5) ? 5 : 4;
-                    CreateAuditTaskDetails(cssScore.ToString(), item.CUST_ID, item.PROJ_ID, cssUrl);
-                }
+                //if (criteriaRatings.Count > 1 && criteriaRatings.Count == highRatings.Count)
+                //{
+                //    var cssScore = highRatings.TrueForAll(x => x.RATING == 5) ? 5 : 4;
+                //    CreateAuditTaskDetails(cssScore.ToString(), item.CUST_ID, item.PROJ_ID, cssUrl);
+                //}
             }
         }
 
@@ -209,7 +209,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                     else
                     {
-                        if (!showCSSFields) CheckCSSLinkValid(iteration, batchCust.PROJ_ID);
+                        if (!showCSSFields) CheckCSSLinkValid(iteration, batchCust.CUST_ID);
                         //Get Question mode based on project
                         // By default - 1
                         //Logic needs to be correct to get latest questions.
@@ -338,11 +338,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (!string.IsNullOrWhiteSpace(projectId))
             {
-                validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE);
+                validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE, projectId);
             }
             else
             {
-                validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE);
+                validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE, "");
             }
 
             if (validDate < DateTime.Now)

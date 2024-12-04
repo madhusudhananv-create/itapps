@@ -17040,7 +17040,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private string GetDBConfigValue(string key, string custId, string projId)
         {
-            return helper.GetDBConfigValue(key, custId, projId);
+            return helper.GetDBConfig(key, custId, projId);
         }
 
         private string GetCustomerId(string ProjId)

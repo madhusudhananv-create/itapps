@@ -786,6 +786,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private Boolean IsGavs(string emailid)
         {
+            if (emailid.Contains("integration"))
+                return false;
             if (!emailid.Contains("@"))
                 return true;
             else if (emailid.ToUpper().EndsWith("@GAVSTECH.COM"))

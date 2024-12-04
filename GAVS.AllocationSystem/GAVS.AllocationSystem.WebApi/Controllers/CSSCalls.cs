@@ -315,7 +315,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("CURRENT_PERIOD", CurrentPeriod);
             EmailContentValues.Add("PREVIOUS_PERIOD", PreviousPeriod);
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
-            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today));
+            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, project.CUST_ID));
 
             mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyRequest.htm", EmailContentValues);
 
@@ -376,7 +376,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("CURRENT_PERIOD", currentPeriod);
             EmailContentValues.Add("PREVIOUS_PERIOD", currentPeriod);
             EmailContentValues.Add("SURVEY_LINK", surveyLink);
-            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today));
+            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
             mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyRequestMonthly.htm", EmailContentValues);
 
             var ep = new EmailProvider(Cldb, CSPdb);

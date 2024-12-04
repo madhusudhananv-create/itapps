@@ -805,7 +805,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
-                    errMsg = "Emp id not found in the db (" + employee.EMP_ID.ToString() + "-" + employee.EMAIL_ID.ToString() + ")";
+                    AddNewEmployee(request);
+                   // errMsg = "Emp id not found in the db (" + employee.EMP_ID.ToString() + "-" + employee.EMAIL_ID.ToString() + ")";
                 }
 
             }

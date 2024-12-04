@@ -486,9 +486,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
         }
 
-        public string GetDBConfig(string sKey, string CustId)
+        public string GetDBConfig(string sKey, string CustId, string projId = "")
         {
-            var config = Cldb.CONFIGURATION_EXT.GetAll().FirstOrDefault(t => t.KEY == sKey && t.CUST_ID == CustId);
+            var config = Cldb.CONFIGURATION_EXT.GetAll().FirstOrDefault(t => t.KEY == sKey && t.CUST_ID == CustId && t.PROJ_ID == projId);
+
+            if (config == null)
+                config = Cldb.CONFIGURATION_EXT.GetAll().FirstOrDefault(t => t.KEY == sKey && t.CUST_ID == CustId);
 
             if (config == null)
                 config = Cldb.CONFIGURATION_EXT.GetAll().FirstOrDefault(t => t.KEY == sKey && t.CUST_ID == "-1");
@@ -908,13 +911,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return result;
         }
 
-        internal string GetLaterDateTextForCSSValidity(DateTime dateSent)
+        internal string GetLaterDateTextForCSSValidity(DateTime dateSent, string custId)
         {
-            var laterDate = GetLaterDateForCSSValidity(dateSent);
+            var laterDate = GetLaterDateForCSSValidity(dateSent, custId);
             return laterDate.ToString("dd-MM-yyyy");
         }
 
-        internal DateTime GetLaterDateForCSSValidity(DateTime dateSent, int valDays = 0)
+        internal DateTime GetLaterDateForCSSValidity(DateTime dateSent, string custId, int valDays = 0)
         {
             var configKey = "CSS_LINK_VALIDITY_DAYS";
 
@@ -924,7 +927,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             int validity = 20;
             if (valDays == 0)
             {
-                var configValues = GetDBConfigValue(configKey, "-1", "");
+                var configValues = GetDBConfig(configKey, custId);
                 int.TryParse(configValues, out validity);
             }
             var validDate = dateSent.AddDays(validity);
@@ -934,11 +937,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return laterDate;
         }
 
-        internal string GetDBConfigValue(string key, string custId, string projId)
-        {
-            var config = Cldb.CONFIGURATION_EXT.GetAll().FirstOrDefault(t => t.KEY == key && (custId == "-1" || custId == t.CUST_ID) && (string.IsNullOrEmpty(projId) || projId == t.PROJ_ID));
-            return GetDBConfigValue(config);
-        }
+        //internal string GetDBConfigValue(string key, string custId, string projId)
+        //{
+        //    var config = Cldb.CONFIGURATION_EXT.GetAll().FirstOrDefault(t => t.KEY == key && (custId == "-1" || custId == t.CUST_ID) && (string.IsNullOrEmpty(projId) || projId == t.PROJ_ID));
+        //    return GetDBConfigValue(config);
+        //}
 
 
     }

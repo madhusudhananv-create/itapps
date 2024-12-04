@@ -138,7 +138,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var targetDate = DateTime.Now.AddDays(20);
             var currentDate = DateTime.Now;
-            var validity = helper.GetDBConfigValue("CSS_LINK_VALIDITY_DAYS", "-1", null);
+            var validity = helper.GetDBConfig("CSS_LINK_VALIDITY_DAYS", "");
             int.TryParse(validity, out int val);
             var projIds = new List<string>();
             var completedCustIds = new List<string>();
@@ -175,7 +175,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 if (!completedCustIds.Contains(t.PROJ_ID))
                 {
-                    if (helper.GetLaterDateForCSSValidity(t.SURVEY_SENT_DATE.Value, val) < currentDate && !string.IsNullOrWhiteSpace(t.PROJ_ID))
+                    if (helper.GetLaterDateForCSSValidity(t.SURVEY_SENT_DATE.Value, t.CUST_ID, val) < currentDate && !string.IsNullOrWhiteSpace(t.PROJ_ID))
                     {
                         filtertedbatchList.Add(t);
                     }
