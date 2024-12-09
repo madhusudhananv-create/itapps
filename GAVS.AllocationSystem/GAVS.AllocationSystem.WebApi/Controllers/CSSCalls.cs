@@ -111,7 +111,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var productName = CSPdb.PORTFOLIO_PRODUCTS.GetAll().FirstOrDefault(x => x.ID == productId && x.ISACTIVE)?.PRODUCT_TITLE;
                 projectName = $"{productName} (Product)";
                 toMail = string.Join(",", helper.GetCSMMailsFromAccount(customerId));
-                ccMail = string.Join(",", helper.GetCCEmailIDsForPremier(mailId));
+                ccMail = string.Join(",", helper.GetCCEmailIDsForPremier(mailId, ""));
                 csmName = "Team";
             }
             else if (project != null)
@@ -356,7 +356,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else
             {
-                ccList.AddRange(helper.GetCCEmailIDsForPremier(cust.EMAIL_ID));
+                ccList.AddRange(helper.GetCCEmailIDsForPremier(cust.EMAIL_ID, ""));
                 ccList.AddRange(helper.GetCSMMailsFromAccount(cust.CUST_ID));
             }
             //var csmMails = helper.GetCSMMailsFromAccount(cust.CUST_ID);
@@ -365,11 +365,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //var qualitySpoc = helper.GetQualitySPOCMailsFromAccount(cust.CUST_ID);
             ccmail = string.Join(",", ccList);
             var specStr = string.IsNullOrEmpty(cust.PROJ_NM) && string.IsNullOrEmpty(cust.PROD_NM) ? "Long 80" : (string.IsNullOrEmpty(cust.PROD_NM) ? cust.PROJ_NM : cust.PROD_NM);
-            if(!string.IsNullOrWhiteSpace(projectText))
-                subject = prefix + $"{specStr} - Customer Success Survey for the project {projectText} for the period of {currentPeriod}";  
+            if (!string.IsNullOrWhiteSpace(projectText))
+                subject = prefix + $"{specStr} - Customer Success Survey for the project {projectText} for the period of {currentPeriod}";
             else
                 subject = prefix + $"{specStr} - Customer Success Survey for the period of {currentPeriod}";
-           
+
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
@@ -400,7 +400,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             CSS_BATCHES batch = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
 
-            List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && (t.STATUS == "MAIL SENT"  ) && t.ISACTIVE).ToList();
+            List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && (t.STATUS == "MAIL SENT") && t.ISACTIVE).ToList();
             batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
             bool hasAnyCustomerNotVerified = batchCustomers.Any(x => !x.IS_VERIFIED);
             if (hasAnyCustomerNotVerified)
@@ -557,7 +557,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             else
             {
                 projectText = "for ";
-                if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE" ))
+                if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE"))
                     return;
             }
 
@@ -921,9 +921,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED bacth in batchesExt)
             {
                 if (bacth.PROD_ID != null)
-                    bacth.PROD_NM = surveyProds.FirstOrDefault(x => x.ID == bacth.PROD_ID).PRODUCT_TITLE;
+                    bacth.PROD_NM = surveyProds.FirstOrDefault(x => x.ID == bacth.PROD_ID)?.PRODUCT_TITLE;
                 if (bacth.PROJ_ID != null)
-                    bacth.PROJ_NM = surveyProjs.FirstOrDefault(x => x.PROJ_ID == bacth.PROJ_ID).PROJ_NM;
+                    bacth.PROJ_NM = surveyProjs.FirstOrDefault(x => x.PROJ_ID == bacth.PROJ_ID)?.PROJ_NM;
                 var matchingContact = contactsList
                                      .FirstOrDefault(contact => contact.CONTACT_EMAILID == bacth.EMAIL_ID);
                 if (matchingContact != null)
@@ -1433,7 +1433,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var productName = CSPdb.PORTFOLIO_PRODUCTS.GetAll().FirstOrDefault(x => x.ID == productId && x.ISACTIVE)?.PRODUCT_TITLE;
                 projectName = $"{productName} (Product)";
                 toMail = string.Join(",", helper.GetCSMMailsFromAccount(customerId));
-                ccMail = string.Join(",", helper.GetCCEmailIDsForPremier(customerMail));
+                ccMail = string.Join(",", helper.GetCCEmailIDsForPremier(customerMail, ""));
                 csmName = "Team";
             }
             else if (project != null)

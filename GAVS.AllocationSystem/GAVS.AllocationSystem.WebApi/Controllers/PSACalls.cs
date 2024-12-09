@@ -309,9 +309,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var toMail = string.Empty;
             toMail = helper.GetDBConfig("NewAccount_ToList", "-1");
-            var qualityMail = helper.GetDBConfig("QUALITY_TEAM_MAIL", "-1");
-            var pexMail = helper.GetDBConfig("PROCESS_EXCELLENCE_TEAM_MAIL", "-1");
-            var ccMail = helper.ConcatEmails(new List<string>() { qualityMail, pexMail });
+            //var qualityMail = helper.GetDBConfig("QUALITY_TEAM_MAIL", "-1");
+            //var pexMail = helper.GetDBConfig("PROCESS_EXCELLENCE_TEAM_MAIL", "-1");
+            var ccMail = helper.ConcatEmails(new List<string>() { Constants.QUALITY_MAIL, Constants.PEX_MAIL, Constants.DEVX_LEAD });
             var customerName = customer.CUST_NM;
             var customerID = customer.CUST_ID;
             var subject = $"New Customer - {customerName} has been added";
@@ -380,7 +380,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("DEPARTMENT", string.IsNullOrWhiteSpace(project.DEPARTMENT) ? "" : project.DEPARTMENT);
 
             string mailContent = helper.GetEmailContent("NewProjectNotification.htm", EmailContentValues);
-            var cclist = new List<string> { Constants.QUALITY_MAIL, Constants.PEX_MAIL , Constants.DEVX_MAIL};
+            var cclist = new List<string> { Constants.QUALITY_MAIL, Constants.PEX_MAIL, Constants.DEVX_MAIL };
             var ccMail = string.Join(",", cclist);
             //todo: move email to template
             var ep = new EmailProvider(Cldb, CSPdb);
@@ -463,7 +463,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("END_DATE", project.END_DATE.ToString("dd-MM-yyyy"));
             EmailContentValues.Add("PM", pmInfo != null ? pmInfo.FRST_NM : "");
             EmailContentValues.Add("CSM", csmInfo != null ? csmInfo.FRST_NM : "");
-            var ccMailIds = string.Join(",", new string[] { emailIds, pmInfo != null ? pmInfo.EMAIL_ID : "", qualitySpoc != null ? qualitySpoc.EMAIL_ID : "", qualityHead, Constants.QUALITY_MAIL });
+            var ccMailIds = string.Join(",", new string[] { emailIds, pmInfo != null ? pmInfo.EMAIL_ID : "", qualitySpoc != null ? qualitySpoc.EMAIL_ID : "", qualityHead, Constants.QUALITY_MAIL,   Constants.PEX_MAIL, Constants.DEVX_LEAD });
             string mailContent = helper.GetEmailContent("ProjectClosureNotification.htm", EmailContentValues);
 
             //todo: move email to template
@@ -739,7 +739,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-                var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID)  );
+                var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID));
                 if (existingRow == null)
                     existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID_NEW == employee.EMP_ID && t.DOR != null) && t.EMAIL_ID == employee.EMAIL_ID);
 
@@ -806,7 +806,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else
                 {
                     AddNewEmployee(request);
-                   // errMsg = "Emp id not found in the db (" + employee.EMP_ID.ToString() + "-" + employee.EMAIL_ID.ToString() + ")";
+                    // errMsg = "Emp id not found in the db (" + employee.EMP_ID.ToString() + "-" + employee.EMAIL_ID.ToString() + ")";
                 }
 
             }

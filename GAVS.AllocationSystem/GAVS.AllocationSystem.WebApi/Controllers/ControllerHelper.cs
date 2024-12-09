@@ -890,17 +890,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return products;
         }
 
-        internal List<string> GetCCEmailIDsForPremier(string customerEMailId)
+        internal List<string> GetCCEmailIDsForPremier(string customerEmailId, string projId)
         {
             var result = new List<string>();
+            var empList = new List<string>();
             try
             {
-                var products = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && x.MANAGEMENT_TYPE == 6 && x.EMP_ID == customerEMailId).Select(x => x.PRODUCT_ID).ToList();
-                if (!products.Any()) return result;
-                var managementTypes = new List<int> { 1, 2, 3, 4 };
-                var productResponsibleList = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && products.Contains(x.PRODUCT_ID) && managementTypes.Contains(x.MANAGEMENT_TYPE)).Select(x => x.EMP_ID).ToList();
-                if (!productResponsibleList.Any()) return result;
-                result = GetEmployeeMailIdList(productResponsibleList).Distinct().ToList();
+                if (string.IsNullOrWhiteSpace(projId))
+                {
+                    var products = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && x.MANAGEMENT_TYPE == 6 && x.EMP_ID == customerEmailId).Select(x => x.PRODUCT_ID).ToList();
+                    if (!products.Any()) return result;
+                    var managementTypes = new List<int> { 1, 2, 3, 4 };
+                    empList = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && products.Contains(x.PRODUCT_ID) && managementTypes.Contains(x.MANAGEMENT_TYPE)).Select(x => x.EMP_ID).ToList();
+
+                }
+                else
+                {
+                    var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
+                    empList.Add(project.PROJ_PM_EMP_ID);
+                    empList.Add(project.PROJ_DM_EMP_ID);
+                    empList.Add(project.PROJ_AM_EMP_ID);
+                    if (!string.IsNullOrWhiteSpace(project.QUALITY_SPOC))
+                        empList.Add(project.QUALITY_SPOC);
+                }
+
+                if (!empList.Any()) return result;
+                result = GetEmployeeMailIdList(empList).Distinct().ToList();
             }
             catch (Exception ex)
             {

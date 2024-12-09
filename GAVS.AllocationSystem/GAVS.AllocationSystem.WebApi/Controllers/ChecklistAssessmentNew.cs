@@ -2100,7 +2100,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ccMailId = string.Join(",", ccMailIds.Select(x => x.MailID));
             }
             var qspoc = GetQSPOCMailforAssessment(proj);
-            ccmail = helper.ConcatEmails(new List<string>() { pmMails, csmMails, ccMailId, selectedccs, qspoc }); // quality spoc , auditor
+            ccmail = helper.ConcatEmails(new List<string>() { pmMails, csmMails, ccMailId, selectedccs, qspoc, Constants.DEVX_LEAD }); // quality spoc , auditor
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("AUDITEE_NM", toperson);
@@ -2318,7 +2318,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     //stage1
 
                     var stage1 = mapp.FirstOrDefault(t => t.STAGE_ID == 1 && t.STAGE_STATUS.ToLower() != "auditee rejected")?.ISCOMPLETE;
-                    if (stage1.HasValue && stage1.Value  )
+                    if (stage1.HasValue && stage1.Value)
                         color.Add("#3AB376");
                     else
                         color.Add("#FF5969");

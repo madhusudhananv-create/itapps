@@ -638,7 +638,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var mailContent = string.Empty;
             bool sendCCmail = bool.Parse(helper.GetDBConfig("CSS_LINK_CC_ENABLE", "-1"));
 
-            ccmail = string.Join(",", helper.GetCCEmailIDsForPremier(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.EMAIL_ID));
+            ccmail = string.Join(",", helper.GetCCEmailIDsForPremier(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.EMAIL_ID, replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROJ_ID));
             if (!string.IsNullOrWhiteSpace(ccmail))
                 ccmail += ",";
             ccmail += helper.GetDBConfig("CSS_SUCCESS_MAIL_CC", replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.CUST_ID);
@@ -695,7 +695,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
             //CC list
-            ccmail = string.Join(",", helper.GetCCEmailIDsForPremier(emailId));
+            ccmail = string.Join(",", helper.GetCCEmailIDsForPremier(emailId, replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROJ_ID));
             if (!string.IsNullOrWhiteSpace(ccmail))
                 ccmail += ",";
             ccmail += helper.GetDBConfig("CUSTOMER_SUCCESS_SURVEY_CC", replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.CUST_ID);
@@ -773,7 +773,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else
             {
-                ccList.AddRange(helper.GetCCEmailIDsForPremier(emailId));
+                ccList.AddRange(helper.GetCCEmailIDsForPremier(emailId, ""));
                 ccList.AddRange(helper.GetCSMMailsFromAccount(emailId));
             }
             ccmail = string.Join(",", ccList);

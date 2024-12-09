@@ -18,5 +18,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         internal const string CSS_BCC = "madhusudhanan.v@gavstech.com,thamaraiselvi.s@gavstech.com";
         internal const string GRC_Team_Email = "GRC_Team@gavstech.com";
         internal const string DEVX_MAIL = "devx@gavstech.com";
+        internal const string DEVX_LEAD = "devxleads@gavstech.com";
     }
 }
