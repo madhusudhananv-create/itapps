@@ -30,6 +30,7 @@ export class OverviewPageComponent implements OnInit {
   GavsDescription : any;
   ClientRAG : any;
   ClientNM : any;
+  companyName = environment.company_name;
   constructor(private route: ActivatedRoute, private _access: AccessControl, private _http: Http, private _util: myUtility, private _appservice: AppsService, public _layoutService: LayoutService) { 
 
     

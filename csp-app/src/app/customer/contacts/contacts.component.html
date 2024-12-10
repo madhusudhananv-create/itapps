@@ -14,7 +14,7 @@
     <table style="width: 99%;" class="table table-bordered">
       <thead class="thead-light">
         <tr>
-          <th style=" width: 50%; font-weight: 600">GS LAB| GAVS</th>
+          <th style=" width: 50%; font-weight: 600">{{ companyName }}</th>
           <th style="font-weight: 600">CUSTOMER</th>
         </tr>
       </thead>
@@ -133,7 +133,7 @@
               <mat-form-field>
                 <mat-select name="txtType" placeholder="Contact Type" [(ngModel)]="newContacts.contacT_TYPE" required>
                   <mat-option value="CUSTOMER">CUSTOMER</mat-option>
-                  <mat-option value="GAVS">GS LAB | GAVS</mat-option>
+                  <mat-option value="GAVS">{{ companyName }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>

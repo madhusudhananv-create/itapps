@@ -25,6 +25,7 @@ export class LoginComponent implements OnInit {
   email: string = "";
   password: string = "";
   gslab: string = "";
+  companyName = environment.company_name;
 
   constructor(private _router: Router, private _http: Http, private _util: myUtility, private _appservice: AppsService,
     private _access: AccessControl, private _spinner: Ng4LoadingSpinnerService, private _activatedRoute: ActivatedRoute
@@ -117,7 +118,7 @@ export class LoginComponent implements OnInit {
     else if (this.email.trim() === "")
       alert("Please enter the email id")
     else if (environment.production === true && this.email.toLowerCase().search('@gavstech.com') >= 0)
-      alert("GS Lab | GAVS users, please click here to sign-in through google")
+      alert(`${this.companyName} users, please click here to sign-in through Google`);
     else if (this.email.toLowerCase().search('@') === -1)
       alert("Please enter a valid email id")
     else if (environment.production === true && this.password === undefined)

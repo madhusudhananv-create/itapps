@@ -52,7 +52,7 @@
     </div>
   </div>
 
-  <p>We would like you to rate GS Lab | GAVS on the aspects mentioned below. </p>
+  <p>We would like you to rate {{ companyName }} on the aspects mentioned below. </p>
   <table class="table table-bordered" style="width:auto;background-color:white;">
     <thead>
       <tr>
@@ -84,7 +84,7 @@
 
     <tr *ngIf="questions_NPS">
       <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 16px;" colspan="3"><span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
-        How likely is that you would recommend GS Lab | GAVS to your friend / acquaintance who wishes to avail IT services?</td>
+        How likely is that you would recommend {{ companyName }} to your friend / acquaintance who wishes to avail IT services?</td>
     </tr>
     <tr *ngIf="questions_NPS">
       <td colspan="2" nowrap style="border-top:0px;padding-bottom:0px;border-bottom:0px; width:auto">

@@ -32,7 +32,7 @@
   </div>
   <div *ngIf="contacts.length > 0">
     <mat-tab-group>
-      <mat-tab label="GS LAB| GAVS">
+      <mat-tab label="{{ companyName }}">
 
         <br>
         <div class="row">
@@ -126,7 +126,7 @@
                 <mat-select name="txtType" placeholder="Contact Type" [(ngModel)]="newContacts.contacT_TYPE"
                   (selectionChange)="verifyContactType($event.value)" required [disabled]="this.displayDisabled">
                   <mat-option value="CUSTOMER">CUSTOMER</mat-option>
-                  <mat-option value="GAVS">GS LAB | GAVS</mat-option>
+                  <mat-option value="GAVS">{{ companyName }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>

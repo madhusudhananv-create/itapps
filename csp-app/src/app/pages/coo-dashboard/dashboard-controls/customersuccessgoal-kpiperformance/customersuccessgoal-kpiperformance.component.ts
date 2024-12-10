@@ -10,6 +10,7 @@ import { COODashboardCommon } from '../../coo-dashboard-common';
 import { forEach } from '@angular/router/src/utils/collection';
 import { CustomerProjectIds } from '../../../../models/customer-projects-model';
 import { CloseComponentService } from '../../../../close-component.service';
+import { environment } from '../../../../../environments/environment';
 
 
 @Component({
@@ -41,6 +42,7 @@ export class CustomerSuccessGoalKPIPerformanceComponent implements OnInit {
    Customerids: any;
    Projectids: any;
    startYear = new Date().getFullYear();
+   companyName = environment.company_name;
 
    constructor(public _cooDashboardService: COODashboardService, public _cooDashboardCommon: COODashboardCommon, public _chartsService: ChartsService, public _util: myUtility, private _sanitizer: DomSanitizer, private close: CloseComponentService) {
       this.AppSettingstoken = localStorage.getItem('token');

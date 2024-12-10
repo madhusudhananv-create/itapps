@@ -64,6 +64,7 @@ export class IdeasPageComponent implements OnInit {
   phEffort  =  "Effort In Person hour";
   phCost  ="Cost in USD";
   phFTESpent = "FTE Spent";
+  companyName = environment.company_name;
 
 
   isBenefitsView : boolean = false;

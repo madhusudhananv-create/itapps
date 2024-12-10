@@ -65,5 +65,6 @@ export class IdeaViewModel {
     status: string;
     type: string;
     targeT_DATE: string;
+    CUSTOMER_NAME:string;
 }
 

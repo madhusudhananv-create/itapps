@@ -15,6 +15,7 @@ import { Location } from "@angular/common";
 })
 export class AppComponent {
   showContentMenu: boolean = false;
+  companyName = environment.company_name;
   //=================
   test: number[] = [
     1,

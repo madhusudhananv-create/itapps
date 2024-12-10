@@ -13,6 +13,7 @@ import { map, startWith } from 'rxjs/operators';
 import { TaskService } from '../../../pages/process-model/task/task.service';
 import { MatAutocompleteTrigger } from '@angular/material'
 import { ContactsRolesModel } from '../../../models/contacts-roles-model';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-contacts-page',
@@ -49,6 +50,7 @@ export class ContactsPageComponent implements OnInit {
   contactRoles: ContactsRolesModel[];
   isPremier: Boolean = false;
   isGavs: Boolean = false;
+  companyName = environment.company_name;
 
   constructor(public _taskService: TaskService, private route: ActivatedRoute, private _access: AccessControl, private _http: Http, private _util: myUtility, private _appservice: AppsService, public _layoutService: LayoutService) { }
 

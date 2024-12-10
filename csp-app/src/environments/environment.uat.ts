@@ -22,6 +22,7 @@
     clientid:'aacc7c9c-0f59-469c-b119-41592a582024',
     redirect:'http%3A%2F%2F10.0.100.222:8092%2Flandingpage/',
     loginpage:'http%3A%2F%2F10.0.100.222:8092%2Flogin/',
-    environment_Id:'UAT'
+    environment_Id:'UAT',
+    company_name: ' GSLAB | Gavs '
   }
   

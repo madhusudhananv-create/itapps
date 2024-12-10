@@ -10,7 +10,8 @@ export const environment = {
   loginpage: 'https%3A%2F%2Fcsm.gavstech.com%2Flogin/',
   googleClientId: '360086473959-4rtb8ep6eq60tt3pm8922g33cr6pvbqe.apps.googleusercontent.com',
   gavsGoogleClientId: '348205218679-gt5j9l08b657o76kuo6j5ni3kbt231ps.apps.googleusercontent.com',
-  environment_Id:''
+  environment_Id:'',
+  company_name: ' GSLAB | Gavs '
 };
 
 

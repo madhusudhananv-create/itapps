@@ -404,6 +404,14 @@ export class TaskPlannerComponent implements OnInit {
     this._taskService.bProgress = true;
     let range = "Y";
     this.getInputDates();
+    if (!this.selectedCustomer) {
+      this.selectedCustomer = [];
+    }
+
+    // Clear project list if no customer is selected
+    if (this.selectedCustomer.length === 0) {
+      this.ProjectList = [];
+    }
     this._taskService.GetTaskDetailsByDateRange(this.startDate, this.endDate, "-1", "-1", "-1", this.selectView, range).subscribe(data => {
       if (this.selectView == "1") {
         this._taskService.taskGroups = data;

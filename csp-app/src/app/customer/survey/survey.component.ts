@@ -10,6 +10,7 @@ import { RatingCriteriaRemarksComponent } from '../rating-criteria-remarks/ratin
 import { StarRatingColor } from '../star-rating/star-rating.component';
 import { E } from '@angular/core/src/render3';
 import { ViewTemplateComponent } from '../../../app/controls/view-template/view-template.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-survey',
@@ -38,6 +39,7 @@ export class SurveyComponent implements OnInit {
   starColorP: StarRatingColor = StarRatingColor.primary;
   starColorW: StarRatingColor = StarRatingColor.warn;
   warnNps :boolean = true;
+  companyName = environment.company_name;
 
   // ddRatings = [
   //   { 'key': '1 - Poor', 'value': 1 },

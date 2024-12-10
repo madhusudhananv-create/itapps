@@ -22,7 +22,7 @@ export class BvdSimilarideasComponent implements OnInit {
     this.dataSource = new MatTableDataSource(this.Similarideas);
   }
 
-  displayedColumns: string[] = ['ideaDescription', 'identifiedDate', 'status', 'identifiedBy'];
+  displayedColumns: string[] = ['projecT_NAME','customeR_NAME','ideaDescription', 'identifiedDate', 'status', 'identifiedBy'];
   dataSource = new MatTableDataSource(this.Similarideas);
 }
 
@@ -31,5 +31,7 @@ export interface Ideas {
   identifiedDate: string;
   status: string;
   area: string;
+  projecT_NAME:string;
+  customeR_NAME:string;
 }
 

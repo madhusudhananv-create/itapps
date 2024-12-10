@@ -3,6 +3,7 @@ import { ContactsModel } from '../../models/contacts-model';
 import { AppsService } from '../../Services/apps.service';
 import { myUtility } from '../../Shared/myUtility';
 import { AccessControl } from '../../Shared/accessControl';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-contacts',
@@ -15,6 +16,7 @@ export class ContactsComponent implements OnInit {
   newContacts: ContactsModel;
   editCmode: any;
   editmode: Boolean = false;
+  companyName = environment.company_name;
 
   unamePattern = "^[A-Z a-z]{0,30}$";
   emailPattern = "^[A-Z a-z]+[A-Za-z0-9._-]+@[A-Z a-z]+\.[A-Z a-z.]{2,5}$";

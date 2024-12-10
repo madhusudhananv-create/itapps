@@ -2,6 +2,7 @@ import { Component, OnInit,Input,SimpleChanges} from '@angular/core';
 import { myUtility } from '../../../../Shared/myUtility';
 import { AppsService } from '../../../../Services/apps.service';
 import { ProjectsModel } from '../../../../models/projects-model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-take-survey-feedback',
@@ -17,6 +18,7 @@ export class TakeSurveyFeedbackComponent implements OnInit {
   projNames: ProjectsModel[];
   _loading: boolean = false;
   panelExpand:boolean[]=[];
+  companyName = environment.company_name;
   // isOpen: boolean;
   // @Input() value: number = 0
 

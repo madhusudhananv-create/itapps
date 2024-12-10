@@ -16,6 +16,7 @@ import { AccessControl } from './accessControl';
 import { FailureAssessment } from '../models/fmea/fm-project-mapping';
 import { MatDialog } from '@angular/material';
 import { GoogleLoginProvider, SocialAuthService } from 'angularx-social-login';
+import { environment } from '../../environments/environment';
 
 @Injectable()
 export class myUtility {
@@ -28,6 +29,7 @@ export class myUtility {
     BaseMeasureEnabledCustomers = '';
     kpiProcessEnabledCustomers = '';
     riskSubject: any = new Subject<any>();
+    companyName = environment.company_name;
     //public gavsService: SocialAuthService;
  
 
@@ -452,10 +454,10 @@ export class myUtility {
         if (error.status === 0)
             alert("CSM server connection is interupted, Please check your network connection. For urgent queries contact csmplatformsupport@gavstech.com.");
         else if (error.status === 500) {
-            alert("CSM server: Error(500) while handling data, please contact GS Lab | GAVS team (csmplatformsupport@gavstech.com).");
+            alert(`CSM server: Error(500) while handling data, please contact ${this.companyName} team (csmplatformsupport@gavstech.com).`);
         }
         else if (error.status === 404)
-            alert("CSM server: Error(404) while handling data, please contact GS Lab | GAVS team (csmplatformsupport@gavstech.com).");
+            alert(`CSM server: Error(404) while handling data, please contact ${this.companyName} (csmplatformsupport@gavstech.com).`);
         else if (error.status === 501)
             alert("Duplicate values in excel not copied ");
         else if (error.status === 400) {
