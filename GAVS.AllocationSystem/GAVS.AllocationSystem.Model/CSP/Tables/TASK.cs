@@ -22,8 +22,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string COMMENTS { get; set; }
         public DateTime? ACTUAL_START_DATE { get; set; }
         public DateTime? ACTUAL_END_DATE { get; set; }
-        public int? SCHEDULED_DURATION { get; set; }
-        public int? ACTUAL_DURATION { get; set; }
+        public decimal? SCHEDULED_DURATION { get; set; }
+        public decimal? ACTUAL_DURATION { get; set; }
         public string CUST_ID { get; set; }
         public string PROJ_ID { get; set; }
         public string OWNER { get; set; }
