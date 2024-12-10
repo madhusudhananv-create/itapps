@@ -45,7 +45,7 @@
       "DUE_DATE:DateTime?",
       "ACTUAL_START_DATE:DateTime?",
       "ACTUAL_END_DATE:DateTime?",
-      "SCHEDULED_DURATION:int",
+      "SCHEDULED_DURATION:decimal?",
       "ACTUAL_DURATION:int?",
       "STATUS:string",
       "CUST_ID:string",
@@ -69,7 +69,7 @@
       "DUE_DATE:DateTime?",
       "ACTUAL_START_DATE:DateTime?",
       "ACTUAL_END_DATE:DateTime?",
-      "SCHEDULED_DURATION:int",
+      "SCHEDULED_DURATION:decimal?",
       "ACTUAL_DURATION:int?",
       "STATUS:string",
       "CUST_ID:string",
@@ -335,7 +335,9 @@
       "DESCRIPTION:string",
       "IDENTIFIED_DATE:DateTime?",
       "STATUS:string",
-      "IDENTIFIED_BY:string"
+      "IDENTIFIED_BY:string",
+      "PROJECT_NAME:string",
+      "CUSTOMER_NAME:string"
     ]
   },
   {
