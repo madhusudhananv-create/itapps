@@ -2100,7 +2100,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ccMailId = string.Join(",", ccMailIds.Select(x => x.MailID));
             }
             var qspoc = GetQSPOCMailforAssessment(proj);
-            ccmail = helper.ConcatEmails(new List<string>() { pmMails, csmMails, ccMailId, selectedccs, qspoc, Constants.DEVX_LEAD }); // quality spoc , auditor
+            ccmail = helper.ConcatEmails(new List<string>() { pmMails, csmMails, ccMailId, selectedccs, qspoc, Constants.DEVX_LEAD, Constants.AUDITOR_LEAD }); // quality spoc , auditor
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("AUDITEE_NM", toperson);

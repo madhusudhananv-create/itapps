@@ -7,6 +7,7 @@ using GAVS.AllocationSystem.WebApi.ActionFilters;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -25,6 +26,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("RefreshDashboardDetailsAuto"), ActionName("RefreshDashboardDetailsAuto"), HttpGet]
         public IHttpActionResult RefreshDashboardDetailsAuto()
         {
+            var stopwatch = Stopwatch.StartNew();
             var lastUpdated = helper.GetDBConfig("DashboardUpdateTime", "-1");
             DateTime lastUpdatedTimestamp = DateTime.Now;
             if (DateTime.TryParse(lastUpdated, out lastUpdatedTimestamp))
@@ -35,7 +37,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     helper.UpdateDBConfig("DashboardUpdateTime", "-1", DateTime.Now.ToString());
                 }
             }
-
+            FillResponseTime(stopwatch);
             return Ok();
         }
 

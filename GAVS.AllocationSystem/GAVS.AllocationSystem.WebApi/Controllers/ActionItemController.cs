@@ -46,13 +46,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
 
             var actionitem = CSPdb.PROJECT_ACTIONITEM.GetAll().FirstOrDefault(x => x.ID == actionItemId);
-            if (actionitem == null || (actionitem.BATCH_CUSTOMER_MONTHLY_ID.HasValue == false && actionitem.BATCH_CUSTOMER_ID.HasValue == false))
+            if (actionitem == null || (actionitem.BATCH_CUSTOMER_MONTHLY_ID.GetValueOrDefault() == 0 && actionitem.BATCH_CUSTOMER_ID.GetValueOrDefault() == 0))
             {
                 //raise error
                 return BadRequest("Unable to find related Customer Success Survey for the Action Item");
             }
             //find premier or non premier
-            var isMonthly = actionitem.BATCH_CUSTOMER_MONTHLY_ID.HasValue;
+            var isMonthly = actionitem.BATCH_CUSTOMER_MONTHLY_ID.GetValueOrDefault() != 0;
             var customerName = string.Empty;
             var customerMail = string.Empty;
             var cssLink = string.Empty;
@@ -82,7 +82,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 customerMail = batchCustomer.EMAIL_ID;
                 customerName = batchCustomer.DISPLAY_NAME;
-                var surevey = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMER_MONTHLY_ID == batchCustomer.ID);
+                var surevey = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMERS_ID == batchCustomer.ID);
                 cssLink = surevey.SURVEY_ID;
             }
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);

@@ -311,7 +311,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             toMail = helper.GetDBConfig("NewAccount_ToList", "-1");
             //var qualityMail = helper.GetDBConfig("QUALITY_TEAM_MAIL", "-1");
             //var pexMail = helper.GetDBConfig("PROCESS_EXCELLENCE_TEAM_MAIL", "-1");
-            var ccMail = helper.ConcatEmails(new List<string>() { Constants.QUALITY_MAIL, Constants.PEX_MAIL, Constants.DEVX_LEAD });
+            var ccMail = helper.ConcatEmails(new List<string>() { Constants.QUALITY_MAIL, Constants.PEX_MAIL, Constants.DEVX_LEAD, Constants.AUDITOR_LEAD });
             var customerName = customer.CUST_NM;
             var customerID = customer.CUST_ID;
             var subject = $"New Customer - {customerName} has been added";

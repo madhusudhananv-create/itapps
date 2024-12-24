@@ -614,6 +614,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var cclist = taskAudit.Task.TASK_CATEGORY_ID == 22 ? GetDBConfig("DEFAULT_STARTUP_AUDIT_CCLIST", project.CUST_ID) : GetDBConfig("QUALITY_HEAD_MAIL", project.CUST_ID);
             recipients.Add(cclist);
+            recipients.Add(Constants.AUDITOR_LEAD);
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CATEGORY", taskAudit.TASK_CATEGORY_TITLE);
