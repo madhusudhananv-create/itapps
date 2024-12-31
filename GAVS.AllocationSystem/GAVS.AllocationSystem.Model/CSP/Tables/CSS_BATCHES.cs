@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GAVS.AllocationSystem.Model.Base;
-using System.ComponentModel.DataAnnotations.Schema
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GAVS.AllocationSystem.Model.CSP
 {

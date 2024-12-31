@@ -25,7 +25,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int TASK_CATEGORY_ID { get; set; }
         public String TASK_CATEGORY { get; set; }
         public String DESCRIPTION { get; set; }
-        public int? SCHEDULED_DURATION { get; set; }
+        public decimal? SCHEDULED_DURATION { get; set; }
         public String STATUS { get; set; }
         public string COLOR_BG { get; set;}
         public string COLOR_MG { get; set; }
