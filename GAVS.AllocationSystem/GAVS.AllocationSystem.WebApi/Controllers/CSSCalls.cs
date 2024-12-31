@@ -17,6 +17,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     public partial class AllSysController
     {
 
+        private const string CSS_COMPLETED = "COMPLETED";
+        private const string CSS_MAIL_SENT = "MAIL SENT";
+        private const string CSS_MAIL_RESENT = "MAIL RE-SENT";
 
         [POST("SendCSSBatchVerification")]
         [ActionName("SendCSSBatchVerification")]
@@ -244,7 +247,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     BATCH_CUSTOMER_MONTHLY_ID = 0,
                     SURVEY_ID = Guid.NewGuid().ToString(),
                     SURVEY_SENT_DATE = DateTime.Now,
-                    STATUS = "MAIL SENT",
+                    STATUS = CSS_MAIL_SENT,
 
                 };
                 UpdateAuditFields(survey);
@@ -400,7 +403,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             CSS_BATCHES batch = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
 
-            List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && (t.STATUS == "MAIL SENT") && t.ISACTIVE).ToList();
+            List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && (t.STATUS == CSS_MAIL_SENT) && t.ISACTIVE).ToList();
             batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
             bool hasAnyCustomerNotVerified = batchCustomers.Any(x => !x.IS_VERIFIED);
             if (hasAnyCustomerNotVerified)
@@ -426,7 +429,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     BATCH_CUSTOMER_MONTHLY_ID = 0,
                     SURVEY_ID = Guid.NewGuid().ToString(),
                     SURVEY_SENT_DATE = DateTime.Now,
-                    STATUS = "MAIL RE-SENT",
+                    STATUS = CSS_MAIL_RESENT,
                 };
                 UpdateAuditFields(survey);
                 CSPdb.CSS_SURVEY_ITERATION.Add(survey);
@@ -451,7 +454,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             int batchid = 36;
             //var batch = CSPdb.CSS_BATCH_MONTHLY.GetById(batchid);
-            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchid && t.STATUS == "MAIL SENT" && t.ISACTIVE).Take(5).ToList();
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchid && t.STATUS == CSS_MAIL_SENT && t.ISACTIVE).Take(5).ToList();
             // batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
             bool hasAnyCustomerNotVerified = batchCustomers.Any(x => !x.IS_VERIFIED);
             if (hasAnyCustomerNotVerified)
@@ -468,12 +471,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 if (skipRecords.Any(x => x.Proj_Id == cust.PROJ_ID)) continue;
                 CSS_SURVEY_ITERATION oldSurvey = CSPdb.CSS_SURVEY_ITERATION.GetById(cust.SURVEY_ID.GetValueOrDefault());
-                oldSurvey.STATUS = "MAIL RE-SENT";
+                oldSurvey.STATUS = CSS_MAIL_RESENT;
                 UpdateAuditFields(oldSurvey);
                 CSPdb.CSS_SURVEY_ITERATION.Update(oldSurvey);
 
                 var ety = batchCustomers.Single(x => x.ID == cust.ID);
-                ety.STATUS = "MAIL RE-SENT";
+                ety.STATUS = CSS_MAIL_RESENT;
                 UpdateAuditFields(ety);
                 CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.Update(ety);
                 string SurveyLink = baseUrl + "/CustomerSuccessSurvey/" + oldSurvey.SURVEY_ID;
@@ -488,7 +491,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetCSSBatches()
         {
-            List<CSS_BATCHES> batches = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(t => t.ID).ToList();
+
+            var batches = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(t => t.ID).ToList();
+            var batchIds = batches.Select(x => x.ID).ToList();
+            var totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED)).ToList();
+            foreach (var item in batches)
+            {
+                item.SURVEY_SENT = totalRecords.Count(x => x.BATCH_ID == item.ID);
+                item.SURVEY_RECD = totalRecords.Count(x => x.BATCH_ID == item.ID && x.STATUS == CSS_COMPLETED);
+            }
             return Ok(batches);
         }
 
@@ -711,13 +722,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 var batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batchId && t.ISACTIVE).ToList();
                 var batchCustomers = batches.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
-                var invalidBatches = batchCustomers.Where(t => t.STATUS != "MAIL SENT" && t.STATUS != "MAIL RE-SENT").ToList();
+                var invalidBatches = batchCustomers.Where(t => t.STATUS != CSS_MAIL_SENT && t.STATUS != CSS_MAIL_RESENT).ToList();
 
                 if (invalidBatches.Any())
                 {
                     throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, "Please select customer(s) with Mail sent or Mail Re-sent Status"));
                 }
-                surveyIterations = CSPdb.CSS_SURVEY_ITERATION.GetAll().Where(x => selectedIds.Any(a => x.BATCH_CUSTOMERS_ID == a) && (x.STATUS == "MAIL SENT" || x.STATUS == "MAIL RE-SENT") && x.ISACTIVE).ToList();
+                surveyIterations = CSPdb.CSS_SURVEY_ITERATION.GetAll().Where(x => selectedIds.Any(a => x.BATCH_CUSTOMERS_ID == a) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT) && x.ISACTIVE).ToList();
 
                 foreach (var b in batchCustomers)
                 {
@@ -728,14 +739,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else if (type == "batchmonthly")
             {
-                var batches = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchId && (t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT")).ToList();
+                var batches = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchId && (t.STATUS == CSS_MAIL_SENT || t.STATUS == CSS_MAIL_RESENT)).ToList();
                 var batchCustomersMonthly = batches.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
-                var invalidBatches = batchCustomersMonthly.Where(t => t.STATUS != "MAIL SENT" && t.STATUS != "MAIL RE-SENT").ToList();
+                var invalidBatches = batchCustomersMonthly.Where(t => t.STATUS != CSS_MAIL_SENT && t.STATUS != CSS_MAIL_RESENT).ToList();
                 if (invalidBatches.Any())
                 {
                     throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, "Please select customer(s) with Mail sent or Mail Re-sent Status"));
                 }
-                surveyIterations = CSPdb.CSS_SURVEY_ITERATION.GetAll().Where(x => selectedIds.Any(a => x.BATCH_CUSTOMER_MONTHLY_ID == a) && (x.STATUS == "MAIL SENT" || x.STATUS == "MAIL RE-SENT") && x.ISACTIVE).ToList();
+                surveyIterations = CSPdb.CSS_SURVEY_ITERATION.GetAll().Where(x => selectedIds.Any(a => x.BATCH_CUSTOMER_MONTHLY_ID == a) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT) && x.ISACTIVE).ToList();
                 foreach (var b in batchCustomersMonthly)
                 {
                     b.SURVEY_SENT_DATE = DateTime.Now;
@@ -1007,7 +1018,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
 
                 //resend part
-                var batchCustomersSent = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batch.ID && t.STATUS == "MAIL SENT" && t.ISACTIVE).ToList();
+                var batchCustomersSent = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batch.ID && t.STATUS == CSS_MAIL_SENT && t.ISACTIVE).ToList();
                 batchCustomers = batchCustomersSent.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
                 var batchCustomersExtSent = FillCustomerAndProjectNames(batchCustomers);
                 if (batch.STATUS.ToUpper() == "CREATED")
@@ -1034,7 +1045,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 BATCH_CUSTOMERS_ID = 0,
                 SURVEY_ID = Guid.NewGuid().ToString(),
                 SURVEY_SENT_DATE = DateTime.Now,
-                STATUS = "MAIL SENT",
+                STATUS = CSS_MAIL_SENT,
             };
             UpdateAuditFields(survey, empId);
             CSPdb.CSS_SURVEY_ITERATION.Add(survey);

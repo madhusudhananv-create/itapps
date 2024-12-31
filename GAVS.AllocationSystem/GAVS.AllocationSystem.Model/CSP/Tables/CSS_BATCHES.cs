@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GAVS.AllocationSystem.Model.Base;
-
+using System.ComponentModel.DataAnnotations.Schema
 
 namespace GAVS.AllocationSystem.Model.CSP
 {
@@ -17,6 +17,12 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime START_DATE { get; set; }
         public DateTime END_DATE { get; set; }
         public string STATUS { get; set; }
+
+        [NotMapped]
+        public int SURVEY_SENT { get; set; }
+
+        [NotMapped]
+        public int SURVEY_RECD { get; set; }
 
     }
 }
