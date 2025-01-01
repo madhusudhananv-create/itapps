@@ -1145,6 +1145,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
             CSPdb.Commit(CanCommit);
+
+            //products
+
         }
 
         private void GenerateMissingBatchCustomers(int batchId, string frequency, string EmpId)
@@ -1159,7 +1162,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var existingCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
             var skipRecords = helper.GetProjectConfigurationDataForSetting("SKIP_CSAT");
             bool isCommitRequired = false;
-            var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 6 || x.MANAGEMENT_TYPE == 7)).ToList(); // 6=CUSTOMER_CSAT
+
 
             foreach (var c in customersProjects)
             {
@@ -1199,12 +1202,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
             //for prod based
-
+            var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 6 || x.MANAGEMENT_TYPE == 7)).ToList(); // 6=CUSTOMER_CSAT
             foreach (var cust in prodResponsible.Where(x => x.MANAGEMENT_TYPE == 6).ToList())
             {
                 var prods = prodResponsible.Where(x => x.EMP_ID == cust.EMP_ID).ToList();
-
-
                 if (cust != null && prods.Any())
                 {
                     foreach (var cp in prods)
@@ -1247,6 +1248,57 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CSPdb.Commit(CanCommit);
         }
 
+        private void GenerateBatchCustomersHalfyearly(int batchId, string empId)
+        {
+            //for prod based
+            var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 8 || x.MANAGEMENT_TYPE == 7)).ToList(); // 6=CUSTOMER_CSAT_Halfyearly
+            var projects = Cldb.PROJECT.GetAll().ToList();
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchId);
+            if (batch == null) return;
+            var existingCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
+            foreach (var cust in prodResponsible.Where(x => x.MANAGEMENT_TYPE == 8).ToList())
+            {
+                var prods = prodResponsible.Where(x => x.EMP_ID == cust.EMP_ID).ToList();
+                if (cust != null && prods.Any())
+                {
+                    foreach (var cp in prods)
+                    {
+
+                        var proj = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == cp.PRODUCT_ID && x.MANAGEMENT_TYPE == 7);
+                        if (proj == null) continue;
+                        var project = projects.FirstOrDefault(x => x.PROJ_ID == proj.PROJECT_ID);
+
+                        if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")) continue;
+
+                        if (existingCustomers.Any(x => x.PROD_ID == cp.PRODUCT_ID && x.EMAIL_ID == cust.EMP_ID)) continue;
+                        var cuser = CSPdb.CUSTOMER_USERS.GetAll().FirstOrDefault(x => x.EMAILID == cust.EMP_ID);
+                        if (cuser == null) continue;
+                        var BatchCustomer = new CSS_BATCH_CUSTOMERS()
+                        {
+                            BATCH_ID = batchId,
+                            CUST_ID = project.CUST_ID,
+                            PROJ_ID = project.PROJ_ID,
+                            PROD_ID = cp.PRODUCT_ID,
+                            QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID),
+                            EMAIL_ID = cust.EMP_ID,
+                            DISPLAY_NAME = cuser.DISPLAY_NAME,
+                            STATUS = "CREATED",
+                            CREATED_BY = empId,
+                            CREATED_DATE = DateTime.Now,
+                            UPDATED_BY = empId,
+                            UPDATED_DATE = DateTime.Now,
+                            ISACTIVE = true,
+                            IS_VERIFIED = true,
+                        };
+                        CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
+
+                    }
+                }
+
+            }
+
+            CSPdb.Commit(CanCommit);
+        }
         private void GenerateMissingBatchCustomersPremier(int batchId, string frequency, string EmpId)
         {
 
@@ -1356,6 +1408,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit(CanCommit);
         }
 
+        [POST("UpdateCustomerContactsVerificationList")]
+        [ActionName("UpdateCustomerContactsVerificationList")]
+        [HttpPost]
+        public IHttpActionResult UpdateCustomerContactsVerificationList([FromBody] CSS_BATCH_CUSTOMERS[] batchCustomers)
+        {
+            CheckAccessForFeature(114);
+            //do business validation here
+
+            //logic
+            foreach (var item in batchCustomers)
+            {
+                UpdateCustomerContactVerificationPrivate(item);
+            }
+
+            return Ok();
+        }
+
+
+
+
         [POST("UpdateCustomerContactsVerification")]
         [ActionName("UpdateCustomerContactsVerification")]
         [HttpPost]
@@ -1363,6 +1435,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             CheckAccessForFeature(114);
 
+            var result = UpdateCustomerContactVerificationPrivate(batchCustomers);
+            if (string.IsNullOrWhiteSpace(result))
+                return Ok();
+            else return Content(HttpStatusCode.Conflict, result);
+        }
+
+
+        internal string UpdateCustomerContactVerificationPrivate(CSS_BATCH_CUSTOMERS batchCustomers)
+        {
             if (batchCustomers != null)
             {
                 var exist = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(x => x.ID == batchCustomers.ID && x.BATCH_ID == batchCustomers.BATCH_ID && x.ISACTIVE);
@@ -1372,7 +1453,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     if (exist.IS_VERIFIED)
                     {
-                        return Content(HttpStatusCode.Conflict, "Already verified.");
+                        return "Already verified.";
                     }
                     else
                     {
@@ -1383,18 +1464,45 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CSPdb.Commit(CanCommit);
                     }
                     SendCSSVerificationApprovalMail(exist.CUST_ID, exist.PROJ_ID, exist.PROD_ID, exist.DISPLAY_NAME, exist.EMAIL_ID, exist.IS_VERIFIED, exist.COMMENTS);
+
                 }
+            }
+
+            return string.Empty;
+        }
+
+        [ActionName("UpdateCustomerContactsVerificationListForPremier")]
+        [HttpPost]
+        public IHttpActionResult UpdateCustomerContactsVerificationListForPremier([FromBody] CSS_BATCH_CUSTOMER_MONTHLY[] batchCustomers)
+        {
+            CheckAccessForFeature(115);
+            //do business validation here
+
+            //logic
+            foreach (var item in batchCustomers)
+            {
+                UpdateCustomerContactsVerificationForPremierPrivate(item);
             }
 
             return Ok();
         }
 
-        [POST("UpdateCustomerContactsVerificationForPremier")]
         [ActionName("UpdateCustomerContactsVerificationForPremier")]
         [HttpPost]
         public IHttpActionResult UpdateCustomerContactsVerificationForPremier([FromBody] CSS_BATCH_CUSTOMER_MONTHLY batchCustomers)
         {
             CheckAccessForFeature(115);
+            var result = UpdateCustomerContactsVerificationForPremierPrivate(batchCustomers);
+
+            if (string.IsNullOrWhiteSpace(result))
+                return Ok();
+            else return Content(HttpStatusCode.Conflict, result);
+
+            return Ok();
+        }
+        private string UpdateCustomerContactsVerificationForPremierPrivate(CSS_BATCH_CUSTOMER_MONTHLY batchCustomers)
+        {
+
 
             if (batchCustomers != null)
             {
@@ -1405,7 +1513,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     if (exist.IS_VERIFIED)
                     {
-                        return Content(HttpStatusCode.Conflict, "Already verified.");
+                        return "Already verified.";
                     }
                     else
                     {
@@ -1419,7 +1527,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
 
-            return Ok();
+            return string.Empty;
         }
 
         private void SendCSSVerificationApprovalMail(string customerId, string projectId, int? productId, string customerName, string customerMail, bool isVerified, string comments)
