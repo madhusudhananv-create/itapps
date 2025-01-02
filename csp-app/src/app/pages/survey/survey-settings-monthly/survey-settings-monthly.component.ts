@@ -12,6 +12,7 @@ import { CssbatchPopupComponent } from '../cssbatch-popup/cssbatch-popup.compone
 import { MatDialogModule, MatDialog } from '@angular/material';
 import { AccessControl } from '../../../Shared/accessControl';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CssBatchCustomersExtendedModel } from '../../../models/css-batch-customers-model';
 @Component({
   selector: 'app-survey-settings-monthly',
   templateUrl: './survey-settings-monthly.component.html',
@@ -284,7 +285,18 @@ export class SurveySettingsMonthlyComponent implements OnInit {
     document.removeEventListener('copy', listener);
   }
 
+  getStatusText(element: CssBatchCustomerMonthlyExtendedModel): string {
+    let status = "";
+    if (element.iS_VERIFIED)
+      status = "Approved";
+    else if (element.iS_VERIFIED == false && element.comments != null && element.comments.trim() != "")
+      status = "Rejected";
+    else if (element.iS_VERIFIED == false && (element.comments == null || element.comments.trim()))
+      status = "Not Verified";
 
+
+    return status;
+  }
 
   /** Whether the number of selected elements matches the total number of rows. */
   isAllSelected() {

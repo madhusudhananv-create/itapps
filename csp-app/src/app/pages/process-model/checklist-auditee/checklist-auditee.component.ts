@@ -144,8 +144,10 @@ export class ChecklistAuditeeComponent implements OnInit {
     for (let i = 0; i < this.checkListFindings.length; i++) {
       for (let j = 0; j < this.checkListFindings[i].findings.length; j++) {
         if (this.getAuditeeResponse(this.checkListFindings[i].findings[j].id)) {
-          if (status == 'Reject' && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
-            alert('Please enter remarks for the findings to reject');
+          if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined 
+            && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0 
+            && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
+            alert('Please enter remarks for the findings to reject.');
             this.disablebtn = false;
             return;
           }
@@ -228,8 +230,10 @@ export class ChecklistAuditeeComponent implements OnInit {
     for (let i = 0; i < this.checkListFindings.length; i++) {
       for (let j = 0; j < this.checkListFindings[i].findings.length; j++) {
         if (!this.getAuditeeResponse(this.checkListFindings[i].findings[j].id)) {
-          if (status == 'Reject' && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
-            alert('Please enter remarks for the findings to reject');
+          if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined 
+            && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0  
+            && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
+            alert('Please enter remarks for the findings to reject..');
             this.disableAcceptReject = false;
             return;
           }

@@ -220,6 +220,19 @@ export class SurveySettingsComponent implements OnInit {
     alert("CSAT link copied to Clipboard.");
   }
 
+  getStatusText(element: CssBatchCustomersExtendedModel): string {
+    let status = "";
+    if (element.iS_VERIFIED)
+      status = "Approved";
+    else if (element.iS_VERIFIED == false && element.comments != null && element.comments.trim() != "")
+      status = "Rejected";
+    else if (element.iS_VERIFIED == false && (element.comments == null || element.comments.trim()))
+      status = "Not Verified";
+
+
+    return status;
+  }
+
   copyitem(item): void {
     let listener = (e: ClipboardEvent) => {
       e.clipboardData.setData("text/plain", item);
@@ -307,7 +320,7 @@ export class SurveySettingsComponent implements OnInit {
     if (this.selection.isEmpty()) {
       alert('Please select customer(s) to proceed.')
       return;
-    } 
+    }
     const invalidStatus = this.selection.selected.some(item => !["MAIL SENT", "MAIL RE-SENT"].includes(item.status));
     if (invalidStatus) {
       alert("Please select customer(s) with Mail sent or Mail Re-sent Status");

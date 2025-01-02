@@ -152,7 +152,7 @@
               <div id="cardtitle" style="float: left; padding: 5px">
                 <div id="portfolioName" style="color: #4e5882; font-size: 11px;width: 224px;">
                   <!-- [routerLink]="['/newdashboard/cust', p.cusT_ID, true]" -->
-                  <a (click)="ResetFilter(p.cusT_ID, p.iS_SLA_AVAILABLE)">
+                  <a style="cursor: pointer;" (click)="ResetFilter(p.cusT_ID, p.iS_SLA_AVAILABLE)">
                     {{p.cusT_NM}}
                   </a>
                 </div>
@@ -167,8 +167,8 @@
                 </tr>
                 <tr style="font-size: 18px">
                   <td>{{getTitleByCustomerId('SUCCESS_GOAL_SCORE', p.cusT_ID)}}</td>
-                  <td>{{getTitleByCustomerId('CSS_PC', p.cusT_ID)}}</td>
-                  <td>{{getTitleByCustomerId('CSS_SS', p.cusT_ID)}}</td>
+                  <td></td><!--{{getTitleByCustomerId('CSS_PC', p.cusT_ID)}}-->
+                  <td></td><!--{{getTitleByCustomerId('CSS_SS', p.cusT_ID)}}-->
                 </tr>
               </table>
             </div>

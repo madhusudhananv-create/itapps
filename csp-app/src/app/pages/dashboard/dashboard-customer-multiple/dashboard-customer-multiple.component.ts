@@ -39,7 +39,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
 
   customerList: CustomerModel[] = [];
 
-  constructor(public _dashboardUtil: DashboardService, public _access: AccessControl, private route: ActivatedRoute, private _router: Router, private _http: Http, private _appservice: AppsService, private _config: Configuration, public _util: myUtility, changeDetectorRef: ChangeDetectorRef, media: MediaMatcher, 
+  constructor(public _dashboardUtil: DashboardService, public _access: AccessControl, private route: ActivatedRoute, private _router: Router, private _http: Http, private _appservice: AppsService, private _config: Configuration, public _util: myUtility, changeDetectorRef: ChangeDetectorRef, media: MediaMatcher,
     private _spinner: Ng4LoadingSpinnerService, public sharedData: SharedData) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
     this._mobileQueryListener = () => changeDetectorRef.detectChanges();
@@ -62,10 +62,10 @@ export class DashboardCustomerMultipleComponent implements OnInit {
 
       }
     });
-    this._appservice.RefreshDashboardDetailsAuto().subscribe(a => { console.log("Dashboard Update") }, error => { });
+    //this._appservice.RefreshDashboardDetailsAuto().subscribe(a => { console.log("Dashboard Update") }, error => { });
 
 
-    this.startTimer();
+   // this.startTimer();
   }
 
   ResetFilter(custId, slaAvailable) {
@@ -78,7 +78,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   }
 
   //Timer --------------------------
-  timeLeft: number = 60;
+  timeLeft: number = 300;
   interval;
   startTimer() {
     this.interval = setInterval(() => {
@@ -86,7 +86,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
         this.timeLeft--;
       }
       else {
-        this.timeLeft = 60;
+        this.timeLeft = 300;
         this.service_GetDashboardDetails();
       }
     }, 1000)

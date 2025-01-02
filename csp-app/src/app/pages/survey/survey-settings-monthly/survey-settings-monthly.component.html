@@ -131,7 +131,7 @@
       <ng-container matColumnDef="verified">
         <th mat-header-cell *matHeaderCellDef>Verified</th>
         <td mat-cell *matCellDef="let element">
-          {{ element.iS_VERIFIED ? "Approved" : "Not Verified"}}
+          {{getStatusText(element)}}
         </td>
       </ng-container>
       <ng-container matColumnDef="comments">
