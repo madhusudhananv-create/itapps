@@ -496,19 +496,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batches = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(t => t.ID).ToList();
             var batchIds = batches.Select(x => x.ID).ToList();
             var totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList();
-            
+
             foreach (var item in batches)
             {
-                {
-                    var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
 
-                    item.TOTAL_RECORDS = batchRecords.Count;
-                    item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT));
-                    item.SURVEY_RECD = batchRecords.Count(x => x.STATUS == CSS_COMPLETED);
-                    item.PENDING = batchRecords.Count(x => x.STATUS == "CREATED" && x.IS_VERIFIED == false && string.IsNullOrWhiteSpace(x.COMMENTS));
-                    item.VERIFIED = batchRecords.Count(x => x.STATUS == "CREATED" && x.IS_VERIFIED);
-                    item.REJECTED = batchRecords.Count(x => x.STATUS == "CREATED" && x.IS_VERIFIED == false && !string.IsNullOrWhiteSpace(x.COMMENTS));
-                }
+                var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
+
+                item.TOTAL_RECORDS = batchRecords.Count;
+                item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED));
+                item.SURVEY_RECD = batchRecords.Count(x => x.STATUS == CSS_COMPLETED);
+                item.PENDING = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && string.IsNullOrWhiteSpace(x.COMMENTS));
+                item.VERIFIED = batchRecords.Count(x => x.IS_VERIFIED);
+                item.REJECTED = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
+
             }
             return Ok(batches);
         }
@@ -882,11 +882,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
 
                 item.TOTAL_RECORDS = batchRecords.Count;
-                item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT));
+                item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED));
                 item.SURVEY_RECD = batchRecords.Count(x => x.STATUS == CSS_COMPLETED);
-                item.PENDING = batchRecords.Count(x => x.STATUS == "CREATED" && x.IS_VERIFIED == false && string.IsNullOrWhiteSpace(x.COMMENTS));
-                item.VERIFIED = batchRecords.Count(x => x.STATUS == "CREATED" && x.IS_VERIFIED);
-                item.REJECTED = batchRecords.Count(x => x.STATUS == "CREATED" && x.IS_VERIFIED == false && !string.IsNullOrWhiteSpace(x.COMMENTS));
+                item.PENDING = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && string.IsNullOrWhiteSpace(x.COMMENTS));
+                item.VERIFIED = batchRecords.Count(x => x.IS_VERIFIED);
+                item.REJECTED = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
             }
             return Ok(batches);
         }
