@@ -83,6 +83,7 @@ export class SurveySettingsComponent implements OnInit {
           (data.status && data.status.toLowerCase().includes(term)) ||
           (data.contractinG_UNIT && data.contractinG_UNIT.toLowerCase().includes(term)) ||
           (data.comments && data.comments.toLowerCase().includes(term)) ||
+          (!data.iS_VERIFIED && data.comments != null && data.comments.trim() !="" ? "Rejected" : "Not Verified").toLowerCase().includes(term) || // Filter for is_verified column
           (data.iS_VERIFIED ? "Approved" : "Not Verified").toLowerCase().includes(term) // Filter for is_verified column
         );
       });

@@ -58,6 +58,7 @@ export class SurveySettingsMonthlyComponent implements OnInit {
           (data.comments && data.comments.toLowerCase().includes(term)) ||
           (data.approver && data.approver.toLowerCase().includes(term)) ||
           (data.contractinG_UNIT && data.contractinG_UNIT.toLowerCase().includes(term)) ||
+          (!data.iS_VERIFIED && data.comments != null && data.comments.trim() !="" ? "Rejected" : "Not Verified").toLowerCase().includes(term) || // Filter for is_verified column
           ((data.iS_VERIFIED ? "Approved" : "Not Verified").toLowerCase().includes(term))
         );
 
