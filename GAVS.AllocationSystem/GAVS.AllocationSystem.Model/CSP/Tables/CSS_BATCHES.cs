@@ -19,6 +19,16 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string STATUS { get; set; }
 
         [NotMapped]
+        public int TOTAL_RECORDS { get; set; }
+
+        [NotMapped]
+        public int REJECTED { get; set; }
+        [NotMapped]
+        public int VERIFIED { get; set; }
+
+        [NotMapped]
+        public int PENDING { get; set; }
+        [NotMapped]
         public int SURVEY_SENT { get; set; }
 
         [NotMapped]
