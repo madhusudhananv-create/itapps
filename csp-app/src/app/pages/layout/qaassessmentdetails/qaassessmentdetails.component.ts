@@ -10,8 +10,11 @@ import { DateSelectionModel } from '../../../models/DateSelection-model';
 import { findingByType, findingModel, findingDetails } from '../../../models/qaassesmentdetails-model';
 import { FilterPreferenceModel } from '../../../models/filter-preference-model';
 import { ParameterModel } from '../../../../app/models/parameter-model';
+import { LayoutService } from "../layout.service";
+import { Http, Headers, RequestOptions } from '@angular/http';
+import { auditeE_ACCEPTANCE } from '../../../models/auditee-acceptance';
 import { ChecklistExecutionNewComponent } from '../../process-model/checklist-execution-new/checklist-execution-new.component';
-
+import { ThrowStmt } from '@angular/compiler';
 
 @Component({
   selector: 'app-qaassessmentdetails',
@@ -19,11 +22,10 @@ import { ChecklistExecutionNewComponent } from '../../process-model/checklist-ex
   styleUrls: ['./qaassessmentdetails.component.scss']
 })
 export class QaassessmentdetailsComponent implements OnInit {
-
   originalfindings: findingByType[];
   filterCriteria: any;
   findings: findingByType[] = [];
-  constructor(private _appservice: AppsService, private route: ActivatedRoute, public _util: myUtility, public _shared: SharedService, private router: Router, private dialog: MatDialog) { }
+  constructor(private _router: Router, private _appservice: AppsService, private route: ActivatedRoute, private _http: Http, public _util: myUtility, public _shared: SharedService, private router: Router, public _layoutService: LayoutService, private dialog: MatDialog) { }
   selectedCust: string;
   private sub: any;
   displayedColumns = [];
@@ -35,7 +37,10 @@ export class QaassessmentdetailsComponent implements OnInit {
   showByFindings: string;
   multiProject: boolean = true;
   allfindings: findingDetails[] = [];
-  isFromFindingByAge : Boolean = false ;
+  isFromFindingByAge: Boolean = false;
+  findingId: number;
+  auditId: number;
+  stageStatus: string;
   stageDict = {
     'AUDITEE_ACCEPTANCE AND CAP SUBMISSION': 'Auditee acceptance',
     'CAP REVIEW': 'CAP review',
@@ -51,14 +56,11 @@ export class QaassessmentdetailsComponent implements OnInit {
   ngOnInit() {
     this.showByFindings = "2";
     this.isFromFindingByAge = Boolean(localStorage.getItem("isFromFindingByAge"));
-    
     if (this.isFromFindingByAge)
       this.displayedColumns = ["index", "portfoliO_NAME", "proJ_NM", "findinG_TYPE", "findinG_DESCRIPTION", "createD_DATE", "stagE_DESCRIPTION", "stagE_STATUS", "targeT_DATE", "responsible", 'agE_OF_FINDING', 'statuS_DATE'];
     else
       this.displayedColumns = ["index", "portfoliO_NAME", "proJ_NM", "findinG_TYPE", "findinG_DESCRIPTION", "createD_DATE", "stagE_DESCRIPTION", "stagE_STATUS", "targeT_DATE", "responsible",'statuS_DATE'];
-    
-      
-      this.sub = this.route.params.subscribe(params => {
+    this.sub = this.route.params.subscribe(params => {
       this.selectedCust = params['custid'];
       if (params['isfromqagoverance'] == "true") {
         let filterValue = [];
@@ -98,7 +100,45 @@ export class QaassessmentdetailsComponent implements OnInit {
     });
     this.showdisplayedColumns();
     this.getAllFindingsForCustomer();
+    this.acceptOrRejectFindings();
+
+
+
+
   }
+
+  acceptOrRejectFindings() {
+    var findingStatusDataList: auditeE_ACCEPTANCE[] = [];
+    let findingStageData;
+    findingStageData = new auditeE_ACCEPTANCE();
+    this.route.params.subscribe(params => {
+      findingStageData = new auditeE_ACCEPTANCE();
+      this.findingId = params['findingid'];
+      this.auditId = params['asssessmentid'];
+      if (params['acceptval'] == "1") {
+        this.stageStatus = "Accept";
+      }
+      else {
+        this.stageStatus = "Reject";
+      }
+      findingStageData.audit_ID = this.auditId;
+      findingStageData.finding_ID = this.findingId;
+      findingStageData.status = this.stageStatus;
+      findingStatusDataList.push(findingStageData);
+      if (this.route.snapshot.url.toString().startsWith("qasummary") && params['acceptval'] != undefined) {
+        this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)
+          .subscribe(data => {
+            alert("Finding status updated successfully");
+            this.getAllFindingsForCustomer();
+          },
+            (error) => {
+              this._util.serviceError(error);
+
+            });
+      }
+    });
+  }
+
 
   getstageDesc(id) {
     return this.stageDict[id];
@@ -205,12 +245,11 @@ export class QaassessmentdetailsComponent implements OnInit {
     obj.proJ_ID = this._shared.selectedProjects[0];
     this.findings = undefined;
     this.originalfindings = undefined;
-    this._appservice.getAllFindingsForCustomer(obj).subscribe(data => {      
+    this._appservice.getAllFindingsForCustomer(obj).subscribe(data => {
       this.findings = data;
       this.originalfindings = data;
       this.getFindingsWithoutGroup(this.originalfindings);
       this.filteredData();
-      
 
     },
       (error) => { this._util.serviceError(error); this.originalfindings = []; })

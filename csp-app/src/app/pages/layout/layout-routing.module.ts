@@ -264,6 +264,10 @@ const routes: Routes = [
         component: QaassessmentdetailsComponent
       },
       {
+        path: 'qasummary/:custid/:projid/:asssessmentid/:findingid/:acceptval',
+        component: QaassessmentdetailsComponent
+      },
+      {
         path: 'appreciation/:custid',
         component: AppreciationComponent
       },
