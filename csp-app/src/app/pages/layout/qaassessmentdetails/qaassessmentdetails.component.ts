@@ -41,6 +41,7 @@ export class QaassessmentdetailsComponent implements OnInit {
   findingId: number;
   auditId: number;
   stageStatus: string;
+  rejectReason: string;
   stageDict = {
     'AUDITEE_ACCEPTANCE AND CAP SUBMISSION': 'Auditee acceptance',
     'CAP REVIEW': 'CAP review',
@@ -116,14 +117,24 @@ export class QaassessmentdetailsComponent implements OnInit {
       this.findingId = params['findingid'];
       this.auditId = params['asssessmentid'];
       if (params['acceptval'] == "1") {
+        if (confirm('Are you sure want to accept this finding?')) {
         this.stageStatus = "Accept";
+        }
       }
       else {
-        this.stageStatus = "Reject";
+        if (confirm('Are you sure want to reject this finding?')) {
+          const reason = prompt('Please provide a reason for rejection');
+          if (reason) {
+            this.rejectReason = reason;
+            this.stageStatus = "Reject";
+          }
+
+        }
       }
       findingStageData.audit_ID = this.auditId;
       findingStageData.finding_ID = this.findingId;
       findingStageData.status = this.stageStatus;
+      findingStageData.remarks = this.rejectReason;
       findingStatusDataList.push(findingStageData);
       if (this.route.snapshot.url.toString().startsWith("qasummary") && params['acceptval'] != undefined) {
         this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)
