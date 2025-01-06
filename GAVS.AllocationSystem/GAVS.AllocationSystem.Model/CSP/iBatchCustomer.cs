@@ -17,5 +17,9 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         DateTime? SURVEY_SENT_DATE { get; set; }
 
+         bool IS_VERIFIED { get; set; }
+
+         string COMMENTS { get; set; }
+
     }
 }
