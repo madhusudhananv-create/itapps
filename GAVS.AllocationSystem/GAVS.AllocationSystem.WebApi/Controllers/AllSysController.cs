@@ -23101,12 +23101,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private void UpdateFindingStatusForAuditorAcceptance(AUDITEE_ACCEPTANCE fcap, int auditId, string empId)
         {
 
-            AUDIT_CHECKLIST_PROJECT_FINDINGS findings = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().FirstOrDefault(t => t.ID == fcap.FINDING_ID && t.ISACTIVE);
+            AUDIT_CHECKLIST_PROJECT_FINDINGS findings = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().FirstOrDefault(t => t.ID == fcap.FINDING_ID && t.ISACTIVE && fcap.ISSUBMITTED == false);
             if (findings != null)
             {
                 findings.ISSUBMITTED = true;
-                findings.UPDATED_BY = empId;
-                findings.UPDATED_DATE = DateTime.Now;
+                UpdateAuditFields(findings);
                 CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.Update(findings);
                 CSPdb.Commit(CanCommit);
             }
@@ -23115,8 +23114,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (details != null)
             {
                 details.ISSUBMITTED = true;
-                details.UPDATED_BY = empId;
-                details.UPDATED_DATE = DateTime.Now;
+                UpdateAuditFields(findings);
                 CSPdb.AUDIT_CHECKLIST_EXECUTION_DETAILS.Update(details);
                 CSPdb.Commit(CanCommit);
             }
@@ -23126,6 +23124,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 stage1.STAGE_STATUS = "Auditee Rejected";
                 stage1.ISCOMPLETE = true;
+                UpdateAuditFields(stage1);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage1);
                 CSPdb.Commit(CanCommit);
             }
@@ -23144,6 +23143,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 stage3.STAGE_STATUS = "Auditee Rejected";
                 stage3.ISCOMPLETE = true;
+                UpdateAuditFields(stage3);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage3);
                 CSPdb.Commit(CanCommit);
             }
@@ -23153,11 +23153,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 stage4.STAGE_STATUS = "Auditee Rejected";
                 stage4.ISCOMPLETE = true;
+                UpdateAuditFields(stage4);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage4);
                 CSPdb.Commit(CanCommit);
             }
         }
-        private void UpdateFindingStatusForAuditeeRejection(AUDITEE_ACCEPTANCE fcap)
+        private string UpdateFindingStatusForAuditeeRejection(AUDITEE_ACCEPTANCE fcap)
         {
             AUDIT_FINDING_STAGES_MAPPING mapping = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 1);
             if (mapping != null)
@@ -23166,17 +23167,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 mapping.ISCOMPLETE = true;
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(mapping);
                 CSPdb.Commit(CanCommit);
+                AUDIT_FINDING_CAPA_STATUS_HISTORY his = new AUDIT_FINDING_CAPA_STATUS_HISTORY();
+                his.FINDING_ID = fcap.FINDING_ID;
+                // his.ROOT_CAUSE_ID = fcap.ROOT_CAUSE_ID;
+                his.UNIQUE_ID = fcap.UNIQUE_ID;
+                his.STATUS = fcap.STATUS;
+                UpdateAuditFields(his);
+
+                CSPdb.AUDIT_FINDING_CAPA_STATUS_HISTORY.Add(his);
+                CSPdb.Commit(CanCommit);
+                return string.Empty;
+            }
+            else
+            {
+                return "Unable to reject the finding, It must have been already Rejected or Accepted and CAP in Progress";
             }
 
-            AUDIT_FINDING_CAPA_STATUS_HISTORY his = new AUDIT_FINDING_CAPA_STATUS_HISTORY();
-            his.FINDING_ID = fcap.FINDING_ID;
-            // his.ROOT_CAUSE_ID = fcap.ROOT_CAUSE_ID;
-            his.UNIQUE_ID = fcap.UNIQUE_ID;
-            his.STATUS = fcap.STATUS;
-            UpdateAuditFields(his);
-            his.ISACTIVE = true;
-            CSPdb.AUDIT_FINDING_CAPA_STATUS_HISTORY.Add(his);
-            CSPdb.Commit(CanCommit);
+
         }
 
         //[POST("AddFindingCAPReviewDetails")]

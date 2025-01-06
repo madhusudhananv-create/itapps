@@ -1424,8 +1424,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         rec.REMARKS = results.REMARKS;
                         rec.ISACTIVE = true;
                         rec.ISSUBMITTED = false;
-                        rec.UPDATED_BY = empId;
-                        rec.UPDATED_DATE = DateTime.Now;
+                        UpdateAuditFields(rec, empId);
                         CSPdb.AUDITEE_ACCEPTANCE.Update(rec);
                         UpdateFindingStatusForAuditorRejection(rec, auditid, empId);
                     }
@@ -1490,31 +1489,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var rec = CSPdb.AUDITEE_ACCEPTANCE.GetAll().Where(x => x.FINDING_ID == results.FINDING_ID && x.ISACTIVE).FirstOrDefault();
                 if (rec != null)
                 {
-                    rec.UPDATED_BY = empId;
-                    rec.UPDATED_DATE = DateTime.Now;
+
                     rec.REMARKS = results.REMARKS;
                     rec.STATUS = results.STATUS;
                     rec.ISSUBMITTED = true;
-                    rec.ISACTIVE = true;
+                    UpdateAuditFields(rec);
                     CSPdb.AUDITEE_ACCEPTANCE.Update(rec);
-
-                    if (results.STATUS == "Reject")
-                        UpdateFindingStatusForAuditeeRejection(rec);
                 }
                 else
                 {
                     results.UNIQUE_ID = Guid.NewGuid().ToString();
-                    results.CREATED_BY = empId;
-                    results.UPDATED_BY = empId;
-                    results.CREATED_DATE = DateTime.Now;
-                    results.UPDATED_DATE = DateTime.Now;
-                    results.ISACTIVE = true;
                     results.ISSUBMITTED = true;
+                    UpdateAuditFields(rec);
                     CSPdb.AUDITEE_ACCEPTANCE.Add(results);
 
-                    if (results.STATUS == "Reject")
-                        UpdateFindingStatusForAuditeeRejection(results);
-
+                }
+                if (results.STATUS == "Reject")
+                {
+                    var updateResult = UpdateFindingStatusForAuditeeRejection(rec);
+                    if (!string.IsNullOrWhiteSpace(updateResult))
+                        return Content(System.Net.HttpStatusCode.Conflict, updateResult);
                 }
             }
             CSPdb.Commit(CanCommit);
