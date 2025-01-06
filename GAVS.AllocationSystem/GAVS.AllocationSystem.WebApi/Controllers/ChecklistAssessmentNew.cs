@@ -1479,9 +1479,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var empId = GetHeaderDetails_String("empId");
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/checklistfindings";
-
             if (resultList == null || resultList.Count == 0)
                 return Ok(resultList);
+            var validationResult = ValidateStatusApprovers(empId, resultList[0].AUDIT_ID);
+            if (!string.IsNullOrWhiteSpace(validationResult))
+                return Content(System.Net.HttpStatusCode.Conflict, validationResult);
+
             foreach (var results in resultList)
             {
                 var rec = CSPdb.AUDITEE_ACCEPTANCE.GetAll().Where(x => x.FINDING_ID == results.FINDING_ID && x.ISACTIVE).FirstOrDefault();
@@ -1553,7 +1556,27 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             SendMailOnAuditChecklistStage(checklistsendmail);
 
             return Ok(resultList);
+
+
         }
+
+        internal string ValidateStatusApprovers(string empId, int auditId)
+        {
+
+            var result = CSPdb.AUDIT_SCHEDULE.GetAll().FirstOrDefault(t => t.ISACTIVE && t.TASK_ID.HasValue && t.TASK_ID == auditId);
+            if (result != null)
+            {
+                result.AUDITEE_EMP_ID = CSPdb.AUDIT_SCHEDULE_REF.GetAll().Where(x => x.KEY == "AUDITEE_EMP_ID" && x.AUDIT_SCHEDULE_ID == result.ID).Select(x => x.VALUE).ToList();
+            }
+            var projectDetails = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == result.PROJ_ID);
+            if ((empId == result.AUDITEE_EMP_ID[0].ToString()) || (empId == projectDetails?.PROJ_PM_EMP_ID) || (empId == projectDetails?.PROJ_DM_EMP_ID))
+            {
+                return string.Empty;
+            }
+            return "You are not an authorised person to accept/reject the findings";
+
+        }
+
 
         private bool CheckIfNoOpenFinding(int auditId, int questionId = -1)
         {
@@ -2091,7 +2114,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 recipientsDetails[0].IsCC = false;
             }
 
-            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, toperson);
+            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, toperson);
 
             var ccMailIds = recipientsDetails.Where(x => x.IsCC).ToList();
             var ccMailId = string.Empty;
@@ -2216,7 +2239,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (checklistSendMail.MAX_SCORE > 0)
                 percent = (checklistSendMail.SCORE.GetValueOrDefault() / checklistSendMail.MAX_SCORE) * 100;
 
-            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, toperson);
+            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, toperson);
 
             string mailContent;
             var subject = $"Release Assessment report for Project: {checklistSendMail.PROJECT_NAME} {checklistSendMail.SUBJECT}"; ;
@@ -2255,12 +2278,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
         }
 
-        private string GenerateFindingTable(int auditId, string findingOwner)
+        private string GenerateFindingTable(int auditId, string custid, string projectid, string findingOwner)
         {
             var findingsList = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == auditId && x.ISACTIVE).ToList();
-
             var sb = new StringBuilder();
             int i = 1;
+            var requestDomain = helper.GetAbsoulteUri();
+            var path = "layout/qasummary";
 
             if (findingsList.Count == 0)
             {
@@ -2274,10 +2298,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 sb.Append($"<td>{item.FINDING_TYPE}</td>");
                 sb.Append($"<td>{item.FINDING_DESCRIPTION}</td>");
                 sb.Append($"<td>{findingOwner}</td>");
+                sb.Append($"<td><a href='{requestDomain}/{path}/{custid}/{projectid}/{item.AUDIT_ID}/{item.ID}/1 '> Accept</a> &nbsp;&nbsp; <a href='{requestDomain}/{path}/{custid}/{projectid}/{item.AUDIT_ID}/{item.ID}/0 '> Reject</a> </td>");
                 sb.AppendLine("</tr>");
             }
             return sb.ToString();
         }
+
 
         [POST("GetStageColor")]
         [ActionName("GetStageColor")]

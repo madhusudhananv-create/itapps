@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,5 +21,9 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string UNIQUE_ID { get; set; }
 
         public bool ISSUBMITTED { get; set; }
+        [NotMapped]
+        public int AUDIT_ID { get; set; }
+
+
     }
 }
