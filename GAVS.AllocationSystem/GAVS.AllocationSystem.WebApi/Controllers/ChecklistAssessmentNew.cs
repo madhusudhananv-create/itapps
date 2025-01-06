@@ -1568,8 +1568,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 result.AUDITEE_EMP_ID = CSPdb.AUDIT_SCHEDULE_REF.GetAll().Where(x => x.KEY == "AUDITEE_EMP_ID" && x.AUDIT_SCHEDULE_ID == result.ID).Select(x => x.VALUE).ToList();
             }
-            var projectDetails = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == result.PROJ_ID);
-            if ((empId == result.AUDITEE_EMP_ID[0].ToString()) || (empId == projectDetails?.PROJ_PM_EMP_ID) || (empId == projectDetails?.PROJ_DM_EMP_ID))
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == result.PROJ_ID);
+            var allowedProjects = GetProjectListForUser(empId, project.CUST_ID);
+            if (allowedProjects.Any(x => x.PROJ_ID == project.PROJ_ID) || (empId == project.PROJ_PM_EMP_ID) || (empId == project.PROJ_DM_EMP_ID))
             {
                 return string.Empty;
             }
