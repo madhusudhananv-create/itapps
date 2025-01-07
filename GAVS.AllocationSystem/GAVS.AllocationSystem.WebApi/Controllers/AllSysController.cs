@@ -23160,21 +23160,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private string UpdateFindingStatusForAuditeeRejection(AUDITEE_ACCEPTANCE fcap)
         {
             AUDIT_FINDING_STAGES_MAPPING mapping = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 1);
-            if (mapping != null)
+            if (mapping != null && !mapping.ISCOMPLETE)
             {
                 mapping.STAGE_STATUS = "Auditee Rejected";
                 mapping.ISCOMPLETE = true;
                 mapping.STATUS_DATE = DateTime.Now;
                 UpdateAuditFields(mapping);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(mapping);
-                CSPdb.Commit(CanCommit);
                 AUDIT_FINDING_CAPA_STATUS_HISTORY his = new AUDIT_FINDING_CAPA_STATUS_HISTORY();
                 his.FINDING_ID = fcap.FINDING_ID;
                 // his.ROOT_CAUSE_ID = fcap.ROOT_CAUSE_ID;
                 his.UNIQUE_ID = fcap.UNIQUE_ID;
                 his.STATUS = fcap.STATUS;
                 UpdateAuditFields(his);
-
                 CSPdb.AUDIT_FINDING_CAPA_STATUS_HISTORY.Add(his);
                 CSPdb.Commit(CanCommit);
                 return string.Empty;
