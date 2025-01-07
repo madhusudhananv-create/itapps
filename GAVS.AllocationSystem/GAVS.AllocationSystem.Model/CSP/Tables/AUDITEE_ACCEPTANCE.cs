@@ -14,13 +14,12 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int FINDING_ID { get; set; }
         public string STATUS { get; set; }
         public string REMARKS { get; set; }
-        public DateTime CREATED_DATE { get; set; }
          
         public string UNIQUE_ID { get; set; }
 
         public bool ISSUBMITTED { get; set; }
         [NotMapped]
-        public int AUDIT_ID { get; set; }
+        public int AUDIT_ID { get; set; }     
 
 
     }

@@ -2109,7 +2109,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 recipientsDetails[0].IsCC = false;
             }
 
-            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, toperson);            var ccMailIds = recipientsDetails.Where(x => x.IsCC).ToList();
+            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, toperson);      
             var ccMailIds = recipientsDetails.Where(x => x.IsCC).ToList();
             var ccMailId = string.Empty;
             if (ccMailIds.Any())
