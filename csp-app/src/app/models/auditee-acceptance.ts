@@ -10,4 +10,5 @@ export class auditeE_ACCEPTANCE {
     isactive: boolean;
     issubmitted: boolean;
     audit_ID: number;
+    iS_AUDITOR_ACCEPT: boolean;
 }

@@ -60,7 +60,7 @@ export class QaassessmentdetailsComponent implements OnInit {
     if (this.isFromFindingByAge)
       this.displayedColumns = ["index", "portfoliO_NAME", "proJ_NM", "findinG_TYPE", "findinG_DESCRIPTION", "createD_DATE", "stagE_DESCRIPTION", "stagE_STATUS", "targeT_DATE", "responsible", 'agE_OF_FINDING', 'statuS_DATE'];
     else
-      this.displayedColumns = ["index", "portfoliO_NAME", "proJ_NM", "findinG_TYPE", "findinG_DESCRIPTION", "createD_DATE", "stagE_DESCRIPTION", "stagE_STATUS", "targeT_DATE", "responsible",'statuS_DATE'];
+      this.displayedColumns = ["index", "portfoliO_NAME", "proJ_NM", "findinG_TYPE", "findinG_DESCRIPTION", "createD_DATE", "stagE_DESCRIPTION", "stagE_STATUS", "targeT_DATE", "responsible", 'statuS_DATE'];
     this.sub = this.route.params.subscribe(params => {
       this.selectedCust = params['custid'];
       if (params['isfromqagoverance'] == "true") {
@@ -109,45 +109,57 @@ export class QaassessmentdetailsComponent implements OnInit {
   }
 
   acceptOrRejectFindings() {
+    
     var findingStatusDataList: auditeE_ACCEPTANCE[] = [];
     let findingStageData;
     findingStageData = new auditeE_ACCEPTANCE();
     this.route.params.subscribe(params => {
+      if (  params['acceptval'] == undefined || params['acceptval'] == null) {
+        return;
+      }
+
       findingStageData = new auditeE_ACCEPTANCE();
       this.findingId = params['findingid'];
       this.auditId = params['asssessmentid'];
-      if (params['acceptval'] == "1") {
-        if (confirm('Are you sure want to accept this finding?')) {
-        this.stageStatus = "Accept";
-        }
+      if (params['auditor'] == "1") {
+
+        //todo:call saveauditoracceptancestatus
       }
       else {
-        if (confirm('Are you sure want to reject this finding?')) {
-          const reason = prompt('Please provide a reason for rejection');
-          if (reason) {
-            this.rejectReason = reason;
-            this.stageStatus = "Reject";
+        if (params['acceptval'] == "1") {
+          if (confirm('Are you sure want to accept this finding?')) {
+            this.stageStatus = "Accept";
           }
-
         }
-      }
-      findingStageData.audit_ID = this.auditId;
-      findingStageData.finding_ID = this.findingId;
-      findingStageData.status = this.stageStatus;
-      findingStageData.remarks = this.rejectReason;
-      findingStatusDataList.push(findingStageData);
-      if (this.route.snapshot.url.toString().startsWith("qasummary") && params['acceptval'] != undefined) {
-        this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)
-          .subscribe(data => {
-            alert("Finding status updated successfully");
-            this.getAllFindingsForCustomer();
-          },
-            (error) => {
-              this._util.serviceError(error);
+        else if (params['acceptval'] == "0") {
+          if (confirm('Are you sure want to reject this finding?')) {
+            const reason = prompt('Please provide a reason for rejection');
+            if (reason) {
+              this.rejectReason = reason;
+              this.stageStatus = "Reject";
+            }
 
-            });
+          }
+        }
+        findingStageData.audit_ID = this.auditId;
+        findingStageData.finding_ID = this.findingId;
+        findingStageData.status = this.stageStatus;
+        findingStageData.remarks = this.rejectReason;
+        findingStatusDataList.push(findingStageData);
+       
+          this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)
+            .subscribe(data => {
+              alert("Finding status updated successfully");
+              this.getAllFindingsForCustomer();
+            },
+              (error) => {
+                this._util.serviceError(error);
+
+              });
+        
       }
     });
+
   }
 
 
