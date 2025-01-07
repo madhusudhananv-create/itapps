@@ -26,7 +26,7 @@ export class SurveySettingsMonthlyComponent implements OnInit {
   selectedBatch: CssBatchMonthlyModel;
   constructor(private dialog: MatDialog, public _util: myUtility, private surveyService: SurveyService,
     public _access: AccessControl, private _router: Router, private route: ActivatedRoute) { }
-  batchColumns = ['index', 'starT_DATE', 'enD_DATE', 'status']
+  batchColumns = ['index', 'starT_DATE', 'enD_DATE', 'status', "totaL_RECORDS","pending","verified","rejected","surveY_SENT","surveY_RECD"]
   batchCustomersColumns = ['select', 'index', 'cusT_NM', 'displaY_NAME', 'emaiL_ID','contacT_ROLE','revenuE_TYPE', 'status', 'sentdate', 'recddate', 'project', 'proJ_STATUS', 'unit', 'verified', 'comments', 'updatedBy', 'updatedDate', 'edit']
   dataSource = new MatTableDataSource(this.BatchCustomers);
   selection = new SelectionModel<CssBatchCustomerMonthlyExtendedModel>(true, []);

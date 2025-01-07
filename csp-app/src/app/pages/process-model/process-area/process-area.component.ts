@@ -1,8 +1,11 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MatTableDataSource, MatPaginator, MatSort, MatSelectChange } from '@angular/material';
 import { myUtility } from '../../../Shared/myUtility';
 import { AppsService } from '../../../Services/apps.service';
-import { ProcessAreaModelNew, ProcessModelNew } from '../../../models/audit-checklist-based-model';
+import { ProcessAreaModelNew, ProcessModel, ProcessModelNew } from '../../../models/audit-checklist-based-model';
+import { trigger, state, style, transition, animate } from '@angular/animations';
+import { forEach } from '@angular/router/src/utils/collection';
 
 @Component({
   selector: 'app-process-area',
@@ -27,7 +30,6 @@ export class ProcessAreaComponent implements OnInit {
   ProcessList_Map: any;
   displayedColumns = ["index", "procesS_AREA_ID", "title", "description", "clausE_REFERENCE", "action"];
   processAreaDisplayedColumns = ["index", "title", "description", "action"];
-  previousSelection: any[] = [];
 
   constructor(private _util: myUtility, private _appservice: AppsService) { }
   iEditIndex = -1;
@@ -189,7 +191,7 @@ export class ProcessAreaComponent implements OnInit {
     if (this.ProcessAreaList != null && this.ProcessAreaList != undefined && this.ProcessAreaList.length > 0) {
       var process = this.ProcessAreaList && this.ProcessAreaList.find(x => x.id == id);
       if (process != null && process != undefined) {
-        return process.title; 
+        return process.title;
       }
       else {
         return '';
@@ -221,14 +223,31 @@ export class ProcessAreaComponent implements OnInit {
   }
 
   applyFilterForISO(value: string, modelReferenceList: number[]) {
-    if (this.overallProcessModelReferenceList && this.overallProcessModelReferenceList.length > 0) {
-      let filteredIso = this.overallProcessModelReferenceList.map(iso => ({
-        ...iso,
-        items: iso.items.filter(item => item.sectioN_REFERENCE.toLowerCase().includes(value.toLowerCase()) ||
-          modelReferenceList.includes(item.procesS_MODEL_REFERENCE_LIST))
-      })).filter(iso => iso.items.length > 0);
-      this.ProcessModelReferenceList = filteredIso;
-    }
+    if (!this.overallProcessModelReferenceList || !this.overallProcessModelReferenceList.length) return;
+  
+    const searchTerm = value.toLowerCase();
+    
+    this.ProcessModelReferenceList = this.overallProcessModelReferenceList
+      .map(iso => {
+        const searchedItems: typeof iso.items = [];
+        const selectedItems: typeof iso.items = [];
+        
+        for (const item of iso.items) {
+          const isSelected = modelReferenceList.includes(item.procesS_MODEL_REFERENCE_LIST);
+          const matchesSearch = item.sectioN_REFERENCE.toLowerCase().includes(searchTerm);
+          
+          if (matchesSearch && !isSelected) {
+            searchedItems.push(item);
+          } else if (isSelected) {
+            selectedItems.push(item);
+          }
+        }
+        
+        return searchedItems.length || selectedItems.length
+          ? { ...iso, items: [...searchedItems, ...selectedItems] }
+          : null;
+      })
+      .filter((iso): iso is NonNullable<typeof iso> => iso !== null);
   }
 
   applyFilter(event) {
@@ -304,7 +323,7 @@ export class ProcessAreaComponent implements OnInit {
     if (process.procesS_MODEL_REFERENCE_LIST == null || process.procesS_MODEL_REFERENCE_LIST.length == 0) {
       alert('Please select ISO Reference');
       return false;
-    }  
+    }
     return true;
   }
 
@@ -329,7 +348,8 @@ export class ProcessAreaComponent implements OnInit {
       this.ProcessAreaList = data;
       this.FilteredProcessAreaList = data;
       this.ProcessList_Map = data;
-      this.dataSource = new MatTableDataSource(this.ProcessList);     
+      this.dataSource = new MatTableDataSource(this.ProcessList);
+      
        
       this.dataSource.paginator = this.paginator;
 

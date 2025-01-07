@@ -33,7 +33,14 @@ export class SurveySettingsComponent implements OnInit {
     "frequency",
     "starT_DATE",
     "enD_DATE",
-    "status"
+    "status",
+    "totaL_RECORDS",
+    "pending",
+    "verified",
+    "rejected",
+    "surveY_SENT",
+    "surveY_RECD"
+
   ];
   batchCustomersColumns = [
     "select",
