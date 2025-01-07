@@ -19,7 +19,10 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public bool ISSUBMITTED { get; set; }
         [NotMapped]
-        public int AUDIT_ID { get; set; }     
+        public int AUDIT_ID { get; set; }    
+        
+        [NotMapped]
+        public bool IS_AUDITOR_ACCEPT { get; set; }
 
 
     }

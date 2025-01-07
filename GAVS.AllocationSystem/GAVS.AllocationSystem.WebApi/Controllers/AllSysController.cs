@@ -23088,7 +23088,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CSPdb.Commit(CanCommit);
             }
 
-            AUDIT_FINDING_STAGES_MAPPING stage1 = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 1);
+            AUDIT_FINDING_STAGES_MAPPING stage1 = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 1 && t.ISCOMPLETE);
             if (stage1 != null)
             {
                 stage1.STAGE_STATUS = "New";
@@ -23117,11 +23117,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CSPdb.AUDIT_CHECKLIST_EXECUTION_DETAILS.Update(details);
                 CSPdb.Commit(CanCommit);
             }
-
+            string rejectionValue = "Auditee Rejected";
             AUDIT_FINDING_STAGES_MAPPING stage1 = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 1);
             if (stage1 != null)
             {
-                stage1.STAGE_STATUS = "Auditee Rejected";
+                stage1.STAGE_STATUS = rejectionValue;
                 stage1.ISCOMPLETE = true;
                 UpdateAuditFields(stage1);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage1);
@@ -23131,7 +23131,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             AUDIT_FINDING_STAGES_MAPPING stage2 = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 2);
             if (stage2 != null)
             {
-                stage2.STAGE_STATUS = "Auditee Rejected";
+                stage2.STAGE_STATUS = rejectionValue;
                 stage2.ISCOMPLETE = true;
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage2);
                 CSPdb.Commit(CanCommit);
@@ -23140,7 +23140,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             AUDIT_FINDING_STAGES_MAPPING stage3 = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 3);
             if (stage3 != null)
             {
-                stage3.STAGE_STATUS = "Auditee Rejected";
+                stage3.STAGE_STATUS = rejectionValue;
                 stage3.ISCOMPLETE = true;
                 UpdateAuditFields(stage3);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage3);
@@ -23150,10 +23150,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             AUDIT_FINDING_STAGES_MAPPING stage4 = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 4);
             if (stage4 != null)
             {
-                stage4.STAGE_STATUS = "Auditee Rejected";
+                stage4.STAGE_STATUS = rejectionValue;
                 stage4.ISCOMPLETE = true;
                 UpdateAuditFields(stage4);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage4);
+                CSPdb.Commit(CanCommit);
+            }
+            AUDIT_FINDING_STAGES_MAPPING stage5 = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().FirstOrDefault(t => t.FINDING_ID == fcap.FINDING_ID && t.STAGE_ID == 5);
+            if (stage5 != null)
+            {
+                stage5.STAGE_STATUS = rejectionValue;
+                stage5.ISCOMPLETE = true;
+                UpdateAuditFields(stage5);
+                CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(stage5);
                 CSPdb.Commit(CanCommit);
             }
         }

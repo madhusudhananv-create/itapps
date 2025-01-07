@@ -1416,18 +1416,35 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var rec = CSPdb.AUDITEE_ACCEPTANCE.GetAll().Where(x => x.FINDING_ID == results.FINDING_ID && x.ISACTIVE).FirstOrDefault();
                 if (rec != null)
                 {
-                    if (results.STATUS == "Accept")
-                        UpdateFindingStatusForAuditorAcceptance(rec, auditid, empId);
+                    if (results.IS_AUDITOR_ACCEPT)
+                    {
+                        if (results.STATUS == "Accept") // auditor is accepting the auditee accept - no action to be taken.
+                        {
+                            //UpdateFindingStatusForAuditorAcceptance(rec, auditid, empId);
+                        }
+                        else if (results.STATUS == "Reject") // auditor is accepting the auditee reject - complete the stages
+                        {
+                            rec.STATUS = results.STATUS;
+                            rec.REMARKS = results.REMARKS;
+                            rec.ISACTIVE = true;
+                            
+                            UpdateAuditFields(rec, empId);
+                            CSPdb.AUDITEE_ACCEPTANCE.Update(rec);
+                            UpdateFindingStatusForAuditorAcceptance(rec, auditid, empId);
+                        }
+                    }
                     else
                     {
-                        rec.STATUS = results.STATUS;
-                        rec.REMARKS = results.REMARKS;
-                        rec.ISACTIVE = true;
-                        rec.ISSUBMITTED = false;
-                        UpdateAuditFields(rec, empId);
-                        CSPdb.AUDITEE_ACCEPTANCE.Update(rec);
-                        UpdateFindingStatusForAuditorRejection(rec, auditid, empId);
+                        if (results.STATUS == "Accept") // auditor is Rejecting the auditee accept - no action to be taken as this wont happen.
+                        {
+                            //UpdateFindingStatusForAuditorAcceptance(rec, auditid, empId);
+                        }
+                        else if (results.STATUS == "Reject") // auditor is rejecting the auditee reject - revert the stages mapping to new
+                        {
+                            UpdateFindingStatusForAuditorRejection(rec, auditid, empId);
+                        }
                     }
+
                 }
             }
             CSPdb.Commit(CanCommit);
@@ -1539,7 +1556,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             checklistsendmail.STAGE = "Findings Submitted";
-            checklistsendmail.STATUS = "Appraisee Response Submitted";
+            checklistsendmail.STATUS = $"Appraisee Response Submitted - {resultList.FirstOrDefault()?.STATUS}";
             checklistsendmail.URL = $"{requestDomain}/{path}/{auditrow.CUSTOMER_ID}/{auditrow.PROJECT_ID}/{auditid}";
 
             checklistsendmail.ACTION = "Yes";
@@ -2073,7 +2090,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var proj = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == checklistSendMail.PROJECT_ID);
             var cust = Cldb.CUSTOMER.GetAll().FirstOrDefault(x => x.CUST_ID == checklistSendMail.CUSTOMER_ID);
 
-            checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result.</p>";
+            checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result. You can <link>Approve<link> or Revert<link> the status</p>";
             checklistSendMail.NOTE_MSG = $"<p> Note : You are requested to accept or reject the findings within 5 days from the date of reporting. In case the findings are not accepted within five days, the findings will be considered as accepted by the internal assessment system </p>";
             checklistSendMail.QUERY_MSG = $" <p>In case you have any query on the findings, please contact { checklistSendMail.AUDITOR_NAME}. In case of any issue that is not resolved even after approaching { checklistSendMail.AUDITOR_NAME} or Quality SPOC, please setup a call with Head of Quality Assurance to resolve it.</ p >";
             checklistSendMail.NEXT_ACTION = checklistSendMail.ACTION_CLASS == "hideAction" ? string.Empty : $"<span> Next Action : <b> {checklistSendMail.NEXT_ACTION} </b></span>";
