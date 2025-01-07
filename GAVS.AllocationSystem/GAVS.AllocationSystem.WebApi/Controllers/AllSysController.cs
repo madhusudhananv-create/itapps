@@ -22966,7 +22966,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         //    }
         //    return Ok(resultList);
         //}
-
         //[GET("GetAllAuditeeResponses")]
         //[ActionName("GetAllAuditeeResponses")]
         //[HttpGet]
@@ -23165,6 +23164,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 mapping.STAGE_STATUS = "Auditee Rejected";
                 mapping.ISCOMPLETE = true;
+                mapping.STATUS_DATE = DateTime.Now;
+                UpdateAuditFields(mapping);
                 CSPdb.AUDIT_FINDING_STAGES_MAPPING.Update(mapping);
                 CSPdb.Commit(CanCommit);
                 AUDIT_FINDING_CAPA_STATUS_HISTORY his = new AUDIT_FINDING_CAPA_STATUS_HISTORY();

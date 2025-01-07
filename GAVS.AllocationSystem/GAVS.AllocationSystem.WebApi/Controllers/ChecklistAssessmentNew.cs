@@ -1493,20 +1493,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     rec.REMARKS = results.REMARKS;
                     rec.STATUS = results.STATUS;
                     rec.ISSUBMITTED = true;
-                    UpdateAuditFields(rec);
+                    UpdateAuditFields(rec, empId);
                     CSPdb.AUDITEE_ACCEPTANCE.Update(rec);
                 }
                 else
                 {
                     results.UNIQUE_ID = Guid.NewGuid().ToString();
                     results.ISSUBMITTED = true;
-                    UpdateAuditFields(rec);
+                    UpdateAuditFields(results, empId);
                     CSPdb.AUDITEE_ACCEPTANCE.Add(results);
 
                 }
                 if (results.STATUS == "Reject")
                 {
-                    var updateResult = UpdateFindingStatusForAuditeeRejection(rec);
+                    var updateResult = UpdateFindingStatusForAuditeeRejection(results);
                     if (!string.IsNullOrWhiteSpace(updateResult))
                         return Content(System.Net.HttpStatusCode.Conflict, updateResult);
                 }
@@ -2109,8 +2109,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 recipientsDetails[0].IsCC = false;
             }
 
-            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, toperson);
-
+            var htmlTable = GenerateFindingTable(checklistSendMail.AUDIT_ID, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, toperson);            var ccMailIds = recipientsDetails.Where(x => x.IsCC).ToList();
             var ccMailIds = recipientsDetails.Where(x => x.IsCC).ToList();
             var ccMailId = string.Empty;
             if (ccMailIds.Any())
