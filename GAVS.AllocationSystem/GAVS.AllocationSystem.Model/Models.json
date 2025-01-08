@@ -419,6 +419,55 @@
     "props": [
       "QUESTION_MODEL_ID:int"
     ]
+  },
+  {
+    "name": "CSS_CUSTOMER_VERIFICATION",
+    "props": [
+      "CUST_NM:string",
+      "PROJ_NM:string",
+      "HEAD_COUNT:int",
+      "START_DateTime:DateTime",
+      "END_DateTime:DateTime",
+      "CSS_CONFIGURED:string",
+      "CUSTOMER_CONTACT_VERIFICATION:string",
+      "VERIFICATION_COMMENTS:string",
+      "VERIFIED_BY:string",
+      "APPROVAL_DateTime:DateTime",
+      "RESPONDENT_NAME:string",
+      "RESPONDENT_MAIL:string",
+      "ROLE:string",
+      "ROLE_TYPE:string",
+      "PROJ_STATUS:string",
+      "PROJECT_TYPE:string",
+      "BUSINESS_UNIT:string",
+      "DEPARTMENT:string",
+      "PROJECT_GROUP:string",
+      "CONTRACTING_UNIT:string",
+      "REVENUE_TYPE:string",
+      "COUNTRY:string",
+      "METHODOLOGY:string",
+      "TYPE_OF_ACCOUNT:string",
+      "ACCOUNT_OWNER:string",
+      "PM:string",
+      "PM_MAIL_ID:string",
+      "CSM:string",
+      "CSM_MAIL_ID:string",
+      "ACCOUNT_MANAGER:string",
+      "AM_MAIL_ID:string",
+      "BU_HEAD:string",
+      "BU_MAIL_ID:string",
+      "QUALITY_SPOC:string",
+      "CSM_REVIEWER_MAIL_ID:string",
+      "SKIP_CSAT:string",
+      "SKIP_CSAT_COMMENTS:string",
+      "PROJ_ID:string",
+      "CUST_ID:string",
+      "BATCH_ID:int?",
+      "BATCH_CUSTOMER_ID:int",
+      "BATCH_MONTHLY_ID:int?",
+      "BATCH_CUSTOMER_MONTHLY_ID:int?",
+      "CSM_EMP_ID:string"
+    ]
   }
   
 ]
