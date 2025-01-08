@@ -1518,11 +1518,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 if (exist != null)
                 {
-                    if (exist.IS_VERIFIED)
-                    {
-                        return "Already verified.";
-                    }
-                    else
+                    //if (exist.IS_VERIFIED)
+                    //{
+                    //    return "Already verified.";
+                    //}
+                    //else
                     {
                         exist.IS_VERIFIED = batchCustomers.IS_VERIFIED;
                         exist.COMMENTS = batchCustomers.COMMENTS;

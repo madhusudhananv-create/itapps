@@ -84,7 +84,8 @@
       "COMMENTS:string",
       "PROCESS_COMPLIANCE_AS_ON_AUDIT_DATE:decimal?",
       "CURRENT_PROCESS_COMPLIANCE:decimal?",
-      "IS_RETAIN_CAPA:bool"
+      "IS_RETAIN_CAPA:bool",
+      "ISSUBMITTED:bool"
     ]
   },
   {
