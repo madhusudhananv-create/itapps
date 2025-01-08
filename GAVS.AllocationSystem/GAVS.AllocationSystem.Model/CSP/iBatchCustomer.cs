@@ -21,5 +21,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
          string COMMENTS { get; set; }
 
+        string STATUS { get; set; }
+
     }
 }

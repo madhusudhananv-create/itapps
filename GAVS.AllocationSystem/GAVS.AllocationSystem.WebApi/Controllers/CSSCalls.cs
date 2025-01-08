@@ -508,7 +508,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 item.SURVEY_RECD = batchRecords.Count(x => x.STATUS == CSS_COMPLETED);
                 item.PENDING = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && string.IsNullOrWhiteSpace(x.COMMENTS));
                 item.VERIFIED = batchRecords.Count(x => x.IS_VERIFIED);
-                item.REJECTED = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
+                item.REJECTED = batchRecords.Count(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
 
             }
             return Ok(batches);
@@ -695,11 +695,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<CSS_BATCH_CUSTOMERS_EXTENDED> batchesExt = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             string empid = this.GetHeaderValue("empid");
             CSS_BATCHES batch = CSPdb.CSS_BATCHES.GetById(BatchId);
-            batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId).ToList();
+            batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId && t.ISACTIVE).ToList();
             if (batches.Count == 0)
             {
                 GenerateBatchCustomers(BatchId, batch.FREQUENCY, empid);
-                batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId).ToList();
+                batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId && t.ISACTIVE).ToList();
             }
 
             batchesExt = helper.FillCustomerAndProjectNames(batches);
@@ -883,11 +883,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
 
                 item.TOTAL_RECORDS = batchRecords.Count;
-                item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED));
+                item.SURVEY_SENT = batchRecords.Count(x => x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED);
                 item.SURVEY_RECD = batchRecords.Count(x => x.STATUS == CSS_COMPLETED);
                 item.PENDING = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && string.IsNullOrWhiteSpace(x.COMMENTS));
                 item.VERIFIED = batchRecords.Count(x => x.IS_VERIFIED);
-                item.REJECTED = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
+                item.REJECTED = batchRecords.Count(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
             }
             return Ok(batches);
         }
@@ -936,11 +936,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batchesExt = new List<CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED>();
             var empid = GetHeaderDetails_String("empid");
             var batch = CSPdb.CSS_BATCH_MONTHLY.GetById(batchId);
-            batches = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchId).ToList();
+            batches = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchId && t.ISACTIVE).ToList();
             if (batches.Count == 0)
             {
                 GenerateBatchCustomersMonthly(batchId, empid);
-                batches = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchId).ToList();
+                batches = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchId && t.ISACTIVE).ToList();
             }
 
             batchesExt = FillCustomerAndProjectNames(batches);
@@ -1277,7 +1277,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private void GenerateBatchCustomersHalfyearly(int batchId, string empId)
         {
             //for prod based
-            var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 8 || x.MANAGEMENT_TYPE == 7)).ToList(); // 6=CUSTOMER_CSAT_Halfyearly
+            var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 8 || x.MANAGEMENT_TYPE == 7)).ToList(); // 8=CUSTOMER_CSAT_Halfyearly
             var projects = Cldb.PROJECT.GetAll().ToList();
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchId);
             if (batch == null) return;
@@ -1714,6 +1714,51 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             return result.ToArray();
+        }
+
+        private string ValidateCSSVerfication(CSS_BATCH_CUSTOMERS[] batchCustomers, string empId)
+        {
+            CheckAccessForFeature(121);
+            //chk any premier ids are there
+            if (batchCustomers.Any(x => x.CUST_ID == PREMIER_CUSTOMER_ID))
+            {
+                return "Premier CSS batches cannot be verified in this lot.";
+            }
+            return ValidateCSSVerificationForProjects(batchCustomers, empId);
+        }
+
+        private string ValidateCSSVerfication(CSS_BATCH_CUSTOMER_MONTHLY[] batchCustomers, string empId)
+        {
+            CheckAccessForFeature(121);
+            //chk any premier ids are there
+            if (batchCustomers.Any(x => x.CUST_ID != PREMIER_CUSTOMER_ID))
+            {
+                return "Premier CSS batches can only be verified in this lot.";
+            }
+            return ValidateCSSVerificationForProjects(batchCustomers, empId);
+        }
+
+        private string ValidateCSSVerificationForProjects(iBatchCustomer[] batchCustomers, string empId)
+        {
+            var projIds = batchCustomers.Select(x => x.PROJ_ID).ToArray();
+            var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).ToList();
+            //check if the user is the csm for all projects - if not throw error saying only csm can approve or reject
+            var userrole = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId).CSM_TITLE_ID;
+
+            if (userrole != 7)
+                if (!projects.Any(x => x.PROJ_DM_EMP_ID == empId))
+                    return "CSMs of the project can only Approve/Reject the contact verification. Please make sure to select the correct records.";
+            //chck all status in creatd
+            if(batchCustomers.Any(x=>x.STATUS != CSS_CREATED))
+                return "Records which are in created status alone can be updated. If CSS sent already, it cannot be updated"
+            //check if any of the record is approved already - if yes then throw error to select only unverified records
+            if (batchCustomers.Any(x => x.IS_VERIFIED))
+                return "Records which are already Approved/Rejected cannot be updated again. Please make sure to select the correct records.";
+
+            //check if any of the records is rejected already(is_verified = false and comments not null) - if yes throw error to select only un verified records
+            if (batchCustomers.Any(x => !x.IS_VERIFIED   && !string.IsNullOrWhiteSpace(x.COMMENTS)))
+                return "Records which are already Rejected cannot be updated again. Please make sure to select the correct records.";
+            return string.Empty;
         }
     }
 
