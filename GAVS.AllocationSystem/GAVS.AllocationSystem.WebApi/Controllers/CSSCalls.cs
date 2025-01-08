@@ -1451,6 +1451,47 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
+        [GET("GetCSSForVerification")]
+        [ActionName("GetCSSForVerification")]
+        [HttpGet]
+        public IHttpActionResult GetCSSForVerification(HttpRequestMessage request)
+        {
+            DateTime endDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+            DateTime startDate = endDate.AddMonths(-3).AddDays(1);
+
+            var headers = request.Headers;
+
+            string emp_Id = GetHeaderDetails_String("empId");
+            DateTime.TryParse(GetHeaderDetails_String("startDate"), out startDate);
+            DateTime.TryParse(GetHeaderDetails_String("endDate"), out endDate);
+
+            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(verification => verification.CSM_EMP_ID == emp_Id).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
+
+            return Ok(cssVerificationList);
+        }
+
+
+        [POST("UpdateCustomerContactsVerificationList")]
+        [ActionName("UpdateCustomerContactsVerificationList")]
+        [HttpPost]
+        public IHttpActionResult UpdateCustomerContactsVerificationList([FromBody] CSS_CUSTOMER_VERIFICATION[] batchCustomers, bool csmAction, string comments)
+        {
+            CheckAccessForFeature(114);
+            //do business validation here
+
+            var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_ID).ToList();
+            //logic
+            var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
+            foreach (var item in batchCustomerEntities)
+            {
+                item.IS_VERIFIED = csmAction;
+                if (!string.IsNullOrWhiteSpace(comments))
+                    item.COMMENTS = comments;
+                UpdateCustomerContactVerificationPrivate(item);
+            }
+
+            return Ok();
+        }
 
 
         [POST("UpdateCustomerContactsVerification")]
