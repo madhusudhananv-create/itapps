@@ -2339,6 +2339,13 @@ namespace GAVS.AllocationSystem.Data
             var appreciationDetails = dbContext.Database.SqlQuery<APPRECIATIONDETAILS>("[dbo].[getAppreciationDetails] @projIds", param1).ToList();
             return appreciationDetails;
         }
-
+        public List<CSS_CUSTOMER_VERIFICATION> GetCSSForVerification(DateTime startDate, DateTime endDate)
+        {
+            var context = new CSPDbContext();
+            SqlParameter param1 = new SqlParameter("@StartDate", startDate.ToString("MM/dd/yyyy"));
+            SqlParameter param2 = new SqlParameter("@EndDate", endDate.ToString("MM/dd/yyyy"));
+            var cssVerificationDetails = context.Database.SqlQuery<CSS_CUSTOMER_VERIFICATION>("[dbo].[CSS_Readiness_Report] @StartDate, @EndDate", param1, param2).ToList();
+            return cssVerificationDetails;
+        }
     }
 }

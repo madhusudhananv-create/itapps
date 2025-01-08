@@ -284,7 +284,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         List<ENGAGEMENT_WISE_KPI> GetTrendDataForEngagementLevelKPI(string customerId, DateTime startDate, DateTime endDate, string KpiName);
         List<APPRECIATIONDETAILS> GetAppreciationDetails(string projIds);
 
-
+        List<CSS_CUSTOMER_VERIFICATION> GetCSSForVerification(DateTime startDate, DateTime endDate);
 
     }
 }
