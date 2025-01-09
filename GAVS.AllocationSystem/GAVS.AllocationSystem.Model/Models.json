@@ -51,6 +51,7 @@
       "CUST_ID:string",
       "PROJ_ID:string",
       "AUDITOR_EMP_ID:string",
+      "ISSUBMITTED:bool",
       "KEY:string",
       "VALUE:string",
       "PROCESS_COMPLIANCE_AS_ON_AUDIT_DATE:decimal?",

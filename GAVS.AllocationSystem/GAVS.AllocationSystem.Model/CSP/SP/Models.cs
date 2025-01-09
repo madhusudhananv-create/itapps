@@ -61,6 +61,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string CUST_ID {get; set;}
         public string PROJ_ID {get; set;}
         public string AUDITOR_EMP_ID {get; set;}
+        public bool ISSUBMITTED {get; set;}
         public string KEY {get; set;}
         public string VALUE {get; set;}
         public decimal? PROCESS_COMPLIANCE_AS_ON_AUDIT_DATE {get; set;}
@@ -443,7 +444,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string PROJ_ID {get; set;}
         public string CUST_ID {get; set;}
         public int? BATCH_ID {get; set;}
-        public int? BATCH_CUSTOMER_ID {get; set;}
+        public int BATCH_CUSTOMER_ID {get; set;}
         public int? BATCH_MONTHLY_ID {get; set;}
         public int? BATCH_CUSTOMER_MONTHLY_ID {get; set;}
         public string CSM_EMP_ID {get; set;}
