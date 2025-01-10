@@ -264,7 +264,7 @@ const routes: Routes = [
         component: QaassessmentdetailsComponent
       },
       {
-        path: 'qasummary/:custid/:projid/:asssessmentid/:findingid/:acceptval',
+        path: 'qasummary/:custid/:projid/:asssessmentid/:findingid/:isauditor/:acceptval',
         component: QaassessmentdetailsComponent
       },
       {

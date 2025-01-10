@@ -42,6 +42,7 @@ export class QaassessmentdetailsComponent implements OnInit {
   auditId: number;
   stageStatus: string;
   rejectReason: string;
+  isAuditorAccept: boolean;
   stageDict = {
     'AUDITEE_ACCEPTANCE AND CAP SUBMISSION': 'Auditee acceptance',
     'CAP REVIEW': 'CAP review',
@@ -103,65 +104,80 @@ export class QaassessmentdetailsComponent implements OnInit {
     this.getAllFindingsForCustomer();
     this.acceptOrRejectFindings();
 
-
-
-
   }
-
   acceptOrRejectFindings() {
-    
+
     var findingStatusDataList: auditeE_ACCEPTANCE[] = [];
     let findingStageData;
     findingStageData = new auditeE_ACCEPTANCE();
     this.route.params.subscribe(params => {
-      if (  params['acceptval'] == undefined || params['acceptval'] == null) {
+      if (params['acceptval'] == undefined || params['acceptval'] == null) {
         return;
       }
 
       findingStageData = new auditeE_ACCEPTANCE();
       this.findingId = params['findingid'];
       this.auditId = params['asssessmentid'];
-      if (params['auditor'] == "1") {
+      findingStageData.audit_ID = this.auditId;
+      findingStageData.finding_ID = this.findingId;
 
-        //todo:call saveauditoracceptancestatus
-      }
-      else {
-        if (params['acceptval'] == "1") {
-          if (confirm('Are you sure want to accept this finding?')) {
-            this.stageStatus = "Accept";
-          }
-        }
-        else if (params['acceptval'] == "0") {
-          if (confirm('Are you sure want to reject this finding?')) {
-            const reason = prompt('Please provide a reason for rejection');
-            if (reason) {
-              this.rejectReason = reason;
-              this.stageStatus = "Reject";
-            }
-
-          }
-        }
-        findingStageData.audit_ID = this.auditId;
-        findingStageData.finding_ID = this.findingId;
+      if (params['isauditor'] == "1") {
+        this.findAcceptValue();
         findingStageData.status = this.stageStatus;
         findingStageData.remarks = this.rejectReason;
+        findingStageData.IS_AUDITOR_ACCEPT = true;
         findingStatusDataList.push(findingStageData);
-       
-          this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)
-            .subscribe(data => {
-              alert("Finding status updated successfully");
-              this.getAllFindingsForCustomer();
-            },
-              (error) => {
-                this._util.serviceError(error);
+        this._appservice.saveAuditorAcceptanceStatus(findingStatusDataList)
+          .subscribe(data => {
+            alert("Finding status updated successfully");
+            this.getAllFindingsForCustomer();
+          },
+            (error) => {
+              this._util.serviceError(error);
 
-              });
-        
+            });
+      }
+      else if (params['isauditor'] == "0") {
+        this.findAcceptValue();
+        findingStageData.status = this.stageStatus;
+        findingStageData.remarks = this.rejectReason;
+        findingStageData.IS_AUDITOR_ACCEPT = false;
+        findingStatusDataList.push(findingStageData);
+
+        this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)
+          .subscribe(data => {
+            alert("Finding status updated successfully");
+            this.getAllFindingsForCustomer();
+          },
+            (error) => {
+              this._util.serviceError(error);
+
+            });
+
       }
     });
 
   }
 
+  findAcceptValue() {
+    this.route.params.subscribe(params => {
+      if (params['acceptval'] == "1") {
+        if (confirm('Are you sure want to accept this finding?')) {
+          this.stageStatus = "Accept";
+        }
+      }
+      else if (params['acceptval'] == "0") {
+        if (confirm('Are you sure want to reject this finding?')) {
+          const reason = prompt('Please provide a reason for rejection');
+          if (reason) {
+            this.rejectReason = reason;
+            this.stageStatus = "Reject";
+          }
+
+        }
+      }
+    });
+  }
 
   getstageDesc(id) {
     return this.stageDict[id];
