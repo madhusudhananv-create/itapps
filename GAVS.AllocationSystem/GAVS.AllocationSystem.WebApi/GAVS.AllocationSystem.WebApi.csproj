@@ -506,6 +506,7 @@
     <Compile Include="Controllers\FMEAController.cs" />
     <Compile Include="Controllers\FMEAControllerRevised.cs" />
     <Compile Include="Controllers\InsightsController.cs" />
+    <Compile Include="Controllers\IssueController.cs" />
     <Compile Include="Controllers\KPIConfigurationController.cs" />
     <Compile Include="Controllers\LayoutController.cs" />
     <Compile Include="Controllers\LMSController.cs" />

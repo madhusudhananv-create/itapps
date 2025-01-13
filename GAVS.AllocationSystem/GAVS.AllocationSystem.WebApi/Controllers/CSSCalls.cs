@@ -511,6 +511,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 item.REJECTED = batchRecords.Count(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
 
             }
+           
             return Ok(batches);
         }
 
@@ -974,6 +975,40 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(sortedbatchesExt);
         }
 
+        [POST("CreateDuplicateBatchCustomer")]
+        [ActionName("CreateDuplicateBatchCustomer")]
+        [HttpPost]
+        public IHttpActionResult CreateDuplicateBatchCustomer([FromBody] CSS_BATCH_CUSTOMERS_EXTENDED batchcustomer)
+        {
+            var batchMonthly = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchcustomer.BATCH_ID);
+            var customerUser = CSPdb.CUSTOMER_USERS.GetAll().FirstOrDefault(x => x.EMAILID == batchcustomer.EMAIL_ID);
+
+            var empId = GetHeaderDetails_String("empid");
+            //perform valiadtions for retrived objs
+
+            // add duplicate row
+            AddBatchCustomer(batchMonthly, customerUser, empId, batchcustomer.CUST_ID, batchcustomer.PROJ_ID, batchcustomer.PROD_ID);
+            return Ok();
+
+        }
+
+        [POST("CreateDuplicateBatchCustomerMonthly")]
+        [ActionName("CreateDuplicateBatchCustomerMonthly")]
+        [HttpPost]
+        public IHttpActionResult CreateDuplicateBatchCustomerMonthly([FromBody] CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED batchcustomer)
+        {
+
+            var batchMonthly = CSPdb.CSS_BATCH_MONTHLY.GetAll().FirstOrDefault(x => x.ID == batchcustomer.BATCH_ID);
+            var customerUser = CSPdb.CUSTOMER_USERS.GetAll().FirstOrDefault(x => x.EMAILID == batchcustomer.EMAIL_ID);
+
+            var empId = GetHeaderDetails_String("empid");
+            //perform valiadtions for retrived objs
+
+            // add duplicate row
+            AddBatchCustomerMonthly(batchMonthly, customerUser, empId, batchcustomer.CUST_ID, batchcustomer.PROJ_ID, batchcustomer.PROD_ID);
+            return Ok();
+
+        }
         [GET("RefreshCSSBatchCustomersMonthly")]
         [ActionName("RefreshCSSBatchCustomersMonthly")]
         [HttpGet]
@@ -1151,22 +1186,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
                     //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
                     if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
-                    CSS_BATCH_CUSTOMERS BatchCustomer = new CSS_BATCH_CUSTOMERS()
-                    {
-                        BATCH_ID = BatchId,
-                        CUST_ID = c.CUST_ID,
-                        PROJ_ID = c.PROJ_ID,
-                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID),
-                        EMAIL_ID = cust.EMAILID,
-                        DISPLAY_NAME = cust.DISPLAY_NAME,
-                        STATUS = "CREATED",
-                        CREATED_BY = EmpId,
-                        CREATED_DATE = DateTime.Now,
-                        UPDATED_BY = EmpId,
-                        UPDATED_DATE = DateTime.Now,
-                        ISACTIVE = true
-                    };
-                    CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
+                    AddBatchCustomer(batch, cust, EmpId, c.CUST_ID, c.PROJ_ID, null);
 
                 }
             }
@@ -1174,6 +1194,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             //products
 
+        }
+
+        private void AddBatchCustomer(CSS_BATCHES batch, CUSTOMER_USERS cust, string empId, string cust_id, string proj_id, int? prod_id)
+        {
+            var batchCustomer = new CSS_BATCH_CUSTOMERS()
+            {
+                BATCH_ID = batch.ID,
+                CUST_ID = cust_id,
+                PROJ_ID = proj_id,
+                QUESTION_MODEL_ID = helper.GetQuestionModel(cust_id, proj_id, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID),
+                EMAIL_ID = cust.EMAILID,
+                DISPLAY_NAME = cust.DISPLAY_NAME,
+                STATUS = "CREATED",
+                PROD_ID = prod_id,
+                CREATED_BY = empId,
+                CREATED_DATE = DateTime.Now,
+                UPDATED_BY = empId,
+                UPDATED_DATE = DateTime.Now,
+                ISACTIVE = true
+            };
+            UpdateAuditFields(batchCustomer);
+            CSPdb.CSS_BATCH_CUSTOMERS.Add(batchCustomer);
         }
 
         private void GenerateMissingBatchCustomers(int batchId, string frequency, string EmpId)
