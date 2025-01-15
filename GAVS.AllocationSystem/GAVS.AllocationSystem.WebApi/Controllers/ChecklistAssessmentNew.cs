@@ -1628,6 +1628,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LogRequest(prefix: "GetAllAuditeeResponses");
             var findingIds = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == assessmentId).Select(x => x.ID).ToList();
             var result = CSPdb.AUDITEE_ACCEPTANCE.GetAll().Where(x => x.ISACTIVE && findingIds.Contains(x.FINDING_ID)).ToList();
+            
+            foreach (var capa in result)
+            {
+                var findingDetails= CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().Where(x => x.FINDING_ID == capa.FINDING_ID).ToList();
+                if (findingDetails.Count>0 && findingDetails.All(x=>x.STAGE_STATUS=="Auditee Rejected" && x.ISCOMPLETE))
+                {
+                    capa.DISABLE_CAPA = true;
+                }
+            }
             return Ok(result);
         }
 
@@ -2094,7 +2103,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else if (checklistSendMail.SUBJECT == "Appraisee Response Submitted")
             {
-                checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result.You can <a href='{requestDomain}/{path}/{checklistSendMail.CUSTOMER_ID}/{checklistSendMail.PROJECT_ID}/{checklistSendMail.AUDIT_ID}/{checklistSendMail.FINDING_ID}/1/1'> Approve</a> or <a href='{requestDomain}/{path}/{checklistSendMail.CUSTOMER_ID}/{checklistSendMail.PROJECT_ID}/{checklistSendMail.AUDIT_ID}/{checklistSendMail.FINDING_ID}/1/0 '> Revert </a>  the status</p>";
+                checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result.You can <a href='{requestDomain}/{path}/{checklistSendMail.CUSTOMER_ID}/{checklistSendMail.PROJECT_ID}/{checklistSendMail.AUDIT_ID}/{checklistSendMail.FINDING_ID}/1/1'> Accept</a> or <a href='{requestDomain}/{path}/{checklistSendMail.CUSTOMER_ID}/{checklistSendMail.PROJECT_ID}/{checklistSendMail.AUDIT_ID}/{checklistSendMail.FINDING_ID}/1/0 '> Revert </a>  the status</p>";
             }
             checklistSendMail.NOTE_MSG = $"<p> Note : You are requested to accept or reject the findings within 5 days from the date of reporting. In case the findings are not accepted within five days, the findings will be considered as accepted by the internal assessment system </p>";
             checklistSendMail.QUERY_MSG = $" <p>In case you have any query on the findings, please contact { checklistSendMail.AUDITOR_NAME}. In case of any issue that is not resolved even after approaching { checklistSendMail.AUDITOR_NAME} or Quality SPOC, please setup a call with Head of Quality Assurance to resolve it.</ p >";
@@ -2316,7 +2325,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 sb.Append($"<td>{item.FINDING_TYPE}</td>");
                 sb.Append($"<td>{item.FINDING_DESCRIPTION}</td>");
                 sb.Append($"<td>{findingOwner}</td>");
-                sb.Append($"<td><a href='{requestDomain}/{path}/{custid}/{projectid}/{item.AUDIT_ID}/{item.ID}/0/1 '> Accept</a> &nbsp;&nbsp; <a href='{requestDomain}/{path}/{custid}/{projectid}/{item.AUDIT_ID}/{item.ID}/0/0 '> Reject</a> </td>");
+                sb.Append($"<td><a href='{requestDomain}/{path}/{custid}/{projectid}/{item.AUDIT_ID}/{item.ID}/0/1 '> Accept</a>  /  <a href='{requestDomain}/{path}/{custid}/{projectid}/{item.AUDIT_ID}/{item.ID}/0/0 '> Reject</a> </td>");
                 sb.AppendLine("</tr>");
             }
             return sb.ToString();
@@ -2359,34 +2368,52 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     List<AUDIT_FINDING_STAGES_MAPPING> mapp = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().Where(t => t.FINDING_ID == finding.ID && t.ISACTIVE).ToList();
 
-                    //stage1
+                    var stageOne = mapp.FirstOrDefault(t => t.STAGE_ID == 1 && t.STAGE_STATUS.ToLower() == "auditee rejected")?.ISCOMPLETE;
+                    var stageTwo = mapp.FirstOrDefault(t => t.STAGE_ID == 2 && t.STAGE_STATUS.ToLower() == "auditee rejected")?.ISCOMPLETE;
+                    var stageThree = mapp.FirstOrDefault(t => t.STAGE_ID == 3 && t.STAGE_STATUS.ToLower() == "auditee rejected")?.ISCOMPLETE;
+                    var stageFour = mapp.FirstOrDefault(t => t.STAGE_ID == 4 && t.STAGE_STATUS.ToLower() == "auditee rejected")?.ISCOMPLETE;
 
-                    var stage1 = mapp.FirstOrDefault(t => t.STAGE_ID == 1 && t.STAGE_STATUS.ToLower() != "auditee rejected")?.ISCOMPLETE;
-                    if (stage1.HasValue && stage1.Value)
-                        color.Add("#3AB376");
-                    else
-                        color.Add("#FF5969");
+                    if ((stageOne.HasValue && stageOne.Value) && (stageTwo.HasValue && stageTwo.Value) && (stageThree.HasValue && stageThree.Value) && (stageFour.HasValue && stageFour.Value))
+                    {
 
-                    //stage2
-                    var stage2 = mapp.FirstOrDefault(t => t.STAGE_ID == 2)?.ISCOMPLETE;
-                    if (stage2.HasValue && stage2.Value)
-                        color.Add("#3AB376");
-                    else
-                        color.Add("#FF5969");
+                        color.Add("#AAAFB4");
+                        color.Add("#AAAFB4");
+                        color.Add("#AAAFB4");
+                        color.Add("#AAAFB4");
 
-                    //stage3
-                    var stage3 = mapp.FirstOrDefault(t => t.STAGE_ID == 3)?.ISCOMPLETE;
-                    if (stage3.HasValue && stage3.Value)
-                        color.Add("#3AB376");
+                    }
                     else
-                        color.Add("#FF5969");
+                    {
 
-                    //stage4
-                    var stage4 = mapp.FirstOrDefault(t => t.STAGE_ID == 4)?.ISCOMPLETE;
-                    if (stage4.HasValue && stage4.Value)
-                        color.Add("#3AB376");
-                    else
-                        color.Add("#FF5969");
+                        //stage1
+
+                        var stage1 = mapp.FirstOrDefault(t => t.STAGE_ID == 1 && t.STAGE_STATUS.ToLower() != "auditee rejected")?.ISCOMPLETE;
+                        if (stage1.HasValue && stage1.Value)
+                            color.Add("#3AB376");
+                        else
+                            color.Add("#FF5969");
+
+                        //stage2
+                        var stage2 = mapp.FirstOrDefault(t => t.STAGE_ID == 2)?.ISCOMPLETE;
+                        if (stage2.HasValue && stage2.Value)
+                            color.Add("#3AB376");
+                        else
+                            color.Add("#FF5969");
+
+                        //stage3
+                        var stage3 = mapp.FirstOrDefault(t => t.STAGE_ID == 3)?.ISCOMPLETE;
+                        if (stage3.HasValue && stage3.Value)
+                            color.Add("#3AB376");
+                        else
+                            color.Add("#FF5969");
+
+                        //stage4
+                        var stage4 = mapp.FirstOrDefault(t => t.STAGE_ID == 4)?.ISCOMPLETE;
+                        if (stage4.HasValue && stage4.Value)
+                            color.Add("#3AB376");
+                        else
+                            color.Add("#FF5969");
+                    }
                 }
                 finding.STAGE_COLORS = color;
             }

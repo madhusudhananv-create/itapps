@@ -23,6 +23,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         
         [NotMapped]
         public bool IS_AUDITOR_ACCEPT { get; set; }
+        [NotMapped]
+        public bool DISABLE_CAPA { get; set; }
 
 
     }
