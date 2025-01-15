@@ -125,7 +125,7 @@ export class QaassessmentdetailsComponent implements OnInit {
         this.findAcceptValue();
         findingStageData.status = this.stageStatus;
         findingStageData.remarks = this.rejectReason;
-        findingStageData.IS_AUDITOR_ACCEPT = true;
+        findingStageData.iS_AUDITOR_ACCEPT = true;
         findingStatusDataList.push(findingStageData);
         this._appservice.saveAuditorAcceptanceStatus(findingStatusDataList)
           .subscribe(data => {
@@ -141,7 +141,7 @@ export class QaassessmentdetailsComponent implements OnInit {
         this.findAcceptValue();
         findingStageData.status = this.stageStatus;
         findingStageData.remarks = this.rejectReason;
-        findingStageData.IS_AUDITOR_ACCEPT = false;
+        findingStageData.iS_AUDITOR_ACCEPT = false;
         findingStatusDataList.push(findingStageData);
 
         this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)

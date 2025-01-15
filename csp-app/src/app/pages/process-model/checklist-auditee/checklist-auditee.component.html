@@ -143,7 +143,7 @@
 
                 </mat-checkbox>
               </div> -->
-              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' && find.findinG_CATEGORY == 'MANDATORY'">
+              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' && find.findinG_CATEGORY == 'MANDATORY' && !disableCap(find.id)">
                 <a style="cursor: pointer;" (click)="AddActionPlan(question, find, quesind, ind)">
                   <i class="material-icons">
                     library_add
@@ -153,7 +153,7 @@
             </div>
           </td>
           <td>
-            <div *ngIf="getAuditeeResponse(find.id) == 'Accept' 
+            <div *ngIf="getAuditeeResponse(find.id) == 'Accept'
               || getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376'
               ">
               <mat-form-field style="width: 90%">

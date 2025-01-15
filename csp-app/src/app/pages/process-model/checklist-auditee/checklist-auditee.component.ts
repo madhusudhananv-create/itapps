@@ -324,6 +324,14 @@ export class ChecklistAuditeeComponent implements OnInit {
     else
       return null;
   }
+  
+ disableCap(findingid) {
+    let rec = this.auditeeResponses.find(x => x.findinG_ID == findingid);
+    if (rec != null)
+      return rec.disablE_CAPA;
+    else
+      return null;
+  }
 
   getAuditorResponse(findingid) {
     let rec = this.auditeeResponses.find(x => x.findinG_ID == findingid);
