@@ -40,6 +40,8 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public string FINANCIAL_IMPACT_DESCRIPTION { get; set; }
 
+        public string BUSINESS_IMPACT_DESC { get; set; }
+
         public string ISSUE_SOURCE { get; set; }
 
         public string LOCATION_SELECTION { get; set; }

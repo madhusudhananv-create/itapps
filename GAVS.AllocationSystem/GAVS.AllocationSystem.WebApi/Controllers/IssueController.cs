@@ -57,7 +57,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.IMPACT_SUMMARY = results.IMPACT_SUMMARY;
                 overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK;
-                overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
+                if (results.IS_POTENTIAL_RISK)
+                {
+                    overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
+                    overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
+                }
                 overview.GEO_LOCATION = results.GEO_LOCATION;
                 overview.ISSUE_TYPE = results.ISSUE_TYPE;
                 overview.SEVERITY = results.SEVERITY;
@@ -179,7 +183,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ISSUE_TYPE = results.ISSUE_TYPE;
                 overview.IMPACT_SUMMARY = results.IMPACT_SUMMARY;
                 overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK;
-                overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
+                if (results.IS_POTENTIAL_RISK)
+                {
+                    overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
+                    overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
+                }
+                else  
+                {
+                    overview.BUSINESS_IMPACT = null;
+                    overview.BUSINESS_IMPACT_DESC = null;
+                }
+
                 overview.SEVERITY = results.SEVERITY;
                 overview.ACTION_PLAN = results.ACTION_PLAN;
                 overview.ASSIGNED_TO = results.ASSIGNED_TO;
