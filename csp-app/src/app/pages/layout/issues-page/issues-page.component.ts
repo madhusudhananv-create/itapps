@@ -496,6 +496,7 @@ export class IssuesPageComponent implements OnInit {
   //**********************************************
   newEditIssue() {
     this.EditIssue = new IssueModelExt();
+    this.EditIssue.financiaL_IMPACT = false;
     this.EditIssue.reporteD_BY = "reportedbyGAVS";
   }
   bShowFilter: boolean = true;
