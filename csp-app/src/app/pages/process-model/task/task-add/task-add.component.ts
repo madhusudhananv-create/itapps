@@ -215,8 +215,11 @@ export class TaskAddComponent implements OnInit {
       this._taskService.selectedTask.recurrence.starT_DATE = this._util.setLocaleDate(this._taskService.selectedTask.recurrence.starT_DATE);
       this._taskService.selectedTask.recurrence.enD_DATE = this._util.setLocaleDate(this._taskService.selectedTask.recurrence.enD_DATE);
 
+      const startDate = new Date(this._taskService.selectedTask.recurrence.starT_DATE);
+      startDate.setMonth(startDate.getMonth() + 1);
+      
       this._taskService.selectedTask.scheduleD_START_DATE = this._taskService.selectedTask.recurrence.starT_DATE;
-      this._taskService.selectedTask.duE_DATE = this._taskService.selectedTask.recurrence.enD_DATE;
+      this._taskService.selectedTask.duE_DATE = startDate;
     }
     else {
       if (this._taskService.selectedTask.scheduleD_START_DATE != null)

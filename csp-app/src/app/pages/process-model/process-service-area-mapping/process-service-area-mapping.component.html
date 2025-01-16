@@ -6,7 +6,7 @@
 
   <div class="row" style="padding: 10px">
 
-    <div class="col-lg-4 col-md-4 col-sm-4" style="text-align:left;">
+    <div class="col-lg-5 col-md-5 col-sm-5" >
       <button class="btn btn-primary" *ngIf="!bAddNewServiceArea" (click)="btnAddServiceArea_Onclick()">
         Add Service Tower</button>&nbsp;
       <!--<button style="margin-left:5px;margin-right: 5px;margin-top: 2px;margin-bottom: 2px" class="btn btn-primary"
@@ -40,9 +40,13 @@
     </div>
 
 
-    <div class="col-lg-8 col-md-8 col-sm-8" style="float:left;">
+    <div class="col-lg-7 col-md-7 col-sm-7" style="padding-top: 20px;">
       <div style="width: 90%" *ngIf="bAddNewServiceArea">
-        <table mat-table [dataSource]="serviceAreaDataSource"
+        <mat-form-field style="width: 320px; margin-left: 20px;">
+          <mat-label>Search by Service Tower, Description</mat-label>
+          <input matInput type="text" [(ngModel)]="filterValue" (input)="applyTableFilter()">
+        </mat-form-field>
+        <table mat-table [dataSource]="filteredServiceAreaDataSource"
           class="table-bordered table-responsive-md table-striped text-align:left" style="width:100%">
           <ng-container matColumnDef="index">
             <th style="color:black" class="index" mat-header-cell *matHeaderCellDef><strong>S.No</strong></th>

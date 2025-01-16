@@ -56,6 +56,8 @@ export class ProcessServiceAreaMappingComponent implements OnInit, AfterViewInit
 
   isServiceAreaEditMode = false;
   serviceAreaDataSource: MatTableDataSource<ServiceAreaModelNew>;
+  filteredServiceAreaDataSource : MatTableDataSource<ServiceAreaModelNew>;
+  filterValue: string = '';
 
   EditToolTip: string = "Edit";
   DeleteToolTip: string = "Delete";
@@ -161,8 +163,9 @@ export class ProcessServiceAreaMappingComponent implements OnInit, AfterViewInit
 
   refreshServiceAreaTable(source) {
     this.serviceAreaDataSource = new MatTableDataSource<ServiceAreaModelNew>(source);
-    this.serviceAreaDataSource.paginator = this.serviceAreaPaginator;
-    this.serviceAreaDataSource.sort = this.sort;
+    this.filteredServiceAreaDataSource = this.serviceAreaDataSource;
+    this.filteredServiceAreaDataSource.paginator = this.serviceAreaPaginator;
+    this.filteredServiceAreaDataSource.sort = this.sort;
   }
 
   SaveRow_onClick() {
@@ -548,6 +551,18 @@ export class ProcessServiceAreaMappingComponent implements OnInit, AfterViewInit
   openedChangeMPAL(opened: boolean) {
     this.searchValueMPAL = "";
     this.applyFilterForMapProcessArea(this.searchValueMPAL);
+  }
+  applyTableFilter() {
+    const filterValue = this.filterValue.trim().toLowerCase();
+    if (filterValue === '') {
+      this.refreshServiceAreaTable(this.ServiceAreaList);
+    } 
+    else{
+      this.filteredServiceAreaDataSource.data = this.serviceAreaDataSource.data.filter(item => {
+        return item.title.toLowerCase().includes(filterValue);
+      });
+    }
+
   }
 
 }

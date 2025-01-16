@@ -1,12 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { ProcessModel } from '../../../models/process-model'
-import { MatTableDataSource, MatPaginator, MatSort } from '@angular/material';
 import { AppsService } from '../../../Services/apps.service';
 import { myUtility } from '../../../Shared/myUtility';
 import { ProcessModelModel, ProcessSqaServiceArea, ProcessSqaProcess } from '../../../models/process-sqa-model';
-import { ProcessAreaModel } from '../../../models/audit-checklist-based-model';
-import { GAVSService } from '../../../models/innovation-model';
 import { AccessControl } from '../../../Shared/accessControl';
 
 @Component({
@@ -64,33 +60,56 @@ export class ChecklistUserComponent implements OnInit {
     if (form.valid) {
       if (this.model.id == 0) {
         this._appservice.addProcessModel(this.model).subscribe(data => {
-          this.modelList.push(data)
-          this.LoadData()
-          alert("Added Successfully");
-          this.model = new ProcessModelModel();
+          this.modelList.push(data);          
+          alert("Added Successfully");                   
+          this.model = new ProcessModelModel();         
+          this.refreshModelList();
         }, error => {
-          if (error.status === 409)
-            alert(error.error);
+          if (error.status === 409) alert(error.error);
           this._util.serviceError(error);
         });
-      }
-      else {
+      } else {
         this._appservice.updateProcessModel(this.model).subscribe(data => {
-          //this.modelList.push(data)
-          this.LoadData()
-          alert("Updated Successfully");
-          this.model = new ProcessModelModel();
+          this.updateModelInList(data); // Update existing model in the list
+          alert("Updated Successfully");          
+          this.model = new ProcessModelModel();          
+          this.refreshModelList();
         }, error => {
-          if (error.status === 409)
-            alert(error.error);
+          if (error.status === 409) alert(error.error);
           this._util.serviceError(error);
         });
       }
-    }
-    else {
-      alert("Please enter the mandatory fields")
+    } else {
+      alert("Please enter the mandatory fields");
     }
   }
+
+  updateModelInList(updatedModel: ProcessModelModel) {
+    const index = this.modelList.findIndex(item => item.id === updatedModel.id);
+    if (index !== -1) {
+      this.modelList[index] = updatedModel;
+    }
+  }
+  sortByRetirementDate() {
+    this.modelList.sort((a, b) => {
+      if (!a.retiremenT_DATE && !b.retiremenT_DATE) {
+        return 0; 
+      }
+      if (!a.retiremenT_DATE) {
+        return -1; 
+      }
+      if (!b.retiremenT_DATE) {
+        return 1; 
+      }
+      return new Date(a.retiremenT_DATE).getTime() - new Date(b.retiremenT_DATE).getTime();
+    });
+  }
+  
+  refreshModelList() {   
+    this.LoadData();
+    this.modelList = [...this.modelList]; // Assign a new reference to trigger Angular change detection    
+  }
+  
   SubmitProcessArea(form) {
     if (form.valid) {
       if (this.processArea.id == 0) {
@@ -177,6 +196,7 @@ export class ChecklistUserComponent implements OnInit {
   LoadData() {
     this._appservice.GetProcessModel().subscribe(data => {
       this.modelList = data;
+      this.sortByRetirementDate();
     }, error => { this._util.serviceError(error); });
   }
   ClearInputs(roWForm: FormGroup) {

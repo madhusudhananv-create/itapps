@@ -49,6 +49,8 @@ export class PspdComponent implements OnInit {
   falseflag: boolean = false;
   isCheck: boolean = false;
   isProcessMapped: boolean = true;
+   sortedItems :any = [];
+   todayDate : Date = new Date();
 
 
   projectFindings: ProjectServiceAreaProcessMappingModel[] = [];
@@ -94,6 +96,15 @@ export class PspdComponent implements OnInit {
       this.Service_GetServiceAreaProjectMapping(this.projId);
     }
   }
+    isRetired(rDate :Date): boolean {
+      if(rDate != null)
+      {
+        return this.todayDate > new Date(rDate); 
+      }
+      else
+      return false;
+     
+    }
 
   checkallNew(event: MatCheckboxChange, processList: ProcessByProcessArea[]) {
     if (event.checked) {
@@ -440,9 +451,16 @@ export class PspdComponent implements OnInit {
       this.serviceAreaProjectMappingList = data;      
       const serviceAreaIds = new Set(this.serviceAreaList.map(item => item.id));
       this.serviceAreaProjectMappingList = this.serviceAreaProjectMappingList.filter(item => serviceAreaIds.has(item.id));
+      this.sortItems();
       if (!(data.length > 0))
         alert("Please configure Service Tower applicable for the project with the help of your QA SPOC");
     }, error => { this._util.serviceError(error); });
+  }
+  sortItems() {
+    const activeItems = this.serviceAreaProjectMappingList.filter(item => !this.isRetired(item.retiremenT_DATE));
+    const retiredItems = this.serviceAreaProjectMappingList.filter(item => this.isRetired(item.retiremenT_DATE));
+    this.sortedItems = [...activeItems, ...retiredItems]; // Store the sorted items
+    console.log(this.sortedItems,"sorted");
   }
   Service_UpdateProjectServiceAreaProcessMapping(mapping: ProjectServiceAreaProcessMappingModel[]) {
     this.isProcessMapped = false;
