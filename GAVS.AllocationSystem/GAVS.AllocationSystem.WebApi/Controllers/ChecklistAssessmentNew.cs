@@ -1628,13 +1628,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LogRequest(prefix: "GetAllAuditeeResponses");
             var findingIds = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == assessmentId).Select(x => x.ID).ToList();
             var result = CSPdb.AUDITEE_ACCEPTANCE.GetAll().Where(x => x.ISACTIVE && findingIds.Contains(x.FINDING_ID)).ToList();
-            
             foreach (var capa in result)
             {
-                var findingDetails= CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().Where(x => x.FINDING_ID == capa.FINDING_ID).ToList();
-                if (findingDetails.Count>0 && findingDetails.All(x=>x.STAGE_STATUS=="Auditee Rejected" && x.ISCOMPLETE))
+                var findingDetails = CSPdb.AUDIT_FINDING_STAGES_MAPPING.GetAll().Where(x => x.FINDING_ID == capa.FINDING_ID).ToList();
+                if (findingDetails.Count > 0 && findingDetails.All(x => x.STAGE_STATUS == "Auditee Rejected" && x.ISCOMPLETE))
                 {
                     capa.DISABLE_CAPA = true;
+                    capa.STATUS="Rejected-Complet";
                 }
             }
             return Ok(result);
@@ -2097,7 +2097,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var cust = Cldb.CUSTOMER.GetAll().FirstOrDefault(x => x.CUST_ID == checklistSendMail.CUSTOMER_ID);
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/qasummary";
-            if (checklistSendMail.SUBJECT == "Assessment Completed" || checklistSendMail.SUBJECT == "Appraiser Response Submitted")
+            if (checklistSendMail.SUBJECT == "Assessment Completed" || checklistSendMail.SUBJECT == "Appraiser Response Submitted" || (checklistSendMail.SUBJECT == "Appraisee Response Submitted" && checklistSendMail.STATUS.Contains("Accept")))
             {
                 checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result.</p>";
             }
