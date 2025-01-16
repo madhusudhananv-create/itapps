@@ -465,6 +465,7 @@ export class IssuesPageComponent implements OnInit {
   //**********************************************
   GetAuthHeader() {
     let headers = new Headers({ 'Accept': 'application/json' });
+    headers.append('empId', localStorage.getItem('empid'));
     headers.append('token', this._util.AppSettings.token);
     return headers;
   }
