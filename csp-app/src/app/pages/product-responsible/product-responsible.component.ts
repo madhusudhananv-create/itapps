@@ -129,6 +129,7 @@ export class ProductResponsibleComponent implements OnInit {
         alert("Please select the Product");
 
     }
+    this.isdisabled = false;
   }
 
   getAllProductsList() {

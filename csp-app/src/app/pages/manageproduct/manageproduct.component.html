@@ -103,7 +103,7 @@
         <td mat-cell *matCellDef="let Item">
           <a *ngIf="_access.IsAllowed(101, 3, '', '')" class="link" (click)="EditRow_onClick(Item)"
             style="font-size: 14px; cursor: pointer;">
-            <i class="fa fa-edit"></i>
+            <i class="fa fa-edit" matTooltip="Edit"></i>
           </a>
         </td>
       </ng-container>
@@ -113,7 +113,7 @@
         <td mat-cell *matCellDef="let element">
           <a *ngIf="_access.IsAllowed(101, 3, '', '')" class="link" (click)="DeleteProduct(element)"
             style="font-size: 14px; cursor: pointer;color:red">
-            <i class="fa fa-trash"></i>
+            <i class="fa fa-trash" matTooltip="Delete"></i>
           </a>
         </td>
       </ng-container>

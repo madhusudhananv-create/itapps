@@ -16,6 +16,7 @@ export class CustomerSuccessSurveyComponent implements OnInit {
    constructor(public _cooDashboardService: COODashboardService, public _cooDashboardCommon: COODashboardCommon, public _util: myUtility) {
 
    }
+   successScore : number = 0;
    selectedQValue: string = 'Q1';
    @Input() isvisible = false;
    range1: any[] = [2022, 2023];
@@ -49,6 +50,7 @@ export class CustomerSuccessSurveyComponent implements OnInit {
             this.noOfSurveys = d.csaT_SUMMARY.nO_OF_SURVEYS;
             this.noOfResponded = d.csaT_SUMMARY.nO_OF_RESPONDED == 0 ? d.csaT_SUMMARY.nO_OF_RESPONDED : d.csaT_SUMMARY.nO_OF_RESPONDED + "(" + Math.round((d.csaT_SUMMARY.nO_OF_RESPONDED / d.csaT_SUMMARY.nO_OF_SURVEYS) * 100) + "%)";
             this.noOfYetToRespond = d.csaT_SUMMARY.nO_OF_YET_TO_RESPOND == 0 ? d.csaT_SUMMARY.nO_OF_YET_TO_RESPOND : d.csaT_SUMMARY.nO_OF_YET_TO_RESPOND + "(" + Math.round((d.csaT_SUMMARY.nO_OF_YET_TO_RESPOND / d.csaT_SUMMARY.nO_OF_SURVEYS) * 100) + "%)";;
+            this.getCustomerSuccessScore(d.csaT_SUMMARY.nO_OF_SURVEYS,d.csat);
          }
          if (d.csat != null && d.csat != undefined && d.csat.length > 0) {
             this.surveyRating1 = this.getSurveyRating(d.csat, 1);
@@ -65,6 +67,14 @@ export class CustomerSuccessSurveyComponent implements OnInit {
             this.surveyRating5 = "0(0%)";
          }
       }
+   }
+   getCustomerSuccessScore(totalSurveys,d)
+   {
+      if(d.length > 0)
+      {
+         const positiveRatingsCount = d.filter(x => x.miN_SCORE === 4 || x.miN_SCORE === 5).length;                        
+         this.successScore = Math.round((positiveRatingsCount / totalSurveys) * 100);            
+      }     
    }
    getSurveyRating(d, i) {
       if (d.length > 0) {
