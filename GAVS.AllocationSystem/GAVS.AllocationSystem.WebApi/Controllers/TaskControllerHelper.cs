@@ -581,6 +581,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 recipients.Add(projectQARec.EMAIL_ID);
                 qaSpocName = projectQARec.FRST_NM;
             }
+            else
+            {
+                if (!string.IsNullOrEmpty(taskAudit.Task.CUST_ID))
+                {
+                    var defaultQA = GetDBConfig("DEFAULT_TASKAUDITQA_MAILID", taskAudit.Task.CUST_ID);
+                    recipients.Add(defaultQA);
+                }
+
+            }
 
             iId = task.OWNER;
             var ownerrec = empList.FirstOrDefault(x => x.EMP_ID == iId);
@@ -610,6 +619,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var requestDomain = GetAbsoulteUri();
                 var path = "layout/people";
                 peoplePageUrl = $"{requestDomain}/{path}/{project.CUST_ID}";
+                subject = $"{taskAudit.PROJ_NM} Team achieved {taskAudit.CSS_SCORE} out 5 in all criteria - Arrange for issuing Spot award to the team";
             }
 
             var cclist = taskAudit.Task.TASK_CATEGORY_ID == 22 ? GetDBConfig("DEFAULT_STARTUP_AUDIT_CCLIST", project.CUST_ID) : GetDBConfig("QUALITY_HEAD_MAIL", project.CUST_ID);
