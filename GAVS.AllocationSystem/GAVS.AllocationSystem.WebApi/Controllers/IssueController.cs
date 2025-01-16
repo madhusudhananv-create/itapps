@@ -74,7 +74,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ROOTCAUSE = results.ROOTCAUSE;
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
-                overview.ACK_DATE = results.ACK_DATE;
+                if(results.ACK_DATE.HasValue)
+                    overview.ACK_DATE = results.ACK_DATE.GetValueOrDefault(DateTime.Today).ToLocalTime();  
                 overview.SERVICE_IMPACT = results.SERVICE_IMPACT;
                 overview.FINANCIAL_IMPACT = results.FINANCIAL_IMPACT;
 
@@ -193,7 +194,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ROOTCAUSE = results.ROOTCAUSE;
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
-                overview.ACK_DATE = results.ACK_DATE;
+                if (results.ACK_DATE.HasValue)
+                    overview.ACK_DATE = results.ACK_DATE.GetValueOrDefault(DateTime.Today).ToLocalTime();
                 overview.SERVICE_IMPACT = results.SERVICE_IMPACT;
                 overview.FINANCIAL_IMPACT = results.FINANCIAL_IMPACT;
                 if (overview.FINANCIAL_IMPACT.GetValueOrDefault())
