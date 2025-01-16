@@ -43,6 +43,7 @@ import { SqaManagementUploadComponent } from "./pages/sqa-management/sqa-managem
 import { GslabloginComponent } from "./authentication/gslablogin/gslablogin.component";
 import { SurveySettingsComponent } from "./pages/survey/survey-settings/survey-settings.component";
 import { SurveySettingsMonthlyComponent } from "./pages/survey/survey-settings-monthly/survey-settings-monthly.component";
+import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
 
 const routes: Routes = [];
 
@@ -121,7 +122,7 @@ const appRoutes: Routes = [
   },
   { path: "ras", loadChildren: "./pages/raspage/raspage.module#RASPageModule" },
   { path: "css", loadChildren: "./pages/survey/survey.module#SurveyModule" },
-
+  { path: "cssverification", component: SurveySettingsVerificationPageComponent },
   {
     path: "css/:batchid/:recordid/:isApproveReject",
     component: SurveySettingsComponent

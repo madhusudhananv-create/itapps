@@ -232,6 +232,7 @@ import { environment } from "../environments/environment";
 import { RatingCriteriaRemarksComponent } from "./customer/rating-criteria-remarks/rating-criteria-remarks.component";
 import { GslabloginComponent } from './authentication/gslablogin/gslablogin.component';
 import { assessmentUtility } from "./Shared/assessmentUtility";
+import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
 //import { googleEnvironment } from "../environments/google";
 
 
@@ -408,6 +409,7 @@ export class DemoMaterialModule { }
     CiLeaderboardPageComponent,
     SurveySettingsPageMonthlyComponent,
     SurveySettingsMonthlyComponent,
+    SurveySettingsVerificationPageComponent,
     KpiFileUploadComponent, ExternalKpiDataUploadComponent,
     ExternalKpiFormulaUploadComponent,
     KpiActionPlanComponent,

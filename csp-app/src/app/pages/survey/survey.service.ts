@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
 
@@ -10,6 +10,7 @@ import { CssBatchCustomersExtendedModel } from '../../models/css-batch-customers
 import { CSMList } from '../../pages/survey/survey-settings/survey-settings.component';
 import { CssBatchMonthlyModel } from '../../models/css-batch-monthly-model';
 import { CssBatchCustomerMonthlyExtendedModel } from '../../models/css-batch-customers-monthly-model';
+import { CssCustomerVerificationModel } from '../../models/css-customer-verification-model';
 
 
 @Injectable({
@@ -150,4 +151,23 @@ export class SurveyService {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': token });
     return this._http.post<any>(this.apiurl + '/Logout', '', { headers: header });
   }
+
+  GetCSSCustomerVerifications(starT_DATE:any,enD_DATE: any, custId:any): Observable<CssCustomerVerificationModel[]> {
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid')});
+    
+    header = header.append('startDate', starT_DATE);
+    header = header.append('endDate', enD_DATE);
+    header = header.append('custId', custId);
+    
+    return this._http.get<CssCustomerVerificationModel[]>(this.apiurl + '/GetCSSForVerification', { headers: header });
+  }
+
+  UpdateCustomerContactsVerificationList(cssCustomerVerifications:any[],csmAction:any, comments:any): Observable<CssCustomerVerificationModel[]> {
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid')});  
+
+    let params = new HttpParams().set('csmAction', csmAction); 
+    params = params.append('comments', comments); 
+    return this._http.post<CssCustomerVerificationModel[]>(this.apiurl + '/UpdateCustomerContactsVerificationList',cssCustomerVerifications, { headers: header ,params:params});
+  }
+  
 }
