@@ -120,7 +120,7 @@
           <td style="text-align: center"
             [ngStyle]=" {'font-weight' : (ind == selectedRow && quesind == selectedQuest) ? 'bold' :'normal' ,'font-size' :(ind == selectedRow && quesind == selectedQuest) ? '14px' : 'normal', 'background-color' : (ind == selectedRow && quesind == selectedQuest) ? '#d6d3ce' :'white'} ">
             <div style="display: flex; margin-left: 55px">
-              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' 
+              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' || getAuditeeResponse(find.id) == 'Rejected-Complet'
                   || (getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376')
                   || (getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969')"
                 style="margin-right: 4px;">
