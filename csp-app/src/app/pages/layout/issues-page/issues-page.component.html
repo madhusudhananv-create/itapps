@@ -231,7 +231,7 @@
         </mat-form-field>
       </div>
       <div class="row">
-        <div style="float: left;color: #757575;">Is there a risk(s) if the issue is not resolved ?</div>
+        <div style="float: left;color: #757575;">Is there a business impact if the issue is not resolved? *        </div>
         <mat-radio-group name="radpotentialrisk" class="example-radio-group" [(ngModel)]="EditIssue.iS_POTENTIAL_RISK "
           required>
           <mat-radio-button class="example-radio-button" style="margin-left: 11px;" (click)="EnableImpact()"
@@ -249,6 +249,12 @@
           </mat-select>
         </mat-form-field>
       </div>
+      <div class="row"  >
+        <mat-form-field style="width:75%" *ngIf="impactmode">
+          <textarea name="txtBusinessImpact" maxlength="2000" [(ngModel)]="EditIssue.businesS_IMPACT_DESC" matInput
+            placeholder="Business Impact Description"></textarea>
+        </mat-form-field>
+      </div>
       <div class="row">
         <mat-form-field style="width:75%">
           <textarea name="txtServiceImpact" maxlength="2000" [(ngModel)]="EditIssue.servicE_IMPACT" matInput
@@ -256,7 +262,7 @@
         </mat-form-field>
       </div>
       <div class="row">
-        <div style="float: left;color: #757575;">Financial Impact</div>
+        <div style="float: left;color: #757575;">Financial Impact *</div>
         <mat-radio-group name="radfinancialimpact" class="example-radio-group"
           [(ngModel)]="EditIssue.financiaL_IMPACT ">
           <mat-radio-button class="example-radio-button" style="margin-left: 11px;" (click)="EnableImpact()"

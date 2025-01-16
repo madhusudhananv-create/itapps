@@ -498,6 +498,11 @@ export class IssuesPageComponent implements OnInit {
     this.EditIssue = new IssueModelExt();
     this.EditIssue.financiaL_IMPACT = false;
     this.EditIssue.reporteD_BY = "reportedbyGAVS";
+    if (this.EditIssue.iS_POTENTIAL_RISK == true)
+      this.EnableImpact();
+
+    if (this.EditIssue.reporteD_BY != "reportedbyGAVS")
+      this.EnableLevel();
   }
   bShowFilter: boolean = true;
   ToggleFilter_onClick() {
