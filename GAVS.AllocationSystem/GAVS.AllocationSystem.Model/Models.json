@@ -51,7 +51,7 @@
       "CUST_ID:string",
       "PROJ_ID:string",
       "AUDITOR_EMP_ID:string",
-      "ISSUBMITTED:bool",
+      "ISSUBMITTED:bool?",
       "KEY:string",
       "VALUE:string",
       "PROCESS_COMPLIANCE_AS_ON_AUDIT_DATE:decimal?",
@@ -465,10 +465,12 @@
       "PROJ_ID:string",
       "CUST_ID:string",
       "BATCH_ID:int?",
-      "BATCH_CUSTOMER_ID:int",
+      "BATCH_CUSTOMER_ID:int?",
       "BATCH_MONTHLY_ID:int?",
       "BATCH_CUSTOMER_MONTHLY_ID:int?",
-      "CSM_EMP_ID:string"
+      "CSM_EMP_ID:string",
+      "CONTACTS_LINK:string",
+      "SKIP_CSAT_LINK:string"
     ]
   }
   

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Web;
 using System.Web.Http;
 
@@ -1518,21 +1519,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [ActionName("UpdateCustomerContactsVerificationList")]
         [HttpPost]
         public IHttpActionResult UpdateCustomerContactsVerificationList([FromBody] CSS_CUSTOMER_VERIFICATION[] batchCustomers, bool csmAction, string comments)
-        {
-            CheckAccessForFeature(114);
-            //do business validation here
+        {           
+            string emp_Id = GetHeaderDetails_String("empId");
 
             var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_ID).ToList();
             //logic
             var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
+
+            ValidateCSSVerfication(batchCustomerEntities.ToArray(), emp_Id);
             foreach (var item in batchCustomerEntities)
             {
                 item.IS_VERIFIED = csmAction;
-                if (!string.IsNullOrWhiteSpace(comments))
+                if (csmAction)
+                    item.COMMENTS = null;
+                else if (!string.IsNullOrWhiteSpace(comments))
                     item.COMMENTS = comments;
-                UpdateCustomerContactVerificationPrivate(item);
+                UpdateCustomerContactVerificationPrivate(item, false);
             }
+            CSPdb.Commit(CanCommit);
 
+            SendCSSGroupVerificationApprovalMail(batchCustomerEntities, comments);
             return Ok();
         }
 
@@ -1551,7 +1557,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
-        internal string UpdateCustomerContactVerificationPrivate(CSS_BATCH_CUSTOMERS batchCustomers)
+        internal string UpdateCustomerContactVerificationPrivate(CSS_BATCH_CUSTOMERS batchCustomers, bool sendMail = true)
         {
             if (batchCustomers != null)
             {
@@ -1572,7 +1578,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CSPdb.CSS_BATCH_CUSTOMERS.Update(exist);
                         CSPdb.Commit(CanCommit);
                     }
-                    SendCSSVerificationApprovalMail(exist.CUST_ID, exist.PROJ_ID, exist.PROD_ID, exist.DISPLAY_NAME, exist.EMAIL_ID, exist.IS_VERIFIED, exist.COMMENTS);
+                    if (sendMail)
+                        SendCSSVerificationApprovalMail(exist.CUST_ID, exist.PROJ_ID, exist.PROD_ID, exist.DISPLAY_NAME, exist.EMAIL_ID, exist.IS_VERIFIED, exist.COMMENTS);
 
                 }
             }
@@ -1710,6 +1717,75 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
+
+        private void SendCSSGroupVerificationApprovalMail(List<CSS_BATCH_CUSTOMERS> cssBatchCustomers, string comments)
+        {
+            string subject = string.Empty;
+            string mailContent;
+            string status = string.Empty;
+            var EmailContentValues = new Dictionary<string, string>();
+            var empId = GetHeaderDetails_String("empId");
+
+            var projIds = cssBatchCustomers.Where(x => !string.IsNullOrWhiteSpace(x.PROJ_ID)).Select(x => x.PROJ_ID).ToList();
+            var customerIds = cssBatchCustomers.Where(x => !string.IsNullOrWhiteSpace(x.CUST_ID)).Select(x => x.CUST_ID).ToList();
+
+            var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).ToList();
+            var customers = Cldb.CUSTOMER.GetAll().Where(x => customerIds.Contains(x.CUST_ID)).ToList();
+
+            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
+            List<string> cclist = new List<string>();
+            var toMail = csm.EMAIL_ID;
+            var csmName = csm.FRST_NM;
+
+            int i = 1;
+            var tableContent = new StringBuilder();
+            foreach (var item in cssBatchCustomers.Where(x => !string.IsNullOrWhiteSpace(x.PROJ_ID)).OrderBy(x => x.DISPLAY_NAME))
+            {
+                CheckUserHasAccess(empId, item.CUST_ID, item.PROJ_ID);
+                status = i == 1 && item.IS_VERIFIED ? "Approved" : "Rejected";
+                var project = projects.FirstOrDefault(x => x.PROJ_ID == item.PROJ_ID);
+                if (project == null) continue;
+                var customer = customers.FirstOrDefault(x => x.CUST_ID == item.CUST_ID);
+                cclist.AddRange(helper.GetPMFromProject(project));
+                var qualitySpoc = helper.GetQualitySpocMailForProject(project);
+                if (!string.IsNullOrWhiteSpace(qualitySpoc))
+                    cclist.Add(qualitySpoc);
+                tableContent.Append(GenerateHtmlTableForCustomerVerification(i++, item.DISPLAY_NAME, item.EMAIL_ID,
+                         customer.CUST_NM, project.PROJ_NM, status, !string.IsNullOrWhiteSpace(comments) ? comments : string.Empty, !string.IsNullOrWhiteSpace(project.PROJ_STATUS) ? project.PROJ_STATUS : string.Empty));
+            }
+            string ccMail = string.Join(",", cclist.Distinct().ToList());
+            EmailContentValues.Add("TABLE", tableContent.ToString());
+            subject = $"CSS Customer Contacts {status}";
+            EmailContentValues.Add("CSM_NAME", csmName);
+            EmailContentValues.Add("STATUS", status);
+            mailContent = helper.GetEmailContent("SendCSSGroupVerificationApprovalMail.htm", EmailContentValues);
+            var ep = new EmailProvider(Cldb, CSPdb);
+            ep.SendEmail
+                (
+                new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+                new EmailContent { from = _email, to = toMail, cc = ccMail, bcc = toMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" },
+                this.Request
+                );
+        }
+
+        private string GenerateHtmlTableForCustomerVerification(int rowNum, string custName, string cutEmailId,
+                         string accountName, string projectName, string status, string comments, string projectStatus)
+        {
+            var sb = new StringBuilder();
+            sb.Append("<tr>");
+            sb.Append($"<td>{ rowNum }</td>");
+            sb.Append($"<td>{ custName }</td>");
+            sb.Append($"<td>{ cutEmailId }</td>");
+            sb.Append($"<td>{ accountName }</td>");
+            sb.Append($"<td>{ projectName }</td>");
+            sb.Append($"<td>{ status }</td>");
+            sb.Append($"<td>{ comments }</td>");
+            sb.Append($"<td>{ projectStatus }</td>");
+            sb.AppendLine("</tr>");
+
+            return sb.ToString();
+        }
+
         private CSS_BATCH_CUSTOMER_MONTHLY AddBatchCustomerMonthly(CSS_BATCH_MONTHLY batch, CUSTOMER_USERS cust, string empId, string custId, String projId = null, int? prodId = null)
         {
             var batchCustomer = new CSS_BATCH_CUSTOMER_MONTHLY()
@@ -1769,17 +1845,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return ValidateCSSVerificationForProjects(batchCustomers, empId);
         }
 
-        private string ValidateCSSVerfication(CSS_BATCH_CUSTOMER_MONTHLY[] batchCustomers, string empId)
-        {
-            CheckAccessForFeature(121);
-            //chk any premier ids are there
-            if (batchCustomers.Any(x => x.CUST_ID != PREMIER_CUSTOMER_ID))
-            {
-                return "Premier CSS batches can only be verified in this lot.";
-            }
-            return ValidateCSSVerificationForProjects(batchCustomers, empId);
-        }
-
         private string ValidateCSSVerificationForProjects(iBatchCustomer[] batchCustomers, string empId)
         {
             var projIds = batchCustomers.Select(x => x.PROJ_ID).ToArray();
@@ -1791,8 +1856,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (!projects.Any(x => x.PROJ_DM_EMP_ID == empId))
                     return "CSMs of the project can only Approve/Reject the contact verification. Please make sure to select the correct records.";
             //chck all status in creatd
-            if(batchCustomers.Any(x=>x.STATUS != CSS_CREATED))
-                return "Records which are in created status alone can be updated. If CSS sent already, it cannot be updated"
+            if (batchCustomers.Any(x => x.STATUS != CSS_CREATED))
+                return "Records which are in created status alone can be updated. If CSS sent already, it cannot be updated";
             //check if any of the record is approved already - if yes then throw error to select only unverified records
             if (batchCustomers.Any(x => x.IS_VERIFIED))
                 return "Records which are already Approved/Rejected cannot be updated again. Please make sure to select the correct records.";

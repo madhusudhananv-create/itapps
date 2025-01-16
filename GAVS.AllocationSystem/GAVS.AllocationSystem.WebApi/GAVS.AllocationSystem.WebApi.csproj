@@ -447,6 +447,7 @@
     <Content Include="UploadFile\Mails\ProjectClosureNotification.htm" />
     <Content Include="UploadFile\Mails\ProjectMailToPexTeam.htm" />
     <Content Include="UploadFile\Mails\ReleaseAssessmentEmail.htm" />
+    <Content Include="UploadFile\Mails\SendCSSGroupVerificationApprovalMail.htm" />
     <Content Include="UploadFile\Mails\SendCSSVerificationApprovalMail.htm" />
     <Content Include="UploadFile\Mails\SendMailForConfigEXT.htm" />
     <Content Include="UploadFile\Mails\SendMailForQspocChange.htm" />

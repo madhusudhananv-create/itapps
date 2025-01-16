@@ -95,6 +95,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public decimal? PROCESS_COMPLIANCE_AS_ON_AUDIT_DATE {get; set;}
         public decimal? CURRENT_PROCESS_COMPLIANCE {get; set;}
         public bool IS_RETAIN_CAPA {get; set;}
+        public bool ISSUBMITTED {get; set;}
     }
 
     public partial class PlannedAuditData  
@@ -444,10 +445,12 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string PROJ_ID {get; set;}
         public string CUST_ID {get; set;}
         public int? BATCH_ID {get; set;}
-        public int BATCH_CUSTOMER_ID {get; set;}
+        public int? BATCH_CUSTOMER_ID {get; set;}
         public int? BATCH_MONTHLY_ID {get; set;}
         public int? BATCH_CUSTOMER_MONTHLY_ID {get; set;}
         public string CSM_EMP_ID {get; set;}
+        public string CONTACTS_LINK {get; set;}
+        public string SKIP_CSAT_LINK {get; set;}
     }
 
 
