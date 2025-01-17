@@ -111,15 +111,14 @@ export class QaassessmentdetailsComponent implements OnInit {
     let findingStageData;
     findingStageData = new auditeE_ACCEPTANCE();
     this.route.params.subscribe(params => {
-      if (params['acceptval'] == undefined || params['acceptval'] == null) {
-        return;
-      }
-
       findingStageData = new auditeE_ACCEPTANCE();
       this.findingId = params['findingid'];
       this.auditId = params['asssessmentid'];
       findingStageData.audit_ID = this.auditId;
       findingStageData.finding_ID = this.findingId;
+      if (params['isauditor'] == undefined || params['isauditor'] == null) {
+        return;
+      }
 
       if (params['isauditor'] == "1") {
         this.findAcceptValue();
@@ -161,6 +160,10 @@ export class QaassessmentdetailsComponent implements OnInit {
 
   findAcceptValue() {
     this.route.params.subscribe(params => {
+      if (params['acceptval'] == undefined || params['acceptval'] == null) {
+        return;
+      }
+
       if (params['acceptval'] == "1") {
         if (confirm('Are you sure want to accept this finding?')) {
           this.stageStatus = "Accept";
