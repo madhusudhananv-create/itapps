@@ -1401,7 +1401,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LogRequest(prefix: "SaveAuditorAcceptanceStatus");
             var empId = GetHeaderDetails_String("empId");
 
-            if (resultList == null || resultList.Count == 0)
+            if(resultList == null || resultList.Count == 0 || string.IsNullOrWhiteSpace(resultList[0].STATUS))
                 return Ok(resultList);
 
             var findingId = resultList[0].FINDING_ID;
@@ -1489,7 +1489,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var empId = GetHeaderDetails_String("empId");
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/checklistfindings";
-            if (resultList == null || resultList.Count == 0)
+            if (resultList == null || resultList.Count == 0 || string.IsNullOrWhiteSpace(resultList[0].STATUS))
                 return Ok(resultList);
             var validationResult = ValidateStatusApprovers(empId, resultList[0].AUDIT_ID);
             if (!string.IsNullOrWhiteSpace(validationResult))
@@ -1634,7 +1634,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (findingDetails.Count > 0 && findingDetails.All(x => x.STAGE_STATUS == "Auditee Rejected" && x.ISCOMPLETE))
                 {
                     capa.DISABLE_CAPA = true;
-                    capa.STATUS="Rejected-Complet";
+                    capa.STATUS = "Rejected-Complet";
                 }
             }
             return Ok(result);
