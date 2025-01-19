@@ -25,7 +25,7 @@ export class IssueModel {
 	updateD_BY: string;
 	updateD_DATE: Date;
 	isactive: Boolean;
-	suB_VERTICAL: string;
+	subvertical: string;
 	root_CAUSE: string;
 	SPOC: string;
 	ack_DATE: Date;
@@ -35,6 +35,7 @@ export class IssueModel {
 	issuE_SOURCE: string;
 	issuE_source_otheR: string;
 	locatioN_SELECTION: string;
+	businesS_IMPACT_DESC: string;
 }
 
 export class IssueModelExt extends IssueModel {
