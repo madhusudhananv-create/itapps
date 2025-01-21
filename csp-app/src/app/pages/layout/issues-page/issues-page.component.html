@@ -346,7 +346,7 @@
       </div>
       <div class="row">
         <mat-form-field style="width:20%">
-          <mat-select name="ddIssueSource" [(ngModel)]="EditIssue.issuE_SOURCE" placeholder="Escalation Source">
+          <mat-select name="ddIssueSource" [(ngModel)]="EditIssue.issuE_SOURCE" placeholder="Escalation Source" required>
             <mat-option value="ClientReviewCall">Client escalation-Review Call</mat-option>
             <mat-option value="CSAT">Client escalation-CSAT</mat-option>
             <mat-option value="ExecutiveConnect">Client escalation-Executive connect</mat-option>
@@ -382,7 +382,7 @@
       </div>
       <div class="row">
         <mat-form-field style="width:75%">
-          <textarea name="txtRootCause" maxlength="2000" [(ngModel)]="EditIssue.root_CAUSE" matInput
+          <textarea name="txtRootCause" maxlength="2000" [(ngModel)]="EditIssue.rootcause" matInput
             placeholder="Root Cause" required></textarea>
           <i class="info fa fa-info-circle "  matTooltip="Find the underlying cause why this happened. Are there controls that were missed or not available in the process? If you have not identified the root cause , mention the probable cause that you think may have cause this esclation. You can update this once you have identified the root cause after analysis of the issue"></i>
         </mat-form-field>
@@ -426,13 +426,13 @@
           </mat-select>
           <mat-select *ngIf="EditIssue.reporteD_BY!='reportedbyGAVS'" name="ddLevelCustomer"
             [(ngModel)]="EditIssue.level" placeholder="Level" required>
-            <mat-option value="cxo">CXO</mat-option>
-            <mat-option value="BusinessStakeholder">Business Stakeholder</mat-option>
-            <mat-option value="OperationsStakeholder">Operations Stakeholder</mat-option>
-            <mat-option value="Purchase">customer-procurement</mat-option>
-            <mat-option value="buhead">BU Head</mat-option>
-            <mat-option value="pm">PM</mat-option>
-            <mat-option value="sponser">Sponsor</mat-option>
+            <mat-option value="cxo">Customer-CXO</mat-option>
+            <mat-option value="BusinessStakeholder">Customer-Business Stakeholder</mat-option>
+            <mat-option value="OperationsStakeholder">Customer-Operations Stakeholder</mat-option>
+            <mat-option value="Purchase">Customer-Procurement</mat-option>
+            <mat-option  [disabled]="true" value="buhead">BU Head</mat-option>
+            <mat-option [disabled]="true" value="pm">PM</mat-option>
+            <mat-option [disabled]="true" value="sponser">Sponsor</mat-option>
           </mat-select>
           <i class="info fa fa-info-circle "  matTooltip="Escalation reporter's position or authority within the customer organization. This is important as the issue will be displayed in the Governance dashboard based on the level selected"></i>
         </mat-form-field>
@@ -457,8 +457,8 @@
       </div>
       <div class="row">
         <mat-form-field>
-          <input [min]="EditIssue.identifieD_DATE" matInput name="dtAckDate" [(ngModel)]='EditIssue.ack_DATE'
-            [matDatepicker]="pickerAckDate" placeholder="Acknowledgement Date">
+          <input [min]="EditIssue.identifieD_DATE" matInput name="dtAckDate" [(ngModel)]='EditIssue.acK_DATE'
+            [matDatepicker]="pickerAckDate" placeholder="Acknowledgement Date" required>
           <mat-datepicker-toggle matSuffix [for]="pickerAckDate"></mat-datepicker-toggle>
           <mat-datepicker #pickerAckDate></mat-datepicker>
         </mat-form-field>

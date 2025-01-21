@@ -28,7 +28,7 @@ export class IssueModel {
 	subvertical: string;
 	root_CAUSE: string;
 	SPOC: string;
-	ack_DATE: Date;
+	acK_DATE: Date;
 	servicE_IMPACT: string;
 	financiaL_IMPACT: boolean;
 	financiaL_IMPACT_DESC: string;
