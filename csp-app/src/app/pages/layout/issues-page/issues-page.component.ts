@@ -307,6 +307,12 @@ export class IssuesPageComponent implements OnInit {
         alert('Please enter valid target and resolved dates');
         return;
       }
+      
+      if(this.EditIssue.status!=null && this.EditIssue.status == 'Closed' && this.EditIssue.issuE_RESOLVED_DATE == null)
+      {
+        alert('Please enter value for resolved date for Issues in closed status');
+        return;
+      }
     }
 
 
