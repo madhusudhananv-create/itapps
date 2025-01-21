@@ -2,6 +2,7 @@
 using GAVS.AllocationSystem.Model.AllSys;
 using GAVS.AllocationSystem.Model.CSP;
 using GAVS.AllocationSystem.Model.CSP.SP;
+using GAVS.AllocationSystem.Model.CSP.Tables;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,6 +12,8 @@ using System.Text;
 using System.Web;
 using System.Web.Http;
 using System.Web.UI.WebControls;
+
+
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -620,6 +623,67 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return Ok(projects);
         }
+
+
+        [GET("SaveChecklistCopy")]
+        [ActionName("SaveChecklistCopy")]
+        [HttpGet]
+        public IHttpActionResult SaveChecklistCopy(int checklistId, string title)
+        {
+            int newCheckListId = 0;
+            PM_CHECKLIST checklist = CSPdb.PM_CHECKLIST.GetAll().Where(x => x.ID == checklistId && x.ISACTIVE).FirstOrDefault();
+            checklist.TITLE = title;
+            checklist.CREATED_DATE = DateTime.Now;
+            CSPdb.PM_CHECKLIST.Add(checklist);
+            CSPdb.Commit(CanCommit);
+            newCheckListId = checklist.ID;
+            try
+            {
+
+                var questions = CSPdb.PM_CHECKLIST_QUESTIONS.GetAll().Where(x => x.CHECKLIST_ID == checklistId && x.ISACTIVE).ToList();
+                foreach (var question in questions)
+                {
+                    var mappingData = CSPdb.PM_PROCESS_QUESTIONS_MAPPING.GetAll().FirstOrDefault(x => x.QUESTION_ID == question.ID && x.ISACTIVE);
+                    question.CHECKLIST_ID = checklist.ID;
+                    CSPdb.PM_CHECKLIST_QUESTIONS.Add(question);
+                    if (mappingData != null)
+                    {
+                        mappingData.CHECKLIST_ID = checklist.ID;
+                        mappingData.CREATED_DATE = DateTime.Now;
+                        CSPdb.PM_PROCESS_QUESTIONS_MAPPING.Add(mappingData);
+                    }
+
+                }
+
+                List<AUDIT_CHECKLIST_WEIGHTAGE_SCORES> weightageScores = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.GetAll().Where(x => x.CHECKLIST_ID == checklistId && x.ISACTIVE).ToList();
+                if (weightageScores != null)
+                {
+                    foreach (var weightage in weightageScores)
+                    {
+                        weightage.CHECKLIST_ID = checklist.ID;
+                        CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.Add(weightage);
+
+                    }
+
+                }
+                CSPdb.Commit(CanCommit);
+            }
+            catch (Exception ex)
+            {
+                var newCheckList = CSPdb.PM_CHECKLIST.GetAll().FirstOrDefault(x => x.ID == newCheckListId);
+
+                if (newCheckList != null)
+                {
+                    newCheckList.ISACTIVE = false;
+                    CSPdb.Commit(CanCommit);
+                }
+                return BadRequest($"Error occured while creating the checklist copy: {ex.Message}");
+
+            }
+            return Ok();
+        }
+
+
 
     }
 }
