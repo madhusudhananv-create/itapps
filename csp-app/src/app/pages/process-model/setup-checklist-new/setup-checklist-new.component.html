@@ -291,6 +291,8 @@
       <td colspan="2">
         <button type="button" (click)="btnSaveChecklist_Onclick()" [disabled]="!isSaved" class="btn btn-primary"
           style="margin-right: 5px;">Save</button>
+          <button type="button"  (click)="btnSaveCopyChecklist_Onclick()" class="btn btn-primary"
+          style="margin-right: 5px;">Save as</button>
         <button (click)="btnClearChecklist_Onclick()" [disabled]="showStatusList" class="btn btn-primary">Clear</button>
       </td>
     </tr>

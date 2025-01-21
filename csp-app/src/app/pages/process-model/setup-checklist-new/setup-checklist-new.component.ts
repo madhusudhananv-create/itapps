@@ -5,6 +5,7 @@ import { ProcessModelNew } from './../../../models/audit-checklist-based-model';
 import { myUtility } from './../../../Shared/myUtility';
 import { MatTableDataSource, MatSelect, MatCheckboxChange, MatCheckbox, MatSort, MatIcon } from '@angular/material';
 import { ProcessModelService } from './../process-model.service';
+import { L } from '@angular/core/src/render3';
 
 @Component({
   selector: 'app-setup-checklist-new',
@@ -467,7 +468,7 @@ export class SetupChecklistNewComponent implements OnInit {
     this.service_getChecklistQuestionList(this.newChecklist.id);
     this.getchecklistUsedInAssessment();
     //this.isChecklistAdded = false;
-   
+
 
   }
 
@@ -523,7 +524,7 @@ export class SetupChecklistNewComponent implements OnInit {
     if (this.newChecklist.description == undefined || this.newChecklist.description.trim() == "") {
       alert('Please enter description');
       return;
-    } 
+    }
     if (this.newChecklist.version == undefined || this.newChecklist.version == 0) {
       alert('Please enter version');
       return;
@@ -535,7 +536,7 @@ export class SetupChecklistNewComponent implements OnInit {
     if (this.newChecklist.version.toString().length > 11) {
       alert('Please enter a version with less than 10 digits');
       return;
-    }    
+    }
     if (this.newChecklist.effectivE_FROM == undefined) {
       alert('Please enter effective date');
       return;
@@ -585,7 +586,7 @@ export class SetupChecklistNewComponent implements OnInit {
     this.newChecklist.createD_DATE = new Date().toDateString();
     this.newChecklist.updateD_DATE = new Date().toDateString();
     this.newChecklist.effectivE_FROM = this._util.setLocaleDate(this.newChecklist.effectivE_FROM).toDateString();
-    
+
     if (this.newChecklist.id == 0 || this.newChecklist.id == undefined) {
       //this.isChecklistAdded = true;
       this.service_addChecklist(this.newChecklist);
@@ -594,6 +595,20 @@ export class SetupChecklistNewComponent implements OnInit {
       //this.isChecklistAdded = false;
       this.service_updateChecklist(this.newChecklist);
     }
+  }
+  btnSaveCopyChecklist_Onclick() {
+    this.service_getChecklistList();
+    const currentDateTime = new Date().toLocaleString();
+    const checkistTitle = prompt("Save the title as", `Copy-${currentDateTime} - ${this.newChecklist.title}`);
+    this.service_saveChecklistCopy(this.newChecklist.id, checkistTitle);
+
+  }
+
+  service_saveChecklistCopy(id, checkistTitle) {
+    this._appservice.saveChecklistCopy(id, checkistTitle).subscribe(data => {
+      alert('Checklist saved successfully');
+      this.service_getChecklistList();
+    }, error => { this._util.serviceError(error); });
   }
 
   service_updateChecklist(checklistToUpdate: ChecklistModel) {
@@ -703,12 +718,12 @@ export class SetupChecklistNewComponent implements OnInit {
   getchecklistUsedInAssessment() {
     debugger;
     this._appservice.getChecklistUsedInAssessment().subscribe(data => {
-      this.checklistUsedInAssessment = data;   
-      var checklistInUse = this.checklistUsedInAssessment.filter(x=>x.checklisT_ID == this.newChecklist.id)
-      if(checklistInUse.length > 0)     
-        this.isDisabled = true;      
-      else 
-      this.isDisabled = false;
+      this.checklistUsedInAssessment = data;
+      var checklistInUse = this.checklistUsedInAssessment.filter(x => x.checklisT_ID == this.newChecklist.id)
+      if (checklistInUse.length > 0)
+        this.isDisabled = true;
+      else
+        this.isDisabled = false;
     }, error => { this._util.serviceError(error); });
 
   }

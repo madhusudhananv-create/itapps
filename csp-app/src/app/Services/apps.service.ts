@@ -5649,7 +5649,7 @@ export class AppsService {
     });
     return this._http.get<BatchCustomerAndQuestions>(
       this.apiurl_auth + "GetCSSSurveyQuestions?Code=" + code +
-      "&showQualitativeFeedback=" + showQualitativeFeedback +"&showCSSFields="+showCSSFields,
+      "&showQualitativeFeedback=" + showQualitativeFeedback + "&showCSSFields=" + showCSSFields,
       { headers: header }
     );
   }
@@ -7228,7 +7228,7 @@ export class AppsService {
       token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
     });
-   
+
     //  return this._http.get<any[]>(this.apiurl_auth + "/GetSPData?spName=reports_CSAT_Consolidated&startDate=2024-7-1&endDate=2024-9-30", {
     //  headers: header,
     //  });
@@ -9336,6 +9336,22 @@ export class AppsService {
       this.apiurl + "/GetOverallKPIList",
       { headers: header }
     );
+  }
+
+  saveChecklistCopy(checklistId: string, title: string): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    const requestBody = {
+      checklistId: checklistId,
+      title: title
+    };
+    return this._http.get<any[]>(this.apiurl + "/SaveChecklistCopy", {
+      headers: header,
+      params: requestBody
+    });
   }
 
 
