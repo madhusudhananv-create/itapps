@@ -631,7 +631,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult SaveChecklistCopy(int checklistId, string title)
         {
             int newCheckListId = 0;
-            PM_CHECKLIST checklist = CSPdb.PM_CHECKLIST.GetAll().Where(x => x.ID == checklistId && x.ISACTIVE).FirstOrDefault();
+            var checklist = CSPdb.PM_CHECKLIST.GetAll().Where(x => x.ID == checklistId && x.ISACTIVE).FirstOrDefault();
             checklist.TITLE = title;
             checklist.CREATED_DATE = DateTime.Now;
             CSPdb.PM_CHECKLIST.Add(checklist);
@@ -655,7 +655,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 }
 
-                List<AUDIT_CHECKLIST_WEIGHTAGE_SCORES> weightageScores = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.GetAll().Where(x => x.CHECKLIST_ID == checklistId && x.ISACTIVE).ToList();
+                var weightageScores = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.GetAll().Where(x => x.CHECKLIST_ID == checklistId && x.ISACTIVE).ToList();
                 if (weightageScores != null)
                 {
                     foreach (var weightage in weightageScores)
