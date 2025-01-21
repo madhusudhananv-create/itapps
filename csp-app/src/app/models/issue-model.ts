@@ -31,7 +31,7 @@ export class IssueModel {
 	acK_DATE: Date;
 	servicE_IMPACT: string;
 	financiaL_IMPACT: boolean;
-	financiaL_IMPACT_DESC: string;
+	financiaL_IMPACT_DESCRIPTION: string;
 	issuE_SOURCE: string;
 	issuE_source_otheR: string;
 	locatioN_SELECTION: string;

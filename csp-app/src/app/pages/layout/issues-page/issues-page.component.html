@@ -291,7 +291,7 @@
 
       <div *ngIf="EditIssue.financiaL_IMPACT" class="row">
         <mat-form-field style="width:75%">
-          <textarea name="txtFinancialImpactDesc" maxlength="2000" [(ngModel)]="EditIssue.financiaL_IMPACT_DESC"
+          <textarea name="txtFinancialImpactDesc" maxlength="2000" [(ngModel)]="EditIssue.financiaL_IMPACT_DESCRIPTION"
             matInput placeholder="Financial Impact Description"></textarea>
             <i class="info fa fa-info-circle "
             matTooltip="If Yes, Describe the financial impact. Provide the estimated $ number of the financial impact. You may take the liberty to explain how you arrived at that number "></i>
@@ -408,10 +408,10 @@
         <mat-form-field style="width:calc(50% - 20px)">
           <textarea name="txtIdentifiedBy" maxlength="50" [(ngModel)]="EditIssue.identifieD_BY" matInput
             placeholder="Reported By(Person Name)" required>{{EditIssue.identified_BY}}</textarea>
-          <i class="info fa fa-info-circle "
-            matTooltip="Name of the stakeholder escalating the issue (if it is escalated by Customer, please provide the name of the customer)">
-          </i>
+          
         </mat-form-field>
+        <i class="info fa fa-info-circle " matTooltip="Name of the stakeholder escalating the issue (if it is escalated by Customer, please provide the name of the customer)">
+        </i>
         <!-- <mat-form-field *ngIf ="levelmode"  style="padding-left: 25px;"> -->
         <mat-form-field style="padding-left: 25px;">
           <mat-select *ngIf="EditIssue.reporteD_BY=='reportedbyGAVS'" name="ddLevelGavs" [(ngModel)]="EditIssue.level"
