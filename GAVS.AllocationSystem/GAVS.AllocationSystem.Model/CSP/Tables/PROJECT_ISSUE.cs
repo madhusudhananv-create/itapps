@@ -1,5 +1,6 @@
 ﻿using GAVS.AllocationSystem.Model.Base;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GAVS.AllocationSystem.Model.CSP
 {
@@ -28,6 +29,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         //public Boolean ISCUSTOMERESCALATED { get; set; }
 
+        [NotMapped]
         public string SUBVERTICAL { get; set; }
 
         public string ROOTCAUSE { get; set; }
