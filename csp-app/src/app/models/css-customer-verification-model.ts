@@ -27,7 +27,7 @@ export class CssCustomerVerificationModel {
       typE_OF_ACCOUNT:string;
       accounT_OWNER:string;
       pm:string;
-      pM_MAIL_ID:string;
+      pM_MAIL:string;
       csm:string;
       csM_MAIL_ID:string;
       accounT_MANAGER:string;
