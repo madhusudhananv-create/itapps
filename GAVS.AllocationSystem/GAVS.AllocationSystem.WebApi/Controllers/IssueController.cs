@@ -78,8 +78,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ROOTCAUSE = results.ROOTCAUSE;
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
-                if(results.ACK_DATE.HasValue)
-                    overview.ACK_DATE = results.ACK_DATE.GetValueOrDefault(DateTime.Today).ToLocalTime();  
+                if (results.ACK_DATE.HasValue)
+                    overview.ACK_DATE = results.ACK_DATE.GetValueOrDefault(DateTime.Today).ToLocalTime();
                 overview.SERVICE_IMPACT = results.SERVICE_IMPACT;
                 overview.FINANCIAL_IMPACT = results.FINANCIAL_IMPACT;
 
@@ -188,7 +188,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
                     overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
                 }
-                else  
+                else
                 {
                     overview.BUSINESS_IMPACT = null;
                     overview.BUSINESS_IMPACT_DESC = null;
@@ -236,6 +236,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             LoadOverAllIssuesData();
             return Ok();
+        }
+
+        [GET("GetAccountLevelUsers")]
+        [ActionName("GetAccountLevelUsers")]
+        [HttpGet]
+        public IHttpActionResult GetAccountLevelUsers(string customerId)
+        {
+            var result = new List<Emp_Info_Small>();
+
+            //var projects = Cldb.PROJECT.GetAll().Where(x=>x.)
+            return Ok(result);
+
         }
     }
 }

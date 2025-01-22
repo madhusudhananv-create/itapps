@@ -65,6 +65,14 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
         public string EMP_ID_NEW { get; set; }
     }
-   
+
+    public class Emp_Info_Small
+    {
+        public string EMP_ID { get; set; }
+        
+        public string FRST_NM { get; set; }
+
+        public bool DISABLED { get; set; }
+    }
 }
 
