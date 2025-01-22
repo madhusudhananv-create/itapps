@@ -10,6 +10,7 @@ export class ProcessModelModel {
     isactive: boolean
     releasE_DATE: Date;
     industrY_STANDARD_REFERENCE: any;
+  retiremenT_DATE: string | number | Date;
 }
 export class ProcessSqaServiceArea {
     id: number = 0;

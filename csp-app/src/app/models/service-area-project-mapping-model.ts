@@ -12,6 +12,7 @@ export class ServiceAreaProjectMappingModel {
 export class ServiceTowersProjectMappingModel {
     id:number;
     title:string;
+  retiremenT_DATE: Date;
 }
 
 
