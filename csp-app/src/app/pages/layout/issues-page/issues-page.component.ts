@@ -297,6 +297,15 @@ export class IssuesPageComponent implements OnInit {
       return;
     }
 
+    if (this.EditIssue.status != null && this.EditIssue.status == 'Closed' && this.EditIssue.issuE_RESOLVED_DATE == null) {
+      alert('Please enter value for resolved date for Issues in closed status');
+      return;
+    }
+    if (this.EditIssue.status != null && this.EditIssue.status == 'Closed' && (this.EditIssue.comments == null || this.EditIssue.comments.trim() == '')) {
+      alert('Please enter value for Comments for Issues in closed status');
+      return;
+    }
+
     let rdate = this.EditIssue.issuE_RESOLVED_DATE;
 
     if (this.EditIssue.issuE_RESOLVED_DATE != null && this.EditIssue.issuE_RESOLVED_DATE != undefined) {
@@ -307,16 +316,8 @@ export class IssuesPageComponent implements OnInit {
         alert('Please enter valid target and resolved dates');
         return;
       }
-      
-      if(this.EditIssue.status!=null && this.EditIssue.status == 'Closed' && this.EditIssue.issuE_RESOLVED_DATE == null)
-      {
-        alert('Please enter value for resolved date for Issues in closed status');
-        return;
-      }
-      if (this.EditIssue.status != null && this.EditIssue.status == 'Closed' && (this.EditIssue.comments == null || this.EditIssue.comments.trim() =='')) {
-        alert('Please enter value for Comments for Issues in closed status');
-        return;
-      }
+
+
     }
 
 
