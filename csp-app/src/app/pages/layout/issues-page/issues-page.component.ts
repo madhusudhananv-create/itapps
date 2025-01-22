@@ -313,6 +313,10 @@ export class IssuesPageComponent implements OnInit {
         alert('Please enter value for resolved date for Issues in closed status');
         return;
       }
+      if (this.EditIssue.status != null && this.EditIssue.status == 'Closed' && (this.EditIssue.comments == null || this.EditIssue.comments.trim() =='')) {
+        alert('Please enter value for Comments for Issues in closed status');
+        return;
+      }
     }
 
 
