@@ -407,6 +407,8 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
     {
         public string CUST_NM {get; set;}
         public string PROJ_NM {get; set;}
+        public string CSS_Eligible {get; set;}
+        public string REASON {get; set;}
         public int HEAD_COUNT {get; set;}
         public DateTime START_DateTime {get; set;}
         public DateTime END_DateTime {get; set;}
@@ -431,7 +433,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string TYPE_OF_ACCOUNT {get; set;}
         public string ACCOUNT_OWNER {get; set;}
         public string PM {get; set;}
-        public string PM_MAIL_ID {get; set;}
+        public string PM_MAIL {get; set;}
         public string CSM {get; set;}
         public string CSM_MAIL_ID {get; set;}
         public string ACCOUNT_MANAGER {get; set;}

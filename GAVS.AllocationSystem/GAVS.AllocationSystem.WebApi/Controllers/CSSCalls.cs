@@ -492,17 +492,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetCSSBatches")]
         [ActionName("GetCSSBatches")]
         [HttpGet]
-        public IHttpActionResult GetCSSBatches()
+        public IHttpActionResult GetCSSBatches(string csmId)
         {
 
             var batches = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(t => t.ID).ToList();
             var batchIds = batches.Select(x => x.ID).ToList();
             var totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList();
-
+            var csmIdExists = !string.IsNullOrWhiteSpace(csmId);
+            var projects = csmIdExists ? Cldb.PROJECT.GetAll().Where(x => x.PROJ_DM_EMP_ID == csmId).Select(x => x.PROJ_ID).ToList() : new List<string>();
             foreach (var item in batches)
             {
 
-                var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
+                var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID ).ToList();
+                //if (csmIdExists)
+                //{
+                //    batchRecords = batchRecords.Where(x => projects.Contains(x.PROJ_ID)).ToList();
+                //}
 
                 item.TOTAL_RECORDS = batchRecords.Count;
                 item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED));
@@ -512,7 +517,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 item.REJECTED = batchRecords.Count(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS));
 
             }
-           
+
             return Ok(batches);
         }
 
@@ -878,11 +883,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var batches = CSPdb.CSS_BATCH_MONTHLY.GetAll().OrderByDescending(t => t.ID).ToList();
             var batchIds = batches.Select(x => x.ID).ToList();
-            var totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList();
+            var totalRecords = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_MONTHLY_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList();
 
             foreach (var item in batches)
             {
-                var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
+                var batchRecords = totalRecords.Where(x => x.BATCH_MONTHLY_ID == item.ID).ToList();
 
                 item.TOTAL_RECORDS = batchRecords.Count;
                 item.SURVEY_SENT = batchRecords.Count(x => x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED);
@@ -1510,7 +1515,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             DateTime.TryParse(GetHeaderDetails_String("endDate"), out endDate);
 
             var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(verification => verification.CSM_EMP_ID == emp_Id).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
+            var uri = helper.GetAbsoulteUri();
 
+            foreach (var item in cssVerificationList)
+            {
+                item.SKIP_CSAT_LINK = $"{uri}/layout/projectdataconfiguration/{item.CUST_ID}";
+                item.CONTACTS_LINK = $"{uri}/layout/contacts/{item.CUST_ID}";
+            }
             return Ok(cssVerificationList);
         }
 
@@ -1519,7 +1530,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [ActionName("UpdateCustomerContactsVerificationList")]
         [HttpPost]
         public IHttpActionResult UpdateCustomerContactsVerificationList([FromBody] CSS_CUSTOMER_VERIFICATION[] batchCustomers, bool csmAction, string comments)
-        {           
+        {
             string emp_Id = GetHeaderDetails_String("empId");
 
             var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_ID).ToList();
@@ -1863,7 +1874,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return "Records which are already Approved/Rejected cannot be updated again. Please make sure to select the correct records.";
 
             //check if any of the records is rejected already(is_verified = false and comments not null) - if yes throw error to select only un verified records
-            if (batchCustomers.Any(x => !x.IS_VERIFIED   && !string.IsNullOrWhiteSpace(x.COMMENTS)))
+            if (batchCustomers.Any(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS)))
                 return "Records which are already Rejected cannot be updated again. Please make sure to select the correct records.";
             return string.Empty;
         }
