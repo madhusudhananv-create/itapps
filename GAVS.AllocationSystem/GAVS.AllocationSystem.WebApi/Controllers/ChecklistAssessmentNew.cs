@@ -1491,7 +1491,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var path = "layout/checklistfindings";
             if (resultList == null || resultList.Count == 0 || string.IsNullOrWhiteSpace(resultList[0].STATUS))
                 return Ok(resultList);
-            var validationResult = ValidateStatusApprovers(empId, resultList[0].AUDIT_ID);
+            var findingId = resultList[0].FINDING_ID;
+            var findingrow = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().FirstOrDefault(x => x.ID == findingId && x.ISACTIVE);
+            int auditid = 0;
+
+            if (findingrow != null)
+                auditid = findingrow.AUDIT_ID;
+
+            var validationResult = ValidateStatusApprovers(empId, auditid);
             if (!string.IsNullOrWhiteSpace(validationResult))
                 return Content(System.Net.HttpStatusCode.Conflict, validationResult);
 
@@ -1526,12 +1533,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit(CanCommit);
 
             var checklistsendmail = new ChecklistSendMail();
-            var findingId = resultList[0].FINDING_ID;
-            var findingrow = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().FirstOrDefault(x => x.ID == findingId && x.ISACTIVE);
-            int auditid = 0;
-
-            if (findingrow != null)
-                auditid = findingrow.AUDIT_ID;
+          
 
             if (CheckIfNoOpenFinding(auditid))
                 UpdateAuditStatus(auditid, "COMPLETED");
@@ -1575,13 +1577,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = CSPdb.AUDIT_SCHEDULE.GetAll().FirstOrDefault(t => t.ISACTIVE && t.TASK_ID.HasValue && t.TASK_ID == auditId);
             if (result != null)
             {
-                result.AUDITEE_EMP_ID = CSPdb.AUDIT_SCHEDULE_REF.GetAll().Where(x => x.KEY == "AUDITEE_EMP_ID" && x.AUDIT_SCHEDULE_ID == result.ID).Select(x => x.VALUE).ToList();
-            }
-            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == result.PROJ_ID);
-            var allowedProjects = GetProjectListForUser(empId, project.CUST_ID);
-            if (allowedProjects.Any(x => x.PROJ_ID == project.PROJ_ID) || (empId == project.PROJ_PM_EMP_ID) || (empId == project.PROJ_DM_EMP_ID))
-            {
-                return string.Empty;
+                //result.AUDITEE_EMP_ID = CSPdb.AUDIT_SCHEDULE_REF.GetAll().Where(x => x.KEY == "AUDITEE_EMP_ID" && x.AUDIT_SCHEDULE_ID == result.ID).Select(x => x.VALUE).ToList();
+
+                var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == result.PROJ_ID);
+                var allowedProjects = GetProjectListForUser(empId, project.CUST_ID);
+                if (allowedProjects.Any(x => x.PROJ_ID == project.PROJ_ID) || (empId == project.PROJ_PM_EMP_ID) || (empId == project.PROJ_DM_EMP_ID))
+                {
+                    return string.Empty;
+                }
             }
             return "You are not an authorised person to accept/reject the findings";
 

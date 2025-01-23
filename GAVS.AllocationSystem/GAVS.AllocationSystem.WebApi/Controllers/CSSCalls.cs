@@ -492,7 +492,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetCSSBatches")]
         [ActionName("GetCSSBatches")]
         [HttpGet]
-        public IHttpActionResult GetCSSBatches(string csmId)
+        public IHttpActionResult GetCSSBatches(string csmId = "")
         {
 
             var batches = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(t => t.ID).ToList();
@@ -503,7 +503,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var item in batches)
             {
 
-                var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID ).ToList();
+                var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
                 //if (csmIdExists)
                 //{
                 //    batchRecords = batchRecords.Where(x => projects.Contains(x.PROJ_ID)).ToList();
