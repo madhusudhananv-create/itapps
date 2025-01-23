@@ -10,6 +10,7 @@ import { MatDialog, MatDialogConfig, MatDialogRef, MatSort, MatTableDataSource }
 import { CssBatchMonthlyModel } from '../../../models/css-batch-monthly-model';
 import { CssCustomerVerificationModel } from '../../../models/css-customer-verification-model';
 import { AccessControl } from '../../../Shared/accessControl';
+import { CssBatchModel } from '../../../models/css-batch-model';
 
 @Component({
   selector: 'app-survey-settings-verification-page',
@@ -67,9 +68,9 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
 
 
     //CSMList: CSMList[] = [];
-    Batches: CssBatchMonthlyModel[] = [];
+    Batches: CssBatchModel [] = [];
     BatchCustomers: CssCustomerVerificationModel[] = [];
-    selectedBatch: CssBatchMonthlyModel;
+    selectedBatch: CssBatchModel;
     startDate:any;
     endDate:any;
     batchColumns = ['index', 'starT_DATE', 'enD_DATE', 'status', "totaL_RECORDS","pending","verified","rejected","surveY_SENT","surveY_RECD"]
@@ -81,7 +82,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
     isVerificationInProgress: boolean = false;
     batchCustomerData: CssCustomerVerificationModel = new CssCustomerVerificationModel();
     //new code changes
-    newBatch: CssBatchMonthlyModel;
+    newBatch: CssBatchModel;
     confirmationMessage:string;
     confirmationDialogRef;
   
@@ -139,7 +140,9 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
   
     copyitem(item): void {
       let listener = (e: ClipboardEvent) => {
-        e.clipboardData.setData('text/plain', (item));
+        if (e.clipboardData) {
+          e.clipboardData.setData('text/plain', (item));
+        }
         e.preventDefault();
       };
       document.addEventListener('copy', listener);
@@ -147,6 +150,21 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
       document.removeEventListener('copy', listener);
     }
   
+    openInNewTabCL(url) {
+      this.openInNewTab(url.contactS_LINK);
+    }
+    openInNewTabSC(element){
+      this.openInNewTab(element.skiP_CSAT_LINK);
+    }
+
+    openInNewTab(url) { 
+      const newWindow = window.open(url, '_blank');
+      if (newWindow) {
+        newWindow.focus();
+      }
+    }
+
+    
   
   
     /** Whether the number of selected elements matches the total number of rows. */
@@ -163,7 +181,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
     }
       
     service_GetCSSMonthlyBatches() {
-      this.surveyService.GetCSSMonthlyBatches().subscribe(data => {
+      this.surveyService.GetCSSBatches(localStorage.getItem("empid")).subscribe(data => {
         this.Batches = data;
       }, error => { this._util.serviceError(error); });
     }

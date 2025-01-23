@@ -11,59 +11,59 @@
         <ng-container matColumnDef="index">
           <th mat-header-cell *matHeaderCellDef>No.</th>
           <td mat-cell [ngClass]="'indexWidth'" *matCellDef="let element = index">
-            <a style="color: #0000FF;" class="link">
+            <a style="color: #0000FF; cursor: pointer;"  >
               {{element + 1}} </a>
           </td>
         </ng-container>
         <ng-container matColumnDef="starT_DATE">
           <th mat-header-cell *matHeaderCellDef> Start Date </th>
           <td mat-cell *matCellDef="let element">
-            <a style="color: #0000FF;" class="link">
+            <a style="color: #0000FF; cursor: pointer;"  >
               {{element.starT_DATE|date:'dd-MMM-yyy'}} </a>
           </td>
         </ng-container>
         <ng-container matColumnDef="enD_DATE">
           <th mat-header-cell *matHeaderCellDef> End Date </th>
           <td mat-cell *matCellDef="let element">
-            <a style="color: #0000FF;" class="link">
+            <a style="color: #0000FF; cursor: pointer;"  >
               {{element.enD_DATE|date:'dd-MMM-yyy'}} </a>
           </td>
         </ng-container>
          <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef> Status </th>
           <td mat-cell *matCellDef="let element">
-            <a style="color: #0000FF;" class="link">
+            <a style="color: #0000FF; cursor: pointer;"  >
               {{element.status}}</a>
           </td>
         </ng-container>
         <ng-container matColumnDef="totaL_RECORDS">
           <th mat-header-cell *matHeaderCellDef>Total</th>
-          <td mat-cell *matCellDef="let element"><a style="color: #0000FF;" class="link">
+          <td mat-cell *matCellDef="let element"><a style="color: #0000FF; cursor: pointer;"  >
             {{ element.totaL_RECORDS }} </a></td>
         </ng-container>
         <ng-container matColumnDef="pending">
           <th mat-header-cell *matHeaderCellDef>Pending</th>
-          <td mat-cell *matCellDef="let element"><a style="color: #0000FF;" class="link">
+          <td mat-cell *matCellDef="let element"><a style="color: #0000FF; cursor: pointer;"  >
             {{ element.pending }} </a></td>
         </ng-container>
         <ng-container matColumnDef="verified">
           <th mat-header-cell *matHeaderCellDef>Verified</th>
-          <td mat-cell *matCellDef="let element"><a style="color: #0000FF;" class="link">
+          <td mat-cell *matCellDef="let element"><a style="color: #0000FF; cursor: pointer;"  >
             {{ element.verified }} </a></td>
         </ng-container>
         <ng-container matColumnDef="rejected">
           <th mat-header-cell *matHeaderCellDef>Rejected</th>
-          <td mat-cell *matCellDef="let element"><a style="color: #0000FF;" class="link">
+          <td mat-cell *matCellDef="let element"><a style="color: #0000FF; cursor: pointer;"  >
             {{ element.rejected }} </a></td>
         </ng-container>
         <ng-container matColumnDef="surveY_SENT">
           <th mat-header-cell *matHeaderCellDef>Sent</th>
-          <td mat-cell *matCellDef="let element"><a style="color: #0000FF;" class="link">
+          <td mat-cell *matCellDef="let element"><a style="color: #0000FF; cursor: pointer;"  >
             {{ element.surveY_SENT }} </a></td>
         </ng-container>
         <ng-container matColumnDef="surveY_RECD">
           <th mat-header-cell *matHeaderCellDef> Received </th>
-          <td mat-cell *matCellDef="let element"><a style="color: #0000FF;" class="link">
+          <td mat-cell *matCellDef="let element"><a style="color: #0000FF; cursor: pointer;"  >
             {{ element.surveY_RECD }}</a></td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="batchColumns; sticky: true"></tr>
@@ -182,7 +182,7 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="DEPARTMENT">
-            <th mat-header-cell *matHeaderCellDef> Department </th>
+            <th mat-header-cell *matHeaderCellDef> Subvertical </th>
             <td mat-cell *matCellDef="let element"> {{element.department}} </td>
           </ng-container>
           <ng-container matColumnDef="PROJECT_GROUP">
@@ -218,7 +218,7 @@
             <td mat-cell *matCellDef="let element"> {{element.pm}} </td>
           </ng-container>
           <ng-container matColumnDef="PM_MAIL_ID">
-            <th mat-header-cell *matHeaderCellDef> PM Mail Id </th>
+            <th mat-header-cell *matHeaderCellDef> PM Mail  </th>
             <td mat-cell *matCellDef="let element"> {{element.pM_MAIL}} </td>
           </ng-container>
           <ng-container matColumnDef="QUALITY_SPOC">
@@ -234,14 +234,23 @@
             <td mat-cell *matCellDef="let element"> {{element.skiP_CSAT_COMMENTS}} </td>
           </ng-container>
           <ng-container matColumnDef="contactS_LINK">
-            <th mat-header-cell *matHeaderCellDef> Contact </th>
-            <td mat-cell *matCellDef="let element"> {{element.contactS_LINK}} </td>
+            <th mat-header-cell *matHeaderCellDef> Contacts Link </th>
+            <td mat-cell *matCellDef="let element">
+            <a class="link" (click)="openInNewTabCL(element)">
+              Click Here
+            </a>
+          </td>
           </ng-container>
           <ng-container matColumnDef="skiP_CSAT_LINK">
-            <th mat-header-cell *matHeaderCellDef> Skip CSAT  </th>
-            <td mat-cell *matCellDef="let element"> {{element.skiP_CSAT_LINK}} </td>
+            <th mat-header-cell *matHeaderCellDef> Skip CSAT Link  </th>
+            <td mat-cell *matCellDef="let element">
+              <a class="link" (click)="openInNewTabSC(element)">
+                Click Here
+              </a>
+
+             </td>
           </ng-container>
-          <ng-container matColumnDef="edit">
+          <!-- <ng-container matColumnDef="edit">
             <th mat-header-cell style="font-family: calibri;" [ngClass]="'editWidth'" *matHeaderCellDef>
               <div></div>
             </th>
@@ -250,7 +259,7 @@
                 <img src="\assets\images\copy.png" style="width: 20px;height: 20px" />
               </a>
             </td>
-          </ng-container>
+          </ng-container> -->
           <tr mat-header-row *matHeaderRowDef="batchCustomersColumns; sticky: true"></tr>
           <tr mat-row *matRowDef="let row; columns: batchCustomersColumns;"></tr>
         </table>

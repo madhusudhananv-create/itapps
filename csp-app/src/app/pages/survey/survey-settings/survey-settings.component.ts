@@ -455,7 +455,7 @@ export class SurveySettingsComponent implements OnInit {
   }
 
   service_GetCSSBatches() {
-    this.surveyService.GetCSSBatches().subscribe(
+    this.surveyService.GetCSSBatches(localStorage.getItem("empid")).subscribe(
       (data) => {
         this.Batches = data;
       },

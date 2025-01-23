@@ -55,9 +55,9 @@ export class SurveyService {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid'), 'selectedIds': selectedIds, 'type': premierCSAT});
     return this._http.post<CssBatchCustomersExtendedModel[]>(this.apiurl + "/CreateActionItemForCSAT?batchId=" + batchId, header, { headers: header });
   }
-  GetCSSBatches(): Observable<CssBatchModel[]> {
+  GetCSSBatches(csmId: string): Observable<CssBatchModel[]> {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
-    return this._http.get<CssBatchModel[]>(this.apiurl + '/GetCSSBatches', { headers: header });
+    return this._http.get<CssBatchModel[]>(this.apiurl + '/GetCSSBatches?csmId=' + csmId, { headers: header });
   }
   RefreshCSSBatchCustomers(batchid: number): Observable<CssBatchCustomersExtendedModel[]> {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
