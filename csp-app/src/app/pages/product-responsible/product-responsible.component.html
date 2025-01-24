@@ -134,8 +134,8 @@
           </mat-select>
         </mat-form-field>
     </div>
-
-    <div *ngIf="editItem.managemenT_TYPE != 'CUSTOMER' && editItem.managemenT_TYPE != 'CUSTOMER_CSAT' && editItem.managemenT_TYPE != 'QUALITYSPOC' && editItem.managemenT_TYPE != 'PROJECT' " class="row">
+    
+    <div *ngIf="editItem.managemenT_TYPE != 'CUSTOMER' && editItem.managemenT_TYPE != 'CUSTOMER CSAT QUARTERLY' && editItem.managemenT_TYPE != 'CUSTOMER CSAT HALFYEARLY' && editItem.managemenT_TYPE != 'QUALITYSPOC' && editItem.managemenT_TYPE != 'PROJECT' " class="row">
         <mat-form-field style="width:30%">
           <mat-select name="ddname" [(ngModel)]="editItem.name" placeholder="Responsible Name" required>
               <mat-option [value]="item.name" *ngFor="let item of customerEmployeeList" [title]="item.name">{{item.name}}</mat-option>
@@ -151,7 +151,7 @@
       </mat-form-field>
     </div>
 
-    <div *ngIf="editItem.managemenT_TYPE == 'CUSTOMER' || editItem.managemenT_TYPE == 'CUSTOMER_CSAT'" class="row">
+    <div *ngIf="editItem.managemenT_TYPE == 'CUSTOMER' || editItem.managemenT_TYPE == 'CUSTOMER CSAT HALFYEARLY' || editItem.managemenT_TYPE == 'CUSTOMER CSAT QUARTERLY'" class="row">
       <mat-form-field style="width:30%">
         <mat-select name="ddname" [(ngModel)]="editItem.name" placeholder="Responsible Name" required>
             <mat-option [value]="item.contacT_NAME" *ngFor="let item of customerList" [title]="item.contacT_NAME">{{item.contacT_NAME}}</mat-option>

@@ -188,7 +188,8 @@ export class ProductResponsibleComponent implements OnInit {
       return;
     }
     this.editItem.producT_ID = this.overallProductsList.filter(x => x.producT_TITLE == this.editItem.producT_TITLE)[0].id;
-    if (this.editItem.managemenT_TYPE == 'CUSTOMER' || this.editItem.managemenT_TYPE == 'CUSTOMER_CSAT') {
+    if (this.editItem.managemenT_TYPE == 'CUSTOMER' || this.editItem.managemenT_TYPE == 'CUSTOMER CSAT QUARTERLY'
+      || this.editItem.managemenT_TYPE == 'CUSTOMER CSAT HALFYEARLY') {
       this.editItem.emP_ID = this.customerList.filter(x => x.contacT_NAME == this.editItem.name)[0].contacT_EMAILID;
     }
     else if (this.editItem.managemenT_TYPE == 'QUALITYSPOC') {
