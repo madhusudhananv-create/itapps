@@ -221,7 +221,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else
                         {
-                            questionModelId = helper.GetQuestionModel(batchCust.CUST_ID, batchCust.PROJ_ID, false, batch.START_DATE, batch.END_DATE, batchCust.EMAIL_ID, batch.ID);
+                            questionModelId = helper.GetQuestionModel(batchCust.CUST_ID, batchCust.PROJ_ID, false, batch.START_DATE, batch.END_DATE, batchCust.EMAIL_ID, batch.ID, batch.FREQUENCY);
                         }
                         questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(t => t.MODEL_ID == questionModelId && t.EFFECTIVE_FROM <= DateTime.Now && t.ISACTIVE == true).ToList();
                         questionsWithReplies = GetQuestionReplies(questions, batchesExt.ID, iteration.SURVEY_ID, false);
@@ -293,7 +293,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else
                         {
-                            questionModelId = helper.GetQuestionModel(batchCustMonthly.CUST_ID, batchCustMonthly.PROJ_ID, true, batch.START_DATE, batch.END_DATE, batchCustMonthly.EMAIL_ID, batch.ID);
+                            questionModelId = helper.GetQuestionModel(batchCustMonthly.CUST_ID, batchCustMonthly.PROJ_ID, true, batch.START_DATE, batch.END_DATE, batchCustMonthly.EMAIL_ID, batch.ID, "quarterly");
                         }
                         questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(t => t.MODEL_ID == questionModelId && t.EFFECTIVE_FROM <= DateTime.Now && t.ISACTIVE == true).ToList();
                         questionsWithReplies = GetQuestionReplies(questions, batchCustMonthly.ID, iteration.SURVEY_ID, true);
@@ -564,6 +564,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string tomail = string.Empty;
             string ccmail = string.Empty;
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
+            string csmmails = string.Empty;
+            string pmmmails = string.Empty;
+            string qualitySpoc = string.Empty;
+            string amMail = string.Empty;
+            if (replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROD_ID.HasValue)
+            {
+                var projIds = helper.GetProjIdsForProduct(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROD_ID);
+                var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).ToList();
+                if (projects.Any())
+                {
+                    csmmails = helper.GetCSMMailsFromProject(projects[0]);
+                    pmmmails = helper.GetPMMailsFromProject(projects[0]);
+                    qualitySpoc = helper.GetQualitySpocMailForProject(projects[0], false);
+                    amMail = helper.GetAMFromProject(projects[0]);
+                }
+            }
             if (project == null)
             {
                 var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
@@ -571,24 +587,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID)?.PROJ_ID;
                 if (string.IsNullOrWhiteSpace(projectId)) return;
                 project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
+                csmmails = helper.GetCSMMailsFromProject(project);
+                pmmmails = helper.GetPMMailsFromProject(project);
+                qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
+                amMail = helper.GetAMFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
             }
-            string csmmails = helper.GetCSMMailsFromProject(project);
-            string pmmmails = helper.GetPMMailsFromProject(project);
-            string qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
+            else
+            {
+                csmmails = helper.GetCSMMailsFromProject(project);
+                pmmmails = helper.GetPMMailsFromProject(project);
+                qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
+                amMail = helper.GetAMFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
+            }
+
             string subject = string.Empty;
             string mailContent = string.Empty;
 
 
             //TO list
-            tomail = helper.ConcatEmails(new List<string>() { csmmails, pmmmails, qualitySpoc });
-
-
-            //CC list
-            string PROJ_AM_EMAIL_ID = helper.GetAMFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
-            if (PROJ_AM_EMAIL_ID != string.Empty)
-                ccmail = PROJ_AM_EMAIL_ID + ",";
-
-
+            tomail = helper.ConcatEmails(new List<string>() { csmmails, pmmmails, qualitySpoc, amMail });
             ccmail += helper.GetDBConfig("CUSTOMER_SUCCESS_SURVEY", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID);
             //CSM Names
             //string CSMNames = helper.GetCSMNamesFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);

@@ -133,6 +133,10 @@ namespace GAVS.AllocationSystem.WebApi
                     email.cc = email.cc.Replace(",,", ",").Trim();
                     message.CC.Add(email.cc);
                 }
+                //logic for sender
+                var sendermailId = helper.GetEmployeeMailId(empId);
+                if (!string.IsNullOrWhiteSpace(sendermailId))
+                    message.CC.Add(sendermailId);
                 //logic for gslab
                 if (!string.IsNullOrWhiteSpace(email.ProjId) && email.ProjId.StartsWith("PROJ"))
                 {

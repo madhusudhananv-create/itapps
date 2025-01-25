@@ -308,20 +308,27 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var am = helper.GetAMFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
 
-            subject = Frequency + " Customer Success Survey for the " + projectText + " " + cust.PROJ_NM + " for the period of" + PreviousPeriod;
+            subject = Frequency + " Customer Success Survey for the " + projectText + " " + cust.PROJ_NM + " for the period of " + PreviousPeriod;
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
             ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, pmMails, am, qualitySpoc });
-
-
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
+            string projectList = string.Empty;
+            if (Frequency.ToLower() == "halfyearly"  )
+            {
+                var projIds = helper.GetProjIdsForProduct(cust.PROD_ID);
+                var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_NM).OrderBy(x => x).ToList();
+                EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
+            }
+
+
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
             EmailContentValues.Add("FREQUENCY", Frequency.Substring(0, Frequency.Length - 2));
             EmailContentValues.Add("CURRENT_PERIOD", CurrentPeriod);
             EmailContentValues.Add("PREVIOUS_PERIOD", PreviousPeriod);
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
-            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, project.CUST_ID));
+            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
 
             mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyRequest.htm", EmailContentValues);
 
@@ -701,11 +708,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<CSS_BATCH_CUSTOMERS> batches = new List<CSS_BATCH_CUSTOMERS>();
             List<CSS_BATCH_CUSTOMERS_EXTENDED> batchesExt = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             string empid = this.GetHeaderValue("empid");
-            CSS_BATCHES batch = CSPdb.CSS_BATCHES.GetById(BatchId);
+            var batch = CSPdb.CSS_BATCHES.GetById(BatchId);
             batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId && t.ISACTIVE).ToList();
             if (batches.Count == 0)
             {
-                GenerateBatchCustomers(BatchId, batch.FREQUENCY, empid);
+                if (batch.FREQUENCY.ToLower() == "quarterly")
+                    GenerateBatchCustomers(BatchId, batch.FREQUENCY, empid);
+                else if (batch.FREQUENCY.ToLower() == "halfyearly")
+                    GenerateBatchCustomersHalfyearly(BatchId, empid);
                 batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId && t.ISACTIVE).ToList();
             }
 
@@ -1209,7 +1219,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 BATCH_ID = batch.ID,
                 CUST_ID = cust_id,
                 PROJ_ID = proj_id,
-                QUESTION_MODEL_ID = helper.GetQuestionModel(cust_id, proj_id, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID),
+                QUESTION_MODEL_ID = helper.GetQuestionModel(cust_id, proj_id, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, batch.FREQUENCY),
                 EMAIL_ID = cust.EMAILID,
                 DISPLAY_NAME = cust.DISPLAY_NAME,
                 STATUS = "CREATED",
@@ -1226,6 +1236,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void GenerateMissingBatchCustomers(int batchId, string frequency, string EmpId)
         {
+            if(frequency.ToLower() =="halfyearly")
+                GenerateBatchCustomersHalfyearly(batchId, EmpId);
+
 
             List<CUSTOMER_PROJECTS> customersProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CSAT_SURVEY && t.CSAT_FREQUENCY == frequency).ToList();
             List<int> CustomerId = customersProjects.Select(t => t.CUSTOMER_USER_ID).Distinct().ToList();
@@ -1261,7 +1274,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         BATCH_ID = batchId,
                         CUST_ID = c.CUST_ID,
                         PROJ_ID = c.PROJ_ID,
-                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID),
+                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, batch.FREQUENCY),
                         EMAIL_ID = cust.EMAILID,
                         DISPLAY_NAME = cust.DISPLAY_NAME,
                         STATUS = "CREATED",
@@ -1302,7 +1315,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             CUST_ID = project.CUST_ID,
                             PROJ_ID = project.PROJ_ID,
                             PROD_ID = cp.PRODUCT_ID,
-                            QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID),
+                            QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID, batch.FREQUENCY),
                             EMAIL_ID = cust.EMP_ID,
                             DISPLAY_NAME = cuser.DISPLAY_NAME,
                             STATUS = "CREATED",
@@ -1326,10 +1339,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             //for prod based
             var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 8 || x.MANAGEMENT_TYPE == 7)).ToList(); // 8=CUSTOMER_CSAT_Halfyearly
-            var projects = Cldb.PROJECT.GetAll().ToList();
+            //var projects = Cldb.PROJECT.GetAll().ToList();
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchId);
             if (batch == null) return;
             var existingCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
+            var prodIds = prodResponsible.Select(x => x.PRODUCT_ID);
+            var products = CSPdb.PORTFOLIO_PRODUCTS.GetAll().Where(x => prodIds.Contains(x.ID)).ToList();
             foreach (var cust in prodResponsible.Where(x => x.MANAGEMENT_TYPE == 8).ToList())
             {
                 var prods = prodResponsible.Where(x => x.EMP_ID == cust.EMP_ID).ToList();
@@ -1337,34 +1352,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     foreach (var cp in prods)
                     {
-
-                        var proj = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == cp.PRODUCT_ID && x.MANAGEMENT_TYPE == 7);
-                        if (proj == null) continue;
-                        var project = projects.FirstOrDefault(x => x.PROJ_ID == proj.PROJECT_ID);
-
-                        if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")) continue;
-
+                        
                         if (existingCustomers.Any(x => x.PROD_ID == cp.PRODUCT_ID && x.EMAIL_ID == cust.EMP_ID)) continue;
+                        var product = products.FirstOrDefault(x => x.ID == cp.PRODUCT_ID);
                         var cuser = CSPdb.CUSTOMER_USERS.GetAll().FirstOrDefault(x => x.EMAILID == cust.EMP_ID);
                         if (cuser == null) continue;
-                        var BatchCustomer = new CSS_BATCH_CUSTOMERS()
-                        {
-                            BATCH_ID = batchId,
-                            CUST_ID = project.CUST_ID,
-                            PROJ_ID = project.PROJ_ID,
-                            PROD_ID = cp.PRODUCT_ID,
-                            QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID),
-                            EMAIL_ID = cust.EMP_ID,
-                            DISPLAY_NAME = cuser.DISPLAY_NAME,
-                            STATUS = "CREATED",
-                            CREATED_BY = empId,
-                            CREATED_DATE = DateTime.Now,
-                            UPDATED_BY = empId,
-                            UPDATED_DATE = DateTime.Now,
-                            ISACTIVE = true,
-                            IS_VERIFIED = true,
-                        };
-                        CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
+                        AddBatchCustomer(batch, cuser, empId, product.CUST_ID, "", product.ID);
+                        //var BatchCustomer = new CSS_BATCH_CUSTOMERS()
+                        //{
+                        //    BATCH_ID = batchId,
+                        //    CUST_ID = project.CUST_ID,
+                        //    PROJ_ID = project.PROJ_ID,
+                        //    PROD_ID = cp.PRODUCT_ID,
+                        //    QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID, "halfyearly"),
+                        //    EMAIL_ID = cust.EMP_ID,
+                        //    DISPLAY_NAME = cuser.DISPLAY_NAME,
+                        //    STATUS = "CREATED",
+                        //    CREATED_BY = empId,
+                        //    CREATED_DATE = DateTime.Now,
+                        //    UPDATED_BY = empId,
+                        //    UPDATED_DATE = DateTime.Now,
+                        //    ISACTIVE = true,
+                        //    IS_VERIFIED = true,
+                        //};
+                        //CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
 
                     }
                 }
@@ -1412,7 +1423,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         BATCH_MONTHLY_ID = batchId,
                         CUST_ID = c.CUST_ID,
                         PROJ_ID = c.PROJ_ID,
-                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID),
+                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, "quarterly"),
                         EMAIL_ID = cust.EMAILID,
                         DISPLAY_NAME = cust.DISPLAY_NAME,
                         STATUS = "CREATED",
@@ -1511,10 +1522,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var headers = request.Headers;
 
             string emp_Id = GetHeaderDetails_String("empId");
+            var emailId = helper.GetEmployeeMailId(emp_Id);
             DateTime.TryParse(GetHeaderDetails_String("startDate"), out startDate);
             DateTime.TryParse(GetHeaderDetails_String("endDate"), out endDate);
 
-            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(verification => verification.CSM_EMP_ID == emp_Id).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
+            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL_ID == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
             var uri = helper.GetAbsoulteUri();
 
             foreach (var item in cssVerificationList)
@@ -1525,19 +1537,58 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(cssVerificationList);
         }
 
+        [ActionName("UpdateCustomerContactsVerificationListForPremier")]
+        [HttpPost]
+        public IHttpActionResult UpdateCustomerContactsVerificationListForPremier(CSS_CUSTOMER_VERIFICATION[] batchCustomers, bool csmAction, string comments)
+        {
+            if (batchCustomers == null || batchCustomers.Count() == 0)
+                return Ok();
+            string emp_Id = GetHeaderDetails_String("empId");
+
+            var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_MONTHLY_ID).ToList();
+            //logic
+            var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
+
+            var valResult = ValidateCSSVerficationPremier(batchCustomerEntities.ToArray(), emp_Id);
+            if (!string.IsNullOrWhiteSpace(valResult))
+            {
+                return Content(HttpStatusCode.Conflict, valResult);
+            }
+
+            foreach (var item in batchCustomerEntities)
+            {
+                item.IS_VERIFIED = csmAction;
+                if (csmAction)
+                    item.COMMENTS = null;
+                else if (!string.IsNullOrWhiteSpace(comments))
+                    item.COMMENTS = comments;
+                UpdateCustomerContactVerificationPremierPrivate(item, false);
+            }
+            CSPdb.Commit(CanCommit);
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault();
+            string Period = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
+            SendCSSGroupVerificationApprovalMail(batchCustomerEntities.ToArray(), comments, Period);
+            return Ok();
+        }
 
         [POST("UpdateCustomerContactsVerificationList")]
         [ActionName("UpdateCustomerContactsVerificationList")]
         [HttpPost]
         public IHttpActionResult UpdateCustomerContactsVerificationList([FromBody] CSS_CUSTOMER_VERIFICATION[] batchCustomers, bool csmAction, string comments)
         {
+            if (batchCustomers == null || batchCustomers.Count() == 0)
+                return Ok();
             string emp_Id = GetHeaderDetails_String("empId");
 
             var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_ID).ToList();
             //logic
             var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
 
-            ValidateCSSVerfication(batchCustomerEntities.ToArray(), emp_Id);
+            var valResult = ValidateCSSVerfication(batchCustomerEntities.ToArray(), emp_Id);
+            if (!string.IsNullOrWhiteSpace(valResult))
+            {
+                return Content(HttpStatusCode.Conflict, valResult);
+            }
             foreach (var item in batchCustomerEntities)
             {
                 item.IS_VERIFIED = csmAction;
@@ -1548,8 +1599,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateCustomerContactVerificationPrivate(item, false);
             }
             CSPdb.Commit(CanCommit);
-
-            SendCSSGroupVerificationApprovalMail(batchCustomerEntities, comments);
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault();
+            string Period = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
+            SendCSSGroupVerificationApprovalMail(batchCustomerEntities.ToArray(), comments, Period);
             return Ok();
         }
 
@@ -1598,21 +1650,37 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return string.Empty;
         }
 
-        [ActionName("UpdateCustomerContactsVerificationListForPremier")]
-        [HttpPost]
-        public IHttpActionResult UpdateCustomerContactsVerificationListForPremier([FromBody] CSS_BATCH_CUSTOMER_MONTHLY[] batchCustomers)
+        internal string UpdateCustomerContactVerificationPremierPrivate(CSS_BATCH_CUSTOMER_MONTHLY batchCustomers, bool sendMail = true)
         {
-            CheckAccessForFeature(115);
-            //do business validation here
-
-            //logic
-            foreach (var item in batchCustomers)
+            if (batchCustomers != null)
             {
-                UpdateCustomerContactsVerificationForPremierPrivate(item);
+                var exist = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().FirstOrDefault(x => x.ID == batchCustomers.ID && x.BATCH_ID == batchCustomers.BATCH_ID && x.ISACTIVE);
+                //CheckUserHasAccess(GetHeaderDetails_String("empId"), exist.CUST_ID, exist.PROJ_ID);
+
+                if (exist != null)
+                {
+                    //if (exist.IS_VERIFIED)
+                    //{
+                    //    return "Already verified.";
+                    //}
+                    //else
+                    {
+                        exist.IS_VERIFIED = batchCustomers.IS_VERIFIED;
+                        exist.COMMENTS = batchCustomers.COMMENTS;
+                        UpdateAuditFields(exist);
+                        CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.Update(exist);
+                        CSPdb.Commit(CanCommit);
+                    }
+                    if (sendMail)
+                        SendCSSVerificationApprovalMail(exist.CUST_ID, exist.PROJ_ID, exist.PROD_ID, exist.DISPLAY_NAME, exist.EMAIL_ID, exist.IS_VERIFIED, exist.COMMENTS);
+
+                }
             }
 
-            return Ok();
+            return string.Empty;
         }
+
+
 
         [ActionName("UpdateCustomerContactsVerificationForPremier")]
         [HttpPost]
@@ -1729,7 +1797,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
-        private void SendCSSGroupVerificationApprovalMail(List<CSS_BATCH_CUSTOMERS> cssBatchCustomers, string comments)
+        private void SendCSSGroupVerificationApprovalMail(iBatchCustomer[] cssBatchCustomers, string comments, string period)
         {
             string subject = string.Empty;
             string mailContent;
@@ -1766,7 +1834,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             string ccMail = string.Join(",", cclist.Distinct().ToList());
             EmailContentValues.Add("TABLE", tableContent.ToString());
-            subject = $"CSS Customer Contacts {status}";
+            subject = $"{period} CSS Customer Contacts {status}";
             EmailContentValues.Add("CSM_NAME", csmName);
             EmailContentValues.Add("STATUS", status);
             mailContent = helper.GetEmailContent("SendCSSGroupVerificationApprovalMail.htm", EmailContentValues);
@@ -1804,7 +1872,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 BATCH_MONTHLY_ID = batch.ID,
                 CUST_ID = custId,
 
-                QUESTION_MODEL_ID = helper.GetQuestionModel(custId, null, true, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID),  //By Default model 1 is considered (Product/ADM/IMS)
+                QUESTION_MODEL_ID = helper.GetQuestionModel(custId, null, true, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, "quarterly"),  //By Default model 1 is considered (Product/ADM/IMS)
                 EMAIL_ID = cust.EMAILID,
                 DISPLAY_NAME = cust.DISPLAY_NAME,
                 STATUS = "CREATED",
@@ -1856,6 +1924,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return ValidateCSSVerificationForProjects(batchCustomers, empId);
         }
 
+        private string ValidateCSSVerficationPremier(CSS_BATCH_CUSTOMER_MONTHLY[] batchCustomers, string empId)
+        {
+            CheckAccessForFeature(121);
+            //chk any premier ids are there
+            if (batchCustomers.Any(x => x.CUST_ID != PREMIER_CUSTOMER_ID))
+            {
+                return "Premier CSS batches can only be verified in this lot.";
+            }
+            return ValidateCSSVerificationForProjects(batchCustomers, empId);
+        }
+
         private string ValidateCSSVerificationForProjects(iBatchCustomer[] batchCustomers, string empId)
         {
             var projIds = batchCustomers.Select(x => x.PROJ_ID).ToArray();
@@ -1869,13 +1948,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //chck all status in creatd
             if (batchCustomers.Any(x => x.STATUS != CSS_CREATED))
                 return "Records which are in created status alone can be updated. If CSS sent already, it cannot be updated";
-            //check if any of the record is approved already - if yes then throw error to select only unverified records
-            if (batchCustomers.Any(x => x.IS_VERIFIED))
-                return "Records which are already Approved/Rejected cannot be updated again. Please make sure to select the correct records.";
+            ////check if any of the record is approved already - if yes then throw error to select only unverified records
+            //if (batchCustomers.Any(x => x.IS_VERIFIED))
+            //    return "Records which are already Approved/Rejected cannot be updated again. Please make sure to select the correct records.";
 
-            //check if any of the records is rejected already(is_verified = false and comments not null) - if yes throw error to select only un verified records
-            if (batchCustomers.Any(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS)))
-                return "Records which are already Rejected cannot be updated again. Please make sure to select the correct records.";
+            ////check if any of the records is rejected already(is_verified = false and comments not null) - if yes throw error to select only un verified records
+            //if (batchCustomers.Any(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS)))
+            //    return "Records which are already Rejected cannot be updated again. Please make sure to select the correct records.";
             return string.Empty;
         }
     }

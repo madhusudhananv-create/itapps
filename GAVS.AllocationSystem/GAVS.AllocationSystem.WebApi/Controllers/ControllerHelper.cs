@@ -390,7 +390,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public string GetQualitySpocMailForProject(PROJECT project, bool returnGroupId = true)
         {
 
-            if (project.QUALITY_SPOC != "")
+            if (project != null && project.QUALITY_SPOC != "")
             {
                 var emp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.QUALITY_SPOC && x.DOR == null);
                 if (emp != null) return emp.EMAIL_ID; else return Constants.QUALITY_MAIL;
@@ -801,7 +801,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return config;
         }
 
-        internal int GetQuestionModel(string custId, string projId, bool isMonthly, DateTime startDate, DateTime endDate, string contactEmailId, int batchId)
+        internal int GetQuestionModel(string custId, string projId, bool isMonthly, DateTime startDate, DateTime endDate, string contactEmailId, int batchId, string frequency)
         {
             if (isMonthly)
             {
@@ -831,10 +831,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return GetDBConfigValueInt(config);
                 }
             }
+
             else
             {
-                var config = GetDBConfig("CSS_QUESTION_MODEL", custId, projId, startDate, endDate);
-                return GetDBConfigValueInt(config);
+                if (frequency.ToLower() == "halfyearly")
+                {
+                    var config = GetDBConfig("CSS_QUESTION_MODEL_HALFYEARLY", custId, projId, startDate, endDate);
+                    return GetDBConfigValueInt(config);
+                }
+                else
+                {
+                    var config = GetDBConfig("CSS_QUESTION_MODEL", custId, projId, startDate, endDate);
+                    return GetDBConfigValueInt(config);
+                }
             }
         }
 
@@ -958,6 +967,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         //    return GetDBConfigValue(config);
         //}
 
+        internal List<string> GetProjIdsForProduct(int? prodId)
+        {
+            var result = new List<string>();
+            if (prodId.HasValue == false) return result;
+            var productResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.PRODUCT_ID == prodId && x.MANAGEMENT_TYPE == 7).ToList();
+            if (!productResponsible.Any()) return result;
+            result = productResponsible.Select(x => x.PROJECT_ID).ToList();
+
+            return result;
+        }
 
     }
 
