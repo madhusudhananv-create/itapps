@@ -1557,7 +1557,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_MONTHLY_ID).ToList();
             //logic
             var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
-
+            if (!batchCustomerEntities.Any()) return Ok();
             var valResult = ValidateCSSVerficationPremier(batchCustomerEntities.ToArray(), emp_Id);
             if (!string.IsNullOrWhiteSpace(valResult))
             {
@@ -1574,7 +1574,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateCustomerContactVerificationPremierPrivate(item, false);
             }
             CSPdb.Commit(CanCommit);
-            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault();
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchCustomerEntities.First().BATCH_ID);
             string Period = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
             SendCSSGroupVerificationApprovalMail(batchCustomerEntities.ToArray(), comments, Period);
             return Ok();
@@ -1592,7 +1592,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_ID).ToList();
             //logic
             var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
-
+            if (!batchCustomerEntities.Any()) return Ok();
             var valResult = ValidateCSSVerfication(batchCustomerEntities.ToArray(), emp_Id);
             if (!string.IsNullOrWhiteSpace(valResult))
             {
@@ -1608,7 +1608,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateCustomerContactVerificationPrivate(item, false);
             }
             CSPdb.Commit(CanCommit);
-            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault();
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x=> x.ID ==  batchCustomerEntities.First().BATCH_ID);
             string Period = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
             SendCSSGroupVerificationApprovalMail(batchCustomerEntities.ToArray(), comments, Period);
             return Ok();
