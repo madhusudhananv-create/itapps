@@ -318,7 +318,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
           
             var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
-            var period = $"{batch.START_DATE.ToString("MMM-yyyy")} - {batch.END_DATE.ToString("MMM-yyyy") }";
+            var period = $"{batch.START_DATE.ToString("MMM-yyyy")} to {batch.END_DATE.ToString("MMM-yyyy") }";
             if (batch.FREQUENCY.ToLower() == "halfyearly")
             {
                 string projectList = string.Empty;
@@ -1574,7 +1574,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateCustomerContactVerificationPremierPrivate(item, false);
             }
             CSPdb.Commit(CanCommit);
-            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchCustomerEntities.First().BATCH_ID);
+            var batchId = batchCustomerEntities.First().BATCH_ID;
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchId);
             string Period = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
             SendCSSGroupVerificationApprovalMail(batchCustomerEntities.ToArray(), comments, Period);
             return Ok();
@@ -1608,7 +1609,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateCustomerContactVerificationPrivate(item, false);
             }
             CSPdb.Commit(CanCommit);
-            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x=> x.ID ==  batchCustomerEntities.First().BATCH_ID);
+            var batchId = batchCustomerEntities.First().BATCH_ID;
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x=> x.ID == batchId);
             string Period = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
             SendCSSGroupVerificationApprovalMail(batchCustomerEntities.ToArray(), comments, Period);
             return Ok();
