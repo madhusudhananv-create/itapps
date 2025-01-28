@@ -12832,7 +12832,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         (
                         new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
                         new EmailContent { from = _email, to = tomail, content = emailContent, subject = "Best Practices for the Project ( " + ProjectName + " ) of Customer ( " + CustomerName + " )", hasAttachments = false, attachmentFilePath = "" }
-                        );
+                        , Request);
                 }
             }
             catch (Exception ex)
@@ -13700,8 +13700,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     Period = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
                 }
-                else if (Sequence == 2) { Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString();
-              
+                else if (Sequence == 2)
+                {
+                    Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString();
+
                 }
                 else Period = string.Empty;
 
@@ -15804,7 +15806,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-       
+
 
         [POST("UpdateValueadds")]
         [ActionName("UpdateValueadds")]
@@ -19360,7 +19362,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok();
         }
 
-       
+
 
         [POST("AddValueadds")]
         [ActionName("AddValueadds")]

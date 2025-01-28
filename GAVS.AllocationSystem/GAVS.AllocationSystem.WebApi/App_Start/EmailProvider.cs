@@ -91,7 +91,7 @@ namespace GAVS.AllocationSystem.WebApi
             return result;
         }
 
-        public bool SendEmail(EmailConfig config, EmailContent email, HttpRequestMessage request = null)
+        public bool SendEmail(EmailConfig config, EmailContent email, HttpRequestMessage request)
         {
             MailMessage message = new MailMessage();
 
@@ -172,7 +172,7 @@ namespace GAVS.AllocationSystem.WebApi
                     message.CC.Clear();
                     message.Bcc.Clear();
                     message.To.Add(ConfigurationManager.AppSettings["DefaultMail"]);
-                    message.Body += new StringBuilder().AppendLine().AppendLine("TO:" + email.to).AppendLine("CC:" + email.cc).ToString();
+                    message.Body += new StringBuilder().AppendLine().AppendLine("TO:" + email_log.TOADDRESS).AppendLine("CC:" + email_log.CC).ToString();
                     message.Subject = "UAT: " + message.Subject;
                 }
                 if (email.hasAttachments)

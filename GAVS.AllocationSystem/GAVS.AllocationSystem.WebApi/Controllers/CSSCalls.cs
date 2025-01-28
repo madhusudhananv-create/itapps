@@ -265,7 +265,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 string SurveyId = CreatedSurveys.FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == cust.ID).SURVEY_ID;
                 string SurveyLink = baseUrl + "/CustomerSuccessSurvey/" + SurveyId;
-                SendCSSSurveyMail(cust, SurveyLink, batch.FREQUENCY, GetCurrentPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR));
+                SendCSSSurveyMail(cust, SurveyLink, batch, GetCurrentPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR));
             }
             if (batch.STATUS.ToUpper() == "CREATED")
             {
@@ -276,7 +276,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok();
         }
 
-        private void SendCSSSurveyMail(CSS_BATCH_CUSTOMERS_EXTENDED cust, string SurveyLink, string Frequency, string CurrentPeriod, string PreviousPeriod)
+        private void SendCSSSurveyMail(CSS_BATCH_CUSTOMERS_EXTENDED cust, string SurveyLink, CSS_BATCHES batch, string CurrentPeriod, string PreviousPeriod  )
         {
             string subject = string.Empty;
             string statusMsg = string.Empty;
@@ -287,7 +287,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var projectText = string.Empty;
             if (cust.PROD_ID.HasValue)
             {
-
+                var product = CSPdb.PORTFOLIO_PRODUCTS.GetAll().FirstOrDefault(x => x.ID == cust.PROD_ID);
+                if (product == null) return; //throw err
+                projectText = product.PRODUCT_TITLE;
             }
             else if (project == null)
             {
@@ -308,29 +310,36 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var am = helper.GetAMFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
 
-            subject = Frequency + " Customer Success Survey for the " + projectText + " " + cust.PROJ_NM + " for the period of " + PreviousPeriod;
+            subject = batch.FREQUENCY + " Customer Success Survey for the " + projectText + " " + cust.PROJ_NM + " for the period of " + PreviousPeriod;
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
             ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, pmMails, am, qualitySpoc });
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
-            string projectList = string.Empty;
-            if (Frequency.ToLower() == "halfyearly"  )
+          
+            var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
+            var period = $"{batch.START_DATE.ToString("MMM-yyyy")} - {batch.END_DATE.ToString("MMM-yyyy") }";
+            if (batch.FREQUENCY.ToLower() == "halfyearly")
             {
-                var projIds = helper.GetProjIdsForProduct(cust.PROD_ID);
-                var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_NM).OrderBy(x => x).ToList();
-                EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
+                string projectList = string.Empty;
+             
+                //var projIds = helper.GetProjIdsForProduct(cust.PROD_ID);
+                //var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_NM).OrderBy(x => x).ToList();
+                //EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
+                templateFile = "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
+                subject = $"Half yearly Pulse Survey for the {projectText} in the {cust.CUST_NM} for the period of {period}";
             }
 
 
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
-            EmailContentValues.Add("FREQUENCY", Frequency.Substring(0, Frequency.Length - 2));
+            // EmailContentValues.Add("FREQUENCY", batch.Frequency.Substring(0, Frequency.Length - 2));
             EmailContentValues.Add("CURRENT_PERIOD", CurrentPeriod);
             EmailContentValues.Add("PREVIOUS_PERIOD", PreviousPeriod);
+            EmailContentValues.Add("PERIOD", period);
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
             EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
 
-            mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyRequest.htm", EmailContentValues);
+            mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
 
             var ep = new EmailProvider(Cldb, CSPdb);
             ep.SendEmail
@@ -1236,7 +1245,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void GenerateMissingBatchCustomers(int batchId, string frequency, string EmpId)
         {
-            if(frequency.ToLower() =="halfyearly")
+            if (frequency.ToLower() == "halfyearly")
                 GenerateBatchCustomersHalfyearly(batchId, EmpId);
 
 
@@ -1352,7 +1361,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     foreach (var cp in prods)
                     {
-                        
+
                         if (existingCustomers.Any(x => x.PROD_ID == cp.PRODUCT_ID && x.EMAIL_ID == cust.EMP_ID)) continue;
                         var product = products.FirstOrDefault(x => x.ID == cp.PRODUCT_ID);
                         var cuser = CSPdb.CUSTOMER_USERS.GetAll().FirstOrDefault(x => x.EMAILID == cust.EMP_ID);

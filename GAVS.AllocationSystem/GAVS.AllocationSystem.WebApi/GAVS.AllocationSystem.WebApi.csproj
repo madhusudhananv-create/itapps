@@ -439,6 +439,7 @@
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMail.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedback.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminder.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestHalfYearly.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequest.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveyVerification.htm" />
     <Content Include="UploadFile\Mails\MappingUpdateNotification.htm" />
