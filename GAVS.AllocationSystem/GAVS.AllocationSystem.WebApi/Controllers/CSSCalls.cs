@@ -520,10 +520,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
 
                 var batchRecords = totalRecords.Where(x => x.BATCH_ID == item.ID).ToList();
-                //if (csmIdExists)
-                //{
-                //    batchRecords = batchRecords.Where(x => projects.Contains(x.PROJ_ID)).ToList();
-                //}
+                if (csmIdExists)
+                {
+                    batchRecords = batchRecords.Where(x => projects.Contains(x.PROJ_ID)).ToList();
+                }
 
                 item.TOTAL_RECORDS = batchRecords.Count;
                 item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED));
@@ -1554,6 +1554,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Ok();
             string emp_Id = GetHeaderDetails_String("empId");
 
+            if (string.IsNullOrWhiteSpace(comments) && csmAction == false)
+            {
+                return Content(HttpStatusCode.Conflict, "Comments is mandatory while Rejecting. Please enter comments and try again.");
+            }
             var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_MONTHLY_ID).ToList();
             //logic
             var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
@@ -1589,7 +1593,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (batchCustomers == null || batchCustomers.Count() == 0)
                 return Ok();
             string emp_Id = GetHeaderDetails_String("empId");
-
+            if (string.IsNullOrWhiteSpace(comments) && csmAction == false)
+            {
+                return Content(HttpStatusCode.Conflict, "Comments is mandatory while Rejecting. Please enter comments and try again.");
+            }
             var batchCustomerIds = batchCustomers.Select(ele => ele.BATCH_CUSTOMER_ID).ToList();
             //logic
             var batchCustomerEntities = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(ele => batchCustomerIds.Contains(ele.ID)).ToList();
