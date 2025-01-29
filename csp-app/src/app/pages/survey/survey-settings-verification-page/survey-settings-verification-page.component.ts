@@ -10,6 +10,7 @@ import { MatDialog, MatDialogConfig, MatDialogRef, MatSort, MatTableDataSource }
 import { CssBatchMonthlyModel } from '../../../models/css-batch-monthly-model';
 import { CssCustomerVerificationModel } from '../../../models/css-customer-verification-model';
 import { AccessControl } from '../../../Shared/accessControl';
+ 
 import { CssBatchModel } from '../../../models/css-batch-model';
 
 @Component({
@@ -182,7 +183,8 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
 
   service_GetCSSMonthlyBatches() {
     this.surveyService.GetCSSBatches(localStorage.getItem("empid")).subscribe(data => {
-      this.Batches = data;
+      this.Batches = data.filter(x=>x.frequency == 'Quarterly');
+
     }, error => { this._util.serviceError(error); });
   }
   service_GetCSSVerificationDetails(starT_DATE: Date, enD_DATE: Date, custId: any) {
@@ -192,6 +194,13 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
       this.BatchCustomers = data;
       this.dataSource = new MatTableDataSource(this.BatchCustomers);
       this.isLoading = false;
+      this.selectedBatch.totaL_RECORDS = this.BatchCustomers.length;
+      this.selectedBatch.pending = this.BatchCustomers.filter(x => x.customeR_CONTACT_VERIFICATION === 'No').length;
+      if(this.BatchCustomers.some(x=>x.csS_Eligible == 'Yes' && (x.respondenT_NAME == null || x.respondenT_MAIL =='') ))
+      {
+        alert("There are CSS eligible projects in this list but customers are not configured. Please configure the contact details for the CSS eligible projects. If you want to skip an eligible project, please follow SKIP CSAT process by clicking on SKIP CSAT link to take approval.");
+      } ;
+
     }, error => { this.isLoading = false; this._util.serviceError(error); });
   }
 
@@ -207,16 +216,37 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
 
       this.confirmationDialogRef.afterClosed().subscribe(result => {
         if (result) {
-          console.log(this.selection.selected);
+
 
           this.isLoading = true;
           this.isVerificationInProgress = true;
-          this.surveyService.UpdateCustomerContactsVerificationList(this.selection.selected, true, '').subscribe(data => {
+          var permierCount = this.selection.selected.filter(x => this._util.IsPremier(x.cusT_ID)).length;
+          if (permierCount == this.selection.selected.length) {
+
+            //call premier
+            this.surveyService.UpdateCustomerContactsVerificationListPremier(this.selection.selected, true, '').subscribe(data => {
+              this.isLoading = false;
+              this.isVerificationInProgress = false;
+              alert("Selected customer contact(s) are approved.");
+              this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
+            }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
+          }
+          else if (permierCount == 0) {
+
+            this.surveyService.UpdateCustomerContactsVerificationList(this.selection.selected, true, '').subscribe(data => {
+              this.isLoading = false;
+              this.isVerificationInProgress = false;
+              alert("Selected customer contact(s) are approved.");
+              this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
+            }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
+          }
+          else {
+            alert("You are not allowed to update both Premier and Non-Premier customers at the same time.");
             this.isLoading = false;
             this.isVerificationInProgress = false;
-            alert("Selected customer contact(s) are approved.");
-            this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
-          }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
+          }
+
+
         }
       });
     }
@@ -294,7 +324,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
     const hasUnverifiedCustomers = this.selection.selected.some(x => x.csS_CONFIGURED === 'No' || x.respondenT_MAIL === '' || x.respondenT_MAIL === null);
     if (hasUnverifiedCustomers) {
 
-      alert("Records which have not configured CSS or Email are not allowed for verification.");
+      alert("Records which have not configured CSS contact are not allowed for verification.");
       return false;
     }
     return true;
@@ -314,5 +344,20 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
   }
   Cancel_Confirmation_onClick() {
     this.confirmationDialogRef.close(false);
+  }
+
+  getStatusText(element: CssCustomerVerificationModel): string {
+    let status = "";
+    if (element == undefined || element == null) return status;
+
+    if (element.customeR_CONTACT_VERIFICATION == 'Yes')
+      status = "Approved";
+    else if (element.customeR_CONTACT_VERIFICATION == "No" && element.verificatioN_COMMENTS != null && element.verificatioN_COMMENTS.trim() != "")
+      status = "Rejected";
+    else if (element.customeR_CONTACT_VERIFICATION == "No" && (element.verificatioN_COMMENTS == null || element.verificatioN_COMMENTS.trim()))
+      status = "Not Verified";
+
+
+    return status;
   }
 }

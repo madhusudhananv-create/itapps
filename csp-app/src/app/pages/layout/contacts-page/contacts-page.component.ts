@@ -144,7 +144,9 @@ export class ContactsPageComponent implements OnInit {
       alert("Please enter required fields");
       return;
     }
-
+     let domain = environment.loginpage.replace('login/', '');
+    let url = 'customerinvite/';;
+    var msg = "Contacts added successfully. If you wish to obtain Customer Success Survey from this contact, You need to navigate to Customer details page from settings menu to map the Customer contact to the project. Click Ok to navigate to Customer Details Page, click No to Stay here.";
     if (this.newContacts.id === 0 || this.newContacts.id === undefined) {
 
       this.newContacts.id = 0;
@@ -175,18 +177,37 @@ export class ContactsPageComponent implements OnInit {
         this.myControl.reset();
         return;
       }
+      
 
       this._appservice.addContacts(this.newContacts)
         .subscribe(data => {
           this.contacts.push(data);
-          alert("Contacts added successfully. If you wish to obtain Customer Success Survey from this contact, Please navigate to Customer details page from settings menu (https://csm.gavstech.com/customerinvite) to map the Customer contact to the project.")
+          
+
+          if (window.confirm(msg))
+            {
+              const newWindow = window.open(url, '_blank');
+              if (newWindow) {
+                newWindow.focus();
+              }
+            };
+
+          //alert("Contacts added successfully. If you wish to obtain Customer Success Survey from this contact, Please navigate to Customer details page from settings menu (" + url + ") to map the Customer contact to the project.")
         }, error => { this._util.serviceError(error); });
     }
     else {
       this._appservice.updateContacts(this.newContacts)
         .subscribe(data => {
           this.LoadDetails();
-          alert("Contact updated successfully. If you wish to obtain Customer Success Survey from this contact, Please navigate to Customer details page from settings menu (https://csm.gavstech.com/customerinvite) to map the Customer contact to the project.")
+          //alert("Contact updated successfully. If you wish to obtain Customer Success Survey from this contact, Please navigate to Customer details page from settings menu (" + url + ") to map the Customer contact to the project.")
+          if (window.confirm(msg))
+            {
+              const newWindow = window.open(url, '_blank');
+              if (newWindow) {
+                newWindow.focus();
+              }
+            };
+
         }, error => { this._util.serviceError(error); });
     }
     this.newContacts = new ContactsModel;

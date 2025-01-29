@@ -24,9 +24,9 @@ export class SurveyService {
     this.apiurl = environment.webapiuri;
     this.apiurl_auth = environment.webapiuri_auth;
   }
-  UpdateCssLinkValidity(batchId: number, selectedIds: string,type :string): Observable<CssBatchCustomersExtendedModel[]> {
+  UpdateCssLinkValidity(batchId: number, selectedIds: string, type: string): Observable<CssBatchCustomersExtendedModel[]> {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid'), 'selectedIds': selectedIds });
-    return this._http.post<CssBatchCustomersExtendedModel[]>(this.apiurl + '/UpdateCssLinkValidity?batchId='+batchId+"&type="+type,header, { headers: header });
+    return this._http.post<CssBatchCustomersExtendedModel[]>(this.apiurl + '/UpdateCssLinkValidity?batchId=' + batchId + "&type=" + type, header, { headers: header });
   }
   SendCSSBatchVerification(batch: CssBatchModel, selectedIds: string): Observable<CssBatchCustomersExtendedModel[]> {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid'), 'selectedIds': selectedIds });
@@ -48,11 +48,11 @@ export class SurveyService {
     return this._http.post<CssBatchCustomersExtendedModel[]>(this.apiurl + '/SendCSSBatchReminderMails', batch, { headers: header });
   }
   CreateActionItemForCSAT(batchId: number, selectedIds: string, CSAT): Observable<CssBatchCustomersExtendedModel[]> {
-    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid'), 'selectedIds': selectedIds, 'type': CSAT});
-    return this._http.post<CssBatchCustomersExtendedModel[]>(this.apiurl + "/CreateActionItemForCSAT?batchId=" + batchId, header ,{ headers: header });
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid'), 'selectedIds': selectedIds, 'type': CSAT });
+    return this._http.post<CssBatchCustomersExtendedModel[]>(this.apiurl + "/CreateActionItemForCSAT?batchId=" + batchId, header, { headers: header });
   }
   CreateActionItemForPremierCSAT(batchId: number, selectedIds: string, premierCSAT): Observable<CssBatchCustomersExtendedModel[]> {
-    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid'), 'selectedIds': selectedIds, 'type': premierCSAT});
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid'), 'selectedIds': selectedIds, 'type': premierCSAT });
     return this._http.post<CssBatchCustomersExtendedModel[]>(this.apiurl + "/CreateActionItemForCSAT?batchId=" + batchId, header, { headers: header });
   }
   GetCSSBatches(csmId: string): Observable<CssBatchModel[]> {
@@ -152,22 +152,30 @@ export class SurveyService {
     return this._http.post<any>(this.apiurl + '/Logout', '', { headers: header });
   }
 
-  GetCSSCustomerVerifications(starT_DATE:any,enD_DATE: any, custId:any): Observable<CssCustomerVerificationModel[]> {
-    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid')});
-    
+  GetCSSCustomerVerifications(starT_DATE: any, enD_DATE: any, custId: any): Observable<CssCustomerVerificationModel[]> {
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
+
     header = header.append('startDate', starT_DATE);
     header = header.append('endDate', enD_DATE);
     header = header.append('custId', custId);
-    
+
     return this._http.get<CssCustomerVerificationModel[]>(this.apiurl + '/GetCSSForVerification', { headers: header });
   }
 
-  UpdateCustomerContactsVerificationList(cssCustomerVerifications:any[],csmAction:any, comments:any): Observable<CssCustomerVerificationModel[]> {
-    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid')});  
+  UpdateCustomerContactsVerificationList(cssCustomerVerifications: any[], csmAction: any, comments: any): Observable<CssCustomerVerificationModel[]> {
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
 
-    let params = new HttpParams().set('csmAction', csmAction); 
-    params = params.append('comments', comments); 
-    return this._http.post<CssCustomerVerificationModel[]>(this.apiurl + '/UpdateCustomerContactsVerificationList',cssCustomerVerifications, { headers: header ,params:params});
+    let params = new HttpParams().set('csmAction', csmAction);
+    params = params.append('comments', comments);
+    return this._http.post<CssCustomerVerificationModel[]>(this.apiurl + '/UpdateCustomerContactsVerificationList', cssCustomerVerifications, { headers: header, params: params });
   }
-  
+
+  UpdateCustomerContactsVerificationListPremier(cssCustomerVerifications: any[], csmAction: any, comments: any): Observable<CssCustomerVerificationModel[]> {
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
+
+    let params = new HttpParams().set('csmAction', csmAction);
+    params = params.append('comments', comments);
+    return this._http.post<CssCustomerVerificationModel[]>(this.apiurl + '/UpdateCustomerContactsVerificationListForPremier', cssCustomerVerifications, { headers: header, params: params });
+  }
+
 }

@@ -90,7 +90,7 @@ export class SurveySettingsComponent implements OnInit {
           (data.status && data.status.toLowerCase().includes(term)) ||
           (data.contractinG_UNIT && data.contractinG_UNIT.toLowerCase().includes(term)) ||
           (data.comments && data.comments.toLowerCase().includes(term)) ||
-          (!data.iS_VERIFIED && data.comments != null && data.comments.trim() !="" ? "Rejected" : "Not Verified").toLowerCase().includes(term) || // Filter for is_verified column
+          (!data.iS_VERIFIED && data.comments != null && data.comments.trim() != "" ? "Rejected" : "Not Verified").toLowerCase().includes(term) || // Filter for is_verified column
           (data.iS_VERIFIED ? "Approved" : "Not Verified").toLowerCase().includes(term) // Filter for is_verified column
         );
       });
@@ -230,6 +230,8 @@ export class SurveySettingsComponent implements OnInit {
 
   getStatusText(element: CssBatchCustomersExtendedModel): string {
     let status = "";
+    if (element == undefined || element == null) return status;
+
     if (element.iS_VERIFIED)
       status = "Approved";
     else if (element.iS_VERIFIED == false && element.comments != null && element.comments.trim() != "")

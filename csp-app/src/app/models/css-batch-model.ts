@@ -11,4 +11,6 @@ export class CssBatchModel {
     updateD_BY: string;
     updateD_DATE: Date;
     isactive: boolean;
+  totaL_RECORDS: number;
+  pending: number;
 }
