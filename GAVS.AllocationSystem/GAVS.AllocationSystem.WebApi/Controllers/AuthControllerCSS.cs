@@ -468,6 +468,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else if (Sequence == 3) { Period = "Oct-" + Year.ToString() + " to Dec-" + Year.ToString(); }
                 else if (Sequence == 4) { Period = "Jan-" + (Year + 1).ToString() + " to Mar-" + (Year + 1).ToString(); }
             }
+            else if (Frequency.ToLower() == "halfyearly")
+            {
+                if (Sequence == 1)
+                {
+                    Period = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
+                }
+                else if (Sequence == 2) { Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString(); }
+            }
             return Period;
         }
 
@@ -481,6 +489,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else if (Sequence == 3) { CurrentPeriod = "Oct-Dec " + Year.ToString(); }
                 else if (Sequence == 0 || Sequence == 4) { CurrentPeriod = "Jan-Mar " + (Year).ToString(); }
 
+            }
+            else if (Frequency.ToLower() == "halfyearly")
+            {
+                if (Sequence == 1)
+                {
+                    CurrentPeriod = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
+                }
+                else if (Sequence == 2)
+                { 
+                    CurrentPeriod = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString(); 
+                }
             }
             return CurrentPeriod;
         }
