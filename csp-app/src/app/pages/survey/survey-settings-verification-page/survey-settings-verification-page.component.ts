@@ -218,34 +218,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
         if (result) {
 
 
-          this.isLoading = true;
-          this.isVerificationInProgress = true;
-          var permierCount = this.selection.selected.filter(x => this._util.IsPremier(x.cusT_ID)).length;
-          if (permierCount == this.selection.selected.length) {
-
-            //call premier
-            this.surveyService.UpdateCustomerContactsVerificationListPremier(this.selection.selected, true, '').subscribe(data => {
-              this.isLoading = false;
-              this.isVerificationInProgress = false;
-              alert("Selected customer contact(s) are approved.");
-              this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
-            }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
-          }
-          else if (permierCount == 0) {
-
-            this.surveyService.UpdateCustomerContactsVerificationList(this.selection.selected, true, '').subscribe(data => {
-              this.isLoading = false;
-              this.isVerificationInProgress = false;
-              alert("Selected customer contact(s) are approved.");
-              this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
-            }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
-          }
-          else {
-            alert("You are not allowed to update both Premier and Non-Premier customers at the same time.");
-            this.isLoading = false;
-            this.isVerificationInProgress = false;
-          }
-
+         this.updateCSSVerification(true, '');
 
         }
       });
@@ -278,14 +251,39 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
 
   rejectSelectedCustomerVerifications(): void {
     this.dialog.closeAll();
+   
+   this. updateCSSVerification(false, this.rejectComment);
+  }
+
+  updateCSSVerification(csmAction: boolean, rejectComment : string){
     this.isLoading = true;
     this.isVerificationInProgress = true;
-    this.surveyService.UpdateCustomerContactsVerificationList(this.selection.selected, false, this.rejectComment).subscribe(data => {
-      alert("Selected customer contact(s) are rejected.");
-      this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
+    var premierCount = this.selection.selected.filter(x => this._util.IsPremier(x.cusT_ID)).length;
+    if (premierCount == this.selection.selected.length) {
+
+      //call premier
+      this.surveyService.UpdateCustomerContactsVerificationListPremier(this.selection.selected, csmAction, rejectComment).subscribe(data => {
+        this.isLoading = false;
+        this.isVerificationInProgress = false;
+        alert("Selected customer contact(s) are approved.");
+        this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
+      }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
+    }
+    else if (premierCount == 0) {
+
+      this.surveyService.UpdateCustomerContactsVerificationList(this.selection.selected, csmAction, rejectComment).subscribe(data => {
+        this.isLoading = false;
+        this.isVerificationInProgress = false;
+        alert("Selected customer contact(s) are approved.");
+        this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
+      }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
+    }
+    else {
+      alert("You are not allowed to update both Premier and Non-Premier customers at the same time.");
       this.isLoading = false;
       this.isVerificationInProgress = false;
-    }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
+    }
+
   }
 
   validateApprove() {

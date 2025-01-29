@@ -146,7 +146,7 @@ export class ContactsPageComponent implements OnInit {
     }
      let domain = environment.loginpage.replace('login/', '');
     let url = 'customerinvite/';;
-    var msg = "Contacts added successfully. If you wish to obtain Customer Success Survey from this contact, You need to navigate to Customer details page from settings menu to map the Customer contact to the project. Click Ok to navigate to Customer Details Page, click No to Stay here.";
+    var msg = "Contacts added successfully. If you wish to obtain Customer Success Survey from this contact, You need to navigate to Customer details page from settings menu to map the Customer contact to the project. Click Ok to navigate to Customer Details Page, click Cancel to Stay here.";
     if (this.newContacts.id === 0 || this.newContacts.id === undefined) {
 
       this.newContacts.id = 0;
