@@ -54,6 +54,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 overview.PROJECT_ID = results.PROJECT_ID;
                 overview.RAG = results.RAG;
+                overview.TITLE = results.TITLE;
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.IMPACT_SUMMARY = results.IMPACT_SUMMARY;
                 overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK;
@@ -179,6 +180,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (overview != null && results != null)
             {
                 overview.PROJECT_ID = results.PROJECT_ID;
+                overview.TITLE = results.TITLE;
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.ISSUE_TYPE = results.ISSUE_TYPE;
                 overview.IMPACT_SUMMARY = results.IMPACT_SUMMARY;

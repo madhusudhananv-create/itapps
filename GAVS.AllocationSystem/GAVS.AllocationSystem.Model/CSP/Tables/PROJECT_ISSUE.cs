@@ -9,6 +9,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string PROJECT_ID { get; set; }
         public string RAG { get; set; }
 
+        public string TITLE { get; set; }
         public string DESCRIPTION { get; set; }
         public string IMPACT_SUMMARY { get; set; }
         public Boolean IS_POTENTIAL_RISK { get; set; }
