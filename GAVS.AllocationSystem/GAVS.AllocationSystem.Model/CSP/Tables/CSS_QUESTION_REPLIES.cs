@@ -20,6 +20,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         [NotMapped]
         public string QUESTION_DETAIL { get; set; }
         public int RATING { get; set; }
+        public int RATING_SCALE { get; set; }
         public string RATING_DESCRIPTION { get; set; } = string.Empty;
         public string COMMENTS { get; set; }
         public string CREATED_BY { get; set; }

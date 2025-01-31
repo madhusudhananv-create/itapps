@@ -1366,7 +1366,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         var product = products.FirstOrDefault(x => x.ID == cp.PRODUCT_ID);
                         var cuser = CSPdb.CUSTOMER_USERS.GetAll().FirstOrDefault(x => x.EMAILID == cust.EMP_ID);
                         if (cuser == null) continue;
-                        AddBatchCustomer(batch, cuser, empId, product.CUST_ID, "", product.ID);
+                        var projId = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == product.ID && x.MANAGEMENT_TYPE == 7);
+
+                        AddBatchCustomer(batch, cuser, empId, product.CUST_ID, projId != null ? projId.PROJECT_ID : "", product.ID);
                         //var BatchCustomer = new CSS_BATCH_CUSTOMERS()
                         //{
                         //    BATCH_ID = batchId,

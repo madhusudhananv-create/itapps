@@ -516,7 +516,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     QUESTION_ID = q.ID,
                     QUESTION = q.QUESTION,
                     QUESTION_CATEGORY = q.QUESTION_CATEGORY,
-                    QUESTION_DETAIL = q.QUESTION_DETAIL
+                    QUESTION_DETAIL = q.QUESTION_DETAIL,
+                    RATING_SCALE = q.RATING_SCALE.GetValueOrDefault(1)
                 };
                 if (isMonthly)
                     reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
