@@ -54,6 +54,14 @@ export class SurveyComponent implements OnInit {
     { 'key': '3 - Satisfied', 'value': 3 },
     { 'key': '4 - Highly Satisfied', 'value': 4 },
     { 'key': '5 - Delighted', 'value': 5 },];
+ 
+  ddRatings2 = [
+    { 'key': '1 - Poor', 'value': 1 },
+    { 'key': '2 - Fair', 'value': 2 },
+    { 'key': '3 - Good', 'value': 3 },
+    { 'key': '4 - Very Good', 'value': 4 },
+    { 'key': '5 - Excellent', 'value': 5 },];
+
    //  (1),  (2),  (3),  (4),  (5)
   @Input('guId') guId: any;
   @Input('showQualitativeFeedback') showQualitativeFeedback: boolean = false;

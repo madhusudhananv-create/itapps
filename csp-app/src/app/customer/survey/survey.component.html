@@ -70,7 +70,7 @@
           {{getDetail( criteria.questioN_DETAIL)}}
         </td>
         <td class="starRating" nowrap>
-          <app-star-rating [disabled]="IsCompleted" [rating]="criteria.rating" [starCount]="starCount"
+          <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE" [rating]="criteria.rating" [starCount]="starCount"
             [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
         </td>
         <td style="padding:0px;">
