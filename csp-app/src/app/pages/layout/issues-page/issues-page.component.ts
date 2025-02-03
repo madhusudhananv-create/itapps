@@ -29,7 +29,7 @@ export class IssuesPageComponent implements OnInit {
 
   EditIssue: IssueModelExt;
   portfolio: string[] = [];
-  displayedColumns = ['index', 'portfoliO_NM', 'subvertical', 'proJ_NM', 'description', 'issuE_TYPE', 'severity', 'actioN_PLAN', 'assigneD_TO', 'identifieD_DATE', 'targeT_DATE', 'issuE_RESOLVED_DATE', 'status', 'info', 'edit', 'delete'];
+  displayedColumns = ['index', 'portfoliO_NM', 'subvertical', 'proJ_NM', 'title', 'description', 'issuE_TYPE', 'severity', 'actioN_PLAN', 'assigneD_TO', 'identifieD_DATE', 'targeT_DATE', 'issuE_RESOLVED_DATE', 'status', 'info', 'edit', 'delete'];
   dataSource = new MatTableDataSource(this.input);
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -78,7 +78,7 @@ export class IssuesPageComponent implements OnInit {
     this.getAllIssuesForCustomer(this.selectedCust);
 
     if (!this._util.IsPremier(this.selectedCust))
-      this.displayedColumns = ['index', 'subvertical', 'proJ_NM', 'description', 'issuE_TYPE', 'severity', 'actioN_PLAN', 'assigneD_TO', 'identifieD_DATE', 'targeT_DATE', 'issuE_RESOLVED_DATE', 'status', 'info', 'edit', 'delete'];
+      this.displayedColumns = ['index', 'subvertical', 'proJ_NM', 'title', 'description', 'issuE_TYPE', 'severity', 'actioN_PLAN', 'assigneD_TO', 'identifieD_DATE', 'targeT_DATE', 'issuE_RESOLVED_DATE', 'status', 'info', 'edit', 'delete'];
   }
 
   ngOnChanges() {

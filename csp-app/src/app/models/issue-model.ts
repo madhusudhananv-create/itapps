@@ -36,6 +36,7 @@ export class IssueModel {
 	issuE_source_otheR: string;
 	locatioN_SELECTION: string;
 	businesS_IMPACT_DESC: string;
+	title:string;
 }
 
 export class IssueModelExt extends IssueModel {

@@ -100,6 +100,11 @@
         </th>
         <td mat-cell *matCellDef="let issue" [matTooltip]="issue.proJ_NM">{{issue.proJ_NM}}</td>
       </ng-container>
+      <ng-container matColumnDef="title">
+        <th mat-header-cell style="font-family: calibri; width : 210px; " *matHeaderCellDef mat-sort-header>Issue
+          Title</th>
+        <td mat-cell *matCellDef="let issue" [matTooltip]="issue.title">{{issue.title}}</td>
+      </ng-container>
       <ng-container matColumnDef="description">
         <th mat-header-cell style="font-family: calibri; width : 210px; " *matHeaderCellDef mat-sort-header>Issue
           description</th>
@@ -224,6 +229,11 @@
         </mat-radio-group>
       </div>
       <div class="row">
+        <mat-form-field>
+          <input matInput name="dtTitle" [(ngModel)]='EditIssue.title' placeholder="Title" maxlength="200" required>
+        </mat-form-field>
+      </div>
+      <div class="row">
         <mat-form-field style="width: 75%;">
           <textarea name="txtDescription" maxlength="2000" [(ngModel)]="EditIssue.description" matInput
             placeholder="Description" required></textarea>
@@ -253,7 +263,7 @@
         <mat-form-field *ngIf="impactmode">
           <mat-select name="ddBussImpact" [(ngModel)]="EditIssue.businesS_IMPACT" placeholder="Business Impact"
             required>
-            <mat-option value="Insignificant">Insignificant</mat-option>
+            <mat-option value="NoImpact">No Impact</mat-option>
             <mat-option value="Minor">Minor</mat-option>
             <mat-option value="Moderate">Moderate</mat-option>
             <mat-option value="Major">Major</mat-option>
@@ -285,6 +295,7 @@
           <mat-radio-button class="example-radio-button" style="margin-left: 11px;" (click)="EnableImpact()"
             [value]='true'>Yes</mat-radio-button>
           <mat-radio-button class="example-radio-button" (click)="DisableImpact()" [value]='false'>No</mat-radio-button>
+          <mat-radio-button class="example-radio-button" (click)="DisableImpact()" [value]='DontKnow'>Dont Know</mat-radio-button>
         </mat-radio-group>
       
       </div>
@@ -330,8 +341,11 @@
             <mat-option value="Governance">Governance</mat-option>
             <mat-option value="Resource">Resource</mat-option>
             <mat-option value="Staffing">Staffing</mat-option>
-            <mat-option value=" SoftSkills"> Soft Skills</mat-option>
-
+            <mat-option value="SoftSkills">Soft Skills</mat-option>
+            <mat-option value="TechSkills">Technical Skills</mat-option>
+            <mat-option value="DomainSkills">Domain Skills</mat-option>
+            <mat-option value="ClientRelationship">Client Relationship</mat-option>
+            <mat-option value="ClientBusinessKnowledge">Client Business Knowledge</mat-option>
             <mat-option [disabled]="true" value="Political">Political</mat-option>
             <mat-option [disabled]="true" value="Economic">Economic</mat-option>
             <mat-option [disabled]="true" value="Social">Social</mat-option>
