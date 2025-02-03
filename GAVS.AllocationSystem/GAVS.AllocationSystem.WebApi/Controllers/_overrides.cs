@@ -84,7 +84,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GeneralMethod"), ActionName("GeneralMethod"), HttpGet]
         public IHttpActionResult GeneralMethod()
         {
-            //GenerateCSSReadinessReport();
+            GenerateCSSReadinessReport();
             ////GenerateAutoRisk(31, "batch");
             //// GenerateAutoRisk(35, "batchmonthly");
             //return Ok();

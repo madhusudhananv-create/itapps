@@ -435,6 +435,7 @@
     <Content Include="UploadFile\Mails\AssessmentRevertRequest.htm" />
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_NonPremier.htm" />
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_Customer.htm" />
+    <Content Include="UploadFile\Mails\CSSReadiness.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveyQualitativeFeedback.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMail.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedback.htm" />

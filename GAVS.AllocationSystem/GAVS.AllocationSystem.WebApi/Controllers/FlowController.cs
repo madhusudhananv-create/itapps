@@ -49,14 +49,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void GenerateCSSReadinessReport()
         {
-            var startDate = new DateTime(2024, 7, 1);
-            var endDate = new DateTime(2024, 9, 30);
+            var startDate = new DateTime(2024, 10, 1);
+            var endDate = new DateTime(2024, 12, 31);
             int i = 0;
             var result = Cldb.AppRepo.getCSS_Readiness_Info(startDate, endDate).Where(x => x.PROJECT_TYPE.ToUpper() != "INTERNAL").ToList();
             var absoluteUrl = helper.GetAbsoulteUri();
+            var ineligible = false;
             foreach (var item in result.GroupBy(x => x.CSM_MAIL))
             {
-                if (!missingCSM.Contains(item.Key)) continue;
+                ineligible = true;
+                //if (!missingCSM.Contains(item.Key)) continue;
                 //if (item.All(x => x.CSS_Eligible.ToUpper() == "NO")) continue;
                 //if (item.All(x => x.CSS_CONFIGURED.ToUpper() == "YES")) continue;
                 var toMail = item.Key;
@@ -81,6 +83,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     sbNonEligeible.Append($"<td>{p.PROJ_NM}</td><td>{p.START_DATE}</td><td>{p.END_DATE}</td><td>{p.PROJ_STATUS}</td><td>{p.Reason}</td><td>{p.CSS_CONFIGURED}</td><td>{p.RESPONDENT_NAME}</td><td>{p.RESPONDENT_MAIL}</td><td>{contactLink}</td><td>{skipCSATLink}</td><td>{p.PM}</td><td>{p.CUST_NM}</td>");
                     sbNonEligeible.Append("</tr>");
                     sbNonEligeible.AppendLine();
+
+                }
+                if (!ineligible)
+                {
+                    sbNonEligeible.AppendLine("<tr><td colspan=11>-</td></tr>");
 
                 }
                 var eligible = false;
@@ -116,6 +123,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 string period = GetCurrentPeriodStringNew("quarterly", (startDate.Month - 1) / 3, startDate.Year);
                 Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
                 EmailContentValues.Add("CSM_NAME", item.First().CSM);
+                EmailContentValues.Add("VERIFICATION_URL",  absoluteUrl + "/cssverification");
                 EmailContentValues.Add("INELIGIBLE_CONTENT", sbNonEligeible.ToString());
                 EmailContentValues.Add("ELIGIBLE_CONTENT", sbEligeible.ToString());
                 EmailContentValues.Add("CSS_PERIOD", period);
