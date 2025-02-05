@@ -194,8 +194,9 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
       this.BatchCustomers = data;
       this.dataSource = new MatTableDataSource(this.BatchCustomers);
       this.isLoading = false;
+      this.selection.clear();
       this.selectedBatch.totaL_RECORDS = this.BatchCustomers.length;
-      this.selectedBatch.pending = this.BatchCustomers.filter(x => x.customeR_CONTACT_VERIFICATION === 'No').length;
+      this.selectedBatch.pending = this.BatchCustomers.filter(x => x.customeR_CONTACT_VERIFICATION === 'No' && (x.verificatioN_COMMENTS == null || x.verificatioN_COMMENTS =='')).length;
       if (this.BatchCustomers.some(x => x.csS_Eligible == 'Yes' && (x.respondenT_NAME == null || x.respondenT_MAIL == ''))) {
         alert("There are CSS eligible projects in this list but customers are not configured. Please configure the contact details for the CSS eligible projects. If you want to skip an eligible project, please follow SKIP CSAT process by clicking on SKIP CSAT link to take approval.");
       };
