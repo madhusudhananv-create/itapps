@@ -18,7 +18,7 @@ export class EmployeeSearchComponent implements OnInit {
   @Input("emp_name_readOnly") emp_name_readOnly;
   @Input("emP_Name") emP_Name;
   @Input("multiSelect") multiSelect;
-  @Input("searchText") searchText : string = "Key Resource Name";
+  @Input("searchText") searchText   ;
 
   myControl = new FormControl();
   empinfo: EmpInfoModel[] = [];
@@ -56,7 +56,9 @@ export class EmployeeSearchComponent implements OnInit {
   }
   getsearchText()
   {
-    return this.searchText;
+    if(this.searchText == undefined || this.searchText == null || this.searchText == "")
+      return "Key Resource Name:"; 
+    return this.searchText +":";
   }
   LoadData() {
     this.service_GetEmpInfo();

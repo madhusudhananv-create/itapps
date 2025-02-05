@@ -32,7 +32,7 @@ export class IssueModel {
 	SPOC: string;
 	acK_DATE: Date;
 	servicE_IMPACT: string;
-	financiaL_IMPACT: boolean;
+	financiaL_IMPACT: string;
 	financiaL_IMPACT_DESCRIPTION: string;
 	issuE_SOURCE: string;
 	issuE_source_otheR: string;

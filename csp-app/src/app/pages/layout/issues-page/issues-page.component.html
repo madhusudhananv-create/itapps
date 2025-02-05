@@ -291,16 +291,22 @@
         <div style="float: left;color: #757575;">Financial Impact *</div>   <i class="info fa fa-info-circle "
         matTooltip="Whether there is a financial impact due to the issue"></i>
         <mat-radio-group name="radfinancialimpact" class="example-radio-group"
-          [(ngModel)]="EditIssue.financiaL_IMPACT ">
-          <mat-radio-button class="example-radio-button" style="margin-left: 11px;" (click)="EnableImpact()"
-            [value]='true'>Yes</mat-radio-button>
-          <mat-radio-button class="example-radio-button" (click)="DisableImpact()" [value]='false'>No</mat-radio-button>
-          <mat-radio-button class="example-radio-button" (click)="DisableImpact()" [value]='DontKnow'>Don't Know</mat-radio-button>
+          [(ngModel)]="EditIssue.financiaL_IMPACT" required>
+          <mat-radio-button class="example-radio-button" style="margin-left: 11px;" value="Yes">Yes</mat-radio-button>
+          <mat-radio-button class="example-radio-button"   value="No">No</mat-radio-button>
+          <mat-radio-button class="example-radio-button"   value="DontKnow">Don't Know</mat-radio-button>
         </mat-radio-group>
-      
+        <!-- <mat-radio-group name="radreport" class="example-radio-group" [(ngModel)]="EditIssue.reporteD_BY" required>
+          <mat-radio-button class="example-radio-button" style="margin-left: 12px;" (click)="DisableLevel()"
+            value="reportedbyGAVS">Identified by GAVS</mat-radio-button>
+          <mat-radio-button class="example-radio-button" (click)="EnableLevel()" value="reportedbyClient">Reported by
+            Client</mat-radio-button>
+          <mat-radio-button class="example-radio-button" (click)="EnableLevel()" value="escalatedbyClient">Escalated by
+            Client</mat-radio-button>
+        </mat-radio-group> -->
       </div>
 
-      <div *ngIf="EditIssue.financiaL_IMPACT" class="row">
+      <div *ngIf="EditIssue.financiaL_IMPACT == 'Yes'" class="row">
         <mat-form-field style="width:75%">
           <textarea name="txtFinancialImpactDesc" maxlength="2000" [(ngModel)]="EditIssue.financiaL_IMPACT_DESCRIPTION"
             matInput placeholder="Financial Impact Description"></textarea>
@@ -425,11 +431,11 @@
        
           <div style="width: 70%;margin-top: 10px;margin-bottom: 10px;" *ngIf="!_isEmpSelVisible" >
             <a style="cursor: none;color: grey;text-decoration: none;" >Assigned To(SPOC):</a>&nbsp;&nbsp; {{ EditIssue.assigneD_TO_NAME}} &nbsp;
-            <a   style="cursor:pointer" (click)="changeResponsible()">Change..</a>
+            <a   style="cursor:pointer" (click)="changeResponsible()">Add/Change..</a>
             <i class="info fa fa-info-circle "  matTooltip="Name of the person assigned to resolve the issue"></i> 
           </div>
           <div style="width: 70%" *ngIf="_isEmpSelVisible">
-            <app-employee-search (onChange)="employeeSearch_onChange($event)"  [multiSelect]="false"
+            <app-employee-search (onChange)="employeeSearch_onChange($event)"  [multiSelect]="false" [searchText]="assignedtoText" 
               style="width:200px"></app-employee-search>
              
           </div>
@@ -521,7 +527,7 @@
         <mat-form-field>
           <mat-select name="ddStatus" [(ngModel)]="EditIssue.status" placeholder="Status" required>
             <mat-option value="Identified">Identified</mat-option>
-            <mat-option [disabled] value="Open">Open</mat-option>
+            <mat-option [disabled]="true" value="Open">Open</mat-option>
             <mat-option value="In-Progress">In-Progress</mat-option>
             <mat-option value="Closed">Closed</mat-option>
             <mat-option value="Hold">On Hold</mat-option>

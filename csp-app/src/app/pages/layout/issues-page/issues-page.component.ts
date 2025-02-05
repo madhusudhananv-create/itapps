@@ -58,7 +58,7 @@ export class IssuesPageComponent implements OnInit {
   isLoading: boolean = false;
   empinfo: EmpInfoModel[] = [];
   filteredOptions: Observable<EmpInfoModel[]>;
-
+  assignedtoText: string = "Assigned To";
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
@@ -92,7 +92,7 @@ export class IssuesPageComponent implements OnInit {
   }
   employeeSearch_onChange($event) {
     let obj = $event;
-    alert(obj);
+     
     this.EditIssue.assigneD_TO_EMPID = obj;
     this.EditIssue.assigneD_TO_NAME = this.empinfo.filter(x => x.emP_ID == obj)[0].frsT_NM;
     this._isEmpSelVisible = false;
@@ -544,7 +544,7 @@ export class IssuesPageComponent implements OnInit {
   //**********************************************
   newEditIssue() {
     this.EditIssue = new IssueModelExt();
-    this.EditIssue.financiaL_IMPACT = false;
+    //this.EditIssue.financiaL_IMPACT = false;
     this.EditIssue.reporteD_BY = "reportedbyGAVS";
     if (this.EditIssue.iS_POTENTIAL_RISK == true)
       this.EnableImpact();
