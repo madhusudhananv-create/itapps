@@ -1841,7 +1841,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var item in cssBatchCustomers.Where(x => !string.IsNullOrWhiteSpace(x.PROJ_ID)).OrderBy(x => x.DISPLAY_NAME))
             {
                 CheckUserHasAccess(empId, item.CUST_ID, item.PROJ_ID);
-                status = i == 1 && item.IS_VERIFIED ? "Approved" : "Rejected";
+                if (i == 1)
+                    status = item.IS_VERIFIED ? "Approved" : "Rejected";
                 var project = projects.FirstOrDefault(x => x.PROJ_ID == item.PROJ_ID);
                 if (project == null) continue;
                 var customer = customers.FirstOrDefault(x => x.CUST_ID == item.CUST_ID);
