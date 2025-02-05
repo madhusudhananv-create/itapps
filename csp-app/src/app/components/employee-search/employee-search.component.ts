@@ -18,6 +18,7 @@ export class EmployeeSearchComponent implements OnInit {
   @Input("emp_name_readOnly") emp_name_readOnly;
   @Input("emP_Name") emP_Name;
   @Input("multiSelect") multiSelect;
+  @Input("searchText") searchText : string = "Key Resource Name";
 
   myControl = new FormControl();
   empinfo: EmpInfoModel[] = [];
@@ -53,7 +54,10 @@ export class EmployeeSearchComponent implements OnInit {
   ngOnChanges() {
 
   }
-
+  getsearchText()
+  {
+    return this.searchText;
+  }
   LoadData() {
     this.service_GetEmpInfo();
   }

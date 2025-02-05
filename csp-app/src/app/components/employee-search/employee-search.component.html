@@ -1,7 +1,7 @@
 <mat-progress-bar *ngIf="empinfo.length === 0" mode="indeterminate"></mat-progress-bar>
 <div *ngIf="!multiSelect">
   <mat-form-field style="width:100%">
-    <input type="text" [readonly]='emp_name_readOnly' placeholder="Key Resource Name" matInput [formControl]="myControl"
+    <input type="text" [readonly]='emp_name_readOnly' placeholder="Resource/Employee Name:" matInput [formControl]="myControl"
       [matAutocomplete]="auto" (change)="emitChanges()">
   </mat-form-field>
   <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
@@ -11,7 +11,7 @@
 </div>
 
 <mat-form-field *ngIf="multiSelect" style="width:100%">
-  <mat-select name="employee" placeholder="Key Resource Name" [(ngModel)]="selectedEmployee" multiple
+  <mat-select name="employee" placeholder="Resource/Employee Name:" [(ngModel)]="selectedEmployee" multiple
     (selectionChange)="selectedEmployees()" (openedChange)="onDropdownOpenedChanged($event)">
     <mat-form-field class="filter-Id" style="width:325px !important;">
       <input [(ngModel)]='searchVal' matInput (keydown)="$event.stopPropagation()" (keyup)="onKey($event.target.value)"

@@ -92,6 +92,7 @@ export class IssuesPageComponent implements OnInit {
   }
   employeeSearch_onChange($event) {
     let obj = $event;
+    alert(obj);
     this.EditIssue.assigneD_TO_EMPID = obj;
     this.EditIssue.assigneD_TO_NAME = this.empinfo.filter(x => x.emP_ID == obj)[0].frsT_NM;
     this._isEmpSelVisible = false;

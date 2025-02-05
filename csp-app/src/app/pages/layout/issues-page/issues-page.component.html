@@ -126,7 +126,7 @@
       <ng-container matColumnDef="assigneD_TO">
         <th mat-header-cell style="font-family: calibri; width: 70px;" *matHeaderCellDef mat-sort-header>Assigned to
         </th>
-        <td mat-cell *matCellDef="let issue"> {{issue.assigneD_TO}} </td>
+        <td mat-cell *matCellDef="let issue"> {{issue.assigneD_TO_NAME}} </td>
       </ng-container>
       <ng-container matColumnDef="identifieD_DATE">
         <th mat-header-cell style="font-family: calibri;width: 80px;" *matHeaderCellDef mat-sort-header>Identified Date
@@ -423,15 +423,17 @@
       <div class="row" style="width:75%">
        
        
-          <div style="width: 70%" *ngIf="!_isEmpSelVisible" >
+          <div style="width: 70%;margin-top: 10px;margin-bottom: 10px;" *ngIf="!_isEmpSelVisible" >
             <a style="cursor: none;color: grey;text-decoration: none;" >Assigned To(SPOC):</a>&nbsp;&nbsp; {{ EditIssue.assigneD_TO_NAME}} &nbsp;
             <a   style="cursor:pointer" (click)="changeResponsible()">Change..</a>
+            <i class="info fa fa-info-circle "  matTooltip="Name of the person assigned to resolve the issue"></i> 
           </div>
           <div style="width: 70%" *ngIf="_isEmpSelVisible">
-            <app-employee-search (onChange)="employeeSearch_onChange($event)" [multiSelect]="false"
+            <app-employee-search (onChange)="employeeSearch_onChange($event)"  [multiSelect]="false"
               style="width:200px"></app-employee-search>
+             
           </div>
-            <i class="info fa fa-info-circle "  matTooltip="Name of the person assigned to resolve the issue"></i> 
+            
            
         <!-- <mat-form-field style="width:75%">  [(emP_ID)]='EditIssue.assigneD_TO_EMPID'
             <textarea name="txtAssignedTo" maxlength="2000" [(ngModel)]="EditIssue.assigneD_TO" matInput required
