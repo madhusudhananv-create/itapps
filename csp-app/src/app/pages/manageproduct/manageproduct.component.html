@@ -54,7 +54,7 @@
       </ng-container>
       <ng-container matColumnDef="productnm">
         <th mat-header-cell style="font-family: calibri;max-width :150px;word-break:break-all;" *matHeaderCellDef
-          mat-sort-header> Product Title</th>
+          mat-sort-header> Product / Portfolio</th>
         <td mat-cell style=" max-width :150px;word-break:break-all;" *matCellDef="let element">
           {{element.producT_TITLE}} </td>
       </ng-container>
@@ -163,16 +163,30 @@
     </div>
     <div class="row">
       <mat-form-field style="width:35%">
-        <textarea [(ngModel)]="editItem.producT_TITLE" matInput placeholder="Product/Portfolio Title" maxlength="355" required>
+        <mat-label>Product / Portfolio Title</mat-label> <!-- Removed our custom asterisk -->
+        <textarea [(ngModel)]="editItem.producT_TITLE" matInput maxlength="355" required>
         </textarea>
       </mat-form-field>
     </div>
 
     <div class="row">
       <mat-form-field style="width: 35%;margin-top: 5px;">
-        <mat-select name="servicearea" [(ngModel)]="editItem.servicE_AREA_TYPE_ID" placeholder="Select Service Area Type" required>
+        <mat-label>Select Service Area Type</mat-label> <!-- Removed our custom asterisk -->
+        <mat-select name="servicearea" [(ngModel)]="editItem.servicE_AREA_TYPE_ID" required>
           <mat-option *ngFor="let p of serviceAreaTypes" [value]="p.id" [title]="p.servicE_AREA_TYPE">
             {{p.servicE_AREA_TYPE}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    
+
+    <div class="row">
+      <mat-form-field style="width: 35%;margin-top: 5px;">
+        <mat-label>Select Mode</mat-label> <!-- Removed our custom asterisk -->
+        <mat-select name="servicearea" [(ngModel)]="editItem.modE_ID" required>
+          <mat-option *ngFor="let p of modeList" [value]="p.id" [title]="p.modE_TITLE">
+            {{p.modE_TITLE}}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -180,22 +194,15 @@
 
     <div class="row">
       <mat-form-field style="width: 35%;margin-top: 5px;">
-        <mat-select name="servicearea" [(ngModel)]="editItem.modE_ID" placeholder="Select Mode" required>
-          <mat-option *ngFor="let p of modeList" [value]="p.id" [title]="p.modE_TITLE">
-            {{p.modE_TITLE}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-    <div class="row">
-      <mat-form-field style="width: 35%;margin-top: 5px;">
-        <mat-select name="servicearea" [(ngModel)]="editItem.tieR_ID" placeholder="Select Tier" required>
+        <mat-label>Select Tier</mat-label> <!-- Removed our custom asterisk -->
+        <mat-select name="servicearea" [(ngModel)]="editItem.tieR_ID" required>
           <mat-option *ngFor="let p of productTier" [value]="p.tieR_ID" [title]="p.mttr">
-           Tier-{{p.tieR_ID}} {{p.mttr}}
+            Tier-{{p.tieR_ID}} {{p.mttr}}
           </mat-option>
         </mat-select>
       </mat-form-field>
     </div>
+
     <div class="servicecommenced">
       Service Commenced
       <mat-radio-group [(ngModel)]="editItem.iS_SERVICE_COMMENCED">
