@@ -77,6 +77,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ISSUE_RESOLVED_DATE = results.ISSUE_RESOLVED_DATE.HasValue ? results.ISSUE_RESOLVED_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.COMMENTS = results.COMMENTS;
                 overview.ROOTCAUSE = results.ROOTCAUSE;
+                overview.ISSUE_TITLE = results.ISSUE_TITLE;
+
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
                 if (results.ACK_DATE.HasValue)
@@ -135,6 +137,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Impact Summary", overview.IMPACT_SUMMARY);
             EmailContentValues.Add("Is Potential Risk", overview.IS_POTENTIAL_RISK ? YES : NO);
             EmailContentValues.Add("Business Impact", string.IsNullOrWhiteSpace(overview.BUSINESS_IMPACT) ? "-" : overview.BUSINESS_IMPACT);
+            EmailContentValues.Add("Location Selection", overview.LOCATION_SELECTION);
             EmailContentValues.Add("Location", overview.LOCATION_SELECTION + " " + overview.GEO_LOCATION);
             EmailContentValues.Add("Issue Type", overview.ISSUE_TYPE);
             EmailContentValues.Add("Severity", overview.SEVERITY);
@@ -148,6 +151,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Status", overview.STATUS);
             EmailContentValues.Add("Issue Resolved Date", !overview.ISSUE_RESOLVED_DATE.HasValue ? "-" : overview.ISSUE_RESOLVED_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Comments / Final resolution", overview.COMMENTS);
+            EmailContentValues.Add("Subvertical", overview.SUBVERTICAL);
+            EmailContentValues.Add("Rootcause", overview.ROOTCAUSE);
+            EmailContentValues.Add("ACK Date", overview.ACK_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
+            EmailContentValues.Add("Service Impact", overview.SERVICE_IMPACT);
+            EmailContentValues.Add("Financial Impact",overview.FINANCIAL_IMPACT.HasValue? overview.FINANCIAL_IMPACT.Value.ToString(): "N/A");
+            EmailContentValues.Add("Buisness Impact Desc", overview.BUSINESS_IMPACT);
+            EmailContentValues.Add("Issue Source", overview.ISSUE_SOURCE);
+            EmailContentValues.Add("Issue Source Other", overview.ISSUE_SOURCE_OTHER);
 
             mailContent = helper.GetEmailContent("AddNewIssue.htm", EmailContentValues);
             var ep = new EmailProvider(Cldb, CSPdb);
@@ -208,6 +219,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ISSUE_RESOLVED_DATE = results.ISSUE_RESOLVED_DATE.HasValue ? results.ISSUE_RESOLVED_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.COMMENTS = results.COMMENTS;
                 overview.ROOTCAUSE = results.ROOTCAUSE;
+                overview.ISSUE_TITLE = results.ISSUE_TITLE;
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
                 if (results.ACK_DATE.HasValue)

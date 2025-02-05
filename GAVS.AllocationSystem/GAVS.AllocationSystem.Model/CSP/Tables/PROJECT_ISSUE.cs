@@ -30,7 +30,6 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         //public Boolean ISCUSTOMERESCALATED { get; set; }
 
-        [NotMapped]
         public string SUBVERTICAL { get; set; }
 
         public string ROOTCAUSE { get; set; }
@@ -50,5 +49,6 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string LOCATION_SELECTION { get; set; }
 
         public string ISSUE_SOURCE_OTHER { get; set; }
+        public string ISSUE_TITLE { get; set; }
     }
 }
