@@ -818,7 +818,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         return GetDBConfigValueInt(GetDBConfig("CSS_QUESTION_MODEL", custId, projId, startDate, endDate)); //change get default
                 }
             }
-            else if (!string.IsNullOrEmpty(projId))
+            else if (frequency.ToLower() == "quarterly" && !string.IsNullOrEmpty(projId))
             {
                 int? questionModelId = Cldb.AppRepo.getQuestionModelId(projId, batchId, contactEmailId);
                 if (questionModelId.HasValue && questionModelId.Value != 0)

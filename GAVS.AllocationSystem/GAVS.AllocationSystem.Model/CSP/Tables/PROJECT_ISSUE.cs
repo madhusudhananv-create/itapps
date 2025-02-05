@@ -19,6 +19,9 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string SEVERITY { get; set; }
         public string ACTION_PLAN { get; set; }
         public string ASSIGNED_TO { get; set; }
+        public string ASSIGNED_TO_EMPID { get; set; }
+     
+
         public string IDENTIFIED_BY { get; set; }
         public string REPORTED_BY { get; set; }
         public string LEVEL { get; set; }
@@ -29,8 +32,10 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string COMMENTS { get; set; }
 
         //public Boolean ISCUSTOMERESCALATED { get; set; }
-
+        [NotMapped]
         public string SUBVERTICAL { get; set; }
+        [NotMapped]
+        public string ASSIGNED_TO_NAME { get; set; }
 
         public string ROOTCAUSE { get; set; }
 
@@ -49,6 +54,6 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string LOCATION_SELECTION { get; set; }
 
         public string ISSUE_SOURCE_OTHER { get; set; }
-        public string ISSUE_TITLE { get; set; }
+       
     }
 }

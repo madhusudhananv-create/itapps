@@ -3859,7 +3859,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             output.projects = projects;
 
             issues = CSPdb.AppRepo.GetAllIssuesForCustomer(ProjIds).ToList();
-
+            var empIds = issues.Where(x => x.ASSIGNED_TO_EMPID != null).Select(x => x.ASSIGNED_TO_EMPID).ToList();
+            var employees = Cldb.EMP_INFO.GetAll().Where(x => empIds.Contains(x.EMP_ID)).ToList();
+            foreach (var item in issues)
+            {
+                if (!string.IsNullOrWhiteSpace(item.ASSIGNED_TO_EMPID))
+                {
+                    item.ASSIGNED_TO_NAME = employees.FirstOrDefault(x => x.EMP_ID == item.ASSIGNED_TO_EMPID).FRST_NM;
+                }
+                else
+                {
+                    item.ASSIGNED_TO_NAME = item.ASSIGNED_TO;
+                }
+            }
             output.output = issues;
 
             return Ok(output);

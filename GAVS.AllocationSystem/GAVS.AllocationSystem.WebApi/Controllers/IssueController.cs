@@ -68,6 +68,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.SEVERITY = results.SEVERITY;
                 overview.ACTION_PLAN = results.ACTION_PLAN;
                 overview.ASSIGNED_TO = results.ASSIGNED_TO;
+                overview.ASSIGNED_TO_EMPID = results.ASSIGNED_TO_EMPID;
+                
                 overview.IDENTIFIED_BY = results.IDENTIFIED_BY;
                 overview.REPORTED_BY = results.REPORTED_BY;
                 overview.LEVEL = results.LEVEL;
@@ -77,7 +79,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ISSUE_RESOLVED_DATE = results.ISSUE_RESOLVED_DATE.HasValue ? results.ISSUE_RESOLVED_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.COMMENTS = results.COMMENTS;
                 overview.ROOTCAUSE = results.ROOTCAUSE;
-                overview.ISSUE_TITLE = results.ISSUE_TITLE;
+                 
 
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
@@ -137,7 +139,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Impact Summary", overview.IMPACT_SUMMARY);
             EmailContentValues.Add("Is Potential Risk", overview.IS_POTENTIAL_RISK ? YES : NO);
             EmailContentValues.Add("Business Impact", string.IsNullOrWhiteSpace(overview.BUSINESS_IMPACT) ? "-" : overview.BUSINESS_IMPACT);
-            EmailContentValues.Add("Location Selection", overview.LOCATION_SELECTION);
+          
             EmailContentValues.Add("Location", overview.LOCATION_SELECTION + " " + overview.GEO_LOCATION);
             EmailContentValues.Add("Issue Type", overview.ISSUE_TYPE);
             EmailContentValues.Add("Severity", overview.SEVERITY);
@@ -210,6 +212,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.SEVERITY = results.SEVERITY;
                 overview.ACTION_PLAN = results.ACTION_PLAN;
                 overview.ASSIGNED_TO = results.ASSIGNED_TO;
+                overview.ASSIGNED_TO_EMPID = results.ASSIGNED_TO_EMPID;
+                
                 overview.IDENTIFIED_BY = results.IDENTIFIED_BY;
                 overview.REPORTED_BY = results.REPORTED_BY;
                 overview.LEVEL = results.LEVEL;
@@ -219,7 +223,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ISSUE_RESOLVED_DATE = results.ISSUE_RESOLVED_DATE.HasValue ? results.ISSUE_RESOLVED_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.COMMENTS = results.COMMENTS;
                 overview.ROOTCAUSE = results.ROOTCAUSE;
-                overview.ISSUE_TITLE = results.ISSUE_TITLE;
+                 
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
                 if (results.ACK_DATE.HasValue)
@@ -251,17 +255,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LoadOverAllIssuesData();
             return Ok();
         }
-
-        [GET("GetAccountLevelUsers")]
-        [ActionName("GetAccountLevelUsers")]
-        [HttpGet]
-        public IHttpActionResult GetAccountLevelUsers(string customerId)
-        {
-            var result = new List<Emp_Info_Small>();
-
-            //var projects = Cldb.PROJECT.GetAll().Where(x=>x.)
-            return Ok(result);
-
-        }
+ 
     }
 }
