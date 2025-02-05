@@ -10,7 +10,7 @@ import { MatDialog, MatDialogConfig, MatDialogRef, MatSort, MatTableDataSource }
 import { CssBatchMonthlyModel } from '../../../models/css-batch-monthly-model';
 import { CssCustomerVerificationModel } from '../../../models/css-customer-verification-model';
 import { AccessControl } from '../../../Shared/accessControl';
- 
+
 import { CssBatchModel } from '../../../models/css-batch-model';
 
 @Component({
@@ -183,7 +183,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
 
   service_GetCSSMonthlyBatches() {
     this.surveyService.GetCSSBatches(localStorage.getItem("empid")).subscribe(data => {
-      this.Batches = data.filter(x=>x.frequency == 'Quarterly');
+      this.Batches = data.filter(x => x.frequency == 'Quarterly');
 
     }, error => { this._util.serviceError(error); });
   }
@@ -196,10 +196,9 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
       this.isLoading = false;
       this.selectedBatch.totaL_RECORDS = this.BatchCustomers.length;
       this.selectedBatch.pending = this.BatchCustomers.filter(x => x.customeR_CONTACT_VERIFICATION === 'No').length;
-      if(this.BatchCustomers.some(x=>x.csS_Eligible == 'Yes' && (x.respondenT_NAME == null || x.respondenT_MAIL =='') ))
-      {
+      if (this.BatchCustomers.some(x => x.csS_Eligible == 'Yes' && (x.respondenT_NAME == null || x.respondenT_MAIL == ''))) {
         alert("There are CSS eligible projects in this list but customers are not configured. Please configure the contact details for the CSS eligible projects. If you want to skip an eligible project, please follow SKIP CSAT process by clicking on SKIP CSAT link to take approval.");
-      } ;
+      };
 
     }, error => { this.isLoading = false; this._util.serviceError(error); });
   }
@@ -218,7 +217,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
         if (result) {
 
 
-         this.updateCSSVerification(true, '');
+          this.updateCSSVerification(true, '');
 
         }
       });
@@ -251,11 +250,11 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
 
   rejectSelectedCustomerVerifications(): void {
     this.dialog.closeAll();
-   
-   this. updateCSSVerification(false, this.rejectComment);
+
+    this.updateCSSVerification(false, this.rejectComment);
   }
 
-  updateCSSVerification(csmAction: boolean, rejectComment : string){
+  updateCSSVerification(csmAction: boolean, rejectComment: string) {
     this.isLoading = true;
     this.isVerificationInProgress = true;
     var premierCount = this.selection.selected.filter(x => this._util.IsPremier(x.cusT_ID)).length;
@@ -265,7 +264,11 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
       this.surveyService.UpdateCustomerContactsVerificationListPremier(this.selection.selected, csmAction, rejectComment).subscribe(data => {
         this.isLoading = false;
         this.isVerificationInProgress = false;
-        alert("Selected customer contact(s) are approved.");
+        if (csmAction)
+          alert("Selected customer contact(s) are Approved.");
+
+        else
+          alert("Selected customer contact(s) are Rejected.");
         this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
       }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
     }
@@ -274,7 +277,11 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
       this.surveyService.UpdateCustomerContactsVerificationList(this.selection.selected, csmAction, rejectComment).subscribe(data => {
         this.isLoading = false;
         this.isVerificationInProgress = false;
-        alert("Selected customer contact(s) are approved.");
+        if (csmAction)
+          alert("Selected customer contact(s) are Approved.");
+
+        else
+          alert("Selected customer contact(s) are Rejected.");
         this.service_GetCSSVerificationDetails(this.startDate, this.endDate, 0);
       }, error => { this.isLoading = false; this._util.serviceError(error); this.isVerificationInProgress = false; });
     }

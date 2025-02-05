@@ -11,6 +11,10 @@ import { LayoutService } from '../layout.service';
 import { enumRoles } from '../../../Shared/enum';
 import { SharedService } from '../../../Shared/shared.service';
 import { EntityBaseInfoComponent } from '../entity-base-info/entity-base-info.component';
+import { EmpInfoModel } from '../../../models/emp-info-model';
+import { Observable } from 'rxjs';
+import { FormControl } from '@angular/forms';
+import { map, startWith } from 'rxjs/operators';
 
 
 @Component({
@@ -35,6 +39,8 @@ export class IssuesPageComponent implements OnInit {
   @ViewChild(MatSort) sort: MatSort;
   tempData: IssueModelExt[];
   tempData1: IssueModelExt[];
+ 
+  private _isEmpSelVisible: any;
   @ViewChild(MatSort) set content(sort: MatSort) {
     this.dataSource.sort = sort;
   }
@@ -50,6 +56,8 @@ export class IssuesPageComponent implements OnInit {
   DueClosureChecked: boolean = true;
   isPopOpened: boolean = false;
   isLoading: boolean = false;
+  empinfo: EmpInfoModel[] = [];
+  filteredOptions: Observable<EmpInfoModel[]>;
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
@@ -79,6 +87,19 @@ export class IssuesPageComponent implements OnInit {
 
     if (!this._util.IsPremier(this.selectedCust))
       this.displayedColumns = ['index', 'subvertical', 'proJ_NM', 'title', 'description', 'issuE_TYPE', 'severity', 'actioN_PLAN', 'assigneD_TO', 'identifieD_DATE', 'targeT_DATE', 'issuE_RESOLVED_DATE', 'status', 'info', 'edit', 'delete'];
+    this.service_GetEmpInfo();
+
+  }
+  employeeSearch_onChange($event) {
+    let obj = $event;
+    this.EditIssue.assigneD_TO_EMPID = obj;
+    this.EditIssue.assigneD_TO_NAME = this.empinfo.filter(x => x.emP_ID == obj)[0].frsT_NM;
+    this._isEmpSelVisible = false;
+  }
+
+  changeResponsible() {
+    if (!this._isEmpSelVisible)
+      this._isEmpSelVisible = true;
   }
 
   ngOnChanges() {
@@ -285,6 +306,14 @@ export class IssuesPageComponent implements OnInit {
       alert('Please enter alphanumeric or numeric values along with special characters for Comments');
       return;
     }
+    
+    if (this.EditIssue.assigneD_TO_EMPID == null || this.EditIssue.assigneD_TO_EMPID == "" || this.EditIssue.assigneD_TO_EMPID == undefined) {
+      
+        alert('Please enter valid value for Assigned To');
+        return;
+      
+    }
+    
 
     let tDate = new Date(this.EditIssue.targeT_DATE);
     tDate.setHours(0, 0, 0, 0);
@@ -319,6 +348,7 @@ export class IssuesPageComponent implements OnInit {
 
 
     }
+
 
 
     let projectName;
@@ -390,6 +420,8 @@ export class IssuesPageComponent implements OnInit {
   EditRow_onClick(element) {
     //this.EditIssue = element;
     this.EditIssue = Object.assign({}, element);
+    this._isEmpSelVisible = false;
+
 
     if (this.EditIssue.iS_POTENTIAL_RISK == true)
       this.EnableImpact();
@@ -410,6 +442,9 @@ export class IssuesPageComponent implements OnInit {
   }
   DisableImpact() {
     this.impactmode = false;
+  }
+  EnableAssign(n) {
+
   }
   // SaveRAG_onClick(rag) {
   //   this._util.updateRAG(this.input_rag, 'issue', rag);
@@ -555,5 +590,11 @@ export class IssuesPageComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
     });
   }
+  service_GetEmpInfo() {
+    this._appservice.getEmpInfo().subscribe(data => {
+      this.empinfo = data;
+    }, error => { this._util.serviceError(error); });
+  }
+
 }
 

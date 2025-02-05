@@ -230,7 +230,7 @@
       </div>
       <div class="row">
         <mat-form-field>
-          <input matInput name="dtTitle" [(ngModel)]='EditIssue.title' placeholder="Title" maxlength="200" required>
+          <input matInput name="dtTitle" [(ngModel)]='EditIssue.title' placeholder="Title(100 Characters)" maxlength="100" required>
         </mat-form-field>
       </div>
       <div class="row">
@@ -263,7 +263,7 @@
         <mat-form-field *ngIf="impactmode">
           <mat-select name="ddBussImpact" [(ngModel)]="EditIssue.businesS_IMPACT" placeholder="Business Impact"
             required>
-            <mat-option value="NoImpact">No Impact</mat-option>
+            <!-- <mat-option value="NoImpact">No Impact</mat-option> -->
             <mat-option value="Minor">Minor</mat-option>
             <mat-option value="Moderate">Moderate</mat-option>
             <mat-option value="Major">Major</mat-option>
@@ -295,7 +295,7 @@
           <mat-radio-button class="example-radio-button" style="margin-left: 11px;" (click)="EnableImpact()"
             [value]='true'>Yes</mat-radio-button>
           <mat-radio-button class="example-radio-button" (click)="DisableImpact()" [value]='false'>No</mat-radio-button>
-          <mat-radio-button class="example-radio-button" (click)="DisableImpact()" [value]='DontKnow'>Dont Know</mat-radio-button>
+          <mat-radio-button class="example-radio-button" (click)="DisableImpact()" [value]='DontKnow'>Don't Know</mat-radio-button>
         </mat-radio-group>
       
       </div>
@@ -360,7 +360,7 @@
       </div>
       <div class="row">
         <mat-form-field style="width:20%">
-          <mat-select name="ddIssueSource" [(ngModel)]="EditIssue.issuE_SOURCE" placeholder="Escalation Source" required>
+          <mat-select name="ddIssueSource" [(ngModel)]="EditIssue.issuE_SOURCE" placeholder="Issue Source" required>
             <mat-option value="ClientReviewCall">Client escalation-Review Call</mat-option>
             <mat-option value="CSAT">Client escalation-CSAT</mat-option>
             <mat-option value="ExecutiveConnect">Client escalation-Executive connect</mat-option>
@@ -409,14 +409,38 @@
 
         </mat-form-field>
       </div>
-      <div class="row">
-        <mat-form-field style="width:75%">
-          <textarea name="txtAssignedTo" maxlength="2000" [(ngModel)]="EditIssue.assigneD_TO" matInput required
-            placeholder="Assigned To (SPOC)">{{EditIssue.assigneD_TO}}</textarea>
+      <!-- <div class="row">
+        <div style="float: left;color: #757575;">Assigned To *</div>   <i class="info fa fa-info-circle "
+        matTooltip="Assigned To (SPOC)"></i>
+        <mat-radio-group name="radAssigned" class="example-radio-group" [(ngModel)]="EditIssue.assigneD_TO_OTHER" required>
+          <mat-radio-button class="example-radio-button" style="margin-left: 12px;"   (click)="EnableAssign(0)"
+          [value]='false'>Employee</mat-radio-button>
+          <mat-radio-button class="example-radio-button" (click)="EnableAssign(1)"  [value]='true'>Other</mat-radio-button>
+         
+        </mat-radio-group>
+      </div> -->
+
+      <div class="row" style="width:75%">
+       
+       
+          <div style="width: 70%" *ngIf="!_isEmpSelVisible" >
+            <a style="cursor: none;color: grey;text-decoration: none;" >Assigned To(SPOC):</a>&nbsp;&nbsp; {{ EditIssue.assigneD_TO_NAME}} &nbsp;
+            <a   style="cursor:pointer" (click)="changeResponsible()">Change..</a>
+          </div>
+          <div style="width: 70%" *ngIf="_isEmpSelVisible">
+            <app-employee-search (onChange)="employeeSearch_onChange($event)" [multiSelect]="false"
+              style="width:200px"></app-employee-search>
+          </div>
             <i class="info fa fa-info-circle "  matTooltip="Name of the person assigned to resolve the issue"></i> 
-            <!-- (Select from the drop down). This list has all the people assigned to the Account. If the person whom this is assigned is not in the list, please say other and enter the Full Name"></i> -->
-        </mat-form-field>
+           
+        <!-- <mat-form-field style="width:75%">  [(emP_ID)]='EditIssue.assigneD_TO_EMPID'
+            <textarea name="txtAssignedTo" maxlength="2000" [(ngModel)]="EditIssue.assigneD_TO" matInput required
+            placeholder="Assigned To (SPOC)">{{EditIssue.assigneD_TO}}</textarea>  
+            
+            (Select from the drop down). This list has all the people assigned to the Account. If the person whom this is assigned is not in the list, please say other and enter the Full Name"></i> -->
+         
       </div>
+     
 
       <div class="row">
         <mat-form-field style="width:calc(50% - 20px)">
@@ -495,7 +519,7 @@
         <mat-form-field>
           <mat-select name="ddStatus" [(ngModel)]="EditIssue.status" placeholder="Status" required>
             <mat-option value="Identified">Identified</mat-option>
-            <mat-option value="Open">Open</mat-option>
+            <mat-option [disabled] value="Open">Open</mat-option>
             <mat-option value="In-Progress">In-Progress</mat-option>
             <mat-option value="Closed">Closed</mat-option>
             <mat-option value="Hold">On Hold</mat-option>

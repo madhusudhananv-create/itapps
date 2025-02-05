@@ -12,6 +12,8 @@ export class IssueModel {
 	severity: string;
 	actioN_PLAN: string;
 	assigneD_TO: string;
+	assigneD_TO_EMPID: string;
+ 
 	identifieD_BY: string;
 	reporteD_BY: string;
 	level: string;
@@ -46,5 +48,6 @@ export class IssueModelExt extends IssueModel {
 	portfoliO_NM: string;
 	proJ_NM: string;
 	isEscalated: string;
+  assigneD_TO_NAME: any;
 }
  
