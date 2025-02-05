@@ -157,7 +157,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Rootcause", overview.ROOTCAUSE);
             EmailContentValues.Add("ACK Date", overview.ACK_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Service Impact", overview.SERVICE_IMPACT);
-            EmailContentValues.Add("Financial Impact",overview.FINANCIAL_IMPACT.HasValue? overview.FINANCIAL_IMPACT.Value.ToString(): "N/A");
+            EmailContentValues.Add("Financial Impact",overview.FINANCIAL_IMPACT);
+            EmailContentValues.Add("Financial Impact Description", overview.FINANCIAL_IMPACT_DESCRIPTION);
             EmailContentValues.Add("Buisness Impact Desc", overview.BUSINESS_IMPACT);
             EmailContentValues.Add("Issue Source", overview.ISSUE_SOURCE);
             EmailContentValues.Add("Issue Source Other", overview.ISSUE_SOURCE_OTHER);
@@ -230,7 +231,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     overview.ACK_DATE = results.ACK_DATE.GetValueOrDefault(DateTime.Today).ToLocalTime();
                 overview.SERVICE_IMPACT = results.SERVICE_IMPACT;
                 overview.FINANCIAL_IMPACT = results.FINANCIAL_IMPACT;
-                if (overview.FINANCIAL_IMPACT.GetValueOrDefault())
+                if (overview.FINANCIAL_IMPACT.ToLower() =="yes")
                     overview.FINANCIAL_IMPACT_DESCRIPTION = results.FINANCIAL_IMPACT_DESCRIPTION;
                 else overview.FINANCIAL_IMPACT_DESCRIPTION = string.Empty;
                 overview.LOCATION_SELECTION = results.LOCATION_SELECTION;

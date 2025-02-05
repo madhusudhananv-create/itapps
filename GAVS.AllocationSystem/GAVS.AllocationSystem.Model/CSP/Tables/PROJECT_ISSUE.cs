@@ -43,7 +43,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public string SERVICE_IMPACT { get; set; }
 
-        public bool? FINANCIAL_IMPACT { get; set; }
+        public string FINANCIAL_IMPACT { get; set; }
 
         public string FINANCIAL_IMPACT_DESCRIPTION { get; set; }
 

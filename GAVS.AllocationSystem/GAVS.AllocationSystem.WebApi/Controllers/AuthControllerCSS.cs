@@ -75,8 +75,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
                     else
                     {
-                        SendSurveyResultEmail(replies, surveyId);
-                        SendSurveySuccessEmail(replies, surveyId);
+                        var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
+                        SendSurveyResultEmail(replies, surveyId, batch != null ? batch.FREQUENCY : "");
+                        SendSurveySuccessEmail(replies, surveyId, batch != null ? batch.FREQUENCY : "");
                     }
                 }
                 else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
@@ -497,8 +498,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     CurrentPeriod = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
                 }
                 else if (Sequence == 2)
-                { 
-                    CurrentPeriod = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString(); 
+                {
+                    CurrentPeriod = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString();
                 }
             }
             return CurrentPeriod;
@@ -538,7 +539,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public string SURVEY_PERIOD { get; set; }
         }
 
-        private void SendSurveyResultEmail(BatchCustomerAndQuestions replies, string surveyId)
+        private void SendSurveyResultEmail(BatchCustomerAndQuestions replies, string surveyId, string frequency)
         {
 
             string tomail = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID;
@@ -547,8 +548,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string mailContent = string.Empty;
 
             //SUBJECT
-            subject = "Customer Success Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
-                    ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
+            if (frequency.ToLower() == "halfyearly")
+                subject = "Half Yearly Pulse Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
+                  ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
+            else
+                subject = "Customer Success Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
+                        ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CUSTOMER", replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME);
@@ -578,7 +583,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
         }
-        private void SendSurveySuccessEmail(BatchCustomerAndQuestions replies, string surveyId)
+        private void SendSurveySuccessEmail(BatchCustomerAndQuestions replies, string surveyId, string frequency)
         {
 
             string tomail = string.Empty;
@@ -634,7 +639,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //else
             //    CSMNames += ",";
             //SUBJECT
-            subject = $"Customer Success Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
+            //SUBJECT
+            if (frequency.ToLower() == "halfyearly")
+                subject = $"Half Yearly Pulse Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
+            else
+                subject = $"Customer Success Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
+
+
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             //var url = $"CustomerSuccessSurvey/{surveyId}";
