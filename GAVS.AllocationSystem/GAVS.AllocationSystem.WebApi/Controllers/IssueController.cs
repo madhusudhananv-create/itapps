@@ -60,16 +60,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK;
                 if (results.IS_POTENTIAL_RISK)
                 {
-                    overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
-                    overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
+                  
                 }
+                overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
+                overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
                 overview.GEO_LOCATION = results.GEO_LOCATION;
                 overview.ISSUE_TYPE = results.ISSUE_TYPE;
                 overview.SEVERITY = results.SEVERITY;
                 overview.ACTION_PLAN = results.ACTION_PLAN;
                 overview.ASSIGNED_TO = results.ASSIGNED_TO;
                 overview.ASSIGNED_TO_EMPID = results.ASSIGNED_TO_EMPID;
-                
+
                 overview.IDENTIFIED_BY = results.IDENTIFIED_BY;
                 overview.REPORTED_BY = results.REPORTED_BY;
                 overview.LEVEL = results.LEVEL;
@@ -79,7 +80,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ISSUE_RESOLVED_DATE = results.ISSUE_RESOLVED_DATE.HasValue ? results.ISSUE_RESOLVED_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.COMMENTS = results.COMMENTS;
                 overview.ROOTCAUSE = results.ROOTCAUSE;
-                 
+
 
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
@@ -129,6 +130,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             customerName = customer?.CUST_NM;
             projectName = project.PROJ_NM;
 
+            var assignedTo = string.Empty;
+            if (!string.IsNullOrWhiteSpace(overview.ASSIGNED_TO_EMPID))
+            {
+                assignedTo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == overview.ASSIGNED_TO_EMPID)?.FRST_NM;
+            }
 
             subject = $"New Issue Identified - Project: {projectName}; Customer: {customerName}";
             ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, qualitySpoc });
@@ -139,12 +145,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Impact Summary", overview.IMPACT_SUMMARY);
             EmailContentValues.Add("Is Potential Risk", overview.IS_POTENTIAL_RISK ? YES : NO);
             EmailContentValues.Add("Business Impact", string.IsNullOrWhiteSpace(overview.BUSINESS_IMPACT) ? "-" : overview.BUSINESS_IMPACT);
-          
-            EmailContentValues.Add("Location", overview.LOCATION_SELECTION + " " + overview.GEO_LOCATION);
+
+            EmailContentValues.Add("Location", overview.LOCATION_SELECTION + " " + (overview.GEO_LOCATION ?? ""));
             EmailContentValues.Add("Issue Type", overview.ISSUE_TYPE);
             EmailContentValues.Add("Severity", overview.SEVERITY);
             EmailContentValues.Add("Action Plan / Steps", overview.ACTION_PLAN);
-            EmailContentValues.Add("Assigned To", overview.ASSIGNED_TO);
+            EmailContentValues.Add("Assigned To", assignedTo);
             EmailContentValues.Add("Identified By", overview.IDENTIFIED_BY);
             EmailContentValues.Add("Reported By", overview.REPORTED_BY);
             EmailContentValues.Add("Level", overview.LEVEL);
@@ -153,15 +159,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Status", overview.STATUS);
             EmailContentValues.Add("Issue Resolved Date", !overview.ISSUE_RESOLVED_DATE.HasValue ? "-" : overview.ISSUE_RESOLVED_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Comments / Final resolution", overview.COMMENTS);
-            EmailContentValues.Add("Subvertical", overview.SUBVERTICAL);
+            EmailContentValues.Add("Subvertical", project.DEPARTMENT);
             EmailContentValues.Add("Rootcause", overview.ROOTCAUSE);
             EmailContentValues.Add("ACK Date", overview.ACK_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Service Impact", overview.SERVICE_IMPACT);
-            EmailContentValues.Add("Financial Impact",overview.FINANCIAL_IMPACT);
+            EmailContentValues.Add("Financial Impact", overview.FINANCIAL_IMPACT);
             EmailContentValues.Add("Financial Impact Description", overview.FINANCIAL_IMPACT_DESCRIPTION);
-            EmailContentValues.Add("Buisness Impact Desc", overview.BUSINESS_IMPACT);
-            EmailContentValues.Add("Issue Source", overview.ISSUE_SOURCE);
-            EmailContentValues.Add("Issue Source Other", overview.ISSUE_SOURCE_OTHER);
+            EmailContentValues.Add("Buisness Impact Desc", overview.BUSINESS_IMPACT_DESC);
+            EmailContentValues.Add("Issue Source", overview.ISSUE_SOURCE + " " + overview.ISSUE_SOURCE_OTHER ?? "");
+
 
             mailContent = helper.GetEmailContent("AddNewIssue.htm", EmailContentValues);
             var ep = new EmailProvider(Cldb, CSPdb);
@@ -202,19 +208,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (results.IS_POTENTIAL_RISK)
                 {
                     overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
-                    overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
+                  
                 }
                 else
                 {
                     overview.BUSINESS_IMPACT = null;
-                    overview.BUSINESS_IMPACT_DESC = null;
+                   
                 }
-
+                overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
                 overview.SEVERITY = results.SEVERITY;
                 overview.ACTION_PLAN = results.ACTION_PLAN;
                 overview.ASSIGNED_TO = results.ASSIGNED_TO;
                 overview.ASSIGNED_TO_EMPID = results.ASSIGNED_TO_EMPID;
-                
+
                 overview.IDENTIFIED_BY = results.IDENTIFIED_BY;
                 overview.REPORTED_BY = results.REPORTED_BY;
                 overview.LEVEL = results.LEVEL;
@@ -224,14 +230,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ISSUE_RESOLVED_DATE = results.ISSUE_RESOLVED_DATE.HasValue ? results.ISSUE_RESOLVED_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.COMMENTS = results.COMMENTS;
                 overview.ROOTCAUSE = results.ROOTCAUSE;
-                 
+
 
                 overview.SUBVERTICAL = results.SUBVERTICAL;
                 if (results.ACK_DATE.HasValue)
                     overview.ACK_DATE = results.ACK_DATE.GetValueOrDefault(DateTime.Today).ToLocalTime();
                 overview.SERVICE_IMPACT = results.SERVICE_IMPACT;
                 overview.FINANCIAL_IMPACT = results.FINANCIAL_IMPACT;
-                if (overview.FINANCIAL_IMPACT.ToLower() =="yes")
+                if (overview.FINANCIAL_IMPACT.ToLower() == "yes")
                     overview.FINANCIAL_IMPACT_DESCRIPTION = results.FINANCIAL_IMPACT_DESCRIPTION;
                 else overview.FINANCIAL_IMPACT_DESCRIPTION = string.Empty;
                 overview.LOCATION_SELECTION = results.LOCATION_SELECTION;
@@ -256,6 +262,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LoadOverAllIssuesData();
             return Ok();
         }
- 
+
     }
 }

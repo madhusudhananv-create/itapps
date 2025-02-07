@@ -29,11 +29,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public Nullable<DateTime> COMPLETION_DATE { get; set; }
         public string COMMENTS { get; set; }
 
-        public string CREATED_BY { get; set; }
-        public DateTime CREATED_DATE { get; set; }
-        public string UPDATED_BY { get; set; }
-        public DateTime UPDATED_DATE { get; set; }
-        public Boolean ISACTIVE { get; set; }
+      
         public string STATUS_TYPE { get; set; }
         public int? BATCH_CUSTOMER_ID { get; set; }
         public int? BATCH_CUSTOMER_MONTHLY_ID { get; set; }
@@ -46,13 +42,15 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime? PLANNED_TARGET_DATE { get; set; }
         public DateTime? PLANNED_ACTUAL_DATE { get; set; }
         public string CSS_REFERENCE { get; set; }
+
+        public bool SEND_MAIL { get; set; }
     }
 
     public class ActionItemsAreaVaue
     {
         public string MONTH_NAME { get; set; }
         public int STATUS { get; set; }
-        
+
     }
     public class AccountHealthOutput
     {

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Http;
 namespace GAVS.AllocationSystem.WebApi.Controllers
@@ -156,6 +157,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var questionIds = ratings.Select(x => x.QUESTION_ID).ToList();
             var questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(x => questionIds.Contains(x.ID)).ToList();
+            var createdActionItems = new List<PROJECT_ACTIONITEM>();
             foreach (var item in projects)
             {
                 if (lowRatings.Any())
@@ -163,7 +165,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     foreach (var l in lowRatings)
                     {
                         if (questions.FirstOrDefault(x => x.ID == l.QUESTION_ID)?.TRIGGER_RCA.GetValueOrDefault() == true)
-                            CreateActionItemDetails(new List<CSS_QUESTION_REPLIES> { l }, item.CUST_ID, item.PROJ_ID, null, null, customerName, replies.SURVEY_PERIOD);
+                            createdActionItems.Add(CreateActionItemDetails(new List<CSS_QUESTION_REPLIES> { l }, item.CUST_ID, item.PROJ_ID, null, null, customerName, replies.SURVEY_PERIOD, false));
                     }
 
                 }
@@ -173,7 +175,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //    CreateAuditTaskDetails(cssScore.ToString(), item.CUST_ID, item.PROJ_ID, cssUrl);
                 //}
             }
+            //send mail for created action 
+            //SendActionItemGroupMail(createdActionItems, projects);
         }
+      
+
 
         [GET("GetCSSSurveyQuestions")]
         [ActionName("GetCSSSurveyQuestions")]
@@ -354,7 +360,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-        private void CreateActionItemDetails(List<CSS_QUESTION_REPLIES> lowratings, string custId, string projId, int? batchCustomerId, int? batchCustomerMonthlyId, string customerName, string period)
+        private PROJECT_ACTIONITEM CreateActionItemDetails(List<CSS_QUESTION_REPLIES> lowratings, string custId, string projId, int? batchCustomerId, int? batchCustomerMonthlyId, string customerName, string period, bool sendMail = true)
         {
             var overview = new ActionItemsViewDetails();
             overview.CUST_ID = custId;
@@ -404,7 +410,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.ISACTIVE = true;
             overview.BATCH_CUSTOMER_MONTHLY_ID = lowratings[0].BATCH_CUSTOMER_MONTHLY_ID;
             overview.BATCH_CUSTOMER_ID = lowratings[0].BATCH_CUSTOMER_ID;
-            AddActionItemInternal(overview);
+            overview.SEND_MAIL = sendMail;
+            return AddActionItemInternalPrivate(overview);
         }
 
         private void CreateAuditTaskDetails(string cssScore, string custId, string projId, string cssUrl)

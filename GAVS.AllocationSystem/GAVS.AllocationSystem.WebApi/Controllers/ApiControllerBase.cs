@@ -40,7 +40,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         protected ControllerHelper helper;
         public string _dateformat = "dd-MMM-yyyy";
-        
+
         protected string _email;
         protected string _password;
 
@@ -126,6 +126,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         public IHttpActionResult AddActionItemInternal(ActionItemsViewDetails results)
         {
+
+
+            //AddActionItemNew Mail_End
+            AddActionItemInternalPrivate(results);
+
+            return Ok(results);
+        }
+
+        protected PROJECT_ACTIONITEM AddActionItemInternalPrivate(ActionItemsViewDetails results)
+        {
             string projid = ((ActionItemsViewDetails)results).PROJ_ID;
             PROJECT_ACTIONITEM overview = new PROJECT_ACTIONITEM();
             if (results != null)
@@ -173,12 +183,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateLastUpdatedDetails(results.PROJ_ID, results.CREATED_BY);
             }
 
+            if (!results.SEND_MAIL)
+                return overview;
+
             //AddActionItemNew Mail_Start
 
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == overview.PROJECT_ID);
 
             if (project == null)
-                return Ok(results);
+                return null;
 
 
             //spliting to email address
@@ -192,7 +205,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string tomail = pmMails;
             string ccmail = helper.GetDBConfig("CSS_LINK_CC", "-1");
             var qualitySpoc = helper.GetQualitySpocMailForProject(project);
-            
+
             string customerName = string.Empty;
             string projectName = string.Empty;
 
@@ -208,16 +221,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("Project Name", projectName);
-            EmailContentValues.Add("Description", Regex.Replace(overview.DESCRIPTION, @"\r\n?|\n", "</br>") );
-            EmailContentValues.Add("Source", overview.SOURCE);  
+            EmailContentValues.Add("Description", Regex.Replace(overview.DESCRIPTION, @"\r\n?|\n", "</br>"));
+            EmailContentValues.Add("Source", overview.SOURCE);
             EmailContentValues.Add("Source_Description", overview.SOURCE_DESCRIPTION);
             EmailContentValues.Add("Owner", overview.OWNER);
             EmailContentValues.Add("Priority", overview.PRIORITY);
             EmailContentValues.Add("Identified Date", overview.IDENTIFIED_DATE.ToLocalTime().ToString(_dateformat));
-            EmailContentValues.Add("Target Date", GetDateValueForMail(overview.PLANNED_TARGET_DATE?? overview.TARGET_DATE));
+            EmailContentValues.Add("Target Date", GetDateValueForMail(overview.PLANNED_TARGET_DATE ?? overview.TARGET_DATE));
             EmailContentValues.Add("Status", overview.STATUS);
-			EmailContentValues.Add("Completion Date", GetDateValueForMail(overview.PLANNED_ACTUAL_DATE));
-			EmailContentValues.Add("Action Plan Completion - Target date", !overview.COMPLETION_DATE.HasValue ? "-" : overview.PLANNED_TARGET_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
+            EmailContentValues.Add("Completion Date", GetDateValueForMail(overview.PLANNED_ACTUAL_DATE));
+            EmailContentValues.Add("Action Plan Completion - Target date", !overview.COMPLETION_DATE.HasValue ? "-" : overview.PLANNED_TARGET_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Comments", string.IsNullOrWhiteSpace(overview.COMMENTS) ? "-" : overview.COMMENTS);
             EmailContentValues.Add("URL", $"{requestDomain}/{path}/{overview.CUSTOMER_ID}");
 
@@ -234,11 +247,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 new EmailContent { from = email, to = tomail, cc = ccmail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = overview.PROJECT_ID },
                 Request
                 );
-
-            //AddActionItemNew Mail_End
-
-
-            return Ok(results);
+            return overview;
         }
 
         protected string GetDateValueForMail(DateTime? date)

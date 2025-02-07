@@ -847,7 +847,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             email = string.Empty;
             empid = string.Empty;
             DisplayName = string.Empty;
-            string strDomainName = "gavstech.com";
+           
             if (strUsername.StartsWith("xx"))
             {
                 var emp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMAIL_ID == strUsername.Replace("xx", "") && !x.DOR.HasValue);
@@ -859,7 +859,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return true;
                 }
             }
-
+            string strDomainName = "gavstech.com";
             //using (HostingEnvironment.Impersonate())
             //{
             using (var context = new PrincipalContext(ContextType.Domain, strDomainName))
