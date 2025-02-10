@@ -89,7 +89,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var actionItems = CSPdb.PROJECT_ACTIONITEM.GetAll().Where(x => ids.Contains(x.ID)).ToList();
             var projId = actionItems.First().PROJECT_ID;
             var projects = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == projId).ToList();
-            SendActionItemGroupMail(actionItems, projects, "");
+            //SendActionItemGroupMail(actionItems, projects, "");
             //GenerateCSSReadinessReport();
             ////GenerateAutoRisk(31, "batch");
             //// GenerateAutoRisk(35, "batchmonthly");
