@@ -89,7 +89,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var actionItems = CSPdb.PROJECT_ACTIONITEM.GetAll().Where(x => ids.Contains(x.ID)).ToList();
             var projId = actionItems.First().PROJECT_ID;
             var projects = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == projId).ToList();
-            SendActionItemGroupMail(actionItems, projects);
+            SendActionItemGroupMail(actionItems, projects, "");
             //GenerateCSSReadinessReport();
             ////GenerateAutoRisk(31, "batch");
             //// GenerateAutoRisk(35, "batchmonthly");
@@ -238,102 +238,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return Ok();
         }
-        internal void SendActionItemGroupMail(List<PROJECT_ACTIONITEM> actionItems, List<PROJECT> projects)
-        {
-            string subject = string.Empty;
-            string mailContent;
 
-            var empId = GetHeaderDetails_String("empId");
-            if (!actionItems.Any()) return;
-            var customerIds = projects.Select(x => x.CUST_ID).ToList();
-            var customers = Cldb.CUSTOMER.GetAll().Where(x => customerIds.Contains(x.CUST_ID)).ToList();
-            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
-            List<string> cclist = new List<string>();
-            var toMail = csm.EMAIL_ID;
-            var csmName = csm.FRST_NM;
-
-            int i = 1;
-            var tableContent = new StringBuilder();
-            foreach (var item in actionItems)
-            {
-                tableContent.Append(GenerateHtmlTableRowForActionItem(i++, item.DESCRIPTION, item.CSS_REFERENCE));
-            }
-            var firstActionItem = actionItems.First();
-            var project = projects.FirstOrDefault(x => x.PROJ_ID == firstActionItem.PROJECT_ID);
-
-            if (project == null)
-                return;
-            var customer = customers.FirstOrDefault(x => x.CUST_ID == project.CUST_ID);
-            cclist.AddRange(helper.GetPMFromProject(project));
-            var qualitySpoc = helper.GetQualitySpocMailForProject(project);
-            if (!string.IsNullOrWhiteSpace(qualitySpoc))
-                cclist.Add(qualitySpoc);
-
-            //spliting to email address
-            string csmMails = helper.GetCSMMailsFromProject(project);
-            string pmMails = helper.GetPMMailsFromProject(project);
-
-
-
-            string customerName = customer?.CUST_NM;
-            string projectName = project.PROJ_NM;
-
-            var requestDomain = helper.GetAbsoulteUri();
-            var path = "layout/actionitems";
-
-            subject = $"New Action Item(s) Identified - Project: {projectName}; Customer: {customerName}";
-            string tomail = pmMails;
-
-            string ccMail = string.Join(",", cclist.Distinct().ToList());
-            ccMail = helper.ConcatEmails(new List<string>() { ccMail, csmMails, qualitySpoc });
-            Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
-            EmailContentValues.Add("TABLE", tableContent.ToString());
-
-            EmailContentValues.Add("CSM_NAME", csmName);
-            EmailContentValues.Add("Project Name", projectName);
-
-            EmailContentValues.Add("Source", firstActionItem.SOURCE);
-            EmailContentValues.Add("Source_Description", firstActionItem.SOURCE_DESCRIPTION);
-            EmailContentValues.Add("Owner", firstActionItem.OWNER);
-            EmailContentValues.Add("Priority", firstActionItem.PRIORITY);
-            EmailContentValues.Add("Identified Date", firstActionItem.IDENTIFIED_DATE.ToLocalTime().ToString(_dateformat));
-            EmailContentValues.Add("Target Date", GetDateValueForMail(firstActionItem.PLANNED_TARGET_DATE ?? firstActionItem.TARGET_DATE));
-            EmailContentValues.Add("Status", firstActionItem.STATUS);
-            EmailContentValues.Add("Completion Date", GetDateValueForMail(firstActionItem.PLANNED_ACTUAL_DATE));
-            EmailContentValues.Add("Action Plan Completion - Target date", !firstActionItem.COMPLETION_DATE.HasValue ? "-" : firstActionItem.PLANNED_TARGET_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
-            EmailContentValues.Add("Comments", string.IsNullOrWhiteSpace(firstActionItem.COMMENTS) ? "-" : firstActionItem.COMMENTS);
-            EmailContentValues.Add("URL", $"{requestDomain}/{path}/{firstActionItem.CUSTOMER_ID}");
-
-            mailContent = helper.GetEmailContent("AddNewActionItemList.htm", EmailContentValues);
-
-
-
-            var ep = new EmailProvider(Cldb, CSPdb);
-            if (string.IsNullOrWhiteSpace(tomail)) tomail = _email;
-            ep.SendEmail
-                (
-                new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
-                new EmailContent { from = _email, to = tomail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = firstActionItem.PROJECT_ID },
-                Request
-                );
-
-
-
-
-        }
-
-        private string GenerateHtmlTableRowForActionItem(int rowNum, string description, string sourceDescription)
-        {
-            var sb = new StringBuilder();
-            sb.Append("<tr>");
-            sb.Append($"<td>{ rowNum }</td>");
-            sb.Append($"<td>{ Regex.Replace(description, @"\r\n?|\n", "</br>") }</td>");
-            sb.Append($"<td>{ sourceDescription }</td>");
-
-            sb.AppendLine("</tr>");
-
-            return sb.ToString();
-        }
         public void SendUnsentMails()
         {
             //&& new int[]{8346,8660,10093 }.Contains(x.ID)

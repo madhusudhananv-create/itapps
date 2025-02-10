@@ -44,6 +44,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string CSS_REFERENCE { get; set; }
 
         public bool SEND_MAIL { get; set; }
+
+       
     }
 
     public class ActionItemsAreaVaue

@@ -165,7 +165,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.PLANNED_TARGET_DATE = results.PLANNED_TARGET_DATE.HasValue ? results.PLANNED_TARGET_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.PLANNED_ACTUAL_DATE = results.PLANNED_ACTUAL_DATE.HasValue ? results.PLANNED_ACTUAL_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.CSS_REFERENCE = results.CSS_REFERENCE;
-
+                overview.PORTFOLIO = results.PORTFOLIO_NAME;
                 CSPdb.PROJECT_ACTIONITEM.Add(overview);
                 CSPdb.Commit();
                 results.ACTION_ITEM_ID = overview.ID;

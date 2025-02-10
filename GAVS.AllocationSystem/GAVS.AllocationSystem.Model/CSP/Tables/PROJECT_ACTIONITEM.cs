@@ -32,5 +32,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime? PLANNED_TARGET_DATE { get; set; }
         public DateTime? PLANNED_ACTUAL_DATE { get; set; }
         public string CSS_REFERENCE { get; set; }
+
+        public string PORTFOLIO { get; set; }
     }
 }
