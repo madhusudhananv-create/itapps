@@ -1580,7 +1580,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateCustomerContactVerificationPremierPrivate(item, false);
             }
             CSPdb.Commit(CanCommit);
-            var batchId = batchCustomerEntities.First().BATCH_ID;
+            var batchId = batchCustomerEntities.First().BATCH_MONTHLY_ID;
             var batch = CSPdb.CSS_BATCH_MONTHLY.GetAll().FirstOrDefault(x => x.ID == batchId);
             string Period = GetCurrentPeriodStringNew("quarterly", (batch.MONTH - 1) / 3, batch.YEAR);
             SendCSSGroupVerificationApprovalMail(batchCustomerEntities.ToArray(), comments, Period);
