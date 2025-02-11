@@ -310,7 +310,7 @@
       <td colspan="2">
         <button type="button" (click)="btnSaveChecklist_Onclick()" [disabled]="!isSaved" class="btn btn-primary"
           style="margin-right: 5px;">Save</button>
-        <button type="button" (click)="btnSaveCopyChecklist_Onclick()" class="btn btn-primary" [disabled]="!isEditing"
+        <button type="button" *ngIf="newChecklist.id > 0" (click)="btnSaveCopyChecklist_Onclick()" class="btn btn-primary" 
           style="margin-right: 5px;">Save as</button>
         <button (click)="btnClearChecklist_Onclick()" [disabled]="showStatusList" class="btn btn-primary">Clear</button>
       </td>
@@ -389,7 +389,7 @@
           (click)="ReviseChecklist_onClick(element)"><u>Revise</u></a>
         &nbsp;
         <a [class.disabled]="element.iS_APPROVED" title="Edit" class="link"
-          (click)="EditRow_onClick(element);isEditing=true">
+          (click)="EditRow_onClick(element)">
           <i class="fa fa-edit"></i>
         </a>
         &nbsp;
