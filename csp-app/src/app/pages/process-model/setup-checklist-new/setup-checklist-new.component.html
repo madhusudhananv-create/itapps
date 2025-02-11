@@ -14,15 +14,17 @@
     <tr style="text-align: left;">
       <td colspan="2">
         <mat-form-field style="width: 100%;padding-left: 2px;">
-          <input matInput type="text" name="checklisttitle" [(ngModel)]="newChecklist.title" placeholder="Title *" maxlength="220">
+          <input matInput type="text" name="checklisttitle" [(ngModel)]="newChecklist.title" placeholder="Title *"
+            maxlength="220">
         </mat-form-field>
         <!-- <input type="text" style="width: 90%;" [(ngModel)]="newChecklist.title" placeholder="Title" > -->
       </td>
     </tr>
     <tr style="text-align: left;">
-      <td  colspan="2">
+      <td colspan="2">
         <mat-form-field style="width: 100%;padding-left: 2px;">
-          <textarea matInput name="checklistdesc" [(ngModel)]="newChecklist.description" placeholder="Description *" maxlength="1000">
+          <textarea matInput name="checklistdesc" [(ngModel)]="newChecklist.description" placeholder="Description *"
+            maxlength="1000">
           </textarea>
         </mat-form-field>
         <!-- <textarea style="width: 90%;" [(ngModel)]="newChecklist.description" placeholder="Description"></textarea> -->
@@ -33,7 +35,8 @@
         <div class="row">
           <div class="col-lg-12 col-md-12 col-sm-12">
             <mat-checkbox name="checklistmat" [(ngModel)]="newChecklist.maturitY_LEVEL" placeholder="Maturity Level"
-              style="padding-left: 2px; width: 130px !important;margin-right: 15px; font-weight: normal !important;" [disabled]="isDisabled">
+              style="padding-left: 2px; width: 130px !important;margin-right: 15px; font-weight: normal !important;"
+              [disabled]="isDisabled">
               <span style="font-weight: normal !important;">Is Maturity Level Applicable ?</span>
             </mat-checkbox>
           </div>
@@ -80,11 +83,13 @@
         <div *ngIf="newChecklist.iS_WEIGHTAGE_APPLICABLE && showAddCategory"
           style="padding: 20px; text-align: left;box-shadow: 0px 0.5px 12px #4e5882;">
           <div id="header" style="margin-top: 5px;width: 100%;">
-            <div class="col-lg-7 col-md-7 col-sm-7" style="text-align: left;margin-right: 30%;">Choose Applicable Weightage</div>
-            <div class="col-lg-1 col-md-1 col-sm-1" style="text-align: right; font-weight: bold; margin-right: 5px; font-size: 14px; cursor: pointer"
-            (click)="btnAddNewCategory()">
-            &#10005;</div>
-        </div>
+            <div class="col-lg-7 col-md-7 col-sm-7" style="text-align: left;margin-right: 30%;">Choose Applicable
+              Weightage</div>
+            <div class="col-lg-1 col-md-1 col-sm-1"
+              style="text-align: right; font-weight: bold; margin-right: 5px; font-size: 14px; cursor: pointer"
+              (click)="btnAddNewCategory()">
+              &#10005;</div>
+          </div>
           <div id="content" style="margin-top: 10%">
             <table class="statustable" id="tblweightage">
               <tr *ngFor="let wgt of weightage">
@@ -99,7 +104,8 @@
                 <td style="padding-left:28%">
                   <mat-form-field>
                     <input matInput type="text" name="checklistweightscore" [(ngModel)]="wgt.weightagE_SCORE"
-                      placeholder="Weightage Score" [disabled]="isWeightageDisabled || isDisabled" style="width: 70px !important;" >
+                      placeholder="Weightage Score" [disabled]="isWeightageDisabled || isDisabled"
+                      style="width: 70px !important;">
                   </mat-form-field>
                 </td>
               </tr>
@@ -122,7 +128,8 @@
           <div class="col-lg-12 col-md-12 col-sm-12">
             <mat-checkbox name="checklistcorrectiveactn" [(ngModel)]="newChecklist.correctivE_ACTION_TRACKING"
               placeholder="Corrective action tracking"
-              style="padding-left: 2px; width: 130px !important;margin-right: 15px; font-weight: normal !important;" [disabled]="isDisabled">
+              style="padding-left: 2px; width: 130px !important;margin-right: 15px; font-weight: normal !important;"
+              [disabled]="isDisabled">
               <span style="font-weight: normal !important;">Is Corrective action tracking Applicable ?</span>
             </mat-checkbox>
           </div>
@@ -142,8 +149,8 @@
       </td>
       <td style="width: 80%;">
         <mat-form-field>
-          <mat-select placeholder="Findings type values" name="findingtypevalue" [(ngModel)]="newChecklist.findingtypE_VALUE"
-            [disabled]="isDisabled">
+          <mat-select placeholder="Findings type values" name="findingtypevalue"
+            [(ngModel)]="newChecklist.findingtypE_VALUE" [disabled]="isDisabled">
             <mat-option *ngFor="let mat of findingTypeValues" [value]="mat.id" [title]="mat.findingtypE_VALUE">
               {{mat.findingtypE_VALUE}}
             </mat-option>
@@ -154,18 +161,21 @@
     <tr style="text-align: left;">
       <td>
         <mat-form-field style="padding-left: 2px;margin-top:-14px">
-          <input matInput name="version" type="text" [(ngModel)]="newChecklist.version" placeholder="Version *" [disabled]="isDisabled">
+          <input matInput name="version" type="text" [(ngModel)]="newChecklist.version" placeholder="Version *"
+            [disabled]="isDisabled">
         </mat-form-field>
       </td>
       <td>
         <!-- <input type="text" style="margin-right: 5px; padding-left: 5px;" [(ngModel)]="newChecklist.version"  placeholder="Version"> -->
-      <div>
-        <label style="color: gray;">Effective Date *</label>
-        <input readonly name="dtEffectiveDate" [(ngModel)]='newChecklist.effectivE_FROM' [matDatepicker]="pickerChkEffectiveDate"  [disabled]="isDisabled"
-          style="border:none;border-bottom:1px solid grey">
-        <mat-datepicker-toggle matSuffix [for]="pickerChkEffectiveDate" style="float: right;position: relative;top: -34px;left: 9px;bottom: 0px;right: 0px;">
-        <mat-datepicker #pickerChkEffectiveDate></mat-datepicker></mat-datepicker-toggle>
-      </div>
+        <div>
+          <label style="color: gray;">Effective Date *</label>
+          <input readonly name="dtEffectiveDate" [(ngModel)]='newChecklist.effectivE_FROM'
+            [matDatepicker]="pickerChkEffectiveDate" [disabled]="isDisabled"
+            style="border:none;border-bottom:1px solid grey">
+          <mat-datepicker-toggle matSuffix [for]="pickerChkEffectiveDate"
+            style="float: right;position: relative;top: -34px;left: 9px;bottom: 0px;right: 0px;">
+            <mat-datepicker #pickerChkEffectiveDate></mat-datepicker></mat-datepicker-toggle>
+        </div>
       </td>
     </tr>
     <tr style="text-align: left">
@@ -217,16 +227,19 @@
                 </div> -->
                 <div *ngFor="let row of metStatusValues; let i = index">
                   <mat-form-field style="margin-right: 5px; width: 100px !important;">
-                    <input matInput type="text" [(ngModel)]="row.status" placeholder="Pass Value" [disabled]="isDisabled">
+                    <input matInput type="text" [(ngModel)]="row.status" placeholder="Pass Value"
+                      [disabled]="isDisabled">
                   </mat-form-field>
                   <mat-form-field style="margin-right: 5px; width: 70px !important;">
-                    <input matInput type="text" [(ngModel)]="row.multiplier" placeholder="Multiplier" [disabled]="isDisabled">
+                    <input matInput type="text" [(ngModel)]="row.multiplier" placeholder="Multiplier"
+                      [disabled]="isDisabled">
                   </mat-form-field>
-                  <i style="font-size:13px; cursor: pointer;" class="fa" (click)="deleteNewMetStatusRow(i)" [class.disabled]="isDisabled">&#xf00d;</i>
+                  <i style="font-size:13px; cursor: pointer;" class="fa" (click)="deleteNewMetStatusRow(i)"
+                    [class.disabled]="isDisabled">&#xf00d;</i>
                 </div>
                 <div style="text-align: right;">
-                  <button type="button" style="font-size: 8px !important;" class="btn btn-primary" [disabled]="isDisabled"
-                    (click)="addNewMetStatusRow()">Add Pass</button>
+                  <button type="button" style="font-size: 8px !important;" class="btn btn-primary"
+                    [disabled]="isDisabled" (click)="addNewMetStatusRow()">Add Pass</button>
                 </div>
               </td>
             </tr>
@@ -240,13 +253,15 @@
                 </div> -->
                 <div *ngFor="let row of nmetStatusValues">
                   <mat-form-field style="margin-right: 5px; width: 100px !important;">
-                    <input matInput type="text" [(ngModel)]="row.status" placeholder="Fail value" [disabled]="isDisabled">
+                    <input matInput type="text" [(ngModel)]="row.status" placeholder="Fail value"
+                      [disabled]="isDisabled">
                   </mat-form-field>
                   <mat-form-field style="margin-right: 5px; width: 70px !important;">
-                    <input matInput type="text" [(ngModel)]="row.multiplier" placeholder="Multiplier" [disabled]="isDisabled">
+                    <input matInput type="text" [(ngModel)]="row.multiplier" placeholder="Multiplier"
+                      [disabled]="isDisabled">
                   </mat-form-field>
-                  <i style="font-size:13px; cursor: pointer;" class="fa"
-                    (click)="deleteNewNMetStatusRow(i)" [class.disabled]="isDisabled">&#xf00d;</i>
+                  <i style="font-size:13px; cursor: pointer;" class="fa" (click)="deleteNewNMetStatusRow(i)"
+                    [class.disabled]="isDisabled">&#xf00d;</i>
                 </div>
                 <div style="text-align: right;">
                   <button type="button" style="font-size: 8px !important;" class="btn btn-primary"
@@ -264,12 +279,15 @@
                 </div> -->
                 <div *ngFor="let row of naStatusValues">
                   <mat-form-field style="margin-right: 5px; width: 100px !important;">
-                    <input matInput type="text" [(ngModel)]="row.status" placeholder="Not Applicable Value" [disabled]="isDisabled">
+                    <input matInput type="text" [(ngModel)]="row.status" placeholder="Not Applicable Value"
+                      [disabled]="isDisabled">
                   </mat-form-field>
                   <mat-form-field style="margin-right: 5px; width: 70px !important;">
-                    <input matInput type="text" [(ngModel)]="row.multiplier" placeholder="Multiplier" [disabled]="isDisabled">
+                    <input matInput type="text" [(ngModel)]="row.multiplier" placeholder="Multiplier"
+                      [disabled]="isDisabled">
                   </mat-form-field>
-                  <i style="font-size:13px; cursor: pointer;" class="fa" (click)="deleteNewNAStatusRow(i)" [class.disabled]="isDisabled">&#xf00d;</i>
+                  <i style="font-size:13px; cursor: pointer;" class="fa" (click)="deleteNewNAStatusRow(i)"
+                    [class.disabled]="isDisabled">&#xf00d;</i>
                 </div>
                 <div style="text-align: right;">
                   <button type="button" style="font-size: 8px !important;" class="btn btn-primary"
@@ -279,7 +297,8 @@
             </tr>
             <tr style="text-align: center;">
               <td colspan="2">
-                <button class="btn btn-primary" (click)="saveStatusRecord()" [disabled]="disableStatusSave" [disabled]="isDisabled"> Save
+                <button class="btn btn-primary" (click)="saveStatusRecord()" [disabled]="disableStatusSave"
+                  [disabled]="isDisabled"> Save
                 </button>
               </td>
             </tr>
@@ -291,7 +310,7 @@
       <td colspan="2">
         <button type="button" (click)="btnSaveChecklist_Onclick()" [disabled]="!isSaved" class="btn btn-primary"
           style="margin-right: 5px;">Save</button>
-          <button type="button"  (click)="btnSaveCopyChecklist_Onclick()" class="btn btn-primary"
+        <button type="button" (click)="btnSaveCopyChecklist_Onclick()" class="btn btn-primary" [disabled]="!isEditing"
           style="margin-right: 5px;">Save as</button>
         <button (click)="btnClearChecklist_Onclick()" [disabled]="showStatusList" class="btn btn-primary">Clear</button>
       </td>
@@ -324,7 +343,7 @@
   </div>
 
 
-  <div class="row" *ngIf="bShowFilter"  style="float: left;width: 100%;margin-top: -1%;margin-left: -4%;">
+  <div class="row" *ngIf="bShowFilter" style="float: left;width: 100%;margin-top: -1%;margin-left: -4%;">
     <app-table-filter [data]="input" tableName='PM_CHECKLIST' (onChange)="Filter_onChange($event)"
       (OnAdd)="showAll($event)"></app-table-filter>
   </div>
@@ -335,7 +354,8 @@
     class="table-bordered table-responsive-md table-striped text-center"
     style="margin-left: -20px;width:100%;font-family: Arial, Helvetica, sans-serif;font-size: 14px;">
     <ng-container matColumnDef="index">
-      <th style="text-align:left;color:black" class="index" mat-header-cell *matHeaderCellDef> <strong>S.No</strong> </th>
+      <th style="text-align:left;color:black" class="index" mat-header-cell *matHeaderCellDef> <strong>S.No</strong>
+      </th>
       <td class="index" mat-cell *matCellDef="let element = index" style="text-align:left;padding-left: 3px;"> {{element
         + 1}} </td>
     </ng-container>
@@ -367,12 +387,14 @@
 
         <a style="color: #286090; font-size: 13px; cursor: pointer;margin-right:5px;"
           (click)="ReviseChecklist_onClick(element)"><u>Revise</u></a>
-          &nbsp;
-        <a [class.disabled]="element.iS_APPROVED" title="Edit" class="link" (click)="EditRow_onClick(element)">
+        &nbsp;
+        <a [class.disabled]="element.iS_APPROVED" title="Edit" class="link"
+          (click)="EditRow_onClick(element);isEditing=true">
           <i class="fa fa-edit"></i>
         </a>
         &nbsp;
-        <a style="color: red;"[class.disabled]="element.iS_APPROVED" title="Delete" class="link" (click)="DeleteRow_onClick(element)">
+        <a style="color: red;" [class.disabled]="element.iS_APPROVED" title="Delete" class="link"
+          (click)="DeleteRow_onClick(element)">
           <i class="fa fa-trash"></i>
         </a>
 

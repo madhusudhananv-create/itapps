@@ -54,7 +54,7 @@ export class SetupChecklistNewComponent implements OnInit {
 
   selectedChoice: number = 2
   isSaved: boolean = true;
-
+  isEditing: boolean = false;
   errorStr: string = "";
   filterCriteria: any;
   weightageId: number;
