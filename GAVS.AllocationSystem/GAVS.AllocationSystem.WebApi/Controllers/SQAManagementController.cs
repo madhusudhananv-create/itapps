@@ -646,10 +646,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var mappingData = CSPdb.PM_PROCESS_QUESTIONS_MAPPING.GetAll().FirstOrDefault(x => x.QUESTION_ID == question.ID && x.ISACTIVE);
                     question.CHECKLIST_ID = checklist.ID;
                     CSPdb.PM_CHECKLIST_QUESTIONS.Add(question);
+                    CSPdb.Commit(CanCommit);
                     if (mappingData != null)
                     {
+                        mappingData.QUESTION_ID = question.ID;
                         mappingData.CHECKLIST_ID = checklist.ID;
-                        mappingData.CREATED_DATE = DateTime.Now;
+                        mappingData.CREATED_DATE = DateTime.Now;                        
                         CSPdb.PM_PROCESS_QUESTIONS_MAPPING.Add(mappingData);
                     }
 
