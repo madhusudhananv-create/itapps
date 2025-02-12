@@ -37,25 +37,25 @@ using System.Web.UI.WebControls;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
-    public partial class AllSysController 
+    public partial class AllSysController
     {
         [GET("MigrateProjectData")]
         [ActionName("MigrateProjectData")]
         [HttpGet]
-        public IHttpActionResult MigrateProjectData(string oldProjectId,string newProjectId)
+        public IHttpActionResult MigrateProjectData(string oldProjectId, string newProjectId)
         {
+            LogRequest();
             Cldb.AppRepo.MigrateProjectData(oldProjectId, newProjectId);
             return Ok("Success");
         }
 
 
-        [GET("GetCustomerProjectsForMigration")]
         [ActionName("GetCustomerProjectsForMigration")]
         [HttpGet]
         public IHttpActionResult GetCustomerProjectsForMigration(string customerId, bool needClosed)
         {
             List<PROJECT> projects = new List<PROJECT>();
-            if(needClosed)
+            if (needClosed)
                 projects = Cldb.PROJECT.GetAll().Where(t => t.PARENT_PROJ_ID == t.PROJ_ID && t.CUST_ID == customerId && t.END_DATE < DateTime.Now).OrderBy(t => t.PROJ_NM).ToList();
             else
                 projects = Cldb.PROJECT.GetAll().Where(t => t.PARENT_PROJ_ID == t.PROJ_ID && t.CUST_ID == customerId && t.PROJ_STATUS != "CLOSE" && t.END_DATE > DateTime.Now).OrderBy(t => t.PROJ_NM).ToList();

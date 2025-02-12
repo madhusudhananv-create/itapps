@@ -170,7 +170,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     foreach (var l in lowRatings)
                     {
                         if (questions.FirstOrDefault(x => x.ID == l.QUESTION_ID)?.TRIGGER_RCA.GetValueOrDefault() == true)
-                            createdActionItems.Add(CreateActionItemDetails(new List<CSS_QUESTION_REPLIES> { l }, item.CUST_ID, item.PROJ_ID, null, null, customerName, replies.SURVEY_PERIOD, false, portfolio ));
+                            createdActionItems.Add(CreateActionItemDetails(new List<CSS_QUESTION_REPLIES> { l }, item.CUST_ID, item.PROJ_ID, null, null, customerName, replies.SURVEY_PERIOD, false, portfolio));
                     }
 
                 }
@@ -181,7 +181,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //}
             }
             //send mail for created action 
-            SendActionItemGroupMail(createdActionItems, projects,"");
+            SendActionItemGroupMail(createdActionItems, projects, "");
         }
 
         internal void SendActionItemGroupMail(List<PROJECT_ACTIONITEM> actionItems, List<PROJECT> projects, string anyotherComment)
@@ -189,14 +189,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string subject = string.Empty;
             string mailContent;
 
-            var empId = GetHeaderDetails_String("empId");
+
             if (!actionItems.Any()) return;
             var customerIds = projects.Select(x => x.CUST_ID).ToList();
             var customers = Cldb.CUSTOMER.GetAll().Where(x => customerIds.Contains(x.CUST_ID)).ToList();
-            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
+
             List<string> cclist = new List<string>();
-            var toMail = csm.EMAIL_ID;
-            var csmName = csm.FRST_NM;
+
 
             int i = 1;
             var tableContent = new StringBuilder();
@@ -209,6 +208,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (project == null)
                 return;
+            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.PROJ_DM_EMP_ID);
+            var toMail = csm.EMAIL_ID;
+            var csmName = csm.FRST_NM;
+
             var customer = customers.FirstOrDefault(x => x.CUST_ID == project.CUST_ID);
             cclist.AddRange(helper.GetPMFromProject(project));
             var qualitySpoc = helper.GetQualitySpocMailForProject(project);
