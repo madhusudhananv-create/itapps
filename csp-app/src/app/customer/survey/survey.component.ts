@@ -211,7 +211,7 @@ export class SurveyComponent implements OnInit {
         this.proj = data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_NM;
         this.cust = data.csS_BATCH_CUSTOMERS_EXTENDED.cusT_NM;
         this.displayname = data.csS_BATCH_CUSTOMERS_EXTENDED.displaY_NAME;
-        this.projtext = 'Project/Portfolio Name:';
+        this.projtext = 'Project/Portfolio:';
         this.meetingDate = data.csS_BATCH_CUSTOMERS_EXTENDED.meetinG_DATE;
         this.isCSMNotified = data.csS_BATCH_CUSTOMERS_EXTENDED.csM_NOTIFIED;
         if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED") {
@@ -233,7 +233,7 @@ export class SurveyComponent implements OnInit {
         if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.proJ_ID != null)
           this.projtext = 'Project:';
         if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.proD_ID != null)
-          this.projtext = 'Project:';
+          this.projtext = 'Project/Portfolio:';
         if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.meetinG_DATE != null)
           this.meetingDate = data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.meetinG_DATE;
         if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.csM_NOTIFIED != null)

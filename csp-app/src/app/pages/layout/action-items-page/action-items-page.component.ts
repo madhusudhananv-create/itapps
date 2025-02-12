@@ -111,7 +111,7 @@ export class ActionItemsPageComponent implements OnInit {
     }
 
     if (!this._util.IsPremier(this.selectedCust))
-      this.displayedColumns = ['index', 'proJ_NM', 'description', 'owner', 'targeT_DATE', 'identifieD_DATE', 'status', 'priority', 'source', 'completioN_DATE','info', 'edit', 'delete'];
+      this.displayedColumns = ['index', 'portfoliO_NAME', 'proJ_NM', 'description', 'owner', 'targeT_DATE', 'identifieD_DATE', 'status', 'priority', 'source', 'completioN_DATE','info', 'edit', 'delete'];
 
     this.getAllActionItemsForCustomer();
     this.getAllProjectsFromCustomer();

@@ -8,6 +8,7 @@
     <mat-option *ngFor="let option of filteredOptions | async" [value]="option"
       [title]="option.frsT_NM">{{option.frsT_NM}}</mat-option>
   </mat-autocomplete>
+  <!-- <i class="fa fa-search" aria-hidden="true"></i> -->
 </div>
 
 <mat-form-field *ngIf="multiSelect" style="width:100%">
@@ -20,4 +21,5 @@
     </mat-form-field>
     <mat-option *ngFor="let emp of empinfo" [value]="emp.emP_ID" [title]="emp.frsT_NM">{{emp.frsT_NM}}</mat-option>
   </mat-select>
+  <!-- <i class="fa fa-search" aria-hidden="true"></i> -->
 </mat-form-field>
