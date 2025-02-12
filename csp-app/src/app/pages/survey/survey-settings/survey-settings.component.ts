@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,ViewChild,ElementRef } from '@angular/core';
 import { myUtility } from '../../../Shared/myUtility';
 //import { AppsService } from '../../Services/apps.service';
 import { CssBatchModel } from '../../../models/css-batch-model';
 import { CssBatchCustomersModel, CssBatchCustomersExtendedModel } from '../../../models/css-batch-customers-model';
-import { MatTableDataSource } from '@angular/material';
+import { MatTableDataSource,MatSort,MatPaginator } from '@angular/material';
 import { SurveyService } from '../survey.service';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatDialogModule, MatDialog } from '@angular/material';
@@ -21,6 +21,12 @@ export class SurveySettingsComponent implements OnInit {
   Batches: any;
   BatchCustomers: CssBatchCustomersExtendedModel[] = [];
   selectedBatch: CssBatchModel;
+  FinalTabData: any[];
+  progress: boolean = false;
+ @ViewChild('tableToExport', { read: ElementRef }) table: ElementRef;
+ @ViewChild(MatSort) sort: MatSort;
+
+ @ViewChild('paginatorTable') paginator: MatPaginator;
   constructor(
     private dialog: MatDialog,
     public _util: myUtility,
@@ -150,7 +156,26 @@ export class SurveySettingsComponent implements OnInit {
       });
     }
   }
+  UpdateTable() {
+    this.dataSource = new MatTableDataSource(this.FinalTabData);
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  }
 
+  exportToExcel() {
+    this.progress = true;
+    this.FinalTabData = this.BatchCustomers;
+    if (this.FinalTabData.length > 0) {
+        this.UpdateTable();
+        const getDate = new Date();
+        const fileName = `CSS_Batch_Customers_Monthly${getDate.toLocaleString()}`;
+        this._util.exportToExcel(this.table.nativeElement, fileName);
+        this.progress = false;
+      } else {
+        alert("No records!");
+        this.progress = false;
+      }
+    }
   service_customerContactsVerification(batchCustomerData) {
     this.surveyService.updateCustomerContactsVerification(batchCustomerData).subscribe(
       (data) => {
@@ -222,10 +247,6 @@ export class SurveySettingsComponent implements OnInit {
   }
   isSelectedRow(element) {
     return this.selectedRow === element;
-  }
-  CopyToClipboard(element) {
-    this.copyitem(element.url);
-    alert("CSAT link copied to Clipboard.");
   }
 
   getStatusText(element: CssBatchCustomersExtendedModel): string {

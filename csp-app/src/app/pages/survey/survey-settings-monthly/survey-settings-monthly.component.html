@@ -4,10 +4,18 @@
     Batch Details
     <mat-icon class="mat-icon-refresh" (click)="btnRefresh_onclick()">refresh</mat-icon>
 
-    <button style="text-transform: none; height: 35px; width: 130px; margin-left: 83%" name="btnVerification"
-      *ngIf="_access.IsAllowed(92, 1, '', '')" (click)="openPopup()">
-      Add Batch
-    </button>
+    <div style="margin-left: 83%; display: flex; align-items: center;">
+      <button 
+        style="text-transform: none; height: 35px; width: 130px;" 
+        name="btnVerification"
+        *ngIf="_access.IsAllowed(92, 1, '', '')" 
+        (click)="openPopup()">
+        Add Batch
+      </button>
+      <a class="iconbutton" title="Export to Excel" (click)="exportToExcel()" style="border: none; background: none; padding: 0 0 0 10px;">
+        <i style="color: #207346; font-size: 20px;" class="fa fa-file-excel-o"></i>
+      </a>
+    </div>
   </div>
   <div class="example-container" style="margin-top: 10px;">
     <table mat-table [dataSource]="Batches" class="table table-bordered" style="font-size:12px">
@@ -96,8 +104,7 @@
     <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
   </div>
   <div class="example-container1" style="margin-top:5px;margin-bottom: 5px">
-    <table mat-table [dataSource]="dataSource" class="table table-bordered" style="font-size:12px">
-      <!-- Checkbox Column -->
+  <table #tableToExport mat-table [dataSource]="dataSource" class="table table-bordered" style="font-size:12px">
       <ng-container matColumnDef="select">
         <th mat-header-cell *matHeaderCellDef>
           <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"

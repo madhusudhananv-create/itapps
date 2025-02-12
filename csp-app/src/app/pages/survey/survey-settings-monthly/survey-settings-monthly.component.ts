@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,ViewChild,ElementRef } from '@angular/core';
 import { myUtility } from '../../../Shared/myUtility';
 //import { AppsService } from '../../Services/apps.service';
 //import { CssBatchModel } from '../../../models/css-batch-model';
 //import { CssBatchCustomersModel, CssBatchCustomersMonthlyExtendedModel } from '../../../models/css-batch-customers-model';
-import { MatTableDataSource } from '@angular/material';
+import { MatTableDataSource,MatSort,MatPaginator } from '@angular/material';
 import { SurveyService } from '../survey.service';
 import { SelectionModel } from '@angular/cdk/collections';
 import { CssBatchMonthlyModel } from '../../../models/css-batch-monthly-model';
@@ -24,6 +24,11 @@ export class SurveySettingsMonthlyComponent implements OnInit {
   Batches: CssBatchMonthlyModel[] = [];
   BatchCustomers: CssBatchCustomerMonthlyExtendedModel[] = [];
   selectedBatch: CssBatchMonthlyModel;
+  FinalTabData: any[];
+  progress: boolean = false;
+ @ViewChild('tableToExport', { read: ElementRef }) table: ElementRef;
+ @ViewChild(MatSort) sort: MatSort;
+ @ViewChild('paginatorTable') paginator: MatPaginator;
   constructor(private dialog: MatDialog, public _util: myUtility, private surveyService: SurveyService,
     public _access: AccessControl, private _router: Router, private route: ActivatedRoute) { }
   batchColumns = ['index', 'starT_DATE', 'enD_DATE', 'status', "totaL_RECORDS","pending","verified","rejected","surveY_SENT","surveY_RECD"]
@@ -101,7 +106,25 @@ export class SurveySettingsMonthlyComponent implements OnInit {
       });
     }
   }
-
+  UpdateTable() {
+    this.dataSource = new MatTableDataSource(this.FinalTabData);
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  }
+  exportToExcel() {
+    this.progress = true;
+    this.FinalTabData = this.BatchCustomers;
+    if (this.FinalTabData.length > 0) {
+    this.UpdateTable();
+    const getDate = new Date();
+    const fileName = `CSS_Batch_Customers_Monthly${getDate.toLocaleString()}`;
+    this._util.exportToExcel(this.table.nativeElement, fileName);
+    this.progress = false;
+    } else {
+   alert("No records!");
+  this.progress = false;
+  }
+}
   service_customerContactsVerification(batchCustomerData) {
     this.surveyService.updateCustomerContactsVerificationForPremier(batchCustomerData).subscribe(
       (data) => {
@@ -271,10 +294,7 @@ export class SurveySettingsMonthlyComponent implements OnInit {
     alert("Feature yet to be developed");
     return;
   }
-  CopyToClipboard(element) {
-    this.copyitem(element.url);
-    alert('CSAT link copied to Clipboard.');
-  }
+ 
 
   copyitem(item): void {
     let listener = (e: ClipboardEvent) => {
