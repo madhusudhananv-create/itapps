@@ -259,13 +259,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var ep = new EmailProvider(Cldb, CSPdb);
             if (string.IsNullOrWhiteSpace(tomail)) tomail = _email;
+            //ep.SendEmail
+            //    (
+            //    new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+            //    new EmailContent { from = _email, to = tomail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = firstActionItem.PROJECT_ID },
+            //    Request
+            //    );
             ep.SendEmail
-                (
-                new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
-                new EmailContent { from = _email, to = tomail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = firstActionItem.PROJECT_ID },
-                Request
-                );
-
+              (
+              new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
+              new EmailContent { from = ServiceEmail, to = tomail, cc = ccMail, bcc = Constants.BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
+              );
 
 
 
