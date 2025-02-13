@@ -1012,7 +1012,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //perform valiadtions for retrived objs
 
             // add duplicate row
-            AddBatchCustomer(batchMonthly, customerUser, empId, batchcustomer.CUST_ID, batchcustomer.PROJ_ID, batchcustomer.PROD_ID);
+            AddBatchCustomer(batchMonthly, customerUser.EMAILID, customerUser.DISPLAY_NAME, empId, batchcustomer.CUST_ID, batchcustomer.PROJ_ID, batchcustomer.PROD_ID);
             return Ok();
 
         }
@@ -1211,7 +1211,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
                     //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
                     if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
-                    AddBatchCustomer(batch, cust, EmpId, c.CUST_ID, c.PROJ_ID, null);
+                    AddBatchCustomer(batch, cust.EMAILID, cust.DISPLAY_NAME, EmpId, c.CUST_ID, c.PROJ_ID, null);
 
                 }
             }
@@ -1221,16 +1221,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-        private void AddBatchCustomer(CSS_BATCHES batch, CUSTOMER_USERS cust, string empId, string cust_id, string proj_id, int? prod_id)
+        private void AddBatchCustomer(CSS_BATCHES batch, string emailId, string displayName, string empId, string cust_id, string proj_id, int? prod_id)
         {
             var batchCustomer = new CSS_BATCH_CUSTOMERS()
             {
                 BATCH_ID = batch.ID,
                 CUST_ID = cust_id,
                 PROJ_ID = proj_id,
-                QUESTION_MODEL_ID = helper.GetQuestionModel(cust_id, proj_id, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, batch.FREQUENCY),
-                EMAIL_ID = cust.EMAILID,
-                DISPLAY_NAME = cust.DISPLAY_NAME,
+                QUESTION_MODEL_ID = helper.GetQuestionModel(cust_id, proj_id, false, batch.START_DATE, batch.END_DATE, emailId, batch.ID, batch.FREQUENCY),
+                EMAIL_ID = emailId,
+                DISPLAY_NAME = displayName,
                 STATUS = "CREATED",
                 PROD_ID = prod_id,
                 CREATED_BY = empId,
@@ -1347,49 +1347,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private void GenerateBatchCustomersHalfyearly(int batchId, string empId)
         {
             //for prod based
-            var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 8 || x.MANAGEMENT_TYPE == 7)).ToList(); // 8=CUSTOMER_CSAT_Halfyearly
+            var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 7 || x.MANAGEMENT_TYPE == 8)).ToList(); // 8=CUSTOMER_CSAT_Halfyearly
             //var projects = Cldb.PROJECT.GetAll().ToList();
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchId);
             if (batch == null) return;
             var existingCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
             var prodIds = prodResponsible.Select(x => x.PRODUCT_ID);
             var products = CSPdb.PORTFOLIO_PRODUCTS.GetAll().Where(x => prodIds.Contains(x.ID)).ToList();
-            foreach (var cust in prodResponsible.Where(x => x.MANAGEMENT_TYPE == 8).ToList())
+            var halfyearlyCustomers = prodResponsible.Where(x => x.MANAGEMENT_TYPE == 8).ToList();
+            foreach (var item in halfyearlyCustomers)
             {
-                var prods = prodResponsible.Where(x => x.EMP_ID == cust.EMP_ID).ToList();
-                if (cust != null && prods.Any())
-                {
-                    foreach (var cp in prods)
-                    {
+                //var prods = prodResponsible.Where(x => x.EMP_ID == item.EMP_ID).ToList();
+                //if (!prods.Any()) continue;
 
-                        if (existingCustomers.Any(x => x.PROD_ID == cp.PRODUCT_ID && x.EMAIL_ID == cust.EMP_ID)) continue;
-                        var product = products.FirstOrDefault(x => x.ID == cp.PRODUCT_ID);
-                        var cuser = CSPdb.CUSTOMER_USERS.GetAll().FirstOrDefault(x => x.EMAILID == cust.EMP_ID);
-                        if (cuser == null) continue;
-                        var projId = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == product.ID && x.MANAGEMENT_TYPE == 7);
+                //foreach (var cp in prods)
+                //{
+                if (existingCustomers.Any(x => x.PROD_ID == item.PRODUCT_ID && x.EMAIL_ID.ToLower() == item.EMP_ID.ToLower())) continue;
+                var product = products.FirstOrDefault(x => x.ID == item.PRODUCT_ID);
+                var cuser = CSPdb.CONTACTS.GetAll().FirstOrDefault(x => x.CONTACT_EMAILID == item.EMP_ID);
+                if (cuser == null) continue;
+                var projId = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == product.ID && x.MANAGEMENT_TYPE == 7);
+                AddBatchCustomer(batch, cuser.CONTACT_EMAILID, cuser.CONTACT_NAME, empId, product.CUST_ID, projId != null ? projId.PROJECT_ID : "", product.ID);
+                // }
 
-                        AddBatchCustomer(batch, cuser, empId, product.CUST_ID, projId != null ? projId.PROJECT_ID : "", product.ID);
-                        //var BatchCustomer = new CSS_BATCH_CUSTOMERS()
-                        //{
-                        //    BATCH_ID = batchId,
-                        //    CUST_ID = project.CUST_ID,
-                        //    PROJ_ID = project.PROJ_ID,
-                        //    PROD_ID = cp.PRODUCT_ID,
-                        //    QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID, "halfyearly"),
-                        //    EMAIL_ID = cust.EMP_ID,
-                        //    DISPLAY_NAME = cuser.DISPLAY_NAME,
-                        //    STATUS = "CREATED",
-                        //    CREATED_BY = empId,
-                        //    CREATED_DATE = DateTime.Now,
-                        //    UPDATED_BY = empId,
-                        //    UPDATED_DATE = DateTime.Now,
-                        //    ISACTIVE = true,
-                        //    IS_VERIFIED = true,
-                        //};
-                        //CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
-
-                    }
-                }
 
             }
 
@@ -1976,6 +1956,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ////check if any of the records is rejected already(is_verified = false and comments not null) - if yes throw error to select only un verified records
             //if (batchCustomers.Any(x => !x.IS_VERIFIED && !string.IsNullOrWhiteSpace(x.COMMENTS)))
             //    return "Records which are already Rejected cannot be updated again. Please make sure to select the correct records.";
+
+            //check if the customer is available as part of halfyearly
+            var mailIds = batchCustomers.Select(x => x.EMAIL_ID).ToList();
+            var productResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => mailIds.Contains(x.EMP_ID) && x.MANAGEMENT_TYPE == 8).ToList();
+            if (productResponsible.Any())
+            {
+                return $"The customers who are configured to recieve Half yearly surveys cannot be approved. Please remove the following ids and try again - {string.Join(",", productResponsible.Select(x => x.EMP_ID)) }";
+            }
             return string.Empty;
         }
     }
