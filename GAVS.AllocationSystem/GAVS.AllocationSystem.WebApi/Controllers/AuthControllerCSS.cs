@@ -230,7 +230,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/actionitems";
 
-            subject = $"New Action Item(s) Identified - : {firstActionItem.PORTFOLIO ?? projectName}; Customer: {customerName}";
+            subject = $"New Action Item(s) Identified - {firstActionItem.PORTFOLIO ?? projectName}; Customer: {customerName}";
             string tomail = pmMails;
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
