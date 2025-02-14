@@ -1517,7 +1517,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             DateTime.TryParse(GetHeaderDetails_String("startDate"), out startDate);
             DateTime.TryParse(GetHeaderDetails_String("endDate"), out endDate);
 
-            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL_ID == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
+            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL  == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
             var uri = helper.GetAbsoulteUri();
 
             foreach (var item in cssVerificationList)

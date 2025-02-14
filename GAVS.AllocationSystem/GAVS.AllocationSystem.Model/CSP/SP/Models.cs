@@ -439,7 +439,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ACCOUNT_MANAGER {get; set;}
         public string AM_MAIL_ID {get; set;}
         public string BU_HEAD {get; set;}
-        public string BU_MAIL_ID {get; set;}
+        public string BU_MAIL{get; set;}
         public string QUALITY_SPOC {get; set;}
         public string CSM_REVIEWER_MAIL_ID {get; set;}
         public string SKIP_CSAT {get; set;}

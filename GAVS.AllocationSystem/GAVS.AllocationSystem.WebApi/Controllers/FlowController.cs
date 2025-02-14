@@ -21,30 +21,34 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 {
     public partial class AllSysController
     {
-        List<string> missingCSM = new List<string>
+        List<string> skipCSMs = new List<string>
         {
 
-"alwinking.rajamani@gavstech.com",
-"arunkumar.singh@GAVSTECH.COM",
+//"alwinking.rajamani@gavstech.com",
+//"arunkumar.singh@GAVSTECH.COM",
 
-"elangovan.s@gavstech.com",
-"gautam.burse@gslab.com",
-"guru.bhoopala@gavstech.com",
-"ishwarya.m@gavstech.com",
-"juliana.koshy@gavstech.com",
+//"elangovan.s@gavstech.com",
+//"gautam.burse@gslab.com",
+//"guru.bhoopala@gavstech.com",
+//"ishwarya.m@gavstech.com",
+//"juliana.koshy@gavstech.com",
  
-"kumararaman.h@gavstech.com",
-"kumarvel.sk@GAVSTECH.COM",
-"mayilsamy.k@gavstech.com",
-"priyanand.somisetty@gavstech.com",
-"rajeshkumar.vp@GAVSTECH.COM",
-"ramesh.jayachandar@gavstech.com",
-"ravindran.c@gavstech.com",
-"shruti.kapoor@gavstech.com",
-"sundara.rajulu@gavstech.com",
-"suraaj.doshi@gavstech.com",
-"swapnil.warkar@gslab.com",
-"Vasan.Rajesh@gavstech.com"
+//"kumararaman.h@gavstech.com",
+//"kumarvel.sk@GAVSTECH.COM",
+//"mayilsamy.k@gavstech.com",
+//"priyanand.somisetty@gavstech.com",
+//"rajeshkumar.vp@GAVSTECH.COM",
+//"ramesh.jayachandar@gavstech.com",
+//"ravindran.c@gavstech.com",
+//"shruti.kapoor@gavstech.com",
+//"sundara.rajulu@gavstech.com",
+//"suraaj.doshi@gavstech.com",
+//"swapnil.warkar@gslab.com",
+//"Vasan.Rajesh@gavstech.com"
+"balaji.uppili@gavstech.com",
+ "viswabharathi.r@gavstech.com",
+"balaji.uppili@gavstech.com",
+"kulesh.deshmukh@gslab.com",
         };
 
         private void GenerateCSSReadinessReport()
@@ -54,21 +58,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             int i = 0;
             var result = Cldb.AppRepo.getCSS_Readiness_Info(startDate, endDate).Where(x => x.PROJECT_TYPE.ToUpper() != "INTERNAL").ToList();
             var absoluteUrl = helper.GetAbsoulteUri();
-            var ineligible = false;
+           
             foreach (var item in result.GroupBy(x => x.CSM_MAIL))
             {
-                ineligible = true;
-                //if (!missingCSM.Contains(item.Key)) continue;
+             
+                if (skipCSMs.Contains(item.Key.ToLower())) continue;
                 //if (item.All(x => x.CSS_Eligible.ToUpper() == "NO")) continue;
                 //if (item.All(x => x.CSS_CONFIGURED.ToUpper() == "YES")) continue;
                 var toMail = item.Key;
                 var ccMail = string.Join(",", item.Select(x => x.PM_MAIL).Distinct().ToList());
-                ccMail += "," + Constants.DEVX_MAIL;
+                ccMail += "," + Constants.DEVX_MAIL +"," + "thamaraiselvi.s@gavstech.com";
                 var sbNonEligeible = new StringBuilder();
                 var sbEligeible = new StringBuilder();
-
+                var ineligible = false;
+             
                 foreach (var p in item.Where(x => x.CSS_Eligible.ToUpper() == "NO").Distinct().ToList())
                 {
+                    ineligible = true;
                     var verificationLink = string.Empty;
                     var skipCSATLink = string.Empty;
                     var contactLink = absoluteUrl + $"/layout/contacts/{p.CUST_ID}";
@@ -138,7 +144,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 new EmailContent { from = _email, to = toMail, cc = ccMail, bcc = Constants.CSS_BCC, content = mailContent, subject = mailSubject, hasAttachments = false, attachmentFilePath = "" },
                 Request
                 )) ;
-                //if (i++ == 5) break;
+                //if (i++ == 2) break;
             }
         }
 
