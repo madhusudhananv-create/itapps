@@ -327,7 +327,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_NM).OrderBy(x => x).ToList();
                 //EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
                 templateFile = "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
-                subject = $"Half yearly Pulse Survey for the {projectText} in the {cust.CUST_NM} for the period of {period}";
+                subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
             }
 
 
