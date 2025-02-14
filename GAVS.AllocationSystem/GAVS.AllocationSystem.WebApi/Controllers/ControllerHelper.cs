@@ -303,6 +303,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
             return Cldb.EMP_INFO.GetAll().Where(x => x.EMP_ID == project.PROJ_PM_EMP_ID).ToList();
         }
+        public List<EMP_INFO> GetCSMEmpInfoFromProject(string projId)
+        {
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
+            return Cldb.EMP_INFO.GetAll().Where(x => x.EMP_ID == project.PROJ_DM_EMP_ID).ToList();
+        }
 
         public List<EMP_INFO> GetBUHEADFromProject(string projId)
         {

@@ -230,7 +230,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/actionitems";
 
-            subject = $"New Action Item(s) Identified - Project: {projectName}; Customer: {customerName}";
+            subject = $"New Action Item(s) Identified - : {firstActionItem.PORTFOLIO ?? projectName}; Customer: {customerName}";
             string tomail = pmMails;
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
@@ -240,6 +240,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             EmailContentValues.Add("CSM_NAME", csmName);
             EmailContentValues.Add("Project Name", projectName);
+            EmailContentValues.Add("Portfolio", firstActionItem.PORTFOLIO);
 
             EmailContentValues.Add("Source", firstActionItem.SOURCE);
             EmailContentValues.Add("Source_Description", firstActionItem.SOURCE_DESCRIPTION);
@@ -528,7 +529,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.SOURCE = $"Customer Success Survey - {customerName}";
             overview.SOURCE_DESCRIPTION = $"CSAT - { period}, {customerName} , Lower CSAT Score in Question ({string.Join(", ", lowratings.Select(x => x.QUESTION)) })";
             overview.CSS_REFERENCE = reference.ToString();
-            overview.OWNER = helper.GetPMEmpInfoFromProject(projId).FirstOrDefault()?.FRST_NM;
+
             overview.IDENTIFIED_DATE = DateTime.Today;
             overview.TARGET_DATE = DateTime.Today.AddDays(7);
             overview.STATUS = "Identified";
@@ -543,7 +544,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.BATCH_CUSTOMER_ID = lowratings[0].BATCH_CUSTOMER_ID;
             overview.SEND_MAIL = sendMail;
             if (!string.IsNullOrWhiteSpace(portfolio))
+            {
                 overview.PORTFOLIO_NAME = portfolio;
+                overview.OWNER = helper.GetCSMEmpInfoFromProject(projId).FirstOrDefault()?.FRST_NM;
+            }
+            else
+            {
+                overview.OWNER = helper.GetPMEmpInfoFromProject(projId).FirstOrDefault()?.FRST_NM;
+            }
             return AddActionItemInternalPrivate(overview);
         }
 

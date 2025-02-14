@@ -1962,7 +1962,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var productResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => mailIds.Contains(x.EMP_ID) && x.MANAGEMENT_TYPE == 8).ToList();
             if (productResponsible.Any())
             {
-                return $"The customers who are configured to recieve Half yearly surveys cannot be approved. Please remove the following ids and try again - {string.Join(",", productResponsible.Select(x => x.EMP_ID)) }";
+                return $"The customers who are configured to recieve Half yearly surveys cannot be approved. Please remove the following Id(s) and try again - {string.Join(",", productResponsible.Select(x => x.EMP_ID)) }";
             }
             return string.Empty;
         }
