@@ -513,7 +513,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var batches = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(t => t.ID).ToList();
             var batchIds = batches.Select(x => x.ID).ToList();
-            var totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList();
+            List<iBatchCustomer> totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList<iBatchCustomer>();
+            //if (totalRecords.Count == 0)
+            //    totalRecords = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_MONTHLY_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList<iBatchCustomer>();
+
             var csmIdExists = !string.IsNullOrWhiteSpace(csmId);
             var projects = csmIdExists ? Cldb.PROJECT.GetAll().Where(x => x.PROJ_DM_EMP_ID == csmId).Select(x => x.PROJ_ID).ToList() : new List<string>();
             foreach (var item in batches)
@@ -1517,7 +1520,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             DateTime.TryParse(GetHeaderDetails_String("startDate"), out startDate);
             DateTime.TryParse(GetHeaderDetails_String("endDate"), out endDate);
 
-            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL  == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
+            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
             var uri = helper.GetAbsoulteUri();
 
             foreach (var item in cssVerificationList)

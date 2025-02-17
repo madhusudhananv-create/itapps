@@ -943,7 +943,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         internal string GetLaterDateTextForCSSValidity(DateTime dateSent, string custId)
         {
             var laterDate = GetLaterDateForCSSValidity(dateSent, custId);
-            return laterDate.ToString("dd-MM-yyyy");
+            return laterDate.ToString("dd-MMM-yyyy");
         }
 
         internal DateTime GetLaterDateForCSSValidity(DateTime dateSent, string custId, int valDays = 0)
