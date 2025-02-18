@@ -20709,6 +20709,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             CSPdb.Commit(CanCommit);
+            //genereate css batch customers
+            if (results.CUST_ID == PREMIER_CUSTOMER_ID)
+            {
+                var batch = CSPdb.CSS_BATCH_MONTHLY.GetAll().OrderByDescending(x => x.ID).Take(1);
+                if (batch.Any())
+
+                    GenerateMissingCustomerContactsPremier(batch.First().ID);
+            }
+            else
+            {
+                var batch = CSPdb.CSS_BATCHES.GetAll().Where(x => x.FREQUENCY.ToLower() == "quarterly").OrderByDescending(x => x.ID).Take(1);
+                if (batch.Any())
+
+                    GenerateMissingCustomerContacts(batch.First().ID);
+            }
             return Ok();
         }
 
