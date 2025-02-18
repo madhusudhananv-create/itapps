@@ -12,9 +12,7 @@
         (click)="openPopup()">
         Add Batch
       </button>
-      <a class="iconbutton" title="Export to Excel" (click)="exportToExcel()" style="border: none; background: none; padding: 0 0 0 10px;">
-        <i style="color: #207346; font-size: 20px;" class="fa fa-file-excel-o"></i>
-      </a>
+    
     </div>
   </div>
   <div class="example-container" style="margin-top: 10px;">
@@ -99,6 +97,9 @@
       <button style="text-transform: none;height: 35px; width: 130px;" name="btnVerification"
         (click)="btnReGenerateCustomerList_OnClick()">Re-Generate List</button>
     </div>
+    <a class="iconbutton" title="Export to Excel" (click)="exportToExcel()" style="border: none; background: none; padding: 0 0 0 10px;">
+      <i style="color: #207346; font-size: 20px;" class="fa fa-file-excel-o"></i>
+    </a>
   </div>
   <div class="row">
     <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>

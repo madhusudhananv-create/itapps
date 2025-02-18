@@ -295,7 +295,11 @@ export class SurveySettingsMonthlyComponent implements OnInit {
     return;
   }
  
-
+  CopyToClipboard(element) {
+    this.copyitem(element.url);
+    alert('CSAT link copied to Clipboard.');
+  }
+  
   copyitem(item): void {
     let listener = (e: ClipboardEvent) => {
       e.clipboardData.setData('text/plain', (item));

@@ -263,6 +263,11 @@ export class SurveySettingsComponent implements OnInit {
 
     return status;
   }
+  
+  CopyToClipboard(element) {
+    this.copyitem(element.url);
+    alert('CSAT link copied to Clipboard.');
+  }
 
   copyitem(item): void {
     let listener = (e: ClipboardEvent) => {
