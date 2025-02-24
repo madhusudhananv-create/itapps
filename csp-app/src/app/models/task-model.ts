@@ -132,6 +132,7 @@ export class tasK_DETAILS {
     scheduleD_START_DATE?: Date;
     scheduleD_DURATION: number;
     duE_DATE: Date;
+    iS_DRAFT: boolean;
 }
 
 export class Task_Audit_VM {

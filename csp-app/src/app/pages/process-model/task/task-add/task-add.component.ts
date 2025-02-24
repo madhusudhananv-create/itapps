@@ -383,7 +383,7 @@ export class TaskAddComponent implements OnInit {
     let isValid: boolean = false;
     if (this._taskService.selectedTask.tasK_TYPE_ID == undefined) { alert("Please select Type"); return false; }
     else if (this._taskService.selectedTask.tasK_CATEGORY_ID == undefined) { alert("Please select Category"); return false; }
-    else if (this._taskService.selectedTask.description == undefined || this._taskService.selectedTask.description == null) { alert("Please enter Description"); return false; }
+    else if ((this._taskService.selectedTask.description == undefined || this._taskService.selectedTask.description == null ) &&  this._taskService.selectedTask.iS_DRAFT == false) { alert("Please enter Description"); return false; }
     else if (this._taskService.selectedTask.scheduleD_START_DATE == undefined || this._taskService.selectedTask.scheduleD_START_DATE == null) { alert("Please select scheduled start date"); return false; }
     else if (this._taskService.selectedTask.seT_RECURRENCE && (this._taskService.selectedTask.recurrence.starT_DATE == undefined || this._taskService.selectedTask.recurrence.enD_DATE == undefined)) { alert("Please set start date and end date for recurring Event/Task"); return false; }
     else if (this._taskService.selectedTask.cusT_ID == undefined && !this.showServiceTower) { alert("Please select a Customer. If Customer not applicable select Gavs Internal."); return false; }
@@ -397,7 +397,7 @@ export class TaskAddComponent implements OnInit {
       }
     }
 
-    if (this._taskService.selectedTask.isAudit && !this._taskService.selectedTask.isAllDisabled && this._taskService.selectedTask.tasK_TYPE_ID == 2 && !this.showServiceTower) {
+    if (this._taskService.selectedTask.isAudit && !this._taskService.selectedTask.isAllDisabled && this._taskService.selectedTask.tasK_TYPE_ID == 2 && !this.showServiceTower && this._taskService.selectedTask.iS_DRAFT == false) {
       if (this._taskService.auditSchedule.auditoR_EMP_ID == undefined) { alert("Please select an Appraiser"); return false; }
       if (this._taskService.auditSchedule.auditeE_EMP_ID == undefined) { alert("Please select an Appraisee"); return false; }
     }

@@ -132,7 +132,7 @@
               <a title={{getTooltip(task)}} style="cursor:pointer" (click)="Task_OnClick(task)">
                 <span [style.background-color]="getStatusColor(task.status)"
                   class="badge">{{getStatusAbr(task.status)}}</span>
-                <b style="padding-left:2px">{{task.tasK_TYPE}}</b> - {{task.tasK_CATEGORY}}<br>
+                  <b style="padding-left:2px">{{task.tasK_TYPE}} </b><span *ngIf="task.iS_DRAFT==true"><b style="color: orange;">(D)</b></span> - {{task.tasK_CATEGORY}}<br>
                 St Dt: <span [style.color]="getDateColor(task.status)"> {{getDayPart(task.scheduleD_START_DATE)}}</span>
                 |
                 Due Dt: <span [style.color]="getDateColor(task.status)">{{getDayPart(task.duE_DATE)}}</span>
@@ -163,7 +163,7 @@
               <a title={{getTooltip(task)}} style="cursor:pointer" (click)="Task_OnClick(task)">
                 <span [style.background-color]="getStatusColor(task.status)"
                   class="badge">{{getStatusAbr(task.status)}}</span>
-                <b style="padding-left:2px">{{task.tasK_TYPE}}</b> - {{task.tasK_CATEGORY}}<br>
+                  <b style="padding-left:2px">{{task.tasK_TYPE}} </b><span *ngIf="task.iS_DRAFT==true"><b style="color: orange;">(D)</b></span>- {{task.tasK_CATEGORY}}<br>
                 St Dt: <span [style.color]="getDateColor(task.status)"> {{getDayPart(task.scheduleD_START_DATE)}}</span>
                 |
                 Due Dt: <span [style.color]="getDateColor(task.status)">{{getDayPart(task.duE_DATE)}}</span>
@@ -193,7 +193,9 @@
               <a title={{getTooltip(task)}} style="cursor:pointer" (click)="Task_OnClick(task)">
                 <span [style.background-color]="getStatusColor(task.status)"
                   class="badge">{{getStatusAbr(task.status)}}</span>
-                <b style="padding-left:2px">{{task.tasK_TYPE}}</b> - {{task.tasK_CATEGORY}}<br>
+                 <!-- If the task is a draft, display (D) after the task type -->
+                 <b style="padding-left:2px">{{task.tasK_TYPE}}</b>
+                 <span *ngIf="task.iS_DRAFT==true"><b style="color: orange;">(D)</b></span> - {{task.tasK_CATEGORY}}<br>
                 St Dt: <span [style.color]="getDateColor(task.status)"> {{getDayPart(task.scheduleD_START_DATE)}}</span>
                 |
                 Due Dt: <span [style.color]="getDateColor(task.status)">{{getDayPart(task.duE_DATE)}}</span>
@@ -248,4 +250,7 @@
 
 
 
+</div>
+<div style="font-family: calibri;width: 50%;float: left;margin-top: 14px;"><b>Note:</b> <br>
+  <b style="color: orange;">(D)</b> <b>: Denotes Task in Draft State</b>
 </div>
