@@ -179,27 +179,27 @@ export class ConfigextComponentComponent implements OnInit {
       alert("Please enter valid value for Key");
       return;
     }
-    else if (body.key != undefined && (specialCarPattern.test(body.key.trim()) || numberPattern.test(body.key.trim()))) {
-      alert('Invalid Key - Please enter alphanumeric or numeric values along with special characters');
-      return;
-    }
+    // else if (body.key != undefined && (specialCarPattern.test(body.key.trim()) || numberPattern.test(body.key.trim()))) {
+    //   alert('Invalid Key - Please enter alphanumeric or numeric values along with special characters');
+    //   return;
+    // }
     if ((body.value.trim() == '')) {
       alert("Please enter valid values for Value ");
       return;
     }
-    else if (body.value != undefined && (specialCarPattern.test(body.value.trim()) || numberPattern.test(body.value.trim()))) {
-      alert('Invalid Value - Please enter alphanumeric or numeric values along with special characters');
-      return;
-    }
-    if (body.description != undefined && (specialCarPattern.test(body.description.trim()) || numberPattern.test(body.description.trim()))) {
-      alert('Invalid Description - Please enter alphanumeric or numeric values along with special characters');
-      return;
-    }
+    // else if (body.value != undefined && (specialCarPattern.test(body.value.trim()) || numberPattern.test(body.value.trim()))) {
+    //   alert('Invalid Value - Please enter alphanumeric or numeric values along with special characters');
+    //   return;
+    // }
+    // if (body.description != undefined && (specialCarPattern.test(body.description.trim()) || numberPattern.test(body.description.trim()))) {
+    //   alert('Invalid Description - Please enter alphanumeric or numeric values along with special characters');
+    //   return;
+    // }
 
-    if (body.comments != undefined && (specialCarPattern.test(body.comments.trim()) || numberPattern.test(body.comments.trim()))) {
-      alert('Invalid Comment - Please enter alphanumeric or numeric values along with special characters');
-      return;
-    }
+    // if (body.comments != undefined && (specialCarPattern.test(body.comments.trim()) || numberPattern.test(body.comments.trim()))) {
+    //   alert('Invalid Comment - Please enter alphanumeric or numeric values along with special characters');
+    //   return;
+    // }
     this.AddUpdateConfigext(body);
   }
 

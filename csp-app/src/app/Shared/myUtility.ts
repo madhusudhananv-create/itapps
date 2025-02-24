@@ -31,7 +31,7 @@ export class myUtility {
     riskSubject: any = new Subject<any>();
     companyName = environment.company_name;
     //public gavsService: SocialAuthService;
- 
+
 
     constructor(private _router: Router, private _chartsService: ChartsService, private _otherServices: AppServiceOthers, private matDialog: MatDialog) {
         //localStorage.clear();
@@ -976,6 +976,14 @@ export class myUtility {
                     fromDate = new Date(year - 1, 3, 1);
                     toDate = new Date(year, 3, 0);
                     break;
+                case "H1":
+                    fromDate = new Date(year, 0, 1);
+                    toDate = new Date(year, 6, 0);
+                    break;
+                case "H2":
+                    fromDate = new Date(year, 6, 1);
+                    toDate = new Date(year, 12, 0);
+                    break;
                 case "lastQuarter":
                     fromDate = new Date(year - 1, 4, 1);
                     toDate = new Date(year, 3, 0);
@@ -1052,6 +1060,14 @@ export class myUtility {
                     // fromDate = new Date(startDate.toLocaleDateString());
                     // toDate = new Date(endDate.toLocaleDateString());
                 }
+                break;
+            case "H1":
+                fromDate = new Date(year, 0, 1);
+                toDate = new Date(year, 6, 0);
+                break;
+            case "H2":
+                fromDate = new Date(year, 6, 1);
+                toDate = new Date(year, 12, 0);
                 break;
             case "Select Period":
                 let date = new Date();
@@ -1213,20 +1229,20 @@ export class myUtility {
         let count = 0;
         let filteredOpenFinding = openFindings.filter(x => x.audiT_ID == id);
         if (openFindings.length > 0 && filteredOpenFinding.length > 0) {
-            if (type == "total") {               
-                    count = filteredOpenFinding[0].totaL_FINDINGS;                 
+            if (type == "total") {
+                count = filteredOpenFinding[0].totaL_FINDINGS;
             }
-            if (type == "open") {               
-                    count = filteredOpenFinding[0].opeN_FINDINGS;               
+            if (type == "open") {
+                count = filteredOpenFinding[0].opeN_FINDINGS;
             }
-            if (type == "closed") {               
-                    count = filteredOpenFinding[0].closeD_FINDINGS;                
+            if (type == "closed") {
+                count = filteredOpenFinding[0].closeD_FINDINGS;
             }
         }
         return count;
     }
-    
- 
+
+
 
 }
 

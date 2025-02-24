@@ -66,6 +66,7 @@ export class CssDashboardCSSTableComponent implements OnInit {
   }
 
   getCSATHeatmap1() {
+    
     if (this.cssDashboardInputs != null && this.cssDashboardInputs != undefined) {
       this._loading = true;
       if ((this.cssDashboardInputs.csM_IDs != null && this.cssDashboardInputs.csM_IDs != undefined) ||

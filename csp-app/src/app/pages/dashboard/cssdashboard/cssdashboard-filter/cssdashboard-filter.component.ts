@@ -45,6 +45,7 @@ export class CssdashboardFilterComponent implements OnInit {
   qualitySpocAccounts: any;
   allstrategicAccounts :any;
   resultData: any;
+  frequency: string ="Both";
   constructor(public _util: myUtility, private _appService: AppsService, private surveyService: SurveyService, private dialog: MatDialog) { }
 
   selectDefaultvalues() {
@@ -60,6 +61,7 @@ export class CssdashboardFilterComponent implements OnInit {
     this.selectedYear = this._util.Year();
     this.trendQuarter = 1;//this.allCust ? -1 : Number(this.custId);
     this.getAccountsForUser();
+    this.frequency ="Both";
     this.csmIds = "-1";
     this.service_GetCSMList();
     this.selectedQuarter = this.IsPremier() == true ? "Select Period" : "lastQuarter";
@@ -227,7 +229,7 @@ export class CssdashboardFilterComponent implements OnInit {
       }
     }
     this.getdatesForQuarter();
-
+   
     this.getCssInputEmitter.emit({
       selectedYear: this.selectedYear,
       selectedQuarter: this.selectedQuarter,
@@ -235,7 +237,8 @@ export class CssdashboardFilterComponent implements OnInit {
       toDate: this.toDate,
       trendQuarter: this.trendQuarter,
       customerIds: this.getCustomerIds(),
-      csmIds: this.getCsmIds()
+      csmIds: this.getCsmIds(),
+      frequency: this.frequency
     });
   }
 
@@ -331,12 +334,13 @@ export class CssdashboardFilterComponent implements OnInit {
     else
       obj.customeR_IDS = "-1";
 
-    if (this.selectedQuarter == "Select Period") {
-      obj.frequency = "Monthly"
-    }
-    else {
-      obj.frequency = "Quarterly"
-    }
+    // if (this.selectedQuarter == "Select Period") {
+    //   obj.frequency = "Monthly"
+    // }
+    // else {
+    //   obj.frequency = "Quarterly"
+    // }
+    obj.frequency = this.frequency;
     this.cssInputs = obj;
 
   }

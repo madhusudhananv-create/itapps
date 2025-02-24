@@ -89,6 +89,7 @@ export class CssdashboardComponent implements OnInit {
   allAccountsExcepttop15Accounts: string;
   _loading: boolean = false;
   csmIds: string;
+  frequency: string;
   constructor(private _router: Router, public _util: myUtility, private _appService: AppsService, public _access: AccessControl) {
 
   }
@@ -104,7 +105,7 @@ export class CssdashboardComponent implements OnInit {
       // this.customerId = String(this.custId); 
     }
   }
-  ngAfterViewInit() { 
+  ngAfterViewInit() {
     this.bindCSATInputs();
 
   }
@@ -116,12 +117,13 @@ export class CssdashboardComponent implements OnInit {
     obj.enD_DATE = this.toDate != undefined ? this.toDate.toDateString() : "";
     obj.csM_IDs = this.csmIds;
     obj.customeR_IDS = this.customerIds;
-    if (this.selectedQuarter == "Select Period") {
-      obj.frequency = "Monthly"
-    }
-    else {
-      obj.frequency = "Quarterly"
-    }
+    obj.frequency = this.frequency;
+    // if (this.selectedQuarter == "Select Period") {
+    //   obj.frequency = "Monthly"
+    // }
+    // else {
+    //   obj.frequency = "Quarterly"
+    // }
     this.cssInputs = obj;
   }
 
@@ -134,8 +136,9 @@ export class CssdashboardComponent implements OnInit {
       this.toDate = event.toDate,
       this.trendQuarter = event.trendQuarter,
       this.customerIds = event.customerIds,
-      this.csmIds = event.csmIds
-    this.isLoaded = !this.isLoaded;
+      this.csmIds = event.csmIds,
+      this.frequency = event.frequency,
+      this.isLoaded = !this.isLoaded;
 
     this.bindCSATInputs();
 

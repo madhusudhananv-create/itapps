@@ -38,6 +38,8 @@
             <mat-option value='Q2'>Q2</mat-option>
             <mat-option value='Q3'>Q3</mat-option>
             <mat-option value='Q4'>Q4</mat-option>
+            <mat-option value='H1'>H1</mat-option>
+            <mat-option value='H2'>H2</mat-option>
             <mat-option value='Select Period' *ngIf="IsPremier()">Select Period</mat-option>
           </mat-select>
         </mat-form-field>
@@ -67,6 +69,17 @@
               <mat-option [value]="1">For Specific Period </mat-option>
               <mat-option [value]="2">Till Chosen Period </mat-option>
               <mat-option [value]="3">For Last 4 Quarters </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </td>
+      <td style="padding-left: 3%;">
+        <div style="margin-left: -87%;">
+          <mat-form-field>
+            <mat-select name='tableFrequency'   [(ngModel)]="frequency" placeholder="Frequency"  >
+              <mat-option value="Both">Both </mat-option>
+              <mat-option value="Quarterly">Quarterly </mat-option>
+              <mat-option value="Halfyearly">Half-Yearly </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
