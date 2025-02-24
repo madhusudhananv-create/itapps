@@ -34,5 +34,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string ASSIGNED_TO { get; set; }
         public string OWNER { get; set; }
         public string FREQUENCY { get; set; }
+        public bool? IS_DRAFT { get; set; }
+
     }
 }
