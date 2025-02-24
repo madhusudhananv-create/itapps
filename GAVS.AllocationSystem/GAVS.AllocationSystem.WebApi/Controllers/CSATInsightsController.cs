@@ -19,9 +19,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
         [GET("GetAccountsForCSATDashboard")]
-        
+
         [ActionName("GetAccountsForCSATDashboard")]
-		[HttpGet]
+        [HttpGet]
         public IHttpActionResult GetAccountsForCSATDashboard(bool isHaveAllCustomerAccess)
         {
             LogRequest(prefix: "x");
@@ -32,7 +32,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var allUserAccounts = new List<CustomerBase>(); var allTop15Accounts = string.Empty; var allAccountsExceptTop15Accounts = string.Empty;
             var allQASpocAccounts = string.Empty; var allGSLabAccounts = string.Empty; var allGSLabKeyAccounts = string.Empty;
             var allStrategicAccounts = string.Empty;
-            var excludedIds = new List<string> { "-1", "-2", "-3", "-4", "-5", "-6","-7" };
+            var excludedIds = new List<string> { "-1", "-2", "-3", "-4", "-5", "-6", "-7" };
 
             var projects = GetProjectListForUser(empId.ToString());
             var customerIds = projects.Select(t => t.CUST_ID).Distinct().ToList<string>();
@@ -258,7 +258,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 return BadRequest("Please choose CSM");
             }
-            var csatdata = CSPdb.AppRepo.GetCSSTableForPeriod1(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS, csatInsightsInput.CSM_IDS);
+            var csatdata = CSPdb.AppRepo.GetCSSTableForPeriod1(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS, csatInsightsInput.CSM_IDS, csatInsightsInput.FREQUENCY);
             var absoluteUrl = helper.GetAbsoulteUri();
             foreach (var item in csatdata)
             {

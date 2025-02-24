@@ -1365,7 +1365,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 //foreach (var cp in prods)
                 //{
-                if (existingCustomers.Any(x => x.PROD_ID == item.PRODUCT_ID && x.EMAIL_ID.ToLower() == item.EMP_ID.ToLower())) continue;
+                if (existingCustomers.Any(x => x.PROD_ID == item.PRODUCT_ID && x.EMAIL_ID.ToLower().Trim() == item.EMP_ID.ToLower().Trim())) continue;
                 var product = products.FirstOrDefault(x => x.ID == item.PRODUCT_ID);
                 var cuser = CSPdb.CONTACTS.GetAll().FirstOrDefault(x => x.CONTACT_EMAILID == item.EMP_ID);
                 if (cuser == null) continue;

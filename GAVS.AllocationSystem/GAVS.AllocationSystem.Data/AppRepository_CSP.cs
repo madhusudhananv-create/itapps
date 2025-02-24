@@ -716,7 +716,7 @@ namespace GAVS.AllocationSystem.Data
             SqlParameter param4 = new SqlParameter("@Customerids", Customerids);
             SqlParameter param5 = new SqlParameter("@Projectids", Projectids);
             SqlParameter param6 = new SqlParameter("@ServiceTowerIds", ServiceTowerIds);
-            var QueryResult = dbContext.Database.SqlQuery<GlobalKPIData>("[dbo].[getKPIDataAcrossProjects] @Startdate, @Enddate, @GlobalKpis, @Customerids, @Projectids,@ServiceTowerIds", param1, param2, param3, param4, param5,param6).ToList();
+            var QueryResult = dbContext.Database.SqlQuery<GlobalKPIData>("[dbo].[getKPIDataAcrossProjects] @Startdate, @Enddate, @GlobalKpis, @Customerids, @Projectids,@ServiceTowerIds", param1, param2, param3, param4, param5, param6).ToList();
             return QueryResult;
         }
 
@@ -727,7 +727,7 @@ namespace GAVS.AllocationSystem.Data
             SqlParameter param2 = new SqlParameter("@Enddate", Enddate);
             SqlParameter param3 = new SqlParameter("@GlobalKpis", GlobalKpis);
             SqlParameter param4 = new SqlParameter("@Customerids", Customerids);
-            SqlParameter param5 = new SqlParameter("@Projectids", Projectids);     
+            SqlParameter param5 = new SqlParameter("@Projectids", Projectids);
             var QueryResult = dbContext.Database.SqlQuery<GlobalKPIData>("[dbo].[getKPIDataAcrossProjectsNew] @Startdate, @Enddate, @GlobalKpis, @Customerids, @Projectids", param1, param2, param3, param4, param5).ToList();
             return QueryResult;
         }
@@ -1146,7 +1146,7 @@ namespace GAVS.AllocationSystem.Data
             SqlParameter param5 = new SqlParameter("@STATUS", STATUS);
             SqlParameter param6 = new SqlParameter("@EMP_ID", string.IsNullOrEmpty(EMP_ID) ? (object)DBNull.Value : EMP_ID);
             SqlParameter param7 = new SqlParameter("@MEETING_DATE", MEETING_DATE ?? Convert.DBNull);
-            SqlParameter param8 = new SqlParameter("@IS_CSM_NOTIFIED", IS_CSM_NOTIFIED.HasValue ? (object)IS_CSM_NOTIFIED.Value : DBNull.Value); 
+            SqlParameter param8 = new SqlParameter("@IS_CSM_NOTIFIED", IS_CSM_NOTIFIED.HasValue ? (object)IS_CSM_NOTIFIED.Value : DBNull.Value);
             var QueryResult = dbContext.Database.SqlQuery<List<string>>("[dbo].[usp_update_CSSBatchCustomers] @ID, @SURVEY_ID, @SURVEY_SENT_DATE, @SURVEY_RECEIVED_DATE, @STATUS, @EMP_ID, @MEETING_DATE, @IS_CSM_NOTIFIED", param1, param2, param3, param4, param5, param6, param7, param8).ToList();
         }
 
@@ -1972,13 +1972,13 @@ namespace GAVS.AllocationSystem.Data
             SqlParameter param4 = new SqlParameter("@endDate", enDate);
             var QueryResult = dbContext.Database.SqlQuery<KPI_REFERENCES_PRODUCT>("[dbo].[usp_get_KPIReference_ByCustomer] @custId,@kpiSLAIds,@startDate,@endDate", param1, param2, param3, param4).ToList();
             return QueryResult;
-        } 
+        }
         public List<AUDIT_DETAILS_VM> GetAuditNotCompleted()
         {
-            var dbContext = new CSPDbContext(); 
+            var dbContext = new CSPDbContext();
             var QueryResult = dbContext.Database.SqlQuery<AUDIT_DETAILS_VM>("[dbo].usp_getAuditsNotCompleted").ToList();
             return QueryResult;
-        } 
+        }
         public List<AUDIT_DETAILS_VM> GetAuditScoreNotSubmitted()
         {
             var dbContext = new CSPDbContext();
@@ -2175,14 +2175,15 @@ namespace GAVS.AllocationSystem.Data
             return TemplateDetails;
         }
 
-        public IEnumerable<PROJECT_CSAT_DATA_EXTENDED> GetCSSTableForPeriod1(string startDate, string endDate, string custId, string csmId)
+        public IEnumerable<PROJECT_CSAT_DATA_EXTENDED> GetCSSTableForPeriod1(string startDate, string endDate, string custId, string csmId, string frequency)
         {
             var dbContext = new CSPDbContext();
             SqlParameter param1 = new SqlParameter("@startDate", startDate);
             SqlParameter param2 = new SqlParameter("@endDate", endDate);
             SqlParameter param3 = new SqlParameter("@custIds", custId);
             SqlParameter param4 = new SqlParameter("@csmIds", csmId);
-            var TemplateDetails = dbContext.Database.SqlQuery<PROJECT_CSAT_DATA_EXTENDED>("[dbo].[getCSSTableForPeriod1] @startDate,@endDate,@custIds,@csmIds", param1, param2, param3, param4).ToList();
+            SqlParameter param5 = new SqlParameter("@frequency", frequency);
+            var TemplateDetails = dbContext.Database.SqlQuery<PROJECT_CSAT_DATA_EXTENDED>("[dbo].[getCSSTableForPeriod1] @startDate,@endDate,@custIds,@csmIds,@frequency", param1, param2, param3, param4, param5).ToList();
             return TemplateDetails;
         }
 
@@ -2308,7 +2309,7 @@ namespace GAVS.AllocationSystem.Data
             SqlParameter param3 = new SqlParameter("@endDate", endDate);
             var QueryResult = dbContext.Database.SqlQuery<PROJECT_CAPA_DETAILS>("[dbo].[getProjectWiseCAPACount] @customerId,@startDate,@endDate", param1, param2, param3).ToList();
             return QueryResult;
-        }       
+        }
 
         public List<ProductKPIDetails> GetProductKPIDetails(int kpiDetailsId)
         {

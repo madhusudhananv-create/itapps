@@ -19,7 +19,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         IEnumerable<PROJECT_CSAT_DATA> GetCSSTableForPeriod(string startDate, string endDate, string custId);
 
-        IEnumerable<PROJECT_CSAT_DATA_EXTENDED> GetCSSTableForPeriod1(string startDate, string endDate, string custId, string csmId);
+        IEnumerable<PROJECT_CSAT_DATA_EXTENDED> GetCSSTableForPeriod1(string startDate, string endDate, string custId, string csmId, string frequency);
 
         IEnumerable<PROJECT_CUSTOMER_NPS_DATA> GetCSSTable(string YearQuarter, string pQuarter, string cQuarter, string custIds);
 
@@ -138,7 +138,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         List<PlannedAudits> GetPlannedAudits(string Custid, string Projid);
 
-        List<GlobalKPIData> GetGlobalKPIDetails(DateTime startDate, DateTime endDate, string GlobalKpis, string Customerids, string Projectids ,string ServiceTowerIds);
+        List<GlobalKPIData> GetGlobalKPIDetails(DateTime startDate, DateTime endDate, string GlobalKpis, string Customerids, string Projectids, string ServiceTowerIds);
 
         //List<GlobalKPIData> GetGlobalKPIDetailsNew(DateTime Startdate, DateTime Enddate, string GlobalKpis, string Customerids, string Projectids);
         //List<GlobalKPIData> GetGlobalKPIDetails(DateTime startDate, DateTime endDate, string GlobalKpis, string Customerids, string Projectids);
