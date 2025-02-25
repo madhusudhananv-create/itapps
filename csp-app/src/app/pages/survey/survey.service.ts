@@ -68,6 +68,10 @@ export class SurveyService {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
     return this._http.get<any>(this.apiurl + '/GenerateMissingCustomerContacts?batchId=' + batchid, { headers: header });
   }
+  GenerateMissingCustomerContactsPremier(batchid: number): Observable<CssBatchCustomerMonthlyExtendedModel[]> {
+    let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
+    return this._http.get<any>(this.apiurl + '/GenerateMissingCustomerContactsPremier?batchId=' + batchid, { headers: header });
+  }
   GetCSSBatchCustomers(batchid: number): Observable<CssBatchCustomersExtendedModel[]> {
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem('empid') });
     return this._http.get<CssBatchCustomersExtendedModel[]>(this.apiurl + '/GetCSSBatchCustomers?BatchId=' + batchid, { headers: header });

@@ -291,10 +291,27 @@ export class SurveySettingsMonthlyComponent implements OnInit {
     }
   }
   btnGenerateMissingContacts() {
-    alert("Feature yet to be developed");
-    return;
+    
+    if (this.selectedBatch != undefined && this.selectedBatch != null &&
+      this.selectedBatch.id != undefined && this.selectedBatch.id != null) {
+
+      if (confirm("Are you sure you want to generate missing contacts?")) {
+        this.service_GenerateMissingCustomerContacts(this.selectedBatch.id);
+      }
+    }
   }
- 
+
+  service_GenerateMissingCustomerContacts(batchId: number) {
+    this.surveyService.GenerateMissingCustomerContactsPremier (batchId).subscribe(
+      (data) => {
+        this.service_GetCSSBatchCustomersMonthly(batchId);
+      },
+      (error) => {
+        this._util.serviceError(error);
+      }
+    );
+  }
+
   CopyToClipboard(element) {
     this.copyitem(element.url);
     alert('CSAT link copied to Clipboard.');
