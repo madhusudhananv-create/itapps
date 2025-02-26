@@ -670,6 +670,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     newExt.PROJ_NM = product.PRODUCT_TITLE;
                     newExt.PROJ_STATUS = proj?.PROJ_STATUS;
+                    newExt.BUSINESS_UNIT = proj?.BUSINESS_UNIT;
                 }
                 else if (proj != null)
                 {
@@ -677,6 +678,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newExt.PROJ_STATUS = proj.PROJ_STATUS;
                     newExt.CONTRACTING_UNIT = proj.CONTRACTING_UNIT;
                     newExt.REVENUE_TYPE = proj.REVENUE_TYPE;
+                    newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
                 }
                 else if (proj == null)
                 {
@@ -777,6 +779,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newExt.PROJ_STATUS = proj.PROJ_STATUS;
                     newExt.PROJ_ID = proj.PROJ_ID;
                     newExt.PROD_ID = batch.PROD_ID;
+                    newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
                 }
                 ext.Add(newExt);
             }

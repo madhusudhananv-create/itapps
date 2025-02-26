@@ -36,7 +36,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public bool? CSM_NOTIFIED { get; set; }
 
         [NotMapped]
-        public int BATCH_ID{get;set;}
+        public int BATCH_ID { get; set; }
     }
     [NotMapped]
     public class CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED : CSS_BATCH_CUSTOMER_MONTHLY
@@ -44,13 +44,14 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string CUST_NM { get; set; }
         public string PROJ_NM { get; set; }
         public string PROJ_STATUS { get; set; }
-        public string PROD_NM { get; set; }   
+        public string PROD_NM { get; set; }
         public string csm { get; set; }
         public string URL { get; set; }
         public string APPROVER { get; set; }
         public string CONTRACTING_UNIT { get; set; }
         public string CONTACT_ROLE { get; set; }
         public string REVENUE_TYPE { get; set; }
+        public string BUSINESS_UNIT { get; set }
 
     }
 
