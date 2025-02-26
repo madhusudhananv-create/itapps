@@ -51,6 +51,7 @@ export class SurveySettingsComponent implements OnInit {
   batchCustomersColumns = [
     "select",
     "index",
+    "BUSINESS_UNIT",
     "cusT_NM",
     "proJ_NM",
     "proJ_STATUS",
