@@ -1177,6 +1177,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         newExt.PROJ_STATUS = proj.PROJ_STATUS;
                         newExt.CONTRACTING_UNIT = proj.CONTRACTING_UNIT;
                         newExt.REVENUE_TYPE = proj.REVENUE_TYPE;
+                        newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
                     }
 
                 }

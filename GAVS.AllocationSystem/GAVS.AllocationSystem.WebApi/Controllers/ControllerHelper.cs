@@ -779,7 +779,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newExt.PROJ_STATUS = proj.PROJ_STATUS;
                     newExt.PROJ_ID = proj.PROJ_ID;
                     newExt.PROD_ID = batch.PROD_ID;
-                    newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
+                   // newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
                 }
                 ext.Add(newExt);
             }
