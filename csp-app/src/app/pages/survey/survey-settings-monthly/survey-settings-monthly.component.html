@@ -126,6 +126,12 @@
         <th mat-header-cell *matHeaderCellDef> Customer </th>
         <td mat-cell *matCellDef="let element"> {{element.cusT_NM}} </td>
       </ng-container>
+      <ng-container matColumnDef="BUSINESS_UNIT">
+        <th mat-header-cell *matHeaderCellDef>Business Unit</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.businesS_UNIT}}
+        </td>
+      </ng-container>
       <ng-container matColumnDef="displaY_NAME">
         <th mat-header-cell *matHeaderCellDef> Name </th>
         <td mat-cell *matCellDef="let element"> {{element.displaY_NAME}} </td>
@@ -153,6 +159,12 @@
       <ng-container matColumnDef="recddate">
         <th mat-header-cell *matHeaderCellDef> Survey Recived On </th>
         <td mat-cell *matCellDef="let element"> {{element.surveY_RECEIVED_DATE|date:'dd-MMM'}} </td>
+      </ng-container>
+      <ng-container matColumnDef="CSMList">
+        <th mat-header-cell *matHeaderCellDef>CSM</th>
+        <td mat-cell *matCellDef="let element">
+          {{ GetCSM(element.proJ_ID) }}
+        </td>
       </ng-container>
       <ng-container matColumnDef="project">
         <th mat-header-cell *matHeaderCellDef> Project / Product </th>

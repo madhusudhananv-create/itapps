@@ -20,7 +20,7 @@ import { CssBatchCustomersExtendedModel } from '../../../models/css-batch-custom
 })
 export class SurveySettingsMonthlyComponent implements OnInit {
 
-  //CSMList: CSMList[] = [];
+  CSMList: CSMList[] = [];
   Batches: CssBatchMonthlyModel[] = [];
   BatchCustomers: CssBatchCustomerMonthlyExtendedModel[] = [];
   selectedBatch: CssBatchMonthlyModel;
@@ -32,7 +32,7 @@ export class SurveySettingsMonthlyComponent implements OnInit {
   constructor(private dialog: MatDialog, public _util: myUtility, private surveyService: SurveyService,
     public _access: AccessControl, private _router: Router, private route: ActivatedRoute) { }
   batchColumns = ['index', 'starT_DATE', 'enD_DATE', 'status', "totaL_RECORDS","pending","verified","rejected","surveY_SENT","surveY_RECD"]
-  batchCustomersColumns = ['select', 'index', 'cusT_NM', 'displaY_NAME', 'emaiL_ID','contacT_ROLE','revenuE_TYPE', 'status', 'sentdate', 'recddate', 'project', 'proJ_STATUS', 'unit', 'verified', 'comments', 'updatedBy', 'updatedDate', 'edit']
+  batchCustomersColumns = ['select', 'index','BUSINESS_UNIT', 'cusT_NM', 'displaY_NAME', 'emaiL_ID','contacT_ROLE','revenuE_TYPE', 'status', 'sentdate', 'recddate','CSMList','project', 'proJ_STATUS', 'unit', 'verified', 'comments', 'updatedBy', 'updatedDate', 'edit']
   dataSource = new MatTableDataSource(this.BatchCustomers);
   selection = new SelectionModel<CssBatchCustomerMonthlyExtendedModel>(true, []);
   selectedRow: any;
@@ -54,6 +54,7 @@ export class SurveySettingsMonthlyComponent implements OnInit {
       return searchTerms.every(term => {
         return (
           (data.cusT_NM && data.cusT_NM.toLowerCase().includes(term)) ||
+          (data.BUSINESS_UNIT && data.BUSINESS_UNIT.toLowerCase().includes(term)) ||
           (data.displaY_NAME && data.displaY_NAME.toLowerCase().includes(term)) ||
           (data.emaiL_ID && data.emaiL_ID.toLowerCase().includes(term)) ||
           (data.status && data.status.toLowerCase().includes(term)) ||
@@ -75,6 +76,7 @@ export class SurveySettingsMonthlyComponent implements OnInit {
 
   LoadDetails() {
     this.service_GetCSSMonthlyBatches();
+    this.service_GetCSMList();
   }
 
   customerContactsVerification() {
@@ -185,6 +187,17 @@ export class SurveySettingsMonthlyComponent implements OnInit {
       this.dataSource.filterPredicate = this.createFilter();
     }
   }
+  GetCSM(projId) {
+	  if(!projId){
+		return "";
+	   }
+      let lst: CSMList[] = this.CSMList.filter((t) => t.proJ_ID === projId);
+      if (lst.length > 0) {
+        return lst[0].csm;
+      } else {
+        return "-";
+      }
+    }
 
 
   btnRefresh_onclick() {
@@ -423,11 +436,11 @@ export class SurveySettingsMonthlyComponent implements OnInit {
     }, error => { this.isLoading = false; this._util.serviceError(error); });
   }
 
-  // service_GetCSMList() {
-  //   this.surveyService.GetCSMList().subscribe(data => {
-  //     this.CSMList = data;
-  //   }, error => { this._util.serviceError(error); });
-  // }
+   service_GetCSMList() {
+     this.surveyService.GetCSMList().subscribe(data => {
+       this.CSMList = data;
+     }, error => { this._util.serviceError(error); });
+   }
 
 }
 export class CSMList {
