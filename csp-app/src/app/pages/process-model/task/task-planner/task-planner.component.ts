@@ -125,20 +125,47 @@ export class TaskPlannerComponent implements OnInit {
     }
   }
 
+  
   btnClear_OnClick() {
-    this.currentYear = new Date().getFullYear();
-    if (new Date().getMonth() < 4) {
-      this.currentYear = this.currentYear - 1;
-    }
+    const currentDate = new Date();
+    this.currentYear = currentDate.getFullYear() - (currentDate.getMonth() < 4 ? 1 : 0);
+
+    // Reset selections
     this.selectedTaskType = 0;
     this.selectedTaskCategory = 0;
     this.selectedTask = new TaskModel();
-    this.selectedProject = [];
     this.selectedCustomer = [];
+    this.selectedProject = [];
     this.ProjectList = [];
+    this.filteredProjectList = [];
+
+    // Deselect options in UI
+    if (this.selectCustomer && this.selectCustomer.options) {
+        this.selectCustomer.options.forEach(function (item) {
+            item.deselect();
+        });
+    }
+    
+    if (this.selectProject && this.selectProject.options) {
+        this.selectProject.options.forEach(function (item) {
+            item.deselect();
+        });
+    }
+
+    // Deselect "Select All" options
+    if (this.allCustomerSelected) {
+        this.allCustomerSelected.deselect();
+    }
+    
+    if (this.allProjectSelected) {
+        this.allProjectSelected.deselect();
+    }
+
+    // Fetch task details and update categories
     this.service_GetTaskDetails();
     this.selectAllCategory();
-  }
+}
+
 
   MovePreviousYear() {
     this.currentYear--;
