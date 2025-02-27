@@ -213,9 +213,16 @@ export class CssdashboardFilterComponent implements OnInit {
     }
   }
   getdatesForQuarter() {
+  
+
     this.dates = this._util.getDatesBasedOnQuarter(this.selectedQuarter, this.selectedYear, this.trendQuarter, this.fromDate, this.toDate);
     this.fromDate = this.dates[0].fromDate;
     this.toDate = this.dates[0].toDate;
+    if(this.selectedQuarter == 'H1' || this.selectedQuarter == 'H2')
+      { 
+        this._loading = false;
+        return;
+      }
     this.selectedQuarter = this.selectedQuarter != "Select Period" ? this._util.getQuarter(this.toDate.getMonth() + 1) : this.selectedQuarter;
     this.selectedYear = this.selectedQuarter == "Q4" ? this.toDate.getFullYear() - 1 : this.toDate.getFullYear();
     this._loading = false;
