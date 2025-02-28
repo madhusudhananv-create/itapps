@@ -51,6 +51,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
   IsSavedAuditsExpand: boolean = false;
   custId: string;
   selectedAuditId: number;
+  auditId: number;
   checkListData: AuditCheckListModel[] = [];
   projId: string;
   IsSubmitted: boolean = false;
@@ -129,6 +130,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
   updatedChecklistScore: any;
   updatedChecklistScorePercentage: any;
   checklistScorePercentage: any;
+  auditReportData: AuditChecklistModelNew[] = [];
 
   constructor(private _router: Router, public _access: AccessControl, private _appService: AppsService, private cdref: ChangeDetectorRef,
     private _util: myUtility, private _assessmentUtil: assessmentUtility, private _http: HttpClient, public dialog: MatDialog, private route: ActivatedRoute,
@@ -153,7 +155,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
     this.getDropDownParams();
     this.sub = this.route.params.subscribe(params => {
       if (params['custid'] != undefined && params['projid'] != undefined && params['auditid'] != undefined) {
-        this.custidParam =  params['custid'] ;
+        this.custidParam = params['custid'];
         this.projIdParam = params['projid'];
         this.custId = params['custid'];
         this.projId = params['projid'];
@@ -866,15 +868,15 @@ export class ChecklistExecutionNewComponent implements OnInit {
   }
 
   getFindingsCount(id) {
-    let count = this._util.getFindingsCount(this.findings, id,"total");
+    let count = this._util.getFindingsCount(this.findings, id, "total");
     return count;
   }
   getOpenFindingCount(id) {
-    let count = this._util.getFindingsCount(this.findings, id,"open");
+    let count = this._util.getFindingsCount(this.findings, id, "open");
     return count;
   }
   getClosedFindingsCount(id) {
-    let count = this._util.getFindingsCount(this.findings, id,"closed");
+    let count = this._util.getFindingsCount(this.findings, id, "closed");
     return count;
   }
 
@@ -1061,7 +1063,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
 
   getEmployeeListFromproject() {
 
-   
+
     this._appService.getAuditeeDetails(this.custId, this.projId).subscribe(
       data => {
         this.auditeesList = data
@@ -1106,6 +1108,19 @@ export class ChecklistExecutionNewComponent implements OnInit {
   SaveCheckListExecutionNew(status) {
     this.ValidateChecklist(status);
   }
+
+  handlePdfExport(i,list) {
+            this._appService.sendInternalAuditReportData(list).subscribe(
+              data => {      
+          alert("Report Downloaded Successfully");
+              },
+              (error) => {
+                this._util.serviceError(error);
+              }
+            );
+        }
+   
+
 
   ValidateFieldsNew(status) {
 

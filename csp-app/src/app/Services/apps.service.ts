@@ -9354,7 +9354,24 @@ export class AppsService {
     });
   }
 
-  service_DowloadFile(category : string, id: number, filetype: string): Observable<Blob> {
+
+  sendInternalAuditReportData(plannedAudit): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.post<any[]>(
+      this.apiurl + "/SendInternalAuditReport", plannedAudit,
+      {
+        headers: header,
+      }
+    );
+  }
+
+
+
+service_DowloadFile(category : string, id: number, filetype: string): Observable<Blob> {
     let apiuri: string = environment.webapiuri + 'DownloadFile';
     let header = new HttpHeaders({
       Accept: 'application/json',
@@ -9371,6 +9388,7 @@ export class AppsService {
       }, 
      
     );
+
 
      /**
       *  get(url: string, options: {
