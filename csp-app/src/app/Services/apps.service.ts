@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from "@angular/core";
-import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpEvent, HttpHeaders, HttpParams, HttpResponse } from "@angular/common/http";
 import { environment } from "../../environments/environment";
 import { ScopeModel, modelRow, projectScopes } from "../models/scope-Model";
 import { Observable } from "rxjs/Observable";
@@ -90,7 +90,7 @@ import {
   CssQuestionMasterModel,
   BatchCustomerAndQuestions,
 } from "../models/css-question-master-model";
-import { timeout } from "rxjs/operators";
+import { observeOn, timeout } from "rxjs/operators";
 import { AuditFindingCappa } from "../models/audit-finding-capa";
 import { AuditFindingCapaExt, AuditFindingStage } from "../models/audit-finding-stage";
 import { CheckListExecutionModel } from "../models/checklist-execution";
@@ -9354,6 +9354,39 @@ export class AppsService {
     });
   }
 
+  service_DowloadFile(category : string, id: number, filetype: string): Observable<Blob> {
+    let apiuri: string = environment.webapiuri + 'DownloadFile';
+    let header = new HttpHeaders({
+      Accept: 'application/json',
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem('empid'),
+    });
+    return this._http.get(
+      `${apiuri}?category=${category}&id=${id}`,
+      
+      {
+        headers: header,
+      
+        responseType: 'blob',
+      }, 
+     
+    );
+
+     /**
+      *  get(url: string, options: {
+        headers?: HttpHeaders | {
+            [header: string]: string | string[];
+        };
+        observe: 'response';
+        params?: HttpParams | {
+            [param: string]: string | string[];
+        };
+        reportProgress?: boolean;
+        responseType: 'blob';
+        withCredentials?: boolean;
+    }): Observable<HttpResponse<Blob>>;
+      */
+  }
 
   //Reference: https://angular.io/guide/http
 }
