@@ -8,15 +8,21 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
-using System.Reflection;
+using System.Net.Http.Headers;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Web.Http;
 using System.Web.UI.WebControls;
-using EF = GAVS.AllocationSystem.WebApi.DBContext;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Html2pdf;
+
+
+
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -32,6 +38,133 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ProcessExternalKPIs("202100121", dt, "ZIF");
             ProcessExternalKPIsByFormula("202100121", dt, "FRESHWORKS");
             return Ok();
+        }
+
+        [GET("DownloadFile")]
+        [ActionName("DownloadFile")]
+        [HttpGet]
+        public HttpResponseMessage DownloadFile(string category, int id)
+        {
+            try
+            {
+
+
+                switch (category.ToLower())
+                {
+                    case "assessment":
+                        var file = string.Empty;
+                        break;
+                    default:
+                        break;
+                }
+
+
+
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+
+                    HttpResponseMessage httpResponseMessage = new HttpResponseMessage();
+                    httpResponseMessage.Content = new ByteArrayContent(CreatePdf(x => { }).ToArray());
+                    httpResponseMessage.Content.Headers.Add("x-filename", "assesment");
+                    httpResponseMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+                    httpResponseMessage.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+                    httpResponseMessage.Content.Headers.ContentDisposition.FileName = "assesment.pdf";
+                    //var filename = "assesment.pdf";
+                    //httpResponseMessage.Content.Headers.Add("Content-Disposition", $" attachment; filename={filename}");
+
+                    httpResponseMessage.StatusCode = HttpStatusCode.OK;
+                    return httpResponseMessage;
+
+                }
+
+                return this.Request.CreateResponse(HttpStatusCode.NotFound, "File not found.");
+            }
+            catch (Exception ex)
+            {
+                return this.Request.CreateResponse(HttpStatusCode.InternalServerError, ex);
+            }
+        }
+
+        private byte[] CreatePdf(Action<Document> pdfModifier)
+        {
+            var stream = new MemoryStream();
+            var writer = new PdfWriter(stream);
+            var pdf = new PdfDocument(writer);
+
+            var etys = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ID == 11130 || x.ID == 11129 || x.ID == 11128).ToArray();
+            var content = SendCSSGroupVerificationApprovalMailDummy(etys, "test comment", "Q3 - 2024");
+
+            ConverterProperties converterProperties = new ConverterProperties();
+            //var document = HtmlConverter.ConvertToDocument(content, pdf, converterProperties);
+
+
+            //// List<IElement> elements2 = (List<IElement>)HtmlConverter.ConvertToElements(content);
+            //foreach (var element in elements2)
+            //{
+            //    document.Add((IBlockElement)element);
+            //}
+            //document.Add(new Paragraph(content));
+
+
+            using (var workStream = new MemoryStream())
+            using (var pdfWriter = new PdfWriter(workStream))
+            {
+                using (var document = HtmlConverter.ConvertToDocument(content, pdfWriter, converterProperties))
+                {
+                    //Passes the document to a delegated function to perform some content, margin or page size manipulation
+                    pdfModifier(document);
+                }
+
+                //Returns the written-to MemoryStream containing the PDF.   
+                return workStream.ToArray();
+            }
+
+
+        }
+        private string SendCSSGroupVerificationApprovalMailDummy(iBatchCustomer[] cssBatchCustomers, string comments, string period)
+        {
+            string subject = string.Empty;
+            string mailContent;
+            string status = string.Empty;
+            var EmailContentValues = new Dictionary<string, string>();
+            var empId = GetHeaderDetails_String("empId");
+
+            var projIds = cssBatchCustomers.Where(x => !string.IsNullOrWhiteSpace(x.PROJ_ID)).Select(x => x.PROJ_ID).ToList();
+            var customerIds = cssBatchCustomers.Where(x => !string.IsNullOrWhiteSpace(x.CUST_ID)).Select(x => x.CUST_ID).ToList();
+
+            var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).ToList();
+            var customers = Cldb.CUSTOMER.GetAll().Where(x => customerIds.Contains(x.CUST_ID)).ToList();
+
+            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
+            List<string> cclist = new List<string>();
+            var toMail = csm.EMAIL_ID;
+            var csmName = csm.FRST_NM;
+
+            int i = 1;
+            var tableContent = new StringBuilder();
+            foreach (var item in cssBatchCustomers.Where(x => !string.IsNullOrWhiteSpace(x.PROJ_ID)).OrderBy(x => x.DISPLAY_NAME))
+            {
+                CheckUserHasAccess(empId, item.CUST_ID, item.PROJ_ID);
+                if (i == 1)
+                    status = item.IS_VERIFIED ? "Approved" : "Rejected";
+                var project = projects.FirstOrDefault(x => x.PROJ_ID == item.PROJ_ID);
+                if (project == null) continue;
+                var customer = customers.FirstOrDefault(x => x.CUST_ID == item.CUST_ID);
+                cclist.AddRange(helper.GetPMFromProject(project));
+                var qualitySpoc = helper.GetQualitySpocMailForProject(project);
+                if (!string.IsNullOrWhiteSpace(qualitySpoc))
+                    cclist.Add(qualitySpoc);
+                tableContent.Append(GenerateHtmlTableForCustomerVerification(i++, item.DISPLAY_NAME, item.EMAIL_ID,
+                         customer.CUST_NM, project.PROJ_NM, status, !string.IsNullOrWhiteSpace(comments) ? comments : string.Empty, !string.IsNullOrWhiteSpace(project.PROJ_STATUS) ? project.PROJ_STATUS : string.Empty));
+            }
+            string ccMail = string.Join(",", cclist.Distinct().ToList());
+            EmailContentValues.Add("TABLE", tableContent.ToString());
+            subject = $"{period} CSS Customer Contacts {status}";
+            EmailContentValues.Add("CSM_NAME", csmName);
+            EmailContentValues.Add("STATUS", status);
+            mailContent = helper.GetEmailContent("SendCSSGroupVerificationApprovalMail.htm", EmailContentValues);
+            return mailContent;
         }
 
 
