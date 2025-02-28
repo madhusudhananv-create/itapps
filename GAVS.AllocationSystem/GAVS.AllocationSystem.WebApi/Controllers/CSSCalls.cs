@@ -455,7 +455,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CSPdb.Commit(CanCommit);
                 CSPdb.AppRepo.UpdateCSSBatchCustomers(cust.ID, survey.ID, survey.SURVEY_SENT_DATE, null, survey.STATUS, null, null, null);
                 string SurveyLink = baseUrl + "/CustomerSuccessSurvey/" + survey.SURVEY_ID;
-                SendCSSSurveyReminderMail(cust, SurveyLink, batch.FREQUENCY, GetCurrentPeriod(batch.FREQUENCY), GetPreviousPeriod(batch.FREQUENCY), oldSurvey.CREATED_DATE.ToString("dd-MMM-yyy"));
+                SendCSSSurveyReminderMail(cust, SurveyLink, batch.FREQUENCY, GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), oldSurvey.CREATED_DATE.ToString("dd-MMM-yyy"));
             }
 
             return Ok();

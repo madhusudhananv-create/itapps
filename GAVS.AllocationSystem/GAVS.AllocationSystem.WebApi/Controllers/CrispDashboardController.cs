@@ -33,7 +33,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             DateTime pubdate = Convert.ToDateTime("1-" + month + "-" + year.ToString());
             //Data
-          
+
             //var basProjects = Cldb.AppRepo.Projects(empid, "").ToList();// Cldb.PROJECT.GetAll().Where(x => PROJECT_IDs.Contains(x.PROJ_ID)).ToList<PROJECT>();
             List<CRISP_CATEGORY> categories = CSPdb.CRISP_CATEGORY.GetAll().ToList<CRISP_CATEGORY>();
             List<CRISP_CRITERIA> criterias = CSPdb.CRISP_CRITERIA.GetAll().ToList<CRISP_CRITERIA>();
@@ -75,7 +75,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CheckUserHasAccess(empid, "", item, basProjects);
             }
             //var basProjects = Cldb.AppRepo.Projects(empid, "").ToList();// Cldb.PROJECT.GetAll().Where(x => PROJECT_IDs.Contains(x.PROJ_ID)).ToList<PROJECT>();
-          
+
             List<CRISP_CATEGORY> categories = CSPdb.CRISP_CATEGORY.GetAll().ToList<CRISP_CATEGORY>();
             List<CRISP_CRITERIA> criterias = CSPdb.CRISP_CRITERIA.GetAll().ToList<CRISP_CRITERIA>();
             List<CRISP_VALIDATIONS> validations = CSPdb.CRISP_VALIDATIONS.GetAll().ToList<CRISP_VALIDATIONS>();
@@ -366,7 +366,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (Request.Headers.Contains("projId"))
                 projIds = Request.Headers.GetValues("projId").ToList<string>()[0].ToString().Split(',').ToList<string>();
 
-           var projects = GetProjectListForUser(empId);
+            var projects = GetProjectListForUser(empId);
             List<string> empProjects = projects.Select(t => t.PROJ_ID).ToList();
 
             List<KPI_DETAILS_EXTENDED> kpi_all = new List<KPI_DETAILS_EXTENDED>();
@@ -427,7 +427,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 projIds = Request.Headers.GetValues("projId").ToList<string>()[0].ToString().Split(',').ToList<string>();
 
 
-           var projects = GetProjectListForUser(empId);
+            var projects = GetProjectListForUser(empId);
             List<string> empProjects = projects.Select(t => t.PROJ_ID).ToList();
 
             List<KPI_DETAILS_EXTENDED> kpis = new List<KPI_DETAILS_EXTENDED>();
@@ -517,7 +517,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 projIds = Request.Headers.GetValues("projId").ToList<string>()[0].ToString().Split(',').ToList<string>();
 
 
-           var projects = GetProjectListForUser(empId);
+            var projects = GetProjectListForUser(empId);
             List<string> empProjects = projects.Select(t => t.PROJ_ID).ToList();
 
             DateTime stDate = DateTime.Parse(StartDate);
@@ -557,15 +557,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string url = string.Empty;
             DateTime pubdate = Convert.ToDateTime("1-" + month + "-" + year.ToString()).AddMonths(1);
 
-            var surveys = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.PROJ_ID == projId && x.SURVEY_SENT_DATE < pubdate).ToList();
-
-            var latestSurvey = surveys.OrderByDescending(x => x.ID).FirstOrDefault();
-            if (latestSurvey != null)
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
+            if (IsPremier(project.CUST_ID))
             {
-                var surveyIteration = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMERS_ID == latestSurvey.ID);
 
-                if (surveyIteration != null)
-                    url = $"{helper.GetAbsoulteUri()}/CustomerSuccessSurvey/{surveyIteration.SURVEY_ID}";
+            }
+            else
+            {
+                var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.START_DATE <= pubdate && x.END_DATE >= pubdate);
+                if (batch == null)
+                    batch = CSPdb.CSS_BATCHES.GetAll().Where(x => x.END_DATE <= pubdate).OrderByDescending(x => x.ID).FirstOrDefault();
+                if (batch == null)
+                    batch = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(x => x.ID).FirstOrDefault();
+
+                var surveys = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.PROJ_ID == projId && x.BATCH_ID == batch.ID).ToList();
+
+                var latestSurvey = surveys.OrderByDescending(x => x.ID).FirstOrDefault();
+                if (latestSurvey != null)
+                {
+                    var surveyIteration = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMERS_ID == latestSurvey.ID);
+
+                    if (surveyIteration != null)
+                        url = $"{helper.GetAbsoulteUri()}/CustomerSuccessSurvey/{surveyIteration.SURVEY_ID}";
+                }
             }
 
             return Ok(url);
@@ -604,7 +618,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             //var lstVal = lstVal0.ToList();
             projDetails.validations = new List<validations>();
-            foreach (var item in score_criterias.OrderBy(x=>x.CRITERIA_ID))
+            foreach (var item in score_criterias.OrderBy(x => x.CRITERIA_ID))
             {
                 if (projDetails.validations.Any(x => x.CRITERIA_ID == item.CRITERIA_ID)) continue;
                 var criteria = criterias.Single(x => x.ID == item.CRITERIA_ID);
