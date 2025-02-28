@@ -1401,7 +1401,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LogRequest(prefix: "SaveAuditorAcceptanceStatus");
             var empId = GetHeaderDetails_String("empId");
 
-            if(resultList == null || resultList.Count == 0 || string.IsNullOrWhiteSpace(resultList[0].STATUS))
+            if (resultList == null || resultList.Count == 0 || string.IsNullOrWhiteSpace(resultList[0].STATUS))
                 return Ok(resultList);
 
             var findingId = resultList[0].FINDING_ID;
@@ -1533,7 +1533,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit(CanCommit);
 
             var checklistsendmail = new ChecklistSendMail();
-          
+
 
             if (CheckIfNoOpenFinding(auditid))
                 UpdateAuditStatus(auditid, "COMPLETED");
@@ -3106,5 +3106,174 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return Ok();
         }
+        [POST("SendInternalAuditReport")]
+        [ActionName("SendInternalAuditReport")]
+        [HttpPost]
+        public IHttpActionResult SendInternalAuditReport(PlannedAuditsConsolidated plannedAudit)
+        {
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == plannedAudit.PROJ_ID);
+            string projectName = string.Empty;
+            string serviceAreas = string.Empty;
+            var accountName = Cldb.CUSTOMER.GetAll().FirstOrDefault(t => t.CUST_ID == project.CUST_ID)?.CUST_NM;
+            projectName = project.PROJ_NM;
+            serviceAreas = string.Join(",", plannedAudit.SERVICE_AREA_ID);
+            var result = CSPdb.AppRepo.GetChecklistAuditNew(project.CUST_ID, plannedAudit.PROJ_ID, plannedAudit.ID, serviceAreas).ToList();
+            var servicename = string.Empty;
+            string auditStartDate = plannedAudit.ACTUAL_AUDIT_START_DATE?.ToString("MM-dd-yyyy");
+            string auditSubmittedDate = plannedAudit.ACTUAL_AUDIT_END_DATE?.ToString("MM-dd-yyyy");
+            var reqReference = CSPdb.TASK.GetAll().Where(x => x.ID == plannedAudit.ID).Select(x => x.REQUIREMENT_REFERENCE).FirstOrDefault();
+            foreach (var row in result)
+            {
+                servicename = string.Join(",", row.SERVICE_AREA_NAME);
+            }
+            var empId = GetHeaderDetails_String("empId");
+            var empInfoData = Cldb.EMP_INFO.GetAll().ToList();
+            var requestor = empInfoData.FirstOrDefault(x => x.EMP_ID == empId);
+            var toMail = requestor?.EMAIL_ID;
+            var auditorName = GetEmployeeNamebyId(plannedAudit.AUDITOR_ID.ToString());
+            var ccMail = string.Empty;
+            var auditeesName = empInfoData.Where(x => plannedAudit.AUDITESS_ID.Contains(x.EMP_ID)).Select(x => x.FRST_NM);
+            var auditeeNames = string.Join(",", auditeesName);
+            var qualityHead = helper.GetDBConfig("GSLAB_QUALITY_HEAD_MAIL", "-1");
+            var qualityDirector = empInfoData.Where(x => x.EMAIL_ID == qualityHead).Select(x => x.FRST_NM).FirstOrDefault();
+            var subject = $"{plannedAudit.DESCRIPTION} - {accountName} - Internal Audit Report";
+            var findingsTable = GenerateFindingTableReport(plannedAudit.ID, plannedAudit.PROJ_ID); 
+            Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
+            EmailContentValues.Add("PROJECT_NAME", projectName);
+            EmailContentValues.Add("ACCOUNT_NAME", accountName);
+            EmailContentValues.Add("AUDITOR_NAME", auditorName);
+            EmailContentValues.Add("AUDITEE_NAME", auditeeNames);
+            EmailContentValues.Add("SERVICE_TOWER", servicename);
+            EmailContentValues.Add("REQUIREMENT_REFERENCE", reqReference?.ToString());
+            EmailContentValues.Add("QUALITY_DIRECTOR", qualityDirector?.ToString());
+            EmailContentValues.Add("AUDIT_START_DATE", auditStartDate);
+            EmailContentValues.Add("AUDIT_SUBMITTED_DATE", auditSubmittedDate);
+            EmailContentValues.Add("FINDINGS_TABLE", findingsTable);
+            var mailContent = helper.GetEmailContent("InternalAuditReportTemplate.htm", EmailContentValues);
+
+            var ep = new EmailProvider(Cldb, CSPdb);
+            if (string.IsNullOrWhiteSpace(toMail)) toMail = _email;
+
+            if (ep.SendEmail
+                      (
+                      new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+                      new EmailContent { from = _email, to = toMail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = plannedAudit.PROJ_ID },
+                      Request
+                      ))
+            {
+
+            }
+            return Ok();
+        }
+
+        private string GenerateFindingTableReport(int auditId, string projectid)
+        {
+            var findingsList = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == auditId && x.ISACTIVE).ToList();
+
+
+
+            var sb = new StringBuilder();
+            // Section 4: Threats and Weaknesses
+            sb.Append("<p class='section-header'> 4. Findings:</p>");
+            var threatAndWeakness = findingsList.Where(f => f.FINDING_TYPE == "Threat" || f.FINDING_TYPE == "Weakness").ToList();
+
+            switch (threatAndWeakness.Any())
+            {
+                case true:
+                    {
+                        for (int i = 0; i < threatAndWeakness.Count; i++)
+                        {
+                            AppendFindingSection(sb, threatAndWeakness[i], i + 1, "4");
+                        }
+                        break;
+                    }
+                default:
+                    {
+                        sb.Append("<p>NIL</p>");
+                        break;
+                    }
+            }
+
+            // Section 5: Strengths
+            sb.Append("<p class='section-header'> 5. Strengths and Best Practices:</p>");
+            var strengthFindings = findingsList.Where(f => f.FINDING_TYPE == "Strength").ToList();
+            switch (strengthFindings.Any())
+            {
+                case true:
+                    {
+                        for (int i = 0; i < strengthFindings.Count; i++)
+                        {
+                            AppendFindingSection(sb, strengthFindings[i], i + 1, "5");
+                        }
+                        break;
+                    }
+                default:
+                    {
+                        sb.Append("<p>NIL</p>");
+                        break;
+                    }
+            }
+
+            sb.Append("<p class='section-header'> 6. Opportunities for Improvement (OFI):</p>");
+            var OFIFindings = findingsList.Where(f => f.FINDING_TYPE == "Opportunities for Improvement" || f.FINDING_TYPE == "Opportunity").ToList();
+            switch (OFIFindings.Any())
+            {
+                case true:
+                    {
+                        for (int i = 0; i < OFIFindings.Count; i++)
+                        {
+                            AppendFindingSection(sb, OFIFindings[i], i + 1, "6");
+                        }
+                        break;
+                    }
+                default:
+                    {
+                        sb.Append("<p>NIL</p>");
+                        break;
+                    }
+            }
+
+            return sb.ToString();
+        }
+
+        private void AppendFindingSection(StringBuilder sb, dynamic finding, int index, string sectionNumber)
+        {
+            if (finding.FINDING_TYPE == "Strength")
+            {
+
+                sb.Append($"<div class='finding-section'>")
+                  .Append($"<div class='finding-item'>")
+                  .Append($"<p><b>{sectionNumber}.{index} {finding.FINDING_TYPE}:</b> {finding.FINDING_DESCRIPTION}</p>")
+                  .AppendLine("$</div>")
+                  .AppendLine("$</div>");
+            }
+            else
+            {
+                int processModelId = 0;
+                var processModelTitle = string.Empty;
+                processModelId = Convert.ToInt32(finding.PROCESS_MODEL_ID);
+                var allProcessModels = CSPdb.PROCESS_MODEL.GetAll().ToList();
+                var processModel = allProcessModels.FirstOrDefault(x => x.ID == processModelId);
+
+                if (processModel != null)
+                {
+                    processModelTitle = processModel.TITLE;
+                }
+                var processModelClause = Cldb.PROCESS_MODEL_REFERENCE.GetAll().Where(x => x.ID == processModelId).ToList();
+                var clauseControl = new[] { processModelClause[0].SECTION_REFERENCE, processModelClause[0].CONTROL_REFERENCE }.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+                var clauseControlValues = string.Join("-", clauseControl);
+                sb.Append($"<div class='finding-section'>")
+                  .Append($"<div class='finding-item'>")
+                  .Append($"<p><b>{sectionNumber}.{index} {finding.FINDING_TYPE}:</b> {finding.FINDING_DESCRIPTION}</p>")
+                  .Append($"<p><b>Applicable ISO {processModelTitle} Clause/Control:</b></p>")
+                  .Append($"<p>The specific ISO {processModelTitle} Clause/controls that are relevant to this findings are</p>")
+                  .Append($"<p>{clauseControlValues}</p>")
+                  .AppendLine("</div>")
+                  .AppendLine("</div>");
+            }
+        }
+
+
+
     }
 }
