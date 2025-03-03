@@ -221,7 +221,7 @@ export class AccessControlProjectComponent implements OnInit {
   
   GeneralMethod() {
 
-    this._appservice.service_DowloadFile('aa',10, 'application/pdf')  .subscribe(
+    this._appservice.service_DowloadFile('aa','', '', 1)  .subscribe(
       (data:  Blob) => {
         const blob = new Blob([data], { type: 'application/pdf' });
         const a = document.createElement('a');

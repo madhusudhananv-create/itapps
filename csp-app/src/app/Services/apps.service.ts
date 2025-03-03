@@ -9355,23 +9355,23 @@ export class AppsService {
   }
 
 
-  sendInternalAuditReportData(plannedAudit): Observable<any[]> {
-    let header = new HttpHeaders({
-      Accept: "application/json",
-      token: this._util.AppSettings.token,
-      empId: localStorage.getItem("empid"),
-    });
-    return this._http.post<any[]>(
-      this.apiurl + "/SendInternalAuditReport", plannedAudit,
-      {
-        headers: header,
-      }
-    );
-  }
+  // sendInternalAuditReportData(plannedAudit): Observable<any[]> {
+  //   let header = new HttpHeaders({
+  //     Accept: "application/json",
+  //     token: this._util.AppSettings.token,
+  //     empId: localStorage.getItem("empid"),
+  //   });
+  //   return this._http.post<any[]>(
+  //     this.apiurl + "/SendInternalAuditReport", plannedAudit,
+  //     {
+  //       headers: header,
+  //     }
+  //   );
+  // }
 
 
 
-service_DowloadFile(category : string, id: number, filetype: string): Observable<Blob> {
+service_DowloadFile(category : string, custId :string, projId: string, id: number ): Observable<Blob> {
     let apiuri: string = environment.webapiuri + 'DownloadFile';
     let header = new HttpHeaders({
       Accept: 'application/json',
@@ -9379,7 +9379,7 @@ service_DowloadFile(category : string, id: number, filetype: string): Observable
       empId: localStorage.getItem('empid'),
     });
     return this._http.get(
-      `${apiuri}?category=${category}&id=${id}`,
+      `${apiuri}?category=${category}&custId=${custId}&projId=${projId}&id=${id}`,
       
       {
         headers: header,

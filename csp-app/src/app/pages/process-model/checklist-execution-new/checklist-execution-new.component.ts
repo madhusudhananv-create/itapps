@@ -1109,17 +1109,27 @@ export class ChecklistExecutionNewComponent implements OnInit {
     this.ValidateChecklist(status);
   }
 
-  handlePdfExport(i,list) {
-            this._appService.sendInternalAuditReportData(list).subscribe(
-              data => {      
-          alert("Report Downloaded Successfully");
-              },
-              (error) => {
-                this._util.serviceError(error);
-              }
-            );
-        }
-   
+  handlePdfExport(i, list) {
+    this._appService.service_DowloadFile('aa', '', '', 1).subscribe(
+      (data: Blob) => {
+        const blob = new Blob([data], { type: 'application/pdf' });
+        const a = document.createElement('a');
+        document.body.appendChild(a);
+        const url = window.URL.createObjectURL(blob);
+        a.href = url;
+
+
+        a.download = 'assessment.pdf';
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        alert('File downloaded successfully');
+      },
+      error => {
+        this._util.serviceError(error);
+      });
+  }
+
 
 
   ValidateFieldsNew(status) {
