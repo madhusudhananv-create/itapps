@@ -3099,47 +3099,51 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                       new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
                       new EmailContent { from = _email, to = toMail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = plannedAuditData.PROJ_ID },
                       Request
-                      ))
-            {
+                      )) ;
 
-            }
 
             return Ok();
         }
-        [POST("SendInternalAuditReport")]
-        [ActionName("SendInternalAuditReport")]
-        [HttpPost]
-        public IHttpActionResult SendInternalAuditReport(PlannedAuditsConsolidated plannedAudit)
+
+        private string GenerateInternalAuditReport(string custId, string projId, int assessmentId)
         {
-            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == plannedAudit.PROJ_ID);
-            string projectName = string.Empty;
-            string serviceAreas = string.Empty;
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
+            var task = CSPdb.TASK.GetAll().FirstOrDefault(x => x.ID == assessmentId);
+            var audit = CSPdb.AUDIT_SCHEDULE.GetAll().FirstOrDefault(x => x.TASK_ID == task.ID);
+            var auditScheduleRef = CSPdb.AUDIT_SCHEDULE_REF.GetAll().Where(x => x.AUDIT_SCHEDULE_ID == audit.ID).ToList();
+            var auditExecutionSummary = CSPdb.AUDIT_CHECKLIST_EXECUTION_SUMMARY.GetAll().FirstOrDefault(x => x.ASSESSMENT_ID == assessmentId);
+
+
             var accountName = Cldb.CUSTOMER.GetAll().FirstOrDefault(t => t.CUST_ID == project.CUST_ID)?.CUST_NM;
-            projectName = project.PROJ_NM;
-            serviceAreas = string.Join(",", plannedAudit.SERVICE_AREA_ID);
-            var result = CSPdb.AppRepo.GetChecklistAuditNew(project.CUST_ID, plannedAudit.PROJ_ID, plannedAudit.ID, serviceAreas).ToList();
-            var servicename = string.Empty;
-            string auditStartDate = plannedAudit.ACTUAL_AUDIT_START_DATE?.ToString("MM-dd-yyyy");
-            string auditSubmittedDate = plannedAudit.ACTUAL_AUDIT_END_DATE?.ToString("MM-dd-yyyy");
-            var reqReference = CSPdb.TASK.GetAll().Where(x => x.ID == plannedAudit.ID).Select(x => x.REQUIREMENT_REFERENCE).FirstOrDefault();
-            foreach (var row in result)
-            {
-                servicename = string.Join(",", row.SERVICE_AREA_NAME);
-            }
+
+            var auditeeIds = auditScheduleRef.Where(x => x.KEY == "AUDITEE_EMP_ID").Select(x => x.VALUE);
+            var serviesAreaIds = auditScheduleRef.Where(x => x.KEY == "SERVICE_AREA_ID").Select(x => Convert.ToInt32(x.VALUE)).ToList();
+            var serviceAreas = CSPdb.PROCESS_SERVICE_AREA_NEW.GetAll().Where(x => serviesAreaIds.Contains(x.ID)).Select(x => x.TITLE).ToList();
+
+            //var result = CSPdb.AppRepo.GetChecklistAuditNew(custId, projId, assessmentId, serviceAreas).FirstOrDefault();
+
+            string auditStartDate = auditExecutionSummary.ACTUAL_AUDIT_START_DATE.HasValue ? auditExecutionSummary.ACTUAL_AUDIT_START_DATE.Value.ToString("MM-dd-yyyy") : "-";
+            string auditSubmittedDate = auditExecutionSummary.ACTUAL_AUDIT_END_DATE.HasValue ? auditExecutionSummary.ACTUAL_AUDIT_END_DATE.Value.ToString("MM-dd-yyyy") : "-";
+            var reqReference = task.REQUIREMENT_REFERENCE;
+
+
+            var servicename = string.Join(",", serviceAreas);
             var empId = GetHeaderDetails_String("empId");
-            var empInfoData = Cldb.EMP_INFO.GetAll().ToList();
+            var empIdList = new List<string> { empId, audit.AUDITOR_EMP_ID };
+            empIdList.AddRange(auditeeIds);
+            var empInfoData = Cldb.EMP_INFO.GetAll().Where(x => empIdList.Contains(x.EMP_ID)).ToList();
             var requestor = empInfoData.FirstOrDefault(x => x.EMP_ID == empId);
-            var toMail = requestor?.EMAIL_ID;
-            var auditorName = GetEmployeeNamebyId(plannedAudit.AUDITOR_ID.ToString());
-            var ccMail = string.Empty;
-            var auditeesName = empInfoData.Where(x => plannedAudit.AUDITESS_ID.Contains(x.EMP_ID)).Select(x => x.FRST_NM);
+
+            var auditorName = empInfoData.FirstOrDefault(x => x.EMP_ID == audit.AUDITOR_EMP_ID).FRST_NM;
+
+            var auditeesName = empInfoData.Where(x => auditeeIds.Contains(x.EMP_ID)).Select(x => x.FRST_NM).ToList();
             var auditeeNames = string.Join(",", auditeesName);
-            var qualityHead = helper.GetDBConfig("GSLAB_QUALITY_HEAD_MAIL", "-1");
-            var qualityDirector = empInfoData.Where(x => x.EMAIL_ID == qualityHead).Select(x => x.FRST_NM).FirstOrDefault();
-            var subject = $"{plannedAudit.DESCRIPTION} - {accountName} - Internal Audit Report";
-            var findingsTable = GenerateFindingTableReport(plannedAudit.ID, plannedAudit.PROJ_ID); 
+
+            var qualityDirector = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMAIL_ID == Constants.QUALITY_HEAD).FRST_NM;
+            //var subject = $"{plannedAudit.DESCRIPTION} - {accountName} - Internal Audit Report";
+            var findingsTable = GenerateFindingTableReport(assessmentId);
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
-            EmailContentValues.Add("PROJECT_NAME", projectName);
+            EmailContentValues.Add("PROJECT_NAME", project.PROJ_NM);
             EmailContentValues.Add("ACCOUNT_NAME", accountName);
             EmailContentValues.Add("AUDITOR_NAME", auditorName);
             EmailContentValues.Add("AUDITEE_NAME", auditeeNames);
@@ -3151,27 +3155,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("FINDINGS_TABLE", findingsTable);
             var mailContent = helper.GetEmailContent("InternalAuditReportTemplate.htm", EmailContentValues);
 
-            var ep = new EmailProvider(Cldb, CSPdb);
-            if (string.IsNullOrWhiteSpace(toMail)) toMail = _email;
+            return mailContent;
 
-            if (ep.SendEmail
-                      (
-                      new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
-                      new EmailContent { from = _email, to = toMail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = plannedAudit.PROJ_ID },
-                      Request
-                      ))
-            {
 
-            }
-            return Ok();
         }
 
-        private string GenerateFindingTableReport(int auditId, string projectid)
+        private string GenerateFindingTableReport(int auditId)
         {
             var findingsList = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == auditId && x.ISACTIVE).ToList();
-
-
-
             var sb = new StringBuilder();
             // Section 4: Threats and Weaknesses
             sb.Append("<p class='section-header'> 4. Findings:</p>");
@@ -3183,7 +3174,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         for (int i = 0; i < threatAndWeakness.Count; i++)
                         {
-                            AppendFindingSection(sb, threatAndWeakness[i], i + 1, "4");
+                            AppendFindingSection(sb, threatAndWeakness[i], i + 1, 4);
                         }
                         break;
                     }
@@ -3203,7 +3194,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         for (int i = 0; i < strengthFindings.Count; i++)
                         {
-                            AppendFindingSection(sb, strengthFindings[i], i + 1, "5");
+                            AppendFindingSection(sb, strengthFindings[i], i + 1, 5);
                         }
                         break;
                     }
@@ -3222,7 +3213,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         for (int i = 0; i < OFIFindings.Count; i++)
                         {
-                            AppendFindingSection(sb, OFIFindings[i], i + 1, "6");
+                            AppendFindingSection(sb, OFIFindings[i], i + 1, 6);
                         }
                         break;
                     }
@@ -3236,8 +3227,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return sb.ToString();
         }
 
-        private void AppendFindingSection(StringBuilder sb, dynamic finding, int index, string sectionNumber)
+        private void AppendFindingSection(StringBuilder sb, AUDIT_CHECKLIST_PROJECT_FINDINGS finding, int index, int sectionNumber)
         {
+            //todo - Refactor this method - DB calls here and this is called in loop
+
             if (finding.FINDING_TYPE == "Strength")
             {
 
@@ -3251,9 +3244,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 int processModelId = 0;
                 var processModelTitle = string.Empty;
-                processModelId = Convert.ToInt32(finding.PROCESS_MODEL_ID);
-                var allProcessModels = CSPdb.PROCESS_MODEL.GetAll().ToList();
-                var processModel = allProcessModels.FirstOrDefault(x => x.ID == processModelId);
+                processModelId = finding.PROCESS_MODEL_ID;
+
+                var processModel = CSPdb.PROCESS_MODEL.GetAll().FirstOrDefault(x => x.ID == processModelId);
 
                 if (processModel != null)
                 {

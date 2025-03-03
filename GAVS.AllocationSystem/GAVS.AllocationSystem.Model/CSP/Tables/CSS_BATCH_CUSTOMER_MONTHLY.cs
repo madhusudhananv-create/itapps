@@ -51,7 +51,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string CONTRACTING_UNIT { get; set; }
         public string CONTACT_ROLE { get; set; }
         public string REVENUE_TYPE { get; set; }
-        public string BUSINESS_UNIT { get; set }
+        public string BUSINESS_UNIT { get; set; }
 
     }
 

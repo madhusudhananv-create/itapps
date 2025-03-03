@@ -43,29 +43,27 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("DownloadFile")]
         [ActionName("DownloadFile")]
         [HttpGet]
-        public HttpResponseMessage DownloadFile(string category, int id)
+        public HttpResponseMessage DownloadFile(string category, string custId, string projectId, int id)
         {
             try
             {
 
-
+                var result = new byte[] { };
                 switch (category.ToLower())
                 {
                     case "assessment":
-                        var file = string.Empty;
+                        result =   ConvertStringtoFile((x=> { }), GenerateInternalAuditReport(custId, projectId, id));
                         break;
                     default:
                         break;
                 }
 
 
-
-
                 using (MemoryStream ms = new MemoryStream())
                 {
 
                     HttpResponseMessage httpResponseMessage = new HttpResponseMessage();
-                    httpResponseMessage.Content = new ByteArrayContent(CreatePdf(x => { }).ToArray());
+                    httpResponseMessage.Content = new ByteArrayContent(result.ToArray());
                     httpResponseMessage.Content.Headers.Add("x-filename", "assesment");
                     httpResponseMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
                     httpResponseMessage.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
@@ -86,6 +84,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
         }
 
+        private byte[] ConvertStringtoFile(Action<Document> pdfModifier, string content)
+        {
+            var stream = new MemoryStream();
+            var writer = new PdfWriter(stream);
+            var pdf = new PdfDocument(writer);
+            ConverterProperties converterProperties = new ConverterProperties();
+            using (var workStream = new MemoryStream())
+            using (var pdfWriter = new PdfWriter(workStream))
+            {
+                using (var document = HtmlConverter.ConvertToDocument(content, pdfWriter, converterProperties))
+                {
+                    //Passes the document to a delegated function to perform some content, margin or page size manipulation
+                    pdfModifier(document);
+                }
+
+                //Returns the written-to MemoryStream containing the PDF.   
+                return workStream.ToArray();
+            }
+        }
         private byte[] CreatePdf(Action<Document> pdfModifier)
         {
             var stream = new MemoryStream();
