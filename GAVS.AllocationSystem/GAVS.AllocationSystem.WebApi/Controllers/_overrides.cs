@@ -23,7 +23,6 @@ using iText.Html2pdf;
 
 
 
-
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
     public partial class AllSysController
@@ -61,16 +60,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 using (MemoryStream ms = new MemoryStream())
                 {
-
                     HttpResponseMessage httpResponseMessage = new HttpResponseMessage();
                     httpResponseMessage.Content = new ByteArrayContent(result.ToArray());
                     httpResponseMessage.Content.Headers.Add("x-filename", "assesment");
                     httpResponseMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
                     httpResponseMessage.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                    httpResponseMessage.Content.Headers.ContentDisposition.FileName = "assesment.pdf";
-                    //var filename = "assesment.pdf";
-                    //httpResponseMessage.Content.Headers.Add("Content-Disposition", $" attachment; filename={filename}");
-
+                    //httpResponseMessage.Content.Headers.ContentDisposition.FileName = fileName;
+                    //httpResponseMessage.Content.Headers.Add("Content-Disposition", $" attachment; filename={fileName}");
                     httpResponseMessage.StatusCode = HttpStatusCode.OK;
                     return httpResponseMessage;
 

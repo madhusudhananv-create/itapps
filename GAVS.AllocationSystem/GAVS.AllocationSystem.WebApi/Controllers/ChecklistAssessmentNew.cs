@@ -3100,11 +3100,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                       new EmailContent { from = _email, to = toMail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = plannedAuditData.PROJ_ID },
                       Request
                       )) ;
+            
 
+            
 
             return Ok();
         }
-
         private string GenerateInternalAuditReport(string custId, string projId, int assessmentId)
         {
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
@@ -3120,7 +3121,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var serviesAreaIds = auditScheduleRef.Where(x => x.KEY == "SERVICE_AREA_ID").Select(x => Convert.ToInt32(x.VALUE)).ToList();
             var serviceAreas = CSPdb.PROCESS_SERVICE_AREA_NEW.GetAll().Where(x => serviesAreaIds.Contains(x.ID)).Select(x => x.TITLE).ToList();
 
-            //var result = CSPdb.AppRepo.GetChecklistAuditNew(custId, projId, assessmentId, serviceAreas).FirstOrDefault();
 
             string auditStartDate = auditExecutionSummary.ACTUAL_AUDIT_START_DATE.HasValue ? auditExecutionSummary.ACTUAL_AUDIT_START_DATE.Value.ToString("MM-dd-yyyy") : "-";
             string auditSubmittedDate = auditExecutionSummary.ACTUAL_AUDIT_END_DATE.HasValue ? auditExecutionSummary.ACTUAL_AUDIT_END_DATE.Value.ToString("MM-dd-yyyy") : "-";
@@ -3138,9 +3138,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var auditeesName = empInfoData.Where(x => auditeeIds.Contains(x.EMP_ID)).Select(x => x.FRST_NM).ToList();
             var auditeeNames = string.Join(",", auditeesName);
-
+            int processModelId = 0;
+            processModelId = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == assessmentId).Select(x => x.PROCESS_MODEL_ID).FirstOrDefault();
+            var processModel = CSPdb.PROCESS_MODEL.GetAll().FirstOrDefault(x => x.ID == processModelId);
             var qualityDirector = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMAIL_ID == Constants.QUALITY_HEAD).FRST_NM;
-            //var subject = $"{plannedAudit.DESCRIPTION} - {accountName} - Internal Audit Report";
             var findingsTable = GenerateFindingTableReport(assessmentId);
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("PROJECT_NAME", project.PROJ_NM);
@@ -3148,10 +3149,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("AUDITOR_NAME", auditorName);
             EmailContentValues.Add("AUDITEE_NAME", auditeeNames);
             EmailContentValues.Add("SERVICE_TOWER", servicename);
+            EmailContentValues.Add("PROCESS_MODEL", processModel.DESCRIPTION);
             EmailContentValues.Add("REQUIREMENT_REFERENCE", reqReference?.ToString());
             EmailContentValues.Add("QUALITY_DIRECTOR", qualityDirector?.ToString());
             EmailContentValues.Add("AUDIT_START_DATE", auditStartDate);
             EmailContentValues.Add("AUDIT_SUBMITTED_DATE", auditSubmittedDate);
+            EmailContentValues.Add("VERSION", auditExecutionSummary.VERSION_ID.ToString());
             EmailContentValues.Add("FINDINGS_TABLE", findingsTable);
             var mailContent = helper.GetEmailContent("InternalAuditReportTemplate.htm", EmailContentValues);
 
@@ -3160,113 +3163,92 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
+        public class FindingCategory
+        {
+            public int SectionNumber { get; set; }
+            public string SectionHeader { get; set; }
+            public string[] FindingTypes { get; set; }
+        }
+
         private string GenerateFindingTableReport(int auditId)
         {
             var findingsList = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == auditId && x.ISACTIVE).ToList();
-            var sb = new StringBuilder();
-            // Section 4: Threats and Weaknesses
-            sb.Append("<p class='section-header'> 4. Findings:</p>");
-            var threatAndWeakness = findingsList.Where(f => f.FINDING_TYPE == "Threat" || f.FINDING_TYPE == "Weakness").ToList();
 
-            switch (threatAndWeakness.Any())
+            var findingCategories = new List<FindingCategory>
+    {
+        new FindingCategory {
+            SectionNumber = 4,
+            SectionHeader = "4. Findings:",
+            FindingTypes = new[] { "Threat", "Weakness" }
+        },
+        new FindingCategory {
+            SectionNumber = 5,
+            SectionHeader = "5. Strengths and Best Practices:",
+            FindingTypes = new[] { "Strength" }
+        },
+        new FindingCategory {
+            SectionNumber = 6,
+            SectionHeader = "6. Opportunities for Improvement (OFI):",
+            FindingTypes = new[] { "Opportunities for Improvement", "Opportunity" }
+        }
+    };
+
+            return string.Concat(findingCategories.Select(category => GenerateCategorySection(category, findingsList)));
+        }
+
+        private string GenerateCategorySection(FindingCategory category, List<AUDIT_CHECKLIST_PROJECT_FINDINGS> findingsList)
+        {
+            var categoryFindings = findingsList.Where(f => category.FindingTypes.Contains(f.FINDING_TYPE)).ToList();
+
+            var sb = new StringBuilder().Append($"<p class='section-header'>{category.SectionHeader}</p>");
+
+            if (categoryFindings.Any())
             {
-                case true:
-                    {
-                        for (int i = 0; i < threatAndWeakness.Count; i++)
-                        {
-                            AppendFindingSection(sb, threatAndWeakness[i], i + 1, 4);
-                        }
-                        break;
-                    }
-                default:
-                    {
-                        sb.Append("<p>NIL</p>");
-                        break;
-                    }
+                categoryFindings.Select((finding, index) => CreateFindingSection(finding, index + 1, category.SectionNumber)).ToList()
+                    .ForEach(section => sb.Append(section));
             }
-
-            // Section 5: Strengths
-            sb.Append("<p class='section-header'> 5. Strengths and Best Practices:</p>");
-            var strengthFindings = findingsList.Where(f => f.FINDING_TYPE == "Strength").ToList();
-            switch (strengthFindings.Any())
+            else
             {
-                case true:
-                    {
-                        for (int i = 0; i < strengthFindings.Count; i++)
-                        {
-                            AppendFindingSection(sb, strengthFindings[i], i + 1, 5);
-                        }
-                        break;
-                    }
-                default:
-                    {
-                        sb.Append("<p>NIL</p>");
-                        break;
-                    }
-            }
-
-            sb.Append("<p class='section-header'> 6. Opportunities for Improvement (OFI):</p>");
-            var OFIFindings = findingsList.Where(f => f.FINDING_TYPE == "Opportunities for Improvement" || f.FINDING_TYPE == "Opportunity").ToList();
-            switch (OFIFindings.Any())
-            {
-                case true:
-                    {
-                        for (int i = 0; i < OFIFindings.Count; i++)
-                        {
-                            AppendFindingSection(sb, OFIFindings[i], i + 1, 6);
-                        }
-                        break;
-                    }
-                default:
-                    {
-                        sb.Append("<p>NIL</p>");
-                        break;
-                    }
+                sb.Append("<p>NIL</p>");
             }
 
             return sb.ToString();
         }
 
-        private void AppendFindingSection(StringBuilder sb, AUDIT_CHECKLIST_PROJECT_FINDINGS finding, int index, int sectionNumber)
+        private string CreateFindingSection(AUDIT_CHECKLIST_PROJECT_FINDINGS finding, int index, int sectionNumber)
         {
-            //todo - Refactor this method - DB calls here and this is called in loop
+            if (finding == null)
+                return string.Empty;
 
-            if (finding.FINDING_TYPE == "Strength")
+            var sb = new StringBuilder()
+                .Append($"<div class='finding-section'>")
+                .Append($"<div class='finding-item'>")
+                .Append($"<p><b>{sectionNumber}.{index} {finding.FINDING_TYPE}:</b> {finding.FINDING_DESCRIPTION}</p>");
+
+            if (finding.FINDING_TYPE != "Strength")
             {
 
-                sb.Append($"<div class='finding-section'>")
-                  .Append($"<div class='finding-item'>")
-                  .Append($"<p><b>{sectionNumber}.{index} {finding.FINDING_TYPE}:</b> {finding.FINDING_DESCRIPTION}</p>")
-                  .AppendLine("$</div>")
-                  .AppendLine("$</div>");
-            }
-            else
-            {
-                int processModelId = 0;
-                var processModelTitle = string.Empty;
-                processModelId = finding.PROCESS_MODEL_ID;
+                var processModel = CSPdb.PROCESS_MODEL.GetAll().FirstOrDefault(x => x.ID == finding.PROCESS_MODEL_ID);
+                var processModelClause = Cldb.PROCESS_MODEL_REFERENCE.GetAll().FirstOrDefault(x => x.ID == finding.PROCESS_MODEL_ID);
 
-                var processModel = CSPdb.PROCESS_MODEL.GetAll().FirstOrDefault(x => x.ID == processModelId);
-
-                if (processModel != null)
+                if (processModel != null && processModelClause != null)
                 {
-                    processModelTitle = processModel.TITLE;
+                    var clauseControl = new[] { processModelClause.SECTION_REFERENCE, processModelClause.CONTROL_REFERENCE }.Where(x => !string.IsNullOrEmpty(x)) .ToArray();
+
+                    sb.Append($"<p><b>Applicable ISO {processModel.TITLE} Clause/Control:</b></p>")
+                      .Append($"<p>The specific ISO {processModel.TITLE} Clause/controls that are relevant to this findings are</p>")
+                      .Append($"<p>{string.Join("-", clauseControl)}</p>");
                 }
-                var processModelClause = Cldb.PROCESS_MODEL_REFERENCE.GetAll().Where(x => x.ID == processModelId).ToList();
-                var clauseControl = new[] { processModelClause[0].SECTION_REFERENCE, processModelClause[0].CONTROL_REFERENCE }.Where(x => !string.IsNullOrEmpty(x)).ToArray();
-                var clauseControlValues = string.Join("-", clauseControl);
-                sb.Append($"<div class='finding-section'>")
-                  .Append($"<div class='finding-item'>")
-                  .Append($"<p><b>{sectionNumber}.{index} {finding.FINDING_TYPE}:</b> {finding.FINDING_DESCRIPTION}</p>")
-                  .Append($"<p><b>Applicable ISO {processModelTitle} Clause/Control:</b></p>")
-                  .Append($"<p>The specific ISO {processModelTitle} Clause/controls that are relevant to this findings are</p>")
-                  .Append($"<p>{clauseControlValues}</p>")
-                  .AppendLine("</div>")
-                  .AppendLine("</div>");
             }
+
+            sb.AppendLine("</div>")
+              .AppendLine("</div>");
+
+            return sb.ToString();
         }
 
 
 
     }
 }
+
