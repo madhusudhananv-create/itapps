@@ -1109,8 +1109,10 @@ export class ChecklistExecutionNewComponent implements OnInit {
     this.ValidateChecklist(status);
   }
 
-  handlePdfExport(i, list) {
-    this._appService.service_DowloadFile('aa', '', '', 1).subscribe(
+
+
+handlePdfExport(i, list) {
+    this._appService.service_DowloadFile('assessment', this.custId, this.projId, list.id).subscribe(
       (data: Blob) => {
         const blob = new Blob([data], { type: 'application/pdf' });
         const a = document.createElement('a');
@@ -1118,8 +1120,8 @@ export class ChecklistExecutionNewComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         a.href = url;
 
-
-        a.download = 'assessment.pdf';
+        const currentDateTime = new Date().toLocaleString();
+        a.download = `${list.description}_Report_${currentDateTime}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
@@ -1129,7 +1131,6 @@ export class ChecklistExecutionNewComponent implements OnInit {
         this._util.serviceError(error);
       });
   }
-
 
 
   ValidateFieldsNew(status) {

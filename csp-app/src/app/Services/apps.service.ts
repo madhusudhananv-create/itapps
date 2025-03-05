@@ -9368,10 +9368,7 @@ export class AppsService {
   //     }
   //   );
   // }
-
-
-
-service_DowloadFile(category : string, custId :string, projId: string, id: number ): Observable<Blob> {
+  service_DowloadFile(category : string, custId :string, projId: string, id: number ): Observable<Blob> {
     let apiuri: string = environment.webapiuri + 'DownloadFile';
     let header = new HttpHeaders({
       Accept: 'application/json',
@@ -9379,7 +9376,7 @@ service_DowloadFile(category : string, custId :string, projId: string, id: numbe
       empId: localStorage.getItem('empid'),
     });
     return this._http.get(
-      `${apiuri}?category=${category}&custId=${custId}&projId=${projId}&id=${id}`,
+      `${apiuri}?category=${category}&custId=${custId}&projectId=${projId}&id=${id}`,
       
       {
         headers: header,
@@ -9389,6 +9386,7 @@ service_DowloadFile(category : string, custId :string, projId: string, id: numbe
      
     );
 
+ }
 
      /**
       *  get(url: string, options: {
@@ -9407,4 +9405,4 @@ service_DowloadFile(category : string, custId :string, projId: string, id: numbe
   }
 
   //Reference: https://angular.io/guide/http
-}
+
