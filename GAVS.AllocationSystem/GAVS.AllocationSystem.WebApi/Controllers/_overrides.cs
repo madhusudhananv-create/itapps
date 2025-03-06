@@ -86,6 +86,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var writer = new PdfWriter(stream);
             var pdf = new PdfDocument(writer);
             ConverterProperties converterProperties = new ConverterProperties();
+            converterProperties.SetBaseUri(Path.GetFullPath(System.Web.Hosting.HostingEnvironment.MapPath("~/UploadFile/")));
             using (var workStream = new MemoryStream())
             using (var pdfWriter = new PdfWriter(workStream))
             {
