@@ -189,19 +189,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
 
                 csatList = CSPdb.AppRepo.GetCSSResponseSummaryForPeriod(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS).ToList();
-                var sorter = new QuarterSorter();
-                var yearQuarters = csatList.Select(x => x.YEAR_QUARTER).ToList();
-                var quarter = FilterDataByFrequency(csatInsightsInput.FREQUENCY, yearQuarters);
+
+                var quarter = FilterDataByFrequency(csatInsightsInput.FREQUENCY, csatList);
 
                 if (quarter.Count == 0 && csatMonthlyList.Count == 0)
                 {
                     return Ok();
                 }
 
-                if (quarter.Count == 0 && csatMonthlyList.Count > 0)
-                {
-                    quarter = csatMonthlyList.Select(x => x.YEAR_QUARTER).Distinct().OrderBy(t => t, sorter).ToList();
-                }
+                //if (quarter.Count == 0 && csatMonthlyList.Count > 0)
+                //{
+                //    quarter = csatMonthlyList.Select(x => x.YEAR_QUARTER).Distinct().OrderBy(t => t, sorter).ToList();
+                //}
 
                 for (int i = 0; i < quarter.Count; i++)
                 {
@@ -280,8 +279,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                                    .Select(x => x.BUSINESS_UNIT).Distinct().ToList();
             return Ok(businessUnits);
         }
-        private List<string> FilterDataByFrequency(string frequency, List<string> yearQuarters)
+        private List<string> FilterDataByFrequency(string frequency, IEnumerable<iYearQuarter> csatList)
         {
+
+            var yearQuarters = csatList.Select(x => x.YEAR_QUARTER).ToList();
             var sorter = new QuarterSorter();
             if (frequency.ToLower() == "halfyearly" || frequency.ToLower() == "quarterly")
             {
@@ -316,8 +317,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (csatdata != null)
             {
-                var yearQuarters = csatdata.Select(x => x.YEAR_QUARTER).ToList();
-                quarter = FilterDataByFrequency(csatInsightsInput.FREQUENCY, yearQuarters);
+
+                quarter = FilterDataByFrequency(csatInsightsInput.FREQUENCY, csatdata);
             }
 
             if (quarter.Count == 0)

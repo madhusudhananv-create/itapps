@@ -18,12 +18,12 @@ namespace GAVS.AllocationSystem.Model.CSP
     }
 
 
-    public class PROJECT_CSAT_DATA
+    public class PROJECT_CSAT_DATA : iYearQuarter
     {
 
         public int? ID { get; set; }
-        public string PROJECT_ID { get; set; } 
-        public string CUSTOMER_ID { get; set; } 
+        public string PROJECT_ID { get; set; }
+        public string CUSTOMER_ID { get; set; }
         public string CSM_EMP_ID { get; set; }
         public string DELIVERY_HEAD_EMP_ID { get; set; }
         public string RESPONDENT_NAME { get; set; }
@@ -39,13 +39,13 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int? NPS_SCORE { get; set; }
         public string NPS_REMARKS { get; set; }
         public string FEEDBACK { get; set; }
-        public string COMMENTS { get; set; }  
+        public string COMMENTS { get; set; }
     }
 
-    public class CSSData 
-    { 
+    public class CSSData
+    {
         public string SURVEY_ID { get; set; }
-        public string STATUS { get; set; } 
+        public string STATUS { get; set; }
         public string PROJECT_NAME { get; set; }
         public string CUSTOMER_NAME { get; set; }
         public int? ID { get; set; }
@@ -54,14 +54,14 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string CSM_EMP_ID { get; set; }
         public string DELIVERY_HEAD_EMP_ID { get; set; }
         public string RESPONDENT_NAME { get; set; }
-        public DateTime? CSAT_RECIEVED_DATE { get; set; } 
+        public DateTime? CSAT_RECIEVED_DATE { get; set; }
         public string YEAR_QUARTER { get; set; }
         public string YEAR_MONTH { get; set; }
         public int? MIN_SCORE { get; set; }
         public int? NPS_SCORE { get; set; }
         public string NPS_REMARKS { get; set; }
         public string FEEDBACK { get; set; }
-        public string COMMENTS { get; set; } 
+        public string COMMENTS { get; set; }
         public int? Q1 { get; set; }
         public int? Q2 { get; set; }
         public int? Q3 { get; set; }
@@ -79,9 +79,9 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int? Q15 { get; set; }
     }
 
-    public class PROJECT_CSAT_DATA_EXTENDED 
-    {       
-        
+    public class PROJECT_CSAT_DATA_EXTENDED
+    {
+
         public string CUSTOMER_ID { get; set; }
         public string PROJECT_ID { get; set; }
         public string RESPONDENT_NAME { get; set; }

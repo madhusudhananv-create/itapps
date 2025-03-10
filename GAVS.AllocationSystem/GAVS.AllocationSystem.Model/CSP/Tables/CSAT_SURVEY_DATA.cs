@@ -36,10 +36,14 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int RATING { get; set; }
     }
 
-    public class CSAT_SURVEY_DATA_PERIODWISE : CSAT_SURVEY_DATA
+    public class CSAT_SURVEY_DATA_PERIODWISE : CSAT_SURVEY_DATA, iYearQuarter
     {
         public string YEAR_QUARTER { get; set; }
 
+    }
+    public interface iYearQuarter
+    {
+        string YEAR_QUARTER { get; set; }
     }
 
     public class CSAT_SURVEY_DATA_PERIODWISE_MONTHLY
