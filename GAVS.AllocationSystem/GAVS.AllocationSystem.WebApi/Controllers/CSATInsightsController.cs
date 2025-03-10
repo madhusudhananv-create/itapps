@@ -188,7 +188,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     csatMonthlyList = CSPdb.AppRepo.GetCSSResponseSummaryForPremierMonthly(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS).ToList();
                 }
 
-                csatList = CSPdb.AppRepo.GetCSSResponseSummaryForPeriod(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS).ToList();               
+                csatList = CSPdb.AppRepo.GetCSSResponseSummaryForPeriod(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS).ToList();
+                var sorter = new QuarterSorter();
                 var yearQuarters = csatList.Select(x => x.YEAR_QUARTER).ToList();
                 var quarter = FilterDataByFrequency(csatInsightsInput.FREQUENCY, yearQuarters);
 
