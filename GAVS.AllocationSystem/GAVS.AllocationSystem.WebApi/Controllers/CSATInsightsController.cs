@@ -188,9 +188,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     csatMonthlyList = CSPdb.AppRepo.GetCSSResponseSummaryForPremierMonthly(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS).ToList();
                 }
 
-                csatList = CSPdb.AppRepo.GetCSSResponseSummaryForPeriod(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS).ToList();
-                var sorter = new QuarterSorter();
-                var quarter = csatList.Select(x => x.YEAR_QUARTER).Distinct().OrderBy(t => t, sorter).ToList();
+                csatList = CSPdb.AppRepo.GetCSSResponseSummaryForPeriod(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS).ToList();               
+                var yearQuarters = csatList.Select(x => x.YEAR_QUARTER).ToList();
+                var quarter = FilterDataByFrequency(csatInsightsInput.FREQUENCY, yearQuarters);
 
                 if (quarter.Count == 0 && csatMonthlyList.Count == 0)
                 {
@@ -279,6 +279,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                                    .Select(x => x.BUSINESS_UNIT).Distinct().ToList();
             return Ok(businessUnits);
         }
+        private List<string> FilterDataByFrequency(string frequency, List<string> yearQuarters)
+        {
+            var sorter = new QuarterSorter();
+            if (frequency.ToLower() == "halfyearly" || frequency.ToLower() == "quarterly")
+            {
+                var filter = frequency.ToLower() == "quarterly" ? "Q" : "H";
+                return yearQuarters.Where(q => q.ToUpper().StartsWith(filter)).Distinct().OrderBy(t => t, sorter).ToList();
+            }
+            return yearQuarters.Distinct().OrderBy(t => t, sorter).ToList();
+        }
 
         [POST("GetResponseCategoryData")]
         [ActionName("GetResponseCategoryData")]
@@ -305,8 +315,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (csatdata != null)
             {
-                var sorter = new QuarterSorter();
-                quarter = csatdata.Select(x => x.YEAR_QUARTER).Distinct().OrderBy(t => t, sorter).ToList();
+                var yearQuarters = csatdata.Select(x => x.YEAR_QUARTER).ToList();
+                quarter = FilterDataByFrequency(csatInsightsInput.FREQUENCY, yearQuarters);
             }
 
             if (quarter.Count == 0)
