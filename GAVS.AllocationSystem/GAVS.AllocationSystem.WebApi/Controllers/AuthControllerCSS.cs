@@ -780,6 +780,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //TO list
             tomail = helper.ConcatEmails(new List<string>() { csmmails, pmmmails, qualitySpoc, amMail });
             ccmail += helper.GetDBConfig("CUSTOMER_SUCCESS_SURVEY", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID);
+            var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, project);
+            if (!string.IsNullOrWhiteSpace(buMails))
+                ccmail += "," + buMails;
             //CSM Names
             //string CSMNames = helper.GetCSMNamesFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
             //if (CSMNames == string.Empty)
@@ -895,6 +898,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (!string.IsNullOrWhiteSpace(ccmail))
                 ccmail += ",";
             ccmail += helper.GetDBConfig("CUSTOMER_SUCCESS_SURVEY_CC", replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.CUST_ID);
+            var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, null);
+            if (!string.IsNullOrWhiteSpace(buMails))
+                ccmail += "," + buMails;
 
             var specStr = string.IsNullOrEmpty(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROJ_NM) && string.IsNullOrEmpty(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_NM) ? "" : (string.IsNullOrEmpty(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_NM) ? replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROJ_NM : replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_NM);
             //SUBJECT
@@ -994,6 +1000,36 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
                 new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = Constants.BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
+        }
+
+        private string GetBUwiseCCList(string projId, PROJECT project)
+        {
+            var result = string.Empty;
+            if (project == null)
+            {
+                project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
+                if (project == null) return result;
+            }
+            var bu = project.BUSINESS_UNIT;
+            if (string.IsNullOrWhiteSpace(bu)) return result;
+
+            switch (bu.ToUpper())
+            {
+                case "HITEC":
+                    result = helper.GetDBConfig("CSS_CC_LIST_HITEC", null);
+                    break;
+                case "DIVER":
+                    result = helper.GetDBConfig("CSS_CC_LIST_DIVER", null);
+                    break;
+                case "HEAL":
+                    result = helper.GetDBConfig("CSS_CC_LIST_HEAL", null);
+                    break;
+                default:
+                    break;
+            }
+
+            return result;
+
         }
         #endregion
     }

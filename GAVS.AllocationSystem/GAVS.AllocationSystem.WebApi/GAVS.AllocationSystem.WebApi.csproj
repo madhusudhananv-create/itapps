@@ -331,6 +331,7 @@
     <Content Include="DB Scripts\01 StoredProcedure\CSP\getTaskDetailsByDateRange.sql" />
     <Content Include="DB Scripts\01 StoredProcedure\CSP\getTrendDataForEngagementLevelKPI.sql" />
     <Content Include="DB Scripts\01 StoredProcedure\CSP\Premier Dashboard sps.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.2.sql" />
     <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.1.sql" />
     <Content Include="DB Scripts\GSLabIntegration\BAS_CustID_procs_updates.sql" />
     <Content Include="DB Scripts\GSLabIntegration\BAS_EMPID_procs_updates.sql" />
