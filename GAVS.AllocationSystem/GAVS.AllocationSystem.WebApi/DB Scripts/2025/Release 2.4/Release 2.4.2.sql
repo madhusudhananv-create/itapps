@@ -82,7 +82,6 @@ INSERT INTO configuration_ext (
 END
 GO
 
-USE BAS
 
 IF EXISTS(Select 1 from sys.objects where name ='reports_getListofIssues' AND type='P')
 BEGIN
