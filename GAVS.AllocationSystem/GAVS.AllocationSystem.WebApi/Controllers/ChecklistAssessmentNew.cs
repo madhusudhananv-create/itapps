@@ -3100,9 +3100,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                       new EmailContent { from = _email, to = toMail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = plannedAuditData.PROJ_ID },
                       Request
                       )) ;
-            
 
-            
 
             return Ok();
         }
@@ -3125,8 +3123,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string auditStartDate = auditExecutionSummary.ACTUAL_AUDIT_START_DATE.HasValue ? auditExecutionSummary.ACTUAL_AUDIT_START_DATE.Value.ToString("MM-dd-yyyy") : "-";
             string auditSubmittedDate = auditExecutionSummary.ACTUAL_AUDIT_END_DATE.HasValue ? auditExecutionSummary.ACTUAL_AUDIT_END_DATE.Value.ToString("MM-dd-yyyy") : "-";
             var reqReference = task.REQUIREMENT_REFERENCE;
-
-
             var servicename = string.Join(",", serviceAreas);
             var empId = GetHeaderDetails_String("empId");
             var empIdList = new List<string> { empId, audit.AUDITOR_EMP_ID };
@@ -3138,9 +3134,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var auditeesName = empInfoData.Where(x => auditeeIds.Contains(x.EMP_ID)).Select(x => x.FRST_NM).ToList();
             var auditeeNames = string.Join(",", auditeesName);
-            int processModelId = 0;
-            processModelId = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == assessmentId).Select(x => x.PROCESS_MODEL_ID).FirstOrDefault();
-            var processModel = CSPdb.PROCESS_MODEL.GetAll().FirstOrDefault(x => x.ID == processModelId);
+            var processModelIds = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => x.AUDIT_ID == assessmentId).Select(x => x.PROCESS_MODEL_ID).Distinct().ToList();
+            var processModelNames = string.Join(",", CSPdb.PROCESS_MODEL.GetAll().Where(x => processModelIds.Contains(x.ID)).Select(x => x.DESCRIPTION).ToList());
             var qualityDirector = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMAIL_ID == Constants.QUALITY_HEAD).FRST_NM;
             var findingsTable = GenerateFindingTableReport(assessmentId);
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -3149,7 +3144,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("AUDITOR_NAME", auditorName);
             EmailContentValues.Add("AUDITEE_NAME", auditeeNames);
             EmailContentValues.Add("SERVICE_TOWER", servicename);
-            EmailContentValues.Add("PROCESS_MODEL", processModel.DESCRIPTION);
+            EmailContentValues.Add("PROCESS_MODEL", processModelNames);
             EmailContentValues.Add("REQUIREMENT_REFERENCE", reqReference?.ToString());
             EmailContentValues.Add("QUALITY_DIRECTOR", qualityDirector?.ToString());
             EmailContentValues.Add("AUDIT_START_DATE", auditStartDate);
@@ -3224,23 +3219,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Append($"<div class='finding-section'>")
                 .Append($"<div class='finding-item'>")
                 .Append($"<p><b>{sectionNumber}.{index} {finding.FINDING_TYPE}:</b> {finding.FINDING_DESCRIPTION}</p>");
-
-            if (finding.FINDING_TYPE != "Strength")
-            {
-
-                var processModel = CSPdb.PROCESS_MODEL.GetAll().FirstOrDefault(x => x.ID == finding.PROCESS_MODEL_ID);
-                var processModelClause = Cldb.PROCESS_MODEL_REFERENCE.GetAll().FirstOrDefault(x => x.ID == finding.PROCESS_MODEL_ID);
-
-                if (processModel != null && processModelClause != null)
-                {
-                    var clauseControl = new[] { processModelClause.SECTION_REFERENCE, processModelClause.CONTROL_REFERENCE }.Where(x => !string.IsNullOrEmpty(x)) .ToArray();
-
-                    sb.Append($"<p><b>Applicable ISO {processModel.TITLE} Clause/Control:</b></p>")
-                      .Append($"<p>The specific ISO {processModel.TITLE} Clause/controls that are relevant to this findings are</p>")
-                      .Append($"<p>{string.Join("-", clauseControl)}</p>");
-                }
-            }
-
             sb.AppendLine("</div>")
               .AppendLine("</div>");
 
