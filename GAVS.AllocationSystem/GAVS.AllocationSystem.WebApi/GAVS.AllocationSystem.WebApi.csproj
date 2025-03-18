@@ -80,34 +80,44 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="itext.barcodes, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.barcodes.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.barcodes.dll</HintPath>
     </Reference>
     <Reference Include="itext.forms, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.forms.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.forms.dll</HintPath>
     </Reference>
     <Reference Include="itext.html2pdf, Version=2.1.7.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.pdfhtml.2.1.7\lib\net40\itext.html2pdf.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.html2pdf.dll</HintPath>
     </Reference>
     <Reference Include="itext.io, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.io.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.io.dll</HintPath>
     </Reference>
     <Reference Include="itext.kernel, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.kernel.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.kernel.dll</HintPath>
     </Reference>
     <Reference Include="itext.layout, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.layout.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.layout.dll</HintPath>
     </Reference>
     <Reference Include="itext.pdfa, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.pdfa.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.pdfa.dll</HintPath>
     </Reference>
     <Reference Include="itext.sign, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.sign.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.sign.dll</HintPath>
     </Reference>
     <Reference Include="itext.styledxmlparser, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.styledxmlparser.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.styledxmlparser.dll</HintPath>
     </Reference>
     <Reference Include="itext.svg, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
-      <HintPath>..\packages\itext7.7.1.10\lib\net40\itext.svg.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.svg.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AI.Agent.Intercept, Version=2.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.ApplicationInsights.Agent.Intercept.2.4.0\lib\net45\Microsoft.AI.Agent.Intercept.dll</HintPath>
