@@ -32,6 +32,7 @@ using System.Web.Http.Description;
 using System.Web.Http.Filters;
 using System.Web.Http.Results;
 using System.Web.UI.WebControls;
+using GAVS.AllocationSystem.Model.Base;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -20672,6 +20673,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CSPdb.CUSTOMER_USERS.Update(cust);
                 CSPdb.Commit(CanCommit);
             }
+            var newProjects = new List<CUSTOMER_PROJECTS>();
+            var updatedProjects = new List<CUSTOMER_PROJECTS>();
+            var originalProjects = new List<CUSTOMER_PROJECTS>();
 
             foreach (CUSTOMER_PROJECTS p in results.CUSTOMER_PROJECTS)
             {
@@ -20690,25 +20694,39 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CSAT_SURVEY = p.CSAT_SURVEY,
                         CSAT_FREQUENCY = p.CSAT_FREQUENCY,
                         REPORTING = p.REPORTING,
-
                     };
                     UpdateAuditFields(newProj);
                     CSPdb.CUSTOMER_PROJECTS.Add(newProj);
-
+                    newProjects.Add(newProj);
                 }
                 else
                 {
+                    var originalProj = new CUSTOMER_PROJECTS
+                    {
+                        CUST_NM = proj.CUST_NM,
+                        PROJ_NM = proj.PROJ_NM,
+                        REPORTING = proj.REPORTING,
+                        CSAT_SURVEY = proj.CSAT_SURVEY,
+                        CSAT_FREQUENCY = proj.CSAT_FREQUENCY
+                    };
+                    originalProjects.Add(originalProj);
                     proj.REPORTING = p.REPORTING;
                     proj.CSAT_SURVEY = p.CSAT_SURVEY;
                     proj.CSAT_FREQUENCY = p.CSAT_FREQUENCY;
                     UpdateAuditFields(proj);
                     CSPdb.CUSTOMER_PROJECTS.Update(proj);
-
-
+                    updatedProjects.Add(proj);
                 }
-            }
 
+
+            }
             CSPdb.Commit(CanCommit);
+            if (newProjects.Count > 0)
+                SendNotificationToStakeholders(newProjects, results.EMAILID, results.DISPLAY_NAME, CRUD.Create, null);
+
+            if (updatedProjects.Count > 0)
+                SendNotificationToStakeholders(updatedProjects, cust.EMAILID, results.DISPLAY_NAME, CRUD.Update, originalProjects);
+
             //genereate css batch customers
             if (results.CUST_ID == PREMIER_CUSTOMER_ID)
             {
@@ -24852,6 +24870,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     CSPdb.CUSTOMER_PROJECTS.Delete(cp);
                     CSPdb.Commit(CanCommit);
                 }
+                SendNotificationToStakeholders(custProjects, cust.EMAILID, cust.DISPLAY_NAME, CRUD.Delete, null);
             }
             return Ok();
         }
@@ -26128,5 +26147,80 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
         }
+
+        private void SendNotificationToStakeholders(List<CUSTOMER_PROJECTS> projVals, string custEmail, string custUserName, CRUD val, List<CUSTOMER_PROJECTS> oldProjVal)
+        {
+            if (projVals == null && projVals.Any())
+                return;
+            string emailSubject = string.Empty;
+            string ccmail = string.Empty;
+            string mailContent;          
+            Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
+            EmailContentValues.Add("CUSTOMER_NAME", projVals.FirstOrDefault()?.CUST_NM ?? string.Empty);
+            EmailContentValues.Add("UPDATED_BY", GetEmployeeNamebyId(projVals.FirstOrDefault()?.UPDATED_BY.ToString()) ?? string.Empty);
+            EmailContentValues.Add("UPDATED_DATE", projVals.FirstOrDefault()?.UPDATED_DATE.ToString() ?? string.Empty);
+            EmailContentValues.Add("CUSTOMER_USER_NAME", custUserName ?? string.Empty);
+            EmailContentValues.Add("CUSTOMER_EMAIL_ID", custEmail ?? string.Empty);
+            var newTable = GenerateValuesTable(projVals);           
+            var  oldTable = GenerateValuesTable(oldProjVal);         
+            EmailContentValues.Add("OLD_VALUE_TABLE", oldTable);
+            EmailContentValues.Add("NEW_VALUE_TABLE", newTable);
+            mailContent = helper.GetEmailContent("CustomerDetailsSendAddUpdateNotification.htm", EmailContentValues);
+
+            switch (val)
+            {
+
+                case CRUD.Delete:
+                    emailSubject = $"{custUserName} - {projVals.FirstOrDefault()?.CUST_NM} Removed ";
+                    mailContent = helper.GetEmailContent("CustomerDetailsSendDeleteNotification.htm", EmailContentValues);
+                    break;
+
+                case CRUD.Create:
+                    emailSubject = $"{custUserName} - {projVals.FirstOrDefault()?.CUST_NM} Added ";
+                    break;
+
+                case CRUD.Update:
+                    emailSubject = $"{custUserName} - {projVals.FirstOrDefault()?.CUST_NM} Updated ";
+                    break;
+
+            }
+
+            var csmMails = helper.GetCSMMailsFromAccount(projVals.FirstOrDefault().CUST_ID);
+            var pmMails = helper.GetPMMailsFromAccount(projVals.FirstOrDefault().CUST_ID);
+
+            var toMailList = new List<string>();
+            toMailList.AddRange(csmMails);
+            toMailList.AddRange(pmMails);
+            toMailList.Add(Constants.DEVX_LEAD);
+
+            var toMail = helper.ConcatEmails(toMailList);
+            var ep = new EmailProvider(Cldb, CSPdb);
+            if (string.IsNullOrWhiteSpace(toMail)) toMail = _email;
+            ep.SendEmail
+                    (
+                    new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+                    new EmailContent { from = _email, to = toMail, cc = ccmail, content = mailContent, subject = emailSubject, hasAttachments = false, attachmentFilePath = "" }, Request
+                    );
+        }
+
+        private string GenerateValuesTable(List<CUSTOMER_PROJECTS> projVals)
+        {
+            var sb = new StringBuilder();
+            if (projVals == null) return sb.ToString();
+            foreach (var proj in projVals)
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td style=' text-align: center;'>{proj.PROJ_NM ?? string.Empty}</td>");
+                sb.Append($"<td style=' text-align: center;'>{proj.CSAT_FREQUENCY ?? string.Empty}</td>");
+                sb.Append($"<td style=' text-align: center;'>{(proj.REPORTING ? "Yes" : "No")}</td>");
+                sb.Append($"<td style=' text-align: center;'>{(proj.CSAT_SURVEY ? "Yes" : "No")}</td>");
+                sb.Append("</tr>");
+            }
+            return sb.ToString();
+        }
+
+
     }
+
+
 }
