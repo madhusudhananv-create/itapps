@@ -43,9 +43,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (surveyCriteria.IS_MONTHLY)
                 {
                     var cssBatchMonthly = new CSS_BATCH_MONTHLY();
-                    dynamic quarterlyDates = QuarterDates(surveyCriteria.QUARTER, surveyCriteria.YEAR);
-                    cssBatchMonthly.START_DATE = quarterlyDates.startdate;
-                    cssBatchMonthly.END_DATE = quarterlyDates.enddate;
+                    var quarterlyDates = QuarterDates(surveyCriteria.QUARTER, surveyCriteria.YEAR);
+                    cssBatchMonthly.START_DATE = quarterlyDates.Item1;
+                    cssBatchMonthly.END_DATE = quarterlyDates.Item2;
                     batchId = CSPdb.CSS_BATCH_MONTHLY.GetAll().FirstOrDefault(t => t.START_DATE == cssBatchMonthly.START_DATE && t.END_DATE == cssBatchMonthly.END_DATE &&
                                 t.YEAR == surveyCriteria.YEAR)?.ID;
                     if (batchId.HasValue)

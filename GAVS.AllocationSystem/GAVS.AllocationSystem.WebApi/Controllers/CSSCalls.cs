@@ -637,10 +637,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 );
 
         }
-        private object QuarterDates(int quarter, int year)
+        private Tuple<DateTime, DateTime> QuarterDates(int quarter, int year)
         {
-            DateTime periodstDate;
-            DateTime periodedDate;
+            DateTime periodstDate = DateTime.Today;
+            DateTime periodedDate = DateTime.Today;
 
             if (quarter == 1)
             {
@@ -657,18 +657,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 periodstDate = new DateTime(year, 10, 1);
                 periodedDate = new DateTime(year, 12, 31);
             }
-            else
+            else if (quarter == 4)
             {
                 year += 1;
                 periodstDate = new DateTime(year, 1, 1);
                 periodedDate = new DateTime(year, 3, 31);
             }
-
-            return new
+            else if (quarter == 5)
             {
-                startdate = periodstDate,
-                enddate = periodedDate
-            };
+
+                periodstDate = new DateTime(year, 1, 1);
+                periodedDate = new DateTime(year, 6, 30);
+            }
+            else if (quarter == 6)
+            {
+
+                periodstDate = new DateTime(year, 7, 1);
+                periodedDate = new DateTime(year, 12, 31);
+            }
+            else { }
+
+            return new Tuple<DateTime, DateTime>(periodstDate, periodedDate);
+
         }
 
         [POST("AddCSSBatch")]
@@ -683,9 +693,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else
             {
-                dynamic quarterlyDates = QuarterDates(css_batch.SEQUENCE, css_batch.YEAR);
-                css_batch.START_DATE = quarterlyDates.startdate;
-                css_batch.END_DATE = quarterlyDates.enddate;
+                var quarterlyDates = QuarterDates(css_batch.SEQUENCE, css_batch.YEAR);
+                css_batch.START_DATE = quarterlyDates.Item1;
+                css_batch.END_DATE = quarterlyDates.Item2;
                 var isStartDateExists = CSPdb.CSS_BATCHES.GetAll().Any(batch => batch.START_DATE == css_batch.START_DATE);
 
                 var currentDate = DateTime.Now;
