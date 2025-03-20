@@ -456,7 +456,7 @@
           </mat-form-field>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-6">
-          <mat-form-field>
+          <mat-form-field style="width: 105%;">
             <mat-select #mySel [(ngModel)]="selectedKPI" name="ddselectKPI" (selectionChange)="updateKPIName(selectedKPI)"
               (openedChange)="resetFilterValue($event)" placeholder="Select Base Measure Master KPI" required>
               <mat-form-field class="filter-kpi" style="width: 100%;">
