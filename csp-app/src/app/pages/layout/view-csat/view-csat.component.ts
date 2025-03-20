@@ -213,7 +213,7 @@ export class ViewCsatComponent implements OnInit {
             this.guid = this.surveyGuid;
           }
           else {
-            alert("Please send the customer success survey for the selected quarter. After that only you are able fill the survey.");
+            alert("Please send the customer success survey for the selected quarter. Once sent you can fill the survey on behlaf of the Customer.");
             this.loading = false;
             this.showSurveyGuid = false;
             this.showSurveyText = true;
