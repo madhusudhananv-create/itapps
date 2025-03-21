@@ -38,10 +38,18 @@
         th {
             background-color: #CCCCFF;
             font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
         }
 
         .customer-info {
             font-size: 11pt;
+        }
+
+        .header {
+            background-color: #d0e2f3;
+            text-align: center;
+            font-size: larger;
         }
     </style>
 </head>
@@ -58,15 +66,15 @@
         Updated By : <b>{{UPDATED_BY}}</b><br />
         <br />
         <table>
-            <tr><td style='text-align:center'><b>New Value</b></td><td style='text-align:center'><b>Old Value</b></td></tr>
+            <tr><td class="header"><b>Updated Values</b></td><td class="header"><b>Old Values</b></td></tr>
             <tr>
                 <td>
                     <table border='0' style='width: 100%;'>
                         <tr>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>Project</th>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>CSAT Frequency</th>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>Reporting Manager</th>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>CSAT Survey</th>
+                            <th>Project</th>
+                            <th>CSAT Frequency</th>
+                            <th>Reporting Manager</th>
+                            <th>CSAT Survey</th>
                         </tr>
                         {{NEW_VALUE_TABLE}}
 
@@ -75,10 +83,10 @@
                 <td>
                     <table border='0' style='width: 100%;'>
                         <tr>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>Project</th>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>CSAT Frequency</th>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>Reporting Manager</th>
-                            <th style='text-align: center; border-bottom: 1px solid #ddd;'>CSAT Survey</th>
+                            <th>Project</th>
+                            <th>CSAT Frequency</th>
+                            <th>Reporting Manager</th>
+                            <th>CSAT Survey</th>
                         </tr>
                         {{OLD_VALUE_TABLE}}
                     </table>
