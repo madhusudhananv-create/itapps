@@ -79,6 +79,7 @@
     <Compile Include="AllSys\Tables\PROJECT_COURSE_MAPPING.cs" />
     <Compile Include="AllSys\Tables\PROJ_RESRC_TIME_ENTRY.cs" />
     <Compile Include="AllSys\Tables\TIMESHEET_SETTINGS.cs" />
+    <Compile Include="Base\CRUD.cs" />
     <Compile Include="Base\EntityBase.cs" />
     <Compile Include="Charts\ActivityGauge.cs" />
     <Compile Include="Charts\DashboardSearchParams.cs" />
