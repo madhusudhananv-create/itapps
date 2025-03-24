@@ -24,12 +24,17 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string OWNER { get; set; }
         public DateTime IDENTIFIED_DATE { get; set; }
         public DateTime? TARGET_DATE { get; set; }
+        public string ROOT_CAUSE { get; set; }
+        public string ACTION_TYPE { get; set; }
+        public string RATING_DESCRIPTION { get; set; }
+        public int RATING { get; set; }
+        public string QUESTION { get; set; }
+        public string ACTION_PLAN { get; set; }
+
         public string STATUS { get; set; }
         public string PRIORITY { get; set; }
         public Nullable<DateTime> COMPLETION_DATE { get; set; }
         public string COMMENTS { get; set; }
-
-      
         public string STATUS_TYPE { get; set; }
         public int? BATCH_CUSTOMER_ID { get; set; }
         public int? BATCH_CUSTOMER_MONTHLY_ID { get; set; }
@@ -78,4 +83,5 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public int? MEMBER_COUNT { get; set; }
     }
+   
 }
