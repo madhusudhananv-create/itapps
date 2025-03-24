@@ -32,7 +32,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 days.Add("Sunday");
             return days;
         }
-        
+
         private List<DateTime> GetYearlyDates(DateTime StartDate, DateTime EndDate)
         {
             List<DateTime> yearlyDates = new List<DateTime>();
@@ -236,7 +236,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CSPdb.Commit(canCommit);
             }
 
-            if(task != null && !task.IS_DRAFT.GetValueOrDefault())
+            if (task != null && !task.IS_DRAFT.GetValueOrDefault())
             {
                 SendMailToTaskPersons(taskAudit = new TASK_AUDIT_VM
                 {
@@ -249,7 +249,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     IS_SUBMIT = taskAudit.IS_SUBMIT
                 }, request, isnew);
             }
-            
+
             return task;
         }
         internal void DeleteAuditScheduleRef(int AuditScheduleId)
@@ -525,11 +525,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 auditText = "Audit ";
             }
 
-            if(isNew && taskAudit.IS_SUBMIT)
+            if (isNew && taskAudit.IS_SUBMIT)
             {
                 subject = $"New {auditText}task Added - {taskAudit.PROJ_NM} - {taskAudit.TASK_CATEGORY_TITLE}";
             }
-            else if(!isNew && taskAudit.IS_SUBMIT)
+            else if (!isNew && taskAudit.IS_SUBMIT)
             {
                 subject = $"{auditText}Task Updated for {taskAudit.PROJ_NM} - {taskAudit.TASK_CATEGORY_TITLE}";
             }
@@ -650,7 +650,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("CSS_SCORE", taskAudit.CSS_SCORE);
             EmailContentValues.Add("CSS_URL", taskAudit.CSS_URL);
             EmailContentValues.Add("PEOPLE_URL", peoplePageUrl);
-
+            EmailContentValues.Add("RESCHEDULE_REQUESTOR", task.RESCHEDULE_REQUESTER);
+            EmailContentValues.Add("RESCHEDULE_DATE", task.RESCHEDULE_DATE.HasValue ? task.RESCHEDULE_DATE.Value.ToString(_dateformat) : string.Empty);
+            EmailContentValues.Add("RESCHEDULE_REASON", task.RESCHEDULE_REASON);           
             var templateName = taskAudit.PROJ_NM != null && taskAudit.Task.TASK_CATEGORY_ID != 26 ? "AddNewTask.htm" : "AddAuditTaskForCSAT.htm";
             string mailContent = GetEmailContent(templateName, EmailContentValues);
             var ep = new EmailProvider(Cldb, CSPdb);
