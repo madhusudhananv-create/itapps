@@ -493,6 +493,9 @@
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestHalfYearly.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequest.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveyVerification.htm" />
+    <Content Include="UploadFile\Mails\InternalAuditReportTemplate.htm" />
+    <Content Include="UploadFile\Mails\CustomerDetailsSendAddUpdateNotification.htm" />
+    <Content Include="UploadFile\Mails\CustomerDetailsSendDeleteNotification.htm" />
     <Content Include="UploadFile\Mails\MappingUpdateNotification.htm" />
     <Content Include="UploadFile\Mails\DataUpdateNotification.htm" />
     <Content Include="UploadFile\Mails\ProductResponsible.htm" />
