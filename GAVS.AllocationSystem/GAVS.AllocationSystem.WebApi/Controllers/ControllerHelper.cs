@@ -209,6 +209,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return GetEmployeeMailIdList(csms);
 
         }
+        public List<string> GetPMMailsFromAccount(string cust_id)
+        {
+            string emails = string.Empty;
+            var csms = Cldb.PROJECT.GetAll().Where(x => x.CUST_ID == cust_id && x.PROJ_STATUS != "close").Select(x => x.PROJ_PM_EMP_ID).Distinct().ToList();
+            return GetEmployeeMailIdList(csms);
+
+        }
         public List<string> GetAMMailsFromAccount(string cust_id)
         {
             string emails = string.Empty;
@@ -779,7 +786,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newExt.PROJ_STATUS = proj.PROJ_STATUS;
                     newExt.PROJ_ID = proj.PROJ_ID;
                     newExt.PROD_ID = batch.PROD_ID;
-                   // newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
+                    // newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
                 }
                 ext.Add(newExt);
             }
