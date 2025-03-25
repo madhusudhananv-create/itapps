@@ -135,9 +135,9 @@
       <mat-datepicker #picker4 color="primary"></mat-datepicker>
     </mat-form-field>
 
-    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 150px;"
-      *ngIf="_taskService.selectedTask.status.toLowerCase() == 're-schedule'">
-      <mat-label>Re-Schedule Date</mat-label>
+    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 180px;"
+      *ngIf="_taskService.selectedTask.status.toLowerCase() == 're-schedule'" >
+      <mat-label>Re-Schedule Date <span class="mandatory"> * </span></mat-label>
       <input [min]="eventStartDate" matInput [matDatepicker]="dtRestartSheduled"
         [(ngModel)]="_taskService.selectedTask.reschedulE_DATE" [disabled]="_taskService.selectedTask.isAllDisabled">
       <mat-datepicker-toggle matSuffix [for]="dtRestartSheduled"></mat-datepicker-toggle>
@@ -258,8 +258,7 @@
     <div class="col-lg-2 col-md-2 col-sm-2">Scheduled Duration:</div>
     <div class="col-lg-10 col-md-10 col-sm-10">
       <input matInput type="number" [(ngModel)]="_taskService.selectedTask.scheduleD_DURATION"
-        class="example-right-align" style="width:80px;background-color:white;border: 1px solid #d2cdcd;"
-        step="any"
+        class="example-right-align" style="width:80px;background-color:white;border: 1px solid #d2cdcd;" step="any"
         [disabled]="_taskService.selectedTask.isAllDisabled">
     </div>
   </div>
@@ -267,8 +266,7 @@
     <div class="col-lg-2 col-md-2 col-sm-2"> Actual Hours Spent:</div>
     <div class="col-lg-10 col-md-10 col-sm-10">
       <input matInput type="number" class="example-right-align" [(ngModel)]="_taskService.selectedTask.actuaL_DURATION"
-        style="width:80px;background-color:white;border: 1px solid #d2cdcd;"
-        step="any"
+        style="width:80px;background-color:white;border: 1px solid #d2cdcd;" step="any"
         [disabled]="_taskService.selectedTask.isAllDisabled">
     </div>
   </div>
