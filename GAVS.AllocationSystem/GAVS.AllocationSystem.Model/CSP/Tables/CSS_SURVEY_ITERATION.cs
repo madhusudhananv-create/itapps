@@ -16,6 +16,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime SURVEY_SENT_DATE { get; set; }
         public DateTime? SURVEY_RECEIVED_DATE { get; set; }
         public string STATUS { get; set; }
+
+        public int? VALIDITY_DAYS { get; set; }
      
         
     }

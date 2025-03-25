@@ -244,18 +244,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             foreach (CSS_BATCH_CUSTOMERS_EXTENDED cust in batchCustomersExt)
             {
-                CSS_SURVEY_ITERATION survey = new CSS_SURVEY_ITERATION()
-                {
-                    BATCH_CUSTOMERS_ID = cust.ID,
-                    BATCH_CUSTOMER_MONTHLY_ID = 0,
-                    SURVEY_ID = Guid.NewGuid().ToString(),
-                    SURVEY_SENT_DATE = DateTime.Now,
-                    STATUS = CSS_MAIL_SENT,
+                //CSS_SURVEY_ITERATION survey = new CSS_SURVEY_ITERATION()
+                //{
+                //    BATCH_CUSTOMERS_ID = cust.ID,
+                //    BATCH_CUSTOMER_MONTHLY_ID = 0,
+                //    SURVEY_ID = Guid.NewGuid().ToString(),
+                //    SURVEY_SENT_DATE = DateTime.Now,
+                //    STATUS = CSS_MAIL_SENT,
 
-                };
-                UpdateAuditFields(survey);
-                CSPdb.CSS_SURVEY_ITERATION.Add(survey);
-                CSPdb.Commit(CanCommit);
+                //};
+                //UpdateAuditFields(survey);
+                //CSPdb.CSS_SURVEY_ITERATION.Add(survey);
+                //CSPdb.Commit(CanCommit);
+                var survey = AddSurvey(EmpId, cust.ID, 0, cust.CUST_ID);
                 CreatedSurveys.Add(survey);
                 CSPdb.AppRepo.UpdateCSSBatchCustomers(cust.ID, survey.ID, survey.SURVEY_SENT_DATE, null, survey.STATUS, null, null, null);
 
@@ -1100,7 +1101,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 List<CSS_SURVEY_ITERATION> CreatedSurveys = new List<CSS_SURVEY_ITERATION>();
                 foreach (var cust in batchCustomersExt)
                 {
-                    var survey = AddSurvey(empId, cust.ID);
+                    var survey = AddSurvey(empId, 0, cust.ID, custId);
                     CreatedSurveys.Add(survey);
                     CSPdb.AppRepo.UpdateCSSBatchCustomersMonthly(cust.ID, survey.ID, survey.SURVEY_SENT_DATE, null, survey.STATUS, null, null, null);
                 }
@@ -1136,15 +1137,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         //monthly end
 
-        private CSS_SURVEY_ITERATION AddSurvey(string empId, int custId)
+        private CSS_SURVEY_ITERATION AddSurvey(string empId, int batchCustId, int batchcustMonthlyId, string custId)
+
         {
+            var configKey = "CSS_LINK_VALIDITY_DAYS";
+
+
+            int validity = 20;
+
+            var configValues = helper.GetDBConfig(configKey, custId);
+            int.TryParse(configValues, out validity);
+
+
             CSS_SURVEY_ITERATION survey = new CSS_SURVEY_ITERATION()
             {
-                BATCH_CUSTOMER_MONTHLY_ID = custId,
-                BATCH_CUSTOMERS_ID = 0,
+                BATCH_CUSTOMER_MONTHLY_ID = batchcustMonthlyId,
+                BATCH_CUSTOMERS_ID = batchCustId,
                 SURVEY_ID = Guid.NewGuid().ToString(),
                 SURVEY_SENT_DATE = DateTime.Now,
                 STATUS = CSS_MAIL_SENT,
+                VALIDITY_DAYS = validity
             };
             UpdateAuditFields(survey, empId);
             CSPdb.CSS_SURVEY_ITERATION.Add(survey);

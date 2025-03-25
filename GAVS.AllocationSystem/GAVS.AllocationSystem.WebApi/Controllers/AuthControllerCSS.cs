@@ -470,25 +470,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void CheckCSSLinkValid(CSS_SURVEY_ITERATION iteration, string projectId)
         {
-
-
-
             DateTime validDate = DateTime.Now;
-
-            if (!string.IsNullOrWhiteSpace(projectId))
+            if (iteration.VALIDITY_DAYS.HasValue)
             {
-                validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE, projectId);
+                validDate = iteration.SURVEY_SENT_DATE.AddDays(iteration.VALIDITY_DAYS.Value);
             }
             else
             {
-                validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE, "");
+                if (!string.IsNullOrWhiteSpace(projectId))
+                {
+                    validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE, projectId);
+                }
+                else
+                {
+                    validDate = helper.GetLaterDateForCSSValidity(iteration.SURVEY_SENT_DATE, "");
+                }
             }
-
             if (validDate < DateTime.Now)
             {
                 throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Customer Success Survey link is not valid anymore as { validDate.ToString("dd-MM-yyyy")} is the last valid date since it is triggered. Please contact the project team to enable it."));
             }
-
 
         }
 
