@@ -135,7 +135,7 @@
       <mat-datepicker #picker4 color="primary"></mat-datepicker>
     </mat-form-field>
 
-    <mat-form-field color="accent" style="margin:0 10px 0 10px;width: 180px;"
+    <mat-form-field color="accent" style="margin:0 2% 0 2%;width: 14%;"
       *ngIf="_taskService.selectedTask.status.toLowerCase() == 're-schedule'" >
       <mat-label>Re-Schedule Date <span class="mandatory"> * </span></mat-label>
       <input [min]="eventStartDate" matInput [matDatepicker]="dtRestartSheduled"
