@@ -382,3 +382,351 @@ IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'PROJ
 BEGIN
     ALTER TABLE PROJECT_ACTIONITEM ADD ACTION_PLAN VARCHAR(255);
 END
+
+/****** Object:  StoredProcedure [dbo].[reports_CSAT_Consolidated]    Script Date: 3/26/2025 12:54:09 PM ******/
+DROP PROCEDURE IF EXISTS [dbo].[reports_CSAT_Consolidated]
+GO
+/****** Object:  StoredProcedure [dbo].[reports_CSAT_Consolidated]    Script Date: 3/26/2025 12:54:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--[reports_CSAT_Consolidated] '2024-4-1', '2024-6-30'              
+CREATE PROCEDURE [dbo].[reports_CSAT_Consolidated]                     
+                    
+@StartDate date,                   
+@EndDate date                      
+                  
+AS                    
+                  
+BEGIN                      
+     with cte as          
+  (          
+SELECT                      
+c.cust_nm AS [Customer Name],                      
+p.proj_nm AS [Project],             
+[CSS Sent - Acc Level] = (select  cast(count(*)  as decimal(12,2)) from CSS_BATCH_CUSTOMERS cbc where cbc.BATCH_ID = bt.ID and cbc.CUST_ID = b.CUST_ID and IS_VERIFIED =1 and SURVEY_SENT_DATE is not null ),          
+[CSS Recd - Acc Level] = (select  cast(count(*)   as decimal(12,2)) from CSS_BATCH_CUSTOMERS cbc where cbc.BATCH_ID = bt.ID and cbc.CUST_ID = b.CUST_ID and IS_VERIFIED =1  and STATUS in ('Completed') ),          
+display_name AS [Respondent],                      
+B.EMAIL_ID AS [Email_Id],                      
+FORMAT(b.SURVEY_SENT_DATE, 'dd-MMM-yyy', 'EN-us') AS                      
+[CSAT sent Date],                      
+FORMAT(b.SURVEY_RECEIVED_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT received Date],                    
+[Year_Quarter] = LEFT(bt.frequency, 1) + CONVERT(varchar, bt.sequence) + ' - ' + CONVERT(varchar, bt.Year),              
+b.STATUS,          
+pp.TITLE AS [Portfolio],                      
+     [Voice of Customer except NPS] =(select case when min(rating)< 3 then 'Red'          
+            when min(rating) = 3 then 'Amber'          
+            when min(rating) = 4 then 'Green'          
+            when min(rating) =5 then 'Blue' end          
+           from css_question_replies r where r.batch_customer_id = b.id and question_category ='criteria') ,          
+[Voice of Customer - NPS]  = (select case when min(rating)< 9 then 'Red'          
+           when   min(rating) >= 9 then 'Green'           
+           else null end          
+           from css_question_replies r where r.batch_customer_id = b.id and question_category ='NPS'),          
+                     
+                
+(SELECT                      
+E.FRST_NM                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_DM_EMP_ID                      
+WHERE project.PROJ_ID = B.PROJ_ID)                      
+AS [Customer Success Manager],             
+(SELECT                      
+E.EMAIL_ID                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_DM_EMP_ID                      
+WHERE project.PROJ_ID = B.PROJ_ID)                      
+AS [CSM Mail],             
+(SELECT                      
+E.FRST_NM                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                      
+WHERE project.PROJ_ID = B.PROJ_ID)                      
+AS [BU Head],             
+(SELECT                      
+E.EMAIL_ID                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                      
+WHERE project.PROJ_ID = B.PROJ_ID)                      
+AS [BU Head Mail],             
+--(SELECT                      
+--E.FRST_NM                      
+--FROM project                      
+--INNER JOIN EMP_INFO E                      
+--ON E.EMP_ID = project.PROJ_AM_EMP_ID                      
+--WHERE project.PROJ_ID = B.PROJ_ID)                      
+--AS [ACCOUNT MANAGER],          
+p.PROJ_STATUS,                     
+p.BUSINESS_UNIT AS [BUSSINESS UNIT],                      
+P.CONTRACTING_UNIT AS [CONTRACTING UNIT],                      
+--P.METHODOLOGY AS [METHODOLOGY],                      
+P.DEPARTMENT AS [DEPARTMENT],             
+p.REVENUE_TYPE as [PROJECT TYPE],          
+--P.PROJECT_GROUP [PROJECT GROUP],                       
+--P.COUNTRY [COUNTRY],            
+              
+TotalActionItems = (select count(*) from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1  ),          
+SubmissionCompleted = (select count(*) from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1  and  completion_date is not null and completion_date <getdate()),          
+Planned = (select count(*) from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1  and pa.status  in ('planned')),          
+--After target date, RAG code (Considering all action item completion ) --Green-100% --Amber-60-99% --Red-Less than 60% --Within due date of target date - Grey , minimum of one is completed - green         
+Completed =   (select count(*) from PROJECT_ACTIONITEM PA        
+  where B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1  and pa.status  in ('Completed')),           
+          
+[CSS - Improvement Plan submission Status] = (select           
+                     
+            case when max( PA.TARGET_DATE) is null then 'NA'          
+             when   max(pa.COMPLETION_DATE) is not null and max(pa.status) in ('Completed') then 'green'          
+             when  max(pa.STATUS)   in ('identified') and max(PA.TARGET_DATE) < getdate()   then 'red'          
+              --when max(PA.TARGET_DATE) < getdate()+3 and max(pa.COMPLETION_DATE) is   null then 'amber'          
+              when  max(pa.COMPLETION_DATE) is   null then 'grey'          
+              else 'NA' end           
+            from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1     ),          
+                    
+ [CSS - Improvement Plan Implementation Status] = (select           
+            case when max( PA.PLANNED_TARGET_DATE) is null then 'NA'          
+             when max(PA.PLANNED_TARGET_DATE) < getdate() and max(pa.planned_actual_date) is not null and max(pa.status) in ('Completed') then 'green'          
+             when max(PA.PLANNED_TARGET_DATE) < getdate() and max(pa.status) not in ('Completed')  then 'red'    --and max(pa.planned_actual_date) is   null      
+              --when max(PA.PLANNED_TARGET_DATE) < getdate()+7 and max(pa.planned_actual_date) is   null then 'amber'          
+              when  max(pa.planned_actual_date) is   null then 'grey'          
+              else 'NA' end          
+            from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1     ),          
+[Voice of Customer url] ='https://csm.gavstech.com/CustomerSuccessSurvey/' + i.survey_Id,          
+          
+--CASE                  
+--WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(day, -7, GETDATE()) AND pa.status IN ('Identified')                  
+--THEN 'Improvement Plan submission Overdue'                  
+--WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(week, -4, GETDATE()) AND pa.status NOT IN ('Completed')                  
+--THEN 'Improvement Plan Completion Overdue'                  
+--ELSE pa.status                   
+--END AS [Action Item Status],                  
+                  
+--PA.description as [Action Item Description],                    
+ACTION_PLAN_SUBMISSION_TARGET_DATE = (select  FORMAT(Max(PA.TARGET_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_ID = b.ID),                  
+ACTION_PLAN_SUBMISSION_ACTUAL_DATE =  (select  FORMAT(Max(PA.COMPLETION_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_ID = b.ID),                  
+ACTION_PLAN_COMPLETION_TARGET_DATE = (select  FORMAT(Max(PA.PLANNED_TARGET_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_ID = b.ID),              
+ACTION_PLAN_COMPLETION_ACTUAL_DATE = (select  FORMAT(Max(PA.PLANNED_ACTUAL_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_ID = b.ID),                 
+c.Cust_ID AS [Customer_ID]  ,
+p.PROJ_ID
+                
+                  
+FROM [CSS_BATCH_CUSTOMERS] b                      
+INNER JOIN project p                      
+ON p.proj_id = b.proj_id              
+inner join CSS_SURVEY_ITERATION i on b.SURVEY_ID = i.ID          
+LEFT JOIN portfolio_project PR                      ON PR.PROJ_ID = P.PROJ_ID and PR.ISACTIVE = 1                    
+LEFT JOIN PORTFOLIO pp                      
+ON pr.PORTFOLIO_ID = pp.ID and pp.ISACTIVE = 1                    
+INNER JOIN customer c                      
+ON c.cust_id = b.cust_id                    INNER JOIN CSS_BATCHES bt                      
+ON bt.id = b.Batch_ID and bt.ISACTIVE = 1                     
+                    
+--LEFT JOIN PROJECT_ACTIONITEM PA                     
+--ON B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1    and pa.description like '%' + qr.question +'%'                
+WHERE     b.ISACTIVE = 1                    
+AND (bt.start_date BETWEEN @StartDate AND @EndDate                      
+OR bt.ENd_date BETWEEN @StartDate AND @EndDate)                
+              
+UNION             
+          
+SELECT                      
+c.cust_nm AS [Customer Name],                      
+coalesce( pps.product_title + ' (Product)' , p.proj_nm,'') AS [Project],               
+[CSS Sent - Acc Level] = (select  cast(count(*)    as decimal(12,2)) from CSS_BATCH_CUSTOMER_MONTHLY cbc where cbc.BATCH_MONTHLY_ID = bt.ID and cbc.CUST_ID = b.CUST_ID and IS_VERIFIED =1  and SURVEY_SENT_DATE is not null ),          
+[CSS Recd - Acc Level] = (select  cast(count(*)  as decimal(12,2))  from CSS_BATCH_CUSTOMER_MONTHLY cbc where cbc.BATCH_MONTHLY_ID = bt.ID and cbc.CUST_ID = b.CUST_ID and IS_VERIFIED =1  and STATUS in ('completed') ),          
+display_name AS [Respondent],                      
+B.EMAIL_ID AS [Email_Id],                      
+FORMAT(b.SURVEY_SENT_DATE, 'dd-MMM-yyy', 'EN-us') AS                      
+[CSAT sent Date],                      
+FORMAT(b.SURVEY_RECEIVED_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT received Date],                    
+CASE                    
+                     
+WHEN month BETWEEN 4 AND 6 THEN 'Q1 - '   + CONVERT(varchar, Year)                  
+WHEN month BETWEEN 7 AND 9 THEN 'Q2 - '    + CONVERT(varchar, Year)                 
+WHEN month BETWEEN 10 AND 12 THEN 'Q3 - '    + CONVERT(varchar, Year)                 
+ELSE 'Q4 - ' + CONVERT(varchar, (Year-1))                     
+END        as            
+[Quarter_Year] ,           
+b.STATUS,          
+pp.TITLE AS [Portfolio],                      
+     [Voice of Customer except NPS] =(select case when min(rating)< 3 then 'Red'          
+            when min(rating) = 3 then 'Amber'          
+            when min(rating) = 4 then 'Green'          
+            when min(rating) =5 then 'Blue' end          
+           from css_question_replies r where r.Batch_Customer_Monthly_id = b.id and question_category ='criteria') ,          
+[Voice of Customer - NPS]  = (select case when min(rating)< 9 then 'Red'          
+            when   min(rating) >= 9 then 'Green'           
+           else null end          
+           from css_question_replies r where r.Batch_Customer_Monthly_id = b.id and question_category ='NPS'),          
+                     
+                
+(SELECT                      
+E.FRST_NM                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_DM_EMP_ID                      
+WHERE project.PROJ_ID = p.PROJ_ID)                      
+AS [Customer Success Manager],             
+(SELECT                      
+E.EMAIL_ID                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_DM_EMP_ID                      
+WHERE project.PROJ_ID = p.PROJ_ID)                      
+AS [CSM Mail],             
+(SELECT                      
+E.FRST_NM                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                      
+WHERE project.PROJ_ID = p.PROJ_ID)                      
+AS [BU Head],             
+(SELECT                      
+E.EMAIL_ID                      
+FROM project                      
+INNER JOIN EMP_INFO E                      
+ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                      
+WHERE project.PROJ_ID = p.PROJ_ID)                      
+AS [BU Head Mail],            
+--(SELECT                      
+--E.FRST_NM                      
+--FROM project                      
+--INNER JOIN EMP_INFO E                      
+--ON E.EMP_ID = project.PROJ_AM_EMP_ID                      
+--WHERE project.PROJ_ID = B.PROJ_ID)                      
+--AS [ACCOUNT MANAGER],          
+p.PROJ_STATUS,                     
+p.BUSINESS_UNIT AS [BUSSINESS UNIT],                      
+P.CONTRACTING_UNIT AS [CONTRACTING UNIT],                      
+--P.METHODOLOGY AS [METHODOLOGY],                      
+P.DEPARTMENT AS [DEPARTMENT],                
+p.REVENUE_TYPE as [PROJECT TYPE],          
+--P.PROJECT_GROUP [PROJECT GROUP],                      
+--P.COUNTRY [COUNTRY],            
+TotalActionItems = (select count(*) from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1  ),          
+SubmissionCompleted = (select count(*) from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1  and  completion_date is not null and completion_date <getdate()),          
+Planned = (select count(*) from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1  and pa.status  in ('planned')),          
+ Completed =   (select count(*) from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1  and pa.status  in ('Completed')),           
+          
+[CSS - Improvement Plan submission Status] = (select           
+            case when max( PA.TARGET_DATE) is null then 'NA'          
+             when   max(pa.COMPLETION_DATE) is not null and max(pa.status) in ('Completed') then 'green'          
+            when  max(pa.STATUS)   in ('identified') and max(PA.TARGET_DATE) < getdate()   then 'red'          
+              --when max(PA.TARGET_DATE) < getdate()+3 and max(pa.COMPLETION_DATE) is   null then 'amber'          
+              when  max(pa.COMPLETION_DATE) is   null then 'grey'          
+              else 'NA' end           
+            from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1     ),          
+                    
+ [CSS - Improvement Plan Implementation Status] = (select           
+            case when max( PA.PLANNED_TARGET_DATE) is null then 'NA'          
+             when max(PA.PLANNED_TARGET_DATE) < getdate() and max(pa.planned_actual_date) is not null and max(pa.status) in ('Completed') then 'green'          
+         when max(PA.PLANNED_TARGET_DATE) < getdate() and max(pa.status) not in ('Completed')  then 'red'    --and max(pa.planned_actual_date) is   null      
+              --when max(PA.PLANNED_TARGET_DATE) < getdate()+7 and max(pa.planned_actual_date) is   null then 'amber'          
+              when  max(pa.planned_actual_date) is   null then 'grey'          
+              else 'NA' end          
+            from PROJECT_ACTIONITEM PA  where B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1     ),          
+[Voice of Customer url] ='https://csm.gavstech.com/CustomerSuccessSurvey/' + i.survey_Id,          
+          
+--CASE                  
+--WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(day, -7, GETDATE()) AND pa.status IN ('Identified')                  
+--THEN 'Improvement Plan submission Overdue'                  
+--WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(week, -4, GETDATE()) AND pa.status NOT IN ('Completed')                  
+--THEN 'Improvement Plan Completion Overdue'                  
+--ELSE pa.status                   
+--END AS [Action Item Status],                  
+                  
+--PA.description as [Action Item Description],                    
+ACTION_PLAN_SUBMISSION_TARGET_DATE = (select  FORMAT(Max(PA.TARGET_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_MONTHLY_ID = b.ID),                  
+ACTION_PLAN_SUBMISSION_ACTUAL_DATE =  (select  FORMAT(Max(PA.COMPLETION_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_MONTHLY_ID = b.ID),                  
+ACTION_PLAN_COMPLETION_TARGET_DATE = (select  FORMAT(Max(PA.PLANNED_TARGET_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_MONTHLY_ID = b.ID),              
+ACTION_PLAN_COMPLETION_ACTUAL_DATE = (select  FORMAT(Max(PA.PLANNED_ACTUAL_DATE),'yyyy-MM-dd')  from  PROJECT_ACTIONITEM pa where BATCH_CUSTOMER_MONTHLY_ID = b.ID),                
+c.Cust_ID AS [Customer_ID]      ,
+p.PROJ_ID                
+                
+                  
+FROM [CSS_BATCH_CUSTOMER_MONTHLY] b                      
+         
+inner join CSS_SURVEY_ITERATION i on b.SURVEY_ID = i.ID          
+             
+LEFT JOIN PORTFOLIO_PRODUCTS pps   on pps.ID = b.PROD_ID and pps.ISACTIVE  =1          
+         
+left join PRODUCT_RESPONSIBLE prs on b.PROD_ID = prs.PRODUCT_ID and prs.MANAGEMENT_TYPE =7      and  prs.isactive =1  
+LEFT JOIN PROJECT P on  P.PROJ_ID = coalesce(b.PROJ_ID , prs.project_id)            
+LEFT JOIN portfolio_project PR                      
+ON PR.PROJ_ID = P.PROJ_ID and PR.ISACTIVE = 1                    
+LEFT JOIN PORTFOLIO pp                      
+ON pr.PORTFOLIO_ID = pp.ID and pp.ISACTIVE = 1         
+INNER JOIN customer c                  
+ON c.cust_id = b.cust_id                      
+INNER JOIN CSS_BATCH_MONTHLY bt                      
+ON bt.id = b.BATCH_MONTHLY_ID and bt.ISACTIVE = 1                     
+                    
+--LEFT JOIN PROJECT_ACTIONITEM PA                     
+--ON B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1    and pa.description like '%' + qr.question +'%'                
+WHERE     b.ISACTIVE = 1                    
+AND (bt.start_date BETWEEN @StartDate AND @EndDate                      
+OR bt.ENd_date BETWEEN @StartDate AND @EndDate)                        
+)          
+select [Customer Name],           
+ [Type of Account] =  dbo.fn_getTypeOfAccount ([Customer_ID])  ,          
+Project ,          
+      
+Respondent ,        
+[CSS Response %] =  cast( [CSS Recd - Acc Level]/[CSS Sent - Acc Level] *100  as decimal(12,2)),          
+Email_Id ,          
+[CSAT sent Date],          
+[CSAT received Date],           
+         
+[Voice of Customer except NPS] ,          
+[Voice of Customer - NPS] ,        
+   [No of Days Since Feedback Recd] = DATEDIFF(day, [CSAT received Date], getdate()),         
+   [CSS - Improvement Plan submission Status] = case          
+             when TotalActionItems =0 then 'NA'          
+             when DATEDIFF(day, [CSAT received Date], getdate()) > 7           
+             then            
+              case when TotalActionItems = Planned + SubmissionCompleted then 'green'          
+               --when cast(planned + SubmissionCompleted as decimal(12,2)) / cast(TotalActionItems as decimal(12,2)) > .6 then 'amber'          
+               else 'red' end          
+             else           
+              case when Planned =0 then 'grey' else 'green' end          
+              end,          
+[CSS - Improvement Plan Implementation Status]   =  case          
+             when TotalActionItems =0 then 'NA'          
+             when DATEDIFF(day, [CSAT received Date], getdate()) > 28           
+             then            
+              case when TotalActionItems = Completed then 'green'          
+              -- when cast(  Completed as decimal(12,2)) / cast(TotalActionItems as decimal(12,2)) > .6 then 'amber'          
+               else 'red' end          
+             else           
+              case when Completed =0 then 'grey' else 'green' end          
+              end,        
+[Customer Success Manager] ,          
+[CSM Mail],          
+[BU Head],          
+[BU Head Mail],       
+[CONTRACTING UNIT],        
+ [BUSSINESS UNIT] as [BUSINESS UNIT],          
+ Department,          
+PROJ_STATUS ,          
+   [Project Type],          
+ Year_Quarter ,          
+STATUS ,          
+Portfolio,         
+ [Voice of Customer url] ,          
+[ACTION_PLAN_SUBMISSION_TARGET_DATE] ,          
+[ACTION_PLAN_SUBMISSION_ACTUAL_DATE],          
+[ACTION_PLAN_COMPLETION_TARGET_DATE],           
+[ACTION_PLAN_COMPLETION_ACTUAL_DATE],           
+[CSS Sent - Acc Level],          
+[CSS Recd - Acc Level],          
+          
+Customer_ID  ,
+proj_id
+ from cte          
+ORDER BY [Year_Quarter], [Customer Name];                      
+END 
+GO
