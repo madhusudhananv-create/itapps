@@ -17,12 +17,24 @@
           </div>
           <div class="col-lg-5 col-md-5 col-sm-5"></div>
           <div class="col-lg-5 col-md-5 col-sm-5" style="text-align:right">
-            <div style="padding:0 15px">
-              <a *ngIf="!_util.IsGAVS()" class="link" [routerLink]="['/layout/feedback-page', selectedCustomer.cusT_ID]"
-                style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer" matTooltip="Feedback"
-                [matTooltipPosition]="'before'">
-                <img style="width: 20px" src="assets/images/feedback.png">
-              </a>
+            <div style="padding:0 15px"> 
+              <a *ngIf="!_util.IsGAVS()" class="link" 
+              [routerLink]="['/layout/feedback-page', selectedCustomer.cusT_ID]"
+              style="color:steelblue; font-size:100%; margin-right: 1%; cursor: pointer; display: inline-flex; align-items: center;" 
+              matTooltip="Feedback"
+              [matTooltipPosition]="'before'">
+             <img style="width: 200%; height: auto; max-width: 22px; max-height: 22px; vertical-align: middle;" src="assets/images/feedback.png">
+           </a>
+           
+           <a *ngIf="_access.IsAllowed(3,1,'','')" 
+              [routerLink]="['/layout/Voice of customer', selectedCustomer.cusT_ID]"
+              matTooltip="Voice of Customer"
+              [matTooltipPosition]="'before'"
+              style="color:steelblue; font-size:120%; margin-right: 1%; cursor: pointer; display: inline-flex; align-items: center;">
+             <i class="fa fa-list" style="color:#ffd000; font-size: 120%; width: 100%; height: auto; max-width: 22px; max-height: 22px; display: inline-block; text-align: center; vertical-align: middle;"></i>
+           </a>
+           
+
               <i class="fa fa-filter link" (click)="showFilter = !showFilter"
                 style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer"></i>
               <button [disabled]="currIndex == 0" (click)="onPrev()"
