@@ -18,7 +18,7 @@ export class ProcessChecklistMappingComponent implements OnInit {
   selectedProcess: ProcessModelNew;
   selectedProcessArea: ProcessAreaModelNew = new ProcessAreaModelNew();
   selectedServiceArea: ServiceAreaModelNew = new ServiceAreaModelNew();
-
+  processModelDescription: string;
   ProcessAreaList: ProcessAreaModelNew[] = [];
   OriginalProcessAreaList: ProcessAreaModelNew[] = [];
   ProcessList: ProcessModelNew[] = [];
@@ -52,7 +52,6 @@ export class ProcessChecklistMappingComponent implements OnInit {
 
 
 
-
   constructor(private _util: myUtility, private _appservice: AppsService, public dialog: MatDialog) { }
   iEditIndex = -1;
   ngOnInit() {
@@ -64,7 +63,6 @@ export class ProcessChecklistMappingComponent implements OnInit {
     this.getCategory();
     this.getWeightageForAllChecklist();
     this.Service_GetMaturiryLevel();
-
   }
   ngOnChanges() {
     this.Service_GetProcessAreaList();
@@ -185,6 +183,7 @@ export class ProcessChecklistMappingComponent implements OnInit {
       findingstypE_ID: item.findingstypE_ID,
       updateD_NAME: item.updateD_NAME,
       findingtypE_VALUE: item.findingtypE_VALUE,
+      procesS_MODEL_DESCRIPTION: item.procesS_MODEL_DESCRIPTION,
     }));
   }
 
@@ -196,24 +195,23 @@ export class ProcessChecklistMappingComponent implements OnInit {
       return "";
   }
   previewChecklistData: any[] = [];
-
   PreviewChecklist() {
-
     if (this.selectedChecklist === undefined || this.selectedChecklist.id == undefined || this.selectedChecklist.id == 0) {
       alert("Please select a checklist to preview");
       return;
     }
     this._appservice.GetPreviewChecklist(this.selectedChecklist.id).subscribe(data => {
       this.previewChecklistData = data;
-
       this.openPopup();
+     
     },
       (error) => this._util.serviceError(error));
   }
-
+ 
   openPopup() {
+   
     const dialogConfig = new MatDialogConfig();
-    dialogConfig.autoFocus = true;
+    dialogConfig.autoFocus = true;  
     dialogConfig.data = {
       'previewData': this.previewChecklistData,
       'checklistName': this.selectedChecklist.title,
@@ -221,6 +219,7 @@ export class ProcessChecklistMappingComponent implements OnInit {
       'effectivE_FROM': this.selectedChecklist.effectivE_FROM,
       'iS_WEIGHTAGE_APPLICABLE': this.selectedChecklist.iS_WEIGHTAGE_APPLICABLE,
       'iS_MATURITY_APPLICABLE': this.selectedChecklist.maturitY_LEVEL,
+      'process_Model_description': this.selectedChecklist.procesS_MODEL_DESCRIPTION,
     }
     dialogConfig.height = "90%";
     dialogConfig.width = "90%"
@@ -228,6 +227,10 @@ export class ProcessChecklistMappingComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
     });
   }
+
+
+ 
+
 
   getglobalCategoryName(categoryid) {
     let element = this.category.find(x => x.id == categoryid);

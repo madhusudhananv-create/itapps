@@ -120,7 +120,8 @@
           <td style="text-align: center"
             [ngStyle]=" {'font-weight' : (ind == selectedRow && quesind == selectedQuest) ? 'bold' :'normal' ,'font-size' :(ind == selectedRow && quesind == selectedQuest) ? '14px' : 'normal', 'background-color' : (ind == selectedRow && quesind == selectedQuest) ? '#d6d3ce' :'white'} ">
             <div style="display: flex; margin-left: 55px">
-              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' || getAuditeeResponse(find.id) == 'Rejected-Complet'
+              <div
+                *ngIf="getAuditeeResponse(find.id) == 'Accept' || getAuditeeResponse(find.id) == 'Rejected-Complet'
                   || (getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376')
                   || (getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969')"
                 style="margin-right: 4px;">
@@ -265,7 +266,18 @@
                   <tr *ngFor="let st of findingStatus.capA_SUBMISSION.capa;let i = index">
 
                     <td>{{i+1}}</td>
-                    <td>{{st.cappalist.rooT_CAUSE}}</td>
+                    <td>
+                      <mat-form-field  
+                      *ngIf="st.cappalist.rooT_CAUSE === 'Other'; else showRootCause"
+                        style="width :98%">    
+                        <span matPrefix class="rootCauseOther">{{st.cappalist.rooT_CAUSE}} - </span>                   
+                        <textarea  class="rootCause" name="rootcausE_OTHER{{i}}" matInput [disabled]="st.cappalist.issubmitted"
+                         [(ngModel)]="st.cappalist.rootcausE_OTHER"></textarea>                         
+                      </mat-form-field>
+                      <ng-template #showRootCause>
+                        {{st.cappalist.rooT_CAUSE}}
+                      </ng-template>
+                    </td>
                     <td>
                       <mat-form-field style="width: 50px;">
                         <mat-select name="rootCause{{i}}" [(ngModel)]="st.cappalist.isrootcause"
@@ -360,7 +372,9 @@
               <tr *ngFor="let st of findingStatus.capA_REVIEW.capa;let i = index">
 
                 <td>{{i+1}}</td>
-                <td>{{st.rooT_CAUSE}}</td>
+                <td>
+                  {{ st.rooT_CAUSE === 'Other' ? (st.rooT_CAUSE + ' - ' + st.rootcausE_OTHER) : st.rooT_CAUSE }}
+                </td>             
                 <td>
                   {{getRootCauseVal(st.isrootcause)}}
                 </td>
@@ -441,7 +455,9 @@
               <tr *ngFor="let st of findingStatus.caP_IMPLEMENTATION.capa;let i = index">
 
                 <td>{{i+1}}</td>
-                <td>{{st.capadata.rooT_CAUSE}}</td>
+                <td>
+                  {{ st.capadata.rooT_CAUSE === 'Other' ? (st.capadata.rooT_CAUSE + ' - ' + st.capadata.rootcausE_OTHER) : st.capadata.rooT_CAUSE }}
+                </td>
                 <td>
                   {{getRootCauseVal(st.capadata.isrootcause)}}
                 </td>
@@ -521,7 +537,9 @@
             <tr *ngFor="let st of findingStatus.caP_VERIFICATION.capa;let i = index">
 
               <td>{{i+1}}</td>
-              <td>{{st.capadata.rooT_CAUSE}}</td>
+              <td>
+                {{ st.capadata.rooT_CAUSE === 'Other' ? (st.capadata.rooT_CAUSE + ' - ' + st.capadata.rootcausE_OTHER) : st.capadata.rooT_CAUSE }}
+              </td>
               <td>
                 {{getRootCauseVal(st.capadata.isrootcause)}}
               </td>

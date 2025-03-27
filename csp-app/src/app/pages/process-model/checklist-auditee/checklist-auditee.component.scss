@@ -1,4 +1,4 @@
-div
+div,.rootCause,.rootCauseOther
 {
    font-family: calibri; 
 }
@@ -71,10 +71,15 @@ div
     
   }
 
-  .example-margin {
+  .example-margin,.rootCause {
     margin: 0 12px;
   }
-
-
+  .rootCause,.rootCauseOther{
+    font-size: 12px;
+  }
+  .rootCauseOther {
+    position: relative;
+    top: -14px;
+  }
  
   

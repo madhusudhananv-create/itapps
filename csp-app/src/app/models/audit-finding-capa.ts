@@ -22,4 +22,5 @@ export class AuditFindingCappa {
     issaved:boolean;
     isactive:boolean;
     kpI_ACTUAL_ID :number;
+    rootcausE_OTHER:string;
 }

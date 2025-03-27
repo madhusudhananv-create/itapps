@@ -17,14 +17,15 @@ export class ChecklistModel {
     iS_APPROVED: boolean;
     iS_CHECKED: boolean = false;
     correctivE_ACTION_TRACKING: Boolean;
-    findingstypE_ID : number;
+    findingstypE_ID: number;
     updateD_NAME: string;
     findingtypE_VALUE: string;
+    procesS_MODEL_DESCRIPTION: string;
 }
 
 export class ChecklistQuestionsModelNew {
     id: number;
-    displaY_ORDER : number;
+    displaY_ORDER: number;
     checklisT_ID: number;
     title: string;
     version: number;
@@ -78,18 +79,18 @@ export class PM_MATURITYLEVEL_MAPPING {
 
 export class AuditCheckListWeightage {
     id: number;
-    checklisT_ID:number;
+    checklisT_ID: number;
     weightagE_ID: number;
     weightagE_TITLE: string;
     createD_BY: string = localStorage.getItem('empid');
     createD_DATE: Date = new Date();
     updateD_BY: string = localStorage.getItem('empid');
     updateD_DATE: Date = new Date();
-    isactive: boolean = true;    
+    isactive: boolean = true;
     weightagE_SCORE: number;
     iS_CHECKED: boolean = true;
     iS_USED_IN_SUMBITTED_ASSESSMENT: boolean = false;
-   
+
 }
 
 export class AuditStatusList {
