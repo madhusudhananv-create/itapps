@@ -1329,6 +1329,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 fcap.ROOT_CAUSE_ID = cap.CAPPALIST.ROOT_CAUSE_ID;
                 fcap.UPDATED_BY = empId;
                 fcap.UPDATED_DATE = DateTime.Now;
+                fcap.ROOTCAUSE_OTHER = cap.CAPPALIST.ROOTCAUSE_OTHER;
                 CSPdb.AUDIT_FINDINGS_CAPA.Add(fcap);
                 if (cap.CAPPALIST.STATUS == "Corrective Action Plan Submitted")
                     enableCAPReview(cap);
@@ -2855,18 +2856,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetChecklistList()
         {
-            List<PM_CHECKLIST> checklist = CSPdb.PM_CHECKLIST.GetAll().Where(t => t.ISACTIVE).OrderBy(t => t.TITLE).ToList();
-            List<EMP_INFO> empInfo = Cldb.EMP_INFO.GetAll().ToList();
-
+            var checklist = CSPdb.PM_CHECKLIST.GetAll().Where(t => t.ISACTIVE).OrderBy(t => t.TITLE).ToList();
+            var empIds = checklist.Select(c => c.UPDATED_BY).ToList();
+            var empInfo = Cldb.EMP_INFO.GetAll().Where(x => empIds.Contains(x.EMP_ID)).ToList();
+            var processModelIds = checklist.Select(c => c.PROCESS_MODEL_ID).ToList();
+            var processModel = CSPdb.PROCESS_MODEL.GetAll().Where(x => processModelIds.Contains(x.ID) && x.ISACTIVE).ToList();
             if (checklist.Count > 0)
             {
                 checklist.ForEach(x =>
                 {
                     //int intEmpId = 0;
                     //if (int.TryParse(x.UPDATED_BY, out intEmpId))
-                    var emp = empInfo.FirstOrDefault(y => y.EMP_ID == x.UPDATED_BY);
-                    if (emp != null)
-                        x.UPDATED_NAME = emp.FRST_NM;
+                    x.UPDATED_NAME = empInfo.FirstOrDefault(y => y.EMP_ID == x.UPDATED_BY)?.FRST_NM;
+                    x.PROCESS_MODEL_DESCRIPTION = processModel.FirstOrDefault(p => p.ID == x.PROCESS_MODEL_ID)?.DESCRIPTION ?? "N/A";
+
                 });
             }
             return Ok(checklist);

@@ -13961,6 +13961,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ext.UNIQUE_ID = c.UNIQUE_ID;
                 ext.UPDATED_BY = c.UPDATED_BY;
                 ext.UPDATED_DATE = c.UPDATED_DATE;
+                ext.ROOTCAUSE_OTHER = c.ROOTCAUSE_OTHER;
                 extList.Add(ext);
             }
 
@@ -26154,15 +26155,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return;
             string emailSubject = string.Empty;
             string ccmail = string.Empty;
-            string mailContent;          
+            string mailContent;
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CUSTOMER_NAME", projVals.FirstOrDefault()?.CUST_NM ?? string.Empty);
             EmailContentValues.Add("UPDATED_BY", GetEmployeeNamebyId(projVals.FirstOrDefault()?.UPDATED_BY.ToString()) ?? string.Empty);
             EmailContentValues.Add("UPDATED_DATE", projVals.FirstOrDefault()?.UPDATED_DATE.ToString() ?? string.Empty);
             EmailContentValues.Add("CUSTOMER_USER_NAME", custUserName ?? string.Empty);
             EmailContentValues.Add("CUSTOMER_EMAIL_ID", custEmail ?? string.Empty);
-            var newTable = GenerateValuesTable(projVals);           
-            var  oldTable = GenerateValuesTable(oldProjVal);         
+            var newTable = GenerateValuesTable(projVals);
+            var oldTable = GenerateValuesTable(oldProjVal);
             EmailContentValues.Add("OLD_VALUE_TABLE", oldTable);
             EmailContentValues.Add("NEW_VALUE_TABLE", newTable);
             mailContent = helper.GetEmailContent("CustomerDetailsSendAddUpdateNotification.htm", EmailContentValues);

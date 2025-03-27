@@ -36,6 +36,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int?  CAUSE_ID { get; set; }
         public string ROOTCAUSE { get; set; }
 
+        public string ROOTCAUSE_OTHER { get; set; }
+
     }
 
 }
