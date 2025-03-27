@@ -370,27 +370,23 @@ GO
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'PROJECT_ACTIONITEM' AND COLUMN_NAME = 'ROOT_CAUSE')
 BEGIN
-    ALTER TABLE PROJECT_ACTIONITEM ADD ROOT_CAUSE VARCHAR(255);
+    ALTER TABLE PROJECT_ACTIONITEM ADD ROOT_CAUSE VARCHAR(2000) null;
 END
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'PROJECT_ACTIONITEM' AND COLUMN_NAME = 'ACTION_TYPE')
 BEGIN
-    ALTER TABLE PROJECT_ACTIONITEM ADD ACTION_TYPE VARCHAR(255);
+    ALTER TABLE PROJECT_ACTIONITEM ADD ACTION_TYPE VARCHAR(2000) null;
 END
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'PROJECT_ACTIONITEM' AND COLUMN_NAME = 'ACTION_PLAN')
 BEGIN
-    ALTER TABLE PROJECT_ACTIONITEM ADD ACTION_PLAN VARCHAR(255);
+    ALTER TABLE PROJECT_ACTIONITEM ADD ACTION_PLAN VARCHAR(max) null;
 END
 
 /****** Object:  StoredProcedure [dbo].[reports_CSAT_Consolidated]    Script Date: 3/26/2025 12:54:09 PM ******/
 DROP PROCEDURE IF EXISTS [dbo].[reports_CSAT_Consolidated]
 GO
-/****** Object:  StoredProcedure [dbo].[reports_CSAT_Consolidated]    Script Date: 3/26/2025 12:54:09 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+ 
 --[reports_CSAT_Consolidated] '2024-4-1', '2024-6-30'              
 CREATE PROCEDURE [dbo].[reports_CSAT_Consolidated]                     
                     
@@ -730,3 +726,48 @@ proj_id
 ORDER BY [Year_Quarter], [Customer Name];                      
 END 
 GO
+
+
+alter table css_survey_iteration add VALIDITY_DAYS int null
+
+
+Declare @RESOURCEID int = 122
+Declare @EMPID varchar(10) = '104859'
+Declare @RescourceName varchar(250) = 'Customer > Voice of Customer'
+
+If not exists(select 1 from  APP_CONTROLS where RESOURCE_NAME = @RescourceName)
+begin 
+insert into APP_CONTROLS (RESOURCE_ID,RESOURCE_TYPE,RESOURCE_NAME,COMMENTS,CREATED_BY,CREATED_DATE,UPDATED_BY,UPDATED_DATE,ISACTIVE)
+values (@RESOURCEID,'Control',@RescourceName,null,@EMPID,GETDATE(),@EMPID,GETDATE(),1)
+set @RESOURCEID = (select RESOURCE_ID from  APP_CONTROLS where RESOURCE_NAME = @RescourceName )
+end
+
+If not exists(select 1 from  APP_ACCESS_CONTROLS where RESOURCE_ID = @RESOURCEID)
+begin 
+insert into  APP_ACCESS_CONTROLS
+(RESOURCE_ID,ROLE_ID,EMP_ID,CUST_ID,PROJ_ID,COMMENTS,CREATED_BY,UPDATED_BY,VIEW_ACCESS,CREATE_ACCESS,
+EDIT_ACCESS,DELETE_ACCESS,DEFAULT_ACCESS,ISACTIVE,ACCESS_LEVEL,CREATED_DATE,UPDATED_DATE)
+values 
+(@RESOURCEID,1,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,2,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,3,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,4,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,5,'','','',null,@EMPID,@EMPID,1,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,6,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,7,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,8,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,9,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,10,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,11,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,12,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+(@RESOURCEID,13,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate())
+
+End
+
+If not exists (select 1 from  APP_CONTROL_FEATURES where RESOURCE_ID = @RESOURCEID)
+begin 
+insert into  APP_CONTROL_FEATURES (RESOURCE_ID,FEATURE,COMMENTS,CREATED_BY,UPDATED_BY,ISACTIVE,CREATED_DATE,UPDATED_DATE)
+values  
+(@RESOURCEID,'VIEW',null,@EMPID,@EMPID,1,GETDATE(),GETDATE()) 
+End
+Go
