@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild,ElementRef } from '@angular/core';
 import { myUtility } from '../../../Shared/myUtility';
 import { ChangeDetectorRef } from '@angular/core';
 import { MediaMatcher } from '@angular/cdk/layout';
@@ -6,7 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SurveyService } from '../survey.service';
 import { SelectionModel } from '@angular/cdk/collections';
-import { MatDialog, MatDialogConfig, MatDialogRef, MatSort, MatTableDataSource } from '@angular/material';
+import { MatDialog, MatDialogConfig, MatDialogRef, MatSort, MatTableDataSource,MatPaginator } from '@angular/material';
 import { CssBatchMonthlyModel } from '../../../models/css-batch-monthly-model';
 import { CssCustomerVerificationModel } from '../../../models/css-customer-verification-model';
 import { AccessControl } from '../../../Shared/accessControl';
@@ -20,6 +20,10 @@ import { CssBatchModel } from '../../../models/css-batch-model';
 })
 export class SurveySettingsVerificationPageComponent implements OnInit {
   mobileQuery: MediaQueryList;
+  FinalTabData: any[];
+  progress: boolean = false;
+  @ViewChild('tableToExport', { read: ElementRef }) table: ElementRef;
+  @ViewChild('paginatorTable') paginator: MatPaginator;
   private _mobileQueryListener: () => void;
   constructor(public _util: myUtility, changeDetectorRef: ChangeDetectorRef, media: MediaMatcher, private dialog: MatDialog, private surveyService: SurveyService,
     public _access: AccessControl, private _router: Router, private route: ActivatedRoute) {
@@ -164,6 +168,27 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
       newWindow.focus();
     }
   }
+
+  UpdateTable() {
+    this.dataSource = new MatTableDataSource(this.FinalTabData);
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  }
+
+  exportToExcel() {
+    this.progress = true;
+    this.FinalTabData = this.BatchCustomers;
+    if (this.FinalTabData.length > 0) {
+        this.UpdateTable();
+        const getDate = new Date();
+        const fileName = `CSS_Batch_Customers_Monthly${getDate.toLocaleString()}`;
+        this._util.exportToExcel(this.table.nativeElement, fileName);
+        this.progress = false;
+      } else {
+        alert("No records!");
+        this.progress = false;
+      }
+    }
 
 
 

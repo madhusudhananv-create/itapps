@@ -83,16 +83,21 @@
       <div style="float: left; margin-left: 40px;">
         <span style="font-size: 12px; color: #0000FF;">* For all eligible projects Customer has be configured and survey has to be sent. If you want to skip any eligible project please initiate skip CSAT request with reason for approval</span>
       </div>
-      <div style="float: right; margin-right: 10px">
-       
-
-      <button type="submit" class="btn btn-success" [disabled]="isVerificationInProgress" (click)="ApproveOnClick()">Approve</button>
-      <button type="submit" class="btn btn-warning" [disabled]="isVerificationInProgress" style="margin-left: 5px;" (click)="RejectOnClick()">Reject</button>
-      </div>
+      <div style="float: right; margin-right: 10px; display: flex; align-items: center; gap: 10px;">
+        <a class="iconbutton" title="Export to Excel" (click)="exportToExcel()" 
+           style="border: none; background: none; padding: 0; display: flex; align-items: center;">
+            <i class="fa fa-file-excel-o" style="color: #207346; font-size: 22px;"></i>
+        </a>
+    
+        <button type="submit" class="btn btn-success" [disabled]="isVerificationInProgress" (click)="ApproveOnClick()">Approve</button>
+    
+        <button type="submit" class="btn btn-warning" [disabled]="isVerificationInProgress" (click)="RejectOnClick()">Reject</button>
+    </div>
+    
     </div>
     <div style="margin-top: 0px; height: 58%; overflow-y: scroll;">    
       <div class="example-container1" style="margin-top:10px;margin-bottom: 5px">
-        <table mat-table matSort [dataSource]="dataSource" class="table table-bordered" style="font-size:12px; ; margin: 10px; width: 98%!important;">
+        <table #tableToExport mat-table matSort [dataSource]="dataSource" class="table table-bordered" style="font-size:12px; ; margin: 10px; width: 98%!important;">
           <!-- Checkbox Column -->
           <ng-container matColumnDef="select">
             <th mat-header-cell *matHeaderCellDef>
@@ -309,3 +314,5 @@
 </ng-template>
 
 </div>
+
+
