@@ -73,6 +73,7 @@ export class ActionItemsPageComponent implements OnInit {
   isCustomerUpdated: boolean = false;
   maxTargetDate: any;  
   isDescUpdated : boolean = false;
+  originalDescription: string = ""; 
   constructor(private route: ActivatedRoute, private _appservice: AppsService, private _shared: SharedService, private _http: Http, private _util: myUtility,
     private changeDetectorRefs: ChangeDetectorRef, public _access: AccessControl, public dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) private data: any) { }
@@ -116,6 +117,8 @@ export class ActionItemsPageComponent implements OnInit {
     this.getAllActionItemsForCustomer();
     this.getAllProjectsFromCustomer();
     this.Service_CanUpdateToCustomer();
+    this.originalDescription = this.EditActionitem.description;
+
   }
 
   ngAfterViewInit() {
@@ -477,9 +480,10 @@ export class ActionItemsPageComponent implements OnInit {
     this.EditActionitem = new ActionitemModelNew();
     this.isDescUpdated = false;
   }
-  onInputChange(event: string): void {  
-    this.isDescUpdated= true;
+  onInputChange(newValue: string) {  
+    this.isDescUpdated = (newValue && newValue.trim()) !== (this.originalDescription && this.originalDescription.trim() ? this.originalDescription.trim() : "");  
   }
+  
   EditRow_onClick(element) {
     this.csatBased = false;
     this.isDescUpdated = false;
@@ -519,12 +523,13 @@ export class ActionItemsPageComponent implements OnInit {
 
   SendUpdateToCustomer(EditActionitem) {
     this.isCustomerUpdated = true;
-
     if (EditActionitem.originaL_DESCRIPTION == EditActionitem.description) {
       alert('Please update the required details in Description which will be sent as Improvement Plan to Customer and save and continue.');
       this.isCustomerUpdated = false;
       return;
     }
+
+  
     if (EditActionitem.status == 'Identified') {
       alert('Please update the status and save and then send the Update to Customer.');
       this.isCustomerUpdated = false;
