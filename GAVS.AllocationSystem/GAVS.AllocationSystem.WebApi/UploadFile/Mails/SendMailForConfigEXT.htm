@@ -90,6 +90,29 @@
             display: none;
             font-family: "Calibri",sans-serif;
         }
+
+        /* Table styles */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #CCCCFF;
+            font-weight: bold;
+        }
+
+        /* Red text */
+        .red-text {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -103,23 +126,6 @@
     <br />
     <br />
     <p class=MsoNormal>
-        <style>
-            table {
-                border-collapse: collapse;
-                width: 100%;
-            }
-
-            th, td {
-                border: 1px solid black;
-                padding: 8px;
-                text-align: left;
-            }
-
-            th {
-                background-color: #CCCCFF;
-                font-weight: bold;
-            }
-        </style>
         <table>
             <tr>
                 <th>Field</th>
@@ -127,10 +133,11 @@
                 <th>Old Value</th>
             </tr>
 
+            <!-- Note: You'll need to manually add the red-text class to old values that have changed -->
             <tr>
                 <td>Value</td>
                 <td>{{VALUE}}</td>
-                <td>{{OLD_VALUE}}</td>
+                <td class="red-text">{{OLD_VALUE}}</td>
             </tr>
             <tr>
                 <td>Customer</td>
@@ -182,15 +189,13 @@
     <p class=MsoNormal>Regards,</p>
     <div>
         <p class=xmsonormal>
-            <!--<span style='font-size:10.0pt;font-family:"Arial",sans-serif;>
-            </span><br>-->
             <b>
                 <span style='font-size:10.0pt;font-family:"Arial",sans-serif;color:#1F497D'>Quality Assurance</span>
             </b><br>
             <b>
                 <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'> GS Lab | GAVS Technologies Pvt Ltd.</span>
             </b><br>
-            <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>#11 | Old Mahabalipuram Road | Sholinganallur</span><br>
+                <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur</span><br>
             <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>Chennai - 600 119</span><br>
             <b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>Phone:</span></b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>+91 44 66694287</span><br>
             <b><span style='font-size:10.0pt'>Web: </span></b><b><span style='font-size:9.0pt;font-family:"Arial",sans-serif'><a href="http://www.gavstech.com">www.gavstech.com</a></span></b>

@@ -13,15 +13,13 @@
             font-family: Calibri;
             panose-1: 2 15 5 2 2 2 4 3 2 4;
         }
-
         /* Base styles */
         body {
             font-family: "Calibri", sans-serif;
-            font-size: 14pt; /* Increased base font size */
+            font-size: 14pt;
             margin: 0;
             padding: 20px;
         }
-
         /* Simple table styling */
         table {
             border-collapse: collapse;
@@ -51,9 +49,13 @@
             text-align: center;
             font-size: larger;
         }
+        /* Styling for changed values table */
+        .changed-values-table {
+            color: red !important;
+            font-weight: bold !important;
+        }
     </style>
 </head>
-
 <body>
     <p>Hi Team,</p>
     <span style='font-size: larger;'><strong>{{CUSTOMER_NAME}}</strong> contact has been added / updated in CSM PLATFORM - Customer Details Screen</span>
@@ -77,11 +79,10 @@
                             <th>CSAT Survey</th>
                         </tr>
                         {{NEW_VALUE_TABLE}}
-
                     </table>
                 </td>
                 <td>
-                    <table border='0' style='width: 100%;'>
+                    <table border='0' style='width: 100%;' {{IS_CHANGED_ATTRIBUTE}}>
                         <tr>
                             <th>Project</th>
                             <th>CSAT Frequency</th>
@@ -90,18 +91,16 @@
                         </tr>
                         {{OLD_VALUE_TABLE}}
                     </table>
-
                 </td>
             </tr>
         </table>
         <br />
     </p>
-
     <p>Regards,</p>
     <p>
         <b>Quality Assurance</b><br />
         <b>GS Lab | GAVS Technologies Pvt Ltd.</b><br />
-        #11 | Old Mahabalipuram Road | Sholinganallur<br />
+        7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur<br />
         Chennai - 600 119<br />
         <b>Phone:</b> +91 44 66694287<br />
         <b>Web:</b> <a href="http://www.gavstech.com">www.gavstech.com</a>

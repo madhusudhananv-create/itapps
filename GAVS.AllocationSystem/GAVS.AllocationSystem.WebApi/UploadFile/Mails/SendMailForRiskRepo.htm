@@ -90,36 +90,42 @@
             display: none;
             font-family: "Calibri",sans-serif;
         }
+
+        /* Table styles */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #CCCCFF;
+            font-weight: bold;
+        }
+
+        /* Red text for changed values */
+        .red-text {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 
 <body lang=EN-US link=blue vlink="#954F72">
     <p class=MsoNormal>Hi Team,</p>
     <br />
-    One Record has been <strong><span style='font-size: larger;'>{{action}}</span></strong> in Risk Repository
+    One Record has been <strong><span style='font-size: larger;'>{{action}}</span></strong> in configurationEXT table with
     <br />
     <br />
-    
+    <strong><span style='font-size: larger;'>Key: {{KEY}}</span></strong>
     <br />
     <br />
     <p class=MsoNormal>
-        <style>
-            table {
-                border-collapse: collapse;
-                width: 100%;
-            }
-
-            th, td {
-                border: 1px solid black;
-                padding: 8px;
-                text-align: left;
-            }
-
-            th {
-                background-color: #CCCCFF;
-                font-weight: bold;
-            }
-        </style>
         <table>
             <tr>
                 <th>Field</th>
@@ -128,46 +134,44 @@
             </tr>
 
             <tr>
-                <td>Risk Description</td>
-                <td>{{RISK_DESCRIPTION}}</td>
-                <td>{{OLD_RISK_DESCRIPTION}}</td>
+                <td>Value</td>
+                <td>{{VALUE}}</td>
+                <td class="{{VALUE_CHANGED ? 'red-text' : ''}}">{{OLD_VALUE}}</td>
             </tr>
             <tr>
-                <td>Risk Impact</td>
-                <td>{{RISK_IMPACT}}</td>
-                <td>{{OLD_RISK_IMPACT}}</td>
+                <td>Customer</td>
+                <td>{{CUST_ID}}</td>
+                <td class="{{CUST_ID_CHANGED ? 'red-text' : ''}}">{{OLD_CUST_ID}}</td>
             </tr>
             <tr>
-                <td>Likelihood </td>
-                <td>{{LIKELIHOOD}}</td>
-                <td>{{OLD_LIKELIHOOD}}</td>
+                <td>Project </td>
+                <td>{{PROJ_ID}}</td>
+                <td class="{{PROJ_ID_CHANGED ? 'red-text' : ''}}">{{OLD_PROJ_ID}}</td>
             </tr>
             <tr>
-                <td>Consequences</td>
-                <td>{{CONSEQUENCES}}</td>
-                <td>{{OLD_CONSEQUENCES}}</td>
+                <td>Comment</td>
+                <td>{{Comment}}</td>
+                <td class="{{COMMENT_CHANGED ? 'red-text' : ''}}">{{Old_Comment}}</td>
             </tr>
 
             <tr>
-                <td>Risk Treatment Strategy</td>
-                <td>{{RISK_TREATMENT_STRATEGY}}</td>
-                <td>{{OLD_RISK_TREATMENT_STRATEGY}}</td>
+                <td>Description</td>
+                <td>{{Description}}</td>
+                <td class="{{DESCRIPTION_CHANGED ? 'red-text' : ''}}">{{Old_Description}}</td>
             </tr>
+
             <tr>
-                <td>Applicable Service Tower</td>
-                <td>{{ST}}</td>
-                <td>{{OST}}</td>
+                <td>StartDate</td>
+                <td>{{StartDate}}</td>
+                <td class="{{START_DATE_CHANGED ? 'red-text' : ''}}">{{Old_StartDate}}</td>
             </tr>
+
             <tr>
-                <td>Threat</td>
-                <td>{{THREATS}}</td>
-                <td>{{OLD_THREATS}}</td>
+                <td>EndDate</td>
+                <td>{{EndDate}}</td>
+                <td class="{{END_DATE_CHANGED ? 'red-text' : ''}}">{{Old_EndDate}}</td>
             </tr>
-            <tr>
-                <td>Vulnerability</td>
-                <td>{{VULNERABILITIES}}</td>
-                <td>{{OLD_VULNERBILITIES}}</td>
-            </tr>
+
             <tr>
                 <td>Updated Date</td>
                 <td>{{UD}}</td>
@@ -184,15 +188,13 @@
     <p class=MsoNormal>Regards,</p>
     <div>
         <p class=xmsonormal>
-            <!--<span style='font-size:10.0pt;font-family:"Arial",sans-serif;>
-            </span><br>-->
             <b>
                 <span style='font-size:10.0pt;font-family:"Arial",sans-serif;color:#1F497D'>Quality Assurance</span>
             </b><br>
             <b>
                 <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'> GS Lab | GAVS Technologies Pvt Ltd.</span>
             </b><br>
-            <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>#11 | Old Mahabalipuram Road | Sholinganallur</span><br>
+                <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur</span><br>
             <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>Chennai - 600 119</span><br>
             <b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>Phone:</span></b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>+91 44 66694287</span><br>
             <b><span style='font-size:10.0pt'>Web: </span></b><b><span style='font-size:9.0pt;font-family:"Arial",sans-serif'><a href="http://www.gavstech.com">www.gavstech.com</a></span></b>
