@@ -26154,7 +26154,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (projVals == null && projVals.Any())
                 return;
             string emailSubject = string.Empty;
-            string ccmail = string.Empty;
             string mailContent;
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CUSTOMER_NAME", projVals.FirstOrDefault()?.CUST_NM ?? string.Empty);
@@ -26185,16 +26184,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     break;
 
             }
-
-            var csmMails = helper.GetCSMMailsFromAccount(projVals.FirstOrDefault().CUST_ID);
-            var pmMails = helper.GetPMMailsFromAccount(projVals.FirstOrDefault().CUST_ID);
-
+            var projectIds = projVals.Select(p => p.PROJ_ID).ToList();
+            var csmMails = helper.GetCSMMailsFromSelectedProjects(projectIds);
+            var pmMails = helper.GetPMMailsFromSelectedProjects(projectIds);
             var toMailList = new List<string>();
-            toMailList.AddRange(csmMails);
-            toMailList.AddRange(pmMails);
-            toMailList.Add(Constants.DEVX_LEAD);
-
+            toMailList.Add(csmMails);
+            toMailList.Add(pmMails);
+            //toMailList.Add(Constants.DEVX_LEAD);
             var toMail = helper.ConcatEmails(toMailList);
+            var ccmail = Constants.PREMIER_QUALITY_TEAM;
             var ep = new EmailProvider(Cldb, CSPdb);
             if (string.IsNullOrWhiteSpace(toMail)) toMail = _email;
             ep.SendEmail

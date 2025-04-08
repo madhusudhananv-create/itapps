@@ -121,6 +121,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
+        public string GetCSMMailsFromSelectedProjects(List<string> projectIds)
+        {
+            if (projectIds == null || !projectIds.Any())
+                return string.Empty;
+
+            
+            var csmIds = Cldb.PROJECT.GetAll().Where(x => projectIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_DM_EMP_ID ).ToList();
+            var csmEmails = Cldb.EMP_INFO.GetAll().Where(x => csmIds.Contains(x.EMP_ID) && x.DOR == null).Select(x => x.EMAIL_ID).ToList();
+            return string.Join(",", csmEmails);
+        }
+
+        public string GetPMMailsFromSelectedProjects(List<string> projectIds)
+        {
+            if (projectIds == null || !projectIds.Any())
+                return string.Empty;
+
+            var pmIds = Cldb.PROJECT.GetAll().Where(x => projectIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_PM_EMP_ID).ToList();
+            var pmEmails = Cldb.EMP_INFO.GetAll().Where(x => pmIds.Contains(x.EMP_ID)).Select(x => x.EMAIL_ID).ToList();
+            return string.Join(",", pmEmails);
+
+        }
+
         [Obsolete("DO not use this method. Affecting Performance due to multiple DB calls.")]
         public string GetCSMMailsFromProduct(int prodId)
         {
