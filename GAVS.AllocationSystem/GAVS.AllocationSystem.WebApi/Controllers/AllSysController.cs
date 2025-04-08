@@ -26192,7 +26192,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             toMailList.Add(pmMails);
             //toMailList.Add(Constants.DEVX_LEAD);
             var toMail = helper.ConcatEmails(toMailList);
-            var ccmail = Constants.PREMIER_QUALITY_TEAM;
+            var ccmail = IsPremier(projVals.FirstOrDefault().CUST_ID) ? Constants.PREMIER_QUALITY_TEAM : Constants.QUALITY_MAIL;
             var ep = new EmailProvider(Cldb, CSPdb);
             if (string.IsNullOrWhiteSpace(toMail)) toMail = _email;
             ep.SendEmail
