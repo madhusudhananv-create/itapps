@@ -307,6 +307,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             int categoryId = TASK_CATEGORY_ONBOARDNING_PROJECT;
             string taskDesc = TASK_DESC_STARTUP_AUDIT;
+            var existing = CSPdb.TASK.GetAll().Where(x => x.PROJ_ID == item.PROJ_ID && x.DESCRIPTION == taskDesc && x.TASK_CATEGORY_ID == categoryId).ToList();
+            if (existing.Any()) return string.Empty;
             return CreateTaskAudit(item, taskDesc, categoryId, DateTime.Today);
         }
 
@@ -371,7 +373,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CUST_ID = item.CUST_ID,
                 PROJ_ID = projId,
                 SCHEDULED_DURATION = 1,
-                OWNER = item.CREATED_BY,
+                OWNER = item.PROJ_PM_EMP_ID,
                 IS_DRAFT = false
             };
             var auditeeEmpId = new List<string>() { item.PROJ_PM_EMP_ID };
