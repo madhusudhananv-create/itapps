@@ -12,7 +12,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string TITLE { get; set; }
         public string DESCRIPTION { get; set; }
         public string IMPACT_SUMMARY { get; set; }
-        public Boolean IS_POTENTIAL_RISK { get; set; }
+        public bool? IS_POTENTIAL_RISK { get; set; }
         public string BUSINESS_IMPACT { get; set; }
         public string GEO_LOCATION { get; set; }
         public string ISSUE_TYPE { get; set; }

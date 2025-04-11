@@ -57,11 +57,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.TITLE = results.TITLE;
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.IMPACT_SUMMARY = results.IMPACT_SUMMARY;
-                overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK;
-                if (results.IS_POTENTIAL_RISK)
-                {
-                  
-                }
+                overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK.HasValue ? results.IS_POTENTIAL_RISK.Value : (bool?)null;
+                //if (results.IS_POTENTIAL_RISK.HasValue && results.IS_POTENTIAL_RISK.Value)
+                //{
+
+                //}
                 overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
                 overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
                 overview.GEO_LOCATION = results.GEO_LOCATION;
@@ -138,14 +138,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             subject = $"New Issue Identified - Project: {projectName}; Customer: {customerName}";
             ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, qualitySpoc });
+            var isPotentialRiskValue = string.Empty;
+            if (overview.IS_POTENTIAL_RISK.HasValue)
+            {
+                isPotentialRiskValue = overview.IS_POTENTIAL_RISK.Value ? "YES" : "NO";
+            }
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("Project Name", projectName);
             EmailContentValues.Add("Issue Description", overview.DESCRIPTION);
             EmailContentValues.Add("Impact Summary", overview.IMPACT_SUMMARY);
-            EmailContentValues.Add("Is Potential Risk", overview.IS_POTENTIAL_RISK ? YES : NO);
+            EmailContentValues.Add("Is Potential Risk", isPotentialRiskValue);
             EmailContentValues.Add("Business Impact", string.IsNullOrWhiteSpace(overview.BUSINESS_IMPACT) ? "-" : overview.BUSINESS_IMPACT);
-
             EmailContentValues.Add("Location", overview.LOCATION_SELECTION + " " + (overview.GEO_LOCATION ?? ""));
             EmailContentValues.Add("Issue Type", overview.ISSUE_TYPE);
             EmailContentValues.Add("Severity", overview.SEVERITY);
@@ -204,16 +208,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.ISSUE_TYPE = results.ISSUE_TYPE;
                 overview.IMPACT_SUMMARY = results.IMPACT_SUMMARY;
-                overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK;
-                if (results.IS_POTENTIAL_RISK)
+                overview.IS_POTENTIAL_RISK = results.IS_POTENTIAL_RISK.HasValue ? results.IS_POTENTIAL_RISK.Value : (bool?)null;
+                if (results.IS_POTENTIAL_RISK.HasValue && results.IS_POTENTIAL_RISK.Value)
                 {
                     overview.BUSINESS_IMPACT = results.BUSINESS_IMPACT;
-                  
+
                 }
                 else
                 {
                     overview.BUSINESS_IMPACT = null;
-                   
+
                 }
                 overview.BUSINESS_IMPACT_DESC = results.BUSINESS_IMPACT_DESC;
                 overview.SEVERITY = results.SEVERITY;
