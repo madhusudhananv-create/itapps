@@ -338,19 +338,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var auditorEmpId = string.Empty;
             string taskDescNew = string.Empty;
             var strMessage = string.Empty;
+            var defaultAuditor = helper.GetDBConfig("DEFAULT_CLOSURE_AUDITOR", item.CUST_ID);
             if (categoryId == TASK_CATEGORY_OFFBOARDNING_PROJECT)
             {
-                auditorEmpId = helper.GetDBConfig("DEFAULT_CLOSURE_AUDITOR", item.CUST_ID);
+                auditorEmpId = defaultAuditor;
                 taskDescNew = TASK_DESC_CLOSURE_AUDIT;
             }
             else if (categoryId == TASK_CATEGORY_MATURITY_LEVEL)
             {
-                auditorEmpId = helper.GetDBConfig("DEFAULT_HEALTHCHECK_AUDITOR", item.CUST_ID);
+                auditorEmpId = defaultAuditor;
                 taskDescNew = TASK_DESC_MATURITY_LEVEL;
             }
             else if (categoryId == TASK_CATEGORY_ONBOARDNING_PROJECT)
             {
-                auditorEmpId = helper.GetDBConfig("DEFAULT_STARTUP_AUDITOR", item.CUST_ID);
+                auditorEmpId = defaultAuditor;
                 taskDescNew = TASK_DESC_STARTUP_AUDIT;
             }
             if (string.IsNullOrWhiteSpace(taskDesc))
@@ -373,7 +374,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CUST_ID = item.CUST_ID,
                 PROJ_ID = projId,
                 SCHEDULED_DURATION = 1,
-                OWNER = item.PROJ_PM_EMP_ID,
+                OWNER = defaultAuditor,
                 IS_DRAFT = false
             };
             var auditeeEmpId = new List<string>() { item.PROJ_PM_EMP_ID };
