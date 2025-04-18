@@ -286,5 +286,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         List<CSS_CUSTOMER_VERIFICATION> GetCSSForVerification(DateTime startDate, DateTime endDate);
 
+        List<AllProcessList> GetProcessModelListByProcessAreaIds(string processAreaIds);
+
     }
 }

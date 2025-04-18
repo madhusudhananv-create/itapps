@@ -1252,10 +1252,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             public string PROCESS_AREA_NAME { get; set; }
             public int PROCESS_AREA_ID { get; set; }
-            public QUESTIONS_BY_PROCESS_AREA(int id, string title)
+            public string PROCESS_MODEL { get; set; }
+
+            public QUESTIONS_BY_PROCESS_AREA(int id, string title, string processModel = "")
             {
                 this.PROCESS_AREA_ID = id;
                 this.PROCESS_AREA_NAME = title;
+                this.PROCESS_MODEL = processModel;
                 this.QUESTIONS_BY_PROCESS = new List<QUESTIONS_BY_PROCESS>();
             }
             public List<QUESTIONS_BY_PROCESS> QUESTIONS_BY_PROCESS { get; set; }

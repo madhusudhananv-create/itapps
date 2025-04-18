@@ -10,10 +10,10 @@ namespace GAVS.AllocationSystem.Model.CSP
 {
     public class PM_PROCESS_QUESTIONS_MAPPING : EntityBase
     {
-       
+
         public int QUESTION_ID { get; set; }
         public int PROCESS_ID { get; set; }
-       
+
         public int CHECKLIST_ID { get; set; }
 
         public int SERVICE_AREA_ID { get; set; }
@@ -40,5 +40,6 @@ namespace GAVS.AllocationSystem.Model.CSP
         public decimal? WEIGHTAGE_SCORE { get; set; }
         public string CATEGORY { get; set; }
         public string MATURITY_LEVEL { get; set; }
+        public string PROCESS_MODEL { get; set; }
     }
 }

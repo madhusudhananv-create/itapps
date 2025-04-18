@@ -2348,5 +2348,13 @@ namespace GAVS.AllocationSystem.Data
             var cssVerificationDetails = context.Database.SqlQuery<CSS_CUSTOMER_VERIFICATION>("[dbo].[CSS_Readiness_Report] @StartDate, @EndDate", param1, param2).ToList();
             return cssVerificationDetails;
         }
+
+        public List<AllProcessList> GetProcessModelListByProcessAreaIds(string processAreaIds)
+        {
+            var dbContext = new CSPDbContext();
+            SqlParameter param1 = new SqlParameter("@processAreaIds", processAreaIds);
+            var QueryResult = dbContext.Database.SqlQuery<AllProcessList>("[dbo].[getProcessModelListByProcessAreaIds] @processAreaIds",param1).ToList();
+            return QueryResult;
+        }
     }
 }

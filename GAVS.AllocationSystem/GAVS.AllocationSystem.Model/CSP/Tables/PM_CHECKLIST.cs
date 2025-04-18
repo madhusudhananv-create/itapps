@@ -33,8 +33,6 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int? FINDINGSTYPE_ID { get; set; }
         [NotMapped]
         public string UPDATED_NAME { get; set; }
-        [NotMapped]
-        public string PROCESS_MODEL_DESCRIPTION { get; set; }
         public object Clone()
         {
             return this.MemberwiseClone();

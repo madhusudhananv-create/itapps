@@ -2647,6 +2647,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var weightages = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE.GetAll().Where(x => x.ISACTIVE).ToList();
 
             var checklistMappingsExt = new List<PM_PROCESS_QUESTIONS_MAPPING_EXT>();
+            string processAreaIds = string.Join(",", checklistMappings.Select(t => t.PROCESS_AREA_ID).Distinct().ToList());
+            var processModelList = CSPdb.AppRepo.GetProcessModelListByProcessAreaIds(processAreaIds).ToList();
             var output = new List<QUESTIONS_BY_SERVICE_AREA>();
 
             foreach (var row in checklistMappings)
@@ -2654,10 +2656,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var newRow = new PM_PROCESS_QUESTIONS_MAPPING_EXT();
                 newRow.CHECKLIST_ID = row.CHECKLIST_ID;
                 // newRow.IS_MATURITY_APPLICABLE = maturityapplicable;
-                // newRow.IS_WEIGHTAGE_APPLICABLE = weightageapplicable;
                 newRow.PROCESS_ID = row.PROCESS_ID;
+                // newRow.IS_WEIGHTAGE_APPLICABLE = weightageapplicable;
                 newRow.QUESTION_ID = row.QUESTION_ID;
                 newRow.PROCESS_AREA_ID = row.PROCESS_AREA_ID;
+                newRow.PROCESS_MODEL = processModelList.Where(pm => pm.PROCESS_AREA_ID == row.PROCESS_AREA_ID).Select(pm => pm.PROCESS_MODEL_NAME).FirstOrDefault() ?? string.Empty;
                 newRow.SERVICE_AREA_ID = row.SERVICE_AREA_ID;
                 newRow.DISPLAY_ORDER = row.DISPLAY_ORDER;
                 GetServiceAreaForProcess(newRow);
@@ -2678,7 +2681,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var serviceAreaRec = output.Find(x => x.SERVICE_AREA_ID == row.SERVICE_AREA_ID);
 
                 if (!serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Any(x => x.PROCESS_AREA_ID == row.PROCESS_AREA_ID))
-                    serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Add(new QUESTIONS_BY_PROCESS_AREA(row.PROCESS_AREA_ID, row.PROCESS_AREA_NAME));
+                    serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Add(new QUESTIONS_BY_PROCESS_AREA(row.PROCESS_AREA_ID, row.PROCESS_AREA_NAME, row.PROCESS_MODEL ));
 
                 var processAreaRec = serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Find(x => x.PROCESS_AREA_ID == row.PROCESS_AREA_ID);
 
@@ -2859,16 +2862,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var checklist = CSPdb.PM_CHECKLIST.GetAll().Where(t => t.ISACTIVE).OrderBy(t => t.TITLE).ToList();
             var empIds = checklist.Select(c => c.UPDATED_BY).ToList();
             var empInfo = Cldb.EMP_INFO.GetAll().Where(x => empIds.Contains(x.EMP_ID)).ToList();
-            var processModelIds = checklist.Select(c => c.PROCESS_MODEL_ID).ToList();
-            var processModel = CSPdb.PROCESS_MODEL.GetAll().Where(x => processModelIds.Contains(x.ID) && x.ISACTIVE).ToList();
             if (checklist.Count > 0)
             {
                 checklist.ForEach(x =>
                 {
                     //int intEmpId = 0;
                     //if (int.TryParse(x.UPDATED_BY, out intEmpId))
-                    x.UPDATED_NAME = empInfo.FirstOrDefault(y => y.EMP_ID == x.UPDATED_BY)?.FRST_NM;
-                    x.PROCESS_MODEL_DESCRIPTION = processModel.FirstOrDefault(p => p.ID == x.PROCESS_MODEL_ID)?.DESCRIPTION ?? "N/A";
+                    x.UPDATED_NAME = empInfo.FirstOrDefault(y => y.EMP_ID == x.UPDATED_BY)?.FRST_NM;                  
 
                 });
             }
