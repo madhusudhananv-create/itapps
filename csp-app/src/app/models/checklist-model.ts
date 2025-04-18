@@ -20,7 +20,6 @@ export class ChecklistModel {
     findingstypE_ID: number;
     updateD_NAME: string;
     findingtypE_VALUE: string;
-    procesS_MODEL_DESCRIPTION: string;
 }
 
 export class ChecklistQuestionsModelNew {

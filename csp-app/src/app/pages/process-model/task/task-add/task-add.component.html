@@ -210,8 +210,8 @@
   </div>
 
 </div>
-<div class="row bg1" *ngIf="!_taskService.isAuditTask()">
-  <div class="col-lg-2 col-md-2 col-sm-2">Responsible for Execution:</div>
+<div class="row bg1" *ngIf="!_taskService.isAuditTask() || _taskService.selectedTask.owner">
+  <div class="col-lg-2 col-md-2 col-sm-2" *ngIf="_taskService.selectedTask.isOwner || _taskService.selectedTask.assigneD_TO">Responsible for Execution:</div>
   <div class="col-lg-10 col-md-10 col-sm-10">
     <div style="width: 70%" *ngIf="!_taskService.selectedTask.isEmpSelVisible">
       {{ _taskService.selectedTask.empName}} &nbsp;

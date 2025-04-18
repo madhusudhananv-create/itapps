@@ -14,7 +14,6 @@ export class PreviewPopupComponent implements OnInit {
   effectivefrom: Date;
   isweightageApplicable : boolean;
   ismaturityApplicable : boolean;
-  processModelDescription : string;
   constructor(@Inject(MAT_DIALOG_DATA) public data: any, private dialogRef: MatDialogRef<PreviewPopupComponent>, private _util: myUtility) {
     if(data != null)
     {
@@ -25,7 +24,6 @@ export class PreviewPopupComponent implements OnInit {
       this.effectivefrom = data.effectivE_FROM;
       this.isweightageApplicable = data.iS_WEIGHTAGE_APPLICABLE;
       this.ismaturityApplicable = data.iS_MATURITY_APPLICABLE;
-      this.processModelDescription = data.process_Model_description;
     }
    }
 

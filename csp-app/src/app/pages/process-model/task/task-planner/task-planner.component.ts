@@ -294,7 +294,7 @@ export class TaskPlannerComponent implements OnInit {
         this._taskService.selectedTask.reschedulE_REASON_PREV = this._taskService.selectedTask.reschedulE_REASON;
         this._taskService.selectedTask.reschedulE_REQUESTER_PREV = this._taskService.selectedTask.reschedulE_REQUESTER;
       }
-      this._taskService.selectedTask.isAllDisabled = this._taskService.selectedTask.status === "COMPLETED" || !owner;
+      this._taskService.selectedTask.isAllDisabled = this._taskService.selectedTask.status === "COMPLETED" || (!owner && !assigned);
       this._taskService.selectedTask.isOwner = owner;
       this._taskService.selectedTask.moreText = "More Details...";
       this._taskService.LoadServiceAreaProjectMapping();

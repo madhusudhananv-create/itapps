@@ -183,7 +183,6 @@ export class ProcessChecklistMappingComponent implements OnInit {
       findingstypE_ID: item.findingstypE_ID,
       updateD_NAME: item.updateD_NAME,
       findingtypE_VALUE: item.findingtypE_VALUE,
-      procesS_MODEL_DESCRIPTION: item.procesS_MODEL_DESCRIPTION,
     }));
   }
 
@@ -219,7 +218,6 @@ export class ProcessChecklistMappingComponent implements OnInit {
       'effectivE_FROM': this.selectedChecklist.effectivE_FROM,
       'iS_WEIGHTAGE_APPLICABLE': this.selectedChecklist.iS_WEIGHTAGE_APPLICABLE,
       'iS_MATURITY_APPLICABLE': this.selectedChecklist.maturitY_LEVEL,
-      'process_Model_description': this.selectedChecklist.procesS_MODEL_DESCRIPTION,
     }
     dialogConfig.height = "90%";
     dialogConfig.width = "90%"
