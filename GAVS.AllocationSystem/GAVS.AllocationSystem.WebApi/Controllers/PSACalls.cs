@@ -1474,14 +1474,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             try
             {
-                string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + status.ID;
-                var restClient = new RestClient(serverURL);
-                var restRequest = new RestRequest(serverURL, Method.PATCH);
+                //string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + status.ID;
+                //var restClient = new RestClient(serverURL);
+                //var restRequest = new RestRequest(serverURL, Method.PATCH);
 
-                var jContent = "{ \"CSMApprovalDate\":null, \"CSMRejectionDate\": \"" + status.CSMRejectionDate.Value.ToString("yyy-MM-dd") + "\",  \"CSMRejectionComments\": \"" + status.CSMRejectionComments + "\"}";
-                restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
-                if (!string.IsNullOrWhiteSpace(status.ID))
-                    CreatePSATimesheetSync(status.ID, jContent, true, emp);
+                //var jContent = "{ \"CSMApprovalDate\":null, \"CSMRejectionDate\": \"" + status.CSMRejectionDate.Value.ToString("yyy-MM-dd") + "\",  \"CSMRejectionComments\": \"" + status.CSMRejectionComments + "\"}";
+                //restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
+                //if (!string.IsNullOrWhiteSpace(status.ID))
+                //    CreatePSATimesheetSync(status.ID, jContent, true, emp);
 
 
                 //if (IsPSASyncNeeded())
@@ -1515,32 +1515,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 try
                 {
-                    string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + item.PSA_ID;
-                    var restClient = new RestClient(serverURL);
-                    var restRequest = new RestRequest(serverURL, Method.PATCH);
-                    //var jContent = "{ \"CSMApprovalDate\":null, \"CSMRejectionDate\": \"" + status.CSMRejectionDate + "\",  \"CSMRejectionComments\": \"" + status.CSMRejectionComments + "\"}";
-                    var jContent = item.JSON_CONTENT;
-                    restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
-                    IRestResponse<object> result = restClient.Execute<object>(restRequest);
-                    if (item.ISREJECT.GetValueOrDefault())
-                        LogRequest(prefix: $"CUSTOMER REJECT - {item.PSA_ID}:");
-                    else
-                        LogRequest(prefix: $"CUSTOMER APPROVE - {item.PSA_ID}:");
-                    dynamic jsonContent = JsonConvert.DeserializeObject(result.Content);
-                    string text = jsonContent.StatusCode;
-                    if (!string.IsNullOrWhiteSpace(text) && text.ToUpper() == "SUCCESS")
-                    {
-                        item.SYNCED = true;
-                        item.ERROR = null;
+                    //string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + item.PSA_ID;
+                    //var restClient = new RestClient(serverURL);
+                    //var restRequest = new RestRequest(serverURL, Method.PATCH);
+                    ////var jContent = "{ \"CSMApprovalDate\":null, \"CSMRejectionDate\": \"" + status.CSMRejectionDate + "\",  \"CSMRejectionComments\": \"" + status.CSMRejectionComments + "\"}";
+                    //var jContent = item.JSON_CONTENT;
+                    //restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
+                    //IRestResponse<object> result = restClient.Execute<object>(restRequest);
+                    //if (item.ISREJECT.GetValueOrDefault())
+                    //    LogRequest(prefix: $"CUSTOMER REJECT - {item.PSA_ID}:");
+                    //else
+                    //    LogRequest(prefix: $"CUSTOMER APPROVE - {item.PSA_ID}:");
+                    //dynamic jsonContent = JsonConvert.DeserializeObject(result.Content);
+                    //string text = jsonContent.StatusCode;
+                    //if (!string.IsNullOrWhiteSpace(text) && text.ToUpper() == "SUCCESS")
+                    //{
+                    //    item.SYNCED = true;
+                    //    item.ERROR = null;
 
-                    }
-                    else
-                    {
-                        item.ERROR = result.Content;
-                    }
-                    item.UPDATED_DATE = DateTime.Now;
-                    Cldb.PSA_TIMESHEET_SYNC.Update(item);
-                    Cldb.Commit();
+                    //}
+                    //else
+                    //{
+                    //    item.ERROR = result.Content;
+                    //}
+                    //item.UPDATED_DATE = DateTime.Now;
+                    //Cldb.PSA_TIMESHEET_SYNC.Update(item);
+                    //Cldb.Commit();
                 }
                 catch (Exception ex)
                 {
@@ -1594,16 +1594,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             try
             {
-                string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + timesheet.ID;
-                var restClient = new RestClient(serverURL);
-                var restRequest = new RestRequest(serverURL, Method.PATCH);
+                //string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + timesheet.ID;
+                //var restClient = new RestClient(serverURL);
+                //var restRequest = new RestRequest(serverURL, Method.PATCH);
 
-                var jContent = "{ \"CSMApprovalDate\": \"" + timesheet.CSMApprovalDate + "\", \"CSMRejectionDate\":null,  \"CSMRejectionComments\":null}";
-                restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
+                //var jContent = "{ \"CSMApprovalDate\": \"" + timesheet.CSMApprovalDate + "\", \"CSMRejectionDate\":null,  \"CSMRejectionComments\":null}";
+                //restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
 
                 // To avoid the Self signed certificate errors
                 //this.SSLErrorCheck(ref restClient);
-                IRestResponse<object> result = restClient.Execute<object>(restRequest);
+                //IRestResponse<object> result = restClient.Execute<object>(restRequest);
 
                 //if ((result.StatusCode == HttpStatusCode.OK || result.StatusCode == HttpStatusCode.Created) && !String.IsNullOrEmpty(result.Content))
                 //{
@@ -1633,16 +1633,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             try
             {
-                string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + timesheet.ID;
-                var restClient = new RestClient(serverURL);
-                var restRequest = new RestRequest(serverURL, Method.PATCH);
+                //string serverURL = "https://csmpsa.gavstech.com/api/timesheet/" + timesheet.ID;
+                //var restClient = new RestClient(serverURL);
+                //var restRequest = new RestRequest(serverURL, Method.PATCH);
 
-                var jContent = "{ \"CSMApprovalDate\": \null, \"CSMRejectionDate\": \"" + timesheet.CSMRejectionDate + "\",  \"CSMRejectionComments\": \"" + timesheet.CSMRejectionComments + "\"";
-                restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
+                ////var jContent = "{ \"CSMApprovalDate\": \null, \"CSMRejectionDate\": \"" + timesheet.CSMRejectionDate + "\",  \"CSMRejectionComments\": \"" + timesheet.CSMRejectionComments + "\"";
+                ////restRequest.AddParameter("application/json", jContent, ParameterType.RequestBody);
 
-                // To avoid the Self signed certificate errors
-                //this.SSLErrorCheck(ref restClient);
-                IRestResponse<object> result = restClient.Execute<object>(restRequest);
+                //// To avoid the Self signed certificate errors
+                ////this.SSLErrorCheck(ref restClient);
+                //IRestResponse<object> result = restClient.Execute<object>(restRequest);
 
                 //if ((result.StatusCode == HttpStatusCode.OK || result.StatusCode == HttpStatusCode.Created) && !String.IsNullOrEmpty(result.Content))
                 //{

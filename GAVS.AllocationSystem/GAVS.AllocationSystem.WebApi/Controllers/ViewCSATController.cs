@@ -27,7 +27,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 userIds = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.PROJ_ID == projId && t.CUST_ID == customerId).ToList();
             }
             ids = userIds.Select(t => t.CUSTOMER_USER_ID).ToList<int>();
-            usersData = CSPdb.CUSTOMER_USERS.GetAll().Where(t => ids.Contains(t.ID)).OrderBy(t => t.DISPLAY_NAME.Trim()).ToList<CUSTOMER_USERS>();
+            //pick users who are not configured in customer projects
+            var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.CUSTOMER_ID == customerId && x.ISACTIVE).ToList();
+
+            usersData = CSPdb.CUSTOMER_USERS.GetAll().Where(t => ids.Contains(t.ID)).OrderBy(t => t.DISPLAY_NAME.Trim()).ToList();
             return Ok(usersData);
         }
 
@@ -37,9 +40,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetSurveyGuid([FromBody] SURVEY_SEARCH_CRITERIA surveyCriteria)
         {
             int? batchId; int? custbatchId; string guid = null;
-
+            string frequency = "Quarterly";
             if (surveyCriteria != null)
             {
+                if (surveyCriteria.QUARTER == 5 || surveyCriteria.QUARTER == 6)
+                {
+                    frequency = "Halfyearly";
+                    surveyCriteria.QUARTER -= 4;
+                }
                 if (surveyCriteria.IS_MONTHLY)
                 {
                     var cssBatchMonthly = new CSS_BATCH_MONTHLY();
@@ -64,7 +72,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
-                    batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t => t.SEQUENCE == surveyCriteria.QUARTER && t.YEAR == surveyCriteria.YEAR)?.ID;
+                     
+                    batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t => t.SEQUENCE == surveyCriteria.QUARTER && t.FREQUENCY == frequency && t.YEAR == surveyCriteria.YEAR)?.ID;
                     if (batchId.HasValue)
                     {
                         if (surveyCriteria.IS_QUALITATIVE_FEEDBACK)

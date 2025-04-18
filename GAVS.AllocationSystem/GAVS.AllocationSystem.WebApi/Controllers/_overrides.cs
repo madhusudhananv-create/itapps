@@ -232,16 +232,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GeneralMethod"), ActionName("GeneralMethod"), HttpGet]
         public IHttpActionResult GeneralMethod()
         {
-            var ids = new List<int> { 6244, 6243, 6242, 6241, 6240 };
-            var actionItems = CSPdb.PROJECT_ACTIONITEM.GetAll().Where(x => ids.Contains(x.ID)).ToList();
-            var projId = actionItems.First().PROJECT_ID;
-            var projects = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == projId).ToList();
+            SendCSSBatchReminderMailsPremier(Request);
+            //GenerateMissingBatchCustomersPremier(37, "Quarterly", "102802");
+            //var ids = new List<int> { 6244, 6243, 6242, 6241, 6240 };
+            //var actionItems = CSPdb.PROJECT_ACTIONITEM.GetAll().Where(x => ids.Contains(x.ID)).ToList();
+            //var projId = actionItems.First().PROJECT_ID;
+            //var projects = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == projId).ToList();
             //SendActionItemGroupMail(actionItems, projects, "");
             //GenerateCSSReadinessReport();
             ////GenerateAutoRisk(31, "batch");
             //// GenerateAutoRisk(35, "batchmonthly");
             //return Ok();
-            //SendCSSBatchReminderMailsPremier(Request);
+            //
             return Ok();
             string jsonContent =// "{\"GUID\":\"c66c92fd - 3660 - ed11 - 9562 - 000d3af07bf2\",\"PROJ_ID\":\"PROJ0852\",\"CUST_ADDR_ID\":1,\"BILL_CRNCY_ID\":2,\"BILL_CRNCY\":\"USD\",\"PROJ_NM\":\"Andromeda 360 - SOW1 - AIML\",\"proJ_ALIAS_NM\":\"Andromeda 360 - SOW1 - AIML\",\"START_DATE\":\"2022 - 04 - 18T00: 00:00\",\"END_DATE\":\"2023 - 09 - 15T00: 00:00\",\"BILL_TYPE\":true,\"PROC_TYPE\":\"Billable\",\"PROJ_BUHEAD_EMP_ID\":\"1000064\",\"PROJ_DM_EMP_ID\":\"1000064\",\"PROJ_PM_EMP_ID\":\"1000064\",\"PROJ_AM_EMP_ID\":\"1000064\",\"CREATED_BY\":\"1000064\",\"CREATED_DATE\":\"2022 - 11 - 09 19: 41:05 \",\"UPDATED_BY\":\"1000064\",\"UPDATED_DATE\":\"2024 - 06 - 13 10: 17:31 \",\"DEPT_ID\":null,\"DEPT\":\"IDMCD\",\"CUST_ID\":\"CUST0210\",\"CUST_ID_S\":\"CUST0210\",\"BU_ID\":null,\"BU\":\"IDM\",\"PROJ_STATUS\":\"Close\",\"PROJECT_GROUP\":\"Time & Material – Onsite\",\"BUSINESS_UNIT\":\"IDM\",\"PROJECT_TYPE\":\"Time and Material\",\"DEPARTMENT\":\"IDMCD\",\"CONTRACTING_UNIT\":\"GS Lab USA\",\"COUNTRY\":\"United States\",\"METHODOLOGY\":null}";
            "{\"PROJ_ID\":\"PROJ1259\",\"EMP_ID\":null,\"PROJ_RM_EMP_ID\":1000219,\"PROJ_REVIEWER_EMP_ID\":1000271,\"START_DATE\":null,\"END_DATE\":null,\"BILL_FLG\":null,\"ALLCT_PCT\":null,\"ALLOCATION_HOURS\":null,\"CURR_INDC\":\"\u0000\",\"CREATED_DATE\":null,\"UPDATED_DATE\":null,\"ID\":\"177d6496-f872-ee11-8179-6045bdad4ae1\",\"ORG_CODE\":null}";

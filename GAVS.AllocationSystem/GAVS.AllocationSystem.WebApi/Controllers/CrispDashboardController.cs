@@ -564,14 +564,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else
             {
+                var batches = new List<CSS_BATCHES>();
                 var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.START_DATE <= pubdate && x.END_DATE >= pubdate);
                 if (batch == null)
-                    batch = CSPdb.CSS_BATCHES.GetAll().Where(x => x.END_DATE <= pubdate).OrderByDescending(x => x.ID).FirstOrDefault();
-                if (batch == null)
+                    batches = CSPdb.CSS_BATCHES.GetAll().Where(x => x.END_DATE <= pubdate).OrderByDescending(x => x.ID).Take(2).ToList();
+                if (!batches.Any())
                     batch = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(x => x.ID).FirstOrDefault();
+                var surveys = new List<CSS_BATCH_CUSTOMERS>();
+                if (batch != null)
+                {
+                      surveys = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.PROJ_ID == projId && x.BATCH_ID == batch.ID).ToList();
+                }
+                else if (batches.Any())
+                {
+                    var batchids = batches.Select(x => x.ID).ToList();
+                    surveys = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.PROJ_ID == projId && batchids.Contains( x.BATCH_ID )).ToList();
 
-                var surveys = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.PROJ_ID == projId && x.BATCH_ID == batch.ID).ToList();
-
+                }
+           
+                 
                 var latestSurvey = surveys.OrderByDescending(x => x.ID).FirstOrDefault();
                 if (latestSurvey != null)
                 {

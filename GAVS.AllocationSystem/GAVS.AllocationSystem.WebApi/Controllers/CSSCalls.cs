@@ -472,7 +472,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             dynamic json = jsonContent;
             string EmpId = GetHeaderDetails_String("empid");
             //var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
-            int batchid = 36;
+            int batchid = 37;
             //var batch = CSPdb.CSS_BATCH_MONTHLY.GetById(batchid);
             var batchCustomers = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batchid && t.STATUS == CSS_MAIL_SENT && t.ISACTIVE).Take(5).ToList();
             // batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
@@ -1425,7 +1425,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         var project = projects.FirstOrDefault(x => x.PROJ_ID == c.PROJ_ID);
                         if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")) continue;
-                        if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
+                        if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID && x.Bit_Value.GetValueOrDefault())) continue;
                         if (existingCustomers.Any(x => x.PROJ_ID == c.PROJ_ID && x.EMAIL_ID == cust.EMAILID)) continue;
                     }
                     else
