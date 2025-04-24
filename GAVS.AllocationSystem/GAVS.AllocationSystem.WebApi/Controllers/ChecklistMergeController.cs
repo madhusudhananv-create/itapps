@@ -24,8 +24,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     public partial class AllSysController
     {
 
-        [GET("GetPreviewChecklist")]
-        [ActionName("GetPreviewChecklist")]
+        [GET("GetMultiChecklistPreview")]
+        [ActionName("GetMultiChecklistPreview")]
         [HttpGet]
         public IHttpActionResult GetMultiChecklistPreview(List<int> checklistIds)
         {
@@ -43,6 +43,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
 
-        //3. Create the new checklists and its mappings 
+        //  Create the new checklists and its mappings 
+
     }
 }
