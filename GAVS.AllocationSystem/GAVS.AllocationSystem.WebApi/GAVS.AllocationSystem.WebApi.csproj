@@ -537,6 +537,7 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\ActionItemController.cs" />
     <Compile Include="Controllers\AuthControllerCSS.cs" />
+    <Compile Include="Controllers\ChecklistMergeController.cs" />
     <Compile Include="Controllers\ConfigurationExtController.cs" />
     <Compile Include="Controllers\AuditQualityStandardController.cs" />
     <Compile Include="Controllers\COODashboardController.cs" />

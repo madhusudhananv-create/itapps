@@ -1248,6 +1248,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public List<QUESTIONS_BY_PROCESS_AREA> QUESTIONS_BY_PROCESS_AREA { get; set; }
         }
 
+        public class MULTI_CHECKLIST
+        {
+            public int CHECKLIST_ID { get; set; }
+
+            public string CHECKLIST_NAME { get; set; }
+
+            public List<QUESTIONS_BY_SERVICE_AREA> QUESTIONS_BY_SERVICE_AREA { get; set; }
+        }
+
         public class QUESTIONS_BY_PROCESS_AREA
         {
             public string PROCESS_AREA_NAME { get; set; }

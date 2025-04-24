@@ -2641,9 +2641,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetPreviewChecklist(int ChecklistId)
         {
-            var checklistMappings = CSPdb.PM_PROCESS_QUESTIONS_MAPPING.GetAll().Where(x => x.CHECKLIST_ID == ChecklistId && x.ISACTIVE)
-                                                                                                                    .OrderBy(x => x.ID)
-                                                                                                                    .ToList();
+            
+
+            return Ok(GetPreviewChecklistPrivate(ChecklistId));
+        }
+
+        private List<QUESTIONS_BY_SERVICE_AREA>  GetPreviewChecklistPrivate(int checklistId)
+        {
+
+            var checklistMappings = CSPdb.PM_PROCESS_QUESTIONS_MAPPING.GetAll().Where(x => x.CHECKLIST_ID == checklistId && x.ISACTIVE)
+                                                                                                                        .OrderBy(x => x.ID)
+                                                                                                                        .ToList();
             var weightages = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE.GetAll().Where(x => x.ISACTIVE).ToList();
 
             var checklistMappingsExt = new List<PM_PROCESS_QUESTIONS_MAPPING_EXT>();
@@ -2681,7 +2689,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var serviceAreaRec = output.Find(x => x.SERVICE_AREA_ID == row.SERVICE_AREA_ID);
 
                 if (!serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Any(x => x.PROCESS_AREA_ID == row.PROCESS_AREA_ID))
-                    serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Add(new QUESTIONS_BY_PROCESS_AREA(row.PROCESS_AREA_ID, row.PROCESS_AREA_NAME, row.PROCESS_MODEL ));
+                    serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Add(new QUESTIONS_BY_PROCESS_AREA(row.PROCESS_AREA_ID, row.PROCESS_AREA_NAME, row.PROCESS_MODEL));
 
                 var processAreaRec = serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Find(x => x.PROCESS_AREA_ID == row.PROCESS_AREA_ID);
 
@@ -2704,7 +2712,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
 
-            return Ok(output);
+            return output;
         }
 
         [POST("ReviseChecklist")]
@@ -2857,9 +2865,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetChecklistList")]
         [ActionName("GetChecklistList")]
         [HttpGet]
-        public IHttpActionResult GetChecklistList()
+        public IHttpActionResult GetChecklistList(bool includeMerged = true)
         {
-            var checklist = CSPdb.PM_CHECKLIST.GetAll().Where(t => t.ISACTIVE).OrderBy(t => t.TITLE).ToList();
+
+            var checklist = CSPdb.PM_CHECKLIST.GetAll().Where(t => t.ISACTIVE && (includeMerged || t.IS_MERGED == false)).OrderBy(t => t.TITLE).ToList();
             var empIds = checklist.Select(c => c.UPDATED_BY).ToList();
             var empInfo = Cldb.EMP_INFO.GetAll().Where(x => empIds.Contains(x.EMP_ID)).ToList();
             if (checklist.Count > 0)
@@ -2868,7 +2877,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     //int intEmpId = 0;
                     //if (int.TryParse(x.UPDATED_BY, out intEmpId))
-                    x.UPDATED_NAME = empInfo.FirstOrDefault(y => y.EMP_ID == x.UPDATED_BY)?.FRST_NM;                  
+                    x.UPDATED_NAME = empInfo.FirstOrDefault(y => y.EMP_ID == x.UPDATED_BY)?.FRST_NM;
 
                 });
             }
