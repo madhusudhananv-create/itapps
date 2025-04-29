@@ -56,7 +56,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             List<PROJECT> projects = new List<PROJECT>();
             if (needClosed)
-                projects = Cldb.PROJECT.GetAll().Where(t => t.PARENT_PROJ_ID == t.PROJ_ID && t.CUST_ID == customerId && t.END_DATE < DateTime.Now).OrderBy(t => t.PROJ_NM).ToList();
+                projects = Cldb.PROJECT.GetAll().Where(t => t.PARENT_PROJ_ID == t.PROJ_ID && t.CUST_ID == customerId && (t.PROJ_STATUS == "Complete" || t.PROJ_STATUS == "Close") ).OrderBy(t => t.PROJ_NM).ToList();
             else
                 projects = Cldb.PROJECT.GetAll().Where(t => t.PARENT_PROJ_ID == t.PROJ_ID && t.CUST_ID == customerId && t.PROJ_STATUS != "CLOSE" && t.END_DATE > DateTime.Now).OrderBy(t => t.PROJ_NM).ToList();
 
