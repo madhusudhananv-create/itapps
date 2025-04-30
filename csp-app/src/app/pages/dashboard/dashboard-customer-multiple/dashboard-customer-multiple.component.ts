@@ -13,6 +13,8 @@ import { CustomerModel } from '../../../models/customer-model';
 import { DashboardDetailsModel } from '../../../models/dashboard-details-model';
 import { DashboardService } from '../../../pages/dashboard/dashboard.service';
 import { SharedData } from '../../../Shared/sharedData';
+import { DomainConfigService } from '../../../Services/app.domain.config';
+
 
 @Component({
   selector: 'app-dashboard-customer-multiple',
@@ -40,7 +42,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   customerList: CustomerModel[] = [];
 
   constructor(public _dashboardUtil: DashboardService, public _access: AccessControl, private route: ActivatedRoute, private _router: Router, private _http: Http, private _appservice: AppsService, private _config: Configuration, public _util: myUtility, changeDetectorRef: ChangeDetectorRef, media: MediaMatcher,
-    private _spinner: Ng4LoadingSpinnerService, public sharedData: SharedData) {
+    private _spinner: Ng4LoadingSpinnerService, public sharedData: SharedData, public domainConfig: DomainConfigService) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
     this._mobileQueryListener = () => changeDetectorRef.detectChanges();
     this.mobileQuery.addListener(this._mobileQueryListener);
@@ -65,7 +67,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
     //this._appservice.RefreshDashboardDetailsAuto().subscribe(a => { console.log("Dashboard Update") }, error => { });
 
 
-   // this.startTimer();
+    // this.startTimer();
   }
 
   ResetFilter(custId, slaAvailable) {
@@ -384,7 +386,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
       localStorage.setItem('slaAvailableList', JSON.stringify(data.map(x => ({ customerId: x.cusT_ID, customerName: x.cusT_NM, slaAvailable: x.iS_SLA_AVAILABLE }))));
 
       if (data.length === 0) {
-        alert("Customer Accounts are visible here based on your allocation in respective projects in PSA. Looks like there are no active allocations or all the projects you are allocated to have ended. Please take it up with your manager and get allocated in required projects for you to manage them in the CSM Platform. Please send an email to WFM@gavstech.com for allocation or extending the allocation.");
+        alert("Customer Accounts are visible here based on your allocation in respective projects in PSA. Looks like there are no active allocations or all the projects you are allocated to have ended. Please take it up with your manager and get allocated in required projects for you to manage them in the CSM Platform. Please send an email to WFM@" + environment.domain_name + "for allocation or extending the allocation.");
       }
       this.service_GetDashboardDetails();
     }, error => { this._util.serviceError(error); });

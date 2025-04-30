@@ -21,7 +21,7 @@ export class PasswordforgotComponent implements OnInit {
     if (!isValid || this.password.trim() == '') {
       alert("Please enter the email id");
     }
-    else if (this.password.toLocaleLowerCase().search('@gavstech') != -1)
+    else if (this.password.toLocaleLowerCase().search('@'+ environment.domain_name) != -1)
       alert(`${this.companyName}, please re-set your password in google account and use the same credentials here to login`);
     else {
       this._appservice.forgotPassword(this.password).subscribe(data => {

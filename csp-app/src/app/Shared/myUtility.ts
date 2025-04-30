@@ -452,12 +452,12 @@ export class myUtility {
     public serviceError(error) {
         console.log(error);
         if (error.status === 0)
-            alert("CSM server connection is interupted, Please check your network connection. For urgent queries contact csmplatformsupport@gavstech.com.");
+            alert("CSM server connection is interupted, Please check your network connection. For urgent queries contact csmplatformsupport@" + environment.domain_name);
         else if (error.status === 500) {
-            alert(`CSM server: Error(500) while handling data, please contact ${this.companyName} team (csmplatformsupport@gavstech.com).`);
+            alert(`CSM server: Error(500) while handling data, please contact ${this.companyName} team (csmplatformsupport@` + environment.domain_name + `).`);
         }
         else if (error.status === 404)
-            alert(`CSM server: Error(404) while handling data, please contact ${this.companyName} (csmplatformsupport@gavstech.com).`);
+            alert(`CSM server: Error(404) while handling data, please contact ${this.companyName} (csmplatformsupport@` + environment.domain_name + `).`);
         else if (error.status === 501)
             alert("Duplicate values in excel not copied ");
         else if (error.status === 400) {

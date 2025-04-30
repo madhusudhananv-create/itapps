@@ -233,6 +233,7 @@ import { RatingCriteriaRemarksComponent } from "./customer/rating-criteria-remar
 import { GslabloginComponent } from './authentication/gslablogin/gslablogin.component';
 import { assessmentUtility } from "./Shared/assessmentUtility";
 import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
+import { DomainConfigService } from "./Services/app.domain.config";
 //import { googleEnvironment } from "../environments/google";
 
 
@@ -435,7 +436,7 @@ export class DemoMaterialModule { }
     AccessControl,
     SharedService,
     SharedData,
-     
+     DomainConfigService,
       {
         provide: 'SocialAuthServiceConfig',
         useValue: {

@@ -117,7 +117,7 @@ export class LoginComponent implements OnInit {
       alert("Please enter the email id");
     else if (this.email.trim() === "")
       alert("Please enter the email id")
-    else if (environment.production === true && this.email.toLowerCase().search('@gavstech.com') >= 0)
+    else if (environment.production === true && this.email.toLowerCase().search('@'+ environment.domain_name) >= 0)
       alert(`${this.companyName} users, please click here to sign-in through Google`);
     else if (this.email.toLowerCase().search('@') === -1)
       alert("Please enter a valid email id")

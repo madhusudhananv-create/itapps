@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-
+import { DomainConfigService } from '../Services/app.domain.config';
 @Component({
   selector: 'app-roledetails',
   templateUrl: './roledetails.component.html',
@@ -7,7 +7,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class RoledetailsComponent implements OnInit {
 
-  constructor() { }
+  constructor(private domainconfig: DomainConfigService) { }
 
   ngOnInit() {
   }

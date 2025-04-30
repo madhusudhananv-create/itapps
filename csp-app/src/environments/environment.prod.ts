@@ -11,7 +11,8 @@ export const environment = {
   googleClientId: '360086473959-4rtb8ep6eq60tt3pm8922g33cr6pvbqe.apps.googleusercontent.com',
   gavsGoogleClientId: '348205218679-gt5j9l08b657o76kuo6j5ni3kbt231ps.apps.googleusercontent.com',
   environment_Id:'',
-  company_name: ' GSLAB | Gavs '
+  company_name: ' GSLAB | Gavs ',
+   domain_name:'gavstech.com'
 };
 
 
