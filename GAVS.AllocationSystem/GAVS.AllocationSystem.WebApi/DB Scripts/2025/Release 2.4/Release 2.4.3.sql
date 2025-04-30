@@ -40,3 +40,31 @@ END
 
 
 
+
+IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='MERGE_CHECKLIST_MAX')
+BEGIN
+INSERT INTO configuration_ext (
+    [KEY],
+    [value],
+    cust_id,
+    proj_id,
+    comments,
+    isactive,
+    created_by,
+    created_date,
+    updated_by,
+    updated_date
+) VALUES (
+    'MERGE_CHECKLIST_MAX',  
+    '4',     
+    -1,                 
+    NULL,               
+    '',  
+    1,                  
+    '105709',           
+    GETDATE(),          
+    '105709',           
+    GETDATE()           
+);
+END
+GO

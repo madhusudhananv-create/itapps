@@ -390,7 +390,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     var batchCustMonthly = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().FirstOrDefault(t => t.ID == iteration.BATCH_CUSTOMER_MONTHLY_ID && t.ISACTIVE);
                     if (batchCustMonthly == null)
-                        return Content(HttpStatusCode.BadRequest, "Unable to load the survey details at the moment. Please come back later or mail to csmplatformsupport@gavstech.com");
+                        return Content(HttpStatusCode.BadRequest, "Unable to load the survey details at the moment. Please come back later or mail to csmplatformsupport@" + Constants.DOMAIN);
 
                     CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED monthlyExt = helper.FillCustomerAndProjectNames(batchCustMonthly);
                     var batchExt = helper.FillCustomerAndProjectNames(batchCustMonthly);

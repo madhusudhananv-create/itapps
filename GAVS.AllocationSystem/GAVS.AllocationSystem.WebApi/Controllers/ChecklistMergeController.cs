@@ -53,8 +53,36 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var existing = CSPdb.PM_CHECKLIST.GetAll().Where(x => checklistIds.Contains(x.ID) && x.ISACTIVE).ToList();
             if (existing.Count == 0)
                 return Ok(result);
-
             var firstChecklist = existing.First();
+            var maxMergeCount = 4;
+            int.TryParse(helper.GetDBConfig("MERGE_CHECKLIST_MAX", "-1"), out maxMergeCount);
+            if (existing.Count > maxMergeCount)
+            {
+                return BadRequest($"Unable to Merge. Please select max of {maxMergeCount} checklists to continue.");
+            }
+            //check weightage scores are equal for all checklist. else throw error
+            var scores = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.GetAll().Where(x => checklistIds.Contains(x.CHECKLIST_ID) && x.ISACTIVE).ToList();
+            var firstScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 1)?.WEIGHTAGE_SCORE;
+            var secondScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 2)?.WEIGHTAGE_SCORE;
+            var thirdScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 3)?.WEIGHTAGE_SCORE;
+
+            var errMsg = "Unable to Merge. The Weightage scores for {0} category are not the same for the selected checklists. Please select checklists with same weightage scores.";
+            if (!scores.TrueForAll(x => x.WEIGHTAGE_ID == 1 && x.WEIGHTAGE_SCORE == firstScore))
+            {
+                //raise error MAJOR
+                return BadRequest(string.Format(errMsg, "MAJOR"));
+            }
+            if (!scores.TrueForAll(x => x.WEIGHTAGE_ID == 2 && x.WEIGHTAGE_SCORE == secondScore))
+            {
+                //raise error MINOR
+                return BadRequest(string.Format(errMsg, "MINOR"));
+            }
+            if (!scores.TrueForAll(x => x.WEIGHTAGE_ID == 3 && x.WEIGHTAGE_SCORE == thirdScore))
+            {
+                //raise error Mandatory
+                return BadRequest(string.Format(errMsg, "MANDATORY"));
+            }
+
             if (existing.TrueForAll(x => x.MATURITY_LEVEL == firstChecklist.MATURITY_LEVEL))
                 result.MATURITY_LEVEL = firstChecklist.MATURITY_LEVEL;
 
@@ -82,7 +110,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [POST("SaveNewMultiChecklist")]
         [ActionName("SaveNewMultiChecklist")]
         [HttpPost]
-        public IHttpActionResult SaveNewMultiChecklist(List<int> checklistIds, string title)
+        public IHttpActionResult SaveNewMultiChecklist([FromBody] List<MULTI_CHECKLIST> multichecklists, int checklistId)
         {
 
             return Ok();

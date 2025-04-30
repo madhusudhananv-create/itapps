@@ -285,7 +285,7 @@ namespace GAVS.AllocationSystem.WebApi
                     using (SmtpClient smtpClient = new SmtpClient())
                     {
                         smtpClient.UseDefaultCredentials = false;
-                        smtpClient.Credentials = new NetworkCredential(smtpAccount, smtpPassword, "gavstech.com");
+                        smtpClient.Credentials = new NetworkCredential(smtpAccount, smtpPassword, Constants.DOMAIN);
                         smtpClient.Host = smtpHost;
                         smtpClient.Port = smtpPort;
                         smtpClient.EnableSsl = true;

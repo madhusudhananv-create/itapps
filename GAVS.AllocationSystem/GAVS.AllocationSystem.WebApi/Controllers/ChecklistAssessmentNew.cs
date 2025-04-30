@@ -2641,12 +2641,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetPreviewChecklist(int ChecklistId)
         {
-            
+
 
             return Ok(GetPreviewChecklistPrivate(ChecklistId));
         }
 
-        private List<QUESTIONS_BY_SERVICE_AREA>  GetPreviewChecklistPrivate(int checklistId)
+        private List<QUESTIONS_BY_SERVICE_AREA> GetPreviewChecklistPrivate(int checklistId)
         {
 
             var checklistMappings = CSPdb.PM_PROCESS_QUESTIONS_MAPPING.GetAll().Where(x => x.CHECKLIST_ID == checklistId && x.ISACTIVE)
@@ -2671,6 +2671,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 newRow.PROCESS_MODEL = processModelList.Where(pm => pm.PROCESS_AREA_ID == row.PROCESS_AREA_ID).Select(pm => pm.PROCESS_MODEL_NAME).FirstOrDefault() ?? string.Empty;
                 newRow.SERVICE_AREA_ID = row.SERVICE_AREA_ID;
                 newRow.DISPLAY_ORDER = row.DISPLAY_ORDER;
+                newRow.IS_CHECKED = true;
                 GetServiceAreaForProcess(newRow);
                 GetProcessAreaForProcess(newRow);
                 GetProcesstitleProcess(newRow);

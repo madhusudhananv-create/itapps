@@ -43,7 +43,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //if (item.All(x => x.CSS_CONFIGURED.ToUpper() == "YES")) continue;
                 var toMail = item.Key;
                 var ccMail = string.Join(",", item.Select(x => x.PM_MAIL).Distinct().ToList());
-                ccMail += "," + Constants.DEVX_MAIL +"," + "thamaraiselvi.s@gavstech.com";
+                ccMail += "," + Constants.DEVX_MAIL +"," + "thamaraiselvi.s@" + Constants.DOMAIN;
                 var sbNonEligeible = new StringBuilder();
                 var sbEligeible = new StringBuilder();
                 var ineligible = false;

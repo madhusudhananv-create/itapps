@@ -790,7 +790,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return false;
             if (!emailid.Contains("@"))
                 return true;
-            else if (emailid.ToUpper().EndsWith("@GAVSTECH.COM"))
+            else if (emailid.ToUpper().EndsWith("@" + Constants.DOMAIN.ToUpper()))
                 return true;
             else if (emailid.ToUpper().EndsWith("@GSLAB.COM"))
                 return true;
@@ -802,7 +802,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             email = string.Empty;
             empid = string.Empty;
             DisplayName = string.Empty;
-            string strDomainName = "gavstech.com";
+            string strDomainName = Constants.DOMAIN;
             using (HostingEnvironment.Impersonate())
             {
                 using (var context = new PrincipalContext(ContextType.Domain, strDomainName))
@@ -828,8 +828,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                 }
                                 else
                                 {
-                                    strUsername = strUsername.ToLower().Replace("@gavstech.com", "");
-                                    email = strUsername + "@gavstech.com";
+                                    strUsername = strUsername.ToLower().Replace(Constants.DOMAIN, "");
+                                    email = strUsername + "@" + Constants.DOMAIN;
                                 }
                                 isValid = true;
                             }
@@ -859,7 +859,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return true;
                 }
             }
-            string strDomainName = "gavstech.com";
+            string strDomainName = Constants.DOMAIN;
             //using (HostingEnvironment.Impersonate())
             //{
             using (var context = new PrincipalContext(ContextType.Domain, strDomainName))
@@ -884,8 +884,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else
                         {
-                            strUsername = strUsername.ToLower().Replace("@gavstech.com", "");
-                            email = strUsername + "@gavstech.com";
+                            strUsername = strUsername.ToLower().Replace("@" + Constants.DOMAIN, "");
+                            email = strUsername + "@" + Constants.DOMAIN;
                             if (strUsername.ToLower() == "d365administrator")
                                 empid = 199999.ToString();
                         }
