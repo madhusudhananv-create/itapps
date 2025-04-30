@@ -41,5 +41,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string CATEGORY { get; set; }
         public string MATURITY_LEVEL { get; set; }
         public string PROCESS_MODEL { get; set; }
+
+        public bool IS_CHECKED { get; set; }
     }
 }

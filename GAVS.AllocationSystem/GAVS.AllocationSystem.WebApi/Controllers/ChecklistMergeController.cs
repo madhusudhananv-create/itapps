@@ -24,10 +24,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     public partial class AllSysController
     {
 
-        [GET("GetMultiChecklistPreview")]
+        [POST("GetMultiChecklistPreview")]
         [ActionName("GetMultiChecklistPreview")]
-        [HttpGet]
-        public IHttpActionResult GetMultiChecklistPreview(List<int> checklistIds)
+        [HttpPost]
+        public IHttpActionResult GetMultiChecklistPreview([FromBody] List<int> checklistIds)
         {
             var result = new List<MULTI_CHECKLIST>();
             foreach (var item in checklistIds)
@@ -40,10 +40,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(result);
         }
 
-        [GET("CreateNewMultiChecklist")]
+        [POST("CreateNewMultiChecklist")]
         [ActionName("CreateNewMultiChecklist")]
-        [HttpGet]
-        public IHttpActionResult CreateNewMultiChecklist(List<int> checklistIds, string title)
+        [HttpPost]
+        public IHttpActionResult CreateNewMultiChecklist([FromBody] List<int> checklistIds, string title)
         {
             var result = new PM_CHECKLIST();
             result.TITLE = title;
@@ -51,7 +51,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Ok(result);
 
             var existing = CSPdb.PM_CHECKLIST.GetAll().Where(x => checklistIds.Contains(x.ID) && x.ISACTIVE).ToList();
-            if (  existing.Count == 0)
+            if (existing.Count == 0)
                 return Ok(result);
 
             var firstChecklist = existing.First();
@@ -79,6 +79,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
         //  Create the new checklists and its mappings 
+        [POST("SaveNewMultiChecklist")]
+        [ActionName("SaveNewMultiChecklist")]
+        [HttpPost]
+        public IHttpActionResult SaveNewMultiChecklist(List<int> checklistIds, string title)
+        {
 
+            return Ok();
+        }
     }
 }
