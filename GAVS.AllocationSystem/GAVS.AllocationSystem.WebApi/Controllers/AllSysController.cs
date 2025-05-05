@@ -1254,6 +1254,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             public string CHECKLIST_NAME { get; set; }
 
+            public decimal VERSION { get; set; }
+
+            public DateTime EFFECTIVE_FROM { get; set; }
+        
             public List<QUESTIONS_BY_SERVICE_AREA> QUESTIONS_BY_SERVICE_AREA { get; set; }
         }
 

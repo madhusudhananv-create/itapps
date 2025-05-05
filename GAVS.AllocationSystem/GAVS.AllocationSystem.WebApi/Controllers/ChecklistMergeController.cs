@@ -28,13 +28,31 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [ActionName("GetMultiChecklistPreview")]
         [HttpPost]
         public IHttpActionResult GetMultiChecklistPreview([FromBody] List<int> checklistIds)
-        {
+        {        
             var result = new List<MULTI_CHECKLIST>();
+            var allSelectedChecklists = CSPdb.PM_CHECKLIST.GetAll().Where(x => checklistIds.Contains(x.ID)).ToList();
+            if (allSelectedChecklists.Count == 0)
+                return Ok(result);
+           
+            var maxMergeCount = 4;
+            int.TryParse(helper.GetDBConfig("MERGE_CHECKLIST_MAX", "-1"), out maxMergeCount);
+            if (allSelectedChecklists.Count > maxMergeCount)
+            {
+                return BadRequest($"Unable to Merge. Please select max of {maxMergeCount} checklists to continue.");
+            }
             foreach (var item in checklistIds)
             {
-                var output = new MULTI_CHECKLIST { CHECKLIST_ID = item };
-                output.CHECKLIST_NAME = CSPdb.PM_CHECKLIST.GetAll().FirstOrDefault(x => x.ID == item)?.TITLE;
-                output.QUESTIONS_BY_SERVICE_AREA = GetPreviewChecklistPrivate(item);
+                var checklist = allSelectedChecklists.FirstOrDefault(x => x.ID == item);
+                if (checklist != null)
+                {
+                    var output = new MULTI_CHECKLIST { CHECKLIST_ID = item };
+                    output.CHECKLIST_NAME = checklist.TITLE;
+                    output.VERSION = checklist.VERSION;
+                    output.EFFECTIVE_FROM = checklist.EFFECTIVE_FROM;
+                    output.QUESTIONS_BY_SERVICE_AREA = GetPreviewChecklistPrivate(item);
+                    result.Add(output);
+                }
+
             }
 
             return Ok(result);
@@ -45,39 +63,34 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult CreateNewMultiChecklist([FromBody] List<int> checklistIds, string title)
         {
+            
             var result = new PM_CHECKLIST();
             result.TITLE = title;
             if (checklistIds == null || checklistIds.Count == 0)
                 return Ok(result);
 
             var existing = CSPdb.PM_CHECKLIST.GetAll().Where(x => checklistIds.Contains(x.ID) && x.ISACTIVE).ToList();
-            if (existing.Count == 0)
-                return Ok(result);
             var firstChecklist = existing.First();
-            var maxMergeCount = 4;
-            int.TryParse(helper.GetDBConfig("MERGE_CHECKLIST_MAX", "-1"), out maxMergeCount);
-            if (existing.Count > maxMergeCount)
-            {
-                return BadRequest($"Unable to Merge. Please select max of {maxMergeCount} checklists to continue.");
-            }
+
             //check weightage scores are equal for all checklist. else throw error
             var scores = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.GetAll().Where(x => checklistIds.Contains(x.CHECKLIST_ID) && x.ISACTIVE).ToList();
             var firstScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 1)?.WEIGHTAGE_SCORE;
             var secondScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 2)?.WEIGHTAGE_SCORE;
             var thirdScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 3)?.WEIGHTAGE_SCORE;
 
+
             var errMsg = "Unable to Merge. The Weightage scores for {0} category are not the same for the selected checklists. Please select checklists with same weightage scores.";
-            if (!scores.TrueForAll(x => x.WEIGHTAGE_ID == 1 && x.WEIGHTAGE_SCORE == firstScore))
+          if (!scores.Where(x => x.WEIGHTAGE_ID == 1).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == firstScore))
             {
                 //raise error MAJOR
                 return BadRequest(string.Format(errMsg, "MAJOR"));
             }
-            if (!scores.TrueForAll(x => x.WEIGHTAGE_ID == 2 && x.WEIGHTAGE_SCORE == secondScore))
+            if (!scores.Where(x => x.WEIGHTAGE_ID == 2).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == secondScore))
             {
                 //raise error MINOR
                 return BadRequest(string.Format(errMsg, "MINOR"));
             }
-            if (!scores.TrueForAll(x => x.WEIGHTAGE_ID == 3 && x.WEIGHTAGE_SCORE == thirdScore))
+            if (!scores.Where(x => x.WEIGHTAGE_ID == 3).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == thirdScore))
             {
                 //raise error Mandatory
                 return BadRequest(string.Format(errMsg, "MANDATORY"));
@@ -114,6 +127,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
 
             return Ok();
-        }
+    }
     }
 }
