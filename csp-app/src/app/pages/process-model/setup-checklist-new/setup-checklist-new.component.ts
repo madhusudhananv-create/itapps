@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef,Input } from '@angular/core';
 import { ChecklistModel, PM_MATURITYLEVEL_MAPPING, AuditCheckListWeightage, AuditStatusList, ChecklistQuestionsModelNew } from './../../../models/checklist-model';
 import { AppsService } from './../../../Services/apps.service';
 import { ProcessModelNew } from './../../../models/audit-checklist-based-model';
@@ -62,6 +62,7 @@ export class SetupChecklistNewComponent implements OnInit {
   isWeightageDisabled: boolean = false;
   questionList: ChecklistQuestionsModelNew[] = [];
   isDisabled: boolean = false;
+  @Input() isShowCreateChecklist: boolean = false;
   //isChecklistAdded: boolean = false;
   //selectedWeightage : AuditCheckListWeightage[] = [];
   //@ViewChild('WeightageChecked') WeightageChecked: MatCheckbox;

@@ -86,7 +86,7 @@
         </div>
         
       </mat-tab>
-      <mat-tab label="2.New Assessment Check-list" *ngIf="_access.IsAllowed(802, 1, '','')">
+      <mat-tab label="2.Assessment Check-list" *ngIf="_access.IsAllowed(802, 1, '','')">
         <app-setup-checklist-new></app-setup-checklist-new>
       </mat-tab>
       <mat-tab label="3.New Process Area &amp; Process" *ngIf="_access.IsAllowed(812, 1, '','')">
@@ -111,6 +111,10 @@
         <app-pspd></app-pspd>
       </mat-tab>
 
+      <mat-tab label="10.Merge Checklist" *ngIf="_access.IsAllowed(825, 1, '','')">
+        <app-merge-checklist></app-merge-checklist>
+      </mat-tab>
+      
       <!-- <mat-tab label="Add/Map Objective" *ngIf="_access.IsAllowed(817, 1, '','')">
         <app-objective-user></app-objective-user>
       </mat-tab>

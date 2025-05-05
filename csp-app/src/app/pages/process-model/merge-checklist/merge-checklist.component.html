@@ -1,0 +1,58 @@
+
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+
+  <!--  Existing Create New Checklists fields -->
+  <app-setup-checklist-new [isShowCreateChecklist]="true"></app-setup-checklist-new>
+
+  <!--  Merge Checklists fields -->
+  <div class="row mt-3">
+    <div class="col-md-3">
+      <label>Existing Checklists: <span class="mandatory"> * </span></label>
+    </div>
+    <div class="col-md-4">
+      <mat-form-field style="width: 100%;">
+        <mat-select placeholder="Choose a checklist" [formControl]="selectedChecklists"
+          (openedChange)="resetChecklistFilterValue($event)" multiple>
+          <mat-form-field class="filter-category" style="width: 100%;">
+            <input matInput #checklistSearchInput (keyup)="applyFilterForChecklist(checklistSearchInput.value)"
+              (keydown)="$event.stopPropagation()" style="text-indent: 10px;" placeholder="Search Checklist">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          <mat-option *ngFor="let list of checklists" [value]="list.id" [title]="list.title">
+            {{ list.title + '(' + list.version + ' - ' + list.effectivE_FROM.substring(0, 10) + ')' }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-primary" [disabled]="_loading" style="width: 100%;" (click)="previewChecklist()">Create
+        Checklist</button>
+    </div>
+  </div>
+  <!-- Grid section-->
+  <div class="row mt-4" *ngIf="showPreviewGrid">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-body">
+          <div>
+            <div *ngFor="let previewData of previewChecklistsData">
+              <app-preview-popup [previewData]="previewData.questionS_BY_SERVICE_AREA"
+                [checklistname]="previewData.checklisT_NAME" [version]="previewData.version"
+                [effectivefrom]="previewData.effectivE_FROM" [isMergeView]="true"
+                [showSelectColumn]="true"></app-preview-popup>
+            </div>
+          </div>
+          <div *ngIf="previewChecklistsData && previewChecklistsData.length > 0"
+            style="display: flex; justify-content: center; margin: 2% 0;">
+            <button type="button" [disabled]="_loading" class="btn btn-primary" style="margin-right: 2%;"
+              (click)="saveMergeChecklist()">
+              Save
+            </button>
+            <button type="button" [disabled]="_loading" class="btn btn-primary" (click)="clearSelections()">
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

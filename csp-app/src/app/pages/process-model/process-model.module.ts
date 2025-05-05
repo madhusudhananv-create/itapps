@@ -43,10 +43,12 @@ import { ChecklistExecutionNewComponent } from './checklist-execution-new/checkl
 import { ChecklistFindingsNewComponent } from './checklist-execution-new/checklist-findings-new/checklist-findings-new.component';
 import { HelpPageComponent } from './help-page/help-page.component';
 import { TaskEventPageComponent } from './task/task-event-page/task-event-page.component';
+import { MergeChecklistComponent } from './merge-checklist/merge-checklist.component';    
+
 
 @NgModule({
   imports: [
-    CommonModule,
+    CommonModule, 
     ProcessModelRoutingModule,
     MatFormFieldModule,
     SharedModule,
@@ -92,7 +94,8 @@ import { TaskEventPageComponent } from './task/task-event-page/task-event-page.c
     ChecklistExecutionNewComponent,
     ChecklistFindingsNewComponent,
     HelpPageComponent,
-    TaskEventPageComponent
+    TaskEventPageComponent,
+    MergeChecklistComponent,
   ],
   providers: [
     ProcessModelService
@@ -102,7 +105,7 @@ import { TaskEventPageComponent } from './task/task-event-page/task-event-page.c
     ChecklistFindingsComponent,
     PreviewPopupComponent,
     ChecklistFindingsNewComponent,
-    ChecklistExecutionNewComponent
+    ChecklistExecutionNewComponent,
   ],
   exports: [ChecklistAuditeeComponent]
 })

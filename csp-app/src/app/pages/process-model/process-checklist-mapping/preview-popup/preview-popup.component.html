@@ -4,12 +4,13 @@
       Checklist Name:-<u> {{ checklistname +' - '+ version }} </u> <br>
       Checklist Effective from:-<u> {{effectivefrom | date: 'dd-MMM-yyyy'}} </u>
     </div>
-    <div class="col-lg-6 col-md-6 col-sm-6"
+    <div class="col-lg-6 col-md-6 col-sm-6" *ngIf="!isMergeView"
       style="text-align: right; font-weight: bold; margin-right: 5px; font-size: 15px; cursor: pointer"
       (click)="closepopup()">
       &#10005;
     </div>
   </div>
+
   <div *ngFor="let sa of previewData">
     <div style="margin-bottom: 5px; width: 100%; background-color: #999690; font-weight: bold">
       Service Tower :- {{sa.servicE_AREA_NAME}}
@@ -27,6 +28,7 @@
         <table style="width: 100%" class="table table-bordered">
           <thead>
             <tr>
+              <th *ngIf="showSelectColumn">Select</th>
               <th>S.No</th>
               <th>Question name</th>
               <th [hidden]="!isweightageApplicable">Weightage</th>
@@ -38,6 +40,10 @@
           <tbody>
             <ng-container *ngFor="let question of p.questions; let id = index">
               <tr>
+                <td style="text-align: center" *ngIf="showSelectColumn">
+                  <input type="checkbox" [id]="'question_' + sa.checklisT_NAME + '_' + id"
+                    [(ngModel)]="question.selected">
+                </td>
                 <td>{{id+1}}</td>
                 <td style="white-space: pre-wrap">{{question.question}}</td>
                 <td [hidden]="!isweightageApplicable">{{question.weightage + ' (' + question.weightagE_SCORE + ')'}}

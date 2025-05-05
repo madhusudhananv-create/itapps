@@ -9368,7 +9368,7 @@ export class AppsService {
   //     }
   //   );
   // }
-  service_DowloadFile(category : string, custId :string, projId: string, id: number ): Observable<Blob> {
+  service_DowloadFile(category: string, custId: string, projId: string, id: number): Observable<Blob> {
     let apiuri: string = environment.webapiuri + 'DownloadFile';
     let header = new HttpHeaders({
       Accept: 'application/json',
@@ -9377,32 +9377,78 @@ export class AppsService {
     });
     return this._http.get(
       `${apiuri}?category=${category}&custId=${custId}&projectId=${projId}&id=${id}`,
-      
+
       {
         headers: header,
-      
+
         responseType: 'blob',
-      }, 
-     
+      },
+
     );
 
- }
-
-     /**
-      *  get(url: string, options: {
-        headers?: HttpHeaders | {
-            [header: string]: string | string[];
-        };
-        observe: 'response';
-        params?: HttpParams | {
-            [param: string]: string | string[];
-        };
-        reportProgress?: boolean;
-        responseType: 'blob';
-        withCredentials?: boolean;
-    }): Observable<HttpResponse<Blob>>;
-      */
   }
 
-  //Reference: https://angular.io/guide/http
+
+  getAllChecklists(includeMerged): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<any[]>(this.apiurl + "/GetChecklistList?includeMerged=" + includeMerged, {
+      headers: header,
+    });
+  }
+
+
+  getMultiChecklistPreview(ChecklistIds: number[]): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.post<any[]>(this.apiurl + "/GetMultiChecklistPreview", ChecklistIds,
+      { headers: header }
+    );
+
+  }
+
+
+
+  createNewMultiChecklist(checklistIds: number[], title: string): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    const requestData = {
+      title: title
+    };
+    return this._http.post<any[]>(this.apiurl + "/CreateNewMultiChecklist", checklistIds,
+      {
+        headers: header,
+        params: requestData
+      });
+  }
+
+
+
+
+  /**
+        *  get(url: string, options: {
+          headers?: HttpHeaders | {
+              [header: string]: string | string[];
+          };
+          observe: 'response';
+          params?: HttpParams | {
+              [param: string]: string | string[];
+          };
+          reportProgress?: boolean;
+          responseType: 'blob';
+          withCredentials?: boolean;
+      }): Observable<HttpResponse<Blob>>;
+        */
+}
+
+//Reference: https://angular.io/guide/http
 
