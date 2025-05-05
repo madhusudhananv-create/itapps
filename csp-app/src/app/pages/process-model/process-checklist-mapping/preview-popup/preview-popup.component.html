@@ -42,7 +42,7 @@
               <tr>
                 <td style="text-align: center" *ngIf="showSelectColumn">
                   <input type="checkbox" [id]="'question_' + sa.checklisT_NAME + '_' + id"
-                    [(ngModel)]="question.selected">
+                    [(ngModel)]="question.iS_CHECKED">
                 </td>
                 <td>{{id+1}}</td>
                 <td style="white-space: pre-wrap">{{question.question}}</td>

@@ -112,7 +112,7 @@ export class MergeChecklistComponent implements OnInit {
         serviceTower.questionS_BY_PROCESS_AREA.forEach(processArea => {
           processArea.questionS_BY_PROCESS.forEach(process => {
             process.questions.forEach(question => {
-              question.selected = false;
+              question.iS_CHECKED = false;
             });
           });
         });
