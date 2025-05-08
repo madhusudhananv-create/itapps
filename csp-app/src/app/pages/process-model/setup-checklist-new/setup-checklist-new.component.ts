@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef,Input } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef, Input, EventEmitter, Output } from '@angular/core';
 import { ChecklistModel, PM_MATURITYLEVEL_MAPPING, AuditCheckListWeightage, AuditStatusList, ChecklistQuestionsModelNew } from './../../../models/checklist-model';
 import { AppsService } from './../../../Services/apps.service';
 import { ProcessModelNew } from './../../../models/audit-checklist-based-model';
@@ -57,15 +57,18 @@ export class SetupChecklistNewComponent implements OnInit {
   errorStr: string = "";
   filterCriteria: any;
   weightageId: number;
-
+  newChecklistId: number = 0;
   checklistUsedInAssessment: any[] = [];
   isWeightageDisabled: boolean = false;
   questionList: ChecklistQuestionsModelNew[] = [];
   isDisabled: boolean = false;
   @Input() isShowCreateChecklist: boolean = false;
+  @Input() callSave: boolean = false;
+  @Input() dataRecord: ChecklistModel = new ChecklistModel();
   //isChecklistAdded: boolean = false;
   //selectedWeightage : AuditCheckListWeightage[] = [];
   //@ViewChild('WeightageChecked') WeightageChecked: MatCheckbox;
+  @Output() onChange: EventEmitter<string> = new EventEmitter<string>();
 
   constructor(public _appservice: AppsService, public _util: myUtility, public _processService: ProcessModelService, public cdRef: ChangeDetectorRef) { }
 
@@ -87,6 +90,30 @@ export class SetupChecklistNewComponent implements OnInit {
   }
   CancelOnClick() {
     this.showStatusList = false;
+  }
+
+  ngOnChanges() {
+
+    if (this.callSave) {
+
+      this.newChecklist = this.dataRecord
+      this.btnSaveChecklist_Onclick()
+      this.onChange.emit('0');
+    }
+    else if (this.isShowCreateChecklist && this.dataRecord != undefined && this.dataRecord != null) {
+      
+      this.newChecklist = this.dataRecord;
+      if (this.newChecklist.effectivE_FROM != undefined && this.newChecklist.effectivE_FROM != null) {
+        this.effectivE_FROM = new Date(this.newChecklist.effectivE_FROM.toString());
+      }
+      else {
+        this.effectivE_FROM = new Date();
+      }
+      // this.loadApplicableMaturityLevel(this.newChecklist.procesS_MODEL_ID);
+      // this.Service_GetWeightageForChecklist(this.newChecklist.id);
+      // this.service_getChecklistQuestionList(this.newChecklist.id);
+      // this.getchecklistUsedInAssessment();
+    }
   }
 
   deleteNewMetStatusRow(index) {
@@ -646,6 +673,7 @@ export class SetupChecklistNewComponent implements OnInit {
         this.isSaved = true;
         if (newChecklist.iS_WEIGHTAGE_APPLICABLE) {
           this.newChecklist.id = data.id;
+          this.onChange.emit(data.id.toString());
           this.UpdateWeightageScores();
         }
         alert('Checklist added successfully');

@@ -2,7 +2,7 @@
   <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
 
   <!--  Existing Create New Checklists fields -->
-  <app-setup-checklist-new [isShowCreateChecklist]="true"></app-setup-checklist-new>
+  <app-setup-checklist-new [isShowCreateChecklist]="true" [dataRecord]="checklistModel"  [callSave]="_callSave"  (onChange)="project_onChange($event)" ></app-setup-checklist-new>
 
   <!--  Merge Checklists fields -->
   <div class="row mt-3">
@@ -25,7 +25,7 @@
       </mat-form-field>
     </div>
     <div class="col-md-3">
-      <button class="btn btn-primary" [disabled]="_loading" style="width: 100%;" (click)="previewChecklist()">Create
+      <button class="btn btn-primary" [disabled]="_loading" style="width: 100%;" (click)="createNewChecklist()">Create
         Checklist</button>
     </div>
   </div>

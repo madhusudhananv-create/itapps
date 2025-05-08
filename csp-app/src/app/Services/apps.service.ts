@@ -9415,7 +9415,7 @@ export class AppsService {
 
 
 
-  createNewMultiChecklist(checklistIds: number[], title: string): Observable<any[]> {
+  createNewMultiChecklist(checklistIds: number[], title: string): Observable<ChecklistModel> {
     let header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
@@ -9424,7 +9424,7 @@ export class AppsService {
     const requestData = {
       title: title
     };
-    return this._http.post<any[]>(this.apiurl + "/CreateNewMultiChecklist", checklistIds,
+    return this._http.post<ChecklistModel>(this.apiurl + "/CreateNewMultiChecklist", checklistIds,
       {
         headers: header,
         params: requestData
