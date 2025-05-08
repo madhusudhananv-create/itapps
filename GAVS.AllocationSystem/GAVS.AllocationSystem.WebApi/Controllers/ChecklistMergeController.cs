@@ -28,18 +28,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [ActionName("GetMultiChecklistPreview")]
         [HttpPost]
         public IHttpActionResult GetMultiChecklistPreview([FromBody] List<int> checklistIds)
-        {        
+        {
+
+            var watch = Stopwatch.StartNew();
             var result = new List<MULTI_CHECKLIST>();
             var allSelectedChecklists = CSPdb.PM_CHECKLIST.GetAll().Where(x => checklistIds.Contains(x.ID)).ToList();
             if (allSelectedChecklists.Count == 0)
                 return Ok(result);
+
            
-            var maxMergeCount = 4;
-            int.TryParse(helper.GetDBConfig("MERGE_CHECKLIST_MAX", "-1"), out maxMergeCount);
-            if (allSelectedChecklists.Count > maxMergeCount)
-            {
-                return BadRequest($"Unable to Merge. Please select max of {maxMergeCount} checklists to continue.");
-            }
             foreach (var item in checklistIds)
             {
                 var checklist = allSelectedChecklists.FirstOrDefault(x => x.ID == item);
@@ -54,7 +51,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
 
             }
-
+            FillResponseTime(watch);
             return Ok(result);
         }
 
@@ -63,13 +60,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult CreateNewMultiChecklist([FromBody] List<int> checklistIds, string title)
         {
-            
-            var result = new PM_CHECKLIST();
-            result.TITLE = title;
+            LogRequest(prefix: "CreateNewMultiChecklist");
+            var watch = Stopwatch.StartNew();
+            var result = new PM_CHECKLIST { VERSION =1m, TITLE = string.Empty, DESCRIPTION = string.Empty, EFFECTIVE_FROM = DateTime.Today };
+       
             if (checklistIds == null || checklistIds.Count == 0)
                 return Ok(result);
 
             var existing = CSPdb.PM_CHECKLIST.GetAll().Where(x => checklistIds.Contains(x.ID) && x.ISACTIVE).ToList();
+            var maxMergeCount = 4;
+            if (existing.Count <= 1)
+            {
+                return BadRequest($"Unable to Merge. Please select a minimum of 2 checklists to continue.");
+            }
+            int.TryParse(helper.GetDBConfig("MERGE_CHECKLIST_MAX", "-1"), out maxMergeCount);
+            if (existing.Count > maxMergeCount)
+            {
+                return BadRequest($"Unable to Merge. Please select max of {maxMergeCount} checklists to continue.");
+            }
+
             var firstChecklist = existing.First();
 
             //check weightage scores are equal for all checklist. else throw error
@@ -80,7 +89,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
             var errMsg = "Unable to Merge. The Weightage scores for {0} category are not the same for the selected checklists. Please select checklists with same weightage scores.";
-          if (!scores.Where(x => x.WEIGHTAGE_ID == 1).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == firstScore))
+            if (!scores.Where(x => x.WEIGHTAGE_ID == 1).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == firstScore))
             {
                 //raise error MAJOR
                 return BadRequest(string.Format(errMsg, "MAJOR"));
@@ -113,7 +122,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (existing.TrueForAll(x => x.STATUS_LIST_ID == firstChecklist.STATUS_LIST_ID))
                 result.STATUS_LIST_ID = firstChecklist.STATUS_LIST_ID;
-
+            FillResponseTime(watch);
             return Ok(result);
         }
 
@@ -125,8 +134,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult SaveNewMultiChecklist([FromBody] List<MULTI_CHECKLIST> multichecklists, int checklistId)
         {
+            // select * from pm_checklist
+            //select * from pm_checklist_questions where checklist_id in (97,98)
+            // select * from pm_process_questions_mapping where question_id in (select id from  pm_checklist_questions where checklist_id in (97,98))r
+            var watch = Stopwatch.StartNew();
+            LogRequest(prefix: "SaveNewMultiChecklist");
+
+
+            FillResponseTime(watch);
 
             return Ok();
-    }
+        }
     }
 }
