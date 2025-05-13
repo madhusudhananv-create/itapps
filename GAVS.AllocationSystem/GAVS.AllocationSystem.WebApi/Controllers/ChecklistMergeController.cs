@@ -134,7 +134,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     foreach (var qp in qpa.QUESTIONS_BY_PROCESS)
                     {
-                        foreach (var p in qp.QUESTIONS)
+                        foreach (var p in qp.QUESTIONS.Where(x => x.IS_CHECKED).ToList())
                         {
                             if (qCombo.Any(x => x.Item1 == item.SERVICE_AREA_ID && x.Item2 == qpa.PROCESS_AREA_ID && x.Item3 == qp.PROCESS_ID && x.Item4 == p.QUESTION))
                                 continue;
