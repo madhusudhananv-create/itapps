@@ -24254,6 +24254,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (pM_CHECKLIST != null)
             {
+                UpdateAuditFields(pM_CHECKLIST);
                 CSPdb.PM_CHECKLIST.Add(pM_CHECKLIST);
                 CSPdb.Commit(CanCommit);
             }

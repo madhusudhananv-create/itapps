@@ -20,5 +20,8 @@ namespace GAVS.AllocationSystem.Model.CSP
        
         [NotMapped]
         public decimal? DISPLAY_ORDER { get; set; }
+
+        [NotMapped]
+        public int Reference { get; set; }
     }
 }

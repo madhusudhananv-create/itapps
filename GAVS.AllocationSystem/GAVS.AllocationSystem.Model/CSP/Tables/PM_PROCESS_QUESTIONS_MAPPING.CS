@@ -20,6 +20,9 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public int PROCESS_AREA_ID { get; set; }
         public decimal? DISPLAY_ORDER { get; set; }
+
+        [NotMapped]
+        public int Reference { get; set; }
     }
 
     [NotMapped]

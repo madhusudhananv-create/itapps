@@ -1,21 +1,10 @@
 ﻿using AttributeRouting.Web.Mvc;
-using GAVS.AllocationSystem.Model.AllSys;
-using GAVS.AllocationSystem.Model.AllSys.SP;
 using GAVS.AllocationSystem.Model.CSP;
-using GAVS.AllocationSystem.Model.CSP.SP;
-using GAVS.AllocationSystem.Model.CSP.Tables;
-using GAVS.AllocationSystem.Model.CSP.ViewModels;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Web;
 using System.Web.Http;
 using System.Web.UI.WebControls;
 
@@ -23,20 +12,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 {
     public partial class AllSysController
     {
-
         [POST("GetMultiChecklistPreview")]
         [ActionName("GetMultiChecklistPreview")]
         [HttpPost]
         public IHttpActionResult GetMultiChecklistPreview([FromBody] List<int> checklistIds)
         {
-
             var watch = Stopwatch.StartNew();
             var result = new List<MULTI_CHECKLIST>();
             var allSelectedChecklists = CSPdb.PM_CHECKLIST.GetAll().Where(x => checklistIds.Contains(x.ID)).ToList();
             if (allSelectedChecklists.Count == 0)
                 return Ok(result);
 
-           
             foreach (var item in checklistIds)
             {
                 var checklist = allSelectedChecklists.FirstOrDefault(x => x.ID == item);
@@ -49,7 +35,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     output.QUESTIONS_BY_SERVICE_AREA = GetPreviewChecklistPrivate(item);
                     result.Add(output);
                 }
-
             }
             FillResponseTime(watch);
             return Ok(result);
@@ -62,8 +47,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             LogRequest(prefix: "CreateNewMultiChecklist");
             var watch = Stopwatch.StartNew();
-            var result = new PM_CHECKLIST { VERSION =1m, TITLE = string.Empty, DESCRIPTION = string.Empty, EFFECTIVE_FROM = DateTime.Today };
-       
+            var result = new PM_CHECKLIST { VERSION = 1m, TITLE = string.Empty, DESCRIPTION = string.Empty, EFFECTIVE_FROM = DateTime.Today };
+
             if (checklistIds == null || checklistIds.Count == 0)
                 return Ok(result);
 
@@ -86,7 +71,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var firstScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 1)?.WEIGHTAGE_SCORE;
             var secondScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 2)?.WEIGHTAGE_SCORE;
             var thirdScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 3)?.WEIGHTAGE_SCORE;
-
 
             var errMsg = "Unable to Merge. The Weightage scores for {0} category are not the same for the selected checklists. Please select checklists with same weightage scores.";
             if (!scores.Where(x => x.WEIGHTAGE_ID == 1).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == firstScore))
@@ -126,9 +110,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(result);
         }
 
-
-
-        //  Create the new checklists and its mappings 
+        //  Create the new checklists and its mappings
         [POST("SaveNewMultiChecklist")]
         [ActionName("SaveNewMultiChecklist")]
         [HttpPost]
@@ -139,8 +121,71 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // select * from pm_process_questions_mapping where question_id in (select id from  pm_checklist_questions where checklist_id in (97,98))r
             var watch = Stopwatch.StartNew();
             LogRequest(prefix: "SaveNewMultiChecklist");
+            var checklist = CSPdb.PM_CHECKLIST.GetAll().FirstOrDefault(x => x.ID == checklistId);
+
+            var allQuestionsbySA = multichecklists.SelectMany(x => x.QUESTIONS_BY_SERVICE_AREA).ToList();// .SelectMany(x => x.QUESTIONS_BY_PROCESS_AREA).SelectMany(x => x.QUESTIONS_BY_PROCESS).Distinct().ToList();
+            var newQuesList = new List<PM_CHECKLIST_QUESTIONS>();
+            var newProcessMappingList = new List<PM_PROCESS_QUESTIONS_MAPPING>();
+            int i = 1;
+            List<Tuple<int, int, int, string>> qCombo = new List<Tuple<int, int, int, string>>();
+            foreach (var item in allQuestionsbySA)
+            {
+                foreach (var qpa in item.QUESTIONS_BY_PROCESS_AREA)
+                {
+                    foreach (var qp in qpa.QUESTIONS_BY_PROCESS)
+                    {
+                        foreach (var p in qp.QUESTIONS)
+                        {
+                            if (qCombo.Any(x => x.Item1 == item.SERVICE_AREA_ID && x.Item2 == qpa.PROCESS_AREA_ID && x.Item3 == qp.PROCESS_ID && x.Item4 == p.QUESTION))
+                                continue;
+                            newQuesList.Add(new PM_CHECKLIST_QUESTIONS
+                            {
+                                CHECKLIST_ID = checklistId,
+                                EFFECTIVE_FROM = checklist.EFFECTIVE_FROM,
+                                //WEIGHTAGE_ID = p.
+                                Reference = i,
+                                TITLE = p.QUESTION,
+                            });
+
+                            newProcessMappingList.Add(new PM_PROCESS_QUESTIONS_MAPPING
+                            {
+                                CHECKLIST_ID = checklistId,
+                                PROCESS_AREA_ID = qpa.PROCESS_AREA_ID,
+                                PROCESS_ID = qp.PROCESS_ID,
+                                SERVICE_AREA_ID = item.SERVICE_AREA_ID,
+                                Reference = i++,
+                            });
+
+                            qCombo.Add(new Tuple<int, int, int, string>(item.SERVICE_AREA_ID, qpa.PROCESS_AREA_ID, qp.PROCESS_ID, p.QUESTION));
+                        }
+                    }
+                }
+            }
+
+            foreach (var item in newQuesList)
+            {
+                if (newQuesList.Any(x => x.TITLE == item.TITLE))
+                    continue;
+                UpdateAuditFields(item);
+
+                CSPdb.PM_CHECKLIST_QUESTIONS.Add(item);
+            }
+
+            CSPdb.Commit();
+
+            foreach (var item in newProcessMappingList)
+            {
+                var question = newQuesList.FirstOrDefault(x => x.Reference == item.Reference);
+                if (question == null || question.ID == 0)
+                    continue;
+                item.QUESTION_ID = question.ID;
 
 
+                UpdateAuditFields(item);
+                CSPdb.PM_PROCESS_QUESTIONS_MAPPING.Add(item);
+            }
+
+            CSPdb.Commit();
             FillResponseTime(watch);
 
             return Ok();
