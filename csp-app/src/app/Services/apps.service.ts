@@ -9431,6 +9431,21 @@ export class AppsService {
       });
   }
 
+  saveNewMultiChecklist(checklistData, checklistId): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    const requestData = {
+      checklistId: checklistId
+    };
+    return this._http.post<any[]>(this.apiurl + "/SaveNewMultiChecklist", checklistData,
+      {
+        headers: header,
+        params: requestData
+      });
+  }
 
 
 

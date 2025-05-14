@@ -126,27 +126,43 @@ export class MergeChecklistComponent implements OnInit {
   saveMergeChecklist() {
 
     this._callSave = true;
-    this._loading = true;}
+    this._loading = true;
+
+  }
 
   project_onChange($event: any) {
     let obj: any = JSON.parse($event);
     console.log(obj);
     this._callSave = false;
-    this._loading= false; 
-     
-    //call save questions
-    //  const selectedQuestions = [];
-    //   this.previewChecklistsData.forEach(checklist => {
-    //     checklist.questionS_BY_SERVICE_AREA.forEach(serviceTower => {
-    //       serviceTower.questionS_BY_PROCESS_AREA.forEach(processArea => {
-    //         processArea.questionS_BY_PROCESS.forEach(process => {
-    //           const selected = process.questions.filter(q => q.selected);
-    //           selectedQuestions.push(...selected);
-    //         });
-    //       });
-    //     });
-    //   });
-     
+    if (obj!= undefined && obj != null && obj > 0) {
+      this.saveMultiChecklist(obj);
+    }
+  
+  }
+
+  saveMultiChecklist(checklistId: number) {
+    const selectedQuestions = [];
+    this.previewChecklistsData.forEach(checklist => {
+      checklist.questionS_BY_SERVICE_AREA.forEach(serviceTower => {
+        serviceTower.questionS_BY_PROCESS_AREA.forEach(processArea => {
+          processArea.questionS_BY_PROCESS.forEach(process => {
+            const selected = process.questions.filter(q => q.selected);
+            selectedQuestions.push(...selected);
+          });
+        });
+      });
+    });
+    
+
+    this._appService.saveNewMultiChecklist(this.previewChecklistsData, checklistId).subscribe(data => {
+      this._loading = true;
+      this.isSaved = true;
+      this.getAllChecklistsData();
+      this.showPreviewGrid = false;
+    }, error => {
+      this._loading = false;
+      this._util.serviceError(error);
+    });
   }
 
   service_addChecklist(newChecklist: ChecklistModel) {
@@ -158,7 +174,7 @@ export class MergeChecklistComponent implements OnInit {
           this.newChecklist.id = data.id;
           this.UpdateWeightageScores();
         }
-        alert('Checklist added successfully');
+        //alert('Checklist added successfully');
         this.newChecklist = new ChecklistModel();
       }
     }, error => { this._util.serviceError(error); this.isSaved = true });
@@ -177,7 +193,6 @@ export class MergeChecklistComponent implements OnInit {
         this._util.serviceError(error);
       });
   }
-
 
 
 
