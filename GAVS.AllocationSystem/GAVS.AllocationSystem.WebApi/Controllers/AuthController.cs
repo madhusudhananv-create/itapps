@@ -794,6 +794,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return true;
             else if (emailid.ToUpper().EndsWith("@GSLAB.COM"))
                 return true;
+            else if (emailid.ToUpper().EndsWith("@NEUREALM.COM"))
+                return true;
             return false;
         }
         protected bool VaidateUser(string strUsername, string strPassword, out string email, out string empid, out string DisplayName)
