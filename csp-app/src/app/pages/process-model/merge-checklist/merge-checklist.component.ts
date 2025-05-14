@@ -132,7 +132,7 @@ export class MergeChecklistComponent implements OnInit {
 
   project_onChange($event: any) {
     let obj: any = JSON.parse($event);
-    console.log(obj);
+    
     this._callSave = false;
     if (obj!= undefined && obj != null && obj > 0) {
       this.saveMultiChecklist(obj);
