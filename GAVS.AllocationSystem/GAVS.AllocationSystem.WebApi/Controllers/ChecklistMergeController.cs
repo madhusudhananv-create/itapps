@@ -164,10 +164,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             foreach (var item in newQuesList)
             {
-                if (newQuesList.Any(x => x.TITLE == item.TITLE))
+                if (newQuesList.IndexOf(item) != newQuesList.FindIndex(x => x.TITLE == item.TITLE))
                     continue;
                 UpdateAuditFields(item);
-
                 CSPdb.PM_CHECKLIST_QUESTIONS.Add(item);
             }
 
@@ -179,8 +178,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (question == null || question.ID == 0)
                     continue;
                 item.QUESTION_ID = question.ID;
-
-
                 UpdateAuditFields(item);
                 CSPdb.PM_PROCESS_QUESTIONS_MAPPING.Add(item);
             }
