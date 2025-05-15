@@ -23,6 +23,6 @@ export const environment = {
   redirect: 'http%3A%2F%2F10.0.100.222:8092%2Flandingpage/',
   loginpage: 'http%3A%2F%2F10.0.100.222:8092%2Flogin/',
   environment_Id: 'UAT',
-  company_name: ' GSLAB | Gavs ',
+  company_name: 'Neurealm',
   domain_name: 'gavstech.com'
 }

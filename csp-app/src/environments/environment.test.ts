@@ -21,18 +21,18 @@ export const environment = {
   // loginpage: 'http%3A%2F%2F10.0.100.223:8092%2Flogin/',
 
   //// For deploying Azure UAT
-  webapiuri: 'https://csmuatapi.gavstech.com/api/AllSys/',
-  webapiuri_auth: 'https://csmuatapi.gavstech.com/api/Auth/',
+  webapiuri: 'https://csmuatapi.neurealm.com/api/AllSys/',
+  webapiuri_auth: 'https://csmuatapi.neurealm.com/api/Auth/',
   officesite: 'https://login.microsoftonline.com/',
   tenantid: '2ce2daff-4e86-4a36-a7e3-6aa2a22bf4d1',
   //clientid:'e0e8b2ba-811d-4da1-830d-7a99903a4d38',
   clientid: '5b0f38b4-699a-434e-a04e-ccf50dc6e718',
-  redirect: 'https%3A%2F%2Fcsmuat.gavstech.com%2Flandingpage/',
-  loginpage: 'https%3A%2F%2Fcsmuat.gavstech.com%2Flogin',
+  redirect: 'https%3A%2F%2Fcsmuat.neurealm.com%2Flandingpage/',
+  loginpage: 'https%3A%2F%2Fcsmuat.neurealm.com%2Flogin',
   googleClientId: '360086473959-4rtb8ep6eq60tt3pm8922g33cr6pvbqe.apps.googleusercontent.com',
   gavsGoogleClientId: '348205218679-gt5j9l08b657o76kuo6j5ni3kbt231ps.apps.googleusercontent.com',
   environment_Id: 'UAT',
-  company_name: ' GSLAB | Gavs ',
+  company_name: 'Neurealm',
   domain_name: 'gavstech.com'
   //   production: true,
   // //Live - pord
