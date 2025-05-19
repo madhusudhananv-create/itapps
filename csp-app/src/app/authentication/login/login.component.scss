@@ -47,15 +47,15 @@ body
 
 #container
 {
-    margin-top: 130px;
+    margin-top: 40px;
     padding-top: 15px;
     vertical-align: middle;
-    height: 410px;
+    height: 600px;
     background-image: url('/assets/images/brand_element.png');
     background-repeat: no-repeat;
-    background-position-x : 160px;
+    background-position-x : 40px;
     background-position-y: 10px;
-    background-size: 235px 320px;
+    background-size: 600px 420px;
 }
 #Login_Portal{
     margin-left: auto;
@@ -236,8 +236,8 @@ button :focus{
 #googleImageContainer{
     text-align: centre;
     vertical-align: middle;
-    width: 148px;
-    height:50px;
+    width: 200px;
+    height:auto;
     padding-top: 2px;
     padding-left: 2px;
     background-color: #E5F3FB;
@@ -245,11 +245,11 @@ button :focus{
 
 #google{
     background-color: #E5F3FB;
-    height:40px;
+    height:auto;
     background-image: url('/assets//images/Google.PNG');
     background-repeat: no-repeat;
     cursor: pointer;
-    width: 140px;
+    width: 180px;
     border: 0px;
     //border-radius: 6px;
     //box-shadow: 1px 1px 5px gray;
@@ -297,14 +297,14 @@ button :focus{
 
     #container {
         height: 600px;
-        width: 320px;
+        width: 600px;
         margin-top: 0px;
         background-image: url('/assets/images/brand_element.png');
         background-repeat: no-repeat;
         background-position: top;
         background-color: white;
         background-position-y: 50px;
-        background-size: 75px 110px;
+        background-size: 75px 60px;
         margin-left: auto;
         margin-right: auto;
     }
