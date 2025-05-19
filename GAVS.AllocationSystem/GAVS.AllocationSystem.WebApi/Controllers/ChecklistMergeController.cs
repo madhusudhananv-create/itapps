@@ -47,7 +47,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             LogRequest(prefix: "CreateNewMultiChecklist");
             var watch = Stopwatch.StartNew();
-            var result = new PM_CHECKLIST { VERSION = 1m, TITLE = string.Empty, DESCRIPTION = string.Empty, EFFECTIVE_FROM = DateTime.Today };
+            var result = new PM_CHECKLIST { VERSION = 1m, TITLE = string.Empty, DESCRIPTION = string.Empty, EFFECTIVE_FROM = DateTime.Today, IS_MERGED = true };
 
             if (checklistIds == null || checklistIds.Count == 0)
                 return Ok(result);
@@ -106,6 +106,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (existing.TrueForAll(x => x.STATUS_LIST_ID == firstChecklist.STATUS_LIST_ID))
                 result.STATUS_LIST_ID = firstChecklist.STATUS_LIST_ID;
+
             FillResponseTime(watch);
             return Ok(result);
         }
