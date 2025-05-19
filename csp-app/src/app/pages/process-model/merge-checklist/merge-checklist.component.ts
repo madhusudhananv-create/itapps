@@ -15,7 +15,7 @@ import { PreviewPopupComponent } from '../process-checklist-mapping/preview-popu
   styleUrls: ['./merge-checklist.component.scss']
 })
 export class MergeChecklistComponent implements OnInit {
-  isShowCreateChecklist = true;
+  isShowCreateChecklist : boolean = true;
   checklistForm: FormGroup;
   checklists: any;
   previewChecklistsData: any[] = [];
