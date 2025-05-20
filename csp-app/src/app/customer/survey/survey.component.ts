@@ -203,7 +203,7 @@ export class SurveyComponent implements OnInit {
       this.questions = data;
       if (this.questions == undefined || this.questions == null) return;
 
-      this.questions_Criteria = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Criteria').sort(t => t.id);
+      this.questions_Criteria = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Criteria').sort(t => t.SEQUENCE);
       this.questions_NPS = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'NPS')[0];
       this.questions_Others = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Others').sort(t => t.id);
 

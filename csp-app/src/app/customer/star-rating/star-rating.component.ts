@@ -18,7 +18,7 @@ export class StarRatingComponent implements OnInit {
   ratingArr: number[] = [];   
   hasBeenClicked: boolean = false;      
   
-  tooltips: string[] = ['Dissatisfied', 'Somewhat Satisfied', 'Satisfied', 'Highly Satisfied', 'Delighted'];   
+  tooltips: string[] = ['Highly Dissatisfied', 'Dissatisfied', 'Neutral ','Satisfied ', 'Highly Satisfied' ];   
   tooltips1: string[] = ['Strongly Disagree', 'Disagree', 'Somewhat Agree', 'Agree', 'Strongly Agree'];      
 
   constructor(private snackBar: MatSnackBar) {}    

@@ -16,4 +16,5 @@ export class CssQuestionRepliesModel {
     updateD_DATE: Date;
     isactive: boolean;
     canskip : boolean;
+    SEQUENCE: number;
 }
