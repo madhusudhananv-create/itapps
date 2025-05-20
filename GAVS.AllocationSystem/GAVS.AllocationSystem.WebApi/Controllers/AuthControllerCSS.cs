@@ -34,7 +34,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 string surveyId = string.Empty;
                 if (replies.CSS_BATCH_CUSTOMERS_EXTENDED != null)
                 {
-                    foreach (CSS_QUESTION_REPLIES reply in replies.CSS_QUESTION_REPLIES)
+                    foreach (CSS_QUESTION_REPLIES reply in replies.CSS_QUESTION_REPLIES.OrderBy(x => x.SEQUENCE))
                     {
                         surveyId = reply.SURVEY_ID;
                         var existing = CSPdb.CSS_QUESTION_REPLIES.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMER_ID == reply.BATCH_CUSTOMER_ID &&
@@ -83,7 +83,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
                 {
-                    foreach (var reply in replies.CSS_QUESTION_REPLIES)
+                    foreach (var reply in replies.CSS_QUESTION_REPLIES.OrderBy(x => x.SEQUENCE))
                     {
                         surveyId = reply.SURVEY_ID;
                         var existing = CSPdb.CSS_QUESTION_REPLIES.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMER_MONTHLY_ID == reply.BATCH_CUSTOMER_MONTHLY_ID &&
@@ -364,7 +364,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(t => t.MODEL_ID == questionModelId && t.EFFECTIVE_FROM <= DateTime.Now && t.ISACTIVE == true).ToList();
                         questionsWithReplies = GetQuestionReplies(questions, batchesExt.ID, iteration.SURVEY_ID, false);
-                        questionsWithReplies = GetQuestionReplies(questions, batchesExt.ID, iteration.SURVEY_ID, false);
+                        //questionsWithReplies = GetQuestionReplies(questions, batchesExt.ID, iteration.SURVEY_ID, false);
                     }
                     var questionMaster = CSPdb.CSS_QUESTION_MASTER.GetAll().ToList();
                     foreach (var reply in questionsWithReplies)
@@ -436,7 +436,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(t => t.MODEL_ID == questionModelId && t.EFFECTIVE_FROM <= DateTime.Now && t.ISACTIVE == true).ToList();
                         questionsWithReplies = GetQuestionReplies(questions, batchCustMonthly.ID, iteration.SURVEY_ID, true);
-                        questionsWithReplies = GetQuestionReplies(questions, batchCustMonthly.ID, iteration.SURVEY_ID, true);
+                        //questionsWithReplies = GetQuestionReplies(questions, batchCustMonthly.ID, iteration.SURVEY_ID, true);
                     }
                     var questionMaster = CSPdb.CSS_QUESTION_MASTER.GetAll().ToList();
                     foreach (var reply in questionsWithReplies)
@@ -657,7 +657,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         List<CSS_QUESTION_REPLIES> GetQuestionReplies(List<CSS_QUESTION_MASTER> questions, int batch_customer_id, string code, bool isMonthly)
         {
             List<CSS_QUESTION_REPLIES> questionsWithReplies = new List<CSS_QUESTION_REPLIES>();
-            foreach (CSS_QUESTION_MASTER q in questions)
+            foreach (CSS_QUESTION_MASTER q in questions.OrderBy(x => x.SEQUENCE))
             {
                 CSS_QUESTION_REPLIES reply = new CSS_QUESTION_REPLIES()
                 {
@@ -667,7 +667,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     QUESTION = q.QUESTION,
                     QUESTION_CATEGORY = q.QUESTION_CATEGORY,
                     QUESTION_DETAIL = q.QUESTION_DETAIL,
-                    RATING_SCALE = q.RATING_SCALE.GetValueOrDefault(2)
+                    RATING_SCALE = q.RATING_SCALE.GetValueOrDefault(2),
+                    SEQUENCE = q.SEQUENCE.GetValueOrDefault(q.ID),
                 };
                 if (isMonthly)
                     reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
@@ -676,7 +677,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 questionsWithReplies.Add(reply);
             }
 
-            return questionsWithReplies;
+            return questionsWithReplies.ToList();
         }
 
 

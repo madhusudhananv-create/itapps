@@ -23,5 +23,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string PARAM_CATEGORY { get; set; }
 
         public bool? TRIGGER_RCA { get; set; }
+
+         
+        public int? SEQUENCE { get; set; }
     }
 }

@@ -31,5 +31,8 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [NotMapped]
         public bool canskip { get; set; }
+
+        [NotMapped]
+        public int SEQUENCE { get; set; }
     }
 }
