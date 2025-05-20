@@ -20,7 +20,7 @@ export class ChecklistModel {
     findingstypE_ID: number;
     updateD_NAME: string;
     findingtypE_VALUE: string;
-    IS_MERGED: boolean = true;
+    iS_MERGED: boolean = false;
 }
 
 export class ChecklistQuestionsModelNew {
