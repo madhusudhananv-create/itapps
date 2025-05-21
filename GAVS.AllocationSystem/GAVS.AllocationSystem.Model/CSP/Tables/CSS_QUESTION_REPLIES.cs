@@ -34,5 +34,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [NotMapped]
         public int SEQUENCE { get; set; }
+        [NotMapped]
+        public string   RATING_PARAM{ get; set; }
     }
 }
