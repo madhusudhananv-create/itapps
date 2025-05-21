@@ -8,6 +8,7 @@ export class CssQuestionRepliesModel {
     questioN_DETAIL: string;
     rating:number = 0;
     ratinG_DESCRIPTION:string = '';
+    ratinG_PARAM:string;
     ratinG_SCALE
     comments:string;
     createD_BY: string;
