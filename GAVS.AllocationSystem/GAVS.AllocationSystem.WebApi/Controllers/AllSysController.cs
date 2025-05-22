@@ -1302,6 +1302,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (weightage != null)
                 {
                     rec.WEIGHTAGE = weightage.WEIGHTAGE_TITLE;
+                    rec.WEIGHTAGE_ID = weightage.WEIGHTAGE_ID;
                 }
             }
 

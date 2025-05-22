@@ -39,6 +39,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public bool? IS_MATURITY_APPLICABLE { get; set; }
 
+        public int WEIGHTAGE_ID { get; set; }
         public string WEIGHTAGE { get; set; }
         public decimal? WEIGHTAGE_SCORE { get; set; }
         public string CATEGORY { get; set; }

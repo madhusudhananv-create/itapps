@@ -143,9 +143,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             {
                                 CHECKLIST_ID = checklistId,
                                 EFFECTIVE_FROM = checklist.EFFECTIVE_FROM,
-                                //WEIGHTAGE_ID = p.
+                                WEIGHTAGE_ID = p.WEIGHTAGE_ID,
                                 Reference = i,
                                 TITLE = p.QUESTION,
+
                             });
 
                             newProcessMappingList.Add(new PM_PROCESS_QUESTIONS_MAPPING
@@ -155,6 +156,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                 PROCESS_ID = qp.PROCESS_ID,
                                 SERVICE_AREA_ID = item.SERVICE_AREA_ID,
                                 Reference = i++,
+
                             });
 
                             qCombo.Add(new Tuple<int, int, int, string>(item.SERVICE_AREA_ID, qpa.PROCESS_AREA_ID, qp.PROCESS_ID, p.QUESTION));
