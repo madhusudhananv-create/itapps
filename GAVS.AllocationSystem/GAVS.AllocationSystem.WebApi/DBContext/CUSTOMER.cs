@@ -31,7 +31,9 @@ namespace GAVS.AllocationSystem.WebApi.DBContext
         public string UPDATED_BY { get; set; }
         public System.DateTime UPDATED_DATE { get; set; }
         public string CUST_ID_S { get; set; }
-    
+
+        public string BUSINESS_UNIT { get; set; }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<CUST_ADDR> CUST_ADDR { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]

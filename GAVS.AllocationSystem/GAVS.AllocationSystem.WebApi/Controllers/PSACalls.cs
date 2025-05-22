@@ -83,6 +83,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             CREATED_BY = customer.CREATED_BY ?? "99999",
                             UPDATED_BY = customer.UPDATED_BY ?? "99999",
                             EP_ID = GetOldEMPId(customer.EP_ID),
+                            BUSINESS_UNIT = customer.BUSINESS_UNIT,
                             UPDATED_DATE = DateTime.Now,
 
                         };
@@ -311,7 +312,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             toMail = helper.GetDBConfig("NewAccount_ToList", "-1");
             //var qualityMail = helper.GetDBConfig("QUALITY_TEAM_MAIL", "-1");
             //var pexMail = helper.GetDBConfig("PROCESS_EXCELLENCE_TEAM_MAIL", "-1");
-            var ccMail = helper.ConcatEmails(new List<string>() { Constants.QUALITY_MAIL, Constants.PEX_MAIL, Constants.DEVX_LEAD, Constants.AUDITOR_LEAD,Constants.DEVX_MAIL });
+            var ccMail = helper.ConcatEmails(new List<string>() { Constants.QUALITY_MAIL, Constants.PEX_MAIL, Constants.DEVX_LEAD, Constants.AUDITOR_LEAD, Constants.DEVX_MAIL });
             var customerName = customer.CUST_NM;
             var customerID = customer.CUST_ID;
             var subject = $"New Customer - {customerName} has been added";
@@ -463,7 +464,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("END_DATE", project.END_DATE.ToString("dd-MM-yyyy"));
             EmailContentValues.Add("PM", pmInfo != null ? pmInfo.FRST_NM : "");
             EmailContentValues.Add("CSM", csmInfo != null ? csmInfo.FRST_NM : "");
-            var ccMailIds = string.Join(",", new string[] { emailIds, pmInfo != null ? pmInfo.EMAIL_ID : "", qualitySpoc != null ? qualitySpoc.EMAIL_ID : "", qualityHead, Constants.QUALITY_MAIL,   Constants.PEX_MAIL, Constants.DEVX_LEAD });
+            var ccMailIds = string.Join(",", new string[] { emailIds, pmInfo != null ? pmInfo.EMAIL_ID : "", qualitySpoc != null ? qualitySpoc.EMAIL_ID : "", qualityHead, Constants.QUALITY_MAIL, Constants.PEX_MAIL, Constants.DEVX_LEAD });
             string mailContent = helper.GetEmailContent("ProjectClosureNotification.htm", EmailContentValues);
 
             //todo: move email to template
@@ -1087,18 +1088,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             return GetResult<PROJECT_RESOURCE>(resource, errMsg);
         }
-        [POST("UpdateProjectResource")]
-        [ActionName("UpdateProjectResource")]
-        [HttpPost]
-        public IHttpActionResult UpdateProjectResource(HttpRequestMessage request)
-        {
 
-            var content = request.Content;
-            string errMsg = string.Empty;
-            string jsonContent = content.ReadAsStringAsync().Result;
+        private IHttpActionResult UpdateProjResourcePrivate(string jsonContent)
+        {
             dynamic json = jsonContent;
             PROJECT_RESOURCE resource = JsonConvert.DeserializeObject<PROJECT_RESOURCE>(json);
-
+            string errMsg = string.Empty;
             if (resource != null)
             {
                 PROJECT_RESOURCE existingResource = Cldb.PROJECT_RESOURCE.GetAll().Where(t => t.ID == resource.ID).FirstOrDefault();
@@ -1153,6 +1148,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             }
             return GetResult<PROJECT_RESOURCE>(resource, errMsg);
+        }
+        [POST("UpdateProjectResource")]
+        [ActionName("UpdateProjectResource")]
+        [HttpPost]
+        public IHttpActionResult UpdateProjectResource(HttpRequestMessage request)
+        {
+
+            var content = request.Content;
+
+            string jsonContent = content.ReadAsStringAsync().Result;
+            return UpdateProjResourcePrivate(jsonContent);
         }
 
         [POST("DeleteExistingProjectResource")]

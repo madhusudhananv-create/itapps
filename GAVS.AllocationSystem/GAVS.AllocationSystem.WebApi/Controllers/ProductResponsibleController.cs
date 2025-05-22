@@ -61,7 +61,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult AddUpdateProductResponsible([FromBody] PRODUCT_RESPONSIBLE productResponsible)
         {
             CheckAccessForFeature(94);
-            LogRequest(content: JsonConvert.SerializeObject(productResponsible));
+            LogRequest(prefix:"Product", content: JsonConvert.SerializeObject(productResponsible));
             if (productResponsible == null)
             {
                 return Content(HttpStatusCode.Conflict, "Request is invalid");
@@ -119,7 +119,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult DeleteProductResponsible([FromBody] PRODUCT_RESPONSIBLE productResponsible)
         {
             CheckAccessForFeature(94);
-            LogRequest(content: JsonConvert.SerializeObject(productResponsible));
+            LogRequest(prefix: "Product", content: JsonConvert.SerializeObject(productResponsible));
             if (productResponsible == null)
             {
                 return Content(HttpStatusCode.Conflict, "Request is invalid");

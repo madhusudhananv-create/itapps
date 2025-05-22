@@ -520,6 +520,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
         private void SendMailForRiskRepo(RISK_REPOSITORY riskRepository, int flag, RISK_REPOSITORY existingRiskRepository, List<PROCESS_SERVICE_AREA_NEW> serviceTowerList)
         {
+            return;
             var ccMail = Constants._csmSupportMail;
             var toMail = Constants.BCC;// config
 

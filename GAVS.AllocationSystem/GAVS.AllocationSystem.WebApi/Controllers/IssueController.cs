@@ -118,7 +118,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string mailContent;
 
             string tomail = pmMails;
-            string ccmail = helper.GetDBConfig("CSS_LINK_CC", "-1");
+            string ccmail = Constants.DEVX_LEAD;
             var qualitySpoc = helper.GetQualitySpocMailForProject(project);
 
 
@@ -261,7 +261,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CSPdb.PROJECT_ISSUE.Update(overview);
                 CSPdb.Commit(CanCommit);
                 UpdateLastUpdatedDetails(results.PROJECT_ID, results.UPDATED_BY);
-                //SendUpdateMail<PROJECT_RISK>(results, overview, project, FieldNameWithCaptionList, "Risk Updated for " + project.PROJ_NM);
+                //SendUpdateMail<PROJECT_ISSUE>(results, overview, project, FieldNameWithCaptionList, "Issue Updated for " + project.PROJ_NM);
             }
             LoadOverAllIssuesData();
             return Ok();

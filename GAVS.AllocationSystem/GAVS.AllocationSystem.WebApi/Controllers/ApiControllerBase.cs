@@ -52,7 +52,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         protected string GetException(Exception exp, string content, string prefix = "")
         {
 
-            string errMsg = exp.Message + exp.StackTrace;
+
+            string errMsg = string.Empty;
+            if (exp.InnerException != null)
+                errMsg = exp.InnerException.Message + exp.InnerException.StackTrace;
+            else
+                errMsg = exp.Message + exp.StackTrace;
 
             LogRequest(exp, prefix, content);
             return errMsg;

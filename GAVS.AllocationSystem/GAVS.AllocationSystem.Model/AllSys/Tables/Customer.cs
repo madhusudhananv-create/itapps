@@ -25,6 +25,8 @@ namespace GAVS.AllocationSystem.Model.AllSys
         public DateTime UPDATED_DATE { get; set; }
 
         public string EP_ID { get; set; }
+
+        public string  BUSINESS_UNIT { get; set; }
     }
     public class CustomerProjectIds
     {
