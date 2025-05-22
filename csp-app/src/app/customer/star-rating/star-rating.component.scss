@@ -4,7 +4,8 @@
   gap: 10px;
   
   button.disabled-button {     
-    pointer-events: none;     
+    
+    pointer-events: auto;  
     opacity: 0.5;   
   }    
 
