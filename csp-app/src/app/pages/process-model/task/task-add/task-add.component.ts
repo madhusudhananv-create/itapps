@@ -21,6 +21,7 @@ import { MAT_MOMENT_DATE_ADAPTER_OPTIONS, MomentDateAdapter, MAT_MOMENT_DATE_FOR
 import * as _moment from 'moment';
 import { AccessControl } from '../../../../Shared/accessControl';
 import { CustomerProjectIds } from '../../../../models/customer-projects-model';
+import { environment } from '../../../../../environments/environment';
 // import { default as _rollupMoment} from 'moment';
 
 //const moment = _rollupMoment || _moment;
@@ -386,13 +387,13 @@ export class TaskAddComponent implements OnInit {
     else if ((this._taskService.selectedTask.description == undefined || this._taskService.selectedTask.description == null ) &&  this._taskService.selectedTask.iS_DRAFT == false) { alert("Please enter Description"); return false; }
     else if (this._taskService.selectedTask.scheduleD_START_DATE == undefined || this._taskService.selectedTask.scheduleD_START_DATE == null) { alert("Please select scheduled start date"); return false; }
     else if (this._taskService.selectedTask.seT_RECURRENCE && (this._taskService.selectedTask.recurrence.starT_DATE == undefined || this._taskService.selectedTask.recurrence.enD_DATE == undefined)) { alert("Please set start date and end date for recurring Event/Task"); return false; }
-    else if (this._taskService.selectedTask.cusT_ID == undefined && !this.showServiceTower) { alert("Please select a Customer. If Customer not applicable select Gavs Internal."); return false; }
+    else if (this._taskService.selectedTask.cusT_ID == undefined && !this.showServiceTower) { alert(`Please select a Customer. If Customer not applicable select ${environment.company_name} Internal.`); return false; }
     else
       isValid = true;
 
     if (this.showServiceTower) {
       if ((this.Customerids.length == 0 || this.Projectids.length == 0 || this.Projectids == undefined || this.Customerids == undefined)) {
-        alert("Please select a Customer and Project. If Customer not applicable select Gavs Internal.");
+        alert(`Please select a Customer and Project. If Customer not applicable select ${environment.company_name} Internal.`);
         return false;
       }
     }

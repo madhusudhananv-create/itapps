@@ -39,7 +39,7 @@ export class IssuesPageComponent implements OnInit {
   @ViewChild(MatSort) sort: MatSort;
   tempData: IssueModelExt[];
   tempData1: IssueModelExt[];
- 
+  companyName: string;
   private _isEmpSelVisible: any;
   @ViewChild(MatSort) set content(sort: MatSort) {
     this.dataSource.sort = sort;
@@ -68,6 +68,7 @@ export class IssuesPageComponent implements OnInit {
     private _access: AccessControl, private route: ActivatedRoute, public dialog: MatDialog, @Inject(MAT_DIALOG_DATA) private data: any) { }
 
   ngOnInit() {
+    this.companyName = environment.company_name;
     if (this.data.custId != null && this.data.custId != undefined) {
       this.selectedCust = this.data.custId;
       this.isPopOpened = true;
@@ -92,7 +93,7 @@ export class IssuesPageComponent implements OnInit {
   }
   employeeSearch_onChange($event) {
     let obj = $event;
-     
+
     this.EditIssue.assigneD_TO_EMPID = obj;
     this.EditIssue.assigneD_TO_NAME = this.empinfo.filter(x => x.emP_ID == obj)[0].frsT_NM;
     this._isEmpSelVisible = false;
@@ -307,14 +308,14 @@ export class IssuesPageComponent implements OnInit {
       alert('Please enter alphanumeric or numeric values along with special characters for Comments');
       return;
     }
-    
+
     if (this.EditIssue.assigneD_TO_EMPID == null || this.EditIssue.assigneD_TO_EMPID == "" || this.EditIssue.assigneD_TO_EMPID == undefined) {
-      
-        alert('Please enter valid value for Assigned To');
-        return;
-      
+
+      alert('Please enter valid value for Assigned To');
+      return;
+
     }
-    
+
 
     let tDate = new Date(this.EditIssue.targeT_DATE);
     tDate.setHours(0, 0, 0, 0);

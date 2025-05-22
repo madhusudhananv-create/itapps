@@ -221,7 +221,7 @@
       <div class="row">
         <mat-radio-group name="radreport" class="example-radio-group" [(ngModel)]="EditIssue.reporteD_BY" required>
           <mat-radio-button class="example-radio-button" style="margin-left: 12px;" (click)="DisableLevel()"
-            value="reportedbyGAVS">Identified by GAVS</mat-radio-button>
+            value="reportedbyGAVS">Identified by {{companyName}}</mat-radio-button>
           <mat-radio-button class="example-radio-button" (click)="EnableLevel()" value="reportedbyClient">Reported by
             Client</mat-radio-button>
           <mat-radio-button class="example-radio-button" (click)="EnableLevel()" value="escalatedbyClient">Escalated by
@@ -508,7 +508,7 @@
           <mat-datepicker-toggle matSuffix [for]="pickerAckDate"></mat-datepicker-toggle>
           <mat-datepicker #pickerAckDate></mat-datepicker>
         </mat-form-field>
-        <i class="info fa fa-info-circle " matTooltip="Date the escalation was acknowledged by the GS Lab|GAVS team">
+        <i class="info fa fa-info-circle " matTooltip="Date the escalation was acknowledged by the Neurealm team">
         </i>
       </div>
       <div class="row">

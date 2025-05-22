@@ -30,7 +30,7 @@ enum TYPE {
 }
 
 enum BENEFICIARY {
-    GAVS = 1,
+    Internal = 1,
     Customer = 2
 }
 

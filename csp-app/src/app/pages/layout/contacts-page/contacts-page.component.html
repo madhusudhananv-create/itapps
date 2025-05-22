@@ -36,7 +36,7 @@
 
         <br>
         <div class="row">
-          <div class="col-lg-3" *ngFor="let contact of getItems('GAVS'); let i = index">
+          <div class="col-lg-3" *ngFor="let contact of getItems(companyName); let i = index">
             <mat-card class="card_info">
               <div style="text-align:center">
                 <img class="image" src="assets/images/people.png" onerror="this.src ='assets/images/CustomerLogo.png'">
@@ -126,7 +126,7 @@
                 <mat-select name="txtType" placeholder="Contact Type" [(ngModel)]="newContacts.contacT_TYPE"
                   (selectionChange)="verifyContactType($event.value)" required [disabled]="this.displayDisabled">
                   <mat-option value="CUSTOMER">CUSTOMER</mat-option>
-                  <mat-option value="GAVS">{{ companyName }}</mat-option>
+                  <mat-option [value]= "companyName">{{ companyName }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
@@ -149,11 +149,11 @@
                 <input style="width:300px" name="txtName" matInput [(ngModel)]="newContacts.contacT_NAME"
                   [pattern]="unamePattern" #uname1="ngModel" placeholder="Name" required
                   [disabled]="this.displayDisabled">
-                  <mat-error *ngIf="uname1.errors" [ngClass]="'error'">
-                    <mat-error *ngIf="uname1.errors.pattern">
-                      User name is not valid.
-                    </mat-error>
+                <mat-error *ngIf="uname1.errors" [ngClass]="'error'">
+                  <mat-error *ngIf="uname1.errors.pattern">
+                    User name is not valid.
                   </mat-error>
+                </mat-error>
               </mat-form-field>
             </div>
             <div class="row">

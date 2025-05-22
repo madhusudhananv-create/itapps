@@ -16,14 +16,14 @@
       <span id="cus" style="font-size:15px">Customer Success Management</span>
     </div>
     <div id="customerLabel">
-      <label style="font-family: sans-serif;font-weight: 650">Customers:</label>
+      <label style="font-family: sans-serif;font-weight: 650">Customer Login:</label>
     </div>
     <div id="left">
       <form #loginform="ngForm" (ngSubmit)="SubmitForm(loginform.valid)">
         <input type="text" name="uname" id="Username" [(ngModel)]="email" class="textBox" placeholder="Username / Email"
           required="">
         <input type="password" name="pwd" id="passwd" [(ngModel)]="password" class="textBox" placeholder="Password">
-        <button type="submit" id="LoginButton">Customer Login</button>
+        <button type="submit" id="LoginButton">Login</button>
 
       </form>
 
@@ -33,7 +33,7 @@
     </div>
 
     <div id="GavsLabelContainer" style="margin-top: -2%;">
-      <label style="font-family: sans-serif;font-weight: 650;color:grey">&nbsp;&nbsp; {{ companyName }}  Employees:</label>
+      <label style="font-family: sans-serif;font-weight: 650;color:grey">&nbsp;&nbsp; Employee Login:</label>
     </div>
     <div id="right">
       <div id="GavsUsers">

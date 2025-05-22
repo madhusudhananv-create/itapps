@@ -50,7 +50,7 @@ export class ContactsPageComponent implements OnInit {
   contactRoles: ContactsRolesModel[];
   isPremier: Boolean = false;
   isGavs: Boolean = false;
-  companyName = environment.company_name;
+  companyName: string;
 
   constructor(public _taskService: TaskService, private route: ActivatedRoute, private _access: AccessControl, private _http: Http, private _util: myUtility, private _appservice: AppsService, public _layoutService: LayoutService) { }
 
@@ -58,7 +58,7 @@ export class ContactsPageComponent implements OnInit {
     this.contacts = [];
     this.newContacts = new ContactsModel;
     this.editCmode = false;
-
+    this.companyName = environment.company_name;
     this.sub = this.route.params.subscribe(params => {
       this.CUST_ID = params['custid'];
       this.empid = localStorage.getItem('empid');
@@ -102,7 +102,7 @@ export class ContactsPageComponent implements OnInit {
   }
 
   verifyContactType(contactType) {
-    if (contactType == "GAVS") {
+    if (contactType == this.companyName) {
       this.displayGavsContactType = true;
       //this.displayCustomerContactType = false;
     }
@@ -144,7 +144,7 @@ export class ContactsPageComponent implements OnInit {
       alert("Please enter required fields");
       return;
     }
-     let domain = environment.loginpage.replace('login/', '');
+    let domain = environment.loginpage.replace('login/', '');
     let url = 'customerinvite/';;
     var msg = "Contacts added successfully. If you wish to obtain Customer Success Survey from this contact, You need to navigate to Customer details page from settings menu to map the Customer contact to the project. Click Ok to navigate to Customer Details Page, click Cancel to Stay here.";
     if (this.newContacts.id === 0 || this.newContacts.id === undefined) {
@@ -152,7 +152,7 @@ export class ContactsPageComponent implements OnInit {
       this.newContacts.id = 0;
       this.newContacts.customeR_ID = this.CUST_ID;
 
-      if (this.newContacts.contacT_TYPE == "GAVS") {
+      if (this.newContacts.contacT_TYPE == this.companyName) {
         this.newContacts.contacT_NAME = this.myControl.value.frsT_NM;
         this.newContacts.contacT_EMP_ID = this.myControl.value.emP_ID;
 
@@ -177,20 +177,19 @@ export class ContactsPageComponent implements OnInit {
         this.myControl.reset();
         return;
       }
-      
+
 
       this._appservice.addContacts(this.newContacts)
         .subscribe(data => {
           this.contacts.push(data);
-          
 
-          if (window.confirm(msg))
-            {
-              const newWindow = window.open(url, '_blank');
-              if (newWindow) {
-                newWindow.focus();
-              }
-            };
+
+          if (window.confirm(msg)) {
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+              newWindow.focus();
+            }
+          };
 
           //alert("Contacts added successfully. If you wish to obtain Customer Success Survey from this contact, Please navigate to Customer details page from settings menu (" + url + ") to map the Customer contact to the project.")
         }, error => { this._util.serviceError(error); });
@@ -200,13 +199,12 @@ export class ContactsPageComponent implements OnInit {
         .subscribe(data => {
           this.LoadDetails();
           //alert("Contact updated successfully. If you wish to obtain Customer Success Survey from this contact, Please navigate to Customer details page from settings menu (" + url + ") to map the Customer contact to the project.")
-          if (window.confirm(msg))
-            {
-              const newWindow = window.open(url, '_blank');
-              if (newWindow) {
-                newWindow.focus();
-              }
-            };
+          if (window.confirm(msg)) {
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+              newWindow.focus();
+            }
+          };
 
         }, error => { this._util.serviceError(error); });
     }
