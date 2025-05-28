@@ -133,7 +133,8 @@
                 style="margin-right: 4px;">
                 <b></b>
               </div>
-              <div *ngIf="!getAuditeeResponse(find.id)" style="margin-right: 4px">
+              <div *ngIf="!getAuditeeResponse(find.id) || getAuditeeResponse(find.id) == 'Auditor Rejected'" 
+              style="margin-right: 4px">
                 <mat-checkbox class="example-margin" [(ngModel)]="find.ischecked">
 
                 </mat-checkbox>
@@ -155,7 +156,7 @@
           </td>
           <td>
             <div *ngIf="getAuditeeResponse(find.id) == 'Accept'
-              || getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376'
+              || getAuditeeResponse(find.id) == 'Reject'  && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376'
               ">
               <mat-form-field style="width: 90%">
                 <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks"
@@ -164,7 +165,7 @@
               </mat-form-field>
             </div>
             <div
-              *ngIf="getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#3AB376,#FF5969,#FF5969,#FF5969'">
+              *ngIf="getAuditeeResponse(find.id) == 'Reject'  && find.stagE_COLORS == '#3AB376,#FF5969,#FF5969,#FF5969'">
               <mat-form-field style="width: 90%">
                 <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks"
                   [disabled]="getsubmittedstatus(find)">
@@ -172,7 +173,7 @@
               </mat-form-field>
             </div>
             <div *ngIf="!getAuditeeResponse(find.id) && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969' ||
-              getAuditeeResponse(find.id) == 'Reject' && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969'">
+              getAuditeeResponse(find.id) == 'Reject' || getAuditeeResponse(find.id) == 'Auditor Rejected' && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969'">
               <mat-form-field style="width: 90%">
                 <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks">
                     </textarea>

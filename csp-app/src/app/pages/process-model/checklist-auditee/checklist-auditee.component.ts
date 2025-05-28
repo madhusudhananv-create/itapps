@@ -217,6 +217,10 @@ export class ChecklistAuditeeComponent implements OnInit {
           flag = true;
           findingIds.push(x.id);
         }
+        else if (this.getAuditeeResponse(x.id) == 'Auditor Rejected' && x.ischecked) {
+          flag = true;
+          findingIds.push(x.id);
+        }
       })
     })
 

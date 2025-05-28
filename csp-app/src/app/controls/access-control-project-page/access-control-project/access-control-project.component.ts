@@ -221,35 +221,35 @@ export class AccessControlProjectComponent implements OnInit {
   
   GeneralMethod() {
 
-    this._appservice.service_DowloadFile('aa','', '', 1)  .subscribe(
-      (data:  Blob) => {
-        const blob = new Blob([data], { type: 'application/pdf' });
-        const a = document.createElement('a');
-        document.body.appendChild(a);
-        const url = window.URL.createObjectURL(blob);
-        a.href = url;
-        // const contentDisposition = data.headers.get('content-disposition');
-        // // Rest of your code to extract filename using contentDisposition
-        // // Extract the file name
-        // console.log(contentDisposition);
-        // const filename = contentDisposition
-        //   .split(';')[1]
-        //   .split('filename')[1]
-        //   .split('=')[1]
-        //   .trim();
+    // this._appservice.service_DowloadFile('aa','', '', 1)  .subscribe(
+    //   (data:  Blob) => {
+    //     const blob = new Blob([data], { type: 'application/pdf' });
+    //     const a = document.createElement('a');
+    //     document.body.appendChild(a);
+    //     const url = window.URL.createObjectURL(blob);
+    //     a.href = url;
+    //     // const contentDisposition = data.headers.get('content-disposition');
+    //     // // Rest of your code to extract filename using contentDisposition
+    //     // // Extract the file name
+    //     // console.log(contentDisposition);
+    //     // const filename = contentDisposition
+    //     //   .split(';')[1]
+    //     //   .split('filename')[1]
+    //     //   .split('=')[1]
+    //     //   .trim();
 
-        a.download =   'assessment.pdf';
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      },
-      error => {
-        this._util.serviceError(error);
-      }
-    );
-    // this._appservice.GeneralMethod( ).subscribe(e => {
-    //   alert("done!");
-    // });
+    //     a.download =   'assessment.pdf';
+    //     a.click();
+    //     window.URL.revokeObjectURL(url);
+    //     document.body.removeChild(a);
+    //   },
+    //   error => {
+    //     this._util.serviceError(error);
+    //   }
+    // );
+    this._appservice.GeneralMethod( ).subscribe(e => {
+      alert("done!");
+    });
   }
 
   service_GetEmpInfo() {

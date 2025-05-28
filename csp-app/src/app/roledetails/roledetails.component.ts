@@ -7,7 +7,11 @@ import { DomainConfigService } from '../Services/app.domain.config';
 })
 export class RoledetailsComponent implements OnInit {
 
-  constructor(private domainconfig: DomainConfigService) { }
+  public _dc : DomainConfigService
+  constructor(public domainconfig: DomainConfigService) { 
+    this._dc = domainconfig;
+
+  }
 
   ngOnInit() {
   }

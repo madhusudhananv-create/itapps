@@ -38,7 +38,7 @@ export class SurveyComponent implements OnInit {
   starColor: StarRatingColor = StarRatingColor.accent;
   starColorP: StarRatingColor = StarRatingColor.primary;
   starColorW: StarRatingColor = StarRatingColor.warn;
-  warnNps :boolean = true;
+  warnNps: boolean = true;
   companyName = environment.company_name;
 
   // ddRatings = [
@@ -54,7 +54,7 @@ export class SurveyComponent implements OnInit {
     { 'key': '3 - Satisfied', 'value': 3 },
     { 'key': '4 - Highly Satisfied', 'value': 4 },
     { 'key': '5 - Delighted', 'value': 5 },];
- 
+
   ddRatings2 = [
     { 'key': '1 - Poor', 'value': 1 },
     { 'key': '2 - Fair', 'value': 2 },
@@ -62,7 +62,7 @@ export class SurveyComponent implements OnInit {
     { 'key': '4 - Very Good', 'value': 4 },
     { 'key': '5 - Excellent', 'value': 5 },];
 
-   //  (1),  (2),  (3),  (4),  (5)
+  //  (1),  (2),  (3),  (4),  (5)
   @Input('guId') guId: any;
   @Input('showQualitativeFeedback') showQualitativeFeedback: boolean = false;
   @Input('showCSSFields') showCSSFields: boolean = false;
@@ -129,18 +129,17 @@ export class SurveyComponent implements OnInit {
       }
     }
   }
-  onInputNpsChange()
-  {
+  onInputNpsChange() {
     this.warnNps = false;
     if (this.questions_NPS != undefined && this.questions_NPS != null) {
       const specialCharPattern = /^[!@#$%^&*(),.?":{}|<>~`_\-+=\[\]\\\/\s]+$/;
       const numberPattern = /^[0-9\s]+$/;
-      if ((specialCharPattern.test(this.questions_NPS.ratinG_DESCRIPTION)) || numberPattern.test(this.questions_NPS.ratinG_DESCRIPTION)) {        
+      if ((specialCharPattern.test(this.questions_NPS.ratinG_DESCRIPTION)) || numberPattern.test(this.questions_NPS.ratinG_DESCRIPTION)) {
         this.warnNps = true;
       }
+    }
   }
-}
-  
+
 
   SubmitForm() {
     if (this.showCSSFields) {
@@ -177,17 +176,16 @@ export class SurveyComponent implements OnInit {
           return;
         }
       }
-    }  
-    if(this.showQualitativeFeedback)
-    {
+    }
+    if (this.showQualitativeFeedback) {
       for (let q of this.questions_Others) {
-        if ((q.ratinG_DESCRIPTION == undefined || q.ratinG_DESCRIPTION == null || q.ratinG_DESCRIPTION.trim() == "") ) {
+        if ((q.ratinG_DESCRIPTION == undefined || q.ratinG_DESCRIPTION == null || q.ratinG_DESCRIPTION.trim() == "")) {
           alert("Please provide your comments for '" + q.question + "'");
           return;
         }
       }
     }
-    if (!this.showQualitativeFeedback) {
+    if (!this.showQualitativeFeedback && this.questions_NPS != undefined && this.questions_NPS != null) {
       if (this.questions_NPS.rating <= 9 && (this.questions_NPS.ratinG_DESCRIPTION == null ||
         this.questions_NPS.ratinG_DESCRIPTION == undefined || this.questions_NPS.ratinG_DESCRIPTION.trim() == "")) {
         alert("Please provide your comments for '" + this.questions_NPS.question + "'");
@@ -294,11 +292,11 @@ export class SurveyComponent implements OnInit {
     //130003742 — Auto fill rating based on Overall Experience Question
     if (this.questions_Criteria[index].ratinG_PARAM == "Overall Experience" && newRating == 5) {
       for (let i = 0; i < this.questions_Criteria.length; i++) {
-        
-          this.questions_Criteria[i].rating = newRating;
-        
+
+        this.questions_Criteria[i].rating = newRating;
+
       }
-    } 
+    }
   }
 
   viewTemplate(element) {

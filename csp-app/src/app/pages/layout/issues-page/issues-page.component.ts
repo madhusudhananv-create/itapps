@@ -310,10 +310,10 @@ export class IssuesPageComponent implements OnInit {
     }
 
     if (this.EditIssue.assigneD_TO_EMPID == null || this.EditIssue.assigneD_TO_EMPID == "" || this.EditIssue.assigneD_TO_EMPID == undefined) {
-
-      alert('Please enter valid value for Assigned To');
-      return;
-
+      
+        alert('Please enter valid value for Assigned To. Please make sure you select an active employee from the list');
+        return;
+      
     }
 
 
