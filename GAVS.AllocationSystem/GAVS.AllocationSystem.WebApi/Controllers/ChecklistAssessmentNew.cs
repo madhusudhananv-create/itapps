@@ -1430,7 +1430,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else if (results.STATUS == "Reject") // auditor is accepting the auditee accept - no action to be taken.
                         {
-                            rec.STATUS = results.STATUS;
+                            rec.STATUS = "Auditor Rejected";
                             rec.REMARKS = results.REMARKS;
                             UpdateAuditFields(rec, empId);
                             CSPdb.AUDITEE_ACCEPTANCE.Update(rec);
