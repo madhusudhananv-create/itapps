@@ -267,7 +267,7 @@ export class InviteComponent implements OnInit {
     }, error => { this._util.serviceError(error); });
   }
   Delete_onClick(cust) {
-    if (confirm('Are you sure you want to delete the customer?')) {
+    if (confirm('Are you sure you want to delete the Customer Contact Configuration?')) {
       this._appservice.deleteCustomerProjects(cust.emailid, cust.cusT_ID, localStorage.getItem('empid'))
         .subscribe(
           data => {

@@ -9,6 +9,7 @@ export class CssQuestionRepliesModel {
     rating:number = 0;
     ratinG_DESCRIPTION:string = '';
     ratinG_PARAM:string;
+    perspective : string;
     ratinG_SCALE
     comments:string;
     createD_BY: string;

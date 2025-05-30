@@ -289,14 +289,19 @@ export class SurveyComponent implements OnInit {
 
   onRatingChanged(newRating: number, index: number) {
     this.questions_Criteria[index].rating = newRating;
+
     //130003742 — Auto fill rating based on Overall Experience Question
     if (this.questions_Criteria[index].ratinG_PARAM == "Overall Experience" && newRating == 5) {
-      for (let i = 0; i < this.questions_Criteria.length; i++) {
+      if (confirm('Since you have rated 5 for Overall Experience, do you want to make all the ratings as 5?')) {
+        for (let i = 0; i < this.questions_Criteria.length; i++) {
 
-        this.questions_Criteria[i].rating = newRating;
+          this.questions_Criteria[i].rating = newRating;
 
+        }
       }
     }
+
+
   }
 
   viewTemplate(element) {
