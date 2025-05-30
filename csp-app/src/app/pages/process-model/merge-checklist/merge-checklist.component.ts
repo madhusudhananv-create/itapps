@@ -16,6 +16,7 @@ import { PreviewPopupComponent } from '../process-checklist-mapping/preview-popu
 })
 export class MergeChecklistComponent implements OnInit {
   isShowCreateChecklist : boolean = true;
+  isShowChecklistGrid : boolean = false;
   checklistForm: FormGroup;
   checklists: any;
   previewChecklistsData: any[] = [];
@@ -47,7 +48,6 @@ export class MergeChecklistComponent implements OnInit {
 
   selectedChecklists = new FormControl();
   checklistName = new FormControl('', [Validators.required, Validators.pattern('[^<|>]+')]);
-
 
   getAllChecklistsData(includeMerged: boolean = true) {
     this._loading = true;
@@ -98,6 +98,7 @@ export class MergeChecklistComponent implements OnInit {
 
   createNewChecklist() {
     this._loading = true;
+    this.isShowChecklistGrid = true;
     this._appService.createNewMultiChecklist(this.selectedChecklists.value, this.newChecklist.title).subscribe(data => {
       this.showPreviewGrid = true;
       this._loading = false;
@@ -123,6 +124,10 @@ export class MergeChecklistComponent implements OnInit {
       });
     });
   }
+
+  cancel_OnClick() {
+      this._loading = false;
+    }
   saveMergeChecklist() {
 
     this._callSave = true;

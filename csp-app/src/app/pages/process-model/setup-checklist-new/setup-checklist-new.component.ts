@@ -372,6 +372,15 @@ export class SetupChecklistNewComponent implements OnInit {
     }
   }
 
+  onClickCancel(){
+    this.showStatusList = false;
+    this.statustitle = undefined;
+    this.metStatusValues = [];
+    this.nmetStatusValues = [];
+    this.naStatusValues = [];
+
+  }
+
   // saveNewWeightage() {
   //   //debugger
   //   if(this.newChecklist.id  == 0 || this.newChecklist.id == null)

@@ -2,7 +2,7 @@
   <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
 
   <!--  Existing Create New Checklists fields -->
-  <app-setup-checklist-new [isShowCreateChecklist]="isShowCreateChecklist" [dataRecord]="checklistModel"  [callSave]="_callSave"
+  <app-setup-checklist-new *ngIf="isShowChecklistGrid" [isShowCreateChecklist]="isShowCreateChecklist" [dataRecord]="checklistModel"  [callSave]="_callSave"
   (onChange)="project_onChange($event)" ></app-setup-checklist-new>
 
   <!--  Merge Checklists fields -->
@@ -40,7 +40,7 @@
               <app-preview-popup [previewData]="previewData.questionS_BY_SERVICE_AREA"
                 [checklistname]="previewData.checklisT_NAME" [version]="previewData.version"
                 [effectivefrom]="previewData.effectivE_FROM" [isMergeView]="true"
-                [showSelectColumn]="true"></app-preview-popup>
+                [showSelectColumn]="true" ></app-preview-popup>
             </div>
           </div>
           <div *ngIf="previewChecklistsData && previewChecklistsData.length > 0"
@@ -49,6 +49,10 @@
               (click)="saveMergeChecklist()">
               Save
             </button>
+            <button type="button"  class="btn btn-primary" style="margin-right: 2%;"
+            (click)="cancel_OnClick()">
+            Cancel
+          </button>
             <button type="button" [disabled]="_loading" class="btn btn-primary" (click)="clearSelections()">
               Clear All
             </button>

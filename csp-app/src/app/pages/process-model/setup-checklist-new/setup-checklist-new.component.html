@@ -183,7 +183,7 @@
         <div>
           <label style="color: gray;">Effective Date *</label>
           <input readonly name="dtEffectiveDate" [(ngModel)]='newChecklist.effectivE_FROM'
-            [matDatepicker]="pickerChkEffectiveDate" [disabled]="isDisabled"
+            [matDatepicker]="pickerChkEffectiveDate" [disabled]="isDisabled"  [min]="effectivE_FROM"
             style="border:none;border-bottom:1px solid grey">
           <mat-datepicker-toggle matSuffix [for]="pickerChkEffectiveDate"
             style="float: right;position: relative;top: -34px;left: 9px;bottom: 0px;right: 0px;">
@@ -312,7 +312,8 @@
               <td colspan="2">
                 <button class="btn btn-primary" (click)="saveStatusRecord()" [disabled]="disableStatusSave"
                   [disabled]="isDisabled"> Save
-                </button>
+                </button>&nbsp;&nbsp;
+                <button class="btn btn-primary" (click)="onClickCancel()"  [disabled]="isDisabled"> Cancel</button>
               </td>
             </tr>
           </table>
