@@ -40,7 +40,7 @@ export class RiskPageComponent implements OnInit {
   projNames: ProjectsModel[];
   TeamMembers: EmpInfoModel[] = [];
   displayedColumns = ['index', 'Portfolio_Name', 'proJ_NM', 'identifieD_DATE', 'description', 'impact', 'owner', 'probabilitY_SCALE', 'impacT_SCALE', 'rating', 'matrix', 'status', 'iS_PLAN_EXISTS', 'actuaL_DATE', 'edit']
-  displayedColumns1 = ['index', 'description', 'owner', 'identifieD_DATE', 'targeT_DATE', 'status', 'priority', 'info', 'edit', 'delete'];
+  displayedColumns1 = ['index', 'description', 'owner', 'identifieD_DATE', 'targeT_DATE', 'status', 'priority',   'edit', 'delete'];
   //filters: FiltersModel = new FiltersModel(this._util, this._appservice, this.input, 'PROJECT_RISK');
   dataSource = new MatTableDataSource();
   @ViewChild('paginatorRisk') paginator: MatPaginator;
@@ -808,10 +808,12 @@ export class RiskPageComponent implements OnInit {
     if (riskTreatmentStatus == 'Completed') {
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
         width: '500px',
-        height: '170px'
+        height: '170px',
+        data: ''
       });
 
       dialogRef.afterClosed().subscribe(result => {
+        
         if (result == 1) {
           this.EditRisk.probabilitY_SCALE = this.EditRisk.neW_LIKELIHOOD_SCALE;
           this.EditRisk.impacT_SCALE = this.EditRisk.neW_CONSEQUENCES_SCALE;
