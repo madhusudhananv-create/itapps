@@ -23039,7 +23039,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (details != null)
             {
                 details.ISSUBMITTED = true;
-                UpdateAuditFields(findings);
+                UpdateAuditFields(details);
                 CSPdb.AUDIT_CHECKLIST_EXECUTION_DETAILS.Update(details);
                 CSPdb.Commit(CanCommit);
             }
