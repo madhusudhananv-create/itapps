@@ -56,7 +56,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             CREATED_DATE = DateTime.Now,
                             UPDATED_BY = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID,
                             UPDATED_DATE = DateTime.Now,
-                            ISACTIVE = true
+                            ISACTIVE = true,
+                            PERSPECTIVE = reply.PERSPECTIVE,
                         };
                         CSPdb.CSS_QUESTION_REPLIES.Add(newReply);
                         CSPdb.Commit(CanCommit);
@@ -669,7 +670,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     QUESTION_DETAIL = q.QUESTION_DETAIL,
                     RATING_SCALE = q.RATING_SCALE.GetValueOrDefault(2),
                     SEQUENCE = q.SEQUENCE.GetValueOrDefault(q.ID),
-                    RATING_PARAM = q.RATING_PARAM
+                    RATING_PARAM = q.RATING_PARAM,
+                    PERSPECTIVE = q.PERSPECTIVE,
                 };
                 if (isMonthly)
                     reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;

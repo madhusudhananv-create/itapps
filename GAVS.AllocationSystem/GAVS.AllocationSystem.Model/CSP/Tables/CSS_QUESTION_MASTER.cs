@@ -26,5 +26,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
          
         public int? SEQUENCE { get; set; }
+
+        public string PERSPECTIVE { get; set; }
     }
 }
