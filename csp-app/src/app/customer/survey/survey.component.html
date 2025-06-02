@@ -57,7 +57,7 @@
     <thead>
       <tr>
         <th style="width:35%;font-weight:bold;font-size:16px;text-align:center;background-color: #e3f9f9;">Survey Question </th>
-        <th style="width:15%;font-weight:bold;font-size:16px;text-align:center;">Provide your Rating</th>
+        <th style="width:15%;font-weight:bold;font-size:16px;text-align:center;">Rating(based on Perspective)</th>
         <th style="width:50%;font-weight:bold;font-size:16px;text-align:center;">Remarks <br><span
             style="font-size: x-small;"><span style="color: red;">*</span> Remarks are required if the rating is less
             than or equal to three stars</span></th>
@@ -68,21 +68,22 @@
        
          
           <td class="criteria">
-            <b>
-            {{criteria.perspective}}
-          </b>
-            <br />
+          
            
-         <span style="margin-left: 25px;padding-left: 15px;"> 
+         
           <span style="color:red">*</span>
           {{criteria.question}}
           <br />
           {{getDetail( criteria.questioN_DETAIL)}}
-        </span>
+         
         </td>
         <td class="starRating" nowrap>
+          <b>
+            {{criteria.perspective}}
+          </b>
+            <br />
           <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE" [rating]="criteria.rating" [starCount]="starCount"
-            [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
+            [color]="starColor"   (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
         </td>
         <td style="padding:0px;">
           <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
