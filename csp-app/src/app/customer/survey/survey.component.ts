@@ -268,7 +268,7 @@ export class SurveyComponent implements OnInit {
       this.meetingDate = null;
     }
     this._appservice.SaveCSSSurveyAnswers(replies, this.empId, this.meetingDate, this.isCSMNotified).subscribe(data => {
-      alert("Submitted successfully");
+      alert("Thanks for your time!! Customer Satisfaction Survey Submitted successfully. A detailed report would be sent to your mail shortly.");
       this.IsCompleted = true;
       if (this.questions.csS_BATCH_CUSTOMERS_EXTENDED != undefined && this.questions.csS_BATCH_CUSTOMERS_EXTENDED != null)
         this.questions.csS_BATCH_CUSTOMERS_EXTENDED.status = "COMPLETED";
