@@ -16,5 +16,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string UPDATED_BY { get; set; }
         public DateTime UPDATED_DATE { get; set; }
         public bool ISACTIVE { get; set; }
+
+        public string CATEGORY { get; set; }
     }
 }

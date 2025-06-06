@@ -13724,7 +13724,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else if (Sequence == 4) { Period = "Jan-" + (Year + 1).ToString() + " to Mar-" + (Year + 1).ToString(); }
                 else Period = string.Empty;
             }
-            if (Frequency.ToLower() == "halfyearly")
+            if (Frequency.ToLower() == "halfyearly" || Frequency.ToLower() == "half-yearly")
             {
                 if (Sequence == 1)
                 {

@@ -145,7 +145,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (frequency == "Quarterly")
                 frequency = "Quarter";
 
-            subject = $"CSS Customer Contact Verification - {accountName} - {customerName} - Review and update the Customer Contact details by first week of new quarter, Customer Success Survey email will be sent to all customers in the second week";
+            subject = $"CSS Customer Contact Verification - {accountName} - {customerName} - Review and update the Customer Contact details, Customer Satisfcation Survey email will be sent to all customers soon";
 
             var mainUrl = $"{helper.GetAbsoulteUri()}/{url}/{batchId}/{id}/";
             string approveUrl = mainUrl + "1";
@@ -225,7 +225,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string EmpId = GetHeaderDetails_String("empid");
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             CSS_BATCHES batch = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
-            if (batch != null && batch.END_DATE > DateTime.Today)
+            if(batch == null)
+                return BadRequest("Invalid Batch. Unable to trigger.");
+            if (_isProd && batch != null && batch.END_DATE > DateTime.Today)
                 return BadRequest("CSS Period not ended yet. Could not trigger CSS.");
 
             List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && t.STATUS == "CREATED" && t.ISACTIVE == true).ToList();
@@ -735,9 +737,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId && t.ISACTIVE).ToList();
             if (batches.Count == 0)
             {
-                if (batch.FREQUENCY.ToLower() == "quarterly")
+                if (batch.CATEGORY.ToLower() == "project")
                     GenerateBatchCustomers(BatchId, batch.FREQUENCY, empid);
-                else if (batch.FREQUENCY.ToLower() == "halfyearly")
+                else if (batch.FREQUENCY.ToLower() == "pulse")
                     GenerateBatchCustomersHalfyearly(BatchId, empid);
                 batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId && t.ISACTIVE).ToList();
             }
@@ -843,7 +845,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             string empid = this.GetHeaderValue("empid");
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
-            GenerateMissingBatchCustomers(batchId, batch.FREQUENCY, empid);
+            GenerateMissingBatchCustomers(batchId, batch.FREQUENCY, empid, batch.CATEGORY);
             return Ok();
         }
 
@@ -1223,7 +1225,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<int> CustomerId = customersProjects.Select(t => t.CUSTOMER_USER_ID).Distinct().ToList();
             List<CUSTOMER_USERS> customers = CSPdb.CUSTOMER_USERS.GetAll().Where(t => CustomerId.Contains(t.ID)).ToList();
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == BatchId);
-            var projects = Cldb.PROJECT.GetAll().ToList();
+            var projects = Cldb.PROJECT.GetAll().ToList();//change this
 
             var skipRecords = helper.GetProjectConfigurationDataForSetting("SKIP_CSAT");
             foreach (CUSTOMER_PROJECTS c in customersProjects)
@@ -1236,7 +1238,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE")) continue;
                     if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
                     //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
-                    if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
+                    //if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
                     AddBatchCustomer(batch, cust.EMAILID, cust.DISPLAY_NAME, EmpId, c.CUST_ID, c.PROJ_ID, null);
 
                 }
@@ -1254,7 +1256,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 BATCH_ID = batch.ID,
                 CUST_ID = cust_id,
                 PROJ_ID = proj_id,
-                QUESTION_MODEL_ID = helper.GetQuestionModel(cust_id, proj_id, false, batch.START_DATE, batch.END_DATE, emailId, batch.ID, batch.FREQUENCY),
+                QUESTION_MODEL_ID = helper.GetQuestionModel(cust_id, proj_id, false, batch.START_DATE, batch.END_DATE, emailId, batch.ID, batch.FREQUENCY, batch.CATEGORY),
                 EMAIL_ID = emailId,
                 DISPLAY_NAME = displayName,
                 STATUS = "CREATED",
@@ -1269,9 +1271,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.CSS_BATCH_CUSTOMERS.Add(batchCustomer);
         }
 
-        private void GenerateMissingBatchCustomers(int batchId, string frequency, string EmpId)
+        private void GenerateMissingBatchCustomers(int batchId, string frequency, string EmpId, string category)
         {
-            if (frequency.ToLower() == "halfyearly")
+            if (frequency.ToLower() == "pulse")
                 GenerateBatchCustomersHalfyearly(batchId, EmpId);
 
 
@@ -1309,7 +1311,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         BATCH_ID = batchId,
                         CUST_ID = c.CUST_ID,
                         PROJ_ID = c.PROJ_ID,
-                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, batch.FREQUENCY),
+                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, batch.FREQUENCY, batch.CATEGORY),
                         EMAIL_ID = cust.EMAILID,
                         DISPLAY_NAME = cust.DISPLAY_NAME,
                         STATUS = "CREATED",
@@ -1350,7 +1352,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             CUST_ID = project.CUST_ID,
                             PROJ_ID = project.PROJ_ID,
                             PROD_ID = cp.PRODUCT_ID,
-                            QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID, batch.FREQUENCY),
+                            QUESTION_MODEL_ID = helper.GetQuestionModel(project.CUST_ID, project.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMP_ID, batch.ID, batch.FREQUENCY, batch.CATEGORY),
                             EMAIL_ID = cust.EMP_ID,
                             DISPLAY_NAME = cuser.DISPLAY_NAME,
                             STATUS = "CREATED",
@@ -1440,7 +1442,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         BATCH_MONTHLY_ID = batchId,
                         CUST_ID = c.CUST_ID,
                         PROJ_ID = c.PROJ_ID,
-                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, "quarterly"),
+                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, "quarterly", ""),
                         EMAIL_ID = cust.EMAILID,
                         DISPLAY_NAME = cust.DISPLAY_NAME,
                         STATUS = "CREATED",
@@ -1899,7 +1901,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 BATCH_MONTHLY_ID = batch.ID,
                 CUST_ID = custId,
 
-                QUESTION_MODEL_ID = helper.GetQuestionModel(custId, null, true, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, "quarterly"),  //By Default model 1 is considered (Product/ADM/IMS)
+                QUESTION_MODEL_ID = helper.GetQuestionModel(custId, null, true, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, "quarterly", ""),  //By Default model 1 is considered (Product/ADM/IMS)
                 EMAIL_ID = cust.EMAILID,
                 DISPLAY_NAME = cust.DISPLAY_NAME,
                 STATUS = "CREATED",

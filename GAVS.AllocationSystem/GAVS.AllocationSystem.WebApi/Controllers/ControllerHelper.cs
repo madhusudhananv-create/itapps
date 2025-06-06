@@ -838,8 +838,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return config;
         }
 
-        internal int GetQuestionModel(string custId, string projId, bool isMonthly, DateTime startDate, DateTime endDate, string contactEmailId, int batchId, string frequency)
+        internal int GetQuestionModel(string custId, string projId, bool isMonthly, DateTime startDate, DateTime endDate, string contactEmailId, int batchId, string frequency, string category)
         {
+            //no more monthly surveys 
             if (isMonthly)
             {
                 var config = GetDBConfig(GetKeyForCSSMonthly(contactEmailId), custId, projId, startDate, endDate);
@@ -869,19 +870,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
 
-            else
+            else if (!string.IsNullOrEmpty(projId))
             {
-                if (frequency.ToLower() == "halfyearly")
+
+                if (category.ToLower() == "pulse")
                 {
                     var config = GetDBConfig("CSS_QUESTION_MODEL_HALFYEARLY", custId, projId, startDate, endDate);
                     return GetDBConfigValueInt(config);
                 }
+
+
                 else
                 {
-                    var config = GetDBConfig("CSS_QUESTION_MODEL", custId, projId, startDate, endDate);
-                    return GetDBConfigValueInt(config);
+                    int? questionModelId = Cldb.AppRepo.getQuestionModelId(projId, batchId, contactEmailId);
+                    if (questionModelId.HasValue && questionModelId.Value != 0)
+                    {
+                        return questionModelId.Value;
+
+                    }
+                    
                 }
             }
+
+            var config1 = GetDBConfig("CSS_QUESTION_MODEL", custId, projId, startDate, endDate);
+            return GetDBConfigValueInt(config1);
         }
 
         internal List<PROJECT_CONFIGURATION_DATA> GetProjectConfigurationDataForSetting(IList<string> setting)

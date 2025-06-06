@@ -45,34 +45,67 @@ p.xmsonormal, li.xmsonormal, div.xmsonormal
 	margin:1.0in 1.0in 1.0in 1.0in;}
 div.WordSection1
 	{page:WordSection1;}
+
 -->
+    /* Table styles */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+        font-size: 11pt;
+    }
+
+    th {
+        background-color: #CCCCFF;
+        font-weight: bold;
+    }
+
 </style>
 
 </head>
 
 <body lang=EN-US link=blue vlink="#954F72">
 
-<p class=MsoNormal>Dear All:</p>
-<br/>
-<p class=MsoNormal>Please click the below link to view the Customer Success Survey Feedback,<p>
-<p class=MsoNormal><b>Link: </b><a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a></p>
-<br/>
-<p class=MsoNormal>Regards,</p>
-<table class=MsoNormalTable border=0 cellpadding=0>
- <tr>
-  <td valign=top >
-  <p class=xmsonormal><b><span style='font-size:10.0pt;font-family:"Arial",sans-serif;
-  color:#1F497D'>Process Excellence Team</span></b><br>
-  <b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'> Neurealm (Formerly GS Lab | GAVS Technologies)</span></b><br>
-   
-  <b><span style='font-size:10.0pt'>Email: </span></b><b><span
-  style='font-size:9.0pt;font-family:"Arial",sans-serif'><a
-  href="mailto:Quality@neurealm.com">Quality@neurealm.com</a> </span></b><br>
-  <b><span style='font-size:10.0pt'>Web: </span></b><b><span style='font-size:
-  9.0pt;font-family:"Arial",sans-serif'><a href="http://www.neurealm.com">www.neurealm.com</a>
-  </span></b></p>
-  </td>
- </tr>
-</table>
+	<p class=MsoNormal>Dear All:</p>
+	<br />
+	<p class=MsoNormal>Please find the below  Customer Success Survey Feedback,<p>
+
+
+		<table>
+			<tr>
+
+				<th>Perspective</th>
+				<th>Question</th>
+				<th>Rating</th>
+				<th>Comments</th>
+			</tr>
+			{{TABLE}}
+		</table>
+		<br />
+	<p class=MsoNormal><b>CSM Platform Link: </b><a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a></p>
+	<br />
+	<p class=MsoNormal>Regards,</p>
+	<div>
+		<p class=xmsonormal>
+			<b>
+				<span style='font-size:10.0pt;font-family:"Arial",sans-serif;color:#1F497D'>Process Excellence Team</span>
+			</b><br>
+			<b>
+				<span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'> Neurealm (Formerly GS Lab | GAVS Technologies)</span>
+			</b><br>
+			<span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur</span><br>
+			<span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>Chennai - 600 119</span><br>
+			<b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>Phone:</span></b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>+91 44 66694287</span><br>
+			<b><span style='font-size:10.0pt'>Web: </span></b><b><span style='font-size:9.0pt;font-family:"Arial",sans-serif'><a href="http://www.neurealm.com">www.neurealm.com</a></span></b>
+		</p>
+	</div>
+	</p>
 </body>
 </html>

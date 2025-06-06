@@ -17,6 +17,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime START_DATE { get; set; }
         public DateTime END_DATE { get; set; }
         public string STATUS { get; set; }
+        public string CATEGORY { get; set; }
 
         [NotMapped]
         public int TOTAL_RECORDS { get; set; }

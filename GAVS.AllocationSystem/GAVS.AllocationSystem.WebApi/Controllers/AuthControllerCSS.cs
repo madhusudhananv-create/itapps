@@ -78,8 +78,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     else
                     {
                         var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
-                        SendSurveyResultEmail(replies, surveyId, batch != null ? batch.FREQUENCY : "");
-                        SendSurveySuccessEmail(replies, surveyId, batch != null ? batch.FREQUENCY : "");
+                        if (batch != null)
+                        {
+                            SendSurveyResultEmailToCustomer(replies, surveyId, batch.FREQUENCY, batch.CATEGORY);
+                            SendSurveySuccessEmailToManagement(replies, surveyId, batch.FREQUENCY, batch.CATEGORY);
+                        }
                     }
                 }
                 else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
@@ -361,7 +364,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else
                         {
-                            questionModelId = helper.GetQuestionModel(batchCust.CUST_ID, batchCust.PROJ_ID, false, batch.START_DATE, batch.END_DATE, batchCust.EMAIL_ID, batch.ID, batch.FREQUENCY);
+                            questionModelId = helper.GetQuestionModel(batchCust.CUST_ID, batchCust.PROJ_ID, false, batch.START_DATE, batch.END_DATE, batchCust.EMAIL_ID, batch.ID, batch.FREQUENCY, batch.CATEGORY);
                         }
                         questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(t => t.MODEL_ID == questionModelId && t.EFFECTIVE_FROM <= DateTime.Now && t.ISACTIVE == true).ToList();
                         questionsWithReplies = GetQuestionReplies(questions, batchesExt.ID, iteration.SURVEY_ID, false);
@@ -433,7 +436,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else
                         {
-                            questionModelId = helper.GetQuestionModel(batchCustMonthly.CUST_ID, batchCustMonthly.PROJ_ID, true, batch.START_DATE, batch.END_DATE, batchCustMonthly.EMAIL_ID, batch.ID, "quarterly");
+                            questionModelId = helper.GetQuestionModel(batchCustMonthly.CUST_ID, batchCustMonthly.PROJ_ID, true, batch.START_DATE, batch.END_DATE, batchCustMonthly.EMAIL_ID, batch.ID, "quarterly", "");
                         }
                         questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(t => t.MODEL_ID == questionModelId && t.EFFECTIVE_FROM <= DateTime.Now && t.ISACTIVE == true).ToList();
                         questionsWithReplies = GetQuestionReplies(questions, batchCustMonthly.ID, iteration.SURVEY_ID, true);
@@ -691,8 +694,31 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public List<CSS_QUESTION_REPLIES> CSS_QUESTION_REPLIES { get; set; } = new List<Model.CSP.CSS_QUESTION_REPLIES>();
             public string SURVEY_PERIOD { get; set; }
         }
+        private string GetCSSTableData(BatchCustomerAndQuestions replies)
+        {
+            var sb = new StringBuilder();
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x=>x.QUESTION_CATEGORY.ToLower() =="criteria").OrderBy(x=>x.SEQUENCE))
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.COMMENTS}</td>");
+                sb.AppendLine("</tr>");
+            }
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps"))
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.COMMENTS}</td>");
+                sb.AppendLine("</tr>");
+            }
 
-        private void SendSurveyResultEmail(BatchCustomerAndQuestions replies, string surveyId, string frequency)
+            return sb.ToString();
+        }
+        private string GetRatingText(int rating)
+        {
+            return rating > 0 ? rating.ToString() : "";
+        }
+
+
+        private void SendSurveyResultEmailToCustomer(BatchCustomerAndQuestions replies, string surveyId, string frequency, string category)
         {
 
             string tomail = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID;
@@ -701,7 +727,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string mailContent = string.Empty;
 
             //SUBJECT
-            if (frequency.ToLower() == "halfyearly")
+            if (category.ToLower() == "pulse")
                 subject = "Half Yearly Pulse Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
                   ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
             else
@@ -723,6 +749,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             }
 
+            var table = GetCSSTableData(replies);
+            EmailContentValues.Add("TABLE", table);
+
             //var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", ""); ;
             //surveyURL += "/CustomerSuccessSurvey/" + surveyId;
             //EmailContentValues.Add("SURVEY_LINK", surveyURL);
@@ -736,7 +765,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = Constants.CSS_BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
         }
-        private void SendSurveySuccessEmail(BatchCustomerAndQuestions replies, string surveyId, string frequency)
+        private void SendSurveySuccessEmailToManagement(BatchCustomerAndQuestions replies, string surveyId, string frequency, string category)
         {
 
             string tomail = string.Empty;
@@ -796,7 +825,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //    CSMNames += ",";
             //SUBJECT
             //SUBJECT
-            if (frequency.ToLower() == "halfyearly")
+            if (category.ToLower() == "pulse")
                 subject = $"Half Yearly Pulse Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
             else
                 subject = $"Customer Success Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
@@ -818,7 +847,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
 
             }
-
+            var table = GetCSSTableData(replies);
+            EmailContentValues.Add("TABLE", table);
 
             //EmailContentValues.Add("SURVEY_LINK", HttpContext.Current.Request.UrlReferrer.AbsoluteUri);
 
@@ -865,7 +895,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
 
             }
-
+            var table = GetCSSTableData(replies);
+            EmailContentValues.Add("TABLE", table);
 
             //var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", ""); ;
             //surveyURL += "/CustomerSuccessSurvey/" + surveyId;
