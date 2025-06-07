@@ -39,6 +39,7 @@ export class SurveySettingsComponent implements OnInit {
     "frequency",
     "starT_DATE",
     "enD_DATE",
+    "category",
     "status",
     "totaL_RECORDS",
     "pending",

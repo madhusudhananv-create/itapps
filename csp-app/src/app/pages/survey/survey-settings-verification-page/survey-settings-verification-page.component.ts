@@ -78,7 +78,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
   selectedBatch: CssBatchModel;
   startDate: any;
   endDate: any;
-  batchColumns = ['index', 'starT_DATE', 'enD_DATE', 'status', "totaL_RECORDS", "pending", "verified", "rejected", "surveY_SENT", "surveY_RECD"]
+  batchColumns = ['index','frequency', 'starT_DATE', 'enD_DATE','category', 'status', "totaL_RECORDS", "pending", "verified", "rejected", "surveY_SENT", "surveY_RECD"]
   batchCustomersColumns = ['select', 'index', 'CUST_NM', 'PROJ_NM', 'CSS_Eligible', 'REASON', 'HEAD_COUNT', 'CSS_CONFIGURED', 'CUSTOMER_CONTACT_VERIFICATION', 'VERIFICATION_COMMENTS', 'VERIFIED_BY', 'APPROVAL_DATE', 'RESPONDENT_NAME', 'RESPONDENT_MAIL', 'ROLE', 'ROLETYPE', 'PROJ_STATUS', 'PROJECT_TYPE', 'BUSINESS_UNIT', 'DEPARTMENT', 'PROJECT_GROUP', 'CONTRACTING_UNIT', 'REVENUE_TYPE', 'COUNTRY', 'METHODOLOGY', 'TYPE_OF_ACCOUNT', 'ACCOUNT_OWNER', 'PM', 'PM_MAIL_ID', 'QUALITY_SPOC', 'SKIP_CSAT', 'SKIP_CSAT_COMMENTS', 'contactS_LINK', 'skiP_CSAT_LINK']
   dataSource = new MatTableDataSource(this.BatchCustomers);
   selection = new SelectionModel<CssCustomerVerificationModel>(true, []);
@@ -208,7 +208,7 @@ export class SurveySettingsVerificationPageComponent implements OnInit {
 
   service_GetCSSMonthlyBatches() {
     this.surveyService.GetCSSBatches(localStorage.getItem("empid")).subscribe(data => {
-      this.Batches = data.filter(x => x.frequency == 'Quarterly');
+      this.Batches = data.filter(x => x.frequency == 'Quarterly' || x.frequency == 'Half-Yearly');
 
     }, error => { this._util.serviceError(error); });
   }
