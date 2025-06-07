@@ -225,11 +225,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string EmpId = GetHeaderDetails_String("empid");
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             CSS_BATCHES batch = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
-            if(batch == null)
-                return BadRequest("Invalid Batch. Unable to trigger.");
-            if (_isProd && batch != null && batch.END_DATE > DateTime.Today)
-                return BadRequest("CSS Period not ended yet. Could not trigger CSS.");
-
+            var validationResult = ValidateBatch(batch);
+            if (!string.IsNullOrWhiteSpace(validationResult))
+                return BadRequest(validationResult);
             List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && t.STATUS == "CREATED" && t.ISACTIVE == true).ToList();
             batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
             bool hasAnyCustomerNotVerified = batchCustomers.Any(x => !x.IS_VERIFIED);
@@ -413,6 +411,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 );
         }
 
+        private string ValidateBatch(iBatch batch)
+        {
+            if (batch == null)
+                return "Invalid Batch. Unable to trigger.";
+            if (_isProd && batch != null && batch.END_DATE > DateTime.Today)
+                return "CSS Period not ended yet. Could not trigger CSS.";
+            if (batch.STATUS.ToLower() == "COMPLETED")
+                return "CSS is closed. Could not trigger CSS.";
+
+            return string.Empty;
+        }
+
+
         [POST("SendCSSBatchReminderMails")]
         [ActionName("SendCSSBatchReminderMails")]
         [HttpPost]
@@ -424,6 +435,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string EmpId = GetHeaderDetails_String("empid");
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             CSS_BATCHES batch = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
+            var validationResult = ValidateBatch(batch);
+            if (!string.IsNullOrWhiteSpace(validationResult))
+                return BadRequest(validationResult);
 
             List<CSS_BATCH_CUSTOMERS> batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == batch.ID && (t.STATUS == CSS_MAIL_SENT) && t.ISACTIVE).ToList();
             batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
@@ -1083,8 +1097,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string empId = GetHeaderDetails_String("empid");
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
             CSS_BATCH_MONTHLY batch = JsonConvert.DeserializeObject<CSS_BATCH_MONTHLY>(json);
-            if (batch != null && batch.END_DATE > DateTime.Today)
-                return BadRequest("CSS Period not ended yet. Could not trigger CSS.");
+            var validationResult = ValidateBatch(batch);
+            if (!string.IsNullOrWhiteSpace(validationResult))
+                return BadRequest(validationResult);
             var batchCustomers = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(t => t.BATCH_MONTHLY_ID == batch.ID && t.STATUS == "CREATED" && t.ISACTIVE).ToList();
             batchCustomers = batchCustomers.Where(x => selectedIds.Any(a => x.ID == a)).ToList();
             bool hasAnyCustomerNotVerified = batchCustomers.Any(x => !x.IS_VERIFIED);

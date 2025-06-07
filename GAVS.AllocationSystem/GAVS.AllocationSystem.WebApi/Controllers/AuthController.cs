@@ -453,7 +453,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         return false;
                     }
                 }
-                else if (!VaidateUser(username, password, out email, out empid, out DisplayName))
+                else if (!VaidateUser(username,  out email, out empid, out DisplayName))
                 {
                     // returns unauthorized error  
                     Request.CreateResponse(HttpStatusCode.Unauthorized);
@@ -758,7 +758,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             return false;
                         }
                     }
-                    else if (!VaidateUser(username, password, out email, out empid, out DisplayName))
+                    else if (!VaidateUser(username,   out email, out empid, out DisplayName))
                     {
                         // returns unauthorized error  
                         Request.CreateResponse(HttpStatusCode.Unauthorized);
@@ -798,51 +798,51 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return true;
             return false;
         }
-        protected bool VaidateUser(string strUsername, string strPassword, out string email, out string empid, out string DisplayName)
-        {
-            bool isValid = false;
-            email = string.Empty;
-            empid = string.Empty;
-            DisplayName = string.Empty;
-            string strDomainName = Constants.DOMAIN;
-            using (HostingEnvironment.Impersonate())
-            {
-                using (var context = new PrincipalContext(ContextType.Domain, strDomainName))
-                {
-                    isValid = context.ValidateCredentials(strUsername, strPassword);
-                    if (isValid)
-                    {
-                        using (UserPrincipal user = UserPrincipal.FindByIdentity(context, strUsername))
-                        {
-                            if (user != null)
-                            {
-                                DisplayName = user.DisplayName;
-                                if (user.EmailAddress != null)
-                                {
-                                    email = user.EmailAddress;
-                                    if (string.IsNullOrEmpty(user.EmployeeId))
-                                    {
-                                        var emp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMAIL_ID == user.EmailAddress && x.DOR.HasValue == false);
-                                        if (emp != null) empid = emp.EMP_ID.ToString();
-                                    }
-                                    else
-                                        empid = user.EmployeeId;
-                                }
-                                else
-                                {
-                                    strUsername = strUsername.ToLower().Replace(Constants.DOMAIN, "");
-                                    email = strUsername + "@" + Constants.DOMAIN;
-                                }
-                                isValid = true;
-                            }
-                            else
-                                isValid = false;
-                        }
-                    }
-                }
-            }
-            return isValid;
-        }
+        //protected bool VaidateUser(string strUsername, string strPassword, out string email, out string empid, out string DisplayName)
+        //{
+        //    bool isValid = false;
+        //    email = string.Empty;
+        //    empid = string.Empty;
+        //    DisplayName = string.Empty;
+        //    string strDomainName = Constants.DOMAIN;
+        //    using (HostingEnvironment.Impersonate())
+        //    {
+        //        using (var context = new PrincipalContext(ContextType.Domain, strDomainName))
+        //        {
+        //            isValid = context.ValidateCredentials(strUsername, strPassword);
+        //            if (isValid)
+        //            {
+        //                using (UserPrincipal user = UserPrincipal.FindByIdentity(context, strUsername))
+        //                {
+        //                    if (user != null)
+        //                    {
+        //                        DisplayName = user.DisplayName;
+        //                        if (user.EmailAddress != null)
+        //                        {
+        //                            email = user.EmailAddress;
+        //                            if (string.IsNullOrEmpty(user.EmployeeId))
+        //                            {
+        //                                var emp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMAIL_ID == user.EmailAddress && x.DOR.HasValue == false);
+        //                                if (emp != null) empid = emp.EMP_ID.ToString();
+        //                            }
+        //                            else
+        //                                empid = user.EmployeeId;
+        //                        }
+        //                        else
+        //                        {
+        //                            strUsername = strUsername.ToLower().Replace(Constants.DOMAIN, "");
+        //                            email = strUsername + "@" + Constants.DOMAIN;
+        //                        }
+        //                        isValid = true;
+        //                    }
+        //                    else
+        //                        isValid = false;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return isValid;
+        //}
         protected bool VaidateUser(string strUsername, out string email, out string empid, out string DisplayName)
         {
             bool isValid = false;

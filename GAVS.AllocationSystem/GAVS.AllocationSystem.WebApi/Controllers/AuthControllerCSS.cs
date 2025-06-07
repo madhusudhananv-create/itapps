@@ -709,6 +709,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.COMMENTS}</td>");
                 sb.AppendLine("</tr>");
             }
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "Others"))
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.COMMENTS}</td>");
+                sb.AppendLine("</tr>");
+            }
 
             return sb.ToString();
         }
@@ -731,7 +737,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 subject = "Half Yearly Pulse Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
                   ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
             else
-                subject = "Customer Success Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
+                subject = "Customer Satisfaction Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
                         ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();

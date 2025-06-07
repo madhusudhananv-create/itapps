@@ -10,7 +10,7 @@ using GAVS.AllocationSystem.Model.Base;
 
 namespace GAVS.AllocationSystem.Model.CSP
 {
-    public class CSS_BATCH_MONTHLY : EntityBase
+    public class CSS_BATCH_MONTHLY : EntityBase, iBatch
     {
         public int MONTH { get; set; }
         public int YEAR { get; set; }

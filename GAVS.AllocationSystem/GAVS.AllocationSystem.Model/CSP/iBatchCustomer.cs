@@ -6,6 +6,19 @@ using System.Threading.Tasks;
 
 namespace GAVS.AllocationSystem.Model.CSP
 {
+    public interface iBatch
+    {
+        int ID { get; set; }
+       
+       
+        int YEAR { get; set; }
+        DateTime START_DATE { get; set; }
+        DateTime END_DATE { get; set; }
+        string STATUS { get; set; }
+     
+
+
+    }
     public interface iBatchCustomer
     {
         int ID { get; set; }

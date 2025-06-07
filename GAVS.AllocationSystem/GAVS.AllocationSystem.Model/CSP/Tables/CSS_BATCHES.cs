@@ -9,7 +9,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GAVS.AllocationSystem.Model.CSP
 {
-    public class CSS_BATCHES : EntityBase
+    public class CSS_BATCHES : EntityBase, iBatch
     {
         public string FREQUENCY { get; set; }
         public int SEQUENCE { get; set; }
