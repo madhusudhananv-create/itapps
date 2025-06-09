@@ -1281,6 +1281,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             public int PROCESS_ID { get; set; }
             public string PROCESS_NAME { get; set; }
+        
             public QUESTIONS_BY_PROCESS(int id, string title)
             {
                 this.PROCESS_ID = id;
@@ -15889,6 +15890,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.COMMENTS = results.COMMENTS;
                 overview.UPDATED_BY = results.UPDATED_BY;
                 overview.UPDATED_DATE = DateTime.Now;
+                overview.ACTION_PLAN = results.ACTION_PLAN;
+                overview.ACTION_TYPE = results.ACTION_TYPE;
+                overview.ROOT_CAUSE = results.ROOT_CAUSE;
                 CSPdb.PROJECT_ACTIONITEM.Update(overview);
                 CSPdb.Commit(CanCommit);
                 UpdateLastUpdatedDetails(results.PROJECT_ID, results.UPDATED_BY);
@@ -15936,6 +15940,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 newActionItem.ORIGINAL_DESCRIPTION = overview.ORIGINAL_DESCRIPTION;
                 newActionItem.UPDATED_BY = overview.UPDATED_BY;
                 newActionItem.UPDATED_DATE = overview.UPDATED_DATE;
+                newActionItem.ACTION_PLAN = overview.ACTION_PLAN;
+                newActionItem.ACTION_TYPE = overview.ACTION_TYPE;
+                newActionItem.ROOT_CAUSE = overview.ROOT_CAUSE;
 
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.SOURCE = results.SOURCE;
@@ -15950,6 +15957,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.COMMENTS = results.COMMENTS;
                 overview.UPDATED_BY = results.UPDATED_BY;
                 overview.UPDATED_DATE = DateTime.Now;
+                overview.ACTION_PLAN = results.ACTION_PLAN;
+                overview.ACTION_TYPE = results.ACTION_TYPE;
+                overview.ROOT_CAUSE = results.ROOT_CAUSE;
             }
 
             CSPdb.PROJECT_ACTIONITEM.Update(overview);
@@ -15966,7 +15976,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Tuple.Create("TARGET DATE", "TARGET_DATE"),
                     Tuple.Create("COMPLETION DATE", "COMPLETION_DATE"),
                     Tuple.Create("STATUS", "STATUS"),
-                    Tuple.Create("COMMENTS", "COMMENTS")
+                    Tuple.Create("COMMENTS", "COMMENTS"),
+                    Tuple.Create("ROOT CAUSE", "ROOT_CAUSE"),
+                    Tuple.Create("ACTION TYPE", "ACTION_TYPE"),
+                    Tuple.Create("ACTION PLAN", "ACTION_PLAN")
+                   
+                    
             };
             SendUpdateMail<PROJECT_ACTIONITEM>(newActionItem, overview, project, FieldNameWithCaptionList, "Action Item Updated for " + project.PROJ_NM);
             LoadActionItemsDetails();

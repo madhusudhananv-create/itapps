@@ -1,6 +1,7 @@
 ﻿using GAVS.AllocationSystem.Model.Base;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,12 +46,16 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string RISK_TREATMENT_EFFECTIVENESS_VERIFIED_BY { get; set; }
         public DateTime? RISK_TREATMENT_EFFECTIVENESS_VERIFIED_DATE { get; set; }
         public DateTime? PLANNED_TARGET_DATE { get; set; }
-        public DateTime? PLANNED_ACTUAL_DATE { get; set; }
-        public string CSS_REFERENCE { get; set; }
-
+        public DateTime? PLANNED_ACTUAL_DATE { get; set; }       
         public bool SEND_MAIL { get; set; }
+        [NotMapped]
+        public string CSS_REFERENCE { get; set; }
+        [NotMapped]
+        public string CUSTOMER_REMARKS { get; set; }
+        [NotMapped]
+        public int? SCORE { get; set; }
 
-       
+
     }
 
     public class ActionItemsAreaVaue

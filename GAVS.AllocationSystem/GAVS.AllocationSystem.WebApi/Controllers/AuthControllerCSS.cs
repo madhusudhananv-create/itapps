@@ -205,7 +205,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var tableContent = new StringBuilder();
             foreach (var item in actionItems)
             {
-                tableContent.Append(GenerateHtmlTableRowForActionItem(i++, item.CSS_REFERENCE));
+                tableContent.Append(GenerateHtmlTableRowForActionItem(i++, item.DESCRIPTION, item.SCORE));
             }
             var firstActionItem = actionItems.First();
             var project = projects.FirstOrDefault(x => x.PROJ_ID == firstActionItem.PROJECT_ID);
@@ -280,15 +280,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-        private string GenerateHtmlTableRowForActionItem(int rowNum, string cssReference)
+        private string GenerateHtmlTableRowForActionItem(int rowNum, string cssReference, int? rating)
         {
             //Question: How likely are you to recommend GS Lab | GAVS to a friend or colleague, if asked for your advice?     Rating: 5     Remarks: low NPS   
 
 
             var description = Regex.Replace(cssReference, @"\r\n?|\n|</br>", "");
-            var question = TakeSubstring(description, "Question:", "Rating:");
-            var score = TakeSubstring(description, "Rating:", "Remarks:");
-            var remarks = TakeSubstring(description, "Remarks:", "xxx");
+            var question = TakeSubstring(description, "Improvement Plan for Criteria", "- [");
+            var score = rating;
+            var remarks = TakeSubstring(description, "Remarks:", "CAPA:");
             var sb = new StringBuilder();
             sb.Append("<tr>");
             sb.Append($"<td>{ rowNum }</td>");
@@ -505,7 +505,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.RAG = "Red";
 
             var desc = new StringBuilder();
-            var reference = new StringBuilder();
+            //var reference = new StringBuilder();
 
             desc.AppendLine("Improvement Plan for Criteria:");
             desc.Append(Environment.NewLine);
@@ -519,21 +519,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 desc.AppendLine("CAPA: [To be detailed by PM] ");
                 desc.Append(Environment.NewLine);
 
-                reference.AppendLine($"Question: {item.QUESTION} ");
-                reference.Append(Environment.NewLine);
-                reference.AppendLine($"Rating: {item.RATING} ");
-                reference.Append(Environment.NewLine);
-                if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
-                {
-                    reference.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
-                }
+                overview.CSS_REFERENCE = item.QUESTION;
+                overview.SCORE = item.RATING;
+                overview.CUSTOMER_REMARKS = item.RATING_DESCRIPTION;
+                //reference.AppendLine($"Question: {item.QUESTION} ");
+                //reference.Append(Environment.NewLine);
+                //reference.AppendLine($"Rating: {item.RATING} ");
+                //reference.Append(Environment.NewLine);
+                //if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
+                //{
+                //    reference.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
+                //}
             }
-
+            overview.PORTFOLIO_NAME = portfolio;
             overview.DESCRIPTION = desc.ToString();
             overview.ORIGINAL_DESCRIPTION = overview.DESCRIPTION;
             overview.SOURCE = $"Customer Success Survey - {customerName}";
             overview.SOURCE_DESCRIPTION = $"CSAT - { period}, {customerName} , Lower CSAT Score in Question ({string.Join(", ", lowratings.Select(x => x.QUESTION)) })";
-            overview.CSS_REFERENCE = reference.ToString();
+            //overview.CSS_REFERENCE = reference.ToString();
 
             overview.IDENTIFIED_DATE = DateTime.Today;
             overview.TARGET_DATE = DateTime.Today.AddDays(7);

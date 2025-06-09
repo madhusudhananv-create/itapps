@@ -171,6 +171,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.PLANNED_ACTUAL_DATE = results.PLANNED_ACTUAL_DATE.HasValue ? results.PLANNED_ACTUAL_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.CSS_REFERENCE = results.CSS_REFERENCE;
                 overview.PORTFOLIO = results.PORTFOLIO_NAME;
+                overview.ROOT_CAUSE = results.ROOT_CAUSE;
+                overview.SCORE = results.SCORE;
+                overview.CUSTOMER_REMARKS = results.CUSTOMER_REMARKS;
                 CSPdb.PROJECT_ACTIONITEM.Add(overview);
                 CSPdb.Commit();
                 results.ACTION_ITEM_ID = overview.ID;
@@ -237,6 +240,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Completion Date", GetDateValueForMail(overview.PLANNED_ACTUAL_DATE));
             EmailContentValues.Add("Action Plan Completion - Target date", !overview.COMPLETION_DATE.HasValue ? "-" : overview.PLANNED_TARGET_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Comments", string.IsNullOrWhiteSpace(overview.COMMENTS) ? "-" : overview.COMMENTS);
+            EmailContentValues.Add("Root Cause", overview.ROOT_CAUSE);
             EmailContentValues.Add("URL", $"{requestDomain}/{path}/{overview.CUSTOMER_ID}");
 
             mailContent = helper.GetEmailContent("AddNewActionItem.htm", EmailContentValues);
