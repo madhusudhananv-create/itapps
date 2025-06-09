@@ -51,4 +51,10 @@ export class ActionitemModelNew
     id: number;
     planneD_TARGET_DATE : Date;
     planneD_ACTUAL_DATE : Date;
+    rooT_CAUSE: string;
+    customeR_REMARKS: string;
+    actioN_TYPE: string;
+    score: number;
+    actioN_PLAN: string;
+    csS_REFERENCE: string;
 }
