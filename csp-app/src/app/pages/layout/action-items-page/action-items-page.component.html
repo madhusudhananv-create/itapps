@@ -267,12 +267,67 @@
           </mat-select>
         </mat-form-field>
       </div>
+      
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+        <mat-form-field style="width:50%">
+          <textarea name="txtCssReference" maxlength="200" [(ngModel)]="EditActionitem.csS_REFERENCE" matInput
+            placeholder="CSS Reference" ></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+        <mat-form-field style="width:5%">
+          <textarea name="txtScore" maxlength="3" [(ngModel)]="EditActionitem.score" matInput placeholder="Score"
+            ></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+        <mat-form-field style="width:75%">
+          <textarea name="txtCustomerRemarks" maxlength="2000" [(ngModel)]="EditActionitem.customeR_REMARKS" matInput
+            placeholder="Customer Remarks" required></textarea>
+        </mat-form-field>
+      </div>
+      <div class="row">
+        <mat-form-field style="width:75%">
+          <textarea name="txtRootCause" maxlength="2000" [(ngModel)]="EditActionitem.rooT_CAUSE" matInput
+            placeholder="Root Cause" required></textarea>
+        </mat-form-field>
+      </div>   
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+        <mat-form-field style="width:75%">
+          <textarea name="txtActionPlan" maxlength="2000" [(ngModel)]="EditActionitem.actioN_PLAN" matInput
+            placeholder="Action Plan" required></textarea>
+        </mat-form-field>
+      </div> 
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+        <mat-form-field  style="width:20%">
+          <mat-select name="ddActionType" [(ngModel)]="EditActionitem.actioN_TYPE" placeholder="Action Type" required >
+            <mat-option value="Corrective Action">Corrective Action</mat-option>
+            <mat-option value="Preventive Action">Preventive Action</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
       <div class="row">
         <mat-form-field>
           <input [max]="_util.Today()" matInput name="dtIdentifiedDate" [(ngModel)]="EditActionitem.identifieD_DATE"
             [matDatepicker]="picker1" placeholder="Identified Date" required>
           <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
           <mat-datepicker #picker1></mat-datepicker>
+        </mat-form-field>
+      </div>
+      
+      <div class="row">
+        <mat-form-field>
+          <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status" placeholder="Status"
+            [disabled]="!isDescUpdated" required>
+            <mat-option value="Identified" disabled>Identified</mat-option>
+            <mat-option value="Planned">Planned</mat-option>
+            <mat-option value="Started" matTooltip="Planned Activities Commenced">Started</mat-option>
+            <mat-option value="Completed">Completed</mat-option>
+            <mat-option *ngIf="isQATeam" [disabled]="EditActionitem.status !== 'Completed'"
+              value="Verified">Verified</mat-option>
+            <mat-option value="Cancelled">Cancelled</mat-option>
+            <mat-option value="Suspended">Suspended</mat-option>
+          </mat-select>
         </mat-form-field>
       </div>
       <div *ngIf="csatBased" class="row">
@@ -334,60 +389,7 @@
           <mat-datepicker #picker8></mat-datepicker>
         </mat-form-field>
       </div>
-
-      <div class="row">
-        <mat-form-field>
-          <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status" placeholder="Status"
-            [disabled]="!isDescUpdated" required>
-            <mat-option value="Identified" disabled>Identified</mat-option>
-            <mat-option value="Planned">Planned</mat-option>
-            <mat-option value="Started" matTooltip="Planned Activities Commenced">Started</mat-option>
-            <mat-option value="Completed">Completed</mat-option>
-            <mat-option *ngIf="isQATeam" [disabled]="EditActionitem.status !== 'Completed'"
-              value="Verified">Verified</mat-option>
-            <mat-option value="Cancelled">Cancelled</mat-option>
-            <mat-option value="Suspended">Suspended</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
-        <mat-form-field style="width:50%">
-          <textarea name="txtCssReference" maxlength="200" [(ngModel)]="EditActionitem.csS_REFERENCE" matInput
-            placeholder="CSS Reference" ></textarea>
-        </mat-form-field>
-      </div>
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
-        <mat-form-field style="width:5%">
-          <textarea name="txtScore" maxlength="3" [(ngModel)]="EditActionitem.score" matInput placeholder="Score"
-            ></textarea>
-        </mat-form-field>
-      </div>
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
-        <mat-form-field style="width:75%">
-          <textarea name="txtCustomerRemarks" maxlength="2000" [(ngModel)]="EditActionitem.customeR_REMARKS" matInput
-            placeholder="Customer Remarks" required></textarea>
-        </mat-form-field>
-      </div>
-      <div class="row">
-        <mat-form-field style="width:75%">
-          <textarea name="txtRootCause" maxlength="2000" [(ngModel)]="EditActionitem.rooT_CAUSE" matInput
-            placeholder="Root Cause" required></textarea>
-        </mat-form-field>
-      </div>    
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
-        <mat-form-field  style="width:20%">
-          <mat-select name="ddActionType" [(ngModel)]="EditActionitem.actioN_TYPE" placeholder="Action Type" required >
-            <mat-option value="Corrective Action">Corrective Action</mat-option>
-            <mat-option value="Preventive Action">Preventive Action</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
-        <mat-form-field style="width:75%">
-          <textarea name="txtActionPlan" maxlength="2000" [(ngModel)]="EditActionitem.actioN_PLAN" matInput
-            placeholder="Action Plan" required></textarea>
-        </mat-form-field>
-      </div>
+    
 
       <div class="row">
         <mat-form-field style="width:20%">
