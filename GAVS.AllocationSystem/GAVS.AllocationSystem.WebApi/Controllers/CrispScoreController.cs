@@ -730,7 +730,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var item1 in scoresList.GroupBy(x => x.PORTFOLIO))
             {
                 var scores = item1.OrderByDescending(x => x.TOTAL).ToList();
-                sb.Append("<table width='auto'  cellpadding='2'>\n");
+                sb.Append("<table style='border: 1px solid #A49D9C;border-collapse: collapse;font-family: Tahoma;font-size: 11px; color: #636363;padding: 3px;background-color: white;width = auto;cellpadding=2;'>");
                 sb.Append("<tr>");
                 sb.Append($"<th colspan=2>{item1.First().CUST_NM} - {item1.Key}</th>");
                 //sb.Append("<th rowspan=2>Project</th>");
@@ -761,7 +761,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 foreach (CRISPScores item in scores)
                 {
-                    sb.Append("<TR>");
+                    sb.Append("<tr>");
                     //sb.Append("<td>"); sb.Append(item.CSM); sb.Append("</td>");
                     //sb.Append("<td>"); sb.Append(item.CUST_NM); sb.Append("</td>");
 
@@ -792,7 +792,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                     //sb.Append($"<td class='comments'>{item.CSM_GENERATED_COMMENTS }</td>");
                     //sb.Append($"<td class='comments'>{item.COMMENTS }</td>");
-                    sb.Append("</TR>\n");
+                    sb.Append("</tr>\n");
                 }
                 sb.Append("</table>");
                 sb.Append("<br/>");
@@ -837,7 +837,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 foreach (CRISPScores item in scores)
                 {
-                    sb.Append("<TR>");
+                    sb.Append("<tr>");
                     //sb.Append("<td>"); sb.Append(item.CSM); sb.Append("</td>");
                     //sb.Append("<td>"); sb.Append(item.CUST_NM); sb.Append("</td>");
 
@@ -865,7 +865,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                     //sb.Append($"<td class='comments'>{item.CSM_GENERATED_COMMENTS }</td>");
                     //sb.Append($"<td class='comments'>{item.COMMENTS }</td>");
-                    sb.Append("</TR>\n");
+                    sb.Append("</tr>\n");
                 }
                 sb.Append("</table>");
                 sb.Append("<br/>");

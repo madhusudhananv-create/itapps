@@ -703,19 +703,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x=>x.QUESTION_CATEGORY.ToLower() =="criteria").OrderBy(x=>x.SEQUENCE))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.COMMENTS}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps"))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.COMMENTS}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
                 sb.AppendLine("</tr>");
             }
-            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "Others"))
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others"))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.COMMENTS}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
                 sb.AppendLine("</tr>");
             }
 

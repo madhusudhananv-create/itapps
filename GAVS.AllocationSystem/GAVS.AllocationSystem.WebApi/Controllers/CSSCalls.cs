@@ -299,11 +299,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
                 if (string.IsNullOrWhiteSpace(projectId)) return;
                 project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
-                projectText = "portfolio";
+                projectText = "portfolio " + cust.PROJ_NM;
             }
             else
             {
-                projectText = "project";
+                projectText = "project " + cust.PROJ_NM;
             }
 
             string csmMails = helper.GetCSMMailsFromProject(project);
@@ -311,7 +311,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var am = helper.GetAMFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
 
-            subject = batch.FREQUENCY + " Customer Success Survey for the " + projectText + " " + cust.PROJ_NM + " for the period of " + PreviousPeriod;
+            subject = batch.FREQUENCY + " Customer Satisfcation Survey for the " + projectText   + " for the period of " + PreviousPeriod;
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
@@ -568,22 +568,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE"))
                 return;
             //var skipCSATSetting = getprojectconfi("SKIP_CSAT",pro);
-            var projectText = "project";
-            if (project == null)
+            var projectText = string.Empty;
+            if (cust.PROD_ID.HasValue)
+            {
+                var product = CSPdb.PORTFOLIO_PRODUCTS.GetAll().FirstOrDefault(x => x.ID == cust.PROD_ID);
+                if (product == null) return; //throw err
+                projectText = product.PRODUCT_TITLE;
+            }
+            else if (project == null)
             {
                 var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == cust.PROJ_ID);
                 if (portfolio == null) return;
                 var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
                 if (string.IsNullOrWhiteSpace(projectId)) return;
                 project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
-                projectText = "portfolio";
+                projectText = "portfolio " + cust.PROJ_NM;
+            }
+            else
+            {
+                projectText = "project " + cust.PROJ_NM;
             }
 
             string ccmail = helper.GetDBConfig("CSS_LINK_CC", "-1");
             var cclist = helper.getProjectResposnibleMailIds(project, true, true, true);
             cclist.Add(ccmail);
 
-            subject = Frequency + " Customer Success Survey for " + projectText + " " + cust.PROJ_NM + " for the period of " + PreviousPeriod;
+            subject = Frequency + " Customer Satisfcation Survey for " + projectText +  " for the period of " + PreviousPeriod;
             ccmail = helper.ConcatEmails(cclist);
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -1353,7 +1363,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         var proj = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == cp.PRODUCT_ID && x.MANAGEMENT_TYPE == 7);
                         if (proj == null) continue;
                         PROJECT project = projects.FirstOrDefault(x => x.PROJ_ID == proj.PROJECT_ID);
-                        if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
+                       // if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
                         if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")) continue;
                         if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
                         //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
