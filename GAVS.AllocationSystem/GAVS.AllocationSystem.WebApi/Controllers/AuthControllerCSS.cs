@@ -823,9 +823,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //TO list
             tomail = helper.ConcatEmails(new List<string>() { csmmails, pmmmails, qualitySpoc, amMail });
             ccmail += helper.GetDBConfig("CUSTOMER_SUCCESS_SURVEY", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID);
-            var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, project);
-            if (!string.IsNullOrWhiteSpace(buMails))
-                ccmail += "," + buMails;
+            //var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, project);
+            //if (!string.IsNullOrWhiteSpace(buMails))
+            //    ccmail += "," + buMails;
+            var buMailsCustomer = GetBUwiseCCListForAccount(replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID, null);
+            if (!string.IsNullOrWhiteSpace(buMailsCustomer))
+                ccmail += "," + buMailsCustomer;
             //CSM Names
             //string CSMNames = helper.GetCSMNamesFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
             //if (CSMNames == string.Empty)
@@ -943,9 +946,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (!string.IsNullOrWhiteSpace(ccmail))
                 ccmail += ",";
             ccmail += helper.GetDBConfig("CUSTOMER_SUCCESS_SURVEY_CC", replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.CUST_ID);
-            var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, null);
-            if (!string.IsNullOrWhiteSpace(buMails))
-                ccmail += "," + buMails;
+            //var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, null);
+            //if (!string.IsNullOrWhiteSpace(buMails))
+            //    ccmail += "," + buMails;
+            var buMailsCustomer = GetBUwiseCCListForAccount(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.CUST_ID, null);
+            if (!string.IsNullOrWhiteSpace(buMailsCustomer))
+                ccmail += "," + buMailsCustomer;
 
             var specStr = string.IsNullOrEmpty(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROJ_NM) && string.IsNullOrEmpty(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_NM) ? "" : (string.IsNullOrEmpty(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_NM) ? replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROJ_NM : replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_NM);
             //SUBJECT
@@ -1069,6 +1075,42 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 case "HEAL":
                     result = helper.GetDBConfig("CSS_CC_LIST_HEAL", null);
                     break;
+                default:
+                    break;
+            }
+
+            return result;
+
+        }
+
+        private string GetBUwiseCCListForAccount(string custId, CUSTOMER customer)
+        {
+            var result = string.Empty;
+            if (customer == null)
+            {
+                customer = Cldb.CUSTOMER.GetAll().FirstOrDefault(x => x.CUST_ID == custId);
+                if (customer == null) return result;
+            }
+            var bu = customer.BUSINESS_UNIT;
+
+            if (string.IsNullOrWhiteSpace(bu)) return result;
+ 
+
+            switch (bu.ToUpper())
+            {
+                case "INDIAUK":
+                    result = helper.GetDBConfig("CSS_CC_LIST_INDIAUK", null);
+                    break;
+                case "NEWGROWTH":
+                    result = helper.GetDBConfig("CSS_CC_LIST_NEWGROWTH", null);
+                    break;
+                case "TECH":
+                    result = helper.GetDBConfig("CSS_CC_LIST_TECH", null);
+                    break;
+                case "HEALTHCARE":
+                    result = helper.GetDBConfig("CSS_CC_LIST_HEALTHCARE", null);
+                    break;
+                    
                 default:
                     break;
             }

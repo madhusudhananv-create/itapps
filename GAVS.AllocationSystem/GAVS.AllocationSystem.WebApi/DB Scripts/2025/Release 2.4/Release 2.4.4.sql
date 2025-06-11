@@ -83,3 +83,82 @@ ORDER BY A.IDENTIFIED_DATE desc
       
 END 
 GO
+
+
+--css related
+alter table css_question_models add CATEGORY varchar(250)  
+update css_question_models set category ='Project'
+update css_question_models set category ='Pulse' where model_name = 'Half Yearly'
+
+
+alter table CSS_BATCHES add CATEGORY varchar(250)  
+update CSS_BATCHES set category ='Project'
+update CSS_BATCHES set category ='Pulse' where Frequency = 'Halfyearly'
+ 
+
+ insert into css_batches values
+ ('Half-Yearly', 1, 2025, '2025-1-1', '2025-6-30', 'CREATED', '102802', getdate(), '102802', getdate(), 1, 'Project')
+
+ update css_batches set frequency ='Half-Yearly' where id = 35
+
+ go
+
+  CREATE proc usp_insertConfigData
+  (
+     @key varchar(2000),
+     @value varchar(max),
+     @custid  varchar(2000),
+     @projid  varchar(2000),	
+     @createdby   varchar(2000),
+     @comments  varchar(2000)
+ )
+ as
+ BEGIN 
+
+      IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]=@key)
+    BEGIN
+    INSERT INTO configuration_ext (
+        [KEY],
+        [value],
+        cust_id,
+        proj_id,
+        comments,
+        isactive,
+        created_by,
+        created_date,
+        updated_by,
+        updated_date
+    ) VALUES (
+      @key,  
+        @value,     
+                    
+        @custid,               
+        @projid,  
+	    @comments,
+        1,                  
+        @createdby    ,  
+        GETDATE(),          
+       @createdby,        
+        GETDATE()           
+    );
+    END
+END
+GO
+
+ exec usp_insertConfigData 'CSS_CC_LIST_INDIAUK', '', '-1', null, '102802', ''
+ exec usp_insertConfigData 'CSS_CC_LIST_NEWGROWTH', '', '-1', null, '102802', ''
+ exec usp_insertConfigData 'CSS_CC_LIST_TECH', '', '-1', null, '102802', ''
+ exec usp_insertConfigData 'CSS_CC_LIST_HEALTHCARE', '', '-1', null, '102802', ''
+ 
+
+
+
+
+
+
+
+
+
+
+
+
