@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewChildren, QueryList, ElementRef, TemplateRef } from '@angular/core';
 import { AppServiceOthers } from '../../../Services/apps.service.other';
 import { AppsService } from '../../../Services/apps.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -43,6 +43,10 @@ export class QaassessmentdetailsComponent implements OnInit {
   stageStatus: string;
   rejectReason: string;
   isAuditorAccept: boolean;
+  isAcceptOrRejectProcess: boolean = false;
+  confirmAction: string = '';
+  showReasonInput: boolean = false;
+  reasonText: string = '';
   stageDict = {
     'AUDITEE_ACCEPTANCE AND CAP SUBMISSION': 'Auditee acceptance',
     'CAP REVIEW': 'CAP review',
@@ -50,6 +54,7 @@ export class QaassessmentdetailsComponent implements OnInit {
     'VERIFY CAP IMPLEMENTATION': 'Verify CAP'
   }
   @ViewChildren("paginator") paginator: QueryList<MatPaginator>;
+  @ViewChild('confirmationDialog') confirmationDialogTemplate: TemplateRef<any>
   //@ViewChildren("paginator") paginator2: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
   DateSelection: DateSelectionModel = new DateSelectionModel(this._util);
@@ -105,82 +110,121 @@ export class QaassessmentdetailsComponent implements OnInit {
     this.acceptOrRejectFindings();
 
   }
-  acceptOrRejectFindings() {
 
-    var findingStatusDataList: auditeE_ACCEPTANCE[] = [];
-    let findingStageData;
-    findingStageData = new auditeE_ACCEPTANCE();
+  acceptOrRejectFindings() {
+    if (this.isAcceptOrRejectProcess) {
+      return;
+    }
+    this.isAcceptOrRejectProcess = true;
+    let findingStageData = new auditeE_ACCEPTANCE();
+
     this.route.params.subscribe(params => {
-      findingStageData = new auditeE_ACCEPTANCE();
       this.findingId = params['findingid'];
       this.auditId = params['asssessmentid'];
       findingStageData.audit_ID = this.auditId;
-      findingStageData.finding_ID = this.findingId;
-      if (params['isauditor'] == undefined || params['isauditor'] == null) {
+      findingStageData.findinG_ID = this.findingId;
+
+      if (params['isauditor'] === undefined || params['isauditor'] === null) {
+        this.isAcceptOrRejectProcess = false;
         return;
       }
 
-      if (params['isauditor'] == "1") {
-        this.findAcceptValue();
-        findingStageData.status = this.stageStatus;
-        findingStageData.remarks = this.rejectReason;
+      if (params['acceptval'] === '1') {
+        this.confirmAction = 'accept';
+        this.showReasonInput = false;
+      } else if (params['acceptval'] === '0') {
+        this.confirmAction = 'reject';
+        this.showReasonInput = true;
+      } else {
+        this.isAcceptOrRejectProcess = false;
+        return;
+      }
+      this.confirmDialogOpen();
+    });
+  }
+
+  onConfirm(confirmed: boolean) {
+    if (!confirmed) {
+      this.isAcceptOrRejectProcess = false;
+      this.reasonText = '';
+      this._router.navigateByUrl('/layout/checklistfindings/' + this.selectedCust);
+      return;
+    }
+
+    if (this.confirmAction === 'reject' && (!this.reasonText || this.reasonText.trim() === '')) {
+      alert('Please provide a reason for rejection');
+      this.isAcceptOrRejectProcess = false;
+      this.confirmDialogOpen();
+      return;
+    }
+
+    this.stageStatus = this.confirmAction === 'accept' ? 'Accept' : 'Reject';
+    this.rejectReason = this.confirmAction === 'reject' ? this.reasonText : '';
+    this.processAcceptReject();
+  }
+
+  processAcceptReject() {
+    const findingStatusDataList: auditeE_ACCEPTANCE[] = [];
+    let findingStageData = new auditeE_ACCEPTANCE();
+
+    findingStageData.audit_ID = this.auditId;
+    findingStageData.findinG_ID = this.findingId;
+    findingStageData.status = this.stageStatus;
+    findingStageData.remarks = this.rejectReason;
+
+    this.route.params.subscribe(params => {
+      if (params['isauditor'] === '1') {
         findingStageData.iS_AUDITOR_ACCEPT = true;
         findingStatusDataList.push(findingStageData);
-        this._appservice.saveAuditorAcceptanceStatus(findingStatusDataList)
-          .subscribe(data => {
-            alert("Finding status updated successfully");
-            this.getAllFindingsForCustomer();
+        this._appservice.saveAuditorAcceptanceStatus(findingStatusDataList).subscribe(
+          data => {
+            alert('Auditor Finding status updated successfully');
+            this.isAcceptOrRejectProcess = false;
+            this.reasonText = '';
+            this._router.navigateByUrl('/layout/checklistfindings/' + this.selectedCust);
           },
-            (error) => {
-              this._util.serviceError(error);
-
-            });
-      }
-      else if (params['isauditor'] == "0") {
-        this.findAcceptValue();
-        findingStageData.status = this.stageStatus;
-        findingStageData.remarks = this.rejectReason;
+          (error) => {
+            this.isAcceptOrRejectProcess = false;
+            this.reasonText = '';
+            this._util.serviceError(error);
+          }
+        );
+      } else if (params['isauditor'] === '0') {
         findingStageData.iS_AUDITOR_ACCEPT = false;
         findingStatusDataList.push(findingStageData);
-
-        this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList)
-          .subscribe(data => {
-            alert("Finding status updated successfully");
-            this.getAllFindingsForCustomer();
+        this._appservice.saveAuditeeAcceptanceStatus(findingStatusDataList).subscribe(
+          data => {
+            alert('Auditee Finding status updated successfully');
+            this.isAcceptOrRejectProcess = false;
+            this.reasonText = '';
+            this._router.navigateByUrl('/layout/checklistfindings/' + this.selectedCust);
           },
-            (error) => {
-              this._util.serviceError(error);
-
-            });
-
-      }
-    });
-
-  }
-
-  findAcceptValue() {
-    this.route.params.subscribe(params => {
-      if (params['acceptval'] == undefined || params['acceptval'] == null) {
-        return;
-      }
-
-      if (params['acceptval'] == "1") {
-        if (confirm('Are you sure want to accept this finding?')) {
-          this.stageStatus = "Accept";
-        }
-      }
-      else if (params['acceptval'] == "0") {
-        if (confirm('Are you sure want to reject this finding?')) {
-          const reason = prompt('Please provide a reason for rejection');
-          if (reason) {
-            this.rejectReason = reason;
-            this.stageStatus = "Reject";
+          (error) => {
+            this.isAcceptOrRejectProcess = false;
+            this.reasonText = '';
+            this._util.serviceError(error);
           }
-
-        }
+        );
       }
     });
   }
+
+  confirmDialogOpen() {
+    const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
+      width: '500px',
+      height: this.showReasonInput ? '250px' : '170px',
+      data: { confirmAction: this.confirmAction, showReasonInput: this.showReasonInput }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === '1') {
+        this.onConfirm(true);
+      } else {
+        this.onConfirm(false);
+      }
+    });
+  }
+
 
   getstageDesc(id) {
     return this.stageDict[id];
