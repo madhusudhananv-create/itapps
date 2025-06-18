@@ -47,5 +47,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string PROCESS_MODEL { get; set; }
 
         public bool IS_CHECKED { get; set; }
+
+        public int GLOBAL_PERSPECTIVE_ID { get; set; }
     }
 }

@@ -1238,6 +1238,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             public string SERVICE_AREA_NAME { get; set; }
             public int SERVICE_AREA_ID { get; set; }
+           
+            public bool IS_SERVICE_TOWER_SELECTED { get; set; }
             public QUESTIONS_BY_SERVICE_AREA(int id, string title)
             {
                 this.SERVICE_AREA_ID = id;
@@ -1267,6 +1269,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public int PROCESS_AREA_ID { get; set; }
             public string PROCESS_MODEL { get; set; }
 
+            public bool IS_PROCESS_AREA_SELECTED { get; set; }
+
             public QUESTIONS_BY_PROCESS_AREA(int id, string title, string processModel = "")
             {
                 this.PROCESS_AREA_ID = id;
@@ -1281,7 +1285,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             public int PROCESS_ID { get; set; }
             public string PROCESS_NAME { get; set; }
-        
+
+            public bool IS_PROCESS_SELECTED { get; set; }
+
             public QUESTIONS_BY_PROCESS(int id, string title)
             {
                 this.PROCESS_ID = id;

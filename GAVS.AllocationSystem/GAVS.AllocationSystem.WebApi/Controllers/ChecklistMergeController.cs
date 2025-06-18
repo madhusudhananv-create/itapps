@@ -65,28 +65,44 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             var firstChecklist = existing.First();
+            var weightageApplicableChecklists = existing.Where(x => x.IS_WEIGHTAGE_APPLICABLE).ToList();
+            var maturityApplicableChecklists = existing.Where(x => x.MATURITY_LEVEL && !x.IS_WEIGHTAGE_APPLICABLE).ToList();
+
+            if (weightageApplicableChecklists.Count > 0 && maturityApplicableChecklists.Count > 0)
+            {
+                var weightageChecklistNames = string.Join(", ", weightageApplicableChecklists.Select(x => x.TITLE));
+                var maturityChecklistNames = string.Join(", ", maturityApplicableChecklists.Select(x => x.TITLE));
+
+                return BadRequest($"Unable to Merge. Checklists with different applicability types cannot be merged. " +
+                                 $"Weightage applicable checklists: [{weightageChecklistNames}]. " +
+                                 $"Maturity applicable checklists: [{maturityChecklistNames}]. " +
+                                 $"Please select checklists with the same applicability type.");
+            }
 
             //check weightage scores are equal for all checklist. else throw error
-            var scores = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.GetAll().Where(x => checklistIds.Contains(x.CHECKLIST_ID) && x.ISACTIVE).ToList();
-            var firstScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 1)?.WEIGHTAGE_SCORE;
-            var secondScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 2)?.WEIGHTAGE_SCORE;
-            var thirdScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 3)?.WEIGHTAGE_SCORE;
+            if (weightageApplicableChecklists.Count == existing.Count)
+            {
+                var scores = CSPdb.AUDIT_CHECKLIST_WEIGHTAGE_SCORES.GetAll().Where(x => checklistIds.Contains(x.CHECKLIST_ID) && x.ISACTIVE).ToList();
+                var firstScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 1)?.WEIGHTAGE_SCORE;
+                var secondScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 2)?.WEIGHTAGE_SCORE;
+                var thirdScore = scores.FirstOrDefault(x => x.CHECKLIST_ID == firstChecklist.ID && x.WEIGHTAGE_ID == 3)?.WEIGHTAGE_SCORE;
 
-            var errMsg = "Unable to Merge. The Weightage scores for {0} category are not the same for the selected checklists. Please select checklists with same weightage scores.";
-            if (!scores.Where(x => x.WEIGHTAGE_ID == 1).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == firstScore))
-            {
-                //raise error MAJOR
-                return BadRequest(string.Format(errMsg, "MAJOR"));
-            }
-            if (!scores.Where(x => x.WEIGHTAGE_ID == 2).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == secondScore))
-            {
-                //raise error MINOR
-                return BadRequest(string.Format(errMsg, "MINOR"));
-            }
-            if (!scores.Where(x => x.WEIGHTAGE_ID == 3).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == thirdScore))
-            {
-                //raise error Mandatory
-                return BadRequest(string.Format(errMsg, "MANDATORY"));
+                var errMsg = "Unable to Merge. The Weightage scores for {0} category are not the same for the selected checklists. Please select checklists with same weightage scores.";
+                if (!scores.Where(x => x.WEIGHTAGE_ID == 1).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == firstScore))
+                {
+                    //raise error MAJOR
+                    return BadRequest(string.Format(errMsg, "MAJOR"));
+                }
+                if (!scores.Where(x => x.WEIGHTAGE_ID == 2).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == secondScore))
+                {
+                    //raise error MINOR
+                    return BadRequest(string.Format(errMsg, "MINOR"));
+                }
+                if (!scores.Where(x => x.WEIGHTAGE_ID == 3).ToList().TrueForAll(x => x.WEIGHTAGE_SCORE == thirdScore))
+                {
+                    //raise error Mandatory
+                    return BadRequest(string.Format(errMsg, "MANDATORY"));
+                }
             }
 
             if (existing.TrueForAll(x => x.MATURITY_LEVEL == firstChecklist.MATURITY_LEVEL))
@@ -146,6 +162,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                 WEIGHTAGE_ID = p.WEIGHTAGE_ID,
                                 Reference = i,
                                 TITLE = p.QUESTION,
+                                GLOBAL_PERSPECTIVE_ID = p.GLOBAL_PERSPECTIVE_ID,
 
                             });
 

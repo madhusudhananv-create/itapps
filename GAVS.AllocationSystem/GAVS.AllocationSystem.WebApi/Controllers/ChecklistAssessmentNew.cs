@@ -1378,6 +1378,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 checklistsendmail.NEXT_ACTION = "Review Corrective Action Plan submitted";
                 checklistsendmail.ACTION_CLASS = "showAction";
                 checklistsendmail.TARGET = "2 Business days from the date of audit report submitted";
+                checklistsendmail.REMARKS = "N/A";
+                checklistsendmail.FINDING_DESCRIPTION = findingtxt;
                 SendMailOnAuditChecklistStage(checklistsendmail);
             }
             return Ok(results);
@@ -1707,7 +1709,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 var checklistsendmail = new ChecklistSendMail();
                 string findingtxt = string.Empty;
-
+                string remarks = string.Empty;
                 var findingrow = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().FirstOrDefault(x => x.ID == findingId && x.ISACTIVE);
                 int auditid = 0;
 
@@ -1746,7 +1748,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     checklistsendmail.NEXT_ACTION = "Implement Corrective Action and confirm the closure";
                 else if (capStatus == "Corrective Action Plan Rejected")
                     checklistsendmail.NEXT_ACTION = "Resubmit Corrective Action Plan after review";
-
+                checklistsendmail.REMARKS = resultsList[0].REMARKS;
+                checklistsendmail.FINDING_DESCRIPTION = findingtxt;
                 checklistsendmail.ACTION_CLASS = "showAction";
 
                 SendMailOnAuditChecklistStage(checklistsendmail);
@@ -1841,7 +1844,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 checklistsendmail.ACTION_CLASS = "hideAction";
             }
-
+            checklistsendmail.REMARKS = resultsList[0].REMARKS;
+            checklistsendmail.FINDING_DESCRIPTION = findingtxt;
             SendMailOnAuditChecklistStage(checklistsendmail);
 
 
@@ -1978,6 +1982,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             checklistsendmail.SUBJECT = $"Corrective Action Plan Verification status for finding - {findingtxt}";
             checklistsendmail.ACTION_CLASS = "hideAction";
             checklistsendmail.TARGET = "2 Business days from the date of Implementation is completed/submitted by appraisee.";
+            checklistsendmail.REMARKS = resultsList[0].REMARKS;
+            checklistsendmail.FINDING_DESCRIPTION = findingtxt;
             SendMailOnAuditChecklistStage(checklistsendmail);
             return Ok();
         }
@@ -2685,17 +2691,27 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var row in checklistMappingsExt)
             {
                 if (!output.Any(x => x.SERVICE_AREA_ID == row.SERVICE_AREA_ID))
-                    output.Add(new QUESTIONS_BY_SERVICE_AREA(row.SERVICE_AREA_ID, row.SERVICE_AREA_NAME));
+                    output.Add(new QUESTIONS_BY_SERVICE_AREA(row.SERVICE_AREA_ID, row.SERVICE_AREA_NAME)
+                    {
+                        IS_SERVICE_TOWER_SELECTED = true
+                    });
+
 
                 var serviceAreaRec = output.Find(x => x.SERVICE_AREA_ID == row.SERVICE_AREA_ID);
 
                 if (!serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Any(x => x.PROCESS_AREA_ID == row.PROCESS_AREA_ID))
-                    serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Add(new QUESTIONS_BY_PROCESS_AREA(row.PROCESS_AREA_ID, row.PROCESS_AREA_NAME, row.PROCESS_MODEL));
+                    serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Add(new QUESTIONS_BY_PROCESS_AREA(row.PROCESS_AREA_ID, row.PROCESS_AREA_NAME, row.PROCESS_MODEL)
+                    {
+                        IS_PROCESS_AREA_SELECTED = true
+                    });
 
                 var processAreaRec = serviceAreaRec.QUESTIONS_BY_PROCESS_AREA.Find(x => x.PROCESS_AREA_ID == row.PROCESS_AREA_ID);
 
                 if (!processAreaRec.QUESTIONS_BY_PROCESS.Any(x => x.PROCESS_ID == row.PROCESS_ID))
-                    processAreaRec.QUESTIONS_BY_PROCESS.Add(new QUESTIONS_BY_PROCESS(row.PROCESS_ID, row.PROCESS_NAME));
+                    processAreaRec.QUESTIONS_BY_PROCESS.Add(new QUESTIONS_BY_PROCESS(row.PROCESS_ID, row.PROCESS_NAME)
+                    {
+                        IS_PROCESS_SELECTED = true
+                    });
 
                 var processRec = processAreaRec.QUESTIONS_BY_PROCESS.Find(x => x.PROCESS_ID == row.PROCESS_ID);
 
@@ -2786,6 +2802,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     rec.WEIGHTAGE = weightages.FirstOrDefault(x => x.WEIGHTAGE_ID == weightageScores.WEIGHTAGE_ID).WEIGHTAGE_TITLE;
                     rec.WEIGHTAGE_SCORE = weightageScores.WEIGHTAGE_SCORE;
+                    rec.WEIGHTAGE_ID = weightageScores.WEIGHTAGE_ID;
                 }
             }
 
@@ -2846,6 +2863,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (globalRow != null)
                 {
                     rec.CATEGORY = globalRow.SHORT_DESC;
+                    rec.GLOBAL_PERSPECTIVE_ID = globalRow.ID;
                 }
             }
         }
