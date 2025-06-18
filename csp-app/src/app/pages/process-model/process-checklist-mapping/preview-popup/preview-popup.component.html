@@ -13,16 +13,25 @@
 
   <div *ngFor="let sa of previewData">
     <div style="margin-bottom: 5px; width: 100%; background-color: #999690; font-weight: bold">
+      <input *ngIf="showSelectColumn" type="checkbox" [id]="'serviceTower_' + sa.service_AREA_NAME"
+      [(ngModel)]="sa.iS_SERVICE_TOWER_SELECTED" (change)="onCheckboxChange('serviceTower',sa)">
       Service Tower :- {{sa.servicE_AREA_NAME}}
     </div>
     <div *ngFor="let pa of sa.questionS_BY_PROCESS_AREA " style="margin-left: 10px">
       <div
         style="margin-bottom: 5px;width: 100%; background-color: #bab6af; font-weight: bold;display: flex; justify-content: space-between;">
-        <div>Process Area :- {{pa.procesS_AREA_NAME}}</div>
+        <div>
+          <input *ngIf="showSelectColumn" type="checkbox" [id]="'processArea_' + pa.procesS_AREA_NAME"
+            [(ngModel)]="pa.iS_PROCESS_AREA_SELECTED" (change)="onCheckboxChange('processArea',pa,sa)">
+          Process Area :- {{pa.procesS_AREA_NAME}}
+        </div>
+
         <div style="padding-right: 5%;">Process Model :- {{pa.procesS_MODEL}}</div>
       </div>
       <div *ngFor="let p of pa.questionS_BY_PROCESS" style="margin-left: 10px">
         <div style="margin-bottom: 5px;width: 100%; background-color: #d6d3ce; font-weight: bold">
+          <input *ngIf="showSelectColumn" type="checkbox" [id]="'process_' + p.procesS_NAME"
+            [(ngModel)]="p.iS_PROCESS_SELECTED" (change)="onCheckboxChange('process',p, pa,sa)">
           Process :- {{p.procesS_NAME}}
         </div>
         <table style="width: 100%" class="table table-bordered">
@@ -42,7 +51,7 @@
               <tr>
                 <td style="text-align: center" *ngIf="showSelectColumn">
                   <input type="checkbox" [id]="'question_' + sa.checklisT_NAME + '_' + id"
-                    [(ngModel)]="question.iS_CHECKED">
+                    [(ngModel)]="question.iS_CHECKED" (change)="onCheckboxChange(question, 'question', p)">
                 </td>
                 <td>{{id+1}}</td>
                 <td style="white-space: pre-wrap">{{question.question}}</td>

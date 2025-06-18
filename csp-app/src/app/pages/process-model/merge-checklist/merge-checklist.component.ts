@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Output, EventEmitter } from '@angular/core';
 import { AppsService } from '../../../Services/apps.service'
 import { Router } from '@angular/router';
 import { AccessControl } from '../../../Shared/accessControl';
@@ -15,8 +15,8 @@ import { PreviewPopupComponent } from '../process-checklist-mapping/preview-popu
   styleUrls: ['./merge-checklist.component.scss']
 })
 export class MergeChecklistComponent implements OnInit {
-  isShowCreateChecklist : boolean = true;
-  isShowChecklistGrid : boolean = false;
+  isShowCreateChecklist: boolean = true;
+  isShowChecklistGrid: boolean = false;
   checklistForm: FormGroup;
   checklists: any;
   previewChecklistsData: any[] = [];
@@ -31,8 +31,10 @@ export class MergeChecklistComponent implements OnInit {
   weightage: AuditCheckListWeightage[] = [];
   checklistModel: ChecklistModel = new ChecklistModel();
   _callSave: boolean = false;
+
   @ViewChild('checklistSearchInput') checklistSearchInput: ElementRef;
   @ViewChild(PreviewPopupComponent) previewComponent: PreviewPopupComponent;
+  @Output() checklistCreated = new EventEmitter<void>();
   constructor(private _router: Router, public _access: AccessControl,
     private _appService: AppsService, private _util: myUtility, private form: FormBuilder, public dialog: MatDialog) {
     // this.checklistForm = this.form.group({
@@ -44,10 +46,76 @@ export class MergeChecklistComponent implements OnInit {
   ngOnInit() {
     var empId = localStorage.getItem('empid');
     this.getAllChecklistsData();
+
   }
 
   selectedChecklists = new FormControl();
   checklistName = new FormControl('', [Validators.required, Validators.pattern('[^<|>]+')]);
+
+  onCheckboxChange(type, data, parent = null, grandparent = null) {
+    const isChecked = this.getCheckboxValue(type, data);
+    this.setChildrenCheckboxes(type, data, isChecked);
+  
+    if (parent || grandparent) {
+      this.updateParentCheckboxes(parent, grandparent);
+    }
+  }
+
+  setChildrenCheckboxes(type, data, isChecked) {
+    switch (type) {
+      case 'serviceTower':
+        data.questionS_BY_PROCESS_AREA.forEach(pa => {
+          pa.iS_PROCESS_AREA_SELECTED = isChecked;
+          pa.questionS_BY_PROCESS.forEach(p => {
+            p.iS_PROCESS_SELECTED = isChecked;
+            p.questions.forEach(q => {
+              q.iS_CHECKED = isChecked;
+            });
+          });
+        });
+        break;
+      case 'processArea':
+        data.questionS_BY_PROCESS.forEach(p => {
+          p.iS_PROCESS_SELECTED = isChecked;
+          p.questions.forEach(q => {
+            q.iS_CHECKED = isChecked;
+          });
+        });
+        break;
+
+      case 'process':
+        data.questions.forEach(question => {
+          question.iS_CHECKED = isChecked;
+        });
+        break;
+    }
+  }
+
+
+  updateParentCheckboxes(parent = null, grandparent = null) {
+    this.previewChecklistsData.forEach(checklist => {
+      checklist.questionS_BY_SERVICE_AREA.forEach(sa => {
+        sa.questionS_BY_PROCESS_AREA.forEach(pa => {
+          pa.iS_PROCESS_AREA_SELECTED = pa.questionS_BY_PROCESS.some(p => p.iS_PROCESS_SELECTED);
+          pa.questionS_BY_PROCESS.forEach(p => {
+            p.iS_PROCESS_SELECTED = p.questions.some(q => q.iS_CHECKED);
+          });
+        });
+        sa.iS_SERVICE_TOWER_SELECTED = sa.questionS_BY_PROCESS_AREA.some(pa => pa.iS_PROCESS_AREA_SELECTED);
+      });
+      checklist.iS_SERVICE_TOWER_SELECTED = checklist.questionS_BY_SERVICE_AREA.some(sa => sa.iS_SERVICE_TOWER_SELECTED);
+    });
+  }
+  getCheckboxValue(item, level) {
+    switch (item) {
+      case 'serviceTower': return level.iS_SERVICE_TOWER_SELECTED;
+      case 'processArea': return level.iS_PROCESS_AREA_SELECTED;
+      case 'process': return level.iS_PROCESS_SELECTED;
+      case 'question': return level.iS_CHECKED;
+      default: return false;
+    }
+  }
+
 
   getAllChecklistsData(includeMerged: boolean = true) {
     this._loading = true;
@@ -126,8 +194,8 @@ export class MergeChecklistComponent implements OnInit {
   }
 
   cancel_OnClick() {
-      this._loading = false;
-    }
+    this._loading = false;
+  }
   saveMergeChecklist() {
 
     this._callSave = true;
@@ -137,33 +205,40 @@ export class MergeChecklistComponent implements OnInit {
 
   project_onChange($event: any) {
     let obj: any = JSON.parse($event);
-    
+
     this._callSave = false;
-    if (obj!= undefined && obj != null && obj > 0) {
+    if (obj != undefined && obj != null && obj > 0) {
       this.saveMultiChecklist(obj);
     }
-  
+
   }
 
   saveMultiChecklist(checklistId: number) {
     const selectedQuestions = [];
     this.previewChecklistsData.forEach(checklist => {
       checklist.questionS_BY_SERVICE_AREA.forEach(serviceTower => {
-        serviceTower.questionS_BY_PROCESS_AREA.forEach(processArea => {
-          processArea.questionS_BY_PROCESS.forEach(process => {
-            const selected = process.questions.filter(q => q.selected);
-            selectedQuestions.push(...selected);
+        if (serviceTower.iS_SERVICE_TOWER_SELECTED) {
+          serviceTower.questionS_BY_PROCESS_AREA.forEach(processArea => {
+            if (processArea.iS_PROCESS_AREA_SELECTED) {
+              processArea.questionS_BY_PROCESS.forEach(process => {
+                if (process.iS_PROCESS_SELECTED) {
+                  const selected = process.questions.filter(q => q.iS_CHECKED);
+                  selectedQuestions.push(...selected);
+                }
+              });
+            }
           });
-        });
+        }
       });
     });
-    
-
+  
     this._appService.saveNewMultiChecklist(this.previewChecklistsData, checklistId).subscribe(data => {
       this._loading = true;
       this.isSaved = true;
       this.getAllChecklistsData();
       this.showPreviewGrid = false;
+      this.checklistCreated.emit();
+      this._loading = false;
     }, error => {
       this._loading = false;
       this._util.serviceError(error);

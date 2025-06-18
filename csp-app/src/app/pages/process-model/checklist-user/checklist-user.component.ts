@@ -12,8 +12,7 @@ import { AccessControl } from '../../../Shared/accessControl';
 })
 
 export class ChecklistUserComponent implements OnInit {
-
-
+ 
   constructor(private _util: myUtility, private _appservice: AppsService, public _access: AccessControl) { }
   processModelDesc: string;
   modelList: ProcessModelModel[] = []
@@ -26,9 +25,14 @@ export class ChecklistUserComponent implements OnInit {
   processList: ProcessSqaProcess[] = []
   model: ProcessModelModel = new ProcessModelModel()
   displayedColumns = ["index", "title", "description", "releaseVersion", "releaseDate", "Action"];
+  refreshTrigger: number = 0;
+  onChecklistCreated() {
+    this.refreshTrigger++; 
+  }
   ngOnInit() {
     this.LoadData();
     this.getServiceAreaProvided()
+    
   }
   ngOnChanges() {
     this.LoadData();

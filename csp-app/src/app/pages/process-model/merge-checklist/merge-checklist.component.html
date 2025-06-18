@@ -40,7 +40,8 @@
               <app-preview-popup [previewData]="previewData.questionS_BY_SERVICE_AREA"
                 [checklistname]="previewData.checklisT_NAME" [version]="previewData.version"
                 [effectivefrom]="previewData.effectivE_FROM" [isMergeView]="true"
-                [showSelectColumn]="true" ></app-preview-popup>
+                [showSelectColumn]="true" (checkboxChange)="onCheckboxChange($event.type,$event.data, $event.parentData, $event.grandParentData)">
+              </app-preview-popup>
             </div>
           </div>
           <div *ngIf="previewChecklistsData && previewChecklistsData.length > 0"

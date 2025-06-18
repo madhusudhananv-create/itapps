@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, Input, Optional } from '@angular/core';
+import { Component, OnInit, Inject, Input, Optional, Output, EventEmitter } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { myUtility } from '../../../../Shared/myUtility';
 
@@ -15,8 +15,16 @@ export class PreviewPopupComponent implements OnInit {
   @Input() effectivefrom: Date;
   @Input() isMergeView: boolean = false;
   @Input() showSelectColumn: boolean = false;
+  @Input() sa: any;
+  @Input() pa: any;
+  @Input() p: any;
+  @Input() question: any;
+  @Output() checkboxChange = new EventEmitter<{ type: string, data: any, parentData: any, grandparentData: any }>();
   isweightageApplicable: boolean;
   ismaturityApplicable: boolean;
+  onCheckboxChange(type: string, data: any, parentData: any = null, grandparentData: any = null) {
+    this.checkboxChange.emit({ type, data, parentData, grandparentData });
+  }
   constructor(@Optional() @Inject(MAT_DIALOG_DATA) public data: any, @Optional() private dialogRef: MatDialogRef<PreviewPopupComponent>, private _util: myUtility) {
     if (data != null) {
       console.log("preview data", data);

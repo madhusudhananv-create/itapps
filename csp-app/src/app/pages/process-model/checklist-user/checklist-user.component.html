@@ -105,14 +105,14 @@
         <app-process-process-model-view></app-process-process-model-view>
       </mat-tab>
       <mat-tab label="8.Map Checklist Questions and Process" *ngIf="_access.IsAllowed(803, 1, '','')">
-        <app-process-checklist-mapping></app-process-checklist-mapping>
+        <app-process-checklist-mapping [refreshChecklists]="refreshTrigger"></app-process-checklist-mapping>
       </mat-tab>
       <mat-tab label="9.PSPD" *ngIf="_access.IsAllowed(806, 1, '','')">
         <app-pspd></app-pspd>
       </mat-tab>
 
       <mat-tab label="10.Merge Checklist" *ngIf="_access.IsAllowed(825, 1, '','')">
-        <app-merge-checklist></app-merge-checklist>
+        <app-merge-checklist (checklistCreated)="onChecklistCreated()"></app-merge-checklist>
       </mat-tab>
       
       <!-- <mat-tab label="Add/Map Objective" *ngIf="_access.IsAllowed(817, 1, '','')">

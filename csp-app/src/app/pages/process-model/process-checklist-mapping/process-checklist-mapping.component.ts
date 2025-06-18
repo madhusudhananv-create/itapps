@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild,Input,SimpleChanges } from '@angular/core';
 import { myUtility } from '../../../Shared/myUtility';
 import { AppsService } from '../../../Services/apps.service';
 import { ProcessAreaModelNew, ServiceAreaModelNew, ProcessModelNew } from '../../../models/audit-checklist-based-model';
@@ -47,7 +47,7 @@ export class ProcessChecklistMappingComponent implements OnInit {
   originalChecklistList: ChecklistModel[];
   isPreviewChecklistClicked: boolean = false;
   checklistWithVersion: any[] = [];
-
+  @Input() refreshChecklists: number = 0;
 
 
 
@@ -64,8 +64,11 @@ export class ProcessChecklistMappingComponent implements OnInit {
     this.getWeightageForAllChecklist();
     this.Service_GetMaturiryLevel();
   }
-  ngOnChanges() {
+  ngOnChanges(changes: SimpleChanges) {
     this.Service_GetProcessAreaList();
+    if (changes['refreshChecklists']) {
+      this.service_getChecklistList(); 
+    }
   }
 
 
