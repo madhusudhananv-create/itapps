@@ -625,7 +625,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else if (Sequence == 3) { Period = "Oct-" + Year.ToString() + " to Dec-" + Year.ToString(); }
                 else if (Sequence == 4) { Period = "Jan-" + (Year + 1).ToString() + " to Mar-" + (Year + 1).ToString(); }
             }
-            else if (Frequency.ToLower() == "halfyearly")
+            else if (Frequency.ToLower() == "halfyearly" || Frequency.ToLower() == "half-yearly")
             {
                 if (Sequence == 1)
                 {
@@ -647,7 +647,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else if (Sequence == 0 || Sequence == 4) { CurrentPeriod = "Jan-Mar " + (Year).ToString(); }
 
             }
-            else if (Frequency.ToLower() == "halfyearly")
+            else if (Frequency.ToLower() == "halfyearly" || Frequency.ToLower() == "half-yearly")
             {
                 if (Sequence == 1)
                 {
@@ -840,7 +840,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (category.ToLower() == "pulse")
                 subject = $"Half Yearly Pulse Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
             else
-                subject = $"Customer Success Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
+                subject = $"Customer Satisfcation Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
 
 
             //CONTENT

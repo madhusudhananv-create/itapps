@@ -520,14 +520,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 deleteDetails.ForEach(x => x.ISACTIVE = false);
                 CSPdb.AUDITEE_ACCEPTANCE.Update(deleteDetails);
             }
-
+            UpdateAuditStatus(auditId, "IN PROGRESS");
             CSPdb.Commit(CanCommit);
 
             if (summary.AUDITEE_LIST != null && summary.AUDITEE_LIST.Count > 0)
                 SaveCheckListAuditeeDetailsNew(summary.AUDITEE_LIST, auditId, empId);
 
             SaveCheckListCCDetailsNew(summary.CC_LIST, summary.TO_LIST, auditId, empId);
-            UpdateAuditStatus(auditId, "IN PROGRESS");
+         
 
             var auditRows = CSPdb.AUDIT_CHECKLIST_EXECUTION_DETAILS.GetAll().Where(x => x.ASSESSMENT_ID == auditId && x.ISACTIVE && x.ISSUBMITTED).ToList();
 

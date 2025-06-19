@@ -389,9 +389,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ccmail = string.Join(",", ccList);
             var specStr = string.IsNullOrEmpty(cust.PROJ_NM) && string.IsNullOrEmpty(cust.PROD_NM) ? "Long 80" : (string.IsNullOrEmpty(cust.PROD_NM) ? cust.PROJ_NM : cust.PROD_NM);
             if (!string.IsNullOrWhiteSpace(projectText))
-                subject = prefix + $"{specStr} - Customer Success Survey for the project {projectText} for the period of {currentPeriod}";
+                subject = prefix + $"{specStr} - Customer Satisfaction Survey for the project {projectText} for the period of {currentPeriod}";
             else
-                subject = prefix + $"{specStr} - Customer Success Survey for the period of {currentPeriod}";
+                subject = prefix + $"{specStr} - Customer Satisfaction Survey for the period of {currentPeriod}";
 
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -642,7 +642,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var cclist = helper.getProjectResposnibleMailIds(project, true, true, true);
             cclist.Add(ccmail);
 
-            subject = Frequency + " Customer Success Survey " + projectText + " " + cust.PROJ_NM + " for the period of " + PreviousPeriod;
+            subject = Frequency + " Customer Satisfaction Survey " + projectText + " " + cust.PROJ_NM + " for the period of " + PreviousPeriod;
             ccmail = helper.ConcatEmails(cclist);
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
