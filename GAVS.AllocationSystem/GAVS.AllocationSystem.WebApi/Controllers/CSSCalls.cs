@@ -145,7 +145,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (frequency == "Quarterly")
                 frequency = "Quarter";
 
-            subject = $"CSS Customer Contact Verification - {accountName} - {customerName} - Review and update the Customer Contact details, Customer Satisfcation Survey email will be sent to all customers soon";
+            subject = $"CSS Customer Contact Verification - {accountName} - {customerName} - Review and update the Customer Contact details, Customer Satisfaction Survey email will be sent to all customers soon";
 
             var mainUrl = $"{helper.GetAbsoulteUri()}/{url}/{batchId}/{id}/";
             string approveUrl = mainUrl + "1";
@@ -311,7 +311,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var am = helper.GetAMFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
 
-            subject = batch.FREQUENCY + " Customer Satisfcation Survey for the " + projectText   + " for the period of " + PreviousPeriod;
+            subject = batch.FREQUENCY + " Customer Satisfaction Survey for the " + projectText   + " for the period of " + PreviousPeriod;
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
@@ -593,7 +593,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var cclist = helper.getProjectResposnibleMailIds(project, true, true, true);
             cclist.Add(ccmail);
 
-            subject = Frequency + " Customer Satisfcation Survey for " + projectText +  " for the period of " + PreviousPeriod;
+            subject = Frequency + " Customer Satisfaction Survey for " + projectText +  " for the period of " + PreviousPeriod;
             ccmail = helper.ConcatEmails(cclist);
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
