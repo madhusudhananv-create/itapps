@@ -229,12 +229,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
             string customerName = customer?.CUST_NM;
-            string projectName = project.PROJ_NM;
+            string projectName = string.IsNullOrWhiteSpace(firstActionItem.PORTFOLIO) ? project.PROJ_NM : firstActionItem.PORTFOLIO;
 
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/actionitems";
 
-            subject = $"New Action Item(s) Identified - {firstActionItem.PORTFOLIO ?? projectName}; Customer: {customerName}";
+            subject = $"New Action Item(s) Identified - { projectName}; Customer: {customerName}";
             string tomail = pmMails;
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
@@ -700,7 +700,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private string GetCSSTableData(BatchCustomerAndQuestions replies)
         {
             var sb = new StringBuilder();
-            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x=>x.QUESTION_CATEGORY.ToLower() =="criteria").OrderBy(x=>x.SEQUENCE))
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "criteria").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
                 sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
@@ -840,7 +840,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (category.ToLower() == "pulse")
                 subject = $"Half Yearly Pulse Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
             else
-                subject = $"Customer Satisfcation Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
+                subject = $"Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
 
 
             //CONTENT
@@ -1094,7 +1094,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var bu = customer.BUSINESS_UNIT;
 
             if (string.IsNullOrWhiteSpace(bu)) return result;
- 
+
 
             switch (bu.ToUpper())
             {
@@ -1110,7 +1110,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 case "HEALTHCARE":
                     result = helper.GetDBConfig("CSS_CC_LIST_HEALTHCARE", null);
                     break;
-                    
+
                 default:
                     break;
             }

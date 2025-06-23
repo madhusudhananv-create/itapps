@@ -310,8 +310,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var pmMails = helper.GetPMFromProject(project).FirstOrDefault();
             var am = helper.GetAMFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
+         
 
-            subject = batch.FREQUENCY + " Customer Satisfaction Survey for the " + projectText   + " for the period of " + PreviousPeriod;
+            subject = "Neurealm Half-Yearly Customer Satisfaction Survey for the period: " + PreviousPeriod;
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
@@ -328,7 +329,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_NM).OrderBy(x => x).ToList();
                 //EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
                 templateFile = "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
-                subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
+                //subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
+                subject = "Neurealm Half-Yearly Customer Satisfaction Survey for the period: " + PreviousPeriod;
             }
 
 
@@ -338,6 +340,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("PREVIOUS_PERIOD", PreviousPeriod);
             EmailContentValues.Add("PERIOD", period);
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
+            EmailContentValues.Add("ACCOUNT_NAME", cust.CUST_NM);
+            EmailContentValues.Add("PROJECT_NAME", projectText);
             EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
 
             mailContent = helper.GetEmailContent(templateFile, EmailContentValues);

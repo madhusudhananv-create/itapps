@@ -151,9 +151,54 @@ GO
  exec usp_insertConfigData 'CSS_CC_LIST_HEALTHCARE', '', '-1', null, '102802', ''
  
 
+ GO
 
+ update css_question_master set perspective = 'Overall Experience' where question like 'How satisfied are you with your overall experience%'
+update css_question_master set perspective = 'Timeline Adherence' where question like 'How satisfied are you on the adherence to agreed%'
+update css_question_master set perspective = 'Quality of Delivery' where question like 'How satisfied are you on the quality of agreed project deliverables%'
+update css_question_master set perspective = 'Risk Management & Responsiveness' where question like 'How satisfied are you with the risks & issues managed%'
+update css_question_master set perspective = 'Competency' where question like 'How satisfied are you with the competency of the resources%'
+update css_question_master set perspective = 'Thought Leadership' where question like 'How satisfied are you with the innovations and thought%'
+update css_question_master set perspective = 'Timely Resource Fulfillment' where question like 'How satisfied are you with the onboarding of the resources%'
 
+ 
+update css_question_master set sequence = 1 where question like 'How satisfied are you with your overall experience%'
+update css_question_master set sequence = 2  where question like 'How satisfied are you on the adherence to agreed%'
+update css_question_master set sequence = 3 where question like 'How satisfied are you on the quality of agreed project deliverables%'
+update css_question_master set sequence = 5   where question like 'How satisfied are you with the risks & issues managed%'
+update css_question_master set sequence = 4   where question like 'How satisfied are you with the competency of the resources%'
+update css_question_master set sequence = 6   where question like 'How satisfied are you with the innovations and thought%'
+update css_question_master set sequence = 7   where question like 'How satisfied are you with the onboarding of the resources%'
 
+ 
+
+ 
+update css_question_master set isactive = 0 where  model_id in 
+(10,
+9,
+8)
+and QUESTION_CATEGORY ='nps'
+
+ 
+
+update css_question_master set question = 'How satisfied are you with your Overall Experience while working with Neurealm (Formerly GS Lab | GAVS)?' where question like 'How satisfied are you with your overall experience%'
+update css_question_master set question = 'How satisfied are you with the Risks & Issues managed by the project team and responsiveness to the concerns raised?' where question like 'How satisfied are you with the risks & Issues managed by the project team and responsiveness to the concerns raised?'
+update css_question_master set question = 'How satisfied are you on the Quality of agreed project deliverables/ services provided?' where question like 'How satisfied are you on the quality of agreed project deliverables/ services provided?'
+update css_question_master set question = 'How satisfied are you on the adherence to agreed Timelines/ SLA for the deliverables / services provided?' where question like 'How satisfied are you on the adherence to agreed Timelines/ SLA for the deliverables / services provided?'
+update css_question_master set question = 'How satisfied are you with the Competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?' where question like 'How satisfied are you with the competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?'
+
+update css_question_master set question = 'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm (Formerly GS Lab | GAVS)?' where question like 'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm (Formerly GS Lab | GAVS)?'
+update css_question_master set question = 'How satisfied are you with the Onboarding of the resources / talents as per the expected timeline?' where question like 'How satisfied are you with the competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?'
+ 
+ 
+
+alter table css_question_master add PERSPECTIVE varchar(250)
+alter table css_question_master add SEQUENCE int null
+update css_question_master set perspective = rating_param
+
+alter table css_question_replies add PERSPECTIVE varchar(250)
+
+ 
 
 
 
