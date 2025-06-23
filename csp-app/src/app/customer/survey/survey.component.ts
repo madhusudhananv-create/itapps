@@ -292,7 +292,7 @@ export class SurveyComponent implements OnInit {
 
     //130003742 — Auto fill rating based on Overall Experience Question
     if (this.questions_Criteria[index].ratinG_PARAM == "Overall Experience" && newRating == 5) {
-      if (confirm('Since you have rated 5 for overall experience, would you like to rate all other parameters as 5?')) {
+      if (confirm('Since you have rated 5 for Overall Experience, would you like to rate all other parameters as 5?')) {
         for (let i = 0; i < this.questions_Criteria.length; i++) {
 
           this.questions_Criteria[i].rating = newRating;
