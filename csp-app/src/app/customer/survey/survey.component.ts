@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input,ViewChild,TemplateRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { myUtility } from '../../Shared/myUtility';
 import { AppsService } from '../../Services/apps.service';
@@ -40,7 +40,8 @@ export class SurveyComponent implements OnInit {
   starColorW: StarRatingColor = StarRatingColor.warn;
   warnNps: boolean = true;
   companyName = environment.company_name;
-
+  dialogMessage: string = '';
+  dialogHeading: string = '';
   // ddRatings = [
   //   { 'key': '1 - Poor', 'value': 1 },
   //   { 'key': '2 - Fair', 'value': 2 },
@@ -66,6 +67,7 @@ export class SurveyComponent implements OnInit {
   @Input('guId') guId: any;
   @Input('showQualitativeFeedback') showQualitativeFeedback: boolean = false;
   @Input('showCSSFields') showCSSFields: boolean = false;
+  @ViewChild('confirmationDialog') confirmationDialogTemplate: TemplateRef<any>
   displayTemp: boolean = false;
   pName: any;
   empId: string;
@@ -75,6 +77,7 @@ export class SurveyComponent implements OnInit {
   templateName: any;
   templateHeading: any;
   maxDate: Date = new Date();
+
 
   constructor(private route: ActivatedRoute, private _util: myUtility, private _appservice: AppsService, public dialog: MatDialog) { }
 
@@ -192,7 +195,22 @@ export class SurveyComponent implements OnInit {
         return;
       }
     }
-    this.service_SaveSurveyAnswers(this.questions);
+    this.dialogHeading ='Confirm';
+    this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
+    
+    const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
+      width: '500px',
+      height: '180px',
+      data: ''
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 1) {
+        this.service_SaveSurveyAnswers(this.questions);
+      }
+    });
+
+    
   }
   gettry: number = 1
   service_GetSurveyQuestions(code: string) {
@@ -292,17 +310,26 @@ export class SurveyComponent implements OnInit {
 
     //130003742 — Auto fill rating based on Overall Experience Question
     if (this.questions_Criteria[index].ratinG_PARAM == "Overall Experience" && newRating == 5) {
-      if (confirm('Since you have rated 5 for Overall Experience, would you like to rate all other parameters as 5?')) {
-        for (let i = 0; i < this.questions_Criteria.length; i++) {
-
-          this.questions_Criteria[i].rating = newRating;
-
-        }
-      }
+      this.dialogHeading ='Quick Check';
+      this.dialogMessage = 'Since you have rated 5 for Overall Experience, would you like to rate all other parameters as 5?';
+      const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
+        width: '500px',
+        height: '180px',
+        data: ''
+      });
+  
+      dialogRef.afterClosed().subscribe(result => {
+        if (result === 1) {
+          for (let i = 0; i < this.questions_Criteria.length; i++) {
+            this.questions_Criteria[i].rating = newRating;
+          }
+        } 
+      });
     }
 
 
   }
+
 
   viewTemplate(element) {
     this.showTemplate = true;

@@ -185,3 +185,15 @@
     </tr>
   </table>
 </div>
+<ng-template  #confirmationDialog>
+  <h3 mat-dialog-title style="padding: 12px 1pc 0 12pc; margin: 0;">
+    {{dialogHeading}}</h3>
+    <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
+      {{ dialogMessage }}
+    </mat-dialog-content>
+  <mat-dialog-actions style="padding: 20px;">
+    <button mat-button [mat-dialog-close]="1" class="btn btn-primary" style="margin: 0 100px;">Yes</button>
+    <button mat-button [mat-dialog-close]="0" class="btn btn-warning" style="margin-left: 5%;">No</button>
+  </mat-dialog-actions>
+</ng-template>
+
