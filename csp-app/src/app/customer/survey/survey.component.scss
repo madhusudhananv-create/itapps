@@ -109,3 +109,12 @@ a:hover {
   background-color: #337ab7;
   border-color: #2e6da4;
 }
+
+.textarea-wrapper {
+  position:relative;
+}
+.remaning {
+position:absolute;
+bottom: 10px;
+right:10px;
+}

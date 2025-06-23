@@ -331,6 +331,11 @@ export class SurveyComponent implements OnInit {
   }
 
 
+  getRemaining(text){
+    return   text.length;
+
+  }
+
   viewTemplate(element) {
     this.showTemplate = true;
     this.templateName = element;
