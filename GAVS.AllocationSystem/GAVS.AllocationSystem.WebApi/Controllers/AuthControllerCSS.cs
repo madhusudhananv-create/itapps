@@ -735,13 +735,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string subject = string.Empty;
             string mailContent = string.Empty;
 
-            //SUBJECT
+            ////SUBJECT
+            //if (category.ToLower() == "pulse")
+            //    subject = "Half Yearly Pulse Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
+            //      ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
+            //else
+            //    subject = "Customer Satisfaction Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
+            //            ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
             if (category.ToLower() == "pulse")
-                subject = "Half Yearly Pulse Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
-                  ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
+                subject = "Customer Satisfaction Pulse Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
             else
-                subject = "Customer Satisfaction Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
-                        ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
+                subject = "Customer Satisfaction Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
+
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CUSTOMER", replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME);
@@ -760,6 +765,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var table = GetCSSTableData(replies);
             EmailContentValues.Add("TABLE", table);
+            EmailContentValues.Add("ACCOUNT_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM);
+            EmailContentValues.Add("PROJECT_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM);
 
             //var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", ""); ;
             //surveyURL += "/CustomerSuccessSurvey/" + surveyId;
