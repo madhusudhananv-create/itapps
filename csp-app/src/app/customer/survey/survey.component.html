@@ -60,7 +60,7 @@
         <th style="width:15%;font-weight:bold;font-size:13px;text-align:center;">Rating</th>
         <th style="width:50%;font-weight:bold;font-size:13px;text-align:center;">Remarks <br>
           <span style="font-size: x-small;font-weight:normal"><span style="color: red;">*</span>
-           Remarks are required if the rating is less than or equal to 4 stars</span></th>
+           Remarks are required if the rating is less than 4 stars</span></th>
       </tr>
     </thead>
     <tbody class="tahoma-font" *ngIf="questions_Criteria">
@@ -89,7 +89,7 @@
           <div class="textarea-wrapper">
           <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
             style="width:100%;height:95px;padding-top:15px" [disabled]="IsCompleted" maxlength="500"
-            [class.highlight]="criteria.rating <= 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
+            [class.highlight]="criteria.rating < 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
         </textarea>
         <span class="remaning">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/500</span>
       </div>
