@@ -1105,16 +1105,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             switch (bu.ToUpper())
             {
-                case "INDIAUK":
+                case "INDIA & UK":
                     result = helper.GetDBConfig("CSS_CC_LIST_INDIAUK", null);
                     break;
-                case "NEWGROWTH":
+                case "NEW GROWTH":
                     result = helper.GetDBConfig("CSS_CC_LIST_NEWGROWTH", null);
                     break;
                 case "TECH":
                     result = helper.GetDBConfig("CSS_CC_LIST_TECH", null);
                     break;
-                case "HEALTHCARE":
+                case "HEALTH CARE":
                     result = helper.GetDBConfig("CSS_CC_LIST_HEALTHCARE", null);
                     break;
 
