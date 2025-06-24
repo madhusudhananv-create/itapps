@@ -67,16 +67,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var firstChecklist = existing.First();
             var weightageApplicableChecklists = existing.Where(x => x.IS_WEIGHTAGE_APPLICABLE).ToList();
             var maturityApplicableChecklists = existing.Where(x => x.MATURITY_LEVEL && !x.IS_WEIGHTAGE_APPLICABLE).ToList();
-
-            if (weightageApplicableChecklists.Count > 0 && maturityApplicableChecklists.Count > 0)
+            var maturityWeightageNA = existing.Where(x => !x.MATURITY_LEVEL && !x.IS_WEIGHTAGE_APPLICABLE).ToList();
+            var weightageChecklistNames = string.Join(", ", weightageApplicableChecklists.Select(x => x.TITLE));
+            var maturityChecklistNames = string.Join(", ", maturityApplicableChecklists.Select(x => x.TITLE));
+            var maturityWeightageNANames = string.Join(", ", maturityWeightageNA.Select(x => x.TITLE));
+            var baseMessage = "Unable to Merge. Checklists with different applicability types cannot be merged. ";
+            var endMessage = " Please select checklists with the same applicability type.";
+            if (weightageApplicableChecklists.Count > 0 && maturityApplicableChecklists.Count > 0  )
             {
-                var weightageChecklistNames = string.Join(", ", weightageApplicableChecklists.Select(x => x.TITLE));
-                var maturityChecklistNames = string.Join(", ", maturityApplicableChecklists.Select(x => x.TITLE));
-
-                return BadRequest($"Unable to Merge. Checklists with different applicability types cannot be merged. " +
+                return BadRequest(baseMessage +
                                  $"Weightage applicable checklists: [{weightageChecklistNames}]. " +
                                  $"Maturity applicable checklists: [{maturityChecklistNames}]. " +
-                                 $"Please select checklists with the same applicability type.");
+                                 endMessage);
+            }
+            else if (weightageApplicableChecklists.Count > 0 && maturityWeightageNA.Count > 0)
+            {
+
+                return BadRequest(baseMessage +
+                                 $"Weightage applicable checklists: [{weightageChecklistNames}]. " +
+                                 $"Both the Maturity and Weightage Not Applicable checklists: [{maturityWeightageNANames}]. " +
+                                 endMessage);
+            }
+            else if (maturityWeightageNA.Count > 0)
+            {
+                return BadRequest(baseMessage +
+                                $"Both the Maturity and Weightage Not Applicable checklists: [{maturityWeightageNANames}]. " +
+                                  endMessage);
             }
 
             //check weightage scores are equal for all checklist. else throw error
