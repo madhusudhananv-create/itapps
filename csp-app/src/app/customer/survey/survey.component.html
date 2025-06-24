@@ -1,4 +1,4 @@
-<div *ngIf="questions" style="background-color:white;padding:20px">
+<div *ngIf="questions" class="tahoma-font" style="background-color:white;padding:20px">
   <p style="font-size:20px;" *ngIf="!displayTemp">
     <img src="assets/images/GAVS_Logo.png" id="Gavs-logo">&nbsp;&nbsp;&nbsp;Customer Success Survey
   </p>
@@ -31,14 +31,14 @@
   </table>
 
   <div *ngIf="showCSSFields">
-    <mat-form-field style="width:20%">
-      <input matInput name="meetingDate" [max]="maxDate" [(ngModel)]="meetingDate" [matDatepicker]="picker1"
+    <mat-form-field class="tahoma-font" style="width:20%">
+      <input class="tahoma-font" matInput name="meetingDate" [max]="maxDate" [(ngModel)]="meetingDate" [matDatepicker]="picker1"
         [disabled]="IsCompleted" placeholder="Date of Meeting" required>
       <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
       <mat-datepicker #picker1></mat-datepicker>
     </mat-form-field>
     &nbsp; &nbsp; &nbsp; &nbsp;
-    <mat-checkbox [(ngModel)]="isCSMNotified" [disabled]="IsCompleted" name="checkCSMNotified"
+    <mat-checkbox class="tahoma-font" [(ngModel)]="isCSMNotified" [disabled]="IsCompleted" name="checkCSMNotified"
       (change)="onCheckboxChange($event)">
       Customer Success Manager / Delivery Partner is aware of the client feedback
     </mat-checkbox>
@@ -56,14 +56,14 @@
   <table class="table table-bordered" style="width:auto;background-color:white;">
     <thead>
       <tr>
-        <th style="width:35%;font-weight:bold;font-size:16px;text-align:center;background-color: #e3f9f9;">Survey Question </th>
-        <th style="width:15%;font-weight:bold;font-size:16px;text-align:center;">Rating</th>
-        <th style="width:50%;font-weight:bold;font-size:16px;text-align:center;">Remarks <br><span
-            style="font-size: x-small;"><span style="color: red;">*</span> Remarks are required if the rating is less
-            than or equal to 4 stars</span></th>
+        <th style="width:35%;font-weight:bold;font-size:13px;text-align:center;background-color: #e3f9f9;">Survey Question </th>
+        <th style="width:15%;font-weight:bold;font-size:13px;text-align:center;">Rating</th>
+        <th style="width:50%;font-weight:bold;font-size:13px;text-align:center;">Remarks <br>
+          <span style="font-size: x-small;font-weight:normal"><span style="color: red;">*</span>
+           Remarks are required if the rating is less than or equal to 4 stars</span></th>
       </tr>
     </thead>
-    <tbody *ngIf="questions_Criteria">
+    <tbody class="tahoma-font" *ngIf="questions_Criteria">
       <tr *ngFor="let criteria of questions_Criteria;let i = index">
        
          
@@ -98,7 +98,7 @@
     </tbody>
 
     <tr *ngIf="questions_NPS">
-      <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 16px;" colspan="3"><span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
+      <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;" colspan="3"><span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
         {{questions_NPS.question}}</td>
     </tr>
     <tr *ngIf="questions_NPS">
@@ -141,7 +141,7 @@
       <td colspan="3" style="border-top:0px;padding:0px;">
         <div class="textarea-wrapper">
         <span *ngIf="warnNps && !IsCompleted" style ="color: red;font-size:small">Please enter improvement areas in text for the project team to act on.</span>
-        <textarea name="txtNPSDesc" style="width:100%;height:75px" [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)"
+        <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px" [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)"
           [disabled]="IsCompleted" maxlength="500"></textarea>
           <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
         </div>
@@ -194,9 +194,9 @@
     </tr>
   </table>
 </div>
-<ng-template  #confirmationDialog>
-  <h3 mat-dialog-title style="padding: 12px 1pc 0 12pc; margin: 0;">
-    {{dialogHeading}}</h3>
+<ng-template class="tahoma-font" #confirmationDialog>
+  <h2 mat-dialog-title style="padding: 12px 1pc 0 12pc; margin: 0;">
+    {{dialogHeading}}</h2>
     <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
       {{ dialogMessage }}
     </mat-dialog-content>
