@@ -303,7 +303,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else
             {
-                projectText = "project " + cust.PROJ_NM;
+                projectText =   cust.PROJ_NM;
             }
 
             string csmMails = helper.GetCSMMailsFromProject(project);
