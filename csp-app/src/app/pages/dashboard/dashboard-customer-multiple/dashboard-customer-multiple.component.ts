@@ -24,6 +24,7 @@ import { DomainConfigService } from '../../../Services/app.domain.config';
 export class DashboardCustomerMultipleComponent implements OnInit {
   progress: boolean = false;
   dashboardDetails: DashboardDetailsModel[] = [];
+  dashboardDetailsCustomerLevel: DashboardDetailsModel[] = [];
   private sub: any;
   mobileQuery: MediaQueryList;
   webapiuri: String = "";
@@ -57,13 +58,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   ngOnInit() {
     this.empid = localStorage.getItem('empid');
     this.service_LoadCustomerByEmpId();
-    this._appservice.CheckProjectAllocationExpiry().subscribe(e => {
-
-      if (e != "") {
-        alert("The following projects (" + e + ") or allocation to these projects are about to end within the next ten days.  In case the project/allocation end date is not extended in the PSA system, all those project team members will not be able to access (including view) the projects in the CSM Platform. Please review and extend the allocation end date appropriately in the PSA system. In case these projects are about to end then ignore this message. ");
-
-      }
-    });
+    
     //this._appservice.RefreshDashboardDetailsAuto().subscribe(a => { console.log("Dashboard Update") }, error => { });
 
 
@@ -80,7 +75,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   }
 
   //Timer --------------------------
-  timeLeft: number = 300;
+  timeLeft: number = 600;
   interval;
   startTimer() {
     this.interval = setInterval(() => {
@@ -88,7 +83,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
         this.timeLeft--;
       }
       else {
-        this.timeLeft = 300;
+        this.timeLeft = 600;
         this.service_GetDashboardDetails();
       }
     }, 1000)
@@ -103,20 +98,20 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   }
   getTitleByCustomer(title) {
     let content: string = '';
-    if (this.dashboardDetails != undefined) {
-      let details: DashboardDetailsModel[] = [];
-      details = this.dashboardDetails.filter(t => t.title == title && t.proJ_ID == null && t.portfoliO_ID == null);
-      if (details.length > 0) {
-        content = details[0].content;
-      }
-    }
+    // if (this.dashboardDetails != undefined) {
+    //   let details: DashboardDetailsModel[] = [];
+    //   details = this.dashboardDetails.filter(t => t.title == title && t.proJ_ID == null && t.portfoliO_ID == null);
+    //   if (details.length > 0) {
+    //     content = details[0].content;
+    //   }
+    // }
     return content;
   }
   getColorByCustomer(title) {
     let content: string = '';
-    if (this.dashboardDetails != undefined) {
+    if (this.dashboardDetailsCustomerLevel != undefined && this.dashboardDetailsCustomerLevel != null && this.dashboardDetailsCustomerLevel.length >0) {
       let details: DashboardDetailsModel[] = [];
-      details = this.dashboardDetails.filter(t => t.title == title && t.proJ_ID == null && t.portfoliO_ID == null);
+      details = this.dashboardDetailsCustomerLevel.filter(t => t.title == title && t.proJ_ID == null && t.portfoliO_ID == null);
       if (details.length > 0) {
         content = details[0].color;
       }
@@ -125,9 +120,10 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   }
   getTitleByCustomerId(title, customerId) {
     let content: string = '';
-    if (this.dashboardDetails != undefined) {
+    if (this.dashboardDetailsCustomerLevel != undefined && this.dashboardDetailsCustomerLevel != null && this.dashboardDetailsCustomerLevel.length >0) {
       let details: DashboardDetailsModel[] = [];
-      details = this.dashboardDetails.filter(t => t.title == title && t.cusT_ID == customerId && t.proJ_ID == null && t.portfoliO_ID == null);
+      var firstLevel = this.dashboardDetailsCustomerLevel.filter(t =>   t.cusT_ID == customerId);
+      details = firstLevel.filter(t => t.title == title  );
       if (details.length > 0) {
         content = details[0].content;
       }
@@ -136,9 +132,9 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   }
   getColorByCustomerId(title, customerId) {
     let content: string = '';
-    if (this.dashboardDetails != undefined) {
+    if (this.dashboardDetailsCustomerLevel != undefined && this.dashboardDetailsCustomerLevel != null && this.dashboardDetailsCustomerLevel.length >0) {
       let details: DashboardDetailsModel[] = [];
-      details = this.dashboardDetails.filter(t => t.title == title && t.cusT_ID == customerId && t.proJ_ID == null && t.portfoliO_ID == null);
+      details = this.dashboardDetailsCustomerLevel.filter(t => t.title == title && t.cusT_ID == customerId && t.proJ_ID == null && t.portfoliO_ID == null);
       if (details.length > 0) {
         content = details[0].color;
       }
@@ -147,7 +143,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
   }
   getTitleByPortfolio(title, portfolio) {
     let content: string = '-';
-    if (this.dashboardDetails != undefined) {
+    if (this.dashboardDetails != undefined && this.dashboardDetails != null && this.dashboardDetails.length >0) {
       let details: DashboardDetailsModel[] = [];
       details = this.dashboardDetails.filter(t => t.title == title && t.portfoliO_ID == portfolio);
       if (details.length > 0) {
@@ -376,6 +372,14 @@ export class DashboardCustomerMultipleComponent implements OnInit {
     let customerIds: string[] = this.customerList.map(x => x.cusT_ID);
     this._appservice.GetDashboardDetailsByCustomerIds(customerIds).subscribe(data => {
       this.dashboardDetails = data;
+      this.dashboardDetailsCustomerLevel = data.filter(x=>x.proJ_ID == null);
+      this._appservice.CheckProjectAllocationExpiry().subscribe(e => {
+
+        if (e != "") {
+          alert("The following projects (" + e + ") or allocation to these projects are about to end within the next ten days.  In case the project/allocation end date is not extended in the PSA system, all those project team members will not be able to access (including view) the projects in the CSM Platform. Please review and extend the allocation end date appropriately in the PSA system. In case these projects are about to end then ignore this message. ");
+  
+        }
+      });
     }, error => { this._util.serviceError(error); });
   }
   service_LoadCustomerByEmpId() {
