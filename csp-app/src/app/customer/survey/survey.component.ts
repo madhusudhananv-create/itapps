@@ -1,4 +1,4 @@
-import { Component, OnInit, Input,ViewChild,TemplateRef } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, TemplateRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { myUtility } from '../../Shared/myUtility';
 import { AppsService } from '../../Services/apps.service';
@@ -42,6 +42,7 @@ export class SurveyComponent implements OnInit {
   companyName = environment.company_name;
   dialogMessage: string = '';
   dialogHeading: string = '';
+  dialogSuccess: boolean = false;
   // ddRatings = [
   //   { 'key': '1 - Poor', 'value': 1 },
   //   { 'key': '2 - Fair', 'value': 2 },
@@ -195,13 +196,16 @@ export class SurveyComponent implements OnInit {
         return;
       }
     }
-    this.dialogHeading ='Confirm';
+
+    this.dialogHeading = 'Confirm';
     this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
-    
     const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
       width: '500px',
       height: '180px',
-      data: ''
+      data: '',
+      position: {
+        top: '20px'
+      },
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -210,7 +214,7 @@ export class SurveyComponent implements OnInit {
       }
     });
 
-    
+
   }
   gettry: number = 1
   service_GetSurveyQuestions(code: string) {
@@ -286,7 +290,20 @@ export class SurveyComponent implements OnInit {
       this.meetingDate = null;
     }
     this._appservice.SaveCSSSurveyAnswers(replies, this.empId, this.meetingDate, this.isCSMNotified).subscribe(data => {
-      alert("Thanks for your time!! Customer Satisfaction Survey Submitted successfully. A detailed report would be sent to your mail shortly.");
+      this.dialogSuccess = true;
+      this.dialogHeading = '';
+      this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey Submitted successfully. A detailed report would be sent to your mail shortly.';
+
+      const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
+        width: '500px',
+        height: '180px',
+        data: '',
+        position: {
+          top: '20px'
+        },
+      });
+      dialogRef.afterClosed().subscribe(result => {
+      });
       this.IsCompleted = true;
       if (this.questions.csS_BATCH_CUSTOMERS_EXTENDED != undefined && this.questions.csS_BATCH_CUSTOMERS_EXTENDED != null)
         this.questions.csS_BATCH_CUSTOMERS_EXTENDED.status = "COMPLETED";
@@ -310,20 +327,23 @@ export class SurveyComponent implements OnInit {
 
     //130003742 — Auto fill rating based on Overall Experience Question
     if (this.questions_Criteria[index].ratinG_PARAM == "Overall Experience" && newRating == 5) {
-      this.dialogHeading ='Quick Check';
+      this.dialogHeading = 'Quick Check';
       this.dialogMessage = 'Since you have rated 5 for Overall Experience, would you like to rate all other parameters as 5?';
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
         width: '500px',
         height: '180px',
-        data: ''
+        data: '',
+        position: {
+          top: '20px'
+        },
       });
-  
+
       dialogRef.afterClosed().subscribe(result => {
         if (result === 1) {
           for (let i = 0; i < this.questions_Criteria.length; i++) {
             this.questions_Criteria[i].rating = newRating;
           }
-        } 
+        }
       });
     }
 
@@ -331,8 +351,8 @@ export class SurveyComponent implements OnInit {
   }
 
 
-  getRemaining(text){
-    return   text.length;
+  getRemaining(text) {
+    return text.length;
 
   }
 

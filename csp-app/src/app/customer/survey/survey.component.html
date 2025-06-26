@@ -32,8 +32,8 @@
 
   <div *ngIf="showCSSFields">
     <mat-form-field class="tahoma-font" style="width:20%">
-      <input class="tahoma-font" matInput name="meetingDate" [max]="maxDate" [(ngModel)]="meetingDate" [matDatepicker]="picker1"
-        [disabled]="IsCompleted" placeholder="Date of Meeting" required>
+      <input class="tahoma-font" matInput name="meetingDate" [max]="maxDate" [(ngModel)]="meetingDate"
+        [matDatepicker]="picker1" [disabled]="IsCompleted" placeholder="Date of Meeting" required>
       <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
       <mat-datepicker #picker1></mat-datepicker>
     </mat-form-field>
@@ -56,49 +56,52 @@
   <table class="table table-bordered" style="width:auto;background-color:white;">
     <thead>
       <tr>
-        <th style="width:35%;font-weight:bold;font-size:13px;text-align:center;background-color: #e3f9f9;">Survey Question </th>
+        <th style="width:35%;font-weight:bold;font-size:13px;text-align:center;background-color: #e3f9f9;">Survey
+          Question </th>
         <th style="width:15%;font-weight:bold;font-size:13px;text-align:center;">Rating</th>
         <th style="width:50%;font-weight:bold;font-size:13px;text-align:center;">Remarks <br>
           <span style="font-size: x-small;font-weight:normal"><span style="color: red;">*</span>
-           Remarks are required if the rating is less than 4 stars</span></th>
+            Remarks are required if the rating is less than 4 stars</span>
+        </th>
       </tr>
     </thead>
     <tbody class="tahoma-font" *ngIf="questions_Criteria">
       <tr *ngFor="let criteria of questions_Criteria;let i = index">
-       
-         
-          <td class="criteria">
-          
-           
-         
+
+
+        <td class="criteria">
+
+
+
           <span style="color:red">*</span>
           {{criteria.question}}
           <br />
           {{getDetail( criteria.questioN_DETAIL)}}
-         
+
         </td>
         <td class="starRating" nowrap>
           <b>
             {{criteria.perspective}}
           </b>
-            <br />
-          <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE" [rating]="criteria.rating" [starCount]="starCount"
-            [color]="starColor"   (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
+          <br />
+          <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE" [rating]="criteria.rating"
+            [starCount]="starCount" [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
         </td>
         <td style="padding:0px;">
           <div class="textarea-wrapper">
-          <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
-            style="width:100%;height:95px;padding-top:15px" [disabled]="IsCompleted" maxlength="500"
-            [class.highlight]="criteria.rating < 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
+            <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
+              style="width:100%;height:95px;padding-top:15px" [disabled]="IsCompleted" maxlength="500"
+              [class.highlight]="criteria.rating < 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
         </textarea>
-        <span class="remaning">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/500</span>
-      </div>
+            <span class="remaning">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/500</span>
+          </div>
         </td>
       </tr>
     </tbody>
 
     <tr *ngIf="questions_NPS">
-      <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;" colspan="3"><span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
+      <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;" colspan="3">
+        <span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
         {{questions_NPS.question}}</td>
     </tr>
     <tr *ngIf="questions_NPS">
@@ -140,9 +143,11 @@
     <tr *ngIf="questions_NPS && bShowNpsComments">
       <td colspan="3" style="border-top:0px;padding:0px;">
         <div class="textarea-wrapper">
-        <span *ngIf="warnNps && !IsCompleted" style ="color: red;font-size:small">Please enter improvement areas in text for the project team to act on.</span>
-        <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px" [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)"
-          [disabled]="IsCompleted" maxlength="500"></textarea>
+          <span *ngIf="warnNps && !IsCompleted" style="color: red;font-size:small">Please enter improvement areas in
+            text for the project team to act on.</span>
+          <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
+            [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
+            maxlength="500"></textarea>
           <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
         </div>
       </td>
@@ -150,20 +155,22 @@
     <br />
 
     <tr *ngIf="questions_Others[0]">
-      <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[0].question}}</td>
+      <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[0].question}}
+      </td>
     </tr>
     <tr *ngIf="questions_Others[0]">
       <td colspan="3" style="padding:0px;">
-        <div class="textarea-wrapper"> 
-        <textarea name="txtOthersDesc0" [(ngModel)]="questions_Others[0].ratinG_DESCRIPTION"
-          style="width:100%;height:75px" [disabled]="IsCompleted" maxlength="500"></textarea>
+        <div class="textarea-wrapper">
+          <textarea name="txtOthersDesc0" [(ngModel)]="questions_Others[0].ratinG_DESCRIPTION"
+            style="width:100%;height:75px" [disabled]="IsCompleted" maxlength="500"></textarea>
           <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/500</span>
         </div>
       </td>
     </tr>
 
     <tr *ngIf="questions_Others[1]">
-      <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[1].question}}</td>
+      <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[1].question}}
+      </td>
     </tr>
     <tr *ngIf="questions_Others[1]">
       <td colspan="3" style="padding:0px;">
@@ -194,15 +201,17 @@
     </tr>
   </table>
 </div>
-<ng-template class="tahoma-font" #confirmationDialog>
-  <h2 mat-dialog-title style="padding: 12px 1pc 0 12pc; margin: 0;">
-    {{dialogHeading}}</h2>
+  <ng-template class="tahoma-font" #confirmationDialog>
+    <h2 mat-dialog-title style="padding: 12px 1pc 0 12pc; margin: 0;">
+      {{dialogHeading}}</h2>
     <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
       {{ dialogMessage }}
     </mat-dialog-content>
-  <mat-dialog-actions style="padding: 20px;">
-    <button mat-button [mat-dialog-close]="1" class="btn btn-primary" style="margin: 0 100px;">Yes</button>
-    <button mat-button [mat-dialog-close]="0" class="btn btn-warning" style="margin-left: 5%;">No</button>
-  </mat-dialog-actions>
-</ng-template>
-
+    <mat-dialog-actions *ngIf="!dialogSuccess" style="padding: 20px;">
+      <button mat-button [mat-dialog-close]="1" class="btn btn-primary" style="margin: 0 100px;">Yes</button>
+      <button mat-button [mat-dialog-close]="0" class="btn btn-warning" style="margin-left: 5%;">No</button>
+    </mat-dialog-actions>
+    <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
+      <button mat-button [mat-dialog-close]="1" class="btn btn-primary" style="margin: 0 160px;">Ok</button>
+    </mat-dialog-actions>
+  </ng-template>
