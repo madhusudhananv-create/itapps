@@ -1,4 +1,4 @@
-﻿IF EXISTS (SELECT 1 FROM CSS_QUESTION_MASTER WHERE QUESTION like '%GAVS%')
+﻿IF EXISTS (SELECT 1 FROM CSS_QUESTION_MASTER WHERE QUESTION like '%GAVS%') AND not exists(SELECT 1 FROM CSS_QUESTION_MASTER WHERE QUESTION like '%Neurealm%')
 BEGIN
     UPDATE CSS_QUESTION_MASTER set QUESTION = REPLACE(question,'GS Lab | GAVS','Neurealm (Formerly GS Lab | GAVS)') from CSS_QUESTION_MASTER 
 where QUESTION like '%GAVS%'
@@ -14,16 +14,16 @@ GO
 IF EXISTS (SELECT 1 FROM CSS_QUESTION_MASTER)
 BEGIN
 
-UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with your Overall experience while working with Neurealm (Formerly GS Lab | GAVS)?' where id in(31,39,44,48) 
+UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with your Overall Experience while working with Neurealm (Formerly GS Lab | GAVS)?' where id in(31,39,44,48) 
 
 
-UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with the risks & Issues managed by the project team and responsiveness to the concerns raised?' where id in(29,37) 
+UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with the Risks & Issues managed by the project team and responsiveness to the concerns raised?' where id in(29,37) 
 
 
-UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with the competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?' where id in(28,36,42)
+UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with the Competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?' where id in(28,36,42)
 
 
-UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with the onboarding of the resources / talents as per the expected timeline?' where id=43
+UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with the Onboarding of the Resources / Talents as per the expected timeline?' where id=43
 
 
 UPDATE CSS_QUESTION_MASTER SET QUESTION = 'How satisfied are you with Neurealm (Formerly GS Lab | GAVS) in terms of the ability to understand and deliver to your project/ business needs?' where id=50
@@ -145,19 +145,25 @@ update CSS_BATCHES set category ='Pulse' where Frequency = 'Halfyearly'
 END
 GO
 
- exec usp_insertConfigData 'CSS_CC_LIST_INDIAUK', '', '-1', null, '102802', ''
- exec usp_insertConfigData 'CSS_CC_LIST_NEWGROWTH', '', '-1', null, '102802', ''
- exec usp_insertConfigData 'CSS_CC_LIST_TECH', '', '-1', null, '102802', ''
- exec usp_insertConfigData 'CSS_CC_LIST_HEALTHCARE', '', '-1', null, '102802', ''
+ exec usp_insertConfigData 'CSS_CC_LIST_INDIAUK', 'mandeep.singh@neurealm.com,rajaneesh.k@gavstech.com', '-1', null, '102802', ''
+ exec usp_insertConfigData 'CSS_CC_LIST_NEWGROWTH', 'sriram.radhakrishnan@neurealm.com,rajaneesh.k@gavstech.com', '-1', null, '102802', ''
+ exec usp_insertConfigData 'CSS_CC_LIST_TECH', 'niraj.nadkar@neurealm.com,rajaneesh.k@gavstech.com', '-1', null, '102802', ''
+ exec usp_insertConfigData 'CSS_CC_LIST_HEALTHCARE', 'srinivasan.m@neurealm.com,rajaneesh.k@gavstech.com', '-1', null, '102802', ''
  
 
  GO
+ alter table css_question_master add PERSPECTIVE varchar(250)
+alter table css_question_master add SEQUENCE int null
+update css_question_master set perspective = rating_param
+
+alter table css_question_replies add PERSPECTIVE varchar(250)
+
 
  update css_question_master set perspective = 'Overall Experience' where question like 'How satisfied are you with your overall experience%'
 update css_question_master set perspective = 'Timeline Adherence' where question like 'How satisfied are you on the adherence to agreed%'
 update css_question_master set perspective = 'Quality of Delivery' where question like 'How satisfied are you on the quality of agreed project deliverables%'
 update css_question_master set perspective = 'Risk Management & Responsiveness' where question like 'How satisfied are you with the risks & issues managed%'
-update css_question_master set perspective = 'Competency' where question like 'How satisfied are you with the competency of the resources%'
+update css_question_master set perspective = 'Resource Competency' where question like 'How satisfied are you with the competency of the resources%'
 update css_question_master set perspective = 'Thought Leadership' where question like 'How satisfied are you with the innovations and thought%'
 update css_question_master set perspective = 'Timely Resource Fulfillment' where question like 'How satisfied are you with the onboarding of the resources%'
 
@@ -192,11 +198,6 @@ update css_question_master set question = 'How satisfied are you with the Onboar
  
  
 
-alter table css_question_master add PERSPECTIVE varchar(250)
-alter table css_question_master add SEQUENCE int null
-update css_question_master set perspective = rating_param
-
-alter table css_question_replies add PERSPECTIVE varchar(250)
 
  
 
