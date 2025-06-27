@@ -11,6 +11,7 @@ import { StarRatingColor } from '../star-rating/star-rating.component';
 import { E } from '@angular/core/src/render3';
 import { ViewTemplateComponent } from '../../../app/controls/view-template/view-template.component';
 import { environment } from '../../../environments/environment';
+import { NoopScrollStrategy } from '@angular/cdk/overlay';
 
 @Component({
   selector: 'app-survey',
@@ -169,7 +170,9 @@ export class SurveyComponent implements OnInit {
           Field: q.question,
           Rating: q.rating
         }
-        this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig);
+        dialogConfig.hasBackdrop = true;
+        dialogConfig.scrollStrategy = new NoopScrollStrategy();
+        this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig)
         return;
       }
       else if (q.rating <= 3 && q.rating > 0 && q.ratinG_DESCRIPTION != "") {
@@ -196,16 +199,14 @@ export class SurveyComponent implements OnInit {
         return;
       }
     }
-
     this.dialogHeading = 'Confirm';
     this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
     const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
       width: '500px',
       height: '180px',
       data: '',
-      position: {
-        top: '20px'
-      },
+      hasBackdrop: true,
+      scrollStrategy: new NoopScrollStrategy(),
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -297,10 +298,7 @@ export class SurveyComponent implements OnInit {
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
         width: '500px',
         height: '180px',
-        data: '',
-        position: {
-          top: '20px'
-        },
+        data: ''
       });
       dialogRef.afterClosed().subscribe(result => {
       });
@@ -332,10 +330,7 @@ export class SurveyComponent implements OnInit {
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
         width: '500px',
         height: '180px',
-        data: '',
-        position: {
-          top: '20px'
-        },
+        data: ''
       });
 
       dialogRef.afterClosed().subscribe(result => {

@@ -208,10 +208,10 @@
       {{ dialogMessage }}
     </mat-dialog-content>
     <mat-dialog-actions *ngIf="!dialogSuccess" style="padding: 20px;">
-      <button mat-button [mat-dialog-close]="1" class="btn btn-primary" style="margin: 0 100px;">Yes</button>
-      <button mat-button [mat-dialog-close]="0" class="btn btn-warning" style="margin-left: 5%;">No</button>
+      <button  class="btn btn-primary-confirm" mat-button [mat-dialog-close]="1"  style="margin: 0 100px;">Yes</button>
+      <button  class="btn btn-warning-confirm" mat-button [mat-dialog-close]="0"  style="margin-left: 5%;">No</button>
     </mat-dialog-actions>
     <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
-      <button mat-button [mat-dialog-close]="1" class="btn btn-primary" style="margin: 0 160px;">Ok</button>
+      <button  class="btn btn-primary" mat-button [mat-dialog-close]="1"  style="margin: 0 160px;">Ok</button>
     </mat-dialog-actions>
   </ng-template>

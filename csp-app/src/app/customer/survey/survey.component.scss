@@ -1,124 +1,143 @@
-.pillStart{
-    color: #fff;
-    padding: 7px 30px;
-    background-color: #69afff;
-    text-decoration: none;
-    font-size: 13px;
-    line-height: 3;
-    text-align: center;
-    font-weight: 400;
-    border-radius: 10px 0 0 10px;
-    border: 1px solid white;
-    cursor: pointer !important;
+.pillStart {
+  color: #fff;
+  padding: 7px 30px;
+  background-color: #69afff;
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 3;
+  text-align: center;
+  font-weight: 400;
+  border-radius: 10px 0 0 10px;
+  border: 1px solid white;
+  cursor: pointer !important;
 }
-.tblrating th,.tblrating td
-{
-     border: 1px solid rgb(234, 233, 233);
+
+.tblrating th,
+.tblrating td {
+  border: 1px solid rgb(234, 233, 233);
 }
 
 /* width */
 ::-webkit-scrollbar {
-    width: 10px;
-  }
-  
-  /* Track */
-  ::-webkit-scrollbar-track {
-    background: #f1f1f1; 
-  }
-   
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: #cac9c9; 
-  }
-  
-  /* Handle on hover */
-  ::-webkit-scrollbar-thumb:hover {
-    background: #b3b2b2; 
-  }.wrapper1, .wrapper2{width: 1300px; 
-    overflow-x: scroll; overflow-y:hidden;}
-    .wrapper1{height: 20px; } 
-    .div1 {width:1300px; height: 20px; }
-    .div2 {width:1300px;  
-    overflow: auto;}
-    
-.tblrating{
-    width: 100%;
+  width: 10px;
 }
-.pill{
-    color: #fff;
-    padding: 7px 30px;
-    background-color: #69afff;
-    text-decoration: none;
-    font-size: 13px;
-    line-height: 3;
-    text-align: center;
-    font-weight: 400;
-    border: 1px solid white;
-    cursor: pointer !important;
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
-.pillEnd{
-    color: #fff;
-    padding: 7px 30px;
-    background-color: #69afff;
-    text-decoration: none;
-    font-size: 13px;
-    line-height: 3;
-    text-align: center;
-    font-weight: 400;
-    border-radius: 0 10px 10px 0;
-    border: 1px solid white;
-    cursor: pointer !important;
-}#Gavs-logo
-{
-   // height: 25px;
-    width: 230px;
-    //margin-top: 11px;
-    // margin-bottom: 10px;
-    //margin-left: 15px;
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #cac9c9;
 }
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #b3b2b2;
+}
+
+.wrapper1,
+.wrapper2 {
+  width: 1300px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+}
+
+.wrapper1 {
+  height: 20px;
+}
+
+.div1 {
+  width: 1300px;
+  height: 20px;
+}
+
+.div2 {
+  width: 1300px;
+  overflow: auto;
+}
+
+.tblrating {
+  width: 100%;
+}
+
+.pill {
+  color: #fff;
+  padding: 7px 30px;
+  background-color: #69afff;
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 3;
+  text-align: center;
+  font-weight: 400;
+  border: 1px solid white;
+  cursor: pointer !important;
+}
+
+.pillEnd {
+  color: #fff;
+  padding: 7px 30px;
+  background-color: #69afff;
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 3;
+  text-align: center;
+  font-weight: 400;
+  border-radius: 0 10px 10px 0;
+  border: 1px solid white;
+  cursor: pointer !important;
+}
+
+#Gavs-logo {
+  // height: 25px;
+  width: 230px;
+  //margin-top: 11px;
+  // margin-bottom: 10px;
+  //margin-left: 15px;
+}
+
 a:hover {
-    background-color: #0073f7;
-  }
+  background-color: #0073f7;
+}
 
-  .criteria{
-    background-color: #e3f9f9;
-    padding: 10px 10px 10px 10px;
-    font-size:13px;
-  }
-  .red{
-      color:red;
-      font-size:13px;
-  }
+.criteria {
+  background-color: #e3f9f9;
+  padding: 10px 10px 10px 10px;
+  font-size: 13px;
+}
 
-  .starRating{
-    padding-top: 10px;
-    text-align: center
-  }
-  
+.red {
+  color: red;
+  font-size: 13px;
+}
+
+.starRating {
+  padding-top: 10px;
+  text-align: center
+}
+
 .highlight {
 
   border: 1px solid red;
 }
-.btn-warning {
-  color: #fff;
-  background-color: #f0ad4e;
-  border-color: #eea236;
+
+.textarea-wrapper {
+  position: relative;
+}
+
+.remaning {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+.tahoma-font {
+  font-family: Tahoma;
+  font-size: 13px;
 }
 .btn-primary {
   color: #fff;
   background-color: #337ab7;
   border-color: #2e6da4;
-}
-
-.textarea-wrapper {
-  position:relative;
-}
-.remaning {
-position:absolute;
-bottom: 10px;
-right:10px;
-}
-.tahoma-font {
-  font-family: Tahoma;
-  font-size: 13px;
 }
