@@ -42,7 +42,7 @@ export class ActionItemsPageComponent implements OnInit {
   EditActionitem: ActionitemModelNew = new ActionitemModelNew;
   dataSource = new MatTableDataSource(this.result);
   @ViewChild('TABLE') table: ElementRef;
-  displayedColumns = ['index', 'portfoliO_NAME', 'proJ_NM', 'description', 'owner', 'targeT_DATE', 'identifieD_DATE', 'status', 'priority', 'source', 'completioN_DATE','info', 'edit', 'delete'];
+  displayedColumns = ['index', 'portfoliO_NAME', 'proJ_NM', 'description', 'owner', 'targeT_DATE', 'identifieD_DATE', 'status', 'priority', 'source', 'completioN_DATE', 'info', 'edit', 'delete'];
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatSort) set content(sort: MatSort) {
@@ -71,9 +71,9 @@ export class ActionItemsPageComponent implements OnInit {
   csatBased: boolean = false;
   isSaved: boolean = false;
   isCustomerUpdated: boolean = false;
-  maxTargetDate: any;  
-  isDescUpdated : boolean = false;
-  originalDescription: string = ""; 
+  maxTargetDate: any;
+  isDescUpdated: boolean = false;
+  originalDescription: string = "";
   constructor(private route: ActivatedRoute, private _appservice: AppsService, private _shared: SharedService, private _http: Http, private _util: myUtility,
     private changeDetectorRefs: ChangeDetectorRef, public _access: AccessControl, public dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) private data: any) { }
@@ -112,7 +112,7 @@ export class ActionItemsPageComponent implements OnInit {
     }
 
     if (!this._util.IsPremier(this.selectedCust))
-      this.displayedColumns = ['index', 'portfoliO_NAME', 'proJ_NM', 'description', 'owner', 'targeT_DATE', 'identifieD_DATE', 'status', 'priority', 'source', 'completioN_DATE','info', 'edit', 'delete'];
+      this.displayedColumns = ['index', 'portfoliO_NAME', 'proJ_NM', 'description', 'owner', 'targeT_DATE', 'identifieD_DATE', 'status', 'priority', 'source', 'completioN_DATE', 'info', 'edit', 'delete'];
 
     this.getAllActionItemsForCustomer();
     this.getAllProjectsFromCustomer();
@@ -480,10 +480,13 @@ export class ActionItemsPageComponent implements OnInit {
     this.EditActionitem = new ActionitemModelNew();
     this.isDescUpdated = false;
   }
-  onInputChange(newValue: string) {  
-    this.isDescUpdated = (newValue && newValue.trim()) !== (this.originalDescription && this.originalDescription.trim() ? this.originalDescription.trim() : "");  
+  onInputChange(newValue: string) {
+    if (this.csatBased)
+      this.isDescUpdated = (newValue && newValue.trim()) !== (this.originalDescription && this.originalDescription.trim() ? this.originalDescription.trim() : "");
+    else
+      this.isDescUpdated = true;
   }
-  
+
   EditRow_onClick(element) {
     this.csatBased = false;
     this.isDescUpdated = false;
@@ -496,6 +499,9 @@ export class ActionItemsPageComponent implements OnInit {
     if (element.source == "CSS" || element.source.includes('Customer Success Survey') || element.source == 'CSAT') {
       this.csatBased = true;
     }
+
+    if(!this.csatBased)
+      this.isDescUpdated = true;
     this.Edit_onClick()
   }
   DeleteRow_onClick(element): void {
@@ -529,7 +535,7 @@ export class ActionItemsPageComponent implements OnInit {
       return;
     }
 
-  
+
     if (EditActionitem.status == 'Identified') {
       alert('Please update the status and save and then send the Update to Customer.');
       this.isCustomerUpdated = false;
@@ -538,12 +544,11 @@ export class ActionItemsPageComponent implements OnInit {
     if (confirm('If you have made any updates to this action item, please save it first and then send the update to customer. Do you want to continue sending?')) {
       this.service_SubmitActionItemPlanToCustomer(this.selectedCust, this.EditActionitem.proJ_ID, this.EditActionitem.actioN_ITEM_ID);
     }
-    else
-    {
+    else {
       return;
     }
-   
-   
+
+
   }
 
   service_addActionitem(actionitem) {

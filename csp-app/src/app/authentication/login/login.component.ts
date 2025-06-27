@@ -242,6 +242,7 @@ export class LoginComponent implements OnInit {
       });
       let navigateUrl = localStorage.getItem('navigateurl');
       localStorage.setItem('navigateurl', '');
+     
       if (navigateUrl != undefined && navigateUrl != null && navigateUrl.trim() != "" && navigateUrl.indexOf("login") < 0)
         this._router.navigateByUrl(navigateUrl);
       else

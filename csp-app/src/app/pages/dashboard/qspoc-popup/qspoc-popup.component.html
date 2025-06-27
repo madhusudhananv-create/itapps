@@ -65,7 +65,7 @@
 
   <div>
     <mat-form-field style="width: 50%;">
-      <mat-select name="ddname" [(ngModel)]="selectedQA" placeholder="Quality Partner">
+      <mat-select name="ddname" [(ngModel)]="selectedQA" placeholder="DevEx Partner">
         <mat-option [value]="item.emP_ID" *ngFor="let item of QAEmployeeList"
           [title]="item.frsT_NM">{{item.frsT_NM}}</mat-option>
       </mat-select>

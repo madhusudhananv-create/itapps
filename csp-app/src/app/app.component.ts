@@ -133,7 +133,9 @@ export class AppComponent {
         path.indexOf("CustomerSuccessSurvey") > 0 ||
         path.indexOf("login") > 0 ||
         path.indexOf("setpassword") > 0
-      ) {
+      ) 
+      
+      {
       } else if (path.indexOf("landingpage") < 0) {
      
         
