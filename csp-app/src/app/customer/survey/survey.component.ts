@@ -237,9 +237,10 @@ export class SurveyComponent implements OnInit {
         this.isCSMNotified = data.csS_BATCH_CUSTOMERS_EXTENDED.csM_NOTIFIED;
         if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED") {
           this.IsCompleted = true;
-          if (this.questions_NPS != null)
+          if (this.questions_NPS != null) {
             this.npsRating = this.questions_NPS.rating;
-          this.Rating_OnClick(this.npsRating)
+            this.Rating_OnClick(this.npsRating)
+          }
         }
       }
       else if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != undefined && data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null) {
@@ -297,8 +298,10 @@ export class SurveyComponent implements OnInit {
 
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
         width: '500px',
-        height: '180px',
-        data: ''
+        height: '170px',
+        data: '',
+        hasBackdrop: true,
+        scrollStrategy: new NoopScrollStrategy()
       });
       dialogRef.afterClosed().subscribe(result => {
       });
