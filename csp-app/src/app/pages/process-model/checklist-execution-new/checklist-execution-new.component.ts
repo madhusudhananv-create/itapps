@@ -1325,7 +1325,8 @@ handlePdfExport(i, list) {
           this.checkListDataNew = data.audiT_CHECKLIST_BY_SERVICE_AREA_LIST;
           this.checklistSummaryRec = data.audiT_CHECKLIST_EXECUTION_SUMMARY;
           this.IsSubmitted = false;
-          this.IsChecklistDisabled = true;
+          this.IsChecklistDisabled = false;
+          
         }
       },
       (error) => {
