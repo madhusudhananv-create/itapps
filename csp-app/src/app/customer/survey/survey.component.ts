@@ -294,7 +294,7 @@ export class SurveyComponent implements OnInit {
     this._appservice.SaveCSSSurveyAnswers(replies, this.empId, this.meetingDate, this.isCSMNotified).subscribe(data => {
       this.dialogSuccess = true;
       this.dialogHeading = '';
-      this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey Submitted successfully. A detailed report would be sent to your mail shortly.';
+      this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey submitted successfully. A detailed report would be sent to your mail shortly.';
 
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
         width: '500px',
