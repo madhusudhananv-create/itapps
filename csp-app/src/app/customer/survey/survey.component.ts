@@ -200,7 +200,7 @@ export class SurveyComponent implements OnInit {
       }
     }
   
-    this.dialogHeading = 'Quick Check';
+    this.dialogHeading = 'Quick Confirmation';
     this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
     const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
       width: '500px',
