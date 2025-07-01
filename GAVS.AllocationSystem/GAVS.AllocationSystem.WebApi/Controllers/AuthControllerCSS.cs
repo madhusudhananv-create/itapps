@@ -732,6 +732,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             string tomail = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID;
             string ccmail = helper.GetDBConfig("CSS_SUCCESS_MAIL_CC", "-1");
+            if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC))
+                ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
             string subject = string.Empty;
             string mailContent = string.Empty;
 
@@ -836,6 +838,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var buMailsCustomer = GetBUwiseCCListForAccount(replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID, null);
             if (!string.IsNullOrWhiteSpace(buMailsCustomer))
                 ccmail += "," + buMailsCustomer;
+            if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC))
+                ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
             //CSM Names
             //string CSMNames = helper.GetCSMNamesFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
             //if (CSMNames == string.Empty)
@@ -868,6 +872,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             var table = GetCSSTableData(replies);
             EmailContentValues.Add("TABLE", table);
+            EmailContentValues.Add("CUSTOMER_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME);
 
             //EmailContentValues.Add("SURVEY_LINK", HttpContext.Current.Request.UrlReferrer.AbsoluteUri);
 

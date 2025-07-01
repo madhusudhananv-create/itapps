@@ -303,20 +303,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else
             {
-                projectText =   cust.PROJ_NM;
+                projectText = cust.PROJ_NM;
             }
 
             string csmMails = helper.GetCSMMailsFromProject(project);
             var pmMails = helper.GetPMFromProject(project).FirstOrDefault();
             var am = helper.GetAMFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
-         
+
 
             subject = "Neurealm Half-Yearly Customer Satisfaction Survey for the period: " + PreviousPeriod;
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
-            ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, pmMails, am, qualitySpoc });
+            ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, pmMails, am, qualitySpoc, cust.SPOC });
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
 
             var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
@@ -597,8 +597,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var cclist = helper.getProjectResposnibleMailIds(project, true, true, true);
             cclist.Add(ccmail);
 
-            subject = Frequency + " Customer Satisfaction Survey for " + projectText +  " for the period of " + PreviousPeriod;
+            subject = Frequency + " Customer Satisfaction Survey for " + projectText + " for the period of " + PreviousPeriod;
             ccmail = helper.ConcatEmails(cclist);
+            if (!string.IsNullOrWhiteSpace(cust.SPOC))
+                ccmail += "," + cust.SPOC;
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
@@ -1367,7 +1369,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         var proj = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == cp.PRODUCT_ID && x.MANAGEMENT_TYPE == 7);
                         if (proj == null) continue;
                         PROJECT project = projects.FirstOrDefault(x => x.PROJ_ID == proj.PROJECT_ID);
-                       // if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
+                        // if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
                         if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")) continue;
                         if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
                         //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards

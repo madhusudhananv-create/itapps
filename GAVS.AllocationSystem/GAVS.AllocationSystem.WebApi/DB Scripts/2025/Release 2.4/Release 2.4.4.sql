@@ -198,8 +198,13 @@ update css_question_master set question = 'How satisfied are you with the Onboar
  
  
 
+ -- for csat contact
+ alter table css_batch_customers add SPOC varchar(500) null
+ alter table Customer_Projects add SPOC varchar(500) null
 
  
+
+
 
 
 

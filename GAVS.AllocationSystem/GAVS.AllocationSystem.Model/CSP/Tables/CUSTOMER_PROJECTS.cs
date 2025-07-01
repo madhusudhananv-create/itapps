@@ -19,7 +19,9 @@ namespace GAVS.AllocationSystem.Model.CSP
         public Boolean REPORTING { get; set; }
         public Boolean CSAT_SURVEY { get; set; }
         public string CSAT_FREQUENCY { get; set; }
-       
+
+        public string SPOC { get; set; }
+
     }
     [NotMapped]
     public class CUSTOMER_PROJECTS_EXT: CUSTOMER_PROJECTS

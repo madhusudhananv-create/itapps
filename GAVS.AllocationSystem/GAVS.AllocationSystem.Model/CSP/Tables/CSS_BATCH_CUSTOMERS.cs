@@ -36,6 +36,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime? MEETING_DATE { get; set; }
         public bool? CSM_NOTIFIED { get; set; }
 
+        public string SPOC { get; set; }
+
         [NotMapped]
         public int BATCH_MONTHLY_ID { get; set; }
     }
