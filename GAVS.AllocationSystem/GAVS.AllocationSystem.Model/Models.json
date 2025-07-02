@@ -425,6 +425,15 @@
     ]
   },
   {
+    "name": "CUSTOMER_CONTACTS",
+    "props": [
+      
+      "EMAIL_ID:string",
+      "DISPLAY_NAME:string",
+      "IS_ACTIVE:bool"
+    ]
+  },
+  {
     "name": "GET_QUESTION_MODEL",
     "props": [
       "QUESTION_MODEL_ID:int"

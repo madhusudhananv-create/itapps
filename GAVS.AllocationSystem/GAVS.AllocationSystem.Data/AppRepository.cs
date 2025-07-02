@@ -833,6 +833,14 @@ namespace GAVS.AllocationSystem.Data
             var result = dbContext.Database.SqlQuery<CSS_Readiness_Info>("[dbo].[CSS_Readiness_Report] @STARTDATE, @ENDDATE", param1, param2).ToList();
             return result;
         }
+        public List<CUSTOMER_CONTACTS> GetCustomerContactsForAccount(string custId)
+        {
+            var dbContext = new CloudDbContext();
+            SqlParameter param1 = new SqlParameter("@custId", custId);
+           
+            var result = dbContext.Database.SqlQuery<CUSTOMER_CONTACTS>("[dbo].[usp_getContactsForAccount] @custId", param1 ).ToList();
+            return result;
+        }
 
         //**********************************
         //I M P O R T A N T

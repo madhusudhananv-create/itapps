@@ -398,6 +398,20 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public int CLOSED {get; set;}
     }
 
+    public partial class BATCH_DATA_FORMATTED  
+    {
+        public string BATCH_NAME {get; set;}
+        public DateTime START_DATE {get; set;}
+        public DateTime END_DATE {get; set;}
+    }
+
+    public partial class CUSTOMER_CONTACTS  
+    {
+        public string EMAIL_ID {get; set;}
+        public string DISPLAY_NAME {get; set;}
+        public bool IS_ACTIVE {get; set;}
+    }
+
     public partial class GET_QUESTION_MODEL  
     {
         public int QUESTION_MODEL_ID {get; set;}
@@ -439,7 +453,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ACCOUNT_MANAGER {get; set;}
         public string AM_MAIL_ID {get; set;}
         public string BU_HEAD {get; set;}
-        public string BU_MAIL{get; set;}
+        public string BU_MAIL {get; set;}
         public string QUALITY_SPOC {get; set;}
         public string CSM_REVIEWER_MAIL_ID {get; set;}
         public string SKIP_CSAT {get; set;}

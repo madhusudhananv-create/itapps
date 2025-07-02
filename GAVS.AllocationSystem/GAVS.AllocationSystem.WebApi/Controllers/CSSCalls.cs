@@ -1058,7 +1058,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //perform valiadtions for retrived objs
 
             // add duplicate row
-            AddBatchCustomer(batchMonthly, customerUser.EMAILID, customerUser.DISPLAY_NAME, empId, batchcustomer.CUST_ID, batchcustomer.PROJ_ID, batchcustomer.PROD_ID);
+            AddBatchCustomer(batchMonthly, customerUser.EMAILID, customerUser.DISPLAY_NAME, empId, batchcustomer.CUST_ID, batchcustomer.PROJ_ID, batchcustomer.PROD_ID, batchcustomer.SPOC);
             return Ok();
 
         }
@@ -1270,7 +1270,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
                     //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
                     //if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
-                    AddBatchCustomer(batch, cust.EMAILID, cust.DISPLAY_NAME, EmpId, c.CUST_ID, c.PROJ_ID, null);
+                    AddBatchCustomer(batch, cust.EMAILID, cust.DISPLAY_NAME, EmpId, c.CUST_ID, c.PROJ_ID, null, c.SPOC);
 
                 }
             }
@@ -1280,7 +1280,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-        private void AddBatchCustomer(CSS_BATCHES batch, string emailId, string displayName, string empId, string cust_id, string proj_id, int? prod_id)
+        private void AddBatchCustomer(CSS_BATCHES batch, string emailId, string displayName, string empId, string cust_id, string proj_id, int? prod_id, string spoc)
         {
             var batchCustomer = new CSS_BATCH_CUSTOMERS()
             {
@@ -1296,7 +1296,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CREATED_DATE = DateTime.Now,
                 UPDATED_BY = empId,
                 UPDATED_DATE = DateTime.Now,
-                ISACTIVE = true
+                ISACTIVE = true,
+                SPOC = spoc,
             };
             UpdateAuditFields(batchCustomer);
             CSPdb.CSS_BATCH_CUSTOMERS.Add(batchCustomer);
@@ -1426,7 +1427,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var cuser = CSPdb.CONTACTS.GetAll().FirstOrDefault(x => x.CONTACT_EMAILID == item.EMP_ID);
                 if (cuser == null) continue;
                 var projId = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == product.ID && x.MANAGEMENT_TYPE == 7);
-                AddBatchCustomer(batch, cuser.CONTACT_EMAILID, cuser.CONTACT_NAME, empId, product.CUST_ID, projId != null ? projId.PROJECT_ID : "", product.ID);
+                AddBatchCustomer(batch, cuser.CONTACT_EMAILID, cuser.CONTACT_NAME, empId, product.CUST_ID, projId != null ? projId.PROJECT_ID : "", product.ID, null);
                 // }
 
 

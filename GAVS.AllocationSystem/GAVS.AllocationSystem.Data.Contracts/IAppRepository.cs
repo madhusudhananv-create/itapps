@@ -103,5 +103,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         int? getQuestionModelId(string projectId, int batchId, string emailId);
 
         List<CSS_Readiness_Info> getCSS_Readiness_Info(DateTime startDate, DateTime endDate);
+
+        List<CUSTOMER_CONTACTS> GetCustomerContactsForAccount(string custId);
     }
 }

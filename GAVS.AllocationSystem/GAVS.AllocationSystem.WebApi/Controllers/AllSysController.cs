@@ -1238,7 +1238,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             public string SERVICE_AREA_NAME { get; set; }
             public int SERVICE_AREA_ID { get; set; }
-           
+
             public bool IS_SERVICE_TOWER_SELECTED { get; set; }
             public QUESTIONS_BY_SERVICE_AREA(int id, string title)
             {
@@ -1259,7 +1259,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public decimal VERSION { get; set; }
 
             public DateTime EFFECTIVE_FROM { get; set; }
-        
+
             public List<QUESTIONS_BY_SERVICE_AREA> QUESTIONS_BY_SERVICE_AREA { get; set; }
         }
 
@@ -15986,8 +15986,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Tuple.Create("ROOT CAUSE", "ROOT_CAUSE"),
                     Tuple.Create("ACTION TYPE", "ACTION_TYPE"),
                     Tuple.Create("ACTION PLAN", "ACTION_PLAN")
-                   
-                    
+
+
             };
             SendUpdateMail<PROJECT_ACTIONITEM>(newActionItem, overview, project, FieldNameWithCaptionList, "Action Item Updated for " + project.PROJ_NM);
             LoadActionItemsDetails();
@@ -20670,6 +20670,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return response;
         }
 
+        [GET("GetCustomerContacts")]
+        [ActionName("GetCustomerContacts")]
+        [HttpGet]
+        public IHttpActionResult GetCustomerContacts(string customerId)
+        {
+            var result = Cldb.AppRepo.GetCustomerContactsForAccount(customerId);
+            return Ok(result);
+        }
+
         [POST("CustomerProjects")]
         [ActionName("CustomerProjects")]
         [HttpPost]
@@ -20733,6 +20742,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CSAT_SURVEY = p.CSAT_SURVEY,
                         CSAT_FREQUENCY = p.CSAT_FREQUENCY,
                         REPORTING = p.REPORTING,
+                        SPOC = p.SPOC
                     };
                     UpdateAuditFields(newProj);
                     CSPdb.CUSTOMER_PROJECTS.Add(newProj);
@@ -20749,6 +20759,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CSAT_FREQUENCY = proj.CSAT_FREQUENCY
                     };
                     originalProjects.Add(originalProj);
+                    proj.SPOC = p.SPOC;
                     proj.REPORTING = p.REPORTING;
                     proj.CSAT_SURVEY = p.CSAT_SURVEY;
                     proj.CSAT_FREQUENCY = p.CSAT_FREQUENCY;
