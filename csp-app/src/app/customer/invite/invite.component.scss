@@ -84,13 +84,18 @@
 //   border-collapse: collapse;
 // }
 
-th, td {
+th  {
   padding: 8px;
   text-align: center;
 }
 .text-center {
 
   text-align: center !important;
+  font-size:11px
+}
+.text-left {
+
+  text-align: left !important;
   font-size:11px
 }
 th {

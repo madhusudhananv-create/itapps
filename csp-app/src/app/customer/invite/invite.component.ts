@@ -31,6 +31,7 @@ export class InviteComponent implements OnInit {
   customerProjectsOriginal: CustomerProjectsModel[];
   customerEmail: string;
   selectedClient: ClientDetailsModel;
+  customerContacts : CustomerContact[];
   selectedProjectsArr: any;
   selectedProjects: CustomerProjectsModel[] = [];
   ClientContacts: ContactsModel[];
@@ -334,6 +335,17 @@ export class InviteComponent implements OnInit {
           this._util.serviceError(error);
         });
 
+         this._appservice.getCustomerContactsForAccount(this.selectedClient.client_ID )
+      .subscribe(
+        data => {
+          this.customerContacts = data;
+          console.log(data);
+        },
+        error => {
+          this._util.serviceError(error);
+        });
+
+
     this.scrollToTop();
   }
   checkbox_OnChange(emp: EmpInfoModel) {
@@ -354,4 +366,9 @@ export class InviteComponent implements OnInit {
     this.searchText = "";
     this.customerProjects = this.customerProjectsOriginal;
   }
+}
+export class CustomerContact {
+    emaiL_ID : string;
+    displaY_NAME : string;
+    iS_ACTIVE : boolean;
 }

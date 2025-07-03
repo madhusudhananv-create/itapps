@@ -2572,6 +2572,19 @@ export class AppsService {
       headers: header,
     });
   }
+
+  getCustomerContactsForAccount(custid: string) :Observable<any> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<any>(this.apiurl + "/GetCustomerContacts?customerId="+custid, {
+      headers: header,
+    });
+  }
+
+
   inviteUser(email, empid): Observable<any> {
     let header = new HttpHeaders({
       Accept: "application/json",

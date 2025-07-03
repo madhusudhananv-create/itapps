@@ -927,7 +927,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
             this.getMappedChecklistData(this.checklist[0]);
         }
         else {
-          alert('No checklists generated for this Assessment');
+          alert('No Checklists generated for this Assessment. Checklists will be visible based on the combination of PSPD mapping for the project and the Service Tower(s) selected in the Assessment and the Service Towers of the Checklist. Please verify the mentioned screens and update them to see required Checklists here.');
           return;
         }
       },

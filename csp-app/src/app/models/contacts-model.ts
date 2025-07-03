@@ -14,3 +14,6 @@ export class ContactsModel {
     specifiC_SURVEY_OPTED:boolean;
 }
 
+
+
+
