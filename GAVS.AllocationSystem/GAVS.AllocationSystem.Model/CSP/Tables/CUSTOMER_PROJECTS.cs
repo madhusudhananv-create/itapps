@@ -21,6 +21,9 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string CSAT_FREQUENCY { get; set; }
 
         public string SPOC { get; set; }
+        
+        [NotMapped]
+        public string SPOC_NAME { get; set; }
 
     }
     [NotMapped]

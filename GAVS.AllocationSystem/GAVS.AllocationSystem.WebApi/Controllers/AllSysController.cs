@@ -1936,11 +1936,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //arrCustomers.AddRange(csatMappedProjects.Select(t => t.CUSTOMER_USER_ID).ToList());
             var cust_user = CSPdb.AppRepo.CustomerProjects().Where(t => arrCustomers.Contains(t.ID)).OrderBy(t => t.CUST_NM).ThenBy(t => t.EMAILID).ToList();
 
+            ///select all spoc mail ids
+            ///
             foreach (var cust in cust_user)
             {
                 cust.CUSTOMER_PROJECTS = custProjects.Where(t => t.CUSTOMER_USER_ID == cust.ID && t.CUST_ID == cust.CUST_ID).ToList();
 
                 cust.CUSTOMER_PROJECTS.AddRange(csatMappedProjects.Where(t => t.CUSTOMER_USER_ID == cust.ID && t.CUST_ID == cust.CUST_ID).ToList());
+
+                foreach (var item in cust.CUSTOMER_PROJECTS)
+                {
+                    //set spoc name
+                }
             }
             FillResponseTime(stopwatch);
             return Ok(cust_user);
