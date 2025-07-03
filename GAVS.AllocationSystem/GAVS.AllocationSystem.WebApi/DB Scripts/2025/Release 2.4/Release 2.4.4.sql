@@ -206,18 +206,18 @@ update css_question_master set question = 'How satisfied are you with the Onboar
 
  -- customer details
  	
-	create proc usp_getContactsForAccount
+	
+	Create proc usp_getContactsForAccount
 	(
 		@custId varchar(200)
 	)
 	as
 	BEGIN
-		select CONTACT_EMAILID as EMAIL_ID, CONTACT_NAME as DISPLAY_NAME, 1 as IS_ACTIVE from contacts where customer_id =@custId
+		select CONTACT_EMAILID as EMAIL_ID, CONTACT_NAME as DISPLAY_NAME, convert(bit, 1) as IS_ACTIVE from contacts where customer_id =@custId
 		union 
-		select email_id, FRST_NM , case when pr.END_DATE < getdate() then 0 else 1 end from  emp_info e 
-		inner join proj_resource pr on pr.emp_id = e.emp_id inner join project p on p.proj_id = pr.proj_id  where  p.cust_id = @custId
-    END
-
+		select email_id, FRST_NM , case when ( pr.END_DATE < getdate()) then convert(bit,0) else convert(bit, 1) end from  emp_info e 
+		inner join proj_resource pr on pr.emp_id = e.emp_id inner join project p on p.proj_id = pr.proj_id  where  p.cust_id = @custId   and dor is null 
+   end
 
 
 

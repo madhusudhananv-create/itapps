@@ -20676,7 +20676,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetCustomerContacts(string customerId)
         {
             var result = Cldb.AppRepo.GetCustomerContactsForAccount(customerId);
-            return Ok(result);
+            var grouping = result.GroupBy(x => x.EMAIL_ID);
+            var result1 = new List<CUSTOMER_CONTACTS>();
+            foreach (var item in grouping)
+            {
+                result1.Add(new CUSTOMER_CONTACTS { EMAIL_ID = item.Key, DISPLAY_NAME = item.First().DISPLAY_NAME, IS_ACTIVE = true });
+            }
+            return Ok(result1);
         }
 
         [POST("CustomerProjects")]
