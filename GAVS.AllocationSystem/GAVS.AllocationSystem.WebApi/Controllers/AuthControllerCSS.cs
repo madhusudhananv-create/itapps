@@ -295,8 +295,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             sb.Append($"<td>{ question }</td>");
             sb.Append($"<td>{ score}</td>");
             sb.Append($"<td>{ remarks }</td>");
-            sb.Append($"<td></td>");
-            sb.Append($"<td></td>");
+            //sb.Append($"<td></td>");
+            //sb.Append($"<td></td>");
 
             sb.AppendLine("</tr>");
 
