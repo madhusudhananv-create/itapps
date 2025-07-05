@@ -1,4 +1,4 @@
-﻿<html>
+﻿ <html>
 <head>
     <meta http-equiv=Content-Type content="text/html; charset=windows-1252">
     <meta name=Generator content="Microsoft Word 15 (filtered)">
@@ -90,42 +90,36 @@
             display: none;
             font-family: "Calibri",sans-serif;
         }
-
-        /* Table styles */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #CCCCFF;
-            font-weight: bold;
-        }
-
-        /* Red text for changed values */
-        .red-text {
-            color: red;
-            font-weight: bold;
-        }
     </style>
 </head>
 
 <body lang=EN-US link=blue vlink="#954F72">
     <p class=MsoNormal>Hi Team,</p>
     <br />
-    One Record has been <strong><span style='font-size: larger;'>{{action}}</span></strong> in configurationEXT table with
+    One Record has been <strong><span style='font-size: larger;'>{{action}}</span></strong> in Risk Repository
     <br />
     <br />
-    <strong><span style='font-size: larger;'>Key: {{KEY}}</span></strong>
+    
     <br />
     <br />
     <p class=MsoNormal>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th, td {
+                border: 1px solid black;
+                padding: 8px;
+                text-align: left;
+            }
+
+            th {
+                background-color: #CCCCFF;
+                font-weight: bold;
+            }
+        </style>
         <table>
             <tr>
                 <th>Field</th>
@@ -134,44 +128,46 @@
             </tr>
 
             <tr>
-                <td>Value</td>
-                <td>{{VALUE}}</td>
-                <td class="{{VALUE_CHANGED ? 'red-text' : ''}}">{{OLD_VALUE}}</td>
+                <td>Risk Description</td>
+                <td>{{RISK_DESCRIPTION}}</td>
+                <td>{{OLD_RISK_DESCRIPTION}}</td>
             </tr>
             <tr>
-                <td>Customer</td>
-                <td>{{CUST_ID}}</td>
-                <td class="{{CUST_ID_CHANGED ? 'red-text' : ''}}">{{OLD_CUST_ID}}</td>
+                <td>Risk Impact</td>
+                <td>{{RISK_IMPACT}}</td>
+                <td>{{OLD_RISK_IMPACT}}</td>
             </tr>
             <tr>
-                <td>Project </td>
-                <td>{{PROJ_ID}}</td>
-                <td class="{{PROJ_ID_CHANGED ? 'red-text' : ''}}">{{OLD_PROJ_ID}}</td>
+                <td>Likelihood </td>
+                <td>{{LIKELIHOOD}}</td>
+                <td>{{OLD_LIKELIHOOD}}</td>
             </tr>
             <tr>
-                <td>Comment</td>
-                <td>{{Comment}}</td>
-                <td class="{{COMMENT_CHANGED ? 'red-text' : ''}}">{{Old_Comment}}</td>
+                <td>Consequences</td>
+                <td>{{CONSEQUENCES}}</td>
+                <td>{{OLD_CONSEQUENCES}}</td>
             </tr>
 
             <tr>
-                <td>Description</td>
-                <td>{{Description}}</td>
-                <td class="{{DESCRIPTION_CHANGED ? 'red-text' : ''}}">{{Old_Description}}</td>
+                <td>Risk Treatment Strategy</td>
+                <td>{{RISK_TREATMENT_STRATEGY}}</td>
+                <td>{{OLD_RISK_TREATMENT_STRATEGY}}</td>
             </tr>
-
             <tr>
-                <td>StartDate</td>
-                <td>{{StartDate}}</td>
-                <td class="{{START_DATE_CHANGED ? 'red-text' : ''}}">{{Old_StartDate}}</td>
+                <td>Applicable Service Tower</td>
+                <td>{{ST}}</td>
+                <td>{{OST}}</td>
             </tr>
-
             <tr>
-                <td>EndDate</td>
-                <td>{{EndDate}}</td>
-                <td class="{{END_DATE_CHANGED ? 'red-text' : ''}}">{{Old_EndDate}}</td>
+                <td>Threat</td>
+                <td>{{THREATS}}</td>
+                <td>{{OLD_THREATS}}</td>
             </tr>
-
+            <tr>
+                <td>Vulnerability</td>
+                <td>{{VULNERABILITIES}}</td>
+                <td>{{OLD_VULNERBILITIES}}</td>
+            </tr>
             <tr>
                 <td>Updated Date</td>
                 <td>{{UD}}</td>
