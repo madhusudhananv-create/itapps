@@ -506,31 +506,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var desc = new StringBuilder();
             //var reference = new StringBuilder();
+            desc.AppendLine("[To be detailed by PM] ");
 
-            desc.AppendLine("Improvement Plan for Criteria:");
-            desc.Append(Environment.NewLine);
-            foreach (var item in lowratings)
-            {
-                desc.AppendLine($"{item.QUESTION} - [{item.RATING}] ");
-                if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
-                {
-                    desc.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
-                }
-                desc.AppendLine("CAPA: [To be detailed by PM] ");
-                desc.Append(Environment.NewLine);
+            //desc.AppendLine("Improvement Plan for Criteria:");
+            //desc.Append(Environment.NewLine);
+            //foreach (var item in lowratings)
+            //{
+            //    desc.AppendLine($"{item.QUESTION} - [{item.RATING}] ");
+            //    if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
+            //    {
+            //        desc.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
+            //    }
+            //    desc.AppendLine("CAPA: [To be detailed by PM] ");
+            //    desc.Append(Environment.NewLine);
 
-                overview.CSS_REFERENCE = item.QUESTION;
-                overview.SCORE = item.RATING;
-                overview.CUSTOMER_REMARKS = item.RATING_DESCRIPTION;
-                //reference.AppendLine($"Question: {item.QUESTION} ");
-                //reference.Append(Environment.NewLine);
-                //reference.AppendLine($"Rating: {item.RATING} ");
-                //reference.Append(Environment.NewLine);
-                //if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
-                //{
-                //    reference.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
-                //}
-            }
+            //    overview.CSS_REFERENCE = item.QUESTION;
+            //    overview.SCORE = item.RATING;
+            //    overview.CUSTOMER_REMARKS = item.RATING_DESCRIPTION;
+            //    //reference.AppendLine($"Question: {item.QUESTION} ");
+            //    //reference.Append(Environment.NewLine);
+            //    //reference.AppendLine($"Rating: {item.RATING} ");
+            //    //reference.Append(Environment.NewLine);
+            //    //if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
+            //    //{
+            //    //    reference.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
+            //    //}
+            //}
             overview.PORTFOLIO_NAME = portfolio;
             overview.DESCRIPTION = desc.ToString();
             overview.ORIGINAL_DESCRIPTION = overview.DESCRIPTION;
