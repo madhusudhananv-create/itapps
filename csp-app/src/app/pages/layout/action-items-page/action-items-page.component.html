@@ -100,10 +100,11 @@
         <td mat-cell *matCellDef="let actionItem" [matTooltip]="actionItem.portfoliO_NAME">{{actionItem.portfoliO_NAME}}
         </td>
       </ng-container>
-      <ng-container matColumnDef="description">
+      <ng-container matColumnDef="description"  >
         <th mat-header-cell style="font-family: calibri;" [ngClass]="'desWidth'" *matHeaderCellDef mat-sort-header>
           Description</th>
-        <td mat-cell *matCellDef="let actionItem" [matTooltip]="actionItem.description"> {{actionItem.description}}
+        <td mat-cell *matCellDef="let actionItem" [matTooltip]="actionItem.description"> 
+         {{actionItem.description}}
         </td>
       </ng-container>
       <ng-container matColumnDef="owner">
@@ -223,7 +224,7 @@
             matInput placeholder="Portfolio" [disabled]="true"></textarea>
         </mat-form-field>
       </div>
-      <div class="row">
+      <div class="row"  *ngIf=!csatBased>
         <mat-form-field style="width:calc(100% - 20px)">
           <textarea matTextareaAutosize name='txtDescription' maxlength="4000" [(ngModel)]="EditActionitem.description"
             (ngModelChange)="onInputChange($event)" matInput placeholder="Action Plan Description" required>
@@ -268,19 +269,19 @@
         </mat-form-field>
       </div>
       
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:50%">
           <textarea name="txtCssReference" maxlength="200" [(ngModel)]="EditActionitem.csS_REFERENCE" matInput
             placeholder="CSS Reference" ></textarea>
         </mat-form-field>
       </div>
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:5%">
           <textarea name="txtScore" maxlength="3" [(ngModel)]="EditActionitem.score" matInput placeholder="Score"
             ></textarea>
         </mat-form-field>
       </div>
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:75%">
           <textarea name="txtCustomerRemarks" maxlength="2000" [(ngModel)]="EditActionitem.customeR_REMARKS" matInput
             placeholder="Customer Remarks" required></textarea>
@@ -292,18 +293,17 @@
             placeholder="Root Cause" required></textarea>
         </mat-form-field>
       </div>   
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
+      <div class="row"  *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:75%">
-          <textarea name="txtActionPlan" maxlength="2000" [(ngModel)]="EditActionitem.actioN_PLAN" matInput
-            placeholder="Action Plan" required></textarea>
+          <textarea name='txtCorrectiveActionPlan' maxlength="2000" [(ngModel)]="EditActionitem.description"
+           (ngModelChange)="onInputChange($event)" matInput placeholder="Corrective Action Plan" required>
+          </textarea>
         </mat-form-field>
-      </div> 
-      <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM'">
-        <mat-form-field  style="width:20%">
-          <mat-select name="ddActionType" [(ngModel)]="EditActionitem.actioN_TYPE" placeholder="Action Type" required >
-            <mat-option value="Corrective Action">Corrective Action</mat-option>
-            <mat-option value="Preventive Action">Preventive Action</mat-option>
-          </mat-select>
+      </div>
+         <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
+        <mat-form-field style="width:75%">
+          <textarea name="txtPreventiveActionPlan" maxlength="2000" [(ngModel)]="EditActionitem.preventivE_ACTION_PLAN" matInput
+            placeholder="Preventive Action Plan" required></textarea>
         </mat-form-field>
       </div>
       <div class="row">
