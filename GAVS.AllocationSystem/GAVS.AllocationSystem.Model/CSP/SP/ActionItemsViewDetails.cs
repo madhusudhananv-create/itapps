@@ -26,11 +26,10 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime IDENTIFIED_DATE { get; set; }
         public DateTime? TARGET_DATE { get; set; }
         public string ROOT_CAUSE { get; set; }
-        public string ACTION_TYPE { get; set; }
         public string RATING_DESCRIPTION { get; set; }
         public int RATING { get; set; }
         public string QUESTION { get; set; }
-        public string ACTION_PLAN { get; set; }
+        public string PREVENTIVE_ACTION_PLAN { get; set; }
 
         public string STATUS { get; set; }
         public string PRIORITY { get; set; }
@@ -48,7 +47,6 @@ namespace GAVS.AllocationSystem.Model.CSP
         public DateTime? PLANNED_TARGET_DATE { get; set; }
         public DateTime? PLANNED_ACTUAL_DATE { get; set; }       
         public bool SEND_MAIL { get; set; }
-        [NotMapped]
         public string CSS_REFERENCE { get; set; }
         [NotMapped]
         public string CUSTOMER_REMARKS { get; set; }

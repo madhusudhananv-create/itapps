@@ -15903,8 +15903,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.COMMENTS = results.COMMENTS;
                 overview.UPDATED_BY = results.UPDATED_BY;
                 overview.UPDATED_DATE = DateTime.Now;
-                overview.ACTION_PLAN = results.ACTION_PLAN;
-                overview.ACTION_TYPE = results.ACTION_TYPE;
+                overview.PREVENTIVE_ACTION_PLAN = results.PREVENTIVE_ACTION_PLAN;
                 overview.ROOT_CAUSE = results.ROOT_CAUSE;
                 CSPdb.PROJECT_ACTIONITEM.Update(overview);
                 CSPdb.Commit(CanCommit);
@@ -15953,8 +15952,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 newActionItem.ORIGINAL_DESCRIPTION = overview.ORIGINAL_DESCRIPTION;
                 newActionItem.UPDATED_BY = overview.UPDATED_BY;
                 newActionItem.UPDATED_DATE = overview.UPDATED_DATE;
-                newActionItem.ACTION_PLAN = overview.ACTION_PLAN;
-                newActionItem.ACTION_TYPE = overview.ACTION_TYPE;
+                newActionItem.PREVENTIVE_ACTION_PLAN = overview.PREVENTIVE_ACTION_PLAN;
                 newActionItem.ROOT_CAUSE = overview.ROOT_CAUSE;
 
                 overview.DESCRIPTION = results.DESCRIPTION;
@@ -15970,8 +15968,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.COMMENTS = results.COMMENTS;
                 overview.UPDATED_BY = results.UPDATED_BY;
                 overview.UPDATED_DATE = DateTime.Now;
-                overview.ACTION_PLAN = results.ACTION_PLAN;
-                overview.ACTION_TYPE = results.ACTION_TYPE;
+                overview.PREVENTIVE_ACTION_PLAN = results.PREVENTIVE_ACTION_PLAN;
                 overview.ROOT_CAUSE = results.ROOT_CAUSE;
             }
 
@@ -15991,8 +15988,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Tuple.Create("STATUS", "STATUS"),
                     Tuple.Create("COMMENTS", "COMMENTS"),
                     Tuple.Create("ROOT CAUSE", "ROOT_CAUSE"),
-                    Tuple.Create("ACTION TYPE", "ACTION_TYPE"),
-                    Tuple.Create("ACTION PLAN", "ACTION_PLAN")
+                    Tuple.Create("PREVENTIVE_ACTION_PLAN", "PREVENTIVE_ACTION_PLAN")
 
 
             };
@@ -25881,8 +25877,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                  "<tr>" + htmlcontent1 + "</tr>" +
                                "</table><div style='margin-top:10px'>" + validations + "</div></div> ";
             }
-            mailsignature = "<p>Note: The portal is best viewed in Chrome browsers</p><br><p>Regards,</p><br><p>Process Quality Assurance Team</p><p>GAVS Technologies Pvt Ltd</p><p>#11 |Old Mahabalipuram Road | Sholinganallur Chennai - 600 119</p>" +
-                "<p>Phone: +91 44 66694287</p><p>Email: Quality@gavstech.com<mailto:Quality@gavstech.com></p><p>Web: www.gavstech.com<http://www.gavstech.com></p>";
+            mailsignature = "<p>Note: The portal is best viewed in Chrome browsers</p><br><p>Regards,</p><br><p>Process Quality Assurance Team</p><p>Neurealm (Formerly GS Lab | GAVS Technologies)</p><p>7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur Chennai - 600 119</p>" +
+                "<p>Phone: +91 44 66694287</p><p>Email: Quality@neurealm.com<mailto:Quality@neurealm.com></p><p>Web: www.neurealm.com<http://www.neurealm.com></p>";
             htmlcontent = " <style>p{margin: 0;padding: 0;font - size:60px;line - height:30px;}table,td,th{border: 1px solid #A49D9C;border-collapse:collapse;text-align:left;font-family:calibri}</style>" + mailbody + "" + htmlcontent + "" + mailsignature;
             return htmlcontent;
         }

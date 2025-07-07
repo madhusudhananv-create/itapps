@@ -32,11 +32,9 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string ORIGINAL_DESCRIPTION { get; set; }
         public DateTime? PLANNED_TARGET_DATE { get; set; }
         public DateTime? PLANNED_ACTUAL_DATE { get; set; }     
-        public string ACTION_TYPE { get; set; }
         public string PORTFOLIO { get; set; }
-        public string ACTION_PLAN { get; set; }
+        public string PREVENTIVE_ACTION_PLAN { get; set; }
         public string ROOT_CAUSE { get; set; }
-        [NotMapped]
         public string CSS_REFERENCE { get; set; }
         [NotMapped]
         public string CUSTOMER_REMARKS { get; set; }
