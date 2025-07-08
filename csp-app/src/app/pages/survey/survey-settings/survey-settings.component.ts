@@ -64,6 +64,7 @@ export class SurveySettingsComponent implements OnInit {
     "sentdate",
     "recddate",
     "CSMList",
+    "spoc",
     "unit",
     "verified",
     "comments",

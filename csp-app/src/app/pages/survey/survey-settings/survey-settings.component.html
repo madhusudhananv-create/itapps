@@ -178,6 +178,12 @@
         {{ GetCSM(element.proJ_ID) }}
       </td>
     </ng-container>
+    <ng-container matColumnDef="spoc">
+      <th mat-header-cell *matHeaderCellDef>SPOC</th>
+      <td mat-cell *matCellDef="let element">
+        {{ element.spoc }}
+      </td>
+    </ng-container>
     <ng-container matColumnDef="contacT_ROLE">
       <th mat-header-cell *matHeaderCellDef>Role</th>
       <td mat-cell *matCellDef="let element">{{ element.contacT_ROLE }}</td>
