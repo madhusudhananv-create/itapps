@@ -503,10 +503,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.CUST_ID = custId;
             overview.PROJ_ID = projId;
             overview.RAG = "Red";
-            
-            var desc = new StringBuilder();
+
+            var desc = string.Empty;
             var reference = new StringBuilder();
-            desc.AppendLine("[To be detailed by PM] ");
+            //desc.AppendLine("[To be detailed by PM] ");
 
             reference.AppendLine("Improvement Plan for Criteria:");
             reference.Append(Environment.NewLine);
@@ -530,7 +530,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //}
             }
             overview.PORTFOLIO_NAME = portfolio;
-            overview.DESCRIPTION = desc.ToString();
+            overview.DESCRIPTION = desc;
             overview.ORIGINAL_DESCRIPTION = overview.DESCRIPTION;
             overview.SOURCE = $"Customer Success Survey - {customerName}";
             overview.SOURCE_DESCRIPTION = $"CSAT - { period}, {customerName} , Lower CSAT Score in Question ({string.Join(", ", lowratings.Select(x => x.QUESTION)) })";
