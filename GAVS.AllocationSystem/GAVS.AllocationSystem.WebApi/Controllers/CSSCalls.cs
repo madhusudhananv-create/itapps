@@ -1351,7 +1351,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CREATED_DATE = DateTime.Now,
                         UPDATED_BY = EmpId,
                         UPDATED_DATE = DateTime.Now,
-                        ISACTIVE = true
+                        ISACTIVE = true,
+                        SPOC = c.SPOC
                     };
                     CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
                     isCommitRequired = true;

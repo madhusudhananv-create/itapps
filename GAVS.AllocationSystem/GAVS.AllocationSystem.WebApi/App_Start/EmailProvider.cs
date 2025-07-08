@@ -205,7 +205,7 @@ namespace GAVS.AllocationSystem.WebApi
                         if (!string.IsNullOrWhiteSpace(email.fromAddress) && !string.IsNullOrWhiteSpace(email.fromPerson))
                             message.From = new MailAddress(email.fromAddress, email.fromPerson);
                         else
-                            message.From = new MailAddress(Constants.QUALITY_MAIL, "Neurealm - Quality Assurance");
+                            message.From = new MailAddress(Constants.QUALITY_MAIL, "Neurealm Quality Assurance");
                         if (!string.IsNullOrWhiteSpace(email.returnpath))
                             message.ReplyToList.Add(email.returnpath);
                         smtpClient.Send(message);
