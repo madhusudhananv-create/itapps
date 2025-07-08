@@ -238,4 +238,407 @@ BEGIN
 ALTER TABLE PROJECT_ACTIONITEM ADD PREVENTIVE_ACTION_PLAN varchar(max);
 END
 GO
+IF EXISTS(Select 1 from sys.objects where name ='reports_CSAT_Halfyearly' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[reports_CSAT_Halfyearly] 
+END
 
+GO
+CREATE PROCEDURE [dbo].[reports_CSAT_Halfyearly]                         
+                        
+@StartDate date,                       
+@EndDate date                          
+                      
+AS                        
+                      
+BEGIN                          
+                        
+SELECT                          
+c.cust_nm AS [Customer Name],                          
+p.proj_nm AS [Project Name],            
+[Type of Account] =  dbo.fn_getTypeOfAccount (c.cust_id)  ,           
+display_name AS [Respondent Name],                          
+B.EMAIL_ID AS [Email_Id],                          
+FORMAT(b.SURVEY_SENT_DATE, 'dd-MMM-yyy', 'EN-us') AS                          
+[CSAT sent Date],                          
+FORMAT(b.SURVEY_RECEIVED_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT received Date],  IS_VERIFIED,                        
+[Half_Year] = 'H' + CASE     
+        WHEN bt.sequence IN (1 ) THEN '1'    
+        WHEN bt.sequence IN (2) THEN '2'    
+    END + ' - ' + CONVERT(varchar, bt.Year),                   
+pp.TITLE AS [Portfolio],                          
+qr.QUESTION_CATEGORY,                          
+qr.QUESTION,                          
+qr.RATING,                          
+qr.RATING_DESCRIPTION,              
+(select top 1 frst_nm from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER,                          
+(SELECT                          
+E.FRST_NM                          
+FROM project                          
+INNER JOIN EMP_INFO E                          
+ON E.EMP_ID = project.PROJ_DM_EMP_ID                          
+WHERE project.PROJ_ID = B.PROJ_ID)                          
+AS [Customer Success Manager],                          
+(SELECT                          
+E.FRST_NM                          
+FROM project                          
+INNER JOIN EMP_INFO E                          
+ON E.EMP_ID = project.PROJ_AM_EMP_ID                          
+WHERE project.PROJ_ID = B.PROJ_ID)                          
+AS [ACCOUNT MANAGER],               
+(SELECT                            
+E.FRST_NM                            
+FROM project                            
+INNER JOIN EMP_INFO E                            
+ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                            
+WHERE project.PROJ_ID = B.PROJ_ID)                            
+AS [BU Head],                
+           
+             
+p.PROJ_STATUS,                         
+p.BUSINESS_UNIT AS [BUSSINESS UNIT],                          
+P.CONTRACTING_UNIT AS [CONTRACTING UNIT],                          
+P.METHODOLOGY AS [METHODOLOGY],                          
+P.DEPARTMENT AS [DEPARTMENT],                          
+P.PROJECT_GROUP [PROJECT GROUP],                  
+p.REVENUE_TYPE as [PROJECT TYPE],              
+P.COUNTRY [COUNTRY],                        
+CASE                      
+WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(day, -7, GETDATE()) AND pa.status IN ('Identified')                      
+THEN 'Improvement Plan submission Overdue'                      
+WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(week, -4, GETDATE()) AND pa.status NOT IN ('Completed')                      
+THEN 'Improvement Plan Completion Overdue'                      
+ELSE pa.status                       
+END AS [Action Item Status],                      
+                      
+                     
+[Voice of Customer url] ='https://csm.neurealm.com/CustomerSuccessSurvey/' + i.survey_Id,  
+PA.ROOT_CAUSE AS ROOT_CAUSE,
+PA.description as CORRECTIVE_ACTION_PLAN, 
+PREVENTIVE_ACTION_PLAN AS PREVENTIVE_ACTION_PLAN,
+FORMAT(PA.TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_TARGET_DATE,                      
+FORMAT(PA.COMPLETION_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_ACTUAL_DATE,                    
+FORMAT(PA.PLANNED_TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_TARGET_DATE,                    
+FORMAT(PA.PLANNED_ACTUAL_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_ACTUAL_DATE,         
+p.proj_id,    
+c.Cust_ID AS [Customer_ID]                         
+                    
+                      
+FROM [CSS_BATCH_CUSTOMERS] b                          
+INNER JOIN project p                          
+ON p.proj_id = b.proj_id              
+inner join CSS_SURVEY_ITERATION i on b.SURVEY_ID = i.ID                
+LEFT JOIN portfolio_project PR                          
+ON PR.PROJ_ID = P.PROJ_ID and PR.ISACTIVE = 1                        
+LEFT JOIN PORTFOLIO pp                          
+ON pr.PORTFOLIO_ID = pp.ID and pp.ISACTIVE = 1                        
+INNER JOIN customer c                          
+ON c.cust_id = b.cust_id                          
+INNER JOIN CSS_BATCHES bt                         
+ON bt.id = b.Batch_ID and bt.ISACTIVE = 1                     
+INNER JOIN CSS_QUESTION_REPLIES QR                          
+ON QR.BATCH_CUSTOMER_ID = b.ID and QR.ISACTIVE = 1                        
+LEFT JOIN PROJECT_ACTIONITEM PA                         
+ON B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1    and pa.description like '%' + qr.question +'%'                    
+WHERE b.STATUS = 'COMPLETED' and b.ISACTIVE = 1 and bt.FREQUENCY ='halfyearly'                       
+AND (bt.start_date BETWEEN @StartDate AND @EndDate                          
+OR bt.ENd_date BETWEEN @StartDate AND @EndDate)                    
+                  
+--UNION    
+                  
+--SELECT                          
+--c.cust_nm AS [Customer Name],                          
+--COALESCE( pps.PRODUCT_TITLE,P.PROJ_NM,'') AS [Project Name],              
+--[Type of Account] =  dbo.fn_getTypeOfAccount (c.cust_id) ,           
+--b.DISPLAY_NAME AS [Respondent Name],                          
+--B.EMAIL_ID AS [Email_Id],                          
+--FORMAT(b.SURVEY_SENT_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT sent Date],                          
+--FORMAT(b.SURVEY_RECEIVED_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT received Date],  IS_VERIFIED,                        
+--CASE                        
+--    WHEN MONTH(b.SURVEY_SENT_DATE) BETWEEN 1 AND 6 THEN 'H1 - ' + CONVERT(varchar, YEAR(b.SURVEY_SENT_DATE))                      
+--    WHEN MONTH(b.SURVEY_SENT_DATE) BETWEEN 7 AND 12 THEN 'H2 - ' + CONVERT(varchar, YEAR(b.SURVEY_SENT_DATE))                                     
+--END AS [HALF_Year],                          
+--pp.TITLE [Portfolio],                          
+--qr.QUESTION_CATEGORY,                          
+--qr.QUESTION,                          
+--qr.RATING,                          
+--qr.RATING_DESCRIPTION,              
+--(select top 1 frst_nm from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER,                          
+--(SELECT                          
+--E.FRST_NM                          
+--FROM project                          
+--INNER JOIN EMP_INFO E                          
+--ON E.EMP_ID = project.PROJ_DM_EMP_ID                          
+--WHERE project.PROJ_ID = p.PROJ_ID)                          
+--AS [Customer Success Manager],                          
+--(SELECT                          
+--E.FRST_NM                          
+--FROM project                          
+--INNER JOIN EMP_INFO E                          
+--ON E.EMP_ID = project.PROJ_AM_EMP_ID                          
+--WHERE project.PROJ_ID = p.PROJ_ID)                          
+--AS [ACCOUNT MANAGER],              
+--(SELECT                            
+--E.FRST_NM                            
+--FROM project                            
+--INNER JOIN EMP_INFO E                            
+--ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                            
+--WHERE project.PROJ_ID = p.PROJ_ID)                            
+--AS [BU Head],            
+             
+--p.PROJ_STATUS,                            
+--p.BUSINESS_UNIT AS [BUSSINESS UNIT],                          
+--P.CONTRACTING_UNIT AS [CONTRACTING UNIT],                          
+--P.METHODOLOGY AS [METHODOLOGY],                          
+--P.DEPARTMENT AS [DEPARTMENT],                          
+--P.PROJECT_GROUP [PROJECT GROUP],                 
+--p.REVENUE_TYPE as [PROJECT TYPE],              
+--P.COUNTRY [COUNTRY],                        
+--CASE                      
+--WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(day, -7, GETDATE()) AND pa.status IN ('Identified')                      
+--THEN 'Improvement Plan submission Overdue'                      
+--WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(week, -4, GETDATE()) AND pa.status NOT IN ('Completed')                      
+--THEN 'Improvement Plan Completion Overdue'                      
+--ELSE pa.status                       
+--END AS [Action Item Status],                        
+--PA.description as [Action Item Description],                  
+--[Voice of Customer url] ='https://csm.neurealm.com/CustomerSuccessSurvey/' + i.survey_Id,                
+--FORMAT(PA.TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_TARGET_DATE,        
+--FORMAT(PA.COMPLETION_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_ACTUAL_DATE,                    
+--FORMAT(PA.PLANNED_TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_TARGET_DATE,                    
+--FORMAT(PA.PLANNED_ACTUAL_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_ACTUAL_DATE,             
+--p.proj_id,    
+--c.Cust_ID AS [Customer_ID]                    
+                    
+--FROM [CSS_BATCH_CUSTOMER_MONTHLY] b                          
+--INNER JOIN CSS_BATCH_MONTHLY bt                          
+--ON bt.id = b.BATCH_MONTHLY_ID  and bt.ISACTIVE = 1                 
+--inner join CSS_SURVEY_ITERATION i on b.SURVEY_ID = i.ID                
+--INNER JOIN CSS_QUESTION_REPLIES QR                          
+--ON QR.Batch_Customer_Monthly_id = b.ID and QR.ISACTIVE = 1                        
+--INNER JOIN customer c                          
+--ON c.cust_id = b.cust_id                          
+                     
+                      
+                       
+--left join portfolio_products pps on b.prod_id = pps.id           
+--left join PRODUCT_RESPONSIBLE prs on b.PROD_ID = prs.PRODUCT_ID and prs.MANAGEMENT_TYPE =7    and prs.ISACTIVE =1    
+--LEFT JOIN PROJECT P on  P.PROJ_ID = coalesce(b.PROJ_ID , prs.project_id)           
+--LEFT JOIN portfolio_project PR                          
+--ON PR.PROJ_ID = P.PROJ_ID  and PR.ISACTIVE = 1         
+--LEFT JOIN PORTFOLIO pp                          
+--ON pr.PORTFOLIO_ID = pp.ID  and pp.ISACTIVE = 1         
+--LEFT JOIN PROJECT_ACTIONITEM PA                         
+--ON B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1        and pa.description like '%' + qr.question +'%'                    
+--WHERE b.STATUS = 'COMPLETED' and b.ISACTIVE = 1                        
+--AND (bt.start_date BETWEEN @StartDate AND @EndDate                          
+--OR bt.ENd_date BETWEEN @StartDate AND @EndDate)                          
+ORDER BY [Half_Year], [Customer Name];                          
+    
+    
+                        
+END 
+GO
+IF EXISTS(Select 1 from sys.objects where name ='reports_CSAT_Combined' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[reports_CSAT_Combined] 
+END
+
+GO
+CREATE PROCEDURE [dbo].[reports_CSAT_Combined]                       
+                      
+@StartDate date,                     
+@EndDate date                        
+                    
+AS                      
+                    
+BEGIN                        
+                      
+SELECT                        
+c.cust_nm AS [Customer Name],                        
+p.proj_nm AS [Project Name],          
+[Type of Account] =  dbo.fn_getTypeOfAccount (c.cust_id)  ,         
+display_name AS [Respondent Name],                        
+B.EMAIL_ID AS [Email_Id],                        
+FORMAT(b.SURVEY_SENT_DATE, 'dd-MMM-yyy', 'EN-us') AS                        
+[CSAT sent Date],                        
+FORMAT(b.SURVEY_RECEIVED_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT received Date],  IS_VERIFIED,                      
+[Year_Quarter] = 'Q' + CONVERT(varchar, bt.sequence) + ' - ' + CONVERT(varchar, bt.Year),  
+pp.TITLE AS [Portfolio],                        
+qr.QUESTION_CATEGORY,                        
+qr.QUESTION,                        
+qr.RATING,                        
+qr.RATING_DESCRIPTION,            
+(select top 1 frst_nm from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER,                        
+(SELECT                        
+E.FRST_NM                        
+FROM project                        
+INNER JOIN EMP_INFO E                        
+ON E.EMP_ID = project.PROJ_DM_EMP_ID                        
+WHERE project.PROJ_ID = B.PROJ_ID)                        
+AS [Customer Success Manager],                        
+(SELECT                        
+E.FRST_NM                        
+FROM project                        
+INNER JOIN EMP_INFO E                        
+ON E.EMP_ID = project.PROJ_AM_EMP_ID                        
+WHERE project.PROJ_ID = B.PROJ_ID)                        
+AS [ACCOUNT MANAGER],             
+(SELECT                          
+E.FRST_NM                          
+FROM project                          
+INNER JOIN EMP_INFO E                          
+ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                          
+WHERE project.PROJ_ID = B.PROJ_ID)                          
+AS [BU Head],              
+         
+           
+p.PROJ_STATUS,                       
+p.BUSINESS_UNIT AS [BUSSINESS UNIT],                        
+P.CONTRACTING_UNIT AS [CONTRACTING UNIT],                        
+P.METHODOLOGY AS [METHODOLOGY],                        
+P.DEPARTMENT AS [DEPARTMENT],                        
+P.PROJECT_GROUP [PROJECT GROUP],                
+p.REVENUE_TYPE as [PROJECT TYPE],            
+P.COUNTRY [COUNTRY],                      
+CASE                    
+WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(day, -7, GETDATE()) AND pa.status IN ('Identified')                    
+THEN 'Improvement Plan submission Overdue'                    
+WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(week, -4, GETDATE()) AND pa.status NOT IN ('Completed')                    
+THEN 'Improvement Plan Completion Overdue'                    
+ELSE pa.status                     
+END AS [Action Item Status],                    
+                    
+                   
+[Voice of Customer url] ='https://csm.neurealm.com/CustomerSuccessSurvey/' + i.survey_Id,   
+PA.ROOT_CAUSE AS ROOT_CAUSE,
+PA.description as CORRECTIVE_ACTION_PLAN, 
+PREVENTIVE_ACTION_PLAN AS PREVENTIVE_ACTION_PLAN,
+FORMAT(PA.TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_TARGET_DATE,                    
+FORMAT(PA.COMPLETION_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_ACTUAL_DATE,                  
+FORMAT(PA.PLANNED_TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_TARGET_DATE,                  
+FORMAT(PA.PLANNED_ACTUAL_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_ACTUAL_DATE,       
+p.proj_id,  
+c.Cust_ID AS [Customer_ID]                       
+                  
+                    
+FROM [CSS_BATCH_CUSTOMERS] b                        
+INNER JOIN project p                        
+ON p.proj_id = b.proj_id            
+inner join CSS_SURVEY_ITERATION i on b.SURVEY_ID = i.ID              
+LEFT JOIN portfolio_project PR                        
+ON PR.PROJ_ID = P.PROJ_ID and PR.ISACTIVE = 1                      
+LEFT JOIN PORTFOLIO pp                        
+ON pr.PORTFOLIO_ID = pp.ID and pp.ISACTIVE = 1                      
+INNER JOIN customer c                        
+ON c.cust_id = b.cust_id                        
+INNER JOIN CSS_BATCHES bt                       
+ON bt.id = b.Batch_ID and bt.ISACTIVE = 1        and bt.FREQUENCY = 'Quarterly'           
+INNER JOIN CSS_QUESTION_REPLIES QR                        
+ON QR.BATCH_CUSTOMER_ID = b.ID and QR.ISACTIVE = 1                      
+LEFT JOIN PROJECT_ACTIONITEM PA                       
+ON B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1    and pa.description like '%' + qr.question +'%'                  
+WHERE b.STATUS = 'COMPLETED' and b.ISACTIVE = 1                      
+AND (bt.start_date BETWEEN @StartDate AND @EndDate                        
+OR bt.ENd_date BETWEEN @StartDate AND @EndDate)                  
+                
+UNION  
+                
+SELECT                        
+c.cust_nm AS [Customer Name],                        
+COALESCE( pps.PRODUCT_TITLE,P.PROJ_NM,'') AS [Project Name],            
+[Type of Account] =  dbo.fn_getTypeOfAccount (c.cust_id) ,         
+b.DISPLAY_NAME AS [Respondent Name],                        
+B.EMAIL_ID AS [Email_Id],                        
+FORMAT(b.SURVEY_SENT_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT sent Date],                        
+FORMAT(b.SURVEY_RECEIVED_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT received Date],  IS_VERIFIED,                      
+CASE                      
+                       
+WHEN month BETWEEN 4 AND 6 THEN 'Q1 - '   + CONVERT(varchar, Year)                    
+WHEN month BETWEEN 7 AND 9 THEN 'Q2 - '    + CONVERT(varchar, Year)                   
+WHEN month BETWEEN 10 AND 12 THEN 'Q3 - '    + CONVERT(varchar, Year)                   
+ELSE 'Q4 - ' + CONVERT(varchar, (Year-1))                       
+END        as              
+[Quarter_Year],                        
+pp.TITLE [Portfolio],                        
+qr.QUESTION_CATEGORY,                        
+qr.QUESTION,                        
+qr.RATING,                        
+qr.RATING_DESCRIPTION,            
+(select top 1 frst_nm from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER,                        
+(SELECT                        
+E.FRST_NM                        
+FROM project                        
+INNER JOIN EMP_INFO E                        
+ON E.EMP_ID = project.PROJ_DM_EMP_ID                        
+WHERE project.PROJ_ID = p.PROJ_ID)                        
+AS [Customer Success Manager],                        
+(SELECT                        
+E.FRST_NM                        
+FROM project                        
+INNER JOIN EMP_INFO E                        
+ON E.EMP_ID = project.PROJ_AM_EMP_ID                        
+WHERE project.PROJ_ID = p.PROJ_ID)                        
+AS [ACCOUNT MANAGER],            
+(SELECT                          
+E.FRST_NM                          
+FROM project                          
+INNER JOIN EMP_INFO E                          
+ON E.EMP_ID = project.PROJ_BUHEAD_EMP_ID                          
+WHERE project.PROJ_ID = p.PROJ_ID)                          
+AS [BU Head],          
+           
+p.PROJ_STATUS,                          
+p.BUSINESS_UNIT AS [BUSSINESS UNIT],                        
+P.CONTRACTING_UNIT AS [CONTRACTING UNIT],                        
+P.METHODOLOGY AS [METHODOLOGY],                        
+P.DEPARTMENT AS [DEPARTMENT],                        
+P.PROJECT_GROUP [PROJECT GROUP],               
+p.REVENUE_TYPE as [PROJECT TYPE],            
+P.COUNTRY [COUNTRY],                      
+CASE                    
+WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(day, -7, GETDATE()) AND pa.status IN ('Identified')                    
+THEN 'Improvement Plan submission Overdue'                    
+WHEN b.SURVEY_RECEIVED_DATE <= DATEADD(week, -4, GETDATE()) AND pa.status NOT IN ('Completed')                    
+THEN 'Improvement Plan Completion Overdue'                    
+ELSE pa.status                     
+END AS [Action Item Status],                      
+               
+[Voice of Customer url] ='https://csm.neurealm.com/CustomerSuccessSurvey/' + i.survey_Id,        
+PA.ROOT_CAUSE AS ROOT_CAUSE,
+PA.description as CORRECTIVE_ACTION_PLAN, 
+PREVENTIVE_ACTION_PLAN AS PREVENTIVE_ACTION_PLAN,
+FORMAT(PA.TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_TARGET_DATE,      
+FORMAT(PA.COMPLETION_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_ACTUAL_DATE,                  
+FORMAT(PA.PLANNED_TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_TARGET_DATE,                  
+FORMAT(PA.PLANNED_ACTUAL_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_ACTUAL_DATE,           
+p.proj_id,  
+c.Cust_ID AS [Customer_ID]                  
+                  
+FROM [CSS_BATCH_CUSTOMER_MONTHLY] b                        
+INNER JOIN CSS_BATCH_MONTHLY bt                        
+ON bt.id = b.BATCH_MONTHLY_ID  and bt.ISACTIVE = 1               
+inner join CSS_SURVEY_ITERATION i on b.SURVEY_ID = i.ID              
+INNER JOIN CSS_QUESTION_REPLIES QR                        
+ON QR.Batch_Customer_Monthly_id = b.ID and QR.ISACTIVE = 1                      
+INNER JOIN customer c                        
+ON c.cust_id = b.cust_id                        
+                   
+                    
+                     
+left join portfolio_products pps on b.prod_id = pps.id         
+left join PRODUCT_RESPONSIBLE prs on b.PROD_ID = prs.PRODUCT_ID and prs.MANAGEMENT_TYPE =7    and prs.ISACTIVE =1  
+LEFT JOIN PROJECT P on  P.PROJ_ID = coalesce(b.PROJ_ID , prs.project_id)         
+LEFT JOIN portfolio_project PR                        
+ON PR.PROJ_ID = P.PROJ_ID  and PR.ISACTIVE = 1       
+LEFT JOIN PORTFOLIO pp                        
+ON pr.PORTFOLIO_ID = pp.ID  and pp.ISACTIVE = 1       
+LEFT JOIN PROJECT_ACTIONITEM PA                       
+ON B.ID  = PA.BATCH_CUSTOMER_MONTHLY_ID AND PA.ISACTIVE =1        and pa.description like '%' + qr.question +'%'                  
+WHERE b.STATUS = 'COMPLETED' and b.ISACTIVE = 1                      
+AND (bt.start_date BETWEEN @StartDate AND @EndDate                        
+OR bt.ENd_date BETWEEN @StartDate AND @EndDate)                        
+ORDER BY [Year_Quarter], [Customer Name];                    
+END   
+
+ GO
