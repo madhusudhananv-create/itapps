@@ -205,7 +205,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var tableContent = new StringBuilder();
             foreach (var item in actionItems)
             {
-                tableContent.Append(GenerateHtmlTableRowForActionItem(i++, item.CSS_REFERENCE, item.SCORE));
+                tableContent.Append(GenerateHtmlTableRowForActionItem(i++, item.CSS_REFERENCE));
             }
             var firstActionItem = actionItems.First();
             var project = projects.FirstOrDefault(x => x.PROJ_ID == firstActionItem.PROJECT_ID);
@@ -280,15 +280,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-        private string GenerateHtmlTableRowForActionItem(int rowNum, string cssReference, int? rating)
+        private string GenerateHtmlTableRowForActionItem(int rowNum, string cssReference)
         {
             //Question: How likely are you to recommend GS Lab | GAVS to a friend or colleague, if asked for your advice?     Rating: 5     Remarks: low NPS   
 
 
             var description = Regex.Replace(cssReference, @"\r\n?|\n|</br>", "");
-            var question = TakeSubstring(description, "Improvement Plan for Criteria", "- [");
-            var remarks = TakeSubstring(description, "Remarks:", "CAPA:");
-            var score = rating;
+            var question = TakeSubstring(description, "Question:", "Rating:");
+            var score = TakeSubstring(description, "Rating:", "Remarks:");
+            var remarks = TakeSubstring(description, "Remarks:", "xxx");
             var sb = new StringBuilder();
             sb.Append("<tr>");
             sb.Append($"<td>{ rowNum }</td>");
@@ -508,26 +508,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var reference = new StringBuilder();
             //desc.AppendLine("[To be detailed by PM] ");
 
-            reference.AppendLine("Improvement Plan for Criteria:");
-            reference.Append(Environment.NewLine);
+           // reference.AppendLine("Improvement Plan for Criteria:");
+           // reference.Append(Environment.NewLine);
             foreach (var item in lowratings)
             {
-                reference.AppendLine($"{item.QUESTION} - [{item.RATING}] ");
-                if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
-                {
-                    reference.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
-                }
-                reference.AppendLine("CAPA: [To be detailed by PM] ");
-                reference.Append(Environment.NewLine);
-                overview.SCORE = item.RATING;
-                //reference.AppendLine($"Question: {item.QUESTION} ");
-                //reference.Append(Environment.NewLine);
-                //reference.AppendLine($"Rating: {item.RATING} ");
-                //reference.Append(Environment.NewLine);
+                //reference.AppendLine($"{item.QUESTION} - [{item.RATING}] ");
                 //if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
                 //{
                 //    reference.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
                 //}
+                //reference.AppendLine("CAPA: [To be detailed by PM] ");
+                //reference.Append(Environment.NewLine);
+                overview.SCORE = item.RATING;
+                reference.AppendLine($"Question: {item.QUESTION} ");
+                reference.Append(Environment.NewLine);
+                reference.AppendLine($"Rating: {item.RATING} ");
+                reference.Append(Environment.NewLine);
+                if (!string.IsNullOrWhiteSpace(item.RATING_DESCRIPTION))
+                {
+                    reference.AppendLine($"Remarks: {item.RATING_DESCRIPTION} ");
+                }
             }
             overview.PORTFOLIO_NAME = portfolio;
             overview.DESCRIPTION = desc;
