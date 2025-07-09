@@ -63,17 +63,17 @@ CASE WHEN (A.TARGET_DATE < GETDATE() AND A.STATUS  IN ('Planned' , 'Started', 'I
 WHEN  (A.TARGET_DATE >= GETDATE() AND A.STATUS  IN ('Planned' , 'Started',  'Identified')) THEN 'DUE_FOR_CLOSURE'                           
 END  AS STATUS_TYPE, A.ISACTIVE,A.PREVENTIVE_ACTION_PLAN,
 
-CASE WHEN CHARINDEX('Criteria:', A.CSS_REFERENCE) > 0 THEN LTRIM(RTRIM(REPLACE(REPLACE(SUBSTRING(A.CSS_REFERENCE, 
-CHARINDEX('Criteria:', A.CSS_REFERENCE) + 9,CHARINDEX(' - [', A.CSS_REFERENCE) - CHARINDEX('Criteria:', A.CSS_REFERENCE) - 9), CHAR(13), ''),
-CHAR(10), ''))) END AS CSS_REFERENCE,
+CASE WHEN CSS_REFERENCE like'Question:%' and CHARINDEX('Question:', A.CSS_REFERENCE) > 0 THEN LTRIM(RTRIM(REPLACE(REPLACE(SUBSTRING(A.CSS_REFERENCE, 
+CHARINDEX('Question:', A.CSS_REFERENCE) + 9,CHARINDEX('Rating', A.CSS_REFERENCE) - CHARINDEX('Question:', A.CSS_REFERENCE) - 9), CHAR(13), ''),
+CHAR(10), '')))  else NULL END AS CSS_REFERENCE,
 
-CASE WHEN CHARINDEX(' - [', A.CSS_REFERENCE) > 0 THEN CAST(SUBSTRING(A.CSS_REFERENCE,CHARINDEX(' - [', A.CSS_REFERENCE) + 4,
-CHARINDEX(']', A.CSS_REFERENCE) - CHARINDEX(' - [', A.CSS_REFERENCE) - 4) AS INT)  END AS SCORE,
+CASE WHEN CSS_REFERENCE like'Question:%' and CHARINDEX('Rating:', A.CSS_REFERENCE) > 0 THEN cast(LTRIM(RTRIM(REPLACE(REPLACE(SUBSTRING(A.CSS_REFERENCE, 
+CHARINDEX('Rating:', A.CSS_REFERENCE) + 7,CHARINDEX('Remarks', A.CSS_REFERENCE) - CHARINDEX('Rating:', A.CSS_REFERENCE) - 7), CHAR(13), ''),
+CHAR(10), ''))) as int) else NULL END AS SCORE,
 
- CASE WHEN CHARINDEX('Remarks:', A.CSS_REFERENCE) > 0 THEN LTRIM(RTRIM(
- CASE WHEN CHARINDEX('CAPA:', A.CSS_REFERENCE) > CHARINDEX('Remarks:', A.CSS_REFERENCE)
- THEN SUBSTRING(A.CSS_REFERENCE, CHARINDEX('Remarks:', A.CSS_REFERENCE) + 8,
-   CHARINDEX('CAPA:', A.CSS_REFERENCE) - CHARINDEX('Remarks:', A.CSS_REFERENCE) - 8) END)) END AS CUSTOMER_REMARKS  
+
+CASE WHEN CSS_REFERENCE like'Question:%' and CHARINDEX('Remarks:', A.CSS_REFERENCE) > 0 THEN LTRIM(RTRIM(SUBSTRING(A.CSS_REFERENCE, 
+CHARINDEX('Remarks:', A.CSS_REFERENCE) +len('Remarks:'),len(a.CSS_REFERENCE)))) else NULL END AS CUSTOMER_REMARKS 
   
 FROM PROJECT_ACTIONITEM A                                        
 INNER JOIN PROJECT P ON a.PROJECT_ID = p.PROJ_ID AND P.PROJ_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@PROJIDS,',')) AND A.ISACTIVE = 1                 
@@ -86,21 +86,45 @@ GO
 
 
 --css related
-alter table css_question_models add CATEGORY varchar(250)  
-update css_question_models set category ='Project'
-update css_question_models set category ='Pulse' where model_name = 'Half Yearly'
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'css_question_models' AND COLUMN_NAME='CATEGORY') 
+BEGIN
+    alter table css_question_models add CATEGORY varchar(250) 
+END
 
+If  exists (select 1 from css_question_models)  --doubt
+BEGIN
+    update css_question_models set category ='Project'
+END
 
-alter table CSS_BATCHES add CATEGORY varchar(250)  
-update CSS_BATCHES set category ='Project'
-update CSS_BATCHES set category ='Pulse' where Frequency = 'Halfyearly'
- 
+If  exists (select 1 from css_question_models where model_name = 'Half Yearly')
+BEGIN
+    update css_question_models set category ='Pulse' where model_name = 'Half Yearly'
+END
 
- insert into css_batches values
- ('Half-Yearly', 1, 2025, '2025-1-1', '2025-6-30', 'CREATED', '102802', getdate(), '102802', getdate(), 1, 'Project')
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'CSS_BATCHES' AND COLUMN_NAME='CATEGORY') 
+BEGIN
+    alter table CSS_BATCHES add CATEGORY varchar(250)  
+END 
 
- update css_batches set frequency ='Half-Yearly' where id = 35
+If  exists (select 1 from CSS_BATCHES)  --doubt
+BEGIN
+    update CSS_BATCHES set category ='Project'
+END
 
+If exists (select 1 from css_question_models where Frequency = 'Halfyearly')
+BEGIN
+    update CSS_BATCHES set category ='Pulse' where Frequency = 'Halfyearly'
+END
+
+ If  exists (select 1 from css_batches where Frequency = 'Half-Yearly' and sequence=1)   --doubt
+ BEGIN
+    insert into css_batches values('Half-Yearly', 1, 2025, '2025-1-1', '2025-6-30', 'CREATED', '102802', getdate(), '102802', getdate(), 1, 'Project')
+ END
+
+ If exists (select 1 from css_batches where id=35)
+ BEGIN
+    update css_batches set frequency ='Half-Yearly' where id = 35
+ END
  go
 
   CREATE proc usp_insertConfigData
@@ -152,55 +176,84 @@ GO
  
 
  GO
- alter table css_question_master add PERSPECTIVE varchar(250)
-alter table css_question_master add SEQUENCE int null
-update css_question_master set perspective = rating_param
 
-alter table css_question_replies add PERSPECTIVE varchar(250)
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'css_question_master' AND COLUMN_NAME='PERSPECTIVE') 
+BEGIN
+    alter table css_question_master add PERSPECTIVE varchar(250)
+END
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'css_question_master' AND COLUMN_NAME='SEQUENCE') 
+BEGIN
+    alter table css_question_master add SEQUENCE int null
+END
 
 
- update css_question_master set perspective = 'Overall Experience' where question like 'How satisfied are you with your overall experience%'
-update css_question_master set perspective = 'Timeline Adherence' where question like 'How satisfied are you on the adherence to agreed%'
-update css_question_master set perspective = 'Quality of Delivery' where question like 'How satisfied are you on the quality of agreed project deliverables%'
-update css_question_master set perspective = 'Risk Management & Responsiveness' where question like 'How satisfied are you with the risks & issues managed%'
-update css_question_master set perspective = 'Resource Competency' where question like 'How satisfied are you with the competency of the resources%'
-update css_question_master set perspective = 'Thought Leadership' where question like 'How satisfied are you with the innovations and thought%'
-update css_question_master set perspective = 'Timely Resource Fulfillment' where question like 'How satisfied are you with the onboarding of the resources%'
+If exists (select 1 from css_question_master)  --doubt
+BEGIN
+    update css_question_master set perspective = rating_param
+END
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'css_question_replies' AND COLUMN_NAME='PERSPECTIVE') 
+BEGIN
+    alter table css_question_replies add PERSPECTIVE varchar(250)
+END
+
+
+If exists ( select 1 from css_question_master)  --doubt
+BEGIN
+    update css_question_master set perspective = 'Overall Experience' where question like 'How satisfied are you with your overall experience%'
+    update css_question_master set perspective = 'Timeline Adherence' where question like 'How satisfied are you on the adherence to agreed%'
+    update css_question_master set perspective = 'Quality of Delivery' where question like 'How satisfied are you on the quality of agreed project deliverables%'
+    update css_question_master set perspective = 'Risk Management & Responsiveness' where question like 'How satisfied are you with the risks & issues managed%'
+    update css_question_master set perspective = 'Resource Competency' where question like 'How satisfied are you with the competency of the resources%'
+    update css_question_master set perspective = 'Thought Leadership' where question like 'How satisfied are you with the innovations and thought%'
+    update css_question_master set perspective = 'Timely Resource Fulfillment' where question like 'How satisfied are you with the onboarding of the resources%'
+END
+ 
+If exists ( select 1 from css_question_master)
+BEGIN
+    update css_question_master set sequence = 1 where question like 'How satisfied are you with your overall experience%'
+    update css_question_master set sequence = 2  where question like 'How satisfied are you on the adherence to agreed%'
+    update css_question_master set sequence = 3 where question like 'How satisfied are you on the quality of agreed project deliverables%'
+    update css_question_master set sequence = 5   where question like 'How satisfied are you with the risks & issues managed%'
+    update css_question_master set sequence = 4   where question like 'How satisfied are you with the competency of the resources%'
+    update css_question_master set sequence = 6   where question like 'How satisfied are you with the innovations and thought%'
+    update css_question_master set sequence = 7   where question like 'How satisfied are you with the onboarding of the resources%'
+END
+ 
+
+
+
+If exists (select 1 from css_question_master where model_id in (10,9,8)and QUESTION_CATEGORY ='nps')
+BEGIN
+    update css_question_master set isactive = 0 where  model_id in 
+    (10,
+    9,
+    8)
+    and QUESTION_CATEGORY ='nps'
+END
 
  
-update css_question_master set sequence = 1 where question like 'How satisfied are you with your overall experience%'
-update css_question_master set sequence = 2  where question like 'How satisfied are you on the adherence to agreed%'
-update css_question_master set sequence = 3 where question like 'How satisfied are you on the quality of agreed project deliverables%'
-update css_question_master set sequence = 5   where question like 'How satisfied are you with the risks & issues managed%'
-update css_question_master set sequence = 4   where question like 'How satisfied are you with the competency of the resources%'
-update css_question_master set sequence = 6   where question like 'How satisfied are you with the innovations and thought%'
-update css_question_master set sequence = 7   where question like 'How satisfied are you with the onboarding of the resources%'
-
- 
-
- 
-update css_question_master set isactive = 0 where  model_id in 
-(10,
-9,
-8)
-and QUESTION_CATEGORY ='nps'
-
- 
-
-update css_question_master set question = 'How satisfied are you with your Overall Experience while working with Neurealm (Formerly GS Lab | GAVS)?' where question like 'How satisfied are you with your overall experience%'
-update css_question_master set question = 'How satisfied are you with the Risks & Issues managed by the project team and responsiveness to the concerns raised?' where question like 'How satisfied are you with the risks & Issues managed by the project team and responsiveness to the concerns raised?'
-update css_question_master set question = 'How satisfied are you on the Quality of agreed project deliverables/ services provided?' where question like 'How satisfied are you on the quality of agreed project deliverables/ services provided?'
-update css_question_master set question = 'How satisfied are you on the adherence to agreed Timelines/ SLA for the deliverables / services provided?' where question like 'How satisfied are you on the adherence to agreed Timelines/ SLA for the deliverables / services provided?'
-update css_question_master set question = 'How satisfied are you with the Competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?' where question like 'How satisfied are you with the competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?'
-
-update css_question_master set question = 'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm (Formerly GS Lab | GAVS)?' where question like 'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm (Formerly GS Lab | GAVS)?'
-update css_question_master set question = 'How satisfied are you with the Onboarding of the resources / talents as per the expected timeline?' where question like 'How satisfied are you with the competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?'
- 
- 
+If exists ( select 1 from css_question_master where question like 'How satisfied are you%')
+BEGIN
+    update css_question_master set question = 'How satisfied are you with your Overall Experience while working with Neurealm (Formerly GS Lab | GAVS)?' where question like 'How satisfied are you with your overall experience%'
+    update css_question_master set question = 'How satisfied are you with the Risks & Issues managed by the project team and responsiveness to the concerns raised?' where question like 'How satisfied are you with the risks & Issues managed by the project team and responsiveness to the concerns raised?'
+    update css_question_master set question = 'How satisfied are you on the Quality of agreed project deliverables/ services provided?' where question like 'How satisfied are you on the quality of agreed project deliverables/ services provided?'
+    update css_question_master set question = 'How satisfied are you on the adherence to agreed Timelines/ SLA for the deliverables / services provided?' where question like 'How satisfied are you on the adherence to agreed Timelines/ SLA for the deliverables / services provided?'
+    update css_question_master set question = 'How satisfied are you with the Competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?' where question like 'How satisfied are you with the competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?'
+    update css_question_master set question = 'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm (Formerly GS Lab | GAVS)?' where question like 'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm (Formerly GS Lab | GAVS)?'
+    update css_question_master set question = 'How satisfied are you with the Onboarding of the resources / talents as per the expected timeline?' where question like 'How satisfied are you with the competency of the resources / talents including understanding of business requirements and demonstrating technical expertise?'
+END
 
  -- for csat contact
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'css_batch_customers' AND COLUMN_NAME='SPOC') 
+Begin
  alter table css_batch_customers add SPOC varchar(500) null
+end
+ IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Customer_Projects' AND COLUMN_NAME='SPOC') 
+Begin
  alter table Customer_Projects add SPOC varchar(500) null
+end
 
  go
 
@@ -238,6 +291,7 @@ BEGIN
 ALTER TABLE PROJECT_ACTIONITEM ADD PREVENTIVE_ACTION_PLAN varchar(max);
 END
 GO
+
 IF EXISTS(Select 1 from sys.objects where name ='reports_CSAT_Halfyearly' AND type='P')
 BEGIN
        DROP PROCEDURE [dbo].[reports_CSAT_Halfyearly] 
