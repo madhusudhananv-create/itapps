@@ -216,7 +216,7 @@
           </mat-select>
         </mat-form-field>
         <button *ngIf="canUpdateToCustomer && csatBased" type="button" (click)="SendUpdateToCustomer(EditActionitem)"
-          class="btn btn-success" [disabled]="isSaved">Send Update to Customer</button>
+          class="btn btn-success" [disabled]="true">Send Update to Customer</button>
       </div>
       <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && EditActionitem.portfoliO_NAME != ''">
         <mat-form-field style="width:calc(50% - 20px)">
