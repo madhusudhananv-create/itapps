@@ -258,7 +258,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 return BadRequest("Please choose CSM");
             }
-            var csatdata = CSPdb.AppRepo.GetCSSTableForPeriod1(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS, csatInsightsInput.CSM_IDS, csatInsightsInput.FREQUENCY);
+            var csatdata = CSPdb.AppRepo.GetCSSTableForPeriod1(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS, csatInsightsInput.CSM_IDS, csatInsightsInput.FREQUENCY ?? "both");
             var absoluteUrl = helper.GetAbsoulteUri();
             foreach (var item in csatdata)
             {

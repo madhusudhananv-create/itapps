@@ -500,3 +500,20 @@ COUNTRY
 GO
 
 
+--ACTUAL_DURATION 
+if Exists(select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='Task' and COLUMN_NAME='ACTUAL_DURATION' and(DATA_TYPE <> 'decimal' or NUMERIC_PRECISION <> 10 or NUMERIC_SCALE <> 2 or IS_NULLABLE <> 'YES'))
+BEGIN
+    alter table task alter column actual_duration decimal(10,2) null
+END
+
+
+--vARCHARSIZE 
+if Exists(select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='PROJECT_INSCOPE_DETAILS' and COLUMN_NAME='Tools' and(DATA_TYPE <> 'varchar(max)'))
+BEGIN
+alter table PROJECT_INSCOPE_DETAILS alter column Tools varchar(max)
+end
+
+if Exists(select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='PROJECT_INSCOPE_DETAILS' and COLUMN_NAME='TECHNOLOGY' and(DATA_TYPE <> 'varchar(max)'))
+BEGIN
+alter table PROJECT_INSCOPE_DETAILS alter column TECHNOLOGY varchar(max)
+END
