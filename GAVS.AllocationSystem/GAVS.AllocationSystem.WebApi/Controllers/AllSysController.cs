@@ -25589,7 +25589,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ep.SendEmail
                     (
                     new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
-                    new EmailContent { from = _email, to = emailid, cc = sender, content = emailContent, subject = "GAVS invites you to join the Customer Success Management Platform", hasAttachments = false, attachmentFilePath = "" }, Request
+                    new EmailContent { from = _email, to = emailid, cc = sender, content = emailContent, subject = "Neurealm invites you to join the Customer Success Management Platform", hasAttachments = false, attachmentFilePath = "" }, Request
                     );
             }
         }

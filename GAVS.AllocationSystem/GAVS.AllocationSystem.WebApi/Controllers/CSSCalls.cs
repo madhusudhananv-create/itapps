@@ -1309,7 +1309,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 GenerateBatchCustomersHalfyearly(batchId, EmpId);
 
 
-            List<CUSTOMER_PROJECTS> customersProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CSAT_SURVEY && t.CSAT_FREQUENCY == frequency).ToList();
+            List<CUSTOMER_PROJECTS> customersProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CSAT_SURVEY && t.CSAT_FREQUENCY == frequency && t.ISACTIVE).ToList();
             List<int> CustomerId = customersProjects.Select(t => t.CUSTOMER_USER_ID).Distinct().ToList();
             List<CUSTOMER_USERS> customers = CSPdb.CUSTOMER_USERS.GetAll().Where(t => CustomerId.Contains(t.ID)).ToList();
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchId);
@@ -1334,9 +1334,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")
 
                         && project.END_DATE < DateTime.Today.AddDays(-90)) continue;
-                    if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID)) continue;
+                    if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID && x.Is_Approved.GetValueOrDefault() && x.Bit_Value.GetValueOrDefault())) continue;
                     //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
-                    if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
+                    // if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
                     if (existingCustomers.Any(x => x.PROJ_ID == c.PROJ_ID && x.EMAIL_ID == cust.EMAILID)) continue;
                     var BatchCustomer = new CSS_BATCH_CUSTOMERS()
                     {

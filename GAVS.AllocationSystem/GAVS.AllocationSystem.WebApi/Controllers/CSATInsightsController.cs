@@ -284,7 +284,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var yearQuarters = csatList.Select(x => x.YEAR_QUARTER).ToList();
             var sorter = new QuarterSorter();
-            if (frequency.ToLower() == "halfyearly" || frequency.ToLower() == "quarterly")
+            if (frequency.ToLower() == "halfyearly" || frequency.ToLower() == "half-yearly" || frequency.ToLower() == "quarterly")
             {
                 var filter = frequency.ToLower() == "quarterly" ? "Q" : "H";
                 return yearQuarters.Where(q => q.ToUpper().StartsWith(filter)).Distinct().OrderBy(t => t, sorter).ToList();
@@ -941,6 +941,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     {
         public int Compare(string x, string y)
         {
+            if (x == null || y == null) return 0;
             try
             {
                 var xyear = x.Split(' ')[1];
