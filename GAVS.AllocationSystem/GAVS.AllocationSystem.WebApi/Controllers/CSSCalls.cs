@@ -569,6 +569,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string mailContent;
             string tomail = cust.EMAIL_ID;
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);
+            var surveyIteration = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMERS_ID == cust.ID);
+            int? validityDays = surveyIteration?.VALIDITY_DAYS;
+            var validityDate = cust.SURVEY_SENT_DATE.Value.AddDays(int.Parse(validityDays.ToString()));
+
             if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE"))
                 return;
             //var skipCSATSetting = getprojectconfi("SKIP_CSAT",pro);
@@ -586,22 +590,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
                 if (string.IsNullOrWhiteSpace(projectId)) return;
                 project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
-                projectText = "portfolio " + cust.PROJ_NM;
+                projectText =  cust.PROJ_NM;
             }
             else
             {
-                projectText = "project " + cust.PROJ_NM;
+                projectText =  cust.PROJ_NM;
             }
 
             string ccmail = helper.GetDBConfig("CSS_LINK_CC", "-1");
             var cclist = helper.getProjectResposnibleMailIds(project, true, true, true);
             cclist.Add(ccmail);
 
-            subject = Frequency + " Customer Satisfaction Survey for " + projectText + " for the period of " + PreviousPeriod;
+            subject = "Neurealm " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
             ccmail = helper.ConcatEmails(cclist);
             if (!string.IsNullOrWhiteSpace(cust.SPOC))
                 ccmail += "," + cust.SPOC;
-
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
             EmailContentValues.Add("PREVIOUS_SURVEY_DATE", PreviousSurveyDate);
@@ -609,6 +612,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("CURRENT_PERIOD", CurrentPeriod);
             EmailContentValues.Add("PREVIOUS_PERIOD", PreviousPeriod);
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
+            EmailContentValues.Add("CUSTOMER_NAME", cust.CUST_NM);
+            EmailContentValues.Add("PROJECT", projectText);
+            if (validityDate > DateTime.Now)
+            {
+                EmailContentValues.Add("END_DATE", validityDate.ToString("dd-MMM-yyyy"));
+            }
+            else
+            {
+                throw new Exception($"Survey validity for customer {cust.CUST_NM} has expired on {validityDate: dd-MMM-yyyy}. Cannot send survey reminder.");
+            }
 
             mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyReminder.htm", EmailContentValues);
 
