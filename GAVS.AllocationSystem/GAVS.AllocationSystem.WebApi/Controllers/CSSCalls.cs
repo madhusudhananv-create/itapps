@@ -568,11 +568,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string statusMsg = string.Empty;
             string mailContent;
             string tomail = cust.EMAIL_ID;
-            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);
-            var surveyIteration = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMERS_ID == cust.ID);
-            int? validityDays = surveyIteration?.VALIDITY_DAYS;
-            var validityDate = cust.SURVEY_SENT_DATE.Value.AddDays(int.Parse(validityDays.ToString()));
-
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);           
             if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE"))
                 return;
             //var skipCSATSetting = getprojectconfi("SKIP_CSAT",pro);
@@ -601,7 +597,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var cclist = helper.getProjectResposnibleMailIds(project, true, true, true);
             cclist.Add(ccmail);
 
-            subject = "Neurealm " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
+            subject = " A Friendly Reminder - Neurealm " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
             ccmail = helper.ConcatEmails(cclist);
             if (!string.IsNullOrWhiteSpace(cust.SPOC))
                 ccmail += "," + cust.SPOC;
@@ -616,7 +612,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("PROJECT", projectText);
             if (validityDate > DateTime.Now)
             {
-                EmailContentValues.Add("END_DATE", validityDate.ToString("dd-MMM-yyyy"));
+                EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(cust.SURVEY_SENT_DATE.Value, cust.CUST_ID));
             }
             else
             {
