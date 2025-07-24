@@ -609,16 +609,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("PREVIOUS_PERIOD", PreviousPeriod);
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
             EmailContentValues.Add("CUSTOMER_NAME", cust.CUST_NM);
-            EmailContentValues.Add("PROJECT", projectText);
-            if (validityDate > DateTime.Now)
-            {
-                EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(cust.SURVEY_SENT_DATE.Value, cust.CUST_ID));
-            }
-            else
-            {
-                throw new Exception($"Survey validity for customer {cust.CUST_NM} has expired on {validityDate: dd-MMM-yyyy}. Cannot send survey reminder.");
-            }
-
+            EmailContentValues.Add("PROJECT", projectText);          
+            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(cust.SURVEY_SENT_DATE.Value, cust.CUST_ID));
             mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyReminder.htm", EmailContentValues);
 
             var ep = new EmailProvider(Cldb, CSPdb);
