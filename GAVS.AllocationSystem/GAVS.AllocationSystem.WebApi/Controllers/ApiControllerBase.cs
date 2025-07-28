@@ -174,6 +174,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ROOT_CAUSE = results.ROOT_CAUSE;
                 overview.SCORE = results.SCORE;
                 overview.CUSTOMER_REMARKS = results.CUSTOMER_REMARKS;
+                overview.PERSPECTIVE = results.PERSPECTIVE;
                 CSPdb.PROJECT_ACTIONITEM.Add(overview);
                 CSPdb.Commit();
                 results.ACTION_ITEM_ID = overview.ID;

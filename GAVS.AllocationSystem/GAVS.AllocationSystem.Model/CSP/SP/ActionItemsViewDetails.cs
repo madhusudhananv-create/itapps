@@ -52,6 +52,8 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string CUSTOMER_REMARKS { get; set; }
         [NotMapped]
         public int? SCORE { get; set; }
+        [NotMapped]
+        public string PERSPECTIVE { get; set; }
 
 
     }
