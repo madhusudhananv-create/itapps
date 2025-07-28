@@ -270,21 +270,21 @@
       </div>
       
       <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
-        <mat-form-field style="width:50%">
-          <textarea name="txtCssReference" maxlength="200" [(ngModel)]="EditActionitem.csS_REFERENCE" matInput
-            placeholder="CSS Reference" ></textarea>
+        <mat-form-field style="width:20%">
+          <textarea name="txtPerspective" maxlength="200" [(ngModel)]="EditActionitem.perspective" matInput
+            placeholder="Perspective" disabled="true" ></textarea>
         </mat-form-field>
       </div>
       <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:5%">
           <textarea name="txtScore" maxlength="3" [(ngModel)]="EditActionitem.score" matInput placeholder="Score"
-            ></textarea>
+            disabled ="true"></textarea>
         </mat-form-field>
       </div>
       <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:75%">
           <textarea name="txtCustomerRemarks" maxlength="2000" [(ngModel)]="EditActionitem.customeR_REMARKS" matInput
-            placeholder="Customer Remarks" required></textarea>
+           disabled ="true" placeholder="Customer Remarks" required></textarea>
         </mat-form-field>
       </div>
       <div class="row">

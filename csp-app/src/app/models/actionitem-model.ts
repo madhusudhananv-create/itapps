@@ -56,4 +56,5 @@ export class ActionitemModelNew
     score: number;
     preventivE_ACTION_PLAN: string;
     csS_REFERENCE: string;
+    perspective: string;
 }
