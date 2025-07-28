@@ -346,6 +346,7 @@
     <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.3.sql" />
     <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.4.sql" />
     <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.5.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.6.sql" 
     <Content Include="DB Scripts\GSLabIntegration\BAS_CustID_procs_updates.sql" />
     <Content Include="DB Scripts\GSLabIntegration\BAS_EMPID_procs_updates.sql" />
     <Content Include="DB Scripts\GSLabIntegration\CSP_CustID_procs_updates.sql" />
@@ -481,6 +482,7 @@
     <Content Include="UploadFile\Mails\AddAuditTaskForCSAT.htm" />
     <Content Include="UploadFile\Mails\AddInnovation.htm" />
     <Content Include="UploadFile\Mails\AddNewActionItem.htm" />
+    <Content Include="UploadFile\Mails\AddNewIssue.htm" />
     <Content Include="UploadFile\Mails\AuditScoreNotSubmitted.htm" />
     <Content Include="UploadFile\Mails\AuditNotCompleted.htm" />
     <Content Include="UploadFile\Mails\AddNewTask.htm" />
