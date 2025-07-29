@@ -271,5 +271,108 @@ ORDER BY A.IDENTIFIED_DATE desc
 END 
 GO
 
+ IF EXISTS(Select 1 from sys.objects where name ='reports_CSAT_Combined_Aggregate' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[reports_CSAT_Combined_Aggregate] 
+END
+
+GO
+
+create procedure  [dbo].[reports_CSAT_Combined_Aggregate] 
+@StartDate date,                     
+@EndDate date                        
+as
+
+DECLARE @table table( 
+[CUSTOMER NAME] varchar(4000),
+[PROJECT NAME]	varchar(4000),
+[TYPE OF ACCOUNT]	 varchar(4000),
+[RESPONDENT NAME]	 varchar(4000),
+EMAIL_ID	 varchar(4000),
+[CSAT SENT DATE]	datetime ,
+[CSAT RECEIVED DATE]	datetime null,
+IS_VERIFIED	bit,
+YEAR_QUARTER	 varchar(4000),
+PORTFOLIO	varchar(4000),
+QUESTION_CATEGORY	varchar(4000),
+PERSPECTIVE	varchar(4000),
+RATING	int ,
+RATING_DESCRIPTION varchar(4000),
+PROJECT_MANAGER	 varchar(4000),
+[CUSTOMER SUCCESS MANAGER]	varchar(4000),
+[ACCOUNT MANAGER]	varchar(4000),
+[BU HEAD]	 varchar(4000),
+[CSAT SPOC]	 varchar(4000),
+PROJ_STATUS	 varchar(4000),
+[BUSSINESS UNIT]	varchar(4000),
+[CONTRACTING UNIT]	varchar(4000),
+METHODOLOGY	varchar(4000),
+DEPARTMENT	varchar(4000),
+[PROJECT GROUP]	varchar(4000),
+[PROJECT TYPE]	varchar(4000),
+COUNTRY	varchar(4000),
+[ACTION ITEM STATUS]	varchar(4000),
+--[ACTION ITEM DESCRIPTION]	varchar(4000),
+[ROOT CAUSE] varchar(4000),
+[CORRECTIVE ACTION PLAN] varchar(4000),
+[PREVENTIVE ACTION PLAN] varchar(4000),
+[VOICE OF CUSTOMER URL]	varchar(4000),
+ACTION_PLAN_SUBMISSION_TARGET_DATE	datetime null,
+ACTION_PLAN_SUBMISSION_ACTUAL_DATE	datetime null,
+ACTION_PLAN_COMPLETION_TARGET_DATE	datetime null,
+ACTION_PLAN_COMPLETION_ACTUAL_DATE	datetime null,
+PROJ_ID	varchar(4000),
+CUSTOMER_ID varchar(4000) 
+)
+
+insert into @table 
+exec  reports_CSAT_Combined @StartDate, @EndDate
+
+select  [CUSTOMER NAME]  ,
  
 
+[PROJECT NAME],
+[TYPE OF ACCOUNT]	  ,
+
+[CUSTOMER SUCCESS MANAGER], 
+[ACCOUNT MANAGER]	 ,
+[BU HEAD]	  ,
+PROJ_STATUS	  ,
+[BUSSINESS UNIT]	 ,
+[CONTRACTING UNIT]	 ,
+METHODOLOGY	 ,
+DEPARTMENT	 ,
+[PROJECT GROUP]	 ,
+[PROJECT TYPE]	 ,
+COUNTRY	 ,
+
+YEAR_QUARTER, Criteria_AVG = (select avg(t1.rating) from @table t1 where t1.[PROJECT NAME] = t.[PROJECT NAME] and t1.YEAR_QUARTER = t.YEAR_QUARTER and t1.QUESTION_CATEGORY = 'criteria' ),
+NPS_AVG = (select avg(t1.rating) from @table t1 where t1.[PROJECT NAME] = t.[PROJECT NAME] and t1.YEAR_QUARTER = t.YEAR_QUARTER and t1.QUESTION_CATEGORY = 'nps' ) from @table t
+group by  [CUSTOMER NAME]  ,
+ 
+
+[PROJECT NAME],
+[TYPE OF ACCOUNT]	  ,
+YEAR_QUARTER,
+[CUSTOMER SUCCESS MANAGER], 
+[ACCOUNT MANAGER]	 ,
+[BU HEAD]	  ,
+PROJ_STATUS	  ,
+[BUSSINESS UNIT]	 ,
+[CONTRACTING UNIT]	 ,
+METHODOLOGY	 ,
+DEPARTMENT	 ,
+[PROJECT GROUP]	 ,
+[PROJECT TYPE]	 ,
+COUNTRY	 
+ 
+GO
+
+
+
+
+
+
+update CONTACTS set CONTACT_NAME = 'Greg Jensen' where CONTACT_EMAILID='Greg.Jensen@flyfrontier.com'
+update customer_users set DISPLAY_NAME='Greg Jensen' where emailid='Greg.Jensen@flyfrontier.com'
+update CSS_BATCH_CUSTOMERS set DISPLAY_NAME='Greg Jensen' where email_id='Greg.Jensen@flyfrontier.com'
