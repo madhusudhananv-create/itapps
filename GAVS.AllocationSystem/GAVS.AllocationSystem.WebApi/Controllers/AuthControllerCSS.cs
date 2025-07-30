@@ -493,7 +493,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             if (validDate < DateTime.Now)
             {
-                throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Customer Success Survey link is not valid anymore as { validDate.ToString("dd-MM-yyyy")} is the last valid date since it is triggered. Please contact the project team to enable it."));
+                throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Thank you for your interest to participate in Neurealm Half Yearly Customer Satisfaction Survey! This survey is now closed. In case of any feedback on this survey process, please contact csatsupport@neurealm.com. On behalf of Neurealm, we once again sincerely thank you for your time and effort."));
             }
 
         }
