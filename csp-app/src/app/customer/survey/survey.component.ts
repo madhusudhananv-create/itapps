@@ -275,30 +275,31 @@ export class SurveyComponent implements OnInit {
         this.gettry = 2;
         this.service_GetSurveyQuestions(code);
       }
-      else
-        console.log(error);
-      const errorMsg = this._util.GetErrorMessage(error);
-      console.log(errorMsg);
-      if (errorMsg.includes("This survey is now closed")) {
-        this.dialogHeading = 'Survey Closed!';
-        this.dialogMessage = errorMsg;
-        const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
-          width: '500px',
-          height: '180px',
-          data: '',
-        });
-
-        dialogRef.afterClosed().subscribe(result => {
-          if (result === 1) {
-            this.showCSSFields = false;
-            this.bShowNpsComments = false;
-            this.questions_NPS = null;
-            this.IsCompleted = true;
-          }
-        });
-      }
       else {
-        this._util.serviceError(error);
+        const errorMsg = this._util.GetErrorMessage(error);
+        console.log(errorMsg);
+        if (errorMsg.includes("This survey is now closed")) {
+          this.dialogSuccess = true;
+          this.dialogHeading = 'Survey Closed!';
+          this.dialogMessage = errorMsg;
+          const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
+            width: '600px',
+            height: '250px',
+            data: '',
+          });
+
+          dialogRef.afterClosed().subscribe(result => {
+            if (result === 1) {
+              this.showCSSFields = false;
+              this.bShowNpsComments = false;
+              this.questions_NPS = null;
+              this.IsCompleted = true;
+            }
+          });
+        }
+        else {
+          this._util.serviceError(error);
+        }
       }
     });
   }
