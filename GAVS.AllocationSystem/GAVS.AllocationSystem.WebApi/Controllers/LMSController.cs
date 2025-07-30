@@ -182,6 +182,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             LMS_COURSE_ENROLLMENT courseEnrollment = JsonConvert.DeserializeObject<LMS_COURSE_ENROLLMENT>(json);
 
             CheckRequestIsValid(courseEnrollment, empId);
+            if(string.IsNullOrWhiteSpace(courseEnrollment.EMP_ID))
+                return Content(HttpStatusCode.Conflict, EMPTY_EMPLOYEEID_MSG + courseEnrollment.LMS_ENROLLMENT_ID);
             try
             {
                 var course = Cldb.LMS_COURSE.GetAll().FirstOrDefault(x => x.LMS_COURSE_ID == courseEnrollment.COURSE_ID && x.ISACTIVE);

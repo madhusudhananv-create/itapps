@@ -56,7 +56,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public DateTime? ACTUAL_START_DATE {get; set;}
         public DateTime? ACTUAL_END_DATE {get; set;}
         public decimal? SCHEDULED_DURATION {get; set;}
-        public int? ACTUAL_DURATION {get; set;}
+        public decimal? ACTUAL_DURATION {get; set;}
         public string STATUS {get; set;}
         public string CUST_ID {get; set;}
         public string PROJ_ID {get; set;}
@@ -80,7 +80,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public DateTime? ACTUAL_START_DATE {get; set;}
         public DateTime? ACTUAL_END_DATE {get; set;}
         public decimal? SCHEDULED_DURATION {get; set;}
-        public int? ACTUAL_DURATION {get; set;}
+        public decimal? ACTUAL_DURATION {get; set;}
         public string STATUS {get; set;}
         public string CUST_ID {get; set;}
         public string PROJ_ID {get; set;}

@@ -452,6 +452,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     "Please verify all customer contacts with respective CSM before sending the Survey.");
             }
             List<CSS_BATCH_CUSTOMERS_EXTENDED> batchCustomersExt = helper.FillCustomerAndProjectNames(batchCustomers);
+            var configKey = "CSS_LINK_VALIDITY_DAYS";
+
+
+            int validity = 20;
+
+            var configValues = helper.GetDBConfig(configKey, "");
+            int.TryParse(configValues, out validity);
 
             //List<CSS_SURVEY_ITERATION> CreatedSurveys = new List<CSS_SURVEY_ITERATION>();
             string baseUrl = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("css", "");
@@ -470,6 +477,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     SURVEY_ID = Guid.NewGuid().ToString(),
                     SURVEY_SENT_DATE = DateTime.Now,
                     STATUS = CSS_MAIL_RESENT,
+                    VALIDITY_DAYS = validity,
                 };
                 UpdateAuditFields(survey);
                 CSPdb.CSS_SURVEY_ITERATION.Add(survey);
@@ -586,11 +594,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
                 if (string.IsNullOrWhiteSpace(projectId)) return;
                 project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
-                projectText =  cust.PROJ_NM;
+                projectText = cust.PROJ_NM;
             }
             else
             {
-                projectText =  cust.PROJ_NM;
+                projectText = cust.PROJ_NM;
             }
 
             string ccmail = helper.GetDBConfig("CSS_LINK_CC", "-1");
@@ -609,7 +617,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("PREVIOUS_PERIOD", PreviousPeriod);
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
             EmailContentValues.Add("CUSTOMER_NAME", cust.CUST_NM);
-            EmailContentValues.Add("PROJECT", projectText);          
+            EmailContentValues.Add("PROJECT", projectText);
             EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(cust.SURVEY_SENT_DATE.Value, cust.CUST_ID));
             mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyReminder.htm", EmailContentValues);
 
