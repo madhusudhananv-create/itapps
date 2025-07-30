@@ -212,6 +212,7 @@
       <button  class="btn btn-warning-confirm" mat-button [mat-dialog-close]="0"  style="margin-left: 5%;">No</button>
     </mat-dialog-actions>
     <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
-      <button  class="btn btn-primary" mat-button [mat-dialog-close]="1"  style="margin: 0 160px;">OK</button>
+      <button *ngIf ="!dialogExpiry"  class="btn btn-primary" mat-button [mat-dialog-close]="1"  style="margin: 0 160px;">OK</button>
+       <button *ngIf ="dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"  style="margin: 0 200px;">OK</button>
     </mat-dialog-actions>
   </ng-template>

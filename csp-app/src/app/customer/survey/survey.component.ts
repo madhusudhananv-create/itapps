@@ -44,6 +44,7 @@ export class SurveyComponent implements OnInit {
   dialogMessage: string = '';
   dialogHeading: string = '';
   dialogSuccess: boolean = false;
+  dialogExpiry: boolean = false;
   // ddRatings = [
   //   { 'key': '1 - Poor', 'value': 1 },
   //   { 'key': '2 - Fair', 'value': 2 },
@@ -278,8 +279,13 @@ export class SurveyComponent implements OnInit {
       else {
         const errorMsg = this._util.GetErrorMessage(error);
         console.log(errorMsg);
+        this.showCSSFields = false;
+        this.bShowNpsComments = false;
+        this.questions_NPS = null;
+        this.IsCompleted = true;
         if (errorMsg.includes("This survey is now closed")) {
           this.dialogSuccess = true;
+          this.dialogExpiry = true;
           this.dialogHeading = 'Survey Closed!';
           this.dialogMessage = errorMsg;
           const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
@@ -290,10 +296,6 @@ export class SurveyComponent implements OnInit {
 
           dialogRef.afterClosed().subscribe(result => {
             if (result === 1) {
-              this.showCSSFields = false;
-              this.bShowNpsComments = false;
-              this.questions_NPS = null;
-              this.IsCompleted = true;
             }
           });
         }
@@ -318,6 +320,7 @@ export class SurveyComponent implements OnInit {
     }
     this._appservice.SaveCSSSurveyAnswers(replies, this.empId, this.meetingDate, this.isCSMNotified).subscribe(data => {
       this.dialogSuccess = true;
+      this.dialogExpiry =false;
       this.dialogHeading = '';
       this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey submitted successfully. A detailed report would be sent to your e-mail shortly.';
 
