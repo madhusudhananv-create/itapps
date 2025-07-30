@@ -199,7 +199,7 @@ export class SurveyComponent implements OnInit {
         return;
       }
     }
-  
+
     this.dialogHeading = 'Quick Confirmation';
     this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
     const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
@@ -276,7 +276,30 @@ export class SurveyComponent implements OnInit {
         this.service_GetSurveyQuestions(code);
       }
       else
+        console.log(error);
+      const errorMsg = this._util.GetErrorMessage(error);
+      console.log(errorMsg);
+      if (errorMsg.includes("This survey is now closed")) {
+        this.dialogHeading = 'Survey Closed!';
+        this.dialogMessage = errorMsg;
+        const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
+          width: '500px',
+          height: '180px',
+          data: '',
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+          if (result === 1) {
+            this.showCSSFields = false;
+            this.bShowNpsComments = false;
+            this.questions_NPS = null;
+            this.IsCompleted = true;
+          }
+        });
+      }
+      else {
         this._util.serviceError(error);
+      }
     });
   }
 

@@ -512,7 +512,7 @@ export class myUtility {
         }
     }
 
-    GetErrorMessage(error) {
+    public GetErrorMessage(error) {
         let msg = "";
         if (error.error != undefined && error.error != null &&
             error.error.message != undefined && error.error.message != null)
