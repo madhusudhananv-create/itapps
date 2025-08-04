@@ -57,4 +57,10 @@ export class ActionitemModelNew
     preventivE_ACTION_PLAN: string;
     csS_REFERENCE: string;
     perspective: string;
+    actuaL_PLAN_DECLARATION: boolean;
+    actuaL_CUST_DATE: Date;
+    planneD_DECLARATION: boolean;
+    planneD_CUST_DATE: Date;
+    closurE_ACKNOWLEDGE: boolean;
+    closurE_ACTUAL_CUST_DATE: Date;
 }

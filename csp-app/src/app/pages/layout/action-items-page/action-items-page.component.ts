@@ -45,6 +45,9 @@ export class ActionItemsPageComponent implements OnInit {
   displayedColumns = ['index', 'portfoliO_NAME', 'proJ_NM', 'description', 'owner', 'targeT_DATE', 'identifieD_DATE', 'status', 'priority', 'source', 'completioN_DATE', 'info', 'edit', 'delete'];
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
+  showActualDeclaration: boolean;
+  showPlanDeclaration: boolean;
+  showclosureDeclaration: boolean;
   @ViewChild(MatSort) set content(sort: MatSort) {
     this.dataSource.sort = sort;
   }
@@ -74,6 +77,22 @@ export class ActionItemsPageComponent implements OnInit {
   maxTargetDate: any;
   isDescUpdated: boolean = false;
   originalDescription: string = "";
+  status = '';
+  actuaL_PLAN_DECLARATION: boolean = false;
+  planneD_DECLARATION : boolean = false;
+  closurE_ACKNOWLEDGE : boolean = false;
+  //discussionDate: any;
+  showCommCheckboxError: boolean = false;
+  showCommCheckboxErrorComplete: boolean = false;
+  /* discussionDate2: any;
+  plannedDate: any; */
+  declarationVisibility = {
+  actual: false,
+  plan: false,
+  closure: false
+};
+identifiedToCompleted: string[] = ["closure"];
+previousStatus: string = '';
   constructor(private route: ActivatedRoute, private _appservice: AppsService, private _shared: SharedService, private _http: Http, private _util: myUtility,
     private changeDetectorRefs: ChangeDetectorRef, public _access: AccessControl, public dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) private data: any) { }
@@ -118,6 +137,8 @@ export class ActionItemsPageComponent implements OnInit {
     this.getAllProjectsFromCustomer();
     this.Service_CanUpdateToCustomer();
     this.originalDescription = this.EditActionitem.description;
+    this.status=this.EditActionitem.status;
+    this.showCommCheckboxError = false;
 
   }
 
@@ -377,6 +398,7 @@ export class ActionItemsPageComponent implements OnInit {
   }
 
   SubmitForm(isValid) {
+    let a2Date;
     if (!isValid) {
       alert("Please enter valid values for required fields");
       return;
@@ -393,10 +415,22 @@ export class ActionItemsPageComponent implements OnInit {
 
     let cdate = this.EditActionitem.completioN_DATE;
 
+    let aDate = new Date(this.EditActionitem.actuaL_CUST_DATE);
+    aDate.setHours(0, 0, 0, 0);
+
+    if(this.EditActionitem.closurE_ACTUAL_CUST_DATE){
+      a2Date = new Date(this.EditActionitem.closurE_ACTUAL_CUST_DATE);
+      a2Date.setHours(0, 0, 0, 0);
+    }
+    
+    let plannedDate = new Date(this.EditActionitem.planneD_CUST_DATE);
+    plannedDate.setHours(0, 0, 0, 0);
+
     if (this.EditActionitem.completioN_DATE != null && this.EditActionitem.completioN_DATE != undefined) {
       cdate = new Date(this.EditActionitem.completioN_DATE);
       cdate.setHours(0, 0, 0, 0);
     }
+
 
     if (!this.IsDateValid(tDate, iDate)) {
       alert('Please enter valid target and identified dates');
@@ -407,8 +441,25 @@ export class ActionItemsPageComponent implements OnInit {
       alert('Please enter valid identified and completion dates');
       return;
     }
+    if(!this.closurE_ACKNOWLEDGE && !this.EditActionitem.closurE_ACTUAL_CUST_DATE){
+      alert('Please select closure declaration and provide Actual Date of Customer Communication to proceed.');
+      return;
+    }
     this.getProjectName();
     this.isSaved = true;
+    this.showCommCheckboxError = false;
+    if ((this.EditActionitem.status === 'Work In Progress') && !this.planneD_DECLARATION && !this.actuaL_PLAN_DECLARATION) 
+    {
+      this.showCommCheckboxError = true;
+      return;
+    }
+    else if((this.EditActionitem.status === 'Completed') && !this.closurE_ACKNOWLEDGE){
+            this.showCommCheckboxErrorComplete = true;
+            return;
+    }else{
+      this.showCommCheckboxError = false;
+    }
+    
     if (this.EditActionitem.actioN_ITEM_ID === 0 || this.EditActionitem.actioN_ITEM_ID === undefined) {
       this.EditActionitem.cusT_ID = this.selectedCust;
       this.EditActionitem.proJ_NM = this.projNames.find(x => x.proJ_ID == this.EditActionitem.proJ_ID).proJ_NM;
@@ -425,6 +476,12 @@ export class ActionItemsPageComponent implements OnInit {
     else {
       this.EditActionitem.updateD_BY = localStorage.getItem('empid');
       this.EditActionitem.updateD_DATE = new Date();
+      this.EditActionitem.actuaL_PLAN_DECLARATION = this.actuaL_PLAN_DECLARATION;
+    this.EditActionitem.actuaL_CUST_DATE = aDate;
+     this.EditActionitem.planneD_DECLARATION = this.planneD_DECLARATION;
+    this.EditActionitem.planneD_CUST_DATE = plannedDate;
+     this.EditActionitem.closurE_ACKNOWLEDGE = this.closurE_ACKNOWLEDGE;
+    this.EditActionitem.closurE_ACTUAL_CUST_DATE = a2Date;
       this.service_updateActionitem(this.EditActionitem);
       this.readonlymode = true;
       this.editmode = false;
@@ -490,6 +547,10 @@ export class ActionItemsPageComponent implements OnInit {
   EditRow_onClick(element) {
     this.csatBased = false;
     this.isDescUpdated = false;
+    this.EditActionitem.actuaL_PLAN_DECLARATION = element.actuaL_PLAN_DECLARATION;
+    this.EditActionitem.planneD_DECLARATION = element.planneD_DECLARATION;
+    this.EditActionitem.closurE_ACKNOWLEDGE = element.closurE_ACKNOWLEDGE;
+
     this.EditActionitem = Object.assign({}, element);
     //Set Max Target Date 
     let tDate = new Date(this.EditActionitem.identifieD_DATE);
@@ -525,6 +586,7 @@ export class ActionItemsPageComponent implements OnInit {
     this.csatBased = false;
     this.newEditActionitem();
     this.getAllActionItemsForCustomer();
+    //this.resetCheckBoxes();
   }
 
   SendUpdateToCustomer(EditActionitem) {
@@ -574,6 +636,12 @@ export class ActionItemsPageComponent implements OnInit {
         this.canUpdateToCustomer = false;
       }
     }, error => { this._util.serviceError(error); })
+    if(this.EditActionitem && this.EditActionitem.status){
+       this.actuaL_PLAN_DECLARATION = this.EditActionitem.actuaL_PLAN_DECLARATION;
+      this.planneD_DECLARATION = this.EditActionitem.planneD_DECLARATION;
+      this.closurE_ACKNOWLEDGE = this.EditActionitem.closurE_ACKNOWLEDGE;
+      this.showCheckBoxVisibility(this.EditActionitem.status)
+    }
   }
 
   service_SubmitActionItemPlanToCustomer(custid, projId, actionItemId) {
@@ -660,6 +728,34 @@ export class ActionItemsPageComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
     });
   }
+   
+  showCheckBoxVisibility(currentStatus: string): void {
+  let showList: string[] = [];
 
+  if (currentStatus === 'Open') {
+    showList = []; 
+  } 
+  else if (this.previousStatus === 'Open' && currentStatus === 'Completed') {
+    showList = this.identifiedToCompleted; 
+  } 
+  else if (currentStatus === 'Work In Progress') {
+    showList = ['actual', 'plan']; 
+  } 
+  else {
+    showList = ['actual', 'plan', 'closure']; 
+  }
 
+  this.updateDeclarationVisibility(showList);
+  this.previousStatus = currentStatus;
+}
+private updateDeclarationVisibility(showList: string[]): void {
+  Object.keys(this.declarationVisibility).forEach(x => {
+    this.declarationVisibility[x] = showList.includes(x);
+  });
+}
+  resetCheckBoxes(){
+    this.actuaL_PLAN_DECLARATION =false;
+    this.planneD_DECLARATION = false;
+    this.closurE_ACKNOWLEDGE = false;
+  }
 }
