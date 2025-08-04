@@ -42,5 +42,11 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int? SCORE { get; set; }
         [NotMapped]
         public string PERSPECTIVE { get; set; }
+        public DateTime? ACTUAL_CUST_DATE { get; set; }
+        public DateTime? PLANNED_CUST_DATE { get; set; }
+        public DateTime? CLOSURE_ACTUAL_CUST_DATE { get; set; }
+        public Nullable <bool> ACTUAL_PLAN_DECLARATION { get; set; }
+        public Nullable <bool> PLANNED_DECLARATION { get; set; }  
+        public Nullable <bool> CLOSURE_ACKNOWLEDGE { get; set; }
     }
 }

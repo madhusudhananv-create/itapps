@@ -15954,6 +15954,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 newActionItem.UPDATED_DATE = overview.UPDATED_DATE;
                 newActionItem.PREVENTIVE_ACTION_PLAN = overview.PREVENTIVE_ACTION_PLAN;
                 newActionItem.ROOT_CAUSE = overview.ROOT_CAUSE;
+                newActionItem.ACTUAL_PLAN_DECLARATION = overview.ACTUAL_PLAN_DECLARATION;
+                newActionItem.PLANNED_DECLARATION = overview.PLANNED_DECLARATION;
+                newActionItem.CLOSURE_ACKNOWLEDGE = overview.CLOSURE_ACKNOWLEDGE;
+                newActionItem.PLANNED_CUST_DATE = overview.PLANNED_CUST_DATE;
+                newActionItem.ACTUAL_CUST_DATE = overview.ACTUAL_CUST_DATE;
+                newActionItem.CLOSURE_ACTUAL_CUST_DATE = overview.CLOSURE_ACTUAL_CUST_DATE;
 
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.SOURCE = results.SOURCE;
@@ -15970,6 +15976,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.UPDATED_DATE = DateTime.Now;
                 overview.PREVENTIVE_ACTION_PLAN = results.PREVENTIVE_ACTION_PLAN;
                 overview.ROOT_CAUSE = results.ROOT_CAUSE;
+                overview.ACTUAL_PLAN_DECLARATION = results.ACTUAL_PLAN_DECLARATION;
+                overview.PLANNED_DECLARATION = results.PLANNED_DECLARATION;
+                overview.CLOSURE_ACKNOWLEDGE = results.CLOSURE_ACKNOWLEDGE;
+                overview.PLANNED_CUST_DATE = results.PLANNED_CUST_DATE;
+                overview.ACTUAL_CUST_DATE = results.ACTUAL_CUST_DATE;
+                overview.CLOSURE_ACTUAL_CUST_DATE = results.CLOSURE_ACTUAL_CUST_DATE;
             }
 
             CSPdb.PROJECT_ACTIONITEM.Update(overview);
