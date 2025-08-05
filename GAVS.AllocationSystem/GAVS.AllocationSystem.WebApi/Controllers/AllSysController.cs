@@ -15957,9 +15957,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 newActionItem.ACTUAL_PLAN_DECLARATION = overview.ACTUAL_PLAN_DECLARATION;
                 newActionItem.PLANNED_DECLARATION = overview.PLANNED_DECLARATION;
                 newActionItem.CLOSURE_ACKNOWLEDGE = overview.CLOSURE_ACKNOWLEDGE;
-                newActionItem.PLANNED_CUST_DATE = overview.PLANNED_CUST_DATE.HasValue ? overview.PLANNED_CUST_DATE.Value.ToLocalTime() : (DateTime?)null; ;
-                newActionItem.ACTUAL_CUST_DATE = overview.ACTUAL_CUST_DATE.HasValue ? overview.ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null; ;
-                newActionItem.CLOSURE_ACTUAL_CUST_DATE = overview.CLOSURE_ACTUAL_CUST_DATE.HasValue ? overview.CLOSURE_ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null; ;
+                newActionItem.PLANNED_CUST_DATE = overview.PLANNED_CUST_DATE.HasValue ? overview.PLANNED_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
+                newActionItem.ACTUAL_CUST_DATE = overview.ACTUAL_CUST_DATE.HasValue ? overview.ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
+                newActionItem.CLOSURE_ACTUAL_CUST_DATE = overview.CLOSURE_ACTUAL_CUST_DATE.HasValue ? overview.CLOSURE_ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
 
                 overview.DESCRIPTION = results.DESCRIPTION;
                 overview.SOURCE = results.SOURCE;
@@ -15979,9 +15979,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.ACTUAL_PLAN_DECLARATION = results.ACTUAL_PLAN_DECLARATION;
                 overview.PLANNED_DECLARATION = results.PLANNED_DECLARATION;
                 overview.CLOSURE_ACKNOWLEDGE = results.CLOSURE_ACKNOWLEDGE;
-                overview.PLANNED_CUST_DATE = results.PLANNED_CUST_DATE;
-                overview.ACTUAL_CUST_DATE = results.ACTUAL_CUST_DATE;
-                overview.CLOSURE_ACTUAL_CUST_DATE = results.CLOSURE_ACTUAL_CUST_DATE;
+                overview.PLANNED_CUST_DATE = results.PLANNED_CUST_DATE.HasValue ? results.PLANNED_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
+                overview.ACTUAL_CUST_DATE = results.ACTUAL_CUST_DATE.HasValue ? results.ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null; 
+                overview.CLOSURE_ACTUAL_CUST_DATE = results.CLOSURE_ACTUAL_CUST_DATE.HasValue ? results.CLOSURE_ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
             }
 
             CSPdb.PROJECT_ACTIONITEM.Update(overview);
