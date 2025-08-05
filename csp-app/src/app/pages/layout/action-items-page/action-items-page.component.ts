@@ -499,7 +499,7 @@ showInfo = false;
       this.EditActionitem.updateD_BY = localStorage.getItem('empid');
       this.EditActionitem.updateD_DATE = new Date();
       this.EditActionitem.actuaL_PLAN_DECLARATION = this.actuaL_PLAN_DECLARATION;
-    this.EditActionitem.actuaL_CUST_DATE = aDate;
+      this.EditActionitem.actuaL_CUST_DATE = aDate;
      this.EditActionitem.planneD_DECLARATION = this.planneD_DECLARATION;
     this.EditActionitem.planneD_CUST_DATE = plannedDate;
      this.EditActionitem.closurE_ACKNOWLEDGE = this.closurE_ACKNOWLEDGE;
@@ -811,16 +811,26 @@ private updateDeclarationVisibility(showList: string[]): void {
     this.showInfo = !this.showInfo;
   }
 
-  onCheckBoxChange(){
+  onCheckBoxChange(type: any){
+    this.showCommCheckboxError = false;
+    this.showSelectChecboxError = false;
+    this.showCommCheckboxErrorComplete = false;
     let checkBoxSelectedCount = [this.actuaL_PLAN_DECLARATION, this.planneD_DECLARATION, this.closurE_ACKNOWLEDGE].filter(value => value).length;
     console.log("checkbox", this.declarationVisibility, checkBoxSelectedCount)
     if (this.EditActionitem.status === 'Started' || this.EditActionitem.status === 'Planned'){
       if(this.showCommCheckboxError && checkBoxSelectedCount > 1){
         this.showCommCheckboxError = false;
+      }else if(checkBoxSelectedCount == 0){
+        this.showCommCheckboxError = true;
       }
       if(this.showSelectChecboxError && checkBoxSelectedCount == 1){
 
         this.showSelectChecboxError = false;
+      }else if(checkBoxSelectedCount == 2){
+        this.showSelectChecboxError = true;
+        setTimeout(() => {
+          this[type] = false;
+        }, 0);
       }
     }
     if (this.EditActionitem.status === 'Completed'){

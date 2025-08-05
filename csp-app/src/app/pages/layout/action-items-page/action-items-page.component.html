@@ -345,7 +345,7 @@
           matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" matInput name="dtCompletionDate"
             [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker3"
-            placeholder="Action Plan submission -  Actual Date" [required]="EditActionitem.status ==='Started'">
+            placeholder="Action Plan submission -  Actual Date *" [required]="EditActionitem.status ==='Started'">
           <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
           <mat-datepicker #picker3></mat-datepicker>
         </mat-form-field>
@@ -365,7 +365,7 @@
           matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" matInput name="planneD_ACTUAL_DATE"
             [(ngModel)]="EditActionitem.planneD_ACTUAL_DATE" [matDatepicker]="picker6"
-            placeholder="Action Plan Completion -  Actual date" [required]="EditActionitem.status ==='Completed'">
+            placeholder="Action Plan Completion -  Actual date *" [required]="EditActionitem.status ==='Completed'">
           <mat-datepicker-toggle matSuffix [for]="picker6"></mat-datepicker-toggle>
           <mat-datepicker #picker6></mat-datepicker>
         </mat-form-field>
@@ -407,26 +407,26 @@
       </div>
       <div *ngIf="showInfo" class="info-box">
         <p>
-          Only one option can be selected at a time
+          Only one option can be selected at a time<br>
           -Select first checkbox only if the action plan has been mutually agreed upon with the customer.<br>
           -Select second checkbox only the plan has not yet been communicated externally.<br>
         </p>
       </div>
-      <div class="error" *ngIf="isSaved && showCommCheckboxError && EditActionitem.status !== 'Identified' && csatBased"
+      <div class="error" *ngIf="showCommCheckboxError && EditActionitem.status !== 'Identified' && csatBased"
         style="color: red;">
         Please select any one declaration to proceed.
       </div><br />
       <div class="error"
-        *ngIf="isSaved && showSelectChecboxError && EditActionitem.status !== 'Identified' && csatBased"
+        *ngIf="showSelectChecboxError && EditActionitem.status !== 'Identified' && csatBased"
         style="color: red;">
-        You are allow to select only one option to proceed. Please deselect any extra choices.
+        You are allowed to select only one option to proceed.
       </div>
-      <div class="error" *ngIf="isSaved && showCommCheckboxErrorComplete && csatBased" style="color: red;">
+      <div class="error" *ngIf="showCommCheckboxErrorComplete && csatBased" style="color: red;">
         Please select closure declaration and provide Actual Date of Customer Communication to proceed.
       </div>
       <div *ngIf="declarationVisibility.actual && csatBased">
         <mat-checkbox class="example-margin" color="blue" name="actuaL_PLAN_DECLARATION" id="declarationCheckbox1"
-          [(ngModel)]="actuaL_PLAN_DECLARATION" [disabled]="disableActualPlanCheckbox" #actuaL_PLAN_DECLARATIONRef="ngModel" (change)="onCheckBoxChange()">
+          [(ngModel)]="actuaL_PLAN_DECLARATION" [disabled]="disableActualPlanCheckbox" #actuaL_PLAN_DECLARATIONRef="ngModel" (change)="onCheckBoxChange('actuaL_PLAN_DECLARATION')">
           The action plan has been discussed with the Customer and mutually agreed on the plan with timelines for
           implementation.
         </mat-checkbox>
@@ -437,14 +437,14 @@
         <mat-form-field style="width:20%" matTooltipPosition="above">
           <input [max]="_util.Today()" matInput name="actuaL_CUST_DATE" [(ngModel)]="EditActionitem.actuaL_CUST_DATE"
              [matDatepicker]="picker9"
-            placeholder="Actual Date of Customer Communication:" [disabled]="disableActualPlanDate" required>
+            placeholder="Actual Date of Customer Communication:" [disabled]="disableActualPlanDate" [required]="actuaL_PLAN_DECLARATION">
           <mat-datepicker-toggle matSuffix [for]="picker9"></mat-datepicker-toggle>
           <mat-datepicker #picker9></mat-datepicker>
         </mat-form-field>
       </div>
       <div *ngIf="declarationVisibility.plan && csatBased">
         <mat-checkbox class="example-margin" color="blue" name="planneD_DECLARATION" id="declarationCheckbox2"
-          [(ngModel)]="planneD_DECLARATION" #planneD_DECLARATIONRef="ngModel" (change)="onCheckBoxChange()" [disabled]="disablePlannedCheckbox">
+          [(ngModel)]="planneD_DECLARATION" #planneD_DECLARATIONRef="ngModel" (change)="onCheckBoxChange('planneD_DECLARATION')" [disabled]="disablePlannedCheckbox">
           The action plan has been discussed internally and Communication to the Customer is planned
         </mat-checkbox>
 
@@ -454,7 +454,7 @@
         <mat-form-field style="width:20%" matTooltipPosition="above">
           <input matInput name="planneD_CUST_DATE" [(ngModel)]="EditActionitem.planneD_CUST_DATE"
              [matDatepicker]="picker10"
-            placeholder="Planned Date of Customer Communication:" [disabled]="disablePlannedDate">
+            placeholder="Planned Date of Customer Communication:" [disabled]="disablePlannedDate" [required]="planneD_DECLARATION">
           <mat-datepicker-toggle matSuffix [for]="picker10"></mat-datepicker-toggle>
           <mat-datepicker #picker10></mat-datepicker>
         </mat-form-field>
@@ -462,7 +462,7 @@
       
       <div *ngIf="declarationVisibility.closure && csatBased">
         <mat-checkbox class="example-margin" color="blue" name="closurE_ACKNOWLEDGE" id="declarationCheckbox3"
-          [(ngModel)]="closurE_ACKNOWLEDGE" #closurE_ACKNOWLEDGERef="ngModel" (change)="onCheckBoxChange()" [disabled]="disableClosurePlanCheckbox">
+          [(ngModel)]="closurE_ACKNOWLEDGE" #closurE_ACKNOWLEDGERef="ngModel" (change)="onCheckBoxChange('closurE_ACKNOWLEDGE')" [disabled]="disableClosurePlanCheckbox">
           Customer has been informed about the implementation of the action plan and Customer has acknowledged it for
           closure.
         </mat-checkbox>
@@ -472,7 +472,7 @@
         <mat-form-field style="width:20%" matTooltipPosition="above">
           <input [max]="_util.Today()" matInput name="closurE_ACTUAL_CUST_DATE"
             [(ngModel)]="EditActionitem.closurE_ACTUAL_CUST_DATE" [matDatepicker]="picker11"
-            placeholder="Actual Date of Customer Communication:" [disabled]="disableClosureDate">
+            placeholder="Actual Date of Customer Communication:" [disabled]="disableClosureDate"  [required]="EditActionitem.status === 'Completed'">
           <mat-datepicker-toggle matSuffix [for]="picker11"></mat-datepicker-toggle>
           <mat-datepicker #picker11></mat-datepicker>
         </mat-form-field>
