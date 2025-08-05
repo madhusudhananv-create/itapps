@@ -48,6 +48,11 @@ export class ActionItemsPageComponent implements OnInit {
   showActualDeclaration: boolean;
   showPlanDeclaration: boolean;
   showclosureDeclaration: boolean;
+  disablePlannedCheckbox: boolean= false;
+  disableClosurePlanCheckbox: boolean= false;
+  disableActualPlanDate: any;
+  disablePlannedDate: any;
+  disableClosureDate: any;
   @ViewChild(MatSort) set content(sort: MatSort) {
     this.dataSource.sort = sort;
   }
@@ -81,9 +86,10 @@ export class ActionItemsPageComponent implements OnInit {
   actuaL_PLAN_DECLARATION: boolean = false;
   planneD_DECLARATION : boolean = false;
   closurE_ACKNOWLEDGE : boolean = false;
-  //discussionDate: any;
+  disableActualPlanCheckbox: boolean = false;
   showCommCheckboxError: boolean = false;
   showCommCheckboxErrorComplete: boolean = false;
+  showSelectChecboxError: boolean = false;
   /* discussionDate2: any;
   plannedDate: any; */
   declarationVisibility = {
@@ -93,6 +99,7 @@ export class ActionItemsPageComponent implements OnInit {
 };
 identifiedToCompleted: string[] = ["closure"];
 previousStatus: string = '';
+showInfo = false;
   constructor(private route: ActivatedRoute, private _appservice: AppsService, private _shared: SharedService, private _http: Http, private _util: myUtility,
     private changeDetectorRefs: ChangeDetectorRef, public _access: AccessControl, public dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) private data: any) { }
@@ -139,6 +146,8 @@ previousStatus: string = '';
     this.originalDescription = this.EditActionitem.description;
     this.status=this.EditActionitem.status;
     this.showCommCheckboxError = false;
+    this.showCommCheckboxErrorComplete = false;
+    this.showSelectChecboxError = false;
 
   }
 
@@ -441,23 +450,36 @@ previousStatus: string = '';
       alert('Please enter valid identified and completion dates');
       return;
     }
-    if(!this.closurE_ACKNOWLEDGE && !this.EditActionitem.closurE_ACTUAL_CUST_DATE){
+    /* if(!this.closurE_ACKNOWLEDGE && !this.EditActionitem.closurE_ACTUAL_CUST_DATE){
       alert('Please select closure declaration and provide Actual Date of Customer Communication to proceed.');
       return;
-    }
+    } */
     this.getProjectName();
     this.isSaved = true;
     this.showCommCheckboxError = false;
-    if ((this.EditActionitem.status === 'Work In Progress') && !this.planneD_DECLARATION && !this.actuaL_PLAN_DECLARATION) 
-    {
-      this.showCommCheckboxError = true;
-      return;
+    this.showCommCheckboxErrorComplete = false;
+    this.showSelectChecboxError = false;
+    
+   // 1. Handle "Started" or "Planned" status
+    if (this.EditActionitem.status === 'Started' || this.EditActionitem.status === 'Planned') {
+      // Error for selecting NO checkbox
+      if (!this.planneD_DECLARATION && !this.actuaL_PLAN_DECLARATION) {
+        this.showCommCheckboxError = true;
+        return;
+      }
+
+      // Error for selecting BOTH checkboxes
+      if (this.planneD_DECLARATION && this.actuaL_PLAN_DECLARATION) {
+        this.showSelectChecboxError = true;
+        return;
+      }
     }
-    else if((this.EditActionitem.status === 'Completed') && !this.closurE_ACKNOWLEDGE){
-            this.showCommCheckboxErrorComplete = true;
-            return;
-    }else{
-      this.showCommCheckboxError = false;
+    else if (this.EditActionitem.status === 'Completed') {  // 2. Handle "Completed" status
+      // Error for not checking the closure box OR not providing a date
+      if (!this.closurE_ACKNOWLEDGE || !this.EditActionitem.closurE_ACTUAL_CUST_DATE) {
+        this.showCommCheckboxErrorComplete = true;
+        return;
+      }
     }
     
     if (this.EditActionitem.actioN_ITEM_ID === 0 || this.EditActionitem.actioN_ITEM_ID === undefined) {
@@ -550,6 +572,13 @@ previousStatus: string = '';
     this.EditActionitem.actuaL_PLAN_DECLARATION = element.actuaL_PLAN_DECLARATION;
     this.EditActionitem.planneD_DECLARATION = element.planneD_DECLARATION;
     this.EditActionitem.closurE_ACKNOWLEDGE = element.closurE_ACKNOWLEDGE;
+    this.disableActualPlanCheckbox = element.actuaL_PLAN_DECLARATION === true;
+    this.disablePlannedCheckbox = element.planneD_DECLARATION === true;
+    this.disableClosurePlanCheckbox = element.closurE_ACKNOWLEDGE === true;
+    this.disableActualPlanDate = element.actuaL_CUST_DATE != null;
+    this.disablePlannedDate = element.planneD_CUST_DATE != null;
+    this.disableClosureDate = element.closurE_ACTUAL_CUST_DATE != null;
+
 
     this.EditActionitem = Object.assign({}, element);
     //Set Max Target Date 
@@ -586,7 +615,7 @@ previousStatus: string = '';
     this.csatBased = false;
     this.newEditActionitem();
     this.getAllActionItemsForCustomer();
-    //this.resetCheckBoxes();
+    this.resetCheckBoxes();
   }
 
   SendUpdateToCustomer(EditActionitem) {
@@ -730,20 +759,37 @@ previousStatus: string = '';
   }
    
   showCheckBoxVisibility(currentStatus: string): void {
-  let showList: string[] = [];
+    let showList: string[] = [];
+    const actualSelected = this.EditActionitem.actuaL_PLAN_DECLARATION;
+    const planSelected = this.EditActionitem.planneD_DECLARATION;
+    const closureSelected = this.EditActionitem.closurE_ACKNOWLEDGE;
+    if (currentStatus === 'Identified') {
+      showList = [];
+    }
+    else if (this.previousStatus === 'Identified' && currentStatus === 'Completed') {
+      showList = this.identifiedToCompleted;
+    }
+    else if (currentStatus === 'Started' || currentStatus === 'Planned') {
+      
+      if (actualSelected || planSelected) {
+        // Show the one that is selected
+        showList = [];
+        if (actualSelected) showList.push('actual');
+        if (planSelected) showList.push('plan');
+      } else {
+        showList = ['actual', 'plan'];
 
-  if (currentStatus === 'Open') {
-    showList = []; 
-  } 
-  else if (this.previousStatus === 'Open' && currentStatus === 'Completed') {
-    showList = this.identifiedToCompleted; 
-  } 
-  else if (currentStatus === 'Work In Progress') {
-    showList = ['actual', 'plan']; 
-  } 
-  else {
-    showList = ['actual', 'plan', 'closure']; 
-  }
+      }
+    }
+    else {
+      showList = ['closure'];
+      if (actualSelected || planSelected){
+        if (actualSelected) showList.push('actual');
+        if (planSelected) showList.push('plan');
+      }else{
+      showList = ['actual', 'plan', 'closure'];
+      }
+    }
 
   this.updateDeclarationVisibility(showList);
   this.previousStatus = currentStatus;
@@ -757,5 +803,32 @@ private updateDeclarationVisibility(showList: string[]): void {
     this.actuaL_PLAN_DECLARATION =false;
     this.planneD_DECLARATION = false;
     this.closurE_ACKNOWLEDGE = false;
+    this.showCommCheckboxErrorComplete = false;
+    this.showCommCheckboxError = false;
+    this.showSelectChecboxError = false;
   }
+  toggleInfo(){
+    this.showInfo = !this.showInfo;
+  }
+
+  onCheckBoxChange(){
+    let checkBoxSelectedCount = [this.actuaL_PLAN_DECLARATION, this.planneD_DECLARATION, this.closurE_ACKNOWLEDGE].filter(value => value).length;
+    console.log("checkbox", this.declarationVisibility, checkBoxSelectedCount)
+    if (this.EditActionitem.status === 'Started' || this.EditActionitem.status === 'Planned'){
+      if(this.showCommCheckboxError && checkBoxSelectedCount > 1){
+        this.showCommCheckboxError = false;
+      }
+      if(this.showSelectChecboxError && checkBoxSelectedCount == 1){
+
+        this.showSelectChecboxError = false;
+      }
+    }
+    if (this.EditActionitem.status === 'Completed'){
+      if(this.showCommCheckboxErrorComplete && checkBoxSelectedCount == 2){
+        this.showCommCheckboxErrorComplete = false;
+      }
+    }
+
+  }
+  
 }

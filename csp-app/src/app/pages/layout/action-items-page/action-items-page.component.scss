@@ -56,7 +56,7 @@
 .mat-column-description {
   width: 30% !important;
 }
-.mat-column-Completion_DATE,.mat-column-Identified_Date {
+.mat-column-Completion_DATE,.mat-column-Identified_Date, .mat-column-discussionDate {
   width: 8% !important;
   white-space: nowrap;
 }
@@ -105,3 +105,19 @@
 // ::ng-deep .mat-checkbox:not(.mat-checkbox-disabled) .mat-checkbox-ripple .mat-ripple-element {
 //   background-color: black !important;
 // }
+
+.info-icon{
+  color: #007bff;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.info-box{
+  background-color: #f0f8ff;
+  padding: 10px;
+  margin-top: 5px;
+  border-left: 4px solid #007bff;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 90%;
+}
