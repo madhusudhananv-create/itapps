@@ -176,7 +176,7 @@ showInfo = false;
 
     }
     else {
-      this.filteredData = this.filteredData.filter(x => x.status == 'Planned' || x.status == 'Started' || x.status == 'Identified');
+      this.filteredData = this.filteredData.filter(x => x.status == 'In Progress'  || x.status == 'Open');
 
       if (pastDue && dueforClosure) { }
       else if (!pastDue && !dueforClosure) {
@@ -228,13 +228,13 @@ showInfo = false;
         this.tempData1 = this.portfolioData;
 
       else if (this.PastDueChecked && this.DueClosureChecked)
-        this.tempData1 = this.portfolioData.filter(x => x.status == 'Planned' || x.status == 'Started' || x.status == 'Identified');
+        this.tempData1 = this.portfolioData.filter(x => x.status == 'In Progress' || x.status == 'Open');
 
       else if (this.PastDueChecked && !this.DueClosureChecked)
-        this.tempData1 = this.portfolioData.filter(x => new Date(x.targeT_DATE) <= currentDate && (x.status == 'Planned' || x.status == 'Started' || x.status == 'Identified'));
+        this.tempData1 = this.portfolioData.filter(x => new Date(x.targeT_DATE) <= currentDate && (x.status == 'In Progress' || x.status == 'Open'));
 
       else if (!this.PastDueChecked && this.DueClosureChecked)
-        this.tempData1 = this.portfolioData.filter(x => new Date(x.targeT_DATE) > currentDate && (x.status == 'Planned' || x.status == 'Started' || x.status == 'Identified'));
+        this.tempData1 = this.portfolioData.filter(x => new Date(x.targeT_DATE) > currentDate && (x.status == 'In Progress' || x.status == 'Open'));
 
       else if (!this.AllChecked && !this.PastDueChecked && !this.DueClosureChecked)
         this.tempData1 = [];
@@ -257,7 +257,7 @@ showInfo = false;
     this._appservice.getActionItemsDetails(this.selectedCust, this.allproj, 1).subscribe(
       data => {
         this.result = data;
-        this.tempData = this.result.filter(x => x.status == 'Planned' || x.status == 'Started' || x.status == 'Identified')
+        this.tempData = this.result.filter(x => x.status == 'In Progress' || x.status == 'Open')
         if (this.result.length == 0)
           this.bShowFilter = false;
 
@@ -412,8 +412,8 @@ showInfo = false;
       alert("Please enter valid values for required fields");
       return;
     }
-    if (this.EditActionitem.status == "Identified") {
-      alert("Please update the status (other than Identified) to save this Action item");
+    if (this.EditActionitem.status == "Open") {
+      alert("Please update the status (other than Open) to save this Action item");
       return;
     }
     let tDate = new Date(this.EditActionitem.targeT_DATE);
@@ -460,8 +460,8 @@ showInfo = false;
     this.showCommCheckboxErrorComplete = false;
     this.showSelectChecboxError = false;
     
-   // 1. Handle "Started" or "Planned" status
-    if (this.EditActionitem.status === 'Started' || this.EditActionitem.status === 'Planned') {
+   // 1. Handle "In Progress" status
+    if (this.EditActionitem.status === 'In Progress') {
       // Error for selecting NO checkbox
       if (!this.planneD_DECLARATION && !this.actuaL_PLAN_DECLARATION) {
         this.showCommCheckboxError = true;
@@ -627,7 +627,7 @@ showInfo = false;
     }
 
 
-    if (EditActionitem.status == 'Identified') {
+    if (EditActionitem.status == 'Open') {
       alert('Please update the status and save and then send the Update to Customer.');
       this.isCustomerUpdated = false;
       return;
@@ -763,13 +763,13 @@ showInfo = false;
     const actualSelected = this.EditActionitem.actuaL_PLAN_DECLARATION;
     const planSelected = this.EditActionitem.planneD_DECLARATION;
     const closureSelected = this.EditActionitem.closurE_ACKNOWLEDGE;
-    if (currentStatus === 'Identified') {
+    if (currentStatus === 'Open') {
       showList = [];
     }
-    else if (this.previousStatus === 'Identified' && currentStatus === 'Completed') {
+    else if (this.previousStatus === 'Open' && currentStatus === 'Completed') {
       showList = this.identifiedToCompleted;
     }
-    else if (currentStatus === 'Started' || currentStatus === 'Planned') {
+    else if (currentStatus === 'In Progress') {
       
       if (actualSelected || planSelected) {
         // Show the one that is selected
@@ -787,7 +787,7 @@ showInfo = false;
         if (actualSelected) showList.push('actual');
         if (planSelected) showList.push('plan');
       }else{
-      showList = ['actual', 'plan', 'closure'];
+      showList = ['closure'];
       }
     }
 
@@ -817,7 +817,7 @@ private updateDeclarationVisibility(showList: string[]): void {
     this.showCommCheckboxErrorComplete = false;
     let checkBoxSelectedCount = [this.actuaL_PLAN_DECLARATION, this.planneD_DECLARATION, this.closurE_ACKNOWLEDGE].filter(value => value).length;
     console.log("checkbox", this.declarationVisibility, checkBoxSelectedCount)
-    if (this.EditActionitem.status === 'Started' || this.EditActionitem.status === 'Planned'){
+    if (this.EditActionitem.status === 'In Progress'){
       if(this.showCommCheckboxError && checkBoxSelectedCount > 1){
         this.showCommCheckboxError = false;
       }else if(checkBoxSelectedCount == 0){

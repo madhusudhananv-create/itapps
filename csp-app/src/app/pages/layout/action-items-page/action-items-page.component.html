@@ -319,9 +319,9 @@
         <mat-form-field>
           <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status" placeholder="Status"  [disabled]="!isDescUpdated" required
             (selectionChange)="showCheckBoxVisibility($event.value)">
-            <mat-option value="Identified" disabled>Identified</mat-option>
-            <mat-option value="Planned">Planned</mat-option>
-            <mat-option value="Started" matTooltip="Planned Activities Commenced">Started</mat-option>
+            <mat-option value="Open" disabled>Open</mat-option>
+            <!-- <mat-option value="Planned">Planned</mat-option> -->
+            <mat-option value="In Progress" matTooltip="Planned Activities Commenced">In Progress</mat-option>
             <mat-option value="Completed">Completed</mat-option>
             <mat-option *ngIf="isQATeam" [disabled]="EditActionitem.status !== 'Completed'"
               value="Verified">Verified</mat-option>
@@ -345,7 +345,7 @@
           matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" matInput name="dtCompletionDate"
             [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker3"
-            placeholder="Action Plan submission -  Actual Date *" [required]="EditActionitem.status ==='Started'">
+            placeholder="Action Plan submission -  Actual Date *" [required]="EditActionitem.status ==='In Progress'">
           <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
           <mat-datepicker #picker3></mat-datepicker>
         </mat-form-field>
@@ -401,7 +401,7 @@
       </div>
 
       <!-- Declaration of Action ITem -->
-      <div *ngIf="EditActionitem.status !== 'Identified' && csatBased">
+      <div *ngIf="EditActionitem.status !== 'Open' && csatBased">
         <label>Declaration </label>
         <i class="fa fa-info-circle info-icon" (click)="toggleInfo()" title="Click for more info"></i>
       </div>
@@ -412,12 +412,12 @@
           -Select second checkbox only the plan has not yet been communicated externally.<br>
         </p>
       </div>
-      <div class="error" *ngIf="showCommCheckboxError && EditActionitem.status !== 'Identified' && csatBased"
+      <div class="error" *ngIf="showCommCheckboxError && EditActionitem.status !== 'Open' && csatBased"
         style="color: red;">
         Please select any one declaration to proceed.
       </div><br />
       <div class="error"
-        *ngIf="showSelectChecboxError && EditActionitem.status !== 'Identified' && csatBased"
+        *ngIf="showSelectChecboxError && EditActionitem.status !== 'Open' && csatBased"
         style="color: red;">
         You are allowed to select only one option to proceed.
       </div>
