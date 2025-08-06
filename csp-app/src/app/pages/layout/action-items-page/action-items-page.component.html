@@ -343,9 +343,9 @@
         <mat-form-field style="width:20%"
           [matTooltip]="csatBased ? 'Action plan to be submitted to Customer within 7 days from the date of feedback received from Customer' : ''"
           matTooltipPosition="above">
-          <input [min]="EditActionitem.identifieD_DATE" matInput name="dtCompletionDate"
+          <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="dtCompletionDate"
             [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker3"
-            placeholder="Action Plan submission -  Actual Date *" [required]="EditActionitem.status ==='In Progress'">
+            placeholder="Action Plan submission -  Actual Date " [required]="EditActionitem.status ==='In Progress'">
           <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
           <mat-datepicker #picker3></mat-datepicker>
         </mat-form-field>
@@ -363,9 +363,9 @@
         <mat-form-field style="width:20%"
           matTooltip="Action plan to be implemented within 4 weeks from the date of feedback received from Customer"
           matTooltipPosition="above">
-          <input [min]="EditActionitem.identifieD_DATE" matInput name="planneD_ACTUAL_DATE"
+          <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="planneD_ACTUAL_DATE"
             [(ngModel)]="EditActionitem.planneD_ACTUAL_DATE" [matDatepicker]="picker6"
-            placeholder="Action Plan Completion -  Actual date *" [required]="EditActionitem.status ==='Completed'">
+            placeholder="Action Plan Completion -  Actual date " [required]="EditActionitem.status ==='Completed'">
           <mat-datepicker-toggle matSuffix [for]="picker6"></mat-datepicker-toggle>
           <mat-datepicker #picker6></mat-datepicker>
         </mat-form-field>
