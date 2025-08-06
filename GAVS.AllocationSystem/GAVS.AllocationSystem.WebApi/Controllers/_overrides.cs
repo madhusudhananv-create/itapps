@@ -641,7 +641,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 OWNER = pmName,
                 IDENTIFIED_DATE = DateTime.Now,
                 TARGET_DATE = targetDate,
-                STATUS = "Identified",
+                STATUS = "Open",
                 PRIORITY = "High",
                 COMMENTS = "",
                 BATCH_CUSTOMER_ID = batchType == "batch" ? batchId : 0,

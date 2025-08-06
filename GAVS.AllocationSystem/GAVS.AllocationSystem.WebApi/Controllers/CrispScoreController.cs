@@ -904,7 +904,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             overview.IDENTIFIED_DATE = DateTime.Today;
             overview.TARGET_DATE = DateTime.Today.AddDays(7);
-            overview.STATUS = "Started";
+            overview.STATUS = "In Progress";
             overview.PRIORITY = "High";
 
             overview.CREATED_BY = "SYSTEM";

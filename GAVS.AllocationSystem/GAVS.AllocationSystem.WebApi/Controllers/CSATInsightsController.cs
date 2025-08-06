@@ -417,7 +417,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var completedStatusForActionItem = new List<string> { "Completed", "Closed" };
 
-            var notCompletedStatusForActionItem = new List<string> { "Planned", "Started" };
+            var notCompletedStatusForActionItem = new List<string> { "In Progress" };
 
             foreach (var customer in customerList)
             {
@@ -628,7 +628,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var completedStatusForActionItem = new List<string> { "Completed", "Closed" };
 
-            var notCompletedStatusForActionItem = new List<string> { "Planned", "Started" };
+            var notCompletedStatusForActionItem = new List<string> { "In Progress" };
 
             var completedActionItemsForProject = actionItemForProject.Where(x => completedStatusForActionItem.Contains(x.STATUS)).ToList();
 

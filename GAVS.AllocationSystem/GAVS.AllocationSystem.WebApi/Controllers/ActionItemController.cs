@@ -511,9 +511,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.OWNER = helper.GetPMEmpInfoFromProject(projectId).FirstOrDefault()?.FRST_NM;
             overview.IDENTIFIED_DATE = DateTime.Today;
             overview.TARGET_DATE = DateTime.Today.AddDays(7);
-            overview.STATUS = "Started";
+            overview.STATUS = "In Progress";
             overview.PRIORITY = "High";
-
             overview.CREATED_BY = "SYSTEM";
             overview.CREATED_DATE = DateTime.Now;
             overview.UPDATED_BY = "SYSTEM";

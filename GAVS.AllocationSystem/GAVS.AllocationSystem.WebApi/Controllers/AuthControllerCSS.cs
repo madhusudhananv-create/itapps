@@ -539,8 +539,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.SOURCE_DESCRIPTION = $"CSAT - { period}, {customerName} , Lower CSAT Score in Question ({string.Join(", ", lowratings.Select(x => x.QUESTION)) })";
             overview.CSS_REFERENCE = reference.ToString();
             overview.IDENTIFIED_DATE = DateTime.Today;
-            overview.TARGET_DATE = DateTime.Today.AddDays(7);
-            overview.STATUS = "Identified";
+            overview.TARGET_DATE = AddBusinessDays(DateTime.Today, 10);
+            overview.STATUS = "Open";
             overview.PRIORITY = "High";
             overview.PLANNED_TARGET_DATE = DateTime.Today.AddDays(28);
             overview.CREATED_BY = "SYSTEM";
@@ -1130,6 +1130,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return result;
 
         }
+
+        protected DateTime AddBusinessDays(DateTime startDate, int businessDays)
+        {
+            DateTime result = startDate;
+            int daysAdded = 0;
+
+            while (daysAdded < businessDays)
+            {
+                result = result.AddDays(1);
+                if (result.DayOfWeek != DayOfWeek.Saturday && result.DayOfWeek != DayOfWeek.Sunday)
+                    daysAdded++;
+            }
+
+            return result;
+        }
+
         #endregion
     }
 }
