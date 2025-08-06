@@ -357,6 +357,14 @@ update PROJECT_ACTIONITEM set STATUS='Open',UPDATED_DATE=GETDATE(),UPDATED_BY='1
 
 GO
 
+ UPDATE project_actionitem SET TARGET_DATE = DATEADD(day, 
+    CASE WHEN DATEPART(weekday, IDENTIFIED_DATE) = 1 THEN 14  
+        WHEN DATEPART(weekday, IDENTIFIED_DATE) = 7 THEN 12  
+        ELSE 10 + (2 * ((DATEPART(weekday, IDENTIFIED_DATE) + 9) / 7))
+    END, IDENTIFIED_DATE) where (SOURCE like 'Customer Success Survey%' or source ='CSS' or SOURCE='CSAT')
+		and status !='Completed'
+GO
+
 IF EXISTS(Select 1 from sys.objects where name ='getActionItemsViewDetails' AND type='P')
 BEGIN
        DROP PROCEDURE [dbo].[getActionItemsViewDetails] 
