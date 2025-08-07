@@ -1163,8 +1163,8 @@ GO
 CREATE PROCEDURE [dbo].[reports_CSAT_Halfyearly]                         
                         
 @StartDate date,                       
-@EndDate date,                          
-@CUSTOMER varchar(50)='0'  
+@EndDate date                         
+
 AS                        
                       
 BEGIN                          
@@ -1261,7 +1261,7 @@ ON B.ID  = PA.BATCH_CUSTOMER_ID AND PA.ISACTIVE =1    and pa.description like '%
 WHERE b.STATUS = 'COMPLETED' and b.ISACTIVE = 1 and bt.FREQUENCY ='halfyearly'                       
 AND (bt.start_date BETWEEN @StartDate AND @EndDate                          
 OR bt.ENd_date BETWEEN @StartDate AND @EndDate)    
-and (@CUSTOMER='0' or  p.CUST_ID	= @CUSTOMER)
+
                   
 --UNION    
                   
