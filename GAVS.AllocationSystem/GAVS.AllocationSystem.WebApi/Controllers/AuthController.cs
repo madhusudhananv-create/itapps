@@ -39,14 +39,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
-        [GET("GetEmpListTemp")]
-        [ActionName("GetEmpListTemp")]
+        [GET("GetProjectListTemp")]
+        [ActionName("GetProjectListTemp")]
         [HttpGet]
-        public IHttpActionResult GetEmpListTemp()
+        public IHttpActionResult GetProjectListTemp()
         {
-            // return Ok("done");
-            var empList = Cldb.EMP_INFO.GetAll().Where(x => x.DOR == null && x.EMP_ID.StartsWith("GS")).OrderByDescending(x => x.EMP_ID).Take(15).ToList();
-            return Ok(empList);
+             var td = Cldb.AppRepo.GetTable("reports_getQualitySpocs", new List<REPORTS_PARAMS>());
+           
+            var result = JsonConvert.SerializeObject(td, Formatting.Indented);
+            //var empList = Cldb.EMP_INFO.GetAll().Where(x => x.DOR == null && x.EMP_ID.StartsWith("GS")).OrderByDescending(x => x.EMP_ID).Take(15).ToList();
+            return Ok(result);
         }
 
         [POST("UpdateKPIAvanir")]

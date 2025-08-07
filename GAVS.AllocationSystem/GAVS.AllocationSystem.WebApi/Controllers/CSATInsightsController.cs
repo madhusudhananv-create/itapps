@@ -36,9 +36,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var projects = GetProjectListForUser(empId.ToString());
             var customerIds = projects.Select(t => t.CUST_ID).Distinct().ToList<string>();
+            //check whether user is superadmin; if not break the loop
+            var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
+            //todo: refactor to one query
+            var query = Cldb.AppRepo.UserInfo(empInfo.EMAIL_ID).FirstOrDefault<UserInfo>();
 
-            if (isHaveAllCustomerAccess)
+            if (isHaveAllCustomerAccess && query.SUPERADMIN )
             {
+               
+                
                 var allAccounts = Cldb.AppRepo.GetAllAccounts().ToList();
                 allUserAccounts = allAccounts.Where(x => customerIds.Contains(x.CUST_ID) || excludedIds.Contains(x.CUST_ID)).ToList();
 
