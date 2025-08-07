@@ -395,7 +395,7 @@
         <mat-form-field style="width:20%">
           <mat-label>Comments</mat-label>
           <textarea name="txtComments" maxlength="2000" [(ngModel)]="EditActionitem.comments" matInput
-            placeholder="[Details if any dependency/approval]" required>
+            placeholder="[Details if any dependency/approval]" [required]="EditActionitem.status ==='Completed'">
           </textarea>
         </mat-form-field>
       </div>
