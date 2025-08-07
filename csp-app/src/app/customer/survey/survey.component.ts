@@ -278,7 +278,7 @@ export class SurveyComponent implements OnInit {
       }
       else {
         const errorMsg = this._util.GetErrorMessage(error);
-        console.log(errorMsg);
+        
         this.showCSSFields = false;
         this.bShowNpsComments = false;
         this.questions_NPS = null;
@@ -303,7 +303,8 @@ export class SurveyComponent implements OnInit {
           this._util.serviceError(error);
         }
       }
-    });
+      });
+    
   }
 
   bbtnSubmitDisable = false;

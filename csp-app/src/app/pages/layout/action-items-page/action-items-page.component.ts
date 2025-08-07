@@ -80,7 +80,7 @@ export class ActionItemsPageComponent implements OnInit {
   isSaved: boolean = false;
   isCustomerUpdated: boolean = false;
   maxTargetDate: any;
-  isDescUpdated: boolean = false;
+  // isDescUpdated: boolean = false;
   originalDescription: string = "";
   status = '';
   actuaL_PLAN_DECLARATION: boolean = false;
@@ -555,20 +555,20 @@ showInfo = false;
 
   newEditActionitem() {
     this.csatBased = false;
-    this.isDescUpdated = false;
+    //this.isDescUpdated = false;
     this.EditActionitem = new ActionitemModelNew();
-    this.isDescUpdated = false;
+   // this.isDescUpdated = false;
   }
-  onInputChange(newValue: string) {
-    if (this.csatBased)
-      this.isDescUpdated = (newValue && newValue.trim()) !== (this.originalDescription && this.originalDescription.trim() ? this.originalDescription.trim() : "");
-    else
-      this.isDescUpdated = true;
-  }
+  // onInputChange(newValue: string) {
+  //   if (this.csatBased)
+  //     this.isDescUpdated = (newValue && newValue.trim()) !== (this.originalDescription && this.originalDescription.trim() ? this.originalDescription.trim() : "");
+  //   else
+  //     this.isDescUpdated = true;
+  // }
 
   EditRow_onClick(element) {
     this.csatBased = false;
-    this.isDescUpdated = false;
+    //this.isDescUpdated = false;
     this.EditActionitem.actuaL_PLAN_DECLARATION = element.actuaL_PLAN_DECLARATION;
     this.EditActionitem.planneD_DECLARATION = element.planneD_DECLARATION;
     this.EditActionitem.closurE_ACKNOWLEDGE = element.closurE_ACKNOWLEDGE;
@@ -590,8 +590,8 @@ showInfo = false;
       this.csatBased = true;
     }
 
-    if(!this.csatBased)
-      this.isDescUpdated = true;
+    // if(!this.csatBased)
+    //   this.isDescUpdated = true;
     this.Edit_onClick()
   }
   DeleteRow_onClick(element): void {
