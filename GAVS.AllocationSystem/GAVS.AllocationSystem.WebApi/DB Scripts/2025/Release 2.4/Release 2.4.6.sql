@@ -1445,6 +1445,10 @@ RETURN
    
    GO
 
+
+update EMP_INFO set EMAIL_ID = 'nanthakumar.g@neurealm.com' where emp_id='1005234'
+update CSS_BATCH_CUSTOMERS set PREDICTED_SCORE=4 where BATCH_ID=35 and PROJ_ID='202P000180-01' and EMAIL_ID='jennique.stadtmueller@plexus.com'
+
 IF EXISTS(Select 1 from sys.objects where name ='reports_getCSSInitatedDetails' AND type='P')
 BEGIN
        DROP PROCEDURE [dbo].[reports_getCSSInitatedDetails] 
