@@ -302,8 +302,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             // Insert checkpoints
 
-            var auditRecordsToUpdate = CSPdb.AUDIT_CHECKLIST_EXECUTION_DETAILS.GetAll()
-                .Where(x => x.ISACTIVE && x.ASSESSMENT_ID == auditId).ToList();
+            var auditRecordsToUpdate = CSPdb.AUDIT_CHECKLIST_EXECUTION_DETAILS.GetAll().Where(x => x.ISACTIVE && x.ASSESSMENT_ID == auditId).ToList();
 
             foreach (var res in auditRecordsToUpdate)
             {
@@ -527,7 +526,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 SaveCheckListAuditeeDetailsNew(summary.AUDITEE_LIST, auditId, empId);
 
             SaveCheckListCCDetailsNew(summary.CC_LIST, summary.TO_LIST, auditId, empId);
-         
+
 
             var auditRows = CSPdb.AUDIT_CHECKLIST_EXECUTION_DETAILS.GetAll().Where(x => x.ASSESSMENT_ID == auditId && x.ISACTIVE && x.ISSUBMITTED).ToList();
 
@@ -1380,6 +1379,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 checklistsendmail.TARGET = "2 Business days from the date of audit report submitted";
                 checklistsendmail.REMARKS = "N/A";
                 checklistsendmail.FINDING_DESCRIPTION = findingtxt;
+                checklistsendmail.FINDING_ID = findingid;
                 SendMailOnAuditChecklistStage(checklistsendmail);
             }
             return Ok(results);
@@ -1751,7 +1751,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 checklistsendmail.REMARKS = resultsList[0].REMARKS;
                 checklistsendmail.FINDING_DESCRIPTION = findingtxt;
                 checklistsendmail.ACTION_CLASS = "showAction";
-
+                checklistsendmail.FINDING_ID = findingId;
                 SendMailOnAuditChecklistStage(checklistsendmail);
             }
             return Ok();
@@ -1846,6 +1846,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             checklistsendmail.REMARKS = resultsList[0].REMARKS;
             checklistsendmail.FINDING_DESCRIPTION = findingtxt;
+            checklistsendmail.FINDING_ID = findingId;
             SendMailOnAuditChecklistStage(checklistsendmail);
 
 
@@ -1984,6 +1985,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             checklistsendmail.TARGET = "2 Business days from the date of Implementation is completed/submitted by appraisee.";
             checklistsendmail.REMARKS = resultsList[0].REMARKS;
             checklistsendmail.FINDING_DESCRIPTION = findingtxt;
+            checklistsendmail.FINDING_ID = findingId;
             SendMailOnAuditChecklistStage(checklistsendmail);
             return Ok();
         }
@@ -2160,6 +2162,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             var qspoc = GetQSPOCMailforAssessment(proj);
             ccmail = helper.ConcatEmails(new List<string>() { pmMails, csmMails, ccMailId, selectedccs, qspoc, Constants.DEVX_LEAD, Constants.AUDITOR_LEAD }); // quality spoc , auditor
+            bool showCapaTable = checklistSendMail.SUBJECT.ToLower().Contains("corrective action plan");
+            var htmlCapaTable = string.Empty;
+            if (showCapaTable)
+            {
+                htmlCapaTable = GenerateCapaTable(checklistSendMail.FINDING_ID, checklistSendMail.STAGE);
+            }
 
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("AUDITEE_NM", toperson);
@@ -2185,12 +2193,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("TARGET", checklistSendMail.TARGET);
             EmailContentValues.Add("FINDING_DESCRIPTION", checklistSendMail.FINDING_DESCRIPTION);
             EmailContentValues.Add("REMARKS", checklistSendMail.REMARKS);
-
+            EmailContentValues.Add("CAPA_TABLE", htmlCapaTable);            
             if (checklistSendMail.STATUS == "Assessment Completed")
             {
                 mailContent = helper.GetEmailContent("CheckListAuditSendMailForAssessmentCompleted.htm", EmailContentValues);
             }
-            else
+            else if(checklistSendMail.STAGE.ToLower() == "corrective action plan submission")
+            {
+                mailContent = helper.GetEmailContent("CAPAAuditSubmissionEmail.htm", EmailContentValues);
+            }
+            else if (checklistSendMail.STAGE.ToLower() == "corrective action plan review")
+            {
+                mailContent = helper.GetEmailContent("CAPAAuditReviewEmail.htm", EmailContentValues);
+            }
+            else if (checklistSendMail.STAGE.ToLower() == "corrective action plan implementation")
+            {
+                mailContent = helper.GetEmailContent("CAPAAuditImplementationEmail.htm", EmailContentValues);
+            }
+            else if (checklistSendMail.STAGE.ToLower() == "corrective action plan verification")
+            {
+                mailContent = helper.GetEmailContent("CAPAAuditVerificationEmail.htm", EmailContentValues);
+            }
+            else 
             {
                 mailContent = helper.GetEmailContent("ChecklistAuditSendEmail.htm", EmailContentValues);
             }
@@ -2510,7 +2534,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public string NOTE_MSG { get; set; }
             public string QUERY_MSG { get; set; }
             public string FINDING_DESCRIPTION { get; set; }
-            public int FINDING_ID { get; set; }
+            public int? FINDING_ID { get; set; }
             public string REMARKS { get; set; }
 
         }
@@ -3256,7 +3280,80 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return sb.ToString();
         }
 
+        private string GenerateCapaTable(int? findingId, string status)
+        {
+            var findingsList = CSPdb.AUDIT_FINDINGS_CAPA.GetAll().Where(x => x.FINDING_ID == findingId && x.ISACTIVE).ToList();
+            var rootCauseIds = findingsList.Select(x => x.ROOT_CAUSE_ID).Distinct().ToList();
+            var rootCauseList = CSPdb.AUDIT_MANAGEMENT_ROOTCAUSES.GetAll().Where(x => rootCauseIds.Contains(x.ID)).ToList();
+            var empIds = findingsList.Select(x => x.RESPONSIBLE).Distinct().ToList();
+            var empIdList = Cldb.EMP_INFO.GetAll().Where(x => empIds.Contains(x.EMP_ID)).ToList();
+            var sb = new StringBuilder();
+            int i = 1;
+            var capaReviewList = new List<AUDIT_FINDING_CAPA_REVIEW>();
+            var capaImplementationList = new List<AUDIT_FINDING_CAPA_IMPLEMENTATION>();
+            var capaVerificationList = new List<AUDIT_FINDING_CAPA_VERIFICATION>();
 
+            if (status == "Corrective Action Plan Review")
+            {
+         
+                capaReviewList = CSPdb.AUDIT_FINDING_CAPA_REVIEW.GetAll().Where(x => x.FINDING_ID == findingId && x.ISACTIVE && x.ISSUBMITTED).ToList();
+            }
+            else if (status == "Corrective Action Plan Implementation")
+            {
+                capaImplementationList = CSPdb.AUDIT_FINDING_CAPA_IMPLEMENTATION.GetAll().Where(x => x.FINDING_ID == findingId && x.ISACTIVE).ToList();
+            }
+            else if (status == "Corrective Action Plan Verification")
+            {
+                capaVerificationList = CSPdb.AUDIT_FINDING_CAPA_VERIFICATION.GetAll().Where(x => x.FINDING_ID == findingId && x.ISACTIVE).ToList();
+            }
+
+            foreach (var item in findingsList)
+            {
+                var rootCause = rootCauseList.FirstOrDefault(x => x.ID == item.ROOT_CAUSE_ID);
+                string rootCauseName = rootCause.ROOT_CAUSE ?? "N/A";
+                var empDetails = empIdList.FirstOrDefault(x => x.EMP_ID == item.RESPONSIBLE);
+                string isRootCause = item.ISROOTCAUSE ? "Yes" : "No";
+
+                sb.Append("<tr>");
+                sb.Append($"<td>{i++}</td>");
+                sb.Append($"<td>{rootCauseName}</td>");
+                sb.Append($"<td>{isRootCause}</td>");
+                sb.Append($"<td>{item.CORRECTION}</td>");
+                sb.Append($"<td>{item.CORRECTIVE_ACTION_PLAN}</td>");
+                sb.Append($"<td>{item.CAP_TARGET_DATE?.ToString("dd-MM-yyyy")}</td>");
+                sb.Append($"<td>{empDetails.FRST_NM ?? "N/A"}</td>");
+                sb.Append($"<td>{item.PLAN_FOR_EFFECTIVE_CAP}</td>");
+
+                if (status == "Corrective Action Plan Review")
+                {
+                    var capaReview = capaReviewList.FirstOrDefault(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
+                    string isApproved = capaReview.ISAPPROVED == true ? "Yes" : "No";
+                    string remarks = capaReview.REMARKS ?? string.Empty;
+                    sb.Append($"<td>{isApproved}</td>");
+                    sb.Append($"<td>{remarks}</td>");
+                }
+                else if (status == "Corrective Action Plan Implementation")
+                {
+                    var capaImplementation = capaImplementationList.FirstOrDefault(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
+                    string isImplemented = capaImplementation.ISIMPLEMENTED == true ? "Yes" : "No";
+                    string remarks = capaImplementation.REMARKS ?? string.Empty;
+                    sb.Append($"<td>{isImplemented}</td>");
+                    sb.Append($"<td>{remarks}</td>");
+                }
+                else if (status == "Corrective Action Plan Verification")
+                {
+                    var capaVerification = capaVerificationList.FirstOrDefault(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
+                    string isVerified = capaVerification.ISVERIFIED == true ? "Yes" : "No";
+                    string remarks = capaVerification.REMARKS ?? string.Empty;
+                    sb.Append($"<td>{isVerified}</td>");
+                    sb.Append($"<td>{remarks}</td>");
+                }
+
+                sb.AppendLine("</tr>");
+            }
+            return sb.ToString();
+        }
+       
 
     }
 }
