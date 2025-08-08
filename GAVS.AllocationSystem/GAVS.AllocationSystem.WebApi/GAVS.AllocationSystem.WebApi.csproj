@@ -518,6 +518,10 @@
     <Content Include="UploadFile\Mails\SubmittedSlaMetrics.htm" />
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_Premier.htm" />
     <Content Include="UploadFile\Mails\ChecklistAuditSendEmail.htm" />
+  <Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
+  <Content Include="UploadFile\Mails\CAPAAuditReviewEmail.htm" />
+  <Content Include="UploadFile\Mails\CAPAAuditImplementationEmail.htm" />
+  <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />
     <Content Include="UploadFile\Mails\CheckListAuditSendMailForAssessmentCompleted.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestMonthly.htm" />
     <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
