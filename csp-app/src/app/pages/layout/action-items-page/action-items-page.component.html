@@ -317,8 +317,8 @@
 
       <div class="row">
         <mat-form-field>
-          <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status" placeholder="Status"  [disabled]="!isDescUpdated" required
-            (selectionChange)="showCheckBoxVisibility($event.value)">
+          <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status" placeholder="Status"  [disabled]="EditActionitem.status === 'Completed'" required
+            (selectionChange)="showCheckBoxVisibility($event.value)" >
             <mat-option value="Open" disabled>Open</mat-option>
             <!-- <mat-option value="Planned">Planned</mat-option> -->
             <mat-option value="In Progress" matTooltip="Planned Activities Commenced">In Progress</mat-option>
