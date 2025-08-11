@@ -41,11 +41,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             int? batchId; int? custbatchId; string guid = null;
             string frequency = "Quarterly";
+            string frequency1 = string.Empty;
             if (surveyCriteria != null)
             {
                 if (surveyCriteria.QUARTER == 5 || surveyCriteria.QUARTER == 6)
                 {
-                    frequency = "Halfyearly";
+                    frequency1 = "halfyearly";
+                       frequency = "half-yearly";
                     surveyCriteria.QUARTER -= 4;
                 }
                 if (surveyCriteria.IS_MONTHLY)
@@ -58,7 +60,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                 t.YEAR == surveyCriteria.YEAR)?.ID;
                     if (batchId.HasValue)
                     {
-                        if(surveyCriteria.IS_QUALITATIVE_FEEDBACK)
+                        if (surveyCriteria.IS_QUALITATIVE_FEEDBACK)
                         {
                             custbatchId = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().FirstOrDefault(t => t.BATCH_MONTHLY_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID && (t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT"))?.ID;
                         }
@@ -72,8 +74,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
-                     
-                    batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t => t.SEQUENCE == surveyCriteria.QUARTER && t.FREQUENCY == frequency && t.YEAR == surveyCriteria.YEAR)?.ID;
+
+                    batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t => t.SEQUENCE == surveyCriteria.QUARTER && (t.FREQUENCY.ToLower() == frequency || t.FREQUENCY.ToLower() == frequency1) && t.YEAR == surveyCriteria.YEAR)?.ID;
                     if (batchId.HasValue)
                     {
                         if (surveyCriteria.IS_QUALITATIVE_FEEDBACK)
@@ -87,7 +89,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         if (custbatchId.HasValue && custbatchId > 0)
                             guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId).SURVEY_ID;
                     }
-                }       
+                }
             }
             return Ok(new { guid = guid, });
         }

@@ -15989,7 +15989,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             UpdateLastUpdatedDetails(results.PROJ_ID, results.UPDATED_BY);
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == results.PROJ_ID);
             Tuple<string, string>[] FieldNameWithCaptionList = new Tuple<string, string>[] {
-                    Tuple.Create("DESCRIPTION", "DESCRIPTION"),
+                    Tuple.Create("DESCRIPTION/ CORRECTIVE ACTION PLAN", "DESCRIPTION"),
                     Tuple.Create("SOURCE", "SOURCE"),
                     Tuple.Create("SOURCE DESCRIPTION", "SOURCE_DESCRIPTION"),
                     Tuple.Create("OWNER", "OWNER"),
@@ -16000,7 +16000,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Tuple.Create("STATUS", "STATUS"),
                     Tuple.Create("COMMENTS", "COMMENTS"),
                     Tuple.Create("ROOT CAUSE", "ROOT_CAUSE"),
-                    Tuple.Create("PREVENTIVE_ACTION_PLAN", "PREVENTIVE_ACTION_PLAN")
+                    Tuple.Create("PREVENTIVE ACTION PLAN", "PREVENTIVE_ACTION_PLAN"),
+                    Tuple.Create("UPDATED DATE", "UPDATED_DATE"),
+                    Tuple.Create("UPDATED BY", "UPDATED_BY")
 
 
             };
