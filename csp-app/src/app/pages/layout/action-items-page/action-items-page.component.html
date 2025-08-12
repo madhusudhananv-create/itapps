@@ -227,7 +227,7 @@
       <div class="row"  *ngIf="!csatBased">
         <mat-form-field style="width:calc(100% - 20px)">
           <textarea matTextareaAutosize name='txtDescription' maxlength="4000" [(ngModel)]="EditActionitem.description"
-           matInput placeholder="Action Plan Description" required>
+           matInput placeholder="Action Plan Description" (beforeinput)="removeSpecailCharacter($event)" (paste)="onPaste($event)" required>
           </textarea>
         </mat-form-field>
       </div>
@@ -296,7 +296,7 @@
       <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:75%">
           <textarea name='txtCorrectiveActionPlan' maxlength="2000" [(ngModel)]="EditActionitem.description"
-           matInput placeholder="Corrective Action Plan" required>
+           matInput placeholder="Corrective Action Plan" (beforeinput)="removeSpecailCharacter($event)" (paste)="onPaste($event)" required>
           </textarea>
         </mat-form-field>
       </div>
@@ -331,7 +331,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="csatBased" class="row">
-        <mat-form-field style="width:20%">
+        <mat-form-field style="width:23%">
           <input [min]="EditActionitem.identifieD_DATE" [max]="maxTargetDate" matInput name="dtTargetDate"
             [(ngModel)]="EditActionitem.targeT_DATE" [matDatepicker]="picker2"
             [disabled]="EditActionitem.actioN_ITEM_ID > 0" placeholder="Action Plan submission - Target Date" required>
@@ -340,7 +340,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="csatBased" class="row">
-        <mat-form-field style="width:20%"
+        <mat-form-field style="width:23%"
           [matTooltip]="csatBased ? 'Action plan to be submitted to Customer within 7 days from the date of feedback received from Customer' : ''"
           matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="dtCompletionDate"
@@ -351,7 +351,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="csatBased" class="row">
-        <mat-form-field style="width:20%">
+        <mat-form-field style="width:23%">
           <input [min]="EditActionitem.identifieD_DATE" [max]="maxTargetDate" matInput name="planneD_TARGET_DATE"
             [(ngModel)]="EditActionitem.planneD_TARGET_DATE" [matDatepicker]="picker5"
             [disabled]="EditActionitem.actioN_ITEM_ID > 0" placeholder="Action Plan Completion - Target date">
@@ -360,7 +360,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="csatBased" class="row">
-        <mat-form-field style="width:20%"
+        <mat-form-field style="width:23%"
           matTooltip="Action plan to be implemented within 4 weeks from the date of feedback received from Customer"
           matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="planneD_ACTUAL_DATE"
@@ -372,7 +372,7 @@
       </div>
 
       <div *ngIf="!csatBased" class="row">
-        <mat-form-field style="width:20%">
+        <mat-form-field style="width:23%">
           <input [min]="EditActionitem.identifieD_DATE" [max]="maxTargetDate" matInput name="dtTargetDate"
             [(ngModel)]="EditActionitem.targeT_DATE" [matDatepicker]="picker7"
             [disabled]="EditActionitem.actioN_ITEM_ID > 0" placeholder="Action Plan Completion - Target Date" required>
@@ -381,7 +381,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="!csatBased" class="row">
-        <mat-form-field style="width:20%" matTooltipPosition="above">
+        <mat-form-field style="width:23%" matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" matInput name="dtCompletionDate"
             [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker8"
             placeholder="Action Plan Completion -  Actual Date">

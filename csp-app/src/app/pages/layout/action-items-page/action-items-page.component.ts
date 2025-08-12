@@ -840,5 +840,22 @@ private updateDeclarationVisibility(showList: string[]): void {
     }
 
   }
-  
+  removeSpecailCharacter(event: any){
+    const allowedPattern = /[^a-zA-Z0-9.,\s]$/;
+    const inputData = event.data as string;
+    console.log("special",allowedPattern);
+   if(!inputData){
+    return;
+   }
+    if(allowedPattern.test(inputData)){
+      event.preventDefault();
+    }
+  }
+
+  onPaste(event: ClipboardEvent){
+    const pasteData = (event.clipboardData && event.clipboardData.getData('text')) || '';
+    if(!/[^a-zA-Z0-9.,\s]$/.test(pasteData)){
+      event.preventDefault();
+    }
+  }
 }
