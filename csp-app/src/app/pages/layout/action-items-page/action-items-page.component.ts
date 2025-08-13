@@ -100,6 +100,7 @@ export class ActionItemsPageComponent implements OnInit {
 identifiedToCompleted: string[] = ["closure"];
 previousStatus: string = '';
 showInfo = false;
+showDescriptionError: boolean = false;
   constructor(private route: ActivatedRoute, private _appservice: AppsService, private _shared: SharedService, private _http: Http, private _util: myUtility,
     private changeDetectorRefs: ChangeDetectorRef, public _access: AccessControl, public dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) private data: any) { }
@@ -148,6 +149,7 @@ showInfo = false;
     this.showCommCheckboxError = false;
     this.showCommCheckboxErrorComplete = false;
     this.showSelectChecboxError = false;
+    this.showDescriptionError = false;
 
   }
 
@@ -408,6 +410,12 @@ showInfo = false;
 
   SubmitForm(isValid) {
     let a2Date;
+    const specialCarPattern = /^[!@#$^&*()?":{}|<>~`_\+=\[\]\\\/\s]+$/;
+    const numberPattern = /^[0-9\s]+$/;
+    if (!specialCarPattern.test(this.EditActionitem.description) || numberPattern.test(this.EditActionitem.description)) {
+      alert('Invalid Description - Please enter alphanumeric or numeric values for description');
+      return;
+    }
     if (!isValid) {
       alert("Please enter valid values for required fields");
       return;
@@ -459,6 +467,7 @@ showInfo = false;
     this.showCommCheckboxError = false;
     this.showCommCheckboxErrorComplete = false;
     this.showSelectChecboxError = false;
+    this.showDescriptionError = false;
     
    // 1. Handle "In Progress" status
     if (this.EditActionitem.status === 'In Progress') {
@@ -616,6 +625,7 @@ showInfo = false;
     this.newEditActionitem();
     this.getAllActionItemsForCustomer();
     this.resetCheckBoxes();
+    this.showDescriptionError = false;
   }
 
   SendUpdateToCustomer(EditActionitem) {
@@ -840,22 +850,17 @@ private updateDeclarationVisibility(showList: string[]): void {
     }
 
   }
-  removeSpecailCharacter(event: any){
-    const allowedPattern = /[^a-zA-Z0-9.,\s]$/;
-    const inputData = event.data as string;
-    console.log("special",allowedPattern);
-   if(!inputData){
-    return;
-   }
-    if(allowedPattern.test(inputData)){
-      event.preventDefault();
-    }
-  }
+  
+validateDescription() {
 
-  onPaste(event: ClipboardEvent){
-    const pasteData = (event.clipboardData && event.clipboardData.getData('text')) || '';
-    if(!/[^a-zA-Z0-9.,\s]$/.test(pasteData)){
-      event.preventDefault();
+    const specialCarPattern = /^[!@#$^&*()?":{}|<>~`_\+=\[\]\\\/\s]+$/;
+    const numberPattern = /^[0-9\s]+$/;
+    // Check if the current description matches either invalid pattern
+    if (!specialCarPattern.test(this.EditActionitem.description) || numberPattern.test(this.EditActionitem.description)) {
+      this.EditActionitem.description = this.EditActionitem.description.replace(specialCarPattern, '');
+      this.showDescriptionError = true;
+    } else {
+      this.showDescriptionError = false;
     }
   }
 }

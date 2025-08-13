@@ -227,7 +227,7 @@
       <div class="row"  *ngIf="!csatBased">
         <mat-form-field style="width:calc(100% - 20px)">
           <textarea matTextareaAutosize name='txtDescription' maxlength="4000" [(ngModel)]="EditActionitem.description"
-           matInput placeholder="Action Plan Description" (beforeinput)="removeSpecailCharacter($event)" (paste)="onPaste($event)" required>
+           matInput placeholder="Action Plan Description" (input)="validateDescription()"  required>
           </textarea>
         </mat-form-field>
       </div>
@@ -296,9 +296,12 @@
       <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:75%">
           <textarea name='txtCorrectiveActionPlan' maxlength="2000" [(ngModel)]="EditActionitem.description"
-           matInput placeholder="Corrective Action Plan" (beforeinput)="removeSpecailCharacter($event)" (paste)="onPaste($event)" required>
+           matInput placeholder="Corrective Action Plan" (input)="validateDescription()"  required>
           </textarea>
         </mat-form-field>
+      </div>
+      <div *ngIf="showDescriptionError" class="error" style="color: red;">
+        Invalid Description - Please enter alphanumeric or numeric values.
       </div>
       <div class="row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
         <mat-form-field style="width:75%">
@@ -340,7 +343,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="csatBased" class="row">
-        <mat-form-field style="width:23%"
+        <mat-form-field style="width:22%"
           [matTooltip]="csatBased ? 'Action plan to be submitted to Customer within 7 days from the date of feedback received from Customer' : ''"
           matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="dtCompletionDate"
@@ -360,7 +363,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="csatBased" class="row">
-        <mat-form-field style="width:23%"
+        <mat-form-field style="width:22%"
           matTooltip="Action plan to be implemented within 4 weeks from the date of feedback received from Customer"
           matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="planneD_ACTUAL_DATE"
@@ -372,7 +375,7 @@
       </div>
 
       <div *ngIf="!csatBased" class="row">
-        <mat-form-field style="width:23%">
+        <mat-form-field style="width:22%">
           <input [min]="EditActionitem.identifieD_DATE" [max]="maxTargetDate" matInput name="dtTargetDate"
             [(ngModel)]="EditActionitem.targeT_DATE" [matDatepicker]="picker7"
             [disabled]="EditActionitem.actioN_ITEM_ID > 0" placeholder="Action Plan Completion - Target Date" required>
@@ -381,7 +384,7 @@
         </mat-form-field>
       </div>
       <div *ngIf="!csatBased" class="row">
-        <mat-form-field style="width:23%" matTooltipPosition="above">
+        <mat-form-field style="width:22%" matTooltipPosition="above">
           <input [min]="EditActionitem.identifieD_DATE" matInput name="dtCompletionDate"
             [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker8"
             placeholder="Action Plan Completion -  Actual Date">
@@ -434,10 +437,10 @@
       </div>
       <div *ngIf="actuaL_PLAN_DECLARATION && declarationVisibility.actual && csatBased"
         style="margin-left: 20px; margin-top: 5px;">
-        <mat-form-field style="width:20%" matTooltipPosition="above">
+        <mat-form-field style="width:26%" matTooltipPosition="above">
           <input [max]="_util.Today()" matInput name="actuaL_CUST_DATE" [(ngModel)]="EditActionitem.actuaL_CUST_DATE"
              [matDatepicker]="picker9"
-            placeholder="Actual Date of Customer Communication:" [disabled]="disableActualPlanDate" [required]="actuaL_PLAN_DECLARATION">
+            placeholder="Actual Date of Customer Communication:" [matTooltip]="'Actual Date of Customer Communication'" [disabled]="disableActualPlanDate" [required]="actuaL_PLAN_DECLARATION">
           <mat-datepicker-toggle matSuffix [for]="picker9"></mat-datepicker-toggle>
           <mat-datepicker #picker9></mat-datepicker>
         </mat-form-field>
@@ -451,10 +454,10 @@
       </div>
       <div *ngIf="planneD_DECLARATION && declarationVisibility.plan && csatBased"
         style="margin-left: 20px; margin-top: 5px;">
-        <mat-form-field style="width:20%" matTooltipPosition="above">
+        <mat-form-field style="width:26%" matTooltipPosition="above">
           <input matInput name="planneD_CUST_DATE" [(ngModel)]="EditActionitem.planneD_CUST_DATE"
              [matDatepicker]="picker10"
-            placeholder="Planned Date of Customer Communication:" [disabled]="disablePlannedDate" [required]="planneD_DECLARATION">
+            placeholder="Planned Date of Customer Communication:" [matTooltip]="'Planned Date of Customer Communication'" [disabled]="disablePlannedDate" [required]="planneD_DECLARATION">
           <mat-datepicker-toggle matSuffix [for]="picker10"></mat-datepicker-toggle>
           <mat-datepicker #picker10></mat-datepicker>
         </mat-form-field>
@@ -469,10 +472,10 @@
       </div>
       <div *ngIf="closurE_ACKNOWLEDGE && declarationVisibility.closure && csatBased"
         style="margin-left: 20px; margin-top: 5px;">
-        <mat-form-field style="width:20%" matTooltipPosition="above">
+        <mat-form-field style="width:26%" matTooltipPosition="above">
           <input [max]="_util.Today()" matInput name="closurE_ACTUAL_CUST_DATE"
             [(ngModel)]="EditActionitem.closurE_ACTUAL_CUST_DATE" [matDatepicker]="picker11"
-            placeholder="Actual Date of Customer Communication:" [disabled]="disableClosureDate"  [required]="EditActionitem.status === 'Completed'">
+            placeholder="Actual Date of Customer Communication:" [disabled]="disableClosureDate" [matTooltip]="'Actual Date of Customer Communication'"  [required]="EditActionitem.status === 'Completed'">
           <mat-datepicker-toggle matSuffix [for]="picker11"></mat-datepicker-toggle>
           <mat-datepicker #picker11></mat-datepicker>
         </mat-form-field>

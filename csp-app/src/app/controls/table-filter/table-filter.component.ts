@@ -185,12 +185,12 @@ export class TableFilterComponent implements OnInit {
     issueStatus.push(this.NewParam(4, 'On Hold'));
 
     let actionItemStatus: ParameterModel[] = [];
-    actionItemStatus.push(this.NewParam(1, 'Planned'));
-    actionItemStatus.push(this.NewParam(2, 'Started'));
+    actionItemStatus.push(this.NewParam(1, 'In Progress'));
+    //actionItemStatus.push(this.NewParam(2, 'Started'));
     actionItemStatus.push(this.NewParam(3, 'Completed'));
     actionItemStatus.push(this.NewParam(4, 'Cancelled'));
     actionItemStatus.push(this.NewParam(5, 'Suspended'));
-    actionItemStatus.push(this.NewParam(6, 'Identified'));
+    actionItemStatus.push(this.NewParam(6, 'Open'));
     let actionItempriority: ParameterModel[] = [];
     actionItempriority.push(this.NewParam(1, 'Critical'));
     actionItempriority.push(this.NewParam(2, 'High'));
