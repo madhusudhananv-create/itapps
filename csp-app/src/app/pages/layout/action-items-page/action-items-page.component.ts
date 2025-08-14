@@ -851,16 +851,19 @@ private updateDeclarationVisibility(showList: string[]): void {
 
   }
   
-validateDescription() {
+hasSpecialChars(text: string): boolean {
+  const specialCharPattern = /[!@#$^&*()?":{}|<>~`_\+=\[\]\\\/]/; // match any special char
+  return specialCharPattern.test(text);
+}
 
-    const specialCarPattern = /^[!@#$^&*()?":{}|<>~`_\+=\[\]\\\/\s]+$/;
-    const numberPattern = /^[0-9\s]+$/;
-    // Check if the current description matches either invalid pattern
-    if (!specialCarPattern.test(this.EditActionitem.description) || numberPattern.test(this.EditActionitem.description)) {
-      this.EditActionitem.description = this.EditActionitem.description.replace(specialCarPattern, '');
-      this.showDescriptionError = true;
-    } else {
-      this.showDescriptionError = false;
-    }
+validateDescription() {
+  const description = this.EditActionitem.description || '';
+
+  // Show error if contains any special character
+  if (this.hasSpecialChars(description)) {
+    this.showDescriptionError = true;
+  } else {
+    this.showDescriptionError = false;
   }
+}
 }
