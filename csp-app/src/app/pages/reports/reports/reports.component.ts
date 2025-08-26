@@ -38,6 +38,7 @@ export class ReportsComponent implements OnInit {
   portfolio: PortfoliosModel[] = [];
   checklist: ChecklistModel[] = [];
   selectedChecklist: ChecklistModel;
+  filteredCustomerIds: string = '';
   ngAfterViewInit() {
     this.datasource = new MatTableDataSource(this.FinalTabData);
     this.datasource.paginator = this.paginator;
@@ -49,12 +50,12 @@ export class ReportsComponent implements OnInit {
       .subscribe
       (
         data => {
-          //alert(data.length);
+          this.filteredCustomerIds = data.map(c => c.cusT_ID).join(',');
           let all = new CustomerProjectsListModel();
           all.cusT_ID = "0";
           all.cusT_NM = "All";
-          data.fill(all, 0, 1);
-          this.Customers = data;
+          //data.fill(all, 0, 1);
+          this.Customers = [all, ...data];
         });
     this._appservice.GetAllProductList().subscribe(data => {
       let all = new PremierProductsListModel();
@@ -126,7 +127,11 @@ export class ReportsComponent implements OnInit {
     let isValid: boolean = true;
     this.paramData.forEach(x => {
       if (x.paraM_TYPE == "CUSTOMERID" && this.selectedCustomer != undefined && this.selectedCustomer != null) {
-        x.paraM_VALUE = this.selectedCustomer.cusT_ID.toString()
+        if (this.selectedCustomer.cusT_NM === 'All') {
+          x.paraM_VALUE = this.filteredCustomerIds;
+        } else {
+          x.paraM_VALUE = this.selectedCustomer.cusT_ID.toString();
+        }
       }
       else if (x.paraM_TYPE == "PRODUCTID" && this.selectedProduct != undefined && this.selectedProduct != null) {
         x.paraM_VALUE = this.selectedProduct.id.toString();
