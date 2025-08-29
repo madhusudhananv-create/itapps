@@ -403,6 +403,7 @@ export class BestPracticesPageComponent implements OnInit {
   GetFilteredBestPractices(event: any) {
     this._appservice.getBestPracticesFromDescription(event).subscribe(
       data => {
+        console.log("Filtered", data);
         this.filteredBestpractices = data;
         this.dataSource2 = new MatTableDataSource<BestPracticesModelExt>(this.filteredBestpractices);
       }, error => { this._util.serviceError(error); })
@@ -503,9 +504,17 @@ loadProcessAreaswithProcess()
   let servicemap =  this.ddServiceAreaMap.filter(x => x.servicE_AREA_ID == this.editBestPractice.servicE_AREA_ID);           
     this.projectProcess = [];
     this.projectProcessArea = []; 
-    servicemap.forEach(obj => {    
-      this.projectProcess.push(this.ddProcess.filter(t => t.id == obj.procesS_ID)[0]);             
-    });   
+   /* servicemap.forEach(obj => {    
+      this.projectProcess.push(this.ddProcess.filter(t => t.id == obj.procesS_ID)[0]);    
+      console.log("projectProcess",this.projectProcess);         
+    });  */
+
+    servicemap.forEach(obj => {
+      const process = this.ddProcess.find(t => t.id == obj.procesS_ID);
+      if (process && !this.projectProcess.some(p => p.id === process.id)) {
+        this.projectProcess.push(process);
+      }
+    }); 
 
     if(this.projectProcess.length == 1)
      this.editBestPractice.procesS_ID = this.projectProcess[0].id;   

@@ -434,12 +434,23 @@ export class KpiDefinitionsComponent implements OnInit {
     this.definition.kpI_TARGETS.push(this.GetNewProdKPITarget());
   }
   DeleteTarget_Onclick(target) {
-    if(target.starT_DATE != null && target.starT_DATE != undefined && target.enD_DATE != null && target.enD_DATE != undefined){
+    /* if(target.starT_DATE != null && target.starT_DATE != undefined && target.enD_DATE != null && target.enD_DATE != undefined){
       if (confirm('Are you sure you want to delete the record?')) {
         this.service_deleteKpiTarget(target);
       }
     }
     else{
+      alert("Please choose the target date range.")
+    } */
+   if(target.starT_DATE != null && target.starT_DATE != undefined && target.enD_DATE != null && target.enD_DATE != undefined){
+    if (confirm('Are you sure you want to delete the record?')) {
+      const data = {
+        kpi_ID: target.kpI_ID
+      };
+        this.service_deleteKpiTarget(data);
+      }
+    }
+      else{
       alert("Please choose the target date range.")
     }
   }
