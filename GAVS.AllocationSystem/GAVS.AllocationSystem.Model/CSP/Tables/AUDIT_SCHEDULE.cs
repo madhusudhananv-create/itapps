@@ -16,7 +16,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         [NotMapped]
         public List<int> SERVICE_AREA_ID { get; set; }
         public DateTime? SCHEDULED_DATE { get; set; }
-        public int? SCHEDULED_DURATION { get; set; }
+        public decimal? SCHEDULED_DURATION { get; set; }
         public DateTime? ACTUAL_DATE { get; set; }
         //public int? ACTUAL_DURATION { get; set; }
         public string AUDITOR_EMP_ID { get; set; }

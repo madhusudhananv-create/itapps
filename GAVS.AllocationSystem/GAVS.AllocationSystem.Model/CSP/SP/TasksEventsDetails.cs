@@ -18,7 +18,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string description { get; set; }
         public string status { get; set; }
         public DateTime? scheduledStartDate { get; set; }
-        public int? scheduledDuration { get; set; }
+        public decimal? scheduledDuration { get; set; }
         public string priority { get; set; }
         public DateTime? dueDate { get; set; }
         public string owner { get; set; }
