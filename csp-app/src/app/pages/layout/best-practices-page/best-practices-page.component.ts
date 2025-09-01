@@ -382,9 +382,11 @@ export class BestPracticesPageComponent implements OnInit {
           this.editBestPractice.procesS_AREA_ID= pAreaid;
         }
        
-        if (element.process !=null && this.ddProcess.length >0 )
-        {
-        this.editBestPractice.procesS_ID= this.ddProcess.find(x => x.title == element.process).id;
+        if (element.process != null && this.ddProcess.length > 0) {
+          const processID = this.ddProcess.find((x: any) => x.title == element.process);
+          if (processID) {
+            this.editBestPractice.procesS_ID = processID.id;
+          }
         }
       }
       else
@@ -520,7 +522,10 @@ loadProcessAreaswithProcess()
      this.editBestPractice.procesS_ID = this.projectProcess[0].id;   
 
     this.projectProcess.forEach(obj => {
-      this.projectProcessArea.push(this.ddProcessArea.filter(x => x.id == obj.procesS_AREA_ID)[0]);       
+      const processArea = this.ddProcessArea.find(t => t.id == obj.procesS_AREA_ID);
+      if(processArea && !this.projectProcessArea.some(p => p.id === processArea.id)) {
+        this.projectProcessArea.push(processArea);
+      }
     }); 
     if(this.projectProcessArea.length == 1)
      this.editBestPractice.procesS_AREA_ID = this.projectProcessArea[0].id; 
@@ -648,11 +653,11 @@ loadProcessAreaswithProcess()
 
     }
     else {     
-
+      const saveProcess = this.ddProcess.find((x: any) => x.id == this.editBestPractice.procesS_ID && x.procesS_AREA_ID == this.editBestPractice.procesS_AREA_ID);
       this.editBestPractice.servicE_AREA= this.ddServiceArea.find(x => x.id == this.editBestPractice.servicE_AREA_ID).title;
       this.editBestPractice.procesS_AREA= this.ddProcessArea.find(x => x.id == this.editBestPractice.procesS_AREA_ID).title;
-      this.editBestPractice.process= this.ddProcess.find(x => x.id == this.editBestPractice.procesS_ID && x.procesS_AREA_ID == this.editBestPractice.procesS_AREA_ID).title;
-      this.editBestPractice.reporteD_BY= this.myControl.value;
+      this.editBestPractice.process = saveProcess ? saveProcess.title : "";
+      this.editBestPractice.reporteD_BY = this.myControl.value;
       this.editBestPractice.revieweD_BY=this.myControlReview.value;
       this.editBestPractice.approveD_BY=this.myControlApprove.value; 
       this.editBestPractice.updateD_BY = localStorage.getItem('empid');
