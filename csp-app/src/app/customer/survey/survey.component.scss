@@ -136,6 +136,7 @@ a:hover {
   font-family: Tahoma;
   font-size: 13px;
 }
+
 .btn-primary {
   color: #fff;
   background-color: #337ab7;
@@ -143,8 +144,208 @@ a:hover {
   border: none !important;
   outline: none !important;
 }
+
 .btn-primary:focus,
 .btn-primary:active {
   border: none !important;
   outline: none !important;
+}
+
+/* Mobile view styles */
+
+@media screen and (max-width: 768px) {
+
+  .wrapper1,
+  .wrapper2 {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .div1,
+  .div2 {
+    width: 100%;
+  }
+
+  p {
+    font-size: 13px !important;
+  }
+
+  /* Client info table (first table) */
+  table.table {
+    min-width: 100%;
+    border-collapse: collapse;
+    width: 110%;
+  }
+
+  table.table tr {
+    display: table-row;
+  }
+
+  table.table tr td,
+  table.table tr th {
+    display: table-cell;
+    padding: 6px;
+    vertical-align: top;
+    border: 1px solid #0094ff;
+    word-wrap: break-word;
+  }
+
+  table.table tr td:nth-child(odd),
+  table.table tr th:nth-child(odd) {
+    font-weight: bold;
+    background-color: #f5f5f5;
+    font-size:11px;
+  }
+
+  table.table tr td:nth-child(even) {
+    width: 50%;
+  }
+
+  /* Questions table (inside tbody with questions_Criteria) */
+  table.table thead th {
+    display: none !important;
+    /* Hide Survey Question, Rating, Remarks headings */
+  }
+
+  tbody.tahoma-font tr {
+    display: block !important;
+    /* Force block layout for the row */
+    border-bottom: 1px solid #0094ff;
+    margin-bottom: 10px;
+    width: 100% !important;
+  }
+
+  tbody.tahoma-font tr td,
+  tbody.tahoma-font tr th {
+    display: block !important;
+    /* Force block layout for cells */
+    width: 100% !important;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 1px solid #0094ff;
+    font-size: 11px;
+  }
+
+  tbody.tahoma-font tr td:nth-child(odd),
+  tbody.tahoma-font tr th:nth-child(odd) {
+    font-weight: bold;
+    background-color: #f5f5f5;
+  }
+
+  // tbody.tahoma-font tr td:nth-child(even) {
+  //   width: 50%;
+  // }
+  /* NPS rating pills - Make responsive */
+  .pillStart,
+  .pill,
+  .pillEnd {
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 2;
+    margin: 1px;
+    display: inline-block;
+    min-width: 20px;
+    box-sizing: border-box;
+  }
+
+  .pillStart {
+    border-radius: 8px 0 0 8px;
+  }
+
+  .pillEnd {
+    border-radius: 0 8px 8px 0;
+  }
+
+  /* NPS labels - Reduce text size for "Not at all likely" and "Extremely likely" */
+  table.table tr td[colspan="1"][nowrap] {
+    font-size: 8px !important;
+    padding: 2px 4px !important;
+    word-wrap: break-word;
+    white-space: normal !important;
+    line-height: 1.2;
+    font-weight: bold;
+  }
+
+  #Gavs-logo {
+    width: 80px;
+  }
+
+  .criteria {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .red {
+    font-size: 12px;
+  }
+
+  .starRating {
+    padding-top: 5px;
+  }
+
+  .textarea-wrapper textarea {
+    height: 60px;
+    font-size: 12px;
+  }
+
+  .remaning {
+    font-size: 10px;
+    bottom: 5px;
+    right: 5px;
+  }
+
+  .btn-primary {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+
+  mat-form-field {
+    width: 100% !important;
+  }
+
+  mat-checkbox {
+    font-size: 12px;
+  }
+
+  a.link {
+    font-size: 12px;
+  }
+
+  /* Confirmation Dialog Mobile Responsive Styles */
+  .mat-dialog-container {
+    width: 95% !important;
+    max-width: 350px !important;
+    margin: 10px !important;
+    padding: 0 !important;
+  }
+
+  h2[mat-dialog-title] {
+    font-size: 16px !important;
+    padding: 8px 12px 0 12px !important;
+    margin: 0 !important;
+    text-align: center !important;
+    word-wrap: break-word;
+  }
+
+  mat-dialog-content {
+    padding: 8px 12px 0 12px !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    text-align: center !important;
+    word-wrap: break-word;
+    line-height: 1.4;
+  }
+
+  mat-dialog-actions {
+    padding: 15px 10px !important;
+    justify-content: center !important;
+  }
+
+  mat-dialog-actions button {
+    width: 80px !important;
+    margin: 0 5px !important;
+    padding: 0px 0px !important;
+    font-size: 12px !important;
+  }
+
 }
