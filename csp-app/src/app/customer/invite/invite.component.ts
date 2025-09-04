@@ -37,8 +37,9 @@ export class InviteComponent implements OnInit {
   ClientContacts: ContactsModel[];
   searchText: string;
   selectedEmailId: string;
-  csaT_FREQUENCY: string[] = ['', 'Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'];
+  csaT_FREQUENCY: string[] = ['', 'Monthly', 'Quarterly', 'Half-Yearly', 'Half-Yearly ACSAT', 'Yearly'];
   specificSurveyOpted: boolean = false;
+  acsat: boolean = false;
   isMonthly: boolean = false;
   isCSSMonthly: boolean = false;
   dataCSSMonthly: any = [];
@@ -228,13 +229,22 @@ export class InviteComponent implements OnInit {
           return;
         }
       }
+
+      if(!this.acsat && this.selectedProjects.length==0)
+      {
+
+         alert("Please select atleast one Project(when Account CSAT is not selected)");
+          return;
+      }
+
       let newCust = {
         "CUST_ID": this.selectedClient.client_ID,
         "CUST_NM": this.selectedClient.client_NM,
         "CUSTOMER_PROJECTS": this.selectedProjects,
         "DISPLAY_NAME": this.getSelectedName(),
         "EMAILID": this.selectedEmailId,
-        "SPECIFIC_SURVEY_OPTED": (this.specificSurveyOpted == null || this.specificSurveyOpted == undefined ? false : this.specificSurveyOpted)
+        "SPECIFIC_SURVEY_OPTED": (this.specificSurveyOpted == null || this.specificSurveyOpted == undefined ? false : this.specificSurveyOpted),
+        "ACSAT": (this.acsat == null || this.acsat == undefined ? false : this.acsat)
       }
       this._appservice.addCustomerProjects(newCust).subscribe(data1 => {
         this.LoadDetails();
@@ -318,7 +328,9 @@ export class InviteComponent implements OnInit {
           this.selectedEmailId = cust.emailid;
           this.customerEmail = cust.emailid;
           this.specificSurveyOpted = false;
+       
           let c = cust.customeR_PROJECTS.filter(x => x.csaT_FREQUENCY.toLowerCase() == "monthly")
+             
           if (c.length > 0) {
             this.specificSurveyOpted = data.filter(x => x.contacT_EMAILID == cust.emailid)[0].specifiC_SURVEY_OPTED;
             this.isMonthly = true;
@@ -327,6 +339,7 @@ export class InviteComponent implements OnInit {
             this.specificSurveyOpted = data.filter(x => x.contacT_EMAILID == cust.emailid)[0].specifiC_SURVEY_OPTED;
             this.isMonthly = false;
             this.isCSSMonthly = false;
+            this.acsat = data.filter(x => x.contacT_EMAILID == cust.emailid)[0].acsat;
           }
           if (this.ClientContacts.length == 0)
             this.nodata = true;

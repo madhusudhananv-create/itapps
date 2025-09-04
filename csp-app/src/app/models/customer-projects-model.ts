@@ -15,6 +15,7 @@ export class CustomerProjectsModel {
   csaT_SURVEY: boolean;
   csaT_FREQUENCY: string;
   reporting: boolean;
+  acsat: boolean;
   customeR_PROJECTS: CUSTOMER_PROJECTS[];
 }
 export class CUSTOMER_PROJECTS {

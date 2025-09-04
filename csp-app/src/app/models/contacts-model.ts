@@ -12,6 +12,7 @@ export class ContactsModel {
     isactive: Boolean;
     rolE_ID : number;
     specifiC_SURVEY_OPTED:boolean;
+     acsat:boolean;
 }
 
 
