@@ -1929,8 +1929,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var stopwatch = Stopwatch.StartNew();
             var projects = Cldb.AppRepo.GetProjectIdsForUser(EmpId, "", "").ToList();
-            var arrProjects = projects.Select(t => t.PROJ_ID).ToList<string>();
-            var custProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => arrProjects.Contains(t.PROJ_ID)).ToList();
+            var arrProjects = projects.Select(t => t.CUST_ID).ToList<string>();
+            var custProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => arrProjects.Contains(t.CUST_ID)).ToList();
             var csatMappedProjects = Cldb.AppRepo.getProductMappedCSATProjects().ToList();
             var arrCustomers = custProjects.Select(t => t.CUSTOMER_USER_ID).Distinct().ToList();
             //arrCustomers.AddRange(csatMappedProjects.Select(t => t.CUSTOMER_USER_ID).ToList());
@@ -1944,6 +1944,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 cust.CUSTOMER_PROJECTS.AddRange(csatMappedProjects.Where(t => t.CUSTOMER_USER_ID == cust.ID && t.CUST_ID == cust.CUST_ID).ToList());
 
+                if (custProjects.Any(x => x.CUST_ID == cust.CUST_ID && x.CUSTOMER_USER_ID == cust.ID && x.PROJ_ID == null && x.CSAT_SURVEY))
+                    cust.ACSAT = true;
                 foreach (var item in cust.CUSTOMER_PROJECTS)
                 {
                     //set spoc name
@@ -7498,14 +7500,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var contacts = CSPdb.CONTACTS.GetAll().Where(t => t.CUSTOMER_ID == CustomerId && t.CONTACT_TYPE == "CUSTOMER" && t.ISACTIVE).OrderBy(x => x.CONTACT_NAME).ToList();
             var cEmails = contacts.Select(x => x.CONTACT_EMAILID.ToLower()).ToList();
             var cUsers = CSPdb.CUSTOMER_USERS.GetAll().Where(x => cEmails.Contains(x.EMAILID.ToLower())).ToList();
+            var userids = cUsers.Select(x => x.ID).ToList();
 
+            var customerProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(x => userids.Contains(x.CUSTOMER_USER_ID)).ToList();
             foreach (var c in contacts)
             {
-                var opted = cUsers.FirstOrDefault(t => t.EMAILID.ToLower() == c.CONTACT_EMAILID.ToLower())?.SPECIFIC_SURVEY_OPTED;
+                var cuser = cUsers.FirstOrDefault(t => t.EMAILID.ToLower() == c.CONTACT_EMAILID.ToLower());
+                var opted = cuser?.SPECIFIC_SURVEY_OPTED;
                 if (opted.GetValueOrDefault())
                     c.SPECIFIC_SURVEY_OPTED = true;
                 else
                     c.SPECIFIC_SURVEY_OPTED = false;
+
+                c.ACSAT = customerProjects.Any(x => x.CUSTOMER_USER_ID == cuser?.ID && x.CUST_ID == c.CUSTOMER_ID && x.PROJ_ID == null);
             }
             return Ok(contacts);
         }
@@ -13657,6 +13664,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else if (Sequence == 3) { CurrentPeriod = "Jan-" + (Year + 1).ToString(); }
                 else if (Sequence == 4) { CurrentPeriod = "Apr-" + (Year + 1).ToString(); }
             }
+            else if (Frequency.ToLower() == "halfyearly" || Frequency.ToLower() == "half-yearly")
+            {
+                if (Sequence == 1) { CurrentPeriod = "Jan-Jun " + (Year).ToString(); }
+                else if (Sequence == 2) { CurrentPeriod = "Apr-Sep " + Year.ToString(); }
+                else if (Sequence == 3) { CurrentPeriod = "Jul-Dec " + Year.ToString(); }
+
+
+            }
             return CurrentPeriod;
         }
         private string GetCurrentPeriodStringNew(string Frequency, int Sequence, int Year)
@@ -13668,6 +13683,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else if (Sequence == 2) { CurrentPeriod = "Jul-Sep " + Year.ToString(); }
                 else if (Sequence == 3) { CurrentPeriod = "Oct-Dec " + Year.ToString(); }
                 else if (Sequence == 4 || Sequence == 0) { CurrentPeriod = "Jan-Mar " + (Year).ToString(); }
+
+            }
+            else if (Frequency.ToLower() == "halfyearly" || Frequency.ToLower() == "half-yearly")
+            {
+                if (Sequence == 1) { CurrentPeriod = "Jan-Jun " + (Year).ToString(); }
+                else if (Sequence == 2) { CurrentPeriod = "Apr-Sep " + Year.ToString(); }
+                else if (Sequence == 3) { CurrentPeriod = "Jul-Dec " + Year.ToString(); }
+               
 
             }
             return CurrentPeriod;
@@ -13745,6 +13768,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Period = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
                 }
                 else if (Sequence == 2)
+                {
+                    Period = "Apr-" + Year.ToString() + " to Sep-" + Year.ToString();
+
+                }
+                else if (Sequence == 3)
                 {
                     Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString();
 
@@ -15980,7 +16008,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 overview.PLANNED_DECLARATION = results.PLANNED_DECLARATION;
                 overview.CLOSURE_ACKNOWLEDGE = results.CLOSURE_ACKNOWLEDGE;
                 overview.PLANNED_CUST_DATE = results.PLANNED_CUST_DATE.HasValue ? results.PLANNED_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
-                overview.ACTUAL_CUST_DATE = results.ACTUAL_CUST_DATE.HasValue ? results.ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null; 
+                overview.ACTUAL_CUST_DATE = results.ACTUAL_CUST_DATE.HasValue ? results.ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
                 overview.CLOSURE_ACTUAL_CUST_DATE = results.CLOSURE_ACTUAL_CUST_DATE.HasValue ? results.CLOSURE_ACTUAL_CUST_DATE.Value.ToLocalTime() : (DateTime?)null;
             }
 
@@ -20726,7 +20754,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     CREATED_DATE = DateTime.Now,
                     UPDATED_BY = empId,
                     UPDATED_DATE = DateTime.Now,
-                    SPECIFIC_SURVEY_OPTED = results.SPECIFIC_SURVEY_OPTED
+                    SPECIFIC_SURVEY_OPTED = results.SPECIFIC_SURVEY_OPTED,
+
                 };
                 CSPdb.CUSTOMER_USERS.Add(cust);
                 CSPdb.Commit(CanCommit);
@@ -20792,6 +20821,39 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
 
 
+            }
+            if (results.ACSAT)
+            {
+                var existing = CSPdb.CUSTOMER_PROJECTS.GetAll().FirstOrDefault(x => x.CUST_ID == results.CUST_ID && x.CUSTOMER_USER_ID == cust.ID && x.PROJ_ID == null && x.ISACTIVE);
+                if (existing != null)
+                {
+
+                    if (!results.ACSAT)
+                    {
+                        CSPdb.CUSTOMER_PROJECTS.Delete(existing);
+                    }
+                    else
+                    {
+
+                    }
+                }
+                else
+                {
+                    var newproj = new CUSTOMER_PROJECTS
+                    {
+                        CUSTOMER_USER_ID = cust.ID,
+                        CUST_NM = results.CUST_NM,
+                        PROJ_NM = results.CUST_NM,
+                        CUST_ID = results.CUST_ID,
+                        CSAT_SURVEY = true,
+                        CSAT_FREQUENCY = "Half-Yearly",
+                    };
+                    UpdateAuditFields(newproj);
+                    CSPdb.CUSTOMER_PROJECTS.Add(newproj);
+
+
+
+                }
             }
             CSPdb.Commit(CanCommit);
             if (newProjects.Count > 0)

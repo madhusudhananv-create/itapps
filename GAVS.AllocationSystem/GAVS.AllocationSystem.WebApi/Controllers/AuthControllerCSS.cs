@@ -22,7 +22,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [POST("SaveCSSSurveyAnswers")]
         [ActionName("SaveCSSSurveyAnswers")]
         [HttpPost]
-        public IHttpActionResult SaveCSSSurveyAnswers(HttpRequestMessage request, string empId = "", bool? isCSMNotified = null, DateTime? meetingDate = null)
+        public IHttpActionResult SaveCSSSurveyAnswers(HttpRequestMessage request, string empId = "", bool saveAsDraft = false, bool? isCSMNotified = null, DateTime? meetingDate = null)
         {
             try
             {
@@ -34,54 +34,71 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 string surveyId = string.Empty;
                 if (replies.CSS_BATCH_CUSTOMERS_EXTENDED != null)
                 {
-                    foreach (CSS_QUESTION_REPLIES reply in replies.CSS_QUESTION_REPLIES.OrderBy(x => x.SEQUENCE))
+                    foreach (var reply in replies.CSS_QUESTION_REPLIES.OrderBy(x => x.SEQUENCE))
                     {
                         surveyId = reply.SURVEY_ID;
                         var existing = CSPdb.CSS_QUESTION_REPLIES.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMER_ID == reply.BATCH_CUSTOMER_ID &&
                                         x.SURVEY_ID == reply.SURVEY_ID && x.QUESTION_ID == reply.QUESTION_ID);
-                        if (existing != null) continue;
-
-                        CSS_QUESTION_REPLIES newReply = new CSS_QUESTION_REPLIES()
+                        if (existing != null)
                         {
-                            BATCH_CUSTOMER_ID = reply.BATCH_CUSTOMER_ID,
-                            BATCH_CUSTOMER_MONTHLY_ID = reply.BATCH_CUSTOMER_MONTHLY_ID,
-                            SURVEY_ID = reply.SURVEY_ID,
-                            QUESTION_ID = reply.QUESTION_ID,
-                            QUESTION_CATEGORY = reply.QUESTION_CATEGORY,
-                            QUESTION = reply.QUESTION,
-                            RATING = reply.RATING,
-                            RATING_DESCRIPTION = reply.RATING_DESCRIPTION,
-                            COMMENTS = reply.COMMENTS,
-                            CREATED_BY = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID,
-                            CREATED_DATE = DateTime.Now,
-                            UPDATED_BY = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID,
-                            UPDATED_DATE = DateTime.Now,
-                            ISACTIVE = true,
-                            PERSPECTIVE = reply.PERSPECTIVE,
-                        };
-                        CSPdb.CSS_QUESTION_REPLIES.Add(newReply);
+
+                            existing.RATING = reply.RATING;
+                            existing.RATING_DESCRIPTION = reply.RATING_DESCRIPTION;
+                            existing.COMMENTS = reply.COMMENTS;
+                            UpdateAuditFields(existing);
+                        }
+                        else
+                        {
+
+                            var newReply = new CSS_QUESTION_REPLIES()
+                            {
+                                BATCH_CUSTOMER_ID = reply.BATCH_CUSTOMER_ID,
+                                BATCH_CUSTOMER_MONTHLY_ID = reply.BATCH_CUSTOMER_MONTHLY_ID,
+                                SURVEY_ID = reply.SURVEY_ID,
+                                QUESTION_ID = reply.QUESTION_ID,
+                                QUESTION_CATEGORY = reply.QUESTION_CATEGORY,
+                                QUESTION = reply.QUESTION,
+                                RATING = reply.RATING,
+                                RATING_DESCRIPTION = reply.RATING_DESCRIPTION,
+                                COMMENTS = reply.COMMENTS,
+                                CREATED_BY = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID,
+                                CREATED_DATE = DateTime.Now,
+                                UPDATED_BY = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID,
+                                UPDATED_DATE = DateTime.Now,
+                                ISACTIVE = true,
+                                PERSPECTIVE = reply.PERSPECTIVE,
+                            };
+                            CSPdb.CSS_QUESTION_REPLIES.Add(newReply);
+                        }
                         CSPdb.Commit(CanCommit);
                     }
 
                     var customerName = replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME;
-                    var project = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID).ToList();
-                    CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "COMPLETED", empId, meetingDate, isCSMNotified);
-
-                    if (project != null)
-                    {
-                        createActionItemAndTask(replies, surveyId, project, customerName);            //create action item if csat is low 
-                    }
-                    if (!string.IsNullOrWhiteSpace(empId))
-                    {
-                        SendSurveySuccessEmailForQualitativeFeedback(replies, surveyId, replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID, empId);
-                    }
+                    List<PROJECT> project = null;
+                    if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID))
+                        project = Cldb.PROJECT.GetAll().Where(x => x.CUST_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID && x.PROJ_STATUS.ToLower() != "close").ToList();
                     else
+                        project = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID).ToList();
+                    if (!saveAsDraft)
                     {
-                        var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
-                        if (batch != null)
+                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "COMPLETED", empId, meetingDate, isCSMNotified);
+
+                        if (project != null)
                         {
-                            SendSurveyResultEmailToCustomer(replies, surveyId, batch.FREQUENCY, batch.CATEGORY);
-                            SendSurveySuccessEmailToManagement(replies, surveyId, batch.FREQUENCY, batch.CATEGORY);
+                            createActionItemAndTask(replies, surveyId, project, customerName);            //create action item if csat is low 
+                        }
+                        if (!string.IsNullOrWhiteSpace(empId))
+                        {
+                            SendSurveySuccessEmailForQualitativeFeedback(replies, surveyId, replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID, empId);
+                        }
+                        else
+                        {
+                            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
+                            if (batch != null)
+                            {
+                                SendSurveyResultEmailToCustomer(replies, surveyId, batch.FREQUENCY, batch.CATEGORY);
+                                SendSurveySuccessEmailToManagement(replies, surveyId, batch.FREQUENCY, batch.CATEGORY);
+                            }
                         }
                     }
                 }
@@ -205,7 +222,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var tableContent = new StringBuilder();
             foreach (var item in actionItems)
             {
-                tableContent.Append(GenerateHtmlTableRowForActionItem(i++, item.CSS_REFERENCE,item.PERSPECTIVE));
+                tableContent.Append(GenerateHtmlTableRowForActionItem(i++, item.CSS_REFERENCE, item.PERSPECTIVE));
             }
             var firstActionItem = actionItems.First();
             var project = projects.FirstOrDefault(x => x.PROJ_ID == firstActionItem.PROJECT_ID);
@@ -509,8 +526,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var reference = new StringBuilder();
             //desc.AppendLine("[To be detailed by PM] ");
 
-           // reference.AppendLine("Improvement Plan for Criteria:");
-           // reference.Append(Environment.NewLine);
+            // reference.AppendLine("Improvement Plan for Criteria:");
+            // reference.Append(Environment.NewLine);
             foreach (var item in lowratings)
             {
                 //reference.AppendLine($"{item.QUESTION} - [{item.RATING}] ");
@@ -531,7 +548,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 overview.PERSPECTIVE = item.PERSPECTIVE;
             }
-           
+
             overview.PORTFOLIO_NAME = portfolio;
             overview.DESCRIPTION = desc;
             overview.ORIGINAL_DESCRIPTION = overview.DESCRIPTION;
@@ -631,7 +648,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     Period = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
                 }
-                else if (Sequence == 2) { Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString(); }
+                else if (Sequence == 2) { Period = "Apr-" + Year.ToString() + " to Sep-" + Year.ToString(); }
+                else if (Sequence == 3) { Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString(); }
             }
             return Period;
         }
@@ -807,15 +825,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             if (project == null)
             {
-                var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
-                if (portfolio == null) return;
-                var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID)?.PROJ_ID;
-                if (string.IsNullOrWhiteSpace(projectId)) return;
-                project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
+
+                if (string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID))
+                {
+
+                    project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.CUST_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID && x.PROJ_STATUS.ToLower() != "close");
+                    if (project == null) return;
+                }
+                else
+                {
+                    var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
+                    if (portfolio == null) return;
+                    var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID)?.PROJ_ID;
+                    if (string.IsNullOrWhiteSpace(projectId)) return;
+                    project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
+                }
                 csmmails = helper.GetCSMMailsFromProject(project);
                 pmmmails = helper.GetPMMailsFromProject(project);
                 qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
                 amMail = helper.GetAMFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
+
             }
             else
             {

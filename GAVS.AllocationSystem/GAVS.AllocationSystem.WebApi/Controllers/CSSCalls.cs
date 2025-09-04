@@ -266,7 +266,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 string SurveyId = CreatedSurveys.FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == cust.ID).SURVEY_ID;
                 string SurveyLink = baseUrl + "/CustomerSuccessSurvey/" + SurveyId;
-                SendCSSSurveyMail(cust, SurveyLink, batch, GetCurrentPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR));
+                SendCSSSurveyMail(cust, SurveyLink, batch, GetCurrentPeriodStringNew(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR));
             }
             if (batch.STATUS.ToUpper() == "CREATED")
             {
@@ -294,12 +294,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else if (project == null)
             {
-                var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == cust.PROJ_ID);
-                if (portfolio == null) return;
-                var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
-                if (string.IsNullOrWhiteSpace(projectId)) return;
-                project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
-                projectText = "portfolio " + cust.PROJ_NM;
+                if (string.IsNullOrWhiteSpace(cust.PROJ_ID))
+                {
+                    projectText = cust.PROJ_NM;
+                    project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.CUST_ID == cust.CUST_ID && x.PROJ_STATUS.ToLower() != "close");
+                    if (project == null) return;
+                }
+                else
+                {
+                    var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == cust.PROJ_ID);
+                    if (portfolio == null) return;
+                    var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
+                    if (string.IsNullOrWhiteSpace(projectId)) return;
+                    project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
+                    projectText = "portfolio " + cust.PROJ_NM;
+                }
             }
             else
             {
@@ -307,7 +316,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             string csmMails = helper.GetCSMMailsFromProject(project);
-            var pmMails = helper.GetPMFromProject(project).FirstOrDefault();
+            //var pmMails = helper.GetPMFromProject(project).FirstOrDefault();
             var am = helper.GetAMFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
 
@@ -316,12 +325,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
-            ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, pmMails, am, qualitySpoc, cust.SPOC });
+            ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails,   am, qualitySpoc, cust.SPOC });
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
 
             var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
             var period = $"{batch.START_DATE.ToString("MMM-yyyy")} to {batch.END_DATE.ToString("MMM-yyyy") }";
-            if (batch.FREQUENCY.ToLower() == "halfyearly")
+            if (batch.FREQUENCY.ToLower() == "halfyearly" || batch.FREQUENCY.ToLower() == "half-yearly")
             {
                 string projectList = string.Empty;
 
@@ -576,7 +585,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string statusMsg = string.Empty;
             string mailContent;
             string tomail = cust.EMAIL_ID;
-            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);           
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);
             if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE"))
                 return;
             //var skipCSATSetting = getprojectconfi("SKIP_CSAT",pro);
@@ -778,8 +787,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 if (batch.CATEGORY.ToLower() == "project")
                     GenerateBatchCustomers(BatchId, batch.FREQUENCY, empid);
+                else if (batch.CATEGORY.ToLower() == "account")
+                    GenerateBatchCustomersAccount(BatchId, batch.FREQUENCY, empid);
                 else if (batch.FREQUENCY.ToLower() == "pulse")
                     GenerateBatchCustomersHalfyearly(BatchId, empid);
+
                 batches = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.BATCH_ID == BatchId && t.ISACTIVE).ToList();
             }
 
@@ -871,7 +883,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (empid != "102802") return Ok();
             CSPdb.CSS_BATCH_CUSTOMERS.DeleteList(batches);
             CSPdb.Commit(CanCommit);
-            GenerateBatchCustomers(BatchId, batch.FREQUENCY, empid);
+            if (batch.CATEGORY.ToLower() == "project")
+                GenerateBatchCustomers(BatchId, batch.FREQUENCY, empid);
+            else if (batch.CATEGORY.ToLower() == "account")
+                GenerateBatchCustomersAccount(BatchId, batch.FREQUENCY, empid);
+            else if (batch.FREQUENCY.ToLower() == "pulse")
+                GenerateBatchCustomersHalfyearly(BatchId, empid);
+
+
             List<CSS_BATCH_CUSTOMERS_EXTENDED> batchesExt = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             batchesExt = helper.FillCustomerAndProjectNames(batches);
             return Ok(batchesExt);
@@ -1256,7 +1275,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return ext;
         }
 
+        private void GenerateBatchCustomersAccount(int batchId, string frequency, string empId)
+        {
 
+            var customersProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CSAT_SURVEY && t.CSAT_FREQUENCY == frequency && t.PROJ_ID == null).ToList();
+            var CustomerId = customersProjects.Select(t => t.CUSTOMER_USER_ID).Distinct().ToList();
+            var customers = CSPdb.CUSTOMER_USERS.GetAll().Where(t => CustomerId.Contains(t.ID)).ToList();
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batchId);
+
+            foreach (var c in customersProjects)
+            {
+                var cust = customers.FirstOrDefault(t => t.ID == c.CUSTOMER_USER_ID);
+                if (cust != null)
+                {
+                    AddBatchCustomer(batch, cust.EMAILID, cust.DISPLAY_NAME, empId, c.CUST_ID, null, null, c.SPOC);
+                }
+            }
+            CSPdb.Commit(CanCommit);
+        }
 
         private void GenerateBatchCustomers(int BatchId, string Frequency, string EmpId)
         {
@@ -1291,6 +1327,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void AddBatchCustomer(CSS_BATCHES batch, string emailId, string displayName, string empId, string cust_id, string proj_id, int? prod_id, string spoc)
         {
+            var existing = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(x => x.CUST_ID == cust_id && x.PROJ_ID == proj_id && x.EMAIL_ID == emailId && x.BATCH_ID == batch.ID && x.ISACTIVE);
+            if (existing != null) return;
             var batchCustomer = new CSS_BATCH_CUSTOMERS()
             {
                 BATCH_ID = batch.ID,
@@ -1312,12 +1350,41 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.CSS_BATCH_CUSTOMERS.Add(batchCustomer);
         }
 
+        private void AddBatchCustomerAccount(CSS_BATCHES batch, string emailId, string displayName, string empId, string cust_id, string spoc)
+        {
+            var existing = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(x => x.CUST_ID == cust_id && x.EMAIL_ID == emailId && x.BATCH_ID == batch.ID && x.ISACTIVE);
+            if (existing != null) return;
+            var batchCustomer = new CSS_BATCH_CUSTOMERS()
+            {
+                BATCH_ID = batch.ID,
+                CUST_ID = cust_id,
+
+                QUESTION_MODEL_ID = 99,//should take from configuration
+                EMAIL_ID = emailId,
+                DISPLAY_NAME = displayName,
+                STATUS = "CREATED",
+
+                CREATED_BY = empId,
+                CREATED_DATE = DateTime.Now,
+                UPDATED_BY = empId,
+                UPDATED_DATE = DateTime.Now,
+                ISACTIVE = true,
+                SPOC = spoc,
+            };
+            UpdateAuditFields(batchCustomer);
+            CSPdb.CSS_BATCH_CUSTOMERS.Add(batchCustomer);
+        }
+
         private void GenerateMissingBatchCustomers(int batchId, string frequency, string EmpId, string category)
         {
             if (frequency.ToLower() == "pulse")
                 GenerateBatchCustomersHalfyearly(batchId, EmpId);
+            if (category.ToLower() == "account")
+            {
 
-
+                GenerateBatchCustomersAccount(batchId, frequency, EmpId);
+                return;
+            }
             List<CUSTOMER_PROJECTS> customersProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CSAT_SURVEY && t.CSAT_FREQUENCY == frequency && t.ISACTIVE).ToList();
             List<int> CustomerId = customersProjects.Select(t => t.CUSTOMER_USER_ID).Distinct().ToList();
             List<CUSTOMER_USERS> customers = CSPdb.CUSTOMER_USERS.GetAll().Where(t => CustomerId.Contains(t.ID)).ToList();

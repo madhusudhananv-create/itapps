@@ -24,6 +24,8 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [NotMapped]
         public bool? SPECIFIC_SURVEY_OPTED { get; set; }
+        [NotMapped]
+        public bool  ACSAT { get; set; }
 
     } 
 }

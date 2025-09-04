@@ -18,5 +18,6 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string PROJECTIDS { get; set; }
         public List<CUSTOMER_PROJECTS> CUSTOMER_PROJECTS = new List<CUSTOMER_PROJECTS>();
         public bool SPECIFIC_SURVEY_OPTED { get; set; }
+        public bool ACSAT { get; set; }
     }
 }

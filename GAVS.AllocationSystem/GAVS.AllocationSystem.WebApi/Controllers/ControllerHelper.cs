@@ -709,14 +709,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newExt.REVENUE_TYPE = proj.REVENUE_TYPE;
                     newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
                 }
-                else if (proj == null)
+                else if (proj == null && !string.IsNullOrWhiteSpace(c.PROJ_ID))
                 {
                     newExt.PROJ_NM = portfolios.FirstOrDefault(x => x.ID.ToString() == c.PROJ_ID.Trim())?.TITLE;
                 }
+                else
+                    newExt.PROJ_NM = newExt.CUST_NM;
 
 
 
-                var surveyItem = surveyItems.FirstOrDefault(x => x.ID == c.SURVEY_ID);
+               var surveyItem = surveyItems.FirstOrDefault(x => x.ID == c.SURVEY_ID);
                 if (surveyItem != null)
                     newExt.URL = $"{GetAbsoulteUri()}/CustomerSuccessSurvey/{surveyItem.SURVEY_ID}";
                 ext.Add(newExt);
@@ -878,6 +880,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var config = GetDBConfig("CSS_QUESTION_MODEL_HALFYEARLY", custId, projId, startDate, endDate);
                     return GetDBConfigValueInt(config);
                 }
+               
 
 
                 else
@@ -890,6 +893,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
                     
                 }
+            }
+            else if (category.ToLower() == "account")
+            {
+                var config = GetDBConfig("CSS_QUESTION_MODEL_HALFYEARLY_ACCOUNT", custId, projId, startDate, endDate);
+                return GetDBConfigValueInt(config);
             }
 
             var config1 = GetDBConfig("CSS_QUESTION_MODEL", custId, projId, startDate, endDate);
