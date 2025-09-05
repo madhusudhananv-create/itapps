@@ -5667,7 +5667,7 @@ export class AppsService {
     );
   }
 
-  SaveCSSSurveyAnswers(replies: BatchCustomerAndQuestions, empId: string, meetingDate: Date, isCSMNotified: boolean): Observable<BatchCustomerAndQuestions> {
+  SaveCSSSurveyAnswers(replies: BatchCustomerAndQuestions, empId: string , saveAsDraft : boolean, meetingDate: Date, isCSMNotified: boolean): Observable<BatchCustomerAndQuestions> {
     let header = new HttpHeaders({ Accept: "application/json" });
     let formattedMeetingDate;
     if (meetingDate != null && meetingDate != undefined) {
@@ -5676,6 +5676,7 @@ export class AppsService {
 
     return this._http.post<BatchCustomerAndQuestions>(
       this.apiurl_auth + "SaveCSSSurveyAnswers?empId=" + empId +
+      "&saveAsDraft=" + saveAsDraft +
       "&isCSMNotified=" + isCSMNotified + "&meetingDate=" + formattedMeetingDate,
       replies,
       { headers: header }

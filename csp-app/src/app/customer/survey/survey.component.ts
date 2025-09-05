@@ -147,7 +147,7 @@ export class SurveyComponent implements OnInit {
   }
 
 
-  SubmitForm() {
+  SubmitForm(val) {
     if (this.showCSSFields) {
       if (this.meetingDate == null || this.meetingDate == undefined) {
         alert("Please enter the meeting date");
@@ -213,7 +213,7 @@ export class SurveyComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === 1) {
-        this.service_SaveSurveyAnswers(this.questions);
+        this.service_SaveSurveyAnswers(this.questions, val ==1? true : false);
       }
     });
 
@@ -308,7 +308,7 @@ export class SurveyComponent implements OnInit {
   }
 
   bbtnSubmitDisable = false;
-  service_SaveSurveyAnswers(replies: BatchCustomerAndQuestions) {
+  service_SaveSurveyAnswers(replies: BatchCustomerAndQuestions, isDraft: boolean) {
     this.bbtnSubmitDisable = true;
 
     if (this.showCSSFields) {
@@ -319,7 +319,7 @@ export class SurveyComponent implements OnInit {
       this.empId = "";
       this.meetingDate = null;
     }
-    this._appservice.SaveCSSSurveyAnswers(replies, this.empId, this.meetingDate, this.isCSMNotified).subscribe(data => {
+    this._appservice.SaveCSSSurveyAnswers(replies, this.empId, isDraft, this.meetingDate, this.isCSMNotified).subscribe(data => {
       this.dialogSuccess = true;
       this.dialogExpiry =false;
       this.dialogHeading = '';
