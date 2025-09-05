@@ -80,7 +80,7 @@ export class SurveyComponent implements OnInit {
   templateName: any;
   templateHeading: any;
   maxDate: Date = new Date();
-
+  rowspan: number = 1;
 
   constructor(private route: ActivatedRoute, private _util: myUtility, private _appservice: AppsService, public dialog: MatDialog) { }
 
@@ -213,7 +213,7 @@ export class SurveyComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === 1) {
-        this.service_SaveSurveyAnswers(this.questions, val ==1? true : false);
+        this.service_SaveSurveyAnswers(this.questions, val == 1 ? true : false);
       }
     });
 
@@ -237,6 +237,8 @@ export class SurveyComponent implements OnInit {
         this.projtext = 'Project/Portfolio:';
         this.meetingDate = data.csS_BATCH_CUSTOMERS_EXTENDED.meetinG_DATE;
         this.isCSMNotified = data.csS_BATCH_CUSTOMERS_EXTENDED.csM_NOTIFIED;
+        if (data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_ID == null)
+          this.rowspan = 2;
         if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED") {
           this.IsCompleted = true;
           if (this.questions_NPS != null) {
@@ -278,7 +280,7 @@ export class SurveyComponent implements OnInit {
       }
       else {
         const errorMsg = this._util.GetErrorMessage(error);
-        
+
         this.showCSSFields = false;
         this.bShowNpsComments = false;
         this.questions_NPS = null;
@@ -303,8 +305,8 @@ export class SurveyComponent implements OnInit {
           this._util.serviceError(error);
         }
       }
-      });
-    
+    });
+
   }
 
   bbtnSubmitDisable = false;
@@ -321,7 +323,7 @@ export class SurveyComponent implements OnInit {
     }
     this._appservice.SaveCSSSurveyAnswers(replies, this.empId, isDraft, this.meetingDate, this.isCSMNotified).subscribe(data => {
       this.dialogSuccess = true;
-      this.dialogExpiry =false;
+      this.dialogExpiry = false;
       this.dialogHeading = '';
       this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey submitted successfully. A detailed report would be sent to your e-mail shortly.';
 

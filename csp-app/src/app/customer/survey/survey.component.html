@@ -4,8 +4,8 @@
   </p>
   <table class="table" style="width:auto;background-color:white;border:1px solid #0094ff;min-width: 50%;">
     <tr *ngIf="!isMonthly">
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
-      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
+      <td rowspan="{{rowspan}}" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
+      <td rowspan="{{rowspan}}" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{proj}}</td>
     </tr>
@@ -195,7 +195,10 @@
     </tr>
     <tr *ngIf="!IsCompleted">
       <td style="text-align:center" colspan="3">
-        <button type="button" (click)="SubmitForm()" class="btn btn-primary"
+        <button type="button" (click)="SubmitForm(1)" class="btn btn-primary"
+          [disabled]="bbtnSubmitDisable">Submit</button>
+
+            <button type="button" (click)="SubmitForm(0)" class="btn btn-primary"
           [disabled]="bbtnSubmitDisable">Submit</button>
       </td>
     </tr>
