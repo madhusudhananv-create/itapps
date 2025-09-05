@@ -80,7 +80,7 @@ export class SurveyComponent implements OnInit {
   templateName: any;
   templateHeading: any;
   maxDate: Date = new Date();
-  rowspan: number = 1;
+  // rowspan: number = 1;
 
   constructor(private route: ActivatedRoute, private _util: myUtility, private _appservice: AppsService, public dialog: MatDialog) { }
 
@@ -237,8 +237,8 @@ export class SurveyComponent implements OnInit {
         this.projtext = 'Project/Portfolio:';
         this.meetingDate = data.csS_BATCH_CUSTOMERS_EXTENDED.meetinG_DATE;
         this.isCSMNotified = data.csS_BATCH_CUSTOMERS_EXTENDED.csM_NOTIFIED;
-        if (data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_ID == null)
-          this.rowspan = 2;
+        // if (data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_ID == null)
+        //   this.rowspan = 2;
         if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED") {
           this.IsCompleted = true;
           if (this.questions_NPS != null) {

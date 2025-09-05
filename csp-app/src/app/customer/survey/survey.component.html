@@ -3,29 +3,35 @@
     <img src="assets/images/GAVS_Logo.png" id="Gavs-logo">&nbsp;&nbsp;&nbsp;Customer Satisfaction Survey
   </p>
   <table class="table" style="width:auto;background-color:white;border:1px solid #0094ff;min-width: 50%;">
-    <tr *ngIf="!isMonthly">
-      <td rowspan="{{rowspan}}" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
-      <td rowspan="{{rowspan}}" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
+    <tr *ngIf="isMonthly && (pName == '' || pName == null)">
+      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
+      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
+    </tr>
+
+
+    <tr *ngIf="!isMonthly && proj != '' && proj != null ">
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
+      <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{proj}}</td>
     </tr>
 
-    <tr *ngIf="isMonthly && pName==''">
-      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
+
+    <tr *ngIf="!isMonthly && (proj == '' || proj == null )">
+      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
       <td colspan="2" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
     </tr>
 
-    <tr *ngIf="isMonthly && pName!=''">
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Client Name:</td>
+    <tr *ngIf="isMonthly && pName != '' && pName != null">
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{pName}}</td>
-
     </tr>
     <tr>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Feedback for the period:</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{questions.surveY_PERIOD}}</td>
-      <td style="border:1px solid #0095ffbb;padding: 15px 10px 15px 10px;font-weight:bold">Respondent :</td>
+      <td style="border:1px solid #0095ffbb;padding: 15px 10px 15px 10px;font-weight:bold">Respondent Name:</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{displayname}}</td>
     </tr>
   </table>
@@ -53,7 +59,78 @@
   </div>
 
   <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
+
+
+
   <table class="table table-bordered" style="width:auto;background-color:white;">
+    <thead>
+      <tr *ngIf="questions_NPS">
+        <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;" colspan="3">
+          <span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
+          {{questions_NPS.question}}
+        </td>
+      </tr>
+      <tr *ngIf="questions_NPS">
+        <td colspan="2" nowrap style="border-top:0px;padding-bottom:0px;border-bottom:0px; width:auto">
+          <a class="pillStart" (click)="Rating_OnClick('0')"
+            [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
+          <a class="pill" (click)="Rating_OnClick('1')"
+            [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
+          <a class="pill" (click)="Rating_OnClick('2')"
+            [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
+          <a class="pill" (click)="Rating_OnClick('3')"
+            [style.background-color]="npsRating == 3 ? '#0073f7':'#FF0000'">3</a>
+          <a class="pill" (click)="Rating_OnClick('4')"
+            [style.background-color]="npsRating == 4 ? '#0073f7':'#FF0000'">4</a>
+          <a class="pill" (click)="Rating_OnClick('5')"
+            [style.background-color]="npsRating == 5 ? '#0073f7':'#FF0000'">5</a>
+          <a class="pill" (click)="Rating_OnClick('6')"
+            [style.background-color]="npsRating == 6 ? '#0073f7':'#FF0000'">6</a>
+          <a class="pill" (click)="Rating_OnClick('7')"
+            [style.background-color]="npsRating == 7 ? '#0073f7':'#Ffbf00'">7</a>
+          <a class="pill" (click)="Rating_OnClick('8')"
+            [style.background-color]="npsRating == 8 ? '#0073f7':'#Ffbf00'">8</a>
+          <a class="pill" (click)="Rating_OnClick('9')"
+            [style.background-color]="npsRating == 9 ? '#0073f7':'#008000'">9</a>
+          <a class="pillEnd" (click)="Rating_OnClick('10')"
+            [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
+        </td>
+      </tr>
+      <tr *ngIf="questions_NPS">
+        <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 0 8px">Not at all
+          likely
+        </td>
+        <td colspan="1" nowrap
+          style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 12px 8px;text-align: right">
+          Extremely likely</td>
+          <td colspan="1" style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 15px 8px;text-align: left">
+        <b style="position: relative; top: -25px;">
+        {{questions_NPS.perspective}}
+           </b>
+          </td>
+      </tr>
+      <tr *ngIf="questions_NPS && bShowNpsComments">
+        <td colspan="3" style="border-top:0px;border-bottom:0px">{{NpsCommentsTitle}}
+        </td>
+      </tr>
+      <tr *ngIf="questions_NPS && bShowNpsComments">
+        <td colspan="3" style="border-top:0px;padding:0px;">
+          <div class="textarea-wrapper">
+            <span *ngIf="warnNps && !IsCompleted" style="color: red;font-size:small">Please enter improvement areas in
+              text for the project team to act on.</span>
+            <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
+              [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
+              maxlength="500"></textarea>
+            <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
+          </div>
+        </td>
+      </tr>
+
+
+         
+
+    </thead>
+    <br />
     <thead>
       <tr>
         <th style="width:35%;font-weight:bold;font-size:13px;text-align:center;background-color: #e3f9f9;">Survey
@@ -77,8 +154,12 @@
           {{criteria.question}}
           <br />
           {{getDetail( criteria.questioN_DETAIL)}}
+          <br />
+
 
         </td>
+
+
         <td class="starRating" nowrap>
           <b>
             {{criteria.perspective}}
@@ -98,60 +179,6 @@
         </td>
       </tr>
     </tbody>
-
-    <tr *ngIf="questions_NPS">
-      <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;" colspan="3">
-        <span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
-        {{questions_NPS.question}}</td>
-    </tr>
-    <tr *ngIf="questions_NPS">
-      <td colspan="2" nowrap style="border-top:0px;padding-bottom:0px;border-bottom:0px; width:auto">
-        <a class="pillStart" (click)="Rating_OnClick('0')"
-          [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
-        <a class="pill" (click)="Rating_OnClick('1')"
-          [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
-        <a class="pill" (click)="Rating_OnClick('2')"
-          [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
-        <a class="pill" (click)="Rating_OnClick('3')"
-          [style.background-color]="npsRating == 3 ? '#0073f7':'#FF0000'">3</a>
-        <a class="pill" (click)="Rating_OnClick('4')"
-          [style.background-color]="npsRating == 4 ? '#0073f7':'#FF0000'">4</a>
-        <a class="pill" (click)="Rating_OnClick('5')"
-          [style.background-color]="npsRating == 5 ? '#0073f7':'#FF0000'">5</a>
-        <a class="pill" (click)="Rating_OnClick('6')"
-          [style.background-color]="npsRating == 6 ? '#0073f7':'#FF0000'">6</a>
-        <a class="pill" (click)="Rating_OnClick('7')"
-          [style.background-color]="npsRating == 7 ? '#0073f7':'#Ffbf00'">7</a>
-        <a class="pill" (click)="Rating_OnClick('8')"
-          [style.background-color]="npsRating == 8 ? '#0073f7':'#Ffbf00'">8</a>
-        <a class="pill" (click)="Rating_OnClick('9')"
-          [style.background-color]="npsRating == 9 ? '#0073f7':'#008000'">9</a>
-        <a class="pillEnd" (click)="Rating_OnClick('10')"
-          [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
-      </td>
-    </tr>
-    <tr *ngIf="questions_NPS">
-      <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 0 8px">Not at all likely
-      </td>
-      <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 0 8px;text-align: right">
-        Extremely likely</td>
-    </tr>
-    <tr *ngIf="questions_NPS && bShowNpsComments">
-      <td colspan="3" style="border-top:0px;border-bottom:0px">{{NpsCommentsTitle}}
-      </td>
-    </tr>
-    <tr *ngIf="questions_NPS && bShowNpsComments">
-      <td colspan="3" style="border-top:0px;padding:0px;">
-        <div class="textarea-wrapper">
-          <span *ngIf="warnNps && !IsCompleted" style="color: red;font-size:small">Please enter improvement areas in
-            text for the project team to act on.</span>
-          <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
-            [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
-            maxlength="500"></textarea>
-          <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
-        </div>
-      </td>
-    </tr>
     <br />
 
     <tr *ngIf="questions_Others[0]">
@@ -174,8 +201,11 @@
     </tr>
     <tr *ngIf="questions_Others[1]">
       <td colspan="3" style="padding:0px;">
-        <textarea name="txtOthersDesc1" [(ngModel)]="questions_Others[1].ratinG_DESCRIPTION"
-          style="width:100%;height:75px" [disabled]="IsCompleted" maxlength="500"></textarea>
+        <div class="textarea-wrapper">
+          <textarea name="txtOthersDesc1" [(ngModel)]="questions_Others[1].ratinG_DESCRIPTION"
+            style="width:100%;height:75px" [disabled]="IsCompleted" maxlength="500"></textarea>
+          <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/500</span>
+        </div>
       </td>
     </tr>
 
@@ -196,26 +226,28 @@
     <tr *ngIf="!IsCompleted">
       <td style="text-align:center" colspan="3">
         <button type="button" (click)="SubmitForm(1)" class="btn btn-primary"
-          [disabled]="bbtnSubmitDisable">Submit</button>
+          [disabled]="bbtnSubmitDisable" style="margin-right: 15px;">Submit</button>
 
-            <button type="button" (click)="SubmitForm(0)" class="btn btn-primary"
-          [disabled]="bbtnSubmitDisable">Submit</button>
+        <button type="button" (click)="SubmitForm(0)" class="btn btn-primary"
+          [disabled]="bbtnSubmitDisable">Save as Draft</button>
       </td>
     </tr>
   </table>
 </div>
-  <ng-template class="tahoma-font" #confirmationDialog>
-    <h2 mat-dialog-title style="padding: 12px 1pc 0 11pc; margin: 0;">
-      {{dialogHeading}}</h2>
-    <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
-      {{ dialogMessage }}
-    </mat-dialog-content>
-    <mat-dialog-actions *ngIf="!dialogSuccess" style="padding: 20px;">
-      <button  class="btn btn-primary-confirm" mat-button [mat-dialog-close]="1"  style="margin: 0 100px;">Yes</button>
-      <button  class="btn btn-warning-confirm" mat-button [mat-dialog-close]="0"  style="margin-left: 5%;">No</button>
-    </mat-dialog-actions>
-    <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
-      <button *ngIf ="!dialogExpiry"  class="btn btn-primary" mat-button [mat-dialog-close]="1"  style="margin: 0 160px;">OK</button>
-       <button *ngIf ="dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"  style="margin: 0 200px;">OK</button>
-    </mat-dialog-actions>
-  </ng-template>
+<ng-template class="tahoma-font" #confirmationDialog>
+  <h2 mat-dialog-title style="padding: 12px 1pc 0 11pc; margin: 0;">
+    {{dialogHeading}}</h2>
+  <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
+    {{ dialogMessage }}
+  </mat-dialog-content>
+  <mat-dialog-actions *ngIf="!dialogSuccess" style="padding: 20px;">
+    <button class="btn btn-primary-confirm" mat-button [mat-dialog-close]="1" style="margin: 0 100px;">Yes</button>
+    <button class="btn btn-warning-confirm" mat-button [mat-dialog-close]="0" style="margin-left: 5%;">No</button>
+  </mat-dialog-actions>
+  <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
+    <button *ngIf="!dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
+      style="margin: 0 160px;">OK</button>
+    <button *ngIf="dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
+      style="margin: 0 200px;">OK</button>
+  </mat-dialog-actions>
+</ng-template>
