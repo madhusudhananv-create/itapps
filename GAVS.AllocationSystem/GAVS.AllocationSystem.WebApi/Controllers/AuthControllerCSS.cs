@@ -684,7 +684,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<CSS_QUESTION_REPLIES> questionsWithReplies = new List<CSS_QUESTION_REPLIES>();
             foreach (CSS_QUESTION_MASTER q in questions.OrderBy(x => x.SEQUENCE))
             {
-                CSS_QUESTION_REPLIES reply = new CSS_QUESTION_REPLIES()
+                /*CSS_QUESTION_REPLIES reply = new CSS_QUESTION_REPLIES()
                 {
 
                     SURVEY_ID = code,
@@ -696,7 +696,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     SEQUENCE = q.SEQUENCE.GetValueOrDefault(q.ID),
                     RATING_PARAM = q.RATING_PARAM,
                     PERSPECTIVE = q.PERSPECTIVE,
-                };
+                };*/
+                CSS_QUESTION_REPLIES reply;
+
+                var existing = CSPdb.CSS_QUESTION_REPLIES.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMER_ID == batch_customer_id &&
+                                        x.SURVEY_ID == code && x.QUESTION_ID == q.ID);
+                if (existing != null)
+                {
+                    reply = existing;
+                }
+                else
+                {
+                    reply = new CSS_QUESTION_REPLIES()
+                    {
+
+                        SURVEY_ID = code,
+                        QUESTION_ID = q.ID,
+                        QUESTION = q.QUESTION,
+                        QUESTION_CATEGORY = q.QUESTION_CATEGORY,
+                        QUESTION_DETAIL = q.QUESTION_DETAIL,
+                        RATING_SCALE = q.RATING_SCALE.GetValueOrDefault(2),
+                        SEQUENCE = q.SEQUENCE.GetValueOrDefault(q.ID),
+                        RATING_PARAM = q.RATING_PARAM,
+                        PERSPECTIVE = q.PERSPECTIVE,
+                        RATING_DESCRIPTION = "",
+                    };
+                 }
                 if (isMonthly)
                     reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
                 else
