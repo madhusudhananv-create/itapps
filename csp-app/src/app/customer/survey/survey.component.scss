@@ -171,6 +171,7 @@ a:hover {
   }
 
   /* Client info table (first table) */
+
   table.table {
     min-width: 100%;
     border-collapse: collapse;
@@ -206,13 +207,25 @@ a:hover {
     display: none !important;
     /* Hide Survey Question, Rating, Remarks headings */
   }
+   table.table thead td {
+    font-size: 11px !important;
+  }
+  table.table thead td[style*="border-bottom:0px"] {
+    border-bottom: 1px solid #0094ff !important;
+  }
+
+  /* Fix 2: Reduce font size for red highlighted improvement areas text */
+  .red,
+  span[style*="color: red"] {
+    font-size: 10px !important;
+  }
 
   tbody.tahoma-font tr {
     display: block !important;
     /* Force block layout for the row */
     border-bottom: 1px solid #0094ff;
     margin-bottom: 10px;
-    width: 100% !important;
+    width: 117% !important;
   }
 
   tbody.tahoma-font tr td,
