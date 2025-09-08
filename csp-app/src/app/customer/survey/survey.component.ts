@@ -232,7 +232,10 @@ export class SurveyComponent implements OnInit {
       this.questions_Criteria = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Criteria').sort(t => t.SEQUENCE);
       this.questions_NPS = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'NPS')[0];
       this.questions_Others = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Others').sort(t => t.id);
-
+      if (this.questions_NPS != null) {
+            this.npsRating = this.questions_NPS.rating;
+            this.Rating_OnClick(this.npsRating)
+      }
       if (data.csS_BATCH_CUSTOMERS_EXTENDED != undefined && data.csS_BATCH_CUSTOMERS_EXTENDED != null) {
         this.proj = data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_NM;
         this.cust = data.csS_BATCH_CUSTOMERS_EXTENDED.cusT_NM;
@@ -240,14 +243,12 @@ export class SurveyComponent implements OnInit {
         this.projtext = 'Project/Portfolio:';
         this.meetingDate = data.csS_BATCH_CUSTOMERS_EXTENDED.meetinG_DATE;
         this.isCSMNotified = data.csS_BATCH_CUSTOMERS_EXTENDED.csM_NOTIFIED;
+        
         // if (data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_ID == null)
         //   this.rowspan = 2;
         if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED") {
           this.IsCompleted = true;
-          if (this.questions_NPS != null) {
-            this.npsRating = this.questions_NPS.rating;
-            this.Rating_OnClick(this.npsRating)
-          }
+          
         }
       }
       else if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != undefined && data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null) {
@@ -271,9 +272,9 @@ export class SurveyComponent implements OnInit {
         this.isMonthly = true;
         if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "COMPLETED") {
           this.IsCompleted = true;
-          if (this.questions_NPS != null)
+          /* if (this.questions_NPS != null)
             this.npsRating = this.questions_NPS.rating;
-          this.Rating_OnClick(this.npsRating)
+          this.Rating_OnClick(this.npsRating) */
         }
       }
     }, error => {
