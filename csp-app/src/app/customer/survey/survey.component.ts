@@ -200,23 +200,26 @@ export class SurveyComponent implements OnInit {
         return;
       }
     }
+    if (val === 0) {
+      this.dialogHeading = 'Quick Confirmation';
+      this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
+      const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
+        width: '500px',
+        height: '180px',
+        data: '',
+        hasBackdrop: true,
+        scrollStrategy: new NoopScrollStrategy(),
+      });
 
-    this.dialogHeading = 'Quick Confirmation';
-    this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
-    const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
-      width: '500px',
-      height: '180px',
-      data: '',
-      hasBackdrop: true,
-      scrollStrategy: new NoopScrollStrategy(),
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 1) {
-        this.service_SaveSurveyAnswers(this.questions, val == 1 ? true : false);
-      }
-    });
-
+      dialogRef.afterClosed().subscribe(result => {
+        if (result === 1) {
+          this.service_SaveSurveyAnswers(this.questions, false);
+        }
+      });
+    }
+    else {
+      this.service_SaveSurveyAnswers(this.questions, true);
+    }
 
   }
   gettry: number = 1
@@ -311,7 +314,7 @@ export class SurveyComponent implements OnInit {
 
   bbtnSubmitDisable = false;
   service_SaveSurveyAnswers(replies: BatchCustomerAndQuestions, isDraft: boolean) {
-    this.bbtnSubmitDisable = true;
+    //this.bbtnSubmitDisable = true;
 
     if (this.showCSSFields) {
       this.empId = localStorage.getItem("empid");
@@ -325,7 +328,17 @@ export class SurveyComponent implements OnInit {
       this.dialogSuccess = true;
       this.dialogExpiry = false;
       this.dialogHeading = '';
-      this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey submitted successfully. A detailed report would be sent to your e-mail shortly.';
+      if (isDraft) {
+        this.dialogMessage = 'Customer Satisfaction Survey saved successfully as draft. You can modify and submit later.';
+      } else {
+        this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey submitted successfully. A detailed report would be sent to your e-mail shortly.';
+        this.IsCompleted = true;
+        if (this.questions.csS_BATCH_CUSTOMERS_EXTENDED != undefined && this.questions.csS_BATCH_CUSTOMERS_EXTENDED != null)
+          this.questions.csS_BATCH_CUSTOMERS_EXTENDED.status = "COMPLETED";
+
+        if (this.questions.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != undefined && this.questions.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
+          this.questions.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status = "COMPLETED";
+      }
 
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
         width: '500px',
@@ -336,15 +349,9 @@ export class SurveyComponent implements OnInit {
       });
       dialogRef.afterClosed().subscribe(result => {
       });
-      this.IsCompleted = true;
-      if (this.questions.csS_BATCH_CUSTOMERS_EXTENDED != undefined && this.questions.csS_BATCH_CUSTOMERS_EXTENDED != null)
-        this.questions.csS_BATCH_CUSTOMERS_EXTENDED.status = "COMPLETED";
-
-      if (this.questions.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != undefined && this.questions.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
-        this.questions.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status = "COMPLETED";
 
     }, error => {
-      this.bbtnSubmitDisable = false;
+      //this.bbtnSubmitDisable = false;
       this._util.serviceError(error);
     });
   }

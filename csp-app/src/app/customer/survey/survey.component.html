@@ -103,11 +103,11 @@
         <td colspan="1" nowrap
           style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 12px 8px;text-align: right">
           Extremely likely</td>
-          <td colspan="1" style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 15px 8px;text-align: left">
+          <!-- <td colspan="1" style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 15px 8px;text-align: left">
         <b style="position: relative; top: -25px;">
         {{questions_NPS.perspective}}
            </b>
-          </td>
+          </td> -->
       </tr>
       <tr *ngIf="questions_NPS && bShowNpsComments">
         <td colspan="3" style="border-top:0px;border-bottom:0px">{{NpsCommentsTitle}}
@@ -223,15 +223,15 @@
         appreciated!
       </td>
     </tr>
-    <tr *ngIf="!IsCompleted">
-      <td style="text-align:center" colspan="3">
-        <button type="button" (click)="SubmitForm(1)" class="btn btn-primary"
-          [disabled]="bbtnSubmitDisable" style="margin-right: 15px;">Submit</button>
+   <tr *ngIf="!IsCompleted">
+  <td style="text-align:center" colspan="3">
+    <button type="button" (click)="SubmitForm(1)" class="btn btn-primary"
+      [disabled]="IsCompleted" style="margin-right: 15px;">Save as Draft</button>
 
-        <button type="button" (click)="SubmitForm(0)" class="btn btn-primary"
-          [disabled]="bbtnSubmitDisable">Save as Draft</button>
-      </td>
-    </tr>
+    <button type="button" (click)="SubmitForm(0)" class="btn btn-primary"
+      [disabled]="IsCompleted">Submit</button>
+  </td>
+</tr>
   </table>
 </div>
 <ng-template class="tahoma-font" #confirmationDialog>
