@@ -97,7 +97,7 @@
         </td>
       </tr>
       <tr *ngIf="questions_NPS">
-        <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 0 8px">Not at all
+        <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 13px 8px">Not at all
           likely
         </td>
         <td colspan="1" nowrap
@@ -189,8 +189,8 @@
       <td colspan="3" style="padding:0px;">
         <div class="textarea-wrapper">
           <textarea name="txtOthersDesc0" [(ngModel)]="questions_Others[0].ratinG_DESCRIPTION"
-            style="width:100%;height:75px" [disabled]="IsCompleted" maxlength="500"></textarea>
-          <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/500</span>
+            style="width:100%;height:50px" [disabled]="IsCompleted" maxlength="100"></textarea>
+          <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/100</span>
         </div>
       </td>
     </tr>
@@ -203,8 +203,8 @@
       <td colspan="3" style="padding:0px;">
         <div class="textarea-wrapper">
           <textarea name="txtOthersDesc1" [(ngModel)]="questions_Others[1].ratinG_DESCRIPTION"
-            style="width:100%;height:75px" [disabled]="IsCompleted" maxlength="500"></textarea>
-          <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/500</span>
+            style="width:100%;height:50px" [disabled]="IsCompleted" maxlength="100"></textarea>
+          <span class="remaning">{{getRemaining(questions_Others[1].ratinG_DESCRIPTION)}}/100</span>
         </div>
       </td>
     </tr>

@@ -8,7 +8,7 @@
   text-align: center;
   font-weight: 400;
   border-radius: 10px 0 0 10px;
-  border: 1px solid white;
+  border: 1px solid #0094ff;
   cursor: pointer !important;
 }
 
@@ -71,7 +71,7 @@
   line-height: 3;
   text-align: center;
   font-weight: 400;
-  border: 1px solid white;
+  border: 1px solid #0094ff;;
   cursor: pointer !important;
 }
 
@@ -85,7 +85,7 @@
   text-align: center;
   font-weight: 400;
   border-radius: 0 10px 10px 0;
-  border: 1px solid white;
+  border: 1px solid #0094ff;
   cursor: pointer !important;
 }
 
@@ -225,7 +225,7 @@ a:hover {
     /* Force block layout for the row */
     border-bottom: 1px solid #0094ff;
     margin-bottom: 10px;
-    width: 117% !important;
+    width: 120% !important;
   }
 
   tbody.tahoma-font tr td,
@@ -277,6 +277,7 @@ a:hover {
     white-space: normal !important;
     line-height: 1.2;
     font-weight: bold;
+    background-color: whitesmoke;
   }
 
   #Gavs-logo {
