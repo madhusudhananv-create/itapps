@@ -24,5 +24,6 @@ export const environment = {
   loginpage: 'http%3A%2F%2F10.0.100.222:8092%2Flogin/',
   environment_Id: 'UAT',
   company_name: 'Neurealm',
-  domain_name: 'neurealm.com'
+  domain_name: 'neurealm.com',
+  formerly_text :'(Formerly GS Lab | GAVS)'
 }

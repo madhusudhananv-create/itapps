@@ -33,7 +33,8 @@ export const environment = {
   gavsGoogleClientId: '348205218679-gt5j9l08b657o76kuo6j5ni3kbt231ps.apps.googleusercontent.com',
   environment_Id: 'UAT',
   company_name: 'Neurealm',
-  domain_name: 'gavstech.com'
+  domain_name: 'gavstech.com',
+  formerly_text :'(Formerly GS Lab | GAVS)'
   //   production: true,
   // //Live - pord
   // webapiuri: 'https://csmapi.gavstech.com/api/AllSys/',
