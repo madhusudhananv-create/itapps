@@ -41,6 +41,7 @@ export class SurveyComponent implements OnInit {
   starColorW: StarRatingColor = StarRatingColor.warn;
   warnNps: boolean = true;
   companyName = environment.company_name;
+  formerlyText = environment.formerly_text;
   dialogMessage: string = '';
   dialogHeading: string = '';
   dialogSuccess: boolean = false;
@@ -117,6 +118,7 @@ export class SurveyComponent implements OnInit {
   }
 
   Rating_OnClick(rating) {
+     if (this.IsCompleted) return;
     this.npsRating = Number(rating);
     if (this.npsRating >= 0) {
       if (this.questions_NPS == undefined && this.questions_NPS == null) {
@@ -222,6 +224,13 @@ export class SurveyComponent implements OnInit {
     }
 
   }
+  getNPSRating()
+  {
+    if (this.questions_NPS != null) {
+            this.npsRating = this.questions_NPS.rating;
+            this.Rating_OnClick(this.npsRating)
+      }
+  }
   gettry: number = 1
   service_GetSurveyQuestions(code: string) {
     if (code == undefined || code == null) return;
@@ -232,10 +241,7 @@ export class SurveyComponent implements OnInit {
       this.questions_Criteria = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Criteria').sort(t => t.SEQUENCE);
       this.questions_NPS = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'NPS')[0];
       this.questions_Others = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Others').sort(t => t.id);
-      if (this.questions_NPS != null) {
-            this.npsRating = this.questions_NPS.rating;
-            this.Rating_OnClick(this.npsRating)
-      }
+     
       if (data.csS_BATCH_CUSTOMERS_EXTENDED != undefined && data.csS_BATCH_CUSTOMERS_EXTENDED != null) {
         this.proj = data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_NM;
         this.cust = data.csS_BATCH_CUSTOMERS_EXTENDED.cusT_NM;
@@ -246,9 +252,13 @@ export class SurveyComponent implements OnInit {
         
         // if (data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_ID == null)
         //   this.rowspan = 2;
-        if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED") {
+        if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED" ) {
           this.IsCompleted = true;
-          
+           this.getNPSRating();
+        }
+        else if(data.csS_BATCH_CUSTOMERS_EXTENDED.status == "DRAFT")
+        {
+           this.getNPSRating();
         }
       }
       else if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != undefined && data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null) {
@@ -270,11 +280,13 @@ export class SurveyComponent implements OnInit {
           this.isCSMNotified = data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.csM_NOTIFIED;
 
         this.isMonthly = true;
-        if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "COMPLETED") {
+         if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "COMPLETED" ) {
           this.IsCompleted = true;
-          /* if (this.questions_NPS != null)
-            this.npsRating = this.questions_NPS.rating;
-          this.Rating_OnClick(this.npsRating) */
+           this.getNPSRating();
+        }
+        else if(data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "DRAFT")
+        {
+           this.getNPSRating();
         }
       }
     }, error => {

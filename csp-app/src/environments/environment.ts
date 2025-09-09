@@ -17,7 +17,8 @@ export const environment = {
   gavsGoogleClientId: '348205218679-gt5j9l08b657o76kuo6j5ni3kbt231ps.apps.googleusercontent.com',
   environment_Id:'Dev',
   company_name: 'Neurealm',
-  domain_name:'neurealm.com'
+  domain_name:'neurealm.com',
+  formerly_text :'(Formerly GS Lab | GAVS)'
   //Key: "NzUFTGFX7XGt9CCrgfdVlCAdxD6KS5L2TodP+L/v//I=",
   //ng build --environment=prod --build-optimizer --aot
   //ng build --prod --build-optimizer
