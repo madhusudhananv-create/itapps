@@ -631,27 +631,33 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private string GetSurveyPeriodString(string Frequency, int Sequence, int Year)
         {
-            string Period = Frequency;
-            if (Frequency.ToLower() == "quarterly")
-            {
-                if (Sequence == 1)
-                {
-                    Period = "Apr-" + Year.ToString() + " to Jun-" + Year.ToString();
-                }
-                else if (Sequence == 2) { Period = "Jul-" + Year.ToString() + " to Sep-" + Year.ToString(); }
-                else if (Sequence == 3) { Period = "Oct-" + Year.ToString() + " to Dec-" + Year.ToString(); }
-                else if (Sequence == 4) { Period = "Jan-" + (Year + 1).ToString() + " to Mar-" + (Year + 1).ToString(); }
-            }
-            else if (Frequency.ToLower() == "halfyearly" || Frequency.ToLower() == "half-yearly")
-            {
-                if (Sequence == 1)
-                {
-                    Period = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
-                }
-                else if (Sequence == 2) { Period = "Apr-" + Year.ToString() + " to Sep-" + Year.ToString(); }
-                else if (Sequence == 3) { Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString(); }
-            }
-            return Period;
+            return GetCurrentPeriodStringNew(Frequency, Sequence, Year);
+            //string Period = Frequency;
+            //if (Frequency.ToLower() == "quarterly")
+            //{
+            //    if (Sequence == 1)
+            //    {
+            //        Period = "Apr-" + Year.ToString() + " to Jun-" + Year.ToString();
+            //    }
+            //    else if (Sequence == 2) { Period = "Jul-" + Year.ToString() + " to Sep-" + Year.ToString(); }
+            //    else if (Sequence == 3) { Period = "Oct-" + Year.ToString() + " to Dec-" + Year.ToString(); }
+            //    else if (Sequence == 4) { Period = "Jan-" + (Year + 1).ToString() + " to Mar-" + (Year + 1).ToString(); }
+            //}
+            //else if (Frequency.ToLower() == "halfyearly" || Frequency.ToLower() == "half-yearly")
+            //{
+            //    if (Sequence == 1)
+            //    {
+            //        Period = "Jan-" + Year.ToString() + " to Jun-" + Year.ToString();
+            //    }
+            //    else if (Sequence == 2) { Period = "Apr-" + Year.ToString() + " to Sep-" + Year.ToString(); }
+            //    else if (Sequence == 3) { Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString(); }
+            //}
+            //else if (Frequency.ToLower() == "annual")
+            //{
+
+            //    Period = "Annual";
+            //}
+            //return Period;
         }
 
         private string GetCurrentPeriodStringNew(string Frequency, int Sequence, int Year)
@@ -675,6 +681,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     CurrentPeriod = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString();
                 }
+            }
+            else if (Frequency.ToLower() == "annual")
+            {
+
+                CurrentPeriod = "Annual";
             }
             return CurrentPeriod;
         }

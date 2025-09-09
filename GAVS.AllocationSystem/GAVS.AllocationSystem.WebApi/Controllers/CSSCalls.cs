@@ -321,7 +321,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
 
 
-            subject = "Neurealm Half-Yearly Customer Satisfaction Survey for the period: " + PreviousPeriod;
+            subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
@@ -330,7 +330,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
             var period = $"{batch.START_DATE.ToString("MMM-yyyy")} to {batch.END_DATE.ToString("MMM-yyyy") }";
-            if (batch.FREQUENCY.ToLower() == "halfyearly" || batch.FREQUENCY.ToLower() == "half-yearly")
+            if (batch.FREQUENCY.ToLower() == "halfyearly" || batch.FREQUENCY.ToLower() == "half-yearly" || batch.FREQUENCY =="annual")
             {
                 string projectList = string.Empty;
 
@@ -339,7 +339,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
                 templateFile = "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
                 //subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
-                subject = "Neurealm Half-Yearly Customer Satisfaction Survey for the period: " + PreviousPeriod;
+                subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
             }
 
 
