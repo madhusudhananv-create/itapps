@@ -492,9 +492,11 @@
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_Customer.htm" />
     <Content Include="UploadFile\Mails\CSSReadiness.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveyQualitativeFeedback.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMailAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMail.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedback.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminder.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestHalfYearly.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequest.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveyVerification.htm" />
@@ -518,10 +520,10 @@
     <Content Include="UploadFile\Mails\SubmittedSlaMetrics.htm" />
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_Premier.htm" />
     <Content Include="UploadFile\Mails\ChecklistAuditSendEmail.htm" />
-  <Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
-  <Content Include="UploadFile\Mails\CAPAAuditReviewEmail.htm" />
-  <Content Include="UploadFile\Mails\CAPAAuditImplementationEmail.htm" />
-  <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditReviewEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditImplementationEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />
     <Content Include="UploadFile\Mails\CheckListAuditSendMailForAssessmentCompleted.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestMonthly.htm" />
     <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
