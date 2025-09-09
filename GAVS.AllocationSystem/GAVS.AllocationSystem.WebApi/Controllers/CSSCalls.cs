@@ -330,7 +330,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
             var period = $"{batch.START_DATE.ToString("MMM-yyyy")} to {batch.END_DATE.ToString("MMM-yyyy") }";
-            if (batch.FREQUENCY.ToLower() == "halfyearly" || batch.FREQUENCY.ToLower() == "half-yearly" || batch.FREQUENCY =="annual")
+            if (batch.FREQUENCY.ToLower() == "halfyearly" || batch.FREQUENCY.ToLower() == "half-yearly")
             {
                 string projectList = string.Empty;
 
@@ -340,6 +340,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 templateFile = "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
                 //subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
                 subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
+            }
+            else if (batch.FREQUENCY == "annual")
+            {
+                templateFile = "CustomerSuccessSurveySurveyRequestAnnual.htm";
+                
+                subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the Account {projectText}";
             }
 
 

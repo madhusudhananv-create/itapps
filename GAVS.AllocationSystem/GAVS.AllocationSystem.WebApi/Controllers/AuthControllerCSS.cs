@@ -820,9 +820,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", "");
                 surveyURL += "/CustomerSuccessSurvey/" + surveyId;
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
-
             }
-
             var table = GetCSSTableData(replies);
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("ACCOUNT_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM);
@@ -831,8 +829,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", ""); ;
             //surveyURL += "/CustomerSuccessSurvey/" + surveyId;
             //EmailContentValues.Add("SURVEY_LINK", surveyURL);
-
-            mailContent = helper.GetEmailContent("CustomerSuccessSurveySuccessMail.htm", EmailContentValues);
+            var template = category.ToLower() == "account" ? "CustomerSuccessSurveySuccessMailAnnual.htm" : "CustomerSuccessSurveySuccessMail.htm";
+            mailContent = helper.GetEmailContent(template, EmailContentValues);
 
             var ep = new EmailProvider(Cldb, CSPdb);
             ep.SendEmail
