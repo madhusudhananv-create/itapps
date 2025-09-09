@@ -101,6 +101,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             }
                         }
                     }
+                    else
+                    {
+                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "DRAFT", empId, meetingDate, isCSMNotified);
+                    }
                 }
                 else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
                 {
@@ -362,7 +366,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         iteration = CSPdb.CSS_SURVEY_ITERATION.GetById(batchCust.SURVEY_ID.GetValueOrDefault());
                     }
 
-                    if (iteration.STATUS == "COMPLETED")
+                    if (iteration.STATUS == "COMPLETED" || iteration.STATUS == "DRAFT")
                     {
                         //Get Answers if survey is completed
                         questionsWithReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(t => t.SURVEY_ID == iteration.SURVEY_ID).ToList();
@@ -695,7 +699,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<CSS_QUESTION_REPLIES> questionsWithReplies = new List<CSS_QUESTION_REPLIES>();
             foreach (CSS_QUESTION_MASTER q in questions.OrderBy(x => x.SEQUENCE))
             {
-                /*CSS_QUESTION_REPLIES reply = new CSS_QUESTION_REPLIES()
+                CSS_QUESTION_REPLIES reply = new CSS_QUESTION_REPLIES()
                 {
 
                     SURVEY_ID = code,
@@ -707,36 +711,36 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     SEQUENCE = q.SEQUENCE.GetValueOrDefault(q.ID),
                     RATING_PARAM = q.RATING_PARAM,
                     PERSPECTIVE = q.PERSPECTIVE,
-                };*/
-                CSS_QUESTION_REPLIES reply;
+                };
+                //CSS_QUESTION_REPLIES reply;
 
-                var existing = CSPdb.CSS_QUESTION_REPLIES.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMER_ID == batch_customer_id &&
-                                        x.SURVEY_ID == code && x.QUESTION_ID == q.ID);
-                if (existing != null)
-                {
-                    reply = existing;
-                }
-                else
-                {
-                    reply = new CSS_QUESTION_REPLIES()
-                    {
+                //var existing = CSPdb.CSS_QUESTION_REPLIES.GetAll().FirstOrDefault(x => x.BATCH_CUSTOMER_ID == batch_customer_id &&
+                //                        x.SURVEY_ID == code && x.QUESTION_ID == q.ID);
+                //if (existing != null)
+                //{
+                //    reply = existing;
+                //}
+                //else
+                //{
+                //    reply = new CSS_QUESTION_REPLIES()
+                //    {
 
-                        SURVEY_ID = code,
-                        QUESTION_ID = q.ID,
-                        QUESTION = q.QUESTION,
-                        QUESTION_CATEGORY = q.QUESTION_CATEGORY,
-                        QUESTION_DETAIL = q.QUESTION_DETAIL,
-                        RATING_SCALE = q.RATING_SCALE.GetValueOrDefault(2),
-                        SEQUENCE = q.SEQUENCE.GetValueOrDefault(q.ID),
-                        RATING_PARAM = q.RATING_PARAM,
-                        PERSPECTIVE = q.PERSPECTIVE,
-                        RATING_DESCRIPTION = "",
-                    };
-                 }
-                if (isMonthly)
-                    reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
-                else
-                    reply.BATCH_CUSTOMER_ID = batch_customer_id;
+                //        SURVEY_ID = code,
+                //        QUESTION_ID = q.ID,
+                //        QUESTION = q.QUESTION,
+                //        QUESTION_CATEGORY = q.QUESTION_CATEGORY,
+                //        QUESTION_DETAIL = q.QUESTION_DETAIL,
+                //        RATING_SCALE = q.RATING_SCALE.GetValueOrDefault(2),
+                //        SEQUENCE = q.SEQUENCE.GetValueOrDefault(q.ID),
+                //        RATING_PARAM = q.RATING_PARAM,
+                //        PERSPECTIVE = q.PERSPECTIVE,
+                //        RATING_DESCRIPTION = "",
+                //    };
+                // }
+                //if (isMonthly)
+                //    reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
+                //else
+                //    reply.BATCH_CUSTOMER_ID = batch_customer_id;
                 questionsWithReplies.Add(reply);
             }
 
