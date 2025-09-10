@@ -187,7 +187,7 @@ a:hover {
     display: table-cell;
     padding: 6px;
     vertical-align: top;
-    border: 1px solid #0094ff;
+    border: 1px solid #ADADAD;
     word-wrap: break-word;
   }
 
@@ -209,21 +209,30 @@ a:hover {
   }
    table.table thead td {
     font-size: 11px !important;
+    border-bottom: 1px solid #ADADAD !important;
+    padding:8px !important;
   }
   table.table thead td[style*="border-bottom:0px"] {
-    border-bottom: 1px solid #0094ff !important;
+    border-bottom: 1px solid #ADADAD !important;
   }
+
+ 
 
   /* Fix 2: Reduce font size for red highlighted improvement areas text */
   .red,
   span[style*="color: red"] {
     font-size: 10px !important;
   }
+   tbody.tahoma-font td {
+  padding:8px !important;
+  width:90px !important;
+  }
+
 
   tbody.tahoma-font tr {
     display: block !important;
     /* Force block layout for the row */
-    border-bottom: 1px solid #0094ff;
+    border-bottom: 1px solid #ADADAD;
     margin-bottom: 10px;
     width: 120% !important;
   }
@@ -235,7 +244,7 @@ a:hover {
     width: 100% !important;
     box-sizing: border-box;
     padding: 8px;
-    border: 1px solid #0094ff;
+    border: 1px solid #ADADAD;
     font-size: 11px;
   }
 
@@ -252,7 +261,7 @@ a:hover {
   .pillStart,
   .pill,
   .pillEnd {
-    padding: 4px 8px;
+    padding: 4px 9px;
     font-size: 11px;
     line-height: 2;
     margin: 1px;
@@ -278,10 +287,16 @@ a:hover {
     line-height: 1.2;
     font-weight: bold;
     background-color: whitesmoke;
+      padding:8px !important;
   }
 
+  table.table tr td[colspan="3"] {
+      padding:8px !important;
+  }
+
+
   #Gavs-logo {
-    width: 80px;
+    width: 100px;
   }
 
   .criteria {
@@ -298,8 +313,9 @@ a:hover {
   }
 
   .textarea-wrapper textarea {
-    height: 60px;
+    height: 50px;
     font-size: 12px;
+    width: 90%;
   }
 
   .remaning {
