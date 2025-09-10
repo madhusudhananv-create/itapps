@@ -369,13 +369,36 @@ a:hover {
   mat-dialog-actions {
     padding: 15px 10px !important;
     justify-content: center !important;
+    gap: 8px !important;
   }
 
   mat-dialog-actions button {
     width: 80px !important;
     margin: 0 5px !important;
-    padding: 0px 0px !important;
+    padding: 6px 12px !important;
     font-size: 12px !important;
   }
 
+  .btn-primary-confirm {
+    background-color: #337ab7 !important;
+    color: white !important;
+    border: none !important;
+  }
+
+  .btn-warning-confirm {
+    background-color: #f0ad4e !important;
+    color: white !important;
+    border: none !important;
+  }
+
+  /* Single button dialogs (success/expiry) */
+  mat-dialog-actions[ng-if*="dialogSuccess"] {
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+
+  mat-dialog-actions[ng-if*="dialogSuccess"] button {
+    width: 100px !important;
+    margin: 0 auto !important;
+  }
 }
