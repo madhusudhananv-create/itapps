@@ -254,6 +254,7 @@ export class SurveyComponent implements OnInit {
         //   this.rowspan = 2;
         if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED" ) {
           this.IsCompleted = true;
+          this.bShowNpsComments = true;
            this.getNPSRating();
         }
         else if(data.csS_BATCH_CUSTOMERS_EXTENDED.status == "DRAFT")
@@ -282,6 +283,7 @@ export class SurveyComponent implements OnInit {
         this.isMonthly = true;
          if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "COMPLETED" ) {
           this.IsCompleted = true;
+          this.bShowNpsComments = true;
            this.getNPSRating();
         }
         else if(data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "DRAFT")
