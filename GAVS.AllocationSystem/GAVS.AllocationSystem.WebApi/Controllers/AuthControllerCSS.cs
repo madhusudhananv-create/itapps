@@ -370,6 +370,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         //Get Answers if survey is completed
                         questionsWithReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(t => t.SURVEY_ID == iteration.SURVEY_ID).ToList();
+                        if (iteration.STATUS == "DRAFT")
+                        {
+                            var npsQuestion = questionsWithReplies.FirstOrDefault(x => x.QUESTION_CATEGORY == "NPS" && x.RATING == 0);
+                            if (npsQuestion != null) npsQuestion.RATING = -1;
+                        }
+
                     }
 
                     else
