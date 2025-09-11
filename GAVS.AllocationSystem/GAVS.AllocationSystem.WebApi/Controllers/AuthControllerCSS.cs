@@ -743,10 +743,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //        RATING_DESCRIPTION = "",
                 //    };
                 // }
-                //if (isMonthly)
-                //    reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
-                //else
-                //    reply.BATCH_CUSTOMER_ID = batch_customer_id;
+                if (isMonthly)
+                    reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
+                else
+                   reply.BATCH_CUSTOMER_ID = batch_customer_id;
                 questionsWithReplies.Add(reply);
             }
 
