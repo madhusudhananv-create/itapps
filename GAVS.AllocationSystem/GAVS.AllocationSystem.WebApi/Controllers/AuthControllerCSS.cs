@@ -800,7 +800,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
             string subject = string.Empty;
             string mailContent = string.Empty;
-
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(b => b.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
+            var batchYear = batch.YEAR.ToString();
             ////SUBJECT
             //if (category.ToLower() == "pulse")
             //    subject = "Half Yearly Pulse Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
@@ -811,7 +812,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (category.ToLower() == "pulse")
                 subject = "Customer Satisfaction Pulse Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
             else
-                subject = "Customer Satisfaction Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
+                // subject = "Customer Satisfaction Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
+                subject = $"Neurealm {replies.SURVEY_PERIOD} Customer Satisfaction Survey {batchYear} submitted successfully";
 
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -908,6 +910,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, project);
             //if (!string.IsNullOrWhiteSpace(buMails))
             //    ccmail += "," + buMails;
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(b => b.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
+            var batchYear = batch.YEAR.ToString();
             var buMailsCustomer = GetBUwiseCCListForAccount(replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID, null);
             if (!string.IsNullOrWhiteSpace(buMailsCustomer))
                 ccmail += "," + buMailsCustomer;
@@ -924,8 +928,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (category.ToLower() == "pulse")
                 subject = $"Half Yearly Pulse Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
             else
-                subject = $"Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
-
+                //subject = $"Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
+                subject = $"Neurealm {replies.SURVEY_PERIOD} Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | Feedback Period - {batchYear})";
 
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();

@@ -341,11 +341,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
                 subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
             }
-            else if (batch.FREQUENCY == "annual")
+            else if (batch.FREQUENCY == "Annual")
             {
                 templateFile = "CustomerSuccessSurveySurveyRequestAnnual.htm";
-                
-                subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the Account {projectText}";
+
+                //subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the Account {projectText}";
+                subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey {batch.YEAR}";
             }
 
 
@@ -357,6 +358,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
             EmailContentValues.Add("ACCOUNT_NAME", cust.CUST_NM);
             EmailContentValues.Add("PROJECT_NAME", projectText);
+            EmailContentValues.Add("FREQUENCY", batch.FREQUENCY);
+            EmailContentValues.Add("YEAR", batch.YEAR.ToString());
             EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
 
             mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
