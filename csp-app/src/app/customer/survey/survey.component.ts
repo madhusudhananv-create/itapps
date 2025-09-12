@@ -197,7 +197,7 @@ export class SurveyComponent implements OnInit {
         }
       }
       if (!this.showQualitativeFeedback && this.questions_NPS != undefined && this.questions_NPS != null) {
-        if (this.questions_NPS.rating <= 9 && (this.questions_NPS.ratinG_DESCRIPTION == null ||
+        if (this.questions_NPS.rating < 9 && (this.questions_NPS.ratinG_DESCRIPTION == null ||
           this.questions_NPS.ratinG_DESCRIPTION == undefined || this.questions_NPS.ratinG_DESCRIPTION.trim() == "")) {
           alert("Please provide your comments for '" + this.questions_NPS.question + "'");
           return;

@@ -57,70 +57,51 @@
         (onChange)="changeEvent($event)"></app-view-template>
     </div>
   </div>
-<p>At {{ companyName }} {{formerlyText}}, Customer Advocacy Group administers the Annual Customer Satisfaction Survey with our key Customers and you are one of them! This survey feedback is incredibly valuable for our partnership. <br /><br />
+<!-- <p>At {{ companyName }} {{formerlyText}}, Customer Advocacy Group administers the Annual Customer Satisfaction Survey with our key Customers and you are one of them! This survey feedback is incredibly valuable for our partnership. <br /><br />
 
 The insights we gain from your feedback will guide the strategic actions we take to enhance your experience with us and to strengthen our partnership. Look forward to your positive response to this Survey.
-</p><br />
-<!--   <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
- -->
-  <table class="table table-bordered" style="width:auto;background-color:white;">
-    <thead>
-      <tr *ngIf="questions_NPS">
-        <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;" colspan="3">
+</p><br /> 
+ <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
+   -->
+<p>In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction Survey. Your inputs will help us to enhance the overall value of the partnership and help prepare for your strategic priorities.</p><br />
+  <table class="table table-bordered" style="width:auto;background-color:white;">     
+    <thead>       
+      <tr *ngIf="questions_NPS">         
+        <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;">
           <span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
           {{questions_NPS.question}}
         </td>
       </tr>
       <tr *ngIf="questions_NPS">
         <td colspan="2" nowrap style="border-top:0px;padding-bottom:0px;border-bottom:0px; width:auto">
-          <a class="pillStart" (click)="Rating_OnClick('0')"
-            [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
-          <a class="pill" (click)="Rating_OnClick('1')"
-            [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
-          <a class="pill" (click)="Rating_OnClick('2')"
-            [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
-          <a class="pill" (click)="Rating_OnClick('3')"
-            [style.background-color]="npsRating == 3 ? '#0073f7':'#FF0000'">3</a>
-          <a class="pill" (click)="Rating_OnClick('4')"
-            [style.background-color]="npsRating == 4 ? '#0073f7':'#FF0000'">4</a>
-          <a class="pill" (click)="Rating_OnClick('5')"
-            [style.background-color]="npsRating == 5 ? '#0073f7':'#FF0000'">5</a>
-          <a class="pill" (click)="Rating_OnClick('6')"
-            [style.background-color]="npsRating == 6 ? '#0073f7':'#FF0000'">6</a>
-          <a class="pill" (click)="Rating_OnClick('7')"
-            [style.background-color]="npsRating == 7 ? '#0073f7':'#Ffbf00'">7</a>
-          <a class="pill" (click)="Rating_OnClick('8')"
-            [style.background-color]="npsRating == 8 ? '#0073f7':'#Ffbf00'">8</a>
-          <a class="pill" (click)="Rating_OnClick('9')"
-            [style.background-color]="npsRating == 9 ? '#0073f7':'#008000'">9</a>
-          <a class="pillEnd" (click)="Rating_OnClick('10')"
-            [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
+          <div>
+            <a class="pillStart" (click)="Rating_OnClick('0')" [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
+            <a class="pill" (click)="Rating_OnClick('1')" [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
+            <a class="pill" (click)="Rating_OnClick('2')" [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
+            <a class="pill" (click)="Rating_OnClick('3')" [style.background-color]="npsRating == 3 ? '#0073f7':'#FF0000'">3</a>
+            <a class="pill" (click)="Rating_OnClick('4')" [style.background-color]="npsRating == 4 ? '#0073f7':'#FF0000'">4</a>
+            <a class="pill" (click)="Rating_OnClick('5')" [style.background-color]="npsRating == 5 ? '#0073f7':'#FF0000'">5</a>
+            <a class="pill" (click)="Rating_OnClick('6')" [style.background-color]="npsRating == 6 ? '#0073f7':'#FF0000'">6</a>
+            <a class="pill" (click)="Rating_OnClick('7')" [style.background-color]="npsRating == 7 ? '#0073f7':'#Ffbf00'">7</a>
+            <a class="pill" (click)="Rating_OnClick('8')" [style.background-color]="npsRating == 8 ? '#0073f7':'#Ffbf00'">8</a>
+            <a class="pill" (click)="Rating_OnClick('9')" [style.background-color]="npsRating == 9 ? '#0073f7':'#008000'">9</a>
+            <a class="pillEnd" (click)="Rating_OnClick('10')"
+              [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
+          </div>
+          <div style="display: flex;justify-content: space-between;">
+            <span nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 13px 8px">Not at all
+              likely
+            </span>
+            <span nowrap style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 12px 8px;text-align: right">
+              Extremely likely</span>
+          </div>
         </td>
-      </tr>
-      <tr *ngIf="questions_NPS">
-        <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 13px 8px">Not at all
-          likely
-        </td>
-        <td colspan="1" nowrap
-          style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 12px 8px;text-align: right">
-          Extremely likely</td>
-          <!-- <td colspan="1" style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 15px 8px;text-align: left">
-        <b style="position: relative; top: -25px;">
-        {{questions_NPS.perspective}}
-           </b>
-          </td> -->
-      </tr>
-      <tr *ngIf="questions_NPS && bShowNpsComments">
-        <td colspan="3" style="border-top:0px;border-bottom:0px">{{NpsCommentsTitle}}
-        </td>
-      </tr>
-      <tr *ngIf="questions_NPS && bShowNpsComments">
-        <td colspan="3" style="border-top:0px;padding:0px;">
-          <div class="textarea-wrapper">
-               <span style="font-size: x-small;font-weight:normal"><span style="color: red;">*</span>
-            Remarks are required if the score is less than 9</span>
+        <td *ngIf="questions_NPS && bShowNpsComments" colspan="1" style="border-top:0px;padding:0px;border-bottom: none;">
+          <div class="survey-textarea">
+            <span style="font-size: x-small;font-weight:normal;margin-left: 100px"><span style="color: red;">*</span>
+              Remarks are required if the score is less than 9</span>
             <!-- <span *ngIf="warnNps && !IsCompleted" style="color: red;font-size:small">Please enter improvement areas in
-              text for the project team to act on.</span> -->
+                      text for the project team to act on.</span> -->
             <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
               [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
               maxlength="500"></textarea>
@@ -128,6 +109,35 @@ The insights we gain from your feedback will guide the strategic actions we take
           </div>
         </td>
       </tr>
+      <!-- <tr *ngIf="questions_NPS">
+        <td colspan="1" nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 13px 8px">Not at all
+          likely
+        </td>
+        <td colspan="1" nowrap
+          style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 12px 8px;text-align: right">
+          Extremely likely</td> -->
+          <!-- <td colspan="1" style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 15px 8px;text-align: left">
+        <b style="position: relative; top: -25px;">
+        {{questions_NPS.perspective}}
+           </b>
+          </td> -->
+      <!-- </tr> -->
+      <!-- <tr *ngIf="questions_NPS && bShowNpsComments">
+        <td colspan="3" style="border-top:0px;border-bottom:0px">{{NpsCommentsTitle}}
+        </td>
+      </tr> -->
+      <!-- <tr *ngIf="questions_NPS && bShowNpsComments">
+        <td colspan="3" style="border-top:0px;padding:0px;">
+          <div class="textarea-wrapper">
+            <span *ngIf="warnNps && !IsCompleted" style="color: red;font-size:small">Please enter improvement areas in
+              text for the project team to act on.</span>
+            <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
+              [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
+              maxlength="500"></textarea>
+            <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
+          </div>
+        </td>
+      </tr> -->
 
 
          
@@ -254,3 +264,4 @@ The insights we gain from your feedback will guide the strategic actions we take
       style="margin: 0 200px;">OK</button>
   </mat-dialog-actions>
 </ng-template>
+
