@@ -125,12 +125,12 @@ export class SurveyComponent implements OnInit {
         this.questions_NPS = new CssQuestionRepliesModel();
       }
       this.questions_NPS.rating = this.npsRating;
-      if (rating <= 9) {
+      if (rating < 9) {
         this.bShowNpsComments = true;
-        if (rating <= 8)
-          this.NpsCommentsTitle = "You rated us " + rating.toString() + " out of 10. What improvements could we make to bring your rating closer to 10?";
-        else if (rating == 9)
-          this.NpsCommentsTitle = "Feedback for Improvement:- What can we do in the future to earn a score of 10?";
+        // if (rating <= 8)
+        //   this.NpsCommentsTitle = "You rated us " + rating.toString() + " out of 10. What improvements could we make to bring your rating closer to 10?";
+        // else if (rating == 9)
+        //   this.NpsCommentsTitle = "Feedback for Improvement:- What can we do in the future to earn a score of 10?";
       }
       else {
         this.bShowNpsComments = false;

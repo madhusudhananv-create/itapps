@@ -117,8 +117,10 @@ The insights we gain from your feedback will guide the strategic actions we take
       <tr *ngIf="questions_NPS && bShowNpsComments">
         <td colspan="3" style="border-top:0px;padding:0px;">
           <div class="textarea-wrapper">
-            <span *ngIf="warnNps && !IsCompleted" style="color: red;font-size:small">Please enter improvement areas in
-              text for the project team to act on.</span>
+               <span style="font-size: x-small;font-weight:normal"><span style="color: red;">*</span>
+            Remarks are required if the score is less than 9</span>
+            <!-- <span *ngIf="warnNps && !IsCompleted" style="color: red;font-size:small">Please enter improvement areas in
+              text for the project team to act on.</span> -->
             <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
               [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
               maxlength="500"></textarea>
