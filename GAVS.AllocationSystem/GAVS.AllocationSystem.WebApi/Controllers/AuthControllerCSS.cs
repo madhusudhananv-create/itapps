@@ -764,25 +764,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private string GetCSSTableData(BatchCustomerAndQuestions replies)
         {
             var sb = new StringBuilder();
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps").OrderBy(x => x.SEQUENCE))
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
+                sb.AppendLine("</tr>");
+            }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "criteria").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
                 sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
                 sb.AppendLine("</tr>");
             }
-            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps"))
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
                 sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
                 sb.AppendLine("</tr>");
             }
-            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others"))
-            {
-                sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
-                sb.AppendLine("</tr>");
-            }
-
             return sb.ToString();
         }
         private string GetRatingText(int rating)
