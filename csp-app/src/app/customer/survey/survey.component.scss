@@ -175,71 +175,132 @@ a:hover {
     font-size: 13px !important;
   }
 
-  /* Client info table (first table) */
-
-  table.table {
+  /* Client info table (first table) - Keep as table-cell layout */
+  table.table:first-of-type {
     min-width: 100%;
     border-collapse: collapse;
-    width: 110%;
+    display: table !important;
+    /* Force table display */
   }
 
-  table.table tr {
-    display: table-row;
-  }
-
-  table.table tr td,
-  table.table tr th {
-    display: table-cell;
-    padding: 6px;
-    vertical-align: top;
+  table.table:first-of-type td {
+    display: table-cell !important;
+    /* Keep table-cell display */
+    padding: 8px !important;
+    vertical-align: middle;
     border: 1px solid #ADADAD;
     word-wrap: break-word;
+    font-size: 11px;
   }
 
-  table.table tr td:nth-child(odd),
-  table.table tr th:nth-child(odd) {
+  table.table:first-of-type tr {
+    display: table-row !important;
+    /* Keep table-row display */
+    width: 100% !important;
+  }
+
+  /* Style for client info table headers (bold cells) */
+  table.table:first-of-type tr td:nth-child(odd) {
     font-weight: bold;
     background-color: #f5f5f5;
-    font-size:11px;
   }
 
-  table.table tr td:nth-child(even) {
+  /* NPS Questions table (second table and beyond) - Keep as block layout */
+  table.table:not(:first-of-type) {
+    min-width: 100%;
+    border-collapse: collapse;
+  }
+
+  table.table:not(:first-of-type) td {
+    padding: 8px !important;
+    width: 100% !important;
+  }
+
+  table.table:not(:first-of-type) tr {
+    display: table-row !important;
+    margin-bottom: 10px;
+    width: 100% !important;
+  }
+
+  table.table:not(:first-of-type) tr td,
+  table.table:not(:first-of-type) tr th {
+    display: block !important;
+    border: 1px solid #ADADAD;
+    word-wrap: break-word;
+    width: 100% !important;
+  }
+
+  table.table:not(:first-of-type) tr td:nth-child(odd),
+  table.table:not(:first-of-type) tr th:nth-child(odd) {
+    font-weight: bold;
+    background-color: #f5f5f5;
+    font-size: 11px;
+  }
+
+  table.table:not(:first-of-type) tr td:nth-child(even) {
     width: 50%;
   }
 
-  /* Questions table (inside tbody with questions_Criteria) */
-  table.table thead th {
+  /* Questions table headings - Hide Survey Question, Rating, Remarks but keep subtext */
+  table.table thead tr:last-child th:nth-child(1),
+  table.table thead tr:last-child th:nth-child(2) {
     display: none !important;
-    /* Hide Survey Question, Rating, Remarks headings */
   }
-   table.table thead td {
+
+  /* Hide only the "Remarks" text but keep the span visible */
+  table.table thead tr:last-child th:nth-child(3) {
+    color: transparent !important;
+    font-size: 13px !important;
+    background-color: transparent !important;
+  }
+
+  /* Make the subtext visible and properly styled */
+  table.table thead tr:last-child th:nth-child(3) span,
+  table.table thead tr:last-child th:nth-child(3) span[style*="font-size: x-small"] {
+    color: black !important;
+    font-size: 10px !important;
+    display: block !important;
+    visibility: visible !important;
+    line-height: normal !important;
+    font-weight: normal !important;
+    margin-top: -24px;
+    text-align: start;
+  }
+
+  /* Ensure red asterisk is visible */
+  table.table thead tr:last-child th:nth-child(3) span[style*="color: red"] {
+    color: red !important;
+    display: inline !important;
+    order: -1;
+  }
+
+  table.table thead td {
     font-size: 11px !important;
     border-bottom: 1px solid #ADADAD !important;
-    padding:8px !important;
+    padding: 8px !important;
   }
+
   table.table thead td[style*="border-bottom:0px"] {
     border-bottom: 1px solid #ADADAD !important;
   }
-
- 
 
   /* Fix 2: Reduce font size for red highlighted improvement areas text */
   .red,
   span[style*="color: red"] {
     font-size: 10px !important;
-  }
-   tbody.tahoma-font td {
-  padding:8px !important;
-  width:90px !important;
+    margin-left: 40px;
   }
 
+  tbody.tahoma-font td {
+    padding: 8px !important;
+    width: 80% !important;
+  }
 
   tbody.tahoma-font tr {
     display: block !important;
     /* Force block layout for the row */
-    border-bottom: 1px solid #ADADAD;
     margin-bottom: 10px;
-    width: 120% !important;
+    width: 100% !important;
   }
 
   tbody.tahoma-font tr td,
@@ -259,46 +320,86 @@ a:hover {
     background-color: #f5f5f5;
   }
 
-  // tbody.tahoma-font tr td:nth-child(even) {
-  //   width: 50%;
+  // /* NPS rating pills - Make responsive */
+  // .pillStart,
+  // .pill,
+  // .pillEnd {
+  //   padding: 4px 9px;
+  //   font-size: 11px;
+  //   line-height: 2;
+  //   margin: 1px;
+  //   display: inline-block;
+  //   min-width: 20px;
+  //   box-sizing: border-box;
   // }
-  /* NPS rating pills - Make responsive */
-  .pillStart,
-  .pill,
-  .pillEnd {
-    padding: 4px 9px;
-    font-size: 11px;
-    line-height: 2;
-    margin: 1px;
-    display: inline-block;
-    min-width: 20px;
-    box-sizing: border-box;
-  }
 
-  .pillStart {
-    border-radius: 8px 0 0 8px;
-  }
+  // .pillStart {
+  //   border-radius: 8px 0 0 8px;
+  // }
 
-  .pillEnd {
-    border-radius: 0 8px 8px 0;
-  }
+  // .pillEnd {
+  //   border-radius: 0 8px 8px 0;
+  // }
+
+  /* NPS rating pills - Enhanced responsive behavior */
+.pillStart,
+.pill,
+.pillEnd {
+  padding: 4px 9px;
+  font-size: 10px;
+  line-height: 1.5;
+  margin: 1px;
+  display: inline-block;
+  min-width: 18px;
+  max-width: 25px;
+  box-sizing: border-box;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* NPS rating container - make it flexible */
+table.table thead tr td[colspan="2"] div:first-child {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* NPS labels container - make it responsive */
+table.table thead tr td[colspan="2"] div[style*="display: flex"] {
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  margin-top: 5px !important;
+}
+
+/* Adjust NPS labels text */
+table.table tr td[colspan="2"] span[nowrap] {
+  font-size: 8px !important;
+  padding: 2px !important;
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+  flex: 0 0 auto !important;
+}
 
   /* NPS labels - Reduce text size for "Not at all likely" and "Extremely likely" */
   table.table tr td[colspan="1"][nowrap] {
-    font-size: 8px !important;
+    font-size: 6px !important;
     padding: 2px 4px !important;
     word-wrap: break-word;
     white-space: normal !important;
     line-height: 1.2;
     font-weight: bold;
     background-color: whitesmoke;
-      padding:8px !important;
+    padding: 8px !important;
   }
 
   table.table tr td[colspan="3"] {
-      padding:8px !important;
+    padding: 8px !important;
   }
-
 
   #Gavs-logo {
     width: 100px;
@@ -321,6 +422,32 @@ a:hover {
     height: 50px;
     font-size: 12px;
     width: 90%;
+  }
+
+  .survey-textarea textarea {
+    height: 50px;
+    font-size: 12px;
+    width: 90%;
+  }
+
+  /* NPS remarks text styling - separate block for "Remarks are required if the rating is less than 9" */
+  .survey-textarea span[style*="font-size: x-small"],
+  .survey-textarea span {
+    display: block !important;
+    font-size: 10px !important;
+    color: black !important;
+    margin-bottom: 5px !important;
+    font-weight: normal !important;
+    line-height: normal !important;
+    margin-top: 22px !important;
+    margin-left: -93px;
+  }
+
+  /* Red asterisk in NPS section */
+  .survey-textarea span[style*="color: red"] {
+    color: red !important;
+    display: inline !important;
+    order: -1;
   }
 
   .remaning {
