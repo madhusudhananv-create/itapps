@@ -104,7 +104,7 @@ The insights we gain from your feedback will guide the strategic actions we take
                       text for the project team to act on.</span> -->
             <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
               [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
-              maxlength="500"></textarea>
+              maxlength="500"  [class.highlight]="questions_NPS.rating < 9 && questions_NPS.rating > 0 && !questions_NPS.ratinG_DESCRIPTION"></textarea>
             <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
           </div>
         </td>
