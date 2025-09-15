@@ -27,7 +27,7 @@ export class SurveyComponent implements OnInit {
   questions_Others: CssQuestionRepliesModel[] = [];
   IsCompleted: boolean = false;
   npsRating: number = null;
-  bShowNpsComments: boolean = false;
+  bShowNpsComments: boolean = true;
   NpsCommentsTitle: string = '';
   proj: string = '';
   projtext: string = '';
