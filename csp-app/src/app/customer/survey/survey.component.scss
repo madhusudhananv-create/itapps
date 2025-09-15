@@ -173,6 +173,7 @@ a:hover {
 
   p {
     font-size: 13px !important;
+    text-align: justify !important;
   }
 
   /* Client info table (first table) - Keep as table-cell layout */
@@ -235,6 +236,7 @@ a:hover {
     font-weight: bold;
     background-color: #f5f5f5;
     font-size: 11px;
+    text-align: justify !important;
   }
 
   table.table:not(:first-of-type) tr td:nth-child(even) {
@@ -342,48 +344,48 @@ a:hover {
   // }
 
   /* NPS rating pills - Enhanced responsive behavior */
-.pillStart,
-.pill,
-.pillEnd {
-  padding: 4px 9px;
-  font-size: 10px;
-  line-height: 1.5;
-  margin: 1px;
-  display: inline-block;
-  min-width: 18px;
-  max-width: 25px;
-  box-sizing: border-box;
-  text-align: center;
-  flex-shrink: 0;
-}
+  .pillStart,
+  .pill,
+  .pillEnd {
+    padding: 4px 9px;
+    font-size: 10px;
+    line-height: 1.5;
+    margin: 1px;
+    display: inline-block;
+    min-width: 18px;
+    max-width: 25px;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+  }
 
-/* NPS rating container - make it flexible */
-table.table thead tr td[colspan="2"] div:first-child {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  width: 100% !important;
-  overflow-x: auto !important;
-}
+  /* NPS rating container - make it flexible */
+  table.table thead tr td[colspan="2"] div:first-child {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+  }
 
-/* NPS labels container - make it responsive */
-table.table thead tr td[colspan="2"] div[style*="display: flex"] {
-  display: flex !important;
-  justify-content: space-between !important;
-  width: 100% !important;
-  margin-top: 5px !important;
-}
+  /* NPS labels container - make it responsive */
+  table.table thead tr td[colspan="2"] div[style*="display: flex"] {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-top: 5px !important;
+  }
 
-/* Adjust NPS labels text */
-table.table tr td[colspan="2"] span[nowrap] {
-  font-size: 8px !important;
-  padding: 2px !important;
-  word-wrap: break-word !important;
-  white-space: normal !important;
-  line-height: 1.2 !important;
-  flex: 0 0 auto !important;
-}
+  /* Adjust NPS labels text */
+  table.table tr td[colspan="2"] span[nowrap] {
+    font-size: 8px !important;
+    padding: 2px !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+    flex: 0 0 auto !important;
+  }
 
   /* NPS labels - Reduce text size for "Not at all likely" and "Extremely likely" */
   table.table tr td[colspan="1"][nowrap] {
