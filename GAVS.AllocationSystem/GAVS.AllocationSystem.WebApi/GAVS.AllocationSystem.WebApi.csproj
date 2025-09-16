@@ -347,6 +347,7 @@
     <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.4.sql" />
     <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.5.sql" />
     <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.6.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.7.sql" />
     <Content Include="DB Scripts\GSLabIntegration\BAS_CustID_procs_updates.sql" />
     <Content Include="DB Scripts\GSLabIntegration\BAS_EMPID_procs_updates.sql" />
     <Content Include="DB Scripts\GSLabIntegration\CSP_CustID_procs_updates.sql" />
@@ -520,11 +521,10 @@
     <Content Include="UploadFile\Mails\SubmittedSlaMetrics.htm" />
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_Premier.htm" />
     <Content Include="UploadFile\Mails\ChecklistAuditSendEmail.htm" />
-    <Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
+<Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
     <Content Include="UploadFile\Mails\CAPAAuditReviewEmail.htm" />
     <Content Include="UploadFile\Mails\CAPAAuditImplementationEmail.htm" />
-    <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />
-    <Content Include="UploadFile\Mails\CheckListAuditSendMailForAssessmentCompleted.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />    <Content Include="UploadFile\Mails\CheckListAuditSendMailForAssessmentCompleted.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestMonthly.htm" />
     <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
     <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
