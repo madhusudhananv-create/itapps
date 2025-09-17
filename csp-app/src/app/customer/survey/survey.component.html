@@ -64,7 +64,7 @@ The insights we gain from your feedback will guide the strategic actions we take
  <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
    -->
 <p>In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction Survey. Your inputs will help us to enhance the overall value of the partnership and help prepare for your strategic priorities.</p><br />
-  <table class="table table-bordered" style="width:auto;background-color:white;">     
+  <table class="table mainTable" style="width:auto;background-color:white;">     
     <thead>       
       <tr *ngIf="questions_NPS">         
         <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;">
@@ -104,7 +104,7 @@ The insights we gain from your feedback will guide the strategic actions we take
                       text for the project team to act on.</span> -->
             <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
               [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
-              maxlength="500"  [class.highlight]="questions_NPS.rating < 9 && questions_NPS.rating > 0 && !questions_NPS.ratinG_DESCRIPTION"></textarea>
+              maxlength="500"  [class.highlight]="hasRatingBeenSelected && questions_NPS.rating < 9 && !questions_NPS.ratinG_DESCRIPTION"></textarea>
             <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
           </div>
         </td>
@@ -202,8 +202,8 @@ The insights we gain from your feedback will guide the strategic actions we take
       <td colspan="3" style="padding:0px;">
         <div class="textarea-wrapper">
           <textarea name="txtOthersDesc0" [(ngModel)]="questions_Others[0].ratinG_DESCRIPTION"
-            style="width:100%;height:50px" [disabled]="IsCompleted" maxlength="100"></textarea>
-          <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/100</span>
+            style="width:100%;height:50px" [disabled]="IsCompleted" maxlength="300"></textarea>
+          <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/300</span>
         </div>
       </td>
     </tr>
@@ -216,8 +216,8 @@ The insights we gain from your feedback will guide the strategic actions we take
       <td colspan="3" style="padding:0px;">
         <div class="textarea-wrapper">
           <textarea name="txtOthersDesc1" [(ngModel)]="questions_Others[1].ratinG_DESCRIPTION"
-            style="width:100%;height:50px" [disabled]="IsCompleted" maxlength="100"></textarea>
-          <span class="remaning">{{getRemaining(questions_Others[1].ratinG_DESCRIPTION)}}/100</span>
+            style="width:100%;height:50px" [disabled]="IsCompleted" maxlength="300"></textarea>
+          <span class="remaning">{{getRemaining(questions_Others[1].ratinG_DESCRIPTION)}}/300</span>
         </div>
       </td>
     </tr>
@@ -229,7 +229,7 @@ The insights we gain from your feedback will guide the strategic actions we take
     </tr> -->
     <tr>
       <td colspan="3">
-        <span class="red">*</span> Denotes Field is Mandatory.
+        Fields with (<span class="red">*</span>) are mandatory.
         <br>
         <br>
         Thank you very much for taking time to complete this survey. Your feedback is valued and very much

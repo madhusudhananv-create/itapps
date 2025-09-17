@@ -12,6 +12,10 @@
   cursor: pointer !important;
 }
 
+table.table.mainTable {
+  border: 1px solid #0094ff;
+}
+
 .tblrating th,
 .tblrating td {
   border: 1px solid rgb(234, 233, 233);
@@ -124,17 +128,19 @@ a:hover {
 
 .textarea-wrapper {
   position: relative;
+  padding: 8px;
 }
 
 .survey-textarea {
   position: relative;
   margin-top: -27px;
+  padding: 8px;
 }
 
 .remaning {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 15px;
+  right: 15px;
 }
 
 .tahoma-font {
@@ -164,6 +170,10 @@ a:hover {
   .wrapper2 {
     width: 100%;
     overflow-x: auto;
+  }
+
+  table.table.mainTable {
+    border: 1px solid #ddd;
   }
 
   .div1,
@@ -274,6 +284,7 @@ a:hover {
     color: red !important;
     display: inline !important;
     order: -1;
+    margin-left: 30px;
   }
 
   table.table thead td {
@@ -290,7 +301,6 @@ a:hover {
   .red,
   span[style*="color: red"] {
     font-size: 10px !important;
-    margin-left: 40px;
   }
 
   tbody.tahoma-font td {
@@ -426,10 +436,22 @@ a:hover {
     width: 90%;
   }
 
+  .textarea-wrapper {
+    position: relative;
+    padding: 0px;
+  }
+
+
   .survey-textarea textarea {
     height: 50px;
     font-size: 12px;
     width: 90%;
+  }
+
+  .survey-textarea {
+    position: relative;
+    margin-top: -27px;
+    padding: 0px;
   }
 
   /* NPS remarks text styling - separate block for "Remarks are required if the rating is less than 9" */

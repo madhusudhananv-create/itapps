@@ -46,6 +46,7 @@ export class SurveyComponent implements OnInit {
   dialogHeading: string = '';
   dialogSuccess: boolean = false;
   dialogExpiry: boolean = false;
+  hasRatingBeenSelected: boolean = false;
   // ddRatings = [
   //   { 'key': '1 - Poor', 'value': 1 },
   //   { 'key': '2 - Fair', 'value': 2 },
@@ -125,6 +126,7 @@ export class SurveyComponent implements OnInit {
         this.questions_NPS = new CssQuestionRepliesModel();
       }
       this.questions_NPS.rating = this.npsRating;
+         this.hasRatingBeenSelected = true;
       // if (rating < 9) {
       //   this.bShowNpsComments = true;
       //   // if (rating <= 8)
