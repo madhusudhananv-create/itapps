@@ -30,7 +30,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 string jsonContent = content.ReadAsStringAsync().Result;
                 dynamic json = jsonContent;
                 BatchCustomerAndQuestions replies = JsonConvert.DeserializeObject<BatchCustomerAndQuestions>(json);
-
+                CSS_BATCHES batch = null;
                 string surveyId = string.Empty;
                 if (replies.CSS_BATCH_CUSTOMERS_EXTENDED != null)
                 {
@@ -74,26 +74,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
 
                     var customerName = replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME;
-                    List<PROJECT> project = null;
-                    if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID))
-                        project = Cldb.PROJECT.GetAll().Where(x => x.CUST_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID && x.PROJ_STATUS.ToLower() != "close").ToList();
+                    var project = new List<PROJECT>();
+                    if (string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID))
+                    {
+                        //project = Cldb.PROJECT.GetAll().Where(x => x.CUST_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID && x.PROJ_STATUS.ToLower() != "close").ToList();
+                    }
+
                     else
                         project = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID).ToList();
                     if (!saveAsDraft)
                     {
                         CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "COMPLETED", empId, meetingDate, isCSMNotified);
 
-                        if (project != null)
-                        {
-                            createActionItemAndTask(replies, surveyId, project, customerName);            //create action item if csat is low 
-                        }
+
+                        createActionItemAndTask(replies, surveyId, project, customerName);            //create action item if csat is low 
+
                         if (!string.IsNullOrWhiteSpace(empId))
                         {
                             SendSurveySuccessEmailForQualitativeFeedback(replies, surveyId, replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID, empId);
                         }
                         else
                         {
-                            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
+                            batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
                             if (batch != null)
                             {
                                 SendSurveyResultEmailToCustomer(replies, surveyId, batch.FREQUENCY, batch.CATEGORY);
@@ -147,7 +149,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         projIds = GetProjectIdsForMonthlyCSAT(replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.EMAIL_ID);
                     var projects = Cldb.PROJECT.GetAll().Where(x => x.PROJ_STATUS != "Close" && projIds.Contains(x.PROJ_ID)).ToList();
 
-                    if (projects != null)
+                    if (projects != null || (batch != null && batch.CATEGORY.ToLower() == "account"))
                     {
                         createActionItemAndTask(replies, surveyId, projects, customerName);            //create action item if csat is low 
                     }
@@ -172,6 +174,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void createActionItemAndTask(BatchCustomerAndQuestions replies, string surveyId, List<PROJECT> projects, string customerName)
         {
+            bool acsat = false;
             var requestDomain = helper.GetAbsoulteUri();
             var path = "CustomerSuccessSurvey";
             var cssUrl = $"{requestDomain}//{path}/{surveyId}";
@@ -184,9 +187,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var questions = CSPdb.CSS_QUESTION_MASTER.GetAll().Where(x => questionIds.Contains(x.ID)).ToList();
             var createdActionItems = new List<PROJECT_ACTIONITEM>();
             var portfolio = string.Empty;
-            if (replies.CSS_BATCH_CUSTOMERS_EXTENDED != null && replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROD_ID.HasValue)
+
+
+            if (!projects.Any())
+            {
+                acsat = true;
+                //identify key project from account
+                var projAllocations = Cldb.AppRepo.GetAllocationCountForAccount(replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID);
+                if (projAllocations.Any())
+                {
+                    var projId = projAllocations.First().PROJ_ID;
+                    var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
+                    projects.Add(project);
+                }
+            }
+            if (replies.CSS_BATCH_CUSTOMERS_EXTENDED != null && (replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROD_ID.HasValue || acsat))
                 portfolio = replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM;
-            else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null && replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_ID.HasValue)
+            else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null && (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROD_ID.HasValue || acsat))
                 portfolio = replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED.PROJ_NM;
             foreach (var item in projects)
             {
@@ -195,7 +212,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     foreach (var l in lowRatings)
                     {
                         if (questions.FirstOrDefault(x => x.ID == l.QUESTION_ID)?.TRIGGER_RCA.GetValueOrDefault() == true)
-                            createdActionItems.Add(CreateActionItemDetails(new List<CSS_QUESTION_REPLIES> { l }, item.CUST_ID, item.PROJ_ID, null, null, customerName, replies.SURVEY_PERIOD, false, portfolio));
+                            createdActionItems.Add(CreateActionItemDetails(new List<CSS_QUESTION_REPLIES> { l }, item.CUST_ID, item.PROJ_ID, null, null, customerName, replies.SURVEY_PERIOD, false, portfolio, acsat));
                     }
 
                 }
@@ -525,7 +542,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-        private PROJECT_ACTIONITEM CreateActionItemDetails(List<CSS_QUESTION_REPLIES> lowratings, string custId, string projId, int? batchCustomerId, int? batchCustomerMonthlyId, string customerName, string period, bool sendMail = true, string portfolio = "")
+        private PROJECT_ACTIONITEM CreateActionItemDetails(List<CSS_QUESTION_REPLIES> lowratings, string custId, string projId, int? batchCustomerId, int? batchCustomerMonthlyId, string customerName, string period, bool sendMail = true, string portfolio = "", bool acsat = false)
         {
             var overview = new ActionItemsViewDetails();
             overview.CUST_ID = custId;
@@ -562,8 +579,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.PORTFOLIO_NAME = portfolio;
             overview.DESCRIPTION = desc;
             overview.ORIGINAL_DESCRIPTION = overview.DESCRIPTION;
-            overview.SOURCE = $"Customer Success Survey - {customerName}";
-            overview.SOURCE_DESCRIPTION = $"CSAT - { period}, {customerName} , Lower CSAT Score in Question ({string.Join(", ", lowratings.Select(x => x.QUESTION)) })";
+
+            overview.SOURCE = $"{(acsat ? "Account " : "")}Customer Satisfaction Survey - {customerName}";
+            overview.SOURCE_DESCRIPTION = $"{(acsat ? "A" : "")}CSAT - { period}, {customerName} , Lower CSAT Score in Question ({string.Join(", ", lowratings.Select(x => x.QUESTION)) })";
             overview.CSS_REFERENCE = reference.ToString();
             overview.IDENTIFIED_DATE = DateTime.Today;
             overview.TARGET_DATE = AddBusinessDays(DateTime.Today, 10);

@@ -841,6 +841,15 @@ namespace GAVS.AllocationSystem.Data
             var result = dbContext.Database.SqlQuery<CUSTOMER_CONTACTS>("[dbo].[usp_getContactsForAccount] @custId", param1 ).ToList();
             return result;
         }
+        public List<PROJECT_BY_RESOURCE> GetAllocationCountForAccount(string custId)
+        {
+            var dbContext = new CloudDbContext();
+            SqlParameter param1 = new SqlParameter("@custId", custId);
+
+            var result = dbContext.Database.SqlQuery<PROJECT_BY_RESOURCE>("[dbo].[usp_GetProjectAllocationCount] @custId", param1).ToList();
+            return result;
+        }
+
 
         //**********************************
         //I M P O R T A N T

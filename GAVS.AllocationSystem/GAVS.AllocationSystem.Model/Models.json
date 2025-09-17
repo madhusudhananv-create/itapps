@@ -440,6 +440,13 @@
     ]
   },
   {
+    "name": "PROJECT_BY_RESOURCE",
+    "props": [
+      "PROJ_ID:string",
+      "CNT:int"
+    ]
+  },
+  {
     "name": "CSS_CUSTOMER_VERIFICATION",
     "props": [
       "CUST_NM:string",
