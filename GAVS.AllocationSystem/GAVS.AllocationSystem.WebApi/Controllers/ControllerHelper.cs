@@ -335,7 +335,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public List<EMP_INFO> GetCSMEmpInfoFromProject(string projId)
         {
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
-            return Cldb.EMP_INFO.GetAll().Where(x => x.EMP_ID == project.PROJ_DM_EMP_ID).ToList();
+            var id = !string.IsNullOrWhiteSpace(project.PROJ_DP_EMP_ID) ? project.PROJ_DP_EMP_ID : project.PROJ_DM_EMP_ID;
+            return Cldb.EMP_INFO.GetAll().Where(x => x.EMP_ID == id).ToList();
         }
 
         public List<EMP_INFO> GetBUHEADFromProject(string projId)
@@ -718,7 +719,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
 
-               var surveyItem = surveyItems.FirstOrDefault(x => x.ID == c.SURVEY_ID);
+                var surveyItem = surveyItems.FirstOrDefault(x => x.ID == c.SURVEY_ID);
                 if (surveyItem != null)
                     newExt.URL = $"{GetAbsoulteUri()}/CustomerSuccessSurvey/{surveyItem.SURVEY_ID}";
                 ext.Add(newExt);
@@ -880,7 +881,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var config = GetDBConfig("CSS_QUESTION_MODEL_HALFYEARLY", custId, projId, startDate, endDate);
                     return GetDBConfigValueInt(config);
                 }
-               
+
 
 
                 else
@@ -891,7 +892,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         return questionModelId.Value;
 
                     }
-                    
+
                 }
             }
             else if (category.ToLower() == "account")

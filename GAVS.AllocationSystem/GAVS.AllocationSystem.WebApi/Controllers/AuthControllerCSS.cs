@@ -596,7 +596,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.BATCH_CUSTOMER_MONTHLY_ID = lowratings[0].BATCH_CUSTOMER_MONTHLY_ID;
             overview.BATCH_CUSTOMER_ID = lowratings[0].BATCH_CUSTOMER_ID;
             overview.SEND_MAIL = sendMail;
-            if (!string.IsNullOrWhiteSpace(portfolio))
+            if (!string.IsNullOrWhiteSpace(portfolio) || acsat)
             {
                 overview.PORTFOLIO_NAME = portfolio;
                 overview.OWNER = helper.GetCSMEmpInfoFromProject(projId).FirstOrDefault()?.FRST_NM;
@@ -713,7 +713,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             else if (Frequency.ToLower() == "annual")
             {
 
-                CurrentPeriod = "Annual";
+                CurrentPeriod = "Annual " + Year.ToString();
             }
             return CurrentPeriod;
         }
@@ -764,7 +764,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (isMonthly)
                     reply.BATCH_CUSTOMER_MONTHLY_ID = batch_customer_id;
                 else
-                   reply.BATCH_CUSTOMER_ID = batch_customer_id;
+                    reply.BATCH_CUSTOMER_ID = batch_customer_id;
                 questionsWithReplies.Add(reply);
             }
 
@@ -782,22 +782,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private string GetCSSTableData(BatchCustomerAndQuestions replies)
         {
             var sb = new StringBuilder();
-            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps").OrderBy(x => x.SEQUENCE))
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps"))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "criteria").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{item.RATING_DESCRIPTION}</td>");
+                sb.Append($"<td>{GetValidText(item.PERSPECTIVE)}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             return sb.ToString();
@@ -805,6 +805,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private string GetRatingText(int rating)
         {
             return rating > 0 ? rating.ToString() : "";
+        }
+        private string GetValidText(string description)
+        {
+            return string.IsNullOrWhiteSpace(description) ? "-" : description;
         }
 
 
