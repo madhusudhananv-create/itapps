@@ -335,7 +335,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public List<EMP_INFO> GetCSMEmpInfoFromProject(string projId)
         {
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
-            var id = !string.IsNullOrWhiteSpace(project.DP_ID) ? project.DP_ID : project.PROJ_DM_EMP_ID;
+            var id = !string.IsNullOrWhiteSpace(project.PROJ_DM_EMP_ID) ? project.PROJ_DM_EMP_ID : project.DP_ID;
             return Cldb.EMP_INFO.GetAll().Where(x => x.EMP_ID == id).ToList();
         }
 

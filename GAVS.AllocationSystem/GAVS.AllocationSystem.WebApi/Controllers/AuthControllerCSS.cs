@@ -250,7 +250,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (project == null)
                 return;
-            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.DP_ID);
+            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.DP_ID);          
             var toMail = csm.EMAIL_ID;
             var csmName = csm.FRST_NM;
 
@@ -264,7 +264,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //spliting to email address
             string csmMails = helper.GetCSMMailsFromProject(project);
             string pmMails = helper.GetPMMailsFromProject(project);
-
+            var dp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.PROJ_DM_EMP_ID);
+            if (acsat)
+            csmName = dp.FRST_NM;
 
 
             string customerName = customer?.CUST_NM;
