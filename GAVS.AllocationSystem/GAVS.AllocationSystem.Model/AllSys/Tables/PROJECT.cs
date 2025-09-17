@@ -26,7 +26,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
         public string LVL_4_APPR_EMP_ID { get; set; }
         public string PROJ_BUHEAD_EMP_ID { get; set; }
         public string PROJ_DM_EMP_ID { get; set; }
-        public string PROJ_DP_EMP_ID { get; set; }
+        public string DP_ID { get; set; }
         public string PROJ_PM_EMP_ID { get; set; }
         public string PROJ_AM_EMP_ID { get; set; }
         public string CREATED_BY { get; set; }

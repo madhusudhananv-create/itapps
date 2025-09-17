@@ -223,10 +223,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //}
             }
             //send mail for created action 
-            SendActionItemGroupMail(createdActionItems, projects, "");
+            SendActionItemGroupMail(createdActionItems, projects, "", acsat);
         }
 
-        internal void SendActionItemGroupMail(List<PROJECT_ACTIONITEM> actionItems, List<PROJECT> projects, string anyotherComment)
+        internal void SendActionItemGroupMail(List<PROJECT_ACTIONITEM> actionItems, List<PROJECT> projects, string anyotherComment, bool acsat)
         {
             string subject = string.Empty;
             string mailContent;
@@ -250,12 +250,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (project == null)
                 return;
-            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.PROJ_DM_EMP_ID);
+            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.DP_ID);
             var toMail = csm.EMAIL_ID;
             var csmName = csm.FRST_NM;
 
             var customer = customers.FirstOrDefault(x => x.CUST_ID == project.CUST_ID);
-            cclist.AddRange(helper.GetPMFromProject(project));
+            if (!acsat)
+                cclist.AddRange(helper.GetPMFromProject(project));
             var qualitySpoc = helper.GetQualitySpocMailForProject(project);
             if (!string.IsNullOrWhiteSpace(qualitySpoc))
                 cclist.Add(qualitySpoc);
@@ -273,7 +274,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var path = "layout/actionitems";
 
             subject = $"New Action Item(s) Identified - { projectName}; Customer: {customerName}";
-            string tomail = pmMails;
+            string tomail = acsat ? csmMails : pmMails;
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
             ccMail = helper.ConcatEmails(new List<string>() { ccMail, csmMails, qualitySpoc });
