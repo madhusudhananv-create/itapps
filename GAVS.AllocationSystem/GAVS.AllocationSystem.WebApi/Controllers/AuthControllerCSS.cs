@@ -298,8 +298,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Action Plan Completion - Target date", !firstActionItem.COMPLETION_DATE.HasValue ? "-" : firstActionItem.PLANNED_TARGET_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Comments", string.IsNullOrWhiteSpace(firstActionItem.COMMENTS) ? "-" : firstActionItem.COMMENTS);
             EmailContentValues.Add("URL", $"{requestDomain}/{path}/{firstActionItem.CUSTOMER_ID}");
-
-            mailContent = helper.GetEmailContent("AddNewActionItemList.htm", EmailContentValues);
+            var template = acsat ? "AddNewActionItemListAnnual.htm" : "AddNewActionItemList.htm";
+            mailContent = helper.GetEmailContent(template, EmailContentValues);
 
 
 
@@ -788,19 +788,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps"))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "criteria").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{GetValidText(item.PERSPECTIVE)}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.Append($"<td>{GetValidText(item.PERSPECTIVE)}</td><td>{item.QUESTION}</td><td  style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             return sb.ToString();
