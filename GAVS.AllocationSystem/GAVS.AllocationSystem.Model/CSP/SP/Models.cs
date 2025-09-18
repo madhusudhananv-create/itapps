@@ -283,6 +283,8 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ISO_STANDARDS {get; set;}
         public string CERTIFICATION_SCOPES_NAME {get; set;}
         public string ISO_STANDARDS_NAME {get; set;}
+        public string DP { get; set; }
+        public string DP_NAME { get; set; }
     }
 
     public partial class ProjectCertificationScopes  
