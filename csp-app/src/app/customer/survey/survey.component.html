@@ -4,13 +4,13 @@
   </p>
   <table class="table" style="width:auto;background-color:white;border:1px solid #0094ff;min-width: 50%;">
     <tr *ngIf="isMonthly && (pName == '' || pName == null)">
-      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
+      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name:</td>
       <td colspan="2" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
     </tr>
 
 
     <tr *ngIf="!isMonthly && proj != '' && proj != null ">
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{proj}}</td>
@@ -18,20 +18,20 @@
 
 
     <tr *ngIf="!isMonthly && (proj == '' || proj == null )">
-      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
+      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name</td>
       <td colspan="2" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
     </tr>
 
     <tr *ngIf="isMonthly && pName != '' && pName != null">
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Account Name:</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{pName}}</td>
     </tr>
     <tr>
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">Feedback for the period:</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Feedback for the period</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{questions.surveY_PERIOD}}</td>
-      <td style="border:1px solid #0095ffbb;padding: 15px 10px 15px 10px;font-weight:bold">Respondent Name:</td>
+      <td style="border:1px solid #0095ffbb;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Respondent Name</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{displayname}}</td>
     </tr>
   </table>
@@ -229,7 +229,7 @@ The insights we gain from your feedback will guide the strategic actions we take
     </tr> -->
     <tr>
       <td colspan="3">
-        Questions and Fields marked in (<span class="red">*</span>) are mandatory.
+        Questions and Fields marked which (<span class="red">*</span>) are mandatory.
         <br>
         <br>
         Thank you very much for taking time to complete this survey. Your feedback is valued and very much

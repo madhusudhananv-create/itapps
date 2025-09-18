@@ -366,7 +366,7 @@ export class SurveyComponent implements OnInit {
       if (isDraft) {
         this.dialogMessage = 'Customer Satisfaction Survey saved successfully as draft. You can modify and submit later.';
       } else {
-        this.dialogMessage = 'Thanks for your time!! Customer Satisfaction Survey submitted successfully. A detailed report would be sent to your e-mail shortly.';
+        this.dialogMessage = 'Thanks for your time! Customer Satisfaction Survey submitted successfully. A detailed report will be sent to your e-mail shortly.';
         this.IsCompleted = true;
         if (this.questions.csS_BATCH_CUSTOMERS_EXTENDED != undefined && this.questions.csS_BATCH_CUSTOMERS_EXTENDED != null)
           this.questions.csS_BATCH_CUSTOMERS_EXTENDED.status = "COMPLETED";
