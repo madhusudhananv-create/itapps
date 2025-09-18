@@ -788,13 +788,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps"))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE} (On the scale of 0-10) </td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "criteria").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{item.PERSPECTIVE}</td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.Append($"<td>{item.PERSPECTIVE} (On the scale of 1-5) </td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
