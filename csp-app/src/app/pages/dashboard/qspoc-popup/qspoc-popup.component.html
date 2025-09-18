@@ -55,6 +55,15 @@
   </div>
   <div>
     <mat-form-field style="width: 50%;">
+      <mat-select name="ddDP" [(ngModel)]="result.dP_NAME" placeholder="Delivery Partner" [disabled]="true">
+        <mat-option [value]="result.dP_NAME" [title]="result.dP_NAME">
+          {{result.dP_NAME}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div>
+    <mat-form-field style="width: 50%;">
       <mat-select name="ddpm" [(ngModel)]="result.pjT_MNGR_NAME" placeholder="Project Manager" [disabled]="true">
         <mat-option [value]="result.pjT_MNGR_NAME" [title]="result.pjT_MNGR_NAME">
           {{result.pjT_MNGR_NAME}}
@@ -62,7 +71,6 @@
       </mat-select>
     </mat-form-field>
   </div>
-
   <div>
     <mat-form-field style="width: 50%;">
       <mat-select name="ddname" [(ngModel)]="selectedQA" placeholder="DevEx Partner">
@@ -72,6 +80,7 @@
     </mat-form-field>
   </div>
   <div>
+  
     <mat-form-field style="width:50%;">
       <mat-select name="isoname" [(ngModel)]="selectedIso" placeholder="ISO Standard" multiple (selectionChange)="filterScopes(selectedIso)">
         <mat-option [value]="item.id" *ngFor="let item of isoStandardList"
