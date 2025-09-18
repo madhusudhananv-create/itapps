@@ -126,7 +126,7 @@ export class SurveyComponent implements OnInit {
         this.questions_NPS = new CssQuestionRepliesModel();
       }
       this.questions_NPS.rating = this.npsRating;
-         this.hasRatingBeenSelected = true;
+      this.hasRatingBeenSelected = true;
       // if (rating < 9) {
       //   this.bShowNpsComments = true;
       //   // if (rating <= 8)
@@ -174,7 +174,7 @@ export class SurveyComponent implements OnInit {
           const dialogConfig = new MatDialogConfig();
           dialogConfig.data = {
             Field: q.question,
-            Rating: q.rating
+            Rating: "4"
           }
           dialogConfig.hasBackdrop = true;
           dialogConfig.scrollStrategy = new NoopScrollStrategy();
@@ -189,7 +189,25 @@ export class SurveyComponent implements OnInit {
             return;
           }
         }
+
       }
+
+      if (!this.hasRatingBeenSelected) {
+        alert("Please provide rating for '" + this.questions_NPS.question + "'");
+        return;
+      }
+      if (this.questions_NPS.rating >= 0 && this.questions_NPS.rating < 9 && this.questions_NPS.ratinG_DESCRIPTION == "") {
+        const dialogConfig = new MatDialogConfig();
+        dialogConfig.data = {
+          Field: this.questions_NPS.question,
+          Rating: "9"
+        }
+        dialogConfig.hasBackdrop = true;
+        dialogConfig.scrollStrategy = new NoopScrollStrategy();
+        this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig)
+        return;
+      }
+
       if (this.showQualitativeFeedback) {
         for (let q of this.questions_Others) {
           if ((q.ratinG_DESCRIPTION == undefined || q.ratinG_DESCRIPTION == null || q.ratinG_DESCRIPTION.trim() == "")) {
@@ -207,6 +225,7 @@ export class SurveyComponent implements OnInit {
       }
     }
     if (val === 0) {
+      this.dialogSuccess = false;
       this.dialogHeading = 'Quick Confirmation';
       this.dialogMessage = 'Are you sure you want to submit this feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.';
       const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
@@ -257,7 +276,7 @@ export class SurveyComponent implements OnInit {
         //   this.rowspan = 2;
         if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "COMPLETED") {
           this.IsCompleted = true;
-           this.bShowNpsComments = true;
+          this.bShowNpsComments = true;
           this.getNPSRating();
         }
         else if (data.csS_BATCH_CUSTOMERS_EXTENDED.status == "DRAFT") {
@@ -285,7 +304,7 @@ export class SurveyComponent implements OnInit {
         this.isMonthly = true;
         if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "COMPLETED") {
           this.IsCompleted = true;
-           this.bShowNpsComments = true;
+          this.bShowNpsComments = true;
           this.getNPSRating();
         }
         else if (data.csS_BATCH_CUSTOMER_MONTHLY_EXTENDED.status == "DRAFT") {
@@ -301,7 +320,7 @@ export class SurveyComponent implements OnInit {
         const errorMsg = this._util.GetErrorMessage(error);
 
         this.showCSSFields = false;
-       // this.bShowNpsComments = false;
+        // this.bShowNpsComments = false;
         this.questions_NPS = null;
         this.IsCompleted = true;
         if (errorMsg.includes("This survey is now closed")) {
