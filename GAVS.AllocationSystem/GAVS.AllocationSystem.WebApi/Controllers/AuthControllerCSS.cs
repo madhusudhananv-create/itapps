@@ -797,12 +797,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 sb.Append($"<td>{item.PERSPECTIVE} (On the scale of 1-5) </td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
-            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
-            {
-                sb.Append("<tr>");
-                sb.Append($"<td>{GetValidText(item.PERSPECTIVE)}</td><td>{item.QUESTION}</td><td  style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
-                sb.AppendLine("</tr>");
-            }
+            //foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
+            //{
+            //    sb.Append("<tr>");
+            //    sb.Append($"<td>{GetValidText(item.PERSPECTIVE)}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+            //    sb.AppendLine("</tr>");
+            //}
             return sb.ToString();
         }
         private string GetRatingText(int rating)
@@ -855,6 +855,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             var table = GetCSSTableData(replies);
             EmailContentValues.Add("TABLE", table);
+            EmailContentValues.Add("DOING_WELL", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("doing well"))?.COMMENTS));
+            EmailContentValues.Add("CAN_BETTER", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("can do better"))?.COMMENTS));
             EmailContentValues.Add("ACCOUNT_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM);
             EmailContentValues.Add("PROJECT_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM);
 
@@ -974,7 +976,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var table = GetCSSTableData(replies);
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("CUSTOMER_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME);
-
+            EmailContentValues.Add("DOING_WELL", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("doing well"))?.COMMENTS));
+            EmailContentValues.Add("CAN_BETTER", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("can do better"))?.COMMENTS));
             //EmailContentValues.Add("SURVEY_LINK", HttpContext.Current.Request.UrlReferrer.AbsoluteUri);
 
             mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyFeedback.htm", EmailContentValues);

@@ -98,18 +98,34 @@
     <p class=MsoNormal>Please find the below Customer Satisfaction Survey Feedback submitted by {{CUSTOMER_NAME}}.<p>
 
 
-        <table>
-            <tr>
+    <table>
+        <tr>
 
-                <th style="width:10%">Perspective</th>
-                <th style="width:40%">Question</th>
-                <th style="width:5%">Rating</th>
-                <th style="width:45%">Comments</th>
-            </tr>
-            {{TABLE}}
-        </table>
-        <br />
-    <p class=MsoNormal><b>You may also view the CSAT details in the link here:</b><a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a></p>
+            <th style="width:10%">Perspective</th>
+            <th style="width:40%">Question</th>
+            <th style="width:5%">Rating</th>
+            <th style="width:45%">Comments</th>
+        </tr>
+        {{TABLE}}
+    </table>
+    <br />
+
+    <table>
+        <tr>
+
+
+            <th style="width:40%">Top Expectations where Neurealm is doing well</th>
+
+            <th style="width:40%">op expectations where Neurealm can do better</th>
+        </tr>
+        <tr>
+            <td>{{DOING_WELL}}</td>
+            <td>{{CAN_BETTER}}</td>
+        </tr>
+
+    </table>
+    <br />
+<p class=MsoNormal><b>You may also view the CSAT details in the link here:</b><a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a></p>
     <br />
     <p class=MsoNormal>Regards,</p>
     <div>
