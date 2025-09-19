@@ -476,6 +476,21 @@
     <Content Include="Scripts\angular-mocks.js" />
     <Content Include="Scripts\angular.js" />
     <Content Include="Scripts\angular.min.js" />
+    <Content Include="UploadFile\Images\Instagram.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\LinkedIn.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\neurealm.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\twitter.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\Youtube.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="UploadFile\Mails\ActionItemCustomerUpdate.htm" />
     <Content Include="UploadFile\Mails\ActionItemRejectionUpdate.htm" />
     <Content Include="UploadFile\Mails\ActionItemUpdateToCSM.htm" />
@@ -523,10 +538,11 @@
     <Content Include="UploadFile\Mails\SubmittedSlaMetrics.htm" />
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_Premier.htm" />
     <Content Include="UploadFile\Mails\ChecklistAuditSendEmail.htm" />
-<Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
     <Content Include="UploadFile\Mails\CAPAAuditReviewEmail.htm" />
     <Content Include="UploadFile\Mails\CAPAAuditImplementationEmail.htm" />
-    <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />    <Content Include="UploadFile\Mails\CheckListAuditSendMailForAssessmentCompleted.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />
+    <Content Include="UploadFile\Mails\CheckListAuditSendMailForAssessmentCompleted.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestMonthly.htm" />
     <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
     <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
@@ -594,6 +610,7 @@
     <Compile Include="Controllers\RequirementReferenceController.cs" />
     <Compile Include="Controllers\ReusableComponentCalls.cs" />
     <Compile Include="Controllers\RiskRepositoryController.cs" />
+    <Compile Include="Controllers\SignatureHelper.cs" />
     <Compile Include="Controllers\SLARejectionController.cs" />
     <Compile Include="Controllers\SQAManagementController.cs" />
     <Compile Include="Controllers\SupportDataRequestController.cs" />
