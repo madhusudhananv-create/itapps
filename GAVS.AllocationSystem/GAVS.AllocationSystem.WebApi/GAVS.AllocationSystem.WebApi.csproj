@@ -496,6 +496,7 @@
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMailAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMail.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedback.htm" />
+   <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedbackAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminder.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestHalfYearly.htm" />

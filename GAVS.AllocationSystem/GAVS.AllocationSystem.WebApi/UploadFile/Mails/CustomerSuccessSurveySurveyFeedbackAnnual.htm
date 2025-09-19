@@ -62,6 +62,11 @@
             margin: 1.0in 1.0in 1.0in 1.0in;
         }
 
+        div.WordSection1 {
+            page: WordSection1;
+        }
+
+        -->
         /* Table styles */
         table {
             border-collapse: collapse;
@@ -82,26 +87,15 @@
             background-color: #CCCCFF;
             font-weight: bold;
         }
-
-        div.WordSection1 {
-            page: WordSection1;
-        }
-        -->
     </style>
 
 </head>
 
 <body lang=EN-US link=blue vlink="#954F72">
 
-    <p class=MsoNormal>Dear {{CUSTOMER}},</p>
+    <p class=MsoNormal>Dear All,</p>
     <br />
-    <p class=MsoNormal>Thank you for taking the time to complete this survey. Please find below the details of the Survey.</p>
-    <br />
-
-    <p class="MsoNormal">
-        <b>Account Name:</b> {{ACCOUNT_NAME}}
-    </p>
-    <br />
+    <p class=MsoNormal>Please find the below Customer Satisfaction Survey Feedback submitted by {{CUSTOMER_NAME}}.<p>
 
 
     <table>
@@ -114,7 +108,6 @@
         </tr>
         {{TABLE}}
     </table>
-
     <br />
 
     <table>
@@ -131,9 +124,7 @@
         </tr>
 
     </table>
-
     <br />
-
     <table>
         <tr>
             <th>
@@ -151,30 +142,28 @@
         </tr>
     </table>
 
-    <br />
 
-    <p class=MsoNormal>You may also view the CSAT details in the link here: <a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a>.</p>
-    <br />
-    <p class=MsoNormal><i><b>Note: The survey link is best viewed in laptops, PCs and mobile.</b></i></p>
-    <br />
 
+    <br />
+<p class=MsoNormal><b>You may also view the CSAT details in the link here: </b><a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a></p>
+    <br />
     <p class=MsoNormal>Regards,</p>
     <div>
         <p class=xmsonormal>
             <b>
-                <span style='font-size: 10.0pt; font-family: "Tahoma",sans-serif; color: black '>Customer Advocacy Group</span>
+                <span style='font-size:10.0pt;font-family:"Tahoma",sans-serif;color:black'>Customer Advocacy Group</span>
             </b><br>
             <b>
                 <span style='font-size: 9.0pt; font-family: "Tahoma",sans-serif; color: black'> Neurealm (Formerly GS Lab | GAVS Technologies)</span>
             </b><br>
 
             <b><span style='font-size:10.0pt'>Email: </span></b><b>
-                <span style='font-size:9.0pt;font-family:"Tahoma",sans-serif'>
+                <span style='font-size: 9.0pt; font-family:"Tahoma",sans-serif'>
                     <a href="mailto:csatsupport@neurealm.com">csatsupport@neurealm.com</a>
                 </span>
             </b><br>
             <b><span style='font-size:10.0pt'>Web: </span></b><b>
-                <span style='font-size:  9.0pt;font-family:"Tahoma",sans-serif'>
+                <span style='font-size: 9.0pt;font-family:"Tahoma",sans-serif'>
                     <a href="http://www.neurealm.com">www.neurealm.com</a>
                 </span>
             </b>
