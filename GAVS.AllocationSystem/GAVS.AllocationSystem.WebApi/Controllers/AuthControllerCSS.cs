@@ -250,7 +250,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (project == null)
                 return;
-            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.DP_ID);          
+            var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.DP_ID);
             var toMail = csm.EMAIL_ID;
             var csmName = csm.FRST_NM;
 
@@ -266,7 +266,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string pmMails = helper.GetPMMailsFromProject(project);
             var dp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.PROJ_DM_EMP_ID);
             if (acsat)
-            csmName = dp.FRST_NM;
+                csmName = dp.FRST_NM;
 
 
             string customerName = customer?.CUST_NM;
@@ -334,7 +334,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             sb.Append("<tr>");
             sb.Append($"<td style = 'text-align:center'>{ rowNum }</td>");
             //sb.Append($"<td>{ question }</td>");
-            sb.Append($"<td style = 'padding:10px'>{ perspective }</td>");
+
+            string scaleInfo = "";
+            if (perspective.ToLower() == "net promoter score")
+            {
+                scaleInfo = " (on the scale of 0 - 10)";
+            }
+            else
+            {
+                scaleInfo = " (on the scale of 1 - 5)";
+            }
+
+            sb.Append($"<td style='padding:10px'>{ perspective }{ scaleInfo }</td>");
             sb.Append($"<td style = 'text-align:center'>{ score}</td>");
             sb.Append($"<td style = 'padding:10px'>{ remarks }</td>");
             //sb.Append($"<td></td>");
