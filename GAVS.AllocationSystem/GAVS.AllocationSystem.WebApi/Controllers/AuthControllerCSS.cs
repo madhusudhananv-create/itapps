@@ -274,7 +274,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/actionitems";
-
+            string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             subject = $"New Action Item(s) Identified - { projectName}; Customer: {customerName}";
             string tomail = acsat ? csmMails : pmMails;
 
@@ -298,6 +298,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Action Plan Completion - Target date", !firstActionItem.COMPLETION_DATE.HasValue ? "-" : firstActionItem.PLANNED_TARGET_DATE.GetValueOrDefault().ToLocalTime().ToString(_dateformat));
             EmailContentValues.Add("Comments", string.IsNullOrWhiteSpace(firstActionItem.COMMENTS) ? "-" : firstActionItem.COMMENTS);
             EmailContentValues.Add("URL", $"{requestDomain}/{path}/{firstActionItem.CUSTOMER_ID}");
+            EmailContentValues.Add("BASE_URL", baseImageUrl);
             var template = acsat ? "AddNewActionItemListAnnual.htm" : "AddNewActionItemList.htm";
             mailContent = helper.GetEmailContent(template, EmailContentValues);
 
@@ -866,12 +867,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
             }
             var table = GetCSSTableData(replies);
+            string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("DOING_WELL", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("doing well"))?.RATING_DESCRIPTION));
             EmailContentValues.Add("CAN_BETTER", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("can do better"))?.RATING_DESCRIPTION));
             EmailContentValues.Add("ACCOUNT_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM);
             EmailContentValues.Add("PROJECT_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM);
-
+            EmailContentValues.Add("BASE_URL", baseImageUrl);
             //var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", ""); ;
             //surveyURL += "/CustomerSuccessSurvey/" + surveyId;
             //EmailContentValues.Add("SURVEY_LINK", surveyURL);
@@ -986,10 +988,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             }
             var table = GetCSSTableData(replies);
+            string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("CUSTOMER_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME);
             EmailContentValues.Add("DOING_WELL", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("doing well"))?.RATING_DESCRIPTION));
             EmailContentValues.Add("CAN_BETTER", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("can do better"))?.RATING_DESCRIPTION));
+            EmailContentValues.Add("BASE_URL", baseImageUrl);
             //EmailContentValues.Add("SURVEY_LINK", HttpContext.Current.Request.UrlReferrer.AbsoluteUri);
 
             var template = category.ToLower() == "account" ? "CustomerSuccessSurveySurveyFeedbackAnnual.htm" : "CustomerSuccessSurveySurveyFeedback.htm";

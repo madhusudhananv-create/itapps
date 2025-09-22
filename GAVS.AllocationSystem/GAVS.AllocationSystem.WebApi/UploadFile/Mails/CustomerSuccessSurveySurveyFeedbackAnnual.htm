@@ -88,6 +88,29 @@
             font-weight: bold;
             font-size: 10.5pt;
         }
+        a.signHyperlink {
+            text-decoration: none;
+        }
+
+        .signature-table {
+            border: none !important;
+            border-collapse: collapse;
+            border-spacing: 0;
+            width: auto;
+        }
+
+            .signature-table td {
+                border: none !important;
+                padding: 25px;
+                vertical-align: top;
+            }
+
+            .signature-table .content-cell {
+                border-left: 1px solid black !important;
+                border-top: none !important;
+                border-right: none !important;
+                border-bottom: none !important;
+            }
     </style>
 
 </head>
@@ -99,54 +122,54 @@
     <p class=MsoNormal>Please find the below Customer Satisfaction Survey Feedback submitted by {{CUSTOMER_NAME}}.<p>
 
 
-    <table>
-        <tr>
-            <th style="width:5%">S.No</th>
-            <th style="width:10%">Perspective</th>
-            <th style="width:40%">Question</th>
-            <th style="width:5%">Rating</th>
-            <th style="width:45%">Comments</th>
-        </tr>
-        {{TABLE}}
-    </table>
-    <br />
+        <table>
+            <tr>
+                <th style="width:5%">S.No</th>
+                <th style="width:10%">Perspective</th>
+                <th style="width:40%">Question</th>
+                <th style="width:5%">Rating</th>
+                <th style="width:45%">Comments</th>
+            </tr>
+            {{TABLE}}
+        </table>
+        <br />
 
-    <table>
-        <tr>
-
-
-            <th style="width:40%">Top Expectations where Neurealm is doing well</th>
-
-            <th style="width:40%">Top expectations where Neurealm can do better</th>
-        </tr>
-        <tr>
-            <td>{{DOING_WELL}}</td>
-            <td>{{CAN_BETTER}}</td>
-        </tr>
-
-    </table>
-    <br />
-    <table>
-        <tr>
-            <th>
-                Rating Scale for Perspective 1 (NPS)
-            </th>
-            <td>
-                &nbsp; 0 - Not at all likely, 10 - Extremely Likely
-            </td>
-        </tr>
-        <tr>
-            <th>
-                Rating Scale for Perspective 2 to 4
-            </th>
-            <td> &nbsp; Highly Dissatisfied (1), Dissatisfied (2), Neutral (3), Satisfied (4), Highly Satisfied (5)</td>
-        </tr>
-    </table>
+        <table>
+            <tr>
 
 
+                <th style="width:40%">Top Expectations where Neurealm is doing well</th>
 
-    <br />
-<p class=MsoNormal><b>You may also view the CSAT details in the link here: </b><a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a></p>
+                <th style="width:40%">Top expectations where Neurealm can do better</th>
+            </tr>
+            <tr>
+                <td>{{DOING_WELL}}</td>
+                <td>{{CAN_BETTER}}</td>
+            </tr>
+
+        </table>
+        <br />
+        <table>
+            <tr>
+                <th>
+                    Rating Scale for Perspective 1 (NPS)
+                </th>
+                <td>
+                    &nbsp; 0 - Not at all likely, 10 - Extremely Likely
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Rating Scale for Perspective 2 to 4
+                </th>
+                <td> &nbsp; Highly Dissatisfied (1), Dissatisfied (2), Neutral (3), Satisfied (4), Highly Satisfied (5)</td>
+            </tr>
+        </table>
+
+
+
+        <br />
+    <p class=MsoNormal><b>You may also view the CSAT details in the link here: </b><a href="{{SURVEY_LINK}}">{{SURVEY_LINK}}</a></p>
     <br />
     <p class=MsoNormal>Regards,</p>
     <div>
@@ -154,22 +177,51 @@
             <b>
                 <span style='font-size:10.0pt;font-family:"Tahoma",sans-serif;color:black'>Customer Advocacy Group</span>
             </b><br>
-            <b>
+            <!--<b>
                 <span style='font-size: 9.0pt; font-family: "Tahoma",sans-serif; color: black'> Neurealm (Formerly GS Lab | GAVS Technologies)</span>
-            </b><br>
+            </b><br>-->
 
             <b><span style='font-size:10.0pt'>Email: </span></b><b>
                 <span style='font-size: 9.0pt; font-family:"Tahoma",sans-serif'>
                     <a href="mailto:csatsupport@neurealm.com">csatsupport@neurealm.com</a>
                 </span>
             </b><br>
-            <b><span style='font-size:10.0pt'>Web: </span></b><b>
+            <!--<b><span style='font-size:10.0pt'>Web: </span></b><b>
                 <span style='font-size: 9.0pt;font-family:"Tahoma",sans-serif'>
                     <a href="http://www.neurealm.com">www.neurealm.com</a>
                 </span>
-            </b>
+            </b>-->
         </p>
     </div>
-    </p>
+    <br />
+    <table class="signature-table">
+        <tr>
+            <td>
+                <a href="https://www.neurealm.com/" target="_blank" class="signHyperlink">
+                    <img src="{{BASE_URL}}neurealm.png"
+                         width="120"
+                         alt="Neurealm Logo" />
+                </a>
+            </td>
+            <!--<td style="border-right: 1px solid black;"></td>-->
+            <td class="content-cell">
+                <a href="https://www.linkedin.com/company/neurealm" target="_blank" class="signHyperlink">
+                    <img src="{{BASE_URL}}LinkedIn.png" width="20" style="margin-right:5px;" />
+                </a>
+                <a href="https://www.instagram.com/insideneurealm" target="_blank" class="signHyperlink">
+                    <img src="{{BASE_URL}}Instagram.png" width="20" style="margin-right:5px;" />
+                </a>
+                <a href="https://x.com/insideneurealm" target="_blank" class="signHyperlink">
+                    <img src="{{BASE_URL}}twitter.png" width="20" style="margin-right:5px;" />
+                </a>
+                <a href="https://www.youtube.com/@Neurealm" target="_blank" class="signHyperlink">
+                    <img src="{{BASE_URL}}Youtube.png" width="20" style="margin-right:5px;" />
+                </a>
+
+                <br /> <br />
+                <a href="https://www.neurealm.com/" target="_blank">www.neurealm.com</a>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

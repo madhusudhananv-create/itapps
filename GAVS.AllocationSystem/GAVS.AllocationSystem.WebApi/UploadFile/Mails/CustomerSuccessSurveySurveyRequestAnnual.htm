@@ -68,6 +68,25 @@
 		a.signHyperlink{
 			text-decoration: none;
 		}
+        .signature-table {
+            border: none !important;
+            border-collapse: collapse;
+            border-spacing: 0;
+            width: auto;
+        }
+
+            .signature-table td {
+                border: none !important;
+                padding: 25px;
+                vertical-align: top;
+            }
+
+            .signature-table .content-cell {
+                border-left: 1px solid black !important;
+                border-top: none !important;
+                border-right: none !important;
+                border-bottom: none !important;
+            }
 		-->
 	</style>
 
@@ -110,60 +129,53 @@
 	<br />
 
 	<p class=MsoNormal>Regards,</p>
-	<table class=MsoNormalTable border=0 cellpadding=0>
-		<tr>
-			<td valign=top>
-				<p class=xmsonormal>
-					<b>
-						<span style='font-size: 10.0pt; font-family: "Tahoma",sans-serif; color: black'>Customer Advocacy Group</span>
-					</b><br>
-					<b><span style='font-size:10.0pt'>Email: </span></b><b>
-						<span style='font-size: 9.0pt; font-family: "Tahoma",sans-serif'>
-							<a href="mailto:csatsupport@neurealm.com">csatsupport@neurealm.com</a>
-						</span>
-					</b><br>
-					<!--<b>
-						<span style='font-size: 9.0pt; font-family: "Tahoma",sans-serif; color: black'>
-							Neurealm (Formerly GS Lab | GAVS Technologies)
-						</span>
-					</b><br>
+	<div>
+		<p class=xmsonormal>
+			<b>
+				<span style='font-size: 10.0pt; font-family: "Tahoma",sans-serif; color: black '>Customer Advocacy Group</span>
+			</b><br>
+			<!--<b>
+				<span style='font-size: 9.0pt; font-family: "Tahoma",sans-serif; color: black'> Neurealm (Formerly GS Lab | GAVS Technologies)</span>
+			</b><br>-->
 
-
-
-					<b><span style='font-size:10.0pt'>Web: </span></b><b>
-						<span style='font-size: 9.0pt; font-family: "Tahoma",sans-serif'>
-							<a href="http://www.neurealm.com">www.neurealm.com</a>
-						</span>
-					</b>-->
-				</p>
-			</td>
-		</tr>
-	</table><br/>
-	<table>
+			<b><span style='font-size:10.0pt'>Email: </span></b><b>
+				<span style='font-size:9.0pt;font-family:"Tahoma",sans-serif'>
+					<a href="mailto:csatsupport@neurealm.com">csatsupport@neurealm.com</a>
+				</span>
+			</b><br>
+			<!--<b><span style='font-size:10.0pt'>Web: </span></b><b>
+				<span style='font-size:  9.0pt;font-family:"Tahoma",sans-serif'>
+					<a href="http://www.neurealm.com">www.neurealm.com</a>
+				</span>
+			</b>-->
+		</p>
+	</div>
+	<br />
+	<table class="signature-table">
 		<tr>
 			<td>
 				<a href="https://www.neurealm.com/" target="_blank" class="signHyperlink">
-					<img src="../Images/neurealm.png"
-						 width="75"
+					<img src="{{BASE_URL}}neurealm.png"
+						 width="120"
 						 alt="Neurealm Logo" />
 				</a>
 			</td>
-			<td style="border-right: 1px solid black; padding: 0 10px;"></td>
-			<td style="padding: 0 10px;">
+			<!--<td style="border-right: 1px solid black;"></td>-->
+			<td class="content-cell">
 				<a href="https://www.linkedin.com/company/neurealm" target="_blank" class="signHyperlink">
-					<img src="../Image/LinkedIn.png" width="20" style="margin-right:5px;" />
+					<img src="{{BASE_URL}}LinkedIn.png" width="20" style="margin-right:5px;" />
 				</a>
 				<a href="https://www.instagram.com/insideneurealm" target="_blank" class="signHyperlink">
-					<img src="../Image/Instagram.png" width="20" style="margin-right:5px;" />
+					<img src="{{BASE_URL}}Instagram.png" width="20" style="margin-right:5px;" />
 				</a>
 				<a href="https://x.com/insideneurealm" target="_blank" class="signHyperlink">
-					<img src="../Image/twitter.png" width="20" style="margin-right:5px;" />
+					<img src="{{BASE_URL}}twitter.png" width="20" style="margin-right:5px;" />
 				</a>
 				<a href="https://www.youtube.com/@Neurealm" target="_blank" class="signHyperlink">
-					<img src="../Image/Youtube.png" width="20" style="margin-right:5px;" />
+					<img src="{{BASE_URL}}Youtube.png" width="20" style="margin-right:5px;" />
 				</a>
 
-				<br />
+				<br /><br />
 				<a href="https://www.neurealm.com/" target="_blank">www.neurealm.com</a>
 			</td>
 		</tr>

@@ -610,7 +610,6 @@
     <Compile Include="Controllers\RequirementReferenceController.cs" />
     <Compile Include="Controllers\ReusableComponentCalls.cs" />
     <Compile Include="Controllers\RiskRepositoryController.cs" />
-    <Compile Include="Controllers\SignatureHelper.cs" />
     <Compile Include="Controllers\SLARejectionController.cs" />
     <Compile Include="Controllers\SQAManagementController.cs" />
     <Compile Include="Controllers\SupportDataRequestController.cs" />

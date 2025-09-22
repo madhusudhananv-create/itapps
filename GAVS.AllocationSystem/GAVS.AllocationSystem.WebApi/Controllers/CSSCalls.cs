@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Text;
 using System.Web;
 using System.Web.Http;
+using System.Configuration;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -349,7 +350,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey {batch.YEAR}";
             }
 
-
+            string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
             // EmailContentValues.Add("FREQUENCY", batch.Frequency.Substring(0, Frequency.Length - 2));
             EmailContentValues.Add("CURRENT_PERIOD", CurrentPeriod);
@@ -360,6 +361,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("PROJECT_NAME", projectText);
             EmailContentValues.Add("FREQUENCY", batch.FREQUENCY);
             EmailContentValues.Add("YEAR", batch.YEAR.ToString());
+            EmailContentValues.Add("BASE_URL", baseImageUrl);
             EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
 
             mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
