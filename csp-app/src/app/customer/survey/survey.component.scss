@@ -4,7 +4,7 @@
   background-color: #69afff;
   text-decoration: none;
   font-size: 13px;
-  line-height: 3;
+  line-height: 1.5;
   text-align: center;
   font-weight: 400;
   border-radius: 10px 0 0 10px;
@@ -72,7 +72,7 @@ table.table.mainTable {
   background-color: #69afff;
   text-decoration: none;
   font-size: 13px;
-  line-height: 3;
+  line-height: 1.5;
   text-align: center;
   font-weight: 400;
   border: 1px solid white;
@@ -85,7 +85,7 @@ table.table.mainTable {
   background-color: #69afff;
   text-decoration: none;
   font-size: 13px;
-  line-height: 3;
+  line-height: 1.5;
   text-align: center;
   font-weight: 400;
   border-radius: 0 10px 10px 0;
@@ -162,6 +162,26 @@ a:hover {
   outline: none !important;
 }
 
+.rating-container{
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.rating-pills{
+  display: flex;
+}
+.rating-pills a {
+  display: inline-block;
+}
+.rating-label{
+  display: flex;
+  gap: 555px;
+  margin-top: 4px;
+}
+.rating-label span {
+  font-size: 12px;
+}
 /* Mobile view styles */
 
 @media screen and (max-width: 768px) {
@@ -386,7 +406,11 @@ a:hover {
     width: 100% !important;
     margin-top: 5px !important;
   }
-
+  .rating-label{
+    display: flex !important;
+    gap: 150px !important;
+    margin-top: 4px !important;
+  }
   /* Adjust NPS labels text */
   table.table tr td[colspan="2"] span[nowrap] {
     font-size: 8px !important;
@@ -464,7 +488,7 @@ a:hover {
     font-weight: normal !important;
     line-height: normal !important;
     margin-top: 22px !important;
-    margin-left: -77px;
+    margin-left: 4px !important;
   }
 
   /* Red asterisk in NPS section */

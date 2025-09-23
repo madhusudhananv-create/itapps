@@ -74,7 +74,8 @@ The insights we gain from your feedback will guide the strategic actions we take
       </tr>
       <tr *ngIf="questions_NPS">
         <td colspan="2" nowrap style="border-top:0px;padding-bottom:0px;border-bottom:0px; width:auto">
-          <div>
+          <div class="rating-container">
+            <div class="rating-pills">
             <a class="pillStart" (click)="Rating_OnClick('0')" [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
             <a class="pill" (click)="Rating_OnClick('1')" [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
             <a class="pill" (click)="Rating_OnClick('2')" [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
@@ -88,13 +89,16 @@ The insights we gain from your feedback will guide the strategic actions we take
             <a class="pillEnd" (click)="Rating_OnClick('10')"
               [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
           </div>
-          <div style="display: flex;justify-content: space-between;">
-            <span nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 13px 8px">Not at all
+            
+            <div class="rating-label">
+            <span nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 4px 8px">Not at all
               likely
             </span>
-            <span nowrap style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 12px 8px;text-align: right">
+            <span nowrap style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 20px 8px;text-align: right">
               Extremely likely</span>
           </div>
+          </div>
+          
         </td>
         <td *ngIf="questions_NPS && bShowNpsComments" colspan="1" style="border-top:0px;padding:0px;border-bottom: none;">
           <div class="survey-textarea">
