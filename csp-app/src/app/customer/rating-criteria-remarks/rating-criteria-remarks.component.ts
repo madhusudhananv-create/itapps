@@ -7,11 +7,11 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
   styleUrls: ['./rating-criteria-remarks.component.scss']
 })
 export class RatingCriteriaRemarksComponent implements OnInit {
-  @Input() Rating: number;
+  @Input() Message: string;
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,private dialog: MatDialogRef<RatingCriteriaRemarksComponent>) {  }
   remarks : any[];
   ngOnInit() {
-     this.Rating = this.data.Rating;
+     this.Message = this.data.Message;
   }
   closeDialog(): void {
     this.dialog.close(RatingCriteriaRemarksComponent);

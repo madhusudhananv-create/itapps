@@ -150,68 +150,65 @@ export class SurveyComponent implements OnInit {
     }
   }
 
+  showWarningPopup(message: string) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.data = {
+      Message: message,
+    }
+    dialogConfig.hasBackdrop = true;
+    dialogConfig.scrollStrategy = new NoopScrollStrategy();
+    this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig);
+  }
+
 
   SubmitForm(val) {
     if (val == 0) {
       if (this.showCSSFields) {
         if (this.meetingDate == null || this.meetingDate == undefined) {
-          alert("Please enter the meeting date");
+          this.showWarningPopup("Please enter the meeting date");
           return;
         }
 
         if (this.meetingDate > this.maxDate) {
-          alert("Future date will not be allowed.");
+          this.showWarningPopup("Future date will not be allowed.");
           return;
         }
       }
+      if (!this.hasRatingBeenSelected) {
+        this.showWarningPopup("Kindly provide rating for '" + this.questions_NPS.question + "'");
+        return;
+      }
+      if (this.questions_NPS.rating >= 0 && this.questions_NPS.rating < 9 && this.questions_NPS.ratinG_DESCRIPTION == "") {
+        this.showWarningPopup("Kindly provide remarks in highlighted fields if the rating is less than 9.");
+        return;
+      }
+
 
       for (let q of this.questions_Criteria) {
         if (q.rating == 0) {
-          alert("Please provide rating for '" + q.question + "'");
+          this.showWarningPopup("Kindly provide rating for '" + q.question + "'");
           return;
         }
         if (q.rating <= 3 && q.rating > 0 && q.ratinG_DESCRIPTION == "") {
-          const dialogConfig = new MatDialogConfig();
-          dialogConfig.data = {
-            Field: q.question,
-            Rating: "4"
-          }
-          dialogConfig.hasBackdrop = true;
-          dialogConfig.scrollStrategy = new NoopScrollStrategy();
-          this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig)
+          this.showWarningPopup("Kindly provide remarks in highlighted fields if the rating is less than 4 stars.");
           return;
         }
         else if (q.rating <= 3 && q.rating > 0 && q.ratinG_DESCRIPTION != "") {
           const specialCharPattern = /^[!@#$%^&*(),.?":{}|<>~`_\-+=\[\]\\\/\s]+$/;
           const numberPattern = /^[0-9\s]+$/;
           if ((specialCharPattern.test(q.ratinG_DESCRIPTION)) || numberPattern.test(q.ratinG_DESCRIPTION)) {
-            alert('Please enter valid text for improvement areas in text for the project team to act on.');
+           this.showWarningPopup("Please enter valid text for improvement areas in text for the project team to act on.");
             return;
           }
         }
 
       }
 
-      if (!this.hasRatingBeenSelected) {
-        alert("Please provide rating for '" + this.questions_NPS.question + "'");
-        return;
-      }
-      if (this.questions_NPS.rating >= 0 && this.questions_NPS.rating < 9 && this.questions_NPS.ratinG_DESCRIPTION == "") {
-        const dialogConfig = new MatDialogConfig();
-        dialogConfig.data = {
-          Field: this.questions_NPS.question,
-          Rating: "9"
-        }
-        dialogConfig.hasBackdrop = true;
-        dialogConfig.scrollStrategy = new NoopScrollStrategy();
-        this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig)
-        return;
-      }
 
       if (this.showQualitativeFeedback) {
         for (let q of this.questions_Others) {
           if ((q.ratinG_DESCRIPTION == undefined || q.ratinG_DESCRIPTION == null || q.ratinG_DESCRIPTION.trim() == "")) {
-            alert("Please provide your comments for '" + q.question + "'");
+           this.showWarningPopup("Please provide your comments for '" + q.question + "'");
             return;
           }
         }
@@ -219,7 +216,7 @@ export class SurveyComponent implements OnInit {
       if (!this.showQualitativeFeedback && this.questions_NPS != undefined && this.questions_NPS != null) {
         if (this.questions_NPS.rating < 9 && (this.questions_NPS.ratinG_DESCRIPTION == null ||
           this.questions_NPS.ratinG_DESCRIPTION == undefined || this.questions_NPS.ratinG_DESCRIPTION.trim() == "")) {
-          alert("Please provide your comments for '" + this.questions_NPS.question + "'");
+          this.showWarningPopup("Please provide your comments for '" + this.questions_NPS.question + "'");
           return;
         }
       }
