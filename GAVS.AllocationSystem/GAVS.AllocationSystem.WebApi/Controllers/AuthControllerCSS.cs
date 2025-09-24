@@ -794,20 +794,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public List<CSS_QUESTION_REPLIES> CSS_QUESTION_REPLIES { get; set; } = new List<Model.CSP.CSS_QUESTION_REPLIES>();
             public string SURVEY_PERIOD { get; set; }
         }
-        private string GetCSSTableData(BatchCustomerAndQuestions replies)
+        private string GetCSSTableData(BatchCustomerAndQuestions replies,bool includePerspective)
         {
             var sb = new StringBuilder();
             int sno = 1;
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "nps"))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td style=' text-align: center;'>{sno++}</td><td>{item.PERSPECTIVE} (on the scale of 0 - 10) </td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.Append($"<td style=' text-align: center;'>{sno++}</td>" +
+                    (includePerspective ? $"<td>{item.PERSPECTIVE} (on the scale of 1 - 5)</td>" : "") +
+                    $"<td>{item.QUESTION}</td>" +
+                    $"<td style=' text-align: center;'>{GetRatingText(item.RATING)}</td>" +
+                    $"<td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "criteria").OrderBy(x => x.SEQUENCE))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td style=' text-align: center;'>{sno++}</td><td>{item.PERSPECTIVE} (on the scale of 1 - 5) </td><td>{item.QUESTION}</td><td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.Append($"<td style=' text-align: center;'>{sno++}</td>" +
+                    (includePerspective ? $"<td>{item.PERSPECTIVE} (on the scale of 1 - 5)</td>" : "") +
+                    $"<td>{item.QUESTION}</td>" +
+                    $"<td style=' text-align: center;'>{GetRatingText(item.RATING)   }</td>" +
+                    $"<td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
             //foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
@@ -866,7 +874,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 surveyURL += "/CustomerSuccessSurvey/" + surveyId;
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
             }
-            var table = GetCSSTableData(replies);
+            var table = GetCSSTableData(replies,false);
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("DOING_WELL", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("doing well"))?.RATING_DESCRIPTION));
@@ -987,7 +995,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
 
             }
-            var table = GetCSSTableData(replies);
+            var table = GetCSSTableData(replies,true);
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("CUSTOMER_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME);
@@ -1040,7 +1048,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
 
             }
-            var table = GetCSSTableData(replies);
+            var table = GetCSSTableData(replies,true);
             EmailContentValues.Add("TABLE", table);
 
             //var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", ""); ;
