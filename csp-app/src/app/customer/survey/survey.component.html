@@ -4,13 +4,16 @@
   </p>
   <table class="table" style="width:auto;background-color:white;border:1px solid #0094ff;min-width: 50%;">
     <tr *ngIf="isMonthly && (pName == '' || pName == null)">
-      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name:</td>
+      <td colspan="2"
+        style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">
+        Account Name:</td>
       <td colspan="2" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
     </tr>
 
 
     <tr *ngIf="!isMonthly && proj != '' && proj != null ">
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">
+        Account Name</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{proj}}</td>
@@ -18,20 +21,25 @@
 
 
     <tr *ngIf="!isMonthly && (proj == '' || proj == null )">
-      <td colspan="2" style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name</td>
+      <td colspan="2"
+        style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">
+        Account Name</td>
       <td colspan="2" style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
     </tr>
 
     <tr *ngIf="isMonthly && pName != '' && pName != null">
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Account Name</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">
+        Account Name</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{cust}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold">{{projtext}}</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{pName}}</td>
     </tr>
     <tr>
-      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Feedback for the period</td>
+      <td style="border:1px solid #0094ff;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">
+        Feedback for the period</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{questions.surveY_PERIOD}}</td>
-      <td style="border:1px solid #0095ffbb;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">Respondent Name</td>
+      <td style="border:1px solid #0095ffbb;padding: 15px 10px 15px 10px;font-weight:bold;background-color: #e3f9f9;">
+        Respondent Name</td>
       <td style="border:1px solid #0094ff;padding: 15px 5px 15px 5px;">{{displayname}}</td>
     </tr>
   </table>
@@ -57,16 +65,18 @@
         (onChange)="changeEvent($event)"></app-view-template>
     </div>
   </div>
-<!-- <p>At {{ companyName }} {{formerlyText}}, Customer Advocacy Group administers the Annual Customer Satisfaction Survey with our key Customers and you are one of them! This survey feedback is incredibly valuable for our partnership. <br /><br />
+  <!-- <p>At {{ companyName }} {{formerlyText}}, Customer Advocacy Group administers the Annual Customer Satisfaction Survey with our key Customers and you are one of them! This survey feedback is incredibly valuable for our partnership. <br /><br />
 
 The insights we gain from your feedback will guide the strategic actions we take to enhance your experience with us and to strengthen our partnership. Look forward to your positive response to this Survey.
 </p><br /> 
  <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
    -->
-<p>In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction Survey. Your inputs will help us to enhance the overall value of the partnership and help prepare for your strategic priorities.</p><br />
-  <table class="table mainTable" style="width:auto;background-color:white;">     
-    <thead>       
-      <tr *ngIf="questions_NPS">         
+  <p>In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction
+    Survey. Your inputs will help us to enhance the overall value of the partnership and help prepare for your strategic
+    priorities.</p><br />
+  <table class="table mainTable" style="width:auto;background-color:white;">
+    <thead>
+      <tr *ngIf="questions_NPS">
         <td colspan="3" style="border-bottom:0px;padding-left: 15px;padding-right: 15px;font-size: 13px;">
           <span *ngIf="!showQualitativeFeedback" style="color:red">*</span>
           {{questions_NPS.question}}
@@ -76,31 +86,43 @@ The insights we gain from your feedback will guide the strategic actions we take
         <td colspan="2" nowrap style="border-top:0px;padding-bottom:0px;border-bottom:0px; width:auto">
           <div class="rating-container">
             <div class="rating-pills">
-            <a class="pillStart" (click)="Rating_OnClick('0')" [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
-            <a class="pill" (click)="Rating_OnClick('1')" [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
-            <a class="pill" (click)="Rating_OnClick('2')" [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
-            <a class="pill" (click)="Rating_OnClick('3')" [style.background-color]="npsRating == 3 ? '#0073f7':'#FF0000'">3</a>
-            <a class="pill" (click)="Rating_OnClick('4')" [style.background-color]="npsRating == 4 ? '#0073f7':'#FF0000'">4</a>
-            <a class="pill" (click)="Rating_OnClick('5')" [style.background-color]="npsRating == 5 ? '#0073f7':'#FF0000'">5</a>
-            <a class="pill" (click)="Rating_OnClick('6')" [style.background-color]="npsRating == 6 ? '#0073f7':'#FF0000'">6</a>
-            <a class="pill" (click)="Rating_OnClick('7')" [style.background-color]="npsRating == 7 ? '#0073f7':'#Ffbf00'">7</a>
-            <a class="pill" (click)="Rating_OnClick('8')" [style.background-color]="npsRating == 8 ? '#0073f7':'#Ffbf00'">8</a>
-            <a class="pill" (click)="Rating_OnClick('9')" [style.background-color]="npsRating == 9 ? '#0073f7':'#008000'">9</a>
-            <a class="pillEnd" (click)="Rating_OnClick('10')"
-              [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
-          </div>
-            
+              <a class="pillStart" (click)="Rating_OnClick('0')"
+                [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
+              <a class="pill" (click)="Rating_OnClick('1')"
+                [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
+              <a class="pill" (click)="Rating_OnClick('2')"
+                [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
+              <a class="pill" (click)="Rating_OnClick('3')"
+                [style.background-color]="npsRating == 3 ? '#0073f7':'#FF0000'">3</a>
+              <a class="pill" (click)="Rating_OnClick('4')"
+                [style.background-color]="npsRating == 4 ? '#0073f7':'#FF0000'">4</a>
+              <a class="pill" (click)="Rating_OnClick('5')"
+                [style.background-color]="npsRating == 5 ? '#0073f7':'#FF0000'">5</a>
+              <a class="pill" (click)="Rating_OnClick('6')"
+                [style.background-color]="npsRating == 6 ? '#0073f7':'#FF0000'">6</a>
+              <a class="pill" (click)="Rating_OnClick('7')"
+                [style.background-color]="npsRating == 7 ? '#0073f7':'#Ffbf00'">7</a>
+              <a class="pill" (click)="Rating_OnClick('8')"
+                [style.background-color]="npsRating == 8 ? '#0073f7':'#Ffbf00'">8</a>
+              <a class="pill" (click)="Rating_OnClick('9')"
+                [style.background-color]="npsRating == 9 ? '#0073f7':'#008000'">9</a>
+              <a class="pillEnd" (click)="Rating_OnClick('10')"
+                [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
+            </div>
+
             <div class="rating-label">
-            <span nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 4px 8px">Not at all
-              likely
-            </span>
-            <span nowrap style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 40px 8px;text-align: right">
-              Extremely likely</span>
+              <span nowrap style="border-top:0px;border-bottom:0px;border-right:0px;padding:0 4px 8px">Not at all
+                likely
+              </span>
+              <span nowrap
+                style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 40px 8px;text-align: right">
+                Extremely likely</span>
+            </div>
           </div>
-          </div>
-          
+
         </td>
-        <td *ngIf="questions_NPS && bShowNpsComments" colspan="1" style="border-top:0px;padding:0px;border-bottom: none;">
+        <td *ngIf="questions_NPS && bShowNpsComments" colspan="1"
+          style="border-top:0px;padding:0px;border-bottom: none;">
           <div class="survey-textarea">
             <span style="font-size: x-small;font-weight:normal;display: block; margin-top: 8px; text-align: center;">
               <span style="color: red;">*</span>
@@ -110,7 +132,8 @@ The insights we gain from your feedback will guide the strategic actions we take
                       text for the project team to act on.</span> -->
             <textarea name="txtNPSDesc" class="tahoma-font" style="width:100%;height:75px"
               [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange($event)" [disabled]="IsCompleted"
-              maxlength="500"  [class.highlight]="hasRatingBeenSelected && questions_NPS.rating < 9 && !questions_NPS.ratinG_DESCRIPTION"></textarea>
+              maxlength="500"
+              [class.highlight]="hasRatingBeenSelected && questions_NPS.rating < 9 && !questions_NPS.ratinG_DESCRIPTION"></textarea>
             <span class="remaning">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
           </div>
         </td>
@@ -122,7 +145,7 @@ The insights we gain from your feedback will guide the strategic actions we take
         <td colspan="1" nowrap
           style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 12px 8px;text-align: right">
           Extremely likely</td> -->
-          <!-- <td colspan="1" style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 15px 8px;text-align: left">
+      <!-- <td colspan="1" style="border-top:0px;border-bottom:0px;border-left:0px;padding:0 15px 8px;text-align: left">
         <b style="position: relative; top: -25px;">
         {{questions_NPS.perspective}}
            </b>
@@ -146,7 +169,7 @@ The insights we gain from your feedback will guide the strategic actions we take
       </tr> -->
 
 
-         
+
 
     </thead>
     <br />
@@ -180,7 +203,7 @@ The insights we gain from your feedback will guide the strategic actions we take
 
 
         <td class="starRating" nowrap>
-          <b>
+          <b *ngIf="proj != '' && proj != null ">
             {{criteria.perspective}}
           </b>
           <br />
@@ -242,15 +265,14 @@ The insights we gain from your feedback will guide the strategic actions we take
         appreciated!
       </td>
     </tr>
-   <tr *ngIf="!IsCompleted">
-  <td style="text-align:center" colspan="3">
-    <button type="button" (click)="SubmitForm(1)" class="btn btn-primary"
-      [disabled]="IsCompleted" style="margin-right: 15px;">Save as Draft</button>
+    <tr *ngIf="!IsCompleted">
+      <td style="text-align:center" colspan="3">
+        <button type="button" (click)="SubmitForm(1)" class="btn btn-primary" [disabled]="IsCompleted"
+          style="margin-right: 15px;">Save as Draft</button>
 
-    <button type="button" (click)="SubmitForm(0)" class="btn btn-primary"
-      [disabled]="IsCompleted">Submit</button>
-  </td>
-</tr>
+        <button type="button" (click)="SubmitForm(0)" class="btn btn-primary" [disabled]="IsCompleted">Submit</button>
+      </td>
+    </tr>
   </table>
 </div>
 <ng-template class="tahoma-font" #confirmationDialog>
@@ -270,4 +292,3 @@ The insights we gain from your feedback will guide the strategic actions we take
       style="margin: 0 200px;">OK</button>
   </mat-dialog-actions>
 </ng-template>
-
