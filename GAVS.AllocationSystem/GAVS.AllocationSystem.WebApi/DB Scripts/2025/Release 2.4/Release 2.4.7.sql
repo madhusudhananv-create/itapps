@@ -1,6 +1,8 @@
 ﻿
 ----ACSAT SCRIPTS----
 
+DROP INDEX index3 ON css_batch_customers;
+GO
 
  IF Exists(select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='css_batch_customers' and COLUMN_NAME='cust_id' and(DATA_TYPE <> 'varchar(50)'))
 BEGIN
@@ -13,6 +15,10 @@ IF Exists(select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='css_batch_c
 BEGIN
  alter table css_batch_customers alter column proj_id varchar(50)   null
 END
+
+GO
+
+CREATE NONCLUSTERED INDEX index3 ON css_batch_customers (ISACTIVE, [STATUS]);
 
 GO
 
@@ -73,4 +79,25 @@ VALUES (@MODELID, 'NPS'	,'How likely are you to recommend Neurealm (Formerly GS 
 
 END
 
+GO
+ IF NOT EXISTS (SELECT 1 FROM CSS_BATCHES WHERE CATEGORY ='Account')   
+ BEGIN
 
+
+INSERT INTO CSS_BATCHES(FREQUENCY
+,SEQUENCE
+,YEAR
+,START_DATE
+,END_DATE
+,STATUS
+,CREATED_BY
+,CREATED_DATE
+,UPDATED_BY
+,UPDATED_DATE
+,ISACTIVE
+,CATEGORY) VALUES
+('Annual',2,2025,'2025-04-01 00:00:00.000','2025-09-30 00:00:00.000','SURVEY SENT','102802',GETDATE(),'102802',GETDATE(),1,'Account')
+
+END
+
+GO
