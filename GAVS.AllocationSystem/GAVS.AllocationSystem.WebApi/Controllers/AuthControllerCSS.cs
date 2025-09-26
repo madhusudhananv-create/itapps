@@ -802,7 +802,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 sb.Append("<tr>");
                 sb.Append($"<td style=' text-align: center;'>{sno++}</td>" +
-                    (includePerspective ? $"<td>{item.PERSPECTIVE} (on the scale of 1 - 5)</td>" : "") +
+                    (includePerspective ? $"<td>{item.PERSPECTIVE} (on the scale of 0 - 10)</td>" : "") +
                     $"<td>{item.QUESTION}</td>" +
                     $"<td style=' text-align: center;'>{GetRatingText(item.RATING)}</td>" +
                     $"<td>{GetValidText(item.RATING_DESCRIPTION)}</td>");

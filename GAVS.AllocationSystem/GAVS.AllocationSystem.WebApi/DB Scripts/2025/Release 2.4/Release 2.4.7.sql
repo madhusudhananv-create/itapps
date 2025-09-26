@@ -82,8 +82,6 @@ END
 GO
  IF NOT EXISTS (SELECT 1 FROM CSS_BATCHES WHERE CATEGORY ='Account')   
  BEGIN
-
-
 INSERT INTO CSS_BATCHES(FREQUENCY
 ,SEQUENCE
 ,YEAR
@@ -96,8 +94,91 @@ INSERT INTO CSS_BATCHES(FREQUENCY
 ,UPDATED_DATE
 ,ISACTIVE
 ,CATEGORY) VALUES
-('Annual',2,2025,'2025-04-01 00:00:00.000','2025-09-30 00:00:00.000','SURVEY SENT','102802',GETDATE(),'102802',GETDATE(),1,'Account')
+('Annual',2,2025,'2025-04-01 00:00:00.000','2025-09-30 00:00:00.000','CREATED','102802',GETDATE(),'102802',GETDATE(),1,'Account')
 
 END
 
 GO
+
+ IF EXISTS(Select 1 from sys.objects where name ='usp_insertHalfyearlyRespondedAccount' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_insertHalfyearlyRespondedAccount] 
+END
+GO
+ CREATE proc [dbo].[usp_insertHalfyearlyRespondedAccount]               
+@customerName varchar(255),                
+ 
+@respondentName varchar(255),                
+@respondentEmail varchar(255),                
+@respondentRole varchar(255)  ,              
+ @spoc varchar(255)              
+                 
+ as                
+ BEGIN                
+                  
+  declare @custId varchar(100) = ''                
+  declare @contactId int                
+                   
+   select @custid = cust_id from customer where cust_nm =@customerName                
+   if isnull( @custid  , '') = ''                  
+   BEGIN                
+   --RAISEERROR('invalid customer name'  );                
+   --rollback;               
+   --print 'here'              
+   return;                
+  END                
+  --insert contact                
+  if not exists (select 1 from contacts where contact_emailid = @respondentEmail and ISACTIVE =1)                
+  BEGIN                
+    insert into contacts                
+   select @custid, @respondentName, @respondentRole,'CUSTOMER', @respondentEmail,'-', '102802', getdate(), 1, null, null, getdate(), '102802'                
+                
+   select @contactId = @@identity                
+              
+    print 'inserted contact'              
+  END                
+  ELSE                
+  BEGIN                
+   select @contactid = id from contacts where contact_emailid = @respondentEmail                 
+    --print 'update'              
+  END                
+                
+  declare @customerUserId int =0              
+    --insert customer user                
+  if not exists (select 1 from customer_users where EMAILID = @respondentEmail and ISACTIVE =1)                
+  BEGIN                
+    insert into customer_users                
+   select @respondentEmail, @respondentName, null, null, 0, null, null, '102802', getdate(),'102802', getdate(),  1, 0, null               
+                
+   select @customerUserId = @@identity                
+   print 'inserted customer_user'              
+  END                
+  ELSE                
+  BEGIN                
+ select @customerUserId = id from customer_users where EMAILID = @respondentEmail  and ISACTIVE =1                
+ print 'updated Customer_user'              
+ print @customerUserId            
+  END              
+              
+  --customer projects              
+              
+   if not exists (select 1 from CUSTOMER_PROJECTS where CUSTOMER_USER_ID = @customerUserId AND PROJ_ID = null  and ISACTIVE =1 )                
+  BEGIN                
+  insert into CUSTOMER_PROJECTS                
+    select @customerUserId, @custId, @customerName, null, @customerName, '102802', getdate(),'102802', getdate(),  1, 1, 'Annual',0, @spoc                
+            
+ print 'Inserted Customer_Project'              
+                
+  END                
+  ELSE                
+  BEGIN                
+  update customer_projects set CSAT_FREQUENCY ='Annual', SPOC = @spoc, CSAT_SURVEY =1 where CUSTOMER_USER_ID = @customerUserId       and ISACTIVE =1      
+  update css_batch_customers set SPOC = @spoc, is_verified =1 where EMAIL_ID = @respondentEmail  and  batch_id =36  and prod_id is null  and ISACTIVE =1 -- remove batchid check its temporary            
+            
+  print 'updated customer_project'              
+  END              
+                  
+                  
+ END
+
+ GO
