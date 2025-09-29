@@ -71,9 +71,9 @@ INSERT INTO CSS_QUESTION_MASTER( MODEL_ID
 ,PERSPECTIVE)
 
 VALUES (@MODELID, 'NPS'	,'How likely are you to recommend Neurealm (Formerly GS Lab | GAVS) to a friend or colleague, if asked for your advice?', GETDATE(),'104744',GETDATE(),'104744',GETDATE(),	1,NULL,2,'Net Promoter Score',NULL,1,1,'Net Promoter Score'),
-(@MODELID, 'Criteria'	,'How satisfied are you with Neurealm in terms of meeting their commitment on agreed deliverables?',GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,2,'Delivery',NULL,1,2,'Delivery Commitment'),
-(@MODELID, 'Criteria'	,'How satisfied are you with Neurealm Team''s engagement and relationship with you and your team?',	GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,2,'Customer Relationship',NULL,1,3,'Customer Relationship'),
-(@MODELID, 'Criteria'	,'How satisfied are you with Neurealm as a Partner adding value to your business?',	GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,2,'Partnership',NULL,1,4,'Value to The Business'),
+(@MODELID, 'Criteria'	,'How satisfied are you with Neurealm in terms of meeting their commitment on agreed deliverables?',GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,2,'Delivery',NULL,1,2,'Meeting Delivery Commitments'),
+(@MODELID, 'Criteria'	,'How satisfied are you with Neurealm Team''s engagement and relationship with you and your team?',	GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,2,'Customer Relationship',NULL,1,3,'Customer Engagement and Relationship'),
+(@MODELID, 'Criteria'	,'How satisfied are you with Neurealm as a Partner adding value to your business?',	GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,2,'Partnership',NULL,1,4,'Partner adding value to Customer Business'),
 (@MODELID, 'Others'	    ,'Please list your top expectations where Neurealm is doing well.', GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,3,NULL,NULL,1,5,NULL),
 (@MODELID, 'Others'	    ,'Please list your top expectations where Neurealm can do better.',	GETDATE(),'104744',GETDATE(),'104744',GETDATE(),1,NULL,2,NULL,NULL,1,6,NULL)
 
