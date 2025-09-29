@@ -451,7 +451,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var timeElapsed = watch.Elapsed;
             var duration = Convert.ToDecimal(watch.ElapsedMilliseconds / 1000M);
-            if (duration < 7) return;
+            if (duration < 6) return;
             var url = Request.RequestUri.AbsoluteUri;
             var empId = GetEmpIdFromRequest(Request);
             try
