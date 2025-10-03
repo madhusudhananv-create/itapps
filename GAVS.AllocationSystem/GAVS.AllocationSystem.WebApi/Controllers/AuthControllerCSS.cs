@@ -330,7 +330,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var description = Regex.Replace(cssReference, @"\r\n?|\n|</br>", "");
             var question = TakeSubstring(description, "Question:", "Rating:");
             var score = TakeSubstring(description, "Rating:", "Remarks:");
-            var remarks = TakeSubstring(description, "Remarks:", "xxx");
+            var remarks = TakeSubstring(cssReference, "Remarks:", "xxx");
             var sb = new StringBuilder();
             sb.Append("<tr>");
             sb.Append($"<td style = 'text-align:center'>{ rowNum }</td>");
@@ -348,7 +348,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             sb.Append($"<td style='padding:10px'>{ perspective }{ scaleInfo }</td>");
             sb.Append($"<td style = 'text-align:center'>{ score}</td>");
-            sb.Append($"<td style = 'padding:10px'>{ remarks }</td>");
+            sb.Append($"<td style = 'padding:10px'>{ GetValidText(remarks)}</td>");
             //sb.Append($"<td></td>");
             //sb.Append($"<td></td>");
 
@@ -832,7 +832,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
         private string GetValidText(string description)
         {
-            return string.IsNullOrWhiteSpace(description) ? "-" : description;
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                return "-";
+            }
+            return description
+                .Replace("\r\n", "<br>")  
+                .Replace("\n", "<br>")    
+                .Replace("\r", "<br>");    
         }
 
 
