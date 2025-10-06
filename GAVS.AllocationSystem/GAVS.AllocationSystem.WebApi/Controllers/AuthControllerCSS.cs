@@ -32,6 +32,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 BatchCustomerAndQuestions replies = JsonConvert.DeserializeObject<BatchCustomerAndQuestions>(json);
                 CSS_BATCHES batch = null;
                 string surveyId = string.Empty;
+                if (replies.CSS_QUESTION_REPLIES != null && replies.CSS_QUESTION_REPLIES.Count > 6)
+                {
+                    throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Error in Questions. Unable to save."));
+                }
                 if (replies.CSS_BATCH_CUSTOMERS_EXTENDED != null)
                 {
                     foreach (var reply in replies.CSS_QUESTION_REPLIES.OrderBy(x => x.SEQUENCE))
@@ -393,6 +397,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string surveyPeriod = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
                     List<CSS_QUESTION_REPLIES> questionsWithReplies = new List<CSS_QUESTION_REPLIES>();
 
+                   
                     if (iteration.ID != batchCust.SURVEY_ID)
                     {
                         iteration = CSPdb.CSS_SURVEY_ITERATION.GetById(batchCust.SURVEY_ID.GetValueOrDefault());
@@ -402,6 +407,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         //Get Answers if survey is completed
                         questionsWithReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(t => t.SURVEY_ID == iteration.SURVEY_ID).ToList();
+                     
                         if (iteration.STATUS == "DRAFT")
                         {
                             var npsQuestion = questionsWithReplies.FirstOrDefault(x => x.QUESTION_CATEGORY == "NPS" && x.RATING == 0);
@@ -448,6 +454,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         batchCustomerAndQuestions.CSS_QUESTION_REPLIES.First(x => x.QUESTION_CATEGORY.ToUpper() == "NPS").canskip = true;
                     }
                     batchCustomerAndQuestions.SURVEY_PERIOD = surveyPeriod;
+                    if (questionsWithReplies != null && questionsWithReplies.Count > 6)
+                    {
+                        throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Error - Unable to get questions."));
+                    }
                     return Ok(batchCustomerAndQuestions);
                 }
                 else

@@ -110,6 +110,8 @@ namespace GAVS.AllocationSystem.WebApi
                     }
                 }
                 log.METHOD = request.Method.ToString();
+                  if (request.Content != null)
+                    log.CONTENT = request.Content.ReadAsStringAsync().Result;
                 logger.logWithEmailid(log);
             }
         }
