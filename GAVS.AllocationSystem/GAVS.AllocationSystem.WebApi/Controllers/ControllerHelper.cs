@@ -680,7 +680,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<PORTFOLIO> portfolios = CSPdb.PORTFOLIO.GetAll().ToList();
             var ids = batches.Where(x => x.SURVEY_ID.HasValue).Select(x => x.SURVEY_ID.Value).ToList();
             var surveyItems = CSPdb.CSS_SURVEY_ITERATION.GetAll().Where(x => ids.Contains(x.ID)).ToList();
-
+            var buDetails = Cldb.PROJECT.GetAll().Where(t => (t.PROJ_STATUS.ToLower() != "close" && CustIds.Contains(t.CUST_ID))).ToList();
             List<CSS_BATCH_CUSTOMERS_EXTENDED> ext = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             foreach (CSS_BATCH_CUSTOMERS c in batches)
             {
@@ -716,7 +716,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                     newExt.PROJ_NM = newExt.CUST_NM;
-
+                var planBU = buDetails.FirstOrDefault(p => p.CUST_ID == c.CUST_ID);
+                newExt.BUSINESS_UNIT = planBU?.BUSINESS_UNIT;
 
 
                 var surveyItem = surveyItems.FirstOrDefault(x => x.ID == c.SURVEY_ID);
