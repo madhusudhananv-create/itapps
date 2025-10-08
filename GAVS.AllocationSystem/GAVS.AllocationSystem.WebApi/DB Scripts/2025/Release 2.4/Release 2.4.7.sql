@@ -100,18 +100,19 @@ END
 
 GO
 
- IF EXISTS(Select 1 from sys.objects where name ='usp_insertHalfyearlyRespondedAccount' AND type='P')
+IF EXISTS(Select 1 from sys.objects where name ='usp_insertHalfyearlyRespondedAccount' AND type='P')
 BEGIN
        DROP PROCEDURE [dbo].[usp_insertHalfyearlyRespondedAccount] 
 END
 GO
- CREATE proc [dbo].[usp_insertHalfyearlyRespondedAccount]               
+ CREATE PROCEDURE [dbo].[usp_insertHalfyearlyRespondedAccount]               
 @customerName varchar(255),                
  
 @respondentName varchar(255),                
 @respondentEmail varchar(255),                
 @respondentRole varchar(255)  ,              
- @spoc varchar(255)              
+ @spoc varchar(255),
+ @predictedScore decimal
                  
  as                
  BEGIN                
@@ -162,7 +163,7 @@ GO
               
   --customer projects              
               
-   if not exists (select 1 from CUSTOMER_PROJECTS where CUSTOMER_USER_ID = @customerUserId AND PROJ_ID = null  and ISACTIVE =1 )                
+   if not exists (select 1 from CUSTOMER_PROJECTS where CUSTOMER_USER_ID = @customerUserId AND PROJ_ID is null  and ISACTIVE =1 )                
   BEGIN                
   insert into CUSTOMER_PROJECTS                
     select @customerUserId, @custId, @customerName, null, @customerName, '102802', getdate(),'102802', getdate(),  1, 1, 'Annual',0, @spoc                
@@ -173,13 +174,14 @@ GO
   ELSE                
   BEGIN                
   update customer_projects set CSAT_FREQUENCY ='Annual', SPOC = @spoc, CSAT_SURVEY =1 where CUSTOMER_USER_ID = @customerUserId       and ISACTIVE =1      
-  update css_batch_customers set SPOC = @spoc, is_verified =1 where EMAIL_ID = @respondentEmail  and  batch_id =36  and prod_id is null  and ISACTIVE =1 -- remove batchid check its temporary            
+  update css_batch_customers set SPOC = @spoc, is_verified =1, PREDICTED_SCORE=@predictedScore where EMAIL_ID = @respondentEmail  and  batch_id =36  and prod_id is null  and ISACTIVE =1 -- remove batchid check its temporary            
             
   print 'updated customer_project'              
   END              
                   
                   
  END
+
 
  GO
 
