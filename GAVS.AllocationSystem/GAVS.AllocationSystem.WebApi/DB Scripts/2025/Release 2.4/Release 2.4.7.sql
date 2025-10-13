@@ -185,107 +185,68 @@ GO
 
  GO
 
-IF EXISTS(Select 1 from sys.objects where name ='reports_getCSSInitatedDetails' AND type='P')
+ IF not Exists(select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='CSS_BATCHES' and COLUMN_NAME='CSS_VALIDITY_ENDDATE' )
 BEGIN
-       DROP PROCEDURE [dbo].[reports_getCSSInitatedDetails] 
+    alter table CSS_BATCHES add  CSS_VALIDITY_ENDDATE DATETIME null
+END
+
+ GO
+
+update CSS_BATCHES set CSS_VALIDITY_ENDDATE ='2025-11-06 23:59:59.059' where FREQUENCY='Annual'
+
+GO
+
+IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='CSS_ACTIONITEM_TARGET_DATE_ADDDAYS')
+BEGIN
+INSERT INTO configuration_ext (
+    [KEY],
+    [value],
+    cust_id,
+    proj_id,
+    comments,
+    isactive,
+    created_by,
+    created_date,
+    updated_by,
+    updated_date
+) VALUES (
+    'CSS_ACTIONITEM_TARGET_DATE_ADDDAYS',  
+    '85',     
+    -1,                 
+    NULL,               
+    '',  
+    1,                  
+    '104744',           
+    GETDATE(),          
+    '104744',           
+    GETDATE()           
+);
 END
 GO
-     
-CREATE PROCEDURE [dbo].[reports_getCSSInitatedDetails]                      
-                
-@STARTDATE DATETIME,                      
-@ENDDATE DATETIME ,
-@CUSTOMER varchar(max)='0'
-                
-AS                      
-BEGIN                      
-                
-SET @STARTDATE = CONVERT(DATETIME, CONVERT(VARCHAR(11),@STARTDATE, 111 ) + ' 00:00:00', 111)                      
-SET @ENDDATE = CONVERT(DATETIME, CONVERT(VARCHAR(11),@ENDDATE, 111 ) + ' 23:59:59', 111)                      
-SELECT C.CUST_NM,          
-[Type of Account] =  dbo.fn_getTypeOfAccount (c.cust_id) ,        
-p.Proj_nm , p.REVENUE_TYPE, CSS.STATUS,                      
-CONVERT(VARCHAR(10), CSS.SURVEY_SENT_DATE, 110) AS CSS_SENT_DATE,                      
-CONVERT(VARCHAR(10), CSS.SURVEY_RECEIVED_DATE, 110) AS CSS_RECEIVED_DATE, CSS.IS_VERIFIED,                     
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER,                      
-(select top 1 email_id from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER_MAIL,                      
-(select top 1 frst_nm from emp_info where emp_id = p.DP_ID) CSM,                      
-(select top 1 email_id from emp_info where emp_id = p.DP_ID) CSM_MAIL,                      
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_AM_EMP_ID) ACCOUNT_MANAGER,                      
-(select top 1 email_id from emp_info where emp_id = p.PROJ_AM_EMP_ID) ACCOUNT_MANAGER_MAIL,         
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_BUHEAD_EMP_ID) BU_HEAD,                      
-(select top 1 email_id from emp_info where emp_id = p.PROJ_BUHEAD_EMP_ID) BU_HEAD_MAIL,         
-(select top 1 frst_nm from emp_info where emp_id = p.QUALITY_SPOC) QUALITY_SPOC,                      
-(select top 1 email_id from emp_info where emp_id = p.QUALITY_SPOC) QUALITY_SPOC_MAIL, 
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_DM_EMP_ID) [DP NAME],    
-(select top 1 EMAIL_ID from emp_info where emp_id = p.PROJ_DM_EMP_ID) [DP MAIL],                       
 
-CSS.DISPLAY_NAME as CUSTOMER_NAME,CSS.EMAIL_ID as CUSTOMER_MAIL,                      
-[Year - Quarter] =  ( case when frequency='Annual' then  frequency  + ' - ' + Convert(varchar,  Year) else
-(select Left( frequency,1) + Convert(varchar,sequence) + ' - ' + Convert(varchar,  Year) from  CSS_BATCHES where id= b.id ) end ),  
-CASE When predicted_score is null then '-' else convert(varchar, convert(int,predicted_score)) end as PREDICTED_SCORE,
-ACTUAL_SCORE = (case when MODEL_NAME ='ACSAT' then 
-(select top 1 RATING from CSS_QUESTION_REPLIES where BATCH_CUSTOMER_ID = css.ID and QUESTION_CATEGORY = 'NPS'
-and PERSPECTIVE = 'Net Promoter Score' )
-else (select top 1 RATING from CSS_QUESTION_REPLIES where BATCH_CUSTOMER_ID = css.ID and QUESTION_CATEGORY = 'Criteria'
-and PERSPECTIVE = 'Overall Experience' ) end ),
-p.PROJ_STATUS, p.BUSINESS_UNIT AS [BUSINESS UNIT], P.CONTRACTING_UNIT AS [CONTRACTING UNIT], P.METHODOLOGY AS [METHODOLOGY],                 
-P.DEPARTMENT AS [DEPARTMENT], P.PROJECT_GROUP [PROJECT GROUP], p.REVENUE_TYPE as [PROJECT TYPE], P.COUNTRY [COUNTRY],                      
-P.CUST_ID, P.PROJ_ID  , b.id, css.ID,
-STUFF((select distinct ', ' + e.frst_nm from EMP_INFO e where ',' + spoc + ',' like '%,' + e.email_id + ',%' FOR XML PATH('')), 
-    1, 1, '') AS [CSAT SPOC] 
-FROM CSS_BATCH_CUSTOMERS CSS       
-inner join CSS_QUESTION_MODELS cq on cq.id=css.QUESTION_MODEL_ID
-INNER JOIN CSS_BATCHES B ON B.ID = CSS.BATCH_ID AND B.START_DATE >= @STARTDATE   AND B.END_DATE <= @ENDDATE                      
-INNER JOIN CUSTOMER C on C.CUST_ID = CSS.CUST_ID                      
-left JOIN PROJECT P on P.PROJ_ID = CSS.PROJ_ID                    
-WHERE CSS.STATUS   IN ('MAIL SENT', 'MAIL RE-SENT', 'COMPLETED')    and css.ISACTIVE =1     
-and  (@CUSTOMER='0' or  C.CUST_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER,','))  ) 
-                    
-union                        
-                    
-SELECT C.CUST_NM,          
-[Type of Account] =  dbo.fn_getTypeOfAccount (c.cust_id) ,            
-coalesce( pp.product_title,P.PROJ_NM,'') as proj_nm, p.REVENUE_TYPE, CSS.STATUS,                      
-CONVERT(VARCHAR(10), CSS.SURVEY_SENT_DATE, 110) AS CSS_SENT_DATE,                      
-CONVERT(VARCHAR(10), CSS.SURVEY_RECEIVED_DATE, 110) AS CSS_RECEIVED_DATE, CSS.IS_VERIFIED,                     
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER,                      
-(select top 1 email_id from emp_info where emp_id = p.PROJ_PM_EMP_ID) PROJECT_MANAGER_MAIL,                      
-(select top 1 frst_nm from emp_info where emp_id = p.DP_ID) CSM,                      
-(select top 1 email_id from emp_info where emp_id = p.DP_ID) CSM_MAIL,                      
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_AM_EMP_ID) ACCOUNT_MANAGER,                      
-(select top 1 email_id from emp_info where emp_id = p.PROJ_AM_EMP_ID) ACCOUNT_MANAGER_MAIL,           
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_BUHEAD_EMP_ID) BU_HEAD,                      
-(select top 1 email_id from emp_info where emp_id = p.PROJ_BUHEAD_EMP_ID) BU_HEAD_MAIL,        
-(select top 1 frst_nm from emp_info where emp_id = p.QUALITY_SPOC) QUALITY_SPOC,                      
-(select top 1 email_id from emp_info where emp_id = p.QUALITY_SPOC) QUALITY_SPOC_MAIL,        
-(select top 1 frst_nm from emp_info where emp_id = p.PROJ_DM_EMP_ID) [DP NAME],    
-(select top 1 EMAIL_ID from emp_info where emp_id = p.PROJ_DM_EMP_ID) [DP MAIL],    
-CSS.DISPLAY_NAME as CUSTOMER_NAME,CSS.EMAIL_ID as CUSTOMER_MAIL,                      
-[Year - Quarter] =  (SELECT                      
-CASE                      
-                       
-WHEN month BETWEEN 4 AND 6 THEN 'Q1 - '   + CONVERT(varchar, Year)                    
-WHEN month BETWEEN 7 AND 9 THEN 'Q2 - '    + CONVERT(varchar, Year)                   
-WHEN month BETWEEN 10 AND 12 THEN 'Q3 - '    + CONVERT(varchar, Year)                   
-ELSE 'Q4 - ' + CONVERT(varchar, (Year-1))                       
-END                      
-FROM CSS_BATCH_MONTHLY where id= b.id ),    
-'-',
-ACTUAL_SCORE = (select top 1 RATING  from CSS_QUESTION_REPLIES where Batch_Customer_Monthly_id = css.ID and QUESTION_CATEGORY = 'Criteria' and PERSPECTIVE = 'Overall Experience' ),
-p.PROJ_STATUS, p.BUSINESS_UNIT AS [BUSINESS UNIT], P.CONTRACTING_UNIT AS [CONTRACTING UNIT], P.METHODOLOGY AS [METHODOLOGY],                 
-P.DEPARTMENT AS [DEPARTMENT], P.PROJECT_GROUP [PROJECT GROUP], p.REVENUE_TYPE as [PROJECT TYPE], P.COUNTRY [COUNTRY],                      
-P.CUST_ID, P.PROJ_ID   , b.id, css.ID ,''                 
-from CSS_BATCH_CUSTOMER_MONTHLY CSS                      
-INNER JOIN CSS_BATCH_MONTHLY B ON B.ID = CSS.BATCH_MONTHLY_ID AND B.START_DATE >= @STARTDATE AND B.END_DATE <= @ENDDATE                      
-INNER JOIN CUSTOMER C on C.CUST_ID = CSS.CUST_ID                      
-                
-left join portfolio_products pp on css.prod_id = pp.id           
-left join PRODUCT_RESPONSIBLE pr on css.PROD_ID = pr.PRODUCT_ID and pr.MANAGEMENT_TYPE =7    and pr.ISACTIVE = 1    
-LEFT JOIN PROJECT P on  P.PROJ_ID = coalesce(CSS.PROJ_ID , pr.project_id)            
-WHERE CSS.STATUS   IN ('MAIL SENT', 'MAIL RE-SENT', 'COMPLETED')      and css.ISACTIVE =1    
-and  (@CUSTOMER='0' or  C.CUST_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER,','))  ) 
-order by C.CUST_NM, P.PROJ_ID                      
-end 
-
-GO
+IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='CSS_VALIDITY_DATE')
+BEGIN
+INSERT INTO configuration_ext (
+    [KEY],
+    [value],
+    cust_id,
+    proj_id,
+    comments,
+    isactive,
+    created_by,
+    created_date,
+    updated_by,
+    updated_date
+) VALUES (
+    'CSS_VALIDITY_DATE',  
+    '11/06/2025 00:00:00 AM',     
+    -1,                 
+    NULL,               
+    '',  
+    1,                  
+    '104744',           
+    GETDATE(),          
+    '104744',           
+    GETDATE()           
+);
+END
