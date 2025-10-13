@@ -35,5 +35,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         [NotMapped]
         public int SURVEY_RECD { get; set; }
 
+        public DateTime? CSS_VALIDITY_ENDDATE { get; set; }
+
     }
 }

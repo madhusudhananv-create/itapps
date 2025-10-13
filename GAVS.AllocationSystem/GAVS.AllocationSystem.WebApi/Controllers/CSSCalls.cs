@@ -285,6 +285,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string mailContent;
             string tomail = cust.EMAIL_ID;
             string ccmail = helper.GetDBConfig("CSS_LINK_CC", cust.CUST_ID);
+
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);
             var projectText = string.Empty;
             if (cust.PROD_ID.HasValue)
@@ -349,7 +350,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the Account {projectText}";
                 subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey {batch.YEAR}";
             }
-
+            
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
             // EmailContentValues.Add("FREQUENCY", batch.Frequency.Substring(0, Frequency.Length - 2));
@@ -362,7 +363,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("FREQUENCY", batch.FREQUENCY);
             EmailContentValues.Add("YEAR", batch.YEAR.ToString());
             EmailContentValues.Add("BASE_URL", baseImageUrl);
-            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
+            if(batch.FREQUENCY.ToLower() == "annual")
+            {
+                var batchValidityDate = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batch.ID).CSS_VALIDITY_ENDDATE;
+                EmailContentValues.Add("END_DATE", batchValidityDate?.ToString("dd-MMM-yyyy"));
+            }               
+            else
+            {
+                EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
+            }
+            
 
             mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
 

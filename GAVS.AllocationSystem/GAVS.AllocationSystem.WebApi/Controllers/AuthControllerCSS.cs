@@ -279,7 +279,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/actionitems";
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
-            subject = $"New Action Item(s) Identified - { projectName}; Customer: {customerName}";
+            if(acsat)
+            subject = $"New Action Item(s) Identified - Customer: {customerName}";
+            else
+             subject = $"New Action Item(s) Identified - { projectName}; Customer: {customerName}";
             string tomail = acsat ? csmMails : pmMails;
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
@@ -600,19 +603,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 overview.PERSPECTIVE = item.PERSPECTIVE;
             }
-
+            string configValue = helper.GetDBConfig("CSS_VALIDITY_DATE", "-1");
+            DateTime configCsatValidityDate = DateTime.Parse(configValue);
+            overview.PLANNED_TARGET_DATE = configCsatValidityDate.AddDays(int.Parse(helper.GetDBConfig("CSS_ACTIONITEM_TARGET_DATE_ADDDAYS", "-1")));
             overview.PORTFOLIO_NAME = portfolio;
             overview.DESCRIPTION = desc;
             overview.ORIGINAL_DESCRIPTION = overview.DESCRIPTION;
-
             overview.SOURCE = $"{(acsat ? "Account " : "")}Customer Satisfaction Survey - {customerName}";
             overview.SOURCE_DESCRIPTION = $"{(acsat ? "A" : "")}CSAT - { period}, {customerName} , Lower CSAT Score in Question ({string.Join(", ", lowratings.Select(x => x.QUESTION)) })";
             overview.CSS_REFERENCE = reference.ToString();
             overview.IDENTIFIED_DATE = DateTime.Today;
             overview.TARGET_DATE = AddBusinessDays(DateTime.Today, 10);
             overview.STATUS = "Open";
-            overview.PRIORITY = "High";
-            overview.PLANNED_TARGET_DATE = DateTime.Today.AddDays(28);
+            overview.PRIORITY = "High";               
             overview.CREATED_BY = "SYSTEM";
             overview.CREATED_DATE = DateTime.Now;
             overview.UPDATED_BY = "SYSTEM";
@@ -875,7 +878,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 subject = "Customer Satisfaction Pulse Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
             else
                 // subject = "Customer Satisfaction Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
-                subject = $"Neurealm {replies.SURVEY_PERIOD} Customer Satisfaction Survey {batchYear} submitted successfully";
+                subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey {batchYear} submitted successfully";
 
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -952,9 +955,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
                 }
                 csmmails = helper.GetCSMMailsFromProject(project);
-                pmmmails = helper.GetPMMailsFromProject(project);
+                pmmmails = string.Empty;
                 qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
-                amMail = helper.GetAMFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
+                amMail = helper.GetAMFromProject(project.PROJ_ID);
 
             }
             else
@@ -994,7 +997,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 subject = $"Half Yearly Pulse Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
             else
                 //subject = $"Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
-                subject = $"Neurealm {replies.SURVEY_PERIOD} Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | Feedback Period - {batchYear})";
+                subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | Feedback Period - {batchYear})";
 
             //CONTENT
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
