@@ -16035,7 +16035,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Tuple.Create("PRIORITY", "PRIORITY"),
                     Tuple.Create("IDENTIFIED DATE", "IDENTIFIED_DATE"),
                     Tuple.Create("TARGET DATE", "TARGET_DATE"),
-                    Tuple.Create("COMPLETION DATE", "COMPLETION_DATE"),
+                    Tuple.Create("COMPLETION DATE", "PLANNED_ACTUAL_DATE"),
                     Tuple.Create("STATUS", "STATUS"),
                     Tuple.Create("COMMENTS", "COMMENTS"),
                     Tuple.Create("ROOT CAUSE", "ROOT_CAUSE"),

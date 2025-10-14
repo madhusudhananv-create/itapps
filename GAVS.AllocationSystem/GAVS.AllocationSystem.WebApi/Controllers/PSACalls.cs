@@ -16,7 +16,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
     public partial class AllSysController
     {
-
+        private   readonly List<string>  _allowedBusinessUnits = new List<string> { "Health care", "India & UK", "New Growth", "Tech" };
         private void LogRequest(Exception exception = null, string prefix = "PSA:", string content = "")
         {
             var l = new Logger(Request, exception, prefix, content);
@@ -172,7 +172,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID_NEW == newEmpId && x.DOR == null);
             if (empInfo == null)
             {
-                empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID_NEW == newEmpId  );
+                empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID_NEW == newEmpId);
             }
 
 
@@ -222,9 +222,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 project.PROJ_AM_EMP_ID = GetOldEMPId(project.PROJ_AM_EMP_ID);
                 project.PROJ_PM_EMP_ID = GetOldEMPId(project.PROJ_PM_EMP_ID);
                 project.PROJ_DM_EMP_ID = GetOldEMPId(project.PROJ_DM_EMP_ID);
-                 
+
                 project.PROJ_BUHEAD_EMP_ID = GetOldEMPId(project.PROJ_BUHEAD_EMP_ID);
                 project.PROJ_EP_ID = GetOldEMPId(project.PROJ_EP_ID);
+                if (!_allowedBusinessUnits.Contains(project.BUSINESS_UNIT))
+                    project.BUSINESS_UNIT = null;
+
+
                 Cldb.PROJECT.Add(project);
                 Cldb.Commit(CanCommit);
                 var projList = Cldb.PROJECT.GetAll().Where(x => x.CUST_ID == project.CUST_ID).ToList();
@@ -500,6 +504,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             try
             {
                 PROJECT project = JsonConvert.DeserializeObject<PROJECT>(json);
+
                 if (project != null)
                 {
                     var existing = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == project.PROJ_ID);
@@ -539,7 +544,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existing.CUST_ID = project.CUST_ID;
                     existing.DEPT_ID = project.DEPT_ID;
 
-                    //existing.BUSINESS_UNIT = project.BUSINESS_UNIT;
+                    if (_allowedBusinessUnits.Contains(project.BUSINESS_UNIT))
+                        existing.BUSINESS_UNIT = project.BUSINESS_UNIT;
                     existing.PROJECT_TYPE = project.PROJECT_TYPE;
                     existing.DEPARTMENT = project.DEPARTMENT;
                     existing.PROJECT_GROUP = project.PROJECT_GROUP;
@@ -557,6 +563,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                     existing.UPDATED_DATE = DateTime.Now;
                     existing.REVENUE_TYPE = project.REVENUE_TYPE;
+
+                    existing.ENGAGAMENT_TYPE = project.ENGAGAMENT_TYPE;
+                    existing.EXECUTION_TYPE = project.EXECUTION_TYPE;
                     Cldb.PROJECT.Update(existing);
                     Cldb.Commit();
                     if (projStatusList.Contains(existing.PROJ_STATUS.ToLower()))
@@ -747,7 +756,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-                var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID));
+                var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID && t.DOR == null));
                 if (existingRow == null)
                     existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID_NEW == employee.EMP_ID && t.DOR != null) && t.EMAIL_ID == employee.EMAIL_ID);
 
