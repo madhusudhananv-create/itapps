@@ -201,8 +201,8 @@ set @report_sp_id = (select top 1 ID from REPORTS_SP_DETAILS where SP_NAME='dbo.
 
 IF NOT exists (select 1 from REPORTS_PARAMS WHERE REPORT_SP_ID= @report_sp_id)   
 BEGIN
-insert into REPORTS_PARAMS values(@report_sp_id, 'StartDate', 'Date','2025-04-01')
-insert into REPORTS_PARAMS values(@report_sp_id, 'EndDate', 'Date','2025-09-30')
+insert into REPORTS_PARAMS values(@report_sp_id, 'StartDate', 'DATE','2025-04-01')
+insert into REPORTS_PARAMS values(@report_sp_id, 'EndDate', 'DATE','2025-09-30')
 insert into REPORTS_PARAMS values(@report_sp_id, 'Customer', 'CUSTOMERID','-1')
 END
 
@@ -212,7 +212,7 @@ set @report_sp_id2 = (select top 1 ID from REPORTS_SP_DETAILS where SP_NAME='dbo
 
 IF NOT exists (select 1 from REPORTS_PARAMS WHERE REPORT_SP_ID= @report_sp_id2)
 BEGIN
-insert into REPORTS_PARAMS values(@report_sp_id2, 'StartDate', 'Date','2025-04-01')
-insert into REPORTS_PARAMS values(@report_sp_id2, 'EndDate', 'Date','2025-09-30')
+insert into REPORTS_PARAMS values(@report_sp_id2, 'StartDate', 'DATE','2025-04-01')
+insert into REPORTS_PARAMS values(@report_sp_id2, 'EndDate', 'DATE','2025-09-30')
 insert into REPORTS_PARAMS values(@report_sp_id2, 'Customer', 'CUSTOMERID','-1')
 END
