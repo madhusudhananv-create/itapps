@@ -443,3 +443,136 @@ END
 GO
 
 
+IF EXISTS(Select 1 from sys.objects where name ='getCSSTableForPeriod1' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getCSSTableForPeriod1]
+END
+GO
+
+
+CREATE PROCEDURE [dbo].[getCSSTableForPeriod1]                
+              
+@startDate varchar(10),                                              
+@endDate varchar(10),                                              
+@custIds varchar(max)='-1',                  
+@csmIds varchar(max)='-1',      
+@frequency varchar(100) ='Both'      
+              
+AS                
+BEGIN                                            
+                                                     
+;With NonPremierAccounts AS (                                                    
+                                                    
+select distinct CB.CUST_ID , P.PROJ_ID,isnull( P.PROJ_NM, c.CUST_NM) as proj_nm, isnull( CT.CONTACT_NAME, cb.DISPLAY_NAME) as CONTACT_NAME , R1.RATING as MIN_SCORE , [NPS_SCORE]= r2.rating, URL ='{SUBSTITUE_URL}/CustomerSuccessSurvey/'+ r1.SURVEY_ID,                              
+ActionplanURL ='{SUBSTITUE_URL}/layout/actionitems/'+ cast(CB.CUST_ID as varchar(20)) +'/'+P.PROJ_ID+'/true'  , r1.CREATED_DATE, r1.batch_customer_id,RN = row_number() OVER(partition by ct.contact_name, p.proj_id ORDER BY cb.id desc, r1.rating)           
+  
+    
+,      
+case when b.FREQUENCY ='Annual' then '(A)' when b.frequency ='Quarterly' then '(Q)' else '(H)' end as Frequency      
+                      
+FROM [CSS_BATCH_CUSTOMERS] CB  (NOLOCK)      
+inner join customer  C on c.cust_id = cb.CUST_ID
+                            
+INNER JOIN CSS_BATCHES B (NOLOCK) ON B.ID = CB.BATCH_ID and B.ISACTIVE = 1                                
+INNER JOIN CSS_QUESTION_REPLIES R1 (NOLOCK) on R1.BATCH_CUSTOMER_ID = cb.ID and cb.ISACTIVE =1 and cb.STATUS ='COMPLETED' and r1.QUESTION_CATEGORY ='Criteria' and PERSPECTIVE in( 'Overall Experience','Meeting Delivery Commitments') and R1.ISACTIVE = 1                                
+LEFT JOIN CONTACTS CT on CT.CUSTOMER_ID = CB.CUST_ID and CT.CONTACT_EMAILID = CB.EMAIL_ID and CT.ISACTIVE = 1                                
+LEFT join CSS_QUESTION_REPLIES r2 (NOLOCK) on r2.batch_customer_id = cb.ID and cb.ISACTIVE =1 and cb.STATUS ='COMPLETED' and r2.QUESTION_CATEGORY ='NPS' and r2.ISACTIVE = 1   
+OUTER APPLY (
+    SELECT TOP 1 PROJ_ID, PROJ_NM, PROJ_STATUS,PROJ_DM_EMP_ID
+    FROM PROJECT
+    WHERE ((PROJ_ID = CB.PROJ_ID AND B.FREQUENCY != 'Annual')  OR 
+        (CUST_ID = CB.CUST_ID AND B.FREQUENCY = 'Annual'))
+--left JOIN PROJECT P (NOLOCK) on  ( (p.proj_id = CB.proj_id  and b.frequency!= 'Annual')     or (cb.cust_id = p.cust_id and  b.frequency = 'Annual') ) and isnull(p.proj_status,'') != 'close' 
+ AND ISNULL(PROJ_STATUS, '') != 'close'
+) P
+WHERE CB.STATUS = 'COMPLETED' and (( B.START_DATE BETWEEN @startDate AND @endDate) OR ( B.END_DATE BETWEEN @startDate AND @endDate) )                                
+AND (@custIds = '-1' OR CB.CUST_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@custIds,',')))                                         
+AND (@csmIds ='-1' OR P.PROJ_DM_EMP_ID  in (SELECT * FROM [DBO].[FN_SPLITSTRING](@csmIds,',')))                            
+AND (@frequency ='Both' or b.frequency = @frequency)      
+),                                                 
+                                                    
+PremierAccount As (                                                    
+select CB.CUST_ID , 'Premier' as CUST_NM, P.PROJ_ID, P.PROJ_NM, isnull( CT.CONTACT_NAME, cb.DISPLAY_NAME) as CONTACT_NAME , R1.RATING as MIN_SCORE , [NPS_SCORE]= r2.rating, URL ='{SUBSTITUE_URL}/CustomerSuccessSurvey/'+ r1.SURVEY_ID,                      
+  
+    
+      
+        
+ActionplanURL ='{SUBSTITUE_URL}/layout/actionitems/'+ cast(CB.CUST_ID as varchar(20))+'/0/true', r1.CREATED_DATE, r1.batch_customer_monthly_id,                                
+RN = row_number() OVER(partition by CB.EMAIL_ID, cB.ID, r1.SURVEY_ID ORDER BY cb.id desc, r1.rating )  , pp.id as PROD_ID,                  
+pp.PRODUCT_TITLE as PROD_NM  , ' (Q)' as Frequency                            
+FROM [CSS_BATCH_CUSTOMER_MONTHLY] CB (NOLOCK)                                 
+INNER JOIN CSS_BATCH_monthly B (NOLOCK) ON B.ID = CB.BATCH_MONTHLY_ID and B.ISACTIVE = 1                                
+INNER JOIN CSS_QUESTION_REPLIES R1 (NOLOCK) on R1.BATCH_CUSTOMER_MONTHLY_ID = cb.ID and cb.ISACTIVE =1 and cb.STATUS ='COMPLETED' and r1.QUESTION_CATEGORY ='Criteria' and R1.ISACTIVE = 1                                
+LEFT JOIN CONTACTS CT (NOLOCK)  on CT.CUSTOMER_ID = CB.CUST_ID and CT.CONTACT_EMAILID = CB.EMAIL_ID and CT.ISACTIVE = 1                                
+LEFT JOIN CSS_QUESTION_REPLIES R2 (NOLOCK) on R2.BATCH_CUSTOMER_MONTHLY_ID = cb.ID and cb.ISACTIVE =1 and cb.STATUS ='COMPLETED' and r2.QUESTION_CATEGORY ='NPS' and R2.ISACTIVE = 1                                
+LEFT JOIN PROJECT P ON CB.PROJ_ID = P.PROJ_ID                      
+LEFT JOIN PORTFOLIO_PRODUCTS pp on cb.PROD_ID = pp.ID                  
+WHERE CB.STATUS = 'COMPLETED' and (( B.START_DATE BETWEEN @startDate AND @endDate) OR ( B.END_DATE BETWEEN @startDate AND @endDate) )                                 
+AND (@custIds = '-1' OR CB.CUST_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@custIds,',')))                                
+AND (@csmIds ='-1' OR ( @csmIds !='-1' AND CB.cust_id in (select cust_id from PROJECT where  PROJ_DM_EMP_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@csmIds,',')))))                            
+AND (@frequency ='both' or @frequency ='quarterly')      
+),                                
+                              
+ ActionItem AS (                                
+  select PA.PROJECT_ID,PA.Status,PA.TARGET_DATE from                                            
+  PROJECT_ACTIONITEM PA (NOLOCK)                                           
+  join                                       
+  CSS_BATCH_CUSTOMERS BC  (NOLOCK)                                         
+  on PA.BATCH_CUSTOMER_ID = BC.ID and (PA.SOURCE like  'CSS%' or PA.SOURCE like '%Customer Success Survey%'
+  or PA.SOURCE like '%Account Customer Satisfaction Survey%'
+  ) and PA.ISACTIVE = 1                                         
+  and BC.ISACTIVE = 1 and PA.PROJECT_ID = BC.PROJ_ID                           
+  join                                         
+  CSS_BATCHES B (NOLOCK) ON B.ID = BC.BATCH_ID and BC.STATUS = 'COMPLETED'                              
+  and ((B.START_DATE                                   
+  BETWEEN @startDate AND @endDate) OR  (B.END_DATE BETWEEN @startDate AND @endDate))                                
+  Where PA.Status not in ('Cancelled','Suspended')                   
+  AND (@frequency ='both' or b.frequency = @frequency)      
+)          ,            
+PremierActionItem AS (                                
+  select PA.PROJECT_ID,PA.Status,PA.TARGET_DATE from                                            
+  PROJECT_ACTIONITEM PA (NOLOCK)                                           
+  join                                       
+  CSS_BATCH_CUSTOMER_MONTHLY BC  (NOLOCK)                                         
+  on PA.BATCH_CUSTOMER_MONTHLY_ID = BC.ID and (PA.SOURCE like  'CSS%' or PA.SOURCE like '%Customer Success Survey%') and PA.ISACTIVE = 1                                         
+  and BC.ISACTIVE = 1 and PA.PROJECT_ID = BC.PROJ_ID                           
+  join                                         
+  CSS_BATCH_monthly B (NOLOCK) ON B.ID = BC.BATCH_MONTHLY_ID and BC.STATUS = 'COMPLETED'                              
+  and ((B.START_DATE                                   
+  BETWEEN @startDate AND @endDate) OR  (B.END_DATE BETWEEN @startDate AND @endDate))                                
+  Where PA.Status not in ('Cancelled','Suspended')           
+  AND (@frequency ='both' or @frequency ='quarterly')      
+)                      
+                              
+ SELECT A.PROJ_ID [PROJECT_ID], A.CUST_ID [CUSTOMER_ID],                                                    
+ A.CONTACT_NAME RESPONDENT_NAME,                                                         
+  A.CONTACT_NAME + ' - ' + A.PROJ_NM + Frequency  as [DISPLAY_TEXT] , A.MIN_SCORE,A.NPS_SCORE,Null as CSS_SCORE,A.URL,    ActionplanURL,                                        
+  [ACTION_PLAN_SUBMITTED] = (select COUNT(distinct PA.PROJECT_ID) from ActionItem PA Where PA.Status in ('Completed','Closed')  AND PA.PROJECT_ID=A.PROJ_ID),                                
+  [ACTION_PLAN_NOT_SUBMITTED] =  (select COUNT(distinct PA.PROJECT_ID) from ActionItem PA                                 
+  Where PA.Status in ('In Progress','Open') and PA.TARGET_DATE < GETDATE()  AND PA.PROJECT_ID=A.PROJ_ID)                                   
+  FROM                                 
+  NonPremierAccounts A Where A.RN = 1               
+                                  
+  UNION                                       
+                                  
+  SELECT                       
+   '0' [PROJECT_ID], A.CUST_ID [CUSTOMER_ID]                                               
+  , A.CONTACT_NAME RESPONDENT_NAME                                
+  , CASE                   
+  WHEN A.PROJ_ID IS not null  THEN A.CONTACT_NAME +' - ' + A.PROJ_NM    + Frequency                  
+  WHEN A.PROD_ID IS not null  THEN A.CONTACT_NAME +' - ' + A.PROD_NM     + Frequency                  
+    ELSE A.CONTACT_NAME +' - ' + A.CUST_NM     + Frequency                     
+ END as [DISPLAY_TEXT]                      
+  , null MIN_SCORE ,A.NPS_SCORE,A.MIN_SCORE as CSS_SCORE,A.URL,   ActionplanURL,              
+              
+  [ACTION_PLAN_SUBMITTED] = (select COUNT(distinct PA.PROJECT_ID) from PremierActionItem PA Where PA.Status in ('Completed','Closed')  AND PA.PROJECT_ID=A.PROJ_ID),                                
+  [ACTION_PLAN_NOT_SUBMITTED] =  (select COUNT(distinct PA.PROJECT_ID) from PremierActionItem PA                                 
+  Where PA.Status in ('In Progress','Open') and PA.TARGET_DATE < GETDATE()  AND PA.PROJECT_ID=A.PROJ_ID)                       
+              
+  FROM                                         
+  PremierAccount A Where A.RN = 1                                                     
+  order by RESPONDENT_NAME                                  
+                                  
+END     
+
+
