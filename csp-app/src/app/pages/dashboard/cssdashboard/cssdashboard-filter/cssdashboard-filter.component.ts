@@ -218,7 +218,7 @@ export class CssdashboardFilterComponent implements OnInit {
     this.dates = this._util.getDatesBasedOnQuarter(this.selectedQuarter, this.selectedYear, this.trendQuarter, this.fromDate, this.toDate);
     this.fromDate = this.dates[0].fromDate;
     this.toDate = this.dates[0].toDate;
-    if(this.selectedQuarter == 'H1' || this.selectedQuarter == 'H2')
+    if(this.selectedQuarter == 'H1' || this.selectedQuarter == 'H2'|| this.selectedQuarter == 'Annual' )
       { 
         this._loading = false;
         return;

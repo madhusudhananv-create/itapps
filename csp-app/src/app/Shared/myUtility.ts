@@ -988,6 +988,10 @@ export class myUtility {
                     fromDate = new Date(year - 1, 4, 1);
                     toDate = new Date(year, 3, 0);
                     break;
+                case "Annual":
+                    fromDate = new Date(year, 0, 1);
+                    toDate = new Date(year, 12, 0);
+                    break;
             }
             dates.push({ fromDate, toDate });
             return dates;
@@ -1069,6 +1073,10 @@ export class myUtility {
                 fromDate = new Date(year, 6, 1);
                 toDate = new Date(year, 12, 0);
                 break;
+            case "Annual":  
+                fromDate = new Date(year, 0, 1);
+                toDate = new Date(year, 12, 0);
+                break;                                    
             case "Select Period":
                 let date = new Date();
 
