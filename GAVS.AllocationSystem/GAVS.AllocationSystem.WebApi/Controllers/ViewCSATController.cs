@@ -22,9 +22,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 userIds = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CUST_ID == customerId && t.CSAT_FREQUENCY == "Monthly").ToList<CUSTOMER_PROJECTS>();
             }
-            else
+            else if (!string.IsNullOrEmpty(projId))
             {
                 userIds = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.PROJ_ID == projId && t.CUST_ID == customerId).ToList();
+            }
+            else
+            {
+                userIds = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CUST_ID == customerId).ToList();
             }
             ids = userIds.Select(t => t.CUSTOMER_USER_ID).ToList<int>();
             //pick users who are not configured in customer projects
@@ -74,17 +78,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
+                    if(string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
+                    {
+                        frequency = "Annual";
+                        batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t =>  (t.FREQUENCY.ToLower() == frequency) && t.YEAR == surveyCriteria.YEAR)?.ID;
 
-                    batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t => t.SEQUENCE == surveyCriteria.QUARTER && (t.FREQUENCY.ToLower() == frequency || t.FREQUENCY.ToLower() == frequency1) && t.YEAR == surveyCriteria.YEAR)?.ID;
+                    }
+                    else
+                    {
+                        batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t => t.SEQUENCE == surveyCriteria.QUARTER && (t.FREQUENCY.ToLower() == frequency || t.FREQUENCY.ToLower() == frequency1) && t.YEAR == surveyCriteria.YEAR)?.ID;
+
+                    }
                     if (batchId.HasValue)
                     {
                         if (surveyCriteria.IS_QUALITATIVE_FEEDBACK)
                         {
                             custbatchId = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && (t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT") && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID)?.ID;
                         }
-                        else
+                        else if(!string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
                         {
                             custbatchId = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && t.STATUS == "COMPLETED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID)?.ID;
+                        }
+                        else
+                        {
+                            custbatchId = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.STATUS == "COMPLETED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID)?.ID;
                         }
                         if (custbatchId.HasValue && custbatchId > 0)
                             guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId).SURVEY_ID;
