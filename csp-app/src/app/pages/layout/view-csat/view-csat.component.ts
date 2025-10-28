@@ -38,6 +38,7 @@ export class ViewCsatComponent implements OnInit {
   isMonthly: boolean = false;
   tableMonth: number;
   disablebtn: boolean = false;
+  showProjectDropdown: boolean = true;
   displayedColumns: string[];
   dataSource = new MatTableDataSource(this.reportRec)
   @ViewChild('TABLE') table: ElementRef;
@@ -73,6 +74,21 @@ export class ViewCsatComponent implements OnInit {
     this._layoutService.selectedCust = this.input_customerid
     this.getDBConfig();
   }
+
+  onViewTypeChange() {
+  if (!this.showProjectDropdown) {
+    this.input_projectid = '';
+  } else {
+    if (this.projNames && this.projNames.length > 0) {
+      this.input_projectid = this.projNames[0].proJ_ID;
+    }
+  }
+  this.guid = [];
+  this.showSurveyGuid = false;
+  this.showSurveyText = false;
+  this.surveyGuid = null;
+  this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
+}
 
   getDBConfig() {
     this._appService.GetDBConfigValue("MONTHLYCSS", -1, "").subscribe(data => {
@@ -130,7 +146,7 @@ export class ViewCsatComponent implements OnInit {
 
         if (this.projNames != undefined && this.projNames != null && this.projNames.length > 0) {
           if (!this.input_projectid)
-            this.input_projectid = this.projNames[0].proJ_ID;
+             this.input_projectid = this.projNames[0].proJ_ID;  
           this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
         }
       },
