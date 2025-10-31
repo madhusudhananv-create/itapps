@@ -27,5 +27,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         [NotMapped]
         public bool  ACSAT { get; set; }
 
+        public string CATEGORY { get; set; }
+
     } 
 }

@@ -607,9 +607,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string statusMsg = string.Empty;
             string mailContent;
             string tomail = cust.EMAIL_ID;
+
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);
-            if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE"))
-                return;
+            //if (project.PROJ_STATUS != null && (project.PROJ_STATUS.ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE"))
+            //    return;
             //var skipCSATSetting = getprojectconfi("SKIP_CSAT",pro);
             var projectText = string.Empty;
             if (cust.PROD_ID.HasValue)
@@ -620,12 +621,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else if (project == null)
             {
-                var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == cust.PROJ_ID);
-                if (portfolio == null) return;
-                var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
-                if (string.IsNullOrWhiteSpace(projectId)) return;
-                project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
-                projectText = cust.PROJ_NM;
+                if (string.IsNullOrWhiteSpace(cust.PROJ_ID))
+                {
+                    project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.CUST_ID == cust.CUST_ID && x.PROJ_STATUS.ToLower() != "close");
+                    if (project == null) return;
+                }
+                else
+                {
+                    var portfolio = CSPdb.PORTFOLIO.GetAll().FirstOrDefault(x => x.ID.ToString() == cust.PROJ_ID);
+                    if (portfolio == null) return;
+                    var projectId = CSPdb.PORTFOLIO_PROJECT.GetAll().FirstOrDefault(x => x.PORTFOLIO_ID.ToString() == cust.PROJ_ID)?.PROJ_ID;
+                    if (string.IsNullOrWhiteSpace(projectId)) return;
+                    project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
+                    projectText = cust.PROJ_NM;
+                }
             }
             else
             {
@@ -635,8 +644,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string ccmail = helper.GetDBConfig("CSS_LINK_CC", "-1");
             var cclist = helper.getProjectResposnibleMailIds(project, true, true, true);
             cclist.Add(ccmail);
-
-            subject = " A Friendly Reminder - Neurealm " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
+            var templateFile = string.Empty;
+            if (Frequency.ToLower() == "annual")
+            {
+                templateFile = "CustomerSuccessSurveySurveyReminderAnnual.htm";
+                subject = " A Friendly Reminder - Neurealm " + Frequency + " Yearly Customer Satisfaction Survey " + PreviousPeriod;
+            }
+            else
+            {
+                templateFile = "CustomerSuccessSurveySurveyReminder.htm";
+                subject = " A Friendly Reminder - Neurealm " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
+            }
+               
             ccmail = helper.ConcatEmails(cclist);
             if (!string.IsNullOrWhiteSpace(cust.SPOC))
                 ccmail += "," + cust.SPOC;
@@ -649,8 +668,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("SURVEY_LINK", SurveyLink);
             EmailContentValues.Add("CUSTOMER_NAME", cust.CUST_NM);
             EmailContentValues.Add("PROJECT", projectText);
-            EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(cust.SURVEY_SENT_DATE.Value, cust.CUST_ID));
-            mailContent = helper.GetEmailContent("CustomerSuccessSurveySurveyReminder.htm", EmailContentValues);
+            var batchValidityDate = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == cust.BATCH_ID).CSS_VALIDITY_ENDDATE;
+            EmailContentValues.Add("END_DATE", batchValidityDate?.ToString("dd-MMM-yyyy"));
+            //EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(cust.SURVEY_SENT_DATE.Value, cust.CUST_ID));
+            mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
 
             var ep = new EmailProvider(Cldb, CSPdb);
             ep.SendEmail

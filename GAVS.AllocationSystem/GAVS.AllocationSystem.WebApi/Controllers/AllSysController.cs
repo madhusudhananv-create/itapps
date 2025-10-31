@@ -13791,6 +13791,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else Period = string.Empty;
 
             }
+            if (Frequency.ToLower() == "annual")
+            {
+                Period = Year.ToString();
+            }
             return Period;
         }
 
@@ -19210,6 +19214,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.CONTACT_TYPE = results.CONTACT_TYPE;
             overview.CONTACT_EMP_ID = results.CONTACT_EMP_ID;
             overview.ROLE_ID = results.ROLE_ID;
+            overview.CATEGORY = results.CATEGORY;
             UpdateAuditFields(overview);
         }
 
