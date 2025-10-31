@@ -767,6 +767,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     result = empRecords.FirstOrDefault(x => x.EMP_ID_NEW != null && x.DOR == null);
                 }
+
+                if (result == null)
+                {
+                    result = empRecords.FirstOrDefault(x =>   x.DOR == null);
+                }
             }
 
             return result;
