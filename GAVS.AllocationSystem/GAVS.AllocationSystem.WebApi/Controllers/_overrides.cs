@@ -232,6 +232,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GeneralMethod"), ActionName("GeneralMethod"), HttpGet]
         public IHttpActionResult GeneralMethod()
         {
+            var mailId = "aashitosh.todkar@neurealm.com";
+            mailId = "madhusudhanan.v@neurealm.com";
+            for (int i = 0; i < 10; i++)
+            {
+                GetCorrectEmployeeRecord(mailId);
+            }
+            
+
+            return Ok();
             //SendCSSBatchReminderMailsPremier(Request);
             //GenerateMissingBatchCustomersPremier(37, "Quarterly", "102802");
             //var ids = new List<int> { 6244, 6243, 6242, 6241, 6240 };

@@ -26,6 +26,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             try
             {
+                LogRequest();
                 var content = request.Content;
                 string jsonContent = content.ReadAsStringAsync().Result;
                 dynamic json = jsonContent;
@@ -565,7 +566,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             if (validDate < DateTime.Now)
             {
-                throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Thank you for your interest to participate in Neurealm Half Yearly Customer Satisfaction Survey! This survey is now closed. In case of any feedback on this survey process, please contact csatsupport@neurealm.com. On behalf of Neurealm, we once again sincerely thank you for your time and effort."));
+                throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Thank you for your interest to participate in Neurealm Customer Satisfaction Survey! This survey is now closed. In case of any feedback on this survey process, please contact csatsupport@neurealm.com. On behalf of Neurealm, we once again sincerely thank you for your time and effort."));
             }
 
         }

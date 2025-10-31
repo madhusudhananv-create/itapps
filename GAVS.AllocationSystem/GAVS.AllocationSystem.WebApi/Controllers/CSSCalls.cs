@@ -225,7 +225,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             dynamic json = jsonContent;
             string EmpId = GetHeaderDetails_String("empid");
             var selectedIds = GetHeaderDetails_Array("selectedIds").Select(x => Convert.ToInt32(x)).ToList();
-            CSS_BATCHES batch = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
+            CSS_BATCHES batchjson = JsonConvert.DeserializeObject<CSS_BATCHES>(json);
+            var batch = CSPdb.CSS_BATCHES.GetById(batchjson.ID);
             var validationResult = ValidateBatch(batch);
             if (!string.IsNullOrWhiteSpace(validationResult))
                 return BadRequest(validationResult);
@@ -1675,7 +1676,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             DateTime.TryParse(GetHeaderDetails_String("startDate"), out startDate);
             DateTime.TryParse(GetHeaderDetails_String("endDate"), out endDate);
 
-            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
+            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL  == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
             var uri = helper.GetAbsoulteUri();
 
             foreach (var item in cssVerificationList)

@@ -16,7 +16,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
     public partial class AllSysController
     {
-        private   readonly List<string>  _allowedBusinessUnits = new List<string> { "Health care", "India & UK", "New Growth", "Tech" };
+        private readonly List<string> _allowedBusinessUnits = new List<string> { "Health care", "India & UK", "New Growth", "Tech" };
         private void LogRequest(Exception exception = null, string prefix = "PSA:", string content = "")
         {
             var l = new Logger(Request, exception, prefix, content);
@@ -222,7 +222,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 project.PROJ_AM_EMP_ID = GetOldEMPId(project.PROJ_AM_EMP_ID);
                 project.PROJ_PM_EMP_ID = GetOldEMPId(project.PROJ_PM_EMP_ID);
                 project.PROJ_DM_EMP_ID = GetOldEMPId(project.PROJ_DM_EMP_ID);
-
+                project.DP_ID = GetOldEMPId(project.PROJ_EP_ID);
                 project.PROJ_BUHEAD_EMP_ID = GetOldEMPId(project.PROJ_BUHEAD_EMP_ID);
                 project.PROJ_EP_ID = GetOldEMPId(project.PROJ_EP_ID);
                 if (!_allowedBusinessUnits.Contains(project.BUSINESS_UNIT))
@@ -535,7 +535,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existing.PROJ_PM_EMP_ID = GetOldEMPId(project.PROJ_PM_EMP_ID);
                     existing.PROJ_DM_EMP_ID = GetOldEMPId(project.PROJ_DM_EMP_ID);
                     existing.PROJ_BUHEAD_EMP_ID = GetOldEMPId(project.PROJ_BUHEAD_EMP_ID);
-                    existing.PROJ_EP_ID = GetOldEMPId(project.PROJ_EP_ID);
+                    existing.DP_ID = GetOldEMPId(project.PROJ_EP_ID);
 
                     existing.BILL_CRNCY_ID = project.BILL_CRNCY_ID;
                     existing.BILL_TYPE = project.BILL_TYPE;
@@ -640,6 +640,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             return Ok();
         }
+
+
+
+
         [POST("AddNewEmployee")]
         [ActionName("AddNewEmployee")]
         [HttpPost]
@@ -661,7 +665,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 UpdateCSMTitle(employee);
 
-                var existing = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => t.EMP_ID == employee.EMP_ID);
+                var existing = GetCorrectEmployeeRecord(employee.EMAIL_ID);
                 if (existing != null)
                     //return GetResult<EMP_INFO>(null, $"Emp Id {employee.EMP_ID} already exists.");
                     return UpdateEmployee(request);
@@ -740,6 +744,35 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     employee.CSM_TITLE_ID = 3;
             }
         }
+
+        private EMP_INFO GetCorrectEmployeeRecord(string emailId)
+        {
+            EMP_INFO result = null;
+            var empRecords = Cldb.EMP_INFO.GetAll().Where(t => t.EMAIL_ID == emailId).ToList();
+
+            if (empRecords.Count == 1)
+            {
+                if (empRecords.First().DOR == null)
+                    result = empRecords.First();
+            }
+            else
+            {
+
+                if (empRecords.All(x => x.DOR == null))
+                {
+                    //take the old record
+                    result = empRecords.FirstOrDefault(x => x.EMP_ID_NEW != null);
+                }
+                else
+                {
+                    result = empRecords.FirstOrDefault(x => x.EMP_ID_NEW != null && x.DOR == null);
+                }
+            }
+
+            return result;
+        }
+
+
         [POST("UpdateEmployee")]
         [ActionName("UpdateEmployee")]
         [HttpPost]
@@ -756,12 +789,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-                var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID && t.DOR == null));
-                if (existingRow == null)
-                    existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID_NEW == employee.EMP_ID && t.DOR != null) && t.EMAIL_ID == employee.EMAIL_ID);
+                //var existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID == employee.EMP_ID && t.DOR == null));
+                //if (existingRow == null)
+                //    existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => (t.EMP_ID_NEW == employee.EMP_ID && t.DOR != null) && t.EMAIL_ID == employee.EMAIL_ID);
 
+                //if (existingRow == null)
+                //    existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => t.EMP_ID_NEW == employee.EMP_ID && t.EMAIL_ID == employee.EMAIL_ID);
+                var existingRow = GetCorrectEmployeeRecord(employee.EMAIL_ID);
                 if (existingRow == null)
-                    existingRow = Cldb.EMP_INFO.GetAll().FirstOrDefault(t => t.EMP_ID_NEW == employee.EMP_ID && t.EMAIL_ID == employee.EMAIL_ID);
+                {
+                    return GetResult<EMP_INFO>(null, $"Employee with {employee.EMAIL_ID} doesnt exists");
+                }
+                if (existingRow.DOR != null)
+                {
+                    return GetResult<EMP_INFO>(null, $"Employee with {employee.EMAIL_ID} set as relieved from Neurealm. Unable to update.");
+                }
                 if (existingRow != null)
                 {
                     // existingRow.EMP_ID = employee.EMP_ID;

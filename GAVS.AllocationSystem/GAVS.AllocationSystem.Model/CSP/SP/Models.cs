@@ -56,7 +56,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public DateTime? ACTUAL_START_DATE {get; set;}
         public DateTime? ACTUAL_END_DATE {get; set;}
         public decimal? SCHEDULED_DURATION {get; set;}
-        public int? ACTUAL_DURATION {get; set;}
+        public decimal? ACTUAL_DURATION {get; set;}
         public string STATUS {get; set;}
         public string CUST_ID {get; set;}
         public string PROJ_ID {get; set;}
@@ -80,7 +80,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public DateTime? ACTUAL_START_DATE {get; set;}
         public DateTime? ACTUAL_END_DATE {get; set;}
         public decimal? SCHEDULED_DURATION {get; set;}
-        public int? ACTUAL_DURATION {get; set;}
+        public decimal? ACTUAL_DURATION {get; set;}
         public string STATUS {get; set;}
         public string CUST_ID {get; set;}
         public string PROJ_ID {get; set;}
@@ -283,8 +283,6 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ISO_STANDARDS {get; set;}
         public string CERTIFICATION_SCOPES_NAME {get; set;}
         public string ISO_STANDARDS_NAME {get; set;}
-        public string DP { get; set; }
-        public string DP_NAME { get; set; }
     }
 
     public partial class ProjectCertificationScopes  
@@ -461,7 +459,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ACCOUNT_MANAGER {get; set;}
         public string AM_MAIL_ID {get; set;}
         public string BU_HEAD {get; set;}
-        public string BU_MAIL  {get; set;}
+        public string BU_MAIL {get; set;}
         public string QUALITY_SPOC {get; set;}
         public string CSM_REVIEWER_MAIL_ID {get; set;}
         public string SKIP_CSAT {get; set;}
