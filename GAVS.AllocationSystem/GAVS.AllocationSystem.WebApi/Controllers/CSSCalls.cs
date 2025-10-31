@@ -670,6 +670,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("PROJECT", projectText);
             var batchValidityDate = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == cust.BATCH_ID).CSS_VALIDITY_ENDDATE;
             EmailContentValues.Add("END_DATE", batchValidityDate?.ToString("dd-MMM-yyyy"));
+            string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
+            EmailContentValues.Add("BASE_URL", baseImageUrl);
             //EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(cust.SURVEY_SENT_DATE.Value, cust.CUST_ID));
             mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
 
