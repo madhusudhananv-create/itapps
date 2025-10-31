@@ -227,6 +227,7 @@ export class ContactsPageComponent implements OnInit {
     this.newContacts.contacT_TYPE = element.contacT_TYPE;
     this.newContacts.contacT_EMP_ID = element.contacT_EMP_ID;
     this.newContacts.isactive = element.isactive;
+    this.newContacts.category = element.category;
     //this.newContacts.isactive = element.isactive;
     this.editmode = true;
     this.displayGavsContactType = false;

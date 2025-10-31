@@ -172,11 +172,21 @@
                 <input name="txtRole" matInput [(ngModel)]="newContacts.contacT_ROLE" placeholder="Role" required>
               </mat-form-field>
             </div>
+            
             <div class="row" *ngIf="isPremier && isGavs">
               <mat-form-field>
                 <mat-select name="txtRoleType" placeholder="Role Type" [(ngModel)]="newContacts.rolE_ID" required>
                   <mat-option *ngFor="let c of contactRoles" [value]="c.rolE_ID" [title]="c.rolE_NAME">{{c.rolE_NAME}}
                   </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+             <div class="row" *ngIf="newContacts.contacT_TYPE=='CUSTOMER'">
+              <mat-form-field>
+                <mat-select name="txtType" placeholder="Category" [(ngModel)]="newContacts.category"
+                  (selectionChange)="verifyContactType($event.value)" required>
+                  <mat-option value="CXO">CXO</mat-option>
+                  <mat-option value= "Non CXO">Non CXO</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
@@ -208,6 +218,7 @@
         <th style="background-color:#d0d0d0;color:black !important;">No.</th>
         <th style="background-color:#d0d0d0;color:black !important;">Name</th>
         <th style="background-color:#d0d0d0;color:black !important;">Role</th>
+        <th style="background-color:#d0d0d0;color:black !important;">Category</th>
         <th style="background-color:#d0d0d0;color:black !important;" *ngIf="isPremier && isGavs">Role Type</th>
         <th style="background-color:#d0d0d0;color:black !important;">Email Id</th>
         <th style="background-color:#d0d0d0;color:black !important;">Phone</th>
@@ -220,6 +231,7 @@
         <td>{{i + 1}}</td>
         <td>{{contact.contacT_NAME}}</td>
         <td>{{contact.contacT_ROLE}}</td>
+        <td>{{contact.category}}</td>
         <td *ngIf="isPremier && isGavs">{{getContactRoleTypeName(contact.rolE_ID)}}</td>
         <td>{{contact.contacT_EMAILID}}</td>
         <td>{{contact.contacT_PHONE}}</td>
