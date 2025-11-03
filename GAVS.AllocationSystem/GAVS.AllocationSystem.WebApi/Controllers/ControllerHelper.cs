@@ -338,7 +338,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var id = !string.IsNullOrWhiteSpace(project.PROJ_DM_EMP_ID) ? project.PROJ_DM_EMP_ID : project.DP_ID;
             return Cldb.EMP_INFO.GetAll().Where(x => x.EMP_ID == id).ToList();
         }
-
+        public List<EMP_INFO> GetCustomerScuccessManagerEmpInfoFromProject(string projId)
+        {
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
+            return Cldb.EMP_INFO.GetAll().Where(x => x.EMP_ID == project.DP_ID).ToList();
+        }
         public List<EMP_INFO> GetBUHEADFromProject(string projId)
         {
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);

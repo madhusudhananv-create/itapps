@@ -349,24 +349,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void SendMailtoProjectCSM(PROJECT project)
         {
-            var csmInfo = helper.GetCSMFromProject(project).FirstOrDefault();
+            var dpInfo = helper.GetCSMFromProject(project).FirstOrDefault();
             var pmInfo = helper.GetPMEmpInfoFromProject(project.PROJ_ID).FirstOrDefault();
             var amInfo = helper.GetAMEmpInfoFromProject(project.PROJ_ID).FirstOrDefault();
+            var csmInfo = helper.GetCustomerScuccessManagerEmpInfoFromProject(project.PROJ_ID).FirstOrDefault();
 
             var toMail = string.Empty;
             var toPerson = string.Empty;
 
-            if (csmInfo != null && pmInfo != null)
+            if (dpInfo != null && pmInfo != null)
             {
-                if (pmInfo.EMAIL_ID == csmInfo.EMAIL_ID)
+                if (pmInfo.EMAIL_ID == dpInfo.EMAIL_ID)
                 {
                     toMail = pmInfo.EMAIL_ID;
                     toPerson = pmInfo.FRST_NM;
                 }
                 else
                 {
-                    toMail = string.Join(",", pmInfo.EMAIL_ID, csmInfo.EMAIL_ID);
-                    toPerson = string.Join(",", pmInfo.FRST_NM, csmInfo.FRST_NM);
+                    toMail = string.Join(",", pmInfo.EMAIL_ID, dpInfo.EMAIL_ID);
+                    toPerson = string.Join(",", pmInfo.FRST_NM, dpInfo.FRST_NM);
                 }
             }
 
@@ -382,8 +383,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("START_DATE", project.START_DATE.ToString("dd-MM-yyyy"));
             EmailContentValues.Add("END_DATE", project.END_DATE.ToString("dd-MM-yyyy"));
             EmailContentValues.Add("PM", pmInfo != null ? pmInfo.FRST_NM : "");
-            EmailContentValues.Add("CSM", csmInfo != null ? csmInfo.FRST_NM : "");
+            EmailContentValues.Add("DP", dpInfo != null ? dpInfo.FRST_NM : "");
             EmailContentValues.Add("AM", amInfo != null ? amInfo.FRST_NM : "");
+            EmailContentValues.Add("CSM", csmInfo != null ? csmInfo.FRST_NM : "");
             EmailContentValues.Add("REVENUE_TYPE", string.IsNullOrWhiteSpace(project.REVENUE_TYPE) ? "" : project.REVENUE_TYPE);
             EmailContentValues.Add("PROJECT_TYPE", string.IsNullOrWhiteSpace(project.PROJECT_TYPE) ? "" : project.PROJECT_TYPE);
             EmailContentValues.Add("PROJECT_GROUP", string.IsNullOrWhiteSpace(project.PROJECT_GROUP) ? "" : project.PROJECT_GROUP);
