@@ -91,8 +91,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "COMPLETED", empId, meetingDate, isCSMNotified);
 
+                        try
+                        {
+                            createActionItemAndTask(replies, surveyId, project, customerName);            //create action item if csat is low 
+                        }
+                        catch (Exception ex)
+                        {
+                            LogRequest(ex);
 
-                        createActionItemAndTask(replies, surveyId, project, customerName);            //create action item if csat is low 
+                        }
+
 
                         if (!string.IsNullOrWhiteSpace(empId))
                         {
@@ -238,6 +246,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
             if (!actionItems.Any()) return;
+            if (!projects.Any()) return;
             var customerIds = projects.Select(x => x.CUST_ID).ToList();
             var customers = Cldb.CUSTOMER.GetAll().Where(x => customerIds.Contains(x.CUST_ID)).ToList();
 
@@ -256,6 +265,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (project == null)
                 return;
             var csm = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.DP_ID);
+            if (csm == null) return;
             var toMail = csm.EMAIL_ID;
             var csmName = csm.FRST_NM;
 
@@ -280,10 +290,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/actionitems";
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
-            if(acsat)
-            subject = $"New Action Item(s) Identified - Customer: {customerName}";
+            if (acsat)
+                subject = $"New Action Item(s) Identified - Customer: {customerName}";
             else
-             subject = $"New Action Item(s) Identified - { projectName}; Customer: {customerName}";
+                subject = $"New Action Item(s) Identified - { projectName}; Customer: {customerName}";
             string tomail = acsat ? csmMails : pmMails;
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
@@ -401,7 +411,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string surveyPeriod = GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR);
                     List<CSS_QUESTION_REPLIES> questionsWithReplies = new List<CSS_QUESTION_REPLIES>();
 
-                   
+
                     if (iteration.ID != batchCust.SURVEY_ID)
                     {
                         iteration = CSPdb.CSS_SURVEY_ITERATION.GetById(batchCust.SURVEY_ID.GetValueOrDefault());
@@ -411,7 +421,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         //Get Answers if survey is completed
                         questionsWithReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(t => t.SURVEY_ID == iteration.SURVEY_ID).ToList();
-                     
+
                         if (iteration.STATUS == "DRAFT")
                         {
                             var npsQuestion = questionsWithReplies.FirstOrDefault(x => x.QUESTION_CATEGORY == "NPS" && x.RATING == 0);
@@ -616,7 +626,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             overview.IDENTIFIED_DATE = DateTime.Today;
             overview.TARGET_DATE = AddBusinessDays(DateTime.Today, 10);
             overview.STATUS = "Open";
-            overview.PRIORITY = "High";               
+            overview.PRIORITY = "High";
             overview.CREATED_BY = "SYSTEM";
             overview.CREATED_DATE = DateTime.Now;
             overview.UPDATED_BY = "SYSTEM";
@@ -808,7 +818,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public List<CSS_QUESTION_REPLIES> CSS_QUESTION_REPLIES { get; set; } = new List<Model.CSP.CSS_QUESTION_REPLIES>();
             public string SURVEY_PERIOD { get; set; }
         }
-        private string GetCSSTableData(BatchCustomerAndQuestions replies,bool includePerspective)
+        private string GetCSSTableData(BatchCustomerAndQuestions replies, bool includePerspective)
         {
             var sb = new StringBuilder();
             int sno = 1;
@@ -851,9 +861,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return "-";
             }
             return description
-                .Replace("\r\n", "<br>")  
-                .Replace("\n", "<br>")    
-                .Replace("\r", "<br>");    
+                .Replace("\r\n", "<br>")
+                .Replace("\n", "<br>")
+                .Replace("\r", "<br>");
         }
 
 
@@ -895,7 +905,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 surveyURL += "/CustomerSuccessSurvey/" + surveyId;
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
             }
-            var table = GetCSSTableData(replies,false);
+            var table = GetCSSTableData(replies, false);
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("DOING_WELL", GetValidText(replies.CSS_QUESTION_REPLIES.FirstOrDefault(x => x.QUESTION_CATEGORY == "Others" && x.QUESTION.Contains("doing well"))?.RATING_DESCRIPTION));
@@ -1016,7 +1026,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
 
             }
-            var table = GetCSSTableData(replies,true);
+            var table = GetCSSTableData(replies, true);
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("TABLE", table);
             EmailContentValues.Add("CUSTOMER_NAME", replies.CSS_BATCH_CUSTOMERS_EXTENDED.DISPLAY_NAME);
@@ -1069,7 +1079,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("SURVEY_LINK", surveyURL);
 
             }
-            var table = GetCSSTableData(replies,true);
+            var table = GetCSSTableData(replies, true);
             EmailContentValues.Add("TABLE", table);
 
             //var surveyURL = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("CustomerSuccessSurvey", ""); ;
