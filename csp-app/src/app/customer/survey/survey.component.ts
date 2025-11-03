@@ -47,6 +47,7 @@ export class SurveyComponent implements OnInit {
   dialogSuccess: boolean = false;
   dialogExpiry: boolean = false;
   hasRatingBeenSelected: boolean = false;
+  disableSubmit: boolean = false;
   // ddRatings = [
   //   { 'key': '1 - Poor', 'value': 1 },
   //   { 'key': '2 - Fair', 'value': 2 },
@@ -235,6 +236,7 @@ export class SurveyComponent implements OnInit {
 
       dialogRef.afterClosed().subscribe(result => {
         if (result === 1) {
+          this.disableSubmit= true;
           this.service_SaveSurveyAnswers(this.questions, false);
         }
       });

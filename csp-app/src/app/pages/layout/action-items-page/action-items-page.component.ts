@@ -412,7 +412,7 @@ showDescriptionError: boolean = false;
     let a2Date;
     const specialCarPattern = /^[!@#$^&*()?":{}|<>~`_\+=\[\]\\\/\s]+$/;
     const numberPattern = /^[0-9\s]+$/;
-    if (!specialCarPattern.test(this.EditActionitem.description) || numberPattern.test(this.EditActionitem.description)) {
+    if (specialCarPattern.test(this.EditActionitem.description) || numberPattern.test(this.EditActionitem.description)) {
       alert('Invalid Description - Please enter alphanumeric or numeric values for description');
       return;
     }
@@ -470,7 +470,7 @@ showDescriptionError: boolean = false;
     this.showDescriptionError = false;
     
    // 1. Handle "In Progress" status
-    if (this.EditActionitem.status === 'In Progress') {
+    if (this.csatBased && this.EditActionitem.status === 'In Progress') {
       // Error for selecting NO checkbox
       if (!this.planneD_DECLARATION && !this.actuaL_PLAN_DECLARATION) {
         this.showCommCheckboxError = true;
@@ -483,7 +483,7 @@ showDescriptionError: boolean = false;
         return;
       }
     }
-    else if (this.EditActionitem.status === 'Completed') {  // 2. Handle "Completed" status
+    else if (this.csatBased && this.EditActionitem.status === 'Completed') {  // 2. Handle "Completed" status
       // Error for not checking the closure box OR not providing a date
       if (!this.closurE_ACKNOWLEDGE || !this.EditActionitem.closurE_ACTUAL_CUST_DATE) {
         this.showCommCheckboxErrorComplete = true;
