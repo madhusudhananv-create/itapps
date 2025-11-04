@@ -289,7 +289,9 @@
       "CERTIFICATION_SCOPES:string",
       "ISO_STANDARDS:string",
       "CERTIFICATION_SCOPES_NAME:string",
-      "ISO_STANDARDS_NAME:string"
+      "ISO_STANDARDS_NAME:string",
+      "DP:string",
+      "DP_NAME:string"
     ]
   },
   {

@@ -283,6 +283,8 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ISO_STANDARDS {get; set;}
         public string CERTIFICATION_SCOPES_NAME {get; set;}
         public string ISO_STANDARDS_NAME {get; set;}
+        public string DP {get; set;}
+        public string DP_NAME {get; set;}
     }
 
     public partial class ProjectCertificationScopes  
@@ -459,7 +461,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ACCOUNT_MANAGER {get; set;}
         public string AM_MAIL_ID {get; set;}
         public string BU_HEAD {get; set;}
-        public string BU_MAIL {get; set;}
+        public string BU_MAIL_ID {get; set;}
         public string QUALITY_SPOC {get; set;}
         public string CSM_REVIEWER_MAIL_ID {get; set;}
         public string SKIP_CSAT {get; set;}
