@@ -234,9 +234,9 @@ namespace GAVS.AllocationSystem.WebApi
 
             string smtpAccount = config.smtpAccount;
             string smtpPassword = config.smtpPassword;
-            string smtpHost = config.smtpHost;
+            string smtpHost = "smtp.gmail.com";
             string smtpPortValue = config.smtpPortValue;
-            int smtpPort = Convert.ToInt32(smtpPortValue);
+            int smtpPort = 587;// Convert.ToInt32(smtpPortValue);
 
             string sHeader = "";
             email.content = sHeader + email.content;
@@ -284,12 +284,20 @@ namespace GAVS.AllocationSystem.WebApi
                     if (isProd && email.content.Contains("localhost")) throw new Exception("Invalid localhost URL in mail content");
                     using (SmtpClient smtpClient = new SmtpClient())
                     {
-                        smtpClient.UseDefaultCredentials = false;
-                        smtpClient.Credentials = new NetworkCredential(smtpAccount, smtpPassword, Constants.DOMAIN);
+                        //smtpClient.UseDefaultCredentials = false;
+                        //smtpClient.Credentials = new NetworkCredential(smtpAccount, smtpPassword);
+                        //smtpClient.Host = smtpHost;
+                        //smtpClient.Port = smtpPort;
+                        //smtpClient.EnableSsl = true;
                         smtpClient.Host = smtpHost;
                         smtpClient.Port = smtpPort;
                         smtpClient.EnableSsl = true;
+                        smtpClient.UseDefaultCredentials = false;
+                        var credentials = new System.Net.NetworkCredential(smtpAccount, smtpPassword);
+                        smtpClient.Credentials = credentials;
+
                         smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+
                         smtpClient.Send(message);
                         email_log.MAILSENT = true;
                         email_log.UPDATED_DATE = DateTime.Now;

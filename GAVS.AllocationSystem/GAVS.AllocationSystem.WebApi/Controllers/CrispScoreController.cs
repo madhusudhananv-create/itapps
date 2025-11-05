@@ -137,7 +137,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public void ProcessCrispScoresForPeriod(string Month, string Year, bool regenerate = false)
         {
-            LogRequest(prefix: "ProcessCrispScoresForPeriod" );
+            LogRequest(prefix: "ProcessCrispScoresForPeriod");
             var stopwatch = Stopwatch.StartNew();
             var emp = GetHeaderDetails_String("empid");
             string date = "1-" + Month + "-" + Year;
@@ -412,12 +412,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             else
             {
-               
-               
+
+
                 var kpidetailsSow = CSPdb.AppRepo.GetKPIForCRISPNew(projId, startDate, true).ToList();
                 if (!kpidetailsSow.Any())
                     kpidetailsSow = CSPdb.AppRepo.GetKPIForCRISPNew(projId, startDate.AddMonths(-1), true);
-             
+
                 if (!kpidetailsSow.Any() && IsSLAMetricsAvailable(new string[] { custId }))
                 {
                     kpiscoreSow = ProcessProductKPIScores(projId, startDate, endDate);
@@ -435,7 +435,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
                 }
             }
-           
+
 
             var skipKPI = helper.GetProjectConfigurationDataForSetting("SKIP_Non_SOW_KPI_Calculation").FirstOrDefault(x => x.Bit_Value == true && x.Proj_Id == projId);
             var nonSOWkpiscore = new List<string>();
@@ -498,7 +498,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var sowResult = GetKPICRISPSOW(kpiscoreSow, config.CRISP_VALIDATIONS);
                 if (sowResult.CreateActionItem)
                 {
-                    var existingactionItem = CSPdb.PROJECT_ACTIONITEM.GetAll().FirstOrDefault(x => x.CUSTOMER_ID == custId && x.PROJECT_ID == projId && x.SOURCE == "CRISP" && x.DESCRIPTION.Contains(month + "-" + year));
+                    var existingactionItem = CSPdb.PROJECT_ACTIONITEM.GetAll().FirstOrDefault(x => x.CUSTOMER_ID == custId && x.PROJECT_ID == projId && x.SOURCE.Contains("CRISP") && x.DESCRIPTION.Contains(month + "-" + year));
                     if (existingactionItem != null)
                     {
                         existingactionItem.DESCRIPTION = $"{kpiscoreSow.Count(x => x == "RED" || x == "AMBER").ToString()} out of {kpiscoreSow.Count} KPIs not met the target specified in SOW for the period {month + "-" + year}. Perform RCA, prepare CAPA and submit Service Improvement Plan to customer";
@@ -521,7 +521,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 cpc.UPDATED_BY = emp;
                 cpc.UPDATED_DATE = DateTime.Now;
                 cpc.COMMENTS = "Regenerated";
-                var crisp_scores_categoryExistingList = CSPdb.CRISP_SCORES_CATEGORY.GetAll().Where(x => x.CRISP_SCORES_PROJECT_ID == cpc.ID).Distinct(). ToList();
+                var crisp_scores_categoryExistingList = CSPdb.CRISP_SCORES_CATEGORY.GetAll().Where(x => x.CRISP_SCORES_PROJECT_ID == cpc.ID).Distinct().ToList();
                 var crisp_scores_criteriaList = CSPdb.CRISP_SCORES_CRITERIA.GetAll().Where(x => x.CRISP_SCORES_PROJECT_ID == cpc.ID).ToList();
                 var crisp_scores_validationList = CSPdb.CRISP_SCORES_VALIDATIONS.GetAll().Where(x => x.CRISP_SCORES_PROJECT_ID == cpc.ID).ToList();
                 foreach (var item in crisp_scores_validationList)
@@ -700,7 +700,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private void SendCRISPScoresMailAuto(string ToEmailId, string To, string cc, string Subject, List<CRISPScores> scores, string period, string path, bool isPremier, DateTime date, bool sendCCtoQualityHead = false)
         {
-           
+
 
             //string SenderEmaiId = string.Empty;
             string filePath = HttpContext.Current.Server.MapPath("~/UploadFile/Mails/") + path;

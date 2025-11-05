@@ -232,13 +232,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GeneralMethod"), ActionName("GeneralMethod"), HttpGet]
         public IHttpActionResult GeneralMethod()
         {
-            var mailId = "aashitosh.todkar@neurealm.com";
-            mailId = "madhusudhanan.v@neurealm.com";
-            for (int i = 0; i < 10; i++)
-            {
-                GetCorrectEmployeeRecord(mailId);
-            }
-            
+            SendUnsentMails();
+
+
 
             return Ok();
             //SendCSSBatchReminderMailsPremier(Request);
@@ -403,7 +399,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public void SendUnsentMails()
         {
             //&& new int[]{8346,8660,10093 }.Contains(x.ID)
-            var dateToCheck = DateTime.Now.AddMonths(-1);
+            var dateToCheck = DateTime.Now.AddDays(-3);
             var unsent = CSPdb.EMAIL_LOG.GetAll().Where(x => x.MAILSENT == false && x.CREATED_DATE > dateToCheck).ToList();
             foreach (var item in unsent)
             {
@@ -416,6 +412,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 item,
                 Request
                 );
+               
             }
         }
 
