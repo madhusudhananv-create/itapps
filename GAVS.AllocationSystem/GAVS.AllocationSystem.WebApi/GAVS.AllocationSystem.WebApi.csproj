@@ -517,9 +517,9 @@
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMailAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMail.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedback.htm" />
-   <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedbackAnnual.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedbackAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminder.htm" />
-   <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminderAnnual.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminderAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestAnnual.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestHalfYearly.htm" />
     <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequest.htm" />
@@ -600,6 +600,7 @@
     <Compile Include="Controllers\FMEAController.cs" />
     <Compile Include="Controllers\FMEAControllerRevised.cs" />
     <Compile Include="Controllers\InsightsController.cs" />
+    <Compile Include="Controllers\IntegrationController.cs" />
     <Compile Include="Controllers\IssueController.cs" />
     <Compile Include="Controllers\KPIConfigurationController.cs" />
     <Compile Include="Controllers\LayoutController.cs" />
