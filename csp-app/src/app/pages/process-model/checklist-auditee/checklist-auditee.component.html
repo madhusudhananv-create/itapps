@@ -157,7 +157,7 @@
           <td>
             <div *ngIf="getAuditeeResponse(find.id) == 'Accept'
               || getAuditeeResponse(find.id) == 'Reject'  && find.stagE_COLORS == '#3AB376,#3AB376,#3AB376,#3AB376'
-              ">
+               || getAuditeeResponse(find.id) == 'Rejected-Complet' ">
               <mat-form-field style="width: 90%">
                 <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks"
                   [disabled]="getsubmittedstatus(find)">
