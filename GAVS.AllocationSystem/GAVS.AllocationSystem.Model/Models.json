@@ -485,7 +485,7 @@
       "ACCOUNT_MANAGER:string",
       "AM_MAIL_ID:string",
       "BU_HEAD:string",
-      "BU_MAIL_ID:string",
+      "BU_MAIL:string",
       "QUALITY_SPOC:string",
       "CSM_REVIEWER_MAIL_ID:string",
       "SKIP_CSAT:string",

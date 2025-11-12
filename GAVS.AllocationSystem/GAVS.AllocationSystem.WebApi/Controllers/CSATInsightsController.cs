@@ -98,6 +98,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             LogRequest();
             var watch = Stopwatch.StartNew();
+            if (csatInsightsInput.BUSINESS_UNIT.ToUpper() != "all") csatInsightsInput.CUSTOMER_IDS = "-1";
             var csatdata = CSPdb.AppRepo.GetCSSTableForPeriod(csatInsightsInput.START_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.END_DATE.ToString("yyyy-MM-dd"), csatInsightsInput.CUSTOMER_IDS);
 
             var csat = new List<PROJECT_CSAT_DATA>();

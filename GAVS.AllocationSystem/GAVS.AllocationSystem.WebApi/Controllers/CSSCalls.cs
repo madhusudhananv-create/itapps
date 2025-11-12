@@ -24,6 +24,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private const string CSS_MAIL_SENT = "MAIL SENT";
         private const string CSS_MAIL_RESENT = "MAIL RE-SENT";
         private const string CSS_CREATED = "CREATED";
+        private const string CSS_DRAFT = "DRAFT";
 
         [POST("SendCSSBatchVerification")]
         [ActionName("SendCSSBatchVerification")]
@@ -328,7 +329,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
-            ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails,   am, qualitySpoc, cust.SPOC });
+            ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, am, qualitySpoc, cust.SPOC });
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
 
             var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
@@ -351,7 +352,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the Account {projectText}";
                 subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey {batch.YEAR}";
             }
-            
+
             string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
             EmailContentValues.Add("CUSTOMER", cust.DISPLAY_NAME);
             // EmailContentValues.Add("FREQUENCY", batch.Frequency.Substring(0, Frequency.Length - 2));
@@ -364,16 +365,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("FREQUENCY", batch.FREQUENCY);
             EmailContentValues.Add("YEAR", batch.YEAR.ToString());
             EmailContentValues.Add("BASE_URL", baseImageUrl);
-            if(batch.FREQUENCY.ToLower() == "annual")
+            if (batch.FREQUENCY.ToLower() == "annual")
             {
                 var batchValidityDate = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batch.ID).CSS_VALIDITY_ENDDATE;
                 EmailContentValues.Add("END_DATE", batchValidityDate?.ToString("dd-MMM-yyyy"));
-            }               
+            }
             else
             {
                 EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
             }
-            
+
 
             mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
 
@@ -573,7 +574,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var batches = CSPdb.CSS_BATCHES.GetAll().OrderByDescending(t => t.ID).ToList();
             var batchIds = batches.Select(x => x.ID).ToList();
-            List<iBatchCustomer> totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList<iBatchCustomer>();
+            List<iBatchCustomer> totalRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED || x.STATUS == CSS_DRAFT)).ToList<iBatchCustomer>();
             //if (totalRecords.Count == 0)
             //    totalRecords = CSPdb.CSS_BATCH_CUSTOMER_MONTHLY.GetAll().Where(x => x.ISACTIVE && batchIds.Contains(x.BATCH_MONTHLY_ID) && (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_CREATED)).ToList<iBatchCustomer>();
 
@@ -589,7 +590,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
 
                 item.TOTAL_RECORDS = batchRecords.Count;
-                item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED));
+                item.SURVEY_SENT = batchRecords.Count(x => (x.STATUS == CSS_MAIL_SENT || x.STATUS == CSS_MAIL_RESENT || x.STATUS == CSS_COMPLETED || x.STATUS == CSS_DRAFT));
                 item.SURVEY_RECD = batchRecords.Count(x => x.STATUS == CSS_COMPLETED);
                 item.PENDING = batchRecords.Count(x => x.STATUS == CSS_CREATED && !x.IS_VERIFIED && string.IsNullOrWhiteSpace(x.COMMENTS));
                 item.VERIFIED = batchRecords.Count(x => x.IS_VERIFIED);
@@ -655,7 +656,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 templateFile = "CustomerSuccessSurveySurveyReminder.htm";
                 subject = " A Friendly Reminder - Neurealm " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
             }
-               
+
             ccmail = helper.ConcatEmails(cclist);
             if (!string.IsNullOrWhiteSpace(cust.SPOC))
                 ccmail += "," + cust.SPOC;
@@ -1699,7 +1700,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             DateTime.TryParse(GetHeaderDetails_String("startDate"), out startDate);
             DateTime.TryParse(GetHeaderDetails_String("endDate"), out endDate);
 
-            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL   == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
+            var cssVerificationList = CSPdb.AppRepo.GetCSSForVerification(startDate, endDate).Where(x => x.CSM_EMP_ID == emp_Id || x.BU_MAIL == emailId || x.AM_MAIL_ID == emailId).ToList().OrderBy(verification => verification.CUST_NM).OrderBy(verification => verification.PROJ_NM).OrderBy(verification => verification.RESPONDENT_NAME);
             var uri = helper.GetAbsoulteUri();
 
             foreach (var item in cssVerificationList)

@@ -16,6 +16,8 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public string CUSTOMER_IDS { get; set; }
         public string FREQUENCY { get; set; } 
         public string CSM_IDS { get; set; }
+
+        public string BUSINESS_UNIT { get; set; }
     }
 
     public class CSATViewDetailsInputHolder
