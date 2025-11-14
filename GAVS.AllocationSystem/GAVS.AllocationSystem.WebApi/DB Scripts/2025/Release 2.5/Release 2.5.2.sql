@@ -455,3 +455,36 @@ where isnull(proj_status, '') != 'close'
 order by c.cust_nm, p.proj_nm            
 END 
 GO
+
+IF EXISTS(Select 1 from sys.objects where name ='getAllAccounts' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getAllAccounts] 
+END
+GO
+
+CREATE PROCEDURE  [dbo].[getAllAccounts]    
+   
+AS                                      
+BEGIN       
+    
+  select  '-1' as CUST_ID ,'All' as CUST_NM,''as BUSINESS_UNIT, 1 as SORT_ORDER        
+  union        
+  select  '-2' ,'My Accounts'  ,'' ,2  
+  union  
+  select  '-3' ,'Top 10 Accounts' ,'',3     
+  union        
+  select  '-4','All Accounts Except Top 10 Accounts','',4    
+  union   
+  select  '-5','All GS Lab Accounts','',5        
+  union       
+  select  '-6','GS Lab Key Accounts','',6  
+  union
+  select  '-7','Strategic Accounts - President','',7
+  union        
+  select  C.CUST_ID,C.CUST_NM ,c.BUSINESS_UNIT as BUSINESS_UNIT, 8 as SORT_ORDER from CUSTOMER C   
+  where c.CUST_ID in (select  distinct P.CUST_ID from PROJECT P where ISNULL(P.PROJ_STATUS,'') != 'Close')    
+  and c.BUSINESS_UNIT in('Health Care','India & UK','New Growth','Tech')
+  order by SORT_ORDER,CUST_NM        
+  
+End  
+GO

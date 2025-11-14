@@ -424,6 +424,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                         if (iteration.STATUS == "DRAFT")
                         {
+                            CheckCSSLinkValid(iteration, batchCust.CUST_ID);
                             var npsQuestion = questionsWithReplies.FirstOrDefault(x => x.QUESTION_CATEGORY == "NPS" && x.RATING == 0);
                             if (npsQuestion != null) npsQuestion.RATING = -1;
                         }
@@ -1274,6 +1275,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     result = helper.GetDBConfig("CSS_CC_LIST_INDIAUK", null);
                     break;
                 case "NEW GROWTH":
+                 case "CIT":
                     result = helper.GetDBConfig("CSS_CC_LIST_NEWGROWTH", null);
                     break;
                 case "TECH":

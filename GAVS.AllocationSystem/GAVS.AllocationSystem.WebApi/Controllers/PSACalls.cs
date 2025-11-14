@@ -16,7 +16,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
     public partial class AllSysController
     {
-        private readonly List<string> _allowedBusinessUnits = new List<string> { "Health care", "India & UK", "New Growth", "Tech" };
+
+
+
+        private readonly List<string> _allowedBusinessUnits = new List<string> { "Health care", "India & UK", "New Growth", "CIT", "Tech" };
         private void LogRequest(Exception exception = null, string prefix = "PSA:", string content = "")
         {
             var l = new Logger(Request, exception, prefix, content);
@@ -225,8 +228,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 project.DP_ID = GetOldEMPId(project.PROJ_EP_ID);
                 project.PROJ_BUHEAD_EMP_ID = GetOldEMPId(project.PROJ_BUHEAD_EMP_ID);
                 project.PROJ_EP_ID = GetOldEMPId(project.PROJ_EP_ID);
-                if (!_allowedBusinessUnits.Contains(project.BUSINESS_UNIT))
-                    project.BUSINESS_UNIT = null;
+                project.BUSINESS_UNIT = getUpdatedBusinessUnit(project.BUSINESS_UNIT);
 
 
                 Cldb.PROJECT.Add(project);
@@ -546,8 +548,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existing.CUST_ID = project.CUST_ID;
                     existing.DEPT_ID = project.DEPT_ID;
 
-                    if (_allowedBusinessUnits.Contains(project.BUSINESS_UNIT))
-                        existing.BUSINESS_UNIT = project.BUSINESS_UNIT;
+                    existing.BUSINESS_UNIT = getUpdatedBusinessUnit(project.BUSINESS_UNIT);
                     existing.PROJECT_TYPE = project.PROJECT_TYPE;
                     existing.DEPARTMENT = project.DEPARTMENT;
                     existing.PROJECT_GROUP = project.PROJECT_GROUP;
@@ -601,6 +602,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return GetResult<PROJECT>(null, errMsg);
         }
         #endregion
+        private string getUpdatedBusinessUnit(string businessUnit)
+        {
+            if (_allowedBusinessUnits.Any(x => x == businessUnit)) return businessUnit;
+            switch (businessUnit.ToLower())
+            {
+                case "ngrow":
+                    return "CIT";
+                case "heal":
+                    return "Health care";
+                case "tech":
+                    return "Tech";
+                case "inuk":
+                    return "India & UK";
+                default:
+                    break;
+            }
+
+            return businessUnit;
+        }
+
         #region Employee
         [GET("GetEmployeeById")]
         [ActionName("GetEmployeeById")]
@@ -772,7 +793,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 if (result == null)
                 {
-                    result = empRecords.FirstOrDefault(x =>   x.DOR == null);
+                    result = empRecords.FirstOrDefault(x => x.DOR == null);
                 }
             }
 

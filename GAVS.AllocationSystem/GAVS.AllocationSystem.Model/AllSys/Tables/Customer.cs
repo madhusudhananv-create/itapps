@@ -13,6 +13,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
         [Key]
         public string CUST_ID { get; set; }
         public string CUST_NM { get; set; }
+        public string BUSINESS_UNIT { get; set; }
     }
     public class CUSTOMER :CustomerBase
     {
@@ -26,7 +27,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
         public string EP_ID { get; set; }
 
-        public string  BUSINESS_UNIT { get; set; }
+      
     }
     public class CustomerProjectIds
     {
