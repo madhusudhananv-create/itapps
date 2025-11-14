@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, Output, EventEmitter, AfterViewInit, DebugElement } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, Output, EventEmitter, AfterViewInit, DebugElement , ChangeDetectorRef, AfterContentChecked} from '@angular/core';
 import { AppsService } from '../../../../Services/apps.service';
 import { myUtility } from '../../../../Shared/myUtility';
 import { MatDialog, MatDialogConfig, MatOption, MatSelect } from '@angular/material';
@@ -20,12 +20,15 @@ export class CssdashboardFilterComponent implements OnInit {
   trendQuarter: number = 1;
   //customerIds: string;
   customer: any = [];
+  businessUnits: any = [];
   @Input("custId") custId: string;
   @Input("allCust") allCust: boolean;
   @ViewChild('mySel') mySel: MatSelect;
   @ViewChild('myCSM') myCSM: MatSelect;
+  @ViewChild('myBU') myBU: MatSelect;
   @ViewChild('allCustomerSelected') allCustomerSelected: MatOption;
   @ViewChild('allCSMSelected') allCSMSelected: MatOption;
+  @ViewChild('allBUSelected') allBUSelected: MatOption;
 
   allAccountsExcepttop15Accounts: any
   top15Accounts: any
@@ -35,9 +38,9 @@ export class CssdashboardFilterComponent implements OnInit {
   fromDate: Date = new Date();
   toDate: Date = new Date();
   @Output() getCssInputEmitter = new EventEmitter<any>();
-  cssInputs: CssdashboardInputs;
-  CSMList: any;
-  csmIds: string;
+  cssInputs: CssdashboardInputs= new CssdashboardInputs();
+   CSMList: any;
+   csmIds: string;
   csmIdsa: any;
   customerIdsa: any;
   allGSLabAccounts: any;
@@ -46,11 +49,20 @@ export class CssdashboardFilterComponent implements OnInit {
   allstrategicAccounts :any;
   resultData: any;
   frequency: string ="Both";
-  constructor(public _util: myUtility, private _appService: AppsService, private surveyService: SurveyService, private dialog: MatDialog) { }
+  filteredCustomers: any = [];
+  isAccountDropdownDisabled: boolean = false;
+  selectedBUs: any[] = [];
+  constructor(public _util: myUtility, private _appService: AppsService, private surveyService: SurveyService, private dialog: MatDialog, private cdref: ChangeDetectorRef) { }
+   ngAfterContentChecked() {
 
+    this.cdref.detectChanges();
+
+  }
+  
   selectDefaultvalues() {
     this.selectDefaultCSM();
     this.selectDefaultCustomer();
+    this.selectDefaultBU();
     setTimeout(() => {
       this.checkAll();
     }, 500);
@@ -65,6 +77,8 @@ export class CssdashboardFilterComponent implements OnInit {
     this.csmIds = "-1";
     this.service_GetCSMList();
     this.selectedQuarter = this.IsPremier() == true ? "Select Period" : "lastQuarter";
+    this.filteredCustomers = this.customer;
+    this.selectedBUs = ["All"];
   }
 
   getAccountsForUser() {
@@ -74,13 +88,18 @@ export class CssdashboardFilterComponent implements OnInit {
       this.resultData = data;
       if (this.resultData != undefined) {
         this.customer = this.resultData.customers;
+         this.filteredCustomers = this.customer; 
         this.top15Accounts = this.resultData.allTop15Accounts;
         this.allAccountsExcepttop15Accounts = this.resultData.allAccountsExceptTop15Accounts;
         this.qualitySpocAccounts = this.resultData.allQASpocAccounts;
         this.allGSLabAccounts = this.resultData.allGSLabAccounts;
         this.allGSLabKeyAccounts = this.resultData.allGSLabKeyAccounts;
         this.allstrategicAccounts = this.resultData.allstrategicAccounts;
-      }
+         this.businessUnits = this.customer.map(x => x.businesS_UNIT).filter((value, index, self) => {
+          return value && value.trim() !== '' && self.indexOf(value) === index;
+        }).sort();
+    }
+   
       
       if (this.customer != undefined) {
         if (this.allCust) {
@@ -100,6 +119,7 @@ export class CssdashboardFilterComponent implements OnInit {
   checkAll() {
     this.mySel.options.forEach((item: MatOption) => item.select());
     this.myCSM.options.forEach((item: MatOption) => item.select());
+    this.myBU.options.forEach((item: MatOption) => item.select());
     this.emitChanges();
   }
   CheckIfAllSelected() {
@@ -158,7 +178,71 @@ export class CssdashboardFilterComponent implements OnInit {
     if (this.CSMList.length == count)
       this.allCSMSelected.select();
   }
+ onBUSelectionChange() {
+  const selectedBUValues = this.myBU.value;
+  if (selectedBUValues && selectedBUValues.includes("All")) {
 
+    this.isAccountDropdownDisabled = true;
+    this.filteredCustomers = this.customer;
+    setTimeout(() => {
+      this.mySel.options.forEach((item: MatOption) => item.select());
+    }, 0);
+  } 
+  else if (selectedBUValues && selectedBUValues.length > 0) {
+    this.isAccountDropdownDisabled = true;
+    
+    this.filteredCustomers = this.customer.filter(c => 
+      selectedBUValues.includes(c.businesS_UNIT)
+    );
+    
+    const filteredCustomerIds = this.filteredCustomers.map(c => c.cusT_ID);  
+    this.mySel.options.forEach((item: MatOption) => item.deselect());
+  
+    setTimeout(() => {
+      this.mySel.options.forEach((item: MatOption) => {
+        if (filteredCustomerIds.includes(item.value) || item.value === "-1") {
+          item.select();
+        }
+      });
+    }, 0);
+  } 
+  else {
+    this.isAccountDropdownDisabled = false;
+    this.filteredCustomers = this.customer;
+  }
+  
+  this.selectedPeriod_OnChange();
+}
+
+  toggleSelectionForBU() {
+  if (this.allBUSelected.selected) {
+    this.myBU.options.forEach((item: MatOption) => item.select());
+  } else {
+    this.myBU.options.forEach((item: MatOption) => item.deselect());
+  }
+}
+
+buTosslePerOne() {
+  if (this.allBUSelected.selected) {
+    this.allBUSelected.deselect();
+    setTimeout(() => {
+      this.onBUSelectionChange();
+    }, 0);
+    return false;
+  }
+  
+  let count = 0;
+  this.myBU.options.forEach((item: MatOption) => {
+    if (item.selected) {
+      count++;
+    }
+  });
+  
+  if (this.businessUnits.length == count) {
+    this.allBUSelected.select();
+  }
+  
+}
   public IsPremier() {
     let custid = this.getCustomerIds();
     if (custid == "202100062" || custid == "212100001" || custid == "202100062,212100001" || custid == "212100001,202100062")
@@ -202,16 +286,22 @@ export class CssdashboardFilterComponent implements OnInit {
       this.selectDefaultvalues();
     }
   }
-  selectDefaultCSM() {
-    if (this.myCSM != undefined && this.myCSM.options != undefined && this.myCSM.options.first != undefined) {
-      this.myCSM.options.first.select();
-    }
-  }
+   selectDefaultCSM() {
+     if (this.myCSM != undefined && this.myCSM.options != undefined && this.myCSM.options.first != undefined) {
+       this.myCSM.options.first.select();
+     }
+   }
   selectDefaultCustomer() {
     if (this.mySel != undefined && this.mySel.options != undefined && this.mySel.options.first != undefined) {
       this.mySel.options.first.select();
     }
   }
+   selectDefaultBU() {
+    if (this.myBU != undefined && this.myBU.options != undefined && this.myBU.options.first != undefined) {
+      this.myBU.options.first.select();
+    }
+  }
+
   getdatesForQuarter() {
   
 

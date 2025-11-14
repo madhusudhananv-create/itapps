@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Inject, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, Inject, EventEmitter, Output, ViewChild,ChangeDetectorRef } from '@angular/core';
 import { myUtility } from '../../../Shared/myUtility';
 import * as Highcharts from 'highcharts/highstock';
 import { AppsService } from '../../../Services/apps.service';
@@ -90,7 +90,12 @@ export class CssdashboardComponent implements OnInit {
   _loading: boolean = false;
   csmIds: string;
   frequency: string;
-  constructor(private _router: Router, public _util: myUtility, private _appService: AppsService, public _access: AccessControl) {
+  constructor(private _router: Router, public _util: myUtility, private _appService: AppsService, public _access: AccessControl, private cdref: ChangeDetectorRef) {
+
+  }
+  ngAfterContentChecked() {
+
+    this.cdref.detectChanges();
 
   }
 
@@ -106,6 +111,7 @@ export class CssdashboardComponent implements OnInit {
     }
   }
   ngAfterViewInit() {
+    
     this.bindCSATInputs();
 
   }

@@ -44,11 +44,10 @@ export class CssDashboardCSSTableComponent implements OnInit {
   startDate = new Date();
   endDate = new Date();
   @Input("isLoaded") isLoaded: boolean;
-  @Input("cssDashboardInputs") cssDashboardInputs: CssdashboardInputs;
+  @Input("cssDashboardInputs") cssDashboardInputs: CssdashboardInputs = new CssdashboardInputs();
   _loading: boolean = false;
 
   constructor(private _util: myUtility, private _appService: AppsService) { }
-
 
   Highcharts = Highcharts;
 
@@ -79,6 +78,7 @@ export class CssDashboardCSSTableComponent implements OnInit {
     }
   }
   getSurveyData1() {
+    if (this.cssDashboardInputs != null && this.cssDashboardInputs != undefined) {
     this._loading = true;
     this.surveyData = undefined;
     this._appService.getSurveyDataPeriodwise(this.cssDashboardInputs).subscribe(data => {
@@ -86,8 +86,10 @@ export class CssDashboardCSSTableComponent implements OnInit {
       this._loading = false;
     }, error => { this._util.serviceError(error); this._loading = false; })
   }
+}
 
   getNPSTrendDataInPercentage() {
+    if (this.cssDashboardInputs != null && this.cssDashboardInputs != undefined) {
     this._loading = true;
     this.trendChartDataNPSInPercentage = undefined;
     this._appService.getResponseCategoryData(this.cssDashboardInputs).subscribe(data => {
@@ -95,6 +97,7 @@ export class CssDashboardCSSTableComponent implements OnInit {
       this._loading = false;
     }, error => { this._util.serviceError(error); this._loading = false; })
   }
+}
 
   bindCSATInputs() {
     // let obj = new CssdashboardInputs();

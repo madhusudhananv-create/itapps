@@ -1,12 +1,24 @@
 <div style="margin-left: 1%;" class="row">
   <table>
     <tr>
-      <td>
-        <mat-form-field style="width: 120% !important;">
+       <td>
+        <mat-form-field style="width: 80% !important;">
+          <mat-select multiple name="ddBU" placeholder="Business Unit" [(ngModel)]='selectedBUs'
+             [disabled]="_loading" (selectionChange)="onBUSelectionChange()" #myBU>
+            <mat-option value ="All" (click)="toggleSelectionForBU()"  #allBUSelected>All</mat-option>
+           <mat-option *ngFor="let bu of businessUnits" (click)="buTosslePerOne()"[value]="bu"
+              [title]="bu">
+              {{ bu }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+      <td style="padding-left: 5px;">
+        <mat-form-field style="width: 100% !important;">
           <mat-select multiple name="ddCustomer" placeholder="Account" [(ngModel)]='customerIdsa'
-            [disabled]="_loading" (selectionChange)="selectedPeriod_OnChange()" #mySel>
+           [disabled]="_loading || isAccountDropdownDisabled" (selectionChange)="selectedPeriod_OnChange()" #mySel>
             <mat-option [value]="-1" (click)="toggleSelectionForCustomer()" #allCustomerSelected>All</mat-option>
-            <mat-option *ngFor="let c of customer" (click)="customerTosslePerOne()" [value]="c.cusT_ID"
+            <mat-option *ngFor="let c of filteredCustomers" (click)="customerTosslePerOne()" [value]="c.cusT_ID"
               [title]="c.cusT_NM">
               {{ c.cusT_NM}}
             </mat-option>
@@ -14,8 +26,8 @@
           </mat-select>
         </mat-form-field>
       </td>
-      <td style="padding-left: 3%;">
-        <mat-form-field style="width: 80% !important;">
+      <td style="padding-left: 3%;display: none;">
+        <mat-form-field style="width: 20% !important;">
           <mat-select name='CSM' multiple [(ngModel)]="csmIdsa" placeholder="CSM" #myCSM>
             <mat-option [value]="-1" (click)="toggleSelectionForCSM()" #allCSMSelected>All</mat-option>
             <mat-option [value]="c.csM_ID" (click)="csmTosslePerOne()" *ngFor="let c of CSMList" [title]="c.csm">{{c.csm}}</mat-option>
@@ -63,8 +75,8 @@
       </td>
 
       <td style="padding-left: 3%;">
-        <div style="margin-left: -87%;">
-          <mat-form-field>
+        <div style="margin-left: -80%;">
+          <mat-form-field style="Width:60% !important;">
             <mat-select name='tableTrend' (selectionChange)="selectedPeriod_OnChange()" [(ngModel)]="trendQuarter"
               placeholder="Show Data" [disabled]="_loading">
               <mat-option [value]="1">For Specific Period </mat-option>
@@ -74,9 +86,9 @@
           </mat-form-field>
         </div>
       </td>
-      <td style="padding-left: 3%;">
-        <div style="margin-left: -87%;">
-          <mat-form-field>
+      <td style="padding-left: 2%;">
+        <div style="margin-left: -80%;">
+          <mat-form-field style="Width:30% !important;">
             <mat-select name='tableFrequency'   [(ngModel)]="frequency" placeholder="Frequency"  >
               <mat-option value="Both">All </mat-option>
               <mat-option value="Quarterly">Quarterly </mat-option>
@@ -86,13 +98,13 @@
           </mat-form-field>
         </div>
       </td>
-      <td style="padding-right: 5%;">
+      <td style="padding-right: 12%;">
         <div style="float:right;display: inline-flex;margin-top: -12%;">
-          <button class="btn btn-primary" style="float: left;border:none;margin-right: 7%;width:50%" mat-raised-button
+          <button class="btn btn-primary" style="float: left;border:none;margin-right: 5%;width:50%" mat-raised-button
             (click)="emitChanges()" [disabled]="_loading">Apply</button>
           <button class="btn btn-warning" style="border:none;float:right;width:50%" mat-raised-button (click)="reset()"
             [disabled]="_loading">Reset</button>
-          <button class="btn btn-primary" mat-raised-button style="border:none;float:right;width:50%;margin-left: 7%;"
+          <button class="btn btn-primary" mat-raised-button style="border:none;float:right;width:50%;margin-left: 1%;"
             mat-raised-button (click)="ViewCSSDetails()">View Details</button>
         </div>
       </td>
