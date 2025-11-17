@@ -545,6 +545,7 @@
     <Content Include="UploadFile\Mails\SubmittedSlaMetrics.htm" />
     <Content Include="UploadFile\Mails\CapaSendMailForKPI_Premier.htm" />
     <Content Include="UploadFile\Mails\ChecklistAuditSendEmail.htm" />
+    <Content Include="UploadFile\Mails\ChecklistAuditAppraiserSendEmail.htm" />
     <Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
     <Content Include="UploadFile\Mails\CAPAAuditReviewEmail.htm" />
     <Content Include="UploadFile\Mails\CAPAAuditImplementationEmail.htm" />

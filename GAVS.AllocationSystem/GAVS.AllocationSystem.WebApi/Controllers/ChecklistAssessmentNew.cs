@@ -1567,6 +1567,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             checklistsendmail.AUDIT_ID = auditid;
             checklistsendmail.FINDING_ID = resultList[0].FINDING_ID;
             checklistsendmail.REMARKS = resultList[0].REMARKS ?? "None";
+            checklistsendmail.RESULT_LIST = resultList.ToList();
             SendMailOnAuditChecklistStage(checklistsendmail);
 
             return Ok(resultList);
@@ -2109,14 +2110,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var cust = Cldb.CUSTOMER.GetAll().FirstOrDefault(x => x.CUST_ID == checklistSendMail.CUSTOMER_ID);
             var requestDomain = helper.GetAbsoulteUri();
             var path = "layout/qasummary";
-            if (checklistSendMail.SUBJECT == "Assessment Completed" || checklistSendMail.SUBJECT == "Appraiser Response Submitted" || (checklistSendMail.SUBJECT == "Appraisee Response Submitted" && checklistSendMail.STATUS.Contains("Accept")))
+            var htmlFindingsTable = string.Empty;
+            if (checklistSendMail.RESULT_LIST != null && checklistSendMail.RESULT_LIST.Count > 0 && checklistSendMail.SUBJECT == "Appraisee Response Submitted")
+            {
+                htmlFindingsTable = GenerateAppraiseeResponseTable(checklistSendMail.RESULT_LIST, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, checklistSendMail.AUDIT_ID);
+
+            }
+            else if (checklistSendMail.SUBJECT == "Assessment Completed" || checklistSendMail.SUBJECT == "Appraiser Response Submitted" || checklistSendMail.SUBJECT == "Appraisee Response Submitted" )
             {
                 checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result.</p>";
             }
-            else if (checklistSendMail.SUBJECT == "Appraisee Response Submitted")
-            {
-                checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result.You can <a href='{requestDomain}/{path}/{checklistSendMail.CUSTOMER_ID}/{checklistSendMail.PROJECT_ID}/{checklistSendMail.AUDIT_ID}/{checklistSendMail.FINDING_ID}/1/1'> Accept</a> or <a href='{requestDomain}/{path}/{checklistSendMail.CUSTOMER_ID}/{checklistSendMail.PROJECT_ID}/{checklistSendMail.AUDIT_ID}/{checklistSendMail.FINDING_ID}/1/0 '> Revert </a>  the status</p>";
-            }
+
             checklistSendMail.NOTE_MSG = $"<p> Note : You are requested to accept or reject the findings within 5 days from the date of reporting. In case the findings are not accepted within five days, the findings will be considered as accepted by the internal assessment system </p>";
             checklistSendMail.QUERY_MSG = $" <p>In case you have any query on the findings, please contact { checklistSendMail.AUDITOR_NAME}. In case of any issue that is not resolved even after approaching { checklistSendMail.AUDITOR_NAME} or Quality SPOC, please setup a call with Head of Quality Assurance to resolve it.</ p >";
             checklistSendMail.NEXT_ACTION = checklistSendMail.ACTION_CLASS == "hideAction" ? string.Empty : $"<span> Next Action : <b> {checklistSendMail.NEXT_ACTION} </b></span>";
@@ -2193,10 +2197,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("TARGET", checklistSendMail.TARGET);
             EmailContentValues.Add("FINDING_DESCRIPTION", checklistSendMail.FINDING_DESCRIPTION);
             EmailContentValues.Add("REMARKS", checklistSendMail.REMARKS);
-            EmailContentValues.Add("CAPA_TABLE", htmlCapaTable);            
+            EmailContentValues.Add("CAPA_TABLE", htmlCapaTable);
+            EmailContentValues.Add("FINDINGS_TABLE", htmlFindingsTable);
             if (checklistSendMail.STATUS == "Assessment Completed")
             {
                 mailContent = helper.GetEmailContent("CheckListAuditSendMailForAssessmentCompleted.htm", EmailContentValues);
+            }
+            else if (checklistSendMail.SUBJECT.ToLower() == "appraiser response submitted")
+            {
+                mailContent = helper.GetEmailContent("ChecklistAuditAppraiserSendEmail.htm", EmailContentValues);
             }
             else if(checklistSendMail.STAGE.ToLower() == "corrective action plan submission")
             {
@@ -2365,7 +2374,48 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return sb.ToString();
         }
 
+        private string GenerateAppraiseeResponseTable(List<AUDITEE_ACCEPTANCE> resultList, string customerId, string projectId, int auditId)
+        {
+            var path = "layout/qasummary";
+            var requestDomain = helper.GetAbsoulteUri();
+            var findingIds = resultList.Select(x => x.FINDING_ID).ToList();
+            var findingDetails = CSPdb.AUDIT_CHECKLIST_PROJECT_FINDINGS.GetAll().Where(x => findingIds.Contains(x.ID) && x.ISACTIVE).ToList();
+            int i = 1;
+            var findingsTableRows = new StringBuilder();
 
+            foreach (var result in resultList)
+            {
+                var findingDetail = findingDetails.FirstOrDefault(x => x.ID == result.FINDING_ID);
+
+                if (findingDetail != null)
+                {
+                    var acceptLink = $"{requestDomain}/{path}/{customerId}/{projectId}/{auditId}/{result.FINDING_ID}/1/1";
+                    var revertLink = $"{requestDomain}/{path}/{customerId}/{projectId}/{auditId}/{result.FINDING_ID}/1/0";
+                    var remarks = result.REMARKS;
+                    if (!string.IsNullOrWhiteSpace(remarks) && remarks.Contains("Auditee Remarks"))
+                    {
+                        remarks = remarks.Substring(0, remarks.IndexOf("Auditee Remarks")).Trim();
+                    }
+                    if (string.IsNullOrWhiteSpace(remarks))
+                    {
+                        remarks = "-";
+                    }
+                    findingsTableRows.AppendLine("<tr>");
+                    findingsTableRows.Append($"<td>{i++}</td>");
+                    findingsTableRows.AppendLine($"<td'>{findingDetail.FINDING_TYPE}</td>");
+                    findingsTableRows.AppendLine($"<td'>{findingDetail.FINDING_DESCRIPTION}</td>");
+                    findingsTableRows.AppendLine($"<td'>{result.STATUS}</td>");
+                    findingsTableRows.AppendLine($"<td style = '{(remarks == "-" ? "text-align: center" : "")}'>{remarks}</td>");
+                    if(result.STATUS == "Reject")
+                        findingsTableRows.AppendLine($"<td'><a href='{acceptLink}'>Accept</a> | <a href='{revertLink}'>Revert</a></td>");
+                    else
+                        findingsTableRows.AppendLine($"<td'>None</td>");
+                    findingsTableRows.AppendLine("</tr>");
+                }
+            }
+
+            return findingsTableRows.ToString();
+        }
         [POST("GetStageColor")]
         [ActionName("GetStageColor")]
         [HttpPost]
@@ -2537,6 +2587,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             public int? FINDING_ID { get; set; }
             public string REMARKS { get; set; }
 
+            public List<AUDITEE_ACCEPTANCE> RESULT_LIST { get; set; }
         }
 
         [GET("GetFindingsForProject")]
