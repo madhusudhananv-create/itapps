@@ -269,5 +269,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository_CSP<APPRECIATION> APPRECIATION { get; }        
         IRepository_CSP<PROJECT_INSCOPE_DETAILS> PROJECT_INSCOPE_DETAILS { get; }
         IRepository_CSP<CSS_QUESTION_MODELS> CSS_QUESTION_MODELS { get; }
+
+        IRepository_CSP<ACCESS_REQUESTS> ACCESS_REQUESTS { get; }
     }
 }

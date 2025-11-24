@@ -300,6 +300,16 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
 
 
+    public partial class ACCESS_REQUESTS : EntityBase
+    {
+        public string RESOURCE_IDS {get; set;}
+        public string ACCESS_TYPE {get; set;}
+        public string PROJ_ID {get; set;}
+        public string STATUS {get; set;}
+        public string APPROVER_ID  {get; set;}
+        public  DateTime? APPROVAL_DATE {get; set;}
+        public  string REJECT_REASON  {get; set;}
+    }
 
 }
  

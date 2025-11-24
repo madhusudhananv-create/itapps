@@ -243,7 +243,7 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<SLA_REJECTION_STATUS_HISTORY>().ToTable("dbo.SLA_REJECTION_STATUS_HISTORY");
             modelBuilder.Entity<SLA_REJECTION_STATUS>().ToTable("dbo.SLA_REJECTION_STATUS");
             modelBuilder.Entity<APPRECIATION>().ToTable("dbo.APPRECIATION");
-
+            modelBuilder.Entity<ACCESS_REQUESTS>().ToTable("dbo.ACCESS_REQUESTS");
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
         }
         public virtual DbSet<APP_ACCESS_CONTROLS> APP_ACCESS_CONTROLS { get; set; }
@@ -452,5 +452,8 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<TASK_STATUS_HISTORY> TASK_STATUS_HISTORY { get; set; }
         public virtual DbSet<APPRECIATION> APPRECIATION { get; set; }
         public virtual DbSet<CSS_QUESTION_MODELS> CSS_QUESTION_MODELS { get; set; }
+
+        public virtual DbSet<ACCESS_REQUESTS> ACCESS_REQUESTS { get; set; }
+
     }
 }

@@ -540,6 +540,8 @@
     <Content Include="UploadFile\Mails\SendMailForConfigEXT.htm" />
     <Content Include="UploadFile\Mails\SendMailForQspocChange.htm" />
     <Content Include="UploadFile\Mails\SendMailForRiskRepo.htm" />
+    <Content Include="UploadFile\Mails\ResourceAccessRequest.htm" />
+    <Content Include="UploadFile\Mails\AccessRequestStatus.htm" />
     <Content Include="UploadFile\Mails\SLARejectionAcceptRejectByProductManagers.htm" />
     <Content Include="UploadFile\Mails\SLARejectionByCustomer.htm" />
     <Content Include="UploadFile\Mails\SubmittedSlaMetrics.htm" />
