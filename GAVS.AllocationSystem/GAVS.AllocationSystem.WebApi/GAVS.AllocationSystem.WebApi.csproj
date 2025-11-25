@@ -627,6 +627,7 @@
     <Compile Include="Controllers\TaskControllerHelper.cs" />
     <Compile Include="Controllers\TimesheetController.cs" />
     <Compile Include="Controllers\ViewCSATController.cs" />
+   <Compile Include="Controllers\AccessManagementController.cs" />
     <Compile Include="Controllers\_constants.cs" />
     <Compile Include="Controllers\_overrides.cs" />
     <Compile Include="DBContext\ACTIVITY_LOGS.cs">
