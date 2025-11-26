@@ -51,7 +51,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 switch (category.ToLower())
                 {
                     case "assessment":
-                        result =   ConvertStringtoFile((x=> { }), GenerateInternalAuditReport(custId, projectId, id));
+                        result = ConvertStringtoFile((x => { }), GenerateInternalAuditReport(custId, projectId, id));
                         break;
                     default:
                         break;
@@ -412,7 +412,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 item,
                 Request
                 );
-               
+
             }
         }
 
@@ -496,7 +496,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return result;
         }
 
-        private void CheckUserHasAccess(string empId, string custId, string projId, IEnumerable<ProjectBase> projects = null)
+        private bool CheckUserHasAccess(string empId, string custId, string projId, IEnumerable<ProjectBase> projects = null, bool throwError = true)
         {
             // return Content(HttpStatusCode.Conflict, $"There are no resources allocated for the selected project -{projectName}. Please make sure allocations are added to choose Auditees.");
             if (IsGavs(empId))
@@ -510,8 +510,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     if (!projects.Any(x => x.CUST_ID == custId))
                     {
-                        var cust = Cldb.CUSTOMER.GetAll().FirstOrDefault(x => x.CUST_ID == custId)?.CUST_NM;
-                        throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Authorization Issue: Access to information related to account ({custId}) not allowed for the employee ({empId})."));
+                        if (throwError)
+                        {
+                            var cust = Cldb.CUSTOMER.GetAll().FirstOrDefault(x => x.CUST_ID == custId)?.CUST_NM;
+                            throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Authorization Issue: Access to information related to account ({cust}) not allowed for the employee ({empId})."));
+                        }
+                        else
+                            return false;
 
                     }
 
@@ -520,12 +525,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     if (!projects.Any(x => x.PROJ_ID == projId))
                     {
-                        throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Authorization Issue: Access to information related to Project ({projId}) not allowed for the employee ({empId})."));
+                        if (throwError)
+                            throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Authorization Issue: Access to information related to Project ({projId}) not allowed for the employee ({empId})."));
+                        else return false;
 
                     }
                 }
 
             }
+
+            return true;
 
         }
 

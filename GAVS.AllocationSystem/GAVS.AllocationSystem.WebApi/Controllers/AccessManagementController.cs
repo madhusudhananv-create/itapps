@@ -18,14 +18,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [POST("RequestEditResourceAccess")]
         [ActionName("RequestEditResourceAccess")]
         [HttpPost]
-        public IHttpActionResult RequestEditResourceAccess([FromBody] List<int> resourceId, string empId, int accessType, string projId = null)
+        public IHttpActionResult RequestEditResourceAccess([FromBody] List<int> resourceId, string feature, string empId, int accessType, string custId, string projId = null)
         {
 
             if (string.IsNullOrEmpty(empId)) { return BadRequest("Employee ID is required"); }
             if (resourceId == null || resourceId.Count == 0) { return BadRequest("Resource ID list is required"); }
             if (!string.IsNullOrEmpty(projId))
             {
-                bool hasAllocation = CheckProjectAllocation(projId, empId);
+                bool hasAllocation = CheckUserHasAccess(empId, custId, projId, throwError: false);
                 if (!hasAllocation)
                 {
                     return BadRequest("Employee does not have allocation to the project");
@@ -47,9 +47,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     break;
             }
             var requestId = SaveAccessRequest(resourceId, empId, accessTypeText, projId);
-            var subject = $"Access Request to {accessTypeText} Audit Findings";
+            var subject = $"{accessTypeText} Access Request to {feature}";
             var empName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId && x.DOR == null);
-            var custId = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId && x.PROJ_STATUS.ToLower() != "close").CUST_ID;
+        
             var mainUrl = $"{helper.GetAbsoulteUri()}/accesscontrolrequest/{custId}/{projId}/{requestId}/{accessTypeText}/{accessType}/";
             string approveUrl = mainUrl + "1";
             string rejectUrl = mainUrl + "0";
@@ -78,17 +78,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         }
 
-        private bool CheckProjectAllocation(string projId, string empId)
-        {
-            if (string.IsNullOrWhiteSpace(projId) || string.IsNullOrWhiteSpace(empId))
-                return false;
+        //private bool CheckProjectAllocation(string projId, string empId)
+        //{
+        //    if (string.IsNullOrWhiteSpace(projId) || string.IsNullOrWhiteSpace(empId))
+        //        return false;
 
-            var empAllocation = Cldb.PROJECT_RESOURCE.GetAll().Where(x => x.PROJ_ID == projId && x.EMP_ID == empId && x.END_DATE >= DateTime.Today);
-            if (empAllocation.Any())
-                return true;
+        //    var empAllocation = Cldb.PROJECT_RESOURCE.GetAll().Where(x => x.PROJ_ID == projId && x.EMP_ID == empId && x.END_DATE >= DateTime.Today);
+        //    if (empAllocation.Any())
+        //        return true;
 
-            return false;
-        }
+        //    return false;
+        //}
         private int SaveAccessRequest(List<int> resourceIds, string empId, string accessTypeText, string projId)
         {
             var sortedResourceIds = string.Join(",", resourceIds.OrderBy(x => x));
