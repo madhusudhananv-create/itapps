@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GAVS.AllocationSystem.Model.Base;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -7,10 +8,9 @@ using System.Threading.Tasks;
 
 namespace GAVS.AllocationSystem.Model.CSP
 {
-    public class APP_ACCESS_CONTROLS
+    public class APP_ACCESS_CONTROLS : EntityBase
     {
-        [Key]
-        public int ID { get; set; }
+       
         public int RESOURCE_ID { get; set; }
         public int ACCESS_LEVEL { get; set; }
         public int? ROLE_ID { get; set; }
@@ -23,11 +23,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public bool DELETE_ACCESS { get; set; }
         public bool DEFAULT_ACCESS { get; set; }
         public string COMMENTS { get; set; }
-        public string CREATED_BY { get; set; }
-        public DateTime CREATED_DATE { get; set; }
-        public string UPDATED_BY { get; set; }
-        public DateTime UPDATED_DATE { get; set; }
-        public Boolean ISACTIVE { get; set; }
+        
     }
 
     public class APP_ACCESS_CONTROLS_MODEL

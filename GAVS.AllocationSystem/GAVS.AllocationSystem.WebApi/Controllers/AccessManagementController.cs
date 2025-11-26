@@ -33,13 +33,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string accessTypeText = string.Empty;
             switch (accessType)
             {
-                case 1:
+                case 3:
                     accessTypeText = "EDIT";
                     break;
                 case 2:
+                    accessTypeText = "CREATED";
+                    break;
+                case 1:
                     accessTypeText = "VIEW";
                     break;
-                case 3:
+                case 4:
                     accessTypeText = "DELETE";
                     break;
                 default:
@@ -48,7 +51,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var requestId = SaveAccessRequest(resourceId, empId, accessType, projId);
             var subject = $"{accessTypeText} Access Request to {feature}";
             var empName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId && x.DOR == null);
-        
+
             var mainUrl = $"{helper.GetAbsoulteUri()}/accesscontrolrequest/{custId}/{projId}/{requestId}/{accessTypeText}/{accessType}/";
             string approveUrl = mainUrl + "1";
             string rejectUrl = mainUrl + "0";
@@ -90,12 +93,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         //}
         private int SaveAccessRequest(int resourceId, string empId, int accessType, string projId)
         {
-            
+
 
             var existingRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.CREATED_BY == empId && x.PROJ_ID == projId && x.STATUS == "Pending");
             if (existingRequest != null)
             {
-               
+
                 if (existingRequest.RESOURCE_ID == resourceId)
                 {
                     throw new Exception("You have already requested an access. Please wait for approval.");
@@ -120,22 +123,57 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
 
 
-            var accessRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.ID == accessRequestData.ID && x.ISACTIVE);
-            if (accessRequest == null) { return BadRequest("Access request not found"); }
-            if (accessRequestData.APPROVER_ID == accessRequest.CREATED_BY) { return BadRequest("You are not authorized person to approve/reject this request"); }
-            if (accessRequest.STATUS != "Pending") { return BadRequest("Request already processed"); }
-            // if (accessRequestData.STATUS.ToLower() == "approved")
-            // {
-            //Check the role of the employee
-            //Logic to provide project specific access for the employees to edit/view/delete the findings
+            var accessRequestEty = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.ID == accessRequestData.ID && x.ISACTIVE);
+            if (accessRequestEty == null) { return BadRequest("Access request not found"); }
+            var approverList = helper.GetDBConfig("ACCESS_REQUEST_RESOURCE_APPROVERS", "-1");
+            //important check
+            if (!approverList.Contains(accessRequestEty.REQUESTED_BY))
+            {
+                return BadRequest("You are not authorized person to approve/reject this request. Please ask the Approvers to approve the request. ");
 
-            // }
-            string requestorEmpId = accessRequest.CREATED_BY;
-            accessRequest.STATUS = accessRequestData.STATUS;
-            accessRequest.APPROVER_ID = accessRequestData.APPROVER_ID;
-            accessRequest.APPROVAL_DATE = accessRequestData.APPROVAL_DATE;
-            accessRequest.REJECT_REASON = accessRequestData.REJECT_REASON;
-            UpdateAuditFields(accessRequest);
+            }
+
+            if (accessRequestEty.STATUS != "Pending") { return BadRequest("Request already processed. Please create a new request for fresh Approval."); }
+            if (accessRequestData.STATUS.ToLower() == "approved")
+            {
+                //Check the role of the employee
+                //Logic to provide project specific access for the employees to edit / view / delete the findings
+
+                //1. get the role of the employee
+                var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestData.REQUESTED_BY && x.DOR == null);
+                //do nullcheck
+
+                //2. get all records for this resourceid
+                var appaccessControls = CSPdb.APP_ACCESS_CONTROLS.GetAll().Where(x => x.RESOURCE_ID == accessRequestData.RESOURCE_ID && x.ISACTIVE);
+
+
+
+                //3. if role and corresponding app_access_control record matches dont do anything
+                //4. take the first record which has a role that have access for this resource
+                var level = accessRequestData.ACCESS_LEVEL;
+                var activeRecord = appaccessControls.FirstOrDefault(x => (level == 1 && x.VIEW_ACCESS) || (level == 2 && x.CREATE_ACCESS)
+                                        || (level == 3 && x.EDIT_ACCESS) || (level == 4 && x.DELETE_ACCESS));
+                //5. append the given emp_id record in that record and save
+                if (activeRecord != null)
+                {
+                    activeRecord.EMP_ID += $",{accessRequestData.REQUESTED_BY}";
+                    UpdateAuditFields(activeRecord);
+                    accessRequestEty.STATUS = accessRequestData.STATUS;
+                    CSPdb.APP_ACCESS_CONTROLS.Update(activeRecord);
+                }
+                else
+                {
+                    //throw error and return
+                }
+
+
+            }
+            string requestorEmpId = accessRequestEty.CREATED_BY;
+          
+            accessRequestEty.APPROVER_ID = accessRequestData.APPROVER_ID;
+            accessRequestEty.APPROVAL_DATE = accessRequestData.APPROVAL_DATE;
+            accessRequestEty.REJECT_REASON = accessRequestData.REJECT_REASON;
+            UpdateAuditFields(accessRequestEty);
             CSPdb.Commit(CanCommit);
             string subject = string.Empty;
             string mailContent = string.Empty;
