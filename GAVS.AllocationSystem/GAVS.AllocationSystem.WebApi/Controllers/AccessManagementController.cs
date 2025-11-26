@@ -18,11 +18,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [POST("RequestEditResourceAccess")]
         [ActionName("RequestEditResourceAccess")]
         [HttpPost]
-        public IHttpActionResult RequestEditResourceAccess([FromBody] List<int> resourceId, string feature, string empId, int accessType, string custId, string projId = null)
+        public IHttpActionResult RequestEditResourceAccess([FromBody] int resourceId, string feature, string empId, int accessType, string custId, string projId = null)
         {
 
             if (string.IsNullOrEmpty(empId)) { return BadRequest("Employee ID is required"); }
-            if (resourceId == null || resourceId.Count == 0) { return BadRequest("Resource ID list is required"); }
             if (!string.IsNullOrEmpty(projId))
             {
                 bool hasAllocation = CheckUserHasAccess(empId, custId, projId, throwError: false);
@@ -46,7 +45,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 default:
                     break;
             }
-            var requestId = SaveAccessRequest(resourceId, empId, accessTypeText, projId);
+            var requestId = SaveAccessRequest(resourceId, empId, accessType, projId);
             var subject = $"{accessTypeText} Access Request to {feature}";
             var empName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId && x.DOR == null);
         
@@ -89,26 +88,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         //    return false;
         //}
-        private int SaveAccessRequest(List<int> resourceIds, string empId, string accessTypeText, string projId)
+        private int SaveAccessRequest(int resourceId, string empId, int accessType, string projId)
         {
-            var sortedResourceIds = string.Join(",", resourceIds.OrderBy(x => x));
+            
 
-            var existingRequest = CSPdb.ACCESS_REQUESTS.GetAll().FirstOrDefault(x => x.CREATED_BY == empId && x.PROJ_ID == projId && x.STATUS == "Pending");
+            var existingRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.CREATED_BY == empId && x.PROJ_ID == projId && x.STATUS == "Pending");
             if (existingRequest != null)
             {
-                var existingResourceIds = string.Join(",", existingRequest.RESOURCE_IDS.Split(',').Select(int.Parse).OrderBy(x => x));
-                if (existingResourceIds == sortedResourceIds)
+               
+                if (existingRequest.RESOURCE_ID == resourceId)
                 {
                     throw new Exception("You have already requested an access. Please wait for approval.");
                 }
             }
-            var newRequest = new ACCESS_REQUESTS();
-            newRequest.RESOURCE_IDS = sortedResourceIds;
-            newRequest.ACCESS_TYPE = accessTypeText;
+            var newRequest = new ACCESS_REQUEST();
+            newRequest.RESOURCE_ID = resourceId;
+            newRequest.ACCESS_LEVEL = accessType;
             newRequest.PROJ_ID = projId;
             newRequest.STATUS = "Pending";
             UpdateAuditFields(newRequest);
-            CSPdb.ACCESS_REQUESTS.Add(newRequest);
+            CSPdb.ACCESS_REQUEST.Add(newRequest);
             CSPdb.Commit(CanCommit);
 
             return newRequest.ID;
@@ -117,11 +116,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [POST("ApproveOrRejectEditResourceAccess")]
         [ActionName("ApproveOrRejectEditResourceAccess")]
         [HttpPost]
-        public IHttpActionResult ApproveOrRejectEditResourceAccess([FromBody] ACCESS_REQUESTS accessRequestData)
+        public IHttpActionResult ApproveOrRejectEditResourceAccess([FromBody] ACCESS_REQUEST accessRequestData)
         {
 
 
-            var accessRequest = CSPdb.ACCESS_REQUESTS.GetAll().FirstOrDefault(x => x.ID == accessRequestData.ID && x.ISACTIVE);
+            var accessRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.ID == accessRequestData.ID && x.ISACTIVE);
             if (accessRequest == null) { return BadRequest("Access request not found"); }
             if (accessRequestData.APPROVER_ID == accessRequest.CREATED_BY) { return BadRequest("You are not authorized person to approve/reject this request"); }
             if (accessRequest.STATUS != "Pending") { return BadRequest("Request already processed"); }
@@ -147,7 +146,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("APPROVER_NAME", approverName.FRST_NM);
             EmailContentValues.Add("REQUEST_STATUS", accessRequestData.STATUS);
             EmailContentValues.Add("REJECT_REASON", !string.IsNullOrEmpty(accessRequestData.REJECT_REASON) ? accessRequestData.REJECT_REASON : "None");
-            EmailContentValues.Add("ACCESS_TYPE", accessRequestData.ACCESS_TYPE);
+            //EmailContentValues.Add("ACCESS_TYPE", accessRequestData.ACCESS_LEVEL);
             EmailContentValues.Add("APPROVAL_DATE", accessRequestData.APPROVAL_DATE?.ToString("dd-MMM-yyyy"));
             EmailContentValues.Add("PROJECT_NAME", GetProjectName(accessRequestData.PROJ_ID));
             EmailContentValues.Add("REQUESTOR_NAME", requestorInfo.FRST_NM);

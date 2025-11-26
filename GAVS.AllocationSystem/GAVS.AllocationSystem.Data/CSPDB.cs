@@ -292,7 +292,7 @@ namespace GAVS.AllocationSystem.Data
         public IRepository_CSP<PROJECT_INSCOPE_DETAILS> PROJECT_INSCOPE_DETAILS { get { return GetStandardRepo<PROJECT_INSCOPE_DETAILS>(); } }
         public IRepository_CSP<CSS_QUESTION_MODELS> CSS_QUESTION_MODELS { get { return GetStandardRepo<CSS_QUESTION_MODELS>(); } }
 
-        public IRepository_CSP<ACCESS_REQUESTS> ACCESS_REQUESTS { get { return GetStandardRepo<ACCESS_REQUESTS>(); } }
+        public IRepository_CSP<ACCESS_REQUEST> ACCESS_REQUEST { get { return GetStandardRepo<ACCESS_REQUEST>(); } }
 
         protected void CreateDbContext()
         {

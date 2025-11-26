@@ -230,15 +230,18 @@
     ]
   },
     {
-      "name": "ACCESS_REQUESTS",
+      "name": "ACCESS_REQUEST",
       "props": [
-        "RESOURCE_IDS:string",
-        "ACCESS_TYPE:string",
+        "RESOURCE_ID:int",
+        "ACCESS_LEVEL:int",
+        "CUST_ID:string",
         "PROJ_ID:string",
         "STATUS:string",
         "APPROVER_ID :string",
         "APPROVAL_DATE: DateTime?",
-        "REJECT_REASON : string"
+        "REJECT_REASON : string",
+        "REQUESTED_BY :string",
+        "REQUESTED_DATE : DateTime?"
       ]
 
   }
