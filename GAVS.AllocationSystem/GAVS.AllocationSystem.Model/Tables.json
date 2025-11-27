@@ -234,6 +234,7 @@
       "props": [
         "RESOURCE_ID:int",
         "ACCESS_LEVEL:int",
+        "FEATURE:string",
         "CUST_ID:string",
         "PROJ_ID:string",
         "STATUS:string",

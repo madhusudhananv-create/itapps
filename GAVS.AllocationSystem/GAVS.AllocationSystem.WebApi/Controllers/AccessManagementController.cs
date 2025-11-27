@@ -3,10 +3,13 @@ using GAVS.AllocationSystem.Model.AllSys;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Web.Http;
+using System.Net.Http;
 using System.Web.UI.WebControls;
+using Newtonsoft.Json;
+using System.Net;
+
 
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
@@ -30,29 +33,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return BadRequest("Employee does not have allocation to the project");
                 }
             }
-            string accessTypeText = string.Empty;
-            switch (accessType)
-            {
-                case 3:
-                    accessTypeText = "EDIT";
-                    break;
-                case 2:
-                    accessTypeText = "CREATED";
-                    break;
-                case 1:
-                    accessTypeText = "VIEW";
-                    break;
-                case 4:
-                    accessTypeText = "DELETE";
-                    break;
-                default:
-                    break;
-            }
-            var requestId = SaveAccessRequest(resourceId, empId, accessType, projId);
-            var subject = $"{accessTypeText} Access Request to {feature}";
+            var accessTypeValue = AccessTypeValue(accessType);
+            var requestId = SaveAccessRequest(resourceId, empId, accessType, feature, custId, projId);
+
+            var subject = $"{accessTypeValue} Access Request to {feature}";
             var empName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId && x.DOR == null);
 
-            var mainUrl = $"{helper.GetAbsoulteUri()}/accesscontrolrequest/{custId}/{projId}/{requestId}/{accessTypeText}/{accessType}/";
+            var mainUrl = $"{helper.GetAbsoulteUri()}/accesscontrolrequest/{custId}/{projId}/{requestId}/{accessTypeValue}/{accessType}/";
             string approveUrl = mainUrl + "1";
             string rejectUrl = mainUrl + "0";
 
@@ -62,7 +49,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("APPROVE", approveUrl);
             EmailContentValues.Add("REJECT", rejectUrl);
             EmailContentValues.Add("REQUESTED_DATE", DateTime.Today.ToString("dd-MMM-yyyy"));
-            EmailContentValues.Add("ACCESS_TYPE", accessTypeText);
+            EmailContentValues.Add("ACCESS_TYPE", accessTypeValue);
+            EmailContentValues.Add("FEATURE", feature);
             var toMail = helper.GetDBConfig("ACCESS_REQUEST_RESOURCE_TOMAIL", "-1");
             var mailContent = helper.GetEmailContent("ResourceAccessRequest.htm", EmailContentValues);
 
@@ -91,17 +79,39 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         //    return false;
         //}
-        private int SaveAccessRequest(int resourceId, string empId, int accessType, string projId)
+
+        private string AccessTypeValue(int accessType)
+        {
+            string accessTypeText = string.Empty;
+            switch (accessType)
+            {
+                
+                case 1:
+                    accessTypeText = "VIEW";
+                    break;
+                case 2:
+                    accessTypeText = "CREATED";
+                    break;
+                case 3:
+                    accessTypeText = "EDIT";
+                    break;
+                case 4:
+                    accessTypeText = "DELETE";
+                    break;
+
+            }
+            return accessTypeText;
+        }
+        private int SaveAccessRequest(int resourceId, string empId, int accessType, string feature, string custId, string projId)
         {
 
 
-            var existingRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.CREATED_BY == empId && x.PROJ_ID == projId && x.STATUS == "Pending");
+            var existingRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.REQUESTED_BY == empId && x.PROJ_ID == projId && x.STATUS == "Pending");
             if (existingRequest != null)
             {
-
                 if (existingRequest.RESOURCE_ID == resourceId)
                 {
-                    throw new Exception("You have already requested an access. Please wait for approval.");
+                   throw new Exception("You have already requested an access. Please wait for approval.");
                 }
             }
             var newRequest = new ACCESS_REQUEST();
@@ -109,6 +119,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             newRequest.ACCESS_LEVEL = accessType;
             newRequest.PROJ_ID = projId;
             newRequest.STATUS = "Pending";
+            newRequest.REQUESTED_BY = empId;
+            newRequest.REQUESTED_DATE = DateTime.Now;
+            newRequest.FEATURE = feature;
+            newRequest.CUST_ID = custId;
             UpdateAuditFields(newRequest);
             CSPdb.ACCESS_REQUEST.Add(newRequest);
             CSPdb.Commit(CanCommit);
@@ -127,7 +141,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (accessRequestEty == null) { return BadRequest("Access request not found"); }
             var approverList = helper.GetDBConfig("ACCESS_REQUEST_RESOURCE_APPROVERS", "-1");
             //important check
-            if (!approverList.Contains(accessRequestEty.REQUESTED_BY))
+            if (!approverList.Contains(accessRequestData.APPROVER_ID))
             {
                 return BadRequest("You are not authorized person to approve/reject this request. Please ask the Approvers to approve the request. ");
 
@@ -136,40 +150,38 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (accessRequestEty.STATUS != "Pending") { return BadRequest("Request already processed. Please create a new request for fresh Approval."); }
             if (accessRequestData.STATUS.ToLower() == "approved")
             {
-                //Check the role of the employee
-                //Logic to provide project specific access for the employees to edit / view / delete the findings
 
                 //1. get the role of the employee
-                var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestData.REQUESTED_BY && x.DOR == null);
+                var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestEty.REQUESTED_BY && x.DOR == null);
                 //do nullcheck
 
                 //2. get all records for this resourceid
-                var appaccessControls = CSPdb.APP_ACCESS_CONTROLS.GetAll().Where(x => x.RESOURCE_ID == accessRequestData.RESOURCE_ID && x.ISACTIVE);
-
-
+                var appaccessControls = CSPdb.APP_ACCESS_CONTROLS.GetAll().Where(x => x.RESOURCE_ID == accessRequestEty.RESOURCE_ID && x.ISACTIVE).ToList();
 
                 //3. if role and corresponding app_access_control record matches dont do anything
                 //4. take the first record which has a role that have access for this resource
-                var level = accessRequestData.ACCESS_LEVEL;
+                var level = accessRequestEty.ACCESS_LEVEL;
                 var activeRecord = appaccessControls.FirstOrDefault(x => (level == 1 && x.VIEW_ACCESS) || (level == 2 && x.CREATE_ACCESS)
                                         || (level == 3 && x.EDIT_ACCESS) || (level == 4 && x.DELETE_ACCESS));
+
                 //5. append the given emp_id record in that record and save
                 if (activeRecord != null)
                 {
-                    activeRecord.EMP_ID += $",{accessRequestData.REQUESTED_BY}";
+                    activeRecord.EMP_ID = string.IsNullOrEmpty(activeRecord.EMP_ID) ? accessRequestEty.REQUESTED_BY : $"{activeRecord.EMP_ID},{accessRequestEty.REQUESTED_BY}";
                     UpdateAuditFields(activeRecord);
                     accessRequestEty.STATUS = accessRequestData.STATUS;
                     CSPdb.APP_ACCESS_CONTROLS.Update(activeRecord);
+                    CSPdb.Commit(CanCommit);
                 }
                 else
                 {
-                    //throw error and return
+                    return Content(HttpStatusCode.BadRequest, "There is no active record exists for the requested feature: " + accessRequestEty.FEATURE);
                 }
 
 
             }
-            string requestorEmpId = accessRequestEty.CREATED_BY;
-          
+            string requestorEmpId = accessRequestEty.REQUESTED_BY;
+            var accessTypeValue = AccessTypeValue(accessRequestEty.ACCESS_LEVEL);
             accessRequestEty.APPROVER_ID = accessRequestData.APPROVER_ID;
             accessRequestEty.APPROVAL_DATE = accessRequestData.APPROVAL_DATE;
             accessRequestEty.REJECT_REASON = accessRequestData.REJECT_REASON;
@@ -178,13 +190,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string subject = string.Empty;
             string mailContent = string.Empty;
             var requestorInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == requestorEmpId && x.DOR == null);
-            subject = $"Your access request has been {accessRequestData.STATUS}";
+            subject = $"{accessTypeValue} access request for the {accessRequestEty.FEATURE} has been {accessRequestData.STATUS}";
             var approverName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestData.APPROVER_ID && x.DOR == null);
             var EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("APPROVER_NAME", approverName.FRST_NM);
             EmailContentValues.Add("REQUEST_STATUS", accessRequestData.STATUS);
             EmailContentValues.Add("REJECT_REASON", !string.IsNullOrEmpty(accessRequestData.REJECT_REASON) ? accessRequestData.REJECT_REASON : "None");
-            //EmailContentValues.Add("ACCESS_TYPE", accessRequestData.ACCESS_LEVEL);
+            EmailContentValues.Add("ACCESS_TYPE", accessTypeValue);
+            EmailContentValues.Add("FEATURE", accessRequestEty.FEATURE);
             EmailContentValues.Add("APPROVAL_DATE", accessRequestData.APPROVAL_DATE?.ToString("dd-MMM-yyyy"));
             EmailContentValues.Add("PROJECT_NAME", GetProjectName(accessRequestData.PROJ_ID));
             EmailContentValues.Add("REQUESTOR_NAME", requestorInfo.FRST_NM);
