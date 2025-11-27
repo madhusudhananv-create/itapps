@@ -39,6 +39,7 @@ import { TimesheetDialogPopupComponent } from '../pages/layout/timesheet-page-ne
 import { SurveyComponent } from '../customer/survey/survey.component';
 import { StarRatingComponent } from '../customer/star-rating/star-rating.component';
 import { ViewTemplateComponent } from '../controls/view-template/view-template.component';
+import { AccesscontrolManagementComponent } from './accesscontrol-management/accesscontrol-management.component';
 //import { PortfolioProjectFilterComponent } from './portfolio-project-filter/portfolio-project-filter.component';
 
 @NgModule({
@@ -85,7 +86,8 @@ import { ViewTemplateComponent } from '../controls/view-template/view-template.c
      EnterpriseCssComponent, 
      EnterpriseNpsComponent,
      SurveyComponent,StarRatingComponent,
-     ViewTemplateComponent
+     ViewTemplateComponent,
+     AccesscontrolManagementComponent
     // SidebarComponent
   ],
   declarations: [
@@ -121,7 +123,8 @@ import { ViewTemplateComponent } from '../controls/view-template/view-template.c
      EnterpriseNpsComponent,
      TimesheetDialogPopupComponent,
      SurveyComponent,StarRatingComponent,
-     ViewTemplateComponent
+     ViewTemplateComponent,
+     AccesscontrolManagementComponent
     //PortfolioProjectFilterComponent
   ],
   entryComponents: [
@@ -140,7 +143,8 @@ export class ComponentsModule {
         MonthandyearpickerComponent,
         EmployeeSearchComponent,
         TableFilterComponent,
-        SubprojectComponent
+        SubprojectComponent,
+        AccesscontrolManagementComponent
       ]
     };
   }

@@ -75,6 +75,9 @@
     <button type="button" class="btn btn-primary" [disabled]="disableAcceptReject" (click)="SaveResponse('Reject')">
       Reject </button>
   </div>
+  <app-accesscontrol-management  [resourceId]="108" [feature]="'Accept/ Reject to Audit Findings'"
+    [projectId]="projectId" [accessType]="accessType"  [custId] ="custId"
+    [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
 </div>
 
 <div style="padding: 15px">
@@ -133,8 +136,8 @@
                 style="margin-right: 4px;">
                 <b></b>
               </div>
-              <div *ngIf="!getAuditeeResponse(find.id) || getAuditeeResponse(find.id) == 'Auditor Rejected'" 
-              style="margin-right: 4px">
+              <div *ngIf="!getAuditeeResponse(find.id) || getAuditeeResponse(find.id) == 'Auditor Rejected'"
+                style="margin-right: 4px">
                 <mat-checkbox class="example-margin" [(ngModel)]="find.ischecked">
 
                 </mat-checkbox>
@@ -145,7 +148,8 @@
 
                 </mat-checkbox>
               </div> -->
-              <div *ngIf="getAuditeeResponse(find.id) == 'Accept' && find.findinG_CATEGORY == 'MANDATORY' && !disableCap(find.id)">
+              <div
+                *ngIf="getAuditeeResponse(find.id) == 'Accept' && find.findinG_CATEGORY == 'MANDATORY' && !disableCap(find.id)">
                 <a style="cursor: pointer;" (click)="AddActionPlan(question, find, quesind, ind)">
                   <i class="material-icons">
                     library_add
@@ -172,7 +176,8 @@
                     </textarea>
               </mat-form-field>
             </div>
-            <div *ngIf="!getAuditeeResponse(find.id) && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969' ||
+            <div
+              *ngIf="!getAuditeeResponse(find.id) && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969' ||
               getAuditeeResponse(find.id) == 'Reject' || getAuditeeResponse(find.id) == 'Auditor Rejected' && find.stagE_COLORS == '#FF5969,#FF5969,#FF5969,#FF5969'">
               <mat-form-field style="width: 90%">
                 <textarea name="corrective{{ind}}" matInput [(ngModel)]="find.remarks">
@@ -268,12 +273,11 @@
 
                     <td>{{i+1}}</td>
                     <td>
-                      <mat-form-field  
-                      *ngIf="st.cappalist.rooT_CAUSE === 'Other'; else showRootCause"
-                        style="width :98%">    
-                        <span matPrefix class="rootCauseOther">{{st.cappalist.rooT_CAUSE}} - </span>                   
-                        <textarea  class="rootCause" name="rootcausE_OTHER{{i}}" matInput [disabled]="st.cappalist.issubmitted"
-                         [(ngModel)]="st.cappalist.rootcausE_OTHER"></textarea>                         
+                      <mat-form-field *ngIf="st.cappalist.rooT_CAUSE === 'Other'; else showRootCause"
+                        style="width :98%">
+                        <span matPrefix class="rootCauseOther">{{st.cappalist.rooT_CAUSE}} - </span>
+                        <textarea class="rootCause" name="rootcausE_OTHER{{i}}" matInput
+                          [disabled]="st.cappalist.issubmitted" [(ngModel)]="st.cappalist.rootcausE_OTHER"></textarea>
                       </mat-form-field>
                       <ng-template #showRootCause>
                         {{st.cappalist.rooT_CAUSE}}
@@ -336,6 +340,11 @@
               [disabled]="iscapsubmitbutton || disablesubmittillSave" class="btn btn-primary"
               style="margin: 5px">Submit</button>
           </div>
+          <div style="text-align: center" class="row" *ngIf="findingStatus?.capA_SUBMISSION?.capa.length > 0">
+            <app-accesscontrol-management   [resourceId]="109"
+              [feature]="'Audit Findings - CAPA Submission Stage 1'" [projectId]="projectId" [accessType]="accessType"
+              [custId] ="custId" [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
+          </div>
           <div>
             <mat-progress-bar *ngIf="disablesubmittillSave" mode="indeterminate"></mat-progress-bar>
           </div>
@@ -375,7 +384,7 @@
                 <td>{{i+1}}</td>
                 <td>
                   {{ st.rooT_CAUSE === 'Other' ? (st.rooT_CAUSE + ' - ' + st.rootcausE_OTHER) : st.rooT_CAUSE }}
-                </td>             
+                </td>
                 <td>
                   {{getRootCauseVal(st.isrootcause)}}
                 </td>
@@ -418,6 +427,11 @@
               class="btn btn-primary" [disabled]="iscapreviewbutton || disabletillreviewSave" (click)="SubmitCap()"
               style="margin: 5px" mat-raised-button>Submit</button>
           </div>
+          <div style="text-align: center" class="row" *ngIf="findingStatus.capA_REVIEW?.capa.length > 0 ">
+            <app-accesscontrol-management *ngIf="showForAuditor || showForQATeam"  [resourceId]="110"
+              [feature]="'Audit Findings - CAPA Review Stage 2'" [projectId]="projectId" [accessType]="accessType"
+               [custId] ="custId" [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
+          </div>
           <div>
             <mat-progress-bar *ngIf="disabletillreviewSave" mode="indeterminate"></mat-progress-bar>
           </div>
@@ -457,7 +471,8 @@
 
                 <td>{{i+1}}</td>
                 <td>
-                  {{ st.capadata.rooT_CAUSE === 'Other' ? (st.capadata.rooT_CAUSE + ' - ' + st.capadata.rootcausE_OTHER) : st.capadata.rooT_CAUSE }}
+                  {{ st.capadata.rooT_CAUSE === 'Other' ? (st.capadata.rooT_CAUSE + ' - ' + st.capadata.rootcausE_OTHER)
+                  : st.capadata.rooT_CAUSE }}
                 </td>
                 <td>
                   {{getRootCauseVal(st.capadata.isrootcause)}}
@@ -500,7 +515,14 @@
             <button
               *ngIf="findingStatus.caP_IMPLEMENTATION?.capa?.length > 0 && (showCheck || showForQATeam || _access.IsAllowed(111, 1, '', ''))"
               (click)="ImplementCap()" style="margin: 5px" mat-raised-button class="btn btn-primary"
-              [disabled]="isimplementbutton || disabletillSaveImplement">Submit</button>
+              [disabled]="isimplementbutton || disabletillSaveImplement">Submit
+            </button>
+          </div>
+          <div style="text-align: center" class="row" *ngIf="findingStatus.caP_IMPLEMENTATION?.capa?.length > 0">
+            <app-accesscontrol-management [resourceId]="111"
+              [feature]="'Audit Findings - CAPA Implementation Stage 3'" [projectId]="projectId"
+              [accessType]="accessType"  [custId] ="custId"
+              [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
           </div>
           <div>
             <mat-progress-bar *ngIf="disabletillSaveImplement" mode="indeterminate"></mat-progress-bar>
@@ -539,7 +561,8 @@
 
               <td>{{i+1}}</td>
               <td>
-                {{ st.capadata.rooT_CAUSE === 'Other' ? (st.capadata.rooT_CAUSE + ' - ' + st.capadata.rootcausE_OTHER) : st.capadata.rooT_CAUSE }}
+                {{ st.capadata.rooT_CAUSE === 'Other' ? (st.capadata.rooT_CAUSE + ' - ' + st.capadata.rootcausE_OTHER) :
+                st.capadata.rooT_CAUSE }}
               </td>
               <td>
                 {{getRootCauseVal(st.capadata.isrootcause)}}
@@ -603,6 +626,11 @@
                   </mat-select>
                 </mat-form-field>
               </div> -->
+          </div>
+          <div style="text-align: center" class="row" *ngIf="findingStatus.caP_VERIFICATION?.capa?.length > 0 ">
+            <app-accesscontrol-management *ngIf="showForAuditor || showForQATeam" [resourceId]="112"
+              [feature]="'Audit Findings - CAPA Verification Stage 4'" [projectId]="projectId" [accessType]="accessType"
+               [custId] ="custId" [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
           </div>
         </div>
 

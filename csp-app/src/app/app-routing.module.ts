@@ -44,6 +44,7 @@ import { GslabloginComponent } from "./authentication/gslablogin/gslablogin.comp
 import { SurveySettingsComponent } from "./pages/survey/survey-settings/survey-settings.component";
 import { SurveySettingsMonthlyComponent } from "./pages/survey/survey-settings-monthly/survey-settings-monthly.component";
 import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
+import { AccesscontrolManagementComponent } from "./components/accesscontrol-management/accesscontrol-management.component";
 
 const routes: Routes = [];
 
@@ -156,6 +157,7 @@ const appRoutes: Routes = [
     path: "gslablogin",
     component: GslabloginComponent
   },
+    { path: "accesscontrolrequest/:custid/:projid/:requestid/:accesstypetext/:accesstype/:approveval", component: AccesscontrolManagementComponent },
 
   // otherwise redirect to home
   //{ path: '**', redirectTo: '' }

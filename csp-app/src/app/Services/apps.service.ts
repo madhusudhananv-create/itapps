@@ -53,6 +53,7 @@ import { CrispProjectSummaryModel } from "../models/crisp-project-summary-model"
 import { ProjectsModel, AddProjectsModel } from "../models/projects-model";
 import { ProjectStatusRAGCount } from "../controls/crisp/crisp-project-status-chart/crisp-project-status-chart.component";
 import {
+  AccessRequestModel,
   AppAccessControlsModel,
   AppControlFeaturesModel,
 } from "../models/access-control-model";
@@ -2573,13 +2574,13 @@ export class AppsService {
     });
   }
 
-  getCustomerContactsForAccount(custid: string) :Observable<any> {
+  getCustomerContactsForAccount(custid: string): Observable<any> {
     let header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
     });
-    return this._http.get<any>(this.apiurl + "/GetCustomerContacts?customerId="+custid, {
+    return this._http.get<any>(this.apiurl + "/GetCustomerContacts?customerId=" + custid, {
       headers: header,
     });
   }
@@ -5667,7 +5668,7 @@ export class AppsService {
     );
   }
 
-  SaveCSSSurveyAnswers(replies: BatchCustomerAndQuestions, empId: string , saveAsDraft : boolean, meetingDate: Date, isCSMNotified: boolean): Observable<BatchCustomerAndQuestions> {
+  SaveCSSSurveyAnswers(replies: BatchCustomerAndQuestions, empId: string, saveAsDraft: boolean, meetingDate: Date, isCSMNotified: boolean): Observable<BatchCustomerAndQuestions> {
     let header = new HttpHeaders({ Accept: "application/json" });
     let formattedMeetingDate;
     if (meetingDate != null && meetingDate != undefined) {
@@ -9461,6 +9462,39 @@ export class AppsService {
       });
   }
 
+  sendRequestAccess(controlId: number,feature :string, empId: string, accessType, custId: string,projId: string): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    const requestBody = {
+      empId: empId,
+      feature: feature,
+      custId: custId,
+      projId: projId,
+      accessType: accessType
+    };
+    return this._http.post<any[]>(this.apiurl + "/RequestEditResourceAccess", controlId,
+      {
+        headers: header,
+        params: requestBody
+      });
+
+  }
+saveApproveRejectRequestAccess( accessRequestData: AccessRequestModel ): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.post<any[]>(this.apiurl + "/ApproveOrRejectEditResourceAccess",
+      accessRequestData,
+      {
+        headers: header
+      });
+
+  }
 
 
   /**

@@ -45,6 +45,24 @@ export class AppControlFeaturesModel {
     updateD_DATE: Date;
     isactive: Boolean;
 }
-
+export class AccessRequestModel {
+    id: number;
+    resourcE_ID: number;
+    proJ_ID: string;
+    cusT_ID: string;
+    accesS_LEVEL: number;
+    status:string
+    feature: string;
+    approveR_ID: string;
+    approvaL_DATE: Date;
+    rejecT_REASON: string;
+    requesteD_BY: string
+    requesteD_DATE: Date;
+    createD_BY: string
+    createD_DATE: Date;
+    updateD_BY: string;
+    updateD_DATE: Date;
+    isactive: Boolean;
+}
 
 

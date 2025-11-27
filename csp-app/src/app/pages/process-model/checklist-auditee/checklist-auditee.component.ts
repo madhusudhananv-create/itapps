@@ -16,7 +16,7 @@ import { MatSelectChange } from '@angular/material';
 import { SharedService } from '../../../Shared/shared.service';
 import { auditeE_ACCEPTANCE } from '../../../models/auditee-acceptance';
 import { ChecklistExecutionComponent } from '../checklist-execution/checklist-execution.component';
-import { enumRoles } from '../../../Shared/enum';
+import { AccesscontrolManagementComponent } from '../../../components/accesscontrol-management/accesscontrol-management.component';
 
 
 
@@ -80,7 +80,12 @@ export class ChecklistAuditeeComponent implements OnInit {
   auditeeAcceptedDate: Date;
   maxTargetDate: Date;
   project: string[] = [];
-
+  resourceId: number[];
+  projectId: string;
+  custId: string;
+  feature: string;
+  accessType: number;
+  showAccessRequestButton: boolean = false;
   constructor(private _access: AccessControl, private _formBuilder: FormBuilder, private _appservice: AppsService, private _util: myUtility, private _http: HttpClient, protected elementRef: ElementRef,
     private _sharedService: SharedService) {
   }
@@ -99,6 +104,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     this.secondFormGroup = this._formBuilder.group({
       secondCtrl: ['', Validators.required]
     });
+
   }
 
   selectallFindings() {
@@ -144,8 +150,8 @@ export class ChecklistAuditeeComponent implements OnInit {
     for (let i = 0; i < this.checkListFindings.length; i++) {
       for (let j = 0; j < this.checkListFindings[i].findings.length; j++) {
         if (this.getAuditeeResponse(this.checkListFindings[i].findings[j].id)) {
-          if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined 
-            && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0 
+          if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined
+            && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0
             && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
             alert('Please enter remarks for the findings to reject.');
             this.disablebtn = false;
@@ -234,8 +240,8 @@ export class ChecklistAuditeeComponent implements OnInit {
     for (let i = 0; i < this.checkListFindings.length; i++) {
       for (let j = 0; j < this.checkListFindings[i].findings.length; j++) {
         if (!this.getAuditeeResponse(this.checkListFindings[i].findings[j].id)) {
-          if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined 
-            && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0  
+          if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined
+            && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0
             && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
             alert('Please enter remarks for the findings to reject..');
             this.disableAcceptReject = false;
@@ -328,8 +334,8 @@ export class ChecklistAuditeeComponent implements OnInit {
     else
       return null;
   }
-  
- disableCap(findingid) {
+
+  disableCap(findingid) {
     let rec = this.auditeeResponses.find(x => x.findinG_ID == findingid);
     if (rec != null)
       return rec.disablE_CAPA;
@@ -384,10 +390,25 @@ export class ChecklistAuditeeComponent implements OnInit {
             if (this.checklistSummaryRec.auditoR_ID == empId)
               this.showForAuditor = true;
           }
+          this.emitRequestChanges();
         },
           error => { this._util.serviceError(error); }
         )
+
       }
+    }
+
+  }
+
+  emitRequestChanges() {
+    this.custId = this.checklistSummaryRec.customeR_ID;
+    this.projectId = this.checklistSummaryRec.projecT_ID;
+    this.accessType = 1;
+    if (this.showForAuditor || this.showForQATeam || this.showCheck) {
+      this.showAccessRequestButton = false;
+    }
+    else {
+      this.showAccessRequestButton = true;
     }
   }
 
@@ -486,6 +507,7 @@ export class ChecklistAuditeeComponent implements OnInit {
       this.disableCAPReviewButton();
       this.disableImplementButtonInReview();
       this.disableVerificationButton();
+      this.emitRequestChanges();
     },
       error => { this._util.serviceError(error); }
     )
