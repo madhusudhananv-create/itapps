@@ -36,7 +36,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var accessTypeValue = AccessTypeValue(accessType);
             var requestId = SaveAccessRequest(resourceId, empId, accessType, feature, custId, projId);
 
-            var subject = $"{accessTypeValue} Access Request to {feature}";
+            var subject = $"{accessTypeValue} access request {feature}";
             var empName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId && x.DOR == null);
 
             var mainUrl = $"{helper.GetAbsoulteUri()}/accesscontrolrequest/{custId}/{projId}/{requestId}/{accessTypeValue}/{accessType}/";
@@ -190,7 +190,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string subject = string.Empty;
             string mailContent = string.Empty;
             var requestorInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == requestorEmpId && x.DOR == null);
-            subject = $"{accessTypeValue} access request for the {accessRequestEty.FEATURE} has been {accessRequestData.STATUS}";
+            subject = $"{accessTypeValue} access request {accessRequestEty.FEATURE} - {accessRequestData.STATUS}";
             var approverName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestData.APPROVER_ID && x.DOR == null);
             var EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("APPROVER_NAME", approverName.FRST_NM);
