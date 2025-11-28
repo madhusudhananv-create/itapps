@@ -168,7 +168,7 @@ BEGIN
     ,B.YEAR [CSAT_YEAR]            
     ,[EMAIL_ID] [CLIENT_EMAIL_ID]            
     ,[DISPLAY_NAME] [CLIENT_NAME]            
-    ,CB.STATUS            
+    ,case when CB.STATUS  ='DRAFT' THEN 'MAIL SENT' else cb.STATUS END as [STATUS]              
     ,[SURVEY_SENT_DATE] [INITIATED_DATE]            
     ,[SURVEY_RECEIVED_DATE] [SUBMISSION_DATE],  
    
@@ -191,6 +191,8 @@ BEGIN
   AND CB.STATUS NOT IN ('CREATED') and CB.ISACTIVE =1     
           
 END
+
+
 
 GO
 
@@ -488,3 +490,99 @@ BEGIN
   
 End  
 GO
+
+
+
+
+IF NOT exists (select 1 from REPORTS_SP_DETAILS WHERE SP_NAME='dbo.report_getACSATResponseDetails')   
+BEGIN
+insert into REPORTS_SP_DETAILS values('dbo.report_getACSATResponseDetails', 'ACSAT - Rating and Remarks Report', 'BAS')
+END
+
+GO
+
+declare @report_sp_id int
+set @report_sp_id = (select top 1 ID from REPORTS_SP_DETAILS where SP_NAME='dbo.report_getACSATResponseDetails')
+
+IF NOT exists (select 1 from REPORTS_PARAMS WHERE REPORT_SP_ID= @report_sp_id)   
+BEGIN
+insert into REPORTS_PARAMS values(@report_sp_id, 'StartDate', 'DATE','2025-04-01')
+insert into REPORTS_PARAMS values(@report_sp_id, 'EndDate', 'DATE','2025-09-30')
+insert into REPORTS_PARAMS values(@report_sp_id, 'Customer', 'CUSTOMERID','-1')
+END
+
+GO
+
+IF EXISTS(Select 1 from sys.objects where name ='report_getACSATResponseDetails' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[report_getACSATResponseDetails] 
+END
+GO
+CREATE PROCEDURE [dbo].[report_getACSATResponseDetails]            
+             
+@STARTDATE datetime,      
+@ENDDATE datetime ,
+@CUSTOMER varchar(max)='0'  
+                                                                                                                               
+AS                                                
+BEGIN       
+
+SELECT                          
+c.cust_nm AS [CUSTOMER NAME],                          
+'' AS [PROJECT NAME],            
+[TYPE OF ACCOUNT] =  dbo.fn_getTypeOfAccount (c.cust_id)  ,           
+display_name AS [RESPONDENT NAME],   
+co.CONTACT_ROLE AS [RESPONDENT ROLE], 
+co.CATEGORY as [RESPONDENT CATEGORY],
+B.EMAIL_ID AS [EMAIL_ID],                          
+FORMAT(b.SURVEY_SENT_DATE, 'dd-MMM-yyy', 'EN-us') AS                          
+[CSAT SENT DATE],                          
+FORMAT(b.SURVEY_RECEIVED_DATE, 'dd-MMM-yyy', 'EN-us') AS [CSAT RECEIVED DATE],  IS_VERIFIED,                        
+[YEAR - QUARTER]  = case when frequency='Annual' then  frequency  + ' - ' + Convert(varchar,  Year) else 'H' + CASE     
+        WHEN bt.sequence IN (1 ) THEN '1'    
+        WHEN bt.sequence IN (2) THEN '2'    
+    END + ' - ' + CONVERT(varchar, bt.Year) end,                     
+max(case when PERSPECTIVE='Net Promoter Score' then  qr.RATING end) as [NPS Rating],   
+max(case when PERSPECTIVE='Net Promoter Score' then  qr.RATING_DESCRIPTION end) as [NPS_RATING_DESCRIPTION],  
+max(case when PERSPECTIVE='Meeting Delivery Commitments' then  qr.RATING end) as [Meeting Delivery Commitments _Rating],   
+max(case when PERSPECTIVE='Meeting Delivery Commitments' then  qr.RATING_DESCRIPTION end) as [Meeting Delivery Commitments_Description],  
+max(case when PERSPECTIVE='Customer Engagement and Relationship' then  qr.RATING end) as [Customer Engagement and Relationship_Rating],   
+max(case when PERSPECTIVE='Customer Engagement and Relationship' then  qr.RATING_DESCRIPTION end) as [Customer Engagement and Relationship_Description],  
+max(case when PERSPECTIVE='Partner adding value to Customer Business' then  qr.RATING end) as [Partner adding value to Customer Business_Rating],   
+max(case when PERSPECTIVE='Partner adding value to Customer Business' then  qr.RATING_DESCRIPTION end) as [Partner adding value to Customer Business_Description],  
+max(case when QUESTION like '%doing well%' then  qr.RATING_DESCRIPTION end) as [Top Expectations - Doing Well],   
+max(case when QUESTION like '%can do better%' then  qr.RATING_DESCRIPTION end) as [Top Expectations - Can do Better],                            
+(SELECT TOP 1 e.FRST_NM FROM project p 
+join EMP_INFO e on e.EMP_ID = p.PROJ_BUHEAD_EMP_ID
+where p.cust_id =c.CUST_ID and isnull(proj_status,'') != 'Close' GROUP BY FRST_NM ORDER BY COUNT(FRST_NM) DESC) as [BU HEAD NAME],               
+ STUFF((select distinct ', ' + e.frst_nm from EMP_INFO e where email_id =spoc FOR XML PATH('')), 
+    1, 1, '') AS [CSAT SPOC],                                         
+c.BUSINESS_UNIT AS [BUSINESS UNIT]                                                                             
+FROM [CSS_BATCH_CUSTOMERS] b                                   
+inner join CSS_SURVEY_ITERATION i on b.SURVEY_ID = i.ID                                    
+INNER JOIN customer c   ON c.cust_id = b.cust_id                          
+INNER JOIN CSS_BATCHES bt  ON bt.id = b.Batch_ID and bt.ISACTIVE = 1                     
+INNER JOIN CSS_QUESTION_REPLIES QR                          
+ON QR.BATCH_CUSTOMER_ID = b.ID and QR.ISACTIVE = 1                        
+join CONTACTS co on co.CONTACT_EMAILID = b.EMAIL_ID and co.ISACTIVE = 1
+WHERE b.STATUS = 'COMPLETED' and b.ISACTIVE = 1 and bt.FREQUENCY in('Annual')     
+AND (bt.start_date BETWEEN @StartDate AND @EndDate                          
+OR bt.ENd_date BETWEEN @StartDate AND @EndDate)    
+and (@CUSTOMER='0' or  c.CUST_ID in	(SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER,',')))  
+GROUP BY 
+    c.cust_nm,
+    c.cust_id,
+    display_name,
+    co.CONTACT_ROLE,
+    co.CATEGORY,
+    B.EMAIL_ID,
+    b.SURVEY_SENT_DATE,
+    b.SURVEY_RECEIVED_DATE,
+    IS_VERIFIED,
+    bt.frequency,
+    bt.Year,
+    bt.sequence,
+    c.BUSINESS_UNIT,
+    spoc
+
+	END
