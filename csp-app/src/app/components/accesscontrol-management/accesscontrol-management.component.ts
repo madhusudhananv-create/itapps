@@ -100,6 +100,7 @@ export class AccesscontrolManagementComponent implements OnInit {
   processApproveReject() {
     this._appservice.saveApproveRejectRequestAccess(this.accessRequestData).subscribe(data => {
       alert('Access ' + this.accessRequestData.status + ' successfully.');
+       this.router.navigateByUrl('/newdashboard/custm');    
       this.reasonText = '';
     },
       (error) => {
