@@ -340,11 +340,11 @@
               [disabled]="iscapsubmitbutton || disablesubmittillSave" class="btn btn-primary"
               style="margin: 5px">Submit</button>
           </div>
-          <div style="text-align: center" class="row" *ngIf="findingStatus?.capA_SUBMISSION?.capa.length > 0">
+          <!-- <div style="text-align: center" class="row" *ngIf="findingStatus?.capA_SUBMISSION?.capa.length > 0">
             <app-accesscontrol-management   [resourceId]="109"
               [feature]="'To submit Audit Findings for CAPA Submission Stage 1'" [projectId]="projectId" [accessType]="accessType"
               [custId] ="custId" [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
-          </div>
+          </div> -->
           <div>
             <mat-progress-bar *ngIf="disablesubmittillSave" mode="indeterminate"></mat-progress-bar>
           </div>
@@ -427,11 +427,11 @@
               class="btn btn-primary" [disabled]="iscapreviewbutton || disabletillreviewSave" (click)="SubmitCap()"
               style="margin: 5px" mat-raised-button>Submit</button>
           </div>
-          <div style="text-align: center" class="row" *ngIf="findingStatus.capA_REVIEW?.capa.length > 0 ">
+          <!-- <div style="text-align: center" class="row" *ngIf="findingStatus.capA_REVIEW?.capa.length > 0 ">
             <app-accesscontrol-management *ngIf="showForAuditor || showForQATeam"  [resourceId]="110"
               [feature]="'To submit Audit Findings for CAPA Review Stage 2'" [projectId]="projectId" [accessType]="accessType"
                [custId] ="custId" [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
-          </div>
+          </div> -->
           <div>
             <mat-progress-bar *ngIf="disabletillreviewSave" mode="indeterminate"></mat-progress-bar>
           </div>
@@ -518,12 +518,12 @@
               [disabled]="isimplementbutton || disabletillSaveImplement">Submit
             </button>
           </div>
-          <div style="text-align: center" class="row" *ngIf="findingStatus.caP_IMPLEMENTATION?.capa?.length > 0">
+          <!-- <div style="text-align: center" class="row" *ngIf="findingStatus.caP_IMPLEMENTATION?.capa?.length > 0">
             <app-accesscontrol-management [resourceId]="111"
               [feature]="'To submit Audit Findings for CAPA Implementation Stage 3'" [projectId]="projectId"
               [accessType]="accessType"  [custId] ="custId"
               [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
-          </div>
+          </div> -->
           <div>
             <mat-progress-bar *ngIf="disabletillSaveImplement" mode="indeterminate"></mat-progress-bar>
           </div>
@@ -627,11 +627,11 @@
                 </mat-form-field>
               </div> -->
           </div>
-          <div style="text-align: center" class="row" *ngIf="findingStatus.caP_VERIFICATION?.capa?.length > 0 ">
+          <!-- <div style="text-align: center" class="row" *ngIf="findingStatus.caP_VERIFICATION?.capa?.length > 0 ">
             <app-accesscontrol-management *ngIf="showForAuditor || showForQATeam" [resourceId]="112"
               [feature]="'To submit Audit Findings for CAPA Verification Stage 4'" [projectId]="projectId" [accessType]="accessType"
                [custId] ="custId" [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
-          </div>
+          </div> -->
         </div>
 
         <div>

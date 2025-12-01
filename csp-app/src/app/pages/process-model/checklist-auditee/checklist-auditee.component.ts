@@ -404,7 +404,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     this.custId = this.checklistSummaryRec.customeR_ID;
     this.projectId = this.checklistSummaryRec.projecT_ID;
     this.accessType = 1;
-    if (this.showForAuditor || this.showForQATeam || this.showCheck) {
+    if (this.showForQATeam || this.showCheck) {
       this.showAccessRequestButton = false;
     }
     else {
@@ -507,7 +507,6 @@ export class ChecklistAuditeeComponent implements OnInit {
       this.disableCAPReviewButton();
       this.disableImplementButtonInReview();
       this.disableVerificationButton();
-      this.emitRequestChanges();
     },
       error => { this._util.serviceError(error); }
     )
