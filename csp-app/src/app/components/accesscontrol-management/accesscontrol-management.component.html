@@ -1,5 +1,5 @@
 <div  *ngIf="showAccessRequestButton && !_access.IsAllowed(resourceId, accessType, '', '')">
-  <a class="link"  target="_blank" style="cursor: pointer;" (click)="requestAccess()" >Request Access {{feature}} </a>
+  <button mat-button class="access-request-btn" (click)="requestAccess()" >Request Access {{feature}} </button>
 </div>
 
   <ng-template  #confirmationDialogAccess >
