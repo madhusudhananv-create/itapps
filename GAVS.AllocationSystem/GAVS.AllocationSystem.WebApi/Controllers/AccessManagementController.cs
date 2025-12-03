@@ -189,7 +189,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit(CanCommit);
             string subject = string.Empty;
             string mailContent = string.Empty;
+            string message = string.Empty;
             var requestorInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == requestorEmpId && x.DOR == null);
+            if(accessRequestEty.STATUS.ToLower() == "approved")
+            {
+                message = "Please note that you need to log out and log back in to see the changes.";
+            }
             subject = $"{accessTypeValue} access request {accessRequestEty.FEATURE} - {accessRequestData.STATUS}";
             var approverName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestData.APPROVER_ID && x.DOR == null);
             var EmailContentValues = new Dictionary<string, string>();
@@ -201,6 +206,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("APPROVAL_DATE", accessRequestData.APPROVAL_DATE?.ToString("dd-MMM-yyyy"));
             EmailContentValues.Add("PROJECT_NAME", GetProjectName(accessRequestData.PROJ_ID));
             EmailContentValues.Add("REQUESTOR_NAME", requestorInfo.FRST_NM);
+            EmailContentValues.Add("MESSAGE", message);
             var ccMail = helper.GetDBConfig("ACCESS_REQUEST_RESOURCE_TOMAIL", "-1");
             var toMail = requestorInfo.EMAIL_ID;
             mailContent = helper.GetEmailContent("AccessRequestStatus.htm", EmailContentValues);
