@@ -229,24 +229,23 @@
       "ISO_STANDARD_ID:int"
     ]
   },
-    {
-      "name": "ACCESS_REQUEST",
-      "props": [
-        "RESOURCE_ID:int",
-        "ACCESS_LEVEL:int",
-        "FEATURE:string",
-        "CUST_ID:string",
-        "PROJ_ID:string",
-        "STATUS:string",
-        "APPROVER_ID :string",
-        "APPROVAL_DATE: DateTime?",
-        "REJECT_REASON : string",
-        "REQUESTED_BY :string",
-        "REQUESTED_DATE : DateTime?"
-      ]
+  {
+    "name": "ACCESS_REQUEST",
+    "props": [
+      "RESOURCE_ID:string",
+      "ACCESS_LEVEL:int",
+      "FEATURE:string",
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "STATUS:string",
+      "APPROVER_ID :string",
+      "APPROVAL_DATE: DateTime?",
+      "REJECT_REASON : string",
+      "REQUESTED_BY :string",
+      "REQUESTED_DATE : DateTime?"
+    ]
 
   }
-
 
 
 

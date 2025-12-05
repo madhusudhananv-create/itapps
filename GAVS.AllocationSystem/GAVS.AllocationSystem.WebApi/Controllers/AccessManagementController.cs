@@ -21,7 +21,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [POST("RequestEditResourceAccess")]
         [ActionName("RequestEditResourceAccess")]
         [HttpPost]
-        public IHttpActionResult RequestEditResourceAccess([FromBody] int resourceId, string feature, string empId, int accessType, string custId, string projId = null)
+        public IHttpActionResult RequestEditResourceAccess([FromBody] List<int> resourceId, string feature, string empId, int accessType, string custId, string projId = null)
         {
 
             if (string.IsNullOrEmpty(empId)) { return BadRequest("Employee ID is required"); }
@@ -102,20 +102,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             return accessTypeText;
         }
-        private int SaveAccessRequest(int resourceId, string empId, int accessType, string feature, string custId, string projId)
+        private int SaveAccessRequest(List<int> resourceId, string empId, int accessType, string feature, string custId, string projId)
         {
 
-
+            var sortedResourceIds = string.Join(",", resourceId.OrderBy(x => x));
             var existingRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.REQUESTED_BY == empId && x.PROJ_ID == projId && x.STATUS == "Pending");
-            if (existingRequest != null)
+            if (existingRequest != null && !string.IsNullOrEmpty(existingRequest.RESOURCE_ID))
             {
-                if (existingRequest.RESOURCE_ID == resourceId)
+                var existingResourceIds = string.Join(",",existingRequest.RESOURCE_ID.Split(',').Select(id => int.Parse(id.Trim())).OrderBy(x => x)
+       );
+                if (existingRequest.RESOURCE_ID == sortedResourceIds)
                 {
-                   throw new Exception("You have already requested an access. Please wait for approval.");
+                    throw new InvalidOperationException("You have already requested an access. Please wait for approval.");
                 }
             }
             var newRequest = new ACCESS_REQUEST();
-            newRequest.RESOURCE_ID = resourceId;
+            newRequest.RESOURCE_ID = string.Join(",", resourceId);
             newRequest.ACCESS_LEVEL = accessType;
             newRequest.PROJ_ID = projId;
             newRequest.STATUS = "Pending";
@@ -153,38 +155,48 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 //1. get the role of the employee
                 var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestEty.REQUESTED_BY && x.DOR == null);
+
+                var appaccessControls = CSPdb.APP_ACCESS_CONTROLS.GetAll().Where(x => accessRequestEty.RESOURCE_ID.Contains(x.RESOURCE_ID.ToString()) && x.ISACTIVE).ToList();
                 //do nullcheck
-
-                //2. get all records for this resourceid
-                var appaccessControls = CSPdb.APP_ACCESS_CONTROLS.GetAll().Where(x => x.RESOURCE_ID == accessRequestEty.RESOURCE_ID && x.ISACTIVE).ToList();
-
-                //3. if role and corresponding app_access_control record matches dont do anything
-                //4. take the first record which has a role that have access for this resource
                 var level = accessRequestEty.ACCESS_LEVEL;
-                var activeRecord = appaccessControls.FirstOrDefault(x => (level == 1 && x.VIEW_ACCESS) || (level == 2 && x.CREATE_ACCESS)
+                var resourceIds = accessRequestEty.RESOURCE_ID.Split(',').Select(id => id.Trim()).ToList();
+                var hasAnySuccess = false;
+                foreach (var resourceId in resourceIds)
+                {
+                    //2. get all records for this resourceid
+
+                    var resourceData = appaccessControls.Where(x => x.RESOURCE_ID.ToString() == resourceId).ToList();
+
+                    //3. if role and corresponding app_access_control record matches dont do anything
+                    //4. take the first record which has a role that have access for this resource
+
+                    var activeRecord = resourceData.FirstOrDefault(x => (level == 1 && x.VIEW_ACCESS) || (level == 2 && x.CREATE_ACCESS)
                                         || (level == 3 && x.EDIT_ACCESS) || (level == 4 && x.DELETE_ACCESS));
 
-                //5. append the given emp_id record in that record and save
-                if (activeRecord != null)
-                {
-                    activeRecord.EMP_ID = string.IsNullOrEmpty(activeRecord.EMP_ID) ? accessRequestEty.REQUESTED_BY : $"{activeRecord.EMP_ID},{accessRequestEty.REQUESTED_BY}";
-                    UpdateAuditFields(activeRecord);
-                    accessRequestEty.STATUS = accessRequestData.STATUS;
-                    CSPdb.APP_ACCESS_CONTROLS.Update(activeRecord);
-                    CSPdb.Commit(CanCommit);
+                    //5. append the given emp_id record in that record and save
+                    if (activeRecord != null)
+                    {
+                        activeRecord.EMP_ID = string.IsNullOrEmpty(activeRecord.EMP_ID) ? accessRequestEty.REQUESTED_BY : $"{activeRecord.EMP_ID},{accessRequestEty.REQUESTED_BY}";
+                        UpdateAuditFields(activeRecord);
+                        accessRequestEty.STATUS = accessRequestData.STATUS;
+                        CSPdb.APP_ACCESS_CONTROLS.Update(activeRecord);
+                        CSPdb.Commit(CanCommit);
+                        hasAnySuccess = true;
+                    }
                 }
-                else
+                if (!hasAnySuccess)
                 {
                     return Content(HttpStatusCode.BadRequest, "There is no active record exists for the requested feature: " + accessRequestEty.FEATURE);
                 }
-
-
+                
             }
             string requestorEmpId = accessRequestEty.REQUESTED_BY;
             var accessTypeValue = AccessTypeValue(accessRequestEty.ACCESS_LEVEL);
             accessRequestEty.APPROVER_ID = accessRequestData.APPROVER_ID;
             accessRequestEty.APPROVAL_DATE = accessRequestData.APPROVAL_DATE;
             accessRequestEty.REJECT_REASON = accessRequestData.REJECT_REASON;
+            string logoutUrl = string.Empty;
+            logoutUrl = $"{helper.GetAbsoulteUri()}/new";
             UpdateAuditFields(accessRequestEty);
             CSPdb.Commit(CanCommit);
             string subject = string.Empty;
@@ -193,7 +205,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var requestorInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == requestorEmpId && x.DOR == null);
             if(accessRequestEty.STATUS.ToLower() == "approved")
             {
-                message = "Please note that you need to log out and log back in to see the changes.";
+                message = $"Please click the link here {logoutUrl} and log in to see the changes.";
             }
             subject = $"{accessTypeValue} access request {accessRequestEty.FEATURE} - {accessRequestData.STATUS}";
             var approverName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == accessRequestData.APPROVER_ID && x.DOR == null);
@@ -207,6 +219,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("PROJECT_NAME", GetProjectName(accessRequestData.PROJ_ID));
             EmailContentValues.Add("REQUESTOR_NAME", requestorInfo.FRST_NM);
             EmailContentValues.Add("MESSAGE", message);
+            EmailContentValues.Add("LOGOUT_URL", logoutUrl);
             var ccMail = helper.GetDBConfig("ACCESS_REQUEST_RESOURCE_TOMAIL", "-1");
             var toMail = requestorInfo.EMAIL_ID;
             mailContent = helper.GetEmailContent("AccessRequestStatus.htm", EmailContentValues);

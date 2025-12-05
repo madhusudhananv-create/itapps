@@ -302,7 +302,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
     public partial class ACCESS_REQUEST : EntityBase
     {
-        public int RESOURCE_ID {get; set;}
+        public string RESOURCE_ID {get; set;}
         public int ACCESS_LEVEL {get; set;}
         public string FEATURE {get; set;}
         public string CUST_ID {get; set;}
@@ -319,6 +319,6 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
 
 
-
+   
 }
  
