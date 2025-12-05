@@ -40,6 +40,7 @@ import { SurveyComponent } from '../customer/survey/survey.component';
 import { StarRatingComponent } from '../customer/star-rating/star-rating.component';
 import { ViewTemplateComponent } from '../controls/view-template/view-template.component';
 import { AccesscontrolManagementComponent } from './accesscontrol-management/accesscontrol-management.component';
+import{NewpageComponent} from './newpage/newpage.component';
 //import { PortfolioProjectFilterComponent } from './portfolio-project-filter/portfolio-project-filter.component';
 
 @NgModule({
@@ -87,7 +88,8 @@ import { AccesscontrolManagementComponent } from './accesscontrol-management/acc
      EnterpriseNpsComponent,
      SurveyComponent,StarRatingComponent,
      ViewTemplateComponent,
-     AccesscontrolManagementComponent
+     AccesscontrolManagementComponent,
+     NewpageComponent
     // SidebarComponent
   ],
   declarations: [
@@ -124,7 +126,8 @@ import { AccesscontrolManagementComponent } from './accesscontrol-management/acc
      TimesheetDialogPopupComponent,
      SurveyComponent,StarRatingComponent,
      ViewTemplateComponent,
-     AccesscontrolManagementComponent
+     AccesscontrolManagementComponent,
+     NewpageComponent
     //PortfolioProjectFilterComponent
   ],
   entryComponents: [
@@ -144,7 +147,8 @@ export class ComponentsModule {
         EmployeeSearchComponent,
         TableFilterComponent,
         SubprojectComponent,
-        AccesscontrolManagementComponent
+        AccesscontrolManagementComponent,
+        NewpageComponent
       ]
     };
   }

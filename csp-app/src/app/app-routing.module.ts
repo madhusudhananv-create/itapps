@@ -45,7 +45,7 @@ import { SurveySettingsComponent } from "./pages/survey/survey-settings/survey-s
 import { SurveySettingsMonthlyComponent } from "./pages/survey/survey-settings-monthly/survey-settings-monthly.component";
 import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
 import { AccesscontrolManagementComponent } from "./components/accesscontrol-management/accesscontrol-management.component";
-
+import { NewpageComponent } from "./components/newpage/newpage.component";
 const routes: Routes = [];
 
 @NgModule({
@@ -57,7 +57,7 @@ export class AppRoutingModule { }
 
 const appRoutes: Routes = [
   //full : makes sure the path is absolute path
- // { path: "", redirectTo: "login", pathMatch: "full" },
+  // { path: "", redirectTo: "login", pathMatch: "full" },
   // { path: "login", redirectTo: "login" },
   // { path: "login/:gslab", redirectTo: "login/:gslab" },
   { path: "forgotpassword", component: PasswordforgotComponent },
@@ -74,7 +74,7 @@ const appRoutes: Routes = [
   { path: "governancedashboard/:year/:month/:custid", component: GovernancePageComponent },
   { path: "governancedashboard", component: GovernancePageComponent },
   { path: "login", component: LoginComponent },
-  { path: "login/:gslab",  component: LoginComponent },
+  { path: "login/:gslab", component: LoginComponent },
   { path: "activation/:email/:code", component: ActivationComponent },
   {
     path: "activation/:email/:code",
@@ -157,7 +157,8 @@ const appRoutes: Routes = [
     path: "gslablogin",
     component: GslabloginComponent
   },
-    { path: "accesscontrolrequest/:custid/:projid/:requestid/:accesstypetext/:accesstype/:approveval", component: AccesscontrolManagementComponent },
+  { path: "accesscontrolrequest/:custid/:projid/:requestid/:accesstypetext/:accesstype/:approveval", component: AccesscontrolManagementComponent },
+  { path: "new", component: NewpageComponent },
 
   // otherwise redirect to home
   //{ path: '**', redirectTo: '' }

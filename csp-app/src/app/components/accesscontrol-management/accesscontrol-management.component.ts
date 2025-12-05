@@ -21,6 +21,7 @@ export class AccesscontrolManagementComponent implements OnInit {
   requestId: number;
   accessRequestData: AccessRequestModel;
   @ViewChild('confirmationDialogAccess') confirmationDialogAccessTemplate: TemplateRef<any>
+  @Input() resourceIds: number[];
   @Input() resourceId: number;
   @Input() projectId: string;
   @Input() custId: string;
@@ -37,7 +38,7 @@ export class AccesscontrolManagementComponent implements OnInit {
   }
 
   requestAccess() {
-    this._appservice.sendRequestAccess(this.resourceId, this.feature, localStorage.getItem('empid'), this.accessType, this.custId, this.projectId).subscribe(data => {
+    this._appservice.sendRequestAccess(this.resourceIds, this.feature, localStorage.getItem('empid'), this.accessType, this.custId, this.projectId).subscribe(data => {
       alert("Access request sent to Admin");
     }, (error) => { this._util.serviceError(error) });
   }
@@ -99,8 +100,8 @@ export class AccesscontrolManagementComponent implements OnInit {
 
   processApproveReject() {
     this._appservice.saveApproveRejectRequestAccess(this.accessRequestData).subscribe(data => {
+      this.router.navigateByUrl('/newdashboard/custm');    
       alert('Access ' + this.accessRequestData.status + ' successfully.');
-       this.router.navigateByUrl('/newdashboard/custm');    
       this.reasonText = '';
     },
       (error) => {

@@ -80,7 +80,8 @@ export class ChecklistAuditeeComponent implements OnInit {
   auditeeAcceptedDate: Date;
   maxTargetDate: Date;
   project: string[] = [];
-  resourceId: number[];
+  resourceIds: number[];
+  resourceId: number;
   projectId: string;
   custId: string;
   feature: string;

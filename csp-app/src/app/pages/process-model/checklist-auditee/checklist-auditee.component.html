@@ -75,9 +75,9 @@
     <button type="button" class="btn btn-primary" [disabled]="disableAcceptReject" (click)="SaveResponse('Reject')">
       Reject </button>
   </div>
-  <app-accesscontrol-management  [resourceId]="108" [feature]="'To Accept/ Reject the Audit Findings'"
+  <app-accesscontrol-management [resourceId] ="108" [resourceIds]="[108,109,111]" [feature]="'To Accept/ Reject & CAPA stages 1,3 of the Audit Findings '"
     [projectId]="projectId" [accessType]="accessType"  [custId] ="custId"
-    [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management>
+    [showAccessRequestButton]="showAccessRequestButton"></app-accesscontrol-management> 
 </div>
 
 <div style="padding: 15px">

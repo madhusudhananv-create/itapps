@@ -9462,7 +9462,7 @@ export class AppsService {
       });
   }
 
-  sendRequestAccess(controlId: number,feature :string, empId: string, accessType, custId: string,projId: string): Observable<any[]> {
+  sendRequestAccess(controlId: number[],feature :string, empId: string, accessType, custId: string,projId: string): Observable<any[]> {
     let header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
