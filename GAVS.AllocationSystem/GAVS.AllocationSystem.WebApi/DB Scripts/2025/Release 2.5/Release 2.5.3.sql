@@ -81,7 +81,38 @@ INSERT INTO configuration_ext (
 );
 END
 GO
+IF NOT EXISTS(Select 1 from sys.tables where name ='INTEGRATION_REQUEST_DATA' AND type='U')
+BEGIN
+CREATE TABLE INTEGRATION_REQUEST_DATA(
+REQUEST_TYPE VARCHAR(250),
+REQUEST_DATA VARCHAR(MAX),
+PROJ_ID varchar(20),
+IS_PROCESSED BIT,
+PROCESSED_DATE DATETIME NOT NULL,
+ERROR_INFO VARCHAR(max),
+CREATED_BY VARCHAR(20),
+CREATED_DATE DATETIME,
+UPDATED_BY VARCHAR(20),
+UPDATED_DATE DATETIME)
+END 
+GO
 
+IF NOT EXISTS(Select 1 from sys.tables where name ='Project_Scope_Values' AND type='U')
+BEGIN
+CREATE TABLE [dbo].[Project_Scope_Values](
+    [ID] [int] IDENTITY(1,1) NOT NULL,
+    [PROJ_ID] [varchar](20) NOT NULL,
+    [FIELD_NAME] [varchar](255),
+    [FIELD_VALUE] [varchar](max),
+    [FIELD_TYPE] [varchar](255),
+    [ISACTIVE] [bit],
+    [CREATED_BY] [varchar](10) NULL,
+    [CREATED_DATE] [datetime] NOT NULL,
+    [UPDATED_BY] [varchar](10) NULL,
+    [UPDATED_DATE] [datetime] NOT NULL
+)
+END
+GO
 
 
 
