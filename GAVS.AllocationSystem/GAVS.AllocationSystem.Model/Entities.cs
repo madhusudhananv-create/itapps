@@ -319,6 +319,30 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
 
 
-   
+    public partial class PROJECT_SCOPE_VALUES : EntityBase
+    {
+        public string PROJ_ID {get; set;}
+        public string FIELD_NAME {get; set;}
+        public string FIELD_VALUE  {get; set;}
+        public  string FIELD_TYPE {get; set;}
+    }
+
+
+
+
+
+    public partial class INTEGRATION_REQUEST_DATA : EntityBase
+    {
+        public string REQUEST_TYPE {get; set;}
+        public string REQUEST_DATA {get; set;}
+        public boolean IS_PROCESSED  {get; set;}
+        public  DateTime PROCESSED_DATE {get; set;}
+    }
+
+
+
+
+
+
 }
  

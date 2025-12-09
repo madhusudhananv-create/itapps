@@ -294,6 +294,10 @@ namespace GAVS.AllocationSystem.Data
 
         public IRepository_CSP<ACCESS_REQUEST> ACCESS_REQUEST { get { return GetStandardRepo<ACCESS_REQUEST>(); } }
 
+        public IRepository_CSP<PROJECT_SCOPE_VALUES> PROJECT_SCOPE_VALUES { get { return GetStandardRepo<PROJECT_SCOPE_VALUES>(); } }
+
+        public IRepository_CSP<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get { return GetStandardRepo<INTEGRATION_REQUEST_DATA>(); } }
+
         protected void CreateDbContext()
         {
             // DbContextFactory = new CloudDbContextFactory();

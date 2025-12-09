@@ -245,7 +245,28 @@
       "REQUESTED_DATE : DateTime?"
     ]
 
+  },
+  {
+    "name": "PROJECT_SCOPE_VALUES",
+    "props": [
+      "PROJ_ID:string",
+      "FIELD_NAME:string",
+      "FIELD_VALUE :string",
+      "FIELD_TYPE: string"
+    ]
+
+  },
+  {
+    "name": "INTEGRATION_REQUEST_DATA",
+    "props": [
+      "REQUEST_TYPE:string",
+      "REQUEST_DATA:string",
+      "IS_PROCESSED :boolean",
+      "PROCESSED_DATE: DateTime"
+    ]
+
   }
+
 
 
 

@@ -271,5 +271,9 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository_CSP<CSS_QUESTION_MODELS> CSS_QUESTION_MODELS { get; }
 
         IRepository_CSP<ACCESS_REQUEST> ACCESS_REQUEST { get; }
+
+        IRepository_CSP<PROJECT_SCOPE_VALUES> PROJECT_SCOPE_VALUES { get; }
+
+        IRepository_CSP<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get; }
     }
 }
