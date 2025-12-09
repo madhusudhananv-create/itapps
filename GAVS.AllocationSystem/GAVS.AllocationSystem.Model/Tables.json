@@ -261,7 +261,7 @@
     "props": [
       "REQUEST_TYPE:string",
       "REQUEST_DATA:string",
-      "IS_PROCESSED :boolean",
+      "IS_PROCESSED :bool",
       "PROCESSED_DATE: DateTime"
     ]
 
