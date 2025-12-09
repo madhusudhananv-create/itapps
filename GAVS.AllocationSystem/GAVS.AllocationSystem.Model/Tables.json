@@ -261,8 +261,10 @@
     "props": [
       "REQUEST_TYPE:string",
       "REQUEST_DATA:string",
+      "PROJ_ID:string",
       "IS_PROCESSED :bool",
-      "PROCESSED_DATE: DateTime"
+      "PROCESSED_DATE: DateTime?",
+      "ERROR_INFO: string"
     ]
 
   }

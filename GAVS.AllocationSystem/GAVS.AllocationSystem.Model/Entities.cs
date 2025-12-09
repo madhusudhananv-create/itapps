@@ -335,8 +335,10 @@ namespace GAVS.AllocationSystem.Model.AllSys
     {
         public string REQUEST_TYPE {get; set;}
         public string REQUEST_DATA {get; set;}
+        public string PROJ_ID {get; set;}
         public bool IS_PROCESSED  {get; set;}
-        public  DateTime PROCESSED_DATE {get; set;}
+        public  DateTime? PROCESSED_DATE {get; set;}
+        public  string ERROR_INFO {get; set;}
     }
 
 
