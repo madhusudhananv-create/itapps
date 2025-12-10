@@ -85,7 +85,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string accessTypeText = string.Empty;
             switch (accessType)
             {
-                
+
                 case 1:
                     accessTypeText = "VIEW";
                     break;
@@ -109,7 +109,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var existingRequest = CSPdb.ACCESS_REQUEST.GetAll().FirstOrDefault(x => x.REQUESTED_BY == empId && x.PROJ_ID == projId && x.STATUS == "Pending");
             if (existingRequest != null && !string.IsNullOrEmpty(existingRequest.RESOURCE_ID))
             {
-                var existingResourceIds = string.Join(",",existingRequest.RESOURCE_ID.Split(',').Select(id => int.Parse(id.Trim())).OrderBy(x => x)
+                var existingResourceIds = string.Join(",", existingRequest.RESOURCE_ID.Split(',').Select(id => int.Parse(id.Trim())).OrderBy(x => x)
        );
                 if (existingRequest.RESOURCE_ID == sortedResourceIds)
                 {
@@ -188,7 +188,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     return Content(HttpStatusCode.BadRequest, "There is no active record exists for the requested feature: " + accessRequestEty.FEATURE);
                 }
-                
+
             }
             string requestorEmpId = accessRequestEty.REQUESTED_BY;
             var accessTypeValue = AccessTypeValue(accessRequestEty.ACCESS_LEVEL);
@@ -203,7 +203,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string mailContent = string.Empty;
             string message = string.Empty;
             var requestorInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == requestorEmpId && x.DOR == null);
-            if(accessRequestEty.STATUS.ToLower() == "approved")
+            if (accessRequestEty.STATUS.ToLower() == "approved")
             {
                 message = $"Please click the link here {logoutUrl} and log in to see the changes.";
             }
