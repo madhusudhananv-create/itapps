@@ -325,6 +325,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
         public string FIELD_NAME {get; set;}
         public string FIELD_VALUE  {get; set;}
         public  string FIELD_TYPE {get; set;}
+        public  bool IS_MANDATORY  {get; set;}
     }
 
 

@@ -252,7 +252,8 @@
       "PROJ_ID:string",
       "FIELD_NAME:string",
       "FIELD_VALUE :string",
-      "FIELD_TYPE: string"
+      "FIELD_TYPE: string",
+      "IS_MANDATORY : bool"
     ]
 
   },

@@ -97,14 +97,15 @@ UPDATED_DATE DATETIME)
 END 
 GO
 
-IF NOT EXISTS(Select 1 from sys.tables where name ='Project_Scope_Values' AND type='U')
+IF NOT EXISTS(Select 1 from sys.tables where name ='PROJECT_SCOPE_VALUES' AND type='U')
 BEGIN
-CREATE TABLE [dbo].[Project_Scope_Values](
+CREATE TABLE [dbo].[PROJECT_SCOPE_VALUES](
     [ID] [int] IDENTITY(1,1) NOT NULL,
     [PROJ_ID] [varchar](20) NOT NULL,
     [FIELD_NAME] [varchar](255),
     [FIELD_VALUE] [varchar](max),
     [FIELD_TYPE] [varchar](255),
+	IS_MANDATORY [bit],
     [ISACTIVE] [bit],
     [CREATED_BY] [varchar](10) NULL,
     [CREATED_DATE] [datetime] NOT NULL,
@@ -113,6 +114,7 @@ CREATE TABLE [dbo].[Project_Scope_Values](
 )
 END
 GO
+
 
 
 
