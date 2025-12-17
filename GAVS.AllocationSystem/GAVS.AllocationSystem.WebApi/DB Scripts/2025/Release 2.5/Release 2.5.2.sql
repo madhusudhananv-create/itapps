@@ -586,3 +586,177 @@ GROUP BY
     spoc
 
 	END
+    GO
+
+    
+IF EXISTS(Select 1 from sys.objects where name ='getCSSActionitem_All' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getCSSActionitem_All] 
+END
+
+GO
+
+CREATE PROCEDURE [dbo].[getCSSActionitem_All]     
+    
+@STARTDATE datetime,    
+@ENDDATE datetime,
+@CUSTOMER varchar(max)='0'  
+
+    
+AS            
+    
+BEGIN         
+
+select  p.BUSINESS_UNIT,C.CUST_NM as ACCOUNT,P.PROJ_NM as PROJECT,CB.DISPLAY_NAME as CUSTOMER,
+E.FRST_NM as PROJECT_MANAGER,  
+E.email_id as [PM_MAIL_ID],    
+E1.frst_nm as CSM ,    
+E1.email_id as [CSM_MAIL_ID],
+E2.frst_nm as [DELIVERY_PARTNER],    
+E2.email_id as [DP_MAIL_ID], 
+e3.FRST_NM as [DEX SPOC],
+SOURCE as SOURCE_CATEGORY,
+FORMAT(CB.SURVEY_SENT_DATE,'yyyy-MM-dd') as SURVEY_SENT_DATE,FORMAT(CB.SURVEY_RECEIVED_DATE,'yyyy-MM-dd') as SURVEY_RECEIVED_DATE    
+,cq.PERSPECTIVE,--sa.CSS_REFERENCE,
+sa.SCORE,sa.CUSTOMER_REMARKS,
+PA.DESCRIPTION as  [DESCRIPTION / CORRECTIVE_ACTION_PLAN], PA.STATUS, PA.ROOT_CAUSE, PA.PREVENTIVE_ACTION_PLAN,   
+FORMAT(PA.IDENTIFIED_DATE,'yyyy-MM-dd') as IDENTIFIED_DATE,
+FORMAT(PA.TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_TARGET_DATE,  
+FORMAT(PA.COMPLETION_DATE,'yyyy-MM-dd') as ACTION_PLAN_SUBMISSION_ACTUAL_DATE,
+FORMAT(PA.PLANNED_TARGET_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_TARGET_DATE,
+FORMAT(PA.PLANNED_ACTUAL_DATE,'yyyy-MM-dd') as ACTION_PLAN_COMPLETION_ACTUAL_DATE,
+[Year Quarter] = LEFT(cbt.frequency, 1) + CONVERT(varchar, cbt.sequence) + ' - ' + CONVERT(varchar, cbt.Year),                
+PA.BATCH_CUSTOMER_ID,PA.PROJECT_ID,PA.CUSTOMER_ID     ,FORMAT(PA.PLANNED_CUST_DATE,'yyyy-MM-dd') as [Planned Customer Communication Date], FORMAT(PA.CLOSURE_ACTUAL_CUST_DATE,'yyyy-MM-dd')  as [Actual Customer Communication Date]
+     
+from PROJECT_ACTIONITEM PA     
+CROSS APPLY fn_splitActionItemCssReference(PA.CSS_REFERENCE) sa
+inner join PROJECT P on P.PROJ_ID = PA.PROJECT_ID    
+inner join CUSTOMER C on C.CUST_ID = PA.CUSTOMER_ID       
+inner join CSS_BATCH_CUSTOMERS CB on CB.ID = PA.BATCH_CUSTOMER_ID    
+inner join CSS_QUESTION_REPLIES CQ on cq.BATCH_CUSTOMER_ID=cb.id and sa.CSS_REFERENCE=cq.QUESTION
+inner join CSS_QUESTION_MASTER cm on cm.id=cq.QUESTION_ID
+inner join EMP_INFO E on E.EMP_ID = P.PROJ_PM_EMP_ID    
+inner join EMP_INFO E1 on e1.emp_id  = p.PROJ_DM_EMP_ID                 
+inner join EMP_INFO E2 on e2.EMP_ID = p.DP_ID 
+INNER JOIN CSS_BATCHES cbt ON cbt.id = CB.Batch_ID and cbt.ISACTIVE = 1    
+left join EMP_INFO E3 on e3.EMP_ID  = p.QUALITY_SPOC 
+
+where  PA.ISACTIVE=1 and CB.ISACTIVE=1  --and PA.IDENTIFIED_DATE between @STARTDATE and @ENDDATE
+AND (cbt.START_DATE BETWEEN @StartDate AND @EndDate                          
+OR cbt.END_DATE BETWEEN @StartDate AND @EndDate)    
+and rating between 1 and 3 and cm.QUESTION_CATEGORY ='Criteria' and cm.ISACTIVE=1
+and (@CUSTOMER='0' or  c.CUST_ID in	(SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER,','))  )
+order by PA.IDENTIFIED_DATE,PROJECT,CUSTOMER desc    
+END    
+
+GO
+
+IF EXISTS(Select 1 from sys.objects where name ='getACSAT_AccountSummaryReport' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getACSAT_AccountSummaryReport] 
+END
+
+GO
+
+CREATE PROCEDURE [dbo].[getACSAT_AccountSummaryReport]            
+           
+@STARTDATE datetime,    
+@ENDDATE datetime,
+@CUSTOMER varchar(max)='0'  
+                                                                                                                             
+AS                                              
+BEGIN  
+;with cte as
+(
+select    ISNULL(p.BUSINESS_UNIT, (SELECT TOP 1 BUSINESS_UNIT FROM project WHERE cust_id = c.cust_id AND PROJ_STATUS !='close')) AS BUSINESS_UNIT
+,c.cust_id,cust_nm,
+case when bc.status in ('Mail Sent','Mail Re-sent','completed') then 1 else 0 end as Sentt, 
+case when bc.status ='completed' then 1 else 0 end as Completed ,
+
+case when bc.PREDICTED_SCORE in(9,10) then 'Promoter' end as [NPS_Promotor],
+case when  bc.PREDICTED_SCORE in(7,8) then 'Passive'  end as [NPS_Passive],
+case when  bc.PREDICTED_SCORE >=0 and  bc.PREDICTED_SCORE <=6 then 'Detractor' end as [NPS_Detractor] ,
+
+case when bc.PREDICTED_SCORE in(9,10) and bc.STATUS='Completed' then 'Promoter'  end as [NPS_R_Promotor],
+case when  bc.PREDICTED_SCORE in(7,8) and bc.STATUS='Completed'then 'Passive'  end as [NPS_R_Passive],
+case when  bc.PREDICTED_SCORE >=0 and  bc.PREDICTED_SCORE <=6 and bc.STATUS='Completed' then 'Detractor' end as [NPS_R_Detractor] ,
+
+case when (select top 1 isnull(rating,0) from CSS_QUESTION_REPLIES where batch_customer_id =bc.id and question_category = 'NPS' and PERSPECTIVE ='Net Promoter Score') in (9,10)
+then 'NPS_Actual_Promotor' end as [NPS_Actual_Promotor],
+case when (select top 1 isnull(rating,0) from CSS_QUESTION_REPLIES where batch_customer_id =bc.id and question_category = 'NPS' and PERSPECTIVE ='Net Promoter Score') in (7,8)
+then 'NPS_Actual_Passive' end  as [NPS_Actual_Passive],
+case when (select top 1 isnull(rating,0) from CSS_QUESTION_REPLIES where batch_customer_id =bc.id and question_category = 'NPS' and PERSPECTIVE ='Net Promoter Score') >= 0 
+     and (select top 1 isnull(rating,0) from CSS_QUESTION_REPLIES where batch_customer_id =bc.id and question_category = 'NPS' and PERSPECTIVE ='Net Promoter Score') <= 6
+then 'NPS_Actual_Detractor' end  as [NPS_Actual_Detractor],
+isnull((select   avg(isnull(rating,0))   
+from CSS_QUESTION_REPLIES where batch_customer_id =bc.id and question_category = 'Criteria' and PERSPECTIVE ='Meeting Delivery Commitments' ),0) AVR_DC, 
+isnull((select   avg(isnull(rating,0))   
+from CSS_QUESTION_REPLIES where batch_customer_id =bc.id and question_category = 'Criteria' and PERSPECTIVE ='Customer Engagement and Relationship' ),0) AVR_CE, 
+isnull((select   avg(isnull(rating,0))   
+from CSS_QUESTION_REPLIES where batch_customer_id =bc.id and question_category = 'Criteria' and PERSPECTIVE ='Partner adding value to Customer Business' ),0) AVR_PC, 
+bc.id,bc.predicted_score,bc.SPOC,
+
+(SELECT TOP 1 e.FRST_NM FROM project p 
+join EMP_INFO e on e.EMP_ID = p.PROJ_DM_EMP_ID
+where p.cust_id =c.CUST_ID and isnull(proj_status,'') != 'Close' GROUP BY FRST_NM ORDER BY COUNT(FRST_NM) DESC) as [Delivery Partner],
+
+(SELECT TOP 1 e.EMAIL_ID FROM project p 
+join EMP_INFO e on e.EMP_ID = p.PROJ_DM_EMP_ID
+where p.cust_id =c.CUST_ID and isnull(proj_status,'') != 'Close' GROUP BY EMAIL_ID ORDER BY COUNT(EMAIL_ID) DESC) as [Delivery Partner Email Id]
+
+from css_batch_customers bc 
+inner join customer c on c.cust_id = bc.cust_id 
+left join project p on p.proj_id = bc.PROJ_ID 
+left join EMP_INFO e on p.PROJ_DM_EMP_ID = e.EMP_ID
+join CSS_BATCHES b on b.ID = bc.BATCH_ID
+where  (b.START_DATE BETWEEN @StartDate AND @EndDate                          
+OR b.END_DATE BETWEEN @StartDate AND @EndDate)   and b.ISACTIVE=1 and bc.ISACTIVE=1
+and (@CUSTOMER='0' or  c.CUST_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER,',')) )
+and bc.status in ('mail sent', 'mail re-sent', 'completed' ) 
+),
+SPOC_Aggregation AS
+(
+    SELECT 
+        CUST_ID,cust_nm,
+        STUFF((
+            SELECT DISTINCT ', ' + e.frst_nm 
+            FROM EMP_INFO e 
+            WHERE e.email_id IN (SELECT SPOC FROM cte c2 WHERE c2.cust_id = cte.CUST_ID)
+            FOR XML PATH('')
+        ), 1, 2, '') AS [CSAT SPOC]
+    FROM cte
+    GROUP BY CUST_ID,CUST_NM
+),
+Score_Calculation as(
+select    BUSINESS_UNIT as [BUSINESS UNIT],cust_nm as [ACCOUNT] ,
+convert(varchar, sum(sentt)) AS [CSAT SENT],
+case when sum(completed) > 0 then sum(completed) else 0 end AS [CSAT RECEIVED],
+convert(varchar, case when sum(sentt) = 0 then  0  else  cast( cast(sum(completed) as decimal(10,2))*100/nullif(sum(sentt),0) as decimal(10,2)) end)+'%' AS [RESPONSE_RATE(%)] ,
+cast((count(NPS_Promotor) * 100.0 / NULLIF(sum(sentt), 0)) as decimal(10,2)) - 
+cast((count(NPS_Detractor) * 100.0 / NULLIF(sum(sentt), 0)) as decimal(10,2)) AS [Predicted NPS for All Respondents],
+
+cast(case when sum(completed) > 0 then (count(NPS_R_Promotor)   * 100.0 / nullif(sum(completed),0)) else 0 end as decimal(10,2)) - 
+cast(case when sum(completed) > 0 then (count(NPS_R_Detractor) * 100.0 / nullif(sum(completed),0)) else 0 end as decimal(10,2)) AS [Predicted NPS for Received Responses],
+
+cast(case when sum(completed) > 0 then (count(NPS_Actual_Promotor) * 100.0 / nullif(sum(completed),0)) else 0 end as decimal(10,2)) - 
+cast(case when sum(completed) > 0 then (count(NPS_Actual_Detractor) * 100.0 / nullif(sum(completed),0)) else 0 end as decimal(10,2)) AS [Actual NPS],
+
+convert(varchar, cast(  case when sum(completed) > 0 then cast(  sum(AVR_DC) as decimal(10,2))/ sum(completed) else 0 end   as decimal(18,2))) AS [Average of Delivery Commitment],
+convert(varchar, cast(  case when sum(completed) > 0 then cast(  sum(AVR_CE) as decimal(10,2))/ sum(completed) else 0 end   as decimal(18,2))) AS [Average of Customer Engagement and Relationship],
+convert(varchar, cast(  case when sum(completed) > 0 then cast(  sum(AVR_PC) as decimal(10,2))/ sum(completed) else 0 end   as decimal(18,2))) AS [Average of Partner adding value to Customer Business]
+, [Delivery Partner]
+,[Delivery Partner Email Id]
+   
+from cte  
+group by cust_id, cust_nm,BUSINESS_UNIT,[Delivery Partner],[Delivery Partner Email Id])
+
+
+SELECT 
+    a.*,
+    s.[CSAT SPOC]
+FROM Score_Calculation a
+INNER JOIN SPOC_Aggregation s ON a.ACCOUNT = s.cust_nm
+ORDER BY [BUSINESS UNIT], [ACCOUNT];
+END
+
+GO
