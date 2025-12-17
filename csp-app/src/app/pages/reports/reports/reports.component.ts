@@ -39,6 +39,7 @@ export class ReportsComponent implements OnInit {
   checklist: ChecklistModel[] = [];
   selectedChecklist: ChecklistModel;
   filteredCustomerIds: string = '';
+  showNoDataMessage: boolean = false;
   ngAfterViewInit() {
     this.datasource = new MatTableDataSource(this.FinalTabData);
     this.datasource.paginator = this.paginator;
@@ -181,11 +182,16 @@ export class ReportsComponent implements OnInit {
   service_getAllparamsbyId() {
     this.isdisabled = true;
     this.showDisplayButton = true;
-
+    this.FinalTabData = [];
+    this.displayedColumns = [];
+    this.updateTable();
+    this.showNoDataMessage = false;
     this.inputTypeDate = false;
     this.inputTypeNumber = false;
     this.inputTypeString = false;
-    this.selectedCustomer = null;
+    if (this.Customers.length > 0) {
+      this.selectedCustomer = this.Customers[0];
+    }
     this._appservice.getSpParams(this.selectedSP.id).subscribe(data => {
 
       this.paramData = data;
@@ -205,17 +211,24 @@ export class ReportsComponent implements OnInit {
     this.FinalTabData = [];
     this.displayedColumns = [];
     this.isdisabled = true;
+    this.showNoDataMessage = false;
     this._appservice.displaySpData(paramData, spname).subscribe(data => {
-     
-      this.FinalTabData = data;
+
+      this.FinalTabData = data || [];
       if (this.FinalTabData.length > 0) {
         this.displayedColumns = Object.keys(this.FinalTabData[0]);
-        this.updateTable();
+      } else {
+        this.displayedColumns = [];
       }
+      this.updateTable();
       this.isdisabled = false;
+      this.showNoDataMessage = true;
     },
       error => {
         this.isdisabled = false;
+        this.FinalTabData = [];
+        this.updateTable();
+        this.showNoDataMessage = true;
         this._util.serviceError(error);
       });
   }

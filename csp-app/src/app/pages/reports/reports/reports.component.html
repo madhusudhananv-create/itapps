@@ -5,9 +5,11 @@
   <table style="border-collapse: separate;">
     <tr>
       <td style="width: 25%;">
-        <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" [(ngModel)]="selectedSP" name="ddProcess"
-          (ngModelChange)="service_getAllparamsbyId()" placeholder="Select a Report">
-          <mat-option *ngFor="let type of AllSps" [value]="type" [title]="type.sP_DISPLAY_NAME"> {{type.sP_DISPLAY_NAME}}</mat-option>
+        <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px"
+          [(ngModel)]="selectedSP" name="ddProcess" (ngModelChange)="service_getAllparamsbyId()"
+          placeholder="Select a Report">
+          <mat-option *ngFor="let type of AllSps" [value]="type" [title]="type.sP_DISPLAY_NAME">
+            {{type.sP_DISPLAY_NAME}}</mat-option>
         </mat-select>
         <!-- <select style="height:30px" name="ddSp" name="ddSP" [(ngModel)]="selectedSP" (change)="service_getAllparamsbyId()">
           <option *ngFor="let sp of AllSps" [value]="sp.id">{{sp.sP_DISPLAY_NAME}}</option>
@@ -28,28 +30,32 @@
             <label for="date" style="font-weight: lighter; font-size: x-small;">(DD/MM/YYYY)</label>&nbsp;
           </span>
           <span *ngIf="p.paraM_TYPE=='CUSTOMERID'">
-            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddProject" [(ngModel)]="selectedCustomer">
+            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddProject"
+              [(ngModel)]="selectedCustomer">
               <mat-option *ngFor="let c of Customers" [value]="c" [title]="c.cusT_NM">
                 {{c.cusT_NM}}
               </mat-option>
             </mat-select>
           </span>
           <span *ngIf="p.paraM_TYPE=='PRODUCTID'">
-            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddProduct" [(ngModel)]="selectedProduct">
+            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddProduct"
+              [(ngModel)]="selectedProduct">
               <mat-option *ngFor="let p of products" [value]="p" [title]="p.producT_TITLE">
                 {{p.producT_TITLE}}
               </mat-option>
             </mat-select>
           </span>
           <span *ngIf="p.paraM_TYPE=='PORTFOLIOID'">
-            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddPort" [(ngModel)]="selectedPort">
+            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddPort"
+              [(ngModel)]="selectedPort">
               <mat-option *ngFor="let p of portfolio" [value]="p" [title]="p.title">
                 {{p.title}}
               </mat-option>
             </mat-select>
           </span>
           <span *ngIf="p.paraM_TYPE=='CHECKLIST'">
-            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddChecklist" [(ngModel)]="selectedChecklist">
+            <mat-select class="mat-dropdown-plain" style="width: 300px !important;margin-left: 10px" name="ddChecklist"
+              [(ngModel)]="selectedChecklist">
               <mat-option *ngFor="let c of checklist" [value]="c" [title]="c.title +' - '+ c.version">
                 {{c.title +' - '+ c.version}}
               </mat-option>
@@ -62,7 +68,7 @@
     </tr>
 
     <br>
-    
+
     <tr>
       <td style="padding-left: 10px;">
         <span *ngIf="showDisplayButton">
@@ -85,13 +91,18 @@
   <div class="mat-elevation-z8" #TABLE style="overflow: auto; height: calc(100vh - 170px);">
     <table class="table table-bordered mat-elevation-z8" mat-table [dataSource]="dataSource" matSort>
       <ng-container *ngFor="let hdr of displayedColumns" [matColumnDef]="hdr">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-weight: bolder;  color: rgb(0, 0, 0);">{{hdr | uppercase}}</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header style="font-weight: bolder;  color: rgb(0, 0, 0);">{{hdr |
+          uppercase}}</th>
         <td mat-cell *matCellDef="let element"> {{element[hdr]}} </td>
       </ng-container>
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr   mat-row *matRowDef="let row; columns: displayedColumns;"     
-      ></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
+
+    <div *ngIf="showNoDataMessage && (!FinalTabData || FinalTabData.length === 0)" style="text-align: center;color:red; font-weight: bold;">
+      No records found!
+    </div>
+
     <!-- <mat-paginator #paginatorTable [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>  
      
      [ngClass]="{
@@ -101,4 +112,5 @@
       }"
       -->
   </div>
+
 </div>
