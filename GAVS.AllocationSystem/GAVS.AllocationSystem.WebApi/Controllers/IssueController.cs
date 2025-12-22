@@ -150,7 +150,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Impact Summary", overview.IMPACT_SUMMARY);
             EmailContentValues.Add("Is Potential Risk", isPotentialRiskValue);
             EmailContentValues.Add("Business Impact", string.IsNullOrWhiteSpace(overview.BUSINESS_IMPACT) ? "-" : overview.BUSINESS_IMPACT);
-            EmailContentValues.Add("Location", overview.LOCATION_SELECTION + " " + (overview.GEO_LOCATION ?? ""));
+            EmailContentValues.Add("Location", overview.GEO_LOCATION ?? "");
+            EmailContentValues.Add("Location Selection", overview.LOCATION_SELECTION ?? "");
             EmailContentValues.Add("Issue Type", overview.ISSUE_TYPE);
             EmailContentValues.Add("Severity", overview.SEVERITY);
             EmailContentValues.Add("Action Plan / Steps", overview.ACTION_PLAN);
@@ -170,8 +171,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("Financial Impact", overview.FINANCIAL_IMPACT);
             EmailContentValues.Add("Financial Impact Description", overview.FINANCIAL_IMPACT_DESCRIPTION);
             EmailContentValues.Add("Buisness Impact Desc", overview.BUSINESS_IMPACT_DESC);
-            EmailContentValues.Add("Issue Source", overview.ISSUE_SOURCE + " " + overview.ISSUE_SOURCE_OTHER ?? "");
-
+            EmailContentValues.Add("Issue Source", overview.ISSUE_SOURCE);
+            EmailContentValues.Add("Issue Source Other", overview.ISSUE_SOURCE_OTHER ?? "");
 
             mailContent = helper.GetEmailContent("AddNewIssue.htm", EmailContentValues);
             var ep = new EmailProvider(Cldb, CSPdb);
