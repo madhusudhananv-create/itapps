@@ -46,12 +46,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             int? batchId; int? custbatchId; string guid = null;
             string frequency = "Quarterly";
             string frequency1 = string.Empty;
+            iBatchCustomer batchCustomer = null;
+            string status = string.Empty;
             if (surveyCriteria != null)
             {
                 if (surveyCriteria.QUARTER == 5 || surveyCriteria.QUARTER == 6)
                 {
                     frequency1 = "halfyearly";
-                       frequency = "half-yearly";
+                    frequency = "half-yearly";
                     surveyCriteria.QUARTER -= 4;
                 }
                 if (surveyCriteria.IS_MONTHLY)
@@ -78,10 +80,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
-                    if(string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
+                    if (string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
                     {
                         frequency = "Annual";
-                        batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t =>  (t.FREQUENCY.ToLower() == frequency) && t.YEAR == surveyCriteria.YEAR)?.ID;
+                        batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(t => (t.FREQUENCY.ToLower() == frequency) && t.YEAR == surveyCriteria.YEAR)?.ID;
 
                     }
                     else
@@ -93,22 +95,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         if (surveyCriteria.IS_QUALITATIVE_FEEDBACK)
                         {
-                            custbatchId = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && (t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT") && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID)?.ID;
+                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && (t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT") && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
                         }
-                        else if(!string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
+                        else if (!string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
                         {
-                            custbatchId = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && t.STATUS == "COMPLETED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID)?.ID;
+                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && t.STATUS == "COMPLETED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
                         }
                         else
                         {
-                            custbatchId = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.CUST_ID == surveyCriteria.CUST_ID && t.STATUS == "COMPLETED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID)?.ID;
+                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.STATUS == "COMPLETED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
                         }
-                        if (custbatchId.HasValue && custbatchId > 0)
+                        if (batchCustomer != null)
+                        {
+                            custbatchId = batchCustomer.ID;
+                            status = batchCustomer.STATUS;
                             guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId).SURVEY_ID;
+                        }
+
+
                     }
                 }
             }
-            return Ok(new { guid = guid, });
+            return Ok(new { guid = guid, status = status });
         }
 
         [GET("GetReportDetails")]

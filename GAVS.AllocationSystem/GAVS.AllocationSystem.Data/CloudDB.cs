@@ -65,7 +65,7 @@ namespace GAVS.AllocationSystem.Data
         public IRepository<EXTERNAL_KPI_FORMULAS> EXTERNAL_KPI_FORMULAS { get { return GetStandardRepo<EXTERNAL_KPI_FORMULAS>(); } }
 
         public IRepository<KPI_KEYWORDS> KPI_KEYWORDS { get { return GetStandardRepo<KPI_KEYWORDS>(); } }
-        public IRepository<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get { return GetStandardRepo<RISK_ISO_STANDARD_MAPPING>(); } }        
+        //public IRepository<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get { return GetStandardRepo<RISK_ISO_STANDARD_MAPPING>(); } }        
 
         protected void CreateDbContext()
         {

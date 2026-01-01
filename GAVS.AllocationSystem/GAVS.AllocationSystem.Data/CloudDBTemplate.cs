@@ -88,6 +88,15 @@ namespace GAVS.AllocationSystem.Data
    
             public IRepository<SCP_PROJECT_SERVICE_TOWER> SCP_PROJECT_SERVICE_TOWER { get { return GetStandardRepo<SCP_PROJECT_SERVICE_TOWER>(); } }
   
+   
+            public IRepository<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get { return GetStandardRepo<RISK_ISO_STANDARD_MAPPING>(); } }
+  
+   
+            public IRepository<ACCESS_REQUEST> ACCESS_REQUEST { get { return GetStandardRepo<ACCESS_REQUEST>(); } }
+  
+   
+            public IRepository<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get { return GetStandardRepo<CSS_BATCH_PROJECTS>(); } }
+  
     }
 }
  

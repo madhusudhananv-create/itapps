@@ -346,6 +346,20 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
 
 
+    public partial class CSS_BATCH_PROJECTS : EntityBase
+    {
+        public string CUST_ID {get; set;}
+        public string PROJ_ID {get; set;}
+        public string REASON {get; set;}
+        public string DP_ID {get; set;}
+        public bool IS_SELECTED  {get; set;}
+        public int BATCH_ID {get; set;}
+    }
+
+
+
+
+
 
 }
  

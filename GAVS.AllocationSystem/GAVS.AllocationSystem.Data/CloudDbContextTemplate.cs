@@ -43,9 +43,11 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<IDEA_IDENTIFIER>().ToTable("dbo.IDEA_IDENTIFIER");
             modelBuilder.Entity<PROJECT_INSCOPE_DETAILS>().ToTable("dbo.PROJECT_INSCOPE_DETAILS");
             modelBuilder.Entity<KPI_MASTER>().ToTable("dbo.KPI_MASTER");
-            modelBuilder.Entity<KPI_MASTER2BASE_MEASURE_CONFIG>().ToTable("dbo.KPI_MASTER2BASE_MEASURE_CONFIG");
             modelBuilder.Entity<SCP_APPLICABLE_CONFIG>().ToTable("dbo.SCP_APPLICABLE_CONFIG");
             modelBuilder.Entity<SCP_PROJECT_SERVICE_TOWER>().ToTable("dbo.SCP_PROJECT_SERVICE_TOWER");
+            modelBuilder.Entity<RISK_ISO_STANDARD_MAPPING>().ToTable("dbo.RISK_ISO_STANDARD_MAPPING");
+            modelBuilder.Entity<ACCESS_REQUEST>().ToTable("dbo.ACCESS_REQUEST");
+            modelBuilder.Entity<CSS_BATCH_PROJECTS>().ToTable("dbo.CSS_BATCH_PROJECTS");
         }
         public virtual DbSet<BASE_MEASURE_EXTERNAL_KPI_DATA> BASE_MEASURE_EXTERNAL_KPI_DATA { get; set; }
         public virtual DbSet<PRODUCT_RESPONSIBLE> PRODUCT_RESPONSIBLE { get; set; }
@@ -71,6 +73,9 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<KPI_MASTER> KPI_MASTER { get; set; }
         public virtual DbSet<SCP_APPLICABLE_CONFIG> SCP_APPLICABLE_CONFIG { get; set; }
         public virtual DbSet<SCP_PROJECT_SERVICE_TOWER> SCP_PROJECT_SERVICE_TOWER { get; set; }
+        public virtual DbSet<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get; set; }
+        public virtual DbSet<ACCESS_REQUEST> ACCESS_REQUEST { get; set; }
+        public virtual DbSet<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get; set; }
 }
 }
  

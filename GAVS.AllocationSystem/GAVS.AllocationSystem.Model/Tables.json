@@ -268,7 +268,21 @@
       "ERROR_INFO: string"
     ]
 
+  },
+  {
+    "name": "CSS_BATCH_PROJECTS",
+    "props": [
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "REASON:string",
+      "DP_ID:string",
+      "IS_SELECTED :bool",
+      "BATCH_ID:int"
+
+    ]
+
   }
+
 
 
 

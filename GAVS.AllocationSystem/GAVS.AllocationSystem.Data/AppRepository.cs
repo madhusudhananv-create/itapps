@@ -850,6 +850,18 @@ namespace GAVS.AllocationSystem.Data
             return result;
         }
 
+        public List<CSS_BATCH_PROJECTS> GetAccountProjectSelectionCSAT(DateTime startDate, DateTime endDate, string dpId)
+        {
+            
+
+            var dbContext = new CloudDbContext();
+            SqlParameter param1 = new SqlParameter("@STARTDATE", startDate);
+            SqlParameter param2 = new SqlParameter("@ENDDATE", endDate);
+            SqlParameter param3 = new SqlParameter("@DPID", dpId);
+
+            var result = dbContext.Database.SqlQuery<CSS_BATCH_PROJECTS>("[dbo].[getAccountProjectSelectionCSAT] @STARTDATE, @ENDDATE, @DPID", param1).ToList();
+            return result;
+        }
 
         //**********************************
         //I M P O R T A N T

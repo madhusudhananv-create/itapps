@@ -73,6 +73,8 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository<SCP_APPLICABLE_CONFIG> SCP_APPLICABLE_CONFIG { get; }
         IRepository<SCP_PROJECT_SERVICE_TOWER> SCP_PROJECT_SERVICE_TOWER { get; }
         IRepository<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get; }
+        
+        IRepository<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get; }
 
 
     }

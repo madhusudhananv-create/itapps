@@ -92,7 +92,7 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<EXTERNAL_KPI_DATA_MASTER> EXTERNAL_KPI_DATA_MASTER { get; set; }
         public virtual DbSet<EXTERNAL_KPI_FORMULAS> EXTERNAL_KPI_FORMULAS { get; set; }
         public virtual DbSet<KPI_KEYWORDS> KPI_KEYWORDS { get; set; }
-        public virtual DbSet<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get; set; }
+        //public virtual DbSet<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get; set; }
 
 
     }
