@@ -46,6 +46,7 @@ import { SurveySettingsMonthlyComponent } from "./pages/survey/survey-settings-m
 import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
 import { AccesscontrolManagementComponent } from "./components/accesscontrol-management/accesscontrol-management.component";
 import { NewpageComponent } from "./components/newpage/newpage.component";
+import { CsatConfigurationComponent } from "./customer/csat-configuration/csat-configuration.component";
 const routes: Routes = [];
 
 @NgModule({
@@ -159,6 +160,7 @@ const appRoutes: Routes = [
   },
   { path: "accesscontrolrequest/:custid/:projid/:requestid/:accesstypetext/:accesstype/:approveval", component: AccesscontrolManagementComponent },
   { path: "new", component: NewpageComponent },
+  { path: "csatconfiguration", component: CsatConfigurationComponent },
 
   // otherwise redirect to home
   //{ path: '**', redirectTo: '' }

@@ -16,6 +16,9 @@
   <i class="fa fa-star" style="color: green;"></i>&nbsp;&nbsp;&nbsp;SQA
   Management
 </button>
+<button mat-menu-item [routerLink]="['/csatconfiguration']" *ngIf="_access.IsAllowed(826, 1, '', '')">
+  <mat-icon>track_changes</mat-icon>CSAT Configuration
+</button>
 <button mat-menu-item [routerLink]="['/css']" *ngIf="_access.IsAllowed(38, 1, '', '')">
   <mat-icon>track_changes</mat-icon>Customer Satisfaction Survey
 </button>

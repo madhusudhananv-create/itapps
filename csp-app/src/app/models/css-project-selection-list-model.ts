@@ -1,0 +1,26 @@
+export class CssProjectSelectionListModel {
+    cusT_ID: string;
+    proJ_ID: string;
+    cusT_NM: string;
+    proJ_NM: string;
+    proJ_STATUS: string;
+    dP_ID: string;
+    reason: string;
+    defaulT_REASON: string;
+    predicteD_SCORE: number;
+    predicteD_REASON: string;
+    respondenT_MAIL: string;
+    csaT_SPOC: string;
+    accounT_IN_PCSAT: string;
+    projecT_IN_PCSAT: string;
+    accounT_HEAD_COUNT: number;
+    projecT_HEAD_COUNT: number;
+    executioN_TYPE: string;
+    engagemenT_TYPE: string;
+    CREATED_BY: string
+    CREATED_DATE: Date;
+    UPDATED_BY: string;
+    UPDATED_DATE: Date;
+    ISACTIVE: Boolean;
+    iS_SELECTED: boolean;
+}

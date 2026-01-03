@@ -194,6 +194,7 @@ import { EWSDetailsModel } from '../models//ews-details-model';
 import { AuditQualifiedStandardModel } from "../pages/auditqualitystandards/auditqualitystandards.component";
 import { ProductResponsibleModel } from "../pages/product-responsible/product-responsible.component";
 import { observable } from "rxjs";
+import { CssProjectSelectionListModel } from "../models/css-project-selection-list-model";
 
 @Injectable()
 export class AppsService {
@@ -9462,7 +9463,7 @@ export class AppsService {
       });
   }
 
-  sendRequestAccess(controlId: number[],feature :string, empId: string, accessType, custId: string,projId: string): Observable<any[]> {
+  sendRequestAccess(controlId: number[], feature: string, empId: string, accessType, custId: string, projId: string): Observable<any[]> {
     let header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
@@ -9482,7 +9483,7 @@ export class AppsService {
       });
 
   }
-saveApproveRejectRequestAccess( accessRequestData: AccessRequestModel ): Observable<any[]> {
+  saveApproveRejectRequestAccess(accessRequestData: AccessRequestModel): Observable<any[]> {
     let header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
@@ -9495,8 +9496,49 @@ saveApproveRejectRequestAccess( accessRequestData: AccessRequestModel ): Observa
       });
 
   }
-
-
+  getActiveCurrentBatch(): Observable<any> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<any>(this.apiurl + "/GetCurrentActiveBatch", {
+      headers: header,
+    });
+  }
+  getCSATListforDP(dpId: string,batchId ): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<any[]>(this.apiurl + "/GetCSATListForDP?dpId=" + dpId +
+      "&batchId=" + batchId, {
+      headers: header,
+    });
+  }
+  saveCSATListForDP(projectList: any[], dpId: string, batchId):Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,      
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.post<any[]>(this.apiurl + "/SaveCSATListForDP?dpId=" + dpId +
+      "&batchId=" + batchId, projectList, {
+      headers: header,      
+    });
+  } 
+  getCSATContactListForDP(dpId: string, batchId: number): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,    
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<any[]>(this.apiurl + "/GetCSATContactListForDP?dpId=" + dpId +        
+      "&batchId=" + batchId, {
+      headers: header,    
+    });
+  }
   /**
         *  get(url: string, options: {
           headers?: HttpHeaders | {

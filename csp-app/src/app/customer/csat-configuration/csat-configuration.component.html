@@ -1,0 +1,202 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+  <app-navbar-new [ShowMenu]="false"></app-navbar-new>
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav-content style="padding:3px;">
+
+      <div style="font-size: 20px; text-align: center">PCSAT Configuration Screen</div>
+
+      <mat-vertical-stepper [linear]="true" #stepper>
+
+        <mat-step [stepControl]="step1Form">
+          <ng-template matStepLabel>Project Selection</ng-template>
+
+          <div class="table-card">
+            <div class="table-toolbar">
+              <div class="toolbar-left" *ngIf="batchCycles">
+                <span class="toolbar-label">Batch Cycle:</span>
+                <mat-form-field class="bulk-dropdown" style="width: 210px;">
+                  <mat-select [(ngModel)]="selectedBatchCycle" disableOptionCentering>
+                    <mat-option [value]="batchCycles.batch_name">
+                      {{ batchCycles.batch_name }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="toolbar-right">
+                <mat-form-field class="bulk-dropdown" floatLabel="never">
+                  <mat-select [(ngModel)]="bulkReasonProject" disableOptionCentering
+                    placeholder="Select common reason for unchecked">
+                    <mat-option *ngFor="let reason of rejectionReasons" [value]="reason">
+                      {{ reason }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <button mat-flat-button class="small-btn" (click)="applyBulkReasonProject()">Apply</button>
+              </div>
+            </div>
+
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th style="width: 5%; text-align: center;">
+                    <mat-checkbox (change)="$event ? masterToggleProjects() : null"
+                      [checked]="projectSelection.hasValue() && isAllProjectsSelected()"
+                      [indeterminate]="projectSelection.hasValue() && !isAllProjectsSelected()">
+                    </mat-checkbox>
+                  </th>
+                  <th style="width: 20%;">Account</th>
+                  <th style="width: 20%;">Project</th>
+                  <th style="width: 10%;">Headcount</th>
+                  <th style="width: 10%;">Status</th>
+                  <th style="width: 10%;">Chosen for PCSAT</th>
+                  <th style="width: 25%;">Reason (if No)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let proj of step1ProjectList">
+                  <td style="text-align: center;">
+                    <mat-checkbox (click)="$event.stopPropagation()" (change)="toggleProjectSelection(proj)"
+                      [checked]="projectSelection.isSelected(proj)">
+                    </mat-checkbox>
+                  </td>
+                  <td style="color: #555;">{{ proj.account }}</td>
+                  <td>{{ proj.name }}</td>
+                  <td class="readonly-cell">{{ proj.headcount }}</td>
+                  <td>{{ proj.projectStatus }}</td>
+                  <td [style.color]="projectSelection.isSelected(proj) ? 'green' : 'red'" style="font-weight: 500;">
+                    {{ projectSelection.isSelected(proj) ? 'Yes' : 'No' }}
+                  </td>
+                  <td>
+                    <mat-form-field floatLabel="never" class="table-input"
+                      [class.mat-form-field-invalid]="!proj.isValid"
+                      [class.red-highlight]="!projectSelection.isSelected(proj) && proj.accountHeadcount < 10">
+                      
+                      <mat-select [(ngModel)]="proj.reasonNotChosen" [disabled]="projectSelection.isSelected(proj)"
+                        placeholder="Select Reason" (selectionChange)="proj.isValid = true">
+                        <mat-option *ngFor="let reason of rejectionReasons" [value]="reason">
+                          {{ reason }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-error *ngIf="!proj.isValid" style="font-size: 11px;">Required</mat-error>
+                    </mat-form-field>
+                    
+                    <span *ngIf="!projectSelection.isSelected(proj) && proj.accountHeadcount < 10" 
+                          style="font-size: 9px; color: blueviolet; display:block; margin-top:-5px;">
+                          Account Headcount < 10
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="step1ProjectList.length === 0" class="empty-state">
+              No projects found for this cycle.
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <button mat-raised-button color="primary" (click)="goForwardStep1(stepper)">Save</button>
+            <button mat-raised-button color="primary" (click)="clearStep1()">Clear</button>
+          </div>
+        </mat-step>
+
+        <mat-step [editable]="true">
+          <ng-template matStepLabel>Validation</ng-template>
+
+          <div class="table-card">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th style="width: 11%;">Project</th>
+                  <th style="width: 10%;">Respondent</th>
+                  <th style="width: 6%;">Role</th>
+                  <th style="width: 10%;">Email Id</th>
+                  <th style="width: 9%;">Prediction Score</th>
+                  <th style="width: 8%;">Reason</th>
+                  <th style="width: 10%;">CSAT SPOC</th>
+                  <th style="width: 12%;">CSAT SPOC Email</th>
+                  <th style="width: 7%;">Exec Type</th>
+                  <th style="width: 7%;">Eng Type</th>
+                  <th style="width: 6%;">Remarks</th>
+                  <th style="width: 4%; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of validationData; let i = index">
+                   <td><div class="cell-content" title="{{ row.project }}">{{ row.project }}</div></td>
+                   
+                   <td class="editable-cell">
+                    <div *ngIf="!row.isEditing" class="cell-content">{{ row.respondentName || '-' }}</div>
+                    <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input">
+                      <input type="text" matInput [(ngModel)]="row.respondentName" [matAutocomplete]="autoResp" placeholder="Search">
+                      <mat-autocomplete #autoResp="matAutocomplete" [displayWith]="displayRespondentFn" (optionSelected)="onRespondentSelected(row, $event)">
+                        <mat-option *ngFor="let r of getFilteredRespondents(row.respondentName)" [value]="r">
+                          {{ r.name }} <span style="font-size: 10px; color: #888">({{ r.role }})</span>
+                        </mat-option>
+                      </mat-autocomplete>
+                    </mat-form-field>
+                  </td>
+
+                  <td class="readonly-cell">{{ row.role || '-' }}</td>
+                  <td class="readonly-cell"><div class="cell-content" title="{{row.emailId}}">{{ row.emailId || '-' }}</div></td>
+
+                  <td class="editable-cell">
+                     <div *ngIf="!row.isEditing" class="cell-content">{{ row.predictedScore || '-' }}</div>
+                     <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input">
+                       <input matInput [(ngModel)]="row.predictedScore">
+                     </mat-form-field>
+                  </td>
+                  
+                  <td class="editable-cell">
+                    <div *ngIf="!row.isEditing" class="cell-content">{{ row.reasonPrediction || '-' }}</div>
+                    <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input">
+                       <input matInput [(ngModel)]="row.reasonPrediction">
+                     </mat-form-field>
+                  </td>
+
+                  <td class="editable-cell">
+                    <div *ngIf="!row.isEditing" class="cell-content">{{ row.csatSpoc || '-' }}</div>
+                    <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input">
+                      <input type="text" matInput [(ngModel)]="row.csatSpoc" [matAutocomplete]="autoSpoc" placeholder="Search">
+                      <mat-autocomplete #autoSpoc="matAutocomplete" [displayWith]="displaySpocFn" (optionSelected)="onSpocSelected(row, $event)">
+                        <mat-option *ngFor="let spoc of getFilteredSpocs(row.csatSpoc)" [value]="spoc">{{ spoc.name }}</mat-option>
+                      </mat-autocomplete>
+                    </mat-form-field>
+                  </td>
+
+                  <td class="readonly-cell"><div class="cell-content">{{ row.csatSpocEmail || '-' }}</div></td>
+                  <td class="readonly-cell"><div class="cell-content">{{ row.executionType }}</div></td>
+                  <td class="readonly-cell"><div class="cell-content">{{ row.engagementType }}</div></td>
+                  
+                  <td class="editable-cell">
+                    <div *ngIf="!row.isEditing" class="cell-content">{{ row.remarks || '-' }}</div>
+                    <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input">
+                       <input matInput [(ngModel)]="row.remarks">
+                     </mat-form-field>
+                  </td>
+
+                  <td style="text-align: center;">
+                    <div *ngIf="!row.isEditing">
+                      <button mat-icon-button color="primary" (click)="editRow(row)" style="width: 24px; height: 24px; line-height: 24px;"><mat-icon style="font-size: 16px;">edit</mat-icon></button>
+                      <button mat-icon-button color="warn" (click)="deleteRow(i)" style="width: 24px; height: 24px; line-height: 24px;"><mat-icon style="font-size: 16px;">delete</mat-icon></button>
+                    </div>
+                    <div *ngIf="row.isEditing">
+                       <button mat-icon-button style="color: green; width: 24px; height: 24px; line-height: 24px;" (click)="saveRow(row)"><mat-icon style="font-size: 16px;">check_circle</mat-icon></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="validationData.length === 0" class="empty-state">No projects selected.</div>
+          </div>
+          <div class="step-actions">
+            <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+            <button mat-raised-button color="primary">Submit</button>
+          </div>
+        </mat-step>
+
+      </mat-vertical-stepper>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

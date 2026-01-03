@@ -21,7 +21,6 @@ import { ActionitemComponent } from "./project/tabs/actionitem/actionitem.compon
 import { RiskDetailsComponent } from "./controls/risk-details/risk-details.component";
 import { LoginComponent } from "./authentication/login/login.component";
 import { ActivationComponent } from "./customer/activation/activation.component";
-
 //Controls
 import { Tab } from "./controls/tab/tab";
 import { Tabs } from "./controls/tab/tabs";
@@ -62,6 +61,8 @@ import {
   MatSnackBarModule,
   MatTreeModule,
   MatIconModule,
+  MatStepperModule,
+  MatCheckboxModule,
   MatDatepickerModule,
 
 } from "@angular/material";
@@ -227,13 +228,14 @@ import { ProjectFileUploadComponent } from "./pages/dashboard/project-file-uploa
 import { DropdownFilterComponent } from './pages/dropdown-filter/dropdown-filter.component';
 import { RiskRepositoryComponent } from './pages/risk-repository/risk-repository.component';
 import { SharedData } from "./Shared/sharedData";
-import {  GoogleLoginProvider, SocialLoginModule } from "angularx-social-login";
+import { GoogleLoginProvider, SocialLoginModule } from "angularx-social-login";
 import { environment } from "../environments/environment";
 import { RatingCriteriaRemarksComponent } from "./customer/rating-criteria-remarks/rating-criteria-remarks.component";
 import { GslabloginComponent } from './authentication/gslablogin/gslablogin.component';
 import { assessmentUtility } from "./Shared/assessmentUtility";
 import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
 import { DomainConfigService } from "./Services/app.domain.config";
+import { CsatConfigurationComponent } from './customer/csat-configuration/csat-configuration.component';
 //import { googleEnvironment } from "../environments/google";
 
 
@@ -298,7 +300,10 @@ export class DemoMaterialModule { }
     MatMomentDateModule,
     BvdDashboardModule,
     COODashboardModule,
-    SocialLoginModule
+    SocialLoginModule,
+    MatStepperModule,
+    MatCheckboxModule,
+    MatAutocompleteModule,
 
 
   ],
@@ -420,7 +425,8 @@ export class DemoMaterialModule { }
     ConfigextComponentComponent,
     RiskRepositoryComponent,
     CssbatchPopupComponent,
-    RatingCriteriaRemarksComponent
+    RatingCriteriaRemarksComponent,
+    CsatConfigurationComponent
   ],
   exports: [StaffingSummaryComponent, ProjectSelectorSingletomultipleComponent],
   bootstrap: [AppComponent],
@@ -436,23 +442,24 @@ export class DemoMaterialModule { }
     AccessControl,
     SharedService,
     SharedData,
-     DomainConfigService,
-      {
-        provide: 'SocialAuthServiceConfig',
-        useValue: {
-          autoLogin: false,
-          providers: [
-            {
-              id: GoogleLoginProvider.PROVIDER_ID,
-              provider: new GoogleLoginProvider(
-               environment.gavsGoogleClientId
-              )
-            } ,
-          ]}
-        } ,
+    DomainConfigService,
+    {
+      provide: 'SocialAuthServiceConfig',
+      useValue: {
+        autoLogin: false,
+        providers: [
+          {
+            id: GoogleLoginProvider.PROVIDER_ID,
+            provider: new GoogleLoginProvider(
+              environment.gavsGoogleClientId
+            )
+          },
+        ]
+      }
+    },
 
-     
-         
+
+
   ],
   entryComponents: [
     RiskDetailsComponent,
