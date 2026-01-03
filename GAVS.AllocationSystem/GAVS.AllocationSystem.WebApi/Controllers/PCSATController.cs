@@ -30,14 +30,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (existing != null)
                 {
                     item.IS_SELECTED = existing.IS_SELECTED;
-                    item.REASON = existing.REASON;
+                    if (!existing.IS_SELECTED)
+                    {
+                        item.REASON = existing.REASON;
+                    }
 
                 }
+                else
+                {
+                    item.IS_SELECTED = false;
+                }
 
-                result.Add(item);
+                //result.Add(item);
             }
             //3.
-            return Ok(result);
+            return Ok(spResult);
         }
 
         [POST("SaveCSATListForDP")]
@@ -45,12 +52,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult SaveCSATListForDP([FromBody] List<CSS_BATCH_PROJECTS> batchProjectList, string dpID, int batchId)
         {
-            //perform validation
+
+            var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpID && x.ISACTIVE).ToList();
 
             //loop the results and save.
             foreach (var item in batchProjectList)
             {
-                if (item.ID == 0)
+                var existingRecord = existingRecords.FirstOrDefault(x => x.PROJ_ID == item.PROJ_ID && x.CUST_ID == item.CUST_ID);
+                if (existingRecord == null)
                 {
                     item.BATCH_ID = batchId;
                     item.DP_ID = dpID;
@@ -59,8 +68,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
-                    UpdateAuditFields(item);
-                    Cldb.CSS_BATCH_PROJECTS.Update(item);
+                    existingRecord.IS_SELECTED = item.IS_SELECTED;
+                    existingRecord.REASON = item.REASON;
+                    existingRecord.ISACTIVE = item.ISACTIVE;
+                    UpdateAuditFields(existingRecord);
+                    Cldb.CSS_BATCH_PROJECTS.Update(existingRecord);
                 }
             }
             Cldb.Commit();
@@ -77,10 +89,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
-
             var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && x.DP_ID == dpId).ToList();
-            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId).ToList();
-            var custIds = batchCustomers.Select(x => x.CUST_ID).Distinct().ToList();
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId ).ToList();
+            var custIds = batchprojects.Select(x => x.CUST_ID).Distinct().ToList();
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && x.CONTACT_TYPE == "CUSTOMER" && custIds.Contains(x.CUSTOMER_ID)).ToList();
             foreach (var item in custIds)
             {
@@ -88,20 +99,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var contactsForCustomer = contacts.Where(x => x.CUSTOMER_ID == item).ToList();
                 var cartesianProduct = batchProjectsForCustomer.SelectMany(item1 => contactsForCustomer,
                                                   (item1, item2) => new { Item1 = item1, Item2 = item2 }).ToList();
+               
                 foreach (var item1 in cartesianProduct)
                 {
                     var existing = batchCustomers.FirstOrDefault(x => x.PROJ_ID == item1.Item1.PROJ_ID && x.EMAIL_ID == item1.Item2.CONTACT_EMAILID);
                     if (existing != null)
                         firstResult.Add(existing);
                     else
+                    {
                         firstResult.Add(new CSS_BATCH_CUSTOMERS
                         {
                             BATCH_ID = batchId,
                             ID = 0,
+                            CUST_ID=item1.Item1.CUST_ID,
+                            PROJ_ID=item1.Item1.PROJ_ID,
                             EMAIL_ID = item1.Item2.CONTACT_EMAILID,
                             DISPLAY_NAME = item1.Item2.CONTACT_NAME,
-
-                        });
+                        });;
+                    }
                 } 
             }
             result = helper.FillCustomerAndProjectNames(firstResult);

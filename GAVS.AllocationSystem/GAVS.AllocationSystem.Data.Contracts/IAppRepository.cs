@@ -107,6 +107,6 @@ namespace GAVS.AllocationSystem.Data.Contracts
         List<CUSTOMER_CONTACTS> GetCustomerContactsForAccount(string custId);
         List<PROJECT_BY_RESOURCE> GetAllocationCountForAccount(string custId);
 
-        List<CSS_BATCH_PROJECTS> GetAccountProjectSelectionCSAT(DateTime startDate, DateTime endDate, string dpId);
+        List<CSAT_PROJECT_SELECTION_LIST> GetAccountProjectSelectionCSAT(DateTime startDate, DateTime endDate, string dpId);
     }
 }

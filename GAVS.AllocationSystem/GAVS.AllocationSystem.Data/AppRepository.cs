@@ -850,7 +850,7 @@ namespace GAVS.AllocationSystem.Data
             return result;
         }
 
-        public List<CSS_BATCH_PROJECTS> GetAccountProjectSelectionCSAT(DateTime startDate, DateTime endDate, string dpId)
+        public List<CSAT_PROJECT_SELECTION_LIST> GetAccountProjectSelectionCSAT(DateTime startDate, DateTime endDate, string dpId)
         {
             
 
@@ -859,7 +859,7 @@ namespace GAVS.AllocationSystem.Data
             SqlParameter param2 = new SqlParameter("@ENDDATE", endDate);
             SqlParameter param3 = new SqlParameter("@DPID", dpId);
 
-            var result = dbContext.Database.SqlQuery<CSS_BATCH_PROJECTS>("[dbo].[getAccountProjectSelectionCSAT] @STARTDATE, @ENDDATE, @DPID", param1).ToList();
+            var result = dbContext.Database.SqlQuery<CSAT_PROJECT_SELECTION_LIST>("[dbo].[getAccountProjectSelectionCSAT] @STARTDATE, @ENDDATE, @DPID", param1,param2,param3).ToList();
             return result;
         }
 
