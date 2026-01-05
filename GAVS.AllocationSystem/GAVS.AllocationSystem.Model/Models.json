@@ -500,6 +500,15 @@
       "CONTACTS_LINK:string",
       "SKIP_CSAT_LINK:string"
     ]
+  },
+  {
+    "name": "CSAT_PROJECT_SELECTION_LIST",
+    "props": [
+      "PROJ_ID:string",
+      "CUST_ID:string",
+      "REASON:string",
+      "IS_SELECTED:bool"
+    ]
   }
 
-]
+    ]
