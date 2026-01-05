@@ -5,6 +5,7 @@ using System.Linq;
 using GAVS.AllocationSystem.Model.CSP;
 using System.Collections.Generic;
 using GAVS.AllocationSystem.Model.AllSys;
+using GAVS.AllocationSystem.Model.CSP.SP;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -99,35 +100,51 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var oldBatchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == oldBatchId).ToList();
             var oldBatchCustomerIds = oldBatchCustomers.Select(x => x.ID).ToList();
             var oldReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(x => x.ISACTIVE && x.QUESTION_ID == 48 && oldBatchCustomerIds.Contains(x.BATCH_CUSTOMER_ID)).ToList();
-            foreach (var item in custIds)
+            foreach (var item in batchprojects)
             {
-                var batchProjectsForCustomer = batchprojects.Where(x => x.CUST_ID == item).ToList();
-                var contactsForCustomer = contacts.Where(x => x.CUSTOMER_ID == item).ToList();
-                var cartesianProduct = batchProjectsForCustomer.SelectMany(item1 => contactsForCustomer,
-                                                  (item1, item2) => new { Item1 = item1, Item2 = item2 }).ToList();
+                // var batchProjectsForCustomer = batchprojects.Where(x => x.CUST_ID == item).ToList();
+                // var contactsForCustomer = contacts.Where(x => x.CUSTOMER_ID == item).ToList();
+                //var cartesianProduct = batchProjectsForCustomer.SelectMany(item1 => contactsForCustomer,
+                //                                  (item1, item2) => new { Item1 = item1, Item2 = item2 }).ToList();
 
-                foreach (var item1 in cartesianProduct)
+
+                var existing = batchCustomers.Where(x => x.PROJ_ID == item.PROJ_ID && x.IS_VERIFIED && x.ISACTIVE).ToList();
+                if (!existing.Any())
                 {
-                    var existing = batchCustomers.FirstOrDefault(x => x.PROJ_ID == item1.Item1.PROJ_ID && x.EMAIL_ID == item1.Item2.CONTACT_EMAILID);
-                    if (existing != null)
-                        firstResult.Add(existing);
-                    else
+                    firstResult.Add(new CSS_BATCH_CUSTOMERS
                     {
-                        var predictedValues = GetPredcitedScoreAndReason(item1.Item2.CONTACT_EMAILID, oldBatchCustomers, oldReplies);
+                        BATCH_ID = batchId,
+                        ID = 0,
+                        CUST_ID = item.CUST_ID,
+                        PROJ_ID = item.PROJ_ID,
+                        EMAIL_ID = "",
+                        DISPLAY_NAME = "",
+
+                    });
+                }
+                else
+
+                {
+                    foreach (var item2 in existing)
+                    {
+
+                        var predictedValues = GetPredcitedScoreAndReason(item2.EMAIL_ID, oldBatchCustomers, oldReplies);
                         firstResult.Add(new CSS_BATCH_CUSTOMERS
                         {
                             BATCH_ID = batchId,
                             ID = 0,
-                            CUST_ID = item1.Item1.CUST_ID,
-                            PROJ_ID = item1.Item1.PROJ_ID,
-                            EMAIL_ID = item1.Item2.CONTACT_EMAILID,
-                            DISPLAY_NAME = item1.Item2.CONTACT_NAME,
+                            CUST_ID = item2.CUST_ID,
+                            PROJ_ID = item2.PROJ_ID,
+                            EMAIL_ID = item2.EMAIL_ID,
+                            DISPLAY_NAME = item2.DISPLAY_NAME,
                             SPOC = predictedValues.Item3,
                             PREDICTED_SCORE = predictedValues.Item1.GetValueOrDefault(),
                             PREDICTED_REASON = predictedValues.Item2,
                         });
+
                     }
                 }
+
             }
             result = helper.FillCustomerAndProjectNames(firstResult);
             return Ok(result);
@@ -185,7 +202,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetDropdownOptions(string dropdownName)
         {
-            var result = new List<DROPDOWN_OPTION>();
+
+            var result = new List<DROPDOWN_OPTION>()
+               {
+                new DROPDOWN_OPTION(){ DD_VALUE ="ALREADY_COVERED", DD_TEXT="Project covered in another project" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="JUST_STARTED", DD_TEXT="Project just started" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="IN_TRANSITION", DD_TEXT="Project in transition phase" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="ACCOUNT_CLOSED", DD_TEXT="Account getting closed" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="ZIF_ONLY", DD_TEXT="ZIF only project" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="INVOICING_ONLY", DD_TEXT="Project created for invoicing" }
+               };
+
 
             return Ok(result);
         }
