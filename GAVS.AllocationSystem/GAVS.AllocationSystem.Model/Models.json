@@ -429,7 +429,7 @@
   {
     "name": "CUSTOMER_CONTACTS",
     "props": [
-      
+
       "EMAIL_ID:string",
       "DISPLAY_NAME:string",
       "IS_ACTIVE:bool"
@@ -509,6 +509,14 @@
       "REASON:string",
       "IS_SELECTED:bool"
     ]
+  },
+  {
+    "name": "DROPDOWN_OPTION",
+    "props": [
+      "DD_VALUE:string",
+      "DD_TEXT:string" 
+    
+    ]
   }
 
-    ]
+]

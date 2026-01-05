@@ -485,6 +485,12 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public bool IS_SELECTED {get; set;}
     }
 
+    public partial class DROPDOWN_OPTION  
+    {
+        public string DD_VALUE {get; set;}
+        public string DD_TEXT {get; set;}
+    }
+
 
 }
  

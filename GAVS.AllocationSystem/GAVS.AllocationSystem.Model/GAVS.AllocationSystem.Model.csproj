@@ -47,7 +47,7 @@
     <Compile Include="AllSys\SP\AvanirKPIModel.cs" />
     <Compile Include="AllSys\SP\CONFIGEXTDETAILS.cs" />
     <Compile Include="AllSys\SP\CSS_Readiness_Info.cs" />
-   <Compile Include="AllSys\SP\CSAT_PROJECT_SELECTION_LIST.cs" />
+ 
     <Compile Include="AllSys\SP\CUST_EMP_INFO.cs" />
     <Compile Include="AllSys\SP\EmployeeListfromCustomer.cs" />
     <Compile Include="AllSys\SP\GetCAPAStage.cs" />
