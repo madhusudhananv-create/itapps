@@ -479,10 +479,38 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
 
     public partial class CSAT_PROJECT_SELECTION_LIST  
     {
-        public string PROJ_ID {get; set;}
         public string CUST_ID {get; set;}
-        public string REASON {get; set;}
+        public string CUST_NM {get; set;}
+        public string PROJ_ID {get; set;}
+        public string PROJ_NM {get; set;}
         public bool IS_SELECTED {get; set;}
+        public string IS_REASON_MANDATORY {get; set;}
+        public int PROJECT_HEAD_COUNT {get; set;}
+        public int ACCOUNT_HEAD_COUNT {get; set;}
+        public string DEFAULT_REASON {get; set;}
+        public string REASON {get; set;}
+        public decimal? PREDICTED_SCORE {get; set;}
+        public string PREDICTED_REASON {get; set;}
+        public bool PROJECT_IN_PCSAT {get; set;}
+        public bool ACCOUNT_IN_ACSAT {get; set;}
+        public DateTime? START_DATE {get; set;}
+        public DateTime? END_DATE {get; set;}
+        public string FREQUENCY {get; set;}
+        public string PROJ_STATUS {get; set;}
+        public string RESPONDENT_MAIL {get; set;}
+        public string CONTACT_ROLE {get; set;}
+        public string CSAT_SPOC {get; set;}
+        public string CSAT_SPOC_EMAIL {get; set;}
+        public string PROJECT_TYPE {get; set;}
+        public string EXECUTION_TYPE {get; set;}
+        public string ENGAGAMENT_TYPE {get; set;}
+        public string BUSINESS_UNIT {get; set;}
+        public string DEPARTMENT {get; set;}
+        public string PROJECT_GROUP {get; set;}
+        public string CONTRACTING_UNIT {get; set;}
+        public string REVENUE_TYPE {get; set;}
+        public string COUNTRY {get; set;}
+        public string METHODOLOGY {get; set;}
     }
 
     public partial class DROPDOWN_OPTION  

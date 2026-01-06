@@ -37,10 +37,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
 
                 }
-                else
-                {
-                    item.IS_SELECTED = false;
-                }
+                //else
+                //{
+                //    item.IS_SELECTED = false;
+                //}
 
                 //result.Add(item);
             }
@@ -90,16 +90,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
-            var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && x.DP_ID == dpId).ToList();
-            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId).ToList();
+            var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && x.DP_ID == dpId && x.IS_SELECTED).ToList();
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId ).ToList();
             var custIds = batchprojects.Select(x => x.CUST_ID).Distinct().ToList();
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && x.CONTACT_TYPE == "CUSTOMER" && custIds.Contains(x.CUSTOMER_ID)).ToList();
 
             //write logic to find the real id
             int oldBatchId = 35;
-            var oldBatchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == oldBatchId).ToList();
+            var oldBatchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == oldBatchId && x.SURVEY_SENT_DATE.HasValue).ToList();
             var oldBatchCustomerIds = oldBatchCustomers.Select(x => x.ID).ToList();
-            var oldReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(x => x.ISACTIVE && x.QUESTION_ID == 48 && oldBatchCustomerIds.Contains(x.BATCH_CUSTOMER_ID)).ToList();
+            var oldReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(x => x.ISACTIVE && x.PERSPECTIVE.ToLower() == "overall experience" && oldBatchCustomerIds.Contains(x.BATCH_CUSTOMER_ID)).ToList();
             foreach (var item in batchprojects)
             {
                 // var batchProjectsForCustomer = batchprojects.Where(x => x.CUST_ID == item).ToList();
@@ -107,55 +107,67 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //var cartesianProduct = batchProjectsForCustomer.SelectMany(item1 => contactsForCustomer,
                 //                                  (item1, item2) => new { Item1 = item1, Item2 = item2 }).ToList();
 
+                var savedBatchRecord = batchCustomers.FirstOrDefault(x => x.PROJ_ID == item.PROJ_ID);
 
-                var existing = batchCustomers.Where(x => x.PROJ_ID == item.PROJ_ID && x.IS_VERIFIED && x.ISACTIVE).ToList();
-                if (!existing.Any())
+                if (savedBatchRecord != null)
                 {
-                    firstResult.Add(new CSS_BATCH_CUSTOMERS
-                    {
-                        BATCH_ID = batchId,
-                        ID = 0,
-                        CUST_ID = item.CUST_ID,
-                        PROJ_ID = item.PROJ_ID,
-                        EMAIL_ID = "",
-                        DISPLAY_NAME = "",
-
-                    });
+                    // If it exists in CSS_BATCH_CUSTOMERS, return that record
+                    firstResult.Add(savedBatchRecord);
                 }
                 else
-
                 {
-                    foreach (var item2 in existing)
+                    var existing = oldBatchCustomers.Where(x => x.PROJ_ID == item.PROJ_ID && x.IS_VERIFIED && x.ISACTIVE).ToList();
+                    if (!existing.Any())
                     {
-
-                        var predictedValues = GetPredcitedScoreAndReason(item2.EMAIL_ID, oldBatchCustomers, oldReplies);
                         firstResult.Add(new CSS_BATCH_CUSTOMERS
                         {
                             BATCH_ID = batchId,
                             ID = 0,
-                            CUST_ID = item2.CUST_ID,
-                            PROJ_ID = item2.PROJ_ID,
-                            EMAIL_ID = item2.EMAIL_ID,
-                            DISPLAY_NAME = item2.DISPLAY_NAME,
-                            SPOC = predictedValues.Item3,
-                            PREDICTED_SCORE = predictedValues.Item1.GetValueOrDefault(),
-                            PREDICTED_REASON = predictedValues.Item2,
+                            CUST_ID = item.CUST_ID,
+                            PROJ_ID = item.PROJ_ID,
+                            EMAIL_ID = "",
+                            DISPLAY_NAME = "",
+
                         });
-
                     }
-                }
+                    else
 
+                    {
+                        foreach (var item2 in existing)
+                        {
+
+                            var predictedValues = GetPredcitedScoreAndReason(item2.EMAIL_ID, oldBatchCustomers, oldReplies);
+                            firstResult.Add(new CSS_BATCH_CUSTOMERS
+                            {
+                                BATCH_ID = batchId,
+                                ID = 0,
+                                CUST_ID = item2.CUST_ID,
+                                PROJ_ID = item2.PROJ_ID,
+                                EMAIL_ID = item2.EMAIL_ID,
+                                DISPLAY_NAME = item2.DISPLAY_NAME,
+                                SPOC = predictedValues.Item3,
+                                PREDICTED_SCORE = predictedValues.Item1.GetValueOrDefault(),
+                                PREDICTED_REASON = predictedValues.Item2,
+                            });
+
+                        }
+                    }
+                   
+                }
+                
             }
             result = helper.FillCustomerAndProjectNames(firstResult);
+
             return Ok(result);
         }
 
         [POST("SaveCSATContactListForDP")]
         [ActionName("SaveCSATContactListForDP")]
         [HttpPost]
-        public IHttpActionResult SaveCSATContactListForDP([FromBody] List<CSS_BATCH_CUSTOMERS_EXTENDED> batchCustomerList, string dpId, int batchId)
+        public IHttpActionResult SaveCSATContactListForDP([FromBody] List<CSS_BATCH_CUSTOMERS> batchCustomerList, string dpId, int batchId)
         {
             //perform validation
+
 
             //loop the results and save.
             foreach (var item in batchCustomerList)
@@ -173,17 +185,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     CSPdb.CSS_BATCH_CUSTOMERS.Update(item);
                 }
             }
-            Cldb.Commit();
+            CSPdb.Commit();
 
             return Ok();
         }
 
-        [GET("GetContactListForCustIds")]
+        [POST("GetContactListForCustIds")]
         [ActionName("GetContactListForCustIds")]
-        [HttpGet]
-        public IHttpActionResult GetContactListForCustIds(List<string> custids)
+        [HttpPost]
+        public IHttpActionResult GetContactListForCustIds([FromBody] List<string> custIds)
         {
-            var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && custids.Contains(x.CUSTOMER_ID)).ToList();
+            var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && custIds.Contains(x.CUSTOMER_ID)).ToList();
 
             return Ok(contacts);
         }

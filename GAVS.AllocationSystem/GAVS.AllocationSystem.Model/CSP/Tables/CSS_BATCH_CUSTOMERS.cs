@@ -37,15 +37,19 @@ namespace GAVS.AllocationSystem.Model.CSP
         public bool? CSM_NOTIFIED { get; set; }
 
         public string SPOC { get; set; }
+        [NotMapped]
+        public decimal? PREDICTED_SCORE { get; set; }
+        [NotMapped]
+        public string PREDICTED_REASON { get; set; }
+        [NotMapped]
+        public string REMARKS { get; set; }
 
         [NotMapped]
         public int BATCH_MONTHLY_ID { get; set; }
 
         [NotMapped]
-        public decimal? PREDICTED_SCORE { get; set; }
+        public string CONTACT_ROLE { get; set; }
 
-        [NotMapped]
-        public string PREDICTED_REASON { get; set; }
     }
     [NotMapped]
     public class CSS_BATCH_CUSTOMERS_EXTENDED : CSS_BATCH_CUSTOMERS
