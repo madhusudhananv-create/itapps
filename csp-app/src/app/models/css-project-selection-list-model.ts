@@ -10,7 +10,9 @@ export class CssProjectSelectionListModel {
     predicteD_SCORE: number;
     predicteD_REASON: string;
     respondenT_MAIL: string;
+    contacT_ROLE: string;
     csaT_SPOC: string;
+    csaT_SPOC_EMAIL: string;
     accounT_IN_PCSAT: string;
     projecT_IN_PCSAT: string;
     accounT_HEAD_COUNT: number;

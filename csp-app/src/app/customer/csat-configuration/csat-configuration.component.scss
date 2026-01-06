@@ -7,7 +7,7 @@
   margin-top: 5px;
   margin-bottom: 10px;
   padding-bottom: 0;
-  width: 100%;    
+  width: 100%;
   min-width: 100%;
 }
 
@@ -36,7 +36,7 @@
   border: 1px solid #999;
   font-size: 10px;
   text-transform: uppercase;
-  height: 30px;           
+  height: 30px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -53,17 +53,21 @@
 
 /* --- UTILITIES --- */
 .cell-content {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    width: 100%;
-    line-height: 32px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  width: 100%;
+  line-height: 32px;
 }
 
 .readonly-cell {
-    background-color: #fafafa;
-    color: #555;
+  background-color: #fafafa;
+  color: #555;
+}
+
+.editable-cell {
+    background-color: #ffffff;
 }
 
 /* --- FORM FIELDS IN TABLE --- */
@@ -79,7 +83,7 @@
 
 .styled-table ::ng-deep .mat-form-field-infix {
   border-top: 0;
-  padding: 6px 0 !important; 
+  padding: 6px 0 !important;
   width: auto;
 }
 
@@ -120,7 +124,7 @@
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;          
+  gap: 10px;
 }
 
 .toolbar-label {
@@ -130,53 +134,47 @@
   white-space: nowrap;
 }
 
-/* --- DROPDOWN ALIGNMENT FIX (UPDATED) --- */
+/* --- DROPDOWN ALIGNMENT FIX --- */
 .bulk-dropdown {
-  width: 300px; /* Wide enough for long placeholder */
+  width: 300px;
   margin: 0;
 }
 
-/* 1. Remove wrapper padding/margin */
 .bulk-dropdown ::ng-deep .mat-form-field-wrapper {
   padding-bottom: 0;
   margin: 0;
 }
 
-/* 2. Box Styling */
 .bulk-dropdown ::ng-deep .mat-form-field-flex {
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 4px;
-  padding: 0 8px; 
-  height: 32px; 
+  padding: 0 8px;
+  height: 32px;
   display: flex;
-  align-items: center; /* Vertically center content */
+  align-items: center;
 }
 
-/* 3. Hide Underline */
 .bulk-dropdown ::ng-deep .mat-form-field-underline {
   display: none;
 }
 
-/* 4. Infix (Container for select) - Force full width */
 .bulk-dropdown ::ng-deep .mat-form-field-infix {
   border-top: 0;
   padding: 0 !important;
-  width: 100%; /* CRITICAL: Force width to fill flex container */
+  width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
 }
 
-/* 5. Select Trigger - Pin Arrow to Right */
 .bulk-dropdown ::ng-deep .mat-select-trigger {
-  width: 100%; /* Fill the infix */
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* CRITICAL: Pushes Text Left, Arrow Right */
+  justify-content: space-between;
 }
 
-/* 6. Select Value Text - Fix vertical cut-off */
 .bulk-dropdown ::ng-deep .mat-select-value {
   display: flex;
   align-items: center;
@@ -184,23 +182,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   position: relative;
-  top: 0; /* Reset any default shifting */
-  line-height: normal; /* Prevents text from being pushed down */
+  top: 0;
+  line-height: normal;
 }
 
-/* 7. Select Arrow - Vertical Center */
 .bulk-dropdown ::ng-deep .mat-select-arrow-wrapper {
   transform: translateY(0);
   display: flex;
   align-items: center;
   height: 100%;
-  padding-left: 5px; /* Tiny buffer from text */
+  padding-left: 5px;
 }
 
 /* --- BUTTON ALIGNMENT --- */
 .small-btn {
   height: 32px;
-  line-height: 32px; 
+  line-height: 32px;
   padding: 0 20px;
   font-size: 13px;
   background-color: #ffc107;
@@ -218,11 +215,7 @@
   gap: 10px;
 }
 
-// .selected-row {
-//   background-color: #f0f8ff;
-// }
-
-.styled-table td:first-child, 
+.styled-table td:first-child,
 .styled-table th:first-child {
   padding: 0;
 }
@@ -239,9 +232,9 @@
 
 .mat-form-field-invalid ::ng-deep .mat-form-field-flex {
   border: none !important;
-  border-bottom: 1px solid #f44336 !important;
+  border-bottom: 1px solid #f44336 !important; /* Red Line */
   border-radius: 0;
-  background-color: #fff5f5;
+  background-color: #fff5f5; /* Slight red tint to box */
 }
 
 .mat-error {
@@ -250,12 +243,33 @@
 }
 
 .empty-state {
-    padding: 20px;
-    text-align: center;
-    color: #888;
-    font-size: 14px;
-    background: #fafafa;
-    border-bottom: 1px solid #ccc;
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  background: #fafafa;
+  border-bottom: 1px solid #ccc;
 }
 
+/* --- DROPDOWN COLOR OVERRIDES --- */
 
+/* Force 'Yes' to be Green in the selected box */
+::ng-deep .color-yes .mat-select-value {
+  color: green !important;
+  font-weight: 500;
+}
+
+/* Force 'No' to be Red in the selected box */
+::ng-deep .color-no .mat-select-value {
+  color: red !important;
+  font-weight: 500;
+}
+
+/* Force colors in the dropdown list options */
+::ng-deep .mat-option.color-yes .mat-option-text {
+  color: green !important;
+}
+
+::ng-deep .mat-option.color-no .mat-option-text {
+  color: red !important;
+}

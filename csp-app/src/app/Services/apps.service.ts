@@ -9506,7 +9506,7 @@ export class AppsService {
       headers: header,
     });
   }
-  getCSATListforDP(dpId: string,batchId ): Observable<any[]> {
+  getCSATListforDP(dpId: string, batchId): Observable<any[]> {
     let header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
@@ -9517,28 +9517,68 @@ export class AppsService {
       headers: header,
     });
   }
-  saveCSATListForDP(projectList: any[], dpId: string, batchId):Observable<any[]> {
+  saveCSATListForDP(projectList: any[], dpId: string, batchId): Observable<any[]> {
     let header = new HttpHeaders({
       Accept: "application/json",
-      token: this._util.AppSettings.token,      
+      token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
     });
     return this._http.post<any[]>(this.apiurl + "/SaveCSATListForDP?dpId=" + dpId +
       "&batchId=" + batchId, projectList, {
-      headers: header,      
+      headers: header,
     });
-  } 
+  }
   getCSATContactListForDP(dpId: string, batchId: number): Observable<any[]> {
     let header = new HttpHeaders({
       Accept: "application/json",
-      token: this._util.AppSettings.token,    
+      token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
     });
-    return this._http.get<any[]>(this.apiurl + "/GetCSATContactListForDP?dpId=" + dpId +        
+    return this._http.get<any[]>(this.apiurl + "/GetCSATContactListForDP?dpId=" + dpId +
       "&batchId=" + batchId, {
-      headers: header,    
+      headers: header,
     });
   }
+ getContactListForCustIds(custIds: string[]): Observable<any[]> {
+    let header = new HttpHeaders({
+        Accept: "application/json",
+        token: this._util.AppSettings.token,
+        empId: localStorage.getItem("empid")
+    });
+    return this._http.post<any[]>(
+        this.apiurl + "/GetContactListForCustIds", 
+        custIds, 
+        { headers: header }
+    );
+}
+saveCSATContactListForDP(cssBatchData: any[], dpId: string, batchId): Observable<CssBatchCustomersModel[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,  
+      empId: localStorage.getItem("empid"),
+    });   
+    return this._http.post<CssBatchCustomersModel[]>(this.apiurl + "/SaveCSATContactListForDP?dpId=" + dpId +
+      "&batchId=" + batchId, cssBatchData, {
+      headers: header,
+    });
+  }
+
+  getDropdownOptions(dropdownName :string): Observable<any[]> {  
+    let header = new HttpHeaders({  
+      Accept: "application/json", 
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<any[]>(this.apiurl + "/GetDropdownOptions?dropdownName=" + dropdownName, {
+      headers: header,
+    }); 
+  }
+
+
+                     
+
+
+
   /**
         *  get(url: string, options: {
           headers?: HttpHeaders | {
