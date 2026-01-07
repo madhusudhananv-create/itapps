@@ -91,12 +91,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
             var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && x.DP_ID == dpId && x.IS_SELECTED).ToList();
-            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId ).ToList();
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId).ToList();
             var custIds = batchprojects.Select(x => x.CUST_ID).Distinct().ToList();
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && x.CONTACT_TYPE == "CUSTOMER" && custIds.Contains(x.CUSTOMER_ID)).ToList();
 
             //write logic to find the real id
+
             int oldBatchId = 35;
+            int.TryParse(helper.GetDBConfig("LAST_PCSAT_BATCH_ID", "-1"), out oldBatchId);
             var oldBatchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == oldBatchId && x.SURVEY_SENT_DATE.HasValue).ToList();
             var oldBatchCustomerIds = oldBatchCustomers.Select(x => x.ID).ToList();
             var oldReplies = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(x => x.ISACTIVE && x.PERSPECTIVE.ToLower() == "overall experience" && oldBatchCustomerIds.Contains(x.BATCH_CUSTOMER_ID)).ToList();
@@ -152,9 +154,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                         }
                     }
-                   
+
                 }
-                
+
             }
             result = helper.FillCustomerAndProjectNames(firstResult);
 
@@ -167,11 +169,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult SaveCSATContactListForDP([FromBody] List<CSS_BATCH_CUSTOMERS> batchCustomerList, string dpId, int batchId)
         {
             //perform validation
+            var lastAcsatBatchId = 36;
+            int.TryParse(helper.GetDBConfig("LAST_ACSAT_BATCH_ID", "-1"), out lastAcsatBatchId);
 
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.SURVEY_SENT_DATE.HasValue && x.BATCH_ID == lastAcsatBatchId).ToList();
 
             //loop the results and save.
             foreach (var item in batchCustomerList)
             {
+                if (batchCustomers.Any(x => x.EMAIL_ID == item.EMAIL_ID))
+                {
+                    return BadRequest($"Unable to Save. Customer Contact {item.DISPLAY_NAME} - {item.EMAIL_ID} already has been sent ACSAT in the last period. Please remove the customer contact and continue.");
+                }
                 if (item.ID == 0)
                 {
                     item.BATCH_ID = batchId;
