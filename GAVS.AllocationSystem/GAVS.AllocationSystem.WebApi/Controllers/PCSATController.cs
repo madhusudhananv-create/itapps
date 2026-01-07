@@ -91,7 +91,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
             var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && x.DP_ID == dpId && x.IS_SELECTED).ToList();
-            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId).ToList();
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId ).ToList();
             var custIds = batchprojects.Select(x => x.CUST_ID).Distinct().ToList();
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && x.CONTACT_TYPE == "CUSTOMER" && custIds.Contains(x.CUSTOMER_ID)).ToList();
 
@@ -154,9 +154,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                         }
                     }
-
+                   
                 }
-
+                
             }
             result = helper.FillCustomerAndProjectNames(firstResult);
 
@@ -169,6 +169,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult SaveCSATContactListForDP([FromBody] List<CSS_BATCH_CUSTOMERS> batchCustomerList, string dpId, int batchId)
         {
             //perform validation
+            var existingRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
             var lastAcsatBatchId = 36;
             int.TryParse(helper.GetDBConfig("LAST_ACSAT_BATCH_ID", "-1"), out lastAcsatBatchId);
 
@@ -190,10 +191,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
-                    UpdateAuditFields(item);
-                    CSPdb.CSS_BATCH_CUSTOMERS.Update(item);
-                }
+                    var batchRecords = existingRecords.FirstOrDefault(x => x.ID == item.ID);
+
+                    if (batchRecords != null)
+                    {
+                        batchRecords.DISPLAY_NAME = item.DISPLAY_NAME;
+                        batchRecords.EMAIL_ID = item.EMAIL_ID;
+                        batchRecords.SPOC = item.SPOC;
+                        batchRecords.PREDICTED_SCORE = item.PREDICTED_SCORE;
+                        batchRecords.PREDICTED_REASON = item.PREDICTED_REASON;
+                        batchRecords.REMARKS = item.REMARKS;
+                        UpdateAuditFields(batchRecords);
+                        CSPdb.CSS_BATCH_CUSTOMERS.Update(batchRecords);
+                    }
+                
             }
+        }
             CSPdb.Commit();
 
             return Ok();

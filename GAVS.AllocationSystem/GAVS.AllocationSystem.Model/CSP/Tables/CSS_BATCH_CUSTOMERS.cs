@@ -35,13 +35,9 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string ENTERED_BY { get; set; }
         public DateTime? MEETING_DATE { get; set; }
         public bool? CSM_NOTIFIED { get; set; }
-
         public string SPOC { get; set; }
-        [NotMapped]
         public decimal? PREDICTED_SCORE { get; set; }
-        [NotMapped]
         public string PREDICTED_REASON { get; set; }
-        [NotMapped]
         public string REMARKS { get; set; }
 
         [NotMapped]
