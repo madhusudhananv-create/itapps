@@ -7,7 +7,7 @@
 
       <mat-vertical-stepper [linear]="true" #stepper>
 
-        <mat-step [stepControl]="step1Form">
+        <mat-step [stepControl]="step1Form" [completed]="isStep1Completed">
           <ng-template matStepLabel>Project Selection</ng-template>
 
           <div class="toolbar-right" style="flex: 1;">
@@ -31,7 +31,13 @@
                   </mat-select>
                 </mat-form-field>
               </div>
-
+              <div class="col-sm-8 col-lg-8">
+                <span> Search:</span>
+                <mat-form-field style="width:40%; margin-left: 5px;margin-right: 5px;">
+                  <input name="txtwildcard" matInput [(ngModel)]="searchText" (keyup)="applyFilter()" />
+                </mat-form-field>
+                <button mat-flat-button class="clear-btn" (click)="clearFilter()">Clear</button>
+              </div>
               <div class="toolbar-right">
                 <mat-form-field class="bulk-dropdown" floatLabel="never">
                   <mat-select [(ngModel)]="bulkReasonProject" disableOptionCentering
@@ -56,25 +62,25 @@
                     </mat-checkbox>
                   </th>
                   <th style="width: 20%;">Account</th>
-                  <th style="width: 10%;">Headcount</th>
+                  <th style="width: 13%;">Account Headcount</th>
                   <th style="width: 20%;">Project</th>
-                  <th style="width: 10%;">Headcount</th>
-                  <th style="width: 10%;">Status</th>
+                  <th style="width: 13%;">Project Headcount</th>
+                  <th style="width: 10%;">Project Status</th>
                   <th style="width: 10%;">Chosen for PCSAT</th>
-                  <th style="width: 25%;">Reason (if No)</th>
+                  <th style="width: 20%;">Reason (if No)</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let proj of step1ProjectList">
+                <tr *ngFor="let proj of filteredStep1List">
                   <td style="text-align: center;">
                     <mat-checkbox (click)="$event.stopPropagation()" (change)="toggleProjectSelection(proj)"
                       [checked]="projectSelection.isSelected(proj)">
                     </mat-checkbox>
                   </td>
                   <td style="color: #555;">{{ proj.account }}</td>
-                  <td>{{ proj.accountHeadcount }}</td>
+                  <td style="text-align:right">{{ proj.accountHeadcount }}</td>
                   <td>{{ proj.name }}</td>
-                  <td class="readonly-cell">{{ proj.headcount }}</td>
+                  <td class="readonly-cell" style="text-align:right">{{ proj.headcount }}</td>
                   <td>{{ proj.projectStatus }}</td>
                   <td>
                     <mat-form-field floatLabel="never" class="table-input"
@@ -139,6 +145,7 @@
                   <th style="width: 9%;">Execution Type</th>
                   <th style="width: 9%;">Engagement Type</th>
                   <th style="width: 6%; text-align: center;">Action</th>
+                  <!-- <th style="width: 6%; text-align: center;text-wrap: inherit;">Link to Contacts</th> -->
                 </tr>
               </thead>
               <tbody>
@@ -183,7 +190,7 @@
                     <div *ngIf="!row.isEditing" class="cell-content">{{ row.predictedScore }}</div>
                     <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input"
                       [class.mat-form-field-invalid]="!row.isValid && (row.predictedScore === null || row.predictedScore === '')">
-                      <input matInput type="number" [(ngModel)]="row.predictedScore">
+                      <input matInput type="number" max="5" min="0" [(ngModel)]="row.predictedScore">
                     </mat-form-field>
                   </td>
 

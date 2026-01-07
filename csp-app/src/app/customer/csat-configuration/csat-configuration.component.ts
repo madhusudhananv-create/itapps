@@ -38,18 +38,22 @@ export class CsatConfigurationComponent implements OnInit {
   filteredOptions: Observable<EmpInfoModel[]>;
   myControl = new FormControl();
   empinfo: EmpInfoModel[] = [];
+  searchText: string;
   @ViewChild('stepper') stepper: MatStepper;
+  filteredStep1List: any[] = [];
+  isStep1Completed: boolean = false;
+
 
   constructor(
     private _formBuilder: FormBuilder,
-    changeDetectorRef: ChangeDetectorRef,
+    private _cdRef: ChangeDetectorRef,
     media: MediaMatcher,
     private _appservice: AppsService,
     private route: ActivatedRoute,
     public _util: myUtility
   ) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
-    this._mobileQueryListener = () => changeDetectorRef.detectChanges();
+    this._mobileQueryListener = () => this._cdRef.detectChanges();
     this.mobileQuery.addListener(this._mobileQueryListener);
   }
 
@@ -123,6 +127,8 @@ export class CsatConfigurationComponent implements OnInit {
         chosen: dbRow.iS_SELECTED ? 'Yes' : 'No',
         reasonNotChosen: '',
         isValid: true,
+        executionType: dbRow.executioN_TYPE,
+        engagementType: dbRow.engagamenT_TYPE
       };
 
       if (isSelectedInDb) {
@@ -136,22 +142,29 @@ export class CsatConfigurationComponent implements OnInit {
       }
       this.step1ProjectList.push(newProj);
     });
+    this.filteredStep1List = [...this.step1ProjectList];
   }
 
+  // Update this helper too for the checkbox state
   isAllProjectsSelected() {
-    return this.projectSelection.selected.length === this.step1ProjectList.length;
+    if (this.filteredStep1List.length === 0) return false;
+    return this.filteredStep1List.every(p => this.projectSelection.isSelected(p));
   }
 
   masterToggleProjects() {
-    // Only toggles checkboxes. Does NOT change 'chosen' status or reasons.
-    if (this.isAllProjectsSelected()) {
+    // Check if all VISIBLE projects are selected
+    const allVisibleSelected = this.filteredStep1List.every(p => this.projectSelection.isSelected(p));
+
+    if (allVisibleSelected) {
       this.projectSelection.clear();
     } else {
-      this.step1ProjectList.forEach(p => {
+      // Select only the visible filtered rows
+      this.filteredStep1List.forEach(p => {
         this.projectSelection.select(p);
       });
     }
   }
+
 
   toggleProjectSelection(proj: any) {
     // Only toggles the checkbox for bulk operations.
@@ -183,42 +196,35 @@ export class CsatConfigurationComponent implements OnInit {
     });
   }
 
+
+
+  // REPLACE your goForwardStep1 function with this exact code
   goForwardStep1(stepper: MatStepper) {
     let isFormValid = true;
 
-    // 1. Check if at least one project is 'Yes' (Global check)
-    // const noProjectsWithHeadcount = this.step1ProjectList.filter(p => p.chosen === 'No'
-    //    && p.accountHeadcount >= 10);
-    // if (noProjectsWithHeadcount.length === 0) {
-    //   alert("Please select at least one project for PCSAT with headcount >= 10");
-    // }
-
-    // 2. Validate Row-by-Row
+    // --- Validation Logic ---
     this.step1ProjectList.forEach(proj => {
-      // Reset validity initially so previous errors clear if fixed
       proj.isValid = true;
-
-      // Check: If Chosen is 'No' AND Reason is empty
       if (proj.chosen === 'No' && !proj.reasonNotChosen) {
-        proj.isValid = false; // This triggers the RED highlight on the Reason column
-        isFormValid = false;  // This flags the whole form as invalid
+        proj.isValid = false; 
+        isFormValid = false;
       }
-      if (proj.chosen === 'No' && proj.accountHeadcount >= 10 && !proj.reasonNotChosen) {
-        proj.isValid = false;
-        alert("Please select at least one project for PCSAT with headcount >= 10");
+      if(proj.chosen === 'No' && proj.accountHeadcount >= 10 && !proj.reasonNotChosen) {
+          proj.isValid = false;
+          alert("Please select at least one project for PCSAT with headcount >= 10");
+          isFormValid = false;
       }
-
     });
 
-    // 3. Trigger Alert if validation failed
     if (!isFormValid) {
-      alert("Select reason for No");
-      return; // Stops execution. UI updates immediately after this returns.
+      alert("Select reason for No"); 
+      return;
     }
 
-    // --- Proceed to Save if Valid ---
+    // --- LOGIC: Check for 'Yes' Projects ---
+    const hasSelectedProjects = this.step1ProjectList.some(p => p.chosen === 'Yes');
 
-    // Prepare Save Payload
+    // --- Prepare Save Payload ---
     const projectsToSave = this.step1ProjectList.filter(proj =>
       proj.chosen === 'Yes' || (proj.chosen === 'No' && proj.reasonNotChosen)
     );
@@ -237,38 +243,75 @@ export class CsatConfigurationComponent implements OnInit {
       };
     });
 
+    // --- Save API Call ---
     this._appservice.saveCSATListForDP(saveCSATData, this.dpId, this.batchId).subscribe((response) => {
-      stepper.next();
-      this.loadValidationData();
+      
+      // Update our manual flag
+      this.isStep1Completed = hasSelectedProjects;
+
+      if (!hasSelectedProjects) {
+        // --- SCENARIO: ALL NO ---
+        
+        // 1. Manually FAIL the form validation.
+        // This is the secret trick. Even if fields are filled, we tell the form it is invalid.
+        this.step1Form.setErrors({ 'noProjectsSelected': true });
+
+        // 2. Trigger UI Update
+        this._cdRef.detectChanges();
+
+        alert("Data saved successfully.");
+        // DO NOT navigate. Step 2 will now be locked.
+
+      } else {
+        // --- SCENARIO: AT LEAST ONE YES ---
+        
+        // 1. Clear errors so the form is Valid
+        this.step1Form.setErrors(null);
+        
+        // 2. Trigger UI Update
+        this._cdRef.detectChanges();
+
+        // 3. Navigate
+        stepper.next();
+        this.loadValidationData();
+      }
+
     },
       (error) => { console.error('Error saving project selection', error); }
     );
   }
+
   // --- STEP 2 ---
 
   loadValidationData() {
     this._appservice.getCSATContactListForDP(this.dpId, this.batchId).subscribe(
       (data: any[]) => {
-        this.validationData = data.map(row => ({
-          id: row.id,
-          batchId: row.batcH_ID,
-          custId: row.cusT_ID,
-          projectId: row.proJ_ID,
-          project: row.projecT_NAME || row.proJ_NM,
-          respondentName: row.displaY_NAME,
-          emailId: row.emaiL_ID,
-          role: row.contacT_ROLE,
-          predictedScore: row.predicteD_SCORE,
-          reasonPrediction: row.predicteD_REASON,
-          csatSpoc: row.spoc,
-          csatSpocEmail: row.spoc_EMAIL,
-          remarks: row.remarks || row.comments,
-          isEditing: false,
-          isNew: false,
-          isValid: true,
-          executionType: row.executioN_TYPE,
-          engagementType: row.engagemenT_TYPE
-        }));
+        this.validationData = data.map(row => {
+
+          // 1. Find the matching project from Step 1 List
+          const projValues = this.step1ProjectList.find(p => p.projId === row.proJ_ID);
+
+          return {
+            id: row.id,
+            batchId: row.batcH_ID,
+            custId: row.cusT_ID,
+            projectId: row.proJ_ID,
+            project: row.projecT_NAME || row.proJ_NM,
+            respondentName: row.displaY_NAME,
+            emailId: row.emaiL_ID,
+            role: row.contacT_ROLE,
+            predictedScore: row.predicteD_SCORE,
+            reasonPrediction: row.predicteD_REASON,
+            csatSpoc: row.spoc,
+            csatSpocEmail: row.spoc_EMAIL,
+            remarks: row.remarks || row.comments,
+            isEditing: false,
+            isNew: false,
+            isValid: true,
+            executionType: projValues ? projValues.executionType : '',
+            engagementType: projValues ? projValues.engagementType : ''
+          };
+        });
 
         this.uniqueCustIds = Array.from(new Set(this.validationData.map(v => v.custId)));
         const step1CustIds = this.projectSelection.selected.map(p => p.custId);
@@ -324,6 +367,40 @@ export class CsatConfigurationComponent implements OnInit {
     row.respondentName = '';
     row.emailId = '';
     row.role = '';
+  }
+
+
+  applyFilter() {
+  // 1. Get clean search text
+  const filterValue = (this.searchText || '').toLowerCase().trim();
+
+  // 2. If empty, reset to show everything
+  if (!filterValue) {
+    this.filteredStep1List = [...this.step1ProjectList];
+    return;
+  }
+
+  // 3. Filter Logic
+  this.filteredStep1List = this.step1ProjectList.filter(proj => {
+    // Create a single string containing ALL data for this row
+    // We add '' to force numbers (like headcount) to become strings
+    const allRowData = (
+      (proj.account || '') + ' ' + 
+      (proj.name || '') + ' ' + 
+      (proj.headcount || '') + ' ' +   // This handles the number 10
+      (proj.projectStatus || '') + ' ' + 
+      (proj.chosen || '') + ' ' + 
+      (proj.reasonNotChosen || '')
+    ).toLowerCase();
+
+    // Check if the search text exists anywhere in that string
+    return allRowData.includes(filterValue);
+  });
+}
+
+  clearFilter() {
+    this.searchText = '';
+    this.filteredStep1List = [...this.step1ProjectList];
   }
 
   getFilteredRespondents(row: any): any[] {
@@ -448,7 +525,8 @@ export class CsatConfigurationComponent implements OnInit {
     }
   }
 
-  saveFinalList() {
+saveFinalList() {
+
     const unsavedRows = this.validationData.filter(r => r.isEditing);
     if (unsavedRows.length > 0) {
       alert("You have rows in edit mode. Please save or cancel them before submitting.");
@@ -462,11 +540,13 @@ export class CsatConfigurationComponent implements OnInit {
         row.isValid = false;
       }
     });
+
     if (hasError) {
       alert("Mandatory fields are missing in some rows. Please correct them before submitting.");
       return;
     }
 
+    // 2. Prepare Payload
     const payload = this.validationData.map(row => ({
       ID: row.id,
       BATCH_ID: row.batchId,
@@ -479,13 +559,29 @@ export class CsatConfigurationComponent implements OnInit {
       SPOC: row.csatSpoc,
       SPOC_EMAIL: row.csatSpocEmail,
       REMARKS: row.remarks,
-      ISACTIVE: true
+      ISACTIVE: true,
+      IS_VERIFIED: true
     }));
 
-    this._appservice.saveCSATContactListForDP(payload, this.dpId, this.batchId).subscribe(res => {
-      alert("Saved successfully!");
-      this.loadValidationData();
-    }, err => console.error(err));
+    // 3. Save Call with Error Handling
+    this._appservice.saveCSATContactListForDP(payload, this.dpId, this.batchId).subscribe(
+      (res) => {
+        // Success
+        alert("Saved successfully!");
+        this.loadValidationData();
+      },
+      (err) => {
+        // Error Handling
+        console.error("Save Error:", err);
+        if (err.error && err.error.message) {
+          alert(err.error.message);
+        } else if (typeof err.error === 'string') {
+          alert(err.error);
+        } else {
+          alert("An error occurred while saving. Please check the console for details.");
+        }
+      }
+    );
   }
 
   displayRespondentFn(respondent: any): string {

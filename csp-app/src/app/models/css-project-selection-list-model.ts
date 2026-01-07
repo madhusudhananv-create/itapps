@@ -18,7 +18,7 @@ export class CssProjectSelectionListModel {
     accounT_HEAD_COUNT: number;
     projecT_HEAD_COUNT: number;
     executioN_TYPE: string;
-    engagemenT_TYPE: string;
+    engagamenT_TYPE: string;
     CREATED_BY: string
     CREATED_DATE: Date;
     UPDATED_BY: string;
