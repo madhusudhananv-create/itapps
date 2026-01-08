@@ -180,7 +180,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 if (batchCustomers.Any(x => x.EMAIL_ID == item.EMAIL_ID))
                 {
-                    return BadRequest($"Unable to Save. Customer Contact {item.DISPLAY_NAME} - {item.EMAIL_ID} already has been sent ACSAT in the last period. Please remove the customer contact and continue.");
+                    return BadRequest($"Please choose a different CSAT Respondent as {item.DISPLAY_NAME} - {item.EMAIL_ID} was polled during last ACSAT cycle");
                 }
                 if (item.ID == 0)
                 {
