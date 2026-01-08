@@ -9,7 +9,10 @@
 
         <mat-step [stepControl]="step1Form" [completed]="isStep1Completed">
           <ng-template matStepLabel>Project Selection</ng-template>
-
+          <div class="row">
+            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+          </div>
+          <br />
           <div class="toolbar-right" style="flex: 1;">
             <span class="toolbar-label" style="font-style: italic; color: black; display: flex; align-items: center;">
               <mat-icon
@@ -61,10 +64,10 @@
                       [indeterminate]="projectSelection.hasValue() && !isAllProjectsSelected()">
                     </mat-checkbox>
                   </th>
-                  <th style="width: 20%;">Account</th>
-                  <th style="width: 13%;">Account Headcount</th>
-                  <th style="width: 20%;">Project</th>
-                  <th style="width: 13%;">Project Headcount</th>
+                  <th style="width: 25%;">Account</th>
+                  <th style="width: 8%;text-align: left;text-wrap: inherit;">Account Headcount</th>
+                  <th style="width: 25%;">Project</th>
+                  <th style="width: 8%;text-align: left;text-wrap: inherit;">Project Headcount</th>
                   <th style="width: 10%;">Project Status</th>
                   <th style="width: 10%;">Chosen for PCSAT</th>
                   <th style="width: 20%;">Reason (if No)</th>
@@ -109,43 +112,56 @@
                 </tr>
               </tbody>
             </table>
-            <div *ngIf="step1ProjectList.length === 0" class="empty-state">
-              No projects found for this cycle.
+            <div *ngIf="step1ProjectList.length === 0  && !isLoading" class="empty-state">
+              No projects found.
             </div>
           </div>
 
           <div class="step-actions">
-            <button mat-raised-button color="primary" (click)="goForwardStep1(stepper)">Save</button>
-            <button mat-raised-button color="primary" (click)="clearStep1()">Clear</button>
+            <button mat-raised-button color="primary" (click)="clearStep1()" [disabled]="isLoading">Clear</button>
+            <button mat-raised-button color="primary" (click)="goForwardStep1(stepper)"
+              [disabled]="isLoading">Save</button>
+
           </div>
         </mat-step>
 
         <mat-step [editable]="true">
           <ng-template matStepLabel>Validation</ng-template>
-
+          <div class="row">
+            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+          </div>
           <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
-            <button mat-raised-button color="accent" (click)="addValidationRow()"
-              style="height: 30px; line-height: 30px; font-size: 12px;">
-              <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin-right: 4px;">add</mat-icon> Add Row
+
+            <button mat-raised-button color="primary" (click)="refreshContacts()"
+              style="height: 30px; line-height: 30px; font-size: 12px; margin-top: 10px; margin-right: 10px;">
+              <mat-icon style="font-size: 15px; width: 16px; height: 16px; margin-right: 4px;">refresh</mat-icon>
+              Refresh Contacts
             </button>
+
+            <button mat-raised-button color="accent" (click)="addValidationRow()"
+              style="height: 30px; line-height: 30px; margin-top: 10px;font-size: 12px;">
+              <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin-right: 4px;">add</mat-icon>
+              Add Row
+            </button>
+
           </div>
 
           <div class="table-card">
             <table class="styled-table">
               <thead>
                 <tr>
-                  <th style="width: 12%;">Project</th>
-                  <th style="width: 8%;">Respondent</th>
-                  <th style="width: 8%;">Role</th>
-                  <th style="width: 12%;">Email Id</th>
-                  <th style="width: 6%;">Pred Score</th>
-                  <th style="width: 10%;">Reason</th>
-                  <th style="width: 12%;">CSAT SPOC Email</th>
-                  <th style="width: 7%;">Remarks</th>
-                  <th style="width: 9%;">Execution Type</th>
-                  <th style="width: 9%;">Engagement Type</th>
-                  <th style="width: 6%; text-align: center;">Action</th>
-                  <!-- <th style="width: 6%; text-align: center;text-wrap: inherit;">Link to Contacts</th> -->
+                  <th style="width: 12%;text-align: left;">Project</th>
+                  <th style="width: 8%;text-align: left;">Respondent</th>
+                  <th style="width: 8%;text-align: left;">Role</th>
+                  <th style="width: 12%;text-align: left;">Email Id</th>
+                  <th style="width: 6%;text-align: left;text-wrap: inherit;">Prediction Score</th>
+                  <th style="width: 10%;text-align: left;text-wrap: inherit;">Prediction Reason</th>
+                  <th style="width: 12%;text-align: left;text-wrap: inherit;">CSAT SPOC Email</th>
+                  <th style="width: 7%;text-align: left;">Remarks</th>
+                  <th style="width: 9%;text-align: left;text-wrap: inherit;">Execution Type</th>
+                  <th style="width: 9%;text-align: left;text-wrap: inherit;">Engagement Type</th>
+                  <th style="width: 6%; text-align: left;">Action</th>
+                  <th style="width: 6%; text-align: left;text-wrap: inherit;">Link to Contacts</th>
                 </tr>
               </thead>
               <tbody>
@@ -258,16 +274,24 @@
                       </button>
                     </div>
                   </td>
+                  <td style="text-align: center;">
+                    <a *ngIf="row.custId" mat-icon-button color="accent" [routerLink]="['/layout/contacts', row.custId]"
+                      target="_blank" title="Go to link the Customer Contacts"
+                      style="width: 24px; height: 24px; line-height: 24px;">
+                      <mat-icon style="font-size: 16px;">contact_mail</mat-icon>
+                    </a>
+                  </td>
                 </tr>
               </tbody>
             </table>
-            <div *ngIf="validationData.length === 0" class="empty-state">No projects selected.</div>
+            <div *ngIf="validationData.length === 0 && !isLoading" class="empty-state">No projects selected.</div>
           </div>
 
           <div class="step-actions">
             <button mat-raised-button color="primary" matStepperPrevious>Back</button>
-            <button mat-raised-button color="primary" (click)="saveFinalList()">Submit</button>
+            <button mat-raised-button color="primary" (click)="saveFinalList()">Save</button>
           </div>
+
         </mat-step>
 
       </mat-vertical-stepper>
