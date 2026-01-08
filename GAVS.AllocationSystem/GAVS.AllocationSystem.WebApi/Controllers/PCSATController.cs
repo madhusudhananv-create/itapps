@@ -217,7 +217,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult GetContactListForCustIds([FromBody] List<string> custIds)
         {
-            var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && custIds.Contains(x.CUSTOMER_ID)).ToList();
+            var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && custIds.Contains(x.CUSTOMER_ID) && x.CONTACT_TYPE.ToLower() == "customer").ToList();
 
             return Ok(contacts);
         }
