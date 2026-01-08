@@ -64,13 +64,15 @@
                       [indeterminate]="projectSelection.hasValue() && !isAllProjectsSelected()">
                     </mat-checkbox>
                   </th>
-                  <th style="width: 25%;">Account</th>
-                  <th style="width: 8%;text-align: left;text-wrap: inherit;">Account Headcount</th>
-                  <th style="width: 25%;">Project</th>
-                  <th style="width: 8%;text-align: left;text-wrap: inherit;">Project Headcount</th>
-                  <th style="width: 10%;">Project Status</th>
-                  <th style="width: 10%;">Chosen for PCSAT</th>
-                  <th style="width: 20%;">Reason (if No)</th>
+                  <th style="width: 18%;text-align: left;text-wrap: inherit;">Account</th>
+                  <th style="width: 7%;text-align: left;text-wrap: inherit;">Account Headcount</th>
+                  <th style="width: 22%;text-align: left;text-wrap: inherit;">Project</th>
+                  <th style="width: 7%;text-align: left;text-wrap: inherit;">Project Headcount</th>
+                  <th style="width: 6%;text-align: left;text-wrap: inherit;">Project Status</th>
+                  <th style="width: 11%;text-align: left;text-wrap: inherit;">Execution Type</th>
+                  <th style="width: 11%;text-align: left;text-wrap: inherit;">Engagement Type</th>
+                  <th style="width: 8%;text-align: left;text-wrap: inherit;">Chosen for PCSAT</th>
+                  <th style="width: 20%;text-align: left;text-wrap: inherit;">Reason (if No)</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,12 +87,15 @@
                   <td>{{ proj.name }}</td>
                   <td class="readonly-cell" style="text-align:right">{{ proj.headcount }}</td>
                   <td>{{ proj.projectStatus }}</td>
+                  <td>{{ proj.executionType || '-' }}</td>
+                  <td>{{ proj.engagementType || '-' }}</td>
+
                   <td>
                     <mat-form-field floatLabel="never" class="table-input"
                       [class.mat-form-field-invalid]="!proj.isValid">
 
                       <mat-select [(ngModel)]="proj.chosen" placeholder="Select for PCSAT"
-                        (selectionChange)="proj.isValid = true" [class.color-yes]="proj.chosen === 'Yes'"
+                        (selectionChange)="onProjectStatusChange(proj)" [class.color-yes]="proj.chosen === 'Yes'"
                         [class.color-no]="proj.chosen === 'No'">
                         <mat-option value="Yes" class="color-yes">Yes</mat-option>
                         <mat-option value="No" class="color-no">No</mat-option>
@@ -118,7 +123,8 @@
           </div>
 
           <div class="step-actions">
-            <button mat-raised-button color="primary" (click)="clearStep1()" [disabled]="isLoading">Clear</button>
+            <button mat-raised-button class="btn btn-warning-confirm"  (click)="clearStep1()"
+              [disabled]="isLoading">Clear</button>
             <button mat-raised-button color="primary" (click)="goForwardStep1(stepper)"
               [disabled]="isLoading">Save</button>
 
@@ -132,16 +138,14 @@
           </div>
           <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
 
-            <button mat-raised-button color="primary" (click)="refreshContacts()"
-              style="height: 30px; line-height: 30px; font-size: 12px; margin-top: 10px; margin-right: 10px;">
+            <button mat-raised-button (click)="refreshContacts()" matTooltip="Refresh Contacts"
+              style="background-color: #00a1ff; height: 30px; line-height: 30px; font-size: 12px; margin-top: 10px; margin-right: 10px;">
               <mat-icon style="font-size: 15px; width: 16px; height: 16px; margin-right: 4px;">refresh</mat-icon>
-              Refresh Contacts
             </button>
 
-            <button mat-raised-button color="accent" (click)="addValidationRow()"
-              style="height: 30px; line-height: 30px; margin-top: 10px;font-size: 12px;">
+            <button mat-raised-button color="accent" (click)="addValidationRow()" matTooltip="Add New Row"
+              style="background-color: #FFA500; height: 30px; line-height: 30px; margin-top: 10px;font-size: 12px;">
               <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin-right: 4px;">add</mat-icon>
-              Add Row
             </button>
 
           </div>
@@ -158,8 +162,6 @@
                   <th style="width: 10%;text-align: left;text-wrap: inherit;">Prediction Reason</th>
                   <th style="width: 12%;text-align: left;text-wrap: inherit;">CSAT SPOC Email</th>
                   <th style="width: 7%;text-align: left;">Remarks</th>
-                  <th style="width: 9%;text-align: left;text-wrap: inherit;">Execution Type</th>
-                  <th style="width: 9%;text-align: left;text-wrap: inherit;">Engagement Type</th>
                   <th style="width: 6%; text-align: left;">Action</th>
                   <th style="width: 6%; text-align: left;text-wrap: inherit;">Link to Contacts</th>
                 </tr>
@@ -206,7 +208,8 @@
                     <div *ngIf="!row.isEditing" class="cell-content">{{ row.predictedScore }}</div>
                     <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input"
                       [class.mat-form-field-invalid]="!row.isValid && (row.predictedScore === null || row.predictedScore === '')">
-                      <input matInput type="number" max="5" min="0" [(ngModel)]="row.predictedScore">
+                      <input matInput type="number" max="5" min="0" [(ngModel)]="row.predictedScore"
+                        (ngModelChange)="validateScore(row)">
                     </mat-form-field>
                   </td>
 
@@ -242,12 +245,6 @@
                     <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input">
                       <input matInput [(ngModel)]="row.remarks">
                     </mat-form-field>
-                  </td>
-                  <td class="readonly-cell">
-                    <div class="cell-content" title="{{row.executionType}}">{{ row.executionType || '-' }}</div>
-                  </td>
-                  <td class="readonly-cell">
-                    <div class="cell-content" title="{{row.engagementType}}">{{ row.engagementType || '-' }}</div>
                   </td>
 
                   <td style="text-align: center;">
@@ -288,7 +285,7 @@
           </div>
 
           <div class="step-actions">
-            <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+            <button mat-raised-button class="btn btn-warning-confirm"  matStepperPrevious>Back</button>
             <button mat-raised-button color="primary" (click)="saveFinalList()">Save</button>
           </div>
 
@@ -298,3 +295,21 @@
     </mat-sidenav-content>
   </mat-sidenav-container>
 </div>
+
+<ng-template let-data class="tahoma-font" #confirmationDialog>
+  <h2 mat-dialog-title style="padding: 12px 1pc 0 11pc; margin: 0;">
+    {{data.dialogHeading}}</h2>
+  <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
+    {{ data.dialogMessage }}
+  </mat-dialog-content>
+  <mat-dialog-actions *ngIf="!dialogSuccess" style="padding: 20px;">
+    <button class="btn btn-primary-confirm" mat-button [mat-dialog-close]="1" style="margin: 0 100px;">Yes</button>
+    <button class="btn btn-warning-confirm" mat-button [mat-dialog-close]="0" style="margin-left: 5%;">No</button>
+  </mat-dialog-actions>
+  <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
+    <button *ngIf="!dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
+      style="margin: 0 160px;">OK</button>
+    <button *ngIf="dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
+      style="margin: 0 200px;">OK</button>
+  </mat-dialog-actions>
+</ng-template>

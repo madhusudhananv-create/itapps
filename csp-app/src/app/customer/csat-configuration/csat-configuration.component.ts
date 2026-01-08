@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, TemplateRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MediaMatcher } from '@angular/cdk/layout';
@@ -7,9 +7,12 @@ import { map, startWith } from 'rxjs/operators';
 import { AppsService } from '../../Services/apps.service';
 import { Observable } from 'rxjs/internal/Observable';
 import { myUtility } from '../../Shared/myUtility';
+import { MatDialog, MatDialogConfig } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { CssProjectSelectionListModel } from '../../models/css-project-selection-list-model';
 import { EmpInfoModel } from '../../models/emp-info-model';
+import { RatingCriteriaRemarksComponent } from '../rating-criteria-remarks/rating-criteria-remarks.component';
+import { NoopScrollStrategy } from '@angular/cdk/overlay';
 
 @Component({
   selector: 'app-csat-configuration',
@@ -40,9 +43,11 @@ export class CsatConfigurationComponent implements OnInit {
   empinfo: EmpInfoModel[] = [];
   searchText: string;
   @ViewChild('stepper') stepper: MatStepper;
+  @ViewChild('confirmationDialog') confirmationDialogTemplate: TemplateRef<any>
   filteredStep1List: any[] = [];
   isStep1Completed: boolean = false;
   isLoading: boolean = false;
+  isReset = false;
 
 
   constructor(
@@ -51,7 +56,8 @@ export class CsatConfigurationComponent implements OnInit {
     media: MediaMatcher,
     private _appservice: AppsService,
     private route: ActivatedRoute,
-    public _util: myUtility
+    public _util: myUtility,
+    public dialog: MatDialog
   ) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
     this._mobileQueryListener = () => this._cdRef.detectChanges();
@@ -136,7 +142,6 @@ export class CsatConfigurationComponent implements OnInit {
       };
 
       if (isSelectedInDb) {
-        // Set view to Yes, but do NOT auto-select the checkbox (checkbox is for bulk tools now)
         newProj.chosen = 'Yes';
       } else {
         newProj.chosen = 'No';
@@ -149,7 +154,6 @@ export class CsatConfigurationComponent implements OnInit {
     this.filteredStep1List = [...this.step1ProjectList];
   }
 
-  // Update this helper too for the checkbox state
   isAllProjectsSelected() {
     if (this.filteredStep1List.length === 0) return false;
     return this.filteredStep1List.every(p => this.projectSelection.isSelected(p));
@@ -172,7 +176,6 @@ export class CsatConfigurationComponent implements OnInit {
 
   toggleProjectSelection(proj: any) {
     // Only toggles the checkbox for bulk operations.
-    // Does NOT auto-change 'Yes'/'No' dropdown.
     this.projectSelection.toggle(proj);
   }
 
@@ -188,9 +191,6 @@ export class CsatConfigurationComponent implements OnInit {
 
   applyBulkReasonProject() {
     if (!this.bulkReasonProject) return;
-
-    // Apply reason to SELECTED (Checked) projects
-    // And set their status to "No"
     this.step1ProjectList.forEach(proj => {
       if (this.projectSelection.isSelected(proj)) {
         proj.reasonNotChosen = this.bulkReasonProject;
@@ -202,33 +202,61 @@ export class CsatConfigurationComponent implements OnInit {
 
 
 
-  // REPLACE your goForwardStep1 function with this exact code
-  goForwardStep1(stepper: MatStepper) {
-    let isFormValid = true;
 
-    // --- Validation Logic ---
+  goForwardStep1(stepper: MatStepper) {
+
+    let isReasonMissing = false;
+
+    const customerStatus: { [key: string]: { headcount: number, hasSelectedYes: boolean } } = {};
+
     this.step1ProjectList.forEach(proj => {
       proj.isValid = true;
-      if (proj.chosen === 'No' && !proj.reasonNotChosen) {
-        proj.isValid = false;
-        isFormValid = false;
+
+      if (proj.chosen === 'Yes') {
+        proj.reasonNotChosen = '';
       }
-      if (proj.chosen === 'No' && proj.accountHeadcount >= 10 && !proj.reasonNotChosen) {
+      else if (proj.chosen === 'No' && !proj.reasonNotChosen) {
         proj.isValid = false;
-        alert("Please select at least one project for PCSAT with headcount >= 10");
-        isFormValid = false;
+        isReasonMissing = true;
+      }
+      const id = proj.custId; 
+
+      if (!customerStatus[id]) {
+        customerStatus[id] = {
+          headcount: proj.accountHeadcount || 0,
+          hasSelectedYes: false
+        };
+      }
+
+      if (proj.chosen === 'Yes') {
+        customerStatus[id].hasSelectedYes = true;
       }
     });
 
-    if (!isFormValid) {
-      alert("Select reason for No");
+    // --- Validation Part 1: Missing Reasons ---
+    if (isReasonMissing) {
+      this.showWarningPopup("Please provide reason Chosen for PCSAT as No");
       return;
     }
 
-    // --- LOGIC: Check for 'Yes' Projects ---
+    // --- Validation Part 2: Headcount Rule ---
+    for (const id in customerStatus) {
+      if (customerStatus.hasOwnProperty(id)) {
+        const data = customerStatus[id];
+
+        // THE RULE: If HC >= 10 AND they have ZERO 'Yes' projects
+        if (data.headcount >= 10 && !data.hasSelectedYes) {
+          this.showWarningPopup(
+            "Please select at least one project for PCSAT survey for Account headcount >= 10. For excluding the account from H2 PCSAT please obtain approval from the GDH and share it with DEX Team"
+          );
+          return;
+        }
+      }
+    }
+
+
     const hasSelectedProjects = this.step1ProjectList.some(p => p.chosen === 'Yes');
 
-    // --- Prepare Save Payload ---
     const projectsToSave = this.step1ProjectList.filter(proj =>
       proj.chosen === 'Yes' || (proj.chosen === 'No' && proj.reasonNotChosen)
     );
@@ -249,31 +277,22 @@ export class CsatConfigurationComponent implements OnInit {
 
     // --- Save API Call ---
     this._appservice.saveCSATListForDP(saveCSATData, this.dpId, this.batchId).subscribe((response) => {
-
-      // Update our manual flag
+      
       this.isStep1Completed = hasSelectedProjects;
 
       if (!hasSelectedProjects) {
         // --- SCENARIO: ALL NO ---
-
         this.step1Form.setErrors({ 'noProjectsSelected': true });
-
-        // 2. Trigger UI Update
         this._cdRef.detectChanges();
 
-        alert("Data saved successfully.");
+        this.showWarningPopup("Data saved successfully.");
         // DO NOT navigate. Step 2 will now be locked.
 
       } else {
         // --- SCENARIO: AT LEAST ONE YES ---
-
-        // 1. Clear errors so the form is Valid
         this.step1Form.setErrors(null);
-
-        // 2. Trigger UI Update
         this._cdRef.detectChanges();
-
-        // 3. Navigate
+        this.showWarningPopup("Data saved successfully.");
         stepper.next();
         this.loadValidationData();
       }
@@ -291,8 +310,7 @@ export class CsatConfigurationComponent implements OnInit {
       (data: any[]) => {
         this.validationData = data.map(row => {
 
-          // 1. Find the matching project from Step 1 List
-          const projValues = this.step1ProjectList.find(p => p.projId === row.proJ_ID);
+          //const projValues = this.step1ProjectList.find(p => p.projId === row.proJ_ID);
 
           return {
             id: row.id,
@@ -310,9 +328,7 @@ export class CsatConfigurationComponent implements OnInit {
             remarks: row.remarks || row.comments,
             isEditing: false,
             isNew: false,
-            isValid: true,
-            executionType: projValues ? projValues.executionType : '',
-            engagementType: projValues ? projValues.engagementType : ''
+            isValid: true
           };
         });
 
@@ -336,10 +352,14 @@ export class CsatConfigurationComponent implements OnInit {
       }
     );
   }
-
+  onProjectStatusChange(proj: any) {
+    if (proj.chosen === 'Yes') {
+      proj.reasonNotChosen = '';
+      proj.isValid = true;
+    }
+  }
 
   getStep1SelectedProjects() {
-    // Return projects marked as 'Yes' in the dropdown
     return this.step1ProjectList.filter(p => p.chosen === 'Yes');
   }
 
@@ -391,18 +411,14 @@ export class CsatConfigurationComponent implements OnInit {
 
     // 3. Filter Logic
     this.filteredStep1List = this.step1ProjectList.filter(proj => {
-      // Create a single string containing ALL data for this row
-      // We add '' to force numbers (like headcount) to become strings
       const allRowData = (
         (proj.account || '') + ' ' +
         (proj.name || '') + ' ' +
-        (proj.headcount || '') + ' ' +   // This handles the number 10
+        (proj.headcount || '') + ' ' +
         (proj.projectStatus || '') + ' ' +
         (proj.chosen || '') + ' ' +
         (proj.reasonNotChosen || '')
       ).toLowerCase();
-
-      // Check if the search text exists anywhere in that string
       return allRowData.includes(filterValue);
     });
   }
@@ -411,34 +427,61 @@ export class CsatConfigurationComponent implements OnInit {
     this.searchText = '';
     this.filteredStep1List = [...this.step1ProjectList];
   }
-  refreshContacts() {
-     const isConfirmed = confirm("Warning: Any unsaved changes in the grid might be lost if you proceed.\n\nAre you sure you want to refresh the contacts list?");
-
-    if (!isConfirmed) {
+  validateScore(row: any) {
+    if (this.isReset) {
       return;
     }
 
-    // 2. Proceed with Refresh Logic
-    const step2CustIds = this.validationData.map(v => v.custId);
-    const step1CustIds = this.projectSelection.selected.map(p => p.custId);
-
-    const combinedCustIds = Array.from(new Set([...step2CustIds, ...step1CustIds]));
-
-    if (combinedCustIds.length > 0) {
-      this._appservice.getContactListForCustIds(combinedCustIds).subscribe(
-        (contacts: any[]) => {
-          this.allRespondents = contacts;
-          //alert("Contacts list refreshed successfully!");
-        },
-        (error) => {
-          console.error("Error refreshing contacts", error);
-          alert("Failed to refresh contacts. Please try again.");
-        }
-      );
-    } else {
-      alert("No customers selected to refresh.");
+    if (row.predictedScore > 5) {
+      this.isReset = true;
+      this.showWarningPopup("Predicted score cannot be more than 5");
+      row.predictedScore = 5;
+      setTimeout(() => {
+        this.isReset = false;
+      }, 100);
+    }
+    else if (row.predictedScore < 0) {
+      this.isReset = true;
+      this.showWarningPopup("Predicted score cannot be less than 0");
+      row.predictedScore = 0;
+      setTimeout(() => {
+        this.isReset = false;
+      }, 100);
     }
   }
+  refreshContacts() {
+    const dialogRef = this.showConfirmationDialog(
+      true,
+      "Confirm Refresh",
+      "Any unsaved changes in the grid might be lost if you proceed.\n\nAre you sure you want to refresh the contacts list?"
+    );
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) return;
+
+      // 2. Proceed with Refresh Logic
+      const step2CustIds = this.validationData.map(v => v.custId);
+      const step1CustIds = this.projectSelection.selected.map(p => p.custId);
+
+      const combinedCustIds = Array.from(new Set([...step2CustIds, ...step1CustIds]));
+
+      if (combinedCustIds.length > 0) {
+        this._appservice.getContactListForCustIds(combinedCustIds).subscribe(
+          (contacts: any[]) => {
+            this.allRespondents = contacts;
+            this.showWarningPopup("Respondents list refreshed successfully!");
+          },
+          (error) => {
+            console.error("Error refreshing contacts", error);
+            this.showWarningPopup("Failed to refresh contacts. Please try again.");
+          }
+        );
+      } else {
+        this.showWarningPopup("No customers selected to refresh.");
+      }
+    });
+  }
+
 
   getFilteredRespondents(row: any): any[] {
     if (!row.custId) return [];
@@ -525,39 +568,38 @@ export class CsatConfigurationComponent implements OnInit {
   deleteRow(index: number) {
     const rowToDelete = this.validationData[index];
     const projectId = rowToDelete.projectId;
-
-    // 1. Check if this is the LAST row for this specific project
     const remainingRows = this.validationData.filter((r, i) =>
       i !== index && r.projectId === projectId
     );
 
-    // 2. If it is the last row, we are effectively deselecting the project
     if (remainingRows.length === 0) {
-      const confirmDelete = confirm(
-        `Removing this row will deselect project "${rowToDelete.project}" from PCSAT.\n\nYou will be redirected to Step 1 to provide a mandatory rejection reason.`
+      const dialogRef = this.showConfirmationDialog(
+        true,
+        "Confirm Delete",
+        "Removing this row will deselect project '" + (rowToDelete.project) + "' in the project selection. Are you sure?"
       );
 
-      if (!confirmDelete) return;
+      dialogRef.afterClosed().subscribe((result) => {
+        if (!result) return;
 
-      // 3. Find the project in Step 1 and update its status
-      const step1Proj = this.step1ProjectList.find(p => p.projId === projectId);
-      if (step1Proj) {
-        step1Proj.chosen = 'No';          // Mark as No
-        step1Proj.reasonNotChosen = '';   // Clear reason (force selection)
-        step1Proj.isValid = false;        // Mark invalid to trigger RED highlight in Step 1
-      }
+        // Find the project in Step 1 and update its status
+        const step1Proj = this.step1ProjectList.find(p => p.projId === projectId);
+        if (step1Proj) {
+          step1Proj.chosen = 'No';
+          step1Proj.reasonNotChosen = '';
+          step1Proj.isValid = false;
+        }
 
-      // 4. Remove the row from the Step 2 view
-      this.validationData.splice(index, 1);
+        // Remove the row from the Step 2 view
+        this.validationData.splice(index, 1);
 
-      // 5. Navigate back to Step 1 so user can select the reason
-      setTimeout(() => {
-        this.stepper.selectedIndex = 0; // Go to Step 1
-        // alert(`Project "${rowToDelete.project}" has been unchecked. Please select a reason (highlighted in red) and click Save.`);
-      }, 100);
 
+        setTimeout(() => {
+          // Go to Step 1
+          this.stepper.selectedIndex = 0;
+        }, 100);
+      });
     } else {
-      // If other rows exist for this project, just delete this single row
       this.validationData.splice(index, 1);
     }
   }
@@ -566,7 +608,7 @@ export class CsatConfigurationComponent implements OnInit {
 
     const unsavedRows = this.validationData.filter(r => r.isEditing);
     if (unsavedRows.length > 0) {
-      alert("You have rows in edit mode. Please save or cancel them before submitting.");
+      this.showWarningPopup("You have rows in edit mode. Please save or cancel them before submitting.");
       return;
     }
 
@@ -579,7 +621,7 @@ export class CsatConfigurationComponent implements OnInit {
     });
 
     if (hasError) {
-      alert("Mandatory fields are missing in some rows. Please correct them before submitting.");
+      this.showWarningPopup("Mandatory fields are missing in some rows. Please correct them before submitting.");
       return;
     }
 
@@ -604,18 +646,18 @@ export class CsatConfigurationComponent implements OnInit {
     this._appservice.saveCSATContactListForDP(payload, this.dpId, this.batchId).subscribe(
       (res) => {
         // Success
-        alert("Saved successfully!");
+        this.showWarningPopup("Data saved successfully.");
         this.loadValidationData();
       },
       (err) => {
         // Error Handling
         console.error("Save Error:", err);
         if (err.error && err.error.message) {
-          alert(err.error.message);
+          this.showWarningPopup(err.error.message);
         } else if (typeof err.error === 'string') {
-          alert(err.error);
+          this.showWarningPopup(err.error);
         } else {
-          alert("An error occurred while saving. Please check the console for details.");
+          this.showWarningPopup("An error occurred while saving. Please check the console for details.");
         }
       }
     );
@@ -631,6 +673,30 @@ export class CsatConfigurationComponent implements OnInit {
       return user;
     }
     return user.emaiL_ID ? user.emaiL_ID : '';
+  }
+
+  showWarningPopup(message: string) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.data = {
+      Message: message,
+    }
+    dialogConfig.hasBackdrop = true;
+    dialogConfig.scrollStrategy = new NoopScrollStrategy();
+    this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig);
+  }
+  showConfirmationDialog(dialogSuccess: boolean, dialogHeading: string, dialogMessage: string) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.data = {
+      dialogSuccess: dialogSuccess,
+      dialogHeading: dialogHeading,
+      dialogMessage: dialogMessage,
+    }
+    dialogConfig.width = '500px';
+    dialogConfig.height = '180px';
+    dialogConfig.hasBackdrop = true;
+    dialogConfig.scrollStrategy = new NoopScrollStrategy();
+    return this.dialog.open(this.confirmationDialogTemplate, dialogConfig);
+
   }
 
 }
