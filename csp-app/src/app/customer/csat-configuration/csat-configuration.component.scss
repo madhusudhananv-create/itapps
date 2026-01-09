@@ -44,7 +44,7 @@
 
 /* --- ROWS & CELLS --- */
 .styled-table td {
-  padding: 0 4px;
+  padding: 0 10px;
   border: 1px solid #ccc;
   vertical-align: middle;
   height: 32px;
@@ -99,6 +99,14 @@
   width: 100%;
   font-size: 11px;
   height: 100%;
+}
+
+::ng-deep .mat-select-value-text {
+  white-space: normal !important; 
+  overflow: hidden;
+  text-overflow: ellipsis; 
+  display: block;
+  font-size: 12px; 
 }
 
 /* --- TOOLBAR STYLING --- */

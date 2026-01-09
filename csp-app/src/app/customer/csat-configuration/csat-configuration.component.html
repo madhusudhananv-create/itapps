@@ -154,14 +154,14 @@
             <table class="styled-table">
               <thead>
                 <tr>
-                  <th style="width: 12%;text-align: left;">Project</th>
-                  <th style="width: 8%;text-align: left;">Respondent</th>
-                  <th style="width: 8%;text-align: left;">Role</th>
-                  <th style="width: 12%;text-align: left;">Email Id</th>
+                  <th style="width: 12%;text-align: left;;text-wrap: inherit;">Project</th>
+                  <th style="width: 8%;text-align: left;text-wrap: inherit;">Respondent</th>
+                  <th style="width: 8%;text-align: left;text-wrap: inherit;">Role</th>
+                  <th style="width: 12%;text-align: left;text-wrap: inherit;">Email Id</th>
                   <th style="width: 6%;text-align: left;text-wrap: inherit;">Prediction Score</th>
                   <th style="width: 10%;text-align: left;text-wrap: inherit;">Prediction Reason</th>
                   <th style="width: 12%;text-align: left;text-wrap: inherit;">CSAT SPOC Email</th>
-                  <th style="width: 7%;text-align: left;">Remarks</th>
+                  <th style="width: 7%;text-align: left;text-wrap: inherit;">Remarks</th>
                   <th style="width: 6%; text-align: left;">Action</th>
                   <th style="width: 6%; text-align: left;text-wrap: inherit;">Link to Contacts</th>
                 </tr>
@@ -171,7 +171,7 @@
                   <td>
                     <div *ngIf="row.isNew && row.isEditing">
                       <mat-form-field floatLabel="never" class="table-input"
-                        [class.mat-form-field-invalid]="!row.isValid && !row.projectId">
+                        [class.mat-form-field-invalid]="!row.isValid && !row.projectId" >
                         <mat-select [(ngModel)]="row.projectObj" placeholder="Select Project"
                           (selectionChange)="onNewRowProjectSelected(row, $event.value)">
                           <mat-option *ngFor="let p of getStep1SelectedProjects()" [value]="p">
@@ -189,10 +189,10 @@
                       [class.mat-form-field-invalid]="!row.isValid && !row.respondentName">
                       <input type="text" matInput [(ngModel)]="row.respondentName" [matAutocomplete]="autoResp"
                         placeholder="Search">
-                      <mat-autocomplete #autoResp="matAutocomplete" [displayWith]="displayRespondentFn"
+                      <mat-autocomplete #autoResp="matAutocomplete" panelWidth="auto" [displayWith]="displayRespondentFn"
                         (optionSelected)="onRespondentSelected(row, $event)">
-                        <mat-option *ngFor="let r of getFilteredRespondents(row)" [value]="r">
-                          {{ r.contacT_NAME }} <span style="font-size: 10px; color: #888">({{ r.contacT_ROLE }})</span>
+                        <mat-option *ngFor="let r of getFilteredRespondents(row)" [value]="r" matTooltip="{{ r.contacT_NAME }}">
+                          {{ r.contacT_NAME }} 
                         </mat-option>
                       </mat-autocomplete>
                     </mat-form-field>
@@ -204,7 +204,8 @@
                     <div class="cell-content" title="{{row.emailId}}">{{ row.emailId || '-' }}</div>
                   </td>
 
-                  <td [ngClass]="{'editable-cell': row.isEditing, 'readonly-cell': !row.isEditing}">
+                  <td [ngClass]="{'editable-cell': row.isEditing, 'readonly-cell': !row.isEditing}" 
+                  style="text-align:right">
                     <div *ngIf="!row.isEditing" class="cell-content">{{ row.predictedScore }}</div>
                     <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input"
                       [class.mat-form-field-invalid]="!row.isValid && (row.predictedScore === null || row.predictedScore === '')">
@@ -228,11 +229,11 @@
                       [class.mat-form-field-invalid]="!row.isValid && !row.csatSpoc">
 
                       <input matInput [(ngModel)]="row.csatSpoc" (ngModelChange)="onSpocChange(row, $event)"
-                        [matAutocomplete]="auto" placeholder="Search">
+                        [matAutocomplete]="auto" placeholder="Search" matTooltip="{{ row.csatSpoc }}">
 
-                      <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn"
+                      <mat-autocomplete #auto="matAutocomplete" panelWidth="300px" [displayWith]="displayFn"
                         (optionSelected)="onSpocSelected(row, $event)">
-                        <mat-option *ngFor="let option of getFilteredSpocs(row)" [value]="option">
+                        <mat-option *ngFor="let option of getFilteredSpocs(row)" [value]="option" matTooltip="{{ option.emaiL_ID }}">
                           {{ option.emaiL_ID }}
                         </mat-option>
                       </mat-autocomplete>

@@ -219,7 +219,7 @@ export class CsatConfigurationComponent implements OnInit {
         proj.isValid = false;
         isReasonMissing = true;
       }
-      const id = proj.custId; 
+      const id = proj.custId;
 
       if (!customerStatus[id]) {
         customerStatus[id] = {
@@ -277,7 +277,7 @@ export class CsatConfigurationComponent implements OnInit {
 
     // --- Save API Call ---
     this._appservice.saveCSATListForDP(saveCSATData, this.dpId, this.batchId).subscribe((response) => {
-      
+
       this.isStep1Completed = hasSelectedProjects;
 
       if (!hasSelectedProjects) {
@@ -391,8 +391,8 @@ export class CsatConfigurationComponent implements OnInit {
     row.project = project.name;
     row.projectId = project.projId;
     row.custId = project.custId;
-    row.csatSpoc = project.Spoc || '';
-    row.csatSpocEmail = project.SpocEmail || '';
+    row.csatSpoc = '';
+    row.csatSpocEmail = '';
     row.respondentName = '';
     row.emailId = '';
     row.role = '';
@@ -440,10 +440,10 @@ export class CsatConfigurationComponent implements OnInit {
         this.isReset = false;
       }, 100);
     }
-    else if (row.predictedScore < 0) {
+    else if (row.predictedScore < 1) {
       this.isReset = true;
-      this.showWarningPopup("Predicted score cannot be less than 0");
-      row.predictedScore = 0;
+      this.showWarningPopup("Predicted score cannot be less than 1");
+      row.predictedScore = 1;
       setTimeout(() => {
         this.isReset = false;
       }, 100);
