@@ -91,7 +91,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
             var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && x.DP_ID == dpId && x.IS_SELECTED).ToList();
-            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId ).ToList();
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId).ToList();
             var custIds = batchprojects.Select(x => x.CUST_ID).Distinct().ToList();
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && x.CONTACT_TYPE == "CUSTOMER" && custIds.Contains(x.CUSTOMER_ID)).ToList();
 
@@ -109,12 +109,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //var cartesianProduct = batchProjectsForCustomer.SelectMany(item1 => contactsForCustomer,
                 //                                  (item1, item2) => new { Item1 = item1, Item2 = item2 }).ToList();
 
-                var savedBatchRecord = batchCustomers.FirstOrDefault(x => x.PROJ_ID == item.PROJ_ID);
+                var savedBatchRecords = batchCustomers.Where(x => x.PROJ_ID == item.PROJ_ID).ToList();
 
-                if (savedBatchRecord != null)
+                if (savedBatchRecords.Any())
                 {
-                    // If it exists in CSS_BATCH_CUSTOMERS, return that record
-                    firstResult.Add(savedBatchRecord);
+                    firstResult.AddRange(savedBatchRecords);
                 }
                 else
                 {
@@ -154,11 +153,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                         }
                     }
-                   
+
                 }
-                
+
             }
             result = helper.FillCustomerAndProjectNames(firstResult);
+            foreach (var row in result)
+            {
+                row.CONTACT_ROLE = contacts.FirstOrDefault(c => string.Equals(c.CONTACT_EMAILID, row.EMAIL_ID, StringComparison.OrdinalIgnoreCase))?.CONTACT_ROLE;
+            }
 
             return Ok(result);
         }
@@ -170,6 +173,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             //perform validation
             var existingRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
+            var cssProjIds = batchCustomerList.Select(x => x.PROJ_ID).Distinct().ToList();
+            var projIds = batchCustomerList.Where(x => x.ID > 0).Select(x => x.ID).ToList();
+            var recordsToDelete = existingRecords.Where(x => cssProjIds.Contains(x.PROJ_ID) && !projIds.Contains(x.ID)).ToList();
+            foreach (var delItem in recordsToDelete)
+            {
+                delItem.ISACTIVE = false;
+                UpdateAuditFields(delItem);
+                CSPdb.CSS_BATCH_CUSTOMERS.Update(delItem);
+            }
             var lastAcsatBatchId = 36;
             int.TryParse(helper.GetDBConfig("LAST_ACSAT_BATCH_ID", "-1"), out lastAcsatBatchId);
 
@@ -182,10 +194,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     return BadRequest($"Please choose a different CSAT Respondent as {item.DISPLAY_NAME} - {item.EMAIL_ID} was polled during last ACSAT cycle");
                 }
-                if (item.ID == 0)
+                bool alreadyExists = existingRecords.Any(x => x.PROJ_ID == item.PROJ_ID && x.EMAIL_ID.ToLower() == item.EMAIL_ID.ToLower() && x.ID != item.ID);
+                if (alreadyExists)
                 {
+                    return BadRequest($"Duplicate Error: Respondent {item.EMAIL_ID} is already added to the project : {GetProjectName(item.PROJ_ID)}");
+                }
+                if (item.ID == 0)
+                {                   
                     item.BATCH_ID = batchId;
-
                     UpdateAuditFields(item);
                     CSPdb.CSS_BATCH_CUSTOMERS.Add(item);
                 }
@@ -204,9 +220,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         UpdateAuditFields(batchRecords);
                         CSPdb.CSS_BATCH_CUSTOMERS.Update(batchRecords);
                     }
-                
+
+                }
             }
-        }
             CSPdb.Commit();
 
             return Ok();
