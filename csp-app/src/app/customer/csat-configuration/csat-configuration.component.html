@@ -3,7 +3,23 @@
   <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
     <mat-sidenav-content style="padding:3px;">
 
-      <div style="font-size: 20px; text-align: center">PCSAT Configuration Screen</div>
+      <div style="font-size: 20px; text-align: center">PCSAT Survey Configuration</div>
+
+      <div style="text-align: right; padding-right: 15px; margin-top: 5px;">
+        <a href="https://docs.google.com/document/d/1Pg31pEmcB-i5KqZbLYv6_r4x9tEw2MGVGcH17yGVkSU/edit?tab=t.0"
+          target="_blank" style="color: #1976d2; text-decoration: underline; font-size: 16px; font-weight: 500;">
+          PCSAT Ready Reckoner
+        </a>
+      </div>
+      <br />
+      <div class="toolbar-right" style="flex: 1;margin-left: 30px;">
+        <span class="toolbar-label" style="font-style: italic; color: black; display: flex; align-items: center;">
+          <mat-icon
+            style="font-size: 16px; width: 16px; height: 16px; margin-right: 5px; color: #1976d2;">info</mat-icon>
+          Note: Project selection and Respondent selection in the tables are based on previous PCSAT survey
+          configuration. Modifications can be done as needed.
+        </span>
+      </div>
 
       <mat-vertical-stepper [linear]="true" #stepper>
 
@@ -13,14 +29,6 @@
             <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
           </div>
           <br />
-          <div class="toolbar-right" style="flex: 1;">
-            <span class="toolbar-label" style="font-style: italic; color: black; display: flex; align-items: center;">
-              <mat-icon
-                style="font-size: 16px; width: 16px; height: 16px; margin-right: 5px; color: #1976d2;">info</mat-icon>
-              Note: Below selected projects reflect the previous PCSAT. Please select projects for the current cycle if
-              required.
-            </span>
-          </div>
 
           <div class="table-card">
             <div class="table-toolbar">
@@ -123,10 +131,10 @@
           </div>
 
           <div class="step-actions">
-            <button mat-raised-button class="btn btn-warning-confirm"  (click)="clearStep1()"
+            <button mat-raised-button class="btn btn-warning-confirm" (click)="clearStep1()"
               [disabled]="isLoading">Clear</button>
             <button mat-raised-button color="primary" (click)="goForwardStep1(stepper)"
-              [disabled]="isLoading">Save</button>
+              [disabled]="isLoading">Next</button>
 
           </div>
         </mat-step>
@@ -171,7 +179,7 @@
                   <td>
                     <div *ngIf="row.isNew && row.isEditing">
                       <mat-form-field floatLabel="never" class="table-input"
-                        [class.mat-form-field-invalid]="!row.isValid && !row.projectId" >
+                        [class.mat-form-field-invalid]="!row.isValid && !row.projectId">
                         <mat-select [(ngModel)]="row.projectObj" placeholder="Select Project"
                           (selectionChange)="onNewRowProjectSelected(row, $event.value)">
                           <mat-option *ngFor="let p of getStep1SelectedProjects()" [value]="p">
@@ -189,10 +197,11 @@
                       [class.mat-form-field-invalid]="!row.isValid && !row.respondentName">
                       <input type="text" matInput [(ngModel)]="row.respondentName" [matAutocomplete]="autoResp"
                         placeholder="Search">
-                      <mat-autocomplete #autoResp="matAutocomplete" panelWidth="auto" [displayWith]="displayRespondentFn"
-                        (optionSelected)="onRespondentSelected(row, $event)">
-                        <mat-option *ngFor="let r of getFilteredRespondents(row)" [value]="r" matTooltip="{{ r.contacT_NAME }}">
-                          {{ r.contacT_NAME }} 
+                      <mat-autocomplete #autoResp="matAutocomplete" panelWidth="auto"
+                        [displayWith]="displayRespondentFn" (optionSelected)="onRespondentSelected(row, $event)">
+                        <mat-option *ngFor="let r of getFilteredRespondents(row)" [value]="r"
+                          matTooltip="{{ r.contacT_NAME }}">
+                          {{ r.contacT_NAME }}
                         </mat-option>
                       </mat-autocomplete>
                     </mat-form-field>
@@ -204,8 +213,8 @@
                     <div class="cell-content" title="{{row.emailId}}">{{ row.emailId || '-' }}</div>
                   </td>
 
-                  <td [ngClass]="{'editable-cell': row.isEditing, 'readonly-cell': !row.isEditing}" 
-                  style="text-align:right">
+                  <td [ngClass]="{'editable-cell': row.isEditing, 'readonly-cell': !row.isEditing}"
+                    style="text-align:right">
                     <div *ngIf="!row.isEditing" class="cell-content">{{ row.predictedScore }}</div>
                     <mat-form-field *ngIf="row.isEditing" floatLabel="never" class="table-input"
                       [class.mat-form-field-invalid]="!row.isValid && (row.predictedScore === null || row.predictedScore === '')">
@@ -233,7 +242,8 @@
 
                       <mat-autocomplete #auto="matAutocomplete" panelWidth="300px" [displayWith]="displayFn"
                         (optionSelected)="onSpocSelected(row, $event)">
-                        <mat-option *ngFor="let option of getFilteredSpocs(row)" [value]="option" matTooltip="{{ option.emaiL_ID }}">
+                        <mat-option *ngFor="let option of getFilteredSpocs(row)" [value]="option"
+                          matTooltip="{{ option.emaiL_ID }}">
                           {{ option.emaiL_ID }}
                         </mat-option>
                       </mat-autocomplete>
@@ -286,8 +296,8 @@
           </div>
 
           <div class="step-actions">
-            <button mat-raised-button class="btn btn-warning-confirm"  matStepperPrevious>Back</button>
-            <button mat-raised-button color="primary" (click)="saveFinalList()">Save</button>
+            <button mat-raised-button class="btn btn-warning-confirm" matStepperPrevious>Back</button>
+            <button mat-raised-button color="primary" (click)="saveFinalList()">Submit</button>
           </div>
 
         </mat-step>

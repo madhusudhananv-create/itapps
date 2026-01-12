@@ -292,7 +292,7 @@ export class CsatConfigurationComponent implements OnInit {
         // --- SCENARIO: AT LEAST ONE YES ---
         this.step1Form.setErrors(null);
         this._cdRef.detectChanges();
-        this.showWarningPopup("Data saved successfully.");
+       // this.showWarningPopup("Data saved successfully.");
         stepper.next();
         this.loadValidationData();
       }
