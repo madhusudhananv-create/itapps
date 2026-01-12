@@ -6,6 +6,9 @@ using GAVS.AllocationSystem.Model.CSP;
 using System.Collections.Generic;
 using GAVS.AllocationSystem.Model.AllSys;
 using GAVS.AllocationSystem.Model.CSP.SP;
+using GAVS.AllocationSystem.Model.AllSys.SP;
+using System.Text;
+using System.Configuration;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -225,6 +228,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             CSPdb.Commit();
 
+            SendPCSATAcknowledgementEmail(dpId, batchId);
             return Ok();
         }
 
@@ -286,6 +290,93 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             return result;
+        }
+        private void SendPCSATAcknowledgementEmail(string dpId, int batchId)
+        {
+            try
+            {
+                var selectedProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId && x.ISACTIVE && x.IS_SELECTED).ToList();
+
+                if (!selectedProjects.Any()) return;
+
+                var selectedProjIds = selectedProjects.Select(x => x.PROJ_ID).ToList();
+
+                var respondents = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE && selectedProjIds.Contains(x.PROJ_ID)).ToList();
+
+                var sbProjects = new StringBuilder();
+                int sno = 1;
+                var custIds = selectedProjects.Select(p => p.CUST_ID).Distinct().ToList();
+                var projIds = selectedProjects.Select(p => p.PROJ_ID).Distinct().ToList();
+
+                var accounts = Cldb.CUSTOMER.GetAll().Where(t => custIds.Contains(t.CUST_ID)).ToList();
+                var projects = Cldb.PROJECT.GetAll().Where(t => projIds.Contains(t.PROJ_ID)).ToList();
+
+                foreach (var proj in selectedProjects)
+                {
+                    var accName = accounts.FirstOrDefault(c => c.CUST_ID == proj.CUST_ID)?.CUST_NM;
+                    var projectDetails = projects.FirstOrDefault(p => p.PROJ_ID == proj.PROJ_ID);
+                    string isChosenPCSAT = proj.IS_SELECTED ? "Yes" : "No";
+                    sbProjects.Append("<tr>");
+                    sbProjects.Append($"<td style = 'text-align:right'>{sno++}</td>");
+                    sbProjects.Append($"<td>{accName}</td>");
+                    sbProjects.Append($"<td>{projectDetails?.PROJ_NM}</td>");
+                    sbProjects.Append($"<td>{projectDetails?.EXECUTION_TYPE ?? "-"}</td>");
+                    sbProjects.Append($"<td>{projectDetails?.ENGAGAMENT_TYPE ?? "-"}</td>");
+                    sbProjects.Append($"<td>{isChosenPCSAT}</td>");
+                    sbProjects.Append("</tr>");
+                }
+
+                var sbRespondents = new StringBuilder();
+                int respSNo = 1;
+                foreach (var row in respondents)
+                {
+                    string projName = GetProjectName(row.PROJ_ID);
+
+                    sbRespondents.Append("<tr>");
+                    sbRespondents.Append($"<td style = 'text-align:right'>{respSNo++}</td>");
+                    sbRespondents.Append($"<td>{projName}</td>");
+                    sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
+                    sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
+                    sbRespondents.Append($"<td style = 'text-align:right'>{row.PREDICTED_SCORE}</td>");
+                    sbRespondents.Append($"<td>{row.SPOC}</td>");
+                    sbRespondents.Append("</tr>");
+                }
+                string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
+                string ccMail = string.Empty;
+                Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
+                EmailContentValues.Add("PROJECT_TABLE", sbProjects.ToString());
+                EmailContentValues.Add("VALIDATION_TABLE", sbRespondents.ToString());
+                EmailContentValues.Add("BASE_URL", baseImageUrl);
+                
+                var mailContent = helper.GetEmailContent("PCSATAcknowledgementTemplate.htm", EmailContentValues);
+                string toMail = string.Empty;
+                toMail = Cldb.EMP_INFO.GetAll().Where(e => e.EMP_ID == dpId).Select(e => e.EMAIL_ID).FirstOrDefault();
+                var ccList = new List<string>();
+                foreach (var proj in selectedProjIds)
+                {
+                    ccList.Add(helper.GetCSMMailsFromProject(proj));
+                    ccList.AddRange(helper.GetPMFromProject(proj));
+                    ccList.Add(helper.GetQualitySpocMailForProject(proj, false));
+
+                }
+
+                ccMail = string.Join(",", ccList);
+                var batchObj = CSPdb.CSS_BATCHES.GetById(batchId);
+                var subject = $" {batchObj.FREQUENCY}(H{batchObj.SEQUENCE} - {batchObj.YEAR}) PCSATSurvey Project and Respondent Configuration Submitted";
+                var ep = new EmailProvider(Cldb, CSPdb);
+                if (string.IsNullOrWhiteSpace(toMail)) toMail = _email;
+
+                if (ep.SendEmail
+                          (
+                          new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+                          new EmailContent { from = _email, to = toMail, cc = ccMail, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" },
+                          Request
+                          )) ;
+            }
+            catch (Exception ex)
+            {
+                // Log error (System.Diagnostics.Debug.WriteLine(ex.Message))
+            }
         }
     }
 }
