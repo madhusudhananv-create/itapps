@@ -202,59 +202,57 @@ export class CsatConfigurationComponent implements OnInit {
 
 
 
+goForwardStep1(stepper: MatStepper) {
 
-  goForwardStep1(stepper: MatStepper) {
+  let isReasonMissing = false;
 
-    let isReasonMissing = false;
+  const customerStatus: { [key: string]: { headcount: number, hasSelectedYes: boolean } } = {};
 
-    const customerStatus: { [key: string]: { headcount: number, hasSelectedYes: boolean } } = {};
+  this.step1ProjectList.forEach(proj => {
+    proj.isValid = true;
 
-    this.step1ProjectList.forEach(proj => {
-      proj.isValid = true;
-
-      if (proj.chosen === 'Yes') {
-        proj.reasonNotChosen = '';
-      }
-      else if (proj.chosen === 'No' && !proj.reasonNotChosen) {
-        proj.isValid = false;
-        isReasonMissing = true;
-      }
-      const id = proj.custId;
-
-      if (!customerStatus[id]) {
-        customerStatus[id] = {
-          headcount: proj.accountHeadcount || 0,
-          hasSelectedYes: false
-        };
-      }
-
-      if (proj.chosen === 'Yes') {
-        customerStatus[id].hasSelectedYes = true;
-      }
-    });
-
-    // --- Validation Part 1: Missing Reasons ---
-    if (isReasonMissing) {
-      this.showWarningPopup("Please provide reason for project(s) not chosen for PCSAT.");
-      return;
+    if (proj.chosen === 'Yes') {
+      proj.reasonNotChosen = '';
+    }
+    else if (proj.chosen === 'No' && !proj.reasonNotChosen) {
+      proj.isValid = false;
+      isReasonMissing = true;
     }
 
-    // --- Validation Part 2: Headcount Rule ---
-    for (const id in customerStatus) {
-      if (customerStatus.hasOwnProperty(id)) {
-        const data = customerStatus[id];
+    const id = proj.custId;
 
-        // THE RULE: If HC >= 10 AND they have ZERO 'Yes' projects
-        if (data.headcount >= 10 && !data.hasSelectedYes) {
-          this.showWarningPopup(
-            "Please select at least one project for PCSAT survey for Account headcount >= 10. For excluding the account from H2 PCSAT please obtain approval from the GDH and share it with DEX Team"
-          );
-          return;
-        }
-      }
+    if (!customerStatus[id]) {
+      customerStatus[id] = {
+        headcount: proj.accountHeadcount || 0,
+        hasSelectedYes: false
+      };
     }
 
+    if (proj.chosen === 'Yes') {
+      customerStatus[id].hasSelectedYes = true;
+    }
+  });
 
+  // Validation 1: Missing reasons
+  if (isReasonMissing) {
+    this.showWarningPopup("Please provide reason for project(s) not chosen for PCSAT.");
+    return;
+  }
+
+  // Validation 2: Headcount rule
+  let hasHeadcountViolation = false;
+
+  for (const id in customerStatus) {
+    if (customerStatus.hasOwnProperty(id)) {
+      const data = customerStatus[id];
+      if (data.headcount >= 10 && !data.hasSelectedYes) {
+        hasHeadcountViolation = true;
+        break; 
+      }
+    }
+  }
+
+  const proceedWithSave = () => {
     const hasSelectedProjects = this.step1ProjectList.some(p => p.chosen === 'Yes');
 
     const projectsToSave = this.step1ProjectList.filter(proj =>
@@ -275,32 +273,48 @@ export class CsatConfigurationComponent implements OnInit {
       };
     });
 
-    // --- Save API Call ---
-    this._appservice.saveCSATListForDP(saveCSATData, this.dpId, this.batchId).subscribe((response) => {
+    this._appservice.saveCSATListForDP(saveCSATData, this.dpId, this.batchId).subscribe(
+      (response) => {
+        this.isStep1Completed = hasSelectedProjects;
 
-      this.isStep1Completed = hasSelectedProjects;
-
-      if (!hasSelectedProjects) {
-        // --- SCENARIO: ALL NO ---
-        this.step1Form.setErrors({ 'noProjectsSelected': true });
-        this._cdRef.detectChanges();
-
-        this.showWarningPopup("Data saved successfully.");
-        // DO NOT navigate. Step 2 will now be locked.
-
-      } else {
-        // --- SCENARIO: AT LEAST ONE YES ---
-        this.step1Form.setErrors(null);
-        this._cdRef.detectChanges();
-        this.showWarningPopup("Data saved successfully.");
-        stepper.next();
-        this.loadValidationData();
+        if (!hasSelectedProjects) {
+          // ALL NO → stay on step 1, show success
+          this.step1Form.setErrors({ 'noProjectsSelected': true });
+          this._cdRef.detectChanges();
+          this.showWarningPopup("Data saved successfully.");
+        } else {
+          // At least one YES → go to step 2
+          this.step1Form.setErrors(null);
+          this._cdRef.detectChanges();
+          this.showWarningPopup("Data saved successfully.");
+          stepper.next();
+          this.loadValidationData();
+        }
+      },
+      (error) => {
+        console.error('Error saving project selection', error);
+        this.showWarningPopup("Failed to save data. Please try again.");
       }
-
-    },
-      (error) => { console.error('Error saving project selection', error); }
     );
+  };
+
+  if (hasHeadcountViolation) {
+    const dialogRef = this.dialog.open(RatingCriteriaRemarksComponent, {
+      data: {
+        Message: "Please select at least one project for PCSAT survey for Account headcount >= 10. For excluding the account from H2 PCSAT please obtain approval from the GDH and share it with DEX Team."
+      },
+      hasBackdrop: true,
+      scrollStrategy: new NoopScrollStrategy()
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      proceedWithSave();
+    });
+  } else {
+    proceedWithSave();
   }
+}
+
 
   // --- STEP 2 ---
 
@@ -687,7 +701,7 @@ export class CsatConfigurationComponent implements OnInit {
     }
     dialogConfig.hasBackdrop = true;
     dialogConfig.scrollStrategy = new NoopScrollStrategy();
-    this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig);
+    return this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig);
   }
   showConfirmationDialog(dialogSuccess: boolean, dialogHeading: string, dialogMessage: string) {
     const dialogConfig = new MatDialogConfig();
