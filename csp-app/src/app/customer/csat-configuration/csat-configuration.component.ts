@@ -235,7 +235,7 @@ export class CsatConfigurationComponent implements OnInit {
 
     // --- Validation Part 1: Missing Reasons ---
     if (isReasonMissing) {
-      this.showWarningPopup("Please provide reason Chosen for PCSAT as No");
+      this.showWarningPopup("Please provide reason for project(s) not chosen for PCSAT.");
       return;
     }
 
