@@ -267,4 +267,31 @@ DECLARE @TargetIDs TABLE (ID VARCHAR(MAX));
 	END
     GO
 
+    IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='CSS_BCC')
+BEGIN
+INSERT INTO configuration_ext (
+    [KEY],
+    [value],
+    cust_id,
+    proj_id,
+    comments,
+    isactive,
+    created_by,
+    created_date,
+    updated_by,
+    updated_date
+) VALUES (
+    'CSS_BCC',  
+    'thamaraiselvi.s@neurealm.com,dhiviya.ks@neurealm.com,shivi.srivastava@neurealm.com',     
+    -1,                 
+    NULL,               
+    '',  
+    1,                  
+    '104744',           
+    GETDATE(),          
+    '104744',           
+    GETDATE()           
+);
+END
+GO
 
