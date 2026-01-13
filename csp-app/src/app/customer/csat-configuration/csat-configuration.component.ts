@@ -292,7 +292,7 @@ export class CsatConfigurationComponent implements OnInit {
         // --- SCENARIO: AT LEAST ONE YES ---
         this.step1Form.setErrors(null);
         this._cdRef.detectChanges();
-       // this.showWarningPopup("Data saved successfully.");
+        this.showWarningPopup("Data saved successfully.");
         stepper.next();
         this.loadValidationData();
       }
@@ -624,6 +624,7 @@ export class CsatConfigurationComponent implements OnInit {
       this.showWarningPopup("Mandatory fields are missing in some rows. Please correct them before submitting.");
       return;
     }
+    this.isLoading = true;
 
     // 2. Prepare Payload
     const payload = this.validationData.map(row => ({
@@ -647,6 +648,7 @@ export class CsatConfigurationComponent implements OnInit {
       (res) => {
         // Success
         this.showWarningPopup("Data saved successfully.");
+        this.isLoading = false;
         this.loadValidationData();
       },
       (err) => {
@@ -654,10 +656,13 @@ export class CsatConfigurationComponent implements OnInit {
         console.error("Save Error:", err);
         if (err.error && err.error.message) {
           this.showWarningPopup(err.error.message);
+          this.isLoading = false;
         } else if (typeof err.error === 'string') {
           this.showWarningPopup(err.error);
+          this.isLoading = false;
         } else {
           this.showWarningPopup("An error occurred while saving. Please check the console for details.");
+          this.isLoading = false;
         }
       }
     );
