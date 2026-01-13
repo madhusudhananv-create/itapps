@@ -317,7 +317,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var projectDetails = projects.FirstOrDefault(p => p.PROJ_ID == proj.PROJ_ID);
                     string isChosenPCSAT = proj.IS_SELECTED ? "Yes" : "No";
                     sbProjects.Append("<tr>");
-                    sbProjects.Append($"<td style = 'text-align:center'>{sno++}</td>");
+                    sbProjects.Append($"<td style = 'text-align:center;'>{sno++}</td>");
                     sbProjects.Append($"<td>{accName}</td>");
                     sbProjects.Append($"<td>{projectDetails?.PROJ_NM}</td>");
                     sbProjects.Append($"<td>{projectDetails?.EXECUTION_TYPE ?? "-"}</td>");
@@ -333,11 +333,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string projName = GetProjectName(row.PROJ_ID);
 
                     sbRespondents.Append("<tr>");
-                    sbRespondents.Append($"<td style = 'text-align:center'>{respSNo++}</td>");
+                    sbRespondents.Append($"<td style = text-align:center;'>{respSNo++}</td>");
                     sbRespondents.Append($"<td>{projName}</td>");
                     sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
                     sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
-                    sbRespondents.Append($"<td style = 'text-align:right;padding:0 15px;'>{row.PREDICTED_SCORE}</td>");
+                    sbRespondents.Append($"<td style = 'text-align:center;'>{row.PREDICTED_SCORE}</td>");
                     sbRespondents.Append($"<td>{row.SPOC}</td>");
                     sbRespondents.Append("</tr>");
                 }
@@ -364,7 +364,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 string bcc = string.Empty;
                 bcc = helper.GetDBConfig("CSS_BCC", "-1");
                 var batchObj = CSPdb.CSS_BATCHES.GetById(batchId);
-                var subject = $" {batchObj.FREQUENCY}(H{batchObj.SEQUENCE} - {batchObj.YEAR}) PCSAT Survey Project and Respondent Configuration Submitted";
+                var subject = $" {batchObj.FREQUENCY} PCSAT Survey (H{batchObj.SEQUENCE} - {batchObj.YEAR}) Project and Respondent Configuration Submitted";
                 var ep = new EmailProvider(Cldb, CSPdb);
                 if (string.IsNullOrWhiteSpace(toMail)) toMail = _email;
 
