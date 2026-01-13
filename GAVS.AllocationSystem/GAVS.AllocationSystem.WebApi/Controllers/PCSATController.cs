@@ -357,7 +357,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 foreach (var proj in selectedProjIds)
                 {
                     ccList.Add(helper.GetCSMMailsFromProject(proj));
-                    ccList.AddRange(helper.GetPMFromProject(proj));
+                   // ccList.AddRange(helper.GetPMFromProject(proj));
                     ccList.Add(helper.GetQualitySpocMailForProject(proj, false));
 
                 }
