@@ -511,6 +511,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string REVENUE_TYPE {get; set;}
         public string COUNTRY {get; set;}
         public string METHODOLOGY {get; set;}
+        public string PROJ_PM_EMP_ID {get; set;}
     }
 
     public partial class DROPDOWN_OPTION  

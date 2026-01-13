@@ -535,7 +535,8 @@
       "CONTRACTING_UNIT:string",
       "REVENUE_TYPE:string",
       "COUNTRY:string",
-      "METHODOLOGY:string"
+      "METHODOLOGY:string",
+      "PROJ_PM_EMP_ID:string"
     ]
   },
   {
