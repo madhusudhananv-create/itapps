@@ -260,11 +260,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = new List<DROPDOWN_OPTION>()
                {
                 new DROPDOWN_OPTION(){ DD_VALUE ="ALREADY_COVERED", DD_TEXT="Project covered in another project" },
-                new DROPDOWN_OPTION(){ DD_VALUE ="JUST_STARTED", DD_TEXT="Project just started" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="JUST_STARTED", DD_TEXT="Project started recently" },
                 new DROPDOWN_OPTION(){ DD_VALUE ="IN_TRANSITION", DD_TEXT="Project in transition phase" },
                 new DROPDOWN_OPTION(){ DD_VALUE ="ACCOUNT_CLOSED", DD_TEXT="Account getting closed" },
                 new DROPDOWN_OPTION(){ DD_VALUE ="ZIF_ONLY", DD_TEXT="ZIF only project" },
-                new DROPDOWN_OPTION(){ DD_VALUE ="INVOICING_ONLY", DD_TEXT="Project created for invoicing" }
+                new DROPDOWN_OPTION(){ DD_VALUE ="INVOICING_ONLY", DD_TEXT="Project created for invoicing" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="LESS_HEADCOUNT", DD_TEXT="Project has less headcount" },
+                new DROPDOWN_OPTION(){ DD_VALUE ="OTHERS", DD_TEXT="Others" }
                };
 
 
