@@ -25,4 +25,5 @@ export class CssProjectSelectionListModel {
     UPDATED_DATE: Date;
     ISACTIVE: Boolean;
     iS_SELECTED: boolean;
+    proJ_PM_EMP_ID: string;
 }

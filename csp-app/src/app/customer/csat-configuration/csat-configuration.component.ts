@@ -137,6 +137,7 @@ export class CsatConfigurationComponent implements OnInit {
         chosen: dbRow.iS_SELECTED ? 'Yes' : 'No',
         reasonNotChosen: '',
         isValid: true,
+        PROJ_PM_EMP_ID: dbRow.proJ_PM_EMP_ID,
         executionType: dbRow.executioN_TYPE,
         engagementType: dbRow.engagamenT_TYPE
       };
@@ -267,7 +268,7 @@ goForwardStep1(stepper: MatStepper) {
         CUST_ID: proj.custId,
         PROJ_ID: proj.projId,
         DP_ID: this.dpId,
-        PROJ_PM_EMP_ID: proj.proJ_PM_EMP_ID,
+        PROJ_PM_EMP_ID: proj.PROJ_PM_EMP_ID,
         IS_SELECTED: isChosen,
         REASON: isChosen ? null : proj.reasonNotChosen,
         ISACTIVE: true
