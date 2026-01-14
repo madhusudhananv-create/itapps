@@ -243,14 +243,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit();
 
             SendPCSATAcknowledgementEmail(dpId, batchId, false);
-            //var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId).ToList();
-            //if (batchProjects.Any())
-            //{
-            //    foreach (var item in batchProjects.GroupBy(x => x.PROJ_PM_EMP_ID))
-            //    {
-            //        SendPCSATAcknowledgementEmail(item.Key, batchId, true);
-            //    }
-            //}
+            var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId && x.IS_SELECTED && x.ISACTIVE).ToList();
+            if (batchProjects.Any())
+            {
+                foreach (var item in batchProjects.GroupBy(x => x.PROJ_PM_EMP_ID))
+                {
+                    SendPCSATAcknowledgementEmail(item.Key, batchId, true);
+                }
+            }
             FillResponseTime(stopwatch);
             return Ok();
         }
@@ -383,7 +383,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var ccList = new List<string>();
                 foreach (var proj in selectedProjIds)
                 {
-                    ccList.Add(helper.GetCSMMailsFromProject(proj));
+                    if(!isForPM)
+                    {
+                        ccList.Add(helper.GetCSMMailsFromProject(proj));
+                    }                 
                     // ccList.AddRange(helper.GetPMFromProject(proj));
                     ccList.Add(helper.GetQualitySpocMailForProject(proj, false));
 
