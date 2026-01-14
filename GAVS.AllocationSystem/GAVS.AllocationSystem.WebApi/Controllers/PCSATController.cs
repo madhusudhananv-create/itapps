@@ -57,7 +57,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult SaveCSATListForDP([FromBody] List<CSS_BATCH_PROJECTS> batchProjectList, string dpID, int batchId)
         {
 
-            var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpID && x.ISACTIVE).ToList();
+            var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID) && x.ISACTIVE).ToList();
 
             //loop the results and save.
             foreach (var item in batchProjectList)
@@ -93,7 +93,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
-            var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && x.DP_ID == dpId && x.IS_SELECTED).ToList();
+            var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId) && x.IS_SELECTED).ToList();
             var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId).ToList();
             var custIds = batchprojects.Select(x => x.CUST_ID).Distinct().ToList();
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && x.CONTACT_TYPE == "CUSTOMER" && custIds.Contains(x.CUSTOMER_ID)).ToList();
@@ -203,7 +203,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return BadRequest($"Duplicate Error: Respondent {item.EMAIL_ID} is already added to the project : {GetProjectName(item.PROJ_ID)}");
                 }
                 if (item.ID == 0)
-                {                   
+                {
                     item.BATCH_ID = batchId;
                     UpdateAuditFields(item);
                     CSPdb.CSS_BATCH_CUSTOMERS.Add(item);
@@ -228,7 +228,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             CSPdb.Commit();
 
-            SendPCSATAcknowledgementEmail(dpId, batchId);
+            SendPCSATAcknowledgementEmail(dpId, batchId, false);
+            var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId).ToList();
+            if (batchProjects.Any())
+            {
+                foreach (var item in batchProjects.GroupBy(x => x.PROJ_PM_EMP_ID))
+                {
+                    SendPCSATAcknowledgementEmail(item.Key, batchId, true);
+                }
+            }
             return Ok();
         }
 
@@ -293,11 +301,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return result;
         }
-        private void SendPCSATAcknowledgementEmail(string dpId, int batchId)
+        private void SendPCSATAcknowledgementEmail(string dpId, int batchId, bool isForPM)
         {
             try
             {
-                var selectedProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId && x.ISACTIVE && x.IS_SELECTED).ToList();
+                var selectedProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId) && x.ISACTIVE && x.IS_SELECTED).ToList();
+                //if (isForPM)
+                //{ 
+                //    selectedProjects = selectedProjects.Where(x=>x.)
+                //}
 
                 if (!selectedProjects.Any()) return;
 
@@ -349,15 +361,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("PROJECT_TABLE", sbProjects.ToString());
                 EmailContentValues.Add("VALIDATION_TABLE", sbRespondents.ToString());
                 EmailContentValues.Add("BASE_URL", baseImageUrl);
-                
+
                 var mailContent = helper.GetEmailContent("PCSATAcknowledgementTemplate.htm", EmailContentValues);
                 string toMail = string.Empty;
-                toMail = Cldb.EMP_INFO.GetAll().Where(e => e.EMP_ID == dpId).Select(e => e.EMAIL_ID).FirstOrDefault();
+                toMail = helper.GetEmployeeMailId(dpId);
                 var ccList = new List<string>();
                 foreach (var proj in selectedProjIds)
                 {
                     ccList.Add(helper.GetCSMMailsFromProject(proj));
-                   // ccList.AddRange(helper.GetPMFromProject(proj));
+                    // ccList.AddRange(helper.GetPMFromProject(proj));
                     ccList.Add(helper.GetQualitySpocMailForProject(proj, false));
 
                 }

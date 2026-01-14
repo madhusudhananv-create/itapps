@@ -276,6 +276,7 @@
       "PROJ_ID:string",
       "REASON:string",
       "DP_ID:string",
+      "PROJ_PM_EMP_ID:string",
       "IS_SELECTED :bool",
       "BATCH_ID:int"
 
