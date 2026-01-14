@@ -9,6 +9,9 @@ using GAVS.AllocationSystem.Model.CSP.SP;
 using GAVS.AllocationSystem.Model.AllSys.SP;
 using System.Text;
 using System.Configuration;
+using System.Diagnostics;
+using Newtonsoft.Json;
+
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -20,6 +23,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetCSATListForDP(string dpId, int batchId)
         {
+            var stopwatch = Stopwatch.StartNew();
             var result = new List<CSS_BATCH_PROJECTS>();
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
@@ -48,6 +52,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //result.Add(item);
             }
             //3.
+            FillResponseTime(stopwatch);
             return Ok(spResult);
         }
 
@@ -56,7 +61,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult SaveCSATListForDP([FromBody] List<CSS_BATCH_PROJECTS> batchProjectList, string dpID, int batchId)
         {
-
+            var stopwatch = Stopwatch.StartNew();
+            LogRequest(content: JsonConvert.SerializeObject(batchProjectList));
             var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID) && x.ISACTIVE).ToList();
             //loop the results and save.
             foreach (var item in batchProjectList)
@@ -80,6 +86,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
             Cldb.Commit();
+            FillResponseTime(stopwatch);
             return Ok();
         }
 
@@ -89,6 +96,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetCSATContactListForDP(string dpId, int batchId)
         {
+            var stopwatch = Stopwatch.StartNew();
+            LogRequest();
             var firstResult = new List<CSS_BATCH_CUSTOMERS>();
             var result = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
@@ -165,7 +174,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 row.CONTACT_ROLE = contacts.FirstOrDefault(c => string.Equals(c.CONTACT_EMAILID, row.EMAIL_ID, StringComparison.OrdinalIgnoreCase))?.CONTACT_ROLE;
             }
-
+            FillResponseTime(stopwatch);
             return Ok(result);
         }
 
@@ -174,6 +183,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult SaveCSATContactListForDP([FromBody] List<CSS_BATCH_CUSTOMERS> batchCustomerList, string dpId, int batchId)
         {
+            var stopwatch = Stopwatch.StartNew();
+            LogRequest(content: JsonConvert.SerializeObject(batchCustomerList));
             //perform validation
             var existingRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
             var cssProjIds = batchCustomerList.Select(x => x.PROJ_ID).Distinct().ToList();
@@ -240,6 +251,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //        SendPCSATAcknowledgementEmail(item.Key, batchId, true);
             //    }
             //}
+            FillResponseTime(stopwatch);
             return Ok();
         }
 
