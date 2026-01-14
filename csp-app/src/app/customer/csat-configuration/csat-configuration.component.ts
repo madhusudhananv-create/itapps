@@ -267,6 +267,7 @@ goForwardStep1(stepper: MatStepper) {
         CUST_ID: proj.custId,
         PROJ_ID: proj.projId,
         DP_ID: this.dpId,
+        PROJ_PM_EMP_ID: proj.proJ_PM_EMP_ID,
         IS_SELECTED: isChosen,
         REASON: isChosen ? null : proj.reasonNotChosen,
         ISACTIVE: true
