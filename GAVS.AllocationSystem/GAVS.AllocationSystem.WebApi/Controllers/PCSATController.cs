@@ -58,11 +58,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
 
             var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID) && x.ISACTIVE).ToList();
-
             //loop the results and save.
             foreach (var item in batchProjectList)
             {
                 var existingRecord = existingRecords.FirstOrDefault(x => x.PROJ_ID == item.PROJ_ID && x.CUST_ID == item.CUST_ID);
+
                 if (existingRecord == null)
                 {
                     item.BATCH_ID = batchId;
@@ -197,11 +197,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     return BadRequest($"Please choose a different CSAT Respondent as {item.DISPLAY_NAME} - {item.EMAIL_ID} was polled during last ACSAT cycle");
                 }
+                int countList = batchCustomerList.Count(x => x.PROJ_ID == item.PROJ_ID && x.EMAIL_ID.ToLower() == item.EMAIL_ID.ToLower());
                 bool alreadyExists = existingRecords.Any(x => x.PROJ_ID == item.PROJ_ID && x.EMAIL_ID.ToLower() == item.EMAIL_ID.ToLower() && x.ID != item.ID);
-                if (alreadyExists)
+
+                if (countList > 1 || alreadyExists)
                 {
-                    return BadRequest($"Duplicate Error: Respondent {item.EMAIL_ID} is already added to the project : {GetProjectName(item.PROJ_ID)}");
+                    return BadRequest($"Duplicate Error: Respondent {item.EMAIL_ID} is already added to the project: {GetProjectName(item.PROJ_ID)}");
                 }
+                             
                 if (item.ID == 0)
                 {
                     item.BATCH_ID = batchId;
@@ -229,14 +232,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit();
 
             SendPCSATAcknowledgementEmail(dpId, batchId, false);
-            var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId).ToList();
-            if (batchProjects.Any())
-            {
-                foreach (var item in batchProjects.GroupBy(x => x.PROJ_PM_EMP_ID))
-                {
-                    SendPCSATAcknowledgementEmail(item.Key, batchId, true);
-                }
-            }
+            //var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId).ToList();
+            //if (batchProjects.Any())
+            //{
+            //    foreach (var item in batchProjects.GroupBy(x => x.PROJ_PM_EMP_ID))
+            //    {
+            //        SendPCSATAcknowledgementEmail(item.Key, batchId, true);
+            //    }
+            //}
             return Ok();
         }
 
