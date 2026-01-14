@@ -215,7 +215,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     return BadRequest($"Duplicate Error: Respondent {item.EMAIL_ID} is already added to the project: {GetProjectName(item.PROJ_ID)}");
                 }
-                             
+
                 if (item.ID == 0)
                 {
                     item.BATCH_ID = batchId;
@@ -399,7 +399,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 if (ep.SendEmail
                           (
-                          new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+                          new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587", excludeSender = isForPM },
                           new EmailContent { from = _email, to = toMail, cc = ccMail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" },
                           Request
                           )) ;
