@@ -21,8 +21,8 @@
         </span>
       </div>
 
-      <mat-vertical-stepper [linear]="true" #stepper>
-
+      <mat-vertical-stepper [linear]="true" #stepper (selectionChange)="onStepChange($event)">
+ 
         <mat-step [stepControl]="step1Form" [completed]="isStep1Completed">
           <ng-template matStepLabel>Project Selection</ng-template>
           <div class="row">

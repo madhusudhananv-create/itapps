@@ -70,6 +70,15 @@ export class CsatConfigurationComponent implements OnInit {
     this.LoadData();
   }
 
+   onStepChange(event: any) {
+    if (event.selectedIndex === 1) {
+      const hasSelectedProjects = this.step1ProjectList.some(p => p.chosen === 'Yes');    
+      if (hasSelectedProjects && this.validationData.length === 0) {
+        this.loadValidationData();
+      }
+    }
+  }
+
   getFilteredSpocs(row: any): any[] {
     const searchText = row.csatSpoc;
     if (!searchText) {
@@ -107,6 +116,11 @@ export class CsatConfigurationComponent implements OnInit {
         this._appservice.getCSATListforDP(this.dpId, this.batchId).subscribe(csatData => {
           this.csatList = csatData;
           this.loadProjects();
+          const hasSelectedProjects = this.step1ProjectList.some(p => p.chosen === 'Yes');
+          if (hasSelectedProjects) {
+            this.isStep1Completed = true;
+            this.step1Form.setErrors(null);
+          }
           this.isLoading = false;
         });
       }, error => {
@@ -132,11 +146,12 @@ export class CsatConfigurationComponent implements OnInit {
         name: dbRow.proJ_NM,
         headcount: dbRow.projecT_HEAD_COUNT,
         projectStatus: dbRow.proJ_STATUS,
-        Spoc: dbRow.csaT_SPOC,
+        QUALITY_SPOC: dbRow.qualitY_SPOC,
         SpocEmail: dbRow.csaT_SPOC_EMAIL,
         chosen: dbRow.iS_SELECTED ? 'Yes' : 'No',
-        reasonNotChosen: '',
+        reasonNotChosen: dbRow.reason || '',
         isValid: true,
+        DP_ID: dbRow.dP_ID,
         PROJ_PM_EMP_ID: dbRow.proJ_PM_EMP_ID,
         executionType: dbRow.executioN_TYPE,
         engagementType: dbRow.engagamenT_TYPE
@@ -267,8 +282,9 @@ goForwardStep1(stepper: MatStepper) {
         BATCH_ID: this.batchId,
         CUST_ID: proj.custId,
         PROJ_ID: proj.projId,
-        DP_ID: this.dpId,
+        DP_ID: proj.DP_ID,
         PROJ_PM_EMP_ID: proj.PROJ_PM_EMP_ID,
+        QUALITY_SPOC:proj.QUALITY_SPOC,
         IS_SELECTED: isChosen,
         REASON: isChosen ? null : proj.reasonNotChosen,
         ISACTIVE: true
