@@ -353,6 +353,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
         public string REASON {get; set;}
         public string DP_ID {get; set;}
         public string PROJ_PM_EMP_ID {get; set;}
+        public string QUALITY_SPOC {get; set;}
         public bool IS_SELECTED  {get; set;}
         public int BATCH_ID {get; set;}
     }

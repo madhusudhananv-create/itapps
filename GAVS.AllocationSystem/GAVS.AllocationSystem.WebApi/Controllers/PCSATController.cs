@@ -63,7 +63,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var stopwatch = Stopwatch.StartNew();
             LogRequest(content: JsonConvert.SerializeObject(batchProjectList));
-            var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID) && x.ISACTIVE).ToList();
+            var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID || x.QUALITY_SPOC == dpID ) && x.ISACTIVE).ToList();
             //loop the results and save.
             foreach (var item in batchProjectList)
             {
@@ -72,7 +72,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (existingRecord == null)
                 {
                     item.BATCH_ID = batchId;
-                    item.DP_ID = dpID;
                     UpdateAuditFields(item);
                     Cldb.CSS_BATCH_PROJECTS.Add(item);
                 }
@@ -81,6 +80,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existingRecord.IS_SELECTED = item.IS_SELECTED;
                     existingRecord.REASON = item.REASON;
                     existingRecord.ISACTIVE = item.ISACTIVE;
+                    existingRecord.DP_ID = item.DP_ID;
+                    existingRecord.PROJ_PM_EMP_ID = item.PROJ_PM_EMP_ID;
                     UpdateAuditFields(existingRecord);
                     Cldb.CSS_BATCH_PROJECTS.Update(existingRecord);
                 }
@@ -102,7 +103,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = new List<CSS_BATCH_CUSTOMERS_EXTENDED>();
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
-            var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId) && x.IS_SELECTED).ToList();
+            var batchprojects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId || x.QUALITY_SPOC == dpId) && x.IS_SELECTED).ToList();
             var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId).ToList();
             var custIds = batchprojects.Select(x => x.CUST_ID).Distinct().ToList();
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.ISACTIVE && x.CONTACT_TYPE == "CUSTOMER" && custIds.Contains(x.CUSTOMER_ID)).ToList();
@@ -242,14 +243,37 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             CSPdb.Commit();
 
-            SendPCSATAcknowledgementEmail(dpId, batchId, false);
-            var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && x.DP_ID == dpId && x.IS_SELECTED && x.ISACTIVE).ToList();
+            var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.QUALITY_SPOC == dpId) && x.IS_SELECTED && x.ISACTIVE).ToList();
+            bool isQualitySpoc = batchProjects.Any(x => x.QUALITY_SPOC == dpId);
+            var mailList = new List<string>();
+            if (!isQualitySpoc )
+            {
+                SendPCSATAcknowledgementEmail(dpId, batchId, false);
+                mailList.Add(dpId);
+            }
+            
             if (batchProjects.Any())
             {
                 foreach (var item in batchProjects.GroupBy(x => x.PROJ_PM_EMP_ID))
                 {
-                    SendPCSATAcknowledgementEmail(item.Key, batchId, true);
+                    string pmId = item.Key;
+                    if (!string.IsNullOrEmpty(pmId) && !mailList.Contains(pmId))
+                    {
+                        SendPCSATAcknowledgementEmail(pmId, batchId, true);
+                        mailList.Add(pmId);
+                    }
                 }
+
+                foreach (var item in batchProjects.GroupBy(x => x.DP_ID))
+                {
+                    string accountDpId = item.Key;
+                    if (!string.IsNullOrEmpty(accountDpId) && !mailList.Contains(accountDpId))
+                    {
+                        SendPCSATAcknowledgementEmail(accountDpId, batchId, false);
+                        mailList.Add(accountDpId);
+                    }
+                }
+
             }
             FillResponseTime(stopwatch);
             return Ok();
@@ -320,13 +344,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             try
             {
-                var selectedProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId) && x.ISACTIVE && x.IS_SELECTED).ToList();
+                var selectedProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId || x.QUALITY_SPOC == dpId) && x.ISACTIVE && x.IS_SELECTED).ToList();
                 //if (isForPM)
                 //{ 
                 //    selectedProjects = selectedProjects.Where(x=>x.)
                 //}
 
                 if (!selectedProjects.Any()) return;
+
+                bool isQualitySpoc = selectedProjects.Any(x => x.QUALITY_SPOC == dpId);
 
                 var selectedProjIds = selectedProjects.Select(x => x.PROJ_ID).ToList();
 
@@ -357,10 +383,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 var sbRespondents = new StringBuilder();
                 int respSNo = 1;
+                string updatedBy = respondents.FirstOrDefault().UPDATED_BY;
                 foreach (var row in respondents)
                 {
                     string projName = GetProjectName(row.PROJ_ID);
-
+                    
                     sbRespondents.Append("<tr>");
                     sbRespondents.Append($"<td style = text-align:center;'>{respSNo++}</td>");
                     sbRespondents.Append($"<td>{projName}</td>");
@@ -376,14 +403,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmailContentValues.Add("PROJECT_TABLE", sbProjects.ToString());
                 EmailContentValues.Add("VALIDATION_TABLE", sbRespondents.ToString());
                 EmailContentValues.Add("BASE_URL", baseImageUrl);
-
+                EmailContentValues.Add("UPDATED_BY", GetEmployeeNamebyId(updatedBy.ToString()));
                 var mailContent = helper.GetEmailContent("PCSATAcknowledgementTemplate.htm", EmailContentValues);
                 string toMail = string.Empty;
                 toMail = helper.GetEmployeeMailId(dpId);
                 var ccList = new List<string>();
                 foreach (var proj in selectedProjIds)
                 {
-                    if(!isForPM)
+                    if( !isForPM)
                     {
                         ccList.Add(helper.GetCSMMailsFromProject(proj));
                     }                 

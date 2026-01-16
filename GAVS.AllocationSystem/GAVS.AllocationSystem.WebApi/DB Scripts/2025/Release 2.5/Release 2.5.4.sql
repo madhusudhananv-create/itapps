@@ -180,23 +180,23 @@ BEGIN
 DECLARE @TargetIDs TABLE (ID VARCHAR(MAX));
     INSERT INTO @TargetIDs SELECT * FROM [DBO].[FN_SPLITSTRING](@DPID,',');
 
-    DECLARE @RolePriority INT = 0;
+    --DECLARE @RolePriority INT = 0;
 
-    SELECT @RolePriority = ISNULL(MIN(
-       CASE 
-            WHEN P.PROJ_DM_EMP_ID IS NOT NULL AND P.PROJ_DM_EMP_ID = T.ID THEN 1
-            WHEN P.PROJ_PM_EMP_ID IS NOT NULL AND P.PROJ_PM_EMP_ID = T.ID THEN 2
-            WHEN P.QUALITY_SPOC   IS NOT NULL AND P.QUALITY_SPOC   = T.ID THEN 3
-        END),0)
+    --SELECT @RolePriority = ISNULL(MIN(
+    --   CASE 
+    --        WHEN P.PROJ_DM_EMP_ID IS NOT NULL AND P.PROJ_DM_EMP_ID = T.ID THEN 1
+    --        WHEN P.PROJ_PM_EMP_ID IS NOT NULL AND P.PROJ_PM_EMP_ID = T.ID THEN 2
+    --        WHEN P.QUALITY_SPOC   IS NOT NULL AND P.QUALITY_SPOC   = T.ID THEN 3
+    --    END),0)
 
-               FROM PROJECT P
-			   join customer c on c.CUST_ID=p.CUST_ID 
-			   INNER JOIN @TargetIDs T ON T.ID IN (P.PROJ_DM_EMP_ID, P.PROJ_PM_EMP_ID, P.QUALITY_SPOC)
-               WHERE p.PROJECT_TYPE != 'Internal'
-               AND p.PROJ_STATUS IN ('New','Close','Deliver','Plan','Complete')
-			    AND C.CUST_NM NOT LIKE '%gavs%'
-                AND C.CUST_ID != '202100091'
-			   AND p.end_date >= DATEADD(MONTH, -6, @ENDDATE)
+    --           FROM PROJECT P
+			 --  join customer c on c.CUST_ID=p.CUST_ID 
+			 --  INNER JOIN @TargetIDs T ON T.ID IN (P.PROJ_DM_EMP_ID, P.PROJ_PM_EMP_ID, P.QUALITY_SPOC)
+    --           WHERE p.PROJECT_TYPE != 'Internal'
+    --           AND p.PROJ_STATUS IN ('New','Close','Deliver','Plan','Complete')
+			 --   AND C.CUST_NM NOT LIKE '%gavs%'
+    --            AND C.CUST_ID != '202100091'
+			 --  AND p.end_date >= DATEADD(MONTH, -6, @ENDDATE)
 
       SELECT DISTINCT
         C.CUST_NM,
@@ -205,11 +205,17 @@ DECLARE @TargetIDs TABLE (ID VARCHAR(MAX));
         P.PROJ_ID,
         HC.PROJECT_HEAD_COUNT,
         HC.ACCOUNT_HEAD_COUNT,
+	CAST(
+    COALESCE(
+        cb.IS_SELECTED,
+        CASE WHEN LatestSurvey.FREQUENCY IN ('Half-Yearly','Halfyearly') THEN 1 ELSE 0 END
+    ) AS BIT
+) AS IS_SELECTED,
        
-        CAST(CASE 
-            WHEN LatestSurvey.FREQUENCY IN ('Half-Yearly','Halfyearly') THEN 1 
-            ELSE 0 
-        END AS BIT) AS IS_SELECTED,
+        --CAST(CASE  
+        --    WHEN LatestSurvey.FREQUENCY IN ('Half-Yearly','Halfyearly') THEN 1 
+        --    ELSE 0 
+        --END AS BIT) AS IS_SELECTED,
 
         @STARTDATE AS START_DATE,
         @ENDDATE AS END_DATE,
@@ -220,10 +226,11 @@ DECLARE @TargetIDs TABLE (ID VARCHAR(MAX));
         P.EXECUTION_TYPE, 
         P.ENGAGAMENT_TYPE, 
         P.BUSINESS_UNIT,
-        
+        CB.REASON,
         --E6.EMAIL_ID AS [DP_MAIL],
-         E5.EMP_ID AS PROJ_PM_EMP_ID
-        --E7.FRST_NM AS QUALITY_SPOC
+         E5.EMP_ID AS PROJ_PM_EMP_ID,
+		 E6.EMP_ID as DP_ID,
+        E7.EMP_ID AS QUALITY_SPOC
 
 
     FROM PROJECT P
@@ -231,6 +238,7 @@ DECLARE @TargetIDs TABLE (ID VARCHAR(MAX));
 	LEFT JOIN EMP_INFO E5 ON E5.EMP_ID = P.PROJ_PM_EMP_ID and E5.DOR IS NULL
     LEFT JOIN EMP_INFO E6 ON E6.EMP_ID = P.PROJ_DM_EMP_ID and E6.DOR IS NULL
 	LEFT JOIN EMP_INFO E7 ON E7.EMP_ID = P.QUALITY_SPOC and E7.DOR IS NULL
+	LEFT JOIN CSS_BATCH_PROJECTS CB ON CB.PROJ_ID = P.PROJ_ID and ISACTIVE=1
     OUTER APPLY (
         SELECT TOP 1 
             B.FREQUENCY, 
@@ -253,14 +261,14 @@ DECLARE @TargetIDs TABLE (ID VARCHAR(MAX));
             ACCOUNT_HEAD_COUNT = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.CUST_ID = p.CUST_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE())
     ) HC
 
-   WHERE 
-  (@Customer = '0' OR C.cust_id IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@Customer,',')))  
-     AND (
-        @DPID = '0' 
-        OR (@RolePriority = 1 AND P.PROJ_DM_EMP_ID IN (SELECT ID FROM @TargetIDs)) 
-        OR (@RolePriority = 2 AND P.PROJ_PM_EMP_ID IN (SELECT ID FROM @TargetIDs)) 
-        OR (@RolePriority = 3 AND P.QUALITY_SPOC   IN (SELECT ID FROM @TargetIDs)) 
-    )
+    WHERE 
+        (@Customer = '0' OR C.cust_id IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@Customer,',')))         
+        AND (
+            @DPID = '0' 
+            OR P.PROJ_DM_EMP_ID IN (SELECT ID FROM @TargetIDs)
+            OR P.PROJ_PM_EMP_ID IN (SELECT ID FROM @TargetIDs)
+            OR P.QUALITY_SPOC   IN (SELECT ID FROM @TargetIDs)
+        )
     AND C.CUST_NM NOT LIKE '%gavs%'
     AND C.CUST_ID != '202100091'  AND P.PROJECT_TYPE != 'Internal'
     AND ((P.proj_status in('New','Close','Deliver','Plan','Complete') AND P.end_date >= DATEADD(MONTH, -6, @ENDDATE)))
@@ -296,3 +304,4 @@ INSERT INTO configuration_ext (
 END
 GO
 
+alter table CSS_BATCH_PROJECTS add QUALITY_SPOC VARCHAR(10)

@@ -524,7 +524,7 @@
       "PROJ_STATUS:string",
       "RESPONDENT_MAIL:string",
       "CONTACT_ROLE:string",
-      "CSAT_SPOC:string",
+      "QUALITY_SPOC:string",
       "CSAT_SPOC_EMAIL:string",
       "PROJECT_TYPE:string",
       "EXECUTION_TYPE:string",
@@ -536,7 +536,8 @@
       "REVENUE_TYPE:string",
       "COUNTRY:string",
       "METHODOLOGY:string",
-      "PROJ_PM_EMP_ID:string"
+      "PROJ_PM_EMP_ID:string",
+      "DP_ID:string"
     ]
   },
   {

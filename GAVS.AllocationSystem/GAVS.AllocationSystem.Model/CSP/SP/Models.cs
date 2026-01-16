@@ -499,7 +499,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string PROJ_STATUS {get; set;}
         public string RESPONDENT_MAIL {get; set;}
         public string CONTACT_ROLE {get; set;}
-        public string CSAT_SPOC {get; set;}
+        public string QUALITY_SPOC {get; set;}
         public string CSAT_SPOC_EMAIL {get; set;}
         public string PROJECT_TYPE {get; set;}
         public string EXECUTION_TYPE {get; set;}
@@ -512,6 +512,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string COUNTRY {get; set;}
         public string METHODOLOGY {get; set;}
         public string PROJ_PM_EMP_ID {get; set;}
+        public string DP_ID {get; set;}
     }
 
     public partial class DROPDOWN_OPTION  
