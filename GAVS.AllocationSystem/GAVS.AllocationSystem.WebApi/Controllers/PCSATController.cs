@@ -82,6 +82,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existingRecord.ISACTIVE = item.ISACTIVE;
                     existingRecord.DP_ID = item.DP_ID;
                     existingRecord.PROJ_PM_EMP_ID = item.PROJ_PM_EMP_ID;
+                    existingRecord.QUALITY_SPOC = item.QUALITY_SPOC;
                     UpdateAuditFields(existingRecord);
                     Cldb.CSS_BATCH_PROJECTS.Update(existingRecord);
                 }
