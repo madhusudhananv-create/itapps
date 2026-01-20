@@ -400,11 +400,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
                 string ccMail = string.Empty;
+                string validityDate = string.Empty;
+                validityDate = helper.GetDBConfig("PCSAT_ACK_MAIL_VALIDITY", "-1");
                 Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
                 EmailContentValues.Add("PROJECT_TABLE", sbProjects.ToString());
                 EmailContentValues.Add("VALIDATION_TABLE", sbRespondents.ToString());
                 EmailContentValues.Add("BASE_URL", baseImageUrl);
                 EmailContentValues.Add("UPDATED_BY", GetEmployeeNamebyId(updatedBy.ToString()));
+                EmailContentValues.Add("VALID_DATE", validityDate);
                 var mailContent = helper.GetEmailContent("PCSATAcknowledgementTemplate.htm", EmailContentValues);
                 string toMail = string.Empty;
                 toMail = helper.GetEmployeeMailId(dpId);

@@ -71,6 +71,7 @@ PROJ_ID VARCHAR(20),
 REASON VARCHAR(1000),
 DP_ID VARCHAR(10),
 PROJ_PM_EMP_ID VARCHAR(10),
+QUALITY_SPOC VARCHAR(10),
 IS_SELECTED BIT,
 BATCH_ID INT,
 CREATED_BY VARCHAR(10),
@@ -302,6 +303,34 @@ INSERT INTO configuration_ext (
     GETDATE()           
 );
 END
+
 GO
 
-alter table CSS_BATCH_PROJECTS add QUALITY_SPOC VARCHAR(10)
+
+IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='PCSAT_ACK_MAIL_VALIDITY')
+BEGIN
+INSERT INTO configuration_ext (
+    [KEY],
+    [value],
+    cust_id,
+    proj_id,
+    comments,
+    isactive,
+    created_by,
+    created_date,
+    updated_by,
+    updated_date
+) VALUES (
+    'PCSAT_ACK_MAIL_VALIDITY',  
+    '21st Jan 2026',     
+    -1,                 
+    NULL,               
+    '',  
+    1,                  
+    '104744',           
+    GETDATE(),          
+    '104744',           
+    GETDATE()           
+);
+END
+GO
