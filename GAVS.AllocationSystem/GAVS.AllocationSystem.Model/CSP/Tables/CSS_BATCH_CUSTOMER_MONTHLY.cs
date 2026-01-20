@@ -37,6 +37,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [NotMapped]
         public int BATCH_ID { get; set; }
+        public string SPOC { get; set; }
     }
     [NotMapped]
     public class CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED : CSS_BATCH_CUSTOMER_MONTHLY
