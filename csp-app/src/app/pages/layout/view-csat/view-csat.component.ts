@@ -31,6 +31,8 @@ export class ViewCsatComponent implements OnInit {
   guid: any;
   showSurveyGuid: boolean = false;
   showSurveyText: boolean = false;
+
+  showPreconnect:boolean = false;
   showQualitativeFeedback: boolean = false;
   loading: boolean = false;
   month = [];
@@ -195,7 +197,15 @@ export class ViewCsatComponent implements OnInit {
     this._layoutService.getSurveyGuid(this.surveyPram).subscribe(
       data => {
         this.loading = true;
-        this.surveyGuid = data;
+        this.surveyGuid = data.guid;
+        if(data.status =="Mail Sent" || data.status =="Mail Re-Sent"|| data.status =="Draft" )
+        {
+          if(data.spoc == this._util.empid )
+          {
+
+            this.showPreconnect = true;
+          }
+        }
         if (this.surveyGuid.guid != null) {
           this.loading = false;
           this.showSurveyText = false;

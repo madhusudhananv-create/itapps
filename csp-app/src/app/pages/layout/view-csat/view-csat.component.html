@@ -111,6 +111,12 @@
   </span>
 </div>
 
+<div *ngIf="showPreconnect" style="margin-left: 10px;margin-top: 10px;">
+ <span *ngIf="_access.IsAllowed(??, 1, '', '')">If you wish to enter Pre-Connect Data, Please  
+    <a class="link" (click)="clickmethod(true)" style="cursor: pointer;"> click here</a>.
+  </span>
+</div>
+
 <div *ngIf="showSurveyGuid">
   <app-survey [guId]="guid" [showQualitativeFeedback]="showQualitativeFeedback" [showCSSFields]="true"></app-survey>
 </div>
