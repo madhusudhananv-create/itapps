@@ -40,5 +40,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         string EMAIL_ID { get; set; }
 
+          string SPOC { get; set; }
+
     }
 }

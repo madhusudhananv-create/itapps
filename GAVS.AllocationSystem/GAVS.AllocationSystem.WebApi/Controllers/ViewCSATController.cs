@@ -43,11 +43,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult GetSurveyGuid([FromBody] SURVEY_SEARCH_CRITERIA surveyCriteria)
         {
-            int? batchId; int? custbatchId; string guid = null;
+            int? batchId; int? custbatchId = null ; string guid = null;
             string frequency = "Quarterly";
             string frequency1 = string.Empty;
             iBatchCustomer batchCustomer = null;
             string status = string.Empty;
+            int batchCustomerId = 0;
+            string spoc = "";
             if (surveyCriteria != null)
             {
                 if (surveyCriteria.QUARTER == 5 || surveyCriteria.QUARTER == 6)
@@ -110,13 +112,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             custbatchId = batchCustomer.ID;
                             status = batchCustomer.STATUS;
                             guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId).SURVEY_ID;
+                            if (!string.IsNullOrWhiteSpace(batchCustomer.SPOC))
+                                spoc = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.DOR == null && x.EMAIL_ID == batchCustomer.SPOC)?.EMP_ID;
                         }
 
 
                     }
                 }
             }
-            return Ok(new { guid = guid, status = status });
+            return Ok(new { guid = guid, status = status, batchCustomerId = custbatchId.GetValueOrDefault(), spoc = spoc });
         }
 
         [GET("GetReportDetails")]
