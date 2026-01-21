@@ -95,7 +95,16 @@ namespace GAVS.AllocationSystem.Data
             public IRepository<ACCESS_REQUEST> ACCESS_REQUEST { get { return GetStandardRepo<ACCESS_REQUEST>(); } }
   
    
+            public IRepository<PROJECT_SCOPE_VALUES> PROJECT_SCOPE_VALUES { get { return GetStandardRepo<PROJECT_SCOPE_VALUES>(); } }
+  
+   
+            public IRepository<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get { return GetStandardRepo<INTEGRATION_REQUEST_DATA>(); } }
+  
+   
             public IRepository<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get { return GetStandardRepo<CSS_BATCH_PROJECTS>(); } }
+  
+   
+            public IRepository<ENTITY_HISTORY> ENTITY_HISTORY { get { return GetStandardRepo<ENTITY_HISTORY>(); } }
   
     }
 }

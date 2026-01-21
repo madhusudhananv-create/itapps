@@ -362,6 +362,16 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
 
 
+    public partial class ENTITY_HISTORY : EntityBase
+    {
+        public string ENTITY_NAME {get; set;}
+        public string ENTITY_CONTENT {get; set;}
+    }
+
+
+
+
+
 
 }
  

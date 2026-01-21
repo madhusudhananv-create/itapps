@@ -283,6 +283,16 @@
 
     ]
 
+  },
+  {
+    "name": "ENTITY_HISTORY",
+    "props": [
+      "ENTITY_NAME:string",
+      "ENTITY_CONTENT:string" 
+      
+
+    ]
+
   }
 
 

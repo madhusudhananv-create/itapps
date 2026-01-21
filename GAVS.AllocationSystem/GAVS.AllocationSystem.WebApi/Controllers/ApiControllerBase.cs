@@ -1,7 +1,9 @@
 ﻿using GAVS.AllocationSystem.Data.Contracts;
+using GAVS.AllocationSystem.Model.AllSys;
 using GAVS.AllocationSystem.Model.Base;
 using GAVS.AllocationSystem.Model.CSP;
 using GAVS.AllocationSystem.Model.CSP.SP;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -373,6 +375,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         //    }
         //}
 
+
+
+        private string GetJSONContent<T>(T e) where T : EntityBase
+        {
+
+            string result = string.Empty;
+            result = JsonConvert.SerializeObject(e);
+
+            return result;
+
+        }
+
+        protected void CreateEntityHistory<T>(T entity) where T : EntityBase
+        {
+            var name = entity.GetType().Name;
+            var newEty = new ENTITY_HISTORY
+            {
+                ENTITY_NAME = name,
+                ENTITY_CONTENT = GetJSONContent(entity),
+
+            };
+            UpdateAuditFields(newEty);
+            CSPdb.ENTITY_HISTORY.Add(newEty);
+
+
+        }
         protected string GetHeaderDetails_String(string key)
         {
             string sValue = string.Empty;
@@ -413,6 +441,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return true;
 
         }
+
+
 
     }
 }

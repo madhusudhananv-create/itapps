@@ -275,5 +275,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository_CSP<PROJECT_SCOPE_VALUES> PROJECT_SCOPE_VALUES { get; }
 
         IRepository_CSP<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get; }
+
+        IRepository_CSP<ENTITY_HISTORY> ENTITY_HISTORY { get; }
     }
 }

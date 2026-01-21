@@ -880,6 +880,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             else if (!string.IsNullOrEmpty(projId))
             {
+                int? questionModelId = Cldb.AppRepo.getQuestionModelId(projId, batchId, contactEmailId);
+                if (questionModelId.HasValue && questionModelId.Value != 0)
+                {
+                    return questionModelId.Value;
+
+                }
 
                 if (category.ToLower() == "pulse")
                 {
@@ -887,11 +893,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return GetDBConfigValueInt(config);
                 }
 
-
-
                 else
                 {
-                    int? questionModelId = Cldb.AppRepo.getQuestionModelId(projId, batchId, contactEmailId);
+
                     if (questionModelId.HasValue && questionModelId.Value != 0)
                     {
                         return questionModelId.Value;
@@ -1040,6 +1044,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return result;
         }
+
+       
 
     }
 

@@ -298,6 +298,9 @@ namespace GAVS.AllocationSystem.Data
 
         public IRepository_CSP<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get { return GetStandardRepo<INTEGRATION_REQUEST_DATA>(); } }
 
+        public IRepository_CSP<ENTITY_HISTORY> ENTITY_HISTORY { get { return GetStandardRepo<ENTITY_HISTORY>(); } }
+        
+
         protected void CreateDbContext()
         {
             // DbContextFactory = new CloudDbContextFactory();

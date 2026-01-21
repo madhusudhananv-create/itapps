@@ -47,7 +47,10 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<SCP_PROJECT_SERVICE_TOWER>().ToTable("dbo.SCP_PROJECT_SERVICE_TOWER");
             modelBuilder.Entity<RISK_ISO_STANDARD_MAPPING>().ToTable("dbo.RISK_ISO_STANDARD_MAPPING");
             modelBuilder.Entity<ACCESS_REQUEST>().ToTable("dbo.ACCESS_REQUEST");
+            modelBuilder.Entity<PROJECT_SCOPE_VALUES>().ToTable("dbo.PROJECT_SCOPE_VALUES");
+            modelBuilder.Entity<INTEGRATION_REQUEST_DATA>().ToTable("dbo.INTEGRATION_REQUEST_DATA");
             modelBuilder.Entity<CSS_BATCH_PROJECTS>().ToTable("dbo.CSS_BATCH_PROJECTS");
+            modelBuilder.Entity<ENTITY_HISTORY>().ToTable("dbo.ENTITY_HISTORY");
         }
         public virtual DbSet<BASE_MEASURE_EXTERNAL_KPI_DATA> BASE_MEASURE_EXTERNAL_KPI_DATA { get; set; }
         public virtual DbSet<PRODUCT_RESPONSIBLE> PRODUCT_RESPONSIBLE { get; set; }
@@ -75,7 +78,10 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<SCP_PROJECT_SERVICE_TOWER> SCP_PROJECT_SERVICE_TOWER { get; set; }
         public virtual DbSet<RISK_ISO_STANDARD_MAPPING> RISK_ISO_STANDARD_MAPPING { get; set; }
         public virtual DbSet<ACCESS_REQUEST> ACCESS_REQUEST { get; set; }
+        public virtual DbSet<PROJECT_SCOPE_VALUES> PROJECT_SCOPE_VALUES { get; set; }
+        public virtual DbSet<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get; set; }
         public virtual DbSet<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get; set; }
+        public virtual DbSet<ENTITY_HISTORY> ENTITY_HISTORY { get; set; }
 }
 }
  
