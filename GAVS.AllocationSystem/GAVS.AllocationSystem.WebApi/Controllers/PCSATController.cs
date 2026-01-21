@@ -194,8 +194,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var recordsToDelete = existingRecords.Where(x => cssProjIds.Contains(x.PROJ_ID) && !projIds.Contains(x.ID)).ToList();
             foreach (var delItem in recordsToDelete)
             {
-                delItem.ISACTIVE = false;
+
                 UpdateAuditFields(delItem);
+                delItem.ISACTIVE = false;
                 CSPdb.CSS_BATCH_CUSTOMERS.Update(delItem);
             }
             var lastAcsatBatchId = 36;
@@ -247,12 +248,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.QUALITY_SPOC == dpId) && x.IS_SELECTED && x.ISACTIVE).ToList();
             bool isQualitySpoc = batchProjects.Any(x => x.QUALITY_SPOC == dpId);
             var mailList = new List<string>();
-            if (!isQualitySpoc )
+            if (!isQualitySpoc)
             {
-                SendPCSATAcknowledgementEmail(dpId, batchId, false);
+                SendPCSATAcknowledgementEmail(dpId, null, batchId, false);
                 mailList.Add(dpId);
             }
-            
+
             if (batchProjects.Any())
             {
                 foreach (var item in batchProjects.GroupBy(x => x.PROJ_PM_EMP_ID))
@@ -260,7 +261,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string pmId = item.Key;
                     if (!string.IsNullOrEmpty(pmId) && !mailList.Contains(pmId))
                     {
-                        SendPCSATAcknowledgementEmail(pmId, batchId, true);
+                        SendPCSATAcknowledgementEmail(pmId, dpId, batchId, true);
                         mailList.Add(pmId);
                     }
                 }
@@ -270,7 +271,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string accountDpId = item.Key;
                     if (!string.IsNullOrEmpty(accountDpId) && !mailList.Contains(accountDpId))
                     {
-                        SendPCSATAcknowledgementEmail(accountDpId, batchId, false);
+                        SendPCSATAcknowledgementEmail(accountDpId, dpId, batchId, false);
                         mailList.Add(accountDpId);
                     }
                 }
@@ -341,11 +342,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return result;
         }
-        private void SendPCSATAcknowledgementEmail(string dpId, int batchId, bool isForPM)
+        private void SendPCSATAcknowledgementEmail(string dpId, string qualitySpoc, int batchId, bool isForPM)
         {
             try
             {
-                var selectedProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId || x.QUALITY_SPOC == dpId) && x.ISACTIVE && x.IS_SELECTED).ToList();
+                var selectedProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.PROJ_PM_EMP_ID == dpId) && (qualitySpoc == null || x.QUALITY_SPOC == qualitySpoc) && x.ISACTIVE && x.IS_SELECTED).ToList();
                 //if (isForPM)
                 //{ 
                 //    selectedProjects = selectedProjects.Where(x=>x.)
@@ -384,7 +385,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 var sbRespondents = new StringBuilder();
                 int respSNo = 1;
-                string updatedBy = respondents.FirstOrDefault().UPDATED_BY;
+                string updatedBy = qualitySpoc;
                 foreach (var row in respondents)
                 {
                     string projName = GetProjectName(row.PROJ_ID);
@@ -414,10 +415,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var ccList = new List<string>();
                 foreach (var proj in selectedProjIds)
                 {
-                    if( !isForPM)
+                    if (!isForPM)
                     {
                         ccList.Add(helper.GetCSMMailsFromProject(proj));
-                    }                 
+                    }
                     // ccList.AddRange(helper.GetPMFromProject(proj));
                     ccList.Add(helper.GetQualitySpocMailForProject(proj, false));
 

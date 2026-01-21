@@ -57,7 +57,7 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<EXTERNAL_KPI_DATA_MASTER>().ToTable("dbo.EXTERNAL_KPI_DATA_MASTER");
             modelBuilder.Entity<BASE_MEASURE_EXTERNAL_KPI_DATA>().ToTable("dbo.BASE_MEASURE_EXTERNAL_KPI_DATA");
             modelBuilder.Entity<KPI_KEYWORDS>().ToTable("dbo.KPI_KEYWORDS");
-            modelBuilder.Entity<RISK_ISO_STANDARD_MAPPING>().ToTable("dbo.RISK_ISO_STANDARD_MAPPING");
+            //modelBuilder.Entity<RISK_ISO_STANDARD_MAPPING>().ToTable("dbo.RISK_ISO_STANDARD_MAPPING");
             CreateModelsFromTemplate(modelBuilder);
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
         }

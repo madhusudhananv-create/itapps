@@ -171,7 +171,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private string GetOldEMPId(string newEmpId)
         {
-            if (string.IsNullOrWhiteSpace(newEmpId)) return string.Empty;
+            if (string.IsNullOrWhiteSpace(newEmpId)) return null;
             var empInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID_NEW == newEmpId && x.DOR == null);
             if (empInfo == null)
             {
@@ -548,7 +548,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existing.CUST_ID = project.CUST_ID;
                     existing.DEPT_ID = project.DEPT_ID;
 
-                    existing.BUSINESS_UNIT = getUpdatedBusinessUnit(project.BUSINESS_UNIT);
+                    if (!string.IsNullOrWhiteSpace(project.BUSINESS_UNIT))
+                        existing.BUSINESS_UNIT = getUpdatedBusinessUnit(project.BUSINESS_UNIT);
                     existing.PROJECT_TYPE = project.PROJECT_TYPE;
                     existing.DEPARTMENT = project.DEPARTMENT;
                     existing.PROJECT_GROUP = project.PROJECT_GROUP;
@@ -604,7 +605,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         #endregion
         private string getUpdatedBusinessUnit(string businessUnit)
         {
+            if (string.IsNullOrWhiteSpace(businessUnit)) return string.Empty;
             if (_allowedBusinessUnits.Any(x => x == businessUnit)) return businessUnit;
+
             switch (businessUnit.ToLower())
             {
                 case "ngrow":

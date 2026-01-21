@@ -469,10 +469,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         batchCustomerAndQuestions.CSS_QUESTION_REPLIES.First(x => x.QUESTION_CATEGORY.ToUpper() == "NPS").canskip = true;
                     }
                     batchCustomerAndQuestions.SURVEY_PERIOD = surveyPeriod;
-                    if (questionsWithReplies != null && questionsWithReplies.Count > 6)
-                    {
-                        throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Error - Unable to get questions."));
-                    }
+                    //if (questionsWithReplies != null && questionsWithReplies.Count > 6)
+                    //{
+                    //    throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Error - Unable to get questions."));
+                    //}
                     return Ok(batchCustomerAndQuestions);
                 }
                 else

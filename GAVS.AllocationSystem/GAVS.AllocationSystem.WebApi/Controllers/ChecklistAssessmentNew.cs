@@ -3361,7 +3361,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             foreach (var item in findingsList)
             {
                 var rootCause = rootCauseList.FirstOrDefault(x => x.ID == item.ROOT_CAUSE_ID);
-                string rootCauseName = rootCause.ROOT_CAUSE ?? "N/A";
+                string rootCauseName = rootCause?.ROOT_CAUSE ?? "N/A";
                 var empDetails = empIdList.FirstOrDefault(x => x.EMP_ID == item.RESPONSIBLE);
                 string isRootCause = item.ISROOTCAUSE ? "Yes" : "No";
 
@@ -3372,29 +3372,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 sb.Append($"<td>{item.CORRECTION}</td>");
                 sb.Append($"<td>{item.CORRECTIVE_ACTION_PLAN}</td>");
                 sb.Append($"<td>{item.CAP_TARGET_DATE?.ToString("dd-MM-yyyy")}</td>");
-                sb.Append($"<td>{empDetails.FRST_NM ?? "N/A"}</td>");
+                sb.Append($"<td>{empDetails?.FRST_NM ?? "N/A"}</td>");
                 sb.Append($"<td>{item.PLAN_FOR_EFFECTIVE_CAP}</td>");
 
                 if (status == "Corrective Action Plan Review")
                 {
-                    var capaReview = capaReviewList.FirstOrDefault(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
-                    string isApproved = capaReview.ISAPPROVED == true ? "Yes" : "No";
+                    var capaReview = capaReviewList.Find(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
+                    string isApproved = capaReview?.ISAPPROVED == true ? "Yes" : "No";
                     string remarks = capaReview.REMARKS ?? string.Empty;
                     sb.Append($"<td>{isApproved}</td>");
                     sb.Append($"<td>{remarks}</td>");
                 }
                 else if (status == "Corrective Action Plan Implementation")
                 {
-                    var capaImplementation = capaImplementationList.FirstOrDefault(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
-                    string isImplemented = capaImplementation.ISIMPLEMENTED == true ? "Yes" : "No";
+                    var capaImplementation = capaImplementationList.Find(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
+                    string isImplemented = capaImplementation?.ISIMPLEMENTED == true ? "Yes" : "No";
                     string remarks = capaImplementation.REMARKS ?? string.Empty;
                     sb.Append($"<td>{isImplemented}</td>");
                     sb.Append($"<td>{remarks}</td>");
                 }
                 else if (status == "Corrective Action Plan Verification")
                 {
-                    var capaVerification = capaVerificationList.FirstOrDefault(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
-                    string isVerified = capaVerification.ISVERIFIED == true ? "Yes" : "No";
+                    var capaVerification = capaVerificationList.Find(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
+                    string isVerified = capaVerification?.ISVERIFIED == true ? "Yes" : "No";
                     string remarks = capaVerification.REMARKS ?? string.Empty;
                     sb.Append($"<td>{isVerified}</td>");
                     sb.Append($"<td>{remarks}</td>");
