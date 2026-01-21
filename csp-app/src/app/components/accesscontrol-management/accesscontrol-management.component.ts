@@ -12,7 +12,7 @@ import { AccessControl } from '../../Shared/accessControl';
   styleUrls: ['./accesscontrol-management.component.scss']
 })
 export class AccesscontrolManagementComponent implements OnInit {
-  constructor(private _access: AccessControl, public _util: myUtility, private _appservice: AppsService, private route: ActivatedRoute, private router: Router, public dialog: MatDialog) { }
+  constructor(public _access: AccessControl, public _util: myUtility, private _appservice: AppsService, private route: ActivatedRoute, private router: Router, public dialog: MatDialog) { }
   accessTypeText: string = '';
   rejectReason: string;
   confirmAction: string = '';
