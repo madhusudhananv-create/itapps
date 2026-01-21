@@ -89,7 +89,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         project = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID).ToList();
                     if (!saveAsDraft)
                     {
-                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "COMPLETED", empId, meetingDate, isCSMNotified);
+                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "COMPLETED", empId, meetingDate, isCSMNotified, 0);
 
                         try
                         {
@@ -118,7 +118,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
                     else
                     {
-                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "DRAFT", empId, meetingDate, isCSMNotified);
+                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "DRAFT", empId, meetingDate, isCSMNotified, 0);
                     }
                 }
                 else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
@@ -1275,7 +1275,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     result = helper.GetDBConfig("CSS_CC_LIST_INDIAUK", null);
                     break;
                 case "NEW GROWTH":
-                 case "CIT":
+                case "CIT":
                     result = helper.GetDBConfig("CSS_CC_LIST_NEWGROWTH", null);
                     break;
                 case "TECH":

@@ -1136,7 +1136,7 @@ namespace GAVS.AllocationSystem.Data
         {
             throw new NotImplementedException();
         }
-        public void UpdateCSSBatchCustomers(int ID, int SURVEY_ID, DateTime SURVEY_SENT_DATE, DateTime? SURVEY_RECEIVED_DATE, string STATUS, string EMP_ID, DateTime? MEETING_DATE, bool? IS_CSM_NOTIFIED)
+        public void UpdateCSSBatchCustomers(int ID, int SURVEY_ID, DateTime SURVEY_SENT_DATE, DateTime? SURVEY_RECEIVED_DATE, string STATUS, string EMP_ID, DateTime? MEETING_DATE, bool? IS_CSM_NOTIFIED, int questionModelId)
         {
             var dbContext = new CSPDbContext();
             SqlParameter param1 = new SqlParameter("@ID", ID);
@@ -1147,7 +1147,8 @@ namespace GAVS.AllocationSystem.Data
             SqlParameter param6 = new SqlParameter("@EMP_ID", string.IsNullOrEmpty(EMP_ID) ? (object)DBNull.Value : EMP_ID);
             SqlParameter param7 = new SqlParameter("@MEETING_DATE", MEETING_DATE ?? Convert.DBNull);
             SqlParameter param8 = new SqlParameter("@IS_CSM_NOTIFIED", IS_CSM_NOTIFIED.HasValue ? (object)IS_CSM_NOTIFIED.Value : DBNull.Value);
-            var QueryResult = dbContext.Database.SqlQuery<List<string>>("[dbo].[usp_update_CSSBatchCustomers] @ID, @SURVEY_ID, @SURVEY_SENT_DATE, @SURVEY_RECEIVED_DATE, @STATUS, @EMP_ID, @MEETING_DATE, @IS_CSM_NOTIFIED", param1, param2, param3, param4, param5, param6, param7, param8).ToList();
+            SqlParameter param9 = new SqlParameter("@QUESTION_MODEL_ID", questionModelId);
+            var QueryResult = dbContext.Database.SqlQuery<List<string>>("[dbo].[usp_update_CSSBatchCustomers] @ID, @SURVEY_ID, @SURVEY_SENT_DATE, @SURVEY_RECEIVED_DATE, @STATUS, @EMP_ID, @MEETING_DATE, @IS_CSM_NOTIFIED, @QUESTION_MODEL_ID", param1, param2, param3, param4, param5, param6, param7, param8, param9).ToList();
         }
 
         public void UpdateCSSBatchCustomersMonthly(int ID, int SURVEY_ID, DateTime SURVEY_SENT_DATE, DateTime? SURVEY_RECEIVED_DATE, string STATUS, string EMP_ID, DateTime? MEETING_DATE, bool? IS_CSM_NOTIFIED)

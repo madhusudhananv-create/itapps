@@ -261,7 +261,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //CSPdb.Commit(CanCommit);
                 var survey = AddSurvey(EmpId, cust.ID, 0, cust.CUST_ID);
                 CreatedSurveys.Add(survey);
-                CSPdb.AppRepo.UpdateCSSBatchCustomers(cust.ID, survey.ID, survey.SURVEY_SENT_DATE, null, survey.STATUS, null, null, null);
+                var questionmodel = helper.GetQuestionModel(cust.CUST_ID, cust.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAIL_ID, batch.ID, batch.FREQUENCY, batch.CATEGORY);
+                CSPdb.AppRepo.UpdateCSSBatchCustomers(cust.ID, survey.ID, survey.SURVEY_SENT_DATE, null, survey.STATUS, null, null, null, questionmodel);
 
             }
             string baseUrl = HttpContext.Current.Request.UrlReferrer.AbsoluteUri.Replace("css", "");
@@ -514,7 +515,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateAuditFields(survey);
                 CSPdb.CSS_SURVEY_ITERATION.Add(survey);
                 CSPdb.Commit(CanCommit);
-                CSPdb.AppRepo.UpdateCSSBatchCustomers(cust.ID, survey.ID, survey.SURVEY_SENT_DATE, null, survey.STATUS, null, null, null);
+                CSPdb.AppRepo.UpdateCSSBatchCustomers(cust.ID, survey.ID, survey.SURVEY_SENT_DATE, null, survey.STATUS, null, null, null, 0);
                 string SurveyLink = baseUrl + "/CustomerSuccessSurvey/" + survey.SURVEY_ID;
                 SendCSSSurveyReminderMail(cust, SurveyLink, batch.FREQUENCY, GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), GetSurveyPeriodString(batch.FREQUENCY, batch.SEQUENCE, batch.YEAR), oldSurvey.CREATED_DATE.ToString("dd-MMM-yyy"));
             }

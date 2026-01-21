@@ -94,7 +94,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         List<AUDIT_CONTROL_TEST_COUNT> GetAuditControlandTestCountReport(string ProjectId, DateTime month, string CustomerId, string AuditTitle);
 
         List<PROCESS_MODEL_SUMMARY> GetProcessModelSummaryReport(string ProjectId, DateTime StartDate, string AuditTitle, string CustomerId);
-        void UpdateCSSBatchCustomers(int ID, int SURVEY_ID, DateTime SURVEY_SENT_DATE, DateTime? SURVEY_RECEIVED_DATE, string STATUS, string EMP_ID, DateTime? MEETING_DATE, bool? IS_CSM_NOTIFIED);
+        void UpdateCSSBatchCustomers(int ID, int SURVEY_ID, DateTime SURVEY_SENT_DATE, DateTime? SURVEY_RECEIVED_DATE, string STATUS, string EMP_ID, DateTime? MEETING_DATE, bool? IS_CSM_NOTIFIED, int questionModelId);
         void UpdateCSSBatchCustomersMonthly(int ID, int SURVEY_ID, DateTime SURVEY_SENT_DATE, DateTime? SURVEY_RECEIVED_DATE, string STATUS, string EMP_ID, DateTime? MEETING_DATE, bool? IS_CSM_NOTIFIED);
         List<AUDIT_EXECUTION_REPORT> GetAuditExecutionReport(string ProjectId, DateTime month);
         List<AUDIT_CHECKLIST_PROJECT_EXECUTION_EXTENDED> GetChecklistAudit(string CustomerId, string ProjectId);
