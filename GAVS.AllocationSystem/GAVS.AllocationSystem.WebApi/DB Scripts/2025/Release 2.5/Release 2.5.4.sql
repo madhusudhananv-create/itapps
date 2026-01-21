@@ -334,3 +334,107 @@ INSERT INTO configuration_ext (
 );
 END
 GO
+
+
+IF EXISTS(Select 1 from sys.objects where name ='reports_Account_Project_CSATConfiguration' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[reports_Account_Project_CSATConfiguration]
+END
+GO
+
+
+create PROCEDURE [dbo].[reports_Account_Project_CSATConfiguration]                             
+                            
+@StartDate date,                           
+@EndDate date,
+@CUSTOMER varchar(max)='0'  
+                          
+AS                            
+                          
+BEGIN       
+
+SELECT DISTINCT
+	  [PCSAT Cycle] =  (select Left( frequency,1) + Convert(varchar,sequence) + ' - ' + Convert(varchar,  Year) from  CSS_BATCHES where id= b.ID ),  
+		P.BUSINESS_UNIT as [Business Unit],
+        C.CUST_NM as [Account],
+		[Account HeadCount] = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.CUST_ID = p.CUST_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE()),
+        --C.CUST_ID,
+        P.PROJ_NM as [Project], 
+        --P.PROJ_ID,
+		[Project HeadCount] = (select count(*) from PROJ_RESOURCE pr where pr.PROJ_ID = p.PROJ_ID and pr.BILL_FLG =1 and pr.CURR_INDC ='y' and pr.END_DATE >= GETDATE()),            
+        --HC.PROJECT_HEAD_COUNT,
+		P.PROJ_STATUS as [Project Status],
+		convert(varchar,p.start_date,107) as [Project Start Date],
+		convert(varchar,p.end_date,107)as [Project End Date],  
+        e5.FRST_NM as [Project Manager],
+		e5.EMAIL_ID as [Project Manager MAIL],
+		e6.FRST_NM as [Delivery Partner],
+        E6.EMAIL_ID AS [Delivery Partner MAIL],
+		e8.FRST_NM as [GDH],
+		e8.EMAIL_ID as [GDH MAIL],
+        E7.FRST_NM AS [DEV Ex partner],
+		P.EXECUTION_TYPE as [Execution Type], 
+        P.ENGAGAMENT_TYPE as [Engagement Type], 
+		case when cb.IS_SELECTED = 1 then 'Yes' else 'No' end as [Chosen for PCSAT],
+		cb.REASON  as [Reason (If No)],
+        LatestSurvey.DISPLAY_NAME as [Last Cycle PCSAT Respondant],
+        cbc.DISPLAY_NAME as [Respondent],
+		co.CONTACT_ROLE as [Role],
+		cbc.EMAIL_ID as [Email Id],
+		cbc.PREDICTED_SCORE as [Predicted Score],
+		cbc.PREDICTED_REASON as [Predicted Reason],
+		e.FRST_NM as [CSAT Spoc],
+		e.EMAIL_ID as [CSAT MAIL],
+		NULL as [Pre Survey Connect],
+        NULL as [Planned Date],
+        NULL as [Actual Date],
+        NULL as [Remarks],
+		E4.FRST_NM as [Updated By],
+		convert(varchar,cbc.UPDATED_DATE,107) as [Updated Date],
+		--cbc.UPDATED_DATE as [Updated Date],
+		NULL as [Columns Updated]
+
+
+    FROM PROJECT P
+    INNER JOIN CUSTOMER C ON P.CUST_ID = C.CUST_ID
+	LEFT JOIN EMP_INFO E5 ON E5.EMP_ID = P.PROJ_PM_EMP_ID and E5.DOR IS NULL
+    LEFT JOIN EMP_INFO E6 ON E6.EMP_ID = P.PROJ_DM_EMP_ID and E6.DOR IS NULL
+	LEFT JOIN EMP_INFO E7 ON E7.EMP_ID = P.QUALITY_SPOC and E7.DOR IS NULL
+	LEFT JOIN EMP_INFO E8 ON E8.EMP_ID = P.PROJ_BUHEAD_EMP_ID and E8.DOR IS NULL
+	LEFT JOIN CSS_BATCH_PROJECTS CB ON CB.PROJ_ID = P.PROJ_ID and cb.ISACTIVE=1
+	left join CSS_BATCH_CUSTOMERS cbc on cbc.BATCH_ID=cb.BATCH_ID and cbc.PROJ_ID=p.PROJ_ID and cbc.ISACTIVE=1
+	LEFT JOIN EMP_INFO E ON E.EMAIL_ID = cbc.SPOC and E.DOR IS NULL
+	LEFT JOIN EMP_INFO E4 ON E4.EMP_ID = cbc.UPDATED_BY and E4.DOR IS NULL
+	left join CONTACTS co on co.CONTACT_EMAILID = cbc.EMAIL_ID and co.ISACTIVE = 1   
+	left JOIN CSS_BATCHES B ON B.ID = cb.BATCH_ID AND (B.START_DATE BETWEEN @StartDate AND @EndDate OR B.END_DATE BETWEEN @StartDate AND @EndDate) 
+
+    OUTER APPLY (
+    SELECT  STRING_AGG(css.DISPLAY_NAME, ', ') AS DISPLAY_NAME --css.DISPLAY_NAME
+        FROM CSS_BATCH_CUSTOMERS css
+        INNER JOIN CSS_BATCHES b ON css.BATCH_ID = b.ID
+        WHERE css.PROJ_ID = P.PROJ_ID 
+          AND css.ISACTIVE = 1 
+          AND css.IS_VERIFIED = 1 
+		  AND css.SURVEY_SENT_DATE IS NOT NULL
+          AND B.FREQUENCY IN ('Half-Yearly','Halfyearly','Annual')
+          AND B.YEAR = CASE WHEN MONTH(@STARTDATE) >= 7 THEN YEAR(@STARTDATE) ELSE YEAR(@STARTDATE) - 1 END
+) LatestSurvey
+
+    OUTER APPLY (
+        SELECT 
+            PROJECT_HEAD_COUNT = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.PROJ_ID = p.PROJ_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE()),
+            ACCOUNT_HEAD_COUNT = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.CUST_ID = p.CUST_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE())
+    ) HC
+
+   WHERE 
+  (@Customer = '0' OR C.cust_id IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@Customer,',')))  
+     
+    AND C.CUST_NM NOT LIKE '%gavs%'
+    AND C.CUST_ID != '202100091'  AND P.PROJECT_TYPE != 'Internal'
+    AND ((P.proj_status in('New','Close','Deliver','Plan','Complete') AND P.end_date >= DATEADD(MONTH, -6, @ENDDATE)))
+    ORDER BY C.CUST_NM, P.PROJ_NM
+
+END 
+
+
+GO
