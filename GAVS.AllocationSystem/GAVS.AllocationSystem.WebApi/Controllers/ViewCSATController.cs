@@ -104,7 +104,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else if (!string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
                         {
-                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && t.STATUS != "CREATED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
+                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && (t.STATUS == "CREATED" || t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT" || t.STATUS == "DRAFT") && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
                         }
                         else
                         {
@@ -114,7 +114,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         {
                             custbatchId = batchCustomer.ID;
                             status = batchCustomer.STATUS;
-                            guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId).SURVEY_ID;
+                            guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId && t.ISACTIVE)?.SURVEY_ID;
                             if (!string.IsNullOrWhiteSpace(batchCustomer.SPOC))
                                 spoc = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.DOR == null && x.EMAIL_ID == batchCustomer.SPOC)?.EMP_ID;
                             dex = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID)?.QUALITY_SPOC;
