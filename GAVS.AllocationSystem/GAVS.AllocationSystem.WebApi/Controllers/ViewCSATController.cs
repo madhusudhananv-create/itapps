@@ -52,6 +52,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string status = string.Empty;
             int batchCustomerId = 0;
             string spoc = "";
+            string dex = "";
             if (surveyCriteria != null)
             {
                 if (surveyCriteria.QUARTER == 5 || surveyCriteria.QUARTER == 6)
@@ -116,13 +117,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId).SURVEY_ID;
                             if (!string.IsNullOrWhiteSpace(batchCustomer.SPOC))
                                 spoc = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.DOR == null && x.EMAIL_ID == batchCustomer.SPOC)?.EMP_ID;
+                            dex = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID)?.QUALITY_SPOC;
                         }
 
 
                     }
                 }
             }
-            return Ok(new { guid = guid, status = status, batchCustomerId = custbatchId.GetValueOrDefault(), spoc = spoc });
+            return Ok(new { guid = guid, status = status, batchCustomerId = custbatchId.GetValueOrDefault(), spoc = spoc, dex = dex  });
         }
 
         [GET("GetReportDetails")]
