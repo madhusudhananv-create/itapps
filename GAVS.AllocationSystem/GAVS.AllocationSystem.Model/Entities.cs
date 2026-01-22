@@ -362,6 +362,16 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
 
 
+    public partial class CSS_PRECONNECT : EntityBase
+    {
+        public DateTime? PLANNED_DATE {get; set;}
+        public DateTime? ACTUAL_DATE {get; set;}
+        public string REMARKS {get; set;}
+        public string STATUS {get; set;}
+        public int CSS_BATCH_CUSTOMER_ID {get; set;}
+    }
+
+
     public partial class ENTITY_HISTORY : EntityBase
     {
         public string ENTITY_NAME {get; set;}

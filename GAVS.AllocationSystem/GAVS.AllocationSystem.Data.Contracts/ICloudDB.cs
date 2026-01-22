@@ -76,6 +76,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         
         IRepository<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get; }
 
+        IRepository<CSS_PRECONNECT> CSS_PRECONNECT { get; }
 
     }
 }

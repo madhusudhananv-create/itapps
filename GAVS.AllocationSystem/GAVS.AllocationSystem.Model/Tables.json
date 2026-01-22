@@ -293,6 +293,17 @@
 
     ]
 
+  },
+  {
+    "name": "CSS_PRECONNECT",
+    "props": [
+      "PLANNED_DATE:DateTime?",
+      "ACTUAL_DATE:DateTime?",
+      "REMARKS:string",
+      "STATUS:string",
+      "CSS_BATCH_CUSTOMER_ID:int"
+    ]
+
   }
 
 

@@ -662,3 +662,21 @@ GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
 
 (@modelId3,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
 END
+GO
+IF NOT EXISTS(Select 1 from sys.tables where name ='CSS_PRECONNECT' AND type='U')
+BEGIN
+CREATE table CSS_PRECONNECT(
+ID INT NOT NULL IDENTITY(1,1),
+PLANNED_DATE DATETIME NULL,
+ACTUAL_DATE DATETIME NULL,
+REMARKS VARCHAR(MAX),
+STATUS  VARCHAR(20),
+CSS_BATCH_CUSTOMER_ID INT ,
+CREATED_BY VARCHAR(10),
+CREATED_DATE  DATETIME,
+UPDATED_BY VARCHAR(10),
+UPDATED_DATE DATETIME,
+ISACTIVE bit )
+
+END
+GO

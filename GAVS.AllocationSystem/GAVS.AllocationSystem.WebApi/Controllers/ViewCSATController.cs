@@ -5,6 +5,8 @@ using System.Linq;
 using GAVS.AllocationSystem.Model.CSP;
 using System.Collections.Generic;
 using GAVS.AllocationSystem.Model.AllSys;
+using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
@@ -43,7 +45,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult GetSurveyGuid([FromBody] SURVEY_SEARCH_CRITERIA surveyCriteria)
         {
-            int? batchId; int? custbatchId = null ; string guid = null;
+            int? batchId; int? custbatchId = null; string guid = null;
             string frequency = "Quarterly";
             string frequency1 = string.Empty;
             iBatchCustomer batchCustomer = null;
@@ -101,7 +103,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else if (!string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
                         {
-                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && t.STATUS == "COMPLETED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
+                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && t.STATUS != "CREATED" && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
                         }
                         else
                         {
@@ -166,6 +168,59 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return Ok(spName);
         }
+
+        [GET("GetOverallPreconnectData")]
+        [ActionName("GetOverallPreconnectData")]
+        [HttpGet]
+        public IHttpActionResult GetOverallPreconnectData(int batchCustomerId)
+        {
+            var preConnectData = Cldb.CSS_PRECONNECT.GetAll().Where(x => x.ISACTIVE && x.CSS_BATCH_CUSTOMER_ID == batchCustomerId).ToList();
+            return Ok(preConnectData);
+        }
+
+        [POST("SavePreconnectSurveyData")]
+        [ActionName("SavePreconnectSurveyData")]
+        [HttpPost]
+        public IHttpActionResult SavePreconnectSurveyData([FromBody] CSS_PRECONNECT surveyData)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            LogRequest(content: JsonConvert.SerializeObject(surveyData));
+            if (surveyData == null)
+            {
+                return BadRequest("Survey data is required");
+            }
+            var existingRecord = Cldb.CSS_PRECONNECT.GetAll().FirstOrDefault(x => x.CSS_BATCH_CUSTOMER_ID == surveyData.CSS_BATCH_CUSTOMER_ID && x.ISACTIVE);
+
+            if (existingRecord == null)
+            {
+                var newRecord = new CSS_PRECONNECT
+                {
+                    CSS_BATCH_CUSTOMER_ID = surveyData.CSS_BATCH_CUSTOMER_ID,
+                    ACTUAL_DATE = surveyData.ACTUAL_DATE,
+                    PLANNED_DATE = surveyData.PLANNED_DATE,
+                    STATUS = surveyData.STATUS,
+                    REMARKS = surveyData.REMARKS,
+                };
+                UpdateAuditFields(newRecord);
+                Cldb.CSS_PRECONNECT.Add(newRecord);
+            }
+            else
+            {
+                // Update existing record
+                existingRecord.ACTUAL_DATE = surveyData.ACTUAL_DATE;
+                existingRecord.PLANNED_DATE = surveyData.PLANNED_DATE;
+                existingRecord.STATUS = surveyData.STATUS;
+                existingRecord.REMARKS = surveyData.REMARKS;
+                UpdateAuditFields(existingRecord);
+                Cldb.CSS_PRECONNECT.Update(existingRecord);
+
+            }
+            Cldb.Commit();
+            FillResponseTime(stopwatch);
+            return Ok();
+
+        }
+
 
     }
     public class SURVEY_SEARCH_CRITERIA
