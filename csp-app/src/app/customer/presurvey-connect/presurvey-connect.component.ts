@@ -36,6 +36,8 @@ export class PresurveyConnectComponent implements OnInit {
 
   ngOnInit() {
     this.getPreconnectDataList();
+    this.presurveyformData.csS_BATCH_CUSTOMER_ID = this.batchCustomerId;
+    this.presurveyformData.status = 'To Be Planned';
   }
 
   closePopup() {
@@ -47,6 +49,8 @@ export class PresurveyConnectComponent implements OnInit {
       this.savePreconnectData();
     }
   }
+
+
 
   getPreconnectDataList() {
     this.isLoading = true;
@@ -63,9 +67,7 @@ export class PresurveyConnectComponent implements OnInit {
           if (!this.presurveyformData.status) {
             this.presurveyformData.status = 'To Be Planned';
           }
-          if (this.isEditable && this.presurveyformData.status === 'Completed' && this.presurveyformData.actuaL_DATE) {
-            this.isDisabledData = this.isDisabled;
-          }
+          this.setDisabledState();
         }
       }
     }, error => { this._util.serviceError(error); this.isLoading = false; });
@@ -80,7 +82,7 @@ export class PresurveyConnectComponent implements OnInit {
         : null,
       planneD_DATE: (this.presurveyformData.planneD_DATE && this.presurveyformData.planneD_DATE !== undefined)
         ? this._util.setLocaleDate(this.presurveyformData.planneD_DATE)
-        : null, 
+        : null,
       status: this.presurveyformData.status,
       remarks: this.presurveyformData.remarks || '',
     };
@@ -106,6 +108,21 @@ export class PresurveyConnectComponent implements OnInit {
     dialogConfig.hasBackdrop = true;
     dialogConfig.scrollStrategy = new NoopScrollStrategy();
     return this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig);
+  }
+
+  setDisabledState() {
+    if (!this.isEditable) {
+      this.isDisabledData = true;
+      return;
+    }
+
+    if (this.isEditable) {
+      if (this.presurveyformData.status === 'Completed' && this.presurveyformData.actuaL_DATE) {
+        this.isDisabledData = true;
+      } else {
+        this.isDisabledData = false;
+      }
+    }
   }
 
 }

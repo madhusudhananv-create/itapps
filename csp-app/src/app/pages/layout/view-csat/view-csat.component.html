@@ -107,6 +107,14 @@
   <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
 </div>
 
+
+<div *ngIf="showPreconnect" style="margin-left: 20px;margin-top: 10px;">
+  <span><b>Please click the button to enter pre-survey connect details:-</b><button *ngIf="showPreconnect"
+      style="margin-top:10px;margin-left:10px;height: 30px;background-color: #673ab7;color:white;font-weight: 300;"
+      (click)="preSurveyPopup()">Pre Survey Connect</button>
+      
+  </span>
+</div>
 <div *ngIf="showSurveyText" style="margin-left: 10px;margin-top: 10px;">
   No Survey Feedback available for Selected Period.
   <span *ngIf="_access.IsAllowed(118, 1, '', '')">If you wish to enter feedback using standard questionnaire, please
@@ -114,14 +122,6 @@
   </span>
   <span *ngIf="_access.IsAllowed(118, 1, '', '')">If you wish to enter feedback using custom questionnaire, please
     <a class="link" (click)="get_CSATFeedbackForm(true)" style="cursor: pointer;"> click here</a>.
-  </span>
-</div>
-
-<div *ngIf="showPreconnect" style="margin-left: 20px;margin-top: 10px;">
-  <span><b>Please click the button to enter pre-survey connect details:-</b><button *ngIf="showPreconnect"
-      style="margin-top:10px;margin-left:10px;height: 30px;background-color: #673ab7;color:white;font-weight: 300;"
-      (click)="preSurveyPopup()">Pre Survey Connect</button>
-      
   </span>
 </div>
 

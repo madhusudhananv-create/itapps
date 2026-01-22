@@ -175,7 +175,8 @@ export class SurveyComponent implements OnInit {
           return;
         }
       }
-      if (!this.hasRatingBeenSelected) {
+      if(this.questions_NPS != undefined && this.questions_NPS != null) {
+       if (!this.hasRatingBeenSelected) {
         this.showWarningPopup("Kindly provide rating for '" + this.questions_NPS.question + "'");
         return;
       }
@@ -183,7 +184,7 @@ export class SurveyComponent implements OnInit {
         this.showWarningPopup("Kindly provide remarks in highlighted fields if the rating is less than 9.");
         return;
       }
-
+      }
 
       for (let q of this.questions_Criteria) {
         if (q.rating == 0) {

@@ -203,9 +203,9 @@ export class ViewCsatComponent implements OnInit {
         this.loading = true;
         this.surveyGuid = data;
         this.batchCustomerId = data.batchCustomerId;
-        if ((data.status == "MAIL SENT" || data.status == "MAIL RE-SENT" || data.status == "DRAFT" || data.status == "COMPLETED")) {
+        if ((data.status == "CREATED" || data.status == "MAIL SENT" || data.status == "MAIL RE-SENT" || data.status == "DRAFT" || data.status == "COMPLETED")) {
           this.showPreconnect = true;
-          if (data.spoc == this._util.AppSettings.empid) {
+          if (data.spoc == this._util.AppSettings.empid || data.dex == this._util.AppSettings.empid) {
             this.isEditable = true;
           }
         }
