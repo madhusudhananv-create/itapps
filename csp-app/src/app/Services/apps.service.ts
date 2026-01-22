@@ -194,7 +194,8 @@ import { EWSDetailsModel } from '../models//ews-details-model';
 import { AuditQualifiedStandardModel } from "../pages/auditqualitystandards/auditqualitystandards.component";
 import { ProductResponsibleModel } from "../pages/product-responsible/product-responsible.component";
 import { observable } from "rxjs";
-import { CssProjectSelectionListModel } from "../models/css-project-selection-list-model";
+import { CssPresurveyConnectModel } from "../models/css-project-selection-list-model";
+
 
 @Injectable()
 export class AppsService {
@@ -9574,7 +9575,27 @@ saveCSATContactListForDP(cssBatchData: any[], dpId: string, batchId): Observable
     }); 
   }
 
+  getOverallPreconnectData(batchCustomerId: number): Observable<CssPresurveyConnectModel[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<CssPresurveyConnectModel[]>(this.apiurl + "/GetOverallPreconnectData?batchCustomerId=" + batchCustomerId, {
+      headers: header,
+    });
+  }
 
+savePreconnectSurveyData(presurveyData: CssPresurveyConnectModel): Observable<CssPresurveyConnectModel> {
+    let header = new HttpHeaders({  
+      Accept: "application/json", 
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    }); 
+    return this._http.post<CssPresurveyConnectModel>(this.apiurl + "/SavePreconnectSurveyData", presurveyData, {
+      headers: header,
+    }); 
+  }
                      
 
 

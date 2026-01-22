@@ -236,6 +236,7 @@ import { assessmentUtility } from "./Shared/assessmentUtility";
 import { SurveySettingsVerificationPageComponent } from "./pages/survey/survey-settings-verification-page/survey-settings-verification-page.component";
 import { DomainConfigService } from "./Services/app.domain.config";
 import { CsatConfigurationComponent } from './customer/csat-configuration/csat-configuration.component';
+import { PresurveyConnectComponent } from './customer/presurvey-connect/presurvey-connect.component';
 //import { googleEnvironment } from "../environments/google";
 
 
@@ -426,7 +427,8 @@ export class DemoMaterialModule { }
     RiskRepositoryComponent,
     CssbatchPopupComponent,
     RatingCriteriaRemarksComponent,
-    CsatConfigurationComponent
+    CsatConfigurationComponent,
+    PresurveyConnectComponent
   ],
   exports: [StaffingSummaryComponent, ProjectSelectorSingletomultipleComponent],
   bootstrap: [AppComponent],
@@ -489,7 +491,8 @@ export class DemoMaterialModule { }
     QSPOCPopupComponent,
     ProjectFileUploadComponent,
     DropdownFilterComponent,
-    RatingCriteriaRemarksComponent
+    RatingCriteriaRemarksComponent,
+    PresurveyConnectComponent
     //DaterangeContentComponent
   ], //You need to add dynamically created components to entryComponents inside your @NgModule
 })

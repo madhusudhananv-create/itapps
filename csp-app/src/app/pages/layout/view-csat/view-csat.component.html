@@ -13,12 +13,16 @@
   <label
     style="font-size: 16px; font-weight: 700;font-family: 'Roboto', sans-serif; margin: 15px; color: #4e5882">Customer
     Success Survey</label>
-      <mat-radio-group  style="display: inline;" [(ngModel)]="showProjectDropdown" (ngModelChange)="onViewTypeChange()">
-              <mat-radio-button [value]="false"  style="margin-left: -5px; font-size: 13px;font-family: Lato;padding-right: 1%;font-weight: 600;color: grey;"><label style="margin-bottom: 0px; margin-top: 5px;"> Account level</label>
-              </mat-radio-button>
-              <mat-radio-button [value]="true"  style="padding-left: 6px; font-size: 13px;font-family: Lato;padding-right: 1%;font-weight: 600;color: grey;"><label style="margin-bottom: 0px; margin-top: 5px;"> Project level</label>
-              </mat-radio-button>
-            </mat-radio-group>
+  <mat-radio-group style="display: inline;" [(ngModel)]="showProjectDropdown" (ngModelChange)="onViewTypeChange()">
+    <mat-radio-button [value]="false"
+      style="margin-left: -5px; font-size: 13px;font-family: Lato;padding-right: 1%;font-weight: 600;color: grey;"><label
+        style="margin-bottom: 0px; margin-top: 5px;"> Account level</label>
+    </mat-radio-button>
+    <mat-radio-button [value]="true"
+      style="padding-left: 6px; font-size: 13px;font-family: Lato;padding-right: 1%;font-weight: 600;color: grey;"><label
+        style="margin-bottom: 0px; margin-top: 5px;"> Project level</label>
+    </mat-radio-button>
+  </mat-radio-group>
 </div>
 <div class="row">
   <div class="col-lg-3 col-md-3 col-sm-3" *ngIf="showProjectDropdown">
@@ -89,9 +93,11 @@
     </mat-form-field>
   </div>
 
+
   <button [disabled]="disablebtn"
     style="margin-left: -170px;height: 30px;background-color: #4e5882;color:white;font-weight: 300;cursor: pointer;position: relative;z-index: 10;"
-    (click)="bindData()">View Survey Feedback</button>
+    (click)="bindData()">View Survey Details</button>
+
 
   <button style="margin-top:10px;margin-left:10px;height: 30px;background-color: #4e5882;color:white;font-weight: 300;"
     (click)="getTabledata()">Download Consolidated Report</button>
@@ -111,11 +117,14 @@
   </span>
 </div>
 
-<div *ngIf="showPreconnect" style="margin-left: 10px;margin-top: 10px;">
- <span *ngIf="_access.IsAllowed(??, 1, '', '')">If you wish to enter Pre-Connect Data, Please  
-    <a class="link" (click)="clickmethod(true)" style="cursor: pointer;"> click here</a>.
+<div *ngIf="showPreconnect" style="margin-left: 20px;margin-top: 10px;">
+  <span><b>Please click the button to enter pre-survey connect details:-</b><button *ngIf="showPreconnect"
+      style="margin-top:10px;margin-left:10px;height: 30px;background-color: #673ab7;color:white;font-weight: 300;"
+      (click)="preSurveyPopup()">Pre Survey Connect</button>
+      
   </span>
 </div>
+
 
 <div *ngIf="showSurveyGuid">
   <app-survey [guId]="guid" [showQualitativeFeedback]="showQualitativeFeedback" [showCSSFields]="true"></app-survey>

@@ -27,3 +27,18 @@ export class CssProjectSelectionListModel {
     iS_SELECTED: boolean;
     proJ_PM_EMP_ID: string;
 }
+
+
+export class CssPresurveyConnectModel {
+    csS_BATCH_CUSTOMER_ID: number;
+    actuaL_DATE: Date;
+    planneD_DATE: Date;
+    status: string;
+    remarks: string;
+    createD_BY?: string;
+    createD_DATE?: Date;
+    updateD_BY?: string;
+    updateD_DATE?: Date;
+    isactive?: boolean;
+}
+

@@ -5,9 +5,10 @@ import { myUtility } from '../../../Shared/myUtility';
 import { LayoutService } from '../layout.service';
 import { SurveyComponent } from '../../../customer/survey/survey.component';
 import { ReportsSPParamsModel } from '../../../models/report-model';
-import { MatPaginator, MatSort, MatTableDataSource } from '@angular/material';
+import { MatPaginator, MatSort, MatTableDataSource, MatDialog, MatDialogConfig } from '@angular/material';
 import { DatePipe } from '@angular/common';
 import { AccessControl } from '../../../Shared/accessControl';
+import { PresurveyConnectComponent } from '../../../customer/presurvey-connect/presurvey-connect.component';
 
 @Component({
   selector: 'app-view-csat',
@@ -24,6 +25,7 @@ export class ViewCsatComponent implements OnInit {
   input_userid: string;
   input_respondedid: number;
   ddyear: number[];
+  batchCustomerId: number;
   selectedQuarter: number; //= 1;
   //selectedYear: number;
   surveyGuid: any;
@@ -32,7 +34,7 @@ export class ViewCsatComponent implements OnInit {
   showSurveyGuid: boolean = false;
   showSurveyText: boolean = false;
 
-  showPreconnect:boolean = false;
+  showPreconnect: boolean = false;
   showQualitativeFeedback: boolean = false;
   loading: boolean = false;
   month = [];
@@ -49,8 +51,10 @@ export class ViewCsatComponent implements OnInit {
   selectedSPName: string; errorStr: string = "";
   selectedqrt: string;
   fileName: string;
+  isEditable: boolean = false;
   constructor(private route: ActivatedRoute, public _layoutService: LayoutService, private _appService: AppsService,
-    public _util: myUtility, public datepipe: DatePipe, public _access: AccessControl) {
+    public _util: myUtility, public datepipe: DatePipe, public _access: AccessControl,
+    public dialog: MatDialog) {
 
   }
 
@@ -78,19 +82,19 @@ export class ViewCsatComponent implements OnInit {
   }
 
   onViewTypeChange() {
-  if (!this.showProjectDropdown) {
-    this.input_projectid = '';
-  } else {
-    if (this.projNames && this.projNames.length > 0) {
-      this.input_projectid = this.projNames[0].proJ_ID;
+    if (!this.showProjectDropdown) {
+      this.input_projectid = '';
+    } else {
+      if (this.projNames && this.projNames.length > 0) {
+        this.input_projectid = this.projNames[0].proJ_ID;
+      }
     }
+    this.guid = [];
+    this.showSurveyGuid = false;
+    this.showSurveyText = false;
+    this.surveyGuid = null;
+    this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
   }
-  this.guid = [];
-  this.showSurveyGuid = false;
-  this.showSurveyText = false;
-  this.surveyGuid = null;
-  this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
-}
 
   getDBConfig() {
     this._appService.GetDBConfigValue("MONTHLYCSS", -1, "").subscribe(data => {
@@ -148,7 +152,7 @@ export class ViewCsatComponent implements OnInit {
 
         if (this.projNames != undefined && this.projNames != null && this.projNames.length > 0) {
           if (!this.input_projectid)
-             this.input_projectid = this.projNames[0].proJ_ID;  
+            this.input_projectid = this.projNames[0].proJ_ID;
           this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
         }
       },
@@ -197,13 +201,12 @@ export class ViewCsatComponent implements OnInit {
     this._layoutService.getSurveyGuid(this.surveyPram).subscribe(
       data => {
         this.loading = true;
-        this.surveyGuid = data.guid;
-        if(data.status =="Mail Sent" || data.status =="Mail Re-Sent"|| data.status =="Draft" )
-        {
-          if(data.spoc == this._util.empid )
-          {
-
-            this.showPreconnect = true;
+        this.surveyGuid = data;
+        this.batchCustomerId = data.batchCustomerId;
+        if ((data.status == "MAIL SENT" || data.status == "MAIL RE-SENT" || data.status == "DRAFT" || data.status == "COMPLETED")) {
+          this.showPreconnect = true;
+          if (data.spoc == this._util.AppSettings.empid) {
+            this.isEditable = true;
           }
         }
         if (this.surveyGuid.guid != null) {
@@ -351,6 +354,22 @@ export class ViewCsatComponent implements OnInit {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
 
+  }
+
+  preSurveyPopup() {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.autoFocus = true;
+    dialogConfig.width = "40%";
+    dialogConfig.height = "70%";
+    dialogConfig.data = {
+      batchCustomerId: this.batchCustomerId,
+      isDisabled: true,
+      isEditable: this.isEditable
+    }
+    const dialogRef = this.dialog.open(PresurveyConnectComponent, dialogConfig);
+    dialogRef.afterClosed().subscribe(result => {
+
+    });
   }
 }
 
