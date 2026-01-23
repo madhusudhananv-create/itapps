@@ -33,7 +33,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 BatchCustomerAndQuestions replies = JsonConvert.DeserializeObject<BatchCustomerAndQuestions>(json);
                 CSS_BATCHES batch = null;
                 string surveyId = string.Empty;
-                if (replies.CSS_QUESTION_REPLIES != null && replies.CSS_QUESTION_REPLIES.Count > 6)
+                if (replies.CSS_QUESTION_REPLIES != null && replies.CSS_QUESTION_REPLIES.Count > 7)
                 {
                     throw new HttpResponseException(this.Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, $"Error in Questions. Unable to save."));
                 }
