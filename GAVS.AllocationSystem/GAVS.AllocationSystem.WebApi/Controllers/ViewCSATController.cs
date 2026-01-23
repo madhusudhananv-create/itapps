@@ -19,24 +19,31 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             List<CUSTOMER_USERS> usersData = new List<CUSTOMER_USERS>();
             List<int> ids = new List<int>();
-            List<CUSTOMER_PROJECTS> userIds = new List<CUSTOMER_PROJECTS>();
+            var userIds = new List<CSS_BATCH_CUSTOMERS>();
             if (isMonthly)
             {
-                userIds = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CUST_ID == customerId && t.CSAT_FREQUENCY == "Monthly").ToList<CUSTOMER_PROJECTS>();
+                //userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.CUST_ID == customerId && t.CSAT_FREQUENCY == "Monthly").ToList<CUSTOMER_PROJECTS>();
             }
             else if (!string.IsNullOrEmpty(projId))
             {
-                userIds = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.PROJ_ID == projId && t.CUST_ID == customerId).ToList();
+                userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.PROJ_ID == projId && t.CUST_ID == customerId && t.ISACTIVE).ToList();
             }
             else
             {
-                userIds = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CUST_ID == customerId).ToList();
+                userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.CUST_ID == customerId && t.ISACTIVE).ToList();
             }
-            ids = userIds.Select(t => t.CUSTOMER_USER_ID).ToList<int>();
+            //var 
+            //ids = userIds.Select(t => t.CUSTOMER_USER_ID).ToList<int>();
             //pick users who are not configured in customer projects
             var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.CUSTOMER_ID == customerId && x.ISACTIVE).ToList();
 
-            usersData = CSPdb.CUSTOMER_USERS.GetAll().Where(t => ids.Contains(t.ID)).OrderBy(t => t.DISPLAY_NAME.Trim()).ToList();
+            // usersData = CSPdb.CUSTOMER_USERS.GetAll().Where(t => ids.Contains(t.ID)).OrderBy(t => t.DISPLAY_NAME.Trim()).ToList();
+            usersData = contacts.Select(x => new CUSTOMER_USERS
+            {
+                DISPLAY_NAME = x.CONTACT_NAME,
+                EMAILID = x.CONTACT_EMAILID,
+
+            }).ToList();
             return Ok(usersData);
         }
 
