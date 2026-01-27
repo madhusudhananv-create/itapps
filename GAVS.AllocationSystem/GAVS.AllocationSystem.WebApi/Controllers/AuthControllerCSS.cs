@@ -886,8 +886,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //else
             //    subject = "Customer Satisfaction Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
             //            ", Feedback Period - " + replies.SURVEY_PERIOD + ")";
-            if (category.ToLower() == "pulse")
-                subject = "Customer Satisfaction Pulse Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
+            if (category.ToLower() == "pulse" || category.ToLower() == "project")
+                subject = "Customer Satisfaction Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
             else
                 // subject = "Customer Satisfaction Survey submitted successfully for the Period: " + replies.SURVEY_PERIOD;
                 subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey {batchYear} submitted successfully";
@@ -1005,8 +1005,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //    CSMNames += ",";
             //SUBJECT
             //SUBJECT
-            if (category.ToLower() == "pulse")
-                subject = $"Half Yearly Pulse Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
+            if (category.ToLower() == "pulse" || category.ToLower() == "project")
+                subject = $"Half Yearly Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
             else
                 //subject = $"Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | {replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM} , Feedback Period - { replies.SURVEY_PERIOD })";
                 subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey submitted successfully ({ replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM } | Feedback Period - {batchYear})";
