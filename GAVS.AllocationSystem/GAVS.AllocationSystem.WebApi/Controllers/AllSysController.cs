@@ -13780,7 +13780,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else if (Sequence == 2)
                 {
-                    Period = "Apr-" + Year.ToString() + " to Sep-" + Year.ToString();
+                    Period = "Jul-" + Year.ToString() + " to Dec-" + Year.ToString();
 
                 }
                 else if (Sequence == 3)
