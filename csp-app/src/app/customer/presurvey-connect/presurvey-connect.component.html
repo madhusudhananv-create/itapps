@@ -1,19 +1,59 @@
 <div style="overflow-x: hidden;">
 
-  <div class="row"
-    style="padding: 25px 40px 15px 40px; border-bottom: 1px solid #ddd; margin-bottom: 15px; margin-left: 0; margin-right: 0;">
-    <div class="col-md-11" style="padding-left: 0;">
-      <h4 style="margin: 0; color: #4e5882; font-weight: 700;">PCSAT Presurvey Connect</h4>
-      <div class="row">
-        <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
-      </div>
+  <div
+  class="row"
+  style="
+    padding: 25px 40px 15px 40px;
+    border-bottom: 1px solid #ddd;
+    margin: 0;
+  "
+>
+  <div
+    class="col-12"
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    "
+  >
+    <!-- Left section -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <h4 style="margin: 0; color: #4e5882; font-weight: 700;">
+        PCSAT Presurvey Connect
+      </h4>
+
+      <button
+        mat-icon-button iconButton
+        [matTooltip]="'History'"
+        [matMenuTriggerFor]="historyMenu"
+      >
+        <mat-icon>info</mat-icon>
+      </button>
+
+      <mat-menu #historyMenu="matMenu">
+        <div style="padding: 10px; max-width: 300px;">
+          <p><b>Updated By:</b> {{ presurveyformData?.updateD_BY_NAME || 'NA' }}</p>
+          <p>
+            <b>Updated Date:</b>
+            {{ presurveyformData?.updateD_DATE ? (presurveyformData?.updateD_DATE | date: 'dd-MM-yyyy') : 'NA' }}
+          </p>
+        </div>
+      </mat-menu>
     </div>
-    <div class="col-md-1" style="text-align: right; padding-right: 0;">
-      <i class="fa fa-times" style="cursor: pointer; font-size: 18px; color: #666;" (click)="closePopup()"
-        title="Close">
-      </i>
-    </div>
+
+    <!-- Right section -->
+    <i
+      class="fa fa-times"
+      style="cursor: pointer; font-size: 18px; color: #666;"
+      title="Close"
+      (click)="closePopup()"
+    ></i>
   </div>
+</div>
+
+<!-- Loader below header -->
+<mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+
 
   <form style="background: white; padding-left: 40px; padding-bottom: 10px; padding-right: 40px;"
     #presurveyconnectForm="ngForm" (ngSubmit)="SubmitForm(presurveyconnectForm.valid)">
@@ -32,12 +72,12 @@
 
     <div class="row">
       <mat-form-field style="width: 50%;">
-        <input [min]="_util.Today()" matInput name="dtPlannedDate" [disabled]="isDisabledData"
+        <input [min]="_util.Today()" matInput name="dtPlannedDate" [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned'"
           [(ngModel)]="presurveyformData.planneD_DATE" [matDatepicker]="picker2" placeholder="Planned Date"
-          [required]="presurveyformData.status === 'Planned'">
+          [required]="presurveyformData.status === 'Planned' || presurveyformData.status === 'Completed'">
         <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
         <mat-datepicker #picker2></mat-datepicker>
-        <mat-error *ngIf="presurveyformData.status === 'Planned'">Planned Date is required for Planned
+        <mat-error *ngIf="presurveyformData.status === 'Planned' || presurveyformData.status === 'Completed'">Planned Date is required for Planned
           status</mat-error>
       </mat-form-field>
     </div>
@@ -45,7 +85,7 @@
     <div class="row">
       <mat-form-field style="width: 50%;">
         <input [min]="presurveyformData.planneD_DATE" matInput name="dtActualDate"
-          [disabled]="isDisabledData" [(ngModel)]="presurveyformData.actuaL_DATE" [matDatepicker]="picker1"
+          [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned'" [(ngModel)]="presurveyformData.actuaL_DATE" [matDatepicker]="picker1"
           placeholder="Actual Date" [required]="presurveyformData.status === 'Completed'" #actualDate="ngModel">
         <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
         <mat-datepicker #picker1></mat-datepicker>
@@ -68,5 +108,5 @@
         (click)="closePopup()">Cancel</button>
     </div>
   </form>
-
+  
 </div>

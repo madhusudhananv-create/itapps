@@ -672,7 +672,8 @@ goForwardStep1(stepper: MatStepper) {
       SPOC_EMAIL: row.csatSpocEmail,
       REMARKS: row.remarks,
       ISACTIVE: true,
-      IS_VERIFIED: true
+      IS_VERIFIED: true,
+      STATUS: 'CREATED'
     }));
 
     // 3. Save Call with Error Handling
