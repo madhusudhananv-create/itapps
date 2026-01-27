@@ -28,6 +28,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
     public partial class CSS_PRECONNECT 
     
     {
+        [NotMapped]
         public string UPDATED_BY_NAME { get; set; }
     }
 

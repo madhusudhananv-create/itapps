@@ -193,27 +193,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetOverallPreconnectData(int batchCustomerId)
         {
             var preConnectData = Cldb.CSS_PRECONNECT.GetAll().FirstOrDefault(x => x.ISACTIVE && x.CSS_BATCH_CUSTOMER_ID == batchCustomerId);
+            if (preConnectData != null)
+            {
+                var updatedByIds = preConnectData.UPDATED_BY;
+                var employeeInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => updatedByIds == x.EMP_ID);
 
-            var updatedByIds = preConnectData.UPDATED_BY;
-            var employeeInfo = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => updatedByIds == x.EMP_ID);
+                preConnectData.UPDATED_BY_NAME = employeeInfo?.FRST_NM;
+                //var result = preConnectData.Select(p => new
+                //{
+                //    p.PLANNED_DATE,
+                //    p.ACTUAL_DATE,
+                //    p.REMARKS,
+                //    p.STATUS,
+                //    p.CSS_BATCH_CUSTOMER_ID,
+                //    p.UPDATED_BY,
+                //    UPDATED_BY_NAME = employeeInfo?.FRST_NM,
+                //    p.CREATED_BY,
+                //    p.CREATED_DATE,
+                //    p.UPDATED_DATE,
+                //    p.ISACTIVE
+                //}).ToList();
 
-            preConnectData.UPDATED_BY_NAME = employeeInfo?.FRST_NM;
-            //var result = preConnectData.Select(p => new
-            //{
-            //    p.PLANNED_DATE,
-            //    p.ACTUAL_DATE,
-            //    p.REMARKS,
-            //    p.STATUS,
-            //    p.CSS_BATCH_CUSTOMER_ID,
-            //    p.UPDATED_BY,
-            //    UPDATED_BY_NAME = employeeInfo?.FRST_NM,
-            //    p.CREATED_BY,
-            //    p.CREATED_DATE,
-            //    p.UPDATED_DATE,
-            //    p.ISACTIVE
-            //}).ToList();
-
-            return Ok(preConnectData);
+                return Ok(preConnectData);
+            }
+            return Ok();
         }
 
         [POST("SavePreconnectSurveyData")]
