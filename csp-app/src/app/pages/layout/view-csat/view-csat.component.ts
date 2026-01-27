@@ -108,12 +108,25 @@ export class ViewCsatComponent implements OnInit {
         this.showMonthly = false;
       }
       this.getQuarterorMonth();
+      this.getHalfOrMonth();
       this.getAllProjectsFromCustomer();
     }, (error) => { this._util.serviceError(error) },
       () => {
         this.getReportDetails(this.surveyPram.iS_MONTHLY);
         this.getRportSpName(this.surveyPram.iS_MONTHLY);
       })
+  }
+
+  getHalfOrMonth() {
+    let m = new Date().getMonth() + 1;
+    let y = new Date().getFullYear() - 1;
+    if (m >= 1 && m <= 6) {
+    this.selectedQuarter = 6; // H2
+    this._util.tableYear = y;
+    } else if (m >= 7 && m <= 12) {
+      this.selectedQuarter = 5; // H1
+      this._util.tableYear = y;
+    }
   }
 
   getQuarterorMonth() {

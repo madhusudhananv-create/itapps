@@ -73,23 +73,27 @@ export class PresurveyConnectComponent implements OnInit {
     }, error => { this._util.serviceError(error); this.isLoading = false; });
   } */
 
-    getPreconnectDataList() {
-  this.isLoading = true;
-  this._appservice.getOverallPreconnectData(this.batchCustomerId).subscribe(data => {
-    this.overallPreconnectData = data;
-    this.isLoading = false;
-    if (this.overallPreconnectData) {
-      this.presurveyformData = this.overallPreconnectData;
-      if (!this.presurveyformData.status) {
-        this.presurveyformData.status = 'To Be Planned';
+  getPreconnectDataList() {
+    this.isLoading = true;
+    this._appservice.getOverallPreconnectData(this.batchCustomerId).subscribe(data => {
+      this.overallPreconnectData = data;
+      this.isLoading = false;
+      if (this.overallPreconnectData) {
+        if (!this.isEditable) {
+          this.isDisabledData = this.isDisabled;
+        }
+        this.presurveyformData = this.overallPreconnectData;
+        if (!this.presurveyformData.status) {
+          this.presurveyformData.status = 'To Be Planned';
+        }
       }
       this.setDisabledState();
-    }
-  }, error => { 
-    this._util.serviceError(error); 
-    this.isLoading = false; 
-  });
-}
+
+    }, error => { 
+      this._util.serviceError(error); 
+      this.isLoading = false; 
+    });
+  }
   savePreconnectData() {
     this.isLoading = true;
     const surveyData: CssPresurveyConnectModel = {
