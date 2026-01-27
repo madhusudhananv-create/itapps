@@ -178,13 +178,41 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(spName);
         }
 
+        //[GET("GetOverallPreconnectData")]
+        //[ActionName("GetOverallPreconnectData")]
+        //[HttpGet]
+        //public IHttpActionResult GetOverallPreconnectData(int batchCustomerId)
+        //{
+        //    var preConnectData = Cldb.CSS_PRECONNECT.GetAll().Where(x => x.ISACTIVE && x.CSS_BATCH_CUSTOMER_ID == batchCustomerId).ToList();
+        //    return Ok(preConnectData);
+        //}
+
         [GET("GetOverallPreconnectData")]
         [ActionName("GetOverallPreconnectData")]
         [HttpGet]
         public IHttpActionResult GetOverallPreconnectData(int batchCustomerId)
         {
             var preConnectData = Cldb.CSS_PRECONNECT.GetAll().Where(x => x.ISACTIVE && x.CSS_BATCH_CUSTOMER_ID == batchCustomerId).ToList();
-            return Ok(preConnectData);
+
+            var updatedByIds = preConnectData.Select(x => x.UPDATED_BY).Distinct().ToList();
+            var employeeInfo = Cldb.EMP_INFO.GetAll().Where(x => updatedByIds.Contains(x.EMP_ID)).ToList();
+
+            var result = preConnectData.Select(p => new
+            {
+                p.PLANNED_DATE,
+                p.ACTUAL_DATE,
+                p.REMARKS,
+                p.STATUS,
+                p.CSS_BATCH_CUSTOMER_ID,
+                p.UPDATED_BY,
+                UPDATED_BY_NAME = employeeInfo.FirstOrDefault(e => e.EMP_ID == p.UPDATED_BY)?.FRST_NM,
+                p.CREATED_BY,
+                p.CREATED_DATE,
+                p.UPDATED_DATE,
+                p.ISACTIVE
+            }).ToList();
+
+            return Ok(result);
         }
 
         [POST("SavePreconnectSurveyData")]

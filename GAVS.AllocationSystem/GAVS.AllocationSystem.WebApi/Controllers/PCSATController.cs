@@ -222,6 +222,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (item.ID == 0)
                 {
                     item.BATCH_ID = batchId;
+                    item.STATUS = "CREATED";
                     UpdateAuditFields(item);
                     CSPdb.CSS_BATCH_CUSTOMERS.Add(item);
                 }
