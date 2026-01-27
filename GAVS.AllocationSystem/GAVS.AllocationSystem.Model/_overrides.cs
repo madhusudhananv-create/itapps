@@ -25,6 +25,12 @@ namespace GAVS.AllocationSystem.Model.AllSys
         public string SERVICE_TOWER_NAME { get; set; }
     }
 
+    public partial class CSS_PRECONNECT 
+    
+    {
+        public string UPDATED_BY_NAME { get; set; }
+    }
+
     //public partial class CSS_BATCH_PROJECTS
     //{
     //    [NotMapped]
