@@ -79,6 +79,7 @@ export class ViewCsatComponent implements OnInit {
     this.month = this._util.getmonthsBasedonYear(this._util.tableYear);
     this._layoutService.selectedCust = this.input_customerid
     this.getDBConfig();
+
   }
 
   onViewTypeChange() {
@@ -93,7 +94,7 @@ export class ViewCsatComponent implements OnInit {
     this.showSurveyGuid = false;
     this.showSurveyText = false;
     this.surveyGuid = null;
-    this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
+    this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly, this.startDate, this.endDate);
   }
 
   getDBConfig() {
@@ -101,14 +102,13 @@ export class ViewCsatComponent implements OnInit {
       if (data.indexOf(this.input_customerid.toString()) >= 0) {
         this.showMonthly = true;
         this.surveyPram.iS_MONTHLY = true;
-        this.getAllCustomerUser(this.input_customerid, '', this.surveyPram.iS_MONTHLY);
+        this.getAllCustomerUser(this.input_customerid, '', this.surveyPram.iS_MONTHLY, this.startDate, this.endDate);
       }
       else {
         this.surveyPram.iS_MONTHLY = false;
         this.showMonthly = false;
       }
-      this.getQuarterorMonth();
-      this.getHalfOrMonth();
+      this.getQuarterorMonth(); 
       this.getAllProjectsFromCustomer();
     }, (error) => { this._util.serviceError(error) },
       () => {
@@ -117,31 +117,30 @@ export class ViewCsatComponent implements OnInit {
       })
   }
 
-  getHalfOrMonth() {
-    let m = new Date().getMonth() + 1;
-    let y = new Date().getFullYear() - 1;
-    if (m >= 1 && m <= 6) {
-    this.selectedQuarter = 6; // H2
-    this._util.tableYear = y;
-    } else if (m >= 7 && m <= 12) {
-      this.selectedQuarter = 5; // H1
-      this._util.tableYear = y;
-    }
-  }
 
   getQuarterorMonth() {
     let m = new Date().getMonth() + 1;
-    let y = new Date().getFullYear() - 1;
-    if (m == 4 || m == 5 || m == 6) {
-      this.selectedQuarter = 4;
+    let y = new Date().getFullYear();
+    // if (m == 4 || m == 5 || m == 6) {
+    //   this.selectedQuarter = 4;
+    //   this._util.tableYear = y;
+    // }
+    // else if (m == 7 || m == 8 || m == 9)
+    //   this.selectedQuarter = 1;
+    // else if (m == 10 || m == 11 || m == 12)
+    //   this.selectedQuarter = 2;
+    // else if (m == 1 || m == 2 || m == 3)
+    //   this.selectedQuarter = 3;
+
+    if (m >= 1 && m <= 6) {
+      this.selectedQuarter = 6;
+      this._util.tableYear = y - 1;
+    }
+    else if (m >= 7 && m <= 12) {
+      this.selectedQuarter = 5;
       this._util.tableYear = y;
     }
-    else if (m == 7 || m == 8 || m == 9)
-      this.selectedQuarter = 1;
-    else if (m == 10 || m == 11 || m == 12)
-      this.selectedQuarter = 2;
-    else if (m == 1 || m == 2 || m == 3)
-      this.selectedQuarter = 3;
+    this.getBatchDate();
   }
 
   onYearChange() {
@@ -166,7 +165,7 @@ export class ViewCsatComponent implements OnInit {
         if (this.projNames != undefined && this.projNames != null && this.projNames.length > 0) {
           if (!this.input_projectid)
             this.input_projectid = this.projNames[0].proJ_ID;
-          this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
+          this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly, this.startDate, this.endDate);
         }
       },
       error => {
@@ -175,9 +174,12 @@ export class ViewCsatComponent implements OnInit {
     )
   }
 
-  getAllCustomerUser(customerId, projectId, isMonthly) {
-    this.input_userid = this.input_respondedid == 0 ? "" : this.input_userid;
-    this._layoutService.GetAllCustomerUser(customerId, projectId, isMonthly).subscribe(
+  getAllCustomerUser(customerId, projectId, isMonthly, startDate, endDate) {
+  this.input_userid = this.input_respondedid == 0 ? "" : this.input_userid;
+  const formattedStartDate =this.datepipe.transform(startDate, 'yyyy-MM-dd')
+  const formattedEndDate =  this.datepipe.transform(endDate, 'yyyy-MM-dd')
+  
+    this._layoutService.GetAllCustomerUser(customerId, projectId, isMonthly, formattedStartDate, formattedEndDate).subscribe(
       data => {
         this.custNames = data;
         if (this.input_respondedid == 0) {
@@ -225,7 +227,9 @@ export class ViewCsatComponent implements OnInit {
         if (this.surveyGuid.guid != null) {
           this.loading = false;
           this.showSurveyText = false;
-          this.showSurveyGuid = true;
+          if (data.status == "COMPLETED") {
+            this.showSurveyGuid = true;
+          }
           this.guid = this.surveyGuid;
         }
         else {
@@ -251,7 +255,9 @@ export class ViewCsatComponent implements OnInit {
           if (this.surveyGuid.guid != null) {
             this.loading = false;
             this.showSurveyText = false;
-            this.showSurveyGuid = true;
+            if (data.status == "COMPLETED") {
+              this.showSurveyGuid = true;
+            }
             this.guid = this.surveyGuid;
           }
           else {
@@ -272,7 +278,7 @@ export class ViewCsatComponent implements OnInit {
 
   onProjectChange() {
     this.guid = [];
-    this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly);
+    this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly, this.startDate, this.endDate);
   }
 
   reportParamData: ReportsSPParamsModel[] = [];
@@ -289,6 +295,17 @@ export class ViewCsatComponent implements OnInit {
     this._layoutService.getRportSpName(isMonthly).subscribe(data => {
       this.selectedSPName = data;
     }, error => { this._util.serviceError(error) })
+  }
+
+  getBatchDate() {
+    if (this.selectedQuarter == 5) {
+      this.startDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-01-01"));
+      this.endDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-06-30"));
+    }
+    if (this.selectedQuarter == 6) {
+      this.startDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-07-01"));
+      this.endDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-12-31"));
+    }
   }
 
   getTabledata() {
@@ -315,9 +332,17 @@ export class ViewCsatComponent implements OnInit {
         this.startDate = new Date(this._util.tableYear + "-10-01");
         this.endDate = new Date(this._util.tableYear + "-12-31");
       }
-      else {
+      else if (this.selectedQuarter == 4) {
         this.startDate = new Date((this._util.tableYear + 1) + "-01-01");
         this.endDate = new Date((this._util.tableYear + 1) + "-03-31");
+      }
+      else if (this.selectedQuarter == 5) {
+        this.startDate = new Date((this._util.tableYear + 1) + "-01-01");
+        this.endDate = new Date((this._util.tableYear + 1) + "-06-30");
+      }
+      else if (this.selectedQuarter == 6) {
+        this.startDate = new Date((this._util.tableYear + 1) + "-07-01");
+        this.endDate = new Date((this._util.tableYear + 1) + "-12-31");
       }
       this.reportParamData.push({ id: this.paramData[0].id, reporT_SP_ID: this.paramData[0].reporT_SP_ID, paraM_NAME: this.paramData[0].paraM_NAME, paraM_TYPE: this.paramData[0].paraM_TYPE, paraM_VALUE: this.datepipe.transform(this.startDate, 'yyyy-MM-dd') })
       this.reportParamData.push({ id: this.paramData[1].id, reporT_SP_ID: this.paramData[1].reporT_SP_ID, paraM_NAME: this.paramData[1].paraM_NAME, paraM_TYPE: this.paramData[1].paraM_TYPE, paraM_VALUE: this.datepipe.transform(this.endDate, 'yyyy-MM-dd') })

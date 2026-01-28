@@ -38,7 +38,7 @@
   <div class="col-lg-1 col-md-1 col-sm-1" style="left: -60px;" *ngIf="showProjectDropdown">
     <mat-form-field style="width: 100px;">
       <mat-label style="font-size: 15px;font-family: Roboto;letter-spacing: 0px;color: #333333;opacity: 1;">Select
-        Quarter:</mat-label>
+        Period:</mat-label>
       <mat-select name='tableMonth' [(ngModel)]="selectedQuarter" required placeholder="Choose Quarter"
         (selectionChange)="onQuarterChange()">
         <mat-option [value]='1'>Q1</mat-option>
@@ -84,7 +84,7 @@
   <div class="col-lg-3 col-md-3 col-sm-3" [ngStyle]="{'left': showProjectDropdown ? '-170px' : '-60px'}">
     <mat-form-field style="width: 200px;">
       <mat-label style="font-size: 15px;font-family: Roboto;letter-spacing: 0px;color: #333333;opacity: 1;">Select
-        User:</mat-label>
+        Respondent:</mat-label>
       <mat-select placeholder="Select Customer" [(ngModel)]="input_userid" (selectionChange)="onUserChange()">
         <mat-option *ngFor="let cust of custNames" [value]="cust.emailid"
           [title]="cust.displaY_NAME">{{cust.displaY_NAME}}

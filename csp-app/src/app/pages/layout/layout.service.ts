@@ -80,14 +80,14 @@ export class LayoutService {
       this.apiurl + "/ApproveSelected", data, { headers }
     );
   }
-  GetAllCustomerUser(custId,projId,isMonthly): Observable<any[]>{
+  GetAllCustomerUser(custId,projId,isMonthly,startDate,endDate): Observable<any[]>{
     const header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
     })
     return this._http.get<any[]>(
-      this.apiurl + "/GetAllCustomerUser?customerId=" + custId +"&projId=" + projId + "&isMonthly=" +isMonthly, { headers:header }
+      this.apiurl + "/GetAllCustomerUser?customerId=" + custId +"&projId=" + projId + "&isMonthly=" +isMonthly + "&startDate=" + startDate + "&endDate=" + endDate, { headers:header }
     );
   }
   getSurveyGuid(surveyParam): Observable<any>{
