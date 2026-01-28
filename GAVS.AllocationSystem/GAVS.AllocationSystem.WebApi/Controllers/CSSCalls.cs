@@ -1442,7 +1442,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var skipRecords = helper.GetProjectConfigurationDataForSetting("SKIP_CSAT");
             bool isCommitRequired = false;
 
-
+            
             foreach (var c in customersProjects)
             {
                 var cust = customers.FirstOrDefault(t => t.ID == c.CUSTOMER_USER_ID);
@@ -1451,7 +1451,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
 
                 PROJECT project = projects.FirstOrDefault(x => x.PROJ_ID == c.PROJ_ID);
-                if (cust != null && project != null)
+                if (cust != null && project != null && project.BUSINESS_UNIT!= null && project.BUSINESS_UNIT.ToLower() == "sead")
                 {
 
                     if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")

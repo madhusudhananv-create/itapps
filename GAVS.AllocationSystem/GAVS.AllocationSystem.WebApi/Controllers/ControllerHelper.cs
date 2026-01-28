@@ -127,7 +127,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return string.Empty;
 
 
-            var csmIds = Cldb.PROJECT.GetAll().Where(x => projectIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_DM_EMP_ID).ToList();
+            var csmIds = Cldb.PROJECT.GetAll().Where(x => projectIds.Contains(x.PROJ_ID) && x.PROJ_STATUS !="close").Select(x => x.PROJ_DM_EMP_ID).ToList();
             var csmEmails = Cldb.EMP_INFO.GetAll().Where(x => csmIds.Contains(x.EMP_ID) && x.DOR == null).Select(x => x.EMAIL_ID).ToList();
             return string.Join(",", csmEmails);
         }
