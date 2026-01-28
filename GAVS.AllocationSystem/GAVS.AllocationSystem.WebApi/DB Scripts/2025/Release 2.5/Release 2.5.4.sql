@@ -399,7 +399,8 @@ SELECT DISTINCT
         E7.FRST_NM AS [DEV Ex partner],  
   P.EXECUTION_TYPE as [Execution Type],   
         P.ENGAGAMENT_TYPE as [Engagement Type],   
-  case when cb.IS_SELECTED = 1 then 'Yes' else 'No' end as [Chosen for PCSAT],  
+ case when cb.IS_SELECTED = 1 and cbc.id IS NOT NULL then 'Yes'
+   else 'No' end as [Chosen for PCSAT],  
   cb.REASON  as [Reason (If No)],  
         LatestSurvey.DISPLAY_NAME as [Last Cycle PCSAT Respondant],  
         cbc.DISPLAY_NAME as [Respondent],  
