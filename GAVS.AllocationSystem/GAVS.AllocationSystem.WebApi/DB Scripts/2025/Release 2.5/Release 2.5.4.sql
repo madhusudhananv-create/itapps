@@ -335,7 +335,31 @@ INSERT INTO configuration_ext (
 END
 GO
 
+-------Pre survey connect and Questionarrie changes ----------------
+
+
+
+IF NOT EXISTS(Select 1 from sys.tables where name ='CSS_PRECONNECT' AND type='U')
+BEGIN
+CREATE table CSS_PRECONNECT(
+ID INT NOT NULL IDENTITY(1,1),
+PLANNED_DATE DATETIME NULL,
+ACTUAL_DATE DATETIME NULL,
+REMARKS VARCHAR(MAX),
+STATUS  VARCHAR(20),
+CSS_BATCH_CUSTOMER_ID INT ,
+CREATED_BY VARCHAR(10),
+CREATED_DATE  DATETIME,
+UPDATED_BY VARCHAR(10),
+UPDATED_DATE DATETIME,
+ISACTIVE bit )
+
+END
+GO
+
 ----report SP for Account Project CSAT Configuration-----
+
+
 IF EXISTS(Select 1 from sys.objects where name ='reports_Account_Project_CSATConfiguration' AND type='P')
 BEGIN
        DROP PROCEDURE [dbo].[reports_Account_Project_CSATConfiguration]
@@ -353,87 +377,89 @@ CREATE PROCEDURE [dbo].[reports_Account_Project_CSATConfiguration]
                           
 BEGIN       
 
-SELECT DISTINCT
-	  [PCSAT Cycle] =  (select Left( frequency,1) + Convert(varchar,sequence) + ' - ' + Convert(varchar,  Year) from  CSS_BATCHES where id= b.ID ),  
-		P.BUSINESS_UNIT as [Business Unit],
-        C.CUST_NM as [Account],
-		[Account HeadCount] = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.CUST_ID = p.CUST_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE()),
-        --C.CUST_ID,
-        P.PROJ_NM as [Project], 
-        --P.PROJ_ID,
-		[Project HeadCount] = (select count(*) from PROJ_RESOURCE pr where pr.PROJ_ID = p.PROJ_ID and pr.BILL_FLG =1 and pr.CURR_INDC ='y' and pr.END_DATE >= GETDATE()),            
-        --HC.PROJECT_HEAD_COUNT,
-		P.PROJ_STATUS as [Project Status],
-		convert(varchar,p.start_date,107) as [Project Start Date],
-		convert(varchar,p.end_date,107)as [Project End Date],  
-        e5.FRST_NM as [Project Manager],
-		e5.EMAIL_ID as [Project Manager MAIL],
-		e6.FRST_NM as [Delivery Partner],
-        E6.EMAIL_ID AS [Delivery Partner MAIL],
-		e8.FRST_NM as [GDH],
-		e8.EMAIL_ID as [GDH MAIL],
-        E7.FRST_NM AS [DEV Ex partner],
-		P.EXECUTION_TYPE as [Execution Type], 
-        P.ENGAGAMENT_TYPE as [Engagement Type], 
-		case when cb.IS_SELECTED = 1 then 'Yes' else 'No' end as [Chosen for PCSAT],
-		cb.REASON  as [Reason (If No)],
-        LatestSurvey.DISPLAY_NAME as [Last Cycle PCSAT Respondant],
-        cbc.DISPLAY_NAME as [Respondent],
-		co.CONTACT_ROLE as [Role],
-		cbc.EMAIL_ID as [Email Id],
-		cbc.PREDICTED_SCORE as [Predicted Score],
-		cbc.PREDICTED_REASON as [Predicted Reason],
-		e.FRST_NM as [CSAT Spoc],
-		e.EMAIL_ID as [CSAT MAIL],
-		--cbc.SPOC,
-		cp.status as [Pre Survey Connect],
-        cp.planned_date as [Planned Date],
-        cp.actual_date as [Actual Date],
-        cp.remarks as [Remarks],
-		E4.FRST_NM as [Updated By],
-		convert(varchar,cbc.UPDATED_DATE,107) as [Updated Date],
-		--cbc.UPDATED_DATE as [Updated Date],
-		NULL as [Columns Updated]
+SELECT DISTINCT  
+   [PCSAT Cycle] =  (select Left( frequency,1) + Convert(varchar,sequence) + ' - ' + Convert(varchar,  Year) from  CSS_BATCHES where id= b.ID ),    
+  P.BUSINESS_UNIT as [Business Unit],  
+        C.CUST_NM as [Account],  
+  [Account HeadCount] = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.CUST_ID = p.CUST_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE()),  
+        --C.CUST_ID,  
+        P.PROJ_NM as [Project],   
+        --P.PROJ_ID,  
+  [Project HeadCount] = (select count(*) from PROJ_RESOURCE pr where pr.PROJ_ID = p.PROJ_ID and pr.BILL_FLG =1 and pr.CURR_INDC ='y' and pr.END_DATE >= GETDATE()),              
+        --HC.PROJECT_HEAD_COUNT,  
+  P.PROJ_STATUS as [Project Status],  
+  convert(varchar,p.start_date,107) as [Project Start Date],  
+  convert(varchar,p.end_date,107)as [Project End Date],    
+        e5.FRST_NM as [Project Manager],  
+  e5.EMAIL_ID as [Project Manager MAIL],  
+  e6.FRST_NM as [Delivery Partner],  
+        E6.EMAIL_ID AS [Delivery Partner MAIL],  
+  e8.FRST_NM as [GDH],  
+  e8.EMAIL_ID as [GDH MAIL],  
+        E7.FRST_NM AS [DEV Ex partner],  
+  P.EXECUTION_TYPE as [Execution Type],   
+        P.ENGAGAMENT_TYPE as [Engagement Type],   
+  case when cb.IS_SELECTED = 1 then 'Yes' else 'No' end as [Chosen for PCSAT],  
+  cb.REASON  as [Reason (If No)],  
+        LatestSurvey.DISPLAY_NAME as [Last Cycle PCSAT Respondant],  
+        cbc.DISPLAY_NAME as [Respondent],  
+  co.CONTACT_ROLE as [Role],  
+  cbc.EMAIL_ID as [Email Id],  
+  cbc.PREDICTED_SCORE as [Predicted Score],  
+  cbc.PREDICTED_REASON as [Predicted Reason],  
+  isnull(e.FRST_NM, cbc.SPOC) as [CSAT Spoc],  
+    cbc.SPOC  [CSAT MAIL],  
+	  E4.FRST_NM as [Respondent Last Updated By],  
+  convert(varchar,cbc.UPDATED_DATE,107) as [Respondent Last Updated Date],  
+  cp.status as [Pre Survey Connect],  
+        convert(varchar,cp.planned_date,107)  as [Planned Date],  
+        convert(varchar,cp.actual_date,107)  as [Actual Date],  
+       cp.remarks as [Remarks],  
+	   	E9.FRST_NM as [Presurvey connect Last Updated By],  
+  convert(varchar,cp.UPDATED_DATE,107) as [Presurvey connect Last Updated Date],  
 
-
-    FROM PROJECT P
-    INNER JOIN CUSTOMER C ON P.CUST_ID = C.CUST_ID
-	LEFT JOIN EMP_INFO E5 ON E5.EMP_ID = P.PROJ_PM_EMP_ID and E5.DOR IS NULL
-    LEFT JOIN EMP_INFO E6 ON E6.EMP_ID = P.PROJ_DM_EMP_ID and E6.DOR IS NULL
-	LEFT JOIN EMP_INFO E7 ON E7.EMP_ID = P.QUALITY_SPOC and E7.DOR IS NULL
-	LEFT JOIN EMP_INFO E8 ON E8.EMP_ID = P.PROJ_BUHEAD_EMP_ID and E8.DOR IS NULL
-	LEFT JOIN CSS_BATCH_PROJECTS CB ON CB.PROJ_ID = P.PROJ_ID and cb.ISACTIVE=1
-	left join CSS_BATCH_CUSTOMERS cbc on cbc.BATCH_ID=cb.BATCH_ID and cbc.PROJ_ID=p.PROJ_ID and cbc.ISACTIVE=1 and cbc.BATCH_ID=37
-	LEFT JOIN EMP_INFO E ON E.EMAIL_ID = cbc.SPOC and E.DOR IS NULL
-	LEFT JOIN EMP_INFO E4 ON E4.EMP_ID = cbc.UPDATED_BY and E4.DOR IS NULL
-	left join CONTACTS co on co.CONTACT_EMAILID = cbc.EMAIL_ID and co.ISACTIVE = 1   
-	left JOIN CSS_BATCHES B ON B.ID = cb.BATCH_ID
-	left join CSS_PRECONNECT cp on cp.css_batch_customer_id = cbc.ID and cp.isActive=1
-    OUTER APPLY (
-    SELECT  STRING_AGG(css.DISPLAY_NAME, ', ') AS DISPLAY_NAME --css.DISPLAY_NAME
-        FROM CSS_BATCH_CUSTOMERS css
-        INNER JOIN CSS_BATCHES b ON css.BATCH_ID = b.ID
-        WHERE css.PROJ_ID = P.PROJ_ID 
-          AND css.ISACTIVE = 1 
-          AND css.IS_VERIFIED = 1 
-		  AND css.SURVEY_SENT_DATE IS NOT NULL
-          AND B.FREQUENCY IN ('Half-Yearly','Halfyearly','Annual')
-          AND B.YEAR = CASE WHEN MONTH(@STARTDATE) >= 7 THEN YEAR(@STARTDATE) ELSE YEAR(@STARTDATE) - 1 END
-) LatestSurvey
-
-    OUTER APPLY (
-        SELECT 
-            PROJECT_HEAD_COUNT = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.PROJ_ID = p.PROJ_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE()),
-            ACCOUNT_HEAD_COUNT = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.CUST_ID = p.CUST_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE())
-    ) HC
-
-   WHERE 
-  (@Customer = '0' OR C.cust_id IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@Customer,',')))  
-     
-    AND C.CUST_NM NOT LIKE '%gavs%'
-    AND C.CUST_ID != '202100091'  AND P.PROJECT_TYPE != 'Internal'
-    AND ((P.proj_status in('New','Close','Deliver','Plan','Complete') AND P.end_date >= DATEADD(MONTH, -6, @ENDDATE)))
-    ORDER BY C.CUST_NM, P.PROJ_NM
+  NULL as [Columns Updated]  
+  
+  
+    FROM PROJECT P  
+    INNER JOIN CUSTOMER C ON P.CUST_ID = C.CUST_ID  
+ LEFT JOIN EMP_INFO E5 ON E5.EMP_ID = P.PROJ_PM_EMP_ID and E5.DOR IS NULL  
+    LEFT JOIN EMP_INFO E6 ON E6.EMP_ID = P.PROJ_DM_EMP_ID and E6.DOR IS NULL  
+ LEFT JOIN EMP_INFO E7 ON E7.EMP_ID = P.QUALITY_SPOC and E7.DOR IS NULL  
+ LEFT JOIN EMP_INFO E8 ON E8.EMP_ID = P.PROJ_BUHEAD_EMP_ID and E8.DOR IS NULL  
+ LEFT JOIN CSS_BATCH_PROJECTS CB ON CB.PROJ_ID = P.PROJ_ID and cb.ISACTIVE=1  and cb.IS_SELECTED = 1
+ left join CSS_BATCH_CUSTOMERS cbc on cbc.BATCH_ID=cb.BATCH_ID and cbc.PROJ_ID=p.PROJ_ID and cbc.ISACTIVE=1 and cbc.BATCH_ID=37  
+ LEFT JOIN EMP_INFO E ON E.EMAIL_ID = cbc.SPOC and E.DOR IS NULL  
+ LEFT JOIN EMP_INFO E4 ON E4.EMP_ID = cbc.UPDATED_BY and E4.DOR IS NULL  
+ left join CONTACTS co on co.CONTACT_EMAILID = cbc.EMAIL_ID and co.ISACTIVE = 1   and co.CUSTOMER_ID=cbc.CUST_ID  
+ left JOIN CSS_BATCHES B ON B.ID = cb.BATCH_ID  
+ left join CSS_PRECONNECT cp on cp.css_batch_customer_id = cbc.ID and cp.isActive=1  
+  LEFT JOIN EMP_INFO E9 ON E9.EMP_ID = cp.UPDATED_BY and E9.DOR IS NULL
+    OUTER APPLY (  
+    SELECT  STRING_AGG(css.DISPLAY_NAME, ', ') AS DISPLAY_NAME --css.DISPLAY_NAME  
+        FROM CSS_BATCH_CUSTOMERS css  
+        INNER JOIN CSS_BATCHES b ON css.BATCH_ID = b.ID  
+        WHERE css.PROJ_ID = P.PROJ_ID   
+          AND css.ISACTIVE = 1   
+          AND css.IS_VERIFIED = 1   
+    AND css.SURVEY_SENT_DATE IS NOT NULL  
+          AND B.FREQUENCY IN ('Half-Yearly','Halfyearly','Annual')  
+          AND B.YEAR = CASE WHEN MONTH(@STARTDATE) >= 7 THEN YEAR(@STARTDATE) ELSE YEAR(@STARTDATE) - 1 END  
+) LatestSurvey  
+  
+    OUTER APPLY (  
+        SELECT   
+            PROJECT_HEAD_COUNT = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.PROJ_ID = p.PROJ_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE()),  
+            ACCOUNT_HEAD_COUNT = (SELECT COUNT(*) FROM PROJ_RESOURCE pr WHERE pr.CUST_ID = p.CUST_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE())  
+    ) HC  
+  
+   WHERE   
+  (@Customer = '0' OR C.cust_id IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@Customer,',')))    
+       
+    AND C.CUST_NM NOT LIKE '%gavs%'  
+    AND C.CUST_ID != '202100091'  AND P.PROJECT_TYPE != 'Internal'  
+    AND ((P.proj_status in('New','Close','Deliver','Plan','Complete') AND P.end_date >= DATEADD(MONTH, -6, @ENDDATE)))  
+    ORDER BY C.CUST_NM, P.PROJ_NM  
 
 END 
 
@@ -661,22 +687,5 @@ GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
 1,'Criteria',3,NULL,1,6,'Thought Leadership'),
 
 (@modelId3,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
-END
-GO
-IF NOT EXISTS(Select 1 from sys.tables where name ='CSS_PRECONNECT' AND type='U')
-BEGIN
-CREATE table CSS_PRECONNECT(
-ID INT NOT NULL IDENTITY(1,1),
-PLANNED_DATE DATETIME NULL,
-ACTUAL_DATE DATETIME NULL,
-REMARKS VARCHAR(MAX),
-STATUS  VARCHAR(20),
-CSS_BATCH_CUSTOMER_ID INT ,
-CREATED_BY VARCHAR(10),
-CREATED_DATE  DATETIME,
-UPDATED_BY VARCHAR(10),
-UPDATED_DATE DATETIME,
-ISACTIVE bit )
-
 END
 GO
