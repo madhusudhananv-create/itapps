@@ -64,6 +64,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var stopwatch = Stopwatch.StartNew();
             LogRequest(content: JsonConvert.SerializeObject(batchProjectList));
             var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID || x.QUALITY_SPOC == dpID ) && x.ISACTIVE).ToList();
+            var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId);
             //loop the results and save.
             foreach (var item in batchProjectList)
             {
@@ -78,6 +79,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else
                 {
                     existingRecord.IS_SELECTED = item.IS_SELECTED;
+                    if (existingRecord.IS_SELECTED == false)
+                    {
+                        var existingBatchCustomers = batchCustomers.Where(x => x.PROJ_ID == item.PROJ_ID).ToList();
+                        foreach (var item1 in existingBatchCustomers)
+                        {
+                           
+                            UpdateAuditFields(item1);
+                            item1.ISACTIVE = false;
+                            CSPdb.CSS_BATCH_CUSTOMERS.Update(item1);
+                        }
+                    }
                     existingRecord.REASON = item.REASON;
                     existingRecord.ISACTIVE = item.ISACTIVE;
                     existingRecord.DP_ID = item.DP_ID;
