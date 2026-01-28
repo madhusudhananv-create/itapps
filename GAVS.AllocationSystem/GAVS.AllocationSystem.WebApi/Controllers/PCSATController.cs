@@ -79,7 +79,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 else
                 {
                     existingRecord.IS_SELECTED = item.IS_SELECTED;
-                    if (existingRecord.IS_SELECTED == false)
+                    if (!item.IS_SELECTED)
                     {
                         var existingBatchCustomers = batchCustomers.Where(x => x.PROJ_ID == item.PROJ_ID).ToList();
                         foreach (var item1 in existingBatchCustomers)
@@ -99,6 +99,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Cldb.CSS_BATCH_PROJECTS.Update(existingRecord);
                 }
             }
+            CSPdb.Commit();
             Cldb.Commit();
             FillResponseTime(stopwatch);
             return Ok();

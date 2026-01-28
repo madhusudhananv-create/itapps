@@ -15,27 +15,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetAllCustomerUser")]
         [ActionName("GetAllCustomerUser")]
         [HttpGet]
-        public IHttpActionResult GetAllCustomerUser(string customerId, string projId, bool isMonthly)
+        public IHttpActionResult GetAllCustomerUser(string customerId, string projId, bool isMonthly, DateTime startDate, DateTime endDate )
         {
             List<CUSTOMER_USERS> usersData = new List<CUSTOMER_USERS>();
             List<int> ids = new List<int>();
             var userIds = new List<CSS_BATCH_CUSTOMERS>();
+            int batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.START_DATE == startDate && x.END_DATE == endDate && x.ISACTIVE).ID;
             if (isMonthly)
             {
                 //userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.CUST_ID == customerId && t.CSAT_FREQUENCY == "Monthly").ToList<CUSTOMER_PROJECTS>();
             }
             else if (!string.IsNullOrEmpty(projId))
             {
-                userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.PROJ_ID == projId && t.CUST_ID == customerId && t.ISACTIVE).ToList();
+                userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.PROJ_ID == projId && t.CUST_ID == customerId && t.BATCH_ID == batchId && t.ISACTIVE).ToList();
             }
             else
             {
                 userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.CUST_ID == customerId && t.ISACTIVE).ToList();
             }
             //var 
-            //ids = userIds.Select(t => t.CUSTOMER_USER_ID).ToList<int>();
+            var emailIds = userIds.Select(t => t.EMAIL_ID).ToList<string>();
             //pick users who are not configured in customer projects
-            var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.CUSTOMER_ID == customerId && x.ISACTIVE).ToList();
+            var contacts = CSPdb.CONTACTS.GetAll().Where(x => x.CUSTOMER_ID == customerId && emailIds.Contains(x.CONTACT_EMAILID) && x.ISACTIVE).ToList();
 
             // usersData = CSPdb.CUSTOMER_USERS.GetAll().Where(t => ids.Contains(t.ID)).OrderBy(t => t.DISPLAY_NAME.Trim()).ToList();
             usersData = contacts.Select(x => new CUSTOMER_USERS
@@ -111,7 +112,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                         else if (!string.IsNullOrEmpty(surveyCriteria.PROJ_ID))
                         {
-                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && (t.STATUS == "CREATED" || t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT" || t.STATUS == "DRAFT") && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
+                            batchCustomer = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().FirstOrDefault(t => t.BATCH_ID == batchId && t.ISACTIVE && t.CUST_ID == surveyCriteria.CUST_ID && t.PROJ_ID == surveyCriteria.PROJ_ID && (t.STATUS == "CREATED" || t.STATUS == "MAIL SENT" || t.STATUS == "MAIL RE-SENT" || t.STATUS == "DRAFT" || t.STATUS == "COMPLETED") && t.EMAIL_ID == surveyCriteria.USER_EMAIL_ID);
                         }
                         else
                         {
