@@ -151,9 +151,9 @@ END
 GO
 
 ----Contact SP------
-IF EXISTS(Select 1 from sys.objects where name ='usp_insert_contact' AND type='P')
+IF EXISTS(Select 1 from sys.objects where name ='usp_insertHalfyearlyRespondedProject' AND type='P')
 BEGIN
-	   DROP PROCEDURE [dbo].[usp_insert_contact]
+	   DROP PROCEDURE [dbo].[usp_insertHalfyearlyRespondedProject]
 END
 GO
 CREATE proc [dbo].[usp_insertHalfyearlyRespondedProject]              
