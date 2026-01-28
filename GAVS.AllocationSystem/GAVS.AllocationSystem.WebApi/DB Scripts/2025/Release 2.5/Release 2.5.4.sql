@@ -520,7 +520,7 @@ BEGIN
   
     select @engagementType = ENGAGAMENT_TYPE from project where PROJ_ID = @projectId;  
   
-    if(@engagementType ='Managed Services')  
+    if(@engagementType in ('Managed Services', 'Fully Managed')  )
     BEGIN  
       
      SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services H'       
