@@ -150,6 +150,120 @@ BEGIN
 END
 GO
 
+--conatcts---
+
+IF EXISTS(Select 1 from sys.objects where name ='usp_insertHalfyearlyRespondedProject' AND type='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_insertHalfyearlyRespondedProject]
+END
+GO
+
+CREATE proc [dbo].[usp_insertHalfyearlyRespondedProject]           
+@customerName varchar(255),              
+@projectName  varchar(255),              
+@respondentName varchar(255), 
+@respondentRole varchar(255)  , 
+@respondentEmail varchar(255),                        
+@predictedScore decimal,
+@predictedReason varchar(255),
+@spoc varchar(255)
+               
+as              
+ BEGIN        
+                
+  declare @custId varchar(100) = ''              
+  declare @contactId int              
+                 
+   select @custid = cust_id from customer where cust_nm =@customerName              
+   if isnull( @custid  , '') = ''                
+   BEGIN                      
+   return;              
+  END              
+  --insert contact              
+  if not exists (select 1 from contacts where contact_emailid = @respondentEmail and ISACTIVE =1)              
+  BEGIN              
+    insert into contacts              
+   select @custid, @respondentName, @respondentRole,'CUSTOMER', @respondentEmail,'-', '104744', getdate(), 1, null, null, getdate(), '104744',null            
+              
+   select @contactId = @@identity              
+            
+    print 'inserted contact'            
+  END              
+  ELSE              
+  BEGIN              
+   select @contactid = id from contacts where contact_emailid = @respondentEmail               
+    --print 'update'            
+  END              
+             
+  
+  declare @projId varchar(50),
+  @dpId varchar(10),
+  @pmId varchar(10),
+  @qspoc varchar(10),
+  @batchId int = 37 ,
+  @ENDDATE DATETIME ='2025-12-31'
+   
+-- Get Project Details
+
+SELECT @projId = PROJ_ID, @dpId = PROJ_DM_EMP_ID, @pmId = PROJ_PM_EMP_ID, @qspoc = QUALITY_SPOC 
+FROM project WHERE PROJ_NM = @projectName AND PROJECT_TYPE != 'Internal'  
+    AND ((proj_status in('New','Close','Deliver','Plan','Complete') AND end_date >= DATEADD(MONTH, -6, @ENDDATE)))  
+
+--CSS_BATCH_PROJECTS
+
+
+IF NOT EXISTS (SELECT 1 FROM CSS_BATCH_PROJECTS WHERE PROJ_ID = @projId AND BATCH_ID = @batchId AND ISACTIVE = 1)
+BEGIN
+    INSERT INTO CSS_BATCH_PROJECTS
+    SELECT @custId, @projId, NULL, @dpId, @pmId, 1, @batchId, '104744', GETDATE(), '104744', GETDATE(), 1, @qspoc
+    PRINT 'Inserted css_batch_project'
+END
+
+ELSE
+BEGIN
+
+UPDATE CSS_BATCH_PROJECTS SET IS_SELECTED = 1, REASON = NULL,  UPDATED_DATE = GETDATE() WHERE PROJ_ID = @projId AND 
+BATCH_ID = @batchId and ISACTIVE = 1
+PRINT 'Updated css_batch_project'
+END
+
+--  CSS_BATCH_CUSTOMERS 
+
+
+IF NOT EXISTS (SELECT 1 FROM CSS_BATCH_CUSTOMERS WHERE PROJ_ID = @projId AND EMAIL_ID = @respondentEmail AND BATCH_ID = @batchId AND ISACTIVE = 1
+and IS_VERIFIED = 1 and PROD_ID is null)
+BEGIN
+    INSERT INTO CSS_BATCH_CUSTOMERS (
+        BATCH_ID, CUST_ID, PROJ_ID, QUESTION_MODEL_ID, EMAIL_ID, DISPLAY_NAME, PROCESS_STOP, STATUS, 
+        CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE, ISACTIVE, IS_VERIFIED, 
+        SPOC, PREDICTED_SCORE, PREDICTED_REASON
+    )
+    SELECT 
+        @batchId, @custId, @projId, 0, @respondentEmail, @respondentName, 0, 'CREATED', 
+        '104744', GETDATE(), '104744', GETDATE(), 1, 1, 
+        @spoc, @predictedScore, @predictedReason 
+    PRINT 'Inserted css_batch_customers'
+END
+ELSE
+BEGIN
+    UPDATE CSS_BATCH_CUSTOMERS 
+    SET SPOC = @spoc, IS_VERIFIED = 1,
+        PREDICTED_SCORE = @predictedScore, 
+        PREDICTED_REASON = @predictedReason,
+        UPDATED_DATE = GETDATE()
+    WHERE EMAIL_ID = @respondentEmail 
+      AND PROJ_ID = @projId AND BATCH_ID = @batchId AND ISACTIVE = 1 and PROD_ID is null
+    PRINT 'Updated css_batch_customers'
+END
+
+END
+
+
+GO
+
+
+
+
 
 IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='CSS_CC_LIST_SEAD')
 BEGIN
