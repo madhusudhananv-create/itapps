@@ -1284,6 +1284,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 case "HEALTH CARE":
                     result = helper.GetDBConfig("CSS_CC_LIST_HEALTHCARE", null);
                     break;
+                case "SEAD":
+                    result = helper.GetDBConfig("CSS_CC_LIST_SEAD", null);
+                    break;
 
                 default:
                     break;
