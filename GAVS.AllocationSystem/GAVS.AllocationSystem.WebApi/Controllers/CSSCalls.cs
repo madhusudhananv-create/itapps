@@ -342,9 +342,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //var projIds = helper.GetProjIdsForProduct(cust.PROD_ID);
                 //var projects = Cldb.PROJECT.GetAll().Where(x => projIds.Contains(x.PROJ_ID)).Select(x => x.PROJ_NM).OrderBy(x => x).ToList();
                 //EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
-                templateFile = "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
                 //subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
-                subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
+
+                templateFile = project?.BUSINESS_UNIT.ToLower() == "sead" ? "CustomerSuccessSurveyRequestIGN.htm" : "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
+
+                if (project?.BUSINESS_UNIT != null && project.BUSINESS_UNIT.ToLower() == "sead")
+                {                    
+                    var ignccMail = string.Join(", ", helper.GetDBConfig("CSS_CC_LIST_SEAD", "-1"));
+                    if (!string.IsNullOrWhiteSpace(ignccMail))
+                    {
+                        var allccList = (ccmail + "," + ignccMail).Split(',').Select(e => e.Trim()).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct(StringComparer.OrdinalIgnoreCase);
+                        ccmail = string.Join(",", allccList);
+                    }
+                    subject = $" Ignitarium (A Neurealm Company) {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
+                }
+                else 
+                {
+                    subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
+                }
+              
             }
             else if (batch.FREQUENCY == "Annual")
             {
