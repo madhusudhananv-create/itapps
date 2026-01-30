@@ -32,4 +32,6 @@ export class CssBatchCustomersExtendedModel extends CssBatchCustomersModel {
     csm:string='';
     contacT_ROLE : string = '';
     revenuE_TYPE : string = '';
+    engagemenT_TYPE : string = '';
+    businesS_UNIT : string = '';
 }

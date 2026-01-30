@@ -393,7 +393,7 @@ export class SurveyComponent implements OnInit {
 
   getDetail(text) {
     if (text == undefined || text == null || text == "") return "";
-    return "(" + text + ")";
+    return text;
   }
 
   onRatingChanged(newRating: number, index: number) {

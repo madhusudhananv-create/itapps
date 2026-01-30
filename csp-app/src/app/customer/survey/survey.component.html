@@ -71,9 +71,10 @@ The insights we gain from your feedback will guide the strategic actions we take
 </p><br /> 
  <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
    -->
-  <p>In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction
+ <p *ngIf="questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction
     Survey. Your inputs will help us to enhance the overall value of the partnership and help prepare for your strategic
     priorities.</p><br />
+  <p *ngIf="!questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Half yearly Customer Satisfaction Survey.</p><br />
   <table class="table mainTable" style="width:auto;background-color:white;">
     <thead>
       <tr *ngIf="questions_NPS">
@@ -194,9 +195,15 @@ The insights we gain from your feedback will guide the strategic actions we take
 
           <span style="color:red">*</span>
           {{criteria.question}}
-          <br />
+          <mat-icon  *ngIf="criteria.questioN_DETAIL && criteria.questioN_DETAIL.trim() !== ''" style="cursor: pointer; font-size: 14px; color : dodgerblue; vertical-align: middle; margin-top: 4px;"
+            [matTooltip]="getDetail(criteria.questioN_DETAIL)" 
+            matTooltipClass="custom-tooltip"
+            matTooltipPosition="above">
+            info
+          </mat-icon>
+          <!-- <br />
           {{getDetail( criteria.questioN_DETAIL)}}
-          <br />
+          <br /> -->
 
 
         </td>

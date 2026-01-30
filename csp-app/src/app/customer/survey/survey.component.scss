@@ -182,6 +182,15 @@ a:hover {
 .rating-label span {
   font-size: 12px;
 }
+
+::ng-deep .custom-tooltip {
+  background-color: #212529 !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  padding: 12px !important;
+  z-index: 99999 !important;
+}
+
 /* Mobile view styles */
 
 @media screen and (max-width: 768px) {

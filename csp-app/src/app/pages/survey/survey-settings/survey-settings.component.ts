@@ -59,7 +59,7 @@ export class SurveySettingsComponent implements OnInit {
     "displaY_NAME",
     "emaiL_ID",
     "contacT_ROLE",
-    "revenuE_TYPE",
+    "engagemenT_TYPE",
     "status",
     "sentdate",
     "recddate",
@@ -89,6 +89,8 @@ export class SurveySettingsComponent implements OnInit {
 
       return searchTerms.every(term => {
         return (
+          (data.businesS_UNIT && data.businesS_UNIT.toLowerCase().includes(term)) ||
+          (data.engagemenT_TYPE && data.engagemenT_TYPE.toLowerCase().includes(term)) ||
           (data.cusT_NM && data.cusT_NM.toLowerCase().includes(term)) ||
           (data.proJ_NM && data.proJ_NM.toLowerCase().includes(term)) ||
           (data.proJ_STATUS && data.proJ_STATUS.toLowerCase().includes(term)) ||
