@@ -62,6 +62,9 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public string BUSINESS_UNIT { get; set; }
 
+        public string ENGAGEMENT_TYPE { get; set; }
+
+
     }
 
 }

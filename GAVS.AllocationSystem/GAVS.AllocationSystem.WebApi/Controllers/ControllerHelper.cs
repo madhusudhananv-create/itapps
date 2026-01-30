@@ -713,6 +713,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newExt.CONTRACTING_UNIT = proj.CONTRACTING_UNIT;
                     newExt.REVENUE_TYPE = proj.REVENUE_TYPE;
                     newExt.BUSINESS_UNIT = proj.BUSINESS_UNIT;
+                    newExt.ENGAGEMENT_TYPE = proj.ENGAGAMENT_TYPE;
                 }
                 else if (proj == null && !string.IsNullOrWhiteSpace(c.PROJ_ID))
                 {
