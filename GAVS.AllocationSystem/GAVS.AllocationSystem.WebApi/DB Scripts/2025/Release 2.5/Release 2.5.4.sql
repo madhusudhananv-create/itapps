@@ -365,8 +365,6 @@ BEGIN
        DROP PROCEDURE [dbo].[reports_Account_Project_CSATConfiguration]
 END
 GO
-
-
 CREATE PROCEDURE [dbo].[reports_Account_Project_CSATConfiguration]                             
                             
 @StartDate date,                           
@@ -410,12 +408,13 @@ SELECT DISTINCT
   cbc.PREDICTED_REASON as [Predicted Reason],  
   isnull(e.FRST_NM, cbc.SPOC) as [CSAT Spoc],  
     cbc.SPOC  [CSAT MAIL],  
+	cbc.REMARKS as [REMARKS],
 	  E4.FRST_NM as [Respondent Last Updated By],  
   convert(varchar,cbc.UPDATED_DATE,107) as [Respondent Last Updated Date],  
   cp.status as [Pre Survey Connect],  
         convert(varchar,cp.planned_date,107)  as [Planned Date],  
         convert(varchar,cp.actual_date,107)  as [Actual Date],  
-       cp.remarks as [Remarks],  
+       cp.remarks as [Pre Survey Connect Remarks],  
 	   	E9.FRST_NM as [Presurvey connect Last Updated By],  
   convert(varchar,cp.UPDATED_DATE,107) as [Presurvey connect Last Updated Date],  
 
@@ -428,12 +427,13 @@ SELECT DISTINCT
     LEFT JOIN EMP_INFO E6 ON E6.EMP_ID = P.PROJ_DM_EMP_ID and E6.DOR IS NULL  
  LEFT JOIN EMP_INFO E7 ON E7.EMP_ID = P.QUALITY_SPOC and E7.DOR IS NULL  
  LEFT JOIN EMP_INFO E8 ON E8.EMP_ID = P.PROJ_BUHEAD_EMP_ID and E8.DOR IS NULL  
- LEFT JOIN CSS_BATCH_PROJECTS CB ON CB.PROJ_ID = P.PROJ_ID and cb.ISACTIVE=1  and cb.IS_SELECTED = 1
- left join CSS_BATCH_CUSTOMERS cbc on cbc.BATCH_ID=cb.BATCH_ID and cbc.PROJ_ID=p.PROJ_ID and cbc.ISACTIVE=1 and cbc.BATCH_ID=37  
+ LEFT JOIN CSS_BATCH_PROJECTS CB ON CB.PROJ_ID = P.PROJ_ID and cb.ISACTIVE=1  
+ left join CSS_BATCH_CUSTOMERS cbc on cbc.BATCH_ID=cb.BATCH_ID and cbc.PROJ_ID=p.PROJ_ID and cbc.ISACTIVE=1 
  LEFT JOIN EMP_INFO E ON E.EMAIL_ID = cbc.SPOC and E.DOR IS NULL  
  LEFT JOIN EMP_INFO E4 ON E4.EMP_ID = cbc.UPDATED_BY and E4.DOR IS NULL  
  left join CONTACTS co on co.CONTACT_EMAILID = cbc.EMAIL_ID and co.ISACTIVE = 1   and co.CUSTOMER_ID=cbc.CUST_ID  
- left JOIN CSS_BATCHES B ON B.ID = cb.BATCH_ID  
+ left JOIN CSS_BATCHES B ON B.ID = cb.BATCH_ID and (b.start_date BETWEEN @StartDate AND @EndDate                              
+OR b.ENd_date BETWEEN @StartDate AND @EndDate)     
  left join CSS_PRECONNECT cp on cp.css_batch_customer_id = cbc.ID and cp.isActive=1  
   LEFT JOIN EMP_INFO E9 ON E9.EMP_ID = cp.UPDATED_BY and E9.DOR IS NULL
     OUTER APPLY (  
@@ -463,9 +463,10 @@ SELECT DISTINCT
     ORDER BY C.CUST_NM, P.PROJ_NM  
 
 END 
-
-
 GO
+
+
+
 
 IF NOT exists (select 1 from REPORTS_SP_DETAILS WHERE SP_NAME='reports_Account_Project_CSATConfiguration')   
 BEGIN
@@ -528,165 +529,3 @@ WHERE ID = @SURVEY_ID
 END  
 Go
 
-IF EXISTS(Select 1 from sys.objects where name ='getCSATQuestionModel' AND type='P')
-BEGIN
-       DROP PROCEDURE [dbo].[getCSATQuestionModel]
-END
-GO
-
-create PROCEDURE getCSATQuestionModel      
-      
-@projectId varchar(50)  ,    
-@batchId int = 0,    
-@emailid varchar(200)= ''    
-      
-AS          
-      
-BEGIN  
-    declare @engagementType varchar(250) =''  
-  
-    select @engagementType = ENGAGAMENT_TYPE from project where PROJ_ID = @projectId;  
-  
-    if(@engagementType in ('Managed Services', 'Fully Managed')  )
-    BEGIN  
-      
-     SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services H'       
-  
-    END  
-    ELSE if(@engagementType ='Co-Managed')  
-    BEGIN  
-         SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Co-Managed H'       
-    END  
-    ELSE if(@engagementType ='Staff Augmentation')  
-    BEGIN  
-         SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Staff Augmentation H'       
-    END  
-    ELSE   
-    BEGIN  
-          IF @BATCHiD =99 AND @emailid ='xxx'    
-          BEGIN    
-           SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Qualitative Feedback'       
-          END    
-      
-          IF EXISTS(SELECT 1 FROM PROJECT where REVENUE_TYPE in ('Time and Material','Fixed Bid') and PROJ_ID = @projectId)        
-          BEGIN          
-           SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Time and Material New'      
-          END        
-      
-          ELSE IF EXISTS(SELECT 1 FROM PROJECT where REVENUE_TYPE in ('Managed Services'  ) and PROJ_ID = @projectId)      
-          BEGIN          
-           SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services New'      
-          END        
-      
-          ELSE IF EXISTS(SELECT 1 FROM PROJECT where REVENUE_TYPE in ('Fixed Monthly') and PROJ_ID = @projectId)      
-          BEGIN          
-           SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Staff Augmentation New'      
-          END        
-      
-          ELSE      
-          BEGIN      
-           SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Default'      
-          END      
-    END  
- END
- GO
-
- -- script for engagement type based question model addition-----
- IF NOT EXISTS (SELECT 1 FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Staff Augmentation H')
- BEGIN
- INSERT INTO CSS_QUESTION_MODELS (MODEL_NAME,COMMENTS,CREATED_BY,CREATED_DATE,UPDATED_BY,UPDATED_DATE,ISACTIVE)
-VALUES
-('Staff Augmentation H','CSAT Related questions','1001260',GETDATE(),'1001260',GETDATE(),1)
-END
-IF NOT EXISTS (SELECT 1 FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services H')
-BEGIN
-INSERT INTO CSS_QUESTION_MODELS (MODEL_NAME,COMMENTS,CREATED_BY,CREATED_DATE,UPDATED_BY,UPDATED_DATE,ISACTIVE)
-VALUES
-('Managed Services H','CSAT Related questions','1001260',GETDATE(),'1001260',GETDATE(),1)
-END
-
-IF NOT EXISTS (SELECT 1 FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Co-Managed H')
-BEGIN
-INSERT INTO CSS_QUESTION_MODELS (MODEL_NAME,COMMENTS,CREATED_BY,CREATED_DATE,UPDATED_BY,UPDATED_DATE,ISACTIVE)
-VALUES
-('Co-Managed H','CSAT Related questions','1001260',GETDATE(),'1001260',GETDATE(),1)
-END
-
-
-declare @modelId int = (SELECT ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Staff Augmentation H')
-
-IF NOT EXISTS (SELECT 1 FROM CSS_QUESTION_MASTER WHERE MODEL_ID = @modelId)   
- BEGIN
-INSERT INTO CSS_QUESTION_MASTER (MODEL_ID,QUESTION,CREATED_DATE,CREATED_BY, EFFECTIVE_FROM, UPDATED_BY,UPDATED_DATE,ISACTIVE,QUESTION_CATEGORY,
-RATING_SCALE,RATING_PARAM,TRIGGER_RCA,SEQUENCE, PERSPECTIVE)
-VALUES 
-
-(@modelid,'How satisfied are you with the Overall Experience while working with Neurealm during this period?*',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,1,'Overall  Experience'),
-
-(@modelid,'How satisfied are you with the Competency of the talents including understanding of business requirements and demonstrating technical expertise?',GETDATE(),'1001260',GETDATE(),'1001260',
-GETDATE(),1,'Criteria',2,NULL,1,2,'Resource Competency'),
-
-(@modelid,'How satisfied are you with the Onboarding of the resources / talents as per the expected timeline?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,3,'Timely Resource Fulfillment'),
-
-(@modelid,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,4,'Qualitative feedback')
-END
-
-declare @modelId2 int = (SELECT ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services H')
-IF NOT EXISTS (SELECT 1 FROM CSS_QUESTION_MASTER WHERE MODEL_ID = @modelId2)   
- BEGIN
-INSERT INTO CSS_QUESTION_MASTER (MODEL_ID,QUESTION,CREATED_DATE,CREATED_BY, EFFECTIVE_FROM, UPDATED_BY,UPDATED_DATE,ISACTIVE,QUESTION_CATEGORY,
-RATING_SCALE,RATING_PARAM,TRIGGER_RCA, SEQUENCE, PERSPECTIVE)
-VALUES 
-
-(@modelid2,'How satisfied are you with the Overall Experience while working with Neurealm?*',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,'Overall  Experience',1,1,'Overall  Experience'),
-
-(@modelId2,'How satisfied are you on the adherence to agreed Timelines/ SLA for deliverables / services provided?',GETDATE(),'1001260',GETDATE(),'1001260',
-GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
-
-(@modelId2,'How satisfied are you on the Quality of agreed project deliverables/ services provided?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,3,'Quality of deliverables'),
-
-(@modelId2,'How satisfied are you with the Competency of the talents including understanding of business requirements and demonstrating technical expertise?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,4,'Timely Resource Fulfillment'),
-
-(@modelId2,'How satisfied are you with the Risks and Issues managed by the project team and responsiveness to the concerns raised?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,5,'Risk Management & Responsiveness'),
-
-(@modelId2,'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',3,NULL,1,6,'Thought Leadership'),
-
-(@modelId2,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
-END
-
-declare @modelId3 int = (SELECT ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Co-Managed H')
-
-IF NOT EXISTS (SELECT 1 FROM CSS_QUESTION_MASTER WHERE MODEL_ID = @modelId3)   
- BEGIN
-INSERT INTO CSS_QUESTION_MASTER (MODEL_ID,QUESTION,CREATED_DATE,CREATED_BY, EFFECTIVE_FROM, UPDATED_BY,UPDATED_DATE,ISACTIVE,QUESTION_CATEGORY,
-RATING_SCALE,RATING_PARAM,TRIGGER_RCA, SEQUENCE, PERSPECTIVE)
-VALUES 
-
-(@modelId3,'How satisfied are you with the Overall Experience while working with Neurealm?*',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,'Overall  Experience',1,1,'Overall  Experience'),
-
-(@modelId3,'How satisfied are you on the adherence to agreed Timelines/ SLA for deliverables / services provided?',GETDATE(),'1001260',GETDATE(),'1001260',
-GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
-
-(@modelId3,'How satisfied are you on the Quality of agreed project deliverables/ services provided?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,3,'Quality of deliverables'),
-
-(@modelId3,'How satisfied are you with the Competency of the talents including understanding of business requirements and demonstrating technical expertise?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,4,'Timely Resource Fulfillment'),
-
-(@modelId3,'How satisfied are you with the Risks and Issues managed by the project team and responsiveness to the concerns raised?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',2,NULL,1,5,'Risk Management & Responsiveness'),
-
-(@modelId3,'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
-1,'Criteria',3,NULL,1,6,'Thought Leadership'),
-
-(@modelId3,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
-END
-GO
