@@ -843,12 +843,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     $"<td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
                 sb.AppendLine("</tr>");
             }
-            //foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
-            //{
-            //    sb.Append("<tr>");
-            //    sb.Append($"<td>{GetValidText(item.PERSPECTIVE)}</td><td>{item.QUESTION}</td><td>{GetRatingText(item.RATING)   }</td><td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
-            //    sb.AppendLine("</tr>");
-            //}
+            foreach (var item in replies.CSS_QUESTION_REPLIES.Where(x => x.QUESTION_CATEGORY.ToLower() == "others").OrderBy(x => x.SEQUENCE))
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td style=' text-align: center;'>{sno++}</td>" +
+                (includePerspective ? $"<td>{item.PERSPECTIVE}</td>" : "") +
+                    $"<td>{item.QUESTION}</td>" +
+                    $"<td style=' text-align: center;'>{GetRatingText(item.RATING)}</td>" +
+                    $"<td>{GetValidText(item.RATING_DESCRIPTION)}</td>");
+                sb.AppendLine("</tr>");
+            }
             return sb.ToString();
         }
         private string GetRatingText(int rating)
