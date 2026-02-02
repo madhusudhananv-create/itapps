@@ -493,3 +493,11 @@ GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
 END
 
 
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your overall satisfaction with the project team.' where ID in ('60','64','71','78')
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of  meeting the deadlines as mutually agreed while exucuting the project.' where ID in ('65','72','79')
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of how the deliverables met the expectations as per the project requirements as defined' where ID in ('66','73','80')
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of the team member''s technical or business skills as applicable.' where ID in ('61','67','74','81')
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of regular transparent communication with you in highlighting risks and issues along with timely remediation and resolution ' where ID in ('68','75','82')
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of the team''s ability to provide skilled resources within the agreed timeline. If resource fulfilment was not needed for the Survey period, you may mark the rating as 4- satisfied.' where ID =62
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of how the team regularly shares new, forward thinking ideas, suggests emerging technologies, offers strategic insights that help you stay ahead of your competition, bringing "out-of-the-box" solutions to the challenges, etc. Example: Automation ideas, emerging industry trends.' where ID in ('69','76','83')
+
