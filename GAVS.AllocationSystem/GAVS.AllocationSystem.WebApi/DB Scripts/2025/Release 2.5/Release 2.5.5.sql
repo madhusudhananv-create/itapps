@@ -471,7 +471,7 @@ INSERT INTO CSS_QUESTION_MASTER (MODEL_ID,QUESTION,CREATED_DATE,CREATED_BY, EFFE
 RATING_SCALE,RATING_PARAM,TRIGGER_RCA, SEQUENCE, PERSPECTIVE)
 VALUES 
 
-(@modelId4,'How satisfied are you with the Overall Experience while working with Ignitarium (A Neurealm company)?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
+(@modelId4,'How satisfied are you with the Overall Experience while working with Ignitarium (A Neurealm Company)?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
 1,'Criteria',2,'Overall  Experience',1,1,'Overall  Experience'),
 
 (@modelId4,'How satisfied are you on the adherence to agreed Timelines/ SLA for deliverables / services provided?',GETDATE(),'1001260',GETDATE(),'1001260',
@@ -486,18 +486,56 @@ GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
 (@modelId4,'How satisfied are you with the Risks and Issues managed by the project team and responsiveness to the concerns raised?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
 1,'Criteria',2,NULL,1,5,'Risk Management & Responsiveness'),
 
-(@modelId4,'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Ignitarium (A Neurealm company)?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
+(@modelId4,'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Ignitarium (A Neurealm Company)?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
 1,'Criteria',3,NULL,1,6,'Thought Leadership'),
 
 (@modelId4,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
 END
 
+GO
 
-update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your overall satisfaction with the project team.' where ID in ('60','64','71','78')
-update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of  meeting the deadlines as mutually agreed while exucuting the project.' where ID in ('65','72','79')
-update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of how the deliverables met the expectations as per the project requirements as defined' where ID in ('66','73','80')
-update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of the team member''s technical or business skills as applicable.' where ID in ('61','67','74','81')
-update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of regular transparent communication with you in highlighting risks and issues along with timely remediation and resolution ' where ID in ('68','75','82')
-update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of the team''s ability to provide skilled resources within the agreed timeline. If resource fulfilment was not needed for the Survey period, you may mark the rating as 4- satisfied.' where ID =62
-update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of how the team regularly shares new, forward thinking ideas, suggests emerging technologies, offers strategic insights that help you stay ahead of your competition, bringing "out-of-the-box" solutions to the challenges, etc. Example: Automation ideas, emerging industry trends.' where ID in ('69','76','83')
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your overall satisfaction with the project team.' where  QUESTION like'How satisfied are you with the Overall Experience while working with %' and MODEL_ID IN (13,14,15,16)
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of  meeting the deadlines as mutually agreed while executing the project.' where QUESTION like'How satisfied are you on the adherence to agreed Timelines/ SLA for deliverables / services provided?%' and  MODEL_ID IN (14,15,16)
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of how the deliverables met the expectations as per the project requirements as defined.' where QUESTION LIKE 'How satisfied are you on the Quality of agreed project deliverables/ services provided?%' and  MODEL_ID IN (14,15,16)
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of the team member''s technical or business skills as applicable.' where QUESTION like'How satisfied are you with the Competency of the talents including understanding of business requirements and demonstrating technical expertise?%'  and MODEL_ID IN (13,14,15,16)
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of regular, transparent communication with you in highlighting risks and issues along with timely remediation and resolution.' where QUESTION like'How satisfied are you with the Risks and Issues managed by the project team and responsiveness to the concerns raised?%'  and  MODEL_ID IN (14,15,16) 
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of the team''s ability to provide skilled resources within the agreed timeline. If resource fulfilment was not needed for the Survey period, you may mark the rating as 4- satisfied.' where QUESTION like'How satisfied are you with the Onboarding of the resources / talents as per the expected timeline?%' and MODEL_ID = 13
+update CSS_QUESTION_MASTER set QUESTION_DETAIL='Please rate your satisfaction in terms of how the team regularly shares new, forward thinking ideas, suggests emerging technologies, offers strategic insights that help you stay ahead of your competition, bringing "out-of-the-box" solutions to the challenges, etc. Example: Automation ideas, emerging industry trends.' where QUESTION like 'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by%'  and  MODEL_ID IN (14,15,16)
 
+GO
+
+ IF EXISTS (SELECT 1 FROM CSS_BATCHES WHERE CATEGORY ='Project' and FREQUENCY='Half-Yearly' and SEQUENCE= 2 )   
+ BEGIN
+update CSS_BATCHES set CSS_VALIDITY_ENDDATE = '2026-03-02 00:00:00.000' where ID = 37
+END
+
+GO
+
+
+
+IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='PCSAT_CSS_ACTIONITEM_TARGET_DATE_ADDDAYS')
+BEGIN
+INSERT INTO configuration_ext (
+    [KEY],
+    [value],
+    cust_id,
+    proj_id,
+    comments,
+    isactive,
+    created_by,
+    created_date,
+    updated_by,
+    updated_date
+) VALUES (
+    'PCSAT_CSS_ACTIONITEM_TARGET_DATE_ADDDAYS',  
+    '30',     
+    -1,                 
+    NULL,               
+    '',  
+    1,                  
+    '104744',           
+    GETDATE(),          
+    '104744',           
+    GETDATE()           
+);
+END

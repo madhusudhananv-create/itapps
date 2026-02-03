@@ -287,7 +287,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string statusMsg = string.Empty;
             string mailContent;
             string tomail = cust.EMAIL_ID;
-            string ccmail = helper.GetDBConfig("CSS_LINK_CC", cust.CUST_ID);
+            string ccmail = string.Empty; //helper.GetDBConfig("CSS_LINK_CC", cust.CUST_ID);
 
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == cust.PROJ_ID);
             var projectText = string.Empty;
@@ -323,6 +323,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string csmMails = helper.GetCSMMailsFromProject(project);
             //var pmMails = helper.GetPMFromProject(project).FirstOrDefault();
             var am = helper.GetAMFromProject(project);
+            var pm = helper.GetPMMailsFromProject(project);
             var qualitySpoc = helper.GetQualitySpocMailForProject(project, false);
 
 
@@ -330,7 +331,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
-            ccmail = helper.ConcatEmails(new List<string>() { ccmail, csmMails, am, qualitySpoc, cust.SPOC });
+            ccmail = helper.ConcatEmails(new List<string>() { csmMails, pm, qualitySpoc, cust.SPOC });
+            string bcc = string.Empty;
+            bcc = helper.GetDBConfig("CSS_BCC", "-1");
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
 
             var templateFile = "CustomerSuccessSurveySurveyRequest.htm";
@@ -382,15 +385,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             EmailContentValues.Add("FREQUENCY", batch.FREQUENCY);
             EmailContentValues.Add("YEAR", batch.YEAR.ToString());
             EmailContentValues.Add("BASE_URL", baseImageUrl);
-            if (batch.FREQUENCY.ToLower() == "annual")
-            {
-                var batchValidityDate = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batch.ID).CSS_VALIDITY_ENDDATE;
-                EmailContentValues.Add("END_DATE", batchValidityDate?.ToString("dd-MMM-yyyy"));
-            }
-            else
-            {
-                EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
-            }
+            //if (batch.FREQUENCY.ToLower() == "annual")
+            //{
+            var batchValidityDate = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == batch.ID).CSS_VALIDITY_ENDDATE;
+            EmailContentValues.Add("END_DATE", batchValidityDate?.ToString("dd-MMM-yyyy"));
+            //}
+            //else
+            //{
+            //    EmailContentValues.Add("END_DATE", helper.GetLaterDateTextForCSSValidity(DateTime.Today, cust.CUST_ID));
+            //}
 
 
             mailContent = helper.GetEmailContent(templateFile, EmailContentValues);
@@ -399,7 +402,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
-                new EmailContent { from = _email, to = tomail, cc = ccmail, bcc = Constants.CSS_BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID }
+                new EmailContent { from = _email, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID }
                 , Request
                 );
         }

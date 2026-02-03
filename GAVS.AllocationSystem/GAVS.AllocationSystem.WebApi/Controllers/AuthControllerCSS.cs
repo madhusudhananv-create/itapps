@@ -283,6 +283,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (acsat)
                 csmName = dp.FRST_NM;
 
+            var pmName = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == project.PROJ_PM_EMP_ID && x.DOR == null)?.FRST_NM;
 
             string customerName = customer?.CUST_NM;
             string projectName = string.IsNullOrWhiteSpace(firstActionItem.PORTFOLIO) ? project.PROJ_NM : firstActionItem.PORTFOLIO;
@@ -298,13 +299,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
             ccMail = helper.ConcatEmails(new List<string>() { ccMail, csmMails, qualitySpoc });
+            string bcc = string.Empty;
+            bcc = helper.GetDBConfig("CSS_BCC", "-1");
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
             EmailContentValues.Add("TABLE", tableContent.ToString());
 
             EmailContentValues.Add("CSM_NAME", csmName);
             EmailContentValues.Add("Project Name", projectName);
             EmailContentValues.Add("Portfolio", firstActionItem.PORTFOLIO);
-
+            EmailContentValues.Add("PM_NAME", pmName);
             EmailContentValues.Add("Source", firstActionItem.SOURCE);
             EmailContentValues.Add("Source_Description", firstActionItem.SOURCE_DESCRIPTION);
             EmailContentValues.Add("Owner", firstActionItem.OWNER);
@@ -333,7 +336,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
               (
               new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
-              new EmailContent { from = ServiceEmail, to = tomail, cc = ccMail, bcc = Constants.BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
+              new EmailContent { from = ServiceEmail, to = tomail, cc = ccMail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
               );
 
 
@@ -615,9 +618,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 overview.PERSPECTIVE = item.PERSPECTIVE;
             }
-            string configValue = helper.GetDBConfig("CSS_VALIDITY_DATE", "-1");
-            DateTime configCsatValidityDate = DateTime.Parse(configValue);
-            overview.PLANNED_TARGET_DATE = configCsatValidityDate.AddDays(int.Parse(helper.GetDBConfig("CSS_ACTIONITEM_TARGET_DATE_ADDDAYS", "-1")));
+            int targetdateDaysACSAT = 85;
+            int targetdateDaysPCSAT = 30;
+            if (acsat)
+            {
+                string configValue = helper.GetDBConfig("CSS_VALIDITY_DATE", "-1");
+                DateTime configCsatValidityDate = DateTime.Parse(configValue);               
+                int.TryParse(helper.GetDBConfig("CSS_ACTIONITEM_TARGET_DATE_ADDDAYS", "-1"), out targetdateDaysACSAT);
+                overview.PLANNED_TARGET_DATE = configCsatValidityDate.AddDays(targetdateDaysACSAT);
+            }              
+            else
+            {
+                int.TryParse(helper.GetDBConfig("PCSAT_CSS_ACTIONITEM_TARGET_DATE_ADDDAYS", "-1"), out targetdateDaysPCSAT);
+                overview.PLANNED_TARGET_DATE = DateTime.Today.AddDays(targetdateDaysPCSAT);
+            }
             overview.PORTFOLIO_NAME = portfolio;
             overview.DESCRIPTION = desc;
             overview.ORIGINAL_DESCRIPTION = overview.DESCRIPTION;
@@ -876,13 +890,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
 
             string tomail = replies.CSS_BATCH_CUSTOMERS_EXTENDED.EMAIL_ID;
-            string ccmail = helper.GetDBConfig("CSS_SUCCESS_MAIL_CC", "-1");
+            string ccmail = string.Empty;  //helper.GetDBConfig("CSS_SUCCESS_MAIL_CC", "-1");
             if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC))
-                ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
+                // ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
+                ccmail =  replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
             string subject = string.Empty;
             string mailContent = string.Empty;
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(b => b.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);
             var batchYear = batch.YEAR.ToString();
+            string bcc = string.Empty;
+            bcc = helper.GetDBConfig("CSS_BCC", "-1");
             ////SUBJECT
             //if (category.ToLower() == "pulse")
             //    subject = "Half Yearly Pulse Survey submitted successfully (" + replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_NM + " | " + replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_NM +
@@ -928,7 +945,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
-                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = Constants.CSS_BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
+                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
         }
         private void SendSurveySuccessEmailToManagement(BatchCustomerAndQuestions replies, string surveyId, string frequency, string category)
@@ -986,10 +1003,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             string subject = string.Empty;
             string mailContent = string.Empty;
-
+            string bcc = string.Empty;
+            bcc = helper.GetDBConfig("CSS_BCC", "-1");
 
             //TO list
-            tomail = helper.ConcatEmails(new List<string>() { csmmails, pmmmails, qualitySpoc, amMail });
+            tomail = helper.ConcatEmails(new List<string>() { csmmails, pmmmails, qualitySpoc, amMail, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC });
             ccmail += helper.GetDBConfig("CUSTOMER_SUCCESS_SURVEY", replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID);
             //var buMails = GetBUwiseCCList(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID, project);
             //if (!string.IsNullOrWhiteSpace(buMails))
@@ -999,8 +1017,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var buMailsCustomer = GetBUwiseCCListForAccount(replies.CSS_BATCH_CUSTOMERS_EXTENDED.CUST_ID, null);
             if (!string.IsNullOrWhiteSpace(buMailsCustomer))
                 ccmail += "," + buMailsCustomer;
-            if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC))
-                ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
+            //if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC))
+            //    ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
             //CSM Names
             //string CSMNames = helper.GetCSMNamesFromProject(replies.CSS_BATCH_CUSTOMERS_EXTENDED.PROJ_ID);
             //if (CSMNames == string.Empty)
@@ -1047,7 +1065,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = ServiceEmail, smtpHost = "smtp.office365.com", smtpPassword = ServicePassword, smtpPortValue = "587" },
-                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = Constants.CSS_BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
+                new EmailContent { from = ServiceEmail, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" }, Request
                 );
         }
 
