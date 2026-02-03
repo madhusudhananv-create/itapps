@@ -595,7 +595,7 @@ showDescriptionError: boolean = false;
     tDate.setDate(tDate.getDate() + 28);
     this.maxTargetDate = tDate;
 
-    if (element.source == "CSS" || element.source.includes('Customer Success Survey') || element.source == 'CSAT'|| element.source.includes('Account Customer Satisfaction Survey') ) {
+    if (element.source == "CSS" || element.source.includes('Customer Success Survey') || element.source == 'CSAT'|| element.source.includes('Customer Satisfaction Survey') ) {
       this.csatBased = true;
     }
 
