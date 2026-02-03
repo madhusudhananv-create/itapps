@@ -158,7 +158,7 @@ BEGIN
 END
 GO
 
-CREATE proc [dbo].[usp_insertHalfyearlyRespondedProject]           
+CREATE PROCEDURE [dbo].[usp_insertHalfyearlyRespondedProject]           
 @customerName varchar(255),              
 @projectName  varchar(255),              
 @respondentName varchar(255), 
@@ -258,11 +258,7 @@ END
 
 END
 
-
 GO
-
-
-
 
 
 IF NOT EXISTS (SELECT * FROM configuration_ext WHERE [KEY]='CSS_CC_LIST_SEAD')
@@ -298,7 +294,7 @@ BEGIN
 END
 GO
 
-create PROCEDURE getCSATQuestionModel      
+CREATE PROCEDURE [dbo].[getCSATQuestionModel]      
       
 @projectId varchar(50)  ,    
 @batchId int = 0,    
@@ -307,11 +303,18 @@ create PROCEDURE getCSATQuestionModel
 AS          
       
 BEGIN  
-    declare @engagementType varchar(250) =''  
+    declare @engagementType varchar(250) ='', @bu varchar(50) = ''
   
-    select @engagementType = ENGAGAMENT_TYPE from project where PROJ_ID = @projectId;  
+	select @engagementType = ENGAGAMENT_TYPE, @bu = BUSINESS_UNIT from project where PROJ_ID = @projectId;  
   
-    if(@engagementType in ('Managed Services', 'Fully Managed')  )
+   if(@engagementType in ('Managed Services', 'Fully Managed')  and @bu = 'SEAD')
+    BEGIN  
+      
+     SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services I'       
+  
+    END  
+  
+    else if(@engagementType in ('Managed Services', 'Fully Managed')  )
     BEGIN  
       
      SELECT ID as QUESTION_MODEL_ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services H'       
@@ -353,6 +356,7 @@ BEGIN
           END      
     END  
  END
+
  GO
 
  -- script for engagement type based question model addition-----
