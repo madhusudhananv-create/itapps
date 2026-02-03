@@ -405,7 +405,7 @@ GETDATE(),1,'Criteria',2,NULL,1,2,'Resource Competency'),
 (@modelid,'How satisfied are you with the Onboarding of the resources / talents as per the expected timeline?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
 1,'Criteria',2,NULL,1,3,'Timely Resource Fulfillment'),
 
-(@modelid,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,4,'Qualitative feedback')
+(@modelid,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,4,'Qualitative Feedback')
 END
 
 declare @modelId2 int = (SELECT ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Managed Services H')
@@ -433,7 +433,7 @@ GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
 (@modelId2,'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
 1,'Criteria',3,NULL,1,6,'Thought Leadership'),
 
-(@modelId2,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
+(@modelId2,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative Feedback')
 END
 
 declare @modelId3 int = (SELECT ID FROM CSS_QUESTION_MODELS WHERE MODEL_NAME='Co-Managed H')
@@ -462,7 +462,7 @@ GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
 (@modelId3,'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Neurealm?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
 1,'Criteria',3,NULL,1,6,'Thought Leadership'),
 
-(@modelId3,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
+(@modelId3,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative Feedback')
 END
 GO
 
@@ -493,7 +493,7 @@ GETDATE(),1,'Criteria',2,'Timeline Adherence',1,2,'Timeline Adherence'),
 (@modelId4,'How satisfied are you with the Innovations and Thought Leadership themes brought to the table by Ignitarium (A Neurealm Company)?',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),
 1,'Criteria',3,NULL,1,6,'Thought Leadership'),
 
-(@modelId4,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative feedback')
+(@modelId4,'Any other feedback / point that you would like to mention here which will help the Project team to serve you better in future? (Optional)',GETDATE(),'1001260',GETDATE(),'1001260',GETDATE(),1,'Others',3,NULL,1,7,'Qualitative Feedback')
 END
 
 GO
