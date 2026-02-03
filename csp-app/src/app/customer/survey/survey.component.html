@@ -196,9 +196,14 @@ The insights we gain from your feedback will guide the strategic actions we take
           <span style="color:red">*</span>
           {{criteria.question}}
           <mat-icon  *ngIf="criteria.questioN_DETAIL && criteria.questioN_DETAIL.trim() !== ''" style="cursor: pointer; font-size: 14px; color : dodgerblue; vertical-align: middle; margin-top: 4px;"
-            [matTooltip]="getDetail(criteria.questioN_DETAIL)" 
+           (click)="tooltip.toggle()" 
+           #tooltip="matTooltip"  
+           [matTooltip]="getDetail(criteria.questioN_DETAIL)" 
             matTooltipClass="custom-tooltip"
-            matTooltipPosition="above">
+            matTooltipPosition="above"
+            (click)="onInfoIconClick($event, tooltip)"
+            (mousedown)="$event.stopPropagation()"
+            (touchstart)="$event.stopPropagation()">
             info
           </mat-icon>
           <!-- <br />

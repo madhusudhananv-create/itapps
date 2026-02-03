@@ -188,7 +188,33 @@ a:hover {
   color: #ffffff !important;
   font-size: 14px !important;
   padding: 12px !important;
+  white-space: pre-wrap !important;
+  max-width: 400px !important;
+  width: max-content !important;
   z-index: 99999 !important;
+  position: fixed !important; 
+}
+
+.cdk-overlay-container {
+  z-index: 99999 !important;
+  position: fixed !important;
+}
+
+
+.cdk-overlay-pane {
+  z-index: 99999 !important;
+  position: fixed !important;
+}
+
+
+.criteria mat-icon {
+  cursor: pointer !important;
+  font-size: 14px !important;
+  line-height: 12px !important;
+  color: dodgerblue !important;
+  margin-left: 4px !important;
+  touch-action: manipulation !important; 
+  user-select: none !important;
 }
 
 /* Mobile view styles */
@@ -361,27 +387,6 @@ a:hover {
     background-color: #f5f5f5;
   }
 
-  // /* NPS rating pills - Make responsive */
-  // .pillStart,
-  // .pill,
-  // .pillEnd {
-  //   padding: 4px 9px;
-  //   font-size: 11px;
-  //   line-height: 2;
-  //   margin: 1px;
-  //   display: inline-block;
-  //   min-width: 20px;
-  //   box-sizing: border-box;
-  // }
-
-  // .pillStart {
-  //   border-radius: 8px 0 0 8px;
-  // }
-
-  // .pillEnd {
-  //   border-radius: 0 8px 8px 0;
-  // }
-
   /* NPS rating pills - Enhanced responsive behavior */
   .pillStart,
   .pill,
@@ -530,7 +535,46 @@ a:hover {
     font-size: 12px;
   }
 
-  /* Confirmation Dialog Mobile Responsive Styles */
+  
+
+
+.criteria {
+  display: block !important; 
+  padding: 10px !important;
+  line-height: 1.6 !important;
+  word-wrap: break-word !important;
+}
+
+.criteria mat-icon {
+  display: inline-flex !important; 
+  vertical-align: middle !important;
+  margin-left: 4px !important;
+  font-size: 12px !important; 
+  width: 18px !important;
+  height: 18px !important;
+  cursor: pointer !important;
+  color: dodgerblue !important; 
+}
+
+
+.criteria b, .criteria span, .criteria p {
+  display: inline !important;
+}
+
+
+::ng-deep .custom-tooltip {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-width: 85vw !important;
+  width: 280px !important;
+  z-index: 100001 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  pointer-events: auto !important;
+}
+
   .mat-dialog-container {
     width: 95% !important;
     max-width: 350px !important;

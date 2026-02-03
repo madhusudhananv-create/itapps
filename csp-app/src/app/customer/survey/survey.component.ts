@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, TemplateRef,ViewChildren, QueryList  } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { myUtility } from '../../Shared/myUtility';
 import { AppsService } from '../../Services/apps.service';
@@ -12,6 +12,7 @@ import { E } from '@angular/core/src/render3';
 import { ViewTemplateComponent } from '../../../app/controls/view-template/view-template.component';
 import { environment } from '../../../environments/environment';
 import { NoopScrollStrategy } from '@angular/cdk/overlay';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-survey',
@@ -48,6 +49,9 @@ export class SurveyComponent implements OnInit {
   dialogExpiry: boolean = false;
   hasRatingBeenSelected: boolean = false;
   disableSubmit: boolean = false;
+  @ViewChildren(MatTooltip) tooltips!: QueryList<MatTooltip>;
+
+  private currentOpenTooltip: MatTooltip | null = null;
   // ddRatings = [
   //   { 'key': '1 - Poor', 'value': 1 },
   //   { 'key': '2 - Fair', 'value': 2 },
@@ -102,6 +106,12 @@ export class SurveyComponent implements OnInit {
       this.displayTemp = true;
       this.service_GetSurveyQuestions(this.guId.guid);
     }
+    document.addEventListener('click', () => {
+      if (this.currentOpenTooltip) {
+        this.currentOpenTooltip.hide();
+        this.currentOpenTooltip = null;
+      }
+    });
   }
 
   ngOnChanges() {
@@ -394,6 +404,24 @@ export class SurveyComponent implements OnInit {
   getDetail(text) {
     if (text == undefined || text == null || text == "") return "";
     return text;
+  }
+
+  onInfoIconClick(event: MouseEvent, tooltip: MatTooltip): void {
+    event.stopPropagation();
+    
+    // If there's already an open tooltip, hide it
+    if (this.currentOpenTooltip && this.currentOpenTooltip !== tooltip) {
+      this.currentOpenTooltip.hide();
+    }
+
+    // Toggle the clicked tooltip
+    if (tooltip['_isTooltipVisible']()) {
+      tooltip.hide();
+      this.currentOpenTooltip = null;
+    } else {
+      tooltip.show();
+      this.currentOpenTooltip = tooltip;
+    }
   }
 
   onRatingChanged(newRating: number, index: number) {
