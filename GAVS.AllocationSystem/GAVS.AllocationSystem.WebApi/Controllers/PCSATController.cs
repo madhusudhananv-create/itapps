@@ -264,7 +264,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var mailList = new List<string>();
             if (!isQualitySpoc)
             {
-                SendPCSATAcknowledgementEmail(dpId, null, batchId, false);
+                SendPCSATAcknowledgementEmail(dpId, null, dpId, batchId, false);
                 mailList.Add(dpId);
             }
 
@@ -275,7 +275,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string pmId = item.Key;
                     if (!string.IsNullOrEmpty(pmId) && !mailList.Contains(pmId))
                     {
-                        SendPCSATAcknowledgementEmail(pmId, dpId, batchId, true);
+                        SendPCSATAcknowledgementEmail(pmId, isQualitySpoc ? dpId : null, dpId, batchId, true);
                         mailList.Add(pmId);
                     }
                 }
@@ -285,7 +285,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string accountDpId = item.Key;
                     if (!string.IsNullOrEmpty(accountDpId) && !mailList.Contains(accountDpId))
                     {
-                        SendPCSATAcknowledgementEmail(accountDpId, dpId, batchId, false);
+                        SendPCSATAcknowledgementEmail(accountDpId, isQualitySpoc ? dpId : null, dpId, batchId, false);
                         mailList.Add(accountDpId);
                     }
                 }
@@ -356,7 +356,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return result;
         }
-        private void SendPCSATAcknowledgementEmail(string dpId, string qualitySpoc, int batchId, bool isForPM)
+        private void SendPCSATAcknowledgementEmail(string dpId, string qualitySpoc, string currentUserId, int batchId, bool isForPM)
         {
             try
             {
@@ -399,7 +399,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 var sbRespondents = new StringBuilder();
                 int respSNo = 1;
-                string updatedBy = qualitySpoc;
+                string updatedBy = currentUserId;
                 foreach (var row in respondents)
                 {
                     string projName = GetProjectName(row.PROJ_ID);

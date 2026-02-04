@@ -15,12 +15,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetAllCustomerUser")]
         [ActionName("GetAllCustomerUser")]
         [HttpGet]
-        public IHttpActionResult GetAllCustomerUser(string customerId, string projId, bool isMonthly, DateTime startDate, DateTime endDate )
+        public IHttpActionResult GetAllCustomerUser(string customerId, string projId, bool isMonthly, DateTime startDate, DateTime endDate)
         {
             List<CUSTOMER_USERS> usersData = new List<CUSTOMER_USERS>();
             List<int> ids = new List<int>();
             var userIds = new List<CSS_BATCH_CUSTOMERS>();
-            int batchId = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.START_DATE == startDate && x.END_DATE == endDate && x.ISACTIVE).ID;
+            var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.START_DATE == startDate && x.END_DATE == endDate && x.ISACTIVE);
+            if (batch == null)
+                return Ok();
+            int batchId = batch.ID;
             if (isMonthly)
             {
                 //userIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(t => t.CUST_ID == customerId && t.CSAT_FREQUENCY == "Monthly").ToList<CUSTOMER_PROJECTS>();

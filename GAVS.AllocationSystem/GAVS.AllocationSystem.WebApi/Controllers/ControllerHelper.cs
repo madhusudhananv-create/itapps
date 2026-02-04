@@ -227,7 +227,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public List<string> GetCSMMailsFromAccount(string cust_id)
         {
             string emails = string.Empty;
-            var csms = Cldb.PROJECT.GetAll().Where(x => x.CUST_ID == cust_id).Select(x => x.PROJ_DM_EMP_ID).Distinct().ToList();
+            var csms = Cldb.PROJECT.GetAll().Where(x => x.CUST_ID == cust_id && x.PROJ_STATUS != "close").Select(x => x.PROJ_DM_EMP_ID).Distinct().ToList();
             return GetEmployeeMailIdList(csms);
 
         }
