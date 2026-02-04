@@ -106,6 +106,7 @@ export class PresurveyConnectComponent implements OnInit {
         : null,
       status: this.presurveyformData.status,
       remarks: this.presurveyformData.remarks || '',
+      updateD_BY_NAME :''
     };
 
     this._appservice.savePreconnectSurveyData(surveyData).subscribe(

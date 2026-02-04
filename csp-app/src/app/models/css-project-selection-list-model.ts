@@ -40,5 +40,6 @@ export class CssPresurveyConnectModel {
     updateD_BY?: string;
     updateD_DATE?: Date;
     isactive?: boolean;
+    updateD_BY_NAME: string;
 }
 
