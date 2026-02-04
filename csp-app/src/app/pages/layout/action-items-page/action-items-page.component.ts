@@ -80,6 +80,7 @@ export class ActionItemsPageComponent implements OnInit {
   isSaved: boolean = false;
   isCustomerUpdated: boolean = false;
   maxTargetDate: any;
+  maxActualPlanTargetDate: any;
   // isDescUpdated: boolean = false;
   originalDescription: string = "";
   status = '';
@@ -594,6 +595,11 @@ showDescriptionError: boolean = false;
     let tDate = new Date(this.EditActionitem.identifieD_DATE);
     tDate.setDate(tDate.getDate() + 28);
     this.maxTargetDate = tDate;
+
+
+    let aDate = new Date(this.EditActionitem.identifieD_DATE);
+    aDate.setDate(aDate.getDate() + 90);
+    this.maxActualPlanTargetDate = aDate;
 
     if (element.source == "CSS" || element.source.includes('Customer Success Survey') || element.source == 'CSAT'|| element.source.includes('Customer Satisfaction Survey') ) {
       this.csatBased = true;

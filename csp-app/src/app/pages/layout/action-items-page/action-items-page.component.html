@@ -355,9 +355,9 @@
       </div>
       <div *ngIf="csatBased" class="row">
         <mat-form-field style="width:23%">
-          <input [min]="EditActionitem.identifieD_DATE" [max]="maxTargetDate" matInput name="planneD_TARGET_DATE"
+          <input [min]="EditActionitem.identifieD_DATE" [max]="maxActualPlanTargetDate" matInput name="planneD_TARGET_DATE"
             [(ngModel)]="EditActionitem.planneD_TARGET_DATE" [matDatepicker]="picker5"
-            [disabled]="EditActionitem.actioN_ITEM_ID > 0" placeholder="Action Plan Completion - Target date">
+            placeholder="Action Plan Completion - Target date">
           <mat-datepicker-toggle matSuffix [for]="picker5"></mat-datepicker-toggle>
           <mat-datepicker #picker5></mat-datepicker>
         </mat-form-field>
