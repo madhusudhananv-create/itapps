@@ -102,11 +102,15 @@ namespace GAVS.AllocationSystem.Data
   
    
             public IRepository<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get { return GetStandardRepo<CSS_BATCH_PROJECTS>(); } }
-
-            public IRepository<CSS_PRECONNECT> CSS_PRECONNECT { get { return GetStandardRepo<CSS_PRECONNECT>(); } }
-
+  
    
             public IRepository<ENTITY_HISTORY> ENTITY_HISTORY { get { return GetStandardRepo<ENTITY_HISTORY>(); } }
+  
+   
+            public IRepository<CSS_PRECONNECT> CSS_PRECONNECT { get { return GetStandardRepo<CSS_PRECONNECT>(); } }
+  
+   
+            public IRepository<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get { return GetStandardRepo<DROPDOWN_OPTIONS>(); } }
   
     }
 }

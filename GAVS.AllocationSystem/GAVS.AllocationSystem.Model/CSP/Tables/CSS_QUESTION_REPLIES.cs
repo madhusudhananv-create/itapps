@@ -37,5 +37,11 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         
         public string PERSPECTIVE { get; set; }
+
+        public string QUALITATIVE_CATEGORY { get; set; }
+
+        public string QUALITATIVE_STATUS { get; set; }
+        public string QUALITATIVE_REMARKS { get; set; }
+
     }
 }

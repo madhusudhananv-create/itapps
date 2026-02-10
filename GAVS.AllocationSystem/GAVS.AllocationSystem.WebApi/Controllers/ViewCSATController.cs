@@ -267,7 +267,34 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
-    }
+        [POST("UpdateQualitativeAnalysis")]
+        [ActionName("UpdateQualitativeAnalysis")]
+        [HttpPost]
+        public IHttpActionResult UpdateQualitativeAnalysis([FromBody] List<CSS_QUESTION_REPLIES> replies)
+        {
+            var ids = replies.Select(x => x.ID).ToList();
+            var entities = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(x => ids.Contains(x.ID)).ToList();
+            foreach (var item in replies)
+            {
+                var ety = entities.FirstOrDefault(x => x.ID == item.ID);
+                if (ety == null)
+                {
+                    //raise error
+                }
+                else
+                {
+                    ety.QUALITATIVE_CATEGORY = item.QUALITATIVE_CATEGORY;
+                    ety.QUALITATIVE_CATEGORY = item.QUALITATIVE_CATEGORY;
+                    ety.QUALITATIVE_CATEGORY = item.QUALITATIVE_CATEGORY;
+                    UpdateAuditFields(ety);
+                    CSPdb.CSS_QUESTION_REPLIES.Update(ety);
+                }
+            }
+            CSPdb.Commit();
+            return Ok();
+        }
+
+        }
     public class SURVEY_SEARCH_CRITERIA
     {
         public string CUST_ID { get; set; }

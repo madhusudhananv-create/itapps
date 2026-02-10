@@ -39,6 +39,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok();
         }
 
+        [GET("GetDropdownOptionsFromDB")]
+        [ActionName("GetDropdownOptionsFromDB")]
+        [HttpGet]
+        public IHttpActionResult GetDropdownOptionsFromDB(string name)
+        {
+            var result = new List<DROPDOWN_OPTIONS>();
+            result = CSPdb.DROPDOWN_OPTIONS.GetAll().Where(x => x.ISACTIVE && x.DD_NAME == name).ToList();
+            return Ok(result);
+        }
         [GET("DownloadFile")]
         [ActionName("DownloadFile")]
         [HttpGet]

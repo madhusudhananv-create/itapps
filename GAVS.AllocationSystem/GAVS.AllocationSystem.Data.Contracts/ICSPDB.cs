@@ -57,12 +57,12 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository_CSP<KPI_GOALS> KPI_GOALS { get; }
         IRepository_CSP<LAST_UPDATED_DETAILS> LAST_UPDATED_DETAILS { get; }
 
-        IRepository_CSP<NOTES>NOTES { get; }
+        IRepository_CSP<NOTES> NOTES { get; }
         IRepository_CSP<MOM> MOM { get; }
         IRepository_CSP<PARAMETER_TABLE> PARAMETER_TABLE { get; }
         IRepository_CSP<CSAT_SURVEY_DATA> CSAT_SURVEY_DATA { get; }
         IRepository_CSP<PORTFOLIO> PORTFOLIO { get; }
-        
+
         IRepository_CSP<PORTFOLIO_PRODUCT> PORTFOLIO_PRODUCTS { get; }
         IRepository_CSP<PORTFOLIO_PROJECT> PORTFOLIO_PROJECT { get; }
         IRepository_CSP<PORTFOLIOS> PORTFOLIOS { get; }
@@ -193,7 +193,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         IRepository_CSP<FMEAModel> FMEAModel { get; }
         IRepository_CSP<Failure_Mode_Master> Failure_Mode_Master { get; }
-        
+
         IRepository_CSP<CHECKLIST_SCORES_BY_AUDIT> CHECKLIST_SCORES_BY_AUDIT { get; }
 
         IRepository_CSP<FMEA_DATA_STAGE2_MODEL> FMEA_DATA_STAGE2_MODEL { get; }
@@ -241,13 +241,13 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         IRepository_CSP<PRODUCTS_SERVICE_LEVEL_TYPE> PRODUCTS_SERVICE_LEVEL_TYPE { get; }
 
-        IRepository_CSP<PRODUCT_SERVICE_LEVEL_METRICS> PRODUCT_SERVICE_LEVEL_METRICS { get; }        
+        IRepository_CSP<PRODUCT_SERVICE_LEVEL_METRICS> PRODUCT_SERVICE_LEVEL_METRICS { get; }
         IRepository_CSP<REFERENCE_MASTER> REFERENCE_MASTER { get; }
 
         IRepository_CSP<BASE_MEASURE> BASE_MEASURE { get; }
         IRepository_CSP<SERVICE_LEVEL_MEASUREMENT_2_BASE_MEASURE_CONFIG> SERVICE_LEVEL_MEASUREMENT_2_BASE_MEASURE_CONFIG { get; }
         IRepository_CSP<KPI_BASE_MEASURE_VALUE> KPI_BASE_MEASURE_VALUE { get; }
-    
+
         IRepository_CSP<AUDIT_CHECKLIST_WEIGHTAGE_SCORES> AUDIT_CHECKLIST_WEIGHTAGE_SCORES { get; }
         IRepository_CSP<PRODUCT_RESPONSIBLE> PRODUCT_RESPONSIBLE { get; }
 
@@ -266,7 +266,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository_CSP<SLA_REJECTION_STATUS> SLA_REJECTION_STATUS { get; }
         IRepository_CSP<TASK_STATUS_HISTORY> TASK_STATUS_HISTORY { get; }
 
-        IRepository_CSP<APPRECIATION> APPRECIATION { get; }        
+        IRepository_CSP<APPRECIATION> APPRECIATION { get; }
         IRepository_CSP<PROJECT_INSCOPE_DETAILS> PROJECT_INSCOPE_DETAILS { get; }
         IRepository_CSP<CSS_QUESTION_MODELS> CSS_QUESTION_MODELS { get; }
 
@@ -277,5 +277,8 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository_CSP<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get; }
 
         IRepository_CSP<ENTITY_HISTORY> ENTITY_HISTORY { get; }
+
+        IRepository_CSP<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get; }
+
     }
 }
