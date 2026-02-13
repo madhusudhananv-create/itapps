@@ -217,6 +217,17 @@ a:hover {
   user-select: none !important;
 }
 
+.mat-icon-button .mat-icon {
+    font-size: 21px !important;
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    margin-top: -40px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 /* Mobile view styles */
 
 @media screen and (max-width: 768px) {
@@ -300,7 +311,7 @@ a:hover {
   table.table:not(:first-of-type) tr td:nth-child(odd),
   table.table:not(:first-of-type) tr th:nth-child(odd) {
     font-weight: bold;
-    background-color: #f5f5f5;
+    background-color: transparent !important;
     font-size: 11px;
   }
 

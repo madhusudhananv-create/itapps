@@ -1,3 +1,4 @@
+<ng4-loading-spinner> </ng4-loading-spinner>
 <div *ngIf="questions" class="tahoma-font" style="background-color:white;padding:20px">
   <p style="font-size:20px;" *ngIf="!displayTemp">
     <img src="assets/images/GAVS_Logo.png" id="Gavs-logo">&nbsp;&nbsp;&nbsp;Customer Satisfaction Survey
@@ -56,6 +57,22 @@
       (change)="onCheckboxChange($event)">
       Customer Success Manager / Delivery Partner is aware of the client feedback
     </mat-checkbox>
+
+     <button mat-icon-button iconButton [matTooltip]="'Qualitative Analysis History'"
+      *ngIf ="showQualitativeAnalysisFields"
+     [matMenuTriggerFor]="historyMenu">
+        <mat-icon style="margin-bottom: -34px;margin-left: -30px;">info</mat-icon>
+      </button>
+
+      <mat-menu #historyMenu="matMenu" >
+        <div style="padding: 10px; max-width: 300px;">
+          <p><b>Updated By: </b>{{ (lastUpdateByQualitative && lastUpdateByQualitative !== '') ? lastUpdateByQualitative : 'NA' }} </p>
+          <p>
+            <b>Updated Date:</b>
+            {{ (lastUpdateDateQualitative && lastUpdateByQualitative !== 'NA') ? (lastUpdateDateQualitative | date: 'dd-MM-yyyy') : 'NA' }}
+          </p>
+        </div>
+      </mat-menu>
     &nbsp; &nbsp; &nbsp;
     <a *ngIf="!IsCompleted" class="link" (click)="viewTemplate('CustomerSuccessSurveyQualitativeFeedback')"
       style="cursor: pointer;">Click here to view the mail template that will be sent to customer</a>
@@ -71,10 +88,12 @@ The insights we gain from your feedback will guide the strategic actions we take
 </p><br /> 
  <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
    -->
- <p *ngIf="questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction
+  <p *ngIf="questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Annual
+    Customer Satisfaction
     Survey. Your inputs will help us to enhance the overall value of the partnership and help prepare for your strategic
     priorities.</p><br />
-  <p *ngIf="!questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Half yearly Customer Satisfaction Survey.</p><br />
+  <p *ngIf="!questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Half
+    yearly Customer Satisfaction Survey.</p><br />
   <table class="table mainTable" style="width:auto;background-color:white;">
     <thead>
       <tr *ngIf="questions_NPS">
@@ -186,58 +205,64 @@ The insights we gain from your feedback will guide the strategic actions we take
       </tr>
     </thead>
     <tbody class="tahoma-font" *ngIf="questions_Criteria">
-      <tr *ngFor="let criteria of questions_Criteria;let i = index">
+      <ng-container *ngFor="let criteria of questions_Criteria;let i = index">
+        <tr>
+
+          <td class="criteria">
 
 
-        <td class="criteria">
+
+            <span style="color:red">*</span>
+            {{criteria.question}}
+            <mat-icon *ngIf="criteria.questioN_DETAIL && criteria.questioN_DETAIL.trim() !== ''"
+              style="cursor: pointer; font-size: 14px; color : dodgerblue; vertical-align: middle; margin-top: 4px;"
+              (click)="tooltip.toggle()" #tooltip="matTooltip" [matTooltip]="getDetail(criteria.questioN_DETAIL)"
+              matTooltipClass="custom-tooltip" matTooltipPosition="above" (click)="onInfoIconClick($event, tooltip)"
+              (mousedown)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()">
+              info
+            </mat-icon>
 
 
 
-          <span style="color:red">*</span>
-          {{criteria.question}}
-          <mat-icon  *ngIf="criteria.questioN_DETAIL && criteria.questioN_DETAIL.trim() !== ''" style="cursor: pointer; font-size: 14px; color : dodgerblue; vertical-align: middle; margin-top: 4px;"
-           (click)="tooltip.toggle()" 
-           #tooltip="matTooltip"  
-           [matTooltip]="getDetail(criteria.questioN_DETAIL)" 
-            matTooltipClass="custom-tooltip"
-            matTooltipPosition="above"
-            (click)="onInfoIconClick($event, tooltip)"
-            (mousedown)="$event.stopPropagation()"
-            (touchstart)="$event.stopPropagation()">
-            info
-          </mat-icon>
-          <!-- <br />
+            <!-- <br />
           {{getDetail( criteria.questioN_DETAIL)}}
           <br /> -->
 
+          </td>
 
-        </td>
-
-
-        <td class="starRating" nowrap>
-          <b *ngIf="proj != '' && proj != null ">
-            {{criteria.perspective}}
-          </b>
-          <br />
-          <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE" [rating]="criteria.rating"
-            [starCount]="starCount" [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
-        </td>
-        <td style="padding:0px;">
-          <div class="textarea-wrapper">
-            <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
-              style="width:100%;height:95px;padding-top:15px" [disabled]="IsCompleted" maxlength="500"
-              [class.highlight]="criteria.rating < 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
+          <td class="starRating" nowrap>
+            <b *ngIf="proj != '' && proj != null ">
+              {{criteria.perspective}}
+            </b>
+            <br />
+            <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE" [rating]="criteria.rating"
+              [starCount]="starCount" [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
+          </td>
+          <td style="padding:0px;">
+            <div class="textarea-wrapper">
+              <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
+                style="width:100%;height:95px;padding-top:15px" [disabled]="IsCompleted" maxlength="500"
+                [class.highlight]="criteria.rating < 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
         </textarea>
-            <span class="remaning">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/500</span>
-          </div>
-        </td>
-      </tr>
+              <span class="remaning">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/500</span>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="showQualitativeAnalysisFields">
+          <td colspan="2" style="padding-left: 20px; ">
+            <ng-container *ngTemplateOutlet="qualitativeFields; context: {item: criteria}"></ng-container>
+          </td>
+          <td style="background-color: transparent;"></td>
+        </tr>
+      </ng-container>
     </tbody>
     <br />
 
     <tr *ngIf="questions_Others[0]">
       <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[0].question}}
       </td>
+
     </tr>
     <tr *ngIf="questions_Others[0]">
       <td colspan="3" style="padding:0px;">
@@ -246,6 +271,12 @@ The insights we gain from your feedback will guide the strategic actions we take
             style="width:100%;height:50px" [disabled]="IsCompleted" maxlength="300"></textarea>
           <span class="remaning">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/300</span>
         </div>
+      </td>
+    </tr>
+
+    <tr *ngIf="questions_Others[0] && showQualitativeAnalysisFields">
+      <td colspan="2" style="padding-left: 20px; ">
+        <ng-container *ngTemplateOutlet="qualitativeFields; context: {item: questions_Others[0]}"></ng-container>
       </td>
     </tr>
 
@@ -285,22 +316,76 @@ The insights we gain from your feedback will guide the strategic actions we take
         <button type="button" (click)="SubmitForm(0)" class="btn btn-primary" [disabled]="disableSubmit">Submit</button>
       </td>
     </tr>
+    <tr *ngIf="showQualitativeAnalysisFields">
+      <td style="text-align:center" colspan="3">
+        <button type="button" (click)="SubmitFormQualitative(0)" class="btn btn-primary"
+          [disabled]="disableSubmitQualitative" style="margin-right: 15px;">Save Qualitative Analysis</button>
+        <button type="button" (click)="SubmitFormQualitative(1)" class="btn btn-primary"
+          [disabled]="disableSubmitQualitative">Submit Qualitative Analysis </button>
+
+      </td>
+    </tr>
   </table>
-</div>
-<ng-template class="tahoma-font" #confirmationDialog>
-  <h2 mat-dialog-title style="padding: 12px 1pc 0 11pc; margin: 0;">
-    {{dialogHeading}}</h2>
-  <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
-    {{ dialogMessage }}
-  </mat-dialog-content>
-  <mat-dialog-actions *ngIf="!dialogSuccess" style="padding: 20px;">
-    <button class="btn btn-primary-confirm" mat-button [mat-dialog-close]="1" style="margin: 0 100px;">Yes</button>
-    <button class="btn btn-warning-confirm" mat-button [mat-dialog-close]="0" style="margin-left: 5%;">No</button>
-  </mat-dialog-actions>
-  <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
-    <button *ngIf="!dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
-      style="margin: 0 160px;">OK</button>
-    <button *ngIf="dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
-      style="margin: 0 200px;">OK</button>
-  </mat-dialog-actions>
-</ng-template>
+
+  <ng-template class="tahoma-font" #confirmationDialog>
+    <h2 mat-dialog-title style="padding: 12px 1pc 0 11pc; margin: 0;">
+      {{dialogHeading}}</h2>
+    <mat-dialog-content style="padding: 12px 12px 0 12px; margin: 0;">
+      {{ dialogMessage }}
+    </mat-dialog-content>
+    <mat-dialog-actions *ngIf="!dialogSuccess" style="padding: 20px;">
+      <button class="btn btn-primary-confirm" mat-button [mat-dialog-close]="1" style="margin: 0 100px;">Yes</button>
+      <button class="btn btn-warning-confirm" mat-button [mat-dialog-close]="0" style="margin-left: 5%;">No</button>
+    </mat-dialog-actions>
+    <mat-dialog-actions *ngIf="dialogSuccess" style="padding: 30px;">
+      <button *ngIf="!dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
+        style="margin: 0 160px;">OK</button>
+      <button *ngIf="dialogExpiry" class="btn btn-primary" mat-button [mat-dialog-close]="1"
+        style="margin: 0 200px;">OK</button>
+    </mat-dialog-actions>
+  </ng-template>
+
+
+  <ng-template #qualitativeFields let-item="item">
+    <div style="font-weight: bold; padding: 0px 0 5px 20px;">Qualitative Analysis:-
+     
+    </div>
+    <div style="background-color: #F0F4F8; padding: 6px 10px 0px 18px;">
+
+      <mat-form-field appearance="outline" class="custom-bg-field compact-field"
+        style="width: 170px; margin-right: 30px;">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="item.qualitativE_CATEGORY" [matTooltip]="item.qualitativE_CATEGORY"
+          [disabled]="disableSubmitQualitative">
+          <mat-option value="Positive">Positive</mat-option>
+          <mat-option value="Neutral">Neutral</mat-option>
+          <mat-option value="Negative">Negative</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="custom-bg-field compact-field"
+        style="width: 220px; margin-right: 30px;">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="item.qualitativE_STATUS" [matTooltip]="item.qualitativE_STATUS"
+          [disabled]="disableSubmitQualitative">
+          <mat-option *ngFor="let dropdown of dropdownText" [value]="dropdown.dD_TEXT">
+            {{dropdown.dD_TEXT}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="custom-bg-field compact-field" style="width: 170px;">
+        <mat-label>Remarks</mat-label>
+        <input matInput [(ngModel)]="item.qualitativE_REMARKS" maxlength="200" [disabled]="disableSubmitQualitative">
+
+      </mat-form-field>
+
+      <button mat-icon-button aria-label="Clear Row" *ngIf=" !disableSubmitQualitative 
+    && (item.qualitativE_CATEGORY || item.qualitativE_STATUS || item.qualitativE_REMARKS)"
+        (click)="clearRowQualitative(item)" title="Clear this row" style="color: black; margin-left: 5px;">
+        <mat-icon>clear_all</mat-icon>
+      </button>
+
+
+    </div>
+  </ng-template>

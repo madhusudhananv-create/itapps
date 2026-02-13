@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, TemplateRef,ViewChildren, QueryList  } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, TemplateRef, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { myUtility } from '../../Shared/myUtility';
 import { AppsService } from '../../Services/apps.service';
@@ -13,6 +13,7 @@ import { ViewTemplateComponent } from '../../../app/controls/view-template/view-
 import { environment } from '../../../environments/environment';
 import { NoopScrollStrategy } from '@angular/cdk/overlay';
 import { MatTooltip } from '@angular/material/tooltip';
+import { Ng4LoadingSpinnerService } from 'ng4-loading-spinner';
 
 @Component({
   selector: 'app-survey',
@@ -49,7 +50,14 @@ export class SurveyComponent implements OnInit {
   dialogExpiry: boolean = false;
   hasRatingBeenSelected: boolean = false;
   disableSubmit: boolean = false;
+  dropdownName: string = "QUALITATIVE_ANALYSIS";
+  dropdownText: any;
+  loading: boolean = false;
+  lastEmpId: string;
+  lastUpdateDateQualitative: Date;
+  lastUpdateByQualitative: string;
   @ViewChildren(MatTooltip) tooltips!: QueryList<MatTooltip>;
+  replies: CssQuestionRepliesModel[] = [];
 
   private currentOpenTooltip: MatTooltip | null = null;
   // ddRatings = [
@@ -77,6 +85,9 @@ export class SurveyComponent implements OnInit {
   @Input('guId') guId: any;
   @Input('showQualitativeFeedback') showQualitativeFeedback: boolean = false;
   @Input('showCSSFields') showCSSFields: boolean = false;
+  @Input('showQualitativeAnalysisFields') showQualitativeAnalysisFields: boolean = false;
+  @Input('disableSubmitQualitative') disableSubmitQualitative: boolean = false;
+  @Input('isQualitativeEditable') isQualitativeEditable: boolean = false;
   @ViewChild('confirmationDialog') confirmationDialogTemplate: TemplateRef<any>
   displayTemp: boolean = false;
   pName: any;
@@ -89,7 +100,9 @@ export class SurveyComponent implements OnInit {
   maxDate: Date = new Date();
   // rowspan: number = 1;
 
-  constructor(private route: ActivatedRoute, private _util: myUtility, private _appservice: AppsService, public dialog: MatDialog) { }
+  constructor(private route: ActivatedRoute, private _util: myUtility, private _appservice: AppsService, public dialog: MatDialog,
+    private _spinner: Ng4LoadingSpinnerService
+  ) { }
 
   ngOnInit() {
     this.questions = new BatchCustomerAndQuestions();
@@ -105,6 +118,7 @@ export class SurveyComponent implements OnInit {
     if (this.guId != undefined && this.guId != null) {
       this.displayTemp = true;
       this.service_GetSurveyQuestions(this.guId.guid);
+      this.getDropdownValues();
     }
     document.addEventListener('click', () => {
       if (this.currentOpenTooltip) {
@@ -185,15 +199,15 @@ export class SurveyComponent implements OnInit {
           return;
         }
       }
-      if(this.questions_NPS != undefined && this.questions_NPS != null) {
-       if (!this.hasRatingBeenSelected) {
-        this.showWarningPopup("Kindly provide rating for '" + this.questions_NPS.question + "'");
-        return;
-      }
-      if (this.questions_NPS.rating >= 0 && this.questions_NPS.rating < 9 && this.questions_NPS.ratinG_DESCRIPTION == "") {
-        this.showWarningPopup("Kindly provide remarks in highlighted fields if the rating is less than 9.");
-        return;
-      }
+      if (this.questions_NPS != undefined && this.questions_NPS != null) {
+        if (!this.hasRatingBeenSelected) {
+          this.showWarningPopup("Kindly provide rating for '" + this.questions_NPS.question + "'");
+          return;
+        }
+        if (this.questions_NPS.rating >= 0 && this.questions_NPS.rating < 9 && this.questions_NPS.ratinG_DESCRIPTION == "") {
+          this.showWarningPopup("Kindly provide remarks in highlighted fields if the rating is less than 9.");
+          return;
+        }
       }
 
       for (let q of this.questions_Criteria) {
@@ -209,7 +223,7 @@ export class SurveyComponent implements OnInit {
           const specialCharPattern = /^[!@#$%^&*(),.?":{}|<>~`_\-+=\[\]\\\/\s]+$/;
           const numberPattern = /^[0-9\s]+$/;
           if ((specialCharPattern.test(q.ratinG_DESCRIPTION)) || numberPattern.test(q.ratinG_DESCRIPTION)) {
-           this.showWarningPopup("Please enter valid text for improvement areas in text for the project team to act on.");
+            this.showWarningPopup("Please enter valid text for improvement areas in text for the project team to act on.");
             return;
           }
         }
@@ -220,7 +234,7 @@ export class SurveyComponent implements OnInit {
       if (this.showQualitativeFeedback) {
         for (let q of this.questions_Others) {
           if ((q.ratinG_DESCRIPTION == undefined || q.ratinG_DESCRIPTION == null || q.ratinG_DESCRIPTION.trim() == "")) {
-           this.showWarningPopup("Please provide your comments for '" + q.question + "'");
+            this.showWarningPopup("Please provide your comments for '" + q.question + "'");
             return;
           }
         }
@@ -247,7 +261,7 @@ export class SurveyComponent implements OnInit {
 
       dialogRef.afterClosed().subscribe(result => {
         if (result === 1) {
-          this.disableSubmit= true;
+          this.disableSubmit = true;
           this.service_SaveSurveyAnswers(this.questions, false);
         }
       });
@@ -257,12 +271,142 @@ export class SurveyComponent implements OnInit {
     }
 
   }
+
+
+  SubmitFormQualitative(val: number) {
+
+    if (val === 1) {
+
+      // 1. Validate Criteria Questions 
+      for (let q of this.questions_Criteria) {
+        if (q.ratinG_DESCRIPTION && q.ratinG_DESCRIPTION.trim() !== "") {
+          if (!q.qualitativE_CATEGORY || q.qualitativE_CATEGORY === "") {
+            this.showWarningPopup(`Please select a Category for the question: "${q.question}"`);
+            return;
+          }
+          if (!q.qualitativE_STATUS || q.qualitativE_STATUS === "") {
+            this.showWarningPopup(`Please select a Status for the question: "${q.question}"`);
+            return;
+          }
+        }
+      }
+
+      // 2. Validate NPS Question 
+      if (this.questions_NPS && this.questions_NPS.ratinG_DESCRIPTION && this.questions_NPS.ratinG_DESCRIPTION.trim() !== "") {
+        if (!this.questions_NPS.qualitativE_CATEGORY || this.questions_NPS.qualitativE_CATEGORY === "") {
+          this.showWarningPopup(`Please select a Category for the NPS feedback.`);
+          return;
+        }
+        if (!this.questions_NPS.qualitativE_STATUS || this.questions_NPS.qualitativE_STATUS === "") {
+          this.showWarningPopup(`Please select a Status for the NPS feedback.`);
+          return;
+        }
+      }
+
+      // 3. Validate "Others" Questions 
+      for (let q of this.questions_Others) {
+        if (q.ratinG_DESCRIPTION && q.ratinG_DESCRIPTION.trim() !== "") {
+          if (!q.qualitativE_CATEGORY || q.qualitativE_CATEGORY === "") {
+            this.showWarningPopup(`Please select a Category for the question: "${q.question}"`);
+            return;
+          }
+          if (!q.qualitativE_STATUS || q.qualitativE_STATUS === "") {
+            this.showWarningPopup(`Please select a Status for the question: "${q.question}"`);
+            return;
+          }
+        }
+      }
+
+      for (let q of this.questions.csS_QUESTION_REPLIES) {
+        const hasCategory = q.qualitativE_CATEGORY && q.qualitativE_CATEGORY !== "";
+        const hasStatus = q.qualitativE_STATUS && q.qualitativE_STATUS !== "";
+
+        if (hasCategory || hasStatus) {
+          if (!hasCategory) {
+            this.showWarningPopup(`Please select Category for: "${q.question}"`);
+            return;
+          }
+          if (!hasStatus) {
+            this.showWarningPopup(`Please select Status for: "${q.question}"`);
+            return;
+          }
+        }
+      }
+
+    }
+    if (val === 1) {
+      this.openConfirmationDialog('Quick Confirmation', 'Are you sure you want to submit this qualitative feedback? Once submitted, you won\'t be able to modify and re-submit your feedback.',
+        '500px', '180px', false).afterClosed().subscribe(result => {
+          if (result === 1) {
+            this._spinner.show();
+            this.disableSubmitQualitative = true;
+            this.loading = true;
+            this.questions.csS_QUESTION_REPLIES = this.questions.csS_QUESTION_REPLIES.map(q => {
+              q.qualitativE_SUBMITTED = true;
+              return q;
+            });
+            this.update_surveyQualitativeAnswers(this.questions.csS_QUESTION_REPLIES);
+          }
+          else {
+            this.loading = false;
+            this.disableSubmitQualitative = false;
+            return;
+          }
+        });
+    }
+    else {
+      this._spinner.show();
+      this.questions.csS_QUESTION_REPLIES = this.questions.csS_QUESTION_REPLIES.map(q => {
+        q.qualitativE_SUBMITTED = false;
+        return q;
+      });
+      this.update_surveyQualitativeAnswers(this.questions.csS_QUESTION_REPLIES);
+
+    }
+
+  }
+
+
+  update_surveyQualitativeAnswers(replies: CssQuestionRepliesModel[]) {
+    this._appservice.UpdateCSSSurveyQualitativeFeedback(replies).subscribe(data => {
+      this._spinner.hide();
+      const space = '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+      this.dialogSuccess = true;
+      this.dialogHeading = '';
+      this.loading = false;
+      if (replies.filter(r => r.qualitativE_SUBMITTED == false).length > 0) {
+        this.dialogMessage = space + 'Qualitative Analysis feedback saved as draft successfully.';
+      }
+      else {
+        this.dialogMessage = space + 'Qualitative Analysis feedback submitted successfully.';
+      }
+      this.openConfirmationDialog('', this.dialogMessage,
+        '450px', '150px', true).afterClosed().subscribe(result => {
+          if (result === 1) {
+            return;
+          }
+        });
+    }, error => {
+      const errorMsg = this._util.GetErrorMessage(error);
+      this._spinner.hide();
+    }
+    );
+  }
+  clearRowQualitative(item: any) {
+    if (item && !item.QUALITATIVE_ISSUBMITTED) {
+      item.qualitativE_CATEGORY = '';
+      item.qualitativE_STATUS = '';
+      item.qualitativE_REMARKS = '';
+    }
+  }
+
   getNPSRating() {
     if (this.questions_NPS != null) {
       this.npsRating = this.questions_NPS.rating;
       this.Rating_OnClick(this.npsRating)
     }
   }
+
   gettry: number = 1
   service_GetSurveyQuestions(code: string) {
     if (code == undefined || code == null) return;
@@ -273,6 +417,24 @@ export class SurveyComponent implements OnInit {
       this.questions_Criteria = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Criteria').sort(t => t.SEQUENCE);
       this.questions_NPS = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'NPS')[0];
       this.questions_Others = data.csS_QUESTION_REPLIES.filter(t => t.questioN_CATEGORY == 'Others').sort(t => t.id);
+      if (this.showQualitativeAnalysisFields) {
+        const hasQualitativeData = data.csS_QUESTION_REPLIES.some(q =>
+         !! (q.qualitativE_CATEGORY || q.qualitativE_STATUS || q.qualitativE_REMARKS)
+        );
+
+        if (hasQualitativeData) {
+          this.lastEmpId = data.csS_QUESTION_REPLIES[0].updateD_BY;
+          this.lastUpdateDateQualitative = data.csS_QUESTION_REPLIES[0].updateD_DATE;
+          this.getEmpName();
+        } else {
+          this.lastUpdateByQualitative = 'NA';
+        }
+      }
+
+      this.disableSubmitQualitative = this.questions.csS_QUESTION_REPLIES.filter(r => r.qualitativE_SUBMITTED == true).length > 0 ? true : false;
+      if (!this.isQualitativeEditable) {
+        this.disableSubmitQualitative = true;
+      }
 
       if (data.csS_BATCH_CUSTOMERS_EXTENDED != undefined && data.csS_BATCH_CUSTOMERS_EXTENDED != null) {
         this.proj = data.csS_BATCH_CUSTOMERS_EXTENDED.proJ_NM;
@@ -357,6 +519,18 @@ export class SurveyComponent implements OnInit {
 
   }
 
+  getEmpName() {
+    this._appservice.getEmpNameById(this.lastEmpId).subscribe(
+      data => {
+        if (this.showQualitativeAnalysisFields)
+          this.lastUpdateByQualitative = data;
+      },
+      error => {
+        { this._util.serviceError(error); }
+      }
+    )
+  }
+
   bbtnSubmitDisable = false;
   service_SaveSurveyAnswers(replies: BatchCustomerAndQuestions, isDraft: boolean) {
     //this.bbtnSubmitDisable = true;
@@ -401,6 +575,28 @@ export class SurveyComponent implements OnInit {
     });
   }
 
+
+  private openConfirmationDialog(
+    heading: string,
+    message: string,
+    width: string = '500px',
+    height: string = '180px',
+    isSuccess: boolean = false,
+    isExpiry: boolean = false
+  ) {
+    this.dialogHeading = heading;
+    this.dialogMessage = message;
+    this.dialogSuccess = isSuccess;
+    this.dialogExpiry = isExpiry;
+
+    return this.dialog.open(this.confirmationDialogTemplate, {
+      width: width,
+      height: height,
+      hasBackdrop: true,
+      scrollStrategy: new NoopScrollStrategy(),
+    });
+
+  }
   getDetail(text) {
     if (text == undefined || text == null || text == "") return "";
     return text;
@@ -408,7 +604,7 @@ export class SurveyComponent implements OnInit {
 
   onInfoIconClick(event: MouseEvent, tooltip: MatTooltip): void {
     event.stopPropagation();
-    
+
     // If there's already an open tooltip, hide it
     if (this.currentOpenTooltip && this.currentOpenTooltip !== tooltip) {
       this.currentOpenTooltip.hide();
@@ -463,6 +659,14 @@ export class SurveyComponent implements OnInit {
 
   changeEvent(event) {
     this.showTemplate = event;
+  }
+
+  getDropdownValues() {
+    this._appservice.getDropdownValues(this.dropdownName).subscribe((data) => {
+      if (data) {
+        this.dropdownText = data;
+      }
+    })
   }
 
 }

@@ -195,6 +195,7 @@ import { AuditQualifiedStandardModel } from "../pages/auditqualitystandards/audi
 import { ProductResponsibleModel } from "../pages/product-responsible/product-responsible.component";
 import { observable } from "rxjs";
 import { CssPresurveyConnectModel } from "../models/css-project-selection-list-model";
+import { CssQuestionRepliesModel } from "../models/css-question-replies-model";
 
 
 @Injectable()
@@ -9597,8 +9598,29 @@ savePreconnectSurveyData(presurveyData: CssPresurveyConnectModel): Observable<Cs
     }); 
   }
                      
+ getDropdownValues(name: string): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,  
+      empId: localStorage.getItem("empid"),
+    }); 
+    return this._http.get<any[]>(this.apiurl + "/GetDropdownOptionsFromDB?name=" + name, {
+      headers: header,
+    });   
+  }
 
+  UpdateCSSSurveyQualitativeFeedback(feedbackData: CssQuestionRepliesModel[]): Observable<CssQuestionRepliesModel[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,  
+      empId: localStorage.getItem("empid"),   
+    }); 
+    return this._http.post<CssQuestionRepliesModel[]>(this.apiurl + "/UpdateQualitativeAnalysis", feedbackData, {
+      headers: header,
+    });
+  } 
 
+  
 
   /**
         *  get(url: string, options: {

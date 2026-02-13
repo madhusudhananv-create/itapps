@@ -36,6 +36,8 @@ export class ViewCsatComponent implements OnInit {
 
   showPreconnect: boolean = false;
   showQualitativeFeedback: boolean = false;
+  disableSubmitQualitative: boolean = false;
+  isQualitativeEditable: boolean = false;
   loading: boolean = false;
   month = [];
   showMonthly: boolean;
@@ -52,6 +54,7 @@ export class ViewCsatComponent implements OnInit {
   selectedqrt: string;
   fileName: string;
   isEditable: boolean = false;
+  showQualitativeAnalysisFields: boolean = false;
   constructor(private route: ActivatedRoute, public _layoutService: LayoutService, private _appService: AppsService,
     public _util: myUtility, public datepipe: DatePipe, public _access: AccessControl,
     public dialog: MatDialog) {
@@ -108,7 +111,7 @@ export class ViewCsatComponent implements OnInit {
         this.surveyPram.iS_MONTHLY = false;
         this.showMonthly = false;
       }
-      this.getQuarterorMonth(); 
+      this.getQuarterorMonth();
       this.getAllProjectsFromCustomer();
     }, (error) => { this._util.serviceError(error) },
       () => {
@@ -175,10 +178,10 @@ export class ViewCsatComponent implements OnInit {
   }
 
   getAllCustomerUser(customerId, projectId, isMonthly, startDate, endDate) {
-  this.input_userid = this.input_respondedid == 0 ? "" : this.input_userid;
-  const formattedStartDate =this.datepipe.transform(startDate, 'yyyy-MM-dd')
-  const formattedEndDate =  this.datepipe.transform(endDate, 'yyyy-MM-dd')
-  
+    this.input_userid = this.input_respondedid == 0 ? "" : this.input_userid;
+    const formattedStartDate = this.datepipe.transform(startDate, 'yyyy-MM-dd')
+    const formattedEndDate = this.datepipe.transform(endDate, 'yyyy-MM-dd')
+
     this._layoutService.GetAllCustomerUser(customerId, projectId, isMonthly, formattedStartDate, formattedEndDate).subscribe(
       data => {
         this.custNames = data;
@@ -238,6 +241,18 @@ export class ViewCsatComponent implements OnInit {
           this.showSurveyText = true;
         }
         this.disablebtn = false;
+        if (data.status == "COMPLETED") {
+          this.showQualitativeAnalysisFields = true;
+          if (this._access.IsAllowed(827, 1, '', '') ) {
+            this.isQualitativeEditable = true;
+          }
+          else
+          {
+            this.isQualitativeEditable = false;
+          }
+        }
+
+
       },
       error => { this._util.serviceError(error) }
     )

@@ -41,6 +41,7 @@ import { StarRatingComponent } from '../customer/star-rating/star-rating.compone
 import { ViewTemplateComponent } from '../controls/view-template/view-template.component';
 import { AccesscontrolManagementComponent } from './accesscontrol-management/accesscontrol-management.component';
 import{NewpageComponent} from './newpage/newpage.component';
+import { Ng4LoadingSpinnerModule } from 'ng4-loading-spinner';
 //import { PortfolioProjectFilterComponent } from './portfolio-project-filter/portfolio-project-filter.component';
 
 @NgModule({
@@ -52,7 +53,8 @@ import{NewpageComponent} from './newpage/newpage.component';
     MatButtonModule,
     MatInputModule,
     NgPipesModule,
-    MatDialogModule
+    MatDialogModule,
+    Ng4LoadingSpinnerModule
     //NavbarComponent,
     //NavbarMenuComponent,
     //SidebarComponent
