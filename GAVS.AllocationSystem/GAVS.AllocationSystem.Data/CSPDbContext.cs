@@ -246,6 +246,7 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<ACCESS_REQUEST>().ToTable("dbo.ACCESS_REQUEST");
             modelBuilder.Entity<PROJECT_SCOPE_VALUES>().ToTable("dbo.PROJECT_SCOPE_VALUES");
             modelBuilder.Entity<INTEGRATION_REQUEST_DATA>().ToTable("dbo.INTEGRATION_REQUEST_DATA");
+            modelBuilder.Entity<DROPDOWN_OPTIONS>().ToTable("dbo.DROPDOWN_OPTIONS");
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
         }
         public virtual DbSet<APP_ACCESS_CONTROLS> APP_ACCESS_CONTROLS { get; set; }
@@ -460,6 +461,8 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<PROJECT_SCOPE_VALUES> PROJECT_SCOPE_VALUES { get; set; }
 
         public virtual DbSet<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get; set; }
+
+        public virtual DbSet<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get; set; }
 
     }
 }

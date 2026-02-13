@@ -304,6 +304,15 @@
       "CSS_BATCH_CUSTOMER_ID:int"
     ]
 
+  },
+  {
+    "name": "DROPDOWN_OPTIONS",
+    "props": [
+      "DD_NAME:string",
+      "DD_VALUE:string",
+      "DD_TEXT:string"
+    ]
+
   }
 
 

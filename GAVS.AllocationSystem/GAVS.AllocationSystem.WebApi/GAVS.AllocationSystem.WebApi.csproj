@@ -357,6 +357,8 @@
     <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.3.sql" />
     <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.4.sql" />
     <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.5.sql" />
+    <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.6.sql" /> 
+    <Content Include="DB Scripts\2026\Release 2.6\Release 2.6.1.sql" /> 
     <Content Include="DB Scripts\GSLabIntegration\BAS_CustID_procs_updates.sql" />
     <Content Include="DB Scripts\GSLabIntegration\BAS_EMPID_procs_updates.sql" />
     <Content Include="DB Scripts\GSLabIntegration\CSP_CustID_procs_updates.sql" />

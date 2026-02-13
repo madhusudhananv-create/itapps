@@ -42,7 +42,7 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public string QUALITATIVE_STATUS { get; set; }
         public string QUALITATIVE_REMARKS { get; set; }
-        public bool QUALITATIVE_SUBMITTED { get; set; }
+        public bool? QUALITATIVE_SUBMITTED { get; set; }
 
     }
 }

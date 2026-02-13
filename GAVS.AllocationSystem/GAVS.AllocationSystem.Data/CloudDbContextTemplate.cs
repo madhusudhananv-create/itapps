@@ -52,7 +52,6 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<CSS_BATCH_PROJECTS>().ToTable("dbo.CSS_BATCH_PROJECTS");
             modelBuilder.Entity<ENTITY_HISTORY>().ToTable("dbo.ENTITY_HISTORY");
             modelBuilder.Entity<CSS_PRECONNECT>().ToTable("dbo.CSS_PRECONNECT");
-            modelBuilder.Entity<DROPDOWN_OPTIONS>().ToTable("dbo.DROPDOWN_OPTIONS");
         }
         public virtual DbSet<BASE_MEASURE_EXTERNAL_KPI_DATA> BASE_MEASURE_EXTERNAL_KPI_DATA { get; set; }
         public virtual DbSet<PRODUCT_RESPONSIBLE> PRODUCT_RESPONSIBLE { get; set; }
@@ -85,7 +84,6 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<CSS_BATCH_PROJECTS> CSS_BATCH_PROJECTS { get; set; }
         public virtual DbSet<ENTITY_HISTORY> ENTITY_HISTORY { get; set; }
         public virtual DbSet<CSS_PRECONNECT> CSS_PRECONNECT { get; set; }
-        public virtual DbSet<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get; set; }
 }
 }
  
