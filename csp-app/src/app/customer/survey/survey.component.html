@@ -354,7 +354,7 @@ The insights we gain from your feedback will guide the strategic actions we take
 
       <mat-form-field appearance="outline" class="custom-bg-field compact-field"
         style="width: 170px; margin-right: 30px;">
-        <mat-label>Category</mat-label>
+        <mat-label>Sentiment Type</mat-label>
         <mat-select [(ngModel)]="item.qualitativE_CATEGORY" [matTooltip]="item.qualitativE_CATEGORY"
           [disabled]="disableSubmitQualitative">
           <mat-option value="Positive">Positive</mat-option>
@@ -365,7 +365,7 @@ The insights we gain from your feedback will guide the strategic actions we take
 
       <mat-form-field appearance="outline" class="custom-bg-field compact-field"
         style="width: 220px; margin-right: 30px;">
-        <mat-label>Status</mat-label>
+        <mat-label>Sentiment Category</mat-label>
         <mat-select [(ngModel)]="item.qualitativE_STATUS" [matTooltip]="item.qualitativE_STATUS"
           [disabled]="disableSubmitQualitative">
           <mat-option *ngFor="let dropdown of dropdownText" [value]="dropdown.dD_TEXT">
