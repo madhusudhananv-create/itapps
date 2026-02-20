@@ -288,8 +288,8 @@
     "name": "ENTITY_HISTORY",
     "props": [
       "ENTITY_NAME:string",
-      "ENTITY_CONTENT:string" 
-      
+      "ENTITY_CONTENT:string"
+
 
     ]
 
@@ -303,6 +303,14 @@
       "STATUS:string",
       "CSS_BATCH_CUSTOMER_ID:int"
     ]
+  },
+  {
+    "name": "DROPDOWN_OPTIONS",
+    "props": [
+      "DD_NAME:string",
+      "DD_VALUE:string",
+      "DD_TEXT:string"
+    ]
 
   },
   {
@@ -314,7 +322,6 @@
     ]
 
   }
-
 
 
 
