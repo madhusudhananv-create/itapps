@@ -38,7 +38,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public const string AUDIT_STATUS_SCHEDULED = "SCHEDULED";
         public const string TASK_STATUS_PLANNED = "PLANNED";
         public const string TASK_PRIORITY_MEDIUM = "MEDIUM";
-     
+
 
         [GET("ProcessAutoAudit")]
         [ActionName("ProcessAutoAudit")]
@@ -143,7 +143,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         // Even if , Audit is completed and score not submitted with in 2 working days , then email should be tiggered to Auditor , Auditor’s manager , GRC Team.
         public IHttpActionResult NotifyAuditScoreNotSubmitted()
-        { 
+        {
             var stopwatch = Stopwatch.StartNew();
             string strMessage = string.Empty; var audit = new AUDIT_SCHEDULE();
             var empIds = new List<string>();
@@ -294,10 +294,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             foreach (var project in projectList)
             {
-                if (!project.PROJ_ID.StartsWith("PROJ"))
+                bool isExcludedEngagement = project.ENGAGAMENT_TYPE?.ToLower() == "license sale" || project.ENGAGAMENT_TYPE?.ToLower() == "staff augmentation";
+
+
+                if (!project.PROJ_ID.StartsWith("PROJ") && !isExcludedEngagement)
                 {
                     StartUpAutoTaskAudit(project);
-                }          
+                }
             }
 
             return Ok("Success");
@@ -401,7 +404,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             taskAudit.Audit = audit;
             taskAudit.IS_SUBMIT = true;
             var empId = this.GetHeaderDetails_String("empid");
-           
+
             helper.AddTaskandAudit(taskAudit, Request, CanCommit, empId, out strMessage);
             return strMessage;
         }
