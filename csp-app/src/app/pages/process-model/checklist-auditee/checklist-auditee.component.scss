@@ -82,4 +82,31 @@ div,.rootCause,.rootCauseOther
     top: -14px;
   }
  
-  
+  ::ng-deep {
+  .mat-step-label {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.4;
+    min-width: 100px;
+  }
+
+
+  .mat-horizontal-stepper-header-container {
+    height: auto !important;
+    align-items: flex-start !important;
+    padding-bottom: 10px;
+  }
+
+  .mat-step-label-content {
+    display: block !important;
+  }
+
+  label {
+    display: inline-block;
+    max-width: 100%;
+    margin-bottom: 0px;
+    font-weight: bold;
+    font-size: 12px;
+  }
+}

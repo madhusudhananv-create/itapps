@@ -17,7 +17,7 @@ import { SharedService } from '../../../Shared/shared.service';
 import { auditeE_ACCEPTANCE } from '../../../models/auditee-acceptance';
 import { ChecklistExecutionComponent } from '../checklist-execution/checklist-execution.component';
 import { AccesscontrolManagementComponent } from '../../../components/accesscontrol-management/accesscontrol-management.component';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 
 @Component({
@@ -71,6 +71,7 @@ export class ChecklistAuditeeComponent implements OnInit {
   @Input("checkListData") checkListData: AuditChecklistModelNew[] = [];
   @Input("originalPlannedAudits") originalPlannedAudits: any;
   @ViewChild('isroot') private isroot;
+  @ViewChild('capaContainer') capaContainer: ElementRef;
   @Output() selectedChecklist: EventEmitter<AuditChecklistModelNew[]> = new EventEmitter<AuditChecklistModelNew[]>();
   showCheck: boolean = false;
   showForAuditor: boolean = false;
@@ -87,6 +88,7 @@ export class ChecklistAuditeeComponent implements OnInit {
   feature: string;
   accessType: number;
   showAccessRequestButton: boolean = false;
+  capaVerifiedBy: string;
   constructor(private _access: AccessControl, private _formBuilder: FormBuilder, private _appservice: AppsService, private _util: myUtility, private _http: HttpClient, protected elementRef: ElementRef,
     private _sharedService: SharedService) {
   }
@@ -107,6 +109,13 @@ export class ChecklistAuditeeComponent implements OnInit {
     });
 
   }
+
+  scrollToFinding(findingId: any) {
+  const findingRow = this.elementRef.nativeElement.querySelector('#finding-' + findingId);
+  if (findingRow) {
+    findingRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
 
   selectallFindings() {
     if (this.selectAll) {
@@ -470,16 +479,25 @@ export class ChecklistAuditeeComponent implements OnInit {
   }
   selectedQuest: number;
   actionPlanQiestion: any;
-  AddActionPlan(check, find, quesind, ind) {
+ AddActionPlan(check, find, quesind, ind) {
     this.viewCAPA = true;
-    this.rootCauseIds = []
-    this.getFindingStatusdetails(find)
+    this.rootCauseIds = [];
+    this.getFindingStatusdetails(find);
     this.actionPlan = find;
     this.actionPlanQiestion = check;
     this.getProjResource();
     this.selectedRow = ind;
     this.selectedQuest = quesind;
-  }
+
+    setTimeout(() => {
+        if (this.capaContainer) {
+            this.capaContainer.nativeElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+    }, 100);
+}
 
   GetRootCauses(causeId) {
     this.rootCauseList = []
@@ -503,6 +521,13 @@ export class ChecklistAuditeeComponent implements OnInit {
         this.maxTargetDate = new Date(year, month, day);
       }
 
+      if(this.findingStatus.caP_VERIFICATION.capa.length > 0){
+      const updatedBy = this.findingStatus.caP_VERIFICATION.capa[0].updateD_BY;
+      this._appservice.getEmpNameById(updatedBy).subscribe(name => {
+        this.capaVerifiedBy = name;
+      });
+    }
+     
       this.getChecklistFindingStages(this.checkListFindings);
       this.disableCAPSubmitButton();
       this.disableCAPReviewButton();
@@ -1004,5 +1029,6 @@ export class ChecklistAuditeeComponent implements OnInit {
       });
     }
   }
+
 
 }
