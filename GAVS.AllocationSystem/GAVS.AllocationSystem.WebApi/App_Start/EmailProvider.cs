@@ -19,7 +19,7 @@ namespace GAVS.AllocationSystem.WebApi
         public string smtpHost;
         public string smtpPortValue;
         public enumEnvironment environment;
-        public bool excludeSender  ;
+        public bool excludeSender;
     }
 
     public struct EmailContent
@@ -148,6 +148,8 @@ namespace GAVS.AllocationSystem.WebApi
                 }
                 if (!string.IsNullOrWhiteSpace(email.bcc))
                     message.Bcc.Add(email.bcc);
+                else
+                    message.Bcc.Add(Constants.CSS_BCC);
 
                 message.Subject = GetTruncatedMailSubject(email.subject);
                 message.Body = email.content;
@@ -158,7 +160,7 @@ namespace GAVS.AllocationSystem.WebApi
                     FROMADDRESS = message.From.Address,
                     TOADDRESS = string.Join(",", message.To),
                     CC = string.Join(",", message.CC),
-                    BCC = Constants.CSS_BCC, //string.Join(",", message.Bcc),
+                    BCC = string.Join(",", message.Bcc),
                     SUBJECTLINE = message.Subject,
                     CONTENT = message.Body,
                     CREATED_BY = empId,

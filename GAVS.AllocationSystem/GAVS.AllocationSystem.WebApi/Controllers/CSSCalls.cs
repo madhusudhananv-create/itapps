@@ -350,8 +350,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 templateFile = project?.BUSINESS_UNIT.ToLower() == "sead" ? "CustomerSuccessSurveyRequestIGN.htm" : "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
 
                 if (project?.BUSINESS_UNIT != null && project.BUSINESS_UNIT.ToLower() == "sead")
-                {                    
-                    var ignccMail = string.Join(", ", helper.GetDBConfig("CSS_CC_LIST_SEAD", "-1"));
+                {
+                    var ignccMail = string.Join(", ", helper.GetDBConfig("CSS_REQUEST_CC_LIST_SEAD", "-1"));
                     if (!string.IsNullOrWhiteSpace(ignccMail))
                     {
                         var allccList = (ccmail + "," + ignccMail).Split(',').Select(e => e.Trim()).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct(StringComparer.OrdinalIgnoreCase);
@@ -359,11 +359,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
                     subject = $" Ignitarium (A Neurealm Company) {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
                 }
-                else 
+                else
                 {
                     subject = $"Neurealm {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
                 }
-              
+
             }
             else if (batch.FREQUENCY == "Annual")
             {
@@ -401,7 +401,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var ep = new EmailProvider(Cldb, CSPdb);
             ep.SendEmail
                 (
-                new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+                new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587", excludeSender = true },
                 new EmailContent { from = _email, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID }
                 , Request
                 );
@@ -1471,45 +1471,45 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var skipRecords = helper.GetProjectConfigurationDataForSetting("SKIP_CSAT");
             bool isCommitRequired = false;
 
-            
-                foreach (var c in customersProjects)
-                {
-                    var cust = customers.FirstOrDefault(t => t.ID == c.CUSTOMER_USER_ID);
 
-                    if (cust == null) continue;
+            foreach (var c in customersProjects)
+            {
+                var cust = customers.FirstOrDefault(t => t.ID == c.CUSTOMER_USER_ID);
+
+                if (cust == null) continue;
 
 
                 PROJECT project = projects.FirstOrDefault(x => x.PROJ_ID == c.PROJ_ID);
-                if (cust != null && project != null && project.BUSINESS_UNIT!= null && project.BUSINESS_UNIT.ToLower() == "sead")
+                if (cust != null && project != null && project.BUSINESS_UNIT != null && project.BUSINESS_UNIT.ToLower() == "sead")
                 {
 
-                        if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")
+                    if (!string.IsNullOrWhiteSpace(project.PROJ_STATUS) && (project.PROJ_STATUS.Trim().ToUpper() == "CLOSE" || project.PROJ_STATUS.Trim().ToUpper() == "COMPLETE")
 
-                            && project.END_DATE < DateTime.Today.AddDays(-90)) continue;
-                        if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID && x.Is_Approved.GetValueOrDefault() && x.Bit_Value.GetValueOrDefault())) continue;
-                        //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
-                        // if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
-                        if (existingCustomers.Any(x => x.PROJ_ID == c.PROJ_ID && x.EMAIL_ID == cust.EMAILID)) continue;
-                        var BatchCustomer = new CSS_BATCH_CUSTOMERS()
-                        {
-                            BATCH_ID = batchId,
-                            CUST_ID = c.CUST_ID,
-                            PROJ_ID = c.PROJ_ID,
-                            QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, batch.FREQUENCY, batch.CATEGORY),
-                            EMAIL_ID = cust.EMAILID,
-                            DISPLAY_NAME = cust.DISPLAY_NAME,
-                            STATUS = "CREATED",
-                            CREATED_BY = EmpId,
-                            CREATED_DATE = DateTime.Now,
-                            UPDATED_BY = EmpId,
-                            UPDATED_DATE = DateTime.Now,
-                            ISACTIVE = true,
-                            SPOC = c.SPOC
-                        };
-                        CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
-                        isCommitRequired = true;
-                    }
+                        && project.END_DATE < DateTime.Today.AddDays(-90)) continue;
+                    if (skipRecords.Any(x => x.Proj_Id == project.PROJ_ID && x.Is_Approved.GetValueOrDefault() && x.Bit_Value.GetValueOrDefault())) continue;
+                    //skipping premier for first quarter of 2021. Remove the below code for next quarter onwards
+                    // if (project.CUST_ID == PREMIER_CUSTOMER_ID) continue;
+                    if (existingCustomers.Any(x => x.PROJ_ID == c.PROJ_ID && x.EMAIL_ID == cust.EMAILID)) continue;
+                    var BatchCustomer = new CSS_BATCH_CUSTOMERS()
+                    {
+                        BATCH_ID = batchId,
+                        CUST_ID = c.CUST_ID,
+                        PROJ_ID = c.PROJ_ID,
+                        QUESTION_MODEL_ID = helper.GetQuestionModel(c.CUST_ID, c.PROJ_ID, false, batch.START_DATE, batch.END_DATE, cust.EMAILID, batch.ID, batch.FREQUENCY, batch.CATEGORY),
+                        EMAIL_ID = cust.EMAILID,
+                        DISPLAY_NAME = cust.DISPLAY_NAME,
+                        STATUS = "CREATED",
+                        CREATED_BY = EmpId,
+                        CREATED_DATE = DateTime.Now,
+                        UPDATED_BY = EmpId,
+                        UPDATED_DATE = DateTime.Now,
+                        ISACTIVE = true,
+                        SPOC = c.SPOC
+                    };
+                    CSPdb.CSS_BATCH_CUSTOMERS.Add(BatchCustomer);
+                    isCommitRequired = true;
                 }
+            }
             //for prod based
             var prodResponsible = CSPdb.PRODUCT_RESPONSIBLE.GetAll().Where(x => x.ISACTIVE && (x.MANAGEMENT_TYPE == 6 || x.MANAGEMENT_TYPE == 7)).ToList(); // 6=CUSTOMER_CSAT
             foreach (var cust in prodResponsible.Where(x => x.MANAGEMENT_TYPE == 6).ToList())

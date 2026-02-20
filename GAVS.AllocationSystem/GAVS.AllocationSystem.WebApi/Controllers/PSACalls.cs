@@ -703,7 +703,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newEMP.BASE_CNTRY_ID = employee.BASE_CNTRY_ID;
                     newEMP.MANAGER_EMP_ID = GetOldEMPId(employee.MANAGER_EMP_ID);
                     newEMP.REVIEWER_EMP_ID = GetOldEMPId(employee.REVIEWER_EMP_ID);
-                    newEMP.EMPL_TYPE = employee.EMPL_TYPE;
+                    newEMP.EMPL_TYPE = string.IsNullOrEmpty(employee.EMPL_TYPE) ? "Retainer" : employee.EMPL_TYPE;
                     newEMP.FRST_NM = employee.FRST_NM;
                     //existingRow.NAME_IN_US_FORMAT = employee.NAME_IN_US_FORMAT;
                     newEMP.MIDDLE_NM = string.Empty; ;
