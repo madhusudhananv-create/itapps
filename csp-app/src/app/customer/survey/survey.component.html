@@ -249,12 +249,12 @@ The insights we gain from your feedback will guide the strategic actions we take
           </td>
         </tr>
 
-        <tr *ngIf="showQualitativeAnalysisFields">
+        <!-- <tr *ngIf="showQualitativeAnalysisFields">
           <td colspan="2" style="padding-left: 20px; ">
             <ng-container *ngTemplateOutlet="qualitativeFields; context: {item: criteria}"></ng-container>
           </td>
           <td style="background-color: transparent;"></td>
-        </tr>
+        </tr> -->
       </ng-container>
     </tbody>
     <br />
@@ -274,11 +274,11 @@ The insights we gain from your feedback will guide the strategic actions we take
       </td>
     </tr>
 
-    <tr *ngIf="questions_Others[0] && showQualitativeAnalysisFields">
+    <!-- <tr *ngIf="questions_Others[0] && showQualitativeAnalysisFields">
       <td colspan="2" style="padding-left: 20px; ">
         <ng-container *ngTemplateOutlet="qualitativeFields; context: {item: questions_Others[0]}"></ng-container>
       </td>
-    </tr>
+    </tr> -->
 
     <tr *ngIf="questions_Others[1]">
       <td colspan="3"><span *ngIf="showQualitativeFeedback" style="color:red">*</span>{{questions_Others[1].question}}
@@ -316,7 +316,7 @@ The insights we gain from your feedback will guide the strategic actions we take
         <button type="button" (click)="SubmitForm(0)" class="btn btn-primary" [disabled]="disableSubmit">Submit</button>
       </td>
     </tr>
-    <tr *ngIf="showQualitativeAnalysisFields">
+    <!-- <tr *ngIf="showQualitativeAnalysisFields">
       <td style="text-align:center" colspan="3">
         <button type="button" (click)="SubmitFormQualitative(0)" class="btn btn-primary"
           [disabled]="disableSubmitQualitative" style="margin-right: 15px;">Save Qualitative Analysis</button>
@@ -324,7 +324,7 @@ The insights we gain from your feedback will guide the strategic actions we take
           [disabled]="disableSubmitQualitative">Submit Qualitative Analysis </button>
 
       </td>
-    </tr>
+    </tr> -->
   </table>
 
   <ng-template class="tahoma-font" #confirmationDialog>
@@ -345,7 +345,7 @@ The insights we gain from your feedback will guide the strategic actions we take
     </mat-dialog-actions>
   </ng-template>
 
-
+<!-- 
   <ng-template #qualitativeFields let-item="item">
     <div style="font-weight: bold; padding: 0px 0 5px 20px;">Qualitative Analysis:-
      
@@ -388,4 +388,4 @@ The insights we gain from your feedback will guide the strategic actions we take
 
 
     </div>
-  </ng-template>
+  </ng-template> -->

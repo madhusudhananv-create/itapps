@@ -19,8 +19,8 @@ export class CssQuestionRepliesModel {
     isactive: boolean;
     canskip : boolean;
     SEQUENCE: number;
-    qualitativE_CATEGORY: string;
-    qualitativE_STATUS: string;
-    qualitativE_REMARKS: string;
-    qualitativE_SUBMITTED: boolean;
+    // qualitativE_CATEGORY: string;
+    // qualitativE_STATUS: string;
+    // qualitativE_REMARKS: string;
+    // qualitativE_SUBMITTED: boolean;
 }

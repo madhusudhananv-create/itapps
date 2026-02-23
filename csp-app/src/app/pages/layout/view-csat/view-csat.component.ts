@@ -36,8 +36,8 @@ export class ViewCsatComponent implements OnInit {
 
   showPreconnect: boolean = false;
   showQualitativeFeedback: boolean = false;
-  disableSubmitQualitative: boolean = false;
-  isQualitativeEditable: boolean = false;
+  // disableSubmitQualitative: boolean = false;
+  // isQualitativeEditable: boolean = false;
   loading: boolean = false;
   month = [];
   showMonthly: boolean;
@@ -54,7 +54,7 @@ export class ViewCsatComponent implements OnInit {
   selectedqrt: string;
   fileName: string;
   isEditable: boolean = false;
-  showQualitativeAnalysisFields: boolean = false;
+  //showQualitativeAnalysisFields: boolean = false;
   constructor(private route: ActivatedRoute, public _layoutService: LayoutService, private _appService: AppsService,
     public _util: myUtility, public datepipe: DatePipe, public _access: AccessControl,
     public dialog: MatDialog) {
@@ -101,6 +101,7 @@ export class ViewCsatComponent implements OnInit {
   }
 
   getDBConfig() {
+     this.getQuarterorMonth();
     this._appService.GetDBConfigValue("MONTHLYCSS", -1, "").subscribe(data => {
       if (data.indexOf(this.input_customerid.toString()) >= 0) {
         this.showMonthly = true;
@@ -111,7 +112,7 @@ export class ViewCsatComponent implements OnInit {
         this.surveyPram.iS_MONTHLY = false;
         this.showMonthly = false;
       }
-      this.getQuarterorMonth();
+     
       this.getAllProjectsFromCustomer();
     }, (error) => { this._util.serviceError(error) },
       () => {
@@ -241,16 +242,16 @@ export class ViewCsatComponent implements OnInit {
           this.showSurveyText = true;
         }
         this.disablebtn = false;
-        if (data.status == "COMPLETED") {
-          this.showQualitativeAnalysisFields = true;
-          if (this._access.IsAllowed(827, 1, '', '') ) {
-            this.isQualitativeEditable = true;
-          }
-          else
-          {
-            this.isQualitativeEditable = false;
-          }
-        }
+        // if (data.status == "COMPLETED") {
+        //   this.showQualitativeAnalysisFields = true;
+        //   if (this._access.IsAllowed(827, 1, '', '') ) {
+        //     this.isQualitativeEditable = true;
+        //   }
+        //   else
+        //   {
+        //     this.isQualitativeEditable = false;
+        //   }
+        // }
 
 
       },

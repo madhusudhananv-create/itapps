@@ -9598,27 +9598,27 @@ savePreconnectSurveyData(presurveyData: CssPresurveyConnectModel): Observable<Cs
     }); 
   }
                      
- getDropdownValues(name: string): Observable<any[]> {
-    let header = new HttpHeaders({
-      Accept: "application/json",
-      token: this._util.AppSettings.token,  
-      empId: localStorage.getItem("empid"),
-    }); 
-    return this._http.get<any[]>(this.apiurl + "/GetDropdownOptionsFromDB?name=" + name, {
-      headers: header,
-    });   
-  }
+//  getDropdownValues(name: string): Observable<any[]> {
+//     let header = new HttpHeaders({
+//       Accept: "application/json",
+//       token: this._util.AppSettings.token,  
+//       empId: localStorage.getItem("empid"),
+//     }); 
+//     return this._http.get<any[]>(this.apiurl + "/GetDropdownOptionsFromDB?name=" + name, {
+//       headers: header,
+//     });   
+//   }
 
-  UpdateCSSSurveyQualitativeFeedback(feedbackData: CssQuestionRepliesModel[]): Observable<CssQuestionRepliesModel[]> {
-    let header = new HttpHeaders({
-      Accept: "application/json",
-      token: this._util.AppSettings.token,  
-      empId: localStorage.getItem("empid"),   
-    }); 
-    return this._http.post<CssQuestionRepliesModel[]>(this.apiurl + "/UpdateQualitativeAnalysis", feedbackData, {
-      headers: header,
-    });
-  } 
+//   UpdateCSSSurveyQualitativeFeedback(feedbackData: CssQuestionRepliesModel[]): Observable<CssQuestionRepliesModel[]> {
+//     let header = new HttpHeaders({
+//       Accept: "application/json",
+//       token: this._util.AppSettings.token,  
+//       empId: localStorage.getItem("empid"),   
+//     }); 
+//     return this._http.post<CssQuestionRepliesModel[]>(this.apiurl + "/UpdateQualitativeAnalysis", feedbackData, {
+//       headers: header,
+//     });
+//   } 
 
   
 
