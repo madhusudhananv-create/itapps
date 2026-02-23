@@ -268,41 +268,41 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
-        [POST("UpdateQualitativeAnalysis")]
-        [ActionName("UpdateQualitativeAnalysis")]
-        [HttpPost]
-        public IHttpActionResult UpdateQualitativeAnalysis([FromBody] List<CSS_QUESTION_REPLIES> replies)
-        {
-            var ids = replies.Select(x => x.ID).ToList();
-            //validation - check if user belong to dex group
-            var empId = GetEmpIdFromRequest(Request);
-            var emp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
-            if (emp == null || emp.CSM_TITLE_ID != 7)
-            {
-                //raise error
-                throw new HttpResponseException(Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, "User does not belong to DEX group, unable to update the Qualitative data."));
-            }
-            var entities = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(x => ids.Contains(x.ID)).ToList();
-            foreach (var item in replies)
-            {
-                var ety = entities.FirstOrDefault(x => x.ID == item.ID);
-                if (ety == null)
-                {
-                    //raise error
-                }
-                else
-                {
-                    ety.QUALITATIVE_CATEGORY = item.QUALITATIVE_CATEGORY;
-                    ety.QUALITATIVE_STATUS = item.QUALITATIVE_STATUS;
-                    ety.QUALITATIVE_REMARKS = item.QUALITATIVE_REMARKS;
-                    ety.QUALITATIVE_SUBMITTED = item.QUALITATIVE_SUBMITTED;
-                    UpdateAuditFields(ety);
-                    CSPdb.CSS_QUESTION_REPLIES.Update(ety);
-                }
-            }
-            CSPdb.Commit();
-            return Ok();
-        }
+    //    [POST("UpdateQualitativeAnalysis")]
+    //    [ActionName("UpdateQualitativeAnalysis")]
+    //    [HttpPost]
+    //    public IHttpActionResult UpdateQualitativeAnalysis([FromBody] List<CSS_QUESTION_REPLIES> replies)
+    //    {
+    //        var ids = replies.Select(x => x.ID).ToList();
+    //        //validation - check if user belong to dex group
+    //        var empId = GetEmpIdFromRequest(Request);
+    //        var emp = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
+    //        if (emp == null || emp.CSM_TITLE_ID != 7)
+    //        {
+    //            //raise error
+    //            throw new HttpResponseException(Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, "User does not belong to DEX group, unable to update the Qualitative data."));
+    //        }
+    //        var entities = CSPdb.CSS_QUESTION_REPLIES.GetAll().Where(x => ids.Contains(x.ID)).ToList();
+    //        foreach (var item in replies)
+    //        {
+    //            var ety = entities.FirstOrDefault(x => x.ID == item.ID);
+    //            if (ety == null)
+    //            {
+    //                //raise error
+    //            }
+    //            else
+    //            {
+    //                ety.QUALITATIVE_CATEGORY = item.QUALITATIVE_CATEGORY;
+    //                ety.QUALITATIVE_STATUS = item.QUALITATIVE_STATUS;
+    //                ety.QUALITATIVE_REMARKS = item.QUALITATIVE_REMARKS;
+    //                ety.QUALITATIVE_SUBMITTED = item.QUALITATIVE_SUBMITTED;
+    //                UpdateAuditFields(ety);
+    //                CSPdb.CSS_QUESTION_REPLIES.Update(ety);
+    //            }
+    //        }
+    //        CSPdb.Commit();
+    //        return Ok();
+    //    }
 
     }
     public class SURVEY_SEARCH_CRITERIA
