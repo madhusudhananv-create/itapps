@@ -677,7 +677,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 if(project?.BUSINESS_UNIT != null && project.BUSINESS_UNIT.ToLower() == "sead")
                 {
-                    subject = " A Friendly Reminder - Ignitarium (A Neurealm Company)" + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
+                    subject = " A Friendly Reminder - Ignitarium (A Neurealm Company) " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
                 }
                 else
                 {
