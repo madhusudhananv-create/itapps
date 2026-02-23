@@ -518,7 +518,7 @@
   </mat-radio-group>
 
   <div class="row bg1"
-    *ngIf="_taskService.selectedTask.isAudit && _taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
+    *ngIf="_taskService.isAuditTask()  && _taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
     <div class="col-lg-2 col-md-2 col-sm-2">
       Service Tower:
     </div>
@@ -564,7 +564,7 @@
   </div> -->
 
   <div class="row bg2"
-    *ngIf="_taskService.selectedTask.isAudit && _taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
+    *ngIf="_taskService.isAuditTask()  && _taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
     <div class="col-lg-2 col-md-2 col-sm-2">
       Appraiser & Appraisees:
     </div>
@@ -590,7 +590,7 @@
     </div>
   </div>
 
-  <div class="row bg1" *ngIf="_taskService.selectedTask.isAudit && _taskService.selectedTask.tasK_TYPE_ID==2">
+  <div class="row bg1" *ngIf="_taskService.isAuditTask()  && _taskService.selectedTask.tasK_TYPE_ID==2">
     <div class="col-lg-2 col-md-2 col-sm-2">
       Comments:
     </div>

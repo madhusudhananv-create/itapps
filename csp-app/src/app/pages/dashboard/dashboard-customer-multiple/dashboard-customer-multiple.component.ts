@@ -390,7 +390,7 @@ export class DashboardCustomerMultipleComponent implements OnInit {
       localStorage.setItem('slaAvailableList', JSON.stringify(data.map(x => ({ customerId: x.cusT_ID, customerName: x.cusT_NM, slaAvailable: x.iS_SLA_AVAILABLE }))));
 
       if (data.length === 0) {
-        alert("Customer Accounts are visible here based on your allocation in respective projects in PSA. Looks like there are no active allocations or all the projects you are allocated to have ended. Please take it up with your manager and get allocated in required projects for you to manage them in the CSM Platform. Please send an email to WFM@" + environment.domain_name + "for allocation or extending the allocation.");
+        alert("Customer Accounts are visible here based on your allocation in respective projects in Dynamics 365 (https://operations-neurealm-prod.crm8.dynamics.com). Looks like there are no active allocations or all the projects you are allocated to have ended. Please take it up with your manager and get allocated in required projects for you to manage them in the CSM Platform. Please send an email to WFM@" + environment.domain_name + " for allocation or extending the allocation.");
       }
       this.service_GetDashboardDetails();
     }, error => { this._util.serviceError(error); });

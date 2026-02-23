@@ -77,6 +77,7 @@ export class TaskService {
   }
 
   isAuditTask() {
+    if(this.selectedTask == null) return false;
     if (this.selectedTask.tasK_TYPE_ID == undefined || this.selectedTask.tasK_CATEGORY_ID == undefined) return false;
     return this.selectedTask.tasK_TYPE_ID == 2 && this.auditCategory.filter(x => x == this.selectedTask.tasK_CATEGORY_ID.toString()).length > 0;
   }

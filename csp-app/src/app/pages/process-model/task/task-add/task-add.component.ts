@@ -97,6 +97,7 @@ export class TaskAddComponent implements OnInit {
     this.service_GetTaskTypeList();
     this.service_GetTaskCategoryListByTaskType(99, this.filterAuditCategories);
     this.Service_getServiceAreaList();
+
   }
 
   ngOnChanges() {
@@ -202,7 +203,7 @@ export class TaskAddComponent implements OnInit {
   SaveRow_onClick(status) {
     const specialCharPattern = /^[!@#$%^&*(),.?":{}|<>~`_\-+=\[\]\\\/\s]+$/;
     const numberPattern = /^[0-9\s]+$/;
-    
+
     if (status) {
       this.taskAudit.iS_SUBMIT = false;
       this._taskService.selectedTask.iS_DRAFT = true;
@@ -218,7 +219,7 @@ export class TaskAddComponent implements OnInit {
 
       const startDate = new Date(this._taskService.selectedTask.recurrence.starT_DATE);
       startDate.setMonth(startDate.getMonth() + 1);
-      
+
       this._taskService.selectedTask.scheduleD_START_DATE = this._taskService.selectedTask.recurrence.starT_DATE;
       this._taskService.selectedTask.duE_DATE = startDate;
     }
@@ -384,7 +385,7 @@ export class TaskAddComponent implements OnInit {
     let isValid: boolean = false;
     if (this._taskService.selectedTask.tasK_TYPE_ID == undefined) { alert("Please select Type"); return false; }
     else if (this._taskService.selectedTask.tasK_CATEGORY_ID == undefined) { alert("Please select Category"); return false; }
-    else if ((this._taskService.selectedTask.description == undefined || this._taskService.selectedTask.description == null ) &&  this._taskService.selectedTask.iS_DRAFT == false) { alert("Please enter Description"); return false; }
+    else if ((this._taskService.selectedTask.description == undefined || this._taskService.selectedTask.description == null) && this._taskService.selectedTask.iS_DRAFT == false) { alert("Please enter Description"); return false; }
     else if (this._taskService.selectedTask.scheduleD_START_DATE == undefined || this._taskService.selectedTask.scheduleD_START_DATE == null) { alert("Please select scheduled start date"); return false; }
     else if (this._taskService.selectedTask.seT_RECURRENCE && (this._taskService.selectedTask.recurrence.starT_DATE == undefined || this._taskService.selectedTask.recurrence.enD_DATE == undefined)) { alert("Please set start date and end date for recurring Event/Task"); return false; }
     else if (this._taskService.selectedTask.cusT_ID == undefined && !this.showServiceTower) { alert(`Please select a Customer. If Customer not applicable select ${environment.company_name} Internal.`); return false; }
