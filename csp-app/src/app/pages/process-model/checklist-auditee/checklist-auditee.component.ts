@@ -12,12 +12,14 @@ import { EmpInfoModel, ProjectResourceByEmpIdModel } from '../../../models/emp-i
 import { AccessControl } from '../../../Shared/accessControl';
 import { AuditFindingImplementation } from '../../../models/audit-finding-implementation';
 import { AuditFindingVerification } from '../../../models/audit-finding-verification';
-import { MatSelectChange } from '@angular/material';
+import { MatSelectChange, MatDialog, MatDialogConfig } from '@angular/material';
 import { SharedService } from '../../../Shared/shared.service';
 import { auditeE_ACCEPTANCE } from '../../../models/auditee-acceptance';
 import { ChecklistExecutionComponent } from '../checklist-execution/checklist-execution.component';
 import { AccesscontrolManagementComponent } from '../../../components/accesscontrol-management/accesscontrol-management.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { NoopScrollStrategy } from '@angular/cdk/overlay';
+import { RatingCriteriaRemarksComponent } from '../../../customer/rating-criteria-remarks/rating-criteria-remarks.component';
 
 
 @Component({
@@ -89,8 +91,11 @@ export class ChecklistAuditeeComponent implements OnInit {
   accessType: number;
   showAccessRequestButton: boolean = false;
   capaVerifiedBy: string;
+  stage3EvidenceMappings: any[] = [];
+  stage4EvidenceMappings: any[] = [];
+  isFileAction: boolean = false;
   constructor(private _access: AccessControl, private _formBuilder: FormBuilder, private _appservice: AppsService, private _util: myUtility, private _http: HttpClient, protected elementRef: ElementRef,
-    private _sharedService: SharedService) {
+    private _sharedService: SharedService, public dialog: MatDialog) {
   }
 
   ngOnInit() {
@@ -111,11 +116,11 @@ export class ChecklistAuditeeComponent implements OnInit {
   }
 
   scrollToFinding(findingId: any) {
-  const findingRow = this.elementRef.nativeElement.querySelector('#finding-' + findingId);
-  if (findingRow) {
-    findingRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const findingRow = this.elementRef.nativeElement.querySelector('#finding-' + findingId);
+    if (findingRow) {
+      findingRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
-}
 
   selectallFindings() {
     if (this.selectAll) {
@@ -151,7 +156,7 @@ export class ChecklistAuditeeComponent implements OnInit {
       })
     })
     if (!flag) {
-      alert('Findings Can be Accepted Or Rejected Only by Auditee or PM or QualitySpoc of the Project')
+      this.showWarningPopup('Findings Can be Accepted Or Rejected Only by Auditee or PM or QualitySpoc of the Project');
       this.disablebtn = false;
       return;
     }
@@ -163,7 +168,7 @@ export class ChecklistAuditeeComponent implements OnInit {
           if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined
             && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0
             && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
-            alert('Please enter remarks for the findings to reject.');
+            this.showWarningPopup('Please enter remarks for the findings to reject.');
             this.disablebtn = false;
             return;
           }
@@ -188,7 +193,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     });
 
     this._appservice.saveAuditorAcceptanceStatus(acceptanceList).subscribe(data => {
-      alert("Status updated");
+      this.showWarningPopup("Status updated");
       this.disablebtn = false;
 
       if (status == 'Accept') {
@@ -241,7 +246,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     })
 
     if (!flag) {
-      alert('Please select a finding to accept/reject');
+      this.showWarningPopup('Please select a finding to accept/reject');
       this.disableAcceptReject = false;
       return;
     }
@@ -253,7 +258,7 @@ export class ChecklistAuditeeComponent implements OnInit {
           if (status == 'Reject' && this.checkListFindings[i].findings[j].findinG_DESCRIPTION != undefined
             && this.checkListFindings[i].findings[j].findinG_DESCRIPTION.trim().length > 0
             && this.checkListFindings[i].findings[j].ischecked && (this.checkListFindings[i].findings[j].remarks === undefined || this.checkListFindings[i].findings[j].remarks.length === 0)) {
-            alert('Please enter remarks for the findings to reject..');
+            this.showWarningPopup('Please enter remarks for the findings to reject..');
             this.disableAcceptReject = false;
             return;
           }
@@ -289,7 +294,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     });
     acceptanceList = acceptanceList.filter(x => x.findinG_ID != 0);
     this._appservice.saveAuditeeAcceptanceStatus(acceptanceList).subscribe(data => {
-      alert("Status updated");
+      this.showWarningPopup("Status updated");
       this.disableAcceptReject = false;
       if (status == 'Reject') {
         for (let i = 0; i < this.checkListData.length; i++) {
@@ -479,9 +484,11 @@ export class ChecklistAuditeeComponent implements OnInit {
   }
   selectedQuest: number;
   actionPlanQiestion: any;
- AddActionPlan(check, find, quesind, ind) {
+  AddActionPlan(check, find, quesind, ind) {
     this.viewCAPA = true;
     this.rootCauseIds = [];
+    this.stage3EvidenceMappings = [];
+    this.stage4EvidenceMappings = [];
     this.getFindingStatusdetails(find);
     this.actionPlan = find;
     this.actionPlanQiestion = check;
@@ -490,14 +497,14 @@ export class ChecklistAuditeeComponent implements OnInit {
     this.selectedQuest = quesind;
 
     setTimeout(() => {
-        if (this.capaContainer) {
-            this.capaContainer.nativeElement.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
-            });
-        }
+      if (this.capaContainer) {
+        this.capaContainer.nativeElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     }, 100);
-}
+  }
 
   GetRootCauses(causeId) {
     this.rootCauseList = []
@@ -505,9 +512,76 @@ export class ChecklistAuditeeComponent implements OnInit {
       this.rootCauseList = this.causeCollection.rootcause.filter(t => t.causE_ID == causeId);
   }
   getFindingStatusdetails(check: ObservationModel) {
+    this.stage3EvidenceMappings = [];
+    this.stage4EvidenceMappings = [];
+
+    const savedImplementations = (this.findingStatus && this.findingStatus.caP_IMPLEMENTATION && this.findingStatus.caP_IMPLEMENTATION.capa)
+      ? this.findingStatus.caP_IMPLEMENTATION.capa.map(v => ({
+        rooT_CAUSE_ID: v.capadata ? v.capadata.rooT_CAUSE_ID : null,
+        isimplemented: v.isimplemented,
+        status: v.status
+      }))
+      : [];
+
+
+    const savedVerifications = (this.findingStatus && this.findingStatus.caP_VERIFICATION && this.findingStatus.caP_VERIFICATION.capa)
+      ? this.findingStatus.caP_VERIFICATION.capa.map(v => ({
+        rooT_CAUSE_ID: v.capadata ? v.capadata.rooT_CAUSE_ID : null,
+        isverified: v.isverified,
+        isrejected: v.isrejected,
+        remarks: v.remarks,
+        recommendeD_ACTION: v.recommendeD_ACTION
+      }))
+      : [];
+
 
     this._appservice.getFindingStatus(check).subscribe(data => {
       this.findingStatus = data;
+      if (this.findingStatus.caP_IMPLEMENTATION && this.findingStatus.caP_IMPLEMENTATION.capa) {
+        this.stage3EvidenceMappings = [];
+        this.findingStatus.caP_IMPLEMENTATION.capa.forEach((element: any) => {
+          const saved = savedImplementations.find(function (s) {
+            return element.capadata && s.rooT_CAUSE_ID === element.capadata.rooT_CAUSE_ID;
+          });
+          if (saved) {
+            element.isimplemented = saved.isimplemented;
+            element.status = saved.status;
+          }
+          element.selectedFiles = [];
+          if (element.capadata && element.capadata.findinG_ID) {
+            this._appservice.getAuditEvidence(element.capadata.findinG_ID, 3, element.capadata.rooT_CAUSE_ID)
+              .subscribe(files => {
+                if (files) {
+                  this.stage3EvidenceMappings = [...this.stage3EvidenceMappings, ...files];
+                }
+              });
+          }
+        });
+      }
+
+      if (this.findingStatus.caP_VERIFICATION && this.findingStatus.caP_VERIFICATION.capa) {
+        this.stage4EvidenceMappings = [];
+        this.findingStatus.caP_VERIFICATION.capa.forEach((element: any) => {
+          const saved = savedVerifications.find(function (s) {
+            return element.capadata && s.rooT_CAUSE_ID === element.capadata.rooT_CAUSE_ID;
+          });
+          if (saved) {
+            element.isverified = saved.isverified;
+            element.isrejected = saved.isrejected;
+            element.remarks = saved.remarks;
+            element.recommendeD_ACTION = saved.recommendeD_ACTION;
+          }
+          element.selectedFiles = [];
+          if (element.capadata && element.capadata.findinG_ID) {
+            this._appservice.getAuditEvidence(element.capadata.findinG_ID, 4, element.capadata.rooT_CAUSE_ID)
+              .subscribe(files => {
+                if (files) {
+                  this.stage4EvidenceMappings = [...this.stage4EvidenceMappings, ...files];
+                }
+              });
+          }
+        });
+      }
       if (this.findingStatus.capA_SUBMISSION.capa.length > 0) {
         this.FillSelectedCauses()
         // this.getIsroot()
@@ -521,18 +595,21 @@ export class ChecklistAuditeeComponent implements OnInit {
         this.maxTargetDate = new Date(year, month, day);
       }
 
-      if(this.findingStatus.caP_VERIFICATION.capa.length > 0){
-      const updatedBy = this.findingStatus.caP_VERIFICATION.capa[0].updateD_BY;
-      this._appservice.getEmpNameById(updatedBy).subscribe(name => {
-        this.capaVerifiedBy = name;
-      });
-    }
-     
+      if (this.findingStatus.caP_VERIFICATION.capa.length > 0) {
+        const updatedBy = this.findingStatus.caP_VERIFICATION.capa[0].updateD_BY;
+        this._appservice.getEmpNameById(updatedBy).subscribe(name => {
+          this.capaVerifiedBy = name;
+        });
+      }
+
       this.getChecklistFindingStages(this.checkListFindings);
       this.disableCAPSubmitButton();
       this.disableCAPReviewButton();
-      this.disableImplementButtonInReview();
-      this.disableVerificationButton();
+      if (!this.isFileAction) {
+        this.disableImplementButtonInReview();
+        this.disableVerificationButton();
+      }
+      this.isFileAction = false;
     },
       error => { this._util.serviceError(error); }
     )
@@ -571,17 +648,17 @@ export class ChecklistAuditeeComponent implements OnInit {
   }
   disableImplementButtonInReview() {
     if (this.findingStatus != undefined) {
-      if (this.findingStatus.caP_IMPLEMENTATION.capa.length == 0)
+      if (this.findingStatus.caP_IMPLEMENTATION.capa.length == 0) {
         this.isimplementbutton = false;
-      else {
-        for (let element of this.findingStatus.caP_IMPLEMENTATION.capa) {
-          if (!element.isimplemented) {
-            this.isimplementbutton = false;
-            break
-          }
-          else
-            this.isimplementbutton = true;
-        };
+      } else {
+        const stage3Status = this.findingStatus.caP_IMPLEMENTATION.status
+          ? this.findingStatus.caP_IMPLEMENTATION.status.stagE_STATUS
+          : null;
+        if (stage3Status === 'Corrective Action Plan Implemented') {
+          this.isimplementbutton = true;
+        } else {
+          this.isimplementbutton = false;
+        }
       }
     }
   }
@@ -612,17 +689,17 @@ export class ChecklistAuditeeComponent implements OnInit {
 
   disableVerificationButton() {
     if (this.findingStatus != undefined) {
-      if (this.findingStatus.caP_VERIFICATION.capa.length == 0)
+      if (this.findingStatus.caP_VERIFICATION.capa.length == 0) {
         this.isverficationbutton = false;
-      else {
-        for (let element of this.findingStatus.caP_VERIFICATION.capa) {
-          if (!element.isverified) {
-            this.isverficationbutton = false;
-            break
-          }
-          else
-            this.isverficationbutton = true;
-        };
+      } else {
+        const stage4Status = this.findingStatus.caP_VERIFICATION.status
+          ? this.findingStatus.caP_VERIFICATION.status.stagE_STATUS
+          : null;
+        if (stage4Status === 'Corrective Action Plan Passed' || stage4Status === 'Corrective Action Plan Failed' || stage4Status === 'Corrective Action Implementation Verified') {
+          this.isverficationbutton = true;
+        } else {
+          this.isverficationbutton = false;
+        }
       }
     }
   }
@@ -635,12 +712,12 @@ export class ChecklistAuditeeComponent implements OnInit {
   SaveCheckListCAPA(status) {
 
     if (!this.validateCAPAinputfields()) {
-      alert("Please input all the values for CAPA");
+      this.showWarningPopup("Please input all the values for CAPA");
       return;
     }
 
     if (!this.validateRootcauseField()) {
-      alert("Please choose any one cause as Root cause");
+      this.showWarningPopup("Please choose any one cause as Root cause");
       return;
     }
 
@@ -868,7 +945,7 @@ export class ChecklistAuditeeComponent implements OnInit {
       if (this.findingStatus.capA_REVIEW.capa.length > 0) {
         for (let element of this.findingStatus.capA_REVIEW.capa) {
           if (element.iscaprejected && (element.remarks == "" || element.remarks == null)) {
-            alert("Please enter remarks")
+            this.showWarningPopup("Please enter remarks");
             this.flag = true;
             break;
           }
@@ -879,44 +956,74 @@ export class ChecklistAuditeeComponent implements OnInit {
     }
   }
 
+
   ImplementCap() {
-    if (this.findingStatus.caP_IMPLEMENTATION.capa.length > 0) {
-      this.findingStatus.caP_IMPLEMENTATION.capa.forEach(element => {
-        if (element.isimplemented) {
-          element.isimplemented = true;
-          element.status = "Corrective Action Plan Implemented"
-        }
-        else {
-          element.isimplemented = false;
-          element.status = "Corrective Action Plan Not Implemented"
-        }
-      });
-      this.addAuditFindingImplementation()
+    if (this.findingStatus.caP_IMPLEMENTATION.capa.length == 0) {
+      this.showWarningPopup("Please select a Corrective Action Plan");
+      return;
     }
-    else
-      alert("Please select a Corrective Action Plan")
+
+    this.findingStatus.caP_IMPLEMENTATION.capa.forEach((element: any) => {
+      if (element.isimplemented) {
+        element.isimplemented = true;
+        element.status = "Corrective Action Plan Implemented";
+      } else {
+        element.isimplemented = false;
+        element.status = "Corrective Action Plan Not Implemented";
+      }
+    });
+
+    this.addAuditFindingImplementation();
   }
 
+
+
   VerifyCAPImplementation() {
-    if (this.findingStatus.caP_VERIFICATION.capa.length > 0) {
-      this.findingStatus.caP_VERIFICATION.capa.forEach(element => {
-        if (element.isverified) {
-          element.isverified = true;
-          element.isrejected = false;
-          element.status = "Corrective Action Plan Passed"
-        }
-        else {
-          this.rejectImp = true;
-          element.isverified = false;
-          element.isrejected = true;
-          element.status = "Corrective Action Plan Failed"
-        }
-      });
-      this.addAuditFindingVerification()
+    if (this.findingStatus.caP_VERIFICATION.capa.length === 0) {
+      this.showWarningPopup("Please select a finding");
+      return;
     }
-    else
-      alert("Please select a finding")
+
+    let missingEvidence = false;
+    let missingEvidenceCause = [];
+
+    this.findingStatus.caP_VERIFICATION.capa.forEach((element: any) => {
+      if (element.isverified) {
+        const stage3Files = (this.stage3EvidenceMappings || []).filter(
+          (m: any) => m.stagE_ID === 3 && m.rootcausE_ID === element.capadata.rooT_CAUSE_ID
+        );
+        const existingStage4Files = (this.stage4EvidenceMappings || []).filter(
+          (m: any) => m.stagE_ID === 4 && m.rootcausE_ID === element.capadata.rooT_CAUSE_ID
+        );
+
+        if (stage3Files.length === 0 && existingStage4Files.length === 0) {
+          missingEvidenceCause.push(element.capadata.rooT_CAUSE);
+          missingEvidence = true;
+          return;
+        }
+
+        element.isverified = true;
+        element.isrejected = false;
+        element.status = "Corrective Action Plan Passed";
+
+      } else {
+        this.rejectImp = true;
+        element.isverified = false;
+        element.isrejected = true;
+        element.status = "Corrective Action Plan Failed";
+      }
+    });
+
+    if (missingEvidence) {
+      this.showWarningPopup(
+        `Evidence is mandatory for "${missingEvidenceCause.join(', ')}" because no evidence was provided during the Implementation Stage.`
+      );
+      return;
+    }
+
+    this.addAuditFindingVerification();
   }
+
 
   verifyChanges(event: MatSelectChange) {
     this.findingStatus.caP_VERIFICATION.capa.forEach(element => {
@@ -945,7 +1052,6 @@ export class ChecklistAuditeeComponent implements OnInit {
   //services
   //addFindingCAP
   service_saveCAPDetailsForFinding(sta, status) {
-
     let header = new HttpHeaders({ 'Accept': 'application/json', 'token': this._util.AppSettings.token, 'empId': localStorage.getItem("empid") });
     let apiuri: string = environment.webapiuri + 'AddFindingCAP'
     this._http.post<any>(apiuri, this.findingStatus, { headers: header })
@@ -953,7 +1059,7 @@ export class ChecklistAuditeeComponent implements OnInit {
         this.findingStatus = data;
         this.disablesubmittillSave = false;
         this.submitcap = true;
-        alert("Submitted Sucessfully");
+        this.showWarningPopup("Submitted Sucessfully");
         this.getFindingStatusdetails(this.actionPlan)
       }, error => {
         this._util.serviceError(error);
@@ -967,7 +1073,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     let apiuri: string = environment.webapiuri + 'AddFindingCAPReviewDetails'
     this._http.post(apiuri, this.findingStatus.capA_REVIEW.capa, { headers: header })
       .subscribe(data => {
-        alert("Submitted Sucessfully");
+        this.showWarningPopup("Submitted Sucessfully");
         this.disabletillreviewSave = false;
         this.getFindingStatusdetails(this.actionPlan)
         this.SelectedValue = []
@@ -981,7 +1087,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     let apiuri: string = environment.webapiuri + 'AddFindingCAPImplementationDetails'
     this._http.post(apiuri, this.findingStatus.caP_IMPLEMENTATION.capa, { headers: header })
       .subscribe(data => {
-        alert("Submitted Sucessfully");
+        this.showWarningPopup("Submitted Sucessfully");
         this.disabletillSaveImplement = false;
         this.getFindingStatusdetails(this.actionPlan)
         this.SelectedValueImp = []
@@ -995,7 +1101,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     let apiuri: string = environment.webapiuri + 'AddFindingCAPVerificationDetails'
     this._http.post(apiuri, this.findingStatus.caP_VERIFICATION.capa, { headers: header })
       .subscribe(data => {
-        alert("Submitted Sucessfully");
+        this.showWarningPopup("Submitted Sucessfully");
         this.disableTillSaveVerification = false;
         this.getFindingStatusdetails(this.actionPlan);
         this.processCrispScore();
@@ -1011,7 +1117,7 @@ export class ChecklistAuditeeComponent implements OnInit {
       }, error => { this._util.serviceError(error); });
     }
     else
-      alert("Audit Details are empty.Please submit and then send mail");
+      this.showWarningPopup("Audit Details are empty.Please submit and then send mail");
   }
 
   processCrispScore() {
@@ -1025,10 +1131,133 @@ export class ChecklistAuditeeComponent implements OnInit {
     if (this.checklistSummaryRec.customeR_ID != null && this.checklistSummaryRec.customeR_ID != undefined &&
       month != null && month != undefined && year != null && year != undefined) {
       this._appservice.ProcessCrispScoresForProject(this.checklistSummaryRec.customeR_ID, this.project, month, year).subscribe(data => {
+      }, error => { });
+    }
+  }
 
+  onFilesSelected(event: any, row: any, stageId: number) {
+    if (!row.selectedFiles) row.selectedFiles = [];
+    const files: File[] = Array.from(event.target.files);
+
+    if (files.length === 0) return;
+
+
+    const existingMappings = stageId === 3 ? this.stage3EvidenceMappings : this.stage4EvidenceMappings;
+    const existingFileNames = (existingMappings || [])
+      .filter((m: any) => m.rootcausE_ID === row.capadata.rooT_CAUSE_ID)
+      .map((m: any) => m.filE_NAME.toLowerCase().trim());
+
+    const selectedFileNames: string[] = [];
+    const duplicateFiles: string[] = [];
+
+    for (const file of files) {
+      const fileName = file.name.toLowerCase().trim();
+
+      if (existingFileNames.includes(fileName) || selectedFileNames.includes(fileName)) {
+        duplicateFiles.push(file.name);
+      } else {
+        selectedFileNames.push(fileName);
+      }
+    }
+
+    if (duplicateFiles.length > 0) {
+      this.showWarningPopup(
+        `The following file(s) already exist. Please upload a different file:\n${duplicateFiles.join(', ')}`
+      );
+
+      event.target.value = '';
+      return;
+    }
+
+    row.isUploading = true;
+
+    this.uploadAuditEvidence(files, row.capadata.findinG_ID, stageId, row.capadata.rooT_CAUSE_ID,
+      () => {
+        row.isUploading = false;
+        row.selectedFiles = [];
+      },
+      () => {
+        row.isUploading = false;
+        row.selectedFiles = [];
+      }
+    );
+    event.target.value = '';
+  }
+
+  removeFile(row: any, index: number) {
+    row.selectedFiles.splice(index, 1);
+  }
+
+
+
+  downloadFile(doc: any) {
+    const fileData = {
+      FileName: doc.filE_NAME,
+      FilePath: doc.filE_GUID,
+      FileType: doc.filE_TYPE
+    };
+
+    this._appservice.downloadFile(fileData, this.custId, this.projectId).subscribe((blob: Blob) => {
+      this.showWarningPopup("File downloaded successfully");
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = doc.filE_NAME;
+      link.click();
+
+      window.URL.revokeObjectURL(downloadUrl);
+    }, error => {
+      this._util.serviceError(error);
+    });
+  }
+
+
+  uploadAuditEvidence(files: File[], findingId: number, stageId: number, rootCauseId: number, onSuccess?: () => void, onError?: () => void) {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+
+    this._appservice.uploadProjectFile(0, this.custId, this.projectId, formData, findingId, stageId, rootCauseId)
+      .subscribe({
+        next: () => {
+          //this.showWarningPopup("Evidence uploaded successfully");
+          this.isFileAction = true;
+          this.getFindingStatusdetails(this.actionPlan);
+          if (onSuccess) onSuccess();
+        },
+        error: (error) => {
+          const errorMessage = this._util.GetErrorMessage(error);
+          this.showWarningPopup(errorMessage);
+          if (onError) onError();
+        }
+      });
+  }
+
+  removeSavedEvidence(doc: any) {
+    if (confirm("Are you sure you want to delete this evidence file?")) {
+      const fileData = {
+        ID: doc.id,
+        FileName: doc.filE_NAME,
+      };
+
+      this._appservice.deleteFile(fileData, this.custId, this.projectId).subscribe(() => {
+        this.showWarningPopup("Evidence deleted successfully");
+        this.isFileAction = true;
+        this.getFindingStatusdetails(this.actionPlan);
+      }, error => {
+        this._util.serviceError(error);
       });
     }
   }
 
+  showWarningPopup(message: string) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.data = {
+      Message: message,
+    }
+    dialogConfig.hasBackdrop = true;
+    dialogConfig.scrollStrategy = new NoopScrollStrategy();
+    this.dialog.open(RatingCriteriaRemarksComponent, dialogConfig);
+  }
 
 }
+

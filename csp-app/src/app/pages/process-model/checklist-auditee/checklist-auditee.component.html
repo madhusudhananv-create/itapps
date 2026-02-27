@@ -61,6 +61,7 @@
     </tr>
   </table>
 </div> -->
+
 <div style="margin-bottom: 5px; display: flex; margin-top: 5px; width: 85%"
   *ngIf="checkListFindings && checkListFindings.length > 0">
   <div *ngIf="showCheck || showForQATeam || _access.IsAllowed(108, 1, '', '')" style="line-height: 34px">
@@ -493,6 +494,7 @@
                   Is Implemented
                 </th>
                 <th>Remarks</th>
+                <th>Evidence</th>
               </tr>
               <tr *ngFor="let st of findingStatus.caP_IMPLEMENTATION.capa;let i = index">
 
@@ -531,11 +533,44 @@
                 </td>
                 <td>
                   <mat-form-field *ngIf="!st.isimplemented">
-                    <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="st.issubmitted"
+                    <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="isimplementbutton"
                       placeholder="Enter remarks"></textarea>
                   </mat-form-field>
                 </td>
+                <td>
+                  <div class="evidence-upload">
 
+                    <input type="file" #fileInputStage3 multiple (change)="onFilesSelected($event, st, 3)"
+                      style="display: none">
+
+                    <button *ngIf="!isimplementbutton" type="button" class="btn btn-sm btn-info"
+                      (click)="fileInputStage3.click()" title="Upload Evidence">
+                      <i class="material-icons">cloud_upload</i>
+                    </button>
+
+
+                    <div *ngIf="st.isUploading" style="margin-top: 4px;">
+                      <mat-progress-bar mode="indeterminate" style="width: 120px;"></mat-progress-bar>
+                      <small style="color: #888;">Uploading...</small>
+                    </div>
+
+                    <div *ngFor="let doc of stage3EvidenceMappings" style="margin-top: 5px;">
+                      <ng-container *ngIf="doc.rootcausE_ID === st.capadata.rooT_CAUSE_ID">
+                        <div style="display:flex; align-items:flex-start; gap:4px;">
+                          <i class="material-icons" style="font-size:16px; color:#337ab7; flex-shrink:0;">attachment</i>
+                          <a (click)="downloadFile(doc)" style="cursor:pointer; color:#337ab7; text-decoration:underline; font-size:12px;"
+                            [title]="doc.filE_NAME">
+                            {{doc.filE_NAME}}
+                          </a>
+                          <i *ngIf="!isimplementbutton" class="material-icons" (click)="removeSavedEvidence(doc)"
+                            style="font-size:16px; color:red; cursor:pointer; flex-shrink:0;margin-top:1px;"
+                            title="Delete File">delete_forever</i>
+                        </div>
+                      </ng-container>
+                    </div>
+
+                  </div>
+                </td>
               </tr>
             </table>
           </div>
@@ -590,6 +625,7 @@
               <!-- <th style="width: 8%;">Target Date</th> -->
               <th style="width: 2%;">Is Corrective Action Completed / Closed ?</th>
               <th>Remarks</th>
+              <th>Evidence</th>
             </tr>
             <tr *ngFor="let st of findingStatus.caP_VERIFICATION.capa;let i = index">
 
@@ -629,17 +665,18 @@
                 </mat-form-field>
                 <mat-form-field style="width: 100px;" *ngIf="!st.isverified">
                   <mat-select name="capVerification" [(ngModel)]="st.recommendeD_ACTION"
-                    [disabled]="isverficationbutton">
+                    [disabled]="isverficationbutton" required>
                     <mat-option value="Resubmit Corrective Action Plan">Re-Submit Corrective Action Plan</mat-option>
                     <mat-option value="Reimplement Corrective Action Plan">Re-Implement Corrective Action
                       Plan</mat-option>
                   </mat-select>
+                  <mat-error *ngIf="!st.recommendeD_ACTION">Action is required for rejection</mat-error>
                 </mat-form-field>
                 <!-- <input type="checkbox" (click)="SendIdtoArrayImp(st)" [(ngModel)]="st.isimplemented" name="check{{i}}"> -->
               </td>
               <td>
                 <mat-form-field>
-                  <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="st.issubmitted"
+                  <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="isverficationbutton"
                     placeholder="Enter remarks"></textarea>
                 </mat-form-field>
                 <div *ngIf="findingStatus?.caP_VERIFICATION?.capa[0]?.updateD_BY">
@@ -647,6 +684,40 @@
                     style="margin-top: 5px; font-style: italic; color: #666; font-size: 11px;">
                     <label>Verified By:</label> {{capaVerifiedBy}}
                   </div>
+                </div>
+              </td>
+
+              <td>
+                <div class="evidence-upload">
+
+                  <input type="file" #fileInputStage4 multiple (change)="onFilesSelected($event, st, 4)"
+                    style="display: none">
+
+                  <button *ngIf="!isverficationbutton" type="button" class="btn btn-sm btn-info"
+                    (click)="fileInputStage4.click()" title="Upload Evidence">
+                    <i class="material-icons">cloud_upload</i>
+                  </button>
+
+                  <div *ngIf="st.isUploading" style="margin-top: 4px;">
+                    <mat-progress-bar mode="indeterminate" style="width: 120px;"></mat-progress-bar>
+                    <small style="color: #888;">Uploading...</small>
+                  </div>
+
+                  <div *ngFor="let doc of stage4EvidenceMappings" style="margin-top: 5px;">
+                    <ng-container *ngIf="doc.rootcausE_ID === st.capadata.rooT_CAUSE_ID">
+                     <div style="display:flex; align-items:flex-start; gap:4px;">
+                        <i class="material-icons" style="font-size:16px; color:#337ab7; flex-shrink:0;">attachment</i>
+                        <a (click)="downloadFile(doc)" style="cursor:pointer; color:#337ab7; text-decoration:underline; font-size:12px;"
+                          [title]="doc.filE_NAME">
+                          {{doc.filE_NAME}}
+                        </a>
+                        <i *ngIf="!isverficationbutton" class="material-icons" (click)="removeSavedEvidence(doc)"
+                          style="font-size:16px; color:red; cursor:pointer; flex-shrink:0;margin-top:1px;"
+                          title="Delete File">delete_forever</i>
+                      </div>
+                    </ng-container>
+                  </div>
+
                 </div>
               </td>
             </tr>

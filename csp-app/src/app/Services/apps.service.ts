@@ -9058,20 +9058,45 @@ export class AppsService {
     );
   }
 
-  uploadProjectFile(folderId, customerId, projectId, formData): Observable<any> {
+  // uploadProjectFile(folderId, customerId, projectId, formData): Observable<any> {
+  //   let header = new HttpHeaders({
+  //     Accept: "application/json",
+  //     token: this._util.AppSettings.token,
+  //     empId: localStorage.getItem("empid"),
+  //   });
+  //   let headers = new Headers();
+  //   return this._http.post<any[]>(
+  //     this.apiurl + "/UploadFile?folderId=" + folderId + "&customerId=" + customerId +
+  //     "&projectId=" + projectId, formData,
+  //     {
+  //       headers: header,
+  //     }
+  //   );
+  // }
+
+  uploadProjectFile(folderId, customerId, projectId, formData, findingId?: number, stageId?: number, rootCauseId?: number): Observable<any> {
     let header = new HttpHeaders({
       Accept: "application/json",
       token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
     });
-    let headers = new Headers();
-    return this._http.post<any[]>(
-      this.apiurl + "/UploadFile?folderId=" + folderId + "&customerId=" + customerId +
-      "&projectId=" + projectId, formData,
-      {
-        headers: header,
-      }
-    );
+
+    let url = `${this.apiurl}/UploadFile?customerId=${customerId}&projectId=${projectId}`;
+
+    if (folderId !== undefined && folderId !== null) {
+      url += `&folderId=${folderId}`;
+    }
+    if (findingId !== undefined && findingId !== null) {
+      url += `&findingId=${findingId}`;
+    }
+    if (stageId !== undefined && stageId !== null) {
+      url += `&stageId=${stageId}`;
+    }
+    if (rootCauseId !== undefined && rootCauseId !== null) {
+      url += `&rootCauseId=${rootCauseId}`;
+    }
+
+    return this._http.post<any[]>(url, formData, { headers: header });
   }
 
   downloadFile(fileData, customerId: string, projectId: string): Observable<Blob> {
@@ -9541,39 +9566,39 @@ export class AppsService {
       headers: header,
     });
   }
- getContactListForCustIds(custIds: string[]): Observable<any[]> {
-    let header = new HttpHeaders({
-        Accept: "application/json",
-        token: this._util.AppSettings.token,
-        empId: localStorage.getItem("empid")
-    });
-    return this._http.post<any[]>(
-        this.apiurl + "/GetContactListForCustIds", 
-        custIds, 
-        { headers: header }
-    );
-}
-saveCSATContactListForDP(cssBatchData: any[], dpId: string, batchId): Observable<CssBatchCustomersModel[]> {
+  getContactListForCustIds(custIds: string[]): Observable<any[]> {
     let header = new HttpHeaders({
       Accept: "application/json",
-      token: this._util.AppSettings.token,  
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid")
+    });
+    return this._http.post<any[]>(
+      this.apiurl + "/GetContactListForCustIds",
+      custIds,
+      { headers: header }
+    );
+  }
+  saveCSATContactListForDP(cssBatchData: any[], dpId: string, batchId): Observable<CssBatchCustomersModel[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
-    });   
+    });
     return this._http.post<CssBatchCustomersModel[]>(this.apiurl + "/SaveCSATContactListForDP?dpId=" + dpId +
       "&batchId=" + batchId, cssBatchData, {
       headers: header,
     });
   }
 
-  getDropdownOptions(dropdownName :string): Observable<any[]> {  
-    let header = new HttpHeaders({  
-      Accept: "application/json", 
+  getDropdownOptions(dropdownName: string): Observable<any[]> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
       token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
     });
     return this._http.get<any[]>(this.apiurl + "/GetDropdownOptions?dropdownName=" + dropdownName, {
       headers: header,
-    }); 
+    });
   }
 
   getOverallPreconnectData(batchCustomerId: number): Observable<CssPresurveyConnectModel[]> {
@@ -9587,40 +9612,49 @@ saveCSATContactListForDP(cssBatchData: any[], dpId: string, batchId): Observable
     });
   }
 
-savePreconnectSurveyData(presurveyData: CssPresurveyConnectModel): Observable<CssPresurveyConnectModel> {
-    let header = new HttpHeaders({  
-      Accept: "application/json", 
+  savePreconnectSurveyData(presurveyData: CssPresurveyConnectModel): Observable<CssPresurveyConnectModel> {
+    let header = new HttpHeaders({
+      Accept: "application/json",
       token: this._util.AppSettings.token,
       empId: localStorage.getItem("empid"),
-    }); 
+    });
     return this._http.post<CssPresurveyConnectModel>(this.apiurl + "/SavePreconnectSurveyData", presurveyData, {
       headers: header,
-    }); 
+    });
   }
-                     
-//  getDropdownValues(name: string): Observable<any[]> {
-//     let header = new HttpHeaders({
-//       Accept: "application/json",
-//       token: this._util.AppSettings.token,  
-//       empId: localStorage.getItem("empid"),
-//     }); 
-//     return this._http.get<any[]>(this.apiurl + "/GetDropdownOptionsFromDB?name=" + name, {
-//       headers: header,
-//     });   
-//   }
 
-//   UpdateCSSSurveyQualitativeFeedback(feedbackData: CssQuestionRepliesModel[]): Observable<CssQuestionRepliesModel[]> {
-//     let header = new HttpHeaders({
-//       Accept: "application/json",
-//       token: this._util.AppSettings.token,  
-//       empId: localStorage.getItem("empid"),   
-//     }); 
-//     return this._http.post<CssQuestionRepliesModel[]>(this.apiurl + "/UpdateQualitativeAnalysis", feedbackData, {
-//       headers: header,
-//     });
-//   } 
+  getAuditEvidence(findingId: number, stageId: number, rootCauseId?: number): Observable<any> {
+    const url = `${this.apiurl}/GetAuditEvidence?findingId=${findingId}&stageId=${stageId}&rootCauseId=${rootCauseId}`;
+     let header = new HttpHeaders({
+      Accept: "application/json",
+      token: this._util.AppSettings.token,
+      empId: localStorage.getItem("empid"),
+    });
+    return this._http.get<any>(url, { headers: header });
+  }
+  //  getDropdownValues(name: string): Observable<any[]> {
+  //     let header = new HttpHeaders({
+  //       Accept: "application/json",
+  //       token: this._util.AppSettings.token,  
+  //       empId: localStorage.getItem("empid"),
+  //     }); 
+  //     return this._http.get<any[]>(this.apiurl + "/GetDropdownOptionsFromDB?name=" + name, {
+  //       headers: header,
+  //     });   
+  //   }
 
-  
+  //   UpdateCSSSurveyQualitativeFeedback(feedbackData: CssQuestionRepliesModel[]): Observable<CssQuestionRepliesModel[]> {
+  //     let header = new HttpHeaders({
+  //       Accept: "application/json",
+  //       token: this._util.AppSettings.token,  
+  //       empId: localStorage.getItem("empid"),   
+  //     }); 
+  //     return this._http.post<CssQuestionRepliesModel[]>(this.apiurl + "/UpdateQualitativeAnalysis", feedbackData, {
+  //       headers: header,
+  //     });
+  //   } 
+
+
 
   /**
         *  get(url: string, options: {
