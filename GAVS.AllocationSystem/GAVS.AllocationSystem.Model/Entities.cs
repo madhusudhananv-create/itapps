@@ -396,6 +396,18 @@ namespace GAVS.AllocationSystem.Model.AllSys
 
 
 
+    public partial class AUDIT_EVIDENCE_DATA : EntityBase
+    {
+        public int FINDING_ID {get; set;}
+        public int STAGE_ID {get; set;}
+        public int ROOTCAUSE_ID  {get; set;}
+        public int FILE_DATA_ID {get; set;}
+    }
+
+
+
+
+
 
 }
  

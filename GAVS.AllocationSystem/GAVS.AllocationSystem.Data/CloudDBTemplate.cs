@@ -111,7 +111,9 @@ namespace GAVS.AllocationSystem.Data
   
    
             public IRepository<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get { return GetStandardRepo<DROPDOWN_OPTIONS>(); } }
-  
+
+        public IRepository<AUDIT_EVIDENCE_DATA> AUDIT_EVIDENCE_DATA { get { return GetStandardRepo<AUDIT_EVIDENCE_DATA>(); } }
+
     }
 }
  

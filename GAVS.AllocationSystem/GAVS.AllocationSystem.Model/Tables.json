@@ -314,13 +314,14 @@
 
   },
   {
-    "name": "DROPDOWN_OPTIONS",
+    "name": "AUDIT_EVIDENCE_DATA",
     "props": [
-      "DD_NAME:string",
-      "DD_VALUE:string",
-      "DD_TEXT:string"
-    ]
+      "FINDING_ID:int",
+      "STAGE_ID:int",
+      "ROOTCAUSE_ID :int",
+      "FILE_DATA_ID:int",
 
+    ]
   }
 
 

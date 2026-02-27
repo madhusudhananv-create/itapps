@@ -55,7 +55,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var empId = GetHeaderDetails_String("empId");
             CheckUserHasAccess(empId, "", projectId);
-            var existing = GetFolderData(customerId, projectId).FirstOrDefault(x=> x.PARENT_FOLDER_ID == folderData.ParentFolderId && x.FOLDER_NAME == folderData.FolderName);
+            var existing = GetFolderData(customerId, projectId).FirstOrDefault(x => x.PARENT_FOLDER_ID == folderData.ParentFolderId && x.FOLDER_NAME == folderData.FolderName);
             if (existing != null)
             {
                 return BadRequest($"Folder with name {folderData.FolderName} already exists in same location. Please use different folder name or create in different Folder.");
@@ -115,22 +115,43 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
         //4. Add File
         [POST("UploadFile"), ActionName("UploadFile"), HttpPost]
-        public IHttpActionResult UploadFile(int folderId, string customerId, string projectId)
+        public IHttpActionResult UploadFile(int folderId, string customerId, string projectId, int? findingId = null, int? stageId = null, int? rootCauseId = null)
         {
             var empId = GetHeaderDetails_String("empId");
             CheckUserHasAccess(empId, customerId, projectId);
             var httpRequest = HttpContext.Current.Request;
             if (httpRequest.Files.Count > 0)
             {
-                foreach (string file in httpRequest.Files)
+                for (int i = 0; i < httpRequest.Files.Count; i++)
                 {
-                    var postedFile = httpRequest.Files[file];
-                    CheckNameLengthAndValidation(postedFile.FileName);
-                    var existing = Cldb.FILE_DATA.GetAll().FirstOrDefault(x => x.ISACTIVE && x.FOLDER_ID == folderId && x.FILE_NAME == postedFile.FileName);
-                    if (existing != null)
+                    var postedFile = httpRequest.Files[i];
+
+                    if (findingId.HasValue)
                     {
-                        return BadRequest($"File with name {postedFile.FileName} already exists in same location. Please use different name or create in different Folder.");
+                        var mappedIds = Cldb.AUDIT_EVIDENCE_DATA.GetAll().Where(x => x.ISACTIVE && x.FINDING_ID == findingId.Value).Select(x => x.FILE_DATA_ID).ToList();
+
+                        var existingInFinding = Cldb.FILE_DATA.GetAll().FirstOrDefault(x => x.ISACTIVE && mappedIds.Contains(x.ID) && x.FILE_NAME == postedFile.FileName);
+
+                        if (existingInFinding != null)
+                        {
+                            return BadRequest($"File '{postedFile.FileName}' already exists for this Finding. Please use different name for the file and upload again.");
+                        }
                     }
+                    else
+                    {
+                        var existingInFolder = Cldb.FILE_DATA.GetAll().FirstOrDefault(x => x.ISACTIVE && x.FOLDER_ID == folderId && x.FILE_NAME == postedFile.FileName);
+
+                        if (existingInFolder != null)
+                        {
+                            return BadRequest($"File with name {postedFile.FileName} already exists in same location. Please use different name or create in different Folder.");
+
+                        }
+                    }
+                    if (!findingId.HasValue)
+                    {
+                        CheckNameLengthAndValidation(postedFile.FileName);
+                    }
+
 
                     string ServerFileName = Guid.NewGuid().ToString();
                     string contentType = postedFile.ContentType;
@@ -149,9 +170,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     };
                     UpdateAuditFields(ety);
                     Cldb.FILE_DATA.Add(ety);
-
+                    Cldb.Commit();
+                    if (findingId.HasValue && stageId.HasValue)
+                    {
+                        var evidenceMapping = new AUDIT_EVIDENCE_DATA
+                        {
+                            FINDING_ID = findingId.Value,
+                            STAGE_ID = stageId.Value,
+                            FILE_DATA_ID = ety.ID,
+                            ROOTCAUSE_ID = rootCauseId.Value
+                        };
+                        UpdateAuditFields(evidenceMapping);
+                        Cldb.AUDIT_EVIDENCE_DATA.Add(evidenceMapping);
+                        Cldb.Commit();
+                    }
                 }
-                Cldb.Commit(CanCommit);
+
+
+
+
             }
             return Ok();
         }
@@ -220,6 +257,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 UpdateAuditFields(ety);
                 ety.ISACTIVE = false;
+                var evidenceMapping = Cldb.AUDIT_EVIDENCE_DATA.GetAll().FirstOrDefault(x => x.FILE_DATA_ID == fileData.ID && x.ISACTIVE);
+
+                if (evidenceMapping != null)
+                {
+                    UpdateAuditFields(evidenceMapping);
+                    evidenceMapping.ISACTIVE = false;
+                }
+
                 Cldb.Commit(CanCommit);
             }
             return Ok();
@@ -332,5 +377,44 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return projectFolders;
         }
         #endregion
+
+
+        [POST("GetAuditEvidence"), ActionName("GetAuditEvidence"), HttpGet]
+        public IHttpActionResult GetAuditEvidence(int findingId, int stageId, int rootCauseId)
+        {
+            var evidenceMappings = Cldb.AUDIT_EVIDENCE_DATA.GetAll().Where(mapping => mapping.FINDING_ID == findingId && mapping.STAGE_ID == stageId && mapping.ROOTCAUSE_ID == rootCauseId && mapping.ISACTIVE).ToList();
+
+            var fileIds = evidenceMappings.Select(m => m.FILE_DATA_ID).ToList();
+
+            var files = Cldb.FILE_DATA.GetAll().Where(f => fileIds.Contains(f.ID) && f.ISACTIVE).ToList();
+
+            var result = new List<object>();
+
+            foreach (var mapping in evidenceMappings)
+            {
+                var file = files.FirstOrDefault(f => f.ID == mapping.FILE_DATA_ID);
+
+                if (file != null)
+                {
+                    result.Add(new 
+                    {
+                        ID = mapping.FILE_DATA_ID,
+                        FILE_GUID = file.FILE_GUID,
+                        FILE_NAME = file.FILE_NAME,
+                        FILE_TYPE = file.FILE_TYPE,
+                        ROOTCAUSE_ID = mapping.ROOTCAUSE_ID,
+                        STAGE_ID = mapping.STAGE_ID
+                    });
+                }
+            }
+
+            return Ok(result);
+
+        }
+
+
     }
+
+
+
 }

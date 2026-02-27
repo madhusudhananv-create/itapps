@@ -78,5 +78,8 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         IRepository<CSS_PRECONNECT> CSS_PRECONNECT { get; }
 
+        IRepository<AUDIT_EVIDENCE_DATA> AUDIT_EVIDENCE_DATA { get; }
+
+
     }
 }
