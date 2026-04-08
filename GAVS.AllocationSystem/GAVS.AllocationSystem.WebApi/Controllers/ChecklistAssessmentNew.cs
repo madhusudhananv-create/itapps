@@ -1678,17 +1678,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 if (review.ISREJECTED.Value)
                 {
                     var cap = CSPdb.AUDIT_FINDINGS_CAPA.GetAll().FirstOrDefault(t => t.FINDING_ID == review.FINDING_ID && t.ROOT_CAUSE_ID == review.ROOT_CAUSE_ID && t.UNIQUE_ID == review.UNIQUE_ID && t.ISACTIVE == true);
-                    cap.ISSUBMITTED = false;
-                    cap.STATUS = review.STATUS;
-                    CSPdb.AUDIT_FINDINGS_CAPA.Update(cap);
+                    if (cap != null)
+                    {
+                        cap.ISSUBMITTED = false;
+                        cap.STATUS = review.STATUS;
+                        CSPdb.AUDIT_FINDINGS_CAPA.Update(cap);
+                       
+                    }
                     capStatus = "Corrective Action Plan Rejected";
                 }
 
                 else if (review.ISAPPROVED.Value)
                 {
                     var cap = CSPdb.AUDIT_FINDINGS_CAPA.GetAll().Where(t => t.FINDING_ID == review.FINDING_ID && t.ROOT_CAUSE_ID == review.ROOT_CAUSE_ID && t.UNIQUE_ID == review.UNIQUE_ID && t.ISACTIVE == true).FirstOrDefault();
-                    cap.STATUS = review.STATUS;
-                    CSPdb.AUDIT_FINDINGS_CAPA.Update(cap);
+                    if (cap != null)
+                    {
+                        cap.STATUS = review.STATUS;
+                        CSPdb.AUDIT_FINDINGS_CAPA.Update(cap);
+                    }
                 }
             }
 
@@ -2116,7 +2123,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 htmlFindingsTable = GenerateAppraiseeResponseTable(checklistSendMail.RESULT_LIST, checklistSendMail.CUSTOMER_ID, checklistSendMail.PROJECT_ID, checklistSendMail.AUDIT_ID);
 
             }
-            else if (checklistSendMail.SUBJECT == "Assessment Completed" || checklistSendMail.SUBJECT == "Appraiser Response Submitted" || checklistSendMail.SUBJECT == "Appraisee Response Submitted" )
+            else if (checklistSendMail.SUBJECT == "Assessment Completed" || checklistSendMail.SUBJECT == "Appraiser Response Submitted" || checklistSendMail.SUBJECT == "Appraisee Response Submitted")
             {
                 checklistSendMail.FINDING_DETAILS_MSG = $"<p> Details of compliance against check-points  / assessment findings can be viewed <a href = \'{checklistSendMail.URL}'\'> here </a> , where in you can choose the assessment to view the result.</p>";
             }
@@ -2207,7 +2214,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 mailContent = helper.GetEmailContent("ChecklistAuditAppraiserSendEmail.htm", EmailContentValues);
             }
-            else if(checklistSendMail.STAGE.ToLower() == "corrective action plan submission")
+            else if (checklistSendMail.STAGE.ToLower() == "corrective action plan submission")
             {
                 mailContent = helper.GetEmailContent("CAPAAuditSubmissionEmail.htm", EmailContentValues);
             }
@@ -2223,7 +2230,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 mailContent = helper.GetEmailContent("CAPAAuditVerificationEmail.htm", EmailContentValues);
             }
-            else 
+            else
             {
                 mailContent = helper.GetEmailContent("ChecklistAuditSendEmail.htm", EmailContentValues);
             }
@@ -2406,7 +2413,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     findingsTableRows.AppendLine($"<td'>{findingDetail.FINDING_DESCRIPTION}</td>");
                     findingsTableRows.AppendLine($"<td'>{result.STATUS}</td>");
                     findingsTableRows.AppendLine($"<td style = '{(remarks == "-" ? "text-align: center" : "")}'>{remarks}</td>");
-                    if(result.STATUS == "Reject")
+                    if (result.STATUS == "Reject")
                         findingsTableRows.AppendLine($"<td'><a href='{acceptLink}'>Accept</a> | <a href='{revertLink}'>Revert</a></td>");
                     else
                         findingsTableRows.AppendLine($"<td'>None</td>");
@@ -3346,7 +3353,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (status == "Corrective Action Plan Review")
             {
-         
+
                 capaReviewList = CSPdb.AUDIT_FINDING_CAPA_REVIEW.GetAll().Where(x => x.FINDING_ID == findingId && x.ISACTIVE && x.ISSUBMITTED).ToList();
             }
             else if (status == "Corrective Action Plan Implementation")
@@ -3379,7 +3386,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     var capaReview = capaReviewList.Find(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
                     string isApproved = capaReview?.ISAPPROVED == true ? "Yes" : "No";
-                    string remarks = capaReview.REMARKS ?? string.Empty;
+                    string remarks = capaReview?.REMARKS ?? string.Empty;
                     sb.Append($"<td>{isApproved}</td>");
                     sb.Append($"<td>{remarks}</td>");
                 }
@@ -3387,7 +3394,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     var capaImplementation = capaImplementationList.Find(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
                     string isImplemented = capaImplementation?.ISIMPLEMENTED == true ? "Yes" : "No";
-                    string remarks = capaImplementation.REMARKS ?? string.Empty;
+                    string remarks = capaImplementation?.REMARKS ?? string.Empty;
                     sb.Append($"<td>{isImplemented}</td>");
                     sb.Append($"<td>{remarks}</td>");
                 }
@@ -3395,7 +3402,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     var capaVerification = capaVerificationList.Find(x => x.ROOT_CAUSE_ID == item.ROOT_CAUSE_ID);
                     string isVerified = capaVerification?.ISVERIFIED == true ? "Yes" : "No";
-                    string remarks = capaVerification.REMARKS ?? string.Empty;
+                    string remarks = capaVerification?.REMARKS ?? string.Empty;
                     sb.Append($"<td>{isVerified}</td>");
                     sb.Append($"<td>{remarks}</td>");
                 }
@@ -3404,7 +3411,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             return sb.ToString();
         }
-       
+
 
     }
 }

@@ -549,7 +549,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existing.DEPT_ID = project.DEPT_ID;
 
                     if (!string.IsNullOrWhiteSpace(project.BUSINESS_UNIT))
-                        existing.BUSINESS_UNIT = getUpdatedBusinessUnit(project.BUSINESS_UNIT);
+                    {
+                        var updateBU = getUpdatedBusinessUnit(project.BUSINESS_UNIT);
+                        if (!string.IsNullOrWhiteSpace(updateBU))
+                            existing.BUSINESS_UNIT = updateBU;
+                    }
                     existing.PROJECT_TYPE = project.PROJECT_TYPE;
                     existing.DEPARTMENT = project.DEPARTMENT;
                     existing.PROJECT_GROUP = project.PROJECT_GROUP;
@@ -618,6 +622,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return "Tech";
                 case "inuk":
                     return "India & UK";
+                case "sead":
+                    return "Sead";
                 default:
                     break;
             }

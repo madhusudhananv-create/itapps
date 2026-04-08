@@ -89,4 +89,5 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<AUDIT_EVIDENCE_DATA> AUDIT_EVIDENCE_DATA { get; set; }
     }
 }
+}
  

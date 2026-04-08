@@ -297,13 +297,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
 
-            if (isDraft == false)
+            if (!isDraft   && serviceMetrics.Any())
             {
                 //send mail.
                 var kpiDetails = serviceMetrics.FirstOrDefault();
-                var product = CSPdb.PORTFOLIO_PRODUCTS.GetAll().FirstOrDefault(x => x.ID == kpiDetails.PRODUCT_ID);
+              
                 if (kpiDetails != null)
                 {
+                    var product = CSPdb.PORTFOLIO_PRODUCTS.GetAll().FirstOrDefault(x => x.ID == kpiDetails.PRODUCT_ID);
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine("<table border=1  cellspacing=0 >");
                     sb.AppendLine("<tr><th>Frequency</th><th>Service Level Metrics</th><th>Specification Limit</th><th>Service Tower</th><th>Service Level</th><th>Expected Service Level</th><th>Minimum Service Level</th><th>KPI Achievements</th><th>Service Level Status(Expected)</th><th>Service Level Status(Minimum)</th><th>Exclusion KPI Achievements</th><th>Remarks</th></tr>");

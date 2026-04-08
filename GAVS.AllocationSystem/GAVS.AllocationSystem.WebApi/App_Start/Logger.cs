@@ -33,6 +33,7 @@ namespace GAVS.AllocationSystem.WebApi
                     log.INNER_EXCEPTION = "~" + context.Exception.InnerException.InnerException.ToString();
             }
             log.STACK_TRACE = context.Exception.StackTrace;
+            log.CONTENT = context.Request.Content.ReadAsStringAsync().Result;
             logger.logWithToken(log);
         }
         public Logger(HttpRequestMessage request, Exception exception, string prefix = "", string content = "")
