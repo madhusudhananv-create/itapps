@@ -12,8 +12,9 @@ import { Guid } from '../../Shared/guid';
 import { Ng4LoadingSpinnerService } from 'ng4-loading-spinner';
 import { AccessControl } from '../../Shared/accessControl';
 import { resolve } from 'url';
-import { SocialAuthService, GoogleLoginProvider } from 'angularx-social-login';
-import { loadGapiInsideDOM } from 'gapi-script';
+// Google Login - Commented out for Azure migration
+// import { SocialAuthService, GoogleLoginProvider } from 'angularx-social-login';
+// import { loadGapiInsideDOM } from 'gapi-script';
 
 @Component({
   selector: 'app-login',
@@ -35,43 +36,45 @@ export class LoginComponent implements OnInit {
 
   }
 
-  private gavsService: SocialAuthService;
+  // Google Login - Commented out for Azure migration
+  // private gavsService: SocialAuthService;
   //private gslabService : SocialAuthService;
   ngOnInit() {
 
-    const gapi = loadGapiInsideDOM();
+    // Google Login - Commented out for Azure migration
+    // const gapi = loadGapiInsideDOM();
 
-    this._activatedRoute.params.subscribe(params => {
-      this.gslab = params['gslab'];
-      if (this.gslab == 'gslab') {
-        this.gavsService = new SocialAuthService({
-          autoLogin: false,
-          providers: [{
-            id: GoogleLoginProvider.PROVIDER_ID,
-            provider:
-              new GoogleLoginProvider(
-                environment.googleClientId
-              )
-          }]
-        });
-        alert("Please click on GSLab google icon to login.");
-      }
-      else {
-        this.gavsService = new SocialAuthService({
-          autoLogin: false,
-          providers: [{
-            id: GoogleLoginProvider.PROVIDER_ID,
-            provider:
-              new GoogleLoginProvider(
-                environment.gavsGoogleClientId
-              )
-          }]
-        });
+    // this._activatedRoute.params.subscribe(params => {
+    //   this.gslab = params['gslab'];
+    //   if (this.gslab == 'gslab') {
+    //     this.gavsService = new SocialAuthService({
+    //       autoLogin: false,
+    //       providers: [{
+    //         id: GoogleLoginProvider.PROVIDER_ID,
+    //         provider:
+    //           new GoogleLoginProvider(
+    //             environment.googleClientId
+    //           )
+    //       }]
+    //     });
+    //     alert("Please click on GSLab google icon to login.");
+    //   }
+    //   else {
+    //     this.gavsService = new SocialAuthService({
+    //       autoLogin: false,
+    //       providers: [{
+    //         id: GoogleLoginProvider.PROVIDER_ID,
+    //         provider:
+    //           new GoogleLoginProvider(
+    //             environment.gavsGoogleClientId
+    //           )
+    //       }]
+    //     });
 
 
-      }
+    //   }
 
-    })
+    // })
 
 
   }
@@ -199,27 +202,28 @@ export class LoginComponent implements OnInit {
   //     );
   // }
 
-  AuthenticateGoogleLogin(data) {
+  // Google Login - Commented out for Azure migration
+  // AuthenticateGoogleLogin(data) {
 
-    this._spinner.show();
-    let apiuri = environment.webapiuri_auth + "AuthenticateGoogleToken";
-    let headers = new Headers();
+  //   this._spinner.show();
+  //   let apiuri = environment.webapiuri_auth + "AuthenticateGoogleToken";
+  //   let headers = new Headers();
 
-    this._http.post(apiuri, data, { headers: headers })
-      .subscribe
-      (
+  //   this._http.post(apiuri, data, { headers: headers })
+  //     .subscribe
+  //     (
 
-        response => {
+  //       response => {
 
-          this._spinner.hide();
-          this.SetEnvironmentVariables('', response);
-        },
-        error => {
-          this._spinner.hide();
-          this._util.serviceError(error);
-        }
-      );
-  }
+  //         this._spinner.hide();
+  //         this.SetEnvironmentVariables('', response);
+  //       },
+  //       error => {
+  //         this._spinner.hide();
+  //         this._util.serviceError(error);
+  //       }
+  //     );
+  // }
 
   SetEnvironmentVariables(username, response) {
 
@@ -294,72 +298,74 @@ export class LoginComponent implements OnInit {
     //this._router.navigate(this.officeurl);
   }
 
-  private initializeObject(clientId: string) {
+  // Google Login - Commented out for Azure migration
+  // private initializeObject(clientId: string) {
 
-    // this.gavsService = new SocialAuthService( {
-    //   autoLogin: false,
-    //   providers: [{
-    //     id: GoogleLoginProvider.PROVIDER_ID,
-    //     provider :
-    //     new GoogleLoginProvider(      
-    //   clientId//  environment.gavsGoogleClientId
-    //   )}]
-    // })
-    // this.delay(2000);
-  }
+  //   // this.gavsService = new SocialAuthService( {
+  //   //   autoLogin: false,
+  //   //   providers: [{
+  //   //     id: GoogleLoginProvider.PROVIDER_ID,
+  //   //     provider :
+  //   //     new GoogleLoginProvider(      
+  //   //   clientId//  environment.gavsGoogleClientId
+  //   //   )}]
+  //   // })
+  //   // this.delay(2000);
+  // }
 
-  async delay(ms: number) {
-    await new Promise<void>(resolve => setTimeout(() => resolve(), ms)).then(() => console.log("fired"));
-  }
+  // Google Login - Commented out for Azure migration
+  // async delay(ms: number) {
+  //   await new Promise<void>(resolve => setTimeout(() => resolve(), ms)).then(() => console.log("fired"));
+  // }
 
-  public GavsSocialSignIn() {
-    let socialPlatformProvider = GoogleLoginProvider.PROVIDER_ID;
-    this.initializeObject(environment.gavsGoogleClientId);
-    if (this.gslab != 'gslab') {
-      //this.gavsService.signOut();
-      this.gavsService.signIn(socialPlatformProvider).then(
-        (userData) => {
-          this.AuthenticateGoogleLogin(userData);
-        }
-      )
-        .catch((a) => { console.log(a); });
-    }
-    else  
-    {
-      
-      const url = this._router.serializeUrl(this._router.createUrlTree(['/login'],
-      //{ queryParams: { gslab: 'gslab' } }
-    ));
-    window.open(url, '_blank');
+  // public GavsSocialSignIn() {
+  //   let socialPlatformProvider = GoogleLoginProvider.PROVIDER_ID;
+  //   this.initializeObject(environment.gavsGoogleClientId);
+  //   if (this.gslab != 'gslab') {
+  //     //this.gavsService.signOut();
+  //     this.gavsService.signIn(socialPlatformProvider).then(
+  //       (userData) => {
+  //         this.AuthenticateGoogleLogin(userData);
+  //       }
+  //     )
+  //       .catch((a) => { console.log(a); });
+  //   }
+  //   else  
+  //   {
+  //     
+  //     const url = this._router.serializeUrl(this._router.createUrlTree(['/login'],
+  //     //{ queryParams: { gslab: 'gslab' } }
+  //   ));
+  //   window.open(url, '_blank');
 
-    }
-  }
+  //   }
+  // }
+
+  // Google Login - Commented out for Azure migration
+  // public GsLabSocialSignIn() {
+  //   //alert('Unable to signin at the moment!')
+  //   if (this.gslab != 'gslab') {
+  //     //this._router.navigateByUrl('/login?gslab=gslab');
+  //     const url = this._router.serializeUrl(this._router.createUrlTree(['/login/gslab'],
+  //       //{ queryParams: { gslab: 'gslab' } }
+  //     ));
+  //     window.open(url, '_blank');
+  //   }
+  //   else {
+  //     let socialPlatformProvider = GoogleLoginProvider.PROVIDER_ID;
+
+  //     //this.initializeObject(environment.googleClientId);
+  //     //this.gavsService.signOut();
+  //     this.gavsService.signIn(socialPlatformProvider).then(
+  //       (userData) => {
+  //         this.AuthenticateGoogleLogin(userData);
+  //       }
+  //     )
+  //       .catch((a) => { console.log(a); });
+  //   }
 
 
-  public GsLabSocialSignIn() {
-    //alert('Unable to signin at the moment!')
-    if (this.gslab != 'gslab') {
-      //this._router.navigateByUrl('/login?gslab=gslab');
-      const url = this._router.serializeUrl(this._router.createUrlTree(['/login/gslab'],
-        //{ queryParams: { gslab: 'gslab' } }
-      ));
-      window.open(url, '_blank');
-    }
-    else {
-      let socialPlatformProvider = GoogleLoginProvider.PROVIDER_ID;
-
-      //this.initializeObject(environment.googleClientId);
-      //this.gavsService.signOut();
-      this.gavsService.signIn(socialPlatformProvider).then(
-        (userData) => {
-          this.AuthenticateGoogleLogin(userData);
-        }
-      )
-        .catch((a) => { console.log(a); });
-    }
-
-
-  }
+  // }
 
 }
 
