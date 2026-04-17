@@ -41,10 +41,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             //todo: refactor to one query
             var query = Cldb.AppRepo.UserInfo(empInfo.EMAIL_ID).FirstOrDefault<UserInfo>();
 
-            if (isHaveAllCustomerAccess && query.SUPERADMIN )
+            if (isHaveAllCustomerAccess && query.SUPERADMIN)
             {
-               
-                
+
+
                 var allAccounts = Cldb.AppRepo.GetAllAccounts().ToList();
                 allUserAccounts = allAccounts.Where(x => customerIds.Contains(x.CUST_ID) || excludedIds.Contains(x.CUST_ID)).ToList();
 
@@ -283,7 +283,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetBusinessUnits()
         {
             var businessUnits = Cldb.PROJECT.GetAll().Where(x => !string.IsNullOrEmpty(x.PROJ_STATUS) && x.PROJ_STATUS != "Close" && x.BUSINESS_UNIT != null)
-                                                   .Select(x => x.BUSINESS_UNIT).Distinct().ToList();
+                                                      .Select(x => new { CUST_ID = x.CUST_ID, BUSINESS_UNIT = x.BUSINESS_UNIT }).Distinct().ToList();
             return Ok(businessUnits);
         }
         private List<string> FilterDataByFrequency(string frequency, IEnumerable<iYearQuarter> csatList)
