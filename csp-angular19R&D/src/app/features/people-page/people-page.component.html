@@ -1,0 +1,165 @@
+<div class="people-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-left">
+      <button 
+        mat-icon-button 
+        class="back-button"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+        matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+
+      <div class="logo-container">
+        <img 
+          class="customer-logo" 
+          [src]="'assets/images/' + _layoutService.selectedCust + '.png'"
+          (error)="$any($event.target).src='assets/images/CustomerLogo.png'"
+          [alt]="_layoutService.selectedCust + ' Logo'">
+      </div>
+
+      <div class="header-title">
+        <h1>People</h1>
+        <p class="subtitle">Team & Resources</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <mat-form-field appearance="outline" class="project-selector">
+        <mat-label>Select Project</mat-label>
+        <mat-select [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange()">
+          <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
+            {{proj.proJ_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Section Title -->
+  <!-- <div class="section-title">
+    <mat-icon class="title-icon">people</mat-icon>
+    <h2>People</h2>
+  </div> -->
+
+  <!-- Progress Bar -->
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate" class="progress-bar"></mat-progress-bar>
+
+  <!-- Content Section -->
+  <div class="content-section" *ngIf="showdetails && input">
+    <div *ngIf="readonlymode">
+      <!-- RAG and Challenges Form -->
+      <form #rvform="ngForm" (ngSubmit)="SubmitForm(rvform)" class="people-form">
+        <div class="form-header">
+          <div class="rag-selector" *ngIf="_util.IsEditable() && input.projecT_PEOPLE">
+            <mat-form-field appearance="outline" class="rag-field">
+              <mat-label>RAG</mat-label>
+              <mat-select ngModel name="ragSelected" #ragSelected 
+                          [(ngModel)]="input.projecT_PEOPLE.rag" required>
+                <mat-option value="green" style="color:green">Green</mat-option>
+                <mat-option value="orange" style="color:orange">Amber</mat-option>
+                <mat-option value="red" style="color:red">Red</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="challenges-field" *ngIf="_util.IsEditable() && input.projecT_PEOPLE">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Key Highlights</mat-label>
+              <textarea matInput 
+                        ngModel 
+                        name="txtChallenges" 
+                        #txtChallenges
+                        [(ngModel)]="input.projecT_PEOPLE.resourcE_CHALLENGES"
+                        rows="2"></textarea>
+            </mat-form-field>
+          </div>
+
+          <button mat-raised-button color="primary" type="submit" class="save-button" *ngIf="_util.IsEditable()">
+            <mat-icon>save</mat-icon>
+            Save
+          </button>
+        </div>
+
+        <!-- Read-only highlights -->
+        <div class="highlights-display" *ngIf="!_util.IsEditable() && input.projecT_PEOPLE">
+          <p>{{input.projecT_PEOPLE.resourcE_CHALLENGES}}</p>
+        </div>
+      </form>
+
+      <!-- Team Members Section -->
+      <div class="team-members">
+        <!-- No People Message -->
+        <div class="no-people" *ngIf="input.resource.length==0">
+          <mat-icon>people_outline</mat-icon>
+          <p>No People to display</p>
+        </div>
+
+        <!-- People Cards -->
+        <div class="people-grid" *ngIf="input.resource.length>0">
+          <ng-container *ngFor="let rec of input.resource; let i=index;">
+            <mat-card *ngFor="let emp of rec.resource; let j=index;" 
+                      class="person-card"
+                      [class.csm-card]="emp.title=='Customer Success Managers'">
+              
+              <!-- Profile Image -->
+              <div class="card-image">
+                <img 
+                  [src]="'assets/profileImages/' + emp.emP_ID + '.jpg'"
+                  (error)="$any($event.target).src='assets/profileImages/profile-icon-9.png'"
+                  [alt]="emp.name">
+              </div>
+
+              <!-- Name -->
+              <mat-card-header>
+                <mat-card-title>{{emp.name}}</mat-card-title>
+              </mat-card-header>
+
+              <!-- Edit Mode -->
+              <mat-card-content *ngIf="!IsReadonlyCust(j, emp.emP_ID)" class="edit-mode">
+                <mat-form-field appearance="outline" class="title-select">
+                  <mat-label>Title</mat-label>
+                  <mat-select name='titleSelected' [(ngModel)]="emp.csM_TITLE_ID" required>
+                    <mat-option [value]="1">Customer Success Managers</mat-option>
+                    <mat-option [value]="2">Project Manager</mat-option>
+                    <mat-option [value]="3">Team Members</mat-option>
+                    <mat-option [value]="6">PMO</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="edit-actions">
+                  <button mat-icon-button color="primary" 
+                          (click)="SavePeople_onClick(emp)"
+                          *ngIf="_access.IsAllowed(7, 3, '', input_projectid)"
+                          matTooltip="Save">
+                    <mat-icon>save</mat-icon>
+                  </button>
+                  <button mat-icon-button 
+                          (click)="CancelPeople_onClick()"
+                          *ngIf="_access.IsAllowed(7, 3, '', input_projectid)"
+                          matTooltip="Cancel">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </mat-card-content>
+
+              <!-- Read-only Mode -->
+              <mat-card-content *ngIf="IsReadonlyCust(j, emp.emP_ID)" class="readonly-mode">
+                <div class="subtitle">{{emp.title}}</div>
+                <div class="subtitle-date">From {{emp.activeFrom}}</div>
+                <!-- Uncomment if edit functionality needed
+                <button mat-icon-button 
+                        class="edit-icon"
+                        (click)="EditPeople_onClick(j,emp.emP_ID)"
+                        *ngIf="_access.IsAllowed(7, 3, '', input_projectid)"
+                        matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                -->
+              </mat-card-content>
+            </mat-card>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

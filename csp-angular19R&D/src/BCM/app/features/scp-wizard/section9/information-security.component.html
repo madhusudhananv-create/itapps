@@ -1,0 +1,55 @@
+﻿
+  <form [formGroup]="form">
+    <div>
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Information Security Declaration</h2>
+        <br/>
+        <p>Please use this section to update Information Security / Privacy Controls and Requirements as per customer contract to be considered during BCP, while recovering services from any alternate site including client site</p><br/>
+        <p>
+          <b>This is the default Information Security Plan:</b>
+        </p>
+        <i>
+          "{{ displayedSecurityPolicy }}"
+        </i>
+        <br/>
+        <br/>
+        <div class="comments-row">
+          <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Enter new security requirements...</mat-label>
+            <textarea matInput formControlName="comments" rows="4"></textarea>
+          </mat-form-field>
+        </div>
+        <br/>
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="AddUpdateInformationSecurity()"
+          [disabled]="!form.get('comments')?.value" 
+          style="margin-right: 10px;"
+        >
+          <mat-icon>add</mat-icon>
+          Add/Update Information Security
+        </button>
+
+        <button
+          mat-raised-button
+          color="warn" 
+          (click)="onDeleteInformationSecurity()"
+        >
+          <mat-icon>delete</mat-icon>
+          Delete Information Security
+        </button>
+        <br/>
+    </div>
+  </form>
+  <mat-card-actions class="section-actions">
+        <div class="spacer"></div>
+        <div class="validation-status" *ngIf="form.invalid">
+          <mat-icon color="warn">warning</mat-icon>
+          <span>Please add a comment</span>
+        </div>
+        <div class="validation-status success" *ngIf="form.valid">
+          <mat-icon color="primary">check_circle</mat-icon>
+          <span>Section completed</span>
+        </div>
+  </mat-card-actions>
+  

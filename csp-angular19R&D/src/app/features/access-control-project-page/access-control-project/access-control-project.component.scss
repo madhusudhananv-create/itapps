@@ -1,0 +1,398 @@
+/**
+ * Access Control Project Component — Resource wise Projects tab
+ * Apple-inspired Modern UI
+ */
+
+// --- Design Tokens -------------------------------------------------------------
+$brand-primary   : #0071e3;
+$brand-hover     : #0077ed;
+$brand-subtle    : #e8f1fb;
+$text-primary    : #1d1d1f;
+$text-secondary  : #6e6e73;
+$text-muted      : #9b9ba0;
+$surface-base    : #ffffff;
+$surface-raised  : #f5f5f7;
+$surface-border  : #d2d2d7;
+$danger          : #ff3b30;
+$success         : #34c759;
+$warning         : #ff9500;
+$radius-sm       : 8px;
+$radius-md       : 12px;
+$radius-lg       : 18px;
+$shadow-card     : 0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+$shadow-elevated : 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+$transition-fast : 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-std  : 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+$font-system     : -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+
+// --- Animations ----------------------------------------------------------------
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes rowEnter {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+// --- Row Layout ----------------------------------------------------------------
+.row {
+  margin: 0;
+}
+
+// --- Back Button ---------------------------------------------------------------
+.backbuttonlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: $surface-base;
+  box-shadow: $shadow-card;
+  cursor: pointer;
+  transition: box-shadow $transition-fast, transform $transition-fast;
+  border: 1px solid $surface-border;
+
+  &:hover {
+    box-shadow: $shadow-elevated;
+    transform: scale(1.06);
+  }
+
+  img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+  }
+}
+
+// --- Cards ---------------------------------------------------------------------
+::ng-deep {
+
+  // Search Resource card
+  mat-card {
+    border-radius: $radius-lg !important;
+    box-shadow: $shadow-card !important;
+    border: 1px solid $surface-border !important;
+    background: $surface-base !important;
+    font-family: $font-system !important;
+    animation: fadeSlideUp $transition-std both;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  mat-card-header {
+    padding: 18px 20px 10px !important;
+    border-bottom: 1px solid $surface-border !important;
+    background: $surface-raised !important;
+
+    .mat-mdc-card-header-text { margin: 0 !important; }
+  }
+
+  mat-card-title {
+    font-family: $font-system !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: $text-primary !important;
+    letter-spacing: -0.2px !important;
+    margin: 0 !important;
+  }
+
+  mat-card-content {
+    padding: 18px 20px 20px !important;
+    margin: 0 !important;
+  }
+
+  // Progress bar
+  mat-progress-bar {
+    border-radius: 4px !important;
+    margin-bottom: 10px !important;
+
+    .mdc-linear-progress__bar-inner {
+      border-color: $brand-primary !important;
+    }
+  }
+
+  // --- Autocomplete input ------------------------------------------------------
+  mat-form-field.mat-mdc-form-field {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: $surface-border !important;
+      border-radius: $radius-md !important;
+    }
+
+    &.mat-focused {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: $brand-primary !important;
+        border-width: 2px !important;
+      }
+    }
+
+    input.mat-mdc-input-element {
+      font-family: $font-system !important;
+      font-size: 14px !important;
+      color: $text-primary !important;
+    }
+
+    .mat-mdc-floating-label {
+      font-family: $font-system !important;
+      font-size: 14px !important;
+      color: $text-muted !important;
+    }
+  }
+
+  // Autocomplete panel
+  .mat-mdc-autocomplete-panel {
+    border-radius: $radius-md !important;
+    box-shadow: $shadow-elevated !important;
+    border: 1px solid $surface-border !important;
+    overflow: hidden !important;
+
+    .mat-mdc-option {
+      font-family: $font-system !important;
+      font-size: 13px !important;
+      color: $text-primary !important;
+      transition: background $transition-fast !important;
+
+      &:hover,
+      &.mat-mdc-option-active { background: $brand-subtle !important; }
+    }
+  }
+
+  // --- Slide toggles -----------------------------------------------------------
+  mat-slide-toggle {
+    .mdc-switch__track { border-radius: 980px !important; }
+
+    &.mat-mdc-slide-toggle-checked {
+      .mdc-switch__track::after  { background: $success !important; }
+      .mdc-switch__handle::after { background: #ffffff !important; }
+    }
+
+    .mdc-label {
+      font-family: $font-system !important;
+      font-size: 13px !important;
+      color: $text-secondary !important;
+    }
+  }
+}
+
+// --- Date inputs ---------------------------------------------------------------
+input[type="date"] {
+  font-family: $font-system;
+  font-size: 13px;
+  color: $text-primary;
+  background: $surface-base;
+  border: 1px solid $surface-border;
+  border-radius: $radius-sm;
+  padding: 6px 10px;
+  margin: 0 6px;
+  outline: none;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+  cursor: pointer;
+
+  &:focus {
+    border-color: $brand-primary;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+  }
+}
+
+// Label text next to date inputs
+mat-card-content > .row > .col-lg-5 > br + * {
+  font-family: $font-system;
+  font-size: 13px;
+  color: $text-secondary;
+}
+
+// --- Buttons -------------------------------------------------------------------
+button[mat-raised-button],
+button.mat-mdc-raised-button {
+  font-family: $font-system !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.1px !important;
+  border-radius: 980px !important;
+  padding: 0 20px !important;
+  height: 36px !important;
+  text-transform: none !important;
+  transition: background $transition-fast, box-shadow $transition-fast, transform $transition-fast !important;
+  box-shadow: none !important;
+
+  &[color="primary"],
+  &.mat-primary {
+    background: $brand-primary !important;
+    color: #ffffff !important;
+
+    &:hover:not([disabled]) {
+      background: $brand-hover !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 14px rgba(0, 113, 227, 0.35) !important;
+    }
+
+    &[disabled] {
+      background: darken($surface-border, 5%) !important;
+      color: $text-muted !important;
+      cursor: not-allowed !important;
+    }
+  }
+}
+
+// Admin process buttons (text buttons)
+button:not([mat-raised-button]):not([mat-button]):not([mat-icon-button]) {
+  font-family: $font-system;
+  font-size: 12px;
+  font-weight: 500;
+  color: $brand-primary;
+  background: transparent;
+  border: 1px solid rgba(0, 113, 227, 0.3);
+  border-radius: 980px;
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: background $transition-fast, border-color $transition-fast;
+  margin: 2px 4px;
+
+  &:hover {
+    background: $brand-subtle;
+    border-color: $brand-primary;
+  }
+}
+
+// --- Table Card ----------------------------------------------------------------
+.table {
+  display: block;
+  background: $surface-base;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  border: 1px solid $surface-border;
+  overflow: hidden;
+  margin-top: 8px;
+  animation: fadeSlideUp $transition-std both;
+  animation-delay: 0.06s;
+
+  table[mat-table] {
+    width: 100%;
+    background: transparent;
+    min-width: 700px;
+  }
+}
+
+::ng-deep {
+
+  // Table header
+  .mat-mdc-header-row,
+  tr.mat-header-row {
+    background: $surface-raised !important;
+    height: 44px !important;
+    border-bottom: 1px solid $surface-border !important;
+  }
+
+  .mat-mdc-header-cell,
+  th.mat-header-cell {
+    font-family: $font-system !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: $text-muted !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    border-bottom: none !important;
+    padding: 0 16px !important;
+  }
+
+  // Table rows
+  .mat-mdc-row,
+  tr.mat-row {
+    height: 48px !important;
+    border-bottom: 1px solid rgba($surface-border, 0.6) !important;
+    transition: background $transition-fast !important;
+    animation: rowEnter 0.22s both;
+
+    &:last-child { border-bottom: none !important; }
+
+    &:hover { background: rgba($brand-subtle, 0.55) !important; }
+  }
+
+  .mat-mdc-cell,
+  td.mat-cell {
+    font-family: $font-system !important;
+    font-size: 13px !important;
+    color: $text-primary !important;
+    border-bottom: none !important;
+    padding: 0 16px !important;
+  }
+
+  // Sticky header
+  .cdk-header-row { position: sticky; top: 0; z-index: 2; }
+}
+
+// --- Delete column width -------------------------------------------------------
+.deleteWidth {
+  flex: 0 0 70px !important;
+  width: 70px !important;
+  max-width: 70px !important;
+  text-align: center !important;
+  border-left: none !important;
+}
+
+// --- Action icons -------------------------------------------------------------
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background $transition-fast, color $transition-fast, transform $transition-fast;
+
+  i.fa-edit  { color: $brand-primary; font-size: 14px; }
+  i.fa-trash { color: $danger; font-size: 14px; }
+
+  &:hover {
+    background: rgba($brand-primary, 0.1);
+    transform: scale(1.15);
+
+    i.fa-trash { color: darken($danger, 10%); background: rgba($danger, 0.1); border-radius: 50%; }
+  }
+}
+
+// --- Status badges -------------------------------------------------------------
+.defaultAccess {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 980px;
+  font-family: $font-system;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.btn-success {
+  background: rgba($success, 0.12) !important;
+  color: darken($success, 12%) !important;
+  border: 1px solid rgba($success, 0.25) !important;
+}
+
+.btn-warning {
+  background: rgba($warning, 0.12) !important;
+  color: darken($warning, 20%) !important;
+  border: 1px solid rgba($warning, 0.25) !important;
+}
+
+// --- Advanced Search link ------------------------------------------------------
+// Scoped so it doesn't bleed
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  border-bottom: 1px solid $surface-border;
+  font-family: $font-system;
+  font-size: 13px;
+  color: $brand-primary;
+  cursor: pointer;
+  gap: 4px;
+}

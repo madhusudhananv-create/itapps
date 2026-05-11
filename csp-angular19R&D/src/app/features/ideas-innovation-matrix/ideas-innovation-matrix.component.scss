@@ -1,0 +1,285 @@
+﻿// ============================================================
+// Ideas & Innovations Matrix Dialog â€” Component Styles
+// ============================================================
+
+// â”€â”€ Design tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+$primary:      #667eea;
+$primary-dark: #764ba2;
+$bg-page:      #f8f9fa;
+$border:       #dee2e6;
+$text-muted:   #6c757d;
+$radius:       8px;
+
+// â”€â”€ Dialog Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 12px;
+  background: linear-gradient(9deg, #132658 0%, #774ba3 100%);
+  color: #fff;
+  border-radius: $radius $radius 0 0;
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-icon {
+    font-size: 22px;
+    opacity: 0.9;
+  }
+
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+
+  .close-btn {
+    color: #fff;
+    opacity: 0.85;
+    &:hover { opacity: 1; }
+  }
+}
+
+// â”€â”€ Filter Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.filter-bar {
+  display: flex;
+  //flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 4px;
+  background: #fff;
+  border-bottom: 1px solid $border;
+  position: relative; // legend popup anchor
+
+  .filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: $primary-dark;
+    white-space: nowrap;
+  }
+
+  .filter-field {
+    min-width: 140px;
+    &.date-field { min-width: 120px; }
+  }
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+  ::ng-deep .mat-mdc-text-field-wrapper { padding: 0 8px; }
+
+  .apply-btn {
+    height: 38px;
+    font-size: 11px;
+    background: linear-gradient(135deg, $primary, $primary-dark);
+    color: #fff;
+
+    mat-icon { font-size: 16px; margin-right: 4px; }
+  }
+
+  .legend-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f0f0f8;
+    cursor: pointer;
+    color: $primary-dark;
+    transition: background 0.2s;
+    &:hover { background: #dde0f5; }
+  }
+}
+
+// â”€â”€ Legend Popup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.legend-popup {
+  position: absolute;
+  top: 54px;
+  right: 16px;
+  z-index: 200;
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+
+  .legend-table {
+    font-size: 11px;
+    border-collapse: collapse;
+
+    td {
+      padding: 3px 6px;
+      white-space: nowrap;
+    }
+
+    .legend-title {
+      font-weight: 700;
+      font-size: 11px;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+// â”€â”€ Progress Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.loading-bar {
+  height: 3px;
+}
+
+// â”€â”€ Tabs Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.tabs-container {
+  flex: 1;
+  overflow: hidden;
+  padding: 0 16px;
+
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    overflow: auto;
+  }
+}
+
+// â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.table-wrapper {
+  overflow-x: auto;
+  padding: 8px 0;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+
+  th, td {
+    border: 1px solid $border;
+    padding: 4px 6px;
+    vertical-align: top;
+  }
+
+  th {
+    background: #f1f3f9;
+    font-weight: 600;
+    color: #3a3a5c;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .col-innovation {
+    min-width: 160px;
+    background: #eef0f8;
+    vertical-align: middle;
+  }
+
+  .col-status-header {
+    text-align: center;
+  }
+
+  .td-innovation {
+    font-weight: 500;
+    color: #2d2d5e;
+    vertical-align: middle;
+    padding: 6px;
+  }
+
+  .td-status {
+    padding: 0;
+    vertical-align: top;
+  }
+}
+
+// â”€â”€ Fixed-height Status Cell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.fixedheight {
+  height: 160px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+// â”€â”€ Cell Row (dot + name) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.cell-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.proj-name {
+  font-size: 10px;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// â”€â”€ Status Dot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.round {
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  border-radius: 50%;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+// â”€â”€ Checkbox (scope for implementation) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.select-cb {
+  transform: scale(0.8);
+  transform-origin: left center;
+}
+
+// â”€â”€ No-data state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  color: $text-muted;
+
+  mat-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  p { font-size: 11px; }
+}
+
+// â”€â”€ Radio Group â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.radio-section {
+  padding: 8px 16px;
+  background: #f9faff;
+  border-top: 1px solid $border;
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 11px;
+}
+
+.radio-btn {
+  font-size: 11px;
+}
+
+// â”€â”€ Action Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.action-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid $border;
+  background: #fff;
+
+  .action-btn {
+    min-width: 100px;
+    mat-icon { font-size: 16px; margin-right: 4px; }
+  }
+}
+
+// â”€â”€ Paginator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+mat-paginator {
+  background: transparent;
+  font-size: 11px;
+}

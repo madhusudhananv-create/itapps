@@ -1,0 +1,228 @@
+<!-- CSAT Heat Map — Modern compact design -->
+<div *ngIf="_loading" style="width: 100%; margin-bottom: 8px;">
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+</div>
+
+<div class="heatmap-wrap">
+  <table class="csstable">
+    <thead>
+      <tr>
+        <th class="th-score-col"></th>
+        <th class="th-col th-red">Detractors <span class="th-sub">(NPS: 1–6)</span></th>
+        <th class="th-col th-amber">Passives <span class="th-sub">(NPS: 7 &amp; 8)</span></th>
+        <th class="th-col th-green">Promoters <span class="th-sub">(NPS: 9 &amp; 10)</span></th>
+        <th class="th-col th-blue">NPS Not Applicable</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <!-- CSS = 5 -->
+      <tr>
+        <td class="score-cell"><div class="score-badge">CSS = 5</div></td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==5||h.csS_SCORE==5) && h.npS_SCORE<7 && h.npS_SCORE!=null">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==5||h.csS_SCORE==5) && (h.npS_SCORE==7||h.npS_SCORE==8)">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==5||h.csS_SCORE==5) && h.npS_SCORE>=9">
+              <i class="material-icons icon green-ic">sentiment_very_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.csS_SCORE==5||h.miN_SCORE==5) && h.npS_SCORE==null">
+              <i class="material-icons icon blue-ic">sentiment_very_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+      </tr>
+
+      <!-- CSS = 4 -->
+      <tr>
+        <td class="score-cell"><div class="score-badge">CSS = 4</div></td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==4||h.csS_SCORE==4) && h.npS_SCORE<7 && h.npS_SCORE!=null">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==4||h.csS_SCORE==4) && (h.npS_SCORE==7||h.npS_SCORE==8)">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==4||h.csS_SCORE==4) && h.npS_SCORE>=9">
+              <i class="material-icons icon green-ic">sentiment_very_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.csS_SCORE==4||h.miN_SCORE==4) && h.npS_SCORE==null">
+              <i class="material-icons icon blue-ic">sentiment_very_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+      </tr>
+
+      <!-- CSS = 3 -->
+      <tr>
+        <td class="score-cell"><div class="score-badge">CSS = 3</div></td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==3||h.csS_SCORE==3) && h.npS_SCORE<7 && h.npS_SCORE!=null">
+              <i class="material-icons icon red-ic">sentiment_very_dissatisfied</i>
+              <span class="entry-name">
+                <a (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+                <a (click)="openSurveyFeedback(h.actionplanURL)">
+                  <i class="fa fa-hashtag ap-icon ap-done" *ngIf="h.actioN_PLAN_SUBMITTED==1"></i>
+                  <i class="fa fa-hashtag ap-icon ap-open" *ngIf="h.actioN_PLAN_NOT_SUBMITTED==1"></i>
+                </a>
+              </span>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==3||h.csS_SCORE==3) && (h.npS_SCORE==7||h.npS_SCORE==8)">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <span class="entry-name">
+                <a (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+                <a (click)="openSurveyFeedback(h.actionplanURL)">
+                  <i class="fa fa-hashtag ap-icon ap-done" *ngIf="h.actioN_PLAN_SUBMITTED==1"></i>
+                  <i class="fa fa-hashtag ap-icon ap-open" *ngIf="h.actioN_PLAN_NOT_SUBMITTED==1"></i>
+                </a>
+              </span>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==3||h.csS_SCORE==3) && h.npS_SCORE>=9">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <span class="entry-name">
+                <a (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+                <a (click)="openSurveyFeedback(h.actionplanURL)">
+                  <i class="fa fa-hashtag ap-icon ap-done" *ngIf="h.actioN_PLAN_SUBMITTED==1"></i>
+                  <i class="fa fa-hashtag ap-icon ap-open" *ngIf="h.actioN_PLAN_NOT_SUBMITTED==1"></i>
+                </a>
+              </span>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.csS_SCORE==3||h.miN_SCORE==3) && h.npS_SCORE==null">
+              <i class="material-icons icon blue-ic">sentiment_satisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+      </tr>
+
+      <!-- CSS <= 2 -->
+      <tr>
+        <td class="score-cell"><div class="score-badge">CSS &le; 2</div></td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==1||h.csS_SCORE==1||h.miN_SCORE==2||h.csS_SCORE==2) && h.npS_SCORE<7 && h.npS_SCORE!=null">
+              <i class="material-icons icon red-ic">sentiment_very_dissatisfied</i>
+              <span class="entry-name">
+                <a (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+                <a (click)="openSurveyFeedback(h.actionplanURL)">
+                  <i class="fa fa-hashtag ap-icon ap-done" *ngIf="h.actioN_PLAN_SUBMITTED==1"></i>
+                  <i class="fa fa-hashtag ap-icon ap-open" *ngIf="h.actioN_PLAN_NOT_SUBMITTED==1"></i>
+                </a>
+              </span>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==1||h.csS_SCORE==1||h.miN_SCORE==2||h.csS_SCORE==2) && (h.npS_SCORE==7||h.npS_SCORE==8)">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <span class="entry-name">
+                <a (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+                <a (click)="openSurveyFeedback(h.actionplanURL)">
+                  <i class="fa fa-hashtag ap-icon ap-done" *ngIf="h.actioN_PLAN_SUBMITTED==1"></i>
+                  <i class="fa fa-hashtag ap-icon ap-open" *ngIf="h.actioN_PLAN_NOT_SUBMITTED==1"></i>
+                </a>
+              </span>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==1||h.csS_SCORE==1||h.miN_SCORE==2||h.csS_SCORE==2) && h.npS_SCORE>=9">
+              <i class="material-icons icon amber-ic">sentiment_satisfied</i>
+              <span class="entry-name">
+                <a (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+                <a (click)="openSurveyFeedback(h.actionplanURL)">
+                  <i class="fa fa-hashtag ap-icon ap-done" *ngIf="h.actioN_PLAN_SUBMITTED==1"></i>
+                  <i class="fa fa-hashtag ap-icon ap-open" *ngIf="h.actioN_PLAN_NOT_SUBMITTED==1"></i>
+                </a>
+              </span>
+            </div>
+          </ng-container>
+        </td>
+
+        <td class="data-cell">
+          <ng-container *ngFor="let h of heatMapData">
+            <div class="entry" *ngIf="(h.miN_SCORE==1||h.csS_SCORE==1||h.miN_SCORE==2||h.csS_SCORE==2) && h.npS_SCORE==null">
+              <i class="material-icons icon blue-ic">sentiment_very_dissatisfied</i>
+              <a class="entry-name" (click)="openSurveyFeedback(h.url)">{{h.displaY_TEXT}}</a>
+            </div>
+          </ng-container>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+
+<div class="note-bar">
+  <strong>Note:</strong> Recent NPS &amp; CSS scores used. Lowest question score applied.&nbsp;&nbsp;
+  <i class="fa fa-hashtag ap-done"></i> = Action Plan Closed &nbsp;
+  <i class="fa fa-hashtag ap-open"></i> = Action Plan Overdue
+</div>

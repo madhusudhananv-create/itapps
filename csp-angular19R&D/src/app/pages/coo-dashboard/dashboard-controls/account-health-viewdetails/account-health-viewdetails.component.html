@@ -1,0 +1,150 @@
+<div class="sliding-up-content" [ngClass]="{'show': isvisible}">
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="popup-header">
+      <h2>Account Health</h2>
+      <button mat-icon-button (click)="onClose()" class="close-btn">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Account</label>
+          <select [(ngModel)]="selectedCust" (change)="toggleCustomerSelection($event)" class="filter-select">
+            <option *ngFor="let item of popupCusts" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group" *ngIf="popupPortfolios && popupPortfolios.length > 1">
+          <label>Portfolio</label>
+          <select [(ngModel)]="selectedPortfoliovalue" class="filter-select">
+            <option *ngFor="let item of popupPortfolios" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Project</label>
+          <select [(ngModel)]="selectedProject" class="filter-select">
+            <option *ngFor="let item of popupProjects" [value]="item">{{ item }}</option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-raised-button color="primary" (click)="Apply()" class="apply-btn">
+            Apply
+          </button>
+          <button mat-raised-button (click)="Reset()" class="reset-btn">
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and View Toggle -->
+    <div class="controls-section">
+      <div class="title-section">
+        <h3>Overall Account Health</h3>
+      </div>
+      
+      <div class="search-container">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input 
+          type="text" 
+          [(ngModel)]="ipSearch" 
+          (keyup.enter)="Search()" 
+          placeholder="Search..."
+          class="search-input"
+        />
+      </div>
+    </div>
+
+    <!-- View Type Buttons -->
+    <div class="view-toggle-section">
+      <button 
+        mat-raised-button 
+        [color]="loadDonutIp === 'NF' ? 'primary' : ''"
+        (click)="loadDataBySelection('NF')"
+        class="toggle-btn">
+        Need Focus
+      </button>
+      <button 
+        mat-raised-button 
+        [color]="loadDonutIp === 'UC' ? 'primary' : ''"
+        (click)="loadDataBySelection('UC')"
+        class="toggle-btn">
+        Under Control
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <!-- No Data Message -->
+      <div *ngIf="!customerProjectsScores || customerProjectsScores.length === 0" class="no-data">
+        No data available
+      </div>
+
+      <!-- Data Table -->
+      <table *ngIf="customerProjectsScores && customerProjectsScores.length > 0" class="data-table">
+        <thead>
+          <tr>
+            <th class="accounts-col">Accounts/Portfolios/Projects</th>
+            <th class="score-col">Overall KPI Achievement Score</th>
+            <th class="status-col">Status</th>
+            <th class="actions-col">Actions</th>
+            <th class="view-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let element of customerProjectsScores; let i = index">
+            <!-- Customer Row -->
+            <tr class="customer-row" [class.expanded]="element.isExpanded">
+              <td class="expandable-cell" (click)="toggleExpand(element)">
+                <button mat-icon-button class="expand-btn">
+                  <mat-icon>{{ element.isExpanded ? 'remove' : 'add' }}</mat-icon>
+                </button>
+                <span class="customer-name">{{ element.custName }}</span>
+              </td>
+              <td class="score-cell">{{ element.score }}%</td>
+              <td class="status-cell">
+                <div [innerHTML]="getStatus(element.score)"></div>
+              </td>
+              <td class="actions-cell">
+                <button mat-icon-button class="action-btn">
+                  <mat-icon>send</mat-icon>
+                </button>
+              </td>
+              <td class="view-cell">
+                <a class="link" (click)="ViewBatch_onClick(element)">View Dashboard ›</a>
+              </td>
+            </tr>
+
+            <!-- Project Rows (Expanded) -->
+            <ng-container *ngIf="element.isExpanded">
+              <tr *ngFor="let proj of element.projectScores" class="project-row">
+                <td class="project-cell">
+                  <span class="project-label">Project -</span>
+                  <span class="project-name">{{ proj.projName }}</span>
+                </td>
+                <td class="score-cell">{{ proj.score }}%</td>
+                <td class="status-cell">
+                  <div [innerHTML]="getStatus(proj.score)"></div>
+                </td>
+                <td class="actions-cell">
+                  <button mat-icon-button class="action-btn">
+                    <mat-icon>send</mat-icon>
+                  </button>
+                </td>
+                <td class="view-cell">
+                  <a class="link">View ›</a>
+                </td>
+              </tr>
+            </ng-container>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1001 @@
+﻿// ============================================================
+// checklist-auditee.component.scss
+// Master_UI_Upgrade_Prompt — manage-kpi design system
+// ============================================================
+
+// --- Design Tokens ---
+$primary-color:     #667eea;
+$primary-dark:      #764ba2;
+$primary-light:     #e8eaf6;
+$accent-color:      #764ba2;
+$text-primary:      #1a1a1a;
+$text-secondary:    #333333;
+$text-muted:        #90a4ae;
+$background-light:  #f8f9fa;
+$background-white:  #ffffff;
+$border-color:      #e0e0e0;
+$shadow-sm:         0 1px 3px rgba(0,0,0,0.08);
+$shadow-md:         0 2px 8px rgba(0,0,0,0.12);
+$radius-sm:         4px;
+$radius-md:         8px;
+$radius-lg:         12px;
+$transition-fast:   0.15s ease;
+$transition-medium: 0.25s ease;
+
+// ============================================================
+// Disabled State Overrides - Keep text dark when disabled
+// ============================================================
+::ng-deep {
+  .mat-mdc-input-element:disabled,
+  .mat-input-element:disabled {
+    color: $text-primary !important;
+    font-weight: 400 !important;
+  }
+
+  .mat-mdc-select-disabled .mat-mdc-select-value,
+  .mat-select-disabled .mat-select-value {
+    color: $text-primary !important;
+    font-weight: 400 !important;
+  }
+
+  .mat-mdc-form-field-disabled textarea,
+  .mat-mdc-form-field-disabled input {
+    color: $text-primary !important;
+    font-weight: 400 !important;
+  }
+
+  // Ensure all inputs, textareas, and selects have normal font-weight
+  .mat-mdc-input-element,
+  .mat-input-element,
+  textarea.mat-mdc-input-element,
+  input.mat-mdc-input-element,
+  .mat-mdc-select-value,
+  .mat-select-value {
+    font-weight: 400 !important;
+  }
+}
+
+// ============================================================
+// Root Container
+// ============================================================
+.checklist-auditee-container {
+  padding: 16px;
+  background-color: $background-light;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  // ----------------------------------------------------------
+  // Header Section
+  // ----------------------------------------------------------
+  .header-section {
+    background: #f7f5ff;
+    border-left: 4px solid #667eea;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 16px;
+    border-radius: $radius-sm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    h3 {
+      margin: 0;
+      color: #3a1a6b;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .due-date {
+      margin: 0;
+      color: #ff9800;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // No Findings / Empty State
+  // ----------------------------------------------------------
+  .no-findings {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: $background-white;
+    border-radius: $radius-md;
+    box-shadow: $shadow-sm;
+
+    mat-icon {
+      font-size: 45px;
+      width: 45px;
+      height: 45px;
+      color: $text-muted;
+    }
+
+    p {
+      margin: 12px 0 0;
+      color: $text-secondary;
+      font-size: 12px;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Findings Container
+  // ----------------------------------------------------------
+  .findings-container {
+    background: $background-white;
+    border-radius: $radius-md;
+    box-shadow: $shadow-sm;
+    overflow: hidden;
+
+    // Action Buttons Bar
+    .action-buttons-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: $background-light;
+      border-bottom: 1px solid $border-color;
+
+      button {
+        min-width: 90px;
+        height: 32px;
+        font-size: 12px;
+        line-height: 32px;
+
+        mat-icon {
+          font-size: 17px;
+          width: 17px;
+          height: 17px;
+          margin-right: 4px;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    // ----------------------------------------------------------
+    // Expansion Panel (per question)
+    // ----------------------------------------------------------
+    .finding-panel {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      border-bottom: 1px solid $border-color;
+
+      &:last-child { border-bottom: none; }
+
+      mat-expansion-panel-header {
+        background: $background-white;
+        transition: background $transition-fast;
+
+        &:hover { background: #f5f7ff; }
+
+        mat-panel-title {
+          font-size: 12px;
+          font-weight: 500;
+          color: $text-primary;
+        }
+      }
+
+      // --------------------------------------------------------
+      // Findings Table
+      // --------------------------------------------------------
+      .findings-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+        font-size: 12px;
+
+        thead {
+          tr {
+            background: #f5f5f5;
+          }
+
+          th {
+            padding: 8px 8px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 400;
+            color: $text-secondary;
+            border-bottom: 2px solid rgba(0,0,0,0.12);
+            white-space: nowrap;
+          }
+        }
+
+        tbody {
+          tr {
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            transition: background $transition-fast;
+
+            &:hover { background: #f9f9f9; }
+
+            &.selected { background: #ede7f6; }
+
+            td {
+              padding: 8px 8px;
+              font-size: 12px;
+              vertical-align: top;
+
+              &.checkbox-cell { text-align: center; }
+            }
+          }
+        }
+
+        // Finding description
+        .finding-description {
+          line-height: 1.5;
+          color: $text-primary;
+          font-size: 12px;
+        }
+
+        // Finding Type Badges
+        .finding-type {
+          display: inline-block;
+          padding: 3px 10px;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 600;
+          text-align: center;
+          white-space: nowrap;
+
+          &.major       { background: #ffebee; color: #c62828; }
+          &.minor       { background: #fff3e0; color: #e65100; }
+          &.observation { background: #e3f2fd; color: #1565c0; }
+          &.weakness    { background: #fff9c4; color: #f57f17; }
+        }
+
+        // Status Cell
+        .status-cell {
+          .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+
+            &.accepted { background: #e8f5e9; color: #2e7d32; }
+            &.rejected { background: #ffebee; color: #c62828; }
+            &.pending  { background: #fff3e0; color: #e65100; }
+          }
+        }
+
+        // Remarks field
+        .remarks-field {
+          width: 100%;
+          margin: 0;
+
+          ::ng-deep .mat-mdc-form-field-wrapper { padding-bottom: 0; }
+          ::ng-deep .mat-mdc-text-field-wrapper { padding: 0 6px; }
+          ::ng-deep textarea { font-size: 12px; }
+        }
+
+        // Action Plan Cell
+        .action-plan-cell {
+          text-align: center;
+
+          .action-cell-content {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 36px;
+
+            .accepted-with-action {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+
+              .accepted-text {
+                font-weight: 600;
+                color: #388e3c;
+                font-size: 12px;
+              }
+
+              .add-action-btn {
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+
+                mat-icon {
+                  font-size: 19px;
+                  color: $primary-color;
+                  line-height: 1;
+                }
+              }
+            }
+
+            .accepted-text-only .accepted-text {
+              font-weight: 600;
+              color: #388e3c;
+              font-size: 12px;
+            }
+
+            .rejected-text {
+              font-weight: 600;
+              color: #d32f2f;
+              font-size: 12px;
+            }
+
+            .checkbox-container {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
+        }
+
+        // Stage Status Cell
+        .stage-status-cell {
+          text-align: center;
+          padding: 6px 8px !important;
+        }
+
+        .stage-indicators {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+        }
+
+        .no-stages {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+        }
+
+        .stage-circle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          color: #ffffff;
+          font-weight: 700;
+          font-size: 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.20);
+          flex-shrink: 0;
+        }
+
+        .stage-arrow {
+          font-size: 12px;
+          color: $text-muted;
+          line-height: 1;
+        }
+      }
+
+      // Bottom action buttons row
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 12px 16px;
+        border-top: 1px solid $border-color;
+        background: $background-light;
+
+        button {
+          min-width: 130px;
+          font-size: 12px;
+
+          mat-icon { margin-right: 6px; }
+        }
+      }
+    }
+  }
+
+  // ----------------------------------------------------------
+  // CAP Container (Corrective Action Plan)
+  // ----------------------------------------------------------
+  .capa-container {
+    background: $background-white;
+    border-radius: $radius-md;
+    box-shadow: $shadow-md;
+    overflow: hidden;
+    margin-top: 8px;
+
+    .capa-scroll-wrapper {
+      overflow-x: visible;
+    }
+
+    // ── Back to Finding button ───────────────────────────────
+    .capa-back-btn {
+      font-size: 12px;
+      font-weight: 600;
+      color: #2d1b69;
+      letter-spacing: 0.2px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid #d8d0f5;
+      padding: 4px 12px;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: #ffffff;
+        border-color: #2d1b69;
+        transform: translateX(-2px);
+      }
+
+      mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+        vertical-align: middle;
+        margin-right: 4px;
+      }
+    }
+
+    // ── Finding Details card ─────────────────────────────
+    .capa-finding-card {
+      margin: 14px 16px 0;
+      border: 1px solid #e8e4f7;
+      border-radius: $radius-md;
+      overflow: hidden;
+
+      .capa-finding-body {
+        padding: 12px 16px;
+      }
+
+      .capa-question-label {
+        font-size: 13px;
+        color: $text-primary;
+        font-weight: 600;
+        margin: 0 0 8px;
+
+        .capa-question-text {
+          font-weight: 700;
+          color: #3a1a6b;
+          margin-left: 4px;
+        }
+      }
+
+      .capa-finding-type-row {
+        margin-bottom: 8px;
+      }
+
+      .capa-finding-desc {
+        margin: 0 0 8px;
+        padding: 10px 14px;
+        background: #f8f7ff;
+        border-left: 3px solid #667eea;
+        border-radius: 0 $radius-sm $radius-sm 0;
+        font-size: 12px;
+        line-height: 1.6;
+        color: $text-secondary;
+      }
+
+      .capa-reference {
+        font-size: 12px;
+        color: $text-muted;
+        margin: 0;
+
+        strong { color: $text-secondary; }
+      }
+    }
+
+    // ── Finding type badges ──────────────────────────────
+    .capa-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+
+      &.badge-major       { background: #ffebee; color: #c62828; }
+      &.badge-minor       { background: #fff3e0; color: #e65100; }
+      &.badge-observation { background: #e3f2fd; color: #1565c0; }
+      &.badge-weakness    { background: #fff9c4; color: #f57f17; }
+    }
+
+    // ── Section header bar ───────────────────────────────
+    .capa-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 16px;
+      background: #f7f5ff;
+      border-top: 1px solid #e8e4f7;
+      border-bottom: 1px solid #e8e4f7;
+      font-size: 12px;
+      font-weight: 400;
+      color: #2d1b69;
+      letter-spacing: 0.6px;
+
+      .capa-section-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .capa-section-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+        color: #4c51bf;
+      }
+
+      .capa-guide-link {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 600;
+        color: #667eea;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+
+        &:hover { text-decoration: underline; }
+      }
+    }
+
+    // ── Cause row ────────────────────────────────────────
+    .capa-cause-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px 0;
+
+      .capa-cause-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: $text-secondary;
+        white-space: nowrap;
+        min-width: 80px;
+      }
+
+      .capa-cause-select {
+        flex: 1;
+        max-width: 280px;
+        min-width: 280px;
+        width: 280px;
+
+        ::ng-deep .mat-mdc-select-trigger {
+          width: 100%;
+        }
+
+        ::ng-deep .mat-mdc-select-value {
+          width: 100%;
+        }
+      }
+    }
+
+    // ── Stage content wrapper ────────────────────────────
+    .capa-stage-content {
+      padding: 0 0 12px;
+      margin-top: 24px;
+    }
+
+    .mt-12 { margin-top: 12px; }
+
+    // ── CAPA Table ───────────────────────────────────────
+    .capa-table-wrapper {
+      margin: 0 4px 8px;
+      border-radius: $radius-sm;
+      border: 1px solid #e0e0e8;
+    }
+
+    .capa-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+
+      thead tr {
+        background: linear-gradient(135deg, #f0eeff 0%, #f5f4ff 100%);
+      }
+
+      th {
+        padding: 8px 10px;
+        font-size: 11px;
+        font-weight: 400;
+        color: #2d1b69;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #d8d0f5;
+        border-right: 1px solid #e4e0f5;
+        white-space: normal;
+        text-align: left;
+        line-height: 1.3;
+
+        &:last-child { border-right: none; }
+      }
+
+      tbody tr {
+        border-bottom: 1px solid #eeedf8;
+        transition: background $transition-fast;
+
+        &:last-child { border-bottom: none; }
+        &:hover { background: #faf9ff; }
+      }
+
+      td {
+        padding: 6px 8px;
+        border-right: 1px solid #eeedf8;
+        vertical-align: top;
+
+        &:last-child { border-right: none; }
+
+        mat-form-field { margin: 0; }
+      }
+
+      // Column widths
+      .col-sno     { width: 3%;  text-align: center; }
+      .col-cause   { width: 12%; }
+      .col-isroot  { width: 6%;  text-align: center; }
+      .col-text    { width: 15%; }
+      .col-date    { width: 8%; }
+      .col-resp    { width: 10%; }
+      .col-approved{ width: 7%;  text-align: center; }
+      .col-remarks { width: 14%; }
+      .col-evidence{ width: 12%; }
+
+      .td-center { text-align: center; }
+
+      .td-text {
+        font-size: 11px;
+        color: $text-primary;
+        line-height: 1.5;
+        display: block;
+      }
+
+      .cause-other-prefix {
+        font-size: 11px;
+        color: $text-muted;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      // Compact form fields inside table cells
+      .td-field {
+        width: 100%;
+
+        ::ng-deep .mat-mdc-form-field-infix { min-height: 28px; padding: 4px 0; }
+        ::ng-deep textarea.mat-mdc-input-element { font-size: 11px; min-height: 28px; font-weight: 400; }
+      }
+
+      .td-field-xs {
+        width: 64px;
+
+        ::ng-deep .mat-mdc-form-field-infix { min-height: 28px; padding: 4px 0; }
+        ::ng-deep .mat-mdc-select-value { font-size: 11px; padding-left: 6px; font-weight: 400; }
+        ::ng-deep .mat-mdc-select-arrow-wrapper { transform: translateX(-4px); }
+      }
+
+      .td-field-date {
+        width: 108px;
+
+        ::ng-deep .mat-mdc-form-field-infix { min-height: 28px; padding: 4px 0; }
+        ::ng-deep input.mat-mdc-input-element { font-size: 11px; font-weight: 400; }
+      }
+
+      .td-field-resp {
+        width: 100%;
+
+        ::ng-deep .mat-mdc-form-field-infix { min-height: 28px; padding: 4px 0; }
+        ::ng-deep .mat-mdc-select-value { font-size: 11px; padding-left: 6px; font-weight: 400; }
+        ::ng-deep .mat-mdc-select-arrow-wrapper { transform: translateX(-4px); }
+      }
+
+      .td-field-action {
+        width: 100%;
+        margin-top: 4px;
+
+        ::ng-deep .mat-mdc-form-field-infix { min-height: 28px; padding: 4px 0; }
+        ::ng-deep .mat-mdc-select-value { font-size: 12px; padding-left: 6px; font-weight: 400; }
+        ::ng-deep .mat-mdc-select-arrow-wrapper { transform: translateX(-4px); }
+      }
+
+      // Is-root-cause badge
+      .isroot-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+
+        &.badge-yes { background: #e8f5e9; color: #2e7d32; }
+        &.badge-no  { background: #fafafa; color: $text-muted; border: 1px solid #e0e0e0; }
+      }
+    }
+
+    // ── Action bar (submit row) ──────────────────────────
+    .capa-action-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      padding: 8px 16px 4px;
+      gap: 6px;
+
+      .capa-progress {
+        width: 100%;
+        border-radius: 2px;
+      }
+
+      .capa-submit-btn {
+        height: 32px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        min-width: 110px;
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        color: #ffffff;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          margin-right: 5px;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    // ── Evidence upload section ──────────────────────────
+    .evidence-upload {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 2px 0;
+      max-width: 100%;
+
+      .evidence-upload-btn {
+        height: 26px;
+        font-size: 11px;
+        line-height: 24px;
+        padding: 0 14px;
+        color: #1976d2;
+        border-color: #90caf9;
+
+        mat-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+          margin-right: 3px;
+          vertical-align: middle;
+        }
+      }
+
+      .evidence-progress {
+        width: 100%;
+        margin: 2px 0;
+      }
+
+      .evidence-file-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 3px;
+        margin-top: 3px;
+        max-width: 100%;
+
+        .evidence-file-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+          color: #5c6bc0;
+          flex-shrink: 0;
+        }
+
+        .evidence-file-name {
+          font-size: 11px;
+          color: #1565c0;
+          text-decoration: underline;
+          cursor: pointer;
+          flex: 1;
+          min-width: 0;
+          word-break: break-word;
+          line-height: 1.4;
+
+          &:hover { color: #0d47a1; }
+        }
+
+        .evidence-delete-icon {
+          font-size: 15px;
+          width: 15px;
+          height: 15px;
+          color: #e53935;
+          cursor: pointer;
+          flex-shrink: 0;
+
+          &:hover { color: #b71c1c; }
+        }
+      }
+    }
+
+    // ── Verified-by label ────────────────────────────────
+    .verified-by-label {
+      margin-top: 4px;
+      font-size: 11px;
+      color: $text-muted;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Access Request Section
+  // ----------------------------------------------------------
+  .access-request-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: $background-white;
+    border-radius: $radius-md;
+    box-shadow: $shadow-sm;
+    text-align: center;
+
+    p {
+      margin: 0 0 14px;
+      color: $text-secondary;
+      font-size: 12px;
+    }
+
+    button mat-icon { margin-right: 6px; }
+  }
+}
+
+// ============================================================
+// Material Design Global Overrides
+// ============================================================
+::ng-deep {
+  // Expansion panels inside checklist-auditee
+  .checklist-auditee-container {
+    .mat-expansion-panel {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+
+    .mat-expansion-panel-header-title {
+      align-items: center;
+    }
+
+    .mat-mdc-checkbox {
+      --mdc-checkbox-state-layer-size: 36px;
+    }
+  }
+
+  // Stepper
+  .capa-container {
+    .mat-stepper-horizontal {
+      background: transparent;
+      padding: 0 16px 4px;
+    }
+
+    // Step header
+    .mat-step-header {
+      padding: 10px 14px;
+      border-radius: $radius-sm;
+
+      &:hover { background: #f5f3ff; }
+
+      .mat-step-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
+      }
+
+      // Stage 1 - Submission (Orange)
+      &:nth-child(1) {
+        .mat-step-icon {
+          background-color: #FF9800;
+        }
+        .mat-step-icon-selected {
+          background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+          box-shadow: 0 2px 6px rgba(255, 152, 0, 0.40);
+        }
+        .mat-step-label-selected {
+          .step-title { color: #F57C00; }
+          .step-status { color: #FF9800; }
+        }
+      }
+
+      // Stage 2 - Review (Blue)
+      &:nth-child(3) {
+        .mat-step-icon {
+          background-color: #2196F3;
+        }
+        .mat-step-icon-selected {
+          background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+          box-shadow: 0 2px 6px rgba(33, 150, 243, 0.40);
+        }
+        .mat-step-label-selected {
+          .step-title { color: #1976D2; }
+          .step-status { color: #2196F3; }
+        }
+      }
+
+      // Stage 3 - Implementation (Green)
+      &:nth-child(5) {
+        .mat-step-icon {
+          background-color: #4CAF50;
+        }
+        .mat-step-icon-selected {
+          background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+          box-shadow: 0 2px 6px rgba(76, 175, 80, 0.40);
+        }
+        .mat-step-label-selected {
+          .step-title { color: #388E3C; }
+          .step-status { color: #4CAF50; }
+        }
+      }
+
+      // Stage 4 - Verification (Purple)
+      &:nth-child(7) {
+        .mat-step-icon {
+          background-color: #9C27B0;
+        }
+        .mat-step-icon-selected {
+          background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+          box-shadow: 0 2px 6px rgba(156, 39, 176, 0.40);
+        }
+        .mat-step-label-selected {
+          .step-title { color: #7B1FA2; }
+          .step-status { color: #9C27B0; }
+        }
+      }
+
+      .mat-step-icon-state-done {
+        background-color: #43a047;
+      }
+
+      .mat-step-label {
+        font-size: 12px;
+        white-space: normal;
+        max-width: 200px;
+
+        .step-title {
+          display: block;
+          font-weight: 400;
+          font-size: 12px;
+          color: $text-primary;
+          line-height: 1.5;
+        }
+
+        .step-status {
+          display: block;
+          font-size: 12px;
+          color: $text-secondary;
+          margin-top: 2px;
+          font-weight: 400;
+          line-height: 1.5;
+        }
+      }
+    }
+
+    // Connector line
+    .mat-stepper-horizontal-line {
+      border-top-color: #d0cbf5;
+      margin: 0 -6px;
+    }
+  }
+
+  // Form fields inside CAPA table
+  .capa-table mat-form-field {
+    .mat-mdc-form-field-infix  { min-height: 32px; }
+    .mat-mdc-text-field-wrapper { padding: 0; }
+  }
+}
+
+// ============================================================
+// Global Dropdown Panel Styling (for CDK overlay)
+// ============================================================
+::ng-deep .capa-cause-dropdown-panel {
+  min-width: 280px !important;
+  max-width: 280px !important;
+
+  .mat-mdc-select-panel,
+  .mat-select-panel {
+    min-width: 280px !important;
+    max-width: 280px !important;
+  }
+}

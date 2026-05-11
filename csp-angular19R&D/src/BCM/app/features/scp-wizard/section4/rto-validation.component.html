@@ -1,0 +1,217 @@
+
+    <mat-card class="section-card">
+      <mat-card-content>
+          <form [formGroup]="rtoForm">
+          <input type="hidden" formControlName="id">
+          <input type="hidden" formControlName="activity">
+            <table mat-table [dataSource]="rtoList" class="rto-table">
+            <!-- Activity -->
+              <ng-container matColumnDef="activity">
+                <th mat-header-cell *matHeaderCellDef>Activity / Services</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="read-only">{{ row.activity }}<br>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Evacuation -->
+              <ng-container matColumnDef="evacuation">
+                <th mat-header-cell *matHeaderCellDef>Evacuation (HH:MM)</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewEvacuation">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput formControlName="evacuation" placeholder="0:00" maxlength="5" [readonly]="mode === 'view'">
+                      <mat-icon matSuffix matTooltip="Time for evacuation." matTooltipPosition="above">help</mat-icon>
+                      <mat-error *ngIf="rtoForm.get('evacuation')?.hasError('required')">Required</mat-error>
+                      <mat-error *ngIf="rtoForm.get('evacuation')?.hasError('pattern')">HH:MM</mat-error>
+                    </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewEvacuation>
+                    <div class="read-only">{{ row.evacuation }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- BCP Invocation -->
+              <ng-container matColumnDef="bcpInvocation">
+                <th mat-header-cell *matHeaderCellDef>BCP Invocation (HH:MM)</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewBCPInvocation">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput formControlName="bcpInvocation" placeholder="0:00" maxlength="5" [readonly]="mode === 'view'">
+                      <mat-icon matSuffix matTooltip="Time to make final decision to invoke BCP." matTooltipPosition="above">help</mat-icon>
+                      <mat-error *ngIf="rtoForm.get('bcpInvocation')?.hasError('required')">Required</mat-error>
+                      <mat-error *ngIf="rtoForm.get('bcpInvocation')?.hasError('pattern')">HH:MM</mat-error>
+                    </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewBCPInvocation>
+                    <div class="read-only">{{ row.bcpInvocation }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- Call Tree -->
+              <ng-container matColumnDef="callTree">
+                <th mat-header-cell *matHeaderCellDef>Call Tree (HH:MM)</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewCallTree">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput formControlName="callTree" placeholder="0:00" maxlength="5" [readonly]="mode === 'view'">
+                      <mat-icon matSuffix matTooltip="Time for performing Call Tree." matTooltipPosition="above">help</mat-icon>
+                      <mat-error *ngIf="rtoForm.get('callTree')?.hasError('required')">Required</mat-error>
+                      <mat-error *ngIf="rtoForm.get('callTree')?.hasError('pattern')">HH:MM</mat-error>
+                    </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewCallTree>
+                    <div class="read-only">{{ row.callTree }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- Travel / Work Handover -->
+              <ng-container matColumnDef="travelWorkHandover">
+                <th mat-header-cell *matHeaderCellDef>Travel / Work Handover (HH:MM)</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewTravelWorkHandover">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput formControlName="travelWorkHandover" placeholder="0:00" maxlength="5" [readonly]="mode === 'view'">
+                      <mat-icon matSuffix matTooltip="Worst-case travel time to alternate site." matTooltipPosition="above">help</mat-icon>
+                      <mat-error *ngIf="rtoForm.get('travelWorkHandover')?.hasError('required')">Required</mat-error>
+                      <mat-error *ngIf="rtoForm.get('travelWorkHandover')?.hasError('pattern')">HH:MM</mat-error>
+                    </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewTravelWorkHandover>
+                    <div class="read-only">{{ row.travelWorkHandover }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- Work Resumption -->
+              <ng-container matColumnDef="workResumption">
+                <th mat-header-cell *matHeaderCellDef>Work Resumption (HH:MM)</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewWorkResumption">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput formControlName="workResumption" placeholder="0:00" maxlength="5" [readonly]="mode === 'view'">
+                      <mat-icon matSuffix matTooltip="Time to finish work resumption at alternate site." matTooltipPosition="above">help</mat-icon>
+                      <mat-error *ngIf="rtoForm.get('workResumption')?.hasError('required')">Required</mat-error>
+                      <mat-error *ngIf="rtoForm.get('workResumption')?.hasError('pattern')">HH:MM</mat-error>
+                    </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewWorkResumption>
+                    <div class="read-only">{{ row.workResumption }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- Residual RTO -->
+              <ng-container matColumnDef="residualRto">
+                <th mat-header-cell *matHeaderCellDef>Residual RTO (HH:MM)</th>
+                <td mat-cell *matCellDef="let row"> 
+                  
+                  <div class="read-only" [class.negative]="row.residualRto && row.residualRto.startsWith('-')">
+                      <ng-container *ngIf="editingRowId === row.id">
+                          <span class="calc-value" [class.negative]="isResidualNegative">{{ rtoForm.get('residualRto')?.value || '0:00' }}</span>
+                      </ng-container>
+                      <ng-container *ngIf="editingRowId !== row.id">
+                          {{ row.residualRto || '0:00' }}
+                      </ng-container>
+                  </div>
+
+                </td>
+              </ng-container>
+
+              <!-- RTO met -->
+              <ng-container matColumnDef="rtoMet">
+                <th mat-header-cell *matHeaderCellDef>RTO Met</th>
+                <td mat-cell *matCellDef="let row"> 
+
+                  <div class="read-only">
+                      <ng-container *ngIf="editingRowId === row.id">
+                          <span class="status-chip" [class.ok]="rtoMet" [class.notok]="!rtoMet">{{ rtoMet ? 'Yes' : 'No' }}</span>
+                      </ng-container>
+                      <ng-container *ngIf="editingRowId !== row.id">
+                          <span class="status-chip" [class.ok]="row.rtoMet" [class.notok]="!row.rtoMet">{{ row.rtoMet ? 'Yes' : 'No' }}</span>
+                      </ng-container>
+                  </div>
+                  
+                </td>
+              </ng-container>
+              
+              <!-- Action -->
+              <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef>Edit / Delete</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <ng-container *ngIf="editingRowId === row.id; else showEditButton">
+                    <button mat-icon-button class="save-button" (click)="saveRow()">
+                      <mat-icon>check</mat-icon>
+                    </button>
+                    <button mat-icon-button class="cancel-button" (click)="cancelEdit()">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </ng-container>
+
+                  <ng-template #showEditButton>
+                    <button mat-icon-button class="edit-button" (click)="editRow(row)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="delete-button" (click)="deleteRow(row.id)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+            <br/>
+            <br/>
+            <div class="calc-row">
+              <div class="calc-item">
+                <span class="calc-label">Total Calculated Recovery Time (TCRT)</span>
+                <span class="calc-value">{{ rtoForm.get('tcrt')?.value || '0:00' }}</span>
+              </div>
+             
+            </div>
+
+          </form>
+      </mat-card-content>
+      </mat-card>
+      <mat-card-actions class="section-actions">
+        <div class="spacer"></div>
+        <div class="validation-status" *ngIf="rtoForm.invalid">
+          <mat-icon color="warn">warning</mat-icon>
+          <span>Please complete all required fields</span>
+        </div>
+        <div class="validation-status success" *ngIf="rtoForm.valid">
+          <mat-icon color="primary">check_circle</mat-icon>
+          <span>Section completed</span>
+        </div>
+      </mat-card-actions>

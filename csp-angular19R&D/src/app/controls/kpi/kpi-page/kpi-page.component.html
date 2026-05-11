@@ -1,0 +1,4 @@
+<!-- Navbar with menu toggle for KPI page -->
+<app-navbar-new [ShowMenu]="true" (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+<app-menu [custid]="custId" *ngIf="menuToggleStatus"></app-menu>
+<app-kpi [custId]='custId'></app-kpi>

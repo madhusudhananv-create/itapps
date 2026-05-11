@@ -1,0 +1,193 @@
+<div *ngIf="selectedCust" class="bvd-page">
+
+  <!-- ══════════════════════════════════════════════════════
+       FILTER BAR
+  ══════════════════════════════════════════════════════ -->
+  <div class="bvd-filter-bar">
+
+    <!-- Row 1: filter dropdowns -->
+    <div class="bvd-filter-controls">
+
+      <!-- Beneficiary -->
+      <div class="bvd-filter-field">
+        <label class="bvd-filter-label">Beneficiary</label>
+        <mat-form-field appearance="outline" class="bvd-mat-field">
+          <mat-select [(ngModel)]="benefitsFilter.Beneficiary" multiple name="beneficiary" class="bvd-select">
+            <mat-option [value]="b.value" *ngFor="let b of beneficiary">{{ b.title }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- From -->
+      <div class="bvd-filter-field bvd-filter-field--date">
+        <label class="bvd-filter-label">From</label>
+        <mat-form-field appearance="outline" class="bvd-mat-field">
+          <input name="dateStart" [(ngModel)]="startDate" matInput [matDatepicker]="pickerStartDate" class="bvd-date-input" readonly>
+          <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerStartDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <!-- To -->
+      <div class="bvd-filter-field bvd-filter-field--date">
+        <label class="bvd-filter-label">To</label>
+        <mat-form-field appearance="outline" class="bvd-mat-field">
+          <input name="dateEnd" [(ngModel)]="endDate" matInput [matDatepicker]="pickerEndDate" class="bvd-date-input" readonly>
+          <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+          <mat-datepicker #pickerEndDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <!-- Benefit Pillar -->
+      <div class="bvd-filter-field">
+        <label class="bvd-filter-label">Benefit Pillar</label>
+        <mat-form-field appearance="outline" class="bvd-mat-field">
+          <mat-select class="bvd-select" [(ngModel)]="benefitsFilter.BenefitPillar" multiple name="benefitPillar">
+            <mat-option [value]="pillar.value" *ngFor="let pillar of benefitPillar">{{ pillar.title }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Status -->
+      <div class="bvd-filter-field">
+        <label class="bvd-filter-label">Status</label>
+        <mat-form-field appearance="outline" class="bvd-mat-field">
+          <mat-select multiple #select [(ngModel)]="status" name="status" class="bvd-select">
+            <mat-option [value]="0" #allstatusSelected (click)="toggleSelection()">All</mat-option>
+            <mat-option [value]="2" (click)="tosslePerOne()">Submitted</mat-option>
+            <mat-option [value]="4" (click)="tosslePerOne()">Approved</mat-option>
+            <mat-option [value]="3" (click)="tosslePerOne()">Implemented</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+    </div>
+
+    <!-- Row 2: Identified By + action buttons -->
+    <div class="bvd-filter-row2">
+
+      <!-- Identified By -->
+      <div class="bvd-filter-field bvd-filter-field--identified">
+        <label class="bvd-filter-label">
+          Identified By
+          <i class="fa fa-info-circle bvd-info-icon"
+             matTooltip="This List will show only the employees who have identified & updated ideas / improvements under the selected account / project in the CSM Platform.">
+          </i>
+        </label>
+        <mat-form-field appearance="outline" class="bvd-mat-field">
+          <mat-select #identifiedSelect class="bvd-select" [(ngModel)]="benefitsFilter.IdentifiedBy"
+            (ngModelChange)="identifiedBy_OnChange($event)" (openedChange)="openedChange($event)"
+            multiple name="identifiedBy">
+            <mat-form-field class="bvd-identified-search">
+              <input matInput (keydown)="$event.stopPropagation()" (input)="applyFilter(searchValue)"
+                [(ngModel)]="searchValue" placeholder="Search..." name="searchIdentified">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+            <mat-option [value]="'-1'" (click)="toggleIdentifiedAll()" #allSelected
+              *ngIf="employees && employees.length > 0">All</mat-option>
+            <mat-option *ngFor="let emp of employees" (click)="toggleIdentifiedby()"
+              [value]="emp.emP_ID.toString()">{{ emp.frsT_NM }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="bvd-filter-actions">
+        <button class="bvd-btn bvd-btn--outline" (click)="getFilterValues()">Apply</button>
+        <button class="bvd-btn bvd-btn--outline" (click)="viewIdeas()">View Ideas</button>
+        <button class="bvd-btn bvd-btn--primary" (click)="addNewIdea()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:4px">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          Add Idea
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Active filter chips -->
+    <div class="bvd-active-filters">
+      <span class="bvd-active-label">Active</span>
+      <span class="bvd-chip" *ngIf="startDate && endDate">
+        {{ startDate | date:'MMM yyyy' }}
+        <button class="bvd-chip-close" (click)="getDates()">×</button>
+      </span>
+      <span class="bvd-chip bvd-chip--pillar" *ngIf="benefitsFilter.BenefitPillar?.length">
+        People, Process, Tech
+        <button class="bvd-chip-close" (click)="benefitsFilter.BenefitPillar = []">×</button>
+      </span>
+      <span class="bvd-chip bvd-chip--status" *ngIf="status?.length">
+        All Statuses
+        <button class="bvd-chip-close" (click)="status = [0,2,4,3]">×</button>
+      </span>
+    </div>
+
+  </div>
+  <!-- /FILTER BAR -->
+
+
+  <!-- ══════════════════════════════════════════════════════
+       BUSINESS BENEFITS SECTION
+  ══════════════════════════════════════════════════════ -->
+  <div class="bvd-section">
+    <div class="bvd-section-header">
+      <span class="bvd-section-dot bvd-section-dot--blue"></span>
+      <span class="bvd-section-title">Business Benefits</span>
+    </div>
+
+    <div class="bvd-cards-row">
+      <div class="bvd-card">
+        <app-bvd-quantitative-benefits
+          [Value]="Valuechart"
+          [ValueColumn]="ValueColumnChart"
+          [ValueStacked]="ideasStackedDataValue"
+          [isDataEmpty]="stackedValueEmpty"
+          [ValueBenefitDetaildata]="ValueDetail"
+          (uom)="UOM_OnChange($event,1)">
+        </app-bvd-quantitative-benefits>
+      </div>
+      <div class="bvd-card">
+        <app-bvd-qualitative-benefits
+          [ValueBenefitdata]="Value"
+          [ValueBenefitDetaildata]="ValueDetailQualitative">
+        </app-bvd-qualitative-benefits>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       VALUE ADDITIONS SECTION
+  ══════════════════════════════════════════════════════ -->
+  <div class="bvd-section">
+    <div class="bvd-section-header">
+      <span class="bvd-section-dot bvd-section-dot--orange"></span>
+      <span class="bvd-section-title">Value Additions</span>
+    </div>
+
+    <div class="bvd-cards-row">
+      <div class="bvd-card">
+        <app-bvd-quantitative-benefits
+          [Value]="ValueAddchart"
+          [ValueColumn]="ValueAddColumnChart"
+          [ValueStacked]="ideasStackedDataValueAdd"
+          [isDataEmpty]="stackedValueAddEmpty"
+          [ValueBenefitDetaildata]="ValueAddDetail"
+          (uom)="UOM_OnChange($event,2)">
+        </app-bvd-quantitative-benefits>
+      </div>
+      <div class="bvd-card">
+        <app-bvd-qualitative-benefits
+          [ValueBenefitdata]="ValueAdd"
+          [ValueBenefitDetaildata]="ValueAddDetailQualitative">
+        </app-bvd-qualitative-benefits>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div *ngIf="progress" class="bvd-loading-overlay">
+    <img src="assets/images/loading_spinner.gif" alt="Loading" class="bvd-spinner">
+  </div>
+
+</div>

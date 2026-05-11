@@ -1,0 +1,159 @@
+<div class="matrix-container">
+  <!-- Filter Section -->
+  <div class="filter-row">
+    <div class="filter-label">Filter by Date:</div>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Start Date</mat-label>
+      <input matInput [(ngModel)]="startDate" [max]="maxValue" name="dateStart" [matDatepicker]="pickerStartDate">
+      <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+      <mat-datepicker #pickerStartDate></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>End Date</mat-label>
+      <input matInput [(ngModel)]="endDate" [min]="minValue" name="dateEnd" [matDatepicker]="pickerEndDate">
+      <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+      <mat-datepicker #pickerEndDate></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Choose Service Tower</mat-label>
+      <mat-select [(ngModel)]="input_servicearea" name="ddProcess">
+        <mat-option *ngFor="let type of ddServiceArea" [value]="type" [title]="type">{{type}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Choose Process Area</mat-label>
+      <mat-select [(ngModel)]="input_processarea" name="ddProcess">
+        <mat-option *ngFor="let type of ddProcessArea" [value]="type" [title]="type">{{type}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Choose Status</mat-label>
+      <mat-select [(ngModel)]="ddstatus" name="ddStatus">
+        <mat-option value="All" selected>All</mat-option>
+        <mat-option *ngFor="let type of lstStatus" [value]="type" [title]="type">{{type}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-flat-button color="primary" class="apply-button" (click)="getBestPracticeMatrix()">Apply</button>
+  </div>
+
+  <!-- Progress Bar -->
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate" class="progress-bar"></mat-progress-bar>
+
+  <!-- Tab Group -->
+  <mat-tab-group class="matrix-tabs" [(selectedIndex)]="itVertical" (selectedIndexChange)="selectedTab($event)">
+    <mat-tab label="IMS">
+      <div class="tab-content">
+        <div class="table-wrapper">
+          <table class="matrix-table">
+            <thead>
+              <tr *ngIf="matrixdata.length > 0">
+                <th class="matrix-header sticky-col first-col">Best Practice Description</th>
+                <th class="matrix-header all-col" *ngFor="let mat of matrixdata[0].matrix" [matTooltip]="mat.proJ_NM">
+                  {{mat.proJ_NM | slice:0:20}}{{mat.proJ_NM.length > 20 ? '...' : ''}}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let bp of matrixdata">
+                <td class="matrix-cell sticky-col first-col">{{bp.bestPractice}}</td>
+                <td class="matrix-cell all-col" *ngFor="let mat of bp.matrix">
+                  <mat-icon *ngIf="mat.status != 'Not Implemented'" [style.color]="GetColor(mat.status)" class="status-icon">lens</mat-icon>
+                  <label *ngIf="mat.status == 'Not Implemented'" class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="mat.selected">
+                    <span class="checkmark"></span>
+                  </label>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </mat-tab>
+    <mat-tab label="ADM">
+      <div class="tab-content">
+        <div class="table-wrapper">
+          <table class="matrix-table">
+            <thead>
+              <tr *ngIf="matrixdata.length > 0">
+                <th class="matrix-header sticky-col first-col">Best Practice Description</th>
+                <th class="matrix-header all-col" *ngFor="let mat of matrixdata[0].matrix" [matTooltip]="mat.proJ_NM">
+                  {{mat.proJ_NM | slice:0:20}}{{mat.proJ_NM.length > 20 ? '...' : ''}}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let bp of matrixdata">
+                <td class="matrix-cell sticky-col first-col">{{bp.bestPractice}}</td>
+                <td class="matrix-cell all-col" *ngFor="let mat of bp.matrix">
+                  <mat-icon *ngIf="mat.status != 'Not Implemented'" [style.color]="GetColor(mat.status)" class="status-icon">lens</mat-icon>
+                  <label *ngIf="mat.status == 'Not Implemented'" class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="mat.selected">
+                    <span class="checkmark"></span>
+                  </label>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- Status Change Section -->
+  <div *ngIf="matrixdata.length > 0" class="status-section">
+    <mat-radio-group [(ngModel)]="statusChange" *ngIf="_util.IsEditable()" class="status-radio-group">
+      <mat-radio-button value="Planned" class="status-radio">Mark as Scope/Plan for Implementation</mat-radio-button>
+      <mat-radio-button value="Not Applicable" class="status-radio">Mark as Not Applicable</mat-radio-button>
+      <mat-radio-button value="Completed" class="status-radio">Mark as Implemented/Completed</mat-radio-button>
+    </mat-radio-group>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-section">
+    <button *ngIf="statusCheck()" mat-flat-button color="primary" class="save-button" (click)="SaveStatus(matrixdata)">
+      <mat-icon>save</mat-icon>
+      Save
+    </button>
+    <button mat-stroked-button class="close-button" (click)="CancelOnClick()">
+      <mat-icon>close</mat-icon>
+      Close
+    </button>
+  </div>
+
+  <!-- Legend Section -->
+  <div class="legend-section">
+    <table class="legend-table">
+      <tr>
+        <td class="legend-cell">
+          <label class="checkbox-label">
+            <input type="checkbox">
+            <span class="checkmark"></span>
+          </label>
+        </td>
+        <td class="legend-text">Not Implemented</td>
+        <td class="legend-cell">
+          <mat-icon class="legend-icon" [style.color]="GetColor('Planned')">lens</mat-icon>
+        </td>
+        <td class="legend-text">Planned</td>
+        <td class="legend-cell">
+          <mat-icon class="legend-icon" [style.color]="GetColor('Started')">lens</mat-icon>
+        </td>
+        <td class="legend-text">Started</td>
+      </tr>
+      <tr>
+        <td class="legend-cell">
+          <mat-icon class="legend-icon" [style.color]="GetColor('Completed')">lens</mat-icon>
+        </td>
+        <td class="legend-text">Completed</td>
+        <td class="legend-cell">
+          <mat-icon class="legend-icon" [style.color]="GetColor('Cancelled/Rejected')">lens</mat-icon>
+        </td>
+        <td class="legend-text">Cancelled/Rejected</td>
+        <td class="legend-cell">
+          <mat-icon class="legend-icon" [style.color]="GetColor('Not Applicable')">lens</mat-icon>
+        </td>
+        <td class="legend-text">Not Applicable</td>
+      </tr>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,224 @@
+<div class="contacts-container">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button class="back-button"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+        matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="client-logo-container">
+        <img class="client-logo"
+          [src]="'assets/images/' + _layoutService.selectedCust + '.png'"
+          (error)="$any($event.target).src='assets/images/CustomerLogo.png'"
+          alt="Customer Logo">
+      </div>
+      <span class="page-title">Contacts</span>
+    </div>
+    <div class="header-actions">
+      <ng-container *ngIf="!editCmode">
+        <button *ngIf="_access.IsAllowed(16, 3, '', '')" mat-icon-button class="action-icon-btn edit-mode-btn"
+          title="Edit Contacts" (click)="changemode()">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- VIEW MODE -->
+  <div *ngIf="!editCmode" class="view-mode">
+    <div *ngIf="contacts.length === 0" class="empty-state">
+      <mat-icon>contacts</mat-icon>
+      <p>No contacts added yet</p>
+    </div>
+
+    <mat-tab-group *ngIf="contacts.length > 0" class="contacts-tabs">
+      <mat-tab label="{{ companyName }}">
+        <div class="cards-grid">
+          <div class="contact-card" *ngFor="let contact of getItems(companyName)">
+            <div class="card-avatar">
+              <img src="assets/images/people.png" onerror="this.src='assets/images/CustomerLogo.png'" alt="Contact">
+            </div>
+            <div class="card-name">{{ contact.contacT_NAME }}</div>
+            <div class="card-role">{{ contact.contacT_ROLE }}</div>
+            <mat-divider></mat-divider>
+            <div class="card-details">
+              <div class="card-detail-row">
+                <mat-icon class="detail-icon">email</mat-icon>
+                <a href="mailto:{{contact.contacT_EMAILID}}" class="detail-link">{{ contact.contacT_EMAILID }}</a>
+              </div>
+              <div class="card-detail-row">
+                <mat-icon class="detail-icon">phone</mat-icon>
+                <span>{{ contact.contacT_PHONE }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="CUSTOMER">
+        <div class="cards-grid">
+          <div class="contact-card" *ngFor="let contact of getItems('CUSTOMER')">
+            <div class="card-avatar">
+              <img src="assets/images/people.png" onerror="this.src='assets/images/CustomerLogo.png'" alt="Contact">
+            </div>
+            <div class="card-name">{{ contact.contacT_NAME }}</div>
+            <div class="card-role">{{ contact.contacT_ROLE }}</div>
+            <mat-divider></mat-divider>
+            <div class="card-details">
+              <div class="card-detail-row">
+                <mat-icon class="detail-icon">email</mat-icon>
+                <a href="mailto:{{contact.contacT_EMAILID}}" class="detail-link">{{ contact.contacT_EMAILID }}</a>
+              </div>
+              <div class="card-detail-row">
+                <mat-icon class="detail-icon">phone</mat-icon>
+                <span>{{ contact.contacT_PHONE }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+  <!-- EDIT MODE -->
+  <div *ngIf="editCmode" class="edit-mode">
+    <div class="edit-layout">
+
+      <!-- Add / Edit Form Panel -->
+      <div class="form-panel">
+        <div class="form-header">
+          <span class="form-header-title">{{ editmode ? 'Edit Contact' : 'Add Contact' }}</span>
+          <button mat-icon-button class="action-icon-btn back-mode-btn" title="Back to View"
+            (click)="changeeditmode(contactsForm)" type="button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="form-body">
+          <form #contactsForm="ngForm" (ngSubmit)="SubmitForm(contactsForm)">
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Contact Type</mat-label>
+              <mat-select name="txtType" [(ngModel)]="newContacts.contacT_TYPE"
+                (selectionChange)="verifyContactType($event.value)" required [disabled]="this.displayDisabled">
+                <mat-option value="CUSTOMER">CUSTOMER</mat-option>
+                <mat-option [value]="companyName">{{ companyName }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field *ngIf="displayGavsContactType" appearance="outline" class="form-field">
+              <mat-label>Key Resource Name</mat-label>
+              <input type="text" name="ddlName" matInput [formControl]="myControl"
+                [matAutocomplete]="auto" required>
+              <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+                <mat-option *ngFor="let option of filteredOptions | async" [value]="option" [title]="option.frsT_NM">
+                  {{ option.frsT_NM }}
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field *ngIf="!displayGavsContactType" appearance="outline" class="form-field">
+              <mat-label>Name</mat-label>
+              <input name="txtName" matInput [(ngModel)]="newContacts.contacT_NAME"
+                [pattern]="unamePattern" #uname1="ngModel" required [disabled]="this.displayDisabled">
+              <mat-error *ngIf="uname1.errors?.['pattern']">User name is not valid.</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Email Id</mat-label>
+              <input name="txtEmailId" type="email" matInput [(ngModel)]="newContacts.contacT_EMAILID"
+                [pattern]="emailPattern" #emailid="ngModel" required>
+              <mat-error *ngIf="emailid.errors?.['pattern']">Email is not valid.</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Role</mat-label>
+              <input name="txtRole" matInput [(ngModel)]="newContacts.contacT_ROLE" required>
+            </mat-form-field>
+
+            <mat-form-field *ngIf="isPremier && isGavs" appearance="outline" class="form-field">
+              <mat-label>Role Type</mat-label>
+              <mat-select name="txtRoleType" [(ngModel)]="newContacts.rolE_ID" required>
+                <mat-option *ngFor="let c of contactRoles" [value]="c.rolE_ID" [title]="c.rolE_NAME">
+                  {{ c.rolE_NAME }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field *ngIf="newContacts.contacT_TYPE === 'CUSTOMER'" appearance="outline" class="form-field">
+              <mat-label>Category</mat-label>
+              <mat-select name="txtCategory" [(ngModel)]="newContacts.category"
+                (selectionChange)="verifyContactType($event.value)" required>
+                <mat-option value="CXO">CXO</mat-option>
+                <mat-option value="Non CXO">Non CXO</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Phone</mat-label>
+              <input name="txtPhone" matInput [(ngModel)]="newContacts.contacT_PHONE"
+                [pattern]="phonePattern" #phone="ngModel" required>
+              <mat-error *ngIf="phone.errors?.['pattern']">Phone number is not valid.</mat-error>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button mat-flat-button color="primary" type="submit">
+                <mat-icon>save</mat-icon> Save
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <!-- Contacts Table -->
+      <div class="table-wrapper">
+        <table class="contacts-table table table-hover table-outline mb-0">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Category</th>
+              <th *ngIf="isPremier && isGavs">Role Type</th>
+              <th>Email Id</th>
+              <th>Phone</th>
+              <th>Type</th>
+              <th class="action-col">Action</th>
+            </tr>
+          </thead>
+          <tbody *ngIf="contacts.length > 0">
+            <tr *ngFor="let contact of contacts; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ contact.contacT_NAME }}</td>
+              <td>{{ contact.contacT_ROLE }}</td>
+              <td>{{ contact.category }}</td>
+              <td *ngIf="isPremier && isGavs">{{ getContactRoleTypeName(contact.rolE_ID) }}</td>
+              <td>{{ contact.contacT_EMAILID }}</td>
+              <td>{{ contact.contacT_PHONE }}</td>
+              <td><span class="type-badge" [class.gavs]="contact.contacT_TYPE !== 'CUSTOMER'">{{ contact.contacT_TYPE }}</span></td>
+              <td class="action-col">
+                <button mat-icon-button class="tbl-edit-btn" title="Edit" (click)="EditRow_onClick(contact)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button class="tbl-delete-btn" title="Delete"
+                  (click)="DeleteRow_onClick(contact, contactsForm)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tbody *ngIf="contacts.length === 0">
+            <tr>
+              <td colspan="9" class="no-records">No records found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /.edit-layout -->
+  </div><!-- /.edit-mode -->
+
+</div><!-- /.contacts-container -->

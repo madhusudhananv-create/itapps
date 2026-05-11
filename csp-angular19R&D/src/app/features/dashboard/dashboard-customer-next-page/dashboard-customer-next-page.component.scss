@@ -1,0 +1,739 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dashboard Customer Next Page - Modern Angular 19 Chart Styles
+   Premium Material Design with smooth animations and professional styling
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Container & Layout
+   ───────────────────────────────────────────────────────────────────────── */
+
+.dashboard-container {
+  width: 100%;
+  min-height: 100%;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 24px;
+}
+
+.dashboard-charts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Chart Card - Premium Material Design
+   ───────────────────────────────────────────────────────────────────────── */
+
+.chart-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 4px 8px rgba(0, 0, 0, 0.02),
+    0 0 0 1px rgba(0, 0, 0, 0.01);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+  will-change: transform, box-shadow;
+
+  // Gradient accent bar on top
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    border-radius: 20px 20px 0 0;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  // Subtle outer glow on hover
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.35s ease;
+  }
+
+  &:hover {
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.03),
+      0 8px 20px rgba(0, 0, 0, 0.04),
+      0 0 0 1px rgba(99, 102, 241, 0.08);
+    transform: translateY(-3px) scale(1.005);
+
+    &::before {
+      opacity: 1;
+    }
+
+    &::after {
+      opacity: 0.03;
+    }
+
+    .chart-icon-wrapper {
+      transform: scale(1.1) rotate(5deg);
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      
+      .chart-icon {
+        color: #ffffff;
+      }
+    }
+
+    .chart-title {
+      color: #6366f1;
+    }
+  }
+}
+
+.chart-card-inner {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Chart Header
+   ───────────────────────────────────────────────────────────────────────── */
+
+.chart-header {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chart-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.08);
+  
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    line-height: 20px;
+  }
+}
+
+.chart-icon {
+  font-size: 20px;
+  color: #6366f1;
+  transition: all 0.3s ease;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #212121;
+  margin: 0;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+  letter-spacing: -0.3px;
+  transition: color 0.3s ease;
+}
+
+.chart-subtitle {
+  font-size: 12px;
+  color: #757575;
+  font-weight: 500;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+  letter-spacing: 0;
+  margin-left: 52px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Chart Body & Container
+   ───────────────────────────────────────────────────────────────────────── */
+
+.chart-body {
+  flex: 1;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: visible;
+  padding: 8px 0;
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+  min-height: 240px;
+}
+
+.chart-highcharts {
+  width: 100%;
+  height: 240px;
+  display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Empty State
+   ───────────────────────────────────────────────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  min-height: 220px;
+}
+
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  animation: pulseGlow 2s ease-in-out infinite;
+
+  &.success {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    
+    .empty-icon,
+    mat-icon.empty-icon {
+      color: #22c55e;
+    }
+  }
+  
+  mat-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 32px;
+    line-height: 32px;
+  }
+}
+
+.empty-icon {
+  font-size: 32px;
+  color: #9ca3af;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #212121;
+  font-weight: 600;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.empty-subtext {
+  font-size: 12px;
+  color: #757575;
+  font-weight: 400;
+  font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+  display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Chart Footer & View Details Link
+   ───────────────────────────────────────────────────────────────────────── */
+
+.chart-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+  text-align: right;
+}
+
+.view-details-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1976d2;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+  position: relative;
+  overflow: hidden;
+  height: 32px;
+  line-height: 20px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(25, 118, 210, 0.04);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    border-radius: 6px;
+    z-index: -1;
+  }
+
+  &:hover {
+    background-color: rgba(25, 118, 210, 0.08);
+    color: #1565c0;
+    transform: translateX(2px);
+
+    &::before {
+      opacity: 1;
+    }
+
+    mat-icon,
+    i {
+      transform: translateX(3px);
+    }
+  }
+
+  &:active {
+    transform: translateX(1px) scale(0.98);
+  }
+
+  mat-icon,
+  i {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Highcharts Customizations - Deep Integration
+   ───────────────────────────────────────────────────────────────────────── */
+
+:host ::ng-deep {
+  .highcharts-container {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif !important;
+    overflow: visible !important;
+  }
+
+  // Legend text styling with proper color enforcement
+  .highcharts-legend-item text {
+    fill: #212121 !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    transition: fill 0.2s ease !important;
+  }
+
+  .highcharts-legend-item:hover text {
+    fill: #1976d2 !important;
+  }
+
+  .highcharts-legend-item-hidden text {
+    fill: #9ca3af !important;
+  }
+
+  // Tooltip styling
+  .highcharts-tooltip {
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.12));
+  }
+
+  .highcharts-tooltip-box {
+    fill: white;
+    stroke: #e5e7eb;
+    stroke-width: 1px;
+    rx: 8;
+    ry: 8;
+  }
+
+  .highcharts-label-box {
+    fill: white;
+    stroke: none;
+  }
+
+  // Background transparency
+  .highcharts-background {
+    fill: transparent;
+  }
+
+  // Pie chart slice styling
+  .highcharts-pie-series .highcharts-point {
+    stroke-width: 2px;
+    stroke: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .highcharts-pie-series .highcharts-point:hover {
+    stroke-width: 3px;
+    filter: brightness(1.1);
+  }
+
+  // Column chart styling
+  .highcharts-column-series .highcharts-point {
+    stroke-width: 0;
+    transition: all 0.2s ease;
+  }
+
+  .highcharts-column-series .highcharts-point:hover {
+    filter: brightness(1.05);
+  }
+
+  // Export button styling
+  .highcharts-button {
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    .highcharts-button-box {
+      fill: white;
+      stroke: #e5e7eb;
+      stroke-width: 1px;
+      rx: 6;
+      ry: 6;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.06));
+      transition: all 0.2s ease;
+    }
+
+    &:hover .highcharts-button-box {
+      fill: #f9fafb;
+      stroke: #d1d5db;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+    }
+
+    .highcharts-button-symbol {
+      stroke: #6b7280;
+      stroke-width: 2px;
+    }
+  }
+
+  .highcharts-exporting-group {
+    .highcharts-button {
+      .highcharts-button-box {
+        fill: white;
+        stroke: #e5e7eb;
+        stroke-width: 1px;
+        rx: 6;
+        ry: 6;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.04));
+      }
+
+      &:hover .highcharts-button-box {
+        fill: #f9fafb;
+        stroke: #d1d5db;
+        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.06));
+      }
+    }
+  }
+
+  // Export menu dropdown styling
+  .highcharts-menu {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    box-shadow: 
+      0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+      0 4px 6px -2px rgba(0, 0, 0, 0.05),
+      0 0 0 1px rgba(0, 0, 0, 0.02) !important;
+    padding: 6px !important;
+    background: white !important;
+    backdrop-filter: blur(10px);
+
+    .highcharts-menu-item {
+      padding: 10px 18px !important;
+      font-size: 12px !important;
+      color: #212121 !important;
+      font-weight: 500 !important;
+      font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif !important;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      border-radius: 6px !important;
+      margin: 2px 0 !important;
+
+      &:hover {
+        background-color: #f3f4f6 !important;
+        color: #1976d2 !important;
+        transform: translateX(2px);
+      }
+
+      &:active {
+        background-color: #e5e7eb !important;
+      }
+    }
+  }
+
+  // Data labels
+  .highcharts-data-label text {
+    font-weight: 600 !important;
+    font-size: 11px !important;
+    text-shadow: none !important;
+    font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif !important;
+  }
+
+  // Axis labels
+  .highcharts-axis-labels text {
+    fill: #757575 !important;
+    font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif !important;
+  }
+
+  // Axis titles
+  .highcharts-axis-title {
+    fill: #757575 !important;
+    font-weight: 500 !important;
+    font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif !important;
+  }
+
+  // Grid lines
+  .highcharts-grid-line {
+    stroke: #f3f4f6 !important;
+  }
+
+  // Axis lines
+  .highcharts-axis-line {
+    stroke: #e5e7eb !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Animations & Keyframes
+   ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Staggered animation for chart cards
+.chart-card {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+
+  .charts-row:nth-child(1) & {
+    &:nth-child(1) { animation-delay: 0.1s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+  }
+
+  .charts-row:nth-child(2) & {
+    &:nth-child(1) { animation-delay: 0.3s; }
+    &:nth-child(2) { animation-delay: 0.4s; }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Responsive Design - Mobile & Tablet Optimization
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1400px) {
+  .dashboard-container {
+    padding: 20px;
+  }
+
+  .dashboard-charts-grid {
+    gap: 18px;
+  }
+
+  .charts-row {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chart-card {
+    min-height: 320px;
+  }
+
+  .chart-body {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+
+  .dashboard-charts-grid {
+    gap: 16px;
+  }
+
+  .chart-card-inner {
+    padding: 16px;
+  }
+
+  .chart-title {
+    font-size: 15px;
+  }
+
+  .chart-subtitle {
+    font-size: 11px;
+  }
+
+  .chart-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .chart-icon {
+    font-size: 16px;
+  }
+
+  .empty-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+  }
+
+  .empty-icon {
+    font-size: 28px;
+  }
+
+  .empty-text {
+    font-size: 13px;
+  }
+
+  .empty-subtext {
+    font-size: 11px;
+  }
+
+  .view-details-link {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 12px;
+  }
+
+  .chart-card-inner {
+    padding: 14px;
+  }
+
+  .chart-title-wrapper {
+    gap: 10px;
+  }
+
+  .chart-subtitle {
+    margin-left: 46px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Print Styles
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media print {
+  .dashboard-container {
+    background: white;
+    padding: 0;
+  }
+
+  .chart-card {
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+    page-break-inside: avoid;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  .view-details-link {
+    display: none;
+  }
+
+  :host ::ng-deep .highcharts-exporting-group {
+    display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Accessibility Enhancements
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .chart-card {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .chart-card {
+    border: 2px solid #1f2937;
+  }
+
+  .chart-title {
+    font-weight: 700;
+  }
+
+  .view-details-link {
+    border: 1px solid #6366f1;
+  }
+}

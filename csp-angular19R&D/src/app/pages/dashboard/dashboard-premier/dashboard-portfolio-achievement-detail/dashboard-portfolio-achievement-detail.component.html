@@ -1,0 +1,229 @@
+<div class="modern-dialog">
+  <!-- Modern Header -->
+  <div class="modern-dialog-header" mat-dialog-title>
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>assessment</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2>{{viewBy}} Achievement By Portfolio</h2>
+        <p class="header-subtitle">Service Level Performance Overview</p>
+      </div>
+    </div>
+    <button mat-icon-button class="close-button" (click)="onClose()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-container" *ngIf="isLoading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+
+  <!-- Dialog Content -->
+  <div class="modern-dialog-content">
+    <!-- Modern Table -->
+    <div class="table-container" *ngIf="portData.length > 0">
+      <table class="modern-portfolio-table">
+        <thead>
+          <tr class="header-row">
+            <th colspan="2" class="header-cell">Portfolio</th>
+            <th colspan="3" class="header-cell">
+              <div class="header-with-icon">
+                <mat-icon class="header-icon">trending_up</mat-icon>
+                Overall Service Level Measures Achievement
+              </div>
+            </th>
+            <th colspan="1" class="header-cell">
+              <div class="header-with-icon">
+                <mat-icon class="header-icon">star</mat-icon>
+                Critical Service Level Measures Achievement
+              </div>
+            </th>
+            <th colspan="1" class="header-cell">
+              <div class="header-with-icon">
+                <mat-icon class="header-icon">grade</mat-icon>
+                Key Service Level Measures Achievement
+              </div>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <ng-container *ngFor="let cust of portData; let i = index">
+            <!-- Main Portfolio Row -->
+            <tr class="portfolio-row" [class.expanded]="portDisplayIndex == i">
+              <td class="expand-cell">
+                <button mat-icon-button 
+                        *ngIf="cust.meT_CRITICAL_KPI + cust.meT_KEY_KPI > 0" 
+                        class="expand-button" 
+                        id="img{{i}}"
+                        (click)="setPortIndex(i,$event.target,cust.portfoliO_ID)">
+                  <mat-icon>{{portDisplayIndex == i ? 'expand_less' : 'expand_more'}}</mat-icon>
+                </button>
+              </td>
+              <td class="portfolio-name">
+                <div class="portfolio-info">
+                  <span class="name">{{cust.title}}</span>
+                  <span class="count-badge">{{cust.producT_COUNT}}</span>
+                </div>
+              </td>
+              <td class="status-cell">
+                <span class="status-indicator" 
+                      [ngClass]="(viewByAchievement == 'By Expected Service Level' ? getStatus(cust) : getMinStatus(cust))=='Need Focus' ? 'need-focus':'under-control'">
+                  <mat-icon>{{(viewByAchievement == 'By Expected Service Level' ? getStatus(cust) : getMinStatus(cust))=='Need Focus' ? 'warning' : 'check_circle'}}</mat-icon>
+                </span>
+              </td>
+              <td class="achievement-cell">
+                <div class="achievement-value">
+                  {{ (viewByAchievement == 'By Expected Service Level' ? getAchievement(cust) : getMinAchievement(cust)) | number: '1.0-0'}} %
+                </div>
+              </td>
+
+              <!-- Expected Service Level Data -->
+              <ng-container *ngIf="viewByAchievement == 'By Expected Service Level'">
+                <td class="data-cell" *ngIf="!includeExclusions">
+                  {{cust.meT_CRITICAL_KPI + cust.meT_KEY_KPI}}/{{cust.overalL_KPI_COUNT}}
+                </td>
+                <td class="data-cell" *ngIf="!includeExclusions">
+                  {{cust.meT_CRITICAL_KPI}}/{{cust.criticaL_KPI}}
+                </td>
+                <td class="data-cell" *ngIf="!includeExclusions">
+                  {{cust.meT_KEY_KPI}}/{{cust.keY_KPI}}
+                </td>
+                <td class="data-cell" *ngIf="includeExclusions">
+                  {{cust.exclusioN_MET_CRITICAL_KPI + cust.exclusioN_MET_KEY_KPI}}/{{cust.overalL_KPI_COUNT}}
+                </td>
+                <td class="data-cell" *ngIf="includeExclusions">
+                  {{cust.exclusioN_MET_CRITICAL_KPI}}/{{cust.criticaL_KPI}}
+                </td>
+                <td class="data-cell" *ngIf="includeExclusions">
+                  {{cust.exclusioN_MET_KEY_KPI}}/{{cust.keY_KPI}}
+                </td>
+              </ng-container>
+
+              <!-- Minimum Service Level Data -->
+              <ng-container *ngIf="viewByAchievement == 'By Minimum Service Level'">
+                <td class="data-cell" *ngIf="!includeExclusions">
+                  {{cust.secondarY_MET_CRITICAL_KPI + cust.secondarY_MET_KEY_KPI}}/{{cust.overalL_KPI_COUNT}}
+                </td>
+                <td class="data-cell" *ngIf="!includeExclusions">
+                  {{cust.secondarY_MET_CRITICAL_KPI}}/{{cust.criticaL_KPI}}
+                </td>
+                <td class="data-cell" *ngIf="!includeExclusions">
+                  {{cust.secondarY_MET_KEY_KPI}}/{{cust.keY_KPI}}
+                </td>
+                <td class="data-cell" *ngIf="includeExclusions">
+                  {{cust.exclusioN_SECONDARY_MET_CRITICAL_KPI + cust.exclusioN_SECONDARY_MET_KEY_KPI}}/{{cust.overalL_KPI_COUNT}}
+                </td>
+                <td class="data-cell" *ngIf="includeExclusions">
+                  {{cust.exclusioN_SECONDARY_MET_CRITICAL_KPI}}/{{cust.criticaL_KPI}}
+                </td>
+                <td class="data-cell" *ngIf="includeExclusions">
+                  {{cust.exclusioN_SECONDARY_MET_KEY_KPI}}/{{cust.keY_KPI}}
+                </td>
+              </ng-container>
+            </tr>
+
+            <!-- Expanded Detail Row -->
+            <tr *ngIf="portDisplayIndex == i" class="detail-row">
+              <td colspan="15" class="detail-cell">
+                <div class="detail-container">
+                  <table class="detail-table">
+                    <thead>
+                      <tr>
+                        <th class="detail-header">SLA Id</th>
+                        <th class="detail-header">Service Level Metrics</th>
+                        <th class="detail-header">Service Level Measure Type</th>
+                        <th class="detail-header">Expected Service Level</th>
+                        <th class="detail-header">Minimum Service Level</th>
+                        <th class="detail-header">Achievement</th>
+                        <th class="detail-header">Trend</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let d of portDetailData" class="detail-data-row">
+                        <td class="detail-id">{{d.reference}}</td>
+                        <td class="detail-metric">{{d.kpI_NAME}}</td>
+                        <td class="detail-type">
+                          <span class="type-badge" [class.critical]="d.servicE_LEVEL === 'Critical Measurement'" 
+                                [class.key]="d.servicE_LEVEL === 'Key Measurement'">
+                            {{d.servicE_LEVEL}}
+                          </span>
+                        </td>
+                        <td class="detail-value">
+                          {{d.expecteD_SERVICE_LEVEL}} {{d.uniT_OF_MEASUREMENT == 'Number' ? '' : d.uniT_OF_MEASUREMENT}}
+                        </td>
+                        <td class="detail-value">
+                          {{d.minimuM_SERVICE_LEVEL}} {{d.uniT_OF_MEASUREMENT == 'Number' ? '' : d.uniT_OF_MEASUREMENT}}
+                        </td>
+                        <td class="detail-achievement" *ngIf="!includeExclusions">
+                          <span *ngIf="!d.isna && !d.isnodata && d.kpI_ACTUAL != '' && d.kpI_ACTUAL != null" 
+                                class="achievement-badge" [class.met]="d.slA_STATUS == 'Met'" [class.not-met]="d.slA_STATUS != 'Met'">
+                            {{d.uniT_OF_MEASUREMENT == 'Number' ? (d.kpI_ACTUAL | number:'1.0-0') : d.kpI_ACTUAL}}
+                            {{d.uniT_OF_MEASUREMENT == 'Number' ? '' : d.uniT_OF_MEASUREMENT}}
+                            <mat-icon>{{d.slA_STATUS == 'Met' ? 'thumb_up' : 'thumb_down'}}</mat-icon>
+                          </span>
+                          <span *ngIf="d.isna" class="na-badge">NA</span>
+                          <span *ngIf="d.isnodata" class="na-badge">NT</span>
+                        </td>
+                        <td class="detail-achievement" *ngIf="includeExclusions">
+                          <span *ngIf="d.exclusioN_KPI_ACTUAL != '' && d.exclusioN_KPI_ACTUAL != null" 
+                                class="achievement-badge" [class.met]="d.exclusioN_SLA_STATUS == 'Met'" [class.not-met]="d.exclusioN_SLA_STATUS != 'Met'">
+                            {{d.uniT_OF_MEASUREMENT == 'Number' ? (d.exclusioN_KPI_ACTUAL | number:'1.0-0') : d.exclusioN_KPI_ACTUAL}}
+                            {{d.uniT_OF_MEASUREMENT == 'Number' ? '' : d.uniT_OF_MEASUREMENT}}
+                            <mat-icon>{{d.exclusioN_SLA_STATUS == 'Met' ? 'thumb_up' : 'thumb_down'}}</mat-icon>
+                          </span>
+                          <span *ngIf="d.isna" class="na-badge">NA</span>
+                          <span *ngIf="d.isnodata" class="na-badge">NT</span>
+                        </td>
+                        <td class="detail-action">
+                          <button mat-icon-button class="trend-button" (click)="displayGraph(d.portfoliO_ID,d.kpI_NAME)" matTooltip="View Trend">
+                            <mat-icon>show_chart</mat-icon>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr *ngIf="portDetailData?.length == 0">
+                        <td colspan="7" class="empty-message">
+                          <mat-icon>info</mat-icon>
+                          No Service Level Measures were defined for this Period.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="portData.length == 0" class="empty-state">
+      <mat-icon class="empty-icon">assessment</mat-icon>
+      <h3>No Data Available</h3>
+      <p>No Service Level Measures were defined for this Period.</p>
+    </div>
+
+    <!-- Footer Notes -->
+    <div class="dialog-footer">
+      <div class="note-section">
+        <mat-icon class="note-icon">info</mat-icon>
+        <div class="note-content">
+          <p><strong>Note:</strong> Configured Achievement Threshold: {{achievementPer}}%</p>
+          <div class="legend">
+            <span class="legend-item under-control">
+              <mat-icon>check_circle</mat-icon>
+              Indicates Under Control
+            </span>
+            <span class="legend-item need-focus">
+              <mat-icon>warning</mat-icon>
+              Indicates Need Focus
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

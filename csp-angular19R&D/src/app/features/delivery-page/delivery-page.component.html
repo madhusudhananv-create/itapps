@@ -1,0 +1,265 @@
+<!-- Modern Delivery Page - Angular 19 Material Design -->
+<div class="delivery-container">
+  
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-left">
+      <button 
+        mat-icon-button 
+        class="back-button" 
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+        matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      
+      <div class="logo-container">
+        <img 
+          class="customer-logo" 
+          [src]="'assets/images/' + _layoutService.selectedCust + '.png'"
+          (error)="$any($event.target).src='assets/images/CustomerLogo.png'"
+          [alt]="_layoutService.selectedCust + ' Logo'">
+      </div>
+
+      <div class="header-title">
+        <h1>Delivery</h1>
+        <p class="subtitle">Weekly Status & Sub-Projects</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <mat-form-field appearance="outline" class="project-selector">
+        <mat-label>Select Project</mat-label>
+        <mat-select [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange($event)">
+          <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
+            {{proj.proJ_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate" class="loading-bar"></mat-progress-bar>
+
+  <!-- Content Section -->
+  <div class="content-wrapper" *ngIf="showdetails">
+    
+    <!-- View Toggle -->
+    <div class="view-toggle-section">
+      <mat-button-toggle-group 
+        appearance="legacy" 
+        #group="matButtonToggleGroup" 
+        [value]="selectedOption"
+        (change)="onValChange(group.value)" 
+        class="view-toggle">
+        <mat-button-toggle value="Task">
+          <mat-icon>assignment</mat-icon>
+          Sub Projects
+        </mat-button-toggle>
+        <mat-button-toggle value="4Quadrant">
+          <mat-icon>calendar_view_week</mat-icon>
+          Weekly View
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <!-- 4 Quadrant Weekly View -->
+    <div *ngIf="bShow4Quadrant" class="quadrant-view">
+      
+      <!-- Readonly Mode -->
+      <div *ngIf="readonlymode" class="readonly-mode">
+        <!-- Week Navigation & Actions -->
+        <div class="week-navigation-card">
+          <div class="week-nav-left">
+            <button mat-icon-button (click)="PreviousWeek()" matTooltip="Previous Week">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span class="date-range">
+              {{input.daterange?.startDate | date:'dd-MMM-yyyy'}} - {{input.daterange?.endDate | date:'dd-MMM-yyyy'}}
+            </span>
+            <button mat-icon-button (click)="NextWeek()" matTooltip="Next Week">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+          <div class="week-nav-right" *ngIf="_access.IsAllowed(8, 2, '', '')">
+            <button mat-raised-button color="primary" (click)="Edit_onClick()">
+              <mat-icon>edit</mat-icon>
+              Edit
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Quadrant Grid -->
+        <div class="quadrant-grid">
+          <!-- Top Left: Accomplishments -->
+          <div class="quadrant-card accomplishments">
+            <div class="quadrant-header">
+              <mat-icon>check_circle</mat-icon>
+              <h3>Accomplishments</h3>
+            </div>
+            <div class="quadrant-content">
+              <p *ngIf="input.delivery?.lastweeK_ACHIEVED" class="content-text">{{input.delivery?.lastweeK_ACHIEVED}}</p>
+              <p *ngIf="!input.delivery?.lastweeK_ACHIEVED" class="empty-message">No accomplishments recorded</p>
+            </div>
+          </div>
+
+          <!-- Top Right: Upcoming Milestones -->
+          <div class="quadrant-card milestones">
+            <div class="quadrant-header">
+              <mat-icon>flag</mat-icon>
+              <h3>Upcoming Key Milestones</h3>
+            </div>
+            <div class="quadrant-content">
+              <p *ngIf="input.delivery?.nextweeK_MILESTONE" class="content-text">{{input.delivery?.nextweeK_MILESTONE}}</p>
+              <p *ngIf="!input.delivery?.nextweeK_MILESTONE" class="empty-message">No milestones planned</p>
+            </div>
+          </div>
+
+          <!-- Bottom Left: Risks & Issues -->
+          <div class="quadrant-card risks">
+            <div class="quadrant-header">
+              <mat-icon>warning</mat-icon>
+              <h3>Key Risks & Issues</h3>
+            </div>
+            <div class="quadrant-content">
+              <p *ngIf="input.delivery?.riskS_ISSUES" class="content-text">{{input.delivery?.riskS_ISSUES}}</p>
+              <p *ngIf="!input.delivery?.riskS_ISSUES" class="empty-message">No risks or issues reported</p>
+            </div>
+          </div>
+
+          <!-- Bottom Right: Intervention & Guidance -->
+          <div class="quadrant-card intervention">
+            <div class="quadrant-header">
+              <mat-icon>support_agent</mat-icon>
+              <h3>Intervention & Guidance</h3>
+            </div>
+            <div class="quadrant-content">
+              <p *ngIf="input.delivery?.customeR_SUPPORT" class="content-text">{{input.delivery?.customeR_SUPPORT}}</p>
+              <p *ngIf="!input.delivery?.customeR_SUPPORT" class="empty-message">No intervention required</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div *ngIf="editmode" class="edit-mode">
+        <!-- Edit Header with RAG and Actions -->
+        <div class="edit-header-card">
+          <div class="edit-header-left">
+            <mat-form-field appearance="outline" class="rag-selector">
+              <mat-label>RAG Status</mat-label>
+              <mat-select [(ngModel)]="selectedRag" [value]="input.delivery?.rag">
+                <mat-option value="green" class="rag-green">Green</mat-option>
+                <mat-option value="orange" class="rag-amber">Amber</mat-option>
+                <mat-option value="red" class="rag-red">Red</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <span class="date-range">
+              {{input.daterange?.startDate | date:'dd-MMM-yyyy'}} - {{input.daterange?.endDate | date:'dd-MMM-yyyy'}}
+            </span>
+          </div>
+          <div class="edit-header-right">
+            <button mat-raised-button color="primary" 
+                    (click)="Save_onClick(selectedRag, txtachieved.value, txtmilestone.value, txtrisks.value, txtsupport.value)">
+              <mat-icon>save</mat-icon>
+              Save
+            </button>
+            <button mat-raised-button (click)="Cancel_onClick()">
+              <mat-icon>close</mat-icon>
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Quadrant Edit Grid -->
+        <div class="quadrant-edit-grid">
+          <!-- Top Left: Accomplishments -->
+          <div class="quadrant-edit-card">
+            <div class="quadrant-edit-header">
+              <mat-icon>check_circle</mat-icon>
+              <h3>Accomplishments</h3>
+            </div>
+            <mat-form-field appearance="outline" class="quadrant-textarea">
+              <mat-label>Recent Accomplishments</mat-label>
+              <textarea 
+                #txtachieved 
+                matInput 
+                placeholder="Enter accomplishments from this week..."
+                matTextareaAutosize 
+                matAutosizeMinRows="10"  
+                maxlength="3000"
+                matAutosizeMaxRows="20">{{input.delivery?.lastweeK_ACHIEVED}}</textarea>
+              <mat-hint align="end">{{txtachieved.value?.length || 0}}/3000</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <!-- Top Right: Upcoming Milestones -->
+          <div class="quadrant-edit-card">
+            <div class="quadrant-edit-header">
+              <mat-icon>flag</mat-icon>
+              <h3>Upcoming Key Milestones</h3>
+            </div>
+            <mat-form-field appearance="outline" class="quadrant-textarea">
+              <mat-label>Upcoming Key Activities</mat-label>
+              <textarea 
+                #txtmilestone 
+                matInput 
+                placeholder="Enter upcoming milestones..."
+                matTextareaAutosize 
+                matAutosizeMinRows="10"  
+                maxlength="3000"
+                matAutosizeMaxRows="20">{{input.delivery?.nextweeK_MILESTONE}}</textarea>
+              <mat-hint align="end">{{txtmilestone.value?.length || 0}}/3000</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <!-- Bottom Left: Risks & Issues -->
+          <div class="quadrant-edit-card">
+            <div class="quadrant-edit-header">
+              <mat-icon>warning</mat-icon>
+              <h3>Key Risks & Issues</h3>
+            </div>
+            <mat-form-field appearance="outline" class="quadrant-textarea">
+              <mat-label>Key Risks & Issues</mat-label>
+              <textarea 
+                #txtrisks 
+                matInput 
+                placeholder="Enter risks and issues..."
+                matTextareaAutosize 
+                matAutosizeMinRows="10"  
+                maxlength="3000"
+                matAutosizeMaxRows="20">{{input.delivery?.riskS_ISSUES}}</textarea>
+              <mat-hint align="end">{{txtrisks.value?.length || 0}}/3000</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <!-- Bottom Right: Intervention & Guidance -->
+          <div class="quadrant-edit-card">
+            <div class="quadrant-edit-header">
+              <mat-icon>support_agent</mat-icon>
+              <h3>Intervention & Guidance</h3>
+            </div>
+            <mat-form-field appearance="outline" class="quadrant-textarea">
+              <mat-label>Required Decisions & Guidance</mat-label>
+              <textarea 
+                #txtsupport 
+                matInput 
+                placeholder="Enter required intervention..."
+                matTextareaAutosize 
+                matAutosizeMinRows="10" 
+                maxlength="3000"
+                matAutosizeMaxRows="20">{{input.delivery?.customeR_SUPPORT}}</textarea>
+              <mat-hint align="end">{{txtsupport.value?.length || 0}}/3000</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub Projects View -->
+    <div *ngIf="!bShow4Quadrant" class="subproject-view">
+      <app-subproject [ProjectId]="input_projectid" [CustomerId]="input_customerid"></app-subproject>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,108 @@
+<div class="merge-checklist-container">
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate"></mat-progress-bar>
+
+  <div class="two-column-layout">
+    <!-- Left Column: Create New Checklist Form -->
+    <div class="left-column">
+      <app-setup-checklist-new 
+        *ngIf="isShowChecklistGrid" 
+        [isShowCreateChecklist]="isShowCreateChecklist" 
+        [dataRecord]="checklistModel"  
+        [callSave]="_callSave"
+        (onChange)="project_onChange($event)">
+      </app-setup-checklist-new>
+    </div>
+
+    <!-- Right Column: Existing Checklists -->
+    <div class="right-column">
+      <!-- Merge Checklists fields -->
+      <div class="merge-section">
+        <div class="filter-field">
+          <label>Existing Checklists: <span class="mandatory">*</span></label>
+          <mat-form-field appearance="outline" class="filter-select">
+            <mat-select 
+              [formControl]="selectedChecklists"
+              placeholder="Choose a checklist"
+              (openedChange)="resetChecklistFilterValue($event)" 
+              multiple
+              disableOptionCentering
+              panelClass="dropdown-below">
+              <mat-form-field class="filter-search">
+                <input 
+                  matInput 
+                  #checklistSearchInput 
+                  (keyup)="applyFilterForChecklist(checklistSearchInput.value)"
+                  (keydown)="$event.stopPropagation()" 
+                  placeholder="Search Checklist">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+              <div *ngIf="checklists.length == 0" class="no-results">
+                No results found
+              </div>
+              <mat-option *ngFor="let list of checklists" [value]="list.id" [title]="list.title">
+                {{ list.title + ' (' + list.version + ' - ' + list.effectivE_FROM.substring(0, 10) + ')' }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <button 
+          class="btn-info"
+          [disabled]="_loading || !selectedChecklists.valid" 
+          (click)="createNewChecklist()">
+          <mat-icon>add_circle</mat-icon>
+          Create Checklist
+        </button>
+      </div>
+
+      <!-- Grid section -->
+      <div class="preview-section" *ngIf="showPreviewGrid">
+    <mat-card>
+      <mat-card-header>
+        <div class="preview-header">
+          <mat-icon>preview</mat-icon>
+          <h3>Merged Checklist Preview</h3>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="preview-content">
+          <div *ngFor="let previewData of previewChecklistsData">
+            <app-preview-popup 
+              [previewData]="previewData.questionS_BY_SERVICE_AREA"
+              [checklistname]="previewData.checklisT_NAME" 
+              [version]="previewData.version"
+              [effectivefrom]="previewData.effectivE_FROM" 
+              [isMergeView]="true"
+              [showSelectColumn]="true" 
+              (checkboxChange)="onCheckboxChange($event.type, $event.data, $event.parentData, $event.grandparentData)">
+            </app-preview-popup>
+          </div>
+        </div>
+
+        <div *ngIf="previewChecklistsData && previewChecklistsData.length > 0" class="action-buttons">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            [disabled]="_loading" 
+            (click)="saveMergeChecklist()">
+            <mat-icon>save</mat-icon>
+            Save
+          </button>
+          <button 
+            mat-raised-button 
+            (click)="cancel_OnClick()">
+            <mat-icon>cancel</mat-icon>
+            Cancel
+          </button>
+          <button 
+            mat-raised-button 
+            [disabled]="_loading" 
+            (click)="clearSelections()">
+            <mat-icon>clear_all</mat-icon>
+            Clear All
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

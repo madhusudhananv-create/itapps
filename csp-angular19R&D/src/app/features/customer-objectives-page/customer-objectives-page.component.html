@@ -1,0 +1,52 @@
+<div class="customer-objectives-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-left">
+      <button 
+        mat-icon-button 
+        class="back-button"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+        matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+
+      <div class="logo-container">
+        <img 
+          class="customer-logo" 
+          [src]="'assets/images/' + _layoutService.selectedCust + '.png'"
+          (error)="$any($event.target).src='assets/images/CustomerLogo.png'"
+          [alt]="_layoutService.selectedCust + ' Logo'">
+      </div>
+
+      <div class="header-title">
+        <h1>Project Scope</h1>
+        <p class="subtitle">Customer Objectives</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <mat-form-field appearance="outline" class="project-selector">
+        <mat-label>Select Project</mat-label>
+        <mat-select [(ngModel)]="input_projectid">
+          <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
+            {{proj.proJ_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Section Title -->
+  <!-- <div class="section-title">
+    <mat-icon class="title-icon">description</mat-icon>
+    <h2>Project Scope</h2>
+  </div> -->
+
+  <!-- Content Section -->
+  <div class="content-section">
+    <app-customer-objectives-section 
+      [selectedProj]="input_projectid" 
+      [selectedCust]="input_customerid">
+    </app-customer-objectives-section>
+  </div>
+</div>

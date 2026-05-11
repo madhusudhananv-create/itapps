@@ -1,0 +1,48 @@
+import { ObservationModel, AuditSampleModel } from './audit-checklist-based.model';
+
+export class CheckListExecutionModel {
+  id: number = 0;
+  customeR_ID: string = '';
+  projecT_ID: string = '';
+  planneD_AUDIT_START_DATE: string = '';
+  planneD_AUDIT_END_DATE: string = '';
+  actuaL_AUDIT_START_DATE: string = '';
+  actuaL_AUDIT_END_DATE: string = '';
+  audiT_PLANNED_HOURS: number = 0;
+  audiT_ACTUAL_HOURS: number = 0;
+  audiT_TITLE: string = '';
+  versionid: number = 0;
+  auditoR_NAME: number = 0;
+  audiT_SCOPE: string = '';
+  auditeE_NAME: number[] = [];
+  cC_EMP_LIST: number[] = [];
+  tO_EMP_LIST: number[] = [];
+  applicablE_QUESTIONS: number = 0;
+  status: string = '';
+  notes: string = '';
+  findingS_ID: number = 0;
+  createD_DATE: Date = new Date();
+  createD_BY: string = '';
+  updateD_DATE: Date = new Date();
+  updateD_BY: string = '';
+  procesS_MODEL_DESCRIPTION: string = '';
+  procesS_AREA_DESCRIPTION: string = '';
+  procesS_DESCRIPTION: string = '';
+  statuS_CATEGORY: string = '';
+  score: number = 0;
+  maX_SCORE: number = 0;
+  weightagE_ID: number = 0;
+  weightagE_TITLE: string = '';
+  looK_FOR: string = '';
+  weightagE_SCORE: number = 0;
+  findings: ObservationModel[] = [];
+  checklisT_STATUS_LIST_VALUES: any[] = [];
+  checklisT_STATUS_LIST_ID: number = 0;
+  issubmitted: boolean = false;
+  servicE_AREA_ID: number = 0;
+  procesS_ID: number = 0;
+  procesS_MODEL_ID: number = 0;
+  checklisT_SAMPLE_AUDITED: AuditSampleModel[] = [];
+  mappeD_CHECKLIST: boolean = false;
+  currenT_STATUS: string = '';
+}

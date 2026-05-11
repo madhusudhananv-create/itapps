@@ -1,0 +1,261 @@
+﻿<div class="ie-page">
+
+  <!-- ── Top Stepper ─────────────────────────────────────────── -->
+  <div class="ie-stepper">
+    <div class="ie-step ie-step--active">
+      <div class="ie-step-circle ie-step-circle--active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Idea<br>Submission</span></div>
+    </div>
+    <div class="ie-step-line"></div>
+    <div class="ie-step">
+      <div class="ie-step-circle">2</div>
+      <div class="ie-step-label"><span class="ie-step-name">Evaluate<br>Benefits</span></div>
+    </div>
+    <div class="ie-step-line"></div>
+    <div class="ie-step">
+      <div class="ie-step-circle">3</div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation<br>Plan</span></div>
+    </div>
+    <div class="ie-step-line"></div>
+    <div class="ie-step">
+      <div class="ie-step-circle">4</div>
+      <div class="ie-step-label"><span class="ie-step-name">Review &amp;<br>Approve</span></div>
+    </div>
+    <div class="ie-step-line"></div>
+    <div class="ie-step">
+      <div class="ie-step-circle">5</div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation</span></div>
+    </div>
+  </div>
+
+  <!-- Loading Bar -->
+  <mat-progress-bar *ngIf="loading" mode="indeterminate" class="ie-loading-bar"></mat-progress-bar>
+
+  <!-- ── Two-column body ──────────────────────────────────────── -->
+  <div class="ie-body">
+
+    <!-- LEFT: Form card -->
+    <div class="ie-form-card">
+
+      <!-- Card header -->
+      <div class="ie-card-header">
+        <div class="ie-card-header-left">
+          <button class="ie-back-btn" type="button" (click)="onBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="ie-card-title-wrap">
+            <span class="ie-card-title">Enter Idea</span>
+            <span class="ie-card-title">Details</span>
+          </div>
+        </div>
+        <div class="ie-card-header-actions">
+          <button class="ie-btn ie-btn--save" type="button" (click)="saveForm()" [disabled]="!ideaForm.valid || loading">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Draft
+          </button>
+          <button class="ie-btn ie-btn--next" type="button" (click)="submitForm()" [disabled]="!ideaForm.valid || loading">
+            Next
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Form body -->
+      <form #ideaForm="ngForm" class="ie-form-body">
+
+        <div class="ie-section-label">PROJECT DETAILS</div>
+
+        <!-- Customer Name -->
+        <div class="ie-field-group">
+          <label class="ie-label">Customer Name <span class="ie-required">*</span></label>
+          <mat-form-field appearance="outline" class="ie-mat-field">
+            <mat-select [(ngModel)]="selectedCust" name="customer" required [disabled]="_bvdEntry.isIdeaSubmitted"
+              (selectionChange)="onCustomerChange()" placeholder="Select customer...">
+              <mat-option *ngFor="let cust of customerList; trackBy: trackByCustomerId" [value]="cust.cusT_ID">{{ cust.cusT_NM }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <span class="ie-hint" *ngIf="customerList.length > 0">{{ customerList.length }} customers available</span>
+          <span class="ie-error" *ngIf="ideaForm.controls['customer']?.touched && ideaForm.controls['customer']?.invalid">Customer Name is required</span>
+        </div>
+
+        <!-- Project Name -->
+        <div class="ie-field-group">
+          <label class="ie-label">Project Name <span class="ie-required">*</span></label>
+          <mat-form-field appearance="outline" class="ie-mat-field">
+            <mat-select [(ngModel)]="projectId" name="project" required [disabled]="_bvdEntry.isIdeaSubmitted"
+              (selectionChange)="getRequiredData(projectId)" placeholder="Select project...">
+              <mat-option *ngFor="let proj of projects" [value]="proj.proJ_ID">{{ proj.proJ_NM }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <span class="ie-error" *ngIf="ideaForm.controls['project']?.touched && ideaForm.controls['project']?.invalid">Project Name is required</span>
+        </div>
+
+        <div class="ie-section-label" style="margin-top:8px">IDEA DETAILS</div>
+
+        <!-- Type chips -->
+        <div class="ie-field-group">
+          <label class="ie-label">Type</label>
+          <div class="ie-type-chips">
+            <button type="button" class="ie-chip" *ngFor="let t of improvementS_TYPE"
+              [class.ie-chip--active]="idea.ideA_IMPROVEMENT_TYPE_ID === t.id"
+              (click)="idea.ideA_IMPROVEMENT_TYPE_ID = t.id">{{ t.type }}</button>
+          </div>
+        </div>
+
+        <!-- Description of Problem -->
+        <div class="ie-field-group">
+          <label class="ie-label">Description of Problem <span class="ie-required">*</span></label>
+          <div class="ie-textarea-wrap">
+            <textarea class="ie-textarea" name="description" [(ngModel)]="idea.description" required
+              [readonly]="_bvdEntry.isIdeaSubmitted" rows="4"
+              placeholder="What is the problem you&#x27;ve observed? Be specific..."
+              (ngModelChange)="onDescriptionChange()" maxlength="300"></textarea>
+          </div>
+          <div class="ie-field-footer">
+            <span class="ie-hint">Minimum 10 characters required</span>
+            <span class="ie-char-count">{{ (idea.description || '').length }} / 300</span>
+          </div>
+          <span class="ie-error" *ngIf="ideaForm.controls['description']?.touched && ideaForm.controls['description']?.invalid">Description is required (min 10 characters)</span>
+        </div>
+
+        <!-- Proposed Solution -->
+        <div class="ie-field-group">
+          <label class="ie-label">Proposed Solution / Idea <span class="ie-required">*</span></label>
+          <div class="ie-textarea-wrap">
+            <textarea class="ie-textarea" name="solution" [(ngModel)]="idea.potentiaL_SOLUTION_DESCRIPTION" required
+              [readonly]="_bvdEntry.isIdeaSubmitted" rows="4"
+              placeholder="Describe your idea or proposed improvement..."
+              maxlength="500"></textarea>
+          </div>
+          <div class="ie-field-footer">
+            <span class="ie-hint">Include expected outcome if possible</span>
+            <span class="ie-char-count">{{ (idea.potentiaL_SOLUTION_DESCRIPTION || '').length }} / 500</span>
+          </div>
+          <span class="ie-error" *ngIf="ideaForm.controls['solution']?.touched && ideaForm.controls['solution']?.invalid">Proposed Solution is required</span>
+        </div>
+
+        <div class="ie-section-label" style="margin-top:8px">TRACKING</div>
+
+        <!-- Initiated By + Identified Date -->
+        <div class="ie-field-row">
+          <div class="ie-field-group ie-field-group--half">
+            <label class="ie-label">Initiated / Identified By <span class="ie-required">*</span></label>
+            <app-employee-search (onChange)="employeeSearch_onChange($event)" [emP_ID]="empId"
+              [multiSelect]="true" [searchText]="'Key resource name...'" #appEmployeeSearch>
+            </app-employee-search>
+          </div>
+          <div class="ie-field-group ie-field-group--half">
+            <label class="ie-label">Identified Date <span class="ie-required">*</span></label>
+            <mat-form-field appearance="outline" class="ie-mat-field">
+              <input matInput [matDatepicker]="identifiedDate" [(ngModel)]="identifieD_DATE"
+                name="dateStart" required [readonly]="_bvdEntry.isIdeaSubmitted" placeholder="dd-mm-yyyy">
+              <mat-datepicker-toggle matSuffix [for]="identifiedDate"></mat-datepicker-toggle>
+              <mat-datepicker #identifiedDate></mat-datepicker>
+            </mat-form-field>
+            <span class="ie-error" *ngIf="ideaForm.controls['dateStart']?.touched && ideaForm.controls['dateStart']?.invalid">Identified Date is required</span>
+          </div>
+        </div>
+
+        <!-- Status + Comments -->
+        <div class="ie-field-row">
+          <div class="ie-field-group ie-field-group--half">
+            <label class="ie-label">Status <span class="ie-required">*</span></label>
+            <mat-form-field appearance="outline" class="ie-mat-field">
+              <mat-select [(ngModel)]="idea.ideA_STATUS_ID" name="ddlStatus" required>
+                <mat-option *ngFor="let st of status" [value]="st.id">{{ st.title }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <span class="ie-error" *ngIf="ideaForm.controls['ddlStatus']?.touched && ideaForm.controls['ddlStatus']?.invalid">Status is required</span>
+          </div>
+          <div class="ie-field-group ie-field-group--half">
+            <label class="ie-label">Comments</label>
+            <mat-form-field appearance="outline" class="ie-mat-field">
+              <input matInput name="comments" [(ngModel)]="idea.comments" placeholder="Optional notes...">
+            </mat-form-field>
+          </div>
+        </div>
+
+      </form>
+
+      <!-- Footer progress -->
+      <div class="ie-card-footer">
+        <span class="ie-footer-step">Step 1 of 5</span>
+        <div class="ie-progress-track">
+          <div class="ie-progress-fill" style="width:20%"></div>
+        </div>
+        <span class="ie-footer-pct">20% complete</span>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <div class="ie-sidebar">
+
+      <!-- Similar Ideas (table inside sidebar) -->
+      <div class="ie-sidebar-card">
+        <div class="ie-sidebar-header">
+          <span class="ie-sidebar-icon ie-sidebar-icon--ideas">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <span class="ie-sidebar-title">Similar Ideas</span>
+          <span class="ie-sidebar-badge" *ngIf="similarIdeas.length > 0">{{ similarIdeas.length }} found</span>
+        </div>
+
+        <div class="ie-similar-table-wrap">
+          <table class="ie-similar-table">
+            <thead>
+              <tr>
+                <th class="ie-sth">Project</th>
+                <th class="ie-sth">Customer</th>
+                <th class="ie-sth ie-sth--wide">Description</th>
+                <th class="ie-sth">Date</th>
+                <th class="ie-sth">Status</th>
+                <th class="ie-sth">Identified By</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="similarIdeas.length === 0">
+                <td colspan="6" class="ie-std ie-std--empty">
+                  <span>💡</span>
+                  <span>No similar ideas found. Start typing a description to find matches.</span>
+                </td>
+              </tr>
+              <tr *ngFor="let si of similarIdeas" class="ie-str">
+                <td class="ie-std">{{ si.projecT_NAME }}</td>
+                <td class="ie-std">{{ si.cusT_NM }}</td>
+                <td class="ie-std ie-std--desc">{{ si.description }}</td>
+                <td class="ie-std ie-std--date">{{ si.identifieD_DATE | date:'MM/dd/yyyy' }}</td>
+                <td class="ie-std">
+                  <span class="ie-similar-status" [ngClass]="'ie-similar-status--' + (si.status | lowercase)">{{ si.status }}</span>
+                </td>
+                <td class="ie-std">{{ si.identifieD_BY }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div class="ie-sidebar-card ie-tips-card">
+        <div class="ie-sidebar-header">
+          <span class="ie-sidebar-icon ie-sidebar-icon--tips">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+          <span class="ie-sidebar-title">Tips for a strong Idea</span>
+        </div>
+        <ul class="ie-tips-list">
+          <li>Be specific about the problem &#8212; include frequency and impact</li>
+          <li>Mention the expected outcome or benefit clearly</li>
+          <li>If cost savings are involved, estimate them</li>
+          <li>Check similar ideas before submitting a new one</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+</div>

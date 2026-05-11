@@ -1,0 +1,12 @@
+<mat-select class="mat-dropdown-plain" [(ngModel)]="selectedValue"
+  (selectionChange)="onChangeSelection()" (openedChange)="openedChangeSPAL($event)"
+  placeholder="{{ placeholder }}" required>
+  <mat-form-field class="filter-dropdown" style="width: 100%;padding-left: 2%;">
+    <input matInput (keydown)="$event.stopPropagation()" (keyup)="applyFilterForList($any($event.target).value)" [(ngModel)]="searchValue"
+      style="text-indent: 10px;" placeholder="{{ placeholder }}">
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <mat-option *ngFor="let item of filteredItemList" [value]="item" [title]="item[title]">{{ item[title] }}
+  </mat-option>
+</mat-select>

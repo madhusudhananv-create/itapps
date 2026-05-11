@@ -1,0 +1,206 @@
+<div class="lessons-container">
+  <!-- Modern Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button class="back-button" 
+              [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+              matTooltip="Back to Customer Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="logo-container">
+        <img class="customer-logo" 
+             src="assets/images/{{_layoutService.selectedCust}}.png"
+             onerror="this.src ='assets/images/CustomerLogo.png'">
+      </div>
+      <div class="header-title">
+        <h1>Lessons Learnt</h1>
+        <p class="subtitle">Knowledge Management & Best Practices</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <mat-form-field appearance="outline" class="project-selector">
+        <mat-label>Select Project</mat-label>
+        <mat-select [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange()">
+          <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
+            {{proj.proJ_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate" class="loading-bar"></mat-progress-bar>
+
+  <!-- Content Section -->
+  <div class="content-wrapper" *ngIf="showdetails">
+    <!-- Read-only Mode - Table View -->
+    <div *ngIf="readonlymode" class="table-section">
+      <div class="section-header">
+        <!-- <div class="header-info">
+          <mat-icon class="header-icon">school</mat-icon>
+          <h2>Project Lessons</h2>
+        </div> -->
+        <button mat-raised-button color="primary" 
+                (click)="Edit_onClick()"
+                *ngIf="_access.IsAllowed(19, 2, '', input_projectid)"
+                class="add-btn">
+          <mat-icon>add</mat-icon>
+          Add Lesson
+        </button>
+      </div>
+
+      <div *ngIf="allLessonsLearnt.length == 0" class="empty-state">
+        <mat-icon class="empty-icon">info</mat-icon>
+        <p>No Lessons Learnt defined for the selected Project</p>
+      </div>
+
+      <div class="table-container" *ngIf="_access.IsAllowed(19, 1, '', input_projectid) && allLessonsLearnt.length>0">
+        <table class="modern-table" mat-table #table [dataSource]="dataSource" matSort>
+          <ng-container matColumnDef="index">
+            <th mat-header-cell *matHeaderCellDef class="col-index">No.</th>
+            <td mat-cell *matCellDef="let element = index" class="col-index">{{element + 1}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="categorY_OF_LESSON">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+            <td mat-cell *matCellDef="let lessonslearnt">{{lessonslearnt.categorY_OF_LESSON}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
+            <td mat-cell *matCellDef="let lessonslearnt">{{lessonslearnt.description}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="procesS_AREA">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Process Area</th>
+            <td mat-cell *matCellDef="let lessonslearnt">{{lessonslearnt.procesS_AREA}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="publisheD_BY">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Published By</th>
+            <td mat-cell *matCellDef="let lessonslearnt">{{lessonslearnt.publisheD_BY}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="publisheD_DATE">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Published Date</th>
+            <td mat-cell *matCellDef="let lessonslearnt">{{lessonslearnt.publisheD_DATE | date:'dd-MMM-yyyy'}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="edit">
+            <th mat-header-cell *matHeaderCellDef class="col-action"></th>
+            <td mat-cell *matCellDef="let element" class="col-action">
+              <button mat-icon-button 
+                      (click)="EditRow_onClick(element)" 
+                      *ngIf="_access.IsAllowed(19, 3, '', input_projectid)"
+                      matTooltip="Edit"
+                      class="action-btn edit-btn">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="delete">
+            <th mat-header-cell *matHeaderCellDef class="col-action"></th>
+            <td mat-cell *matCellDef="let element" class="col-action">
+              <button mat-icon-button 
+                      (click)="DeleteRow_onClick(element)"
+                      *ngIf="_access.IsAllowed(19, 4, '', input_projectid)"
+                      matTooltip="Delete"
+                      class="action-btn delete-btn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        <mat-paginator #bppaginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+      </div>
+    </div>
+
+    <!-- Edit Mode - Form View -->
+    <div *ngIf="editmode" class="form-section">
+      <form class="lesson-form" #lessonLearntForm="ngForm" 
+            (ngSubmit)="lessonLearntForm.valid && SubmitForm(lessonLearntForm.valid)">
+        <div class="form-header">
+          <div class="header-info">
+            <mat-icon class="header-icon">edit_note</mat-icon>
+            <h2>{{editLessonLearnt.id ? 'Edit' : 'Add'}} Lesson Learnt</h2>
+          </div>
+          <button mat-icon-button class="close-btn" (click)="Cancel_onClick()" type="button" matTooltip="Close">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="form-content">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Category of Lesson</mat-label>
+            <mat-select name="ddcategoryLesson" [(ngModel)]="editLessonLearnt.categorY_OF_LESSON" required>
+              <mat-option *ngFor="let dd of ddCategoryOfLesson" [value]="dd" [title]="dd">{{dd}}</mat-option>
+            </mat-select>
+            <mat-error>Category is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field full-width">
+            <mat-label>Description</mat-label>
+            <textarea name="txtDescription" 
+                      maxlength="2000" 
+                      [(ngModel)]="editLessonLearnt.description" 
+                      matInput
+                      matTextareaAutosize
+                      matAutosizeMinRows="4"
+                      matAutosizeMaxRows="8"
+                      required></textarea>
+            <mat-hint align="end">{{editLessonLearnt.description?.length || 0}}/2000</mat-hint>
+            <mat-error>Description is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Process Area</mat-label>
+            <mat-select name="ddSeverity" [(ngModel)]="editLessonLearnt.procesS_AREA" required>
+              <mat-option *ngFor="let dd of ddProcessArea" [value]="dd" [title]="dd">{{dd}}</mat-option>
+            </mat-select>
+            <mat-error>Process Area is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Published By</mat-label>
+            <textarea name="txtpublishedname" 
+                      maxlength="2000" 
+                      [(ngModel)]="editLessonLearnt.publisheD_BY" 
+                      matInput
+                      matTextareaAutosize
+                      matAutosizeMinRows="2"
+                      matAutosizeMaxRows="4"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Published Date</mat-label>
+            <input matInput 
+                   name="dtPublishedDate" 
+                   [(ngModel)]='editLessonLearnt.publisheD_DATE' 
+                   [max]="maxdate"
+                   [matDatepicker]="pickerReportedDate" 
+                   required>
+            <mat-datepicker-toggle matIconSuffix [for]="pickerReportedDate"></mat-datepicker-toggle>
+            <mat-datepicker #pickerReportedDate></mat-datepicker>
+            <mat-error>Published Date is required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!lessonLearntForm.valid" class="save-btn">
+            <mat-icon>save</mat-icon>
+            Save
+          </button>
+          <button mat-stroked-button type="button" (click)="Cancel_onClick()" class="cancel-btn">
+            <mat-icon>close</mat-icon>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

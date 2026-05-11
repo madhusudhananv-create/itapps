@@ -1,0 +1,210 @@
+/**
+ * KPI File Upload Component Styles
+ * Migrated from Angular 6 to Angular 19
+ * Modernized with CSS variables and improved responsive design
+ */
+
+/* Dialog Container */
+.dialog {
+  box-shadow: 0px -3px 3px rgba(0, 0, 0, 0.16);
+  opacity: 1;
+  overflow-x: hidden;
+  min-width: 500px;
+  
+  @media (max-width: 768px) {
+    min-width: 100%;
+  }
+}
+
+/* Dialog Header */
+.row[mat-dialog-title] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
+  background: #EBEBEB;
+  margin: 0;
+  padding: 0 15px;
+  border-bottom: 1px solid #d0d0d0;
+
+  label {
+    font-family: Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    line-height: 17px;
+    font-weight: normal;
+    color: #333333;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Close Button */
+.close-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #333333;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #000000;
+    transform: scale(1.1);
+  }
+
+  &:focus {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.close-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* File Upload Section */
+.row {
+  position: relative;
+  margin-bottom: 15px;
+
+  .form-control {
+    width: calc(90% - 20px);
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+
+    &:hover {
+      border-color: #999;
+    }
+  }
+}
+
+/* Upload Button */
+.btn {
+  padding: 8px 20px;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:focus {
+    outline: 2px solid #333;
+    outline-offset: 2px;
+  }
+}
+
+.btn-success {
+  background-color: #4CAF50;
+  color: white;
+  float: right;
+  margin-top: -33px;
+  margin-right: 29px;
+
+  &:hover {
+    background-color: #45a049;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    background-color: #3d8b40;
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+/* File Type Instructions */
+span {
+  display: block;
+  margin-top: 8px;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 12px;
+  color: #4e5882;
+
+  span {
+    display: inline;
+    color: red;
+    font-weight: bold;
+    margin-right: 2px;
+  }
+}
+
+/* Progress Bar */
+mat-progress-bar {
+  margin-top: 15px;
+  height: 4px;
+
+  ::ng-deep .mat-mdc-progress-bar-buffer {
+    background-color: #e0e0e0;
+  }
+
+  ::ng-deep .mat-mdc-progress-bar-fill::after {
+    background-color: #4CAF50;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dialog {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .row .form-control {
+    width: 100%;
+    margin-bottom: 45px;
+  }
+
+  .btn-success {
+    float: none;
+    margin-top: 10px;
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
+/* Accessibility Improvements */
+input[type="file"] {
+  &:focus-visible {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+  }
+}
+
+/* Animation for loading state */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+mat-progress-bar {
+  animation: fadeIn 0.3s ease;
+}

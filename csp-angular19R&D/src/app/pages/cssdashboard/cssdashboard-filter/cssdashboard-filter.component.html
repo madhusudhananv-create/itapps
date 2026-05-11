@@ -1,0 +1,157 @@
+<!-- CSAT Insights Filter — Blueprint Pro Design -->
+<div class="filter-card" style="background: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 4px 12px 15px; margin: 4px 8px; border: 1px solid #e2e8f0;">
+  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;">
+    <!-- Business Unit -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">Business Unit</label>
+      <mat-form-field class="compact-field" style="width: 140px !important;" appearance="outline">
+        <mat-select multiple name="ddBU" placeholder="Business Unit" [(ngModel)]='selectedBUs'
+           [disabled]="_loading" (selectionChange)="onBUSelectionChange()" #myBU>
+          <mat-option value ="All" (click)="toggleSelectionForBU()"  #allBUSelected>All</mat-option>
+          <mat-option *ngFor="let bu of businessUnits" (click)="buTosslePerOne()"[value]="bu"
+            [title]="bu">
+            {{ bu }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Account -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">Account</label>
+      <mat-form-field class="compact-field" style="width: 170px !important;" appearance="outline">
+        <mat-select multiple name="ddCustomer" placeholder="Account" [(ngModel)]='customerIdsa'
+         [disabled]="_loading" (selectionChange)="selectedPeriod_OnChange()" #mySel>
+          <!-- Search Input -->
+          <div style="padding: 4px 6px; border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; background: white; z-index: 10;">
+            <mat-form-field class="search-field-compact" style="width: 100%; margin: 0;" appearance="outline">
+              <mat-icon matPrefix style="color: #666; font-size: 16px; margin-right: 2px;">search</mat-icon>
+              <input matInput 
+                     [(ngModel)]="accountSearchText"
+                     (ngModelChange)="onAccountSearchChange()"
+                     (keydown)="$event.stopPropagation()"
+                     placeholder="Search accounts..."
+                     style="font-size: 12px; height: 24px;">
+            </mat-form-field>
+          </div>
+          <mat-option [value]="-1" (click)="toggleSelectionForCustomer()" #allCustomerSelected>All</mat-option>
+          <mat-option *ngFor="let c of filteredCustomers" (click)="customerTosslePerOne()" [value]="c.cusT_ID"
+            [title]="c.cusT_NM">
+            {{ c.cusT_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- CSM (hidden) -->
+    <div style="display: none; flex-direction: column;">
+      <label class="field-label">CSM</label>
+      <mat-form-field style="width: 150px !important;" appearance="outline">
+        <mat-select name='CSM' multiple [(ngModel)]="csmIdsa" placeholder="CSM" #myCSM>
+          <mat-option [value]="-1" (click)="toggleSelectionForCSM()" #allCSMSelected>All</mat-option>
+          <mat-option [value]="c.csM_ID" (click)="csmTosslePerOne()" *ngFor="let c of CSMList" [title]="c.csm">{{c.csm}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Financial Year -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">Year</label>
+      <mat-form-field class="compact-field" style="width: 78px !important;" appearance="outline">
+        <mat-select name='tableYear' (selectionChange)="selectedPeriod_OnChange()" [(ngModel)]="selectedYear"
+          placeholder="Year" [disabled]="_loading">
+          <mat-option [value]="bb" *ngFor="let bb of ddyear" [title]="bb">{{bb}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Period -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">Period</label>
+      <mat-form-field class="compact-field" style="width: 80px !important;" appearance="outline">
+        <mat-select name='tableMonth' (selectionChange)="selectedPeriod_OnChange()" [(ngModel)]="selectedQuarter"
+          placeholder="Period" [disabled]="_loading">
+          <mat-option value='Q1'>Q1</mat-option>
+          <mat-option value='Q2'>Q2</mat-option>
+          <mat-option value='Q3'>Q3</mat-option>
+          <mat-option value='Q4'>Q4</mat-option>
+          <mat-option value='H1'>H1</mat-option>
+          <mat-option value='H2'>H2</mat-option>
+          <mat-option value='Annual'>Annual</mat-option>
+          <mat-option value='Select Period' *ngIf="IsPremier()">Select Period</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- From -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">From</label>
+      <mat-form-field class="compact-field" style="width: 150px !important;" appearance="outline">
+        <input [(ngModel)]="fromDate" matInput [matDatepicker]="picker1" placeholder="From"
+          [disabled]="selectedQuarter == 'Select Period'?'false' : 'true'">
+        <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- To -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">To</label>
+      <mat-form-field class="compact-field" style="width: 150px !important;" appearance="outline">
+        <input [(ngModel)]="toDate" matInput [matDatepicker]="picker2" placeholder="To"
+          [disabled]="selectedQuarter == 'Select Period'?'false' : 'true'">
+        <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+        <mat-datepicker #picker2></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Show Data -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">Show Data</label>
+      <mat-form-field class="compact-field" style="width: 130px !important;" appearance="outline">
+        <mat-select name='tableTrend' (selectionChange)="selectedPeriod_OnChange()" [(ngModel)]="trendQuarter"
+          placeholder="Show Data" [disabled]="_loading">
+          <mat-option [value]="1">For Specific Period </mat-option>
+          <mat-option [value]="2">Till Chosen Period </mat-option>
+          <mat-option [value]="3">For Last 4 Quarters </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Frequency -->
+    <div style="display: flex; flex-direction: column;">
+      <label class="field-label">Frequency</label>
+      <mat-form-field class="compact-field" style="width: 72px !important;" appearance="outline">
+        <mat-select name='tableFrequency' [(ngModel)]="frequency" placeholder="Frequency">
+          <mat-option value="Both">All </mat-option>
+          <mat-option value="Quarterly">Quarterly </mat-option>
+          <mat-option value="Half-Yearly">Half-Yearly </mat-option>
+          <mat-option value="Annual">Annual</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Action Buttons Section -->
+    <div style="display: flex; flex-direction: column; margin-left: auto; align-self: center; gap: 4px;">
+      <!-- Prev/Next Row -->
+      <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center; margin-top: 6px;">
+        <button class="btn-prev" mat-stroked-button (click)="prevClicked.emit()" [disabled]="currIndex === 0">
+          <i class="fa fa-arrow-left"></i> Prev
+        </button>
+        <button class="btn-next" mat-stroked-button (click)="nextClicked.emit()" [disabled]="currIndex === 2">
+          Next <i class="fa fa-arrow-right"></i>
+        </button>
+      </div>
+      <!-- Action Buttons Row -->
+      <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;margin-right:40px;margin-top: 4px;
+    margin-bottom: -5px;">
+        <button class="btn-apply" mat-raised-button
+          (click)="emitChanges()" [disabled]="_loading">Apply</button>
+        <button class="btn-reset" mat-raised-button (click)="reset()"
+          [disabled]="_loading">Reset</button>
+        <button class="btn-view-details" mat-raised-button
+          (click)="ViewCSSDetails()">View Details</button>
+      </div>
+    </div>
+  </div>
+</div>

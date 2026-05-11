@@ -1,0 +1,241 @@
+﻿<!-- ===== READ MODE: Table View ===== -->
+<div class="manage-product-container" *ngIf="readmode">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span class="toolbar-title">Products</span>
+    <div class="toolbar-controls">
+      <!-- Customer Selector -->
+      <mat-form-field appearance="outline" class="toolbar-field">
+        <mat-select name="ddCustomer" [(ngModel)]="custId"
+          (ngModelChange)="getPortfolioDetails(custId)" [disabled]="true">
+          <mat-option *ngFor="let c of Customer" [value]="c.cusT_ID" [title]="c.cusT_NM">
+            {{c.cusT_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Portfolio Selector -->
+      <mat-form-field appearance="outline" class="toolbar-field" *ngIf="includePortfolio">
+        <mat-select name="ddPortfolio" [(ngModel)]="portId"
+          (ngModelChange)="getProductPortfolioMapping(portId)" placeholder="Select Portfolio">
+          <mat-option *ngFor="let p of portfolioList" [value]="p.id" [title]="p.title">
+            {{p.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Table Filter -->
+      <app-table-filter [data]="productlist" tableName="KPI_PRODUCT"
+        (onChange)="Filter_onChange($event)" (OnAdd)="showAll($event)"
+        [custId]="custId">
+      </app-table-filter>
+
+      <!-- Add Button -->
+      <button mat-icon-button class="add-btn" matTooltip="Add Product" (click)="Edit_onClick()">
+        <mat-icon>add_circle</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="table-wrapper" #TABLE>
+    <table mat-table [dataSource]="dataSource" matSort class="product-table">
+
+      <!-- S.No -->
+      <ng-container matColumnDef="sno">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>S.NO</th>
+        <td mat-cell *matCellDef="let element; let i = index">{{i + 1}}</td>
+      </ng-container>
+
+      <!-- Portfolio -->
+      <ng-container *ngIf="includePortfolio" matColumnDef="portfolio">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>PORTFOLIO</th>
+        <td mat-cell *matCellDef="let element">{{element.portfolio}}</td>
+      </ng-container>
+
+      <!-- Product / Portfolio -->
+      <ng-container matColumnDef="productnm">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>PRODUCT / PORTFOLIO</th>
+        <td mat-cell *matCellDef="let element">
+          <span class="product-name">{{element.producT_TITLE}}</span>
+        </td>
+      </ng-container>
+
+      <!-- Service Area Type -->
+      <ng-container matColumnDef="servicearea">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>SERVICE AREA TYPE</th>
+        <td mat-cell *matCellDef="let element">{{element.servicE_AREA_TYPE}}</td>
+      </ng-container>
+
+      <!-- Mode -->
+      <ng-container matColumnDef="modetitle">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>MODE</th>
+        <td mat-cell *matCellDef="let element">{{element.modE_TITLE}}</td>
+      </ng-container>
+
+      <!-- Tier -->
+      <ng-container matColumnDef="tier">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>TIER</th>
+        <td mat-cell *matCellDef="let element">
+          <span class="tier-badge">Tier-{{element.tieR_ID}}</span>
+        </td>
+      </ng-container>
+
+      <!-- Service Commenced -->
+      <ng-container matColumnDef="servicecommence">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>SERVICE COMMENCED</th>
+        <td mat-cell *matCellDef="let element">
+          <span class="status-badge" [class.yes]="element.iS_SERVICE_COMMENCED" [class.no]="!element.iS_SERVICE_COMMENCED">
+            {{element.iS_SERVICE_COMMENCED ? "Yes" : "No"}}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Commenced Date -->
+      <ng-container matColumnDef="servicecommencedate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>COMMENCED DATE</th>
+        <td mat-cell *matCellDef="let element">
+          {{element.servicE_COMMENCEMENT_DATE | date:"yyyy-MM-dd"}}
+        </td>
+      </ng-container>
+
+      <!-- Edit Action -->
+      <ng-container matColumnDef="edit">
+        <th mat-header-cell *matHeaderCellDef>ACTIONS</th>
+        <td mat-cell *matCellDef="let item">
+          <button mat-icon-button class="edit-btn" matTooltip="Edit"
+            *ngIf="_access.IsAllowed(101, 3, '', '')" (click)="EditRow_onClick(item)">
+            <mat-icon>edit</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Delete Action -->
+      <ng-container matColumnDef="delete">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let element">
+          <button mat-icon-button class="delete-btn" matTooltip="Delete"
+            *ngIf="_access.IsAllowed(101, 3, '', '')" (click)="DeleteProduct(element)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <!-- Paginator -->
+    <mat-paginator #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
+</div>
+
+<!-- ===== EDIT MODE: Form View ===== -->
+<div class="edit-container" *ngIf="editmode">
+  <div class="edit-form">
+
+    <!-- Form Header -->
+    <div class="form-header">
+      <span class="form-header-title">{{editItem.id ? "Edit" : "Add"}} Product</span>
+      <div class="form-header-actions">
+        <button mat-icon-button class="save-btn" matTooltip="Save" (click)="onSaveButtonClick()">
+          <mat-icon>save</mat-icon>
+        </button>
+        <button mat-icon-button class="cancel-btn" matTooltip="Cancel" (click)="Cancel_onClick()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-divider"></div>
+
+    <!-- Form Fields -->
+    <div class="form-body">
+
+      <!-- Selected Customer -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Selected Customer</mat-label>
+        <mat-select name="ddCustomer" [(ngModel)]="custId"
+          (ngModelChange)="getPortfolioDetails(custId)" [disabled]="true">
+          <mat-option *ngFor="let c of Customer" [value]="c.cusT_ID" [title]="c.cusT_NM">
+            {{c.cusT_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Portfolio -->
+      <mat-form-field appearance="outline" class="form-field" *ngIf="includePortfolio">
+        <mat-label>Select Portfolio</mat-label>
+        <mat-select name="ddPortfolio" [(ngModel)]="editItem.portfoliO_ID">
+          <mat-option *ngFor="let p of portfolioList" [value]="p.id" [title]="p.title">
+            {{p.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Product / Portfolio Title -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Product / Portfolio Title *</mat-label>
+        <textarea [(ngModel)]="editItem.producT_TITLE" matInput maxlength="355"
+          rows="2" required></textarea>
+      </mat-form-field>
+
+      <!-- Service Area Type -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Select Service Area Type *</mat-label>
+        <mat-select name="servicearea" [(ngModel)]="editItem.servicE_AREA_TYPE_ID" required>
+          <mat-option *ngFor="let p of serviceAreaTypes" [value]="p.id" [title]="p.servicE_AREA_TYPE">
+            {{p.servicE_AREA_TYPE}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Mode -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Select Mode *</mat-label>
+        <mat-select name="mode" [(ngModel)]="editItem.modE_ID" required>
+          <mat-option *ngFor="let p of modeList" [value]="p.id" [title]="p.modE_TITLE">
+            {{p.modE_TITLE}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Tier -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Select Tier *</mat-label>
+        <mat-select name="tier" [(ngModel)]="editItem.tieR_ID" required>
+          <mat-option *ngFor="let p of productTier" [value]="p.tieR_ID" [title]="p.mttr">
+            Tier-{{p.tieR_ID}} {{p.mttr}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Service Commenced -->
+      <div class="radio-field">
+        <span class="radio-label">Service Commenced</span>
+        <mat-radio-group [(ngModel)]="editItem.iS_SERVICE_COMMENCED" class="radio-group">
+          <mat-radio-button [value]="true">Yes</mat-radio-button>
+          <mat-radio-button [value]="false">No</mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <!-- Commencement Date -->
+      <mat-form-field appearance="outline" class="form-field date-field" *ngIf="editItem.iS_SERVICE_COMMENCED">
+        <mat-label>Commencement Date</mat-label>
+        <input [(ngModel)]="editItem.servicE_COMMENCEMENT_DATE" matInput [matDatepicker]="picker1">
+        <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+      </mat-form-field>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button mat-flat-button color="primary" (click)="onSaveButtonClick()">Save</button>
+        <button mat-stroked-button (click)="Cancel_onClick()">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+</div>

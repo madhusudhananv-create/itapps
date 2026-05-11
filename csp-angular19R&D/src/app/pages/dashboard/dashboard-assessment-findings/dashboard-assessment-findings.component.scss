@@ -1,0 +1,485 @@
+// ============================================
+// QA Governance Dashboard Filter Styles
+// ============================================
+
+// Page Container - Outer wrapper with background
+.page-container {
+  padding: 16px 20px;
+  background: #F8FAFC;
+  min-height: calc(100vh - 52px);
+}
+
+// White Card Container - Contains all filter fields and buttons
+.filter-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 0.5px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: visible; // Changed from hidden to allow dropdown panels to render outside card
+}
+
+// Filter Grid Layout - 5 columns, 3 rows (5 fields, 5 fields, 2 fields + 3 buttons)
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px 12px;
+  padding: 16px 20px 20px;
+  align-items: start;
+}
+
+// Ensure all fields have consistent width
+.filter-grid > * {
+  min-width: 0; // Prevents grid blowout
+}
+
+// Individual Field Wrapper
+.field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+// Field Labels
+.field-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748B;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding: 0;
+}
+
+// Material Form Field Styling
+::ng-deep .filter-field {
+  width: 100%;
+
+  .mat-mdc-form-field-flex {
+    height: 38px;
+    align-items: center;
+  }
+
+  .mat-mdc-text-field-wrapper {
+    height: 38px;
+    padding: 0;
+  }
+
+  .mdc-notched-outline {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #C8CACE !important;
+      border-width: 1px;
+    }
+  }
+
+  .mdc-notched-outline__leading {
+    border-radius: 8px 0 0 8px;
+    width: 12px;
+  }
+
+  .mdc-notched-outline__trailing {
+    border-radius: 0 8px 8px 0;
+  }
+
+  .mdc-notched-outline__notch {
+    border-left: none;
+    border-right: none;
+  }
+
+  // Input and Select Styling
+  input,
+  .mat-mdc-select {
+    font-size: 13px;
+    color: #1A202C;
+    height: 38px;
+    line-height: 38px;
+  }
+
+  input[type="text"] {
+    padding: 0 12px;
+  }
+
+  .mat-mdc-select-trigger {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0;
+  }
+
+  .mat-mdc-select-value {
+    padding: 0 12px 0 12px;
+    font-size: 13px;
+    color: #1A202C;
+    line-height: 38px;
+    max-width: calc(100% - 40px);
+  }
+
+  .mat-mdc-select-value-text {
+    font-size: 13px;
+    color: #1A202C;
+    line-height: 38px;
+  }
+
+  .mat-mdc-select-placeholder {
+    font-size: 13px;
+    color: #94A3B8;
+    line-height: 38px;
+  }
+
+  .mat-mdc-select-arrow-wrapper {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+    transform: none;
+  }
+
+  .mat-mdc-select-arrow {
+    color: #64748B;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid currentColor;
+    margin: 0;
+  }
+
+  // Placeholder Color
+  input::placeholder,
+  .mat-mdc-select-placeholder {
+    color: #94A3B8;
+    opacity: 1;
+  }
+
+  // Focus State
+  &.mat-focused {
+    .mdc-notched-outline {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #1A56DB !important;
+        border-width: 2px;
+      }
+    }
+  }
+
+  // Remove default padding
+  .mat-mdc-form-field-infix {
+    padding: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    border: none;
+  }
+
+  .mat-mdc-form-field-text-prefix,
+  .mat-mdc-form-field-text-suffix {
+    display: flex;
+    align-items: center;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  // Ensure no bottom padding/margin
+  .mat-mdc-text-field-wrapper {
+    padding: 0;
+  }
+
+  .mat-mdc-form-field-bottom-align {
+    display: none;
+  }
+}
+
+// Date Field Specific Styling
+::ng-deep .date-field {
+  .mat-datepicker-toggle {
+    color: #94A3B8;
+    
+    .mat-mdc-icon-button {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      .mat-mdc-button-touch-target {
+        height: 32px;
+        width: 32px;
+      }
+      
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  input {
+    font-size: 13px;
+    color: #1A202C;
+  }
+
+  .mat-mdc-form-field-infix {
+    padding-right: 0;
+  }
+}
+
+// Action Buttons Container (deprecated - buttons now in grid)
+// Action Buttons in Grid
+.grid-button {
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  height: 38px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(0.92);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Individual Button Styles
+.btn-generate,
+.btn-reset,
+.btn-view-details {
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  height: 40px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(0.92);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-generate {
+  background: #1A56DB;
+  color: #fff;
+  padding: 10px 16px;
+  grid-column: span 1;
+
+  &:hover:not(:disabled) {
+    background: #1548c4;
+  }
+}
+
+.btn-reset {
+  background: #F59E0B;
+  color: #fff;
+  padding: 10px 16px;
+  grid-column: span 1;
+
+  &:hover:not(:disabled) {
+    background: #e08f09;
+  }
+}
+
+.btn-view-details {
+  background: #93C5FD;
+  color: #1D4ED8;
+  padding: 10px 16px;
+  grid-column: span 1;
+
+  &:hover:not(:disabled) {
+    background: #7db5fc;
+  }
+}
+
+// Progress Bar Container
+.progress-container {
+  width: 100%;
+  margin-top: 12px;
+}
+
+// Chart Display Area
+.chart-container {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.chart-display {
+  display: block;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+  border-radius: 8px;
+  background: #fff;
+}
+
+// No Data Display
+.no-data-container {
+  display: block;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+  height: 400px;
+  text-align: center;
+  background: #fff;
+  border-radius: 8px;
+  margin-top: 20px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-data-title {
+  font-family: 'Lucida Grande', 'Lucida Sans Unicode', Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 30px;
+}
+
+.no-data-icon {
+  font-size: 70px;
+  opacity: 0.6;
+  color: #94A3B8;
+  margin-bottom: 20px;
+}
+
+.no-data-text {
+  font-family: calibri, sans-serif;
+  font-weight: normal;
+  font-size: 18px;
+  color: #475569;
+}
+
+// Legacy Table Styles
+td, th {
+  padding: 5px;
+}
+
+// ============================================
+// Dropdown Panel Width Fix - Match Trigger Field
+// ============================================
+// Fix overlay pane to match trigger width
+::ng-deep .cdk-overlay-pane {
+  width: auto !important;
+  min-width: unset !important;
+}
+
+// Make panel match trigger field width exactly
+::ng-deep .compact-dropdown-panel {
+  min-width: unset !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  
+  .mat-mdc-select-panel {
+    min-width: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    border-radius: 8px !important;
+    border: 0.5px solid #C8CACE !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10) !important;
+    padding: 4px 0 !important;
+    margin-top: 4px !important;
+    background: #fff !important;
+  }
+  
+  // Ensure consistent option styling
+  .mat-mdc-option {
+    font-size: 13px !important;
+    color: #1A202C !important;
+    padding: 0 14px !important;
+    min-height: 40px !important;
+    border-bottom: 0.5px solid #F1F5F9 !important;
+    
+    &:last-child {
+      border-bottom: none !important;
+    }
+    
+    &:hover {
+      background: #EFF6FF !important;
+      color: #1A56DB !important;
+    }
+    
+    &.mat-mdc-option-active,
+    &.mdc-list-item--selected {
+      background: #EFF6FF !important;
+      color: #1A56DB !important;
+      font-weight: 500 !important;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .filter-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .filter-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 8px;
+  }
+
+  .btn-generate,
+  .btn-reset,
+  .btn-view-details {
+    grid-column: span 2;
+  }
+
+  .page-container {
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-generate,
+  .btn-reset,
+  .btn-view-details {
+    grid-column: span 1;
+  }
+}

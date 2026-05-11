@@ -1,0 +1,189 @@
+﻿
+    <mat-card class="section-card">
+      <mat-card-content>
+          <form [formGroup]="cshForm">
+          <input type="hidden" formControlName="id">
+          <input type="hidden" formControlName="activity">
+            <table mat-table [dataSource]="cshList" class="csh-table">
+            <!-- Activity -->
+              <ng-container matColumnDef="activity">
+                <th mat-header-cell *matHeaderCellDef>Activity / Services</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="read-only">{{ row.activity }}<br>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Total Staff -->
+              <ng-container matColumnDef="totalStaff">
+                <th mat-header-cell *matHeaderCellDef>Total Staff</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewTotalStaff">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput type="number" formControlName="totalStaff" min="0" [readonly]="mode==='view'">
+                  <mat-icon matSuffix matTooltip="Total staff count" matTooltipPosition="above">groups</mat-icon>
+                  <mat-error *ngIf="cshForm.get('totalStaff')?.hasError('required')">Required</mat-error>
+                  <mat-error *ngIf="cshForm.get('totalStaff')?.hasError('min')">Must be â‰¥ 0</mat-error>
+                    </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewTotalStaff>
+                    <div class="read-only">{{ row.totalStaff }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- CSH -->
+              <ng-container matColumnDef="csh">
+                <th mat-header-cell *matHeaderCellDef>CSH</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewCSH">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput type="number" formControlName="csh" min="0" [readonly]="mode==='view'">
+                  <mat-icon matSuffix matTooltip="Minimum staff for recovery." matTooltipPosition="above">info</mat-icon>
+                  <mat-error *ngIf="cshForm.get('csh')?.hasError('required')">Required</mat-error>
+                  <mat-error *ngIf="cshForm.get('csh')?.hasError('min')">Must be â‰¥ 0</mat-error>
+                  <mat-error *ngIf="cshForm.get('csh')?.hasError('cshExceedsTotal')">CSH cannot exceed Total Staff</mat-error>
+                </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewCSH>
+                    <div class="read-only">{{ row.csh }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- Extended CSH -->
+              <ng-container matColumnDef="extendedCsh">
+                <th mat-header-cell *matHeaderCellDef>Extended CSH</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewExtendedCSH">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <input matInput type="number" formControlName="extendedCsh" min="0" [readonly]="mode==='view'">
+                  <mat-icon matSuffix matTooltip="Backup staff to support MBCO." matTooltipPosition="above">support</mat-icon>
+                </mat-form-field>
+                <div class="warn" *ngIf="showExtendedWarning">
+                  <mat-icon color="warn">warning</mat-icon>
+                  <span>Extended CSH is less than CSH</span>
+                </div>
+                </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewExtendedCSH>
+                    <div class="read-only">{{ row.extendedCsh }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- PAS (Primary Alternate Site) -->
+              <ng-container matColumnDef="pas">
+                <th mat-header-cell *matHeaderCellDef>PAS (Primary Alternate Site)</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewPAS">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-select formControlName="pas" [disabled]="mode==='view'">
+                    <mat-option value="Work from home">Work from home</mat-option>
+                    <mat-option value="neurealm Site">neurealm Site</mat-option>
+                    <mat-option value="Non-neurealm Site">Non-neurealm Site</mat-option>
+                  </mat-select>
+                  <mat-icon matSuffix matTooltip="Work from home, neurealm Site, Non-neurealm Site" matTooltipPosition="above">place</mat-icon>
+                  <mat-error *ngIf="cshForm.get('pas')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+                <mat-form-field *ngIf="cshForm.get('pas')?.value !== 'Work from home'" appearance="outline" class="full-width">
+                  <mat-label>neurealm Site / Client Site</mat-label>
+                  <input matInput formControlName="siteName" maxlength="200" [readonly]="mode==='view'">
+                  <mat-icon matSuffix matTooltip="Specific Site Name." matTooltipPosition="above">home_work</mat-icon>
+                  <mat-error *ngIf="cshForm.get('siteName')?.hasError('required')">Required when PAS â‰  Work from home</mat-error>
+                </mat-form-field>
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewPAS>
+                    <div class="read-only">{{ row.pas }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+
+              <!-- Inter-Site Agreement In Place -->
+              <ng-container matColumnDef="interSiteAgreement">
+                <th mat-header-cell *matHeaderCellDef>Inter-Site Agreement In Place</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <!-- EDIT MODE -->
+                  <ng-container *ngIf="editingRowId === row.id; else viewinterSiteAgreement">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-select formControlName="interSiteAgreement" [disabled]="mode==='view'">
+                    <mat-option value="Yes">Yes</mat-option>
+                    <mat-option value="No">No</mat-option>
+                    <mat-option value="NA">NA</mat-option>
+                  </mat-select>
+                  <mat-icon matSuffix>gavel</mat-icon>
+                  <mat-error *ngIf="cshForm.get('interSiteAgreement')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+                
+                  </ng-container>
+
+                  <!-- VIEW MODE -->
+                  <ng-template #viewinterSiteAgreement>
+                    <div class="read-only">{{ row.interSiteAgreement }}</div>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+              <!-- Action -->
+              <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef>Edit / Delete</th>
+                <td mat-cell *matCellDef="let row">
+
+                  <ng-container *ngIf="editingRowId === row.id; else showEditButton">
+                    <button mat-icon-button class="save-button" (click)="saveRow()">
+                      <mat-icon>check</mat-icon>
+                    </button>
+                    <button mat-icon-button class="cancel-button" (click)="cancelEdit()">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </ng-container>
+
+                  <ng-template #showEditButton>
+                    <button mat-icon-button class="edit-button" (click)="editRow(row)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button class="delete-button" (click)="deleteRow(row.id)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </ng-template>
+
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              </table>
+          </form>
+      </mat-card-content>
+      <mat-card-actions class="section-actions">
+        <div class="spacer"></div>
+        <div class="validation-status" *ngIf="cshForm.invalid">
+          <mat-icon color="warn">warning</mat-icon>
+          <span>Please complete all required fields</span>
+        </div>
+        <div class="validation-status success" *ngIf="cshForm.valid">
+          <mat-icon color="primary">check_circle</mat-icon>
+          <span>Section completed</span>
+        </div>
+      </mat-card-actions>
+    </mat-card>
+  

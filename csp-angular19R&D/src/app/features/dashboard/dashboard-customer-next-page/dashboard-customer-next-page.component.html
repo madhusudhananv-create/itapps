@@ -1,0 +1,173 @@
+<!-- Modern Dashboard Charts Grid with Enhanced Material Design -->
+<div class="dashboard-container">
+  <div class="dashboard-charts-grid">
+    <!-- Row 1: Assessment Status & CAP Stages -->
+    <div class="charts-row">
+      <!-- Assessment Status Chart Card -->
+      <div class="chart-card" [@fadeInUp]>
+        <div class="chart-card-inner">
+          <div class="chart-header">
+            <div class="chart-title-wrapper">
+              <div class="chart-icon-wrapper">
+                <i class="fa fa-pie-chart chart-icon"></i>
+              </div>
+              <h3 class="chart-title">Assessment Status</h3>
+            </div>
+            <div class="chart-subtitle" *ngIf="month && year">
+              {{month}} - {{year}}
+            </div>
+          </div>
+          
+          <div class="chart-body">
+            <div *ngIf="isAuditStatusEmpty" class="empty-state">
+              <div class="empty-icon-wrapper">
+                <i class="fa fa-calendar-times-o empty-icon"></i>
+              </div>
+              <span class="empty-text">No Assessment Planned</span>
+              <span class="empty-subtext">There are no assessments scheduled for this period</span>
+            </div>
+            
+            <div *ngIf="!isAuditStatusEmpty && assessmentChartOptions" class="chart-container">
+              <highcharts-chart
+                [options]="assessmentChartOptions"
+                [oneToOne]="true"
+                class="chart-highcharts">
+              </highcharts-chart>
+            </div>
+          </div>
+          
+          <div class="chart-footer">
+            <a class="view-details-link" 
+               [routerLink]="month && year ? ['/layout/assessment', customerId, month, year] : ['/layout/assessment', customerId]">
+              <span>View Details</span>
+              <i class="fa fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAP Stages Chart Card -->
+      <div class="chart-card" [@fadeInUp]>
+        <div class="chart-card-inner">
+          <div class="chart-header">
+            <div class="chart-title-wrapper">
+              <div class="chart-icon-wrapper">
+                <i class="fa fa-tasks chart-icon"></i>
+              </div>
+              <h3 class="chart-title">CAP Stages</h3>
+            </div>
+            <div class="chart-subtitle">Corrective Action Plan</div>
+          </div>
+          
+          <div class="chart-body">
+            <div *ngIf="isFindingsByStageEmpty" class="empty-state">
+              <div class="empty-icon-wrapper success">
+                <i class="fa fa-check-circle empty-icon"></i>
+              </div>
+              <span class="empty-text">No Open Findings</span>
+              <span class="empty-subtext">All findings have been resolved</span>
+            </div>
+            
+            <div *ngIf="!isFindingsByStageEmpty && capStagesChartOptions" class="chart-container">
+              <highcharts-chart
+                [options]="capStagesChartOptions"
+                [oneToOne]="true"
+                class="chart-highcharts">
+              </highcharts-chart>
+            </div>
+          </div>
+          
+          <div class="chart-footer" *ngIf="!isFindingsByStageEmpty">
+            <a class="view-details-link" [routerLink]="['/layout/qasummary', customerId]">
+              <span>View Details</span>
+              <i class="fa fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Findings by Type & Findings by Age -->
+    <div class="charts-row">
+      <!-- Findings by Type Chart Card -->
+      <div class="chart-card" [@fadeInUp]>
+        <div class="chart-card-inner">
+          <div class="chart-header">
+            <div class="chart-title-wrapper">
+              <div class="chart-icon-wrapper">
+                <mat-icon class="chart-icon">filter_list</mat-icon>
+              </div>
+              <h3 class="chart-title">Findings by Type</h3>
+            </div>
+            <div class="chart-subtitle">Distribution Analysis</div>
+          </div>
+          
+          <div class="chart-body">
+            <div *ngIf="isFindingsByTypeEmpty" class="empty-state">
+              <div class="empty-icon-wrapper success">
+                <mat-icon class="empty-icon">check_circle</mat-icon>
+              </div>
+              <span class="empty-text">No Open Findings</span>
+              <span class="empty-subtext">All findings have been addressed</span>
+            </div>
+            
+            <div *ngIf="!isFindingsByTypeEmpty && findingsByTypeChartOptions" class="chart-container">
+              <highcharts-chart
+                [options]="findingsByTypeChartOptions"
+                [oneToOne]="true"
+                class="chart-highcharts">
+              </highcharts-chart>
+            </div>
+          </div>
+          
+          <div class="chart-footer">
+            <a class="view-details-link" [routerLink]="['/layout/qasummary', customerId]">
+              <span>View Details</span>
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Findings by Age Chart Card -->
+      <div class="chart-card" [@fadeInUp]>
+        <div class="chart-card-inner">
+          <div class="chart-header">
+            <div class="chart-title-wrapper">
+              <div class="chart-icon-wrapper">
+                <mat-icon class="chart-icon">schedule</mat-icon>
+              </div>
+              <h3 class="chart-title">Findings by Age</h3>
+            </div>
+            <div class="chart-subtitle">Time-based Analysis</div>
+          </div>
+          
+          <div class="chart-body">
+            <div *ngIf="isFindingsByTimeEmpty" class="empty-state">
+              <div class="empty-icon-wrapper success">
+                <mat-icon class="empty-icon">check_circle</mat-icon>
+              </div>
+              <span class="empty-text">No Open Findings</span>
+              <span class="empty-subtext">All findings have been closed</span>
+            </div>
+            
+            <div *ngIf="!isFindingsByTimeEmpty && findingsByAgeChartOptions" class="chart-container">
+              <highcharts-chart
+                [options]="findingsByAgeChartOptions"
+                [oneToOne]="true"
+                class="chart-highcharts">
+              </highcharts-chart>
+            </div>
+          </div>
+          
+          <div class="chart-footer">
+            <a class="view-details-link" [routerLink]="['/layout/qasummary', customerId]" (click)="setValue()">
+              <span>View Details</span>
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

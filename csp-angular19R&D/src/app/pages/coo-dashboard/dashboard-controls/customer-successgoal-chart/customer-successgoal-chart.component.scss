@@ -1,0 +1,158 @@
+// Customer Success Goal Chart Component Styles
+// Modern Angular 19 version
+
+.gauge-container {
+  position: relative;
+  margin-top: 5px;
+  
+  &.smallchart {
+    width: 151px;
+    height: 90px;
+    
+    #score {
+      margin-left: 28%;
+      font-size: 15px;
+      top: 103px;
+    }
+    
+    .rotateimg {
+      width: 153px;
+      height: 153px;
+    }
+  }
+  
+  &.mediumchart {
+    width: 180px;
+    height: 117px;
+    
+    #score {
+      margin-left: 21%;
+      font-size: 21px;
+      top: 112px;
+    }
+    
+    .rotateimg {
+      width: 184px;
+      height: 184px;
+    }
+  }
+}
+
+#score {
+  position: absolute;
+  font-weight: 600;
+  color: #545454;
+  z-index: 1000;
+  text-align: center;
+}
+
+.rotateimg {
+  rotate: 65deg;
+  -webkit-animation: spin1 5s linear;
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  width: 154px;
+  height: 154px;
+  margin-left: -6px;
+  margin-top: -14px;
+  transition: rotate 0.5s ease-in-out;
+}
+
+// Statistics below gauge
+.sumcounts {
+  text-align: center;
+  
+  &.col-lg-6 {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+  
+  &.smallchart1 {
+    margin-left: -15px !important;
+  }
+  
+  &.mediumchart1 {
+    margin-left: -26px !important;
+  }
+  
+  h4, h5 {
+    margin: 4px 0;
+    color: #4a90e2;
+    
+    b {
+      font-weight: 600;
+    }
+  }
+  
+  h4 {
+    font-size: 18px;
+  }
+  
+  h5 {
+    font-size: 14px;
+  }
+}
+
+// Text styles
+.verysmalltext {
+  font-size: 11px;
+  text-decoration: none !important;
+  text-align: center;
+  font-weight: 300;
+  color: #5c5b5b;
+}
+
+.verysmalltextblack {
+  font-size: 11px;
+  color: #5c5b5b;
+  text-decoration: none !important;
+  text-align: center;
+  font-weight: 300;
+}
+
+.smalltext {
+  font-size: 12px;
+  color: #494a4d;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.smalltextblack {
+  font-size: 11px;
+  color: #474646;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+// Row alignment
+.row {
+  margin: 0;
+  display: flex;
+  justify-content: space-around;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .gauge-container {
+    margin: 0 auto;
+    
+    &.mediumchart {
+      width: 160px;
+      height: 100px;
+    }
+  }
+  
+  .sumcounts {
+    font-size: 10px;
+    
+    h4 {
+      font-size: 16px;
+    }
+    
+    h5 {
+      font-size: 12px;
+    }
+  }
+}

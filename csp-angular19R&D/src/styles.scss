@@ -1,0 +1,1933 @@
+/* Global styles - Migrated from legacy with preserved look and feel */
+
+/* Material Form Field Fixes - Remove Material 3 backgrounds */
+@use './styles/material-form-field-fix.scss';
+
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+/* You can add global styles to this file, and also import other style files */
+html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+}
+
+/* Remove ALL default margins and padding from navbar and its children */
+app-navbar-new,
+app-navbar-new * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+app-navbar-new {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+/* Ensure containers don't add space above navbar */
+.example-container,
+.row:has(> app-navbar-new),
+div:has(> app-navbar-new:first-child) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Remove space from dashboard components */
+app-csm-dashboard,
+app-dashboard-filter,
+app-csm-dashboard>.row,
+app-csm-dashboard>div,
+app-dashboard-filter>div {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block;
+}
+
+/* Ensure no space between navbar and next element */
+app-navbar-new+* {
+  margin-top: 0px !important;
+}
+
+/* Remove default Material toolbar spacing */
+.mat-toolbar,
+mat-toolbar {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove margin from toolbar at top of page */
+body>app-root>app-navbar-new,
+body>app-root>app-navbar-new mat-toolbar {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Login background - preserve from legacy */
+.login_bg {
+  background-color: #f1f2f7;
+}
+
+app-root {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Preserve legacy color scheme and styling */
+:root {
+  --primary-color: #3f51b5;
+  --accent-color: #ff4081;
+  --warn-color: #f44336;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --danger-color: #f44336;
+}
+
+/* Legacy compatibility styles */
+.content {
+  padding-top: 0;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  align-content: center;
+}
+
+/* Remove all top spacing from router outlet and main containers */
+router-outlet,
+router-outlet + *,
+.apple-navigation-container {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Material Design overrides to match legacy look */
+.mat-toolbar {
+  background-color: var(--primary-color);
+  color: white;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  max-height: 40px !important;
+  line-height: normal !important;
+}
+
+/* Override Material's toolbar row classes */
+.mat-toolbar-row,
+.mat-toolbar-single-row {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Remove margin from toolbar at top of page */
+body>app-root>mat-toolbar,
+app-navbar-new mat-toolbar {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Preserve legacy link styles */
+.link {
+  cursor: pointer;
+  text-decoration: none;
+  color: #007bff;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.link_h3 {
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* RAG Status Colors */
+.fa-circle[style*="color: green"],
+.status-green {
+  color: #4caf50 !important;
+}
+
+.fa-circle[style*="color: orange"],
+.status-orange {
+  color: #ff9800 !important;
+}
+
+.fa-circle[style*="color: red"],
+.status-red {
+  color: #f44336 !important;
+}
+
+/* Scrollable areas */
+.scroll-area {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Row and column utilities */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -15px;
+  margin-left: -15px;
+}
+
+.col,
+.col-lg-12 {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+/* Container fluid */
+.container-fluid {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/* Material Dropdown Plain - Legacy style */
+.mat-dropdown-plain {
+  width: 100px !important;
+  background-color: white;
+  border: solid #d0d0d0 1px;
+  padding: 5px;
+}
+
+/* Icon button - Legacy style */
+.iconbutton {
+  padding: 4px 8px 6px 7px;
+  font-size: 18px;
+  background-color: white;
+  border: 1px solid #d0d0d0;
+  cursor: pointer;
+  border-collapse: collapse;
+  text-decoration: none;
+  color: inherit;
+}
+
+.iconbutton:hover {
+  opacity: 0.7;
+}
+
+.maticonbutton {
+  padding: 2px 2px 4px 3px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Material Table Header Styles - Legacy compatibility */
+mat-header-row {
+  background-color: #4472C4 !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  margin-bottom: 0px;
+  align-items: normal !important;
+  min-height: none !important;
+}
+
+mat-row {
+  border-bottom-style: none !important;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+
+mat-header-cell {
+  margin: 0 !important;
+  padding: 2px 2px 0 2px !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  border: solid 1px #c6ddf1 !important;
+  border-bottom-style: none !important;
+  background-color: #4472C4 !important;
+}
+
+mat-cell {
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-self: stretch;
+  -ms-flex-item-align: stretch;
+  align-self: stretch;
+  margin: 0 !important;
+  padding: 2px !important;
+  border: solid 1px #c6ddf1 !important;
+  border-bottom-style: none !important;
+}
+
+.mat-cell,
+.mat-header-cell {
+  padding-left: 5px;
+}
+
+/* Default Access Badge - Legacy style */
+.defaultAccess {
+  padding: 1px 5px 1px 5px;
+  border-radius: 5px;
+}
+
+/* Mat Sort Header - Legacy style */
+mat-sort-header-button {
+  line-height: normal !important;
+}
+
+/* Column Width Classes - Legacy style */
+.indexWidth {
+  flex: 0 0 35px !important;
+  padding-left: 5px !important;
+  text-align: center !important;
+}
+
+.editWidth {
+  padding-left: 3px !important;
+  flex: 0 0 25px !important;
+  border-right: none !important;
+}
+
+.viewWidth {
+  padding-left: 3px !important;
+  flex: 0 0 25px !important;
+  border-right: none !important;
+}
+
+.boolWidth {
+  padding-left: 3px !important;
+  flex: 0 0 70px !important;
+  border-right: none !important;
+  text-align: center;
+}
+
+.deleteWidth {
+  flex: 0 0 25px !important;
+  border-left: none !important;
+}
+
+/* Flat Button - Legacy style */
+.flatbutton {
+  padding: 7px 8px 5px 8px;
+  font-size: 13px;
+  background-color: white;
+  border: 1px solid #d0d0d0;
+  cursor: pointer;
+  border-collapse: collapse;
+}
+
+/* Material Radio Customization - Legacy style */
+.mat-radio-group {
+  display: flex;
+  flex-direction: column;
+  margin: 15px 0;
+}
+
+.mat-radio-label {
+  font-weight: normal;
+  align-items: unset;
+}
+
+.mat-radio-button-custom {
+  margin: 5px;
+}
+
+.mat-radio-button.mat-accent .mat-radio-container {
+  height: 15px;
+  width: 15px;
+}
+
+.mat-radio-button.mat-accent .mat-radio-outer-circle {
+  height: 15px;
+  width: 15px;
+}
+
+.mat-radio-button.mat-accent .mat-radio-inner-circle {
+  height: 15px;
+  width: 15px;
+}
+
+.mat-radio-button.mat-accent.mat-radio-checked div.mat-radio-outer-circle {
+  border-color: rgb(75, 185, 130);
+}
+
+.mat-radio-button.mat-accent .mat-radio-inner-circle {
+  color: rgb(75, 185, 130);
+  background-color: rgb(75, 185, 130);
+}
+
+.mat-radio-button.mat-accent .mat-radio-ripple .mat-ripple-element {
+  background-color: rgb(75, 200, 130);
+}
+
+/* Material Checkbox Customization - Legacy style */
+.mat-checkbox.mat-accent div.mat-checkbox-inner-container {
+  height: 15px;
+  width: 15px;
+}
+
+.mat-checkbox-label {
+  font-weight: normal;
+}
+
+/* MDC Checkbox - Fix purple/filled background when unchecked */
+.mdc-checkbox__background {
+  background-color: transparent !important;
+  border-color: rgba(0, 0, 0, 0.54) !important;
+  border-width: 2px !important;
+}
+
+/* Unchecked state - ensure no fill */
+.mat-mdc-checkbox:not(.mat-mdc-checkbox-checked):not(.mat-mdc-checkbox-indeterminate) .mdc-checkbox__background {
+  background-color: transparent !important;
+  border-color: rgba(0, 0, 0, 0.54) !important;
+}
+
+/* Checked state - blue background */
+.mdc-checkbox--selected .mdc-checkbox__background,
+.mat-mdc-checkbox-checked .mdc-checkbox__background {
+  background-color: #1976d2 !important;
+  border-color: #1976d2 !important;
+}
+
+/* Hover states */
+.mat-mdc-checkbox:hover:not(.mat-mdc-checkbox-checked) .mdc-checkbox__background {
+  background-color: transparent !important;
+  border-color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/* Remove any ripple background on unchecked */
+.mat-mdc-checkbox:not(.mat-mdc-checkbox-checked) .mat-ripple-element {
+  background-color: transparent !important;
+}
+
+/* Multiselect Dropdown - Legacy style */
+.multiselect-dropdown .dropdown-btn {
+  border-radius: 0px !important;
+  border: none !important;
+  border-bottom: 1px solid #adadad !important;
+  outline: none !important;
+  text-decoration: none !important;
+}
+
+.multiselect-dropdown .dropdown-btn .dropdown-down {
+  display: inline-block !important;
+  top: 10px !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-top: 8px solid #adadad !important;
+  border-left: 5px solid transparent !important;
+  border-right: 5px solid transparent !important;
+}
+
+/* Material Select/Form Field Disabled - Legacy style */
+.mat-select-disabled .mat-select-value {
+  font-weight: bold !important;
+  color: black !important;
+}
+
+.mat-form-field-disabled {
+  font-weight: bold !important;
+  color: black !important;
+}
+
+/* Font Awesome Icons - Legacy style */
+.fa-trash {
+  color: red !important;
+}
+
+/* Button Confirm Styles - Legacy style */
+.btn-warning-confirm {
+  color: white !important;
+  background-color: #FFBF00;
+  border: none;
+}
+
+.btn-primary-confirm {
+  color: white !important;
+  background-color: green;
+  border: none !important;
+  outline: none !important;
+}
+
+.btn-primary-confirm:focus,
+.btn-primary-confirm:active {
+  border: none !important;
+  outline: none !important;
+}
+
+/* Panel - Legacy style */
+.panel {
+  margin-bottom: 20px;
+  background-color: #F3F4F8;
+  border: 1px solid transparent;
+}
+
+/* Material Progress Bar - Legacy style */
+.mat-progress-bar {
+  display: block;
+  height: 1px;
+  overflow: hidden;
+  position: relative;
+  transform: translateZ(0);
+  transition: opacity 250ms linear;
+  width: 100%;
+}
+
+/* Material Dialog - Legacy padding override */
+.mat-dialog-container {
+  padding: 0px !important;
+}
+
+/* Achievement Trend Dialog - Wide layout */
+.achievement-trend-dialog {
+  max-width: 95vw !important;
+  width: 1200px !important;
+  
+  .mat-mdc-dialog-container {
+    max-width: 95vw !important;
+    width: 1200px !important;
+  }
+}
+
+/* ============================================================================
+   Global Material Form Field Styles
+   ============================================================================ */
+
+/* Form fields fill container width */
+.mat-mdc-form-field {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Floating label styles */
+.mdc-floating-label {
+  overflow: visible !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+}
+
+/* Label positioned in notch */
+.mdc-floating-label--float-above {
+  overflow: visible !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+  transform: translateY(-34px) scale(0.75) !important;
+  background-color: white;
+  padding: 0 4px;
+}
+
+/* Input/textarea font size */
+.mat-mdc-form-field .mat-mdc-input-element {
+  font-size: 13px !important;
+}
+
+/* Select/Dropdown panel options */
+.mat-mdc-select-panel .mat-mdc-option {
+  font-size: 13px !important;
+  min-height: 36px !important;
+}
+
+/* Compact operator dropdown for KPI definitions */
+.compact-operator-dropdown.mat-mdc-select-panel {
+  max-height: 300px !important;
+  width: 92px !important;
+  min-width: 92px !important;
+  max-width: 92px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+.compact-operator-dropdown .mat-mdc-option {
+  font-size: 12px !important;
+  min-height: 36px !important;
+  padding: 0 8px !important;
+  
+}
+
+/* Compact month/year dropdowns for KPI details */
+.compact-month-dropdown.mat-mdc-select-panel,
+.compact-year-dropdown.mat-mdc-select-panel {
+  max-height: 300px !important;
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+.compact-month-dropdown .mat-mdc-option,
+.compact-year-dropdown .mat-mdc-option {
+  font-size: 12px !important;
+  min-height: 36px !important;
+  padding: 0 8px !important;
+}
+
+/* ============================================================================
+   GLOBAL PAGINATOR DROPDOWN ARROW FIX - Applies to ALL pages/components
+   ============================================================================ */
+
+/* Set proper width and padding for paginator dropdown trigger */
+.mat-mdc-paginator .mat-mdc-paginator-page-size-select {
+  min-width: 80px !important;
+  width: 80px !important;
+  max-width: 80px !important;
+  display: inline-block !important;
+  
+  /* Trigger container - ensure enough space for number + arrow */
+  .mat-mdc-select-trigger {
+    width: 100% !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    padding-right: 28px !important;
+    padding-left: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+  }
+  
+  /* Value text - prevent overlap with arrow */
+  .mat-mdc-select-value {
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: calc(100% - 28px) !important;
+    text-align: left !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+  
+  .mat-mdc-select-value-text {
+    text-align: left !important;
+    padding-right: 0 !important;
+    display: inline-block !important;
+    width: 100% !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Arrow wrapper - position on the right side INSIDE the box */
+  .mat-mdc-select-arrow-wrapper {
+    position: absolute !important;
+    right: 4px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    padding-left: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 12px !important;
+    height: 12px !important;
+  }
+  
+  /* Arrow itself - visible arrow inside the box */
+  .mat-mdc-select-arrow {
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 4px solid transparent !important;
+    border-right: 4px solid transparent !important;
+    border-top: 5px solid rgba(0, 0, 0, 0.54) !important;
+    margin: 0 !important;
+  }
+  
+  .mat-mdc-select-arrow svg {
+    width: 10px !important;
+    height: 10px !important;
+    fill: rgba(0, 0, 0, 0.54) !important;
+  }
+}
+
+/* Hide the extra dropdown icon OUTSIDE the paginator box */
+.mat-mdc-paginator .mat-mdc-form-field-icon-suffix,
+.mat-mdc-paginator .mat-mdc-text-field-suffix,
+.mat-mdc-paginator .mat-icon.mat-mdc-select-arrow {
+  display: none !important;
+}
+
+/* Ensure paginator container has proper layout */
+.mat-mdc-paginator-container {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+/* Constrain select panels to fit-content for compact appearance */
+.cdk-overlay-pane .mat-mdc-select-panel {
+  // Exclude panels that need to be wide or have custom sizing
+  &:not(.compact-operator-dropdown):not(.compact-month-dropdown):not(.compact-year-dropdown):not(.wide-panel) {
+    width: fit-content !important;
+    min-width: 60px !important;
+    max-width: 320px !important;
+  }
+}
+
+/* Force all mat-select dropdowns to open downward, never upward */
+.cdk-overlay-pane:has(.mat-mdc-select-panel) {
+  // Override CDK's automatic vertical positioning
+  &[style*="bottom"] {
+    bottom: auto !important;
+  }
+}
+
+/* Prevent Material from applying "above" positioning */
+/* Mat Select Panel - Smart positioning with downward preference */
+.mat-mdc-select-panel {
+  max-height: 400px !important;
+  
+  // Improve dropdown appearance
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  
+  // Ensure proper scrolling
+  overflow-y: auto !important;
+  
+  // Prefer downward by default
+  transform-origin: top center !important;
+}
+
+// Special styling for dropdown-below panels - prefers downward but allows upward if no space
+.dropdown-below.mat-mdc-select-panel {
+  max-height: 400px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  transform-origin: top center !important;
+  
+  // Additional preference for downward opening
+  &:not(.mat-mdc-select-panel-above) {
+    margin-top: 4px;
+  }
+}
+
+// When panel MUST open above (CDK detected insufficient space below), use bottom origin
+.mat-mdc-select-panel.mat-mdc-select-panel-above {
+  transform-origin: bottom center !important;
+  margin-bottom: 4px;
+  margin-top: 0;
+}
+
+// CDK Overlay - Smart positioning with downward bias
+.cdk-overlay-pane {
+  z-index: 1000 !important;
+}
+
+// Fallback for browsers without :has() support - target dropdown-below panels directly
+.cdk-overlay-pane .dropdown-below:not(.mat-mdc-select-panel-above) {
+  margin-top: 4px;
+}
+
+// Modern browsers with :has() support - more specific targeting
+@supports selector(:has(*)) {
+  .cdk-overlay-pane:has(.dropdown-below) {
+    .mat-mdc-select-panel:not(.mat-mdc-select-panel-above) {
+      margin-top: 4px;
+    }
+  }
+}
+
+// ============================================
+// CDK Overlay Positioning Fix - Prevent Panel Overlap
+// ============================================
+.cdk-overlay-container {
+  z-index: 1050 !important;
+  position: fixed !important;
+  
+  .cdk-overlay-pane {
+    position: absolute !important;
+    
+    .mat-mdc-select-panel {
+      // Ensure scrolling works
+      overflow-y: auto !important;
+    }
+  }
+}
+
+/* Full-width utility class */
+.full-width {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* ============================================================
+   HIGHCHARTS MODERN UI STYLING - Global Theme
+   ============================================================ */
+
+/* Import Inter font for charts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Highcharts Context Menu - Modern Dropdown Style */
+.highcharts-contextmenu {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15),
+    0 4px 12px rgba(15, 23, 42, 0.08) !important;
+  padding: 8px 0 !important;
+  min-width: 200px !important;
+  backdrop-filter: blur(8px);
+  animation: contextMenuFadeIn 0.2s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.highcharts-contextmenu hr {
+  margin: 8px 12px !important;
+  border: none !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+.highcharts-contextmenu div,
+.highcharts-menu-item {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  padding: 10px 16px !important;
+  margin: 2px 8px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.highcharts-contextmenu div:hover,
+.highcharts-menu-item:hover {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  color: #0284c7 !important;
+}
+
+.highcharts-contextmenu div:active,
+.highcharts-menu-item:active {
+  transform: scale(0.98);
+}
+
+/* Highcharts Export Button - Modern Hamburger Style */
+.highcharts-contextbutton {
+  fill: #64748b !important;
+  stroke: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.highcharts-contextbutton:hover {
+  fill: #0ea5e9 !important;
+}
+
+.highcharts-button-box {
+  fill: transparent !important;
+  stroke: #e2e8f0 !important;
+  stroke-width: 1.5px !important;
+  rx: 6 !important;
+  ry: 6 !important;
+  transition: all 0.2s ease !important;
+}
+
+.highcharts-button:hover .highcharts-button-box {
+  fill: #f8fafc !important;
+  stroke: #0ea5e9 !important;
+}
+
+/* Highcharts Container - Modern Card Style */
+.highcharts-container {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.highcharts-background {
+  fill: #ffffff !important;
+}
+
+/* Highcharts Title - Modern Typography */
+.highcharts-title {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  fill: #1e293b !important;
+  letter-spacing: -0.01em !important;
+}
+
+.highcharts-subtitle {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  fill: #64748b !important;
+}
+
+/* Highcharts Axis - Clean Grid */
+.highcharts-axis-title {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  fill: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.highcharts-axis-labels text {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  fill: #64748b !important;
+}
+
+.highcharts-axis-line {
+  stroke: #e2e8f0 !important;
+  stroke-width: 1px !important;
+}
+
+.highcharts-tick {
+  stroke: #e2e8f0 !important;
+}
+
+.highcharts-grid-line {
+  stroke: #f1f5f9 !important;
+  stroke-dasharray: 4, 4 !important;
+}
+
+.highcharts-minor-grid-line {
+  stroke: #f8fafc !important;
+}
+
+/* Highcharts Legend - Modern Pills */
+.highcharts-legend {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.highcharts-legend-item text {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  fill: #475569 !important;
+  transition: fill 0.15s ease !important;
+}
+
+.highcharts-legend-item:hover text {
+  fill: #0f172a !important;
+}
+
+.highcharts-legend-item-hidden text {
+  fill: #94a3b8 !important;
+  text-decoration: line-through !important;
+}
+
+/* Highcharts Tooltip - Dark Glossy Style */
+.highcharts-tooltip {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) !important;
+}
+
+.highcharts-tooltip-box {
+  fill: #1e293b !important;
+  fill-opacity: 0.95 !important;
+  stroke: #334155 !important;
+  stroke-width: 1px !important;
+  rx: 8 !important;
+  ry: 8 !important;
+}
+
+.highcharts-tooltip text {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  fill: #ffffff !important;
+}
+
+.highcharts-tooltip .highcharts-header {
+  font-weight: 600 !important;
+}
+
+/* Highcharts Data Labels - Clean Style */
+.highcharts-data-label text {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  fill: #1e293b !important;
+  text-shadow: none !important;
+}
+
+.highcharts-data-label-box {
+  fill: rgba(255, 255, 255, 0.9) !important;
+  stroke: #e2e8f0 !important;
+  stroke-width: 1px !important;
+  rx: 4 !important;
+  ry: 4 !important;
+}
+
+/* Highcharts Series - Modern Colors & Rounded Bars */
+.highcharts-point {
+  transition: opacity 0.15s ease, filter 0.15s ease !important;
+}
+
+.highcharts-point:hover {
+  filter: brightness(1.1) !important;
+}
+
+/* Rounded column/bar corners */
+.highcharts-point.highcharts-color-0,
+.highcharts-point.highcharts-color-1,
+.highcharts-point.highcharts-color-2,
+.highcharts-point.highcharts-color-3 {
+  rx: 4 !important;
+  ry: 4 !important;
+}
+
+/* Line/Spline series - Smooth & Bold */
+.highcharts-graph {
+  stroke-width: 3px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.highcharts-area {
+  fill-opacity: 0.15 !important;
+}
+
+/* Markers - Modern Dots */
+.highcharts-point {
+  stroke-width: 2px !important;
+}
+
+.highcharts-halo {
+  fill-opacity: 0.15 !important;
+}
+
+/* Pie/Donut Charts - Clean Slices */
+.highcharts-pie-series .highcharts-point {
+  stroke: #ffffff !important;
+  stroke-width: 2px !important;
+}
+
+/* Crosshair - Subtle Guide */
+.highcharts-crosshair {
+  stroke: #94a3b8 !important;
+  stroke-width: 1px !important;
+  stroke-dasharray: 4, 4 !important;
+}
+
+/* Selection/Zoom - Modern Highlight */
+.highcharts-selection-marker {
+  fill: rgba(14, 165, 233, 0.15) !important;
+  stroke: #0ea5e9 !important;
+}
+
+/* Loading State - Animated */
+.highcharts-loading {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.highcharts-loading-inner {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #64748b !important;
+}
+
+/* No Data State */
+.highcharts-no-data text {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  fill: #94a3b8 !important;
+}
+
+/* Credits (usually hidden) */
+.highcharts-credits {
+  display: none !important;
+}
+
+/* Drilldown */
+.highcharts-drilldown-point {
+  cursor: pointer !important;
+}
+
+.highcharts-drilldown-data-label text {
+  text-decoration: underline !important;
+  fill: #0ea5e9 !important;
+}
+
+/* Removed - colors controlled per-chart via point.color */
+// .highcharts-color-0 { fill: #3b82f6; stroke: #3b82f6; }
+// .highcharts-color-1 { fill: #22c55e; stroke: #22c55e; }
+// .highcharts-color-2 { fill: #f59e0b; stroke: #f59e0b; }
+// .highcharts-color-3 { fill: #ef4444; stroke: #ef4444; }
+// .highcharts-color-4 { fill: #8b5cf6; stroke: #8b5cf6; }
+// .highcharts-color-5 { fill: #06b6d4; stroke: #06b6d4; }
+// .highcharts-color-6 { fill: #ec4899; stroke: #ec4899; }
+// .highcharts-color-7 { fill: #84cc16; stroke: #84cc16; }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .highcharts-title {
+    font-size: 14px !important;
+  }
+
+  .highcharts-axis-labels text {
+    font-size: 10px !important;
+  }
+
+  .highcharts-legend-item text {
+    font-size: 11px !important;
+  }
+}
+
+/* Entity Info Dialog - No scroll */
+.entity-info-dialog {
+  .mat-mdc-dialog-container {
+    overflow: visible !important;
+
+    .mdc-dialog__surface {
+      overflow: visible !important;
+      border-radius: 8px !important;
+    }
+
+    .mat-mdc-dialog-content {
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 24px !important;
+    }
+  }
+}
+
+/* Warning Popup Dialog - Modern Style */
+.warning-popup-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    overflow: visible !important;
+
+    .mdc-dialog__surface {
+      background: transparent !important;
+      box-shadow: none !important;
+      border-radius: 20px !important;
+      overflow: visible !important;
+    }
+
+    .mat-mdc-dialog-content {
+      padding: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+  }
+}
+
+.warning-popup-backdrop {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* Modern Dialog Panel - Angular 19 Style */
+.modern-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+
+    .mdc-dialog__surface {
+      border-radius: 24px !important;
+      box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 12px 24px -8px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+      overflow: hidden;
+      background: transparent !important;
+    }
+
+    .mat-mdc-dialog-content {
+      padding: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    .mat-mdc-dialog-actions {
+      padding: 0 !important;
+    }
+  }
+}
+
+.modern-dialog-backdrop {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* KPI Action Plan Dialog - CAPA Dialog Styling */
+.kpi-action-plan-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0;
+    
+    .mdc-dialog__surface {
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+    }
+
+    .mat-mdc-dialog-content {
+      padding: 0;
+      margin: 0;
+      max-height: none;
+    }
+
+    .mat-mdc-dialog-actions {
+      padding: 0;
+      margin: 0;
+      min-height: unset;
+    }
+  }
+}
+
+/* ========================================
+   SNACKBAR NOTIFICATION STYLES
+   ======================================== */
+
+.success-snackbar {
+  .mdc-snackbar__surface {
+    background-color: #4caf50 !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+  }
+}
+
+.error-snackbar {
+  .mdc-snackbar__surface {
+    background-color: #f44336 !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3) !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+  }
+}
+
+.warning-snackbar {
+  .mdc-snackbar__surface {
+    background-color: #ff9800 !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3) !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+  }
+}
+
+.info-snackbar {
+  .mdc-snackbar__surface {
+    background-color: #2196f3 !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+  }
+}
+
+/* Preview Dialog Styling */
+.preview-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    overflow: hidden;
+  }
+
+  .mdc-dialog__surface {
+    border-radius: 8px !important;
+  }
+}
+
+.cdk-overlay-pane {
+  &:has(.preview-dialog) {
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+  }
+}
+
+/* ============================================================================
+   Planner Dropdown Panel Styling (Global - for CDK overlay)
+   ============================================================================ */
+
+/* Panel width and sizing */
+.planner-dropdown-panel.mat-mdc-select-panel {
+  min-width: 300px !important;
+  max-width: 360px !important;
+  max-height: 320px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* ============================================================================
+   Material Paginator - Global Fix for Dropdown Visibility
+   ============================================================================ */
+
+/* Ensure paginator is positioned correctly */
+.mat-mdc-paginator {
+  position: relative !important;
+  z-index: 10 !important;
+  overflow: visible !important;
+}
+
+/* Ensure paginator container doesn't restrict dropdown */
+.mat-mdc-paginator-container {
+  overflow: visible !important;
+}
+
+/* Ensure paginator range actions don't clip dropdown */
+.mat-mdc-paginator-range-actions {
+  overflow: visible !important;
+}
+
+/* Ensure paginator page size section is visible */
+.mat-mdc-paginator-page-size {
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 11 !important;
+}
+
+/* Ensure the form field in paginator is visible */
+.mat-mdc-paginator .mat-mdc-form-field {
+  overflow: visible !important;
+}
+
+/* Ensure select trigger doesn't clip options */
+.mat-mdc-select-trigger {
+  overflow: visible !important;
+}
+
+/* Ensure select arrow doesn't clip */
+.mat-mdc-select-arrow-wrapper {
+  overflow: visible !important;
+}
+
+/* Ensure paginator dropdown panel appears above all content */
+.mat-mdc-select-panel {
+  z-index: 1001 !important;
+  position: fixed !important;
+  max-height: 256px !important;
+  min-height: 48px !important;
+  min-width: 64px !important;
+}
+
+/* Ensure mat-options are fully visible */
+.mat-mdc-option {
+  min-height: 48px !important;
+  height: auto !important;
+  padding: 0 16px !important;
+  line-height: 48px !important;
+  white-space: nowrap !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+}
+
+/* Ensure option text is visible */
+.mat-mdc-option .mdc-list-item__primary-text {
+  display: inline-block !important;
+  width: auto !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  flex: 1 1 auto !important;
+}
+
+/* Ensure overlay container has proper z-index and overflow */
+.cdk-overlay-container {
+  z-index: 1001 !important;
+  overflow: visible !important;
+  pointer-events: none;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+.cdk-overlay-container .cdk-overlay-pane {
+  pointer-events: auto;
+}
+
+/* Ensure overlay pane is positioned correctly */
+.cdk-overlay-pane {
+  z-index: 1001 !important;
+  overflow: visible !important;
+  position: absolute !important;
+}
+
+/* ============================================================================
+   PAGINATOR DROPDOWN FIX - Simple and Clean
+   ============================================================================ */
+
+/* Ensure paginator has enough space below for dropdown */
+.mat-mdc-paginator {
+  margin-bottom: 100px !important;
+  overflow: visible !important;
+}
+
+/* Exception: Compact paginator in dialogs - but allow overflow for dropdown */
+.dialog-container .mat-mdc-paginator,
+.mat-mdc-dialog-container .mat-mdc-paginator {
+  margin-bottom: 0 !important;
+  overflow: visible !important; // Changed to visible for dropdown
+}
+
+.mat-mdc-paginator-container {
+  overflow: visible !important;
+}
+
+/* Exception: Compact paginator container in dialogs - must be visible */
+.dialog-container .mat-mdc-paginator-container,
+.mat-mdc-dialog-container .mat-mdc-paginator-container {
+  overflow: visible !important; // Changed to visible for dropdown
+}
+
+/* Allow table containers to overflow for dropdown visibility */
+.mat-mdc-table-container,
+.mat-elevation-z8 {
+  overflow: visible !important;
+}
+
+/* Exception: Table containers in dialogs - but NOT the risk repository table */
+.dialog-container .mat-mdc-table-container:not(.risk-repository-table),
+.mat-mdc-dialog-container .mat-mdc-table-container:not(.risk-repository-table) {
+  overflow: hidden !important;
+}
+
+/* Risk repository table container must have visible overflow for paginator */
+.dialog-container .table-container,
+.mat-mdc-dialog-container .table-container {
+  overflow: visible !important;
+}
+
+/* Ensure select panel is clickable and visible */
+.cdk-overlay-pane .mat-mdc-select-panel {
+  z-index: 1000 !important;
+}
+
+/* Paginator dropdown needs higher z-index in dialogs */
+.cdk-overlay-connected-position-bounding-box {
+  z-index: 1001 !important;
+}
+
+.mat-mdc-select-panel.mat-mdc-select-panel-above {
+  z-index: 1001 !important;
+}
+
+/* FORCE paginator dropdown to open upward by repositioning */
+.mat-mdc-dialog-container {
+  // Ensure dialog overflow allows dropdown to show
+  overflow: visible !important;
+  
+  .mat-mdc-dialog-surface {
+    overflow: visible !important;
+  }
+  
+  .mat-mdc-dialog-content {
+    overflow: visible !important;
+  }
+  
+  // Target paginator within dialog
+  .mat-mdc-paginator {
+    position: relative;
+    z-index: 100;
+    overflow: visible !important;
+    
+    .mat-mdc-select {
+      overflow: visible !important;
+    }
+    
+    .mat-mdc-form-field {
+      overflow: visible !important;
+    }
+    
+    .mat-mdc-paginator-container {
+      overflow: visible !important;
+    }
+  }
+}
+
+/* Risk Repository Dialog - Special handling for overflow */
+.risk-repository-dialog {
+  // Remove transform to avoid creating new stacking context
+  .mat-mdc-dialog-container {
+    overflow: visible !important;
+    transform: none !important; // Critical: prevent stacking context
+    
+    .mdc-dialog__container {
+      overflow: visible !important;
+      transform: none !important;
+    }
+    
+    .mat-mdc-dialog-surface {
+      overflow: visible !important;
+      transform: none !important;
+    }
+    
+    .mdc-dialog__content {
+      overflow: visible !important;
+    }
+  }
+}
+
+/* Pagination container must allow dropdown to escape */
+.pagination-container,
+.mat-mdc-paginator,
+.mat-mdc-paginator-container,
+.mat-mdc-paginator-page-size {
+  overflow: visible !important;
+  position: relative;
+  z-index: 9999 !important;
+}
+
+/* Ensure dialog backdrop doesn't interfere with paginator dropdown */
+.cdk-overlay-backdrop.cdk-overlay-backdrop-showing {
+  // Dialog backdrop should be below the select overlay
+  z-index: 1000 !important;
+}
+
+// Ensure the CDK overlay has proper z-index and visibility
+.cdk-overlay-container {
+  z-index: 10000 !important; // Much higher than dialog
+  pointer-events: none; // Allow clicks through to dialog content
+  position: fixed !important; // Render in viewport layer, not inside modal
+  
+  .cdk-overlay-pane {
+    z-index: 10001 !important;
+    pointer-events: auto; // Re-enable clicks on the overlay itself
+    position: fixed !important; // Escape modal stacking context
+    
+    .mat-mdc-select-panel {
+      z-index: 10002 !important;
+      max-height: 200px !important;
+      overflow-y: auto !important;
+      background: white !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+      position: relative;
+    }
+  }
+}
+
+/* Make sure options are clickable */
+.mat-mdc-option {
+  cursor: pointer !important;
+}
+
+/* Search option at top of panel */
+.planner-dropdown-panel .search-option {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #E5E5EA !important;
+  padding: 6px 8px !important;
+  height: auto !important;
+  min-height: unset !important;
+  line-height: normal !important;
+  cursor: default !important;
+  user-select: none !important;
+}
+
+/* Hide checkbox for search option */
+.planner-dropdown-panel .search-option .mat-pseudo-checkbox,
+.planner-dropdown-panel .search-option .mdc-checkbox {
+  display: none !important;
+}
+
+/* Prevent ripple effect on search option */
+.planner-dropdown-panel .search-option .mat-ripple,
+.planner-dropdown-panel .search-option::before,
+.planner-dropdown-panel .search-option::after {
+  display: none !important;
+}
+
+/* Don't show hover effect on search option */
+.planner-dropdown-panel .search-option:hover {
+  background: #ffffff !important;
+  cursor: default !important;
+}
+
+.planner-dropdown-panel .search-option .mdc-list-item__primary-text {
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+/* Dropdown search input */
+.planner-dropdown-panel .dropdown-search {
+  display: flex !important;
+  align-items: center !important;
+  background: #F5F5F7 !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  gap: 6px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  pointer-events: auto !important;
+}
+
+.planner-dropdown-panel .dropdown-search input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 12.5px !important;
+  color: #1D1D1F !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  pointer-events: auto !important;
+  cursor: text !important;
+}
+
+.planner-dropdown-panel .dropdown-search input:focus {
+  outline: none !important;
+  border: none !important;
+}
+
+.planner-dropdown-panel .dropdown-search input::placeholder {
+  color: #8E8E93 !important;
+  font-size: 12.5px !important;
+}
+
+.planner-dropdown-panel .dropdown-search mat-icon {
+  font-size: 15px !important;
+  width: 15px !important;
+  height: 15px !important;
+  color: #8E8E93 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Option text - allow full name display with wrapping */
+.planner-dropdown-panel .mat-mdc-option {
+  font-size: 12.5px !important;
+  min-height: 36px !important;
+  height: auto !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  color: #1D1D1F !important;
+  padding: 8px 12px !important;
+  line-height: 1.4 !important;
+  word-break: break-word !important;
+}
+
+.planner-dropdown-panel .mat-mdc-option .mdc-list-item__primary-text {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  font-size: 12.5px !important;
+  width: 100% !important;
+  line-height: 1.4 !important;
+  word-break: break-word !important;
+}
+
+/* Checkbox alignment */
+.planner-dropdown-panel .mat-mdc-option .mat-pseudo-checkbox,
+.planner-dropdown-panel .mat-mdc-option .mdc-checkbox {
+  flex-shrink: 0 !important;
+  margin-right: 8px !important;
+  width: 16px !important;
+  height: 16px !important;
+  align-self: flex-start !important;
+  margin-top: 2px !important;
+}
+
+/* Selected option */
+.planner-dropdown-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background: #EBF3FF !important;
+  color: #0071E3 !important;
+}
+
+/* Hover */
+.planner-dropdown-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled):not(.search-option) {
+  background: #F5F5F7 !important;
+}
+
+/* Checked checkbox color */
+.planner-dropdown-panel .mat-pseudo-checkbox-checked {
+  background: #0071E3 !important;
+  border-color: #0071E3 !important;
+}
+
+/* Not mapped red dot */
+.planner-dropdown-panel .not-mapped-dot {
+  color: #FF3B30 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  margin-left: 4px !important;
+  vertical-align: middle !important;
+}
+
+// ============================================================
+// Global Typography System — Master_UI_Upgrade_Prompt
+// Header: 16px / 600   |   Body content: 11px base
+// ============================================================
+
+// --- Header title classes (all migrated pages) ---
+.header-title,
+.page-title,
+.details-header span,
+.section-header-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+// --- Page / overview / section wrapper base font ---
+.page-wrapper,
+.checklist-auditee-container,
+.findings-container,
+.details-body,
+.capa-container {
+  font-size: 11px;
+
+  // Tables
+  table th,
+  table td,
+  thead th {
+    font-size: 11px;
+  }
+
+  // Labels
+  label,
+  .mat-mdc-form-field,
+  .mat-mdc-select-value,
+  mat-label {
+    font-size: 11px;
+  }
+
+  // Buttons keep their own readable size — do NOT override
+  // mat-icon keeps its own sizing — do NOT override
+}
+
+// ── Global snackbar / toast styles ──────────────────────────────────────────
+// Used by MyUtility.showAlert() and component-level showToast()
+.snack-success .mdc-snackbar__surface { background: #1b5e20 !important; color: #fff !important; }
+.snack-warn    .mdc-snackbar__surface { background: #e65100 !important; color: #fff !important; }
+.snack-error   .mdc-snackbar__surface { background: #b71c1c !important; color: #fff !important; }
+
+// Info / warning panel — replaces native browser alert()
+.snack-info .mdc-snackbar__surface {
+  background: #1a237e !important;  // deep navy
+  color: #fff !important;
+  max-width: 520px !important;
+  border-left: 4px solid #ffb300 !important;   // amber accent
+}
+
+.snack-info .mdc-snackbar__label {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  white-space: pre-wrap !important;
+}
+
+.mdc-snackbar__actions .mat-mdc-snack-bar-action {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ============================================================================
+   FINAL PAGINATOR DROPDOWN FIX — Must be at bottom of file to win cascade
+   ============================================================================ */
+
+/* 1. Remove the transform on dialog surface that creates a stacking context trap */
+.mdc-dialog__container,
+.mdc-dialog__surface {
+  transform: none !important;
+  will-change: auto !important;
+  filter: none !important;
+  isolation: auto !important;
+}
+
+/* 2. CDK overlay must render in viewport layer above everything */
+.cdk-overlay-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 100000 !important;    /* Must beat dialog z-index */
+  pointer-events: none !important;
+  overflow: visible !important;
+  transform: none !important;    /* Never create a stacking context here */
+  will-change: auto !important;
+}
+
+/* 3. Each overlay pane — use absolute, NOT fixed (CDK manages coords) */
+.cdk-overlay-container .cdk-overlay-pane {
+  position: absolute !important;
+  z-index: 100001 !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+
+/* 4. The select panel itself */
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-select-panel {
+  position: relative !important;   /* Let pane handle positioning */
+  z-index: 100002 !important;
+  max-height: 256px !important;
+  overflow-y: auto !important;
+  background: white !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+  border-radius: 8px !important;
+  transform: none !important;
+}
+
+/* 5. Dialog backdrop sits BELOW the overlay container */
+.cdk-overlay-backdrop {
+  z-index: 99999 !important;
+}
+
+/* 6. Undo the conflicting position:fixed that was set earlier in this file */
+.cdk-overlay-pane {
+  position: absolute !important;  /* CDK needs absolute to position correctly */
+}
+
+/* ============================================================================
+   PAGINATOR SELECT — NUCLEAR CLEAN FIX 
+   ============================================================================ */
+
+/* Step 1: Reset everything on the paginator form field */
+.mat-mdc-paginator .mat-mdc-form-field-infix {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 0 !important;
+  min-height: unset !important;
+  height: 28px !important;
+  width: auto !important;
+  border: none !important;
+}
+
+/* Step 2: Make the trigger a single horizontal flex row */
+.mat-mdc-paginator .mat-mdc-select-trigger {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  width: auto !important;
+  min-width: 40px !important;
+  height: 28px !important;
+  position: static !important;
+  padding: 0 4px !important;
+  gap: 4px !important;
+}
+
+/* Step 3: Value text — sits left */
+.mat-mdc-paginator .mat-mdc-select-value {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: unset !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  position: static !important;
+  font-size: 13px !important;
+}
+
+/* Step 4: Arrow wrapper — sits right, inline */
+.mat-mdc-paginator .mat-mdc-select-arrow-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  position: static !important;   /* NOT absolute — let flexbox handle it */
+  transform: none !important;
+  width: 14px !important;
+  height: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Step 5: Arrow — visible CSS triangle */
+.mat-mdc-paginator .mat-mdc-select-arrow {
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-left: 4px solid transparent !important;
+  border-right: 4px solid transparent !important;
+  border-top: 5px solid rgba(0, 0, 0, 0.6) !important;
+  border-bottom: none !important;
+  margin: 0 !important;
+}
+
+.mat-mdc-paginator .mat-mdc-select-arrow svg {
+  display: none !important;
+}
+
+/* Step 6: Kill any wrapper that might stack things vertically */
+.mat-mdc-paginator .mat-mdc-text-field-wrapper,
+.mat-mdc-paginator .mat-mdc-form-field-flex {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 0 !important;
+  height: 28px !important;
+}
+
+/* Step 7: Remove subscript space below the field */
+.mat-mdc-paginator .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+  height: 0 !important;
+}

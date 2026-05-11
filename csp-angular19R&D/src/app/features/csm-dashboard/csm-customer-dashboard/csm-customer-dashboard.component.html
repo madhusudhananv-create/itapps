@@ -1,0 +1,296 @@
+<div class="example-container" *ngIf="customerId">
+  <div class="mainDiv">
+    <!-- Header Section -->
+    <div class="row" style="margin-bottom: 10px;">
+      <div class="col-lg-2 col-md-2 col-sm-2">
+        <img class="image" style="height:45px;padding:5px" 
+             [src]="'assets/images/' + customerId + '.png'"
+             (error)="$event.target.src='assets/images/CustomerLogo.png'">
+      </div>
+      <div class="col-lg-5 col-md-5 col-sm-5"></div>
+      <div class="col-lg-5 col-md-5 col-sm-5" style="text-align:right">
+        <div style="padding:0 15px">
+          <i class="fa fa-filter link" (click)="showFilter = !showFilter"
+            style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer"></i>
+          
+          <button *ngIf="!_util.IsGAVS() && _util.IsPremier(customerId)" 
+                  class="btn btn-warning" style="margin: 2px;">
+            <a style="margin-right: 7px;margin-left: 7px; text-decoration: none; color: white;" 
+               class="link" [routerLink]="['/layout/timesheetnewhome', customerId]">Time Sheets</a>
+          </button>
+          
+          <img *ngIf="progress" class="image" style="height:20px;padding:0px"
+            src="assets/images/loading_spinner.gif">
+          <a *ngIf="!progress" (click)="Refresh_Onclick()" style="cursor: pointer">
+            <mat-icon style="vertical-align: middle;color:#e0dbdb">refresh</mat-icon>
+          </a>
+          
+          <a *ngIf="_util.IsPremier(customerId)" [routerLink]="['/newdashboard/port', customerId]">
+            <img class="image" style="height:40px" src="assets/images/portfolio_view.png">
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="row">
+      <!-- Account Health Card (Premier customers only) -->
+      <div class="col-lg-4 col-md-4 col-sm-4" *ngIf="_util.IsPremier(customerId)">
+        <div class="healthCard">
+          <div class="row">
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family: Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">Account Health</label>
+              <hr style="margin-top: auto;width: 45px;height: 2px;background: #4B4EB1 0% 0% no-repeat padding-box;opacity: 1;margin-left: 7px">
+            </div>
+          </div>
+          <div>
+            <mat-tab-group class="goalTabGrp" [selectedIndex]="0" (selectedTabChange)="OntabChange($event.index)">
+              <mat-tab label="Need Focus"></mat-tab>
+              <mat-tab label="Under Control"></mat-tab>
+            </mat-tab-group>
+          </div>
+          <div class="chart-placeholder">
+            <!-- Phase 2: Google Chart will be added here -->
+            <div style="height: 200px; display: flex; align-items: center; justify-content: center; color: #999;">
+              <span>Account Health Chart<br/>(Phase 2)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Goal/KPI Performance Card -->
+      <div [ngClass]="_util.IsPremier(customerId) ? 'col-lg-8 col-md-8 col-sm-8' : 'col-lg-12 col-md-12 col-sm-12'">
+        <div class="successGoalCard" 
+             [style.margin-left.px]="_util.IsPremier(customerId) ? -90 : 15" 
+             [style.width.px]="_util.IsPremier(customerId) ? 960 : 1228">
+          <div class="row">
+            <div class="col-lg-3 col-md-3 col-sm-3">
+              <label style="height: 15px;text-align: left;font-size:12px;font-family: Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">My Success Goal/KPI Performance</label>
+              <hr style="margin-top: auto;width: 45px;height: 2px;background: #4B4EB1 0% 0% no-repeat padding-box;opacity: 1;margin-left: 7px">
+            </div>
+          </div>
+          
+          <!-- Period Selection -->
+          <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12" style="margin-top: -35px;text-align: center;">
+              <label style="margin-right:10px;text-align: left;font-size:12px;font-family: Proxima Nova;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Period:</label>
+              <mat-form-field floatLabel="never" class="no-line">
+                <mat-select [(ngModel)]="selectedPeriod" style="width:120px;" (ngModelChange)="selectedPeriod_OnChange()">
+                  <mat-option value="currPeriod">Current Period</mat-option>
+                  <mat-option value="lastQuarter">Last Quarter</mat-option>
+                  <mat-option value="yearToMonth">Year To Month</mat-option>
+                </mat-select>
+              </mat-form-field>
+              
+              <label style="margin-right:20px;margin-left: -20px;text-align: left;font-size:12px;font-family: Proxima Nova;letter-spacing: 0px;color: #4C4C47;opacity: 1;">From:</label>
+              <mat-form-field floatLabel="never" class="stDate" style="margin-left: -15px;">
+                <input [min]="startDate" [max]="endDate" matInput [(ngModel)]="fromDate" name="dateStart" [matDatepicker]="pickerStartDate">
+                <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerStartDate></mat-datepicker>
+              </mat-form-field>
+              
+              <label style="margin-right:-20px;margin-left: 10px;text-align: left;font-size:12px;font-family: Proxima Nova;letter-spacing: 0px;color: #4C4C47;opacity: 1;">To:</label>
+              <mat-form-field floatLabel="never" class="edDate" style="margin-left: 25px;">
+                <input [min]="startDate" [max]="endDate" matInput [(ngModel)]="toDate" name="dateEnd" [matDatepicker]="pickerEndDate">
+                <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerEndDate></mat-datepicker>
+              </mat-form-field>
+              
+              <button class="primary" (click)="periodSelectionChange(selectedPeriod)">Apply</button>
+            </div>
+          </div>
+
+          <!-- KPI Display -->
+          <div class="row">
+            <div class="col-lg-3 col-md-3 col-sm-3" style="top: -25px;">
+              <div class="title" style="text-align: center;">
+                <label style="height: 15px;text-align: left;font-size:12px;font-family: Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">My Success Goal Score</label>
+              </div>
+              <div class="secondaryTitle" style="text-align: center;">
+                <label style="height:15px;text-align: left;font-size:10px;font-family: Proxima Nova;letter-spacing: 0px;color: #4C4C47;opacity: 1;">{{selectedPeriod}}:{{lblfromDate}} - {{lbltoDate}}</label>
+              </div>
+              <div class="gaugeChart" style="text-align:-webkit-center;">
+                <!-- Phase 2: Gauge chart will be added here -->
+                <div style="height: 150px; width: 150px; border: 3px solid #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;">
+                  <span style="font-size: 24px; font-weight: bold;">0%</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-3 col-sm-3" style="width:200px;">
+              <div class="kpiPrespective">
+                <label style="height: 15px;text-align: left;font: normal normal medium 12px/15px Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">KPI Prespective <i class="fa fa-info-circle"></i></label>
+              </div>
+              <div style="margin-top:5px">
+                <label class="progressText">Performance {{performance}}</label>
+                <mat-progress-bar class="performanceBar" style="height: 6px;opacity: 1;" mode="determinate" [value]="performanceBar"></mat-progress-bar>
+              </div>
+              <div style="margin-top:5px">
+                <label class="progressText">Quality {{quality}}</label>
+                <mat-progress-bar class="qualityBar" style="height: 6px;opacity: 1;" mode="determinate" [value]="qualityBar"></mat-progress-bar>
+              </div>
+              <div style="margin-top:5px">
+                <label class="progressText">Compilance {{compliance}}</label>
+                <mat-progress-bar class="compilanceBar" style="height: 6px;opacity: 1;" mode="determinate" [value]="compilanceBar"></mat-progress-bar>
+              </div>
+              <div style="margin-top:5px">
+                <label class="progressText">Value {{value}}</label>
+                <mat-progress-bar class="valueBar" style="height: 6px;opacity: 1;" mode="determinate" [value]="valueBar"></mat-progress-bar>
+              </div>
+            </div>
+            
+            <div class="col-lg-6 col-md-6 col-sm-6" style="left:25px;">
+              <div *ngIf="projectScores?.length === 0" style="padding: 20px; text-align: center; color: #999;">
+                No project scores available
+              </div>
+              <table class="successgoalTable" *ngIf="projectScores?.length > 0">
+                <thead>
+                  <tr>
+                    <th style="width: 110px;max-width: 110px !important;padding-left: 5px;">Project</th>
+                    <th style="width: 80px; max-width: 80px !important;text-align: center;">Achievement</th>
+                  </tr>
+                </thead>
+                <tbody style="font-size: 12px;">
+                  <tr *ngFor="let proj of projectScores" style="background: #FAFAFA 0% 0% no-repeat padding-box;border: 1px solid #E5E5E5;">
+                    <td style="width: 110px;max-width: 110px !important;cursor: pointer;font-size:11px;overflow-x: hidden !important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0"
+                        [routerLink]="['/successgoal/goals', proj.cusT_ID, proj.proJ_ID, sMonth, iYear]" 
+                        [matTooltip]="proj.proJ_NM">
+                      {{proj.proJ_NM}}
+                    </td>
+                    <td style="color: black; font-weight: 900;text-align: center; overflow: visible; width: 80px !important;max-width: 80px !important;">
+                      {{proj.score}}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk & Issues Section -->
+    <div class="row">
+      <div class="col-lg-8 col-md-8 col-sm-8">
+        <div class="riskIssueCard">
+          <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-4">
+              <label style="margin-left:5px;height: 15px;text-align: left;font: normal normal medium 12px/15px Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">Risk</label>
+              <hr style="margin-top: auto;width: 45px;height: 2px;background: #4B4EB1 0% 0% no-repeat padding-box;opacity: 1;margin-left: 7px">
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-4" style="float: right;">
+              <label style="margin-left:5px;height: 15px;text-align: left;font: normal normal medium 12px/15px Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">Issues</label>
+              <hr style="margin-top: auto;width: 45px;height: 2px;background: #4B4EB1 0% 0% no-repeat padding-box;opacity: 1;margin-left: 7px">
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-4"></div>
+          </div>
+          
+          <div class="row">
+            <!-- Risks Widget -->
+            <div class="col-lg-4 col-md-4 col-sm-4">
+              <div *ngIf="isRisksEmpty" style="height:85px; width: 170px;font-size: 13px;color:black">
+                <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center;">No Risks</span>
+              </div>
+              <div *ngIf="!isRisksEmpty" style="position: relative;">
+                <!-- Phase 2: Risk chart will be added here -->
+                <div class="chart-placeholder" style="height: 85px; width: 170px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                  <span style="font-size: 12px; color: #999;">Risk Chart</span>
+                </div>
+                <div class="totalLabel">{{totalRisks}} Total Risks</div>
+              </div>
+            </div>
+            
+            <div class="col-lg-2 col-md-2 col-sm-2"></div>
+            
+            <!-- Issues Widget -->
+            <div class="col-lg-4 col-md-4 col-sm-4">
+              <div *ngIf="isIssuesEmpty" style="height:85px; width: 170px;font-size: 13px;color:black">
+                <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center;">No Issues</span>
+              </div>
+              <div *ngIf="!isIssuesEmpty" style="position: relative;">
+                <!-- Phase 2: Issue chart will be added here -->
+                <div class="chart-placeholder" style="height: 85px; width: 170px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                  <span style="font-size: 12px; color: #999;">Issue Chart</span>
+                </div>
+                <div class="totalLabel">{{totalIssues}} Total Issues</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Items Section -->
+      <div class="col-lg-4 col-md-4 col-sm-4">
+        <div class="containerCard">
+          <div style="margin-bottom: 20px; height: 130px; width: 380px;">
+            <div class="row">
+              <div class="col-lg-4 col-md-4 col-sm-4">
+                <label style="margin-left:5px;height: 15px;text-align: left;font: normal normal medium 12px/15px Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">Action Items</label>
+                <hr style="margin-top: auto;width: 45px;height: 2px;background: #4B4EB1 0% 0% no-repeat padding-box;opacity: 1;margin-left: 7px">
+              </div>
+            </div>
+            <div class="row" *ngIf="isActionItemsEmpty" style="height:85px; width: 170px;font-size: 13px;color:black">
+              <span style="display: block;padding-top: 25px;padding-left: 10px; text-align: center;">No Action Items</span>
+            </div>
+            <div *ngIf="!isActionItemsEmpty" style="position: relative;">
+              <!-- Phase 2: Action items chart will be added here -->
+              <div class="chart-placeholder" style="height: 85px; width: 170px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 12px; color: #999;">Action Items Chart</span>
+              </div>
+              <div class="totalLabel">{{totalActionItems}} Total Action Items</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract Status Section -->
+    <div class="row">
+      <div class="col-lg-4 col-md-4 col-sm-4">
+        <div class="contractCard" [style.margin-top.px]="_util.IsPremier(customerId) ? 0 : -15">
+          <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-4">
+              <label style="margin-left:3px;height: 15px;text-align: left;font: normal normal medium 12px/15px Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">Contract Status</label>
+              <hr style="margin-top: auto;width: 45px;height: 2px;background: #4B4EB1 0% 0% no-repeat padding-box;opacity: 1;margin-left: 7px">
+            </div>
+          </div>
+          <div class="row">
+            <label style="margin-left:50px;height: 17px;text-align: left;font: normal normal normal 14px/17px Proxima Nova;letter-spacing: 0px;color: #333333;opacity: 1;">No. Of Talents releasing in 3 Months</label>
+          </div>
+          <div class="row" style="margin-left: 45px;text-align: center;">
+            <div class="col-lg-4 col-md-4 col-sm-4" style="height: 39px;opacity: 1;">
+              <span style="width: 16px;height: 20px;text-align: center;text-decoration: underline;font: normal normal medium 16px/20px Proxima Nova;letter-spacing: 0px;color: #4B4EB1;opacity: 1;">{{pmCount}}</span>
+              <div style="white-space: nowrap;height: 15px;text-align: center;font: normal normal normal 12px/15px Proxima Nova;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Project Managers</div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-4" style="height: 39px;opacity: 1;">
+              <span style="width: 16px;height: 20px;text-align: center;text-decoration: underline;font: normal normal medium 16px/20px Proxima Nova;letter-spacing: 0px;color: #4B4EB1;opacity: 1;">{{memberCount}}</span>
+              <div style="white-space: nowrap;height: 15px;text-align: center;font: normal normal normal 12px/15px Proxima Nova;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Team Members</div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-4" style="height: 39px;opacity: 1;left: -20px;">
+              <span style="width: 16px;height: 20px;text-align: center;text-decoration: underline;font: normal normal medium 16px/20px Proxima Nova;letter-spacing: 0px;color: #4B4EB1;opacity: 1;">{{qualityCount}}</span>
+              <div style="height: 15px;text-align: center;font: normal normal normal 12px/15px Proxima Nova;letter-spacing: 0px;color: #4C4C47;opacity: 1;">Quality</div>
+            </div>
+          </div>
+          <div class="row">
+            <div *ngIf="isProjectStatusEmpty" style="height:50px;font-size: 12px;color:black">
+              <span style="display: block;padding-top: 20px;text-align: center;">No Projects/Contracts to start or close in next 3 months</span>
+            </div>
+            <div *ngIf="!isProjectStatusEmpty">
+              <div style="padding: 20px; text-align: center;">
+                <div style="font-size: 18px; font-weight: bold;">{{projectToEnd}}</div>
+                <div style="font-size: 12px;">Projects Closing</div>
+                <div style="margin: 10px 0; font-size: 18px; font-weight: bold;">{{projectToStart}}</div>
+                <div style="font-size: 12px;">Projects Starting</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No Customer Selected Message -->
+<div *ngIf="!customerId" style="padding: 40px; text-align: center; color: #999;">
+  <h3>Please select a customer to view the dashboard</h3>
+</div>
