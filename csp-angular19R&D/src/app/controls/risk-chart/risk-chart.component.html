@@ -20,11 +20,25 @@
       <div class="filters-grid">
         <!-- Row 1: Dropdowns -->
         <div class="filter-field">
-          <mat-select class="mat-dropdown-plain" [(ngModel)]="customeR_IDS" multiple #selectCustomer placeholder="Account">
+          <mat-select class="mat-dropdown-plain" panelClass="risk-dropdown-panel" [(ngModel)]="customeR_IDS" multiple #selectCustomer 
+                      placeholder="Account" (openedChange)="resetAccountFilterValue($event)">
+            <!-- Search Input -->
+            <mat-option class="search-option" (click)="$event.stopPropagation()">
+              <div class="dropdown-search" (click)="$event.stopPropagation()">
+                <mat-icon>search</mat-icon>
+                <input [(ngModel)]="accountSearchText"
+                       (ngModelChange)="onAccountSearchChange()"
+                       (keydown)="$event.stopPropagation()"
+                       (click)="$event.stopPropagation()"
+                       placeholder="Search accounts..."
+                       class="search-input">
+              </div>
+            </mat-option>
+            
             <mat-option #allCustomerSelected (click)="toggleSelectionForCustomer()" [value]="'-1'">
               <strong>All</strong>
             </mat-option>
-            <ng-container *ngFor="let cust of customer">
+            <ng-container *ngFor="let cust of filteredCustomers">
               <mat-option *ngIf="(cust.cusT_ID || cust.customerId) !== '-1'" 
                           [value]="cust.cusT_ID || cust.customerId">
                 {{cust.cusT_NM || cust.customerName}}
@@ -34,7 +48,7 @@
         </div>
 
         <div class="filter-field">
-          <mat-select class="mat-dropdown-plain" [(ngModel)]="businessUnit" multiple #selectBusinessUnit (click)="getOverallBusinessUnits()" placeholder="Business Unit">
+          <mat-select class="mat-dropdown-plain" panelClass="risk-dropdown-panel" [(ngModel)]="businessUnit" multiple #selectBusinessUnit (click)="getOverallBusinessUnits()" placeholder="Business Unit">
             <mat-option #allBusinessUnitSelected (click)="toggleSelectionForBusinessUnit()" [value]="'-1'">
               <strong>All Business Units</strong>
             </mat-option>
@@ -45,7 +59,7 @@
         </div>
 
         <div class="filter-field">
-          <mat-select class="mat-dropdown-plain" [(ngModel)]="riskStatus" multiple #select placeholder="Risk Status">
+          <mat-select class="mat-dropdown-plain" panelClass="risk-dropdown-panel" [(ngModel)]="riskStatus" multiple #select placeholder="Risk Status">
             <mat-option #allSelected (click)="toggleSelection()" [value]="'-1'">
               <strong>All Statuses</strong>
             </mat-option>

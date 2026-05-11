@@ -9,6 +9,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ReportsService } from '../reports.service';
 import { AppsService } from '../../../core/services/apps.service';
 import { MyUtility } from '../../../shared/my-utility';
@@ -31,13 +35,20 @@ import { ChecklistModel } from '../../../models/checklist.model';
     MatProgressBarModule,
     MatIconModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatButtonModule,
+    MatTooltipModule,
+    MatMenuModule,
+    MatCheckboxModule
   ],
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss']
 })
 export class ReportsComponent implements OnInit {
   displayedColumns: string[] = [];
+  allColumns: string[] = [];
+  columnVisibility: { [key: string]: boolean } = {};
+  columnSearchText: string = '';
   FinalTabData: any[] = [];
   AllSps: ReportsSPDetailsModel[] = [];
   selectedSP: ReportsSPDetailsModel = new ReportsSPDetailsModel();
@@ -46,6 +57,7 @@ export class ReportsComponent implements OnInit {
   Checklist: ChecklistModel[] = [];
   
   @ViewChild('TABLE') table!: ElementRef;
+  @ViewChild('tableScrollContainer') tableScrollContainer!: ElementRef;
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild('paginatorTable') paginator!: MatPaginator;
   
@@ -210,6 +222,50 @@ export class ReportsComponent implements OnInit {
     return isValid;
   }
 
+  /** Scroll the table container left or right by 320px */
+  scrollTable(direction: 'left' | 'right'): void {
+    const el: HTMLElement = this.tableScrollContainer?.nativeElement;
+    if (!el) return;
+    const amount = 320;
+    el.scrollBy({ left: direction === 'right' ? amount : -amount, behavior: 'smooth' });
+  }
+
+  /** True when there are more than 10 total columns */
+  get hasScrollableColumns(): boolean {
+    return this.allColumns.length > 10;
+  }
+
+  // ── Column visibility picker ─────────────────────────────────────
+
+  /** Columns shown in the picker search (filtered by columnSearchText) */
+  get filteredColumnNames(): string[] {
+    const q = this.columnSearchText.toLowerCase().trim();
+    return q ? this.allColumns.filter(c => c.toLowerCase().includes(q)) : this.allColumns;
+  }
+
+  /** Toggle a column on/off and rebuild displayedColumns */
+  toggleColumn(col: string): void {
+    this.columnVisibility[col] = !this.columnVisibility[col];
+    this.displayedColumns = this.allColumns.filter(c => this.columnVisibility[c]);
+  }
+
+  /** True when every column is visible */
+  get allColumnsSelected(): boolean {
+    return this.allColumns.every(c => this.columnVisibility[c]);
+  }
+
+  /** Toggle all columns on/off */
+  toggleAllColumns(): void {
+    const newState = !this.allColumnsSelected;
+    this.allColumns.forEach(c => this.columnVisibility[c] = newState);
+    this.displayedColumns = newState ? [...this.allColumns] : [];
+  }
+
+  /** Number of currently visible columns */
+  get visibleColumnCount(): number {
+    return this.displayedColumns.length;
+  }
+
   updateTable() {
     this.dataSource = new MatTableDataSource(this.FinalTabData);
     this.dataSource.paginator = this.paginator;
@@ -279,8 +335,14 @@ export class ReportsComponent implements OnInit {
       next: (data: any[]) => {
         this.FinalTabData = data || [];
         if (this.FinalTabData.length > 0) {
-          this.displayedColumns = Object.keys(this.FinalTabData[0]);
+          this.allColumns = Object.keys(this.FinalTabData[0]);
+          // default: all columns visible
+          this.columnVisibility = {};
+          this.allColumns.forEach(c => this.columnVisibility[c] = true);
+          this.displayedColumns = [...this.allColumns];
         } else {
+          this.allColumns = [];
+          this.columnVisibility = {};
           this.displayedColumns = [];
         }
         this.updateTable();

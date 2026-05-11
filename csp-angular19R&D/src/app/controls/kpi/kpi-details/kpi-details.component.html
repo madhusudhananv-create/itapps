@@ -7,36 +7,39 @@
 <div class="modern-kpi-dashboard">
 
   <!-- 🎛️ Badge & Filter Controls Row -->
-  <div class="filter-controls-wrapper" *ngIf="!_loading">
-    <!-- Period Badge -->
-    <div class="period-badge" *ngIf="ShowMonthTable()">
-      <mat-icon>calendar_today</mat-icon>
-      Monthly KPI Details
-    </div>
-    
-    <!-- Filter Dropdowns -->
-    <div class="filter-group">
-      <mat-form-field appearance="outline" class="compact-filter">
-        <mat-label>Month</mat-label>
-        <mat-select [disabled]="_loading" name='tableMonth' [(ngModel)]="_util.tableMonth"
-          (selectionChange)="ngOnChanges()">
-          <mat-option *ngFor="let m of month" [value]="m.title">
-            {{m.title}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      
-      <mat-form-field appearance="outline" class="compact-filter year-filter">
-        <mat-label>Year</mat-label>
-        <mat-select [disabled]="_loading" name='tableYear' [(ngModel)]="_util.tableYear"
-          (selectionChange)="ngOnChanges()">
-          <mat-option *ngFor="let year of _util.Years(3)" [value]="year">
-            {{year}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
+<div class="filter-controls-wrapper" *ngIf="!_loading">
+
+  <!-- Period Badge -->
+  <div class="period-badge" *ngIf="ShowMonthTable()">
+    <mat-icon>calendar_today</mat-icon>
+    Monthly KPI Details
   </div>
+
+  <!-- Native Select Dropdowns -->
+  <div class="filter-group">
+    
+    <div class="native-select-wrapper">
+      <label>Month</label>
+      <select [(ngModel)]="_util.tableMonth" 
+              name="tableMonth"
+              [disabled]="_loading"
+              (change)="ngOnChanges()">
+        <option *ngFor="let m of month" [value]="m.title">{{m.title}}</option>
+      </select>
+    </div>
+
+    <div class="native-select-wrapper">
+      <label>Year</label>
+      <select [(ngModel)]="_util.tableYear" 
+              name="tableYear"
+              [disabled]="_loading"
+              (change)="ngOnChanges()">
+        <option *ngFor="let year of _util.Years(3)" [value]="year">{{year}}</option>
+      </select>
+    </div>
+
+  </div>
+</div>
 
   <!-- 📝 Info Banner -->
   <div class="info-banner" *ngIf="!_loading && !ShowMonthTable() && !ShowWeeklyTable() && !ShowQuarterlyTable()">

@@ -232,7 +232,9 @@
       min-height: 30px !important;
     }
     .mdc-notched-outline__notch {
-      display: none !important;
+      border-left: none !important;
+      border-right: none !important;
+      padding: 0 !important;
     }
     .mat-mdc-select-value,
     input.mat-mdc-input-element {
@@ -272,6 +274,13 @@
   .mdc-notched-outline__notch {
     border-color: #e2e8f0 !important;
     transition: border-color 130ms ease !important;
+  }
+  
+  // Remove vertical borders from notch to prevent line artifact
+  .mdc-notched-outline__notch {
+    border-left: none !important;
+    border-right: none !important;
+    padding: 0 !important;
   }
   .mat-mdc-form-field:hover .mdc-notched-outline__leading,
   .mat-mdc-form-field:hover .mdc-notched-outline__trailing,

@@ -9,6 +9,7 @@ import { MatCheckboxModule, MatCheckboxChange } from '@angular/material/checkbox
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -50,6 +51,7 @@ import { environment } from '../../../../environments/environment';
     MatExpansionModule,
     MatProgressBarModule,
     MatIconModule,
+    MatTooltipModule,
     MatSnackBarModule,
     ProjectSelectorComponent,
     DropdownFilterComponent
@@ -69,6 +71,8 @@ export class PspdComponent implements OnInit {
   @Output() onChange: EventEmitter<any> = new EventEmitter<any>();
 
   serviceAreaList: any = [];
+  filteredServiceAreaList: any = [];
+  serviceTowerSearchText: string = '';
   processModelList: ProcessModelModel[] = [];
   selectedServiceAreaToAdd!: ServiceAreaModelNew;
   selectedServiceArea!: ServiceAreaModelNew;
@@ -649,9 +653,42 @@ export class PspdComponent implements OnInit {
 
   Service_GetInscopeServiceList() {
     this.serviceAreaList = [];
+    this.filteredServiceAreaList = [];
     this._appservice.getServiceTowersInscopeMappingList(this.projId).subscribe(data => {
       this.serviceAreaList = data;
+      this.filteredServiceAreaList = [...data];
     }, error => { this._util.serviceError(error); });
+  }
+
+  /**
+   * Reset service tower search when dropdown opens
+   */
+  resetServiceTowerFilterValue(isOpen: boolean) {
+    if (isOpen) {
+      this.serviceTowerSearchText = '';
+      this.filteredServiceAreaList = Array.isArray(this.serviceAreaList) ? [...this.serviceAreaList] : [];
+    }
+  }
+
+  /**
+   * Filter service towers based on search text
+   */
+  onServiceTowerSearchChange() {
+    if (!Array.isArray(this.serviceAreaList)) {
+      this.filteredServiceAreaList = [];
+      return;
+    }
+    
+    const searchText = this.serviceTowerSearchText.toLowerCase().trim();
+    if (searchText === '') {
+      this.filteredServiceAreaList = [...this.serviceAreaList];
+    } else {
+      this.filteredServiceAreaList = this.serviceAreaList.filter((item: any) => {
+        const title = (item.title || '').toLowerCase();
+        const id = (item.id || '').toString().toLowerCase();
+        return title.includes(searchText) || id.includes(searchText);
+      });
+    }
   }
 
   service_saveProcessConfig(processDescription: any) {

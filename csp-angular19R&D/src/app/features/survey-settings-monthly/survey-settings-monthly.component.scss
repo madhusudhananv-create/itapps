@@ -1,15 +1,622 @@
-tr.mat-header-row {
-  height: 35px;
-  vertical-align: bottom !important;
-  border-bottom: 2px solid #ddd !important;
-  font-size: 16px !important;
-  background-color: #e6e6e6 !important;
+// ════════════════════════════════════════════════════════════════
+//  Monthly CSS Configuration — Redesigned SCSS
+//  Matches the clean card-based UI from the design screenshot
+// ════════════════════════════════════════════════════════════════
+
+// ── Design tokens ──────────────────────────────────────────────
+$bg          : #f2f1ec;
+$card-bg     : #ffffff;
+$border      : #e8e8e4;
+$hdr-bg      : #f9f9f7;
+$text        : #1a1a18;
+$muted       : #6b6b69;
+$green       : #16a34a;
+$orange      : #d97706;
+$red         : #dc2626;
+$blue        : #2563eb;
+$purple      : #7c3aed;
+$teal        : #0d9488;
+$shadow      : 0 1px 4px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.05);
+
+// ── Page header ────────────────────────────────────────────────
+.page-header {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #1d4ed8 100%);
+  padding: 28px 32px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: -40px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+    pointer-events: none;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    right: 60px;
+    bottom: -60px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.04);
+    pointer-events: none;
+  }
+
+  .page-header-icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.15);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,.2);
+
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      color: #fff;
+    }
+  }
+
+  .page-header-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .page-title {
+    margin: 0 0 4px;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: .01em;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    margin: 0;
+    font-size: .825rem;
+    color: rgba(255,255,255,.72);
+    letter-spacing: .02em;
+    font-weight: 400;
+  }
+
+  .page-header-badge {
+    flex-shrink: 0;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    mat-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+  }
 }
 
-tr.mat-row {
-  height: 35px;
-  font-size: 12px !important;
+// ── Page wrapper ───────────────────────────────────────────────
+.ssm-page {
+  background: $bg;
+  min-height: 100vh;
+  padding: 20px 24px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
+
+// ── Card ───────────────────────────────────────────────────────
+.ssm-card {
+  background: $card-bg;
+  border-radius: 12px;
+  box-shadow: $shadow;
+  overflow: hidden;
+}
+
+// ── Card header ────────────────────────────────────────────────
+.ssm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid $border;
+  background: $hdr-bg;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ssm-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .8px;
+  color: $muted;
+  text-transform: uppercase;
+
+  .title-icon {
+    color: $muted;
+    flex-shrink: 0;
+  }
+}
+
+.ssm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+// ── Batch count badge ──────────────────────────────────────────
+.batch-count-badge {
+  font-size: 11px;
+  color: $muted;
+  background: #ebebea;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-weight: 600;
+}
+
+// ── Icon button (refresh) ──────────────────────────────────────
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid $border;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: $muted;
+  transition: all .15s;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  &:hover {
+    background: #f0f0ee;
+    color: $text;
+    mat-icon { transform: rotate(90deg); }
+  }
+}
+
+// ── Outline buttons (Add Batch, Generate contacts, Re-generate) ─
+.outline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid $border;
+  border-radius: 20px;
+  background: $card-bg;
+  color: $text;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+  &:hover {
+    border-color: #aaa;
+    background: #f7f7f5;
+  }
+}
+
+// ── Batch table wrapper ────────────────────────────────────────
+.batch-table-wrap {
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 5px; height: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 4px; }
+}
+
+// ── Shared table styles ────────────────────────────────────────
+.ssm-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  // Header
+  thead tr,
+  tr.mat-mdc-header-row,
+  tr.mat-header-row {
+    background: #f4f4f2 !important;
+  }
+
+  th.mat-mdc-header-cell,
+  th.mat-header-cell {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    color: $muted !important;
+    letter-spacing: .55px;
+    text-transform: uppercase;
+    padding: 9px 14px !important;
+    border-bottom: 1px solid $border !important;
+    border-right: 1px solid $border !important;
+    background: #f4f4f2 !important;
+    white-space: nowrap;
+
+    &:last-child { border-right: none !important; }
+  }
+
+  // Rows
+  tr.mat-mdc-row,
+  tr.mat-row {
+    border-bottom: 1px solid $border !important;
+    transition: background .1s;
+
+    &:last-child { border-bottom: none !important; }
+    &:hover { background: #fafaf8 !important; }
+
+    &.selected-row {
+      background: #fef9ec !important;
+      border-left: 3px solid $orange !important;
+    }
+  }
+
+  td.mat-mdc-cell,
+  td.mat-cell {
+    font-size: 12px !important;
+    color: $text;
+    padding: 10px 14px !important;
+    border-right: 1px solid $border !important;
+
+    &:last-child { border-right: none !important; }
+  }
+}
+
+// ── Column helpers ─────────────────────────────────────────────
+.col-no     { width: 48px; text-align: center; color: $muted !important; font-size: 11px !important; }
+.col-check  { width: 44px; text-align: center !important; }
+.col-num    { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.col-pending  { color: $orange !important; }
+.col-verified { color: $green  !important; }
+.col-rejected { color: $red    !important; }
+.col-sent     { color: $blue   !important; }
+.col-received { color: $purple !important; }
+
+.row-num  { font-size: 11px; color: $muted; }
+.date-val { font-size: 12px; font-weight: 500; }
+.cell-muted { color: $muted !important; }
+.cell-bold  { font-weight: 700 !important; }
+.cell-email { font-size: 11px !important; color: #555; }
+
+// ── Status pills ───────────────────────────────────────────────
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.status-active,
+  &.status-completed { background: #dcfce7; color: $green; }
+  &.status-created,
+  &.status-new       { background: #dbeafe; color: $blue; }
+  &.status-pending   { background: #fef3c7; color: $orange; }
+  &.status-rejected  { background: #fee2e2; color: $red; }
+  &.status-survey-sent,
+  &.status-sent      { background: #ffedd5; color: $orange; }
+
+  // Fallback for any unknown status
+  &:not([class*="status-"]) { background: #f3f4f6; color: $muted; }
+}
+
+// ── Stats row ──────────────────────────────────────────────────
+.stats-row {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid $border;
+}
+
+.stat-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 20px 12px;
+  border-right: 1px solid $border;
+  min-width: 0;
+
+  &:last-child { border-right: none; }
+}
+
+.stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .7px;
+  color: $muted;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.v-total    { color: $text;   }
+.v-pending  { color: $orange; }
+.v-verified { color: $green;  }
+.v-rejected { color: $red;    }
+.v-sent     { color: $blue;   }
+.v-received { color: $purple; }
+
+.stat-bar {
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 4px;
+}
+.b-total    { background: #d1d5db; }
+.b-pending  { background: $orange; }
+.b-verified { background: $green;  }
+.b-rejected { background: $red;    }
+.b-sent     { background: $blue;   }
+.b-received { background: $purple; }
+
+// ── Filter bar ─────────────────────────────────────────────────
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid $border;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid $border;
+  border-radius: 20px;
+  padding: 5px 12px;
+  background: #fafaf8;
+  transition: border-color .15s;
+
+  &:focus-within { border-color: #aaa; }
+
+  .search-icon { font-size: 16px; width: 16px; height: 16px; color: $muted; }
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  color: $text;
+  width: 160px;
+
+  &::placeholder { color: $muted; }
+}
+
+// ── Filter pills ───────────────────────────────────────────────
+.filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1.5px solid $border;
+  border-radius: 20px;
+  background: $card-bg;
+  color: $text;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all .15s;
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+
+  &:hover { background: #f0f0ee; border-color: #ccc; }
+
+  &.pill-active { background: $text; color: #fff; border-color: $text; }
+  &.pill-pending.pill-active  { background: $orange; border-color: $orange; }
+  &.pill-verified.pill-active { background: $green;  border-color: $green;  }
+  &.pill-sent.pill-active     { background: $blue;   border-color: $blue;   }
+}
+
+// ── Export button ──────────────────────────────────────────────
+.export-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid $border;
+  border-radius: 8px;
+  background: $card-bg;
+  color: $text;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all .15s;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; color: $green; }
+
+  &:hover { background: #f0f0ee; border-color: #aaa; }
+}
+
+// ── Progress bar ───────────────────────────────────────────────
+.ssm-progress {
+  height: 2px !important;
+  border-radius: 0;
+}
+
+// ── Customer table wrapper ─────────────────────────────────────
+.customer-table-wrap {
+  overflow-x: auto;
+  max-height: 380px;
+  overflow-y: auto;
+  position: relative;
+
+  &::-webkit-scrollbar { width: 5px; height: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 4px; }
+}
+
+.customer-table { min-width: 1300px; }
+
+// ── Avatar initials ────────────────────────────────────────────
+.cell-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #dbeafe;
+  color: $blue;
+}
+
+// Cycle through avatar colors using nth-child
+tr:nth-child(6n+1) .avatar { background: #dbeafe; color: #1d4ed8; }
+tr:nth-child(6n+2) .avatar { background: #fce7f3; color: #9d174d; }
+tr:nth-child(6n+3) .avatar { background: #dcfce7; color: #15803d; }
+tr:nth-child(6n+4) .avatar { background: #fef9c3; color: #a16207; }
+tr:nth-child(6n+5) .avatar { background: #ede9fe; color: #6d28d9; }
+tr:nth-child(6n+6) .avatar { background: #ffedd5; color: #c2410c; }
+
+.name-label { font-size: 12px; font-weight: 500; }
+
+// ── Business unit tag ──────────────────────────────────────────
+.bu-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: $muted;
+}
+
+// ── Copy link button ───────────────────────────────────────────
+.copy-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: $blue;
+  transition: opacity .15s;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  &:hover { opacity: .6; }
+}
+
+// ── Empty state ────────────────────────────────────────────────
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: $muted;
+
+  mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: .3; display: block; margin: 0 auto 12px; }
+  p { margin: 4px 0; font-size: 14px; font-weight: 600; color: $text; }
+  .empty-sub { font-size: 12px; font-weight: 400; color: $muted; }
+}
+
+// ── Bottom action bar ──────────────────────────────────────────
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: $card-bg;
+  border-top: 1px solid $border;
+  padding: 10px 24px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  box-shadow: 0 -2px 12px rgba(0,0,0,.08);
+  z-index: 100;
+}
+
+.action-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid $border;
+  border-radius: 8px;
+  background: $card-bg;
+  color: $text;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; color: $purple; }
+
+  strong { font-weight: 700; }
+
+  &:hover {
+    background: #f5f5f3;
+    border-color: #bbb;
+  }
+
+  &:active { transform: translateY(1px); }
+}
+
+// ── Material checkbox size override ────────────────────────────
+::ng-deep .mat-checkbox-inner-container,
+::ng-deep .mdc-checkbox {
+  height: 16px !important;
+  width: 16px !important;
+  margin: auto !important;
+}
+
+// ── Responsive ─────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .ssm-page { padding: 12px 12px 120px; }
+  .stats-row { flex-wrap: wrap; }
+  .stat-card { min-width: 30%; }
+  .filter-bar { gap: 8px; }
+  .search-input { width: 120px; }
+  .action-bar { flex-direction: column; align-items: stretch; padding: 12px; }
+  .action-bar-btn { justify-content: center; }
+}
+
 
 td {
   font-size: 12px !important;

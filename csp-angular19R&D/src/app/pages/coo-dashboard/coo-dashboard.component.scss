@@ -1,8 +1,46 @@
-/* COO Dashboard Styling - Modernized */
+// ============================================================
+// COO Dashboard — Page Shell
+// ============================================================
+$green: #16a34a;
+$green-light: #dcfce7;
+$text-primary: #111827;
+$text-secondary: #6b7280;
+$border: #e5e7eb;
+$bg-page: #f5f6fa;
 
 body {
-  font-family: 'Lato', "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif !important;
 }
+
+.coo-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  background: $bg-page;
+  min-height: calc(100vh - 52px);
+}
+
+// Sticky filter bar
+.filter-section {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: #ffffff;
+  border-bottom: 1px solid $border;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+// Main content
+.dashboard-content {
+  flex: 1;
+  padding: 20px 24px;
+  animation: cooDashIn 0.3s ease-out;
+}
+
+@keyframes cooDashIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 
 .coo-dashboard-container {
   padding: 0;

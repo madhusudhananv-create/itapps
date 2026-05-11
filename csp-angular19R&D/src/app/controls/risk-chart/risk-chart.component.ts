@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { AppsService } from '../../core/services/apps.service';
 import { MyUtility } from '../../shared/my-utility';
 import { RiskModel } from '../../shared/models/risk.model';
@@ -33,6 +34,7 @@ import { RiskchartControlComponent, riskDashboardInputsModel } from '../risk-cha
     MatInputModule,
     MatProgressBarModule,
     MatCardModule,
+    MatIconModule,
     RiskchartControlComponent
   ],
   templateUrl: './risk-chart.component.html',
@@ -42,6 +44,8 @@ export class RiskchartComponent implements OnInit {
   @Input() customerId: any;
   risk: RiskModel[] = [];
   customer: any;
+  filteredCustomers: any = [];
+  accountSearchText: string = '';
   customerIds: any;
   _loading: boolean = false;
   allCust: string = "";
@@ -88,11 +92,14 @@ export class RiskchartComponent implements OnInit {
   getvalue() {
     this.riskStatusList = this.getRiskStatus();
     
+    console.log('Loading customer accounts...');
     this._serv.getAccountsForCSATDashboard(this.allCust === 'true').subscribe({
       next: (res: any) => {
         // Handle both array and object responses
         // API returns an object with 'customers' property
         this.customer = Array.isArray(res) ? res : (res?.customers || res?.data || []);
+        console.log(`Loaded ${this.customer?.length || 0} customer accounts`);
+        
         if (this.customer && this.customer.length > 0) {
         }
         if (this.customer != null && this.customer != undefined && this.customer.length != 0) {
@@ -108,8 +115,12 @@ export class RiskchartComponent implements OnInit {
           this.customer.unshift(top10);
           this.customer.unshift(myAccounts);
           this.customer.unshift(allCustomer);
+          // Initialize filtered customers
+          this.filteredCustomers = [...this.customer];
+          console.log('Customer accounts loaded successfully');
         } else {
           console.warn('No customer data received or empty array');
+          this.filteredCustomers = [];
         }
       },
       error: (error: any) => {
@@ -117,6 +128,7 @@ export class RiskchartComponent implements OnInit {
         console.error('Error status:', error.status);
         console.error('Error message:', error.message);
         this._util.serviceError('Failed to load customer accounts. Please check console for details.');
+        this.filteredCustomers = [];
       }
     });
     
@@ -164,6 +176,7 @@ export class RiskchartComponent implements OnInit {
     }
     this.riskDashboardInputs.customeR_IDS = this.getCustomerIds();
     this.riskDashboardInputs.businesS_UNITS = businessUnitIds.slice(0, businessUnitIds.lastIndexOf(','));
+    
     var riskStatusIds: string = "";
     if (this.riskStatus != null && this.riskStatus != undefined) {
       this.riskStatus.forEach((element: any) => {
@@ -174,6 +187,8 @@ export class RiskchartComponent implements OnInit {
     this.riskDashboardInputs.StarT_DATE = this.fromDate!;
     this.riskDashboardInputs.enD_DATE = this.toDate!;
     this.isValid = true;
+    
+    console.log('Generating risk chart with inputs:', this.riskDashboardInputs);
     
     // Call the API to get risk chart data
     this._util.GetRiskChart(this.riskDashboardInputs);
@@ -203,7 +218,15 @@ export class RiskchartComponent implements OnInit {
 
   getCustomerIds(): string {
     var allCustomerIds: string = "";
+    var hasSpecialOption = false;
+    
     if (this.customeR_IDS != null && this.customeR_IDS != undefined) {
+      // First pass: check if any special options are selected
+      hasSpecialOption = this.customeR_IDS.some((element: any) => 
+        element == "-1" || element == "-2" || element == "-3" || 
+        element == "-4" || element == "-5" || element == "-6"
+      );
+      
       this.customeR_IDS.forEach((element: any) => {
         if (element == "-1") {
           if (this.customer != null && this.customer != undefined && this.customer.length > 0) {
@@ -275,12 +298,21 @@ export class RiskchartComponent implements OnInit {
           }
         }
 
-        if (element != "-1" && element != "-2" && element != "-3" && element != "-4" && element != "-5" && element != "-6") {
+        // Only add individual customer IDs if NO special options are selected
+        // This prevents duplication when "All" or other special filters are used
+        if (!hasSpecialOption && 
+            element != "-1" && element != "-2" && element != "-3" && 
+            element != "-4" && element != "-5" && element != "-6" &&
+            element != null && element != undefined) {
           allCustomerIds = allCustomerIds + element + ",";
         }
       });
     }
-    return allCustomerIds.slice(0, allCustomerIds.lastIndexOf(','));
+    
+    // Remove trailing comma and return
+    const result = allCustomerIds.slice(0, allCustomerIds.lastIndexOf(','));
+    console.log('Generated customer IDs string:', result);
+    return result;
   }
 
   getRiskStatus(): any {
@@ -300,11 +332,44 @@ export class RiskchartComponent implements OnInit {
 
   toggleSelectionForCustomer() {
     if (this.allCustomerSelected.selected) {
+      // Select all options including "All"
       this.selectCustomer
         .options
         .forEach((item: MatOption) => item.select());
     } else {
+      // Deselect all options
       this.selectCustomer.options.forEach((item: MatOption) => item.deselect());
+    }
+  }
+
+  /**
+   * Reset account search when dropdown opens
+   */
+  resetAccountFilterValue(isOpen: boolean) {
+    if (isOpen) {
+      this.accountSearchText = '';
+      this.filteredCustomers = Array.isArray(this.customer) ? [...this.customer] : [];
+    }
+  }
+
+  /**
+   * Filter accounts based on search text
+   */
+  onAccountSearchChange() {
+    if (!Array.isArray(this.customer)) {
+      this.filteredCustomers = [];
+      return;
+    }
+    
+    const searchText = this.accountSearchText.toLowerCase().trim();
+    if (searchText === '') {
+      this.filteredCustomers = [...this.customer];
+    } else {
+      this.filteredCustomers = this.customer.filter((cust: any) => {
+        const custName = (cust.cusT_NM || cust.customerName || '').toLowerCase();
+        const custId = (cust.cusT_ID || cust.customerId || '').toLowerCase();
+        return custName.includes(searchText) || custId.includes(searchText);
+      });
     }
   }
 
