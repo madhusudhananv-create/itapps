@@ -23,8 +23,22 @@
       <mat-form-field appearance="outline" class="filter-select">
         <mat-select placeholder="Select Service Tower" 
                     [(ngModel)]="selectedServiceAreaToAdd"
-                    [compareWith]="compareServiceAreaObjects">
-          <mat-option *ngFor="let item of serviceAreaList" [value]="item">
+                    [compareWith]="compareServiceAreaObjects"
+                    (openedChange)="resetServiceTowerFilterValue($event)">
+          <!-- Search Input -->
+          <mat-option class="search-option" (click)="$event.stopPropagation()">
+            <div class="dropdown-search" (click)="$event.stopPropagation()">
+              <mat-icon>search</mat-icon>
+              <input [(ngModel)]="serviceTowerSearchText"
+                     (ngModelChange)="onServiceTowerSearchChange()"
+                     (keydown)="$event.stopPropagation()"
+                     (click)="$event.stopPropagation()"
+                     placeholder="Search service towers..."
+                     class="search-input">
+            </div>
+          </mat-option>
+          
+          <mat-option *ngFor="let item of filteredServiceAreaList" [value]="item" [matTooltip]="item.title" matTooltipPosition="right">
             {{ item.title }}
           </mat-option>
         </mat-select>
@@ -41,7 +55,8 @@
     <div class="col-lg-2 col-md-3 col-sm-4">
       <mat-select class="mat-dropdown-plain" (selectionChange)="getApplicableProcessArea()" 
                   [(ngModel)]="gavsserviceArea" multiple placeholder="Service Tower">
-        <mat-option *ngFor="let list of serviceAreaList" [value]="list.id" [title]="list.title">
+        <mat-option *ngFor="let list of serviceAreaList" [value]="list.id" 
+                    [title]="list.title" [matTooltip]="list.title" matTooltipPosition="right">
           {{list.title}}
         </mat-option>
       </mat-select>
@@ -104,7 +119,9 @@
                           </thead>
                           <tbody>
                             <tr>
-                              <td style="vertical-align: top;font-weight: 500;">{{ser.areA_NAME}}</td>
+                              <td style="vertical-align: top;font-weight: 500;" [matTooltip]="ser.areA_NAME" matTooltipPosition="right">
+                                {{ser.areA_NAME}}
+                              </td>
                               <td colspan="2" style="padding: 0;">
                                 <table style="width: 100%;" class="process-list-table">
                                   <tr *ngFor="let s of ser.procesS_NAME; let k = index">
@@ -150,7 +167,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let item of sortedItems" [class.retired-row]="isRetired(item?.retiremenT_DATE)">
-            <td style="padding:5px;">
+            <td style="padding:5px;" [matTooltip]="GetServiceAreaName(item?.id)" matTooltipPosition="right">
               {{GetServiceAreaName(item?.id)}}
               <span *ngIf="isRetired(item?.retiremenT_DATE)" class="retired-badge">Retired</span>
             </td>
@@ -174,7 +191,7 @@
 
     <!-- Right Column: Process Mapping -->
     <div class="col-lg-9 col-md-9 col-sm-12" *ngIf="selectedServiceArea">
-      <div class="process-mapping-header">
+      <div class="process-mapping-header" [matTooltip]="selectedServiceArea.title" matTooltipPosition="above">
         <b>Service Tower: {{selectedServiceArea.title}}</b>
       </div>
 
@@ -212,7 +229,7 @@
                 <table class="table table-bordered">
                   <ng-container *ngFor="let processArea of processModel.groupByProcessArea">
                     <tr class="process-area-row">
-                      <td colspan="2" style="width: 90%">
+                      <td colspan="2" style="width: 90%" [matTooltip]="processArea.procesS_AREA_NAME" matTooltipPosition="right">
                         <b>Process Area:</b> {{processArea.procesS_AREA_NAME}}
                       </td>
                       <td>

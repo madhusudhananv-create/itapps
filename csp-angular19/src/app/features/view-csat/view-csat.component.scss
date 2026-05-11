@@ -191,6 +191,13 @@ $font-weight-bold: 700;
           .mdc-notched-outline__trailing {
             border-color: $border-color;
           }
+          
+          // Remove vertical borders from notch to prevent line artifact
+          .mdc-notched-outline__notch {
+            border-left: none !important;
+            border-right: none !important;
+            padding: 0 !important;
+          }
 
           &:hover:not(.mdc-text-field--disabled) .mdc-notched-outline {
             .mdc-notched-outline__leading,

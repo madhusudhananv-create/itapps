@@ -146,13 +146,14 @@
   margin-bottom: 8px;
   gap: 10px;
   padding: 4px 0;
-  
+  margin-top: -8px;
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-end;
     gap: 6px;
   }
-  
+
   // Period Badge on Left - Compact
   .period-badge {
     display: inline-flex;
@@ -166,7 +167,7 @@
     font-weight: 600;
     box-shadow: var(--shadow-sm);
     flex-shrink: 0;
-    margin-right: auto;
+    margin-left: auto;
     height: 28px;
 
     mat-icon {
@@ -175,62 +176,63 @@
       height: 14px;
     }
   }
-  
+
   // Filter Group on Right - Compact
   .filter-group {
     display: flex;
     gap: 6px;
     align-items: center;
+    margin-top: -8px;
   }
-  
+
   .compact-filter {
     width: 110px;
-    
+
     &.year-filter {
       width: 90px;
     }
-    
+
     ::ng-deep {
       .mat-mdc-form-field {
         height: 32px;
         line-height: 32px;
       }
-      
+
       .mat-mdc-form-field-flex {
         background: var(--surface-tertiary);
         border-radius: var(--radius-sm);
         height: 32px;
         align-items: center;
       }
-      
+
       .mat-mdc-text-field-wrapper {
         padding: 0;
         height: 32px;
       }
-      
+
       .mat-mdc-form-field-infix {
         padding-top: 8px;
         padding-bottom: 8px;
         padding-left: 8px;
         min-height: 32px;
       }
-      
+
       .mdc-notched-outline {
         .mdc-notched-outline__notch {
           max-width: 100%;
         }
       }
-      
+
       .mat-mdc-select-value-text,
       .mat-mdc-select-placeholder {
         font-size: 11px;
         padding-left: 4px;
       }
-      
+
       .mat-mdc-floating-label {
         font-size: 10px;
       }
-      
+
       .mat-mdc-select-arrow {
         width: 0;
         height: 0;
@@ -238,7 +240,7 @@
         border-right: 4px solid transparent;
         border-top: 4px solid currentColor;
       }
-      
+
       .mat-mdc-select-arrow-wrapper {
         transform: translateX(-8px);
       }
@@ -989,7 +991,7 @@
             padding: 0 !important;
             width: 60px !important;
           }
-          
+
           .mat-mdc-floating-label {
             font-size: 9px !important;
             font-weight: 600;
@@ -1108,6 +1110,44 @@
           }
         }
       }
+    }
+  }
+}
+
+
+.native-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding-left: 4px;
+  }
+
+  select {
+    height: 36px;
+    padding: 0 28px 0 10px;
+    border: 1.5px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    background: white;
+    cursor: pointer;
+    appearance: auto;
+    min-width: 80px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 }

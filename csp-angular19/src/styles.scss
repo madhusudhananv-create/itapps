@@ -511,6 +511,14 @@ mat-sort-header-button {
    Global Material Form Field Styles
    ============================================================================ */
 
+/* Fix vertical line artifact in outlined form fields - Remove left/right borders from notch */
+.mdc-notched-outline__notch,
+.mat-mdc-notched-outline__notch {
+  border-left: none !important;
+  border-right: none !important;
+  padding: 0 !important;
+}
+
 /* Form fields fill container width */
 .mat-mdc-form-field {
   width: 100%;
@@ -1310,10 +1318,11 @@ mat-sort-header-button {
    Planner Dropdown Panel Styling (Global - for CDK overlay)
    ============================================================================ */
 
-/* Panel width and sizing */
+/* Panel width and sizing - wider to show full customer/project names */
 .planner-dropdown-panel.mat-mdc-select-panel {
   min-width: 300px !important;
-  max-width: 360px !important;
+  max-width: 500px !important;
+  width: auto !important;
   max-height: 320px !important;
   border-radius: 10px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
@@ -1671,6 +1680,8 @@ mat-sort-header-button {
   padding: 8px 12px !important;
   line-height: 1.4 !important;
   word-break: break-word !important;
+  display: flex !important;
+  align-items: flex-start !important;
 }
 
 .planner-dropdown-panel .mat-mdc-option .mdc-list-item__primary-text {
@@ -1681,6 +1692,15 @@ mat-sort-header-button {
   width: 100% !important;
   line-height: 1.4 !important;
   word-break: break-word !important;
+  display: block !important;
+  min-width: unset !important;
+}
+
+/* List item content wrapper - ensure no width constraint */
+.planner-dropdown-panel .mat-mdc-option .mdc-list-item__content {
+  overflow: visible !important;
+  width: 100% !important;
+  flex: 1 1 auto !important;
 }
 
 /* Checkbox alignment */

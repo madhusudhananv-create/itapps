@@ -120,7 +120,7 @@ $border-color: #e0e0e0;
 // Account: 3fr, Business Unit: 3fr, Risk Status: 1.5fr (reduced), From/To Date: 1fr each
 .filters-grid {
   display: grid !important;
-  grid-template-columns: 3fr 3fr 1.5fr 1fr 1fr auto !important;
+  grid-template-columns: 2fr 1.8fr 1.2fr 1.2fr 1.2fr auto !important;
   gap: 6px !important;
   align-items: end;
   width: 100%;
@@ -143,11 +143,11 @@ $border-color: #e0e0e0;
 
   // Keep responsive behavior only for very small screens
   @media (max-width: 1600px) {
-    grid-template-columns: 2.8fr 2.8fr 1.4fr 1fr 1fr auto !important;
+    grid-template-columns: 1.8fr 1.5fr 1.1fr 1.1fr 1.1fr auto !important;
   }
 
   @media (max-width: 1400px) {
-    grid-template-columns: 2.5fr 2.5fr 1.3fr 1fr 1fr auto !important;
+    grid-template-columns: 1.6fr 1.4fr 1fr 1fr 1fr auto !important;
   }
 
   @media (max-width: 1200px) {
@@ -463,6 +463,69 @@ $border-color: #e0e0e0;
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+// Search input inside dropdown
+::ng-deep .mat-mdc-select-panel {
+  .search-option {
+    position: sticky !important;
+    top: 0 !important;
+    background: #ffffff !important;
+    z-index: 1000 !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #E5E5EA !important;
+    cursor: default !important;
+    pointer-events: auto !important;
+    
+    &:hover {
+      background: #ffffff !important;
+    }
+    
+    // Disable ripple effect
+    .mat-ripple,
+    &::before,
+    &::after {
+      display: none !important;
+    }
+    
+    // Hide checkbox/pseudo-checkbox in search option
+    .mat-pseudo-checkbox,
+    .mdc-checkbox,
+    .mat-mdc-checkbox {
+      display: none !important;
+    }
+  }
+  
+  .dropdown-search {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 4px 8px !important;
+    background: #F5F5F7 !important;
+    border-radius: 6px !important;
+    border: 1px solid #E5E5EA !important;
+    
+    mat-icon {
+      color: #8E8E93 !important;
+      font-size: 18px !important;
+      width: 18px !important;
+      height: 18px !important;
+    }
+    
+    .search-input {
+      flex: 1 !important;
+      border: none !important;
+      outline: none !important;
+      background: transparent !important;
+      font-size: 13px !important;
+      color: #1D1D1F !important;
+      padding: 0 !important;
+      
+      &::placeholder {
+        color: #8E8E93 !important;
+      }
+    }
   }
 }
 

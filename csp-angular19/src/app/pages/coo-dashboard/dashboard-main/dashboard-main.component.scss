@@ -3,41 +3,41 @@
 // ============================================================================
 
 // Variables for consistent theming
-$primary-color: #4a90e2;
-$primary-dark: #2c5aa0;
-$primary-light: #6fa8ef;
+$primary-color: #16a34a;
+$primary-dark: #15803d;
+$primary-light: #4ade80;
 $secondary-color: #6c757d;
-$success-color: #28a745;
-$warning-color: #ffc107;
-$danger-color: #dc3545;
+$success-color: #16a34a;
+$warning-color: #f59e0b;
+$danger-color: #ef4444;
 
-$text-primary: #2c3e50;
-$text-secondary: #6c757d;
-$text-muted: #95a5a6;
+$text-primary: #111827;
+$text-secondary: #6b7280;
+$text-muted: #9ca3af;
 
 $bg-white: #ffffff;
-$bg-light: #f8f9fa;
-$bg-lighter: #f1f3f5;
+$bg-light: #f9fafb;
+$bg-lighter: #f3f4f6;
 
-$border-color: #e9ecef;
+$border-color: #e5e7eb;
 $border-radius-sm: 4px;
 $border-radius: 8px;
 $border-radius-lg: 12px;
 
-$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
 $shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-$shadow-hover: 0 8px 20px rgba(74, 144, 226, 0.15);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+$shadow-hover: 0 6px 16px rgba(22, 163, 74, 0.15);
 
-$transition-fast: 200ms ease-in-out;
-$transition-base: 300ms ease-in-out;
-$transition-slow: 400ms ease-in-out;
+$transition-fast: 150ms ease;
+$transition-base: 250ms ease;
+$transition-slow: 350ms ease;
 
 // Main Container
 .main-dashboard-content {
   width: 100%;
   min-height: calc(100vh - 120px);
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: #f5f6fa;
   animation: fadeIn $transition-slow;
 }
 
@@ -47,201 +47,73 @@ $transition-slow: 400ms ease-in-out;
   background: $bg-white;
   border-radius: $border-radius-lg;
   box-shadow: $shadow;
-  margin: 16px;
   overflow: hidden;
-  
-  @media (max-width: 768px) {
-    margin: 8px;
-    border-radius: $border-radius;
-  }
 }
 
-// Top Progress Bar - Modern Styling
+// Top Progress Bar
 .top-progress-bar {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 1000;
-  height: 4px;
+  height: 3px;
   border-radius: $border-radius-lg $border-radius-lg 0 0;
-  overflow: hidden;
-  
-  ::ng-deep .mat-mdc-progress-bar-fill::after {
-    background: linear-gradient(90deg, $primary-color 0%, $primary-light 100%);
-  }
-  
-  ::ng-deep .mat-mdc-progress-bar-buffer {
-    background: rgba($primary-color, 0.1);
-  }
+
+  ::ng-deep .mat-mdc-progress-bar-fill::after { background: $primary-color; }
+  ::ng-deep .mat-mdc-progress-bar-buffer { background: rgba($primary-color, 0.1); }
 }
 
 // ============================================================================
-// Modern Tab Styling - Angular Material 19
+// TABS — clean green-underline style matching screenshot
 // ============================================================================
-
 .dashboard-tabs {
-  position: relative;
-  
-  // Tab Group Container
-  ::ng-deep .mat-mdc-tab-group {
-    background: transparent;
-  }
 
-  // Tab Header Container
   ::ng-deep .mat-mdc-tab-header {
-    background: linear-gradient(135deg, $bg-white 0%, $bg-lighter 100%);
+    background: $bg-white;
     border-bottom: 1px solid $border-color;
-    box-shadow: $shadow-sm;
-    position: relative;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent 0%, $primary-color 50%, transparent 100%);
-      opacity: 0.3;
-    }
+    box-shadow: none;
+    padding: 0 8px;
   }
 
-  // Tab Labels Container
-  ::ng-deep .mat-mdc-tab-labels {
-    background: transparent;
-    padding: 0 16px;
-  }
+  ::ng-deep .mat-mdc-tab-labels { padding: 0; background: transparent; }
 
-  // Individual Tab Label - Modern Design
   ::ng-deep .mat-mdc-tab {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
     font-weight: 500;
-    letter-spacing: 0.3px;
     color: $text-secondary;
-    min-width: 140px;
-    height: 56px;
-    padding: 0 24px;
-    margin: 0 4px;
-    border-radius: $border-radius $border-radius 0 0;
-    position: relative;
-    overflow: hidden;
-    transition: all $transition-base;
-    
-    // Hover Effect - Subtle Background
-    &:hover:not(.mdc-tab--active) {
-      background: linear-gradient(180deg, rgba($primary-color, 0.05) 0%, rgba($primary-color, 0.02) 100%);
-      color: $primary-dark;
-      transform: translateY(-2px);
-      
-      &::before {
-        opacity: 1;
-      }
-    }
-    
-    // Hover Indicator (Top Border)
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, $primary-light 0%, $primary-color 100%);
-      opacity: 0;
-      transition: opacity $transition-fast;
-    }
-    
-    // Active Tab State - Enhanced
+    height: 48px;
+    padding: 0 20px;
+    min-width: 120px;
+    letter-spacing: 0;
+    border-radius: 0;
+    background: transparent !important;
+    transition: color $transition-fast;
+
+    &:hover:not(.mdc-tab--active) { color: $text-primary; }
+
     &.mdc-tab--active {
       color: $primary-color;
       font-weight: 600;
-      background: $bg-white;
-      box-shadow: 0 -2px 8px rgba($primary-color, 0.1);
-      
-      &::before {
-        opacity: 1;
-      }
-      
-      // Active glow effect
-      &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top, rgba($primary-color, 0.05) 0%, transparent 70%);
-        pointer-events: none;
-      }
-    }
-    
-    // Focus State for Accessibility
-    &:focus-visible {
-      outline: 2px solid $primary-color;
-      outline-offset: -2px;
-      border-radius: $border-radius $border-radius 0 0;
-    }
-    
-    // Disabled State
-    &.mat-mdc-tab-disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      
-      &:hover {
-        transform: none;
-        background: none;
-      }
     }
   }
 
-  // Tab Label Content
-  ::ng-deep .mdc-tab__content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  // Tab Label Text
-  ::ng-deep .mdc-tab__text-label {
-    transition: all $transition-base;
-  }
-
-  // Active Tab Indicator (Underline) - Modern Design
+  // Green underline indicator
   ::ng-deep .mat-mdc-tab-indicator {
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    overflow: hidden;
-    
     .mdc-tab-indicator__content--underline {
-      background: linear-gradient(90deg, $primary-color 0%, $primary-light 100%);
-      border: none;
-      box-shadow: 0 2px 8px rgba($primary-color, 0.3);
-      animation: slideIn $transition-base;
+      border-color: $primary-color !important;
+      border-top-width: 2.5px !important;
+      border-radius: 2px;
     }
   }
 
-  // Tab Body Container - Content Area
-  ::ng-deep .mat-mdc-tab-body-wrapper {
-    background: $bg-white;
-    border-radius: 0 0 $border-radius-lg $border-radius-lg;
-    overflow: hidden;
-  }
+  // Hide ripple
+  ::ng-deep .mat-ripple { display: none; }
 
-  // Tab Body Content
+  ::ng-deep .mat-mdc-tab-body-wrapper { background: $bg-white; }
+
   ::ng-deep .mat-mdc-tab-body-content {
-    padding: 24px;
+    padding: 0;
     animation: fadeInUp $transition-base;
-    
-    @media (max-width: 768px) {
-      padding: 16px;
-    }
-  }
-
-  // Ink Bar Animation (Legacy support)
-  ::ng-deep .mat-ink-bar {
-    background-color: $primary-color;
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    transition: all $transition-base cubic-bezier(0.35, 0, 0.25, 1);
   }
 }
 
@@ -251,63 +123,35 @@ $transition-slow: 400ms ease-in-out;
 
 // Tab Content Wrapper
 .tab-content {
-  padding: 24px 0;
+  padding: 20px 24px;
   animation: fadeInUp $transition-base;
 }
 
-// Tab Title Heading
+// Tab Title — left green border accent (matching screenshot)
 .tab-title {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 22px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
   font-weight: 600;
   color: $text-primary;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid $border-color;
-  position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 60px;
-    height: 2px;
-    background: linear-gradient(90deg, $primary-color 0%, $primary-light 100%);
-  }
+  margin: 0 0 20px 0;
+  padding: 2px 0 2px 12px;
+  border-left: 3.5px solid $primary-color;
+  line-height: 1.4;
 }
 
-// Tab Header (Filter Section)
+// Tab Header (filter row inside a tab)
 .tab-header {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
-  padding: 20px;
-  background: linear-gradient(135deg, $bg-light 0%, $bg-lighter 100%);
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: $bg-light;
   border-radius: $border-radius;
-  box-shadow: $shadow-sm;
   border: 1px solid $border-color;
-  transition: all $transition-base;
-  
-  &:hover {
-    box-shadow: $shadow;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 16px;
-    gap: 12px;
-  }
-  
-  // Tab Title inside Header
-  .tab-title {
-    margin: 0;
-    padding: 0;
-    border: none;
-    flex: 0 0 auto;
-    font-size: 18px;
-  }
+
+  .tab-title { margin: 0; }
 }
 
 // ============================================================================

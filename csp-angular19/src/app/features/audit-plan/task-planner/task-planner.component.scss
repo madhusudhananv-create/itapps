@@ -394,6 +394,17 @@ a {
   .mat-mdc-select-arrow {
     color: #6E6E73 !important;
   }
+
+  // Constrain the trigger to prevent overflow
+  .mat-mdc-select-trigger {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  // Ensure the selected value container doesn't exceed the field width
+  .mat-mdc-select-value {
+    max-width: calc(100% - 24px) !important; // Account for arrow icon
+  }
 }
 
 // Dropdown panel options
