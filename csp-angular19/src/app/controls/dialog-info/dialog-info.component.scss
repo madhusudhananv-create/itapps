@@ -1,0 +1,293 @@
+// Modern Information Dialog Styling
+// Blueprint Pro Design System - Angular 19
+
+.modern-info-dialog {
+  position: relative;
+  padding: 40px 32px 32px;
+  min-width: 420px;
+  max-width: 600px;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 20px;
+
+  @media screen and (max-width: 768px) {
+    min-width: 300px;
+    max-width: 90vw;
+    padding: 32px 24px 24px;
+  }
+}
+
+// Animated background gradient
+.dialog-bg-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.03) 0%, 
+    rgba(16, 185, 129, 0.03) 50%, 
+    rgba(113, 146, 255, 0.03) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+// Content wrapper
+.dialog-content-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+// Animated Icon Container
+.icon-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media screen and (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+// Pulsing rings animation
+.icon-ring {
+  position: absolute;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-radius: 50%;
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  &.ring-1 {
+    width: 100%;
+    height: 100%;
+    animation-delay: 0s;
+  }
+
+  &.ring-2 {
+    width: 85%;
+    height: 85%;
+    animation-delay: 0.3s;
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+
+  &.ring-3 {
+    width: 70%;
+    height: 70%;
+    animation-delay: 0.6s;
+    border-color: rgba(113, 146, 255, 0.2);
+  }
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+// Icon inner container
+.icon-inner {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(113, 146, 255, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+  animation: icon-float 3s ease-in-out infinite;
+
+  @media screen and (max-width: 768px) {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@keyframes icon-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(5deg);
+  }
+}
+
+// Info icon
+.info-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  color: #3b82f6;
+
+  @media screen and (max-width: 768px) {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+// Dialog title
+.dialog-title {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 16px;
+  line-height: 1.3;
+
+  @media screen and (max-width: 768px) {
+    font-size: 20px;
+  }
+}
+
+// Dialog message
+.dialog-message {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 32px;
+  max-width: 500px;
+  white-space: pre-line;
+  text-align: left;
+
+  @media screen and (max-width: 768px) {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+}
+
+// Button container
+.dialog-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+// OK button
+.btn-ok {
+  position: relative;
+  padding: 12px 32px;
+  min-width: 140px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.3), 
+      transparent
+    );
+    transition: left 0.5s;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-text {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  @media screen and (max-width: 768px) {
+    padding: 10px 24px;
+    min-width: 120px;
+    font-size: 14px;
+
+    .btn-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-text {
+      font-size: 14px;
+    }
+  }
+}
+
+// Entrance animation
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modern-info-dialog {
+  animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+// Close animation (when dialog is closing)
+.modern-info-dialog.closing {
+  animation: slideOutDown 0.3s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+}

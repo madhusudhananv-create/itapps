@@ -1,0 +1,46 @@
+<div class="warning-popup-overlay">
+  <div class="warning-popup-card" [class.confirmation-mode]="isConfirmation" [class.update-mode]="actionType === 'update' || actionType === 'save'" [class.delete-mode]="actionType === 'delete'">
+    <!-- Animated background gradient -->
+    <div class="card-glow"></div>
+    
+    <!-- Icon section with animated ring -->
+    <div class="icon-section">
+      <div class="icon-ring" [class.delete-ring]="actionType === 'delete'" [class.update-ring]="actionType === 'update' || actionType === 'save'">
+        <div class="ring-pulse"></div>
+        <div class="icon-container">
+          <mat-icon class="warning-icon" [class.delete-icon]="actionType === 'delete'" [class.update-icon]="actionType === 'update' || actionType === 'save'">{{ icon }}</mat-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message section -->
+    <div class="message-section">
+      <h3 class="popup-title">{{ title }}</h3>
+      <p style="white-space: pre-line;">{{ data.Message }}</p>
+      
+      <!-- Input field (optional) -->
+      <mat-form-field *ngIf="showInput" appearance="outline" class="popup-input-field">
+        <mat-label>{{ inputLabel }}</mat-label>
+        <input matInput [(ngModel)]="inputValue" [placeholder]="inputPlaceholder" (keydown.enter)="confirm()">
+      </mat-form-field>
+    </div>
+
+    <!-- Action section -->
+    <div class="action-section" [class.confirmation-actions]="isConfirmation">
+      <button *ngIf="isConfirmation" mat-stroked-button class="cancel-btn" (click)="closeDialog()">
+        <mat-icon>close</mat-icon>
+        <span>{{ cancelText }}</span>
+      </button>
+      <button mat-raised-button class="confirm-btn" [class.delete-confirm]="actionType === 'delete'" [class.update-confirm]="actionType === 'update' || actionType === 'save'" (click)="isConfirmation ? confirm() : closeDialog()">
+        <mat-icon>{{ actionType === 'delete' ? 'delete' : (actionType === 'update' || actionType === 'save' ? 'check_circle' : 'check_circle') }}</mat-icon>
+        <span>{{ confirmText }}</span>
+      </button>
+    </div>
+
+    <!-- Decorative elements -->
+    <div class="corner-accent top-left"></div>
+    <div class="corner-accent top-right"></div>
+    <div class="corner-accent bottom-left"></div>
+    <div class="corner-accent bottom-right"></div>
+  </div>
+</div>

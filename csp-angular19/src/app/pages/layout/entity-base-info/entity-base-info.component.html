@@ -1,0 +1,39 @@
+<div class="info-container" [ngClass]="{'issue-info': data.entityType === 'issue'}">
+  <div class="info-header" [ngClass]="{'issue-header': data.entityType === 'issue'}">
+    <h4>Additional Information - {{header}}</h4>
+    <button mat-icon-button class="close-button" (click)="closeInfo()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="info-content" *ngIf="!loading; else loadingTemplate">
+    <ul class="info-list">
+      <li>
+        <strong>Project:</strong>
+        <span>{{ project }}</span>
+      </li>
+      <li>
+        <strong>Created By:</strong>
+        <span>{{ response?.createD_BY }}</span>
+      </li>
+      <li>
+        <strong>Created Date:</strong>
+        <span>{{ response?.createD_DATE | date:'dd-MMM-yyyy hh:mm:ss a' }}</span>
+      </li>
+      <li>
+        <strong>Updated By:</strong>
+        <span>{{ response?.updateD_BY }}</span>
+      </li>
+      <li>
+        <strong>Updated Date:</strong>
+        <span>{{ response?.updateD_DATE | date:'dd-MMM-yyyy hh:mm:ss a' }}</span>
+      </li>
+    </ul>
+  </div>
+
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <span>Loading...</span>
+    </div>
+  </ng-template>
+</div>

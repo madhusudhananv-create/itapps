@@ -1,0 +1,105 @@
+<div class="action-item-dialog">
+  <div class="dialog-header">
+    <h3>{{ isEditMode ? 'Edit' : 'Add' }} Risk Treatment Plan Item</h3>
+    <button mat-icon-button (click)="Cancel_onClick()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <form #actionitemForm="ngForm" (ngSubmit)="SubmitForm(actionitemForm.valid ?? false)">
+    <div class="dialog-content">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Project Name</mat-label>
+        <mat-icon matPrefix>folder</mat-icon>
+        <input matInput name="ddProjectName" [(ngModel)]="projectName" [disabled]="true" required>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description</mat-label>
+        <mat-icon matPrefix>description</mat-icon>
+        <textarea matInput name="txtDescription" maxlength="2000" [(ngModel)]="EditActionitem.description" 
+          rows="3" required></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Source</mat-label>
+        <mat-icon matPrefix>source</mat-icon>
+        <textarea matInput name="txtSource" maxlength="100" [(ngModel)]="EditActionitem.source" 
+          rows="2" required></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Owner</mat-label>
+        <mat-icon matPrefix>person</mat-icon>
+        <textarea matInput name="txtOwner" maxlength="100" [(ngModel)]="EditActionitem.owner" 
+          rows="1" required></textarea>
+      </mat-form-field>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-icon matPrefix>flag</mat-icon>
+          <mat-select name="ddPriority" [(ngModel)]="EditActionitem.priority" required>
+            <mat-option value="Critical">Critical</mat-option>
+            <mat-option value="High">High</mat-option>
+            <mat-option value="Medium">Medium</mat-option>
+            <mat-option value="Low">Low</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-icon matPrefix>pending_actions</mat-icon>
+          <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status" required>
+            <mat-option value="Planned">Planned</mat-option>
+            <mat-option value="Started">Started</mat-option>
+            <mat-option value="Completed">Completed</mat-option>
+            <mat-option value="Cancelled">Cancelled</mat-option>
+            <mat-option value="Suspended">Suspended</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Identified Date</mat-label>
+          <mat-icon matPrefix>event</mat-icon>
+          <input matInput name="dtIdentifiedDate" [(ngModel)]="EditActionitem.identifieD_DATE" 
+            [matDatepicker]="picker1" [max]="_util.Today()" required>
+          <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+          <mat-datepicker #picker1></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Target Date</mat-label>
+          <mat-icon matPrefix>event</mat-icon>
+          <input matInput name="dtTargetDate" [(ngModel)]="EditActionitem.targeT_DATE" 
+            [matDatepicker]="picker2" [min]="EditActionitem.identifieD_DATE" required>
+          <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+          <mat-datepicker #picker2></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" *ngIf="EditActionitem.status === 'Completed'">
+        <mat-label>Completion Date</mat-label>
+        <mat-icon matPrefix>event_available</mat-icon>
+        <input matInput name="dtCompletionDate" [(ngModel)]="EditActionitem.completioN_DATE" 
+          [matDatepicker]="picker3">
+        <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
+        <mat-datepicker #picker3></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Comments</mat-label>
+        <mat-icon matPrefix>comment</mat-icon>
+        <textarea matInput name="txtComments" maxlength="2000" [(ngModel)]="EditActionitem.comments" 
+          rows="3"></textarea>
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-button type="button" (click)="Cancel_onClick()">Cancel</button>
+      <button mat-raised-button color="primary" type="submit">Save</button>
+    </div>
+  </form>
+</div>

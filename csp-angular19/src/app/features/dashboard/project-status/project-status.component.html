@@ -1,0 +1,204 @@
+<div class="apple-dialog-container">
+  <!-- Apple-Style Header -->
+  <div class="apple-header">
+    <div class="header-background"></div>
+    <div class="header-content">
+      <h1 class="dialog-title">Contract Status Details</h1>
+      <p class="dialog-subtitle">Project forecast for the next 3 months</p>
+    </div>
+    <button mat-icon-button class="apple-close-btn" (click)="closeDialog()" aria-label="Close">
+      <span class="close-icon">×</span>
+    </button>
+  </div>
+
+  <!-- Apple-Style Tabs -->
+  <mat-tab-group class="apple-tabs" animationDuration="300ms" mat-stretch-tabs="false">
+    
+    <!-- Tab 1: Projects to Start -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <div class="tab-label">
+          <mat-icon class="tab-icon">play_circle_outline</mat-icon>
+          <span class="tab-text">Projects to Start</span>
+          <span class="tab-badge start-badge" *ngIf="projectForeCast?.projectstart?.length">
+            {{projectForeCast.projectstart.length}}
+          </span>
+        </div>
+      </ng-template>
+      
+      <div class="tab-content">
+        <!-- Data Table -->
+        <div class="apple-table-container" *ngIf="projectForeCast?.projectstart?.length > 0">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Project Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let project of projectForeCast.projectstart; let i = index" [style.animation-delay.ms]="i * 50">
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="cell-label">{{customerName}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="project-name">{{project.proJ_NM}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="date-pill start-date">{{project.starT_DATE | date:'dd MMM yyyy'}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="date-label">{{project.enD_DATE | date:'dd MMM yyyy'}}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="apple-empty-state" *ngIf="!projectForeCast?.projectstart?.length">
+          <div class="empty-icon-wrapper start-empty">
+            <mat-icon class="empty-icon">schedule</mat-icon>
+          </div>
+          <h3 class="empty-title">No Upcoming Projects</h3>
+          <p class="empty-description">There are no projects scheduled to start in the next 3 months</p>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Projects to End -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <div class="tab-label">
+          <mat-icon class="tab-icon">stop_circle</mat-icon>
+          <span class="tab-text">Projects to End</span>
+          <span class="tab-badge end-badge" *ngIf="projectForeCast?.projectend?.length">
+            {{projectForeCast.projectend.length}}
+          </span>
+        </div>
+      </ng-template>
+      
+      <div class="tab-content">
+        <!-- Data Table -->
+        <div class="apple-table-container" *ngIf="projectForeCast?.projectend?.length > 0">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Project Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let project of projectForeCast.projectend; let i = index" [style.animation-delay.ms]="i * 50">
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="cell-label">{{customerName}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="project-name">{{project.proJ_NM}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="date-label">{{project.starT_DATE | date:'dd MMM yyyy'}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="date-pill end-date">{{project.enD_DATE | date:'dd MMM yyyy'}}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="apple-empty-state" *ngIf="!projectForeCast?.projectend?.length">
+          <div class="empty-icon-wrapper end-empty">
+            <mat-icon class="empty-icon">event_busy</mat-icon>
+          </div>
+          <h3 class="empty-title">No Ending Projects</h3>
+          <p class="empty-description">There are no projects scheduled to end in the next 3 months</p>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Members to be Released -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <div class="tab-label">
+          <mat-icon class="tab-icon">group_remove</mat-icon>
+          <span class="tab-text">Members to Release</span>
+          <span class="tab-badge release-badge" *ngIf="projectForeCast?.projresrc?.length">
+            {{projectForeCast.projresrc.length}}
+          </span>
+        </div>
+      </ng-template>
+      
+      <div class="tab-content">
+        <!-- Data Table -->
+        <div class="apple-table-container" *ngIf="projectForeCast?.projresrc?.length > 0">
+          <table class="apple-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Project Name</th>
+                <th>Employee ID</th>
+                <th>Employee Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let resource of projectForeCast.projresrc; let i = index" [style.animation-delay.ms]="i * 50">
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="cell-label">{{customerName}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="project-name">{{resource.proJ_NM}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="employee-id">{{resource.emP_ID}}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-wrapper">
+                    <span class="employee-name">{{resource.emP_NAME}}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="apple-empty-state" *ngIf="!projectForeCast?.projresrc?.length">
+          <div class="empty-icon-wrapper release-empty">
+            <mat-icon class="empty-icon">person_off</mat-icon>
+          </div>
+          <h3 class="empty-title">No Resource Changes</h3>
+          <p class="empty-description">There are no team members scheduled to be released in the next 3 months</p>
+        </div>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

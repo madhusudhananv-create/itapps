@@ -1,0 +1,108 @@
+:host {
+    display: block;
+}
+
+.info-container {
+    position: relative;
+    padding: 0;
+    border-radius: 8px;
+    background-color: #fff;
+    min-width: 480px;
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+    border-radius: 4px 4px 0 0;
+    margin: -24px -24px 0 0px;
+    width: 100%;
+
+    // Issue-specific header styling
+    &.issue-header {
+        background: #f3e5f5;
+
+        h4 {
+            color: black;
+        }
+
+        .close-button {
+            color: #7b1fa2;
+
+            &:hover {
+                background-color: rgba(123, 31, 162, 0.1);
+            }
+        }
+    }
+
+    h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .close-button {
+        color: white;
+        width: 28px;
+        height: 28px;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        mat-icon {
+
+            margin-left: -10px;
+            margin-top: -9px;
+            margin-bottom: 3px;
+        }
+    }
+}
+
+.info-content {
+    padding: 16px 0;
+}
+
+.info-list {
+    list-style-type: none;
+    padding: 0 20px;
+    margin: 0;
+
+    li {
+        display: flex;
+        align-items: flex-start;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 0.95rem;
+        line-height: 1.5;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        strong {
+            width: 120px;
+            min-width: 120px;
+            color: #333;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        span {
+            color: #333;
+            flex: 1;
+            padding-left: 16px;
+        }
+    }
+}
+
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #666;
+}

@@ -1,0 +1,1224 @@
+/**
+ * Risk Repository - Apple-inspired Modern UI
+ * Identical design language to Configuration EXT
+ */
+
+// --- Design Tokens ------------------------------------------------------------
+$brand-primary   : #0071e3;
+$brand-hover     : #0077ed;
+$brand-subtle    : #e8f1fb;
+$text-primary    : #1d1d1f;
+$text-secondary  : #6e6e73;
+$text-muted      : #9b9ba0;
+$surface-base    : #ffffff;
+$surface-raised  : #f5f5f7;
+$surface-border  : #d2d2d7;
+$danger          : #ff3b30;
+$danger-hover    : #cc2f26;
+$radius-sm       : 8px;
+$radius-md       : 12px;
+$radius-lg       : 18px;
+$shadow-card     : 0 2px 12px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04);
+$shadow-elevated : 0 8px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+$transition-fast : 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-std  : 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+$font-system     : -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+
+// --- Legacy variable aliases (kept for dialog-mode selectors below) -----------
+$primary-color          : $brand-primary;
+$primary-gradient-start : #3a8fe8;
+$primary-gradient-end   : #1a6fd4;
+$bg-white               : $surface-base;
+$bg-light               : $surface-raised;
+$border-color           : $surface-border;
+$shadow-sm              : $shadow-card;
+$shadow-md              : $shadow-elevated;
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes rowEnter {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.25); }
+  70%  { box-shadow: 0 0 0 7px rgba(0, 113, 227, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 113, 227, 0); }
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(60px) scale(0.94); }
+  to   { opacity: 1; transform: translateX(0)    scale(1);    }
+}
+
+// --- Row & layout reset -------------------------------------------------------
+.row {
+  margin-bottom: 0;
+}
+
+// -----------------------------------------------------------------------------
+//  STANDALONE MODE  (matches Config EXT exactly)
+// -----------------------------------------------------------------------------
+
+// Page wrapper card
+.mainDiv {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $surface-base;
+  border-radius: $radius-lg;
+  margin: 20px 20px 6px 20px;
+  padding: 22px 28px 18px 28px;
+  box-shadow: $shadow-card;
+  animation: fadeSlideUp $transition-std both;
+
+  .page-title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .page-title {
+    font-family: $font-system;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: $text-primary;
+    margin: 0;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+// Add New circle icon button
+.maticonbutton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: $brand-subtle;
+  color: $brand-primary;
+  cursor: pointer;
+  transition: background $transition-fast, transform $transition-fast, box-shadow $transition-fast;
+  text-decoration: none;
+
+  mat-icon {
+    font-size: 20px;
+    line-height: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background: $brand-primary;
+    color: #fff;
+    transform: scale(1.08) rotate(90deg);
+    box-shadow: 0 4px 14px rgba(0, 113, 227, 0.28);
+    animation: pulse-ring 0.6s ease-out;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// ─── Standalone table wrapper — horizontal scroll so columns never hide ───────
+div[style*="padding: 1.8%"],
+div[style*="padding:1.8%"] {
+  padding: 0 20px 20px 20px !important;
+  animation: fadeSlideUp $transition-std 0.05s both;
+
+  // Scroll container for the table
+  > table,
+  > mat-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+// Standalone table card
+.table {
+  width: 100%;
+  min-width: 900px;        // prevents column collapse at 100% zoom
+  background: $surface-base;
+  border-radius: $radius-md;
+  overflow: visible;       // let parent wrapper handle x-scroll
+  box-shadow: $shadow-card;
+  font-family: $font-system;
+  border-collapse: separate;
+  border-spacing: 0;
+  animation: fadeIn $transition-std 0.08s both;
+}
+
+// ─── Sticky edit / delete columns (standalone table) ─────────────────────────
+::ng-deep {
+  // Edit column — sticky right
+  [mat-column-edit] {
+    position: sticky !important;
+    right: 40px !important;
+    z-index: 2 !important;
+    background: inherit !important;
+  }
+
+  // Delete column — sticky right edge
+  [mat-column-delete] {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 2 !important;
+    background: inherit !important;
+    border-left: 1px solid rgba($surface-border, 0.4);
+  }
+
+  // Ensure sticky cells show background on hover rows
+  tr.mat-mdc-row:hover [mat-column-edit],
+  tr.mat-mdc-row:hover [mat-column-delete],
+  tr.mat-row:hover [mat-column-edit],
+  tr.mat-row:hover [mat-column-delete] {
+    background: $brand-subtle !important;
+  }
+}
+
+
+// Table action icons
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background $transition-fast, color $transition-fast, transform $transition-fast;
+  font-size: 14px;
+  color: $brand-primary;
+
+  &:hover {
+    background: $brand-subtle;
+    color: $brand-hover;
+    transform: scale(1.15);
+  }
+
+  &[style*="color:red"],
+  &[style*="color: red"] {
+    color: $danger !important;
+
+    &:hover {
+      background: rgba($danger, 0.08);
+      color: $danger-hover !important;
+    }
+  }
+}
+
+.link_button {
+  background: none;
+  border: none;
+  color: $brand-primary;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 5px 10px;
+  transition: color $transition-fast;
+
+  &:hover { color: $brand-hover; }
+}
+
+// --- Material table overrides (standalone) ------------------------------------
+::ng-deep {
+  .mat-mdc-header-row,
+  tr.mat-header-row {
+    background: $surface-raised !important;
+    border-bottom: 1.5px solid $surface-border;
+  }
+
+  .mat-mdc-header-cell,
+  th.mat-header-cell {
+    font-family: $font-system !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.6px !important;
+    text-transform: uppercase !important;
+    color: $text-secondary !important;
+    padding: 14px 16px !important;
+    background: $surface-raised !important;
+    border-bottom: none !important;
+    white-space: nowrap;
+  }
+
+  .mat-mdc-row,
+  tr.mat-row {
+    background: $surface-base;
+    border-bottom: 1px solid rgba($surface-border, 0.55) !important;
+    transition: background $transition-fast, transform $transition-fast, box-shadow $transition-fast;
+    animation: rowEnter $transition-std both;
+
+    &:hover {
+      background: $brand-subtle !important;
+      transform: translateX(3px);
+      box-shadow: inset 3px 0 0 $brand-primary;
+    }
+
+    &:last-child {
+      border-bottom: none !important;
+    }
+  }
+
+  .mat-mdc-cell,
+  td.mat-cell {
+    font-family: $font-system !important;
+    font-size: 13px !important;
+    color: $text-primary !important;
+    padding: 12px 16px !important;
+    vertical-align: middle;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  .mat-elevation-z5,
+  tr.mat-elevation-z5 {
+    box-shadow: none !important;
+  }
+
+  // Paginator
+  .mat-mdc-paginator,
+  mat-paginator {
+    background: $surface-base !important;
+    border-top: 1px solid $surface-border;
+    border-radius: 0 0 $radius-md $radius-md;
+    font-family: $font-system !important;
+    font-size: 13px;
+    color: $text-secondary;
+
+    .mat-mdc-paginator-range-label {
+      font-size: 12px;
+      color: $text-muted;
+    }
+
+    .mat-mdc-icon-button {
+      color: $brand-primary;
+      transition: background $transition-fast;
+      border-radius: 50%;
+
+      &:hover { background: $brand-subtle; }
+    }
+  }
+}
+
+// --- Form Card (Add / Edit) ---------------------------------------------------
+.form-container {
+  background: $surface-base;
+  padding: 0;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-elevated;
+  margin: 20px auto;
+  max-width: 720px;
+  overflow: hidden;
+  animation: fadeSlideUp $transition-std both;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 28px 20px;
+  background: linear-gradient(135deg, #3a8fe8 0%, #1a6fd4 100%);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='20' r='55' fill='rgba(255,255,255,0.10)'/%3E%3Ccircle cx='10' cy='100' r='40' fill='rgba(255,255,255,0.07)'/%3E%3C/svg%3E") right top / 160px no-repeat;
+    pointer-events: none;
+  }
+}
+
+.form-title h3 {
+  margin: 0;
+  color: #ffffff;
+  font-family: $font-system;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+
+  a, i {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 18px;
+    cursor: pointer;
+    transition: color $transition-fast, transform $transition-fast;
+
+    &:hover {
+      color: #ffffff !important;
+      transform: scale(1.2) rotate(90deg);
+    }
+  }
+}
+
+.form-content {
+  padding: 24px 28px 28px;
+
+  .row {
+    margin-bottom: 4px;
+    animation: fadeSlideUp $transition-std both;
+
+    @for $i from 1 through 10 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.04}s;
+      }
+    }
+  }
+}
+
+.full-width { width: 100%; }
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 980px;
+  font-family: $font-system;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background $transition-fast, box-shadow $transition-fast, transform $transition-fast;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0);
+    transition: background $transition-fast;
+  }
+
+  &:hover::after { background: rgba(255, 255, 255, 0.12); }
+  &:active      { transform: scale(0.96); }
+}
+
+.btn-primary {
+  background: $brand-primary;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.30);
+
+  &:hover {
+    background: $brand-hover;
+    box-shadow: 0 4px 16px rgba(0, 113, 227, 0.40);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-secondary {
+  background: $surface-raised;
+  color: $text-primary;
+  border: 1.5px solid $surface-border;
+
+  &:hover {
+    background: darken($surface-raised, 3%);
+    border-color: $text-secondary;
+    transform: translateY(-1px);
+  }
+}
+
+.header { text-align: right; }
+
+// --- Form field overrides -----------------------------------------------------
+::ng-deep {
+  .form-content {
+    mat-form-field.mat-mdc-form-field {
+      .mdc-text-field--outlined {
+        border-radius: $radius-sm;
+
+        .mdc-notched-outline__leading  { border-radius: $radius-sm 0 0 $radius-sm; }
+        .mdc-notched-outline__trailing { border-radius: 0 $radius-sm $radius-sm 0; }
+
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: $surface-border;
+          transition: border-color $transition-fast;
+        }
+
+        &:hover {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: $brand-primary;
+          }
+        }
+      }
+
+      &.mat-focused .mdc-notched-outline__leading,
+      &.mat-focused .mdc-notched-outline__notch,
+      &.mat-focused .mdc-notched-outline__trailing {
+        border-color: $brand-primary !important;
+        border-width: 2px !important;
+      }
+
+      .mdc-floating-label {
+        font-family: $font-system;
+        font-size: 14px;
+        color: $text-secondary;
+      }
+
+      input.mat-mdc-input-element,
+      textarea.mat-mdc-input-element {
+        font-family: $font-system;
+        font-size: 14px;
+        color: $text-primary;
+        background: transparent !important;
+      }
+    }
+  }
+
+  mat-form-field textarea { background-color: transparent !important; }
+}
+
+// -----------------------------------------------------------------------------
+//  DIALOG MODE  (when opened from Risk Page inside a MatDialog)
+// -----------------------------------------------------------------------------
+
+// Compact Material form fields inside dialog
+::ng-deep .dialog-container {
+  .mat-mdc-form-field {
+    .mat-mdc-form-field-subscript-wrapper { display: none !important; }
+
+    input, select { font-size: 12px !important; }
+  }
+}
+
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 80vh;
+  max-height: 90vh;
+  background: $surface-raised;
+  overflow: visible !important; // Critical: allow paginator dropdown
+  position: relative; // Establish stacking context
+  transform: none !important; // Prevent new stacking context
+  will-change: auto !important; // Don't create GPU layer
+    isolation: auto !important; 
+  // Specific elements that should not shrink
+  .dialog-header,
+  .info-action-row,
+  .filter-section,
+  .progress-bar,
+  .instructions-box {
+    flex-shrink: 0;
+  }
+  
+  // Table container CAN shrink and should take remaining space
+  .table-container {
+    flex: 1 1 auto; // Grow and shrink as needed
+    min-height: 200px; // Minimum viable table space
+    overflow: visible !important; // Allow dropdown to extend outside
+    margin-bottom: 10px;
+    position: relative; // Establish stacking context
+    z-index: 1; // Ensure proper layering
+  }
+}
+
+// Dialog header � gradient + SVG decoration (same as form-header)
+.dialog-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='20' r='55' fill='rgba(255,255,255,0.06)'/%3E%3Ccircle cx='10' cy='100' r='40' fill='rgba(255,255,255,0.04)'/%3E%3C/svg%3E") right top / 160px no-repeat;
+    pointer-events: none;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+
+    .header-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+      opacity: 0.9;
+    }
+
+    .header-title {
+      margin: 0;
+      font-family: $font-system;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+  }
+
+  .close-button {
+    color: rgba(255, 255, 255, 0.85);
+    z-index: 1;
+    transition: color $transition-fast, transform $transition-fast;
+
+    &:hover {
+      color: #fff;
+      transform: scale(1.15) rotate(90deg);
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+// Info banner + action buttons row
+.info-action-row {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 20px 6px;
+  animation: fadeSlideUp $transition-std 0.06s both;
+
+  .info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    flex: 1;
+    padding: 6px 10px;
+    background: $brand-subtle;
+    border-left: 3px solid $brand-primary;
+    border-radius: $radius-sm;
+
+    .info-icon {
+      color: $brand-primary;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    p {
+      margin: 0;
+      font-family: $font-system;
+      font-size: 11px;
+      color: $text-secondary;
+      line-height: 1.4;
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    button {
+      height: 34px !important;
+      padding: 0 16px !important;
+      font-family: $font-system;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      border-radius: 980px !important;
+      line-height: 34px !important;
+      white-space: nowrap;
+      transition: box-shadow $transition-fast, transform $transition-fast !important;
+
+      mat-icon {
+        margin-right: 5px;
+        font-size: 17px;
+        width: 17px;
+        height: 17px;
+      }
+    }
+
+    .add-button {
+      background: $brand-primary !important;
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.28) !important;
+
+      &:hover:not([disabled]) {
+        background: $brand-hover !important;
+        box-shadow: 0 4px 14px rgba(0, 113, 227, 0.36) !important;
+        transform: translateY(-1px);
+      }
+    }
+
+    .clear-button {
+      border-color: $surface-border !important;
+      color: $text-secondary !important;
+
+      &:hover:not([disabled]) {
+        background: $surface-raised !important;
+        border-color: $text-secondary !important;
+      }
+    }
+  }
+}
+
+// Filter section
+.filter-section {
+  flex-shrink: 0;
+  padding: 0 20px 4px;
+}
+
+// Progress bar
+.progress-bar {
+  flex-shrink: 0;
+  margin: 0 20px;
+}
+
+// Instructions box
+.instructions-box {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  margin: 4px 20px;
+  border-radius: $radius-sm;
+  animation: fadeSlideUp $transition-std 0.10s both;
+
+  .instruction-icon {
+    color: #d97706;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  p {
+    margin: 0;
+    font-family: $font-system;
+    font-size: 11px;
+    color: $text-primary;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+}
+
+// Table container (dialog mode)
+.table-container {
+  flex: 1 1 auto; // Take remaining space, can shrink
+  display: flex;
+  flex-direction: column;
+  margin: 4px 20px 120px 20px; // Large bottom margin for dropdown space
+  background: $surface-base;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  min-height: 200px;
+  overflow: visible !important; // Critical: allow paginator dropdown
+  animation: fadeIn $transition-std 0.12s both;
+  position: relative; // Establish positioning context
+  transform: none !important; // Prevent stacking context issues
+  will-change: auto !important; // Don't create new layer
+
+  .table-wrapper {
+    flex: 1 1 auto; // Take space that's available
+    min-height: 0; // CRITICAL: Allow shrinking below content in flexbox
+    overflow-y: auto; // Vertical scroll for content
+    overflow-x: auto; // Horizontal scroll if needed
+    display: block;
+    border-radius: $radius-md $radius-md 0 0; // Round only top corners
+  }
+
+  // Modern table inside dialog
+  table.modern-table {
+    width: 100%;
+    font-family: $font-system;
+    font-size: 11px; // Reduced from 12.5px
+    table-layout: fixed;
+    border-collapse: collapse;
+
+    thead { display: table-header-group; }
+    tbody { display: table-row-group; }
+
+    .mat-mdc-header-row {
+      background: $surface-raised !important;
+      height: 32px !important;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: table-row !important;
+
+      .mat-mdc-header-cell {
+        font-family: $font-system !important;
+        font-size: 9.5px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.4px !important;
+        text-transform: uppercase !important;
+        color: $text-secondary !important;
+        padding: 6px 8px !important;
+        border-bottom: 1.5px solid $surface-border !important;
+        background: $surface-raised !important;
+        display: table-cell !important;
+        white-space: nowrap;
+      }
+    }
+
+    .mat-mdc-row {
+      background: $surface-base;
+      border-bottom: 1px solid rgba($surface-border, 0.55);
+      min-height: 32px !important;
+      height: 32px !important;
+      display: table-row !important;
+      transition: background $transition-fast, transform $transition-fast, box-shadow $transition-fast;
+      animation: rowEnter $transition-std both;
+
+      &:hover {
+        background: $brand-subtle !important;
+        transform: translateX(3px);
+        box-shadow: inset 3px 0 0 $brand-primary;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .mat-mdc-cell {
+        font-family: $font-system !important;
+        font-size: 11px !important;
+        color: $text-primary !important;
+        padding: 4px 8px !important;
+        border-bottom: none !important;
+        word-break: break-word;
+        white-space: normal;
+        vertical-align: middle;
+        display: table-cell !important;
+        line-height: 1.3;
+      }
+    }
+
+    // Checkbox column
+    .col-select {
+      width: 40px !important;
+      min-width: 40px !important;
+      max-width: 40px !important;
+      padding: 2px !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+    }
+
+    // Index column
+    .col-index {
+      width: 50px !important;
+      min-width: 50px !important;
+      max-width: 50px !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+
+      .index-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, $brand-primary 0%, #005bb5 100%);
+        color: #fff;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 9px;
+        font-family: $font-system;
+      }
+    }
+
+    // Strategy badge chips
+    .strategy-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 980px;
+      font-family: $font-system;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: capitalize;
+
+      &.strategy-avoid    { background: #ffebee; color: #c62828; }
+      &.strategy-reduce   { background: #fff3e0; color: #ef6c00; }
+      &.strategy-transfer { background: $brand-subtle; color: $brand-primary; }
+      &.strategy-accept   { background: #e8f5e9; color: #388e3c; }
+    }
+  }
+
+  // Paginator (dialog mode) - Minimal height, always visible, no stacking context issues
+  mat-paginator {
+    flex: 0 0 30px !important; // Fixed 30px height, never grow/shrink
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    width: 100% !important;
+    border-top: 1px solid $surface-border;
+    background: $surface-base !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: $font-system !important;
+    border-radius: 0 0 $radius-md $radius-md;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+
+    overflow: visible !important; // Critical: allow dropdown
+    transform: none !important; // Don't create stacking context
+    will-change: auto !important; // Don't create GPU layer
+  }
+
+
+
+  // Ensure all paginator internals allow overflow
+  ::ng-deep mat-paginator {
+    .mat-mdc-paginator-container,
+    .mat-mdc-paginator-page-size,
+    .mat-mdc-form-field,
+    .mat-mdc-select {
+      overflow: visible !important;
+      transform: none !important;
+      will-change: auto !important;
+    }
+  }
+
+  mat-paginator ::ng-deep .mat-mdc-paginator-container,
+  ::ng-deep .mat-mdc-paginator-container { 
+    min-height: 30px !important;
+    max-height: 30px !important;
+    height: 30px !important;
+    padding: 0 4px !important; 
+    gap: 2px !important;
+    justify-content: flex-end !important;
+    overflow: visible !important; // Allow dropdown to show
+  }
+  
+  // Hide "Items per page:" label to save space
+  mat-paginator ::ng-deep .mat-mdc-paginator-page-size-label,
+  ::ng-deep .mat-mdc-paginator-page-size-label {
+    display: none !important;
+  }
+  
+  mat-paginator ::ng-deep .mat-mdc-paginator-page-size,
+  ::ng-deep .mat-mdc-paginator-page-size { 
+    font-size: 9px !important; 
+    margin: 0 2px 0 0 !important;
+    align-items: center !important;
+    height: 26px !important;
+    overflow: visible !important; // Critical for dropdown visibility
+    position: relative !important;
+    z-index: 100 !important; // Ensure dropdown appears above everything
+    
+    .mat-mdc-form-field { 
+      width: 38px !important;
+      margin: 0 !important;
+      height: 26px !important;
+      overflow: visible !important;
+    }
+    
+    .mat-mdc-form-field-wrapper {
+      padding: 0 !important;
+    }
+    
+    .mat-mdc-form-field-flex {
+      height: 26px !important;
+      align-items: center !important;
+    }
+    
+    .mat-mdc-form-field-infix {
+      padding: 0 !important;
+      min-height: 20px !important;
+      height: 20px !important;
+      border: none !important;
+    }
+    
+    .mdc-text-field { 
+      padding: 0 2px !important;
+      height: 26px !important;
+    }
+    
+    .mat-mdc-select {
+      font-size: 9px !important;
+      line-height: 20px !important;
+    }
+    
+    .mat-mdc-select-value {
+      font-size: 9px !important;
+      line-height: 20px !important;
+    }
+    
+    .mat-mdc-select-trigger {
+      height: 26px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+    
+    .mat-mdc-select-arrow-wrapper {
+      height: 26px !important;
+      padding-left: 2px !important;
+      transform: none !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+    
+    .mat-mdc-select-arrow {
+      width: 10px !important;
+      height: 10px !important;
+    }
+    
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none !important;
+    }
+  }
+  
+  mat-paginator ::ng-deep .mat-mdc-paginator-range-label,
+  ::ng-deep .mat-mdc-paginator-range-label { 
+    font-size: 9px !important; 
+    margin: 0 3px !important; 
+    color: $text-muted;
+    white-space: nowrap;
+    line-height: 30px !important;
+  }
+
+  mat-paginator ::ng-deep .mat-mdc-icon-button,
+  ::ng-deep .mat-mdc-icon-button {
+    color: $brand-primary;
+    border-radius: 50%;
+    width: 26px !important;
+    height: 26px !important;
+    padding: 1px !important;
+    transition: background $transition-fast;
+
+    &:hover { background: $brand-subtle; }
+    
+    mat-icon {
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+      line-height: 16px !important;
+    }
+  }
+  
+  // Compact navigation buttons container
+  mat-paginator ::ng-deep .mat-mdc-paginator-range-actions,
+  ::ng-deep .mat-mdc-paginator-range-actions {
+    margin-left: 2px !important;
+    gap: 0 !important;
+    align-items: center !important;
+  }
+}
+
+// No-data state
+.no-data-message {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: $text-secondary;
+  animation: fadeIn $transition-std 0.15s both;
+
+  .no-data-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: $surface-border;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-family: $font-system;
+    font-size: 17px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  p {
+    margin: 0;
+    font-family: $font-system;
+    font-size: 13.5px;
+    color: $text-secondary;
+  }
+}
+
+// --- Material Checkbox override -----------------------------------------------
+::ng-deep {
+  // Compact checkboxes in dialog mode
+  .dialog-container .mat-mdc-checkbox {
+    .mdc-checkbox {
+      width: 16px !important;
+      height: 16px !important;
+      padding: 0 !important;
+    }
+    
+    .mdc-checkbox__background {
+      width: 16px !important;
+      height: 16px !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+    
+    svg {
+      width: 16px !important;
+      height: 16px !important;
+    }
+  }
+
+  .mat-mdc-checkbox-checked .mdc-checkbox__background {
+    background-color: $brand-primary !important;
+    border-color: $brand-primary !important;
+  }
+
+  .mat-mdc-progress-bar {
+    --mdc-linear-progress-active-indicator-color: #{$brand-primary};
+  }
+}
+
+// --- Toast Notifications ------------------------------------------------------
+::ng-deep {
+  .mat-mdc-snack-bar-container {
+    border-radius: 14px !important;
+    min-width: 300px !important;
+    max-width: 460px !important;
+    padding: 0 !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    animation: toastSlideIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    overflow: hidden;
+    font-family: $font-system;
+
+    .mdc-snackbar__surface { border-radius: 14px !important; padding: 0 !important; }
+
+    .mat-mdc-snack-bar-label {
+      font-size: 13.5px !important;
+      font-weight: 500 !important;
+      line-height: 1.45 !important;
+      padding: 14px 16px !important;
+    }
+
+    .mat-mdc-button.mat-mdc-snack-bar-action {
+      min-width: 36px !important;
+      padding: 0 12px !important;
+      font-size: 16px !important;
+      border-radius: 50% !important;
+      height: 36px !important;
+      opacity: 0.7;
+      transition: opacity 0.18s ease, background 0.18s ease;
+
+      &:hover { opacity: 1; background: rgba(255, 255, 255, 0.15) !important; }
+    }
+  }
+
+  .toast-success {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #1a9e4e 0%, #1db954 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '?  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
+  }
+
+  .toast-error {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '?  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
+  }
+
+  .toast-warning {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '?  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
+  }
+
+  .toast-info {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #0051a8 0%, #0071e3 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '?  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
+  }
+
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    border-radius: 18px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.10) !important;
+  }
+  // --- PAGINATOR DROPDOWN FIX ---------------------------------------------------
+// MatSelect uses CDK Overlay — the panel renders in .cdk-overlay-container
+// which is a direct child of <body>. The issue is the dialog's backdrop or
+// the overlay pane's z-index is too low / clipped by the dialog surface.
+
+::ng-deep {
+  // 1. Ensure CDK overlay container sits above the dialog
+  .cdk-overlay-container {
+    z-index: 100000 !important;
+  }
+
+  // 2. Ensure the select panel itself isn't clipped
+  .cdk-overlay-pane {
+    overflow: visible !important;
+  }
+
+  // 3. Fix the mat-select panel that holds page size options
+  .mat-mdc-select-panel {
+    overflow-y: auto !important;
+    max-height: 200px !important;
+    // Force it to render ABOVE the paginator, not below (upward opening)
+    transform-origin: bottom center !important;
+  }
+
+  // 4. Remove any transform/will-change on the dialog surface
+  // that could be creating a new stacking context trapping the overlay
+  .mdc-dialog__surface {
+    transform: none !important;
+    will-change: auto !important;
+    overflow: visible !important;
+  }
+
+  // 5. Paginator select — remove overflow constraints entirely
+  .mat-mdc-paginator {
+    .mat-mdc-form-field,
+    .mat-mdc-select,
+    .mat-mdc-paginator-page-size,
+    .mat-mdc-paginator-container {
+      overflow: visible !important;
+      transform: none !important;
+      will-change: auto !important;
+    }
+  }
+  ::ng-deep .mat-mdc-paginator .mat-mdc-select-arrow-wrapper {
+  margin-top: -10px !important;
+  transform: none !important;
+}
+}
+}
+    

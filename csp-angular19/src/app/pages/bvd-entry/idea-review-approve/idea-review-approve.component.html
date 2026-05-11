@@ -1,0 +1,157 @@
+<div class="ra-page">
+
+  <!-- ── Top Stepper (matches Step 1 exactly) ──────────────────── -->
+  <div class="ie-stepper">
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Idea<br>Submission</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Evaluate<br>Benefits</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation<br>Plan</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--active">
+      <div class="ie-step-circle ie-step-circle--active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Review &amp;<br>Approve</span></div>
+    </div>
+    <div class="ie-step-line"></div>
+    <div class="ie-step">
+      <div class="ie-step-circle">5</div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation</span></div>
+    </div>
+  </div>
+
+  <!-- ── Loading bar ── -->
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="ra-loading-bar"></mat-progress-bar>
+
+  <!-- ── Main card ── -->
+  <div class="ra-form-card">
+
+    <!-- Card header -->
+    <div class="ra-card-header">
+      <div class="ra-card-header-left">
+        <button class="ra-back-btn" type="button" (click)="setBack()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="ra-spinner ra-spinner--sm"></span>
+          <svg *ngIf="!isLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="ra-card-title-wrap">
+          <span class="ra-card-title">Review &amp;</span>
+          <span class="ra-card-title">Approve</span>
+        </div>
+      </div>
+      <div class="ra-card-header-actions">
+        <button class="ra-btn ra-btn--submit" type="button"
+          *ngIf="_util.IsCSM()"
+          [disabled]="disabled || isLoading"
+          (click)="submitReviewerResponse()">
+          <span *ngIf="isLoading" class="ra-spinner"></span>
+          <svg *ngIf="!isLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          {{ isLoading ? 'Submitting...' : 'Submit Response' }}
+        </button>
+        <button class="ra-btn ra-btn--next" type="button"
+          *ngIf="disabled"
+          [disabled]="isLoading"
+          (click)="setNext()">
+          <span *ngIf="isLoading" class="ra-spinner"></span>
+          {{ isLoading ? 'Loading...' : 'Next' }}
+          <svg *ngIf="!isLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Two-column body ── -->
+    <div class="ra-body">
+
+      <!-- LEFT: Idea's Activity timeline -->
+      <div class="ra-timeline-col">
+        <div class="ra-section-label">IDEA'S ACTIVITY</div>
+
+        <div class="ra-timeline">
+          <div class="ra-timeline__item" *ngFor="let stage of _bvdService.bvdstages; let i = index; let last = last">
+            <div class="ra-timeline__rail">
+              <div class="ra-timeline__dot" [class.ra-timeline__dot--active]="i === 0"></div>
+              <div class="ra-timeline__line" *ngIf="!last"></div>
+            </div>
+            <div class="ra-timeline__content">
+              <span class="ra-timeline__action">{{ stage.action }}</span>
+              <div class="ra-timeline__meta">
+                <span class="ra-timeline__date">
+                  <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  {{ stage.updateD_FORMAT_DATE }}
+                </span>
+                <span class="ra-timeline__person">
+                  <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 13.5c0-2.5 2.5-4 5.5-4s5.5 1.5 5.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  {{ stage.updateD_PERSON }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ra-timeline__empty" *ngIf="!_bvdService.bvdstages || _bvdService.bvdstages.length === 0">
+            <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#e8eaef" stroke-width="2"/><path d="M16 24h16M24 16v16" stroke="#d0d4e8" stroke-width="2" stroke-linecap="round"/></svg>
+            No activity recorded yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Reviewer response -->
+      <div class="ra-response-col" *ngIf="_util.IsCSMorPM()">
+        <div class="ra-section-label">REVIEWER RESPONSE</div>
+
+        <div class="ra-fields">
+
+          <!-- Status -->
+          <div class="ra-field-group">
+            <label class="ra-label">Status <span class="ra-required">*</span></label>
+            <mat-select class="ra-select" [disabled]="disabled" [(ngModel)]="review.ideA_STATUS_ID" name="statusSelect">
+              <mat-option *ngFor="let st of status" [value]="st.id">{{ st.title }}</mat-option>
+            </mat-select>
+          </div>
+
+          <!-- Comments -->
+          <div class="ra-field-group">
+            <label class="ra-label">Comments</label>
+            <textarea class="ra-textarea"
+              [readonly]="disabled"
+              [(ngModel)]="review.revieW_COMMENTS"
+              name="commentsText"
+              rows="8"
+              placeholder="Enter your feedback or reasons for your decision"></textarea>
+          </div>
+
+          <!-- Info note -->
+          <div class="ra-note" *ngIf="!disabled">
+            <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 7h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            After submitting, the idea status will be updated and the submitter will be notified.
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /ra-body -->
+
+    <!-- Footer progress -->
+    <div class="ra-card-footer">
+      <div class="ra-progress">
+        <div class="ra-progress__fill" style="width: 80%"></div>
+      </div>
+      <span class="ra-progress__label">Step 4 of 5 — 80%</span>
+    </div>
+
+  </div><!-- /ra-form-card -->
+</div>

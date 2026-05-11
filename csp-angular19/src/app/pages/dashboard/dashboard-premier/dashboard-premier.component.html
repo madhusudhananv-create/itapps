@@ -1,0 +1,703 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav-content style="background-color:#FFFFFF;width: 100%;height: 100%;overflow: hidden;">
+      
+      <!-- Loading Indicator -->
+      <div *ngIf="progress" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px;">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p style="margin-top: 20px; color: #666; font-size: 16px;">Loading dashboard...</p>
+      </div>
+
+      <!-- Premier Dashboard Content -->
+      <div *ngIf="!progress && selectedCustomer" class="mainDiv" style="width:99%; margin-top: 0px; padding-top: 0px;">
+        
+        <!-- Header Row with Back Button and Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 4px 0 4px 10px;">
+          <!-- Back Button (GAVS users only) -->
+         
+          
+          <!-- Controls Row -->
+          <div style="display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin-left: 350px;">
+            <!-- View Achievement Radio Buttons -->
+            <label style="font-size: 13px;font-family: Lato;font-weight: 600;color: #6B7280; white-space: nowrap;">View Achievement:</label>
+            <div style="display: inline-flex; align-items: center; gap: 4px;">
+              <label *ngFor="let radiobutton of radioItems"
+                style="font-size: 12px;font-family: Lato;font-weight: 500;color: #6B7280; white-space: nowrap; display: inline-flex; align-items: center;">
+              <input type="radio" name="options" style="margin-right: 4px;" (click)="model.option = radiobutton"
+                [checked]="radiobutton === model.option" (change)="changeServiceLevel(model.option)">{{radiobutton}}
+            </label>
+          </div>
+          
+          <span *ngIf="enableExclusion" style="font-size: 16px; color: #D1D5DB; margin: 0 4px;">|</span>
+          
+          <mat-radio-group *ngIf="enableExclusion" [(ngModel)]="includeExclusions" (change)="toggleExclusions(includeExclusions)"
+            style="display: inline-flex; align-items: center; gap: 8px;">
+            <mat-radio-button [value]="false" style="font-size: 12px;font-family: Lato;font-weight: 500;color: #6B7280;">
+              <span style="white-space: nowrap;">Before Exclusions</span>
+            </mat-radio-button>
+            <mat-radio-button [value]="true" style="font-size: 12px;font-family: Lato;font-weight: 500;color: #6B7280;">
+              <span style="white-space: nowrap;">After Exclusions</span>
+            </mat-radio-button>
+          </mat-radio-group>
+
+          <!-- Filter Icon -->
+          <button mat-icon-button 
+                  (click)="showProdFilter = !showProdFilter"
+                  [class.active-filter]="showProdFilter"
+                  class="nav-icon-btn"
+                  matTooltip="Filter"
+                  style="position: relative;">
+            <mat-icon>filter_list</mat-icon>
+            <span *ngIf="showProdFilter" 
+                  style="position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background: #667eea; border-radius: 50%; border: 2px solid white;"></span>
+          </button>
+
+          <!-- Refresh Button -->
+          <button mat-icon-button 
+                  *ngIf="!progress" 
+                  (click)="Refresh_Onclick()"
+                  class="nav-icon-btn"
+                  matTooltip="Refresh">
+            <mat-icon>refresh</mat-icon>
+          </button>
+          <mat-spinner *ngIf="progress" diameter="20" style="display: inline-block;"></mat-spinner>
+          </div>
+        </div>
+
+        <!-- Filter Section -->
+        <!-- Filter Section (inline collapsible) -->
+        <div *ngIf="showProdFilter" style="margin: 0 20px 16px 20px;">
+          <div style="background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            
+            <!-- Filter Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <mat-icon style="font-size: 20px; width: 20px; height: 20px; color: #667eea;">tune</mat-icon>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #374151;">Filter</h3>
+              </div>
+              <button mat-icon-button 
+                      (click)="closeProdNav()"
+                      style="width: 32px; height: 32px;">
+                <mat-icon style="font-size: 20px; width: 20px; height: 20px; color: #6B7280;">close</mat-icon>
+              </button>
+            </div>
+
+            <!-- Filter Content -->
+            <div style="display: flex; gap: 12px; align-items: flex-end;">
+              <!-- Month -->
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 13px; margin-bottom: 6px; color: #374151; font-weight: 500;">
+                  Month
+                </label>
+                <select name='tableMonth' [(ngModel)]="_dashboardUtil.filteR_MONTH" required
+                  style="width: 100%; height: 38px; border: 1px solid #D1D5DB; border-radius: 6px; padding: 0 10px; font-size: 14px; background: white; color: #374151;">
+                  <option value='' disabled selected>Select Month*</option>
+                  <option value='Jan'>January</option>
+                  <option value='Feb'>February</option>
+                  <option value='Mar'>March</option>
+                  <option value='Apr'>April</option>
+                  <option value='May'>May</option>
+                  <option value='Jun'>June</option>
+                  <option value='Jul'>July</option>
+                  <option value='Aug'>August</option>
+                  <option value='Sep'>September</option>
+                  <option value='Oct'>October</option>
+                  <option value='Nov'>November</option>
+                  <option value='Dec'>December</option>
+                </select>
+              </div>
+
+              <!-- Year -->
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 13px; margin-bottom: 6px; color: #374151; font-weight: 500;">
+                  Year
+                </label>
+                <select name='tableYear' [(ngModel)]="_dashboardUtil.filteR_YEAR" required
+                  style="width: 100%; height: 38px; border: 1px solid #D1D5DB; border-radius: 6px; padding: 0 10px; font-size: 14px; background: white; color: #374151;">
+                  <option value='' disabled selected>Select Year*</option>
+                  <option *ngFor="let year of _util.Years(3)" [value]="year">{{year}}</option>
+                </select>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display: flex; gap: 8px;">
+                <button type="button" 
+                        class="btn"
+                        style="height: 38px; padding: 0 16px; font-size: 13px; font-weight: 500; border-radius: 6px; background: #6366f1; border: none; color: white; cursor: pointer; white-space: nowrap;"
+                        (click)="btnApplySingleProd_OnClick()">
+                  Apply
+                </button>
+                <button type="button" 
+                        class="btn"
+                        style="height: 38px; padding: 0 16px; font-size: 13px; font-weight: 500; border-radius: 6px; background: #6b7280; border: none; color: white; cursor: pointer; white-space: nowrap;"
+                        (click)="closeProdNav()">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row" *ngIf="IsPremier()">
+          <div class="col-lg-6 col-md-6 col-sm-6">
+            <div class="healthCard modern-card">
+              <!-- Modern Card Header -->
+              <div class="modern-card-header">
+                <div class="header-title">
+                  <i class="fa fa-pie-chart"></i>
+                  <span>Overall Health</span>
+                  <span class="period-badge">{{ _dashboardUtil.filteR_MONTH + '-' + _dashboardUtil.filteR_YEAR }}</span>
+                </div>
+              </div>
+              <div *ngIf="!healthScoresOverall" class="loading-spinner" style="display: flex; align-items: center; justify-content: center; height: 150px; color: #6B7280; font-size: 14px;">
+                <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 20px;"></i>
+                <span>Loading data...</span>
+              </div>
+              <!-- <div style="margin-left: 130px;">
+                <mat-tab-group class="goalTabGrp" [selectedIndex]="0">
+                    <mat-tab label="Need Focus"></mat-tab>
+                    <mat-tab label="Under Control"></mat-tab>
+                </mat-tab-group>
+              </div> -->
+              <div *ngIf="healthScoresOverall" class="row" style="margin-top: 25px;">
+                <div class="col-lg-4 col-md-4 col-sm-4" style="margin-left:10px;">
+                  <google-chart #chart2 [type]="healthPie" [data]="pieData" [columns]="healthColumn"
+                    [options]="healthOptions" [width]="healthWidth" [height]="healthHeight">
+                  </google-chart>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-4"></div>
+                <div class="col-lg-4 col-md-4 col-sm-4"
+                  style="font-size: 14px; display: flex; align-content: center;align-items: center; height: 142px;top: 15px;">
+                  <table style="border-collapse: separate;border-spacing: 0 0.4em;">
+                    <tr>
+                      <th style="padding-right: 10px">Portfolios</th>
+                      <!-- <th>Total</th> -->
+                    </tr>
+                    <tbody>
+                      <tr *ngFor="let row of pieData">
+                        <td (click)="openPopUp(healthScoresOverall,row)"
+                          style="padding-right: 10px;font-size:13px;cursor: pointer;">{{row[0]}}</td>
+                        <td (click)="openPopUp(healthScoresOverall,row)"
+                          style="font-size:13px;text-align: center;cursor: pointer;">{{row[1]}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- <div *ngIf="healthScoresOverall" class="row" style="float: right;margin-top: 35px;">
+                <a style="text-align: left;font-size:12px;font-family: Proxima Nova;letter-spacing: 0px;color: #4B4EB1;opacity: 1;cursor: pointer;">View Details</a>
+              </div> -->
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-6" style="left: -25px;">
+            <div id="portfolios" class="modern-card">
+              <!-- Modern Card Header -->
+              <div class="modern-card-header">
+                <div class="header-title">
+                  <i class="fa fa-briefcase"></i>
+                  <span>Service Level Achievement by Portfolio</span>
+                  <span class="period-badge">{{ _dashboardUtil.filteR_MONTH + '-' + _dashboardUtil.filteR_YEAR }}</span>
+                </div>
+              </div>
+              <table *ngIf="healthScoresOverall" class="portfolioTable" style="margin-top: 5px; width: -moz-available;width: -webkit-fill-available; ">
+                <thead style="color: black; margin-bottom: 5px;">
+                  <tr style="font-weight: 500; font-size: 12px;">
+                    <th style="height:8px;width: 30%;">Portfolios ({{overallPortCount}})</th>
+                    <th style="height:8px;text-align: center;width: 12%;white-space: nowrap;">Total Products
+                      ({{overallProdCount}})</th>
+                    <th colspan="3" style="height:8px;width: 25px;text-align: center;">Service Level Achievement </th>
+                    <!-- <th></th> -->
+                  </tr>
+                  <tr style="font-size: 10px;font-weight: 500;">
+                    <td style="height:3px;"></td>
+                    <td style="height:3px;width: 17%;"></td>
+                    <td colspan="2" style="height:3px;text-align: right;padding-right:15px">Overall</td>
+                    <td style="height:3px;text-align: center;">Critical Measurement</td>
+                    <td style="height:3px;text-align: center;">Key Measurement</td>
+                    <td style="height:3px;"></td>
+                  </tr>
+                </thead>
+                <tbody class="portfolioTableBody" *ngIf="viewBy == 'By Expected Service Level'">
+                  <tr *ngFor="let p of healthScoresOverall">
+                    <td style="color: #8c8c8c; font-size: 11px; font-weight: 600;width: 30%; padding: 4px 8px;">{{p.title}}</td>
+                    <td style="color: #8c8c8c; font-size: 11px; font-weight: 600;width: 12%;text-align: center; padding: 4px 8px;">
+                      {{p.producT_COUNT}}
+                    </td>
+                    <td style="text-align: center;padding: 4px 4px 4px 8%;"><span style="padding-top:4px"
+                        [ngClass]="showThumbs(p) == 'Need Focus' ? 'fa fa-thumbs-down' : 'fa fa-thumbs-up'"></span>
+                    </td>
+
+                    <td style="color: #8c8c8c; font-size: 11px;text-align: center; padding: 4px 8px;" *ngIf="!includeExclusions">
+                      {{p.meT_CRITICAL_KPI + p.meT_KEY_KPI}}/{{p.overalL_KPI_COUNT}}</td>
+                    <td style="color: #8c8c8c; font-size: 11px;text-align: center;width: 15%; padding: 4px 8px;" *ngIf="!includeExclusions">
+                      {{p.meT_CRITICAL_KPI}}/{{p.criticaL_KPI}}</td>
+                    <td style="color: #8c8c8c; font-size: 11px;text-align: center;padding: 4px 8px 4px 20px;" *ngIf="!includeExclusions">
+                      {{p.meT_KEY_KPI}}/{{p.keY_KPI}}</td>
+
+                      <td style="color: #8c8c8c; font-size: 11px;text-align: center; padding: 4px 8px;" *ngIf="includeExclusions">
+                        {{p.exclusioN_MET_CRITICAL_KPI + p.exclusioN_MET_KEY_KPI}}/{{p.overalL_KPI_COUNT}}</td>
+                      <td style="color: #8c8c8c; font-size: 11px;text-align: center;width: 15%; padding: 4px 8px;" *ngIf="includeExclusions">
+                        {{p.exclusioN_MET_CRITICAL_KPI}}/{{p.criticaL_KPI}}</td>
+                      <td style="color: #8c8c8c; font-size: 11px;text-align: center;padding: 4px 8px 4px 20px;" *ngIf="includeExclusions">
+                        {{p.exclusioN_MET_KEY_KPI}}/{{p.keY_KPI}}</td>
+
+                  </tr>
+                </tbody>
+                <tbody class="portfolioTableBody" *ngIf="viewBy == 'By Minimum Service Level'">
+                  <tr *ngFor="let p of healthScoresOverall">
+                    <td style="color: #8c8c8c; font-size: 11px; font-weight: 600;width: 30%; padding: 4px 8px;">{{p.title}}</td>
+                    <td style="color: #8c8c8c; font-size: 11px; font-weight: 600;width: 12%;text-align: center; padding: 4px 8px;">
+                      {{p.producT_COUNT}}
+                    </td>
+                    <td style="text-align: center;padding: 4px 4px 4px 8%;"><span style="padding-top:4px"
+                        [ngClass]="showThumbs(p) == 'Need Focus' ? 'fa fa-thumbs-down' : 'fa fa-thumbs-up'"></span>
+                    </td>
+
+                    <td style="color: #8c8c8c; font-size: 11px;text-align: center; padding: 4px 8px;" *ngIf="!includeExclusions">
+                      {{p.secondarY_MET_CRITICAL_KPI + p.secondarY_MET_KEY_KPI}}/{{p.overalL_KPI_COUNT}}</td>
+                    <td style="color: #8c8c8c; font-size: 11px;text-align: center;width: 15%; padding: 4px 8px;" *ngIf="!includeExclusions">
+                      {{p.secondarY_MET_CRITICAL_KPI}}/{{p.criticaL_KPI}}</td>
+                    <td style="color: #8c8c8c; font-size: 11px;text-align: center;padding: 4px 8px 4px 20px;" *ngIf="!includeExclusions">
+                      {{p.secondarY_MET_KEY_KPI}}/{{p.keY_KPI}}</td>
+                      <td style="color: #8c8c8c; font-size: 11px;text-align: center; padding: 4px 8px;" *ngIf="includeExclusions">
+                        {{p.exclusioN_SECONDARY_MET_CRITICAL_KPI + p.exclusioN_SECONDARY_MET_KEY_KPI}}/{{p.overalL_KPI_COUNT}}</td>
+                      <td style="color: #8c8c8c; font-size: 11px;text-align: center;width: 15%; padding: 4px 8px;" *ngIf="includeExclusions">
+                        {{p.exclusioN_SECONDARY_MET_CRITICAL_KPI}}/{{p.criticaL_KPI}}</td>
+                      <td style="color: #8c8c8c; font-size: 11px;text-align: center;padding: 4px 8px 4px 20px;" *ngIf="includeExclusions">
+                        {{p.exclusioN_SECONDARY_MET_KEY_KPI}}/{{p.keY_KPI}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div *ngIf="healthScoresOverall?.length == 0"
+                class="empty-state" style="display: flex; align-items: center; justify-content: center; height: 120px; color: #9CA3AF; font-size: 14px; font-weight: 500;">
+                <i class="fa fa-info-circle" style="margin-right: 8px; font-size: 16px;"></i>
+                <span>No Service Level Measures defined for this Period.</span>
+              </div>
+              <div *ngIf="!healthScoresOverall" class="loading-spinner" style="display: flex; align-items: center; justify-content: center; height: 150px; color: #6B7280; font-size: 14px;">
+                <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 20px;"></i>
+                <span>Loading data...</span>
+              </div>
+              <div *ngIf="healthScoresOverall" class="row" style="float: right;margin-top: 8px; margin-bottom: 8px;">
+                <a (click)="openPopUp(healthScoresOverall,'A')"
+                  style="font-size: 11px; color: #3B82F6; text-decoration: none; cursor: pointer; font-weight: 500; transition: all 0.2s;">
+                  <u>View Details →</u>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-6 col-md-6 col-sm-6">
+            <div id="engagementView" class="modern-card">
+              <!-- Modern Card Header -->
+              <div class="modern-card-header">
+                <div class="header-title">
+                  <i class="fa fa-tasks"></i>
+                  <span>Service Level Achievement At Engagement Level</span>
+                  <span class="period-badge">{{ _dashboardUtil.filteR_MONTH + '-' + _dashboardUtil.filteR_YEAR }}</span>
+                </div>
+              </div>
+
+              <table *ngIf="engagementKPI" class="portfolioTable"
+              style="margin-top: 5px;white-space: pre-line;margin-left: 0%;margin-right: 0%;width: -moz-available;width: -webkit-fill-available; ">
+                <thead style="color: black; margin-bottom: 5px;">
+                  <tr style="font-weight: 500; font-size: 12px;">
+                    <th style="height:10px;width: 10% !important;text-align: left;">SLA Id</th>
+                    <th style="height:10px;width: 30%;">Service Level Measures</th>
+                    <th colspan="3" style="height:10px;width: 25px;text-align: center;padding-left: 18%;">Service Level
+                    </th>
+                    <th style="height:10px;width: 9.5%;text-align: left;">Status</th>
+                  </tr>
+                  <tr style="font-size: 10px;font-weight: 500;">
+                    <td style="height:5px;width: 10% !important;"></td>
+                    <td style="height:5px;width: 30%;"></td>
+                    <td style="height:10px;text-align: center;width: 22%;padding-left: 17%;">Expected</td>
+                    <td style="height:10px;text-align: center;width: 12%;padding-left: 7%;">Minimum</td>
+                    <td style="height:10px;width: 12%;padding-left: 5%;">Achievement
+                    </td>
+                    <td></td>
+
+                  </tr>
+                </thead>
+                <tbody class="portfolioTableBody" *ngIf="viewBy == 'By Expected Service Level'">
+                  <tr *ngFor="let e of engagementKPI">
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 10% !important;">{{e.reference}}
+                    </td>
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 45%;">{{e.kpI_NAME}}
+                      <i class="fa fa-info-circle" style="font-size:x-small;position:sticky;"
+                        matTooltipClass="custom-tooltip;" matTooltip="Total No of Products : {{e.producT_COUNT}}
+                           Products Not Applicable for the Service Measure : {{e.isna}}
+                           "></i>
+                    </td>
+                    <!-- Products Whose Actuals Not Updated : {{e.producT_COUNT - e.meT_PRODUCT - e.noT_MET_PRODUCT - e.isna}} -->
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;">
+                      {{e.expecteD_SERVICE_LEVEL}} {{e.uom == 'Number' ? '' : e.uom }}</td>
+
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;">
+                      {{e.minimuM_SERVICE_LEVEL}} {{e.uom == 'Number' ? '' : e.uom }}</td>
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;" *ngIf="!includeExclusions">
+                      {{ e.uom == 'Number' ? (e.achievemenT_VALUE | number:'1.0-0') : e.achievemenT_VALUE }} {{
+                      e.achievemenT_VALUE == null ? '' : (e.uom == 'Number'
+                      ? '' : e.uom)
+                      }}</td>
+
+                      <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;" *ngIf="includeExclusions">
+                      {{ e.uom == 'Number' ? (e.exclusioN_ACHIEVEMENT_VALUE | number:'1.0-0') : e.exclusioN_ACHIEVEMENT_VALUE }} {{
+                      e.exclusioN_ACHIEVEMENT_VALUE == null ? '' : (e.uom == 'Number'
+                      ? '' : e.uom)
+                      }}</td>
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: left;"
+                      [ngClass]="{'red': getAchievementStatus(e.kpI_NAME, e.expecteD_SERVICE_LEVEL, e.achievemenT_VALUE) == 'Not Met'}" *ngIf="!includeExclusions">
+                      {{getAchievementStatus(e.kpI_NAME, e.expecteD_SERVICE_LEVEL, e.achievemenT_VALUE)}}
+                    </td>
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: left;"
+                    [ngClass]="{'red': getAchievementStatus(e.kpI_NAME, e.expecteD_SERVICE_LEVEL, e.exclusioN_ACHIEVEMENT_VALUE) == 'Not Met'}" *ngIf="includeExclusions">
+                    {{getAchievementStatus(e.kpI_NAME, e.expecteD_SERVICE_LEVEL, e.exclusioN_ACHIEVEMENT_VALUE)}}
+                  </td>
+                  </tr>
+                </tbody>
+                <tbody class="portfolioTableBody" *ngIf="viewBy == 'By Minimum Service Level'">
+                  <tr *ngFor="let e of engagementKPI">
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 10% !important;">{{e.reference}}
+                    </td>
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 45%;">{{e.kpI_NAME}}
+                      <i class="fa fa-info-circle" style="font-size:x-small;position:sticky;"
+                        matTooltipClass="custom-tooltip" matTooltip="Total No of Products : {{e.producT_COUNT}}
+                         Products Not Applicable for the Service Measure : {{e.isna}}
+                         Products Whose Actuals Not Updated : "></i>
+                    </td>
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;">
+                      {{e.expecteD_SERVICE_LEVEL}} {{e.uom == 'Number' ? '' : e.uom }}</td>
+
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;">
+                      {{e.minimuM_SERVICE_LEVEL}} {{e.uom == 'Number' ? '' : e.uom }}</td>
+
+
+                      <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;" *ngIf="!includeExclusions">
+                        {{ e.uom == 'Number' ? (e.achievemenT_VALUE | number:'1.0-0') : e.achievemenT_VALUE }} {{
+                        e.achievemenT_VALUE == null ? '' : (e.uom == 'Number'
+                        ? '' : e.uom)
+                        }}</td>
+
+                      <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: center;" *ngIf="includeExclusions">
+                        {{ e.uom == 'Number' ? (e.exclusioN_ACHIEVEMENT_VALUE | number:'1.0-0') : e.exclusioN_ACHIEVEMENT_VALUE }} {{
+                        e.exclusioN_ACHIEVEMENT_VALUE == null ? '' : (e.uom == 'Number'
+                        ? '' : e.uom)
+                        }}</td>
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: left;"
+                      [ngClass]="{'red': getAchievementStatus(e.kpI_NAME, e.minimuM_SERVICE_LEVEL, e.achievemenT_VALUE) == 'Not Met'}" *ngIf="!includeExclusions">
+                      {{getAchievementStatus(e.kpI_NAME, e.minimuM_SERVICE_LEVEL, e.achievemenT_VALUE)}}
+                    </td>
+
+                    <td style="color: #8c8c8c; font-size: 12px; font-weight: 600;width: 12%;text-align: left;"
+                    [ngClass]="{'red': getAchievementStatus(e.kpI_NAME, e.minimuM_SERVICE_LEVEL, e.exclusioN_ACHIEVEMENT_VALUE) == 'Not Met'}" *ngIf="includeExclusions">
+                    {{getAchievementStatus(e.kpI_NAME, e.minimuM_SERVICE_LEVEL, e.exclusioN_ACHIEVEMENT_VALUE)}}
+                  </td>
+
+
+                  </tr>
+                </tbody>
+              </table>
+              <div *ngIf="engagementKPI && _access.IsAllowed(82, 1, '', '')" class="row1"
+                style="float: right;margin-top: 5px;">
+                <a (click)="viewEngagementLevelDetails()"
+                  style="font-size: 11px; color: #3B82F6; text-decoration: none; cursor: pointer; font-weight: 500; transition: all 0.2s;">
+                  <u>View Details →</u>
+                </a>
+              </div>
+              <div *ngIf="!engagementKPI" class="loading-spinner" style="display: flex; align-items: center; justify-content: center; height: 150px; color: #6B7280; font-size: 14px;">
+                <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 20px;"></i>
+                <span>Loading data...</span>
+              </div>
+
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-6">
+            <div id="metricPerformance" class="modern-card" [style.width.%]="_access.IsAllowed(64, 1, '', '') == true ? 95 : 95"
+              [style.marginLeft.%]="_access.IsAllowed(64, 1, '', '') == true ? 1 : 1">
+              <!-- Modern Card Header -->
+              <div class="modern-card-header">
+                <div class="header-title">
+                  <i class="fa fa-cube"></i>
+                  <span>Service Level Achievement by Product</span>
+                  <span class="period-badge">{{ _dashboardUtil.filteR_MONTH + '-' + _dashboardUtil.filteR_YEAR }}</span>
+                </div>
+                <div class="header-actions">
+                  <a (click)="changKPIflag()" *ngIf="_access.IsAllowed(12, 3, '', '')" 
+                    class="action-btn" title="Edit KPI" [routerLink]="['/kpi', customerid]">
+                    <i class="fa fa-edit"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="row">
+                <table *ngIf="productScores" class="prodKPITable modern-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 30%;padding-left: 5px;">Product ({{countOfProds}})</th>
+                      <th style="width: 15%; text-align: center;">Achievement</th>
+                      <th style="width: 15%; text-align: center;">SLA Compliance</th>
+                      <th style="width: 15%; text-align: center;">Customer contact</th>
+                      <th style="width: 10%; text-align: center;">Trend</th>
+                      <th style="width: 10%; text-align: center;">Transition</th>
+                      <th style="width: 5%; text-align: center;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody *ngIf="viewBy == 'By Expected Service Level'">
+                    <tr *ngFor="let prod of productScores"
+                        style="border-left: 3px solid; box-shadow: -1.5px 2px 2.5px 1px lightgray!important;cursor: pointer;">
+                      <!-- Product Name -->
+                      <td [matTooltip]='prod.producT_TITLE'
+                          style="width:30%;max-width: 200px;font-size:12px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0">
+                        <a [routerLink]="['/successgoal/metric', selectedCustomer.cusT_ID, prod.producT_ID,prod.modE_ID,_dashboardUtil.filteR_MONTH,_dashboardUtil.filteR_YEAR]">
+                          {{prod.producT_TITLE}}
+                        </a>
+                      </td>
+                      <!-- Achievement (Thumbs Up/Down) -->
+                      <td style="text-align: center;">
+                        <span style="padding-top:7px"
+                              [ngClass]="showStatusForProduct(prod) == 'Need Focus' ? 'fa fa-thumbs-down' : 'fa fa-thumbs-up'">
+                        </span>
+                      </td>
+                      <!-- SLA Compliance (Overall / Critical / Key) -->
+                      <td style="color: black;text-align: center;font-size: 12px;" *ngIf="!includeExclusions">
+                        {{prod.slA_STATUS}}/{{prod.overalL_KPI_COUNT}}
+                        <span style="font-size: 10px; color: #666;">
+                          ({{prod.meT_CRITICAL_KPI}}/{{prod.criticaL_KPI}} | {{prod.meT_KEY_KPI}}/{{prod.keY_KPI}})
+                        </span>
+                      </td>
+                      <td style="color: black;text-align: center;font-size: 12px;" *ngIf="includeExclusions">
+                        {{prod.exclusioN_SLA_STATUS}}/{{prod.overalL_KPI_COUNT}}
+                        <span style="font-size: 10px; color: #666;">
+                          ({{prod.exclusioN_MET_CRITICAL_KPI}}/{{prod.criticaL_KPI}} | {{prod.exclusioN_MET_KEY_KPI}}/{{prod.keY_KPI}})
+                        </span>
+                      </td>
+                      <!-- Customer Contact -->
+                      <td style="text-align: center;font-size: 12px;">
+                        <i class="fa fa-user" title="Customer Contact"></i>
+                      </td>
+                      <!-- Trend -->
+                      <td style="text-align: center;">
+                        <a style="cursor: pointer;" (click)="openProductKPITrendScreen(prod.producT_ID)">
+                          <i class="fa fa-line-chart" title="View Trend"></i>
+                        </a>
+                      </td>
+                      <!-- Transition -->
+                      <td style="text-align: center;">
+                        <i class="fa fa-exchange" title="Transition"></i>
+                      </td>
+                      <!-- Action -->
+                      <td style="text-align: center;">
+                        <a style="cursor: pointer;">
+                          <i class="fa fa-edit" title="Edit"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tbody *ngIf="viewBy == 'By Minimum Service Level'">
+                    <tr *ngFor="let prod of productScores"                    
+                        style="border-left: 3px solid; box-shadow: -1.5px 2px 2.5px 1px lightgray!important;cursor: pointer;">
+                      <!-- Product Name -->
+                      <td [matTooltip]='prod.producT_TITLE'
+                          style="width:30%;max-width: 200px;font-size:12px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0">
+                        <a [routerLink]="['/successgoal/metric', selectedCustomer.cusT_ID, prod.producT_ID,prod.modE_ID,_dashboardUtil.filteR_MONTH,_dashboardUtil.filteR_YEAR]">
+                          {{prod.producT_TITLE}}
+                        </a>
+                      </td>
+                      <!-- Achievement (Thumbs Up/Down) -->
+                      <td style="text-align: center;">
+                        <span style="padding-top:7px"
+                              [ngClass]="showStatusForProduct(prod) == 'Need Focus' ? 'fa fa-thumbs-down' : 'fa fa-thumbs-up'">
+                        </span>
+                      </td>
+                      <!-- SLA Compliance (Overall / Critical / Key) - Minimum Service Level -->
+                      <td style="color: black;text-align: center;font-size: 12px;" *ngIf="!includeExclusions">
+                        {{prod.secondarY_MET_CRITICAL_KPI + prod.secondarY_MET_KEY_KPI}}/{{prod.overalL_KPI_COUNT}}
+                        <span style="font-size: 10px; color: #666;">
+                          ({{prod.secondarY_MET_CRITICAL_KPI}}/{{prod.criticaL_KPI}} | {{prod.secondarY_MET_KEY_KPI}}/{{prod.keY_KPI}})
+                        </span>
+                      </td>
+                      <td style="color: black;text-align: center;font-size: 12px;" *ngIf="includeExclusions">
+                        {{prod.exclusioN_SECONDARY_MET_CRITICAL_KPI + prod.exclusioN_SECONDARY_MET_KEY_KPI}}/{{prod.overalL_KPI_COUNT}}
+                        <span style="font-size: 10px; color: #666;">
+                          ({{prod.exclusioN_SECONDARY_MET_CRITICAL_KPI}}/{{prod.criticaL_KPI}} | {{prod.exclusioN_SECONDARY_MET_KEY_KPI}}/{{prod.keY_KPI}})
+                        </span>
+                      </td>
+                      <!-- Customer Contact -->
+                      <td style="text-align: center;font-size: 12px;">
+                        <i class="fa fa-user" title="Customer Contact"></i>
+                      </td>
+                      <!-- Trend -->
+                      <td style="text-align: center;">
+                        <a style="cursor: pointer;" (click)="openProductKPITrendScreen(prod.producT_ID)">
+                          <i class="fa fa-line-chart" title="View Trend"></i>
+                        </a>
+                      </td>
+                      <!-- Transition -->
+                      <td style="text-align: center;">
+                        <i class="fa fa-exchange" title="Transition"></i>
+                      </td>
+                      <!-- Action -->
+                      <td style="text-align: center;">
+                        <a style="cursor: pointer;">
+                          <i class="fa fa-edit" title="Edit"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div *ngIf="productScores?.length == 0"
+                  style="height: 100px; text-align: center;line-height: 100px; font-size: 17px;">
+                  No Service Level Measures defined for this Period.
+                </div>
+                <div *ngIf="!productScores" style="text-align: center; height: 100px; line-height: 200px;">
+                  <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-6 col-md-6 col-sm-6" *ngIf="_access.IsAllowed(64, 1, '', '')">
+
+            <div id="journeyMapPremier" class="journeyMapPremier">
+              
+              <!-- Modern Header -->
+              <div class="card-modern-header">
+                <div class="header-title">
+                  <mat-icon class="header-icon">note</mat-icon>
+                  <span>Key Highlights</span>
+                  <span class="period-badge">{{ _dashboardUtil.filteR_MONTH + '-' + _dashboardUtil.filteR_YEAR }}</span>
+                </div>
+                <div class="header-actions">
+                  <a *ngIf="_access.IsAllowed(13, 3, '', '')" (click)="showKPINotesForCustomer(selectedCustomer.cusT_ID)">
+                    <mat-icon class="edit-icon">edit</mat-icon>
+                  </a>
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline" class="period-selector-compact" style="width: 150px; margin-top: 8px;">
+                <mat-select (selectionChange)="weekChange($event.value)" name='Week' [(ngModel)]="SelectedWeek" placeholder="Period">
+                  <mat-option [value]=0>Month</mat-option>
+                  <mat-option [value]=1>Week 1</mat-option>
+                  <mat-option [value]=2>Week 2</mat-option>
+                  <mat-option [value]=3>Week 3</mat-option>
+                  <mat-option [value]=4>Week 4</mat-option>
+                  <mat-option [value]=5>Week 5</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="journeyMapContent" style="max-height: 220px; overflow-y: scroll; overflow-x: hidden ;position: relative;bottom: 13%;">
+                <div *ngIf="!highlights" style="text-align: center; height: 100px; line-height: 100px;">
+                  <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 21px;"></i>Loading...
+                </div>
+                <ul class="a" *ngIf="highlights">
+                  <li
+                    style="padding: 5px;white-space: normal; word-wrap:break-word; width:98%;font-size: 12px;font-family: sans-serif;color: #808080"
+
+                    *ngFor="let h of highlights">
+                    {{h.description}}
+                  </li><!-- [style.width]="_util.IsPremier(selectedCustomer.cusT_ID) == true ? 215 : 420" -->
+                </ul>
+                <div *ngIf="highlights?.length == 0"
+                  style="text-align: center; height: 150px; line-height: 150px; font-size: 13px; color: black;">
+                  No Highlights for this Period
+                </div>
+                <div style="font-size: 11px; color: #94d3f1; text-align: right ">
+                  <a style="margin-left: auto">
+                    <!-- <u>View More</u> -->
+                  </a>
+                </div>
+              </div>
+              <div class="journeyMapFooter" style="height: 20px;">
+
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-6" *ngIf="_access.IsAllowedDebug(80, 1, '', '')">
+            <div class="capa" style="width: 95%;margin-left: 1%;">
+              
+              <!-- Modern Header -->
+              <div class="card-modern-header">
+                <div class="header-title">
+                  <mat-icon class="header-icon">assignment</mat-icon>
+                  <span>Service Improvement Plan</span>
+                  <span class="period-badge">{{ _dashboardUtil.filteR_MONTH + '-' + _dashboardUtil.filteR_YEAR }}</span>
+                </div>
+              </div>
+
+              <table class="prodKPITable" style="margin-top:2%">
+                <thead style="color: black; margin-bottom: 5px;">
+                  <tr style="font-weight: 500; font-size: 12px;">
+                    <th style="width: 205px;max-width: 225px !important;padding-left: 5px;">Entered Products
+                      ({{countOfProds}})</th>
+                    <th style="width: 10%; max-width: 80px !important;text-align:center;"
+                      matTooltip="No of KPIs Target Not Met">
+                      Not Met</th>
+                    <th colspan="5" style="width: 80px; max-width: 80px !important;text-align: center; ">Corrective
+                      Action Plan Stages
+                    </th>
+                  </tr>
+                  <tr style="font-size: 10px;font-weight: 500;">
+                    <td style="height:5px;width: 40%;"></td>
+                    <td style="height:5px;text-align: center;width: 10%;"></td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Submission</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Review</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Customer Approval</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Implementation</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Due for Verification</td>
+                    <td style="height:5px;text-align: center;width: 10%;">Closed</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let CAPA of productCAPACount"
+                    style="border-left: 3px solid; box-shadow: -1.5px 2px 2.5px 1px lightgray!important">
+                    <td [matTooltip]='CAPA.producT_TITLE'
+                      style="width:35%;max-width: 90px;cursor: pointer;font-size:12px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0">
+                      {{CAPA.producT_TITLE}}</td>
+                    <td style="color: black;text-align: center;font-size: 12px;width: 10%">
+                      <a href="/successgoal/metric/{{selectedCustomer.cusT_ID}}/{{CAPA.producT_ID}}/{{CAPA.modE_ID}}/{{_dashboardUtil.filteR_MONTH}}/{{_dashboardUtil.filteR_YEAR}}/true/-1">{{CAPA.noT_MET}}</a>
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%;">
+                      <a href="/successgoal/metric/{{selectedCustomer.cusT_ID}}/{{CAPA.producT_ID}}/{{CAPA.modE_ID}}/{{_dashboardUtil.filteR_MONTH}}/{{_dashboardUtil.filteR_YEAR}}/true/0">{{CAPA.duE_FOR_SUBMISSION}}</a>
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      <a href="/successgoal/metric/{{selectedCustomer.cusT_ID}}/{{CAPA.producT_ID}}/{{CAPA.modE_ID}}/{{_dashboardUtil.filteR_MONTH}}/{{_dashboardUtil.filteR_YEAR}}/true/1">{{CAPA.duE_FOR_REVIEW}}</a>
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      <a href="/successgoal/metric/{{selectedCustomer.cusT_ID}}/{{CAPA.producT_ID}}/{{CAPA.modE_ID}}/{{_dashboardUtil.filteR_MONTH}}/{{_dashboardUtil.filteR_YEAR}}/true/2">{{CAPA.duE_FOR_CUSTOMER_APPROVAL}}</a>
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      <a href="/successgoal/metric/{{selectedCustomer.cusT_ID}}/{{CAPA.producT_ID}}/{{CAPA.modE_ID}}/{{_dashboardUtil.filteR_MONTH}}/{{_dashboardUtil.filteR_YEAR}}/true/5">{{CAPA.duE_FOR_IMPLEMENTATION}}</a>
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      <a href="/successgoal/metric/{{selectedCustomer.cusT_ID}}/{{CAPA.producT_ID}}/{{CAPA.modE_ID}}/{{_dashboardUtil.filteR_MONTH}}/{{_dashboardUtil.filteR_YEAR}}/true/3">{{CAPA.duE_FOR_VERIFICATION}}</a>
+                    </td>
+                    <td style="color: black;font-size: 12px;text-align: center;width: 10%">
+                      <a href="/successgoal/metric/{{selectedCustomer.cusT_ID}}/{{CAPA.producT_ID}}/{{CAPA.modE_ID}}/{{_dashboardUtil.filteR_MONTH}}/{{_dashboardUtil.filteR_YEAR}}/true/4">{{CAPA.closed}}</a>
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+              <div *ngIf="productCAPACount?.length == 0"
+                style="height: 100px; text-align: center;line-height: 100px; font-size: 17px;">
+                No Service Improvement Plan defined for this Period.
+              </div>
+              <div *ngIf="!productCAPACount" style="text-align: center; height: 100px; line-height: 200px;">
+                <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 25px;"></i>Loading...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

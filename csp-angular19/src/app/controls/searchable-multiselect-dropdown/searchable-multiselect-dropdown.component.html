@@ -1,0 +1,39 @@
+<mat-form-field appearance="outline" class="dropdown-field">
+  <mat-label>{{ displayName }}</mat-label>
+  <mat-select 
+    #multiSelect 
+    multiple 
+    [(ngModel)]="ids"
+    [disabled]="disabled"
+    (openedChange)="onDropdownOpenedChanged($event)">
+    
+    <!-- Search Input Inside Dropdown -->
+    <mat-form-field class="filter-search" appearance="outline">
+      <input 
+        placeholder="Search {{ displayName }}" 
+        [(ngModel)]="searchVal" 
+        matInput
+        (keydown)="$event.stopPropagation()" 
+        (ngModelChange)="onKey($event)">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+    
+    <!-- Select All Option -->
+    <mat-option 
+      #allSelected 
+      (click)="toggleAllSelection()" 
+      [value]="-1">
+      All
+    </mat-option>
+    
+    <!-- Data Options -->
+    <mat-option 
+      *ngFor="let d of data" 
+      (click)="tosslePerOne()" 
+      [value]="d[idField]" 
+      [title]="d[nameField]">
+      {{ d[nameField] }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+{{ selectAll() }}

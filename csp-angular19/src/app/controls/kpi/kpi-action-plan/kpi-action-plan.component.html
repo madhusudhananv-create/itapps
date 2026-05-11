@@ -1,0 +1,557 @@
+<div class="dialog" style="box-shadow: 0px -3px 3px #00000029;opacity: 1;overflow-x: hidden;width: 2000px;">
+  <div class="row" mat-dialog-title style="height: 40px;background: #EBEBEB 0% 0% no-repeat padding-box;opacity: 1;">
+
+    <div style="float:left;">
+      <label
+        style="height: 17px;text-align: left;font: normal normal normal 14px/17px Roboto,'Helvetica Neue',sans-serif;;letter-spacing: 0px;color: #333333;opacity: 1;margin-left: 15px;margin-top: 5px">
+        Service Improvement Plan (Corrective Action) </label>
+    </div>
+
+  </div>
+
+  <div style="margin: 15px">
+    <div class="row">
+      <div>
+        <mat-horizontal-stepper #stepper>
+          <mat-step>
+            <ng-template matStepLabel>
+              <label> Stage : Corrective Action Plan Submission </label>
+              <br>
+              <label>Status : </label>
+              <span *ngIf="!findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS"> New </span>
+              <span *ngIf="findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS">
+                {{findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS}} </span>
+
+              <!-- {{findingStatus.capA_SUBMISSION.status?.stagE_STATUS == '' || 'null'? 'New' : findingStatus.capA_SUBMISSION.status?.stagE_STATUS}} -->
+            </ng-template>
+            <div class="row">
+              <table *ngIf="!isNonPremier" style="white-space:no-wrap;">
+                <tr>
+                  <td>
+                    <label>Product : </label> {{product}}
+                  </td>
+                  <td>
+                    <label> Service Level Measures :</label> {{serviceLevelMetric}}
+                  </td>
+                  <td>
+                    <label> Expected Service Level : </label> {{expectedLevel}} %
+                  </td>
+                  <td>
+                    <label> Minimum Service Level : </label> {{minimumLevel}} %
+                  </td>
+                  <td>
+                    <label> KPI Actual :</label> {{kpiActual}} %
+                  </td>
+                  <td>
+                    <label> SLA Status : </label> <span [style.color]="slaStatus == 'Not Met'?'red' : 'green'">
+                      {{slaStatus}} </span>
+                  </td>
+                </tr>
+              </table>
+
+              <table *ngIf="isNonPremier" style="white-space:no-wrap;">
+                <tr>
+                  <td>
+                    <label> KPI Actual :</label> {{kpiActual}} %
+                  </td>
+                  <td>
+                    <label> SLA Status : </label> <span [style.color]="slaStatus == 'Not Met'?'red' : 'green'">
+                      {{slaStatus}} </span>
+                  </td>
+                </tr>
+              </table>
+
+              <div>
+
+                <form>
+                  <!-- <ng-template matStepLabel>
+                    <label>Stage :</label> CAP Submission
+                    <br>
+                    <label>Status :</label> {{findingStatus.capA_SUBMISSION.status?.stagE_STATUS == '' || 'null' ? 'New' : findingStatus.capA_SUBMISSION.status?.stagE_STATUS}}
+                  </ng-template> -->
+                  <!-- <br> -->
+                  <label style="width: 6%;">Cause :</label>
+                  <mat-form-field *ngIf="causeCollection != undefined">
+                    <mat-label>Cause</mat-label>
+                    <mat-select (selectionChange)="getSelectedVal()"
+                      [disabled]="(findingStatus?.capA_SUBMISSION?.capa?.length || 0) > 0 && iscapsubmitbutton && isDraft == false"
+                      [(ngModel)]="rootCauseIds" name="cause" multiple>
+                      <mat-option *ngFor="let cause of causeCollection" [value]="cause.id" [title]="cause.causes">
+                        {{cause.causes}}
+                      </mat-option>
+                    </mat-select>
+
+                    <!-- <mat-label>Cause and Root Cause</mat-label>
+                    <mat-select (selectionChange)="getSelectedVal()"
+                      [disabled]="findingStatus.capA_SUBMISSION.capa.length > 0 && iscapsubmitbutton"
+                      [(ngModel)]="rootCauseIds" name="cause" multiple>
+                      <mat-optgroup *ngFor="let group of causeCollection" [label]="group.causes">
+                        <mat-option *ngFor="let pokemon of group.rooT_CAUSE" [value]="pokemon.id"
+                          [title]="pokemon.rooT_CAUSE">
+                          {{pokemon.rooT_CAUSE}}
+                        </mat-option>
+                      </mat-optgroup>
+                    </mat-select> -->
+                  </mat-form-field>
+                  <!-- <div style="float:right">
+                    <span style="color:#4e5882;"><span style="color:red">*</span> Note : If Root Cause is not available,
+                      Please contact premierqualityteam@gavstech.com</span> -->
+
+
+                  <a style="float: right;margin-top: 1%;" target="_blank"
+                    href="../../../../assets/helpfiles/correctiveaction.html">5 Steps Guide to Corrective Action</a>
+
+
+                  <div class="row">
+                    <table style="width: 99%;font-size: 12px" class="table table-bordered"
+                      *ngIf="findingStatus !=null && findingStatus.capA_SUBMISSION!=null && findingStatus.capA_SUBMISSION.capa.length > 0">
+                      <tr>
+                        <th>S.No</th>
+                        <th style="width: 8%;">Cause</th>
+                        <th style="width: 8%;">Potential Cause</th>                    
+                        <th style="width: 1%">Is Root Cause</th>
+                        <th>Correction</th>
+                        <th>Corrective Action Plan</th>
+                        <th style="width: 8%;">Target Date</th>
+                        <th style="width: 12%">Responsibility</th>
+                        <th>Plan for verifying effectiveness of Corrective Action Plan</th>
+                      </tr>
+                      <tr *ngFor="let st of findingStatus.capA_SUBMISSION.capa;let i = index">
+                        <td style="padding-top: 25px;">{{i+1}}</td>
+                        <td style="padding-top: 25px;">                        
+                          {{st.cappalist.cause}}
+                        </td>
+                        <td style="width :15%">
+                          <mat-form-field style="width :98%">
+                            <textarea name="RootCause{{i}}" matInput [disabled]="isCapCauseDisabled()"
+                              [(ngModel)]="st.cappalist.rooT_CAUSE" maxlength="1000"
+                              (keypress)="numberOnly($event)"></textarea>
+                          </mat-form-field>
+                        </td>                   
+                        <td>
+                          <mat-form-field style="width: 50px;margin-top: 27%;">
+                            <mat-select name="rootCause{{i}}" [(ngModel)]="st.cappalist.isrootcause"
+                              [disabled]="isCapCauseDisabled()" style="width: 88% !important;">
+                              <mat-option [value]="true">Yes</mat-option>
+                              <mat-option [value]="false">No</mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <mat-form-field style="width :98%">
+                            <textarea name="correction{{i}}" matInput [disabled]="isCapCauseDisabled()"
+                              [(ngModel)]="st.cappalist.correction" maxlength="2000"
+                              (keypress)="numberOnly($event)"></textarea>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <mat-form-field style="width :98%">
+                            <textarea name="corrective{{i}}" matInput [disabled]="isCapCauseDisabled()"
+                              [(ngModel)]="st.cappalist.correctivE_ACTION_PLAN" maxlength="2000"
+                              (keypress)="numberOnly($event)"></textarea>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <mat-form-field style="width: 85px;margin-top: 16%;">
+                            <input name="captargetdate{{i}}" [disabled]="isCapCauseDisabled()"
+                              [(ngModel)]="st.cappalist.caP_TARGET_DATE" matInput [matDatepicker]="picker"
+                              placeholder="Target date" [min]="minDate">
+                            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                            <mat-datepicker #picker></mat-datepicker>
+                          </mat-form-field>
+                        </td>
+                        <td *ngIf="isNonPremier">
+                          <mat-form-field style="width: 100px;margin-top: 10%;">
+                            <mat-select name="responsible{{i}}" [disabled]="isCapCauseDisabled()"
+                              [(ngModel)]="st.cappalist.responsible" required>
+                              <mat-option *ngFor="let root of empInfo" [value]="root.emP_ID" [title]="root.frsT_NM">
+                                {{root.frsT_NM}} 
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>   
+                        <td *ngIf="!isNonPremier">
+                          <mat-form-field style="width: 100px;margin-top: 10%;">
+                            <mat-select name="responsible{{i}}" [disabled]="isCapCauseDisabled()"
+                              [(ngModel)]="st.cappalist.responsible" required>
+                              <mat-option *ngFor="let root of empInfo" [value]="root.responsiblE_EMP_ID"
+                                [title]="root.responsiblE_NAME">
+                                {{root.responsiblE_NAME}}</mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </td>
+                        <td>
+                          <mat-form-field style="width :98%">
+                            <textarea name="effectiveplan{{i}}" matInput [disabled]="isCapCauseDisabled()"
+                              [(ngModel)]="st.cappalist.plaN_FOR_EFFECTIVE_CAP" (keypress)="numberOnly($event)"
+                              maxlength="1000"></textarea>
+                          </mat-form-field>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </form>
+              </div>
+              <div style="text-align: center" class="row" *ngIf="(findingStatus?.capA_SUBMISSION?.capa?.length ?? 0) > 0">
+                <button (click)="SaveCheckListCAPA(findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS)"
+                  [disabled]="isCAPSubmissionDisabled()" class="btn btn-primary btn-compact">
+                  {{ iscapsubmitbutton == true || findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS == "Corrective Action Plan Resubmit"
+                  ?'Submit':'Save'}} </button>
+                <!-- <button class="btn btn-primary">Cancel</button> -->
+                <button (click)="onClose()" class="btn btn-primary btn-compact">Close</button>
+              
+              </div>
+              <!-- <div>
+                    <mat-progress-bar  mode="indeterminate"></mat-progress-bar>
+                  </div> -->
+            </div>
+          </mat-step>
+          <mat-step>
+            
+            <ng-template matStepLabel>
+              <label>Stage : Corrective Action Plan Review </label>
+              <br>
+              <span *ngIf="iscapsubmitbutton && (findingStatus?.capA_REVIEW?.capa?.length ?? 0) > 0"> Status :
+                {{findingStatus.capA_REVIEW?.status?.stagE_STATUS}}</span>
+            </ng-template>
+            <form *ngIf="findingStatus != undefined && findingStatus.capA_REVIEW != undefined && iscapsubmitbutton">
+
+              <div class="row" style="margin-top: 15px">
+                <table style="width: 99%;font-size: 12px" class="table table-bordered"
+                  *ngIf="(findingStatus?.capA_REVIEW?.capa?.length ?? 0) > 0">
+                  <tr>
+                    <th style="width: 1%">S.No</th>
+                    <th style="width: 8%;">Potential Cause</th>
+                    <th style="width: 1%">Is Root Cause</th>
+                    <th style="width: 15%;">Correction</th>
+                    <th style="width: 15%;">Corrective Action Plan</th>
+                    <th style="width: 8%;">Target Date</th>
+                    <th style="width: 12%">Responsibility</th>
+                    <th style="width:15%"> Plan for verifying effectiveness of Corrective Action Plan</th>
+                    <!-- <th style="width: 8%;">Target Date</th> -->
+
+                    <th>
+                      <!-- <input type="checkbox" #checkAllId [(ngModel)]="isCheck" (click)="checkAll(checkAllId)"
+                        name="checkAll"> -->
+                      Is Approved
+                    </th>
+                    <th>Remarks</th>
+                  </tr>
+                  <tr *ngFor="let st of findingStatus.capA_REVIEW.capa;let i = index">
+
+                    <td>{{i+1}}</td>
+                    <td>{{st.rooT_CAUSE}}</td>
+                    <td>
+                      {{getRootCauseVal(st.isrootcause)}}
+                    </td>
+                    <td>
+                      {{st.correction}}
+                    </td>
+                    <td>
+                      {{st.correctivE_ACTION_PLAN}}
+                    </td>
+                    <td>
+                      {{st.caP_TARGET_DATE |date :'mediumDate'}}
+                    </td>
+                    <td>
+                      {{getEmployeeName(st.responsible)}}
+                    </td>
+                    <td>
+                      {{ st.plaN_FOR_EFFECTIVE_CAP }}
+                    </td>
+                    <td>
+                      <mat-form-field style="width: 50px;">
+                        <mat-select name="check{{i}}" [(ngModel)]="st.ischecked" [disabled]="st.issubmitted" name="food"
+                          (ngModelChange)="SendIdtoArray(st)">
+                          <mat-option [value]="true">Yes</mat-option>
+                          <mat-option [value]="false">No</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field>
+                        <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks" [disabled]="st.issubmitted"
+                          placeholder="Enter remarks"></textarea>
+                      </mat-form-field>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div style="text-align: center" class="row">
+                <button *ngIf=" ( _access.IsAllowed(85, 3, '', '') || isenablereviewbutton ) && (findingStatus?.capA_REVIEW?.capa?.length ?? 0) > 0" class="btn btn-primary btn-compact"
+                  [disabled]="iscapreviewbutton || disabletillreviewSave || iscapametricview" (click)="SubmitCap()">Submit</button> <!--  -->
+
+                <button (click)="onClose()" class="btn btn-primary btn-compact">Close</button>
+              </div>
+              <div>
+                <mat-progress-bar *ngIf="disabletillreviewSave" mode="indeterminate"></mat-progress-bar>
+              </div>
+            </form>
+          </mat-step>
+          <mat-step>
+            <ng-template matStepLabel>
+              <label>Stage : Corrective Action Plan Approve </label>
+              <br>
+              <span
+                *ngIf="iscapreviewbutton && (findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0 &&  findingStatus.capA_REVIEW?.status?.stagE_STATUS == 'Corrective Action Plan Approved' ">
+                Status :
+                {{findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS}}</span>
+            </ng-template>
+            <form
+              *ngIf="findingStatus != undefined && findingStatus.capA_CUSTOMER_APPROVAL != undefined && iscapreviewbutton && findingStatus.capA_REVIEW?.status?.stagE_STATUS == 'Corrective Action Plan Approved'">
+
+              <div class="row" style="margin-top: 15px">
+                <table style="width: 99%;font-size: 12px" class="table table-bordered"
+                  *ngIf="(findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0">
+                  <tr>
+                    <th style="width: 1%">S.No</th>
+                    <th style="width: 8%;">Potential Cause</th>
+                    <th style="width: 1%">Is Root Cause</th>
+                    <th style="width: 15%;">Correction</th>
+                    <th style="width: 15%;">Corrective Action Plan</th>
+                    <th style="width: 8%;">Target Date</th>
+                    <th style="width: 12%">Responsibility</th>
+                    <th style="width:15%"> Plan for verifying effectiveness of Corrective Action Plan</th>
+                    <!-- <th style="width: 8%;">Target Date</th> -->
+
+                    <th>
+                      <!-- <input type="checkbox" #checkAllId [(ngModel)]="isCheck" (click)="checkAll(checkAllId)"
+                        name="checkAll"> -->
+                      Is Approved / Rejected
+                    </th>
+                    <th>Remarks</th>
+                  </tr>
+                  <tr *ngFor="let st of findingStatus.capA_CUSTOMER_APPROVAL.capa;let i = index">
+
+                    <td>{{i+1}}</td>
+                    <td>{{st.capadata.rooT_CAUSE}}</td>
+                    <td>
+                      {{getRootCauseVal(st.capadata.isrootcause)}}
+                    </td>
+                    <td>
+                      {{st.capadata.correction}}
+                    </td>
+                    <td>
+                      {{st.capadata.correctivE_ACTION_PLAN}}
+                    </td>
+                    <td>
+                      {{st.capadata.caP_TARGET_DATE |date :'mediumDate'}}
+                    </td>
+                    <td>
+                      {{getEmployeeName(st.capadata.responsible)}}
+                    </td>
+                    <td>
+                      {{ st.capadata.plaN_FOR_EFFECTIVE_CAP }}
+                    </td>
+                    <td>
+                      <mat-form-field style="width: 70px;">
+                        <mat-select name="check{{i}}" [(ngModel)]="st.statuS_ID"
+                          [disabled]="st.statuS_ID == 1 && st.isactive && findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete"
+                          name="food" (ngModelChange)="SendIdtoArray(st)">
+                          <mat-option *ngFor="let list of capaCustomerApprovalStatusList" [value]="list.id"
+                            [title]="list.status">{{list.status}}
+                          </mat-option>
+                        </mat-select>
+                        <!-- <mat-select  [(ngModel)]="st.statuS_ID"
+                        [disabled]="st.isactive">
+                        <mat-option *ngFor="let list of auditorList" [value]="list.emP_ID" [title]="list.frsT_NM">{{list.frsT_NM}}
+                        </mat-option>
+                      </mat-select> -->
+
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field>
+                        <textarea matInput name="remark{{i}}" [(ngModel)]="st.remarks"
+                          [disabled]="st.statuS_ID == 1 && st.isactive && findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete"
+                          placeholder="Enter remarks"></textarea>
+                      </mat-form-field>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="!isNonPremier" style="text-align: center" class="row">
+                <button *ngIf="(findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0" class="btn btn-primary btn-compact"
+                  [disabled]="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete || disableTillCustomerApprovalSave || isEditAccessDisabled"
+                  (click)="CapApprovedByCustomer()">Submit</button> <!--  -->
+                
+                <button (click)="onClose()" class="btn btn-primary btn-compact">Close</button>
+              </div>
+              <div *ngIf="isNonPremier" style="text-align: center" class="row">
+                <button *ngIf="(findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0" class="btn btn-primary btn-compact" 
+                  [disabled]="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete || disableTillCustomerApprovalSave"
+                  (click)="CapApprovedByQASpoc()">Submit</button> <!--  -->
+                
+                <button (click)="onClose()" class="btn btn-primary btn-compact">Close</button>
+              </div>
+
+              <div>
+                <mat-progress-bar *ngIf="disableTillCustomerApprovalSave" mode="indeterminate"></mat-progress-bar>
+              </div>
+            </form>
+          </mat-step>
+
+          <mat-step>
+
+            <ng-template matStepLabel>
+              <label>Stage : Corrective Action Plan Implementation </label>
+              <br>
+              <span
+                *ngIf="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete && (findingStatus?.caP_IMPLEMENTATION?.capa?.length ?? 0) > 0 && (findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By Customer' || findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By QASpoc')">
+                Status : {{findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS}}</span>
+            </ng-template>
+            <div
+              *ngIf="findingStatus != undefined && findingStatus.caP_IMPLEMENTATION != undefined && findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete && (findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By Customer' || findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By QASpoc')">
+
+
+              <div class="row" style="margin-top: 15px">
+                <table style="width: 99%;font-size: 12px" class="table table-bordered"
+                  *ngIf="(findingStatus?.caP_IMPLEMENTATION?.capa?.length ?? 0) > 0">
+                  <tr>
+                    <th style="width: 1%">S.No</th>
+                    <th style="width: 8%;">Potential Cause</th>
+                    <th style="width: 1%">Is Root Cause</th>
+                    <th style="width: 15%;">Correction</th>
+                    <th style="width: 15%;">Corrective Action Plan</th>
+                    <th style="width: 8%;">Target Date</th>
+                    <th style="width: 12%">Responsibility</th>
+                    <th style="width:15%">Plan for verifying effectiveness of Corrective Action Plan</th>
+                    <!-- <th style="width: 8%;">Target Date</th> -->
+                    <th style="width: 2%;">
+                      <!-- <input type="checkbox" #checkAllImplementation [(ngModel)]="isCheckImp"
+                        (click)="checkAllImp(checkAllImplementation)" name="checkAllImp"> -->
+                      Is Implemented
+                    </th>
+                    <!-- <th>Remarks</th> -->
+                  </tr>
+                  <tr *ngFor="let st of findingStatus.caP_IMPLEMENTATION.capa;let i = index">
+
+                    <td>{{i+1}}</td>
+                    <td>{{st.capadata.rooT_CAUSE}}</td>
+                    <td>
+                      {{getRootCauseVal(st.capadata.isrootcause)}}
+                    </td>
+                    <td>
+                      {{st.capadata.correction}}
+                    </td>
+                    <td>
+                      {{st.capadata.correctivE_ACTION_PLAN}}
+                    </td>
+                    <td>
+                      {{st.capadata.caP_TARGET_DATE |date :'mediumDate'}}
+                    </td>
+                    <td>
+                      {{getEmployeeName(st.capadata.responsible)}}
+                    </td>
+                    <td>
+                      {{ st.capadata.plaN_FOR_EFFECTIVE_CAP }}
+                    </td>
+                    <td>
+                      <mat-form-field style="width: 50px;">
+                        <mat-select name="check{{i}}" [(ngModel)]="st.isimplemented" name="food"
+                          [disabled]="isimplementbutton">
+                          <mat-option [value]="true">Yes</mat-option>
+                          <mat-option [value]="false">No</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <!-- <input type="checkbox" (click)="SendIdtoArrayImp(st)" [(ngModel)]="st.isimplemented" name="check{{i}}"> -->
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div style="text-align: center" class="row">
+                <button *ngIf="(findingStatus?.caP_IMPLEMENTATION?.capa?.length ?? 0) > 0" (click)="ImplementCap()"
+                  class="btn btn-primary btn-compact"
+                  [disabled]="isimplementbutton || disabletillSaveImplement || iscapametricview">Submit</button>
+
+                <button (click)="onClose()" class="btn btn-primary btn-compact">Close</button>
+                <!-- <button (click)="RejectCap(st)" style="margin: 5px" mat-raised-button>Reject</button> -->
+              </div>
+              <div>
+                <mat-progress-bar *ngIf="disabletillSaveImplement" mode="indeterminate"></mat-progress-bar>
+              </div>
+            </div>
+          </mat-step>
+          <mat-step>
+            <ng-template matStepLabel>
+              <label> Stage : Corrective Action Plan Verification </label>
+              <br>
+              <span
+                *ngIf="isimplementbutton && (findingStatus?.caP_VERIFICATION?.capa?.length ?? 0) > 0 && findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS == 'Corrective Action Plan Implemented'">
+                Status : {{findingStatus.caP_VERIFICATION?.status?.stagE_STATUS}}</span>
+            </ng-template>
+            <div
+              *ngIf="findingStatus != undefined && findingStatus.caP_VERIFICATION != undefined && isimplementbutton && findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS == 'Corrective Action Plan Implemented'">
+
+              <div class="row" *ngIf="findingStatus != undefined" style="margin-top: 15px">
+                <table style="width: 99%;font-size: 12px" class="table table-bordered"
+                  *ngIf="(findingStatus?.caP_VERIFICATION?.capa?.length ?? 0) > 0">
+                  <tr>
+                    <th style="width: 1%">S.No</th>
+                    <th style="width: 8%;">Potential Cause</th>
+                    <th style="width: 1%">Is Root Cause</th>
+                    <th style="width: 15%;">Correction</th>
+                    <th style="width: 15%;">Corrective Action Plan</th>
+                    <th style="width: 8%;">Target Date</th>
+                    <th style="width: 12%">Responsibility</th>
+                    <th style="width:15%">Plan for verifying effectiveness of Corrective Action Plan</th>
+                    <th style="width: 2%;">Is Corrective Action Implementation Verified</th>
+                  </tr>
+                  <tr *ngFor="let st of findingStatus.caP_VERIFICATION.capa;let i = index">
+
+                    <td>{{i+1}}</td>
+                    <td>{{st.capadata.rooT_CAUSE}}</td>
+                    <td>
+                      {{getRootCauseVal(st.capadata.isrootcause)}}
+                    </td>
+                    <td>
+                      {{st.capadata.correction}}
+                    </td>
+                    <td>
+                      {{st.capadata.correctivE_ACTION_PLAN}}
+                    </td>
+                    <td>
+                      {{st.capadata.caP_TARGET_DATE |date :'mediumDate'}}
+                    </td>
+                    <td>
+                      {{ getEmployeeName(st.capadata.responsible)}}
+                    </td>
+                    <td>
+                      {{ st.capadata.plaN_FOR_EFFECTIVE_CAP }}
+                    </td>
+                    <td>
+                      <mat-form-field style="width: 50px;">
+                        <mat-select name="check{{i}}" (selectionChange)="clearrecommendedAction(st)"
+                          [disabled]="isverficationbutton" [(ngModel)]="st.isverified">
+                          <mat-option [value]="true">Yes</mat-option>
+                          <mat-option [value]="false">No</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field style="width: 100px;" *ngIf="!st.isverified">
+                        <mat-select name="capVerification" [(ngModel)]="st.recommendeD_ACTION"
+                          [disabled]="isverficationbutton">
+                          <mat-option value="ReSubmit Corrective Action Plan">Re-Submit Corrective Action Plan</mat-option>
+                          <mat-option value="ReImplement Corrective Action Plan">Re-Implement Corrective Action Plan</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div style="text-align: center" class="row">
+                <button *ngIf="(findingStatus?.caP_VERIFICATION?.capa?.length ?? 0) > 0"
+                  [disabled]="isverficationbutton || disableTillSaveVerification  || iscapametricview"
+                  (click)="VerifyCAPImplementation()" class="btn btn-primary btn-compact">Submit</button>
+
+                <button (click)="onClose()" class="btn btn-primary btn-compact">Close</button>
+              </div>
+              <div>
+                <mat-progress-bar *ngIf="disableTillSaveVerification" mode="indeterminate"></mat-progress-bar>
+              </div>
+            </div>
+          </mat-step>
+        </mat-horizontal-stepper>
+      </div>
+    </div>
+  </div>
+</div>

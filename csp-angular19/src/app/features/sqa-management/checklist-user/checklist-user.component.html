@@ -1,0 +1,295 @@
+<div class="apple-process-container">
+  <!-- Level 3: Numbered Step Strip (Apple Style) -->
+  <div class="step-strip-wrapper">
+    <mat-tab-group 
+      #tabGroup
+      (selectedTabChange)="onTabChange($event)" 
+      class="apple-step-strip"
+      [selectedIndex]="0">
+      
+      <!-- Tab 1: New Process Model -->
+      <mat-tab *ngIf="_access.IsAllowed(811, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">1</span>
+          <span class="step-label">New Process Model</span>
+        </ng-template>
+
+    <!-- Loading Progress Bar -->
+    <mat-progress-bar 
+      *ngIf="isLoading" 
+      mode="indeterminate" 
+      color="primary"
+      class="loading-bar">
+    </mat-progress-bar>
+
+    <div class="tab-content">
+      <div class="form-table-container">
+        <!-- Form Section -->
+        <div class="form-section">
+          <div class="form-card">
+            <div class="form-card-header">
+              <mat-icon>{{ model.id == 0 ? 'add_circle' : 'edit' }}</mat-icon>
+              <h3>{{ model.id == 0 ? 'New Process Model' : 'Edit Process Model' }}</h3>
+            </div>
+            <form #processModelForm="ngForm">
+              <div class="form-row" style="width:85%;">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Process Model Description </mat-label>
+                  <mat-icon matPrefix>description</mat-icon>
+                  <textarea 
+                    matInput 
+                    [(ngModel)]="model.title" 
+                    name="title"
+                    required
+                    rows="1"
+                    pattern="[^<|>]+"
+                    placeholder="Enter process model title"></textarea>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row" style="width:85%;">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Industry Standard Reference</mat-label>
+                  <mat-icon matPrefix>business</mat-icon>
+                  <textarea 
+                    matInput 
+                    [(ngModel)]="model.description"
+                    name="description"
+                    rows="1"
+                    pattern="[^<|>]+"
+                    placeholder="Enter industry standard reference (e.g., ISO 9001, CMMI)"></textarea>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row" style="width:85%;">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Release Version Reference</mat-label>
+                  <mat-icon matPrefix>code</mat-icon>
+                  <textarea 
+                    matInput 
+                    [(ngModel)]="model.releasE_VERSION_REFERENCE" 
+                    name="releasE_VERSION_REFERENCE"
+                    rows="1"
+                    pattern="[^<|>]+"
+                    placeholder="Enter release version reference (e.g., v1.0, 2024.1)"></textarea>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row" style="width:85%;">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Release Date</mat-label>
+                  <mat-icon matPrefix>event</mat-icon>
+                  <input 
+                    matInput 
+                    [matDatepicker]="picker" 
+                    [(ngModel)]="model.releasE_DATE" 
+                    name="releasE_DATE"
+                    required
+                    placeholder="Select release date">
+                  <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+              </div>
+
+              <div class="button-group">
+                <button mat-raised-button [color]="model.id == 0 ? 'accent' : 'primary'" type="button" (click)="SubmitModelForm()">
+                  <mat-icon>{{ model.id == 0 ? 'save' : 'update' }}</mat-icon>
+                  {{ model.id == 0 ? 'Save' : 'Update' }}
+                </button>
+                <button mat-raised-button type="button" (click)="ClearInputs()">
+                  <mat-icon>clear</mat-icon>
+                  Clear
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-section">
+          <div class="table-card">
+            <div class="table-card-header">
+              <div class="header-content">
+                <mat-icon>list</mat-icon>
+                <h3>Process Models List</h3>
+              </div>
+              <span class="record-count">{{ modelList.length }} {{ modelList.length === 1 ? 'record' : 'records' }}</span>
+            </div>
+            
+            <!-- Scrollable table area ONLY -->
+            <div class="table-scroll-container">
+              <mat-table [dataSource]="dataSource" matSort class="process-models-table">
+                
+                <!-- S.No Column -->
+                <ng-container matColumnDef="sno">
+                  <mat-header-cell *matHeaderCellDef>S.No</mat-header-cell>
+                  <mat-cell *matCellDef="let item; let i = index">{{ (paginator?.pageIndex || 0) * (paginator?.pageSize || 10) + i + 1 }}</mat-cell>
+                </ng-container>
+
+                <!-- Process Model Column -->
+                <ng-container matColumnDef="title">
+                  <mat-header-cell *matHeaderCellDef mat-sort-header>Process Model</mat-header-cell>
+                  <mat-cell *matCellDef="let item" class="title-cell">{{ item.title }}</mat-cell>
+                </ng-container>
+
+                <!-- Industry Standard Column -->
+                <ng-container matColumnDef="description">
+                  <mat-header-cell *matHeaderCellDef mat-sort-header>Industry Standard</mat-header-cell>
+                  <mat-cell *matCellDef="let item">{{ item.description || '-' }}</mat-cell>
+                </ng-container>
+
+                <!-- Release Version Column -->
+                <ng-container matColumnDef="releaseVersion">
+                  <mat-header-cell *matHeaderCellDef mat-sort-header>Release Version</mat-header-cell>
+                  <mat-cell *matCellDef="let item">{{ item.releasE_VERSION_REFERENCE || '-' }}</mat-cell>
+                </ng-container>
+
+                <!-- Release Date Column -->
+                <ng-container matColumnDef="releaseDate">
+                  <mat-header-cell *matHeaderCellDef mat-sort-header>Release Date</mat-header-cell>
+                  <mat-cell *matCellDef="let item">{{ item.releasE_DATE | date:'mediumDate' }}</mat-cell>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                  <mat-header-cell *matHeaderCellDef>Action</mat-header-cell>
+                  <mat-cell *matCellDef="let item" class="action-cell">
+                    <div class="action-icons">
+                      <button mat-icon-button color="primary" (click)="EditRow_onClick(item)" title="Edit" class="action-button">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button color="warn" (click)="DeleteRow_onClick(item)" title="Delete" class="action-button">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </mat-cell>
+                </ng-container>
+
+                <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+                <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+                <!-- No Data Row -->
+                <tr class="mat-row" *matNoDataRow>
+                  <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+                    <mat-icon>info</mat-icon>
+                    <span>No process models available. Create your first process model using the form.</span>
+                  </td>
+                </tr>
+              </mat-table>
+            </div>
+            
+            <!-- Paginator OUTSIDE scroll container, always visible at bottom -->
+            <mat-paginator 
+              [pageSizeOptions]="[10, 25, 50]" 
+              [pageSize]="10"
+              showFirstLastButtons
+              aria-label="Select page">
+            </mat-paginator>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 2: Assessment Check-list -->
+      <mat-tab *ngIf="_access.IsAllowed(802, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">2</span>
+          <span class="step-label">Assessment Check-list</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-setup-checklist-new></app-setup-checklist-new>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 3: New Process Area -->
+      <mat-tab *ngIf="_access.IsAllowed(812, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">3</span>
+          <span class="step-label">New Process Area and Process</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-process-area></app-process-area>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 4: Map Service Tower & Process -->
+      <mat-tab *ngIf="_access.IsAllowed(816, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">4</span>
+          <span class="step-label">Map Service Tower & Process</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-process-service-area-mapping [view]="false"></app-process-service-area-mapping>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 5: View Service Tower & Process -->
+      <mat-tab *ngIf="_access.IsAllowed(815, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">5</span>
+          <span class="step-label">View Service Tower & Process</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-process-service-area-mapping [view]="true"></app-process-service-area-mapping>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 6: Map Process Model -->
+      <mat-tab *ngIf="_access.IsAllowed(814, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">6</span>
+          <span class="step-label">Map Process Model</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-process-process-model-mapping></app-process-process-model-mapping>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 7: View Process Model -->
+      <mat-tab *ngIf="_access.IsAllowed(813, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">7</span>
+          <span class="step-label">View Process Model</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-process-process-model-view></app-process-process-model-view>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 8: Map Checklist Questions and Process -->
+      <mat-tab *ngIf="_access.IsAllowed(803, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">8</span>
+          <span class="step-label">Map Checklist Questions and Process</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-process-checklist-mapping [refreshChecklists]="refreshTrigger"></app-process-checklist-mapping>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 9: PSPD -->
+      <mat-tab *ngIf="_access.IsAllowed(806, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">9</span>
+          <span class="step-label">PSPD</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-pspd></app-pspd>
+    </div>
+  </mat-tab>
+
+      <!-- Tab 10: Merge Checklist -->
+      <mat-tab *ngIf="_access.IsAllowed(825, 1, '', '')">
+        <ng-template mat-tab-label>
+          <span class="step-badge">10</span>
+          <span class="step-label">Merge Checklist</span>
+        </ng-template>
+    <div class="tab-content">
+      <app-merge-checklist (checklistCreated)="onChecklistCreatedEvent()"></app-merge-checklist>
+    </div>
+  </mat-tab>
+  
+    </mat-tab-group>
+  </div>
+</div>

@@ -1,0 +1,842 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav-content style="background-color:#FFFFFF">
+      <div *ngIf="customerid" class="mainDiv">
+        <div class="row" style="margin-bottom: -35px;">
+          <div class="col-lg-2 col-md-2 col-sm-2" style="width:57%;">
+          </div>
+          <div class="col-lg-5 col-md-5 col-sm-5"></div>
+          <div style="text-align:right">
+            <div style="padding:0 15px; position: relative; top: 45px;">
+
+              <!-- Refresh Button -->
+              <button mat-icon-button 
+                      *ngIf="!progress" 
+                      (click)="Refresh_Onclick()"
+                      class="nav-icon-btn"
+                      matTooltip="Refresh">
+                <mat-icon>refresh</mat-icon>
+              </button>
+              <mat-spinner *ngIf="progress" diameter="20" style="display: inline-block;"></mat-spinner>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Dashboard Content - Performance of KPI and Events & Tasks in same row -->
+        <div class="row" style="display: flex; gap: 1rem; margin-left: 20px; margin-right: 20px;">
+          
+          <!-- Performance of KPI Table -->
+          <div id="goalPerformance" class="modern-card" style="position: relative; width: 80%; flex-grow: 1;">
+            
+            <!-- Success Goal Filter Popup -->
+            <div class="successGoalFilter modern-filter-popup" *ngIf="showSuccessGoalFilter">
+              <div class="row" style="margin-bottom: 15px; border-bottom: 3px solid #E5E7EB; padding-bottom: 10px;">
+                <div style="float: left; font-weight: 600; color: #374151;">
+                  Filter
+                </div>
+                <div style="float: right; cursor: pointer;" (click)="closeNav()">
+                  <i class="fa fa-times" style="color: #6B7280;"></i>
+                </div>
+              </div>
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Quality</b>
+                </div>
+                <div style="float: right" (click)="closePopup('QualityHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure the outcome of service & delivery from Quality aspect (how free it is of errors).
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Percentage of User stories accepted without defect in every release
+                <br /><br />
+                2) Percentage of Incidents / Service requests re-opened by user
+                <br /><br />
+                3) Percentage / No of defects delivered per user story
+                <br />
+              </div>
+            </div>
+            <div style="position: absolute" class="qualityHelp" *ngIf="showPerformanceHelp">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Performance</b>
+                </div>
+                <div style="float: right" (click)="closePopup('PerformanceHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure how fast or slow is service / delivery.
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Percentage of incidents responded & resolved within agreed SLA
+                <br /><br />
+                2) Percentage of User stories accepted as committed
+                <br /><br />
+                3) Percentage of projects / initiatives progressing / completed within timeline
+                <br />
+              </div>
+            </div>
+            <div style="position: absolute" class="qualityHelp" *ngIf="showValueHelp">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Value</b>
+                </div>
+                <div style="float: right" (click)="closePopup('ValueHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure service & delivery on business outcome achieved, customer’s preferences and customer’s
+                perception.
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Business outcome achieved – Cost – saved / avoided
+                <br /><br />
+                2) User satisfaction after implementing project(s) in live / production
+                <br /><br />
+                3) Customer Satisfaction survey feedback 4. Percentage of incidents resolved prior to business impact
+                <br />
+              </div>
+            </div>
+            <div style="position: absolute" class="qualityHelp" *ngIf="showComplianceHelp">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 480px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Complaince</b>
+                </div>
+                <div style="float: right" (click)="closePopup('ComplianceHelp')">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px;" class="cleverQualityCategory">
+                To measure if the service delivery comply as per compliance requirements, policies, procedures &
+                standards
+                <br /><br />
+                Example :-
+                <br /><br />
+                1) Percentage of Services complied as per contractual requirements including Security, Clean room
+                requirements.
+                <br /><br />
+                2) Percentage of User stories delivered as per quality & security standards
+                <br /><br />
+              </div>
+            </div>
+            <div style="position: absolute" class="successGoalFilter" *ngIf="showSuccessGoalFilter">
+              <div class="row"
+                style="margin-bottom: 15px; border-bottom: 4px solid lightgray; width: 170px; padding-bottom: 5px;">
+                <div style="float: left;">
+                  <b>Filter</b>
+                </div>
+                <div style="text-align: right" (click)="closeNav()">
+                  <i style="font-size:16px; cursor: pointer;" class="fa">&#xf00d;</i>
+                </div>
+              </div>
+              <div style="font-size: 13px; margin-bottom: 3px;">
+                <b>Month</b>
+              </div>
+              <div style="margin-bottom: 12px; font-size: 12px;">
+                <select name='tableMonth' [(ngModel)]="dashboardUtil.csG_FILTER_MONTH" required
+                  style="width: 170px !important; height: 25px;">
+                  <option value='Jan'>JAN</option>
+                  <option value='Feb'>FEB</option>
+                  <option value='Mar'>MAR</option>
+                  <option value='Apr'>APR</option>
+                  <option value='May'>MAY</option>
+                  <option value='Jun'>JUN</option>
+                  <option value='Jul'>JUL</option>
+                  <option value='Aug'>AUG</option>
+                  <option value='Sep'>SEP</option>
+                  <option value='Oct'>OCT</option>
+                  <option value='Nov'>NOV</option>
+                  <option value='Dec'>DEC</option>
+                </select>
+              </div>
+              <div style="font-size: 13px; margin-bottom: 3px;">
+                <b>Year</b>
+              </div>
+              <div style="font-size: 12px; margin-bottom: 55px;">
+                <select name='tableYear' [(ngModel)]="dashboardUtil.csG_FILTER_YEAR" required
+                  style="width: 170px !important; height: 25px;">
+                  <option *ngFor="let year of util.Years(3)" [value]="year">{{year}}</option>
+                  <!--<option [value]='2019'>2019</option>
+        <option [value]='2020'>2020</option>-->
+                </select>
+              </div>
+              <div class="row" style="font-size: 12px; text-align: center" *ngIf="projectScores">
+                <!-- <div class="row" style="font-size: 12px; text-align: center"> -->
+                <button type="button" class="btn btn-primary"
+                  style="height: 25px; width:35%; margin-right: 12px; text-align: center; background-color: #00004d; padding-top: 2px;"
+                  (click)="btnApplyMultiProjects_OnClick()">Apply</button>
+                <button type="button" class="btn btn-primary"
+                  style="height: 25px; width:35%; padding-left : 4px;text-align: center; padding-top: 2px; width: 59px;background-color: #262626"
+                  (click)="closeNav()">Cancel</button>
+              </div>
+              
+            </div>
+            
+            <!-- Modern Card Header -->
+            <div class="modern-card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 10px 10px 0 0; margin: -9px -9px 16px -9px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="header-title" style="color: white; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa fa-trophy" style="font-size: 16px;"></i>
+                  <span>Performance of KPI</span>
+                </div>
+                <div class="header-actions" style="display: flex; gap: 8px; align-items: center;">
+                  <a *ngIf="isFrontier && access.IsAllowed(103, 1, '', '')" 
+                     class="action-btn" 
+                     (click)="UploadProjectFile()" 
+                     title="Upload File"
+                     style="color: white; cursor: pointer; padding: 6px 10px; background: rgba(255,255,255,0.2); border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; transition: all 0.2s;">
+                    <i class="fa fa-upload" style="font-size: 14px;"></i>
+                  </a>
+                  <a (click)="changKPIflag()" 
+                     *ngIf="access.IsAllowed(12, 3, '', '')" 
+                     class="action-btn" 
+                     title="Edit KPI" 
+                     [routerLink]="['/kpi', customerid]"
+                     style="color: white; cursor: pointer; padding: 6px 10px; background: rgba(255,255,255,0.2); border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; transition: all 0.2s;">
+                    <i class="fa fa-edit" style="font-size: 14px;"></i>
+                  </a>
+                  <button class="filter-btn" 
+                          (click)="showSuccessGoalFilter = !showSuccessGoalFilter" 
+                          title="Filter"
+                          style="color: white; background: rgba(255,255,255,0.2); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                    <i class="fa fa-filter" style="font-size: 14px;"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Table Container -->
+            <div class="table-container">
+            <div class="row">
+              <div class="col-sm-3">
+                <!-- Overall Health Index Title -->
+                <div class="row" style="font-size: 12px;color: black;font-weight: 700; text-align: center; margin-bottom: 10px;">Overall Health Index</div>
+                
+                <!-- Chart or No Data Section - Centered -->
+                <div class="row" style="display: flex; justify-content: center; margin-bottom: 15px;">
+                  <!-- Pie Chart -->
+                  <div *ngIf="achievedValueForOverallScore > 0" style="text-align: center;">
+                    <google-chart #chart8 style="height: 95px;" [type]="type8" [data]="data8"
+                      [options]="options8" [width]="width8" [height]="height8">
+                    </google-chart>
+                  </div>
+                  <!-- No Data Available -->
+                  <div *ngIf="achievedValueForOverallScore == 0" style="text-align:center; color: #9ca3af;font-size: 11px; padding: 10px 0;">
+                    <i class="fa fa-info-circle" style="font-size: 24px;color: #d1d5db;margin-bottom: 8px;"></i>
+                    <div style="line-height: 1.4;">No KPI Data<br/>Available</div>
+                  </div>
+                </div>
+                
+                <!-- Breakdown Table - Full Width Below -->
+                <div class="row" style="margin: 0 auto; max-width: 280px;">
+                  <table style="width: 100%; font-size: 11px;">
+                    <tr>
+                      <td style="padding: 4px 8px;">Quality
+                        <i (click)="showQualityHelp = !showQualityHelp" style="font-size:14px;cursor: pointer; margin-left: 4px;"
+                          class="fa fa-question-circle"></i>
+                      </td>
+                      <td align="right" style="padding: 4px 8px; font-weight: 600;"
+                        [style.color]="getColorByCustomer('SUCCESS_GOAL_SCORE_QUALITY')">
+                        {{getTitleByCustomer('SUCCESS_GOAL_SCORE_QUALITY')}}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 8px;">Performance
+                        <i (click)="showPerformanceHelp = !showPerformanceHelp"
+                          style="font-size:14px;cursor: pointer; margin-left: 4px;" class="fa fa-question-circle"></i>
+                      </td>
+                      <td align="right" style="padding: 4px 8px; font-weight: 600;"
+                        [style.color]="getColorByCustomer('SUCCESS_GOAL_SCORE_PERFORMANCE')">
+                        {{getTitleByCustomer('SUCCESS_GOAL_SCORE_PERFORMANCE')}}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 8px;">Value
+                        <i (click)="showValueHelp = !showValueHelp" style="font-size:14px;cursor: pointer; margin-left: 4px;"
+                          class="fa fa-question-circle"></i>
+                      </td>
+                      <td align="right" style="padding: 4px 8px; font-weight: 600;"
+                        [style.color]="getColorByCustomer('SUCCESS_GOAL_SCORE_VALUE')">
+                        {{getTitleByCustomer('SUCCESS_GOAL_SCORE_VALUE')}}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 8px;">Compliance
+                        <i (click)="showComplianceHelp = !showComplianceHelp" style="font-size:14px;cursor: pointer; margin-left: 4px;"
+                          class="fa fa-question-circle"></i>
+                      </td>
+                      <td align="right" style="padding: 4px 8px; font-weight: 600;"
+                        [style.color]="getColorByCustomer('SUCCESS_GOAL_SCORE_COMPLIANCE')">
+                        {{getTitleByCustomer('SUCCESS_GOAL_SCORE_COMPLIANCE')}}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+              <div class="col-lg-9 col-md-9 col-sm-9" *ngIf="projectScores.length > 0">
+                <table class="successgoalTable">
+                  <thead>
+                    <tr *ngIf="!isFrontier">
+                      <th style="width: 130px;max-width: 130px !important;padding-left: 5px;">Project</th>
+                      <th style="width: 80px; max-width: 80px !important;text-align: left;">Business Unit</th>
+                      <th style="width: 90px; max-width: 90px !important;text-align: left;">Customer Name</th>
+                      <th style="width: 70px; max-width: 70px !important; text-align: left;">Period</th>
+                      <th style="width: 80px; max-width: 80px !important;text-align: left;">Achievement</th>
+                      <th style="width: 70px; max-width: 70px !important;text-align: center;">Transition</th>
+                      <th style="width: 30px; max-width: 30px !important;text-align: center;">Edit</th>
+                    </tr>
+                    <tr *ngIf="isFrontier">
+                      <th style="width: 130px;max-width: 130px !important;padding-left: 5px;">Project</th>
+                      <th style="width: 70px; max-width: 70px !important;text-align: left;">Business Unit</th>
+                      <th style="width: 15px; max-width: 15px !important;text-align: center;">KM</th>
+                      <th style="width: 90px; max-width: 90px !important;text-align: center;">Customer Name</th>
+                      <th style="width: 70px; max-width: 70px !important; text-align: left;">Period</th>
+                      <th style="width: 80px; max-width: 80px !important;text-align: left;">Achievement</th>
+                      <th style="width: 70px; max-width: 70px !important;text-align: center;">Transition</th>
+                      <th style="width: 30px; max-width: 30px !important;text-align: center;">Edit</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size: 12px;">
+                    <tr *ngFor="let proj of projectScores"
+                      style="border-left: 3px solid; box-shadow: -1.5px 2px 2.5px 1px lightgray!important"
+                      [style.border-color]="proj.color">
+                      <td
+                        style="width: 130px;max-width: 130px !important;cursor: pointer;font-size:11px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0"
+                        [routerLink]="['/successgoal/goals', proj.cusT_ID, proj.proJ_ID, sMonth, iYear]"
+                        [matTooltip]='proj.proJ_NM'>
+                        {{proj.proJ_NM}}
+                      </td>
+                      <td style="width: 80px;max-width: 80px !important; overflow-x: hidden;text-align: left;font-size:11px;white-space: nowrap; text-overflow: ellipsis;"
+                        [matTooltip]='proj.BUSINESS_UNIT || proj.businesS_UNIT'>
+                        {{proj.BUSINESS_UNIT || proj.businesS_UNIT || '-'}}
+                      </td>
+                      <td *ngIf="isFrontier && access.IsAllowed(103, 1, '', '')"
+                        style="width: 2%;cursor: pointer; text-align: center;">
+                        <a>
+                          <i class="fa fa-upload" title="Upload File" (click)="UploadProjectFile(proj.proJ_ID)"></i>
+                        </a>
+                      </td>
+                      <td
+                        style="width: 90px;max-width: 90px !important; overflow-x: hidden;text-align: left;font-size:11px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;">
+                        {{proj.customeR_NM}}</td>
+                      <td style="width: 70px;max-width: 70px !important;text-align: left;font-size:11px;">{{ sMonth + ', ' + iYear }}
+                      </td>
+                      <td
+                        style="color: black; font-weight: 900;text-align: left; overflow: visible; width: 80px !important;max-width: 80px !important;font-size:11px;">
+                        {{proj.score }}
+                      </td>
+                      <td style="cursor: pointer;text-align: center;width: 70px !important;max-width: 70px !important;">
+                        <a class="link" href="{{proj.projecT_PLAN_URL}}" target="_blank">
+                          <i class="fa fa-exchange" title="Transition"></i>
+                        </a>
+                      </td>
+                      <td style="color: black; cursor: pointer; font-weight: 900;text-align: center; overflow: visible; width: 30px !important;max-width: 30px !important;">
+                        <a>
+                          <i class="fa fa-edit" title="View heads" (click)="viewQSPOC(proj.proJ_ID,proj.proJ_NM)"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div *ngIf="IsProjectEmpty()" style="height: 150px; line-height: 150px;">
+                  No Projects Under this Portfolio
+                </div>
+                <!-- </div> -->
+              </div>
+              <div class="col-lg-8 col-md-8 col-sm-8"
+                *ngIf="successGoalScores.length > 0 && util.IsPremier(customerid)">
+                <table class="successgoalTable1">
+                  <thead>
+                    <tr>
+                      <th style="width: 230px;max-width: 230px;text-align: center;box-sizing: border-box">Customer
+                        Success Goal</th>
+                      <th style="width: 130px;max-width: 130px;text-align: center;padding-left: 23px;">Period</th>
+                      <th style="width: 75px;max-width: 75px;text-align: center">Achievement</th>
+                      <th style="width: 70px;max-width: 70px;text-align: center">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size: 12px;box-sizing: border-box;">
+                    <tr style="box-shadow: -2px 2px 2.5px gray !important;color: gray;; "
+                      *ngFor="let goal of successGoalScores">
+
+                      <td style="width: 230px;max-width: 230px;padding-left: 7px;box-sizing: border-box; overflow-x: hidden !important;
+            white-space: nowrap; text-overflow: ellipsis;box-shadow: -2px 0px 0px gray;border-left: 3px solid green;">
+                        {{ goal.goaL_NAME}}
+                      </td>
+                      <td style="width: 130px;max-width: 130px;text-align: center;">{{ sMonth + ', ' + iYear }}</td>
+                      <td style="width: 75px;max-width: 75px;text-align: center">
+
+                        {{goal.score}}
+
+                      </td>
+                      <td style="width: 70px;max-width: 70px;text-align: center;">
+                        <a style="cursor: pointer; text-decoration: none; color: gray !important"
+                          [routerLink]="['/successgoal/goals', goal?.cusT_ID, goal?.proJ_ID, goal?.goaL_ID, sMonth, iYear ]">
+                          <img src="assets/images/Process Improvements.png" style="width: 15px;">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-lg-8 col-md-8 col-sm-8" *ngIf="successGoalScores.length > 0">
+                <table class="successgoalTable1">
+                  <thead>
+                    <tr>
+                      <th style="width: 230px;max-width: 230px;text-align: center;box-sizing: border-box">Customer
+                        Success Goal</th>
+                      <th style="width: 130px;max-width: 130px;text-align: center;padding-left: 23px;">Period</th>
+                      <th style="width: 75px;max-width: 75px;text-align: center">Achievement</th>
+                      <th style="width: 70px;max-width: 70px;text-align: center">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size: 12px;box-sizing: border-box;">
+                    <tr style="box-shadow: -2px 2px 2.5px gray !important;color: gray;; "
+                      *ngFor="let goal of successGoalScores">
+
+                      <td style="width: 230px;max-width: 230px;padding-left: 7px;box-sizing: border-box; overflow-x: hidden !important;
+            white-space: nowrap; text-overflow: ellipsis;box-shadow: -2px 0px 0px gray;border-left: 3px solid green;">
+                        {{ goal.goaL_NAME}}
+                      </td>
+                      <td style="width: 130px;max-width: 130px;text-align: center;">{{ sMonth + ', ' + iYear }}</td>
+                      <td style="width: 75px;max-width: 75px;text-align: center">
+
+                        {{goal.score}}
+
+                      </td>
+                      <td style="width: 70px;max-width: 70px;text-align: center;">
+                        <a style="cursor: pointer; text-decoration: none; color: gray !important"
+                          [routerLink]="['/successgoal/goals', goal?.cusT_ID, goal?.proJ_ID, goal?.goaL_ID, sMonth, iYear ]">
+                          <img src="assets/images/Process Improvements.png" style="width: 15px;">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div *ngIf="successGoalScores?.length == 0 && !util.IsPremier(customerid)"
+                style="height: 100px; text-align: center;line-height: 100px; font-size: 17px;">
+                No goals defined / KPI achievement details not updated for the period
+              </div>
+            </div>
+            </div>
+          </div>
+    
+          <!-- Events & Tasks Widget -->
+          <div class="separateCard" style="position: relative; width: 200px; height: 312px !important; box-sizing: border-box; overflow: hidden;">
+            <!-- Card Title -->
+            <div style="font-size: 11px; font-weight: 600; color: #374151; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+              Events & Tasks
+            </div>
+            
+            <!-- Empty State -->
+            <div *ngIf="isTasksEventsEmpty" style="height: 85px; width: 190px; font-size: 12px; color: black;">
+              <span style="display: block; padding-top: 25px; padding-left: 10px; text-align: center;">
+                No Events & Tasks
+              </span>
+            </div>
+            
+            <!-- Card Body -->
+            <div *ngIf="!isTasksEventsEmpty" style="display: flex; flex-direction: column; height: calc(100% - 13px); padding: 0 8px;">
+              <!-- Chart Section -->
+              <div style="position: relative; margin-bottom: 0; margin-top: 8px;">
+                <div style="height: 75px; width: 100%;">
+                  <google-chart #charttasksEvents 
+                    [type]="tasksEventstype" 
+                    [data]="tasksEventsSummaryData"
+                    [options]="tasksEventsoptions" 
+                    [width]="widthE"
+                    [height]="75">
+                  </google-chart>
+                </div>
+              </div>
+              
+              <!-- Table Section -->
+              <div style="flex: 0 0 auto; overflow: visible;">
+                <table id="tbleventsummary" style="width: 100%; border-collapse: collapse; font-family: Inter, sans-serif;">
+                  <thead>
+                    <tr style="font-size: 10px; font-weight: 600; color: #6B7280; border-bottom: 1px solid #E5E7EB; line-height: 1.3;">
+                      <th style="text-align: left; padding: 3px 4px;">Due</th>
+                      <th style="text-align: center; padding: 3px 4px;">Events</th>
+                      <th style="text-align: center; padding: 3px 4px;">Tasks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="redborder" style="font-size: 10px !important; cursor: pointer; border-bottom: 1px solid #F3F4F6; line-height: 1.3;" 
+                        [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'OD']"
+                        onmouseover="this.style.backgroundColor='#F9FAFB'" 
+                        onmouseout="this.style.backgroundColor='transparent'">
+                      <th style="font-weight: 500 !important; color: #374151; text-align: left; padding: 3px 4px !important; white-space: nowrap; font-size: 9px !important;">Over Due</th>
+                      <td style="text-align: center; color: #FF9800; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.overdueEvents + eventTasksMediumValues.overdueEvents + eventTasksLowValues.overdueEvents}}
+                      </td>
+                      <td style="text-align: center; color: #10B981; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.overdueTasks + eventTasksMediumValues.overdueTasks + eventTasksLowValues.overdueTasks}}
+                      </td>
+                    </tr>
+                    <tr class="orangeborder" style="font-size: 10px !important; cursor: pointer; border-bottom: 1px solid #F3F4F6; line-height: 1.3;" 
+                        [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'TW']"
+                        onmouseover="this.style.backgroundColor='#F9FAFB'" 
+                        onmouseout="this.style.backgroundColor='transparent'">
+                      <th style="font-weight: 500 !important; color: #374151; text-align: left; padding: 3px 4px !important; white-space: nowrap; font-size: 9px !important;">This week</th>
+                      <td style="text-align: center; color: #FF9800; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.thisWeekEvents + eventTasksMediumValues.thisWeekEvents + eventTasksLowValues.thisWeekEvents}}
+                      </td>
+                      <td style="text-align: center; color: #10B981; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.thisWeekTasks + eventTasksMediumValues.thisWeekTasks + eventTasksLowValues.thisWeekTasks}}
+                      </td>
+                    </tr>
+                    <tr class="orangeborder" style="font-size: 10px !important; cursor: pointer; border-bottom: 1px solid #F3F4F6; line-height: 1.3;" 
+                        [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'TM']"
+                        onmouseover="this.style.backgroundColor='#F9FAFB'" 
+                        onmouseout="this.style.backgroundColor='transparent'">
+                      <th style="font-weight: 500 !important; color: #374151; text-align: left; padding: 3px 4px !important; white-space: nowrap; font-size: 9px !important;">This Month</th>
+                      <td style="text-align: center; color: #FF9800; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.thisMonthEvents + eventTasksMediumValues.thisMonthEvents + eventTasksLowValues.thisMonthEvents}}
+                      </td>
+                      <td style="text-align: center; color: #10B981; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.thisMonthTasks + eventTasksMediumValues.thisMonthTasks + eventTasksLowValues.thisMonthTasks}}
+                      </td>
+                    </tr>
+                    <tr class="greenborder" style="font-size: 10px !important; cursor: pointer; border-bottom: 1px solid #F3F4F6; line-height: 1.3;" 
+                        [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'NW']"
+                        onmouseover="this.style.backgroundColor='#F9FAFB'" 
+                        onmouseout="this.style.backgroundColor='transparent'">
+                      <th style="font-weight: 500 !important; color: #374151; text-align: left; padding: 3px 4px !important; white-space: nowrap; font-size: 9px !important;">Next Week</th>
+                      <td style="text-align: center; color: #FF9800; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.nextWeekEvents + eventTasksMediumValues.nextWeekEvents + eventTasksLowValues.nextWeekEvents}}
+                      </td>
+                      <td style="text-align: center; color: #10B981; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.nextWeekTasks + eventTasksMediumValues.nextWeekTasks + eventTasksLowValues.nextWeekTasks}}
+                      </td>
+                    </tr>
+                    <tr class="greenborder" style="font-size: 10px !important; cursor: pointer; border-bottom: 1px solid #F3F4F6; line-height: 1.3;" 
+                        [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'NM']"
+                        onmouseover="this.style.backgroundColor='#F9FAFB'" 
+                        onmouseout="this.style.backgroundColor='transparent'">
+                      <th style="font-weight: 500 !important; color: #374151; text-align: left; padding: 3px 4px !important; white-space: nowrap; font-size: 9px !important;">Next Month</th>
+                      <td style="text-align: center; color: #FF9800; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.nextMonthEvents + eventTasksMediumValues.nextMonthEvents + eventTasksLowValues.nextMonthEvents}}
+                      </td>
+                      <td style="text-align: center; color: #10B981; font-weight: 500 !important; padding: 3px 4px !important; font-size: 10px !important;">
+                        {{eventTasksHighValues.nextMonthTasks + eventTasksMediumValues.nextMonthTasks + eventTasksLowValues.nextMonthTasks}}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- View Details -->
+              <div style="display: block; text-align: right; padding: 2px 0 0 0; margin-top: 1px; line-height: 1.2;">
+                <a style="font-size: 10px; color: #3B82F6; text-decoration: none; cursor: pointer; white-space: nowrap;"
+                   [routerLink]="['/sqamanagement/viewtaskevents/', customerid,'All']">
+                  <u>View Details</u>
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Row 2: Action Items, Appreciations, Risks, Issues -->
+        <div class="row" style="margin-left:20px; margin-top: 20px;">
+          <div id="containerCard" style="float: left;">
+            <div style="margin-bottom: 20px; height: 130px;width: 580px;">
+              <div class="separateCard" style="height: 107%;float: left">
+                <!-- Card Title -->
+                <div style="font-size: 12px; font-weight: 600; color: #374151;margin-bottom: 17px;;margin-top: -10px;">
+                  Action Items
+                </div>
+                
+                <!-- Empty State -->
+                <div *ngIf="isActionItemsEmpty" style="height:70px; width: 170px;font-size: 12px;color:black">
+                  <span style="display: block;padding-top: 20px;padding-left: 10px; text-align: center">
+                    No Action Items
+                  </span>
+                </div>
+                
+                <!-- Card Body -->
+                <div *ngIf="!isActionItemsEmpty" style="display: flex; flex-direction: column; height: 100%; padding: 4px;">
+                  <div style="display: flex; flex-direction: row; align-items: flex-start; gap: 0px; margin-bottom: 4px;">
+                    <!-- Gauge Container with Big Number -->
+                    <div style="width: 115px; height: 55px; position: relative; flex-shrink: 0;">
+                      <app-semicircular-gauge
+                        [showCenterText]="false"
+                        [high]="+actionItemDueForClosure"
+                        [medium]="0"
+                        [low]="+actionItemPastDueDate"
+                        [highColor]="'#3ab376'"
+                        [lowColor]="'#ff0109'"
+                        [highLabel]="''"
+                        [mediumLabel]="''"
+                        [lowLabel]="''"
+                        [width]="115"
+                        [height]="53"
+                        [strokeWidth]="14">
+                      </app-semicircular-gauge>
+                      <!-- Big Number at bottom -->
+                      <div style="position: absolute; bottom: -3px; width: 100%; text-align: center; font-size: 26px; font-weight: 800; color: #111827; font-family: Inter, sans-serif; line-height: 1;">
+                        {{totalActionItems}}
+                      </div>
+                    </div>
+                    
+                    <!-- Status Legend (Right side of gauge) -->
+                    <div style="display: flex; flex-direction: column; gap: 0px; margin-top: 4px; margin-left: -9px;">
+                      <div style="display: flex; align-items: center; gap: 2px;">
+                        <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background-color: #3ab376;"></span>
+                        <span style="color: #6B7280; font-size: 6.5px; white-space: nowrap;">Due for closure</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 2px;">
+                        <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background-color: #ff0109;"></span>
+                        <span style="color: #6B7280; font-size: 6.5px; white-space: nowrap;">Past due date</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Severity Stats Row -->
+                  <div style="display: flex; justify-content: flex-start; gap: 12px; margin-bottom: 6px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #EF4444;">{{actionItemHigh}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">HIGH</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #F59E0B;">{{actionItemMedium}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">MED</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #22C55E;">{{actionItemLow}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">LOW</span>
+                    </div>
+                  </div>
+                  
+                  <!-- View Details -->
+                  <div style="margin-top: -24px; text-align: right; padding-right: 8px;">
+                    <a style="font-size: 9px; color: #3B82F6; text-decoration: none; cursor: pointer;" [routerLink]="['/layout/actionitems', customerid]">
+                      <u>View Details</u>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="separateCard" style="height: 107%;margin-left: 35%;">
+                <!-- Card Title -->
+                <div style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 11px;margin-top: -11px;">
+                  Issues
+                </div>
+                
+                <!-- Empty State -->
+                <div *ngIf="isIssuesEmpty" style="height:70px; width: 170px;font-size: 12px;color:black">
+                  <span style="display: block;padding-top: 20px;padding-left: 10px; text-align: center">
+                    No Issues
+                  </span>
+                </div>
+                
+                <!-- Card Body -->
+                <div *ngIf="!isIssuesEmpty" style="display: flex; flex-direction: column; height: 100%; padding: 4px;">
+                  <div style="display: flex; flex-direction: row; align-items: flex-start; gap: 0px; margin-bottom: 4px;">
+                    <!-- Gauge Container with Big Number -->
+                    <div style="width: 115px; height: 55px; position: relative; flex-shrink: 0;">
+                      <app-semicircular-gauge
+                        [showCenterText]="false"
+                        [high]="+issueDueForClosure"
+                        [medium]="0"
+                        [low]="+issuePastDueDate"
+                        [highColor]="'#3ab376'"
+                        [lowColor]="'#ff0109'"
+                        [highLabel]="''"
+                        [mediumLabel]="''"
+                        [lowLabel]="''"
+                        [width]="115"
+                        [height]="53"
+                        [strokeWidth]="14">
+                      </app-semicircular-gauge>
+                      <!-- Big Number at bottom -->
+                      <div style="position: absolute; bottom: -3px; width: 100%; text-align: center; font-size: 26px; font-weight: 800; color: #111827; font-family: Inter, sans-serif; line-height: 1;">
+                        {{totalIssues}}
+                      </div>
+                    </div>
+                    
+                    <!-- Status Legend (Right side of gauge) -->
+                    <div style="display: flex; flex-direction: column; gap: 0px; margin-top: 4px; margin-left: -9px;">
+                      <div style="display: flex; align-items: center; gap: 2px;">
+                        <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background-color: #3ab376;"></span>
+                        <span style="color: #6B7280; font-size: 6.5px; white-space: nowrap;">Due for closure</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 2px;">
+                        <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background-color: #ff0109;"></span>
+                        <span style="color: #6B7280; font-size: 6.5px; white-space: nowrap;">Past due date</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Severity Stats Row -->
+                  <div style="display: flex; justify-content: flex-start; gap: 12px; margin-bottom: 6px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #EF4444;">{{issueHigh}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">HIGH</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #F59E0B;">{{issueMedium}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">MED</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #22C55E;">{{issueLow}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">LOW</span>
+                    </div>
+                  </div>
+                  
+                  <!-- View Details -->
+                  <div style="margin-top: -24px; text-align: right; padding-right: 8px;">
+                    <a style="font-size: 9px; color: #3B82F6; text-decoration: none; cursor: pointer;" [routerLink]="['/layout/issues', customerid]">
+                      <u>View Details</u>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div class="separateCard" style="height: 106%;margin-left: 70%;margin-top: -139px;">
+                <!-- Card Title -->
+                <div style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 11px;margin-top: -11px;">
+                  Risks
+                </div>
+                
+                <!-- Empty State -->
+                <div *ngIf="isRisksEmpty" style="height:70px; width: 170px;font-size: 12px;color:black">
+                  <span style="display: block;padding-top: 20px;padding-left: 10px; text-align: center">
+                    No Risks
+                  </span>
+                </div>
+                
+                <!-- Card Body -->
+                <div *ngIf="!isRisksEmpty" style="display: flex; flex-direction: column; height: 100%; padding: 4px;">
+                  <div style="display: flex; flex-direction: row; align-items: flex-start; gap: 0px; margin-bottom: 4px;">
+                    <!-- Gauge Container with Big Number -->
+                    <div style="width: 115px; height: 55px; position: relative; flex-shrink: 0;">
+                      <app-semicircular-gauge
+                        [showCenterText]="false"
+                        [high]="+riskDueForClosure"
+                        [medium]="0"
+                        [low]="+riskPastDueDate"
+                        [highColor]="'#3ab376'"
+                        [lowColor]="'#ff0109'"
+                        [highLabel]="''"
+                        [mediumLabel]="''"
+                        [lowLabel]="''"
+                        [width]="115"
+                        [height]="53"
+                        [strokeWidth]="14">
+                      </app-semicircular-gauge>
+                      <!-- Big Number at bottom -->
+                      <div style="position: absolute; bottom: -3px; width: 100%; text-align: center; font-size: 26px; font-weight: 800; color: #111827; font-family: Inter, sans-serif; line-height: 1;">
+                        {{totalRisks}}
+                      </div>
+                    </div>
+                    
+                    <!-- Status Legend (Right side of gauge) -->
+                    <div style="display: flex; flex-direction: column; gap: 0px; margin-top: 4px; margin-left: -9px;">
+                      <div style="display: flex; align-items: center; gap: 2px;">
+                        <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background-color: #3ab376;"></span>
+                        <span style="color: #6B7280; font-size: 6.5px; white-space: nowrap;">Due for closure</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 2px;">
+                        <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background-color: #ff0109;"></span>
+                        <span style="color: #6B7280; font-size: 6.5px; white-space: nowrap;">Past due date</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Severity Stats Row -->
+                  <div style="display: flex; justify-content: flex-start; gap: 12px; margin-bottom: 6px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #EF4444;">{{riskHigh}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">HIGH</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #F59E0B;">{{riskMedium}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">MED</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                      <span style="font-size: 14px; font-weight: 700; color: #22C55E;">{{riskLow}}</span>
+                      <span style="font-size: 8px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em;">LOW</span>
+                    </div>
+                  </div>
+                  
+                  <!-- View Details -->
+                  <div style="margin-top: -24px; text-align: right; padding-right: 8px;">
+                    <a style="font-size: 9px; color: #3B82F6; text-decoration: none; cursor: pointer;" [routerLink]="['/layout/risk', customerid]">
+                      <u>View Details</u>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="separateCard" style="height: 107%;width:33%; margin-left: 105%;margin-top: -138px;">
+                <!-- Card Title -->
+                <div style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 15px;margin-top: -10px;">
+                  Appreciations Received
+                </div>
+                
+                <!-- Empty State -->
+                <div *ngIf="isAppreciationsEmpty" style="height:70px; width: 170px;font-size: 12px;color:black">
+                  <span style="display: block;padding-top: 20px;padding-left: 10px; text-align: center">
+                    No Appreciations
+                  </span>
+                </div>
+                
+                <!-- Card Body -->
+                <div *ngIf="!isAppreciationsEmpty" style="display: flex; flex-direction: column; height: 100%;">
+                  <!-- Gauge Container with Big Number (Centered) -->
+                  <div style="display: flex; justify-content: center; align-items: center;">
+                    <div style="width: 115px; height: 55px; position: relative;">
+                      <app-semicircular-gauge
+                        [showCenterText]="false"
+                        [high]="+appreciationHigh"
+                        [medium]="+appreciationMedium"
+                        [low]="+appreciationLow"
+                        [highLabel]="'High Impact'"
+                        [mediumLabel]="'Medium Impact'"
+                        [lowLabel]="'Appreciations'"
+                        [width]="115"
+                        [height]="53"
+                        [strokeWidth]="14">
+                      </app-semicircular-gauge>
+                      <!-- Big Number at bottom -->
+                      <div style="position: absolute; bottom: -3px; width: 100%; text-align: center; font-size: 26px; font-weight: 800; color: #111827; font-family: Inter, sans-serif; line-height: 1;">
+                        {{+appreciationHigh + +appreciationMedium + +appreciationLow}}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- View Details -->
+                  <div style="margin-top: 8px; text-align: right; padding-right: 8px;">
+                    <a style="font-size: 9px; color: #3B82F6; text-decoration: none; cursor: pointer;" 
+                       [routerLink]="['/layout/appreciation', customerid]"
+                       (click)="clearFiltersForAppreciation()">
+                      <u>View Details</u>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </div>
+      <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: right;font-size:12px;color:grey;padding-top:10px">
+          Page refresh in {{timeLeft}} sec..</div>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

@@ -1,0 +1,881 @@
+// ==================================================
+// MODERN TASK FORM - EXACT DESIGN SPECIFICATIONS  
+// ==================================================
+
+//CSS Variables
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f9fafb;
+  --color-background-tertiary: #f3f4f6;
+  --color-border-primary: #d1d5db;
+  --color-border-secondary: #e5e7eb;
+  --color-border-tertiary: #f3f4f6;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+}
+
+// ==================================================
+// MAIN CONTAINER
+// ==================================================
+.modern-task-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--color-background-primary);
+
+  // Top Progress Bar
+  .top-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    height: 3px;
+
+    ::ng-deep .mdc-linear-progress__bar-inner {
+      border-color: #1A56DB !important;
+    }
+  }
+}
+
+// ==================================================
+// FORM BODY
+// ==================================================
+.form-body {
+  padding: 0;
+  background: var(--color-background-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+// ==================================================
+// FORM SECTIONS (No Card Wrappers)
+// ==================================================
+.form-section {
+  background: var(--color-background-primary);
+  padding: 8px 20px;
+
+  // Section Header
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    .section-icon {
+      width: 16px;
+      height: 16px;
+      stroke: #1A56DB;
+      stroke-width: 2;
+      flex-shrink: 0;
+      fill: none;
+    }
+
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--color-text-primary);
+      font-weight: 500;
+    }
+  }
+}
+
+// Section Divider
+.section-divider {
+  height: 1px;
+  background: var(--color-border-secondary);
+  margin: 0;
+}
+
+.more-details-content .section-divider {
+  margin: 2px 0;
+}
+
+// ==================================================
+// FIELD GROUPS & LABELS
+// ==================================================
+.field-group {
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.compact-field {
+    max-width: 70%;
+  }
+}
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  margin-bottom: 3px;
+
+  .required {
+    color: #E24B4A;
+    font-size: 13px;
+    margin-left: 2px;
+  }
+}
+
+// ==================================================
+// FORM INPUTS
+// ==================================================
+.field-input {
+  width: 100%;
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid #C8CACE;
+  border-radius: 4px;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #1A56DB;
+    box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.12);
+  }
+
+  &:disabled {
+    background: var(--color-background-secondary);
+    color: var(--color-text-tertiary);
+    cursor: not-allowed;
+  }
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+}
+
+// Select Dropdown with Custom Arrow
+select.field-input {
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 16px;
+}
+
+textarea.field-input {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+// Field Hint
+.field-hint {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+// ==================================================
+// GRID LAYOUTS
+// ==================================================
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grid-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.compact-grid {
+  max-width: 500px;
+}
+
+// ==================================================
+// DATE FIELDS (Material Datepicker)
+// ==================================================
+.date-field {
+  width: 100%;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      padding: 0;
+    }
+
+    .mat-mdc-form-field-flex {
+      align-items: center;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #C8CACE;
+      border-radius: 4px;
+      background: var(--color-background-primary);
+    }
+
+    .mat-mdc-form-field-infix {
+      padding: 0;
+      border: none;
+      min-height: 30px;
+    }
+
+    input {
+      font-size: 13px;
+      padding: 0;
+    }
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+
+    .mat-mdc-form-field-focus-overlay {
+      background: transparent;
+    }
+
+    &.mat-focused .mat-mdc-form-field-flex {
+      border-color: #1A56DB;
+      box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.12);
+    }
+
+    .mat-datepicker-toggle {
+      .mat-mdc-icon-button {
+        width: 32px;
+        height: 32px;
+        padding: 4px;
+
+        .mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: var(--color-text-secondary);
+        }
+      }
+    }
+  }
+}
+
+// ==================================================
+// CHECKBOX
+// ==================================================
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .checkbox-input {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    accent-color: #1A56DB;
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.12);
+    }
+  }
+
+  .checkbox-label {
+    font-size: 13px;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    user-select: none;
+  }
+}
+
+// ==================================================
+// INFO ROW (Owner / Responsible)
+// ==================================================
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+
+  .info-col {
+    .info-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--color-text-tertiary);
+      margin-bottom: 3px;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .info-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .change-link {
+        font-size: 12px;
+        color: #1A56DB;
+        text-decoration: underline;
+        cursor: pointer;
+        font-weight: 400;
+
+        &:hover {
+          color: #0051D5;
+        }
+      }
+    }
+
+    .employee-search-wrapper {
+      margin-top: 4px;
+    }
+  }
+}
+
+// ==================================================
+// LINK TEXT
+// ==================================================
+.link-text {
+  font-size: 12px;
+  color: #1A56DB;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 2px;
+
+  &:hover {
+    text-decoration: underline;
+    color: #0051D5;
+  }
+}
+
+// ==================================================
+// PROJECT SELECTOR STYLING (matching PSPD Execute tab)
+// ==================================================
+app-project-selector,
+app-project-selector-multiple {
+  display: block;
+  width: 100%;
+  
+  ::ng-deep {
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .col {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .mat-dropdown-plain {
+      width: 100% !important;
+      height: 40px;
+      border: 1px solid #C8CACE;
+      border-radius: 8px;
+      background-color: #ffffff;
+      padding: 0;
+      font-size: 13px;
+      color: #1D1D1F;
+      position: relative;
+      transition: border-color 0.2s ease;
+      
+      &:hover {
+        border-color: #B0B0B5;
+      }
+      
+      &:focus,
+      &.mat-mdc-select-focused {
+        border-color: #0071E3;
+        outline: none;
+      }
+      
+      .mat-mdc-select-trigger {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        padding: 0 40px 0 12px;
+      }
+      
+      .mat-mdc-select-value {
+        font-size: 13px;
+        color: #1D1D1F;
+        text-align: left;
+      }
+      
+      .mat-mdc-select-placeholder {
+        font-size: 13px;
+        color: #8E8E93;
+        text-align: left;
+      }
+      
+      .mat-mdc-select-arrow {
+        color: #8E8E93;
+      }
+      
+      .mat-mdc-select-arrow-wrapper {
+        position: absolute;
+        right: 12px;
+      }
+    }
+  }
+}
+
+// ==================================================
+// PROJECT DISPLAY (matching dropdown styling)
+// ==================================================
+.project-display {
+  padding: 0 12px;
+  border: 1.5px solid #D2D2D7;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #1D1D1F;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s ease;
+  
+  &:hover {
+    border-color: #B0B0B5;
+  }
+}
+
+// ==================================================
+// FOOTER
+// ==================================================
+.form-footer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--color-background-primary);
+  border-top: 1px solid var(--color-border-tertiary);
+
+  .more-details-link {
+    font-size: 13px;
+    color: #1A56DB;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:hover {
+      color: #0051D5;
+    }
+  }
+}
+
+// ==================================================
+// ACTION BUTTONS (Submit/Cancel/Save as Draft)
+// ==================================================
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--color-background-primary);
+  justify-content: center;
+}
+
+// ==========Note)
+// ==================================================
+.info-box {
+  margin: 0 20px 20px;
+  padding: 10px 12px;
+
+  .info-box-header {
+    margin-bottom: 8px;
+
+    strong {
+      font-size: 13px;
+      font-weight: 6x;
+      font-weight: 500;
+      color: var(--color-text-primary);
+    }
+  }
+
+  .info-box-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .info-box-item {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--color-text-primary);
+
+      strong {
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// ==================================================
+// BUTTONS
+// ==================================================
+.btn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 20px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: #6B8FD4;
+  color: #ffffff;
+  border: none;
+
+  &:hover:not(:disabled) {
+    background: #5A7EC3;
+  }
+
+  &:active:not(:disabled) {
+    background: #4A6DB2;
+  }
+}
+
+.btn-text {
+  background: transparent;
+  color: var(--color-text-primary);
+  border: none;
+  padding: 9px 16px;
+
+  &:hover:not(:disabled) {
+    background: var(--color-background-secondary);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-background-tertiary);
+  }
+}
+
+.btn-outlined {
+  background: #007bff;
+  border: 1px solid #007bff;
+  color: #ffffff;
+  border-radius: 4px;
+
+  &:hover:not(:disabled) {
+    background: #0056b3;
+    border-color: #0056b3;
+  }
+
+  &:active:not(:disabled) {
+    background: #004085;
+    border-color: #004085;
+  }
+}
+
+.btn-success {
+  background: #28a745;
+  border: 1px solid #28a745;
+  color: #ffffff;
+  border-radius: 4px;
+
+  &:hover:not(:disabled) {
+    background: #218838;
+    border-color: #218838;
+  }
+
+  &:active:not(:disabled) {
+    background: #1e7e34;
+    border-color: #1e7e34;
+  }
+}
+
+.btn-warning {
+  background: #ffc107;
+  border: 1px solid #ffc107;
+  color: #212529;
+  border-radius: 4px;
+
+  &:hover:not(:disabled) {
+    background: #e0a800;
+    border-color: #e0a800;
+  }
+
+  &:active:not(:disabled) {
+    background: #d39e00;
+    border-color: #d39e00;
+  }
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+// ==================================================
+// MORE DETAILS SECTION (Legacy Support)
+// ==================================================
+.more-details-content {
+  background: var(--color-background-primary);
+  margin-top: 0;
+
+  .form-section {
+    padding: 4px 20px;
+    margin-bottom: 0;
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #1A56DB;
+      }
+
+      h2 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--color-text-primary);
+        margin: 0;
+      }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    .form-field {
+      .field-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-secondary);
+        margin-bottom: 3px;
+      }
+
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .field-group {
+      margin-bottom: 6px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .checkbox-wrapper {
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .inline-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+
+  // Recurrence Options
+  .apple-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .recurrence-option {
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: 8px;
+      overflow: hidden;
+
+      .recurrence-header {
+        padding: 12px;
+        background: var(--color-background-secondary);
+
+        .helper-text {
+          font-size: 11px;
+          color: var(--color-text-tertiary);
+          margin-left: 4px;
+        }
+      }
+
+      .recurrence-content {
+        padding: 12px;
+        background: var(--color-background-primary);
+
+        .checkbox-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+          gap: 8px;
+        }
+
+        .day-selector {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+
+          .day-option {
+            flex:  1 1 calc(33.333% - 6px);
+            min-width: 80px;
+          }
+        }
+
+        .inline-selectors {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+
+          .selector-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+          }
+
+          .apple-field.compact {
+            flex: 0 0 120px;
+          }
+        }
+      }
+    }
+  }
+
+  // Material Checkbox Override for Legacy
+  ::ng-deep .apple-checkbox {
+    .mdc-checkbox {
+      padding: 0;
+      margin-right: 8px;
+    }
+
+    .mdc-checkbox__background {
+      width: 16px;
+      height: 16px;
+    }
+
+    .mdc-label {
+      font-size: 13px;
+    }
+  }
+
+  // Material Field Override for Legacy
+  ::ng-deep .apple-field {
+    width: 100%;
+
+    .mat-mdc-text-field-wrapper {
+      padding: 0;
+    }
+
+    .mat-mdc-form-field-flex {
+      align-items: center;
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid #C8CACE;
+      border-radius: 4px;
+      background: var(--color-background-primary);
+    }
+
+    .mat-mdc-form-field-infix {
+      padding: 5px 0;
+      border: none;
+      min-height: auto;
+    }
+
+    input,
+    textarea,
+    .mat-mdc-select {
+      font-size: 13px;
+    }
+
+    &.mat-focused .mat-mdc-form-field-flex {
+      border-color: #1A56DB;
+      box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.12);
+    }
+
+    .mat-mdc-form-field-subscript-wrapper {
+      height: auto;
+      padding: 4px 0 0;
+    }
+
+    mat-icon[matIconSuffix] {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--color-text-secondary);
+    }
+  }
+
+  // Material Radio Override
+  ::ng-deep .apple-radio {
+    .mdc-radio {
+      padding: 0;
+      margin-right: 8px;
+    }
+
+    .mdc-radio__background {
+      width: 16px;
+      height: 16px;
+    }
+
+    .mdc-label {
+      font-size: 13px;
+    }
+  }
+}
+
+// ==================================================
+// RESPONSIVE
+// ==================================================
+@media (max-width: 768px) {
+  .grid-2col,
+  .grid-3col {
+    grid-template-columns: 1fr;
+  }
+
+  .info-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .form-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .info-box {
+    margin: 8px 16px 16px;
+  }
+
+  .form-section {
+    padding: 6px 16px;
+  }
+}

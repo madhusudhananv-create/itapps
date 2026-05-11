@@ -1,0 +1,270 @@
+// ============================================================
+// AccessControl Management Component — Styles
+// Apple HIG inspired — Request Access card + dialog
+// ============================================================
+
+// ── Request Access wrapper ────────────────────────────────────
+.access-request-wrapper {
+  padding: 10px 0;
+}
+
+// ── Card container ─────────────────────────────────────────────
+.access-request-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 10px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(147, 40, 99, 0.18);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgba(147, 40, 99, 0.08),
+    0 4px 12px rgba(147, 40, 99, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  max-width: 100%;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow:
+      0 2px 6px rgba(147, 40, 99, 0.12),
+      0 8px 20px rgba(147, 40, 99, 0.10);
+  }
+}
+
+// ── Lock icon bubble ────────────────────────────────────────────
+.access-lock-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #932863 0%, #c2185b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(147, 40, 99, 0.30);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+
+  // Pending state — amber/orange clock icon
+  &.pending-icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+  }
+}
+
+// ── Pending badge (replaces button after request sent) ──────────
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1.5px solid rgba(245, 158, 11, 0.45);
+  color: #b45309;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+  animation: pendingPulse 2.4s ease-in-out infinite;
+
+  svg {
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+}
+
+@keyframes pendingPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}
+
+// ── Text block ─────────────────────────────────────────────────
+.access-request-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+
+  .access-request-label {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #932863;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+
+    // Pending state — amber colour
+    &.pending-label {
+      color: #b45309;
+    }
+  }
+
+  .access-request-desc {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: #4a4a4a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+  }
+}
+
+// ── Request button ─────────────────────────────────────────────
+.access-request-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #932863 0%, #c2185b 100%);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+  box-shadow: 0 2px 8px rgba(147, 40, 99, 0.35);
+
+  // Shine sweep on hover
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.22) 50%,
+      transparent 100%
+    );
+    transition: left 0.4s ease;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(147, 40, 99, 0.45);
+    filter: brightness(1.06);
+
+    &::before {
+      left: 140%;
+    }
+
+    .btn-arrow {
+      transform: translateX(3px);
+    }
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 1px 4px rgba(147, 40, 99, 0.30);
+    filter: brightness(0.96);
+  }
+
+  .btn-text {
+    line-height: 1;
+  }
+
+  .btn-arrow {
+    color: rgba(255, 255, 255, 0.85);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  // Loading spinner
+  &.is-loading {
+    opacity: 0.80;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .btn-spinner {
+    flex-shrink: 0;
+    animation: spinBtn 0.8s linear infinite;
+    color: rgba(255, 255, 255, 0.90);
+  }
+}
+
+@keyframes spinBtn {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// ── Confirmation dialog ──────────────────────────────────────
+.dialog-title {
+  padding: 12px 48px 0;
+  margin: 0;
+  text-align: center;
+}
+
+.dialog-content {
+  padding: 12px 24px 0;
+  margin: 0 20px;
+}
+
+.reason-container {
+  padding: 4px 24px 0;
+
+  .reason-textarea {
+    width: 80%;
+    margin: 5px 10%;
+    display: block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+    resize: vertical;
+
+    &:focus {
+      outline: none;
+      border-color: #932863;
+      box-shadow: 0 0 0 2px rgba(147, 40, 99, 0.15);
+    }
+  }
+}
+
+.dialog-actions {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+// ── Dialog action buttons ────────────────────────────────────
+.btn-primary {
+  color: #fff;
+  background-color: #337ab7;
+  border-color: #2e6da4;
+
+  &:hover {
+    background-color: #286090;
+  }
+}
+
+.btn-warning {
+  color: white !important;
+  background-color: #ffbf00;
+  border: none;
+
+  &:hover {
+    background-color: #e6ac00;
+  }
+}
+
+

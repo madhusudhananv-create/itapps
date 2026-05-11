@@ -1,0 +1,422 @@
+// ================================================================
+// Implementation — Step 5  (matches Step 1 design system)
+// ================================================================
+
+@use 'sass:color';
+
+$font-sf:  -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+$blue:     #4B4EB1;
+$blue-lt:  rgba(75, 78, 177, 0.10);
+$green:    #34c759;
+$red:      #E83131;
+$text:     #1c1c1e;
+$text2:    #6e6e73;
+$border:   #e8eaef;
+$bg:       #f4f5f9;
+$surface:  #ffffff;
+
+// ── Page shell ──────────────────────────────────────────────────
+.imp-page {
+  font-family: $font-sf;
+  background: $bg;
+  min-height: 100vh;
+  padding: 20px 24px 40px;
+}
+
+// ── Stepper (identical to Step 1) ───────────────────────────────
+.ie-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 24px;
+  padding: 40px 24px;
+  background: $surface;
+  border-radius: 14px;
+  border: 1px solid $border;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.ie-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 80px;
+
+  &--active {
+    .ie-step-circle { background: $blue; color: #fff; border-color: $blue; box-shadow: 0 0 0 3px rgba(75,78,177,0.18); }
+    .ie-step-name   { color: $blue; font-weight: 700; }
+  }
+
+  &--done {
+    .ie-step-circle { background: $blue; color: #fff; border-color: $blue; }
+    .ie-step-name   { color: $blue; font-weight: 600; }
+  }
+}
+
+.ie-step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid $border;
+  background: $surface;
+  color: $text2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  svg { width: 16px; height: 16px; }
+}
+
+.ie-step-label { text-align: center; }
+
+.ie-step-name {
+  font-size: 11px;
+  color: $text2;
+  line-height: 1.3;
+  display: block;
+  text-align: center;
+}
+
+.ie-step-line {
+  flex: 1;
+  height: 2px;
+  background: $border;
+  min-width: 24px;
+  max-width: 60px;
+  margin-bottom: 22px;
+  &--done { background: $blue; }
+}
+
+// ── Main card (matches ie-form-card) ─────────────────────────────
+.imp-form-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+}
+
+// ── Card header ───────────────────────────────────────────────────
+.imp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid $border;
+  background: $surface;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.imp-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.imp-back-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid $border;
+  background: $surface;
+  color: $text2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  svg { width: 14px; height: 14px; }
+  &:hover { border-color: $blue; color: $blue; background: $blue-lt; }
+}
+
+.imp-card-title-wrap {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.imp-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: $text;
+  letter-spacing: -0.2px;
+}
+
+// ── Body ──────────────────────────────────────────────────────────
+.imp-body {
+  padding: 20px 24px;
+  flex: 1;
+}
+
+// ── Section heading row ───────────────────────────────────────────
+.imp-section-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.imp-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: $text2;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  svg { width: 14px; height: 14px; flex-shrink: 0; }
+}
+
+.imp-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: $blue;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+// ── Table wrapper ─────────────────────────────────────────────────
+.imp-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid $border;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+// ── mat-table overrides ───────────────────────────────────────────
+.imp-table {
+  width: 100%;
+
+  ::ng-deep {
+    .mat-mdc-header-row { background: $blue; }
+
+    .mat-mdc-header-cell {
+      color: #fff !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      padding: 10px 12px !important;
+      border-bottom: none !important;
+      white-space: nowrap;
+      font-family: $font-sf !important;
+    }
+
+    .mat-mdc-row {
+      border-bottom: 1px solid $border !important;
+      transition: background 0.1s;
+      &:hover { background: color.adjust($bg, $lightness: -0.5%); }
+      &:last-child { border-bottom: none !important; }
+    }
+
+    .mat-mdc-cell {
+      font-size: 12px !important;
+      color: $text !important;
+      padding: 10px 12px !important;
+      vertical-align: top;
+      font-family: $font-sf !important;
+    }
+  }
+}
+
+// ── Date lines in estimated date cell ────────────────────────────
+.imp-date-line {
+  display: block;
+  font-size: 12px;
+  color: $text;
+  line-height: 1.7;
+}
+
+// ── Actual date rows (edit/view) ──────────────────────────────────
+.imp-actual-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  margin-bottom: 3px;
+  &:last-child { margin-bottom: 0; }
+}
+
+.imp-actual-lbl {
+  font-size: 11px;
+  color: $text2;
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.imp-actual-val {
+  font-size: 12px;
+  color: $text;
+}
+
+.imp-date-input {
+  width: 130px;
+  height: 26px;
+  border: 0.5px solid #d2d8ee;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: #fafbff;
+  font-family: $font-sf;
+  color: $text;
+  transition: border-color 0.15s;
+  &:focus { outline: none; border-color: $blue; }
+}
+
+// ── Status select (edit mode) ─────────────────────────────────────
+.imp-status-select {
+  width: 120px;
+  height: 28px;
+  border: 0.5px solid #d2d8ee;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: #fafbff;
+  font-size: 11px;
+  ::ng-deep .mat-mdc-select-trigger { height: 28px; }
+  ::ng-deep .mat-mdc-select-value   { font-size: 11px; }
+}
+
+// ── Status chip (read mode) ───────────────────────────────────────
+.imp-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: $blue-lt;
+  color: $blue;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// ── Icon action buttons ───────────────────────────────────────────
+.imp-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.imp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.15s;
+  svg { width: 13px; height: 13px; }
+
+  &--edit {
+    border-color: rgba($blue, 0.3);
+    color: $blue;
+    &:hover:not(:disabled) { background: $blue-lt; border-color: $blue; }
+  }
+
+  &--delete {
+    border-color: rgba($red, 0.25);
+    color: $red;
+    &:hover:not(:disabled) { background: #fff0f0; border-color: $red; }
+  }
+
+  &--save {
+    border-color: rgba($green, 0.3);
+    color: $green;
+    &:hover { background: rgba($green, 0.08); border-color: $green; }
+  }
+
+  &--cancel {
+    border-color: rgba($red, 0.25);
+    color: $red;
+    &:hover { background: #fff0f0; border-color: $red; }
+  }
+
+  &:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+}
+
+// ── Empty state ───────────────────────────────────────────────────
+.imp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: $text2;
+  font-size: 13px;
+  svg { width: 48px; height: 48px; }
+}
+
+// ── Card footer ───────────────────────────────────────────────────
+.imp-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid $border;
+  background: color.adjust($bg, $lightness: -0.5%);
+}
+
+.imp-progress {
+  flex: 1;
+  height: 5px;
+  background: $border;
+  border-radius: 3px;
+  overflow: hidden;
+
+  &__fill {
+    height: 100%;
+    background: $green;
+    border-radius: 3px;
+  }
+}
+
+.imp-progress__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: $text2;
+  white-space: nowrap;
+}
+
+// -- Loading bar --------------------------------------------------
+.imp-loading-bar {
+  border-radius: 2px;
+  margin-bottom: 12px;
+}
+
+// -- Button inline spinner -----------------------------------------
+@keyframes imp-spin { to { transform: rotate(360deg); } }
+
+.imp-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: imp-spin 0.65s linear infinite;
+  flex-shrink: 0;
+
+  &--sm {
+    width: 12px;
+    height: 12px;
+    border-color: rgba(75,78,177,0.25);
+    border-top-color: #4B4EB1;
+  }
+}

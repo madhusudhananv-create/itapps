@@ -1,0 +1,225 @@
+﻿<div class="pr-container">
+
+  <!-- Progress Bar -->
+  @if(isdisabled) {
+  <mat-progress-bar mode="indeterminate" color="primary" class="progress-bar"></mat-progress-bar>
+  }
+
+  <!-- ===== READ MODE: Toolbar + Table ===== -->
+  <div *ngIf="readonlymode">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <span class="toolbar-title">Product Responsible Person</span>
+
+      <div class="toolbar-controls">
+
+        <!-- Back Button -->
+        <button mat-icon-button *ngIf="IsBackButtonEnabled" routerLink="/layout/managecustomers"
+          matTooltip="Back to Customer Page" class="back-btn">
+          <mat-icon>keyboard_backspace</mat-icon>
+        </button>
+
+        <!-- Customer Selector -->
+        <mat-form-field appearance="outline" class="toolbar-field">
+          <mat-label>Customer</mat-label>
+          <mat-select [(ngModel)]="custId" disabled>
+            <mat-option *ngFor="let s of Customer" [value]="s.cusT_ID">{{s.cusT_NM}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Portfolio Selector -->
+        <mat-form-field appearance="outline" class="toolbar-field" *ngIf="includePortfolio">
+          <mat-label>Portfolio</mat-label>
+          <mat-select [(ngModel)]="portId" (selectionChange)="getProductPortfolioMapping(portId)">
+            <mat-option *ngFor="let item of portfolioList" [value]="item.id">{{item.title}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Product Selector -->
+        <mat-form-field appearance="outline" class="toolbar-field">
+          <mat-label>Product</mat-label>
+          <mat-select [(ngModel)]="productId">
+            <mat-option *ngFor="let item of productList" [value]="item.id">{{item.producT_TITLE}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Get Details Button -->
+        <button mat-flat-button color="primary" class="get-btn"
+          (click)="getProductResponsibleSummary(productId)" [disabled]="isdisabled">
+          <mat-icon>search</mat-icon> Get Details
+        </button>
+
+        <!-- Customer Logo -->
+        <img [src]="Customer[0]?.cusT_LOGOLOGIN" class="customer-logo"
+          *ngIf="Customer[0]?.cusT_LOGOLOGIN" />
+
+        <!-- Add Button -->
+        <button mat-icon-button class="add-btn" matTooltip="Add Responsible"
+          (click)="Edit_onClick(0)" *ngIf="_access.IsAllowed(101, 2, '', '')">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-wrapper" #TABLE>
+      <table mat-table [dataSource]="dataSource" matSort class="pr-table">
+
+        <!-- S.No -->
+        <ng-container matColumnDef="index">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>S.NO</th>
+          <td mat-cell *matCellDef="let row; let i = index">
+            {{ (paginator?.pageIndex ?? 0) * (paginator?.pageSize ?? 5) + i + 1 }}
+          </td>
+        </ng-container>
+
+        <!-- Management Type -->
+        <ng-container matColumnDef="managemenT_TYPE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>MANAGEMENT TYPE</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="type-badge">{{row.managemenT_TYPE}}</span>
+          </td>
+        </ng-container>
+
+        <!-- Responsible Name -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>RESPONSIBLE NAME</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="name-text">{{row.name}}</span>
+          </td>
+        </ng-container>
+
+        <!-- Effective From -->
+        <ng-container matColumnDef="effectivE_FROM">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>EFFECTIVE FROM</th>
+          <td mat-cell *matCellDef="let row">{{row.effectivE_FROM}}</td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>ACTION</th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-icon-button class="edit-btn" matTooltip="Edit"
+              (click)="EditRow_onClick(row)" *ngIf="_access.IsAllowed(101, 2, '', '')">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button class="delete-btn" matTooltip="Delete"
+              (click)="DeleteRow_onClick(row)" *ngIf="_access.IsAllowed(101, 3, '', '')">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data" colspan="5">No records found. Select a product and click Get Details.</td>
+        </tr>
+      </table>
+
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+
+  </div>
+
+  <!-- ===== EDIT MODE: Form ===== -->
+  <div *ngIf="editmode" class="edit-container">
+
+    <div class="form-header">
+      <span class="form-header-title">
+        <mat-icon>manage_accounts</mat-icon>
+        {{ editItem?.id ? 'Edit Responsible Person' : 'Add Responsible Person' }}
+      </span>
+      <div class="form-header-actions">
+        <button mat-icon-button class="save-btn" matTooltip="Save"
+          (click)="SubmitForm(editItem.producT_TITLE && editItem.managemenT_TYPE && editItem.name)"
+          [disabled]="isdisabled">
+          <mat-icon>save</mat-icon>
+        </button>
+        <button mat-icon-button class="cancel-btn" matTooltip="Cancel" (click)="Cancel_onClick()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-divider"></div>
+
+    <div class="form-body">
+
+      <!-- Row 1: Product + Management Type -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Product Title</mat-label>
+          <mat-select [(ngModel)]="editItem.producT_TITLE" [disabled]="disableProduct" required>
+            <mat-option *ngFor="let item of overallProductsList" [value]="item.producT_TITLE">
+              {{item.producT_TITLE}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Management Type</mat-label>
+          <mat-select [(ngModel)]="editItem.managemenT_TYPE" (selectionChange)="managementTypeChange($event)" required>
+            <mat-option *ngFor="let item of managementTypes" [value]="item.managemenT_TYPE">
+              {{item.managemenT_TYPE}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Row 2: Responsible Name (conditional dropdowns) -->
+      <div class="form-row">
+
+        <!-- Customer types -->
+        <mat-form-field appearance="outline" class="form-field"
+          *ngIf="editItem.managemenT_TYPE == 'CUSTOMER' || editItem.managemenT_TYPE == 'CUSTOMER CSAT QUARTERLY' || editItem.managemenT_TYPE == 'CUSTOMER CSAT HALFYEARLY'">
+          <mat-label>Responsible Name</mat-label>
+          <mat-select [(ngModel)]="editItem.name" required>
+            <mat-option *ngFor="let item of customerList" [value]="item.contacT_NAME">
+              {{item.contacT_NAME}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- QA SPOC -->
+        <mat-form-field appearance="outline" class="form-field"
+          *ngIf="editItem.managemenT_TYPE == 'QUALITYSPOC'">
+          <mat-label>Responsible Name</mat-label>
+          <mat-select [(ngModel)]="editItem.name" required>
+            <mat-option *ngFor="let item of QAEmployeeList" [value]="item.frsT_NM">
+              {{item.frsT_NM}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Project -->
+        <mat-form-field appearance="outline" class="form-field"
+          *ngIf="editItem.managemenT_TYPE == 'PROJECT'">
+          <mat-label>Responsible Name</mat-label>
+          <mat-select [(ngModel)]="editItem.name" required>
+            <mat-option *ngFor="let item of projectList" [value]="item.proJ_NM">
+              {{item.proJ_NM}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Other types -->
+        <mat-form-field appearance="outline" class="form-field"
+          *ngIf="editItem.managemenT_TYPE != 'CUSTOMER' && editItem.managemenT_TYPE != 'QUALITYSPOC' && editItem.managemenT_TYPE != 'PROJECT' && editItem.managemenT_TYPE != 'CUSTOMER CSAT QUARTERLY' && editItem.managemenT_TYPE != 'CUSTOMER CSAT HALFYEARLY' && editItem.managemenT_TYPE != null">
+          <mat-label>Responsible Name</mat-label>
+          <mat-select [(ngModel)]="editItem.name" required>
+            <mat-option *ngFor="let item of customerEmployeeList" [value]="item.name">
+              {{item.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>

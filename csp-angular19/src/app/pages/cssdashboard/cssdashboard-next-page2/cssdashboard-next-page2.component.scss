@@ -1,0 +1,171 @@
+// ============================================================
+// CSAT Charts Page 2 — Blueprint Pro
+// Visual-only upgrade.
+// ============================================================
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+// ── Trend checkbox pill ───────────────────────────────────────
+.checkbox {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 10;
+
+  ::ng-deep {
+    .mat-mdc-checkbox,
+    .mat-checkbox {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 5px 10px 5px 8px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.08);
+      transition: border-color 130ms ease, box-shadow 130ms ease;
+
+      &:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 16px rgba(15,23,42,0.10);
+      }
+
+      label, .mdc-label {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 12.5px !important;
+        font-weight: 500 !important;
+        color: #334155 !important;
+        cursor: pointer;
+      }
+
+      .mdc-checkbox__background { border-radius: 4px !important; }
+
+      --mdc-checkbox-selected-icon-color: #3b82f6 !important;
+      --mdc-checkbox-selected-hover-icon-color: #2563eb !important;
+      --mdc-checkbox-selected-checkmark-color: white !important;
+    }
+  }
+}
+
+// ── No-data placeholder ───────────────────────────────────────
+.no-data-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+  height: 400px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.4;
+  }
+
+  > * { position: relative; z-index: 1; }
+}
+
+// ── Highcharts Modern Styling ─────────────────────────────────
+::ng-deep {
+  highcharts-chart {
+    display: block !important;
+    
+    .highcharts-container {
+      font-family: 'Inter', sans-serif !important;
+    }
+    
+    .highcharts-background {
+      fill: #ffffff;
+    }
+    
+    .highcharts-title {
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
+      fill: #1e293b !important;
+    }
+    
+    .highcharts-subtitle {
+      font-family: 'Inter', sans-serif !important;
+      fill: #64748b !important;
+    }
+    
+    .highcharts-axis-title {
+      font-family: 'Inter', sans-serif !important;
+      fill: #64748b !important;
+    }
+    
+    .highcharts-axis-labels text {
+      font-family: 'Inter', sans-serif !important;
+      fill: #64748b !important;
+    }
+    
+    .highcharts-legend-item text {
+      font-family: 'Inter', sans-serif !important;
+      fill: #475569 !important;
+    }
+    
+    .highcharts-legend-item:hover text {
+      fill: #1e293b !important;
+    }
+    
+    .highcharts-grid-line {
+      stroke: #f1f5f9;
+    }
+    
+    .highcharts-axis-line {
+      stroke: #e2e8f0;
+    }
+    
+    .highcharts-tick {
+      stroke: #e2e8f0;
+    }
+    
+    .highcharts-tooltip-box {
+      fill: #1e293b;
+      stroke: #1e293b;
+    }
+    
+    .highcharts-tooltip text {
+      fill: #ffffff !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+    
+    .highcharts-data-label text {
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
+    }
+    
+    .highcharts-point {
+      rx: 4;
+      ry: 4;
+    }
+  }
+
+  .mat-mdc-checkbox .mdc-checkbox {
+    --mdc-checkbox-selected-icon-color: #3b82f6;
+    --mdc-checkbox-selected-hover-icon-color: #2563eb;
+    --mdc-checkbox-selected-checkmark-color: white;
+  }
+
+  .mat-mdc-progress-bar,
+  .mat-progress-bar {
+    height: 3px !important;
+    border-radius: 2px;
+    .mdc-linear-progress__bar-inner,
+    .mat-progress-bar-fill::after {
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6) !important;
+    }
+    .mdc-linear-progress__buffer-bar { background: #e2e8f0 !important; }
+  }
+}

@@ -1,0 +1,191 @@
+<div class="imp-page">
+
+  <!-- ── Top Stepper (matches Step 1 exactly) ─────────────────── -->
+  <div class="ie-stepper">
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Idea<br>Submission</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Evaluate<br>Benefits</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation<br>Plan</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Review &amp;<br>Approve</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--active">
+      <div class="ie-step-circle ie-step-circle--active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation</span></div>
+    </div>
+  </div>
+
+  <!-- ── Loading bar ── -->
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="imp-loading-bar"></mat-progress-bar>
+
+  <!-- ── Main card ── -->
+  <div class="imp-form-card">
+
+    <!-- Card header -->
+    <div class="imp-card-header">
+      <div class="imp-card-header-left">
+        <button class="imp-back-btn" type="button" (click)="setBack()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="imp-spinner imp-spinner--sm"></span>
+          <svg *ngIf="!isLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="imp-card-title-wrap">
+          <span class="imp-card-title">Implementation</span>
+          <span class="imp-card-title">Status</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Schedule section ── -->
+    <div class="imp-body">
+
+      <!-- Section heading row -->
+      <div class="imp-section-row">
+        <span class="imp-section-label">
+          <svg viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M6 1v4M12 1v4M2 7h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          IMPLEMENTATION SCHEDULE
+        </span>
+        <span class="imp-count-badge">{{ getRowCount() }}</span>
+      </div>
+
+      <!-- Table -->
+      <div class="imp-table-wrap">
+        <table mat-table [dataSource]="dataSource" class="imp-table">
+
+          <!-- Milestone & Task -->
+          <ng-container matColumnDef="milestonetask">
+            <th mat-header-cell *matHeaderCellDef>Milestone &amp; Task</th>
+            <td mat-cell *matCellDef="let row">{{ row.milestone }}</td>
+          </ng-container>
+
+          <!-- Description -->
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+          </ng-container>
+
+          <!-- Efforts -->
+          <ng-container matColumnDef="efforts">
+            <th mat-header-cell *matHeaderCellDef>Efforts</th>
+            <td mat-cell *matCellDef="let row">{{ row.estimateD_EFFORTS }}</td>
+          </ng-container>
+
+          <!-- Responsible -->
+          <ng-container matColumnDef="responsible">
+            <th mat-header-cell *matHeaderCellDef>Responsible</th>
+            <td mat-cell *matCellDef="let row">{{ _bvdService.getEmployeeName(row.responsible) }}</td>
+          </ng-container>
+
+          <!-- Comments -->
+          <ng-container matColumnDef="comments">
+            <th mat-header-cell *matHeaderCellDef>Comments</th>
+            <td mat-cell *matCellDef="let row">{{ row.comments }}</td>
+          </ng-container>
+
+          <!-- Estimated Dates -->
+          <ng-container matColumnDef="estimatedDate">
+            <th mat-header-cell *matHeaderCellDef>Estimated Dates</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="imp-date-line">Start: {{ row.estimateD_START_DATE | date:'dd-MMM-yyyy' }}</span>
+              <span class="imp-date-line">End: {{ row.estimateD_TARGET_DATE | date:'dd-MMM-yyyy' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Actual Dates -->
+          <ng-container matColumnDef="actualstartDate">
+            <th mat-header-cell *matHeaderCellDef>Actual Dates</th>
+            <td mat-cell *matCellDef="let row; let id = index">
+              <div class="imp-actual-row">
+                <span class="imp-actual-lbl">Start:</span>
+                <input *ngIf="id == iEditIndex" type="date" [(ngModel)]="actualstartDate" class="imp-date-input" id="txtstartDate{{id}}">
+                <span *ngIf="id != iEditIndex" class="imp-actual-val">{{ getFormattedDate(row.actuaL_START_DATE) }}</span>
+              </div>
+              <div class="imp-actual-row">
+                <span class="imp-actual-lbl">End:</span>
+                <input *ngIf="id == iEditIndex" [min]="row.actualstartDate" type="date" [(ngModel)]="actualendDate" class="imp-date-input" id="txtendDate{{id}}">
+                <span *ngIf="id != iEditIndex" class="imp-actual-val">{{ getFormattedDate(row.actuaL_END_DATE) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Status -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row; let id = index">
+              <mat-select *ngIf="id == iEditIndex" [(ngModel)]="row.ideA_STATUS_ID" name="ddStatus" class="imp-status-select">
+                <mat-option *ngFor="let st of status" [value]="st.id">{{ st.title }}</mat-option>
+              </mat-select>
+              <span *ngIf="id != iEditIndex" class="imp-status-chip">{{ getstatus(row.ideA_STATUS_ID) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row; let id = index">
+              <div class="imp-actions">
+                <ng-container *ngIf="id != iEditIndex">
+                  <button type="button" class="imp-icon-btn imp-icon-btn--edit" [disabled]="row.iscomplete" (click)="EditRow_onClick(row, id)" title="Edit">
+                    <svg viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="imp-icon-btn imp-icon-btn--delete" [disabled]="row.iscomplete" (click)="DeleteRow_onClick(row)" title="Delete">
+                    <svg viewBox="0 0 16 16" fill="none"><path d="M3 4h10M6 4V3h4v1M5 4v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="id === iEditIndex">
+                  <button type="button" class="imp-icon-btn imp-icon-btn--save" (click)="UpdateRecord(row)" title="Save">
+                    <svg viewBox="0 0 16 16" fill="none"><polyline points="3,8 7,12 13,4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="imp-icon-btn imp-icon-btn--cancel" (click)="CancelEdit_onClick()" title="Cancel">
+                    <svg viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- Empty state -->
+        <div class="imp-empty" *ngIf="dataSource.length === 0">
+          <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#e8eaef" stroke-width="2"/><path d="M16 24h16M24 16v16" stroke="#d0d4e8" stroke-width="2" stroke-linecap="round"/></svg>
+          No implementation schedules found
+        </div>
+      </div>
+
+    </div><!-- /imp-body -->
+
+    <!-- Footer progress -->
+    <div class="imp-card-footer">
+      <div class="imp-progress">
+        <div class="imp-progress__fill" style="width:100%"></div>
+      </div>
+      <span class="imp-progress__label">Step 5 of 5 — 100%</span>
+    </div>
+
+  </div><!-- /imp-form-card -->
+</div>

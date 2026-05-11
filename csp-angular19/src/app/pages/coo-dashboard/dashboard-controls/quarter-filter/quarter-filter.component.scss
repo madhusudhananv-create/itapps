@@ -1,0 +1,86 @@
+// Quarter Filter Component Styles
+// Modern Angular 19 version
+
+.marginbottom5px {
+  margin-bottom: 5px;
+}
+
+.qlinks {
+  text-align: center;
+  
+  a {
+    margin-left: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 200ms ease-in-out;
+    
+    &:hover {
+      color: #4a90e2;
+      transform: translateY(-1px);
+    }
+    
+    &.underline {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 2px;
+      font-weight: 600;
+    }
+  }
+}
+
+.verysmalltext {
+  font-size: 11px;
+  color: #4a90e2;
+  text-decoration: none !important;
+  font-weight: 500;
+  
+  &.nowrap {
+    white-space: nowrap;
+  }
+}
+
+.verysmalltextblack {
+  font-size: 11px;
+  color: #5c5b5b;
+  text-decoration: none !important;
+  font-weight: 300;
+  
+  &.nowrap {
+    white-space: nowrap;
+  }
+}
+
+.smalltext {
+  font-size: 12px;
+  color: #494a4d;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.smalltextblack {
+  font-size: 11px;
+  color: #474646;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.text-center {
+  text-align: center;
+}
+
+// Row layout
+.row {
+  margin: 0;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .qlinks a {
+    margin-left: 5px;
+    font-size: 10px;
+  }
+  
+  .smalltextblack {
+    font-size: 10px;
+  }
+}

@@ -1,0 +1,817 @@
+<div style="background-color:white; padding:5px 0 15px 0;">
+
+  <!-- ── Toolbar: Select Goal + Add KPI ── -->
+  <div class="row kpi-section" *ngIf="readonlymode && !isProductView">
+    <div class="kpi-toolbar-legacy">
+      <div class="toolbar-left">
+        <label class="goal-label">
+          <mat-icon class="goal-flag-icon">flag</mat-icon>
+          Select Goal
+        </label>
+        <div class="goal-select-row">
+          <select
+            class="goal-select-legacy"
+            name="ddGoals"
+            [(ngModel)]="selectedGoal"
+            (ngModelChange)="ddGoals_Onchange()">
+            <option
+              *ngFor="let goal of goals; let i = index"
+              [value]="goal"
+              [attr.selected]="i === 0 ? true : null"
+              [title]="goal.description">
+              {{ goal.description }}
+            </option>
+          </select>
+          <button mat-icon-button
+            (click)="Refresh_onClick()"
+            matTooltip="Refresh"
+            class="refresh-btn-legacy">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <button mat-button
+        (click)="AddKPI_onClick()"
+        class="add-kpi-btn-legacy"
+        matTooltip="Add new KPI">
+        <mat-icon>add</mat-icon>
+        Add KPI
+      </button>
+    </div>
+
+    <!-- Note -->
+    <div class="kpi-note-legacy"
+      *ngIf="dataSource && dataSource.length > 0 && hasExpiredKpis()">
+      Note: KPI name shown in
+      <span style="color:#d32f2f; font-weight:600">red colour</span>
+      indicates that KPI Target end date is less than current date,
+      extend the target date if required
+    </div>
+
+    <!-- Empty states -->
+    <div class="empty-state" *ngIf="goals.length === 0">
+      <mat-icon>flag_circle</mat-icon>
+      <p>No goals available to select.</p>
+    </div>
+    <div class="empty-state" *ngIf="dataSource.length === 0 && goals.length > 0">
+      <mat-icon>analytics</mat-icon>
+      <p>No KPIs available for the selected goal.</p>
+    </div>
+  </div>
+
+  <!-- ── Edit mode header ── -->
+  <div class="row" style="padding:5px;" *ngIf="editmode && !isProductView">
+    <div class="col-lg-7">
+      <b>Goal</b>: {{ selectedGoal.description }}
+    </div>
+    <div class="col-lg-5" style="text-align:right; font-size:20px; padding-top:5px;">
+      <a class="close" (click)="Cancel_onClick()" style="padding:3px">
+        <i class="fa fa-times"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       CONCEPT B — Expandable row table
+       ════════════════════════════════════════════ -->
+  <div *ngIf="readonlymode && !isProductView" class="kpi-table-wrapper">
+
+    <table mat-table
+      [dataSource]="dataSource"
+      multiTemplateDataRows
+      class="kpi-base-table"
+      *ngIf="dataSource.length > 0">
+
+      <!-- ── No. (with expand button) ── -->
+      <ng-container matColumnDef="index">
+        <th mat-header-cell *matHeaderCellDef matTooltip="Row number">No.</th>
+        <td mat-cell *matCellDef="let row">
+          <div style="display:flex; align-items:center; gap:4px;">
+            <button mat-icon-button
+              class="expand-btn"
+              [class.expanded]="expandedRow === row"
+              (click)="toggleExpand(row); $event.stopPropagation()"
+              [matTooltip]="expandedRow === row ? 'Collapse tiers' : 'Expand tiers'">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <span>{{ getRowIndex(row) }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="kpI_UNIQUEID">
+        <th mat-header-cell *matHeaderCellDef matTooltip="KPI Identifier">KPI Identifier</th>
+        <td mat-cell *matCellDef="let row" class="mono-cell" [matTooltip]="row.kpI_UNIQUEID">
+          {{ row.kpI_UNIQUEID }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="servicE_AREA">
+        <th mat-header-cell *matHeaderCellDef matTooltip="Work Group / KPI Area">Work Group /<br>KPI Area</th>
+        <td mat-cell *matCellDef="let row">{{ row.servicE_AREA }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="kpI_NAME">
+        <th mat-header-cell *matHeaderCellDef matTooltip="KPI Name">KPI Name</th>
+        <td mat-cell *matCellDef="let row"
+          [attr.data-expired]="row.isExpired || null"
+          [matTooltip]="row.kpI_NAME"
+          matTooltipPosition="above">
+          <span [style.color]="row.isExpired ? 'red' : 'inherit'"
+                [style.font-weight]="row.isExpired ? '500' : 'normal'">
+            {{ row.kpI_NAME }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="servicE_TOWER_ID">
+        <th mat-header-cell *matHeaderCellDef matTooltip="Service Tower">Service Tower</th>
+        <td mat-cell *matCellDef="let row">{{ GetServiceAreaNames(row.servicE_TOWER_ID) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="supporT_WINDOW">
+        <th mat-header-cell *matHeaderCellDef matTooltip="Support Window">Support<br>Window</th>
+        <td mat-cell *matCellDef="let row">{{ row.supporT_WINDOW }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="frequency">
+        <th mat-header-cell *matHeaderCellDef matTooltip="Frequency">Frequency</th>
+        <td mat-cell *matCellDef="let row">{{ row.frequency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="slA_TARGET_UNIT_OF_MEASUREMENT">
+        <th mat-header-cell *matHeaderCellDef matTooltip="Unit of Measurement">UOM</th>
+        <td mat-cell *matCellDef="let row">{{ row.slA_TARGET_UNIT_OF_MEASUREMENT }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let row" class="actions-cell">
+          <button mat-icon-button class="action-btn edit-btn"
+            (click)="EditRow_onClick(row); $event.stopPropagation()"
+            matTooltip="Edit KPI">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button class="action-btn delete-btn"
+            (click)="DeleteRow_onClick(row); $event.stopPropagation()"
+            matTooltip="Delete KPI">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="expandedDetail">
+        <td mat-cell *matCellDef="let row"
+          [attr.colspan]="baseColumns.length"
+          style="padding: 0; overflow: visible;">
+          <div class="tier-detail-container"
+            [@detailExpand]="row === expandedRow ? 'expanded' : 'collapsed'">
+            <div class="tier-detail-inner">
+              <div class="tier-detail-header">
+                <span>Target tiers</span>
+                <span class="tier-detail-sub">Showing targets for the most recent period</span>
+              </div>
+              <div class="tier-cards-grid">
+                <div class="tier-card tier-card--red" *ngIf="getTarget(row)">
+                  <div class="tier-card__header">
+                    <span class="tier-dot tier-dot--red"></span>
+                    <span class="tier-card__label">Tier 1</span>
+                    <span class="tier-card__sublabel">Baseline</span>
+                  </div>
+                  <div class="tier-card__body">
+                    <div class="tier-row">
+                      <span class="tier-row__key">Description</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_LOW_DESCRIPTION || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Operator</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_LOW_OPERATOR || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Value</span>
+                      <span class="tier-row__val tier-row__val--bold">{{ getTarget(row)?.slA_TARGET_LOW_VALUE || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tier-card tier-card--orange" *ngIf="getTarget(row)">
+                  <div class="tier-card__header">
+                    <span class="tier-dot tier-dot--orange"></span>
+                    <span class="tier-card__label">Tier 2</span>
+                    <span class="tier-card__sublabel">Acceptable</span>
+                  </div>
+                  <div class="tier-card__body">
+                    <div class="tier-row">
+                      <span class="tier-row__key">Description</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_MEDIUM_DESCRIPTION || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Operator</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_MEDIUM_OPERATOR || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Value</span>
+                      <span class="tier-row__val tier-row__val--bold">{{ getTarget(row)?.slA_TARGET_MEDIUM_VALUE || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tier-card tier-card--green" *ngIf="getTarget(row)">
+                  <div class="tier-card__header">
+                    <span class="tier-dot tier-dot--green"></span>
+                    <span class="tier-card__label">Tier 3</span>
+                    <span class="tier-card__sublabel">Good</span>
+                  </div>
+                  <div class="tier-card__body">
+                    <div class="tier-row">
+                      <span class="tier-row__key">Description</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_HIGH_DESCRIPTION || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Operator</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_HIGH_OPERATOR || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Value</span>
+                      <span class="tier-row__val tier-row__val--bold">{{ getTarget(row)?.slA_TARGET_HIGH_VALUE || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tier-card tier-card--blue" *ngIf="getTarget(row)">
+                  <div class="tier-card__header">
+                    <span class="tier-dot tier-dot--blue"></span>
+                    <span class="tier-card__label">Tier 4</span>
+                    <span class="tier-card__sublabel">Excellent</span>
+                  </div>
+                  <div class="tier-card__body" *ngIf="!getTarget(row)?.slA_TARGET_VERYHIGH_VALUE">
+                    <div style="font-size:11px; color:#bbb; text-align:center; padding:12px 0;">Not configured</div>
+                  </div>
+                  <div class="tier-card__body" *ngIf="getTarget(row)?.slA_TARGET_VERYHIGH_VALUE">
+                    <div class="tier-row">
+                      <span class="tier-row__key">Description</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_VERYHIGH_DESCRIPTION || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Operator</span>
+                      <span class="tier-row__val">{{ getTarget(row)?.slA_TARGET_VERYHIGH_OPERATOR || '—' }}</span>
+                    </div>
+                    <div class="tier-row">
+                      <span class="tier-row__key">Value</span>
+                      <span class="tier-row__val tier-row__val--bold">{{ getTarget(row)?.slA_TARGET_VERYHIGH_VALUE || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="baseColumns; sticky: true"></tr>
+      <tr mat-row
+        *matRowDef="let row; columns: baseColumns;"
+        class="kpi-row"
+        [class.kpi-row--expanded]="expandedRow === row"
+        (click)="toggleExpand(row)">
+      </tr>
+      <tr mat-row
+        *matRowDef="let row; columns: ['expandedDetail']"
+        class="detail-row">
+      </tr>
+    </table>
+  </div>
+
+
+  <!-- ════════════════════════
+       EDIT / ADD FORM
+       ════════════════════════ -->
+  <div *ngIf="editmode && !isProductView" style="font-size:12px">
+    <form #definitionForm="ngForm"
+      (ngSubmit)="SubmitForm_Definition(definitionForm)">
+
+      <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>KPI Identifier</mat-label>
+            <input name="txtUniqueId" maxlength="100"
+              [(ngModel)]="definition.kpI_UNIQUEID" matInput required
+              pattern="[a-zA-Z0-9._]*"
+              (input)="alphaNumberOnly($event)"
+              (keypress)="alphaNumberOnly($event)"
+              (paste)="onPaste($event)">
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Work Group / KPI Area</mat-label>
+            <input name="txtServiceArea" maxlength="100"
+              [(ngModel)]="definition.servicE_AREA" matInput required>
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Select Base Measure Master KPI</mat-label>
+            <mat-select #mySel [(ngModel)]="selectedKPI" name="ddselectKPI"
+              (selectionChange)="updateKPIName(selectedKPI)"
+              (openedChange)="resetFilterValue($event)" required>
+              <mat-form-field appearance="outline" class="filter-kpi" style="width:100%">
+                <mat-label>Search KPI</mat-label>
+                <input matInput #searchInput
+                  (input)="applyFilterForKPI(searchInput.value)"
+                  style="text-indent:10px;">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+              <mat-option *ngFor="let kpi of overallKPIList" [value]="kpi.kpI_ID"
+                [title]="kpi.formula + '-' + kpi.numeratordescription + '/' + kpi.denominatordescription">
+                {{ kpi.kpI_NAME }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>KPI Name</mat-label>
+            <input name="txtKPIName" maxlength="100"
+              [(ngModel)]="definition.kpI_NAME" matInput required>
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Numerator</mat-label>
+            <input name="txtKPINumerator"
+              [(ngModel)]="selectedNumerator" matInput [readonly]="true">
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Denominator</mat-label>
+            <input name="txtKPIDenominator"
+              [(ngModel)]="selectedDenominator" matInput [readonly]="true">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Formula</mat-label>
+            <input name="txtKPIFormula"
+              [(ngModel)]="selectedFormula" matInput [readonly]="true">
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Abbreviation</mat-label>
+            <input name="txtAbbreviation" maxlength="100"
+              [(ngModel)]="definition.abbreviation" matInput required>
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Global Category</mat-label>
+            <mat-select name="ddGlobalCategory"
+              [(ngModel)]="definition.globaL_KPI_CATEGORY_ID" required>
+              <mat-optgroup *ngFor="let group of GlobalCategories" [label]="group.perspective">
+                <mat-option *ngFor="let cat of group.category"
+                  [value]="cat.id" [title]="cat.shorT_DESC">
+                  {{ cat.shorT_DESC }}
+                </mat-option>
+              </mat-optgroup>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Support Window</mat-label>
+            <input name="txtSupportWindow" maxlength="100"
+              [(ngModel)]="definition.supporT_WINDOW" matInput>
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Priority</mat-label>
+            <input name="txtPriority" maxlength="100"
+              [(ngModel)]="definition.priority" matInput>
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Unit of Measurement</mat-label>
+            <input name="ddUOM" maxlength="100"
+              [(ngModel)]="definition.slA_TARGET_UNIT_OF_MEASUREMENT"
+              matInput readonly required>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Frequency</mat-label>
+            <mat-select name="ddFrequency" [(ngModel)]="definition.frequency" required>
+              <mat-option value="Build">Build</mat-option>
+              <mat-option value="Fortnightly">Fortnightly</mat-option>
+              <mat-option value="Monthly">Monthly</mat-option>
+              <mat-option value="Quarterly">Quarterly</mat-option>
+              <mat-option value="Release">Release</mat-option>
+              <mat-option value="Sprint">Sprint</mat-option>
+              <mat-option value="Weekly">Weekly</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Service Tower</mat-label>
+            <mat-select multiple
+              [(ngModel)]="definition.servicE_TOWER_ID"
+              name="selServiceTower" required>
+              <mat-option *ngFor="let item of serviceAreaProjectMappingList"
+                [value]="item.id">{{ item?.title }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="service-tower-hint" *ngIf="!serviceAreaProjectMappingList?.length">
+            Please configure Service Tower applicable for the project
+            with the help of your QA SPOC
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12"></div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-12">
+          <label class="check-label">
+            <input type="checkbox" name="cgkShowinchart"
+              [(ngModel)]="definition.shoW_IN_CHART">
+            <span>Show in Customer Success Journey</span>
+          </label>
+          <label class="check-label">
+            <input type="checkbox" name="cgkIsSOW"
+              [(ngModel)]="definition.iS_SOW_COMMITMENT">
+            <span>Is it a SOW Commitment</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Target for the Period Header -->
+      <div class="row" style="background-color:#b0cfed; text-align:center; height:30px; line-height:30px; margin:12px 0 0 0;">
+        <div class="col-lg-12">Target for the Period</div>
+      </div>
+
+      <!-- Start/End Date Table + Tier Targets -->
+      <div class="row target-period-row" style="margin-top:0;">
+        <!-- DATE TABLE -->
+        <div class="col-lg-5 col-md-5 col-sm-12" style="padding-right:8px;">
+          <table class="table table-bordered" style="width:100%; margin-top:0; margin-bottom:0; table-layout:fixed;">
+            <thead>
+              <tr style="background-color:#b0cfed;">
+                <th style="width:45px; text-align:center; padding:6px 4px; font-size:11px; vertical-align:middle;">N<br/>O.</th>
+                <th style="width:110px; text-align:center; padding:6px 4px; font-size:11px; vertical-align:middle;">START<br/>DATE</th>
+                <th style="width:110px; text-align:center; padding:6px 4px; font-size:11px; vertical-align:middle;">END<br/>DATE</th>
+                <th style="width:30px; text-align:center; padding:6px 4px; vertical-align:middle;">
+                  <a class="link" style="font-size:15px; cursor:pointer;"
+                    (click)="AddTarget_OnClick()"
+                    matTooltip="Add new Target">
+                    <i class="fa fa-plus"></i>
+                  </a>
+                </th>
+                <th style="width:30px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let target of definition.kpI_TARGETS; let i = index"
+                [ngStyle]="{'background-color': target.id === selectedTarget.id ? '#d9e2ec' : 'transparent'}"
+                style="height:65px;">
+                <td style="text-align:center; vertical-align:middle; padding:4px;">{{ i + 1 }}</td>
+                <td style="text-align:center; vertical-align:middle; padding:4px;">
+                  <span *ngIf="target.id !== selectedTarget.id">
+                    {{ target.starT_DATE | date:'M/d/yyyy' }}
+                  </span>
+                  <span *ngIf="target.id === selectedTarget.id">
+                    <mat-form-field appearance="outline" class="datefield" style="width:100%; font-size:11px;">
+                      <input matInput name="dtStartDate[{{i}}]"
+                        [(ngModel)]="target.starT_DATE"
+                        [matDatepicker]="pickerStartDate"
+                        [min]="_kpiService.selectedGoal.starT_DATE"
+                        [max]="_kpiService.selectedGoal.enD_DATE" required>
+                      <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+                      <mat-datepicker #pickerStartDate></mat-datepicker>
+                    </mat-form-field>
+                  </span>
+                </td>
+                <td style="text-align:center; vertical-align:middle; padding:4px;">
+                  <span *ngIf="target.id !== selectedTarget.id">
+                    {{ target.enD_DATE | date:'M/d/yyyy' }}
+                  </span>
+                  <span *ngIf="target.id === selectedTarget.id">
+                    <mat-form-field appearance="outline" class="datefield" style="width:100%; font-size:11px;">
+                      <input matInput name="dtEndDate[{{i}}]"
+                        [(ngModel)]="target.enD_DATE"
+                        [matDatepicker]="pickerEndDate" required
+                        [min]="target.starT_DATE"
+                        [max]="_kpiService.selectedGoal.enD_DATE">
+                      <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+                      <mat-datepicker #pickerEndDate></mat-datepicker>
+                    </mat-form-field>
+                  </span>
+                </td>
+                <td style="text-align:center; vertical-align:middle; padding:4px;">
+                  <a class="link" (click)="EditTarget_Onclick(target)" style="cursor:pointer;">
+                    <i matTooltip="Edit Target" class="fa fa-edit"></i>
+                  </a>
+                </td>
+                <td style="text-align:center; vertical-align:middle; padding:4px;">
+                  <a class="link" (click)="DeleteTarget_Onclick(target)" style="cursor:pointer;">
+                    <i *ngIf="i + 1 !== 1" matTooltip="Delete Target" class="fa fa-trash"></i>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- TIER FIELDS — legacy underline style matching Image 1 -->
+        <div class="col-lg-7 col-md-7 col-sm-12 tier-fields-col" style="padding-left:8px;">
+          <table class="tier-fields-table" style="width:100%; border-collapse:separate; border-spacing:0 0; table-layout:fixed;">
+            <thead>
+              <tr style="background-color:#e9ecef; border:1px solid #dee2e6;">
+                <th style="width:40px; padding:6px 4px;"></th>
+                <th style="width:150px; text-align:center; padding:6px 8px; border-left:1px solid #dee2e6; font-size:11px;">Operator</th>
+                <th style="width:100px; text-align:center; padding:6px 8px; border-left:1px solid #dee2e6; font-size:11px;">Target</th>
+                <th style="text-align:center; padding:6px 8px; border-left:1px solid #dee2e6; font-size:11px; min-width:250px;">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Tier 1 — red (Baseline) -->
+              <tr style="border:1px solid #dee2e6; height:65px;">
+                <td style="text-align:center; vertical-align:middle; padding:8px 15px 8px 4px;">
+                  <div style="width:15px;height:15px;border-radius:50%;background:#ff3300cc; margin:0 auto;"></div>
+                </td>
+                <td class="tier-operator-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field operator-field" style="width:100%;">
+                    <mat-label>Operator</mat-label>
+                    <mat-select name="ddLowOperator" panelClass="compact-operator-dropdown" [(ngModel)]="selectedTarget.slA_TARGET_LOW_OPERATOR">
+                      <mat-option value=""></mat-option>
+                      <mat-option value="&gt;=">&gt;=</mat-option>
+                      <mat-option value="&lt;=">&lt;=</mat-option>
+                      <mat-option value="&lt;">&lt;</mat-option>
+                      <mat-option value="&gt;">&gt;</mat-option>
+                      <mat-option value="=">=</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+                <td class="tier-target-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field target-field" style="width:100%;">
+                    <mat-label>Target</mat-label>
+                    <input type="number" [min]="1" name="txtSLALowTarget"
+                      [(ngModel)]="selectedTarget.slA_TARGET_LOW_VALUE" matInput>
+                  </mat-form-field>
+                </td>
+                <td class="tier-description-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field description-field" style="width:100%;">
+                    <mat-label>Description</mat-label>
+                    <input name="txtTargetLowDescription"
+                      [(ngModel)]="selectedTarget.slA_TARGET_LOW_DESCRIPTION" matInput>
+                  </mat-form-field>
+                </td>
+              </tr>
+
+              <!-- Tier 2 — orange/yellow (Acceptable) -->
+              <tr style="border:1px solid #dee2e6; height:65px;">
+                <td style="text-align:center; vertical-align:middle; padding:8px 15px 8px 4px;">
+                  <div style="width:15px;height:15px;border-radius:50%;background:#feeb84; margin:0 auto;"></div>
+                </td>
+                <td class="tier-operator-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field operator-field" style="width:100%;">
+                    <mat-label>Operator</mat-label>
+                    <mat-select name="ddMediumOperator" panelClass="compact-operator-dropdown" [(ngModel)]="selectedTarget.slA_TARGET_MEDIUM_OPERATOR">
+                      <mat-option value=""></mat-option>
+                      <mat-option value="&gt;=">&gt;=</mat-option>
+                      <mat-option value="&lt;=">&lt;=</mat-option>
+                      <mat-option value="&lt;">&lt;</mat-option>
+                      <mat-option value="&gt;">&gt;</mat-option>
+                      <mat-option value="=">=</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+                <td class="tier-target-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field target-field" style="width:100%;">
+                    <mat-label>Target</mat-label>
+                    <input type="number" [min]="1" name="txtSLAMediumTarget"
+                      [(ngModel)]="selectedTarget.slA_TARGET_MEDIUM_VALUE" matInput>
+                  </mat-form-field>
+                </td>
+                <td class="tier-description-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field description-field" style="width:100%;">
+                    <mat-label>Description</mat-label>
+                    <input name="txtTargetMediumDescription"
+                      [(ngModel)]="selectedTarget.slA_TARGET_MEDIUM_DESCRIPTION" matInput>
+                  </mat-form-field>
+                </td>
+              </tr>
+
+              <!-- Tier 3 — green (Good/Stretch) -->
+              <tr style="border:1px solid #dee2e6; height:65px;">
+                <td style="text-align:center; vertical-align:middle; padding:8px 15px 8px 4px;">
+                  <div style="width:15px;height:15px;border-radius:50%;background:#63be7b; margin:0 auto;"></div>
+                </td>
+                <td class="tier-operator-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field operator-field" style="width:100%;">
+                    <mat-label>Operator</mat-label>
+                    <mat-select name="ddHighOperator" panelClass="compact-operator-dropdown"
+                      [(ngModel)]="selectedTarget.slA_TARGET_HIGH_OPERATOR" required>
+                      <mat-option value=""></mat-option>
+                      <mat-option value="&gt;=">&gt;=</mat-option>
+                      <mat-option value="&lt;=">&lt;=</mat-option>
+                      <mat-option value="&lt;">&lt;</mat-option>
+                      <mat-option value="&gt;">&gt;</mat-option>
+                      <mat-option value="=">=</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+                <td class="tier-target-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field target-field" style="width:100%;">
+                    <mat-label>Target</mat-label>
+                    <input type="number" [min]="1" name="txtSLAHighTarget"
+                      [(ngModel)]="selectedTarget.slA_TARGET_HIGH_VALUE" matInput required>
+                  </mat-form-field>
+                </td>
+                <td class="tier-description-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field description-field" style="width:100%;">
+                    <mat-label>Description </mat-label>
+                    <input name="txtTargetHighDescription"
+                      [(ngModel)]="selectedTarget.slA_TARGET_HIGH_DESCRIPTION" matInput required>
+                  </mat-form-field>
+                </td>
+              </tr>
+
+              <!-- Tier 4 — blue (Excellence) -->
+              <tr style="border:1px solid #dee2e6; height:65px;">
+                <td style="text-align:center; vertical-align:middle; padding:8px 15px 8px 4px;">
+                  <div style="width:15px;height:15px;border-radius:50%;background:#7eb3de; margin:0 auto;"></div>
+                </td>
+                <td class="tier-operator-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field operator-field" style="width:100%;">
+                    <mat-label>Operator</mat-label>
+                    <mat-select name="ddVeryHighOperator" panelClass="compact-operator-dropdown"
+                      [(ngModel)]="selectedTarget.slA_TARGET_VERYHIGH_OPERATOR">
+                      <mat-option value=""></mat-option>
+                      <mat-option value="&gt;=">&gt;=</mat-option>
+                      <mat-option value="&lt;=">&lt;=</mat-option>
+                      <mat-option value="&lt;">&lt;</mat-option>
+                      <mat-option value="&gt;">&gt;</mat-option>
+                      <mat-option value="=">=</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+                <td class="tier-target-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field target-field" style="width:100%;">
+                    <mat-label>Target</mat-label>
+                    <input type="number" [min]="1" name="txtSLAVHighTarget"
+                      [(ngModel)]="selectedTarget.slA_TARGET_VERYHIGH_VALUE" matInput>
+                  </mat-form-field>
+                </td>
+                <td class="tier-description-cell" style="vertical-align:middle; padding:4px 8px; border-left:1px solid #dee2e6;">
+                  <mat-form-field appearance="fill" class="tier-field description-field" style="width:100%;">
+                    <mat-label>Description</mat-label>
+                    <input name="txtTargetVHighDescription"
+                      [(ngModel)]="selectedTarget.slA_TARGET_VERYHIGH_DESCRIPTION" matInput>
+                  </mat-form-field>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="target-period-footer">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" (click)="formReset(definitionForm)" class="btn btn-primary">Clear</button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- PRODUCT VIEW SECTION -->
+  <!-- ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="isProductView" class="product-view-section" style="padding-top: 0; position: relative;">
+    <!-- Fixed Progress Bar at Top -->
+    <mat-progress-bar *ngIf="isLoading" mode="indeterminate" style="position: fixed; top: 0; left: 0; right: 0; z-index: 9999;"></mat-progress-bar>
+    
+    <!-- Loading Overlay - Full screen with blur -->
+    <div *ngIf="isLoading" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 9998; display: flex; align-items: center; justify-content: center;">
+      <div style="text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);">
+        <mat-icon style="font-size: 64px; width: 64px; height: 64px; color: #667eea; animation: spin 2s linear infinite;">hourglass_empty</mat-icon>
+        <div style="margin-top: 16px; color: #667eea; font-weight: 600; font-size: 18px;">Loading KPI definitions...</div>
+        <div style="margin-top: 8px; color: #94a3b8; font-size: 14px;">Please wait...</div>
+      </div>
+    </div>
+    
+
+    <div class="row" style="margin-bottom: 16px !important; margin-top: -5px !important;">
+      <div class="col-lg-4 col-md-4 col-sm-12">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #555; font-weight: 500;">Select Mode</label>
+        <mat-form-field appearance="outline" class="compact-select" style="width: 280px; max-width: 100%;">
+          <mat-select name="ddMode" [(ngModel)]="selectedMode" placeholder="Select Mode" (selectionChange)="ddMode_Onchange($event.value)">
+            <mat-option *ngFor="let mode of serviceModes" [value]="mode.id">
+              {{mode.modE_TITLE}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4 col-md-4 col-sm-12">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #555; font-weight: 500;">Select Service Level</label>
+        <mat-form-field appearance="outline" class="compact-select" style="width: 280px; max-width: 100%;">
+          <mat-select name="ddServiceLevel" [(ngModel)]="selectedLevel" placeholder="Select Service Level" (selectionChange)="ddlevel_Onchange($event.value)">
+            <mat-option *ngFor="let level of serviceLevel" [value]="level.id">
+              {{level.servicE_LEVEL}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4 col-md-4 col-sm-12" *ngIf="selectedLevel">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #555; font-weight: 500;">Tier</label>
+        <mat-form-field appearance="outline" class="compact-select" style="width: 280px; max-width: 100%;">
+          <mat-select name="ddTier" [(ngModel)]="tierId" placeholder="Select Tier">
+            <mat-option [value]="0">All Tiers</mat-option>
+            <mat-option [value]="1">Tier 1</mat-option>
+            <mat-option [value]="2">Tier 2</mat-option>
+            <mat-option [value]="3">Tier 3</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="kpi-table-wrapper" *ngIf="kpiDefnitions && kpiDefnitions.length > 0">
+      <div style="overflow-x: auto;">
+        <table mat-table [dataSource]="dataSource1" class="mat-elevation-z2" style="width: 100%;">
+
+          <ng-container matColumnDef="index">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px; width: 50px;">No.</th>
+            <td mat-cell *matCellDef="let element; let i = index" style="font-size: 12px; padding: 8px;">{{i + 1}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="reference">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">SLA Id</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{element.reference}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="kpiname">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">KPI Name</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{element.servicE_LEVEL_METRICS}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">Service Level Metric Description</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{element.servicE_LEVEL_METRIC_DESCRIPTION}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="serviceArea">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">Service Area Type</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{element.servicE_AREA_TYPE}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="serviceType">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">Service Level</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{element.servicE_LEVEL}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="sla">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">SLA Category</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{element.slA_CATEGORY}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="frequency">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">Frequency</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{element.frequency}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="expectedLevel">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">Expected Service Level</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{getmeasurementforServiceLevel(element.kpI_ID)}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="minLevel">
+            <th mat-header-cell *matHeaderCellDef style="font-weight: 600; font-size: 13px; padding: 12px 8px;">Minimum Service Level</th>
+            <td mat-cell *matCellDef="let element" style="font-size: 12px; padding: 8px;">{{getmeasurementforMinServiceLevel(element.kpI_ID)}}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns1"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns1;"></tr>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="!kpiDefnitions || kpiDefnitions.length === 0" style="text-align: center; padding: 40px;">
+      <p style="color: #666; margin-top: 16px;">No KPIs available for the selected mode and service level.</p>
+    </div>
+  </div>
+
+</div>

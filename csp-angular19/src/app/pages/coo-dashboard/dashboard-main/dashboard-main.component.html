@@ -1,0 +1,223 @@
+
+<div class="main-dashboard-content">
+  
+  <div class="content-wrapper">
+    <!-- Progress Bar -->
+    <mat-progress-bar 
+      *ngIf="_cooDashboardCommon.progress" 
+      mode="indeterminate"
+      class="top-progress-bar">
+    </mat-progress-bar>
+
+    <!-- Tab Group -->
+    <mat-tab-group 
+      class="dashboard-tabs" 
+      [selectedIndex]="0" 
+      (selectedTabChange)="selectedTabChange($event)">
+      
+      <!-- Overall Status Tab -->
+      <mat-tab label="Overall Status">
+        <div class="tab-content">
+          <h5 class="tab-title">All accounts - Overall Status</h5>
+          <app-tab-overall-status></app-tab-overall-status>
+        </div>
+      </mat-tab>
+
+      <!-- Risk Dashboard Tab -->
+      <mat-tab label="Risk Dashboard">
+        <div class="tab-content">
+          <div class="tab-header">
+            <h5 class="tab-title">Risk Dashboard</h5>
+            
+            <!-- Business Unit Filter -->
+            <mat-form-field appearance="outline" class="filter-field" style="width: 10%;">
+              <mat-label>Business Unit</mat-label>
+              <mat-select 
+                name="ddBusiness" 
+                [(ngModel)]="_cooDashboardCommon.businessUnit" 
+                [disabled]="_cooDashboardCommon.progress"
+                multiple 
+                #selectBusinessUnit>
+                <mat-option 
+                  value="-1" 
+                  (click)="toggleSelectionForBusinessUnit()" 
+                  #allBusinessUnitSelected>
+                  All
+                </mat-option>
+                <mat-option 
+                  *ngFor="let b of overallBusinessUnit" 
+                  [value]="b" 
+                  [title]="b" 
+                  (click)="businessUnitTosslePerOne()">
+                  {{ b }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Risk Status Filter -->
+            <mat-form-field appearance="outline" class="filter-field" style="width: 30%;">
+              <mat-label>Risk Status</mat-label>
+              <mat-select 
+                name="riskStatus" 
+                [disabled]="_cooDashboardCommon.progress"
+                [(ngModel)]="_cooDashboardCommon.riskStatus" 
+                multiple 
+                #select>
+                <mat-option value="-1" (click)="toggleSelection()" #allSelected>All</mat-option>
+                <mat-option value="Assessed" (click)="tosslePerOne()">Assessed</mat-option>
+                <mat-option value="Closed" (click)="tosslePerOne()">Closed</mat-option>
+                <mat-option value="Identified" (click)="tosslePerOne()">Identified</mat-option>
+                <mat-option value="In-Process" (click)="tosslePerOne()">In-Process</mat-option>
+                <mat-option value="Not-Occurred" (click)="tosslePerOne()">Not Occurred</mat-option>
+                <mat-option value="Occurred" (click)="tosslePerOne()">Occurred</mat-option>
+                <mat-option value="Planned" (click)="tosslePerOne()">Planned</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+              <button 
+                mat-raised-button 
+                color="primary"
+                [disabled]="_cooDashboardCommon.progress" 
+                (click)="riskApply()">
+                Generate
+              </button>
+              <button 
+                mat-raised-button 
+                color="warn"
+                [disabled]="_cooDashboardCommon.progress" 
+                (click)="riskReset()">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Risk Chart Control Component -->
+          <app-risk-chart-control 
+            class="portfolioCard verysmalltextblack" 
+            [inputs]="riskDashboardInputs"
+            [isValid]="true">
+          </app-risk-chart-control>
+        
+            </div>
+      </mat-tab>
+      <!-- CSAT Insights Tab -->
+      <mat-tab label="CSAT Insights">
+        <div class="tab-content">
+          <div class="tab-header">
+            <h5 class="tab-title">CSAT Insights</h5>
+
+            <!-- CSM Filter -->
+            <mat-form-field appearance="outline" class="filter-field" style="width: 30%;">
+              <mat-label>CSM</mat-label>
+              <mat-select 
+                #selectCSM 
+                name="CSM" 
+                multiple 
+                [(ngModel)]="_cooDashboardCommon.csmIds" 
+                [disabled]="_cooDashboardCommon.progress">
+                <mat-option 
+                  [value]="-1" 
+                  (click)="toggleCSMSelection($event)" 
+                  #allSelectedCSM 
+                  selected>
+                  All
+                </mat-option>
+                <mat-option 
+                  [value]="c.csM_ID" 
+                  (click)="tosslePerOneCSM($event)" 
+                  *ngFor="let c of CSMList" 
+                  [title]="c.csm">
+                  {{ c.csm }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+              <button 
+                mat-raised-button 
+                color="primary"
+                [disabled]="_cooDashboardCommon.progress" 
+                (click)="CSATApply()">
+                Apply
+              </button>
+              <button 
+                mat-raised-button 
+                color="warn"
+                [disabled]="_cooDashboardCommon.progress" 
+                (click)="CSATReset()">
+                Reset
+              </button>
+              <button 
+                mat-raised-button 
+                color="primary"
+                [disabled]="_cooDashboardCommon.progress" 
+                (click)="ViewCSSDetails()">
+                View Details
+              </button>
+            </div>
+          </div>
+
+          <!-- Navigation Buttons -->
+          <div class="prev-next-navigation">
+            <button 
+              mat-button 
+              [disabled]="currIndex === 0" 
+              (click)="onPrev()">
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button 
+              mat-button 
+              [disabled]="currIndex === 2" 
+              (click)="onNext()">
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+
+          <!-- Progress Bar -->
+          <mat-progress-bar 
+            *ngIf="_cooDashboardCommon.progress" 
+            mode="indeterminate">
+          </mat-progress-bar>
+
+          <!-- CSAT Views based on currIndex -->
+          <div *ngIf="currIndex === 0" class="csat-view">
+            <!-- CSS Dashboard Table Component -->
+            <app-cssdashboard-css-table 
+              [cssDashboardInputs]="_cooDashboardCommon.cssDashboardInputs"
+              [isLoaded]="true">
+            </app-cssdashboard-css-table>
+          </div>
+
+          <div *ngIf="currIndex === 1" class="csat-view">
+            <!-- CSS Dashboard Next Page 1 Component -->
+            <app-cssdashboard-next-page1 
+              [customerId]="customerId" 
+              [fromDate]="_cooDashboardCommon.dashboardStartdate" 
+              [toDate]="_cooDashboardCommon.dashboardEnddate"
+              [customerIds]="_cooDashboardCommon.custIds.join(',')" 
+              [allCust]="allCust" 
+              [frequency]="_cooDashboardCommon.frequency">
+            </app-cssdashboard-next-page1>
+          </div>
+
+          <div *ngIf="currIndex === 2" class="csat-view">
+            <app-cssdashboard-next-page2 
+              [customerId]="customerId" 
+              [fromDate]="_cooDashboardCommon.dashboardStartdate" 
+              [toDate]="_cooDashboardCommon.dashboardEnddate"
+              [customerIds]="_cooDashboardCommon.custIds.join(',')" 
+              [allCust]="allCust" 
+              [frequency]="_cooDashboardCommon.frequency"
+              [trendQuarter]="trendQuarter ? +trendQuarter : 0">
+            </app-cssdashboard-next-page2>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

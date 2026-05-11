@@ -1,0 +1,540 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+    <app-navbar-new></app-navbar-new>
+    <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+        <mat-sidenav-content style="background-color:#eaeaea; height: 100%">
+            <div *ngIf="OpenFilter" [class.sideNav]="!OpenFilter" [class.sideNavOpened]="OpenFilter">
+                <div style="padding: 0;">
+                    <!-- Filter Header -->
+                    <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                        <b>Filter</b>
+                        <i style="font-size:16px; cursor: pointer;" (click)="closeNav()" class="fa">&#xf00d;</i>
+                    </div>
+                    
+                    <!-- Month Dropdown -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #1D1D1F;">
+                            Month
+                        </div>
+                        <select name='tableMonth' [(ngModel)]="tableMonth" required>
+                            <option value='Jan'>January</option>
+                            <option value='Feb'>February</option>
+                            <option value='Mar'>March</option>
+                            <option value='Apr'>April</option>
+                            <option value='May'>May</option>
+                            <option value='Jun'>June</option>
+                            <option value='Jul'>July</option>
+                            <option value='Aug'>August</option>
+                            <option value='Sep'>September</option>
+                            <option value='Oct'>October</option>
+                            <option value='Nov'>November</option>
+                            <option value='Dec'>December</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Year Dropdown -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #1D1D1F;">
+                            Year
+                        </div>
+                        <select name='tableYear' [(ngModel)]="tableYear" required>
+                            <option *ngFor="let year of _util.Years(3)" [value]="year">{{year}}</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div *ngIf="!isProdView" style="display: flex; gap: 8px; margin-top: 20px;">
+                        <button type="button" class="btn btn-primary" (click)="reloadKPITable()">Apply</button>
+                        <button type="button" class="btn btn-secondary" (click)="resetFilterValues()">Cancel</button>
+                    </div>
+                    <div *ngIf="isProdView" style="display: flex; gap: 8px; margin-top: 20px;">
+                        <button type="button" class="btn btn-primary" (click)="reloadProdKPITable()">Apply</button>
+                        <button type="button" class="btn btn-secondary" (click)="resetFilterValues()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mainDiv" style="padding: 0;">
+                <!-- Apple-Style Header Section -->
+                <div class="apple-header-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <h1 class="header-title" *ngIf="!isProdView">
+                                {{"Customer Success Goal & KPI Performance - " + tableMonth + ', '+ tableYear}}
+                            </h1>
+                            <h1 class="header-title" *ngIf="isProdView">
+                                {{"Service Level Achievement - " + tableMonth + ', '+ tableYear}}
+                            </h1>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <span [class.disabled]="isDisabled" (click)="OpenFilter = !OpenFilter"
+                                style="cursor: pointer; color: #007AFF; font-size: 18px; transition: all 0.3s ease;">
+                                <i class="fa" matTooltip="Filter here" style="font-size: 18px;">&#xf0b0;</i>
+                            </span>
+                            <span style="cursor: pointer; color: #8E8E93; font-size: 22px; transition: all 0.3s ease;"
+                                (click)="getDashbaord(input_custId)">
+                                &#10005;
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Project Info Card -->
+                    <div *ngIf="projectName" class="project-info">
+                        <span class="project-label">Project:</span>
+                        <b class="project-name">{{projectName}}</b>
+                    </div>
+
+                    <!-- iOS-Style Segmented Control for View By Options -->
+                    <div *ngIf="projectName" class="view-by-section">
+                        <label class="view-by-label">View by:</label>
+                        <mat-radio-group aria-label="Select an option" name="selGroupBy" [(ngModel)]="selGroupBy" style="display: flex; align-items: center;">
+                            <mat-radio-button (click)="changeGroupBy('Customer Success Goal','2')" value="2">
+                                Customer Success Goal
+                            </mat-radio-button>
+                            <mat-radio-button (click)="changeGroupBy('Work Group / KPI Area','3')" value="3">
+                                Work Group / KPI Area
+                            </mat-radio-button>
+                            <mat-radio-button (click)="changeGroupBy('Service Tower','1')" value="1">
+                                Service Tower
+                            </mat-radio-button>
+                        </mat-radio-group>
+                    </div>
+
+                    <!-- Service Tower Dropdown and Apply Button Row -->
+                    <div *ngIf="projectName && selGroupBy=='1'" style="display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-left: 2px;">
+                        <mat-form-field appearance="outline" class="service-tower-dropdown">
+                            <mat-select multiple [(ngModel)]="selSeviceTower"
+                                id="selSeviceTower" placeholder="Select Service Tower" name="selSeviceTower">
+                                <mat-option *ngFor="let item of serviceAreaProjectMappingList"
+                                    [value]="item.id">{{item?.title}}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <button type="button" class="btn btn-primary service-tower-apply"
+                            (click)="changeGroupBy('Service Tower','1')">Apply</button>
+                    </div>
+                </div>
+                <div *ngIf="isProdView" style="margin-bottom: 10px;color: #5461a2;margin-left: 2%;">
+                    <!-- <label style="margin-right: 4px; font-size: 17px; color: #5461a2">Product Title :</label>
+                    <b style="font-size: 17px;">{{productName}} ({{metricsDetail.length}})</b> -->
+                    <table *ngIf="productScores" class="prodKPITable">
+                        <thead style="color: black; margin-bottom: 5px;">
+                            <tr style="font-weight: 500; font-size: 12px;">
+                                <th style="width: 225px;max-width: 225px !important;padding-left: 5px;">Product
+                                </th>
+                                <th colspan="3" style="width: 80px; max-width: 80px !important;text-align: right; ">
+                                    Service Level
+                                    Achievement</th>
+                            </tr>
+                            <tr style="font-size: 10px;font-weight: 500;">
+                                <td style="height:5px;width: 40%;"></td>
+                                <td colspan="2" style="height:5px;text-align: center;width: 18%;">Overall</td>
+                                <td style="height:5px;text-align: center;width: 18%;">Critical Measurement</td>
+                                <td style="height:5px;text-align: center;width: 18%;">Key Measurement</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let prod of productScores"
+                                style="border-left: 3px solid; box-shadow: -1.5px 2px 2.5px 1px lightgray!important; cursor: pointer;"
+                                (click)="onProductClick(prod)">
+                                <td [matTooltip]='prod.producT_TITLE'
+                                    style="width:40%;max-width: 110px;font-size:14px;overflow-x: hidden! important;white-space: nowrap; text-overflow: ellipsis;padding-left: 5px;text-decoration: none;outline: 0">
+                                    {{prod.producT_TITLE}}</td>
+                                <td style="text-align: center;padding-left: 4%;"><span style="padding-top:7px"
+                                        [ngClass]="showStatusForProduct(prod) == 'Need Focus' ? 'fa fa-thumbs-down' : 'fa fa-thumbs-up'"></span>
+                                </td>
+                                <td style="color: black;text-align: left;font-size: 12px;width: 10%">
+                                    {{includeExclusions? prod.exclusioN_SLA_STATUS :
+                                    prod.slA_STATUS}}/{{prod.overalL_KPI_COUNT}}
+                                </td>
+                                <td style="color: black;font-size: 12px;text-align: center;width: 15%">
+                                    {{includeExclusions? prod.exclusioN_MET_CRITICAL_KPI : prod.meT_CRITICAL_KPI}}/{{
+                                    prod.criticaL_KPI}}</td>
+                                <td style="color: black;font-size: 12px;text-align: center;width: 15%">
+                                    {{includeExclusions? prod.exclusioN_MET_KEY_KPI :prod.meT_KEY_KPI}}/{{
+                                    prod.keY_KPI}}</td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+                <div *ngIf="isProdView && !showMetrics">
+
+                    <div class="row">
+                        <div class="col-lg-8 col-md-8 col-sm-8" style="margin-left: -15px;">
+                            <app-table-filter [data]="kpiDetail" tableName='KPI' fieldName='slA_STATUS'
+                                (onChange)="Filter_onChange($event)" (OnAdd)="showAll($event)" [custId]="input_custId"
+                                #apptablefilter></app-table-filter>
+                        </div>
+                        <div style="float: right;margin-right:55px">
+                            <mat-checkbox class="example-margin" [(ngModel)]="includeBaseMeasure"
+                                (ngModelChange)="showBaseMeasures(includeBaseMeasure)" style="margin-left:-48px">
+                                Display Base Measure Information</mat-checkbox>
+                        </div>
+
+
+                    </div>
+                    <div class="row">
+                        <div style="margin-right:40px">
+                            <div style="float: left;margin-bottom: 0.8%; margin-left: 25px;">
+                                <button class="btn btn-warning" style="border:none;margin-right: 5px;" mat-raised-button
+                                    (click)="rejectSLA()" *ngIf="_access.IsAllowed(83, 2, '', '')">Reject SLA</button>
+                                <!-- <button class="btn btn-primary" style="border:none;margin-right: 5px;" mat-raised-button
+                                    (click)="rejectSLA()" *ngIf="isPM">Submit SLA
+                                    Rejection</button> -->
+                                <button class="btn btn-warning" style="border:none;margin-right: 5px;" mat-raised-button
+                                    (click)="updateSLARejection()" *ngIf="employeeRole == 1 || employeeRole == 2">Update SLA Rejection</button>
+                                <button class="btn btn-warning" style="border:none;margin-right: 5px;" mat-raised-button
+                                    (click)="sendReviewFeedback()" *ngIf="_access.IsAllowed(102, 1, '', '')">Send Review Feedback</button>
+                                <!-- <button class="btn btn-warning" style="border:none;margin-right: 5px;" mat-raised-button
+                                    (click)="sendSLAToCustomer()" *ngIf="employeeRole == 1 || employeeRole == 2">Send KPI Details to Customer</button> -->
+
+                                <button class="btn btn-primary" style="border:none;margin-right: 5px;" mat-raised-button
+                                    (click)="clear()" *ngIf="_access.IsAllowed(83, 2, '', '') || isPM">Clear</button>
+                            </div>
+                            <div style="float: right;margin-top: 0.8%;margin-bottom: 0.8%; ">
+                                <mat-radio-group *ngIf="enableExclusion" [(ngModel)]="includeExclusions"
+                                    (change)="toggleExclusions(includeExclusions)" style="display: inline;">
+                                    <mat-radio-button [value]="false" style="margin-left: -5px;">Before Exclusions
+                                    </mat-radio-button>
+                                    <mat-radio-button [value]="true" style="padding-left: 6px;">After Exclusions
+                                    </mat-radio-button>
+                                </mat-radio-group>
+                            </div>
+                        </div>
+                    </div>
+                    <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                    <table mat-table [dataSource]="dataSource" id="grdRejections" class="table mat-elevation-z8"
+                        style="width: 95%;margin-left: 25px;">
+                        <ng-container matColumnDef="select">
+                            <th mat-header-cell *matHeaderCellDef style="width: 1%;">
+                                <mat-checkbox (change)="$event ? masterToggle() : null"
+                                    [checked]="selection.hasValue() && isAllSelected()"
+                                    [indeterminate]="selection.hasValue() && !isAllSelected()"
+                                    *ngIf="_access.IsAllowed(83, 2, '', '') || _access.IsAllowed(102, 1, '', '') || isPM">
+                                </mat-checkbox>
+                            </th>
+                            <td mat-cell *matCellDef="let row">
+                                <div
+                                    *ngIf="((_access.IsAllowed(83, 2, '', '')|| (_access.IsAllowed(102, 1, '', '') && !_access.IsAllowed(83, 2, '', '')))&& (row.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1== null || row.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1 == 0 )) || (!_access.IsAllowed(83, 2, '', '') &&  isPM && row.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1 == 1)">
+                                    <mat-checkbox (click)="$event.stopPropagation()"
+                                        (change)="$event ? selection.toggle(row) : null"
+                                        [checked]="selection.isSelected(row)"
+                                        *ngIf="((_access.IsAllowed(83, 2, '', '')|| (_access.IsAllowed(102, 1, '', '') && !_access.IsAllowed(83, 2, '', ''))) && (row.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1== null || row.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1 == 0 )) || (!_access.IsAllowed(83, 2, '', '') && isPM && row.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1 == 1)">
+                                    </mat-checkbox>
+                                </div>
+                            </td>
+                        </ng-container>
+                        <ng-container matColumnDef="reference">
+                            <th mat-header-cell *matHeaderCellDef style="width: 4%;">SLA Id</th>
+                            <td mat-cell *matCellDef="let definitions">{{definitions.reference}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="kpiname">
+                            <th mat-header-cell *matHeaderCellDef style="text-align: left;width: 20%;"
+                                [attr.rowspan]="3">KPI Name</th>
+                            <td mat-cell *matCellDef="let definitions;">{{definitions.servicE_LEVEL_METRICS }} <br>
+                                
+                                <span
+                                    class="status{{definitions.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1}}">{{getrejectStatus(definitions.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1
+                                    )}} </span>
+                                <i *ngIf="definitions.slA_Rejection_data.slA_REJECTION_KPI_DETAILS.comment1 !=null && definitions.slA_Rejection_data.slA_REJECTION_KPI_DETAILS.comment1 !=''"
+                                    class="fa fa-info-circle" style="font-size:x-small;position:absolute;"
+                                    matTooltipClass="custom-tooltip"
+                                    matTooltip="Comment : {{definitions.slA_Rejection_data.slA_REJECTION_KPI_DETAILS.comment1}}"></i>
+                                <div style="margin-top:3px">
+                                    <textarea matInput style="border-bottom: 1px solid grey;"
+                                        (keyup)="$event.stopPropagation()"
+                                        *ngIf="selection.isSelected(definitions) && ((_access.IsAllowed(83, 2, '', '') && (definitions.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1== null || definitions.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1 == 0 ))  || (isPM && !_access.IsAllowed(83, 2, '', '') && definitions.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1==1 && definitions.slA_Rejection_data.slA_REJECTION_KPI_DETAILS.statuS_ID!=2))"
+                                        name="txtComment{{definitions.kpI_ID}}" placeholder="{{commentPlaceHolder}}"
+                                        maxlength="1000"
+                                        [(ngModel)]="definitions.slA_Rejection_data.slA_REJECTION_KPI_DETAILS.comment"
+                                        (keypress)="numberOnly($event)"></textarea>
+
+                                    <textarea matInput style="border-bottom: 1px solid grey;"
+                                        (keyup)="$event.stopPropagation()" *ngIf="_access.IsAllowed(102, 1, '', '') && selection.isSelected(definitions)"
+                                        name="txtFeedback{{definitions.kpI_ID}}" placeholder="{{commentPlaceHolder}}"
+                                        maxlength="1000" [(ngModel)]="definitions.kpI_DETAILS_COMMENT.comment"
+                                        (keypress)="numberOnly($event)"></textarea>
+                                </div>
+                                <div *ngIf="includeBaseMeasure" class="row">
+                                    <ng-container *ngFor="let base of getBaseMeasureData(definitions)">
+                                        <table
+                                            style="font-size: 12px;font-family: Lato;opacity: 1;border-spacing: 0 5px;border-collapse: separate;color: grey;">
+                                            <tr>
+                                                <td style="padding-right: 1%;padding-left: 1%;width: 97%;">
+                                                    <span>{{base.numeratorDescription}}</span>
+                                                    <span *ngIf="base.denominatorDescription !='NA' "> /
+                                                        {{base.denominatorDescription}} </span>
+                                                </td>
+                                                <td>{{base.numerator}}</td>
+                                                <ng-container *ngIf="base.denominatorDescription !='NA'">
+                                                    <td *ngIf="base.denominator != null"> / </td>
+                                                    <td *ngIf="base.denominator != null">{{base.denominator}}</td>
+                                                </ng-container>
+                                            </tr>
+                                        </table>
+                                    </ng-container>
+                                </div>
+                                <ng-container *ngIf="includeExclusions">
+                                    <ng-container *ngIf="definitions.exclusioN_COMMENT">
+                                        <span
+                                            style="font-size: 12px;font-family: Lato;opacity: 1;border-spacing: 0 5px;border-collapse: separate;color: grey;"><strong style="color: orange;">Exclusion
+                                            Comment : </strong>{{definitions.exclusioN_COMMENT}}</span>
+                                    </ng-container>
+
+                                </ng-container>
+
+                            </td>
+
+                        </ng-container>
+                        <ng-container matColumnDef="frequency">
+                            <th mat-header-cell *matHeaderCellDef style="width: 5%;">Frequency</th>
+                            <td mat-cell *matCellDef="let definitions">{{definitions.frequency}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="expectedtarget">
+                            <th mat-header-cell *matHeaderCellDef style="width: 5%;text-align: center;">Expected</th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: right;">
+                                {{definitions.expecteD_SERVICE_LEVEL}} {{definitions.uniT_OF_MEASUREMENT == 'Number' ?
+                                '' : definitions.uniT_OF_MEASUREMENT}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="mintarget">
+                            <th mat-header-cell *matHeaderCellDef style="width: 5%;text-align: center;">Minimum </th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: right;">
+                                {{definitions.minimuM_SERVICE_LEVEL}} {{definitions.uniT_OF_MEASUREMENT == 'Number' ? ''
+                                : definitions.uniT_OF_MEASUREMENT}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="actual">
+                            <th mat-header-cell *matHeaderCellDef style="width: 6%;text-align: center;">
+                                Achievement</th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: center;"
+                                [ngClass]="{'black':getColorforKPI(definitions) == 'black','orange' :getColorforKPI(definitions) == 'orange'}">
+                                {{getActuals(definitions)}}
+                                <i *ngIf="getActuals(definitions) == 'NA' || getActuals(definitions) == 'NT'"
+                                    class="fa fa-info-circle" style="font-size:x-small;position:absolute;"
+                                    matTooltipClass="custom-tooltip" matTooltip="Reason : {{definitions.remarks}}"></i>
+                            </td>
+                        </ng-container>
+                        <ng-container matColumnDef="expstatus">
+                            <th mat-header-cell *matHeaderCellDef style="width: 5%;text-align: center;">Expected </th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: center"
+                                [ngClass]="{'Red':getSLAStatus(definitions) == 'Not Met', 'Orange':getSLAStatus(definitions) == 'NA', 'Green': getSLAStatus(definitions) == 'Met',
+                                'black':getColorforKPI(definitions) == 'black','orange':getColorforKPI(definitions) == 'orange'}">
+                                {{getSLAStatus(definitions)}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="minstatus">
+                            <th mat-header-cell *matHeaderCellDef style="width: 5%;text-align: center;">Minimum</th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: center"
+                                [ngClass]="{'Red':getSecondarySLAStatus(definitions) == 'Not Met', 'Orange':getSecondarySLAStatus(definitions) == 'NA','Green': getSLAStatus(definitions) == 'Met',
+                                'black':getColorforKPI(definitions) == 'black','orange':getColorforKPI(definitions) == 'orange'}">
+                                {{getSecondarySLAStatus(definitions) }}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="trend">
+                            <th mat-header-cell *matHeaderCellDef
+                                style="text-align: center;width: 4%;text-align: center;padding-right: 10px;">Trend</th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: center">
+                                <a style="margin-left: 10px;">
+                                    <i class="fa fa-line-chart" title="View Trend"
+                                        (click)="displayGraph(definitions.kpI_ID,definitions.servicE_LEVEL_METRICS)"></i>
+                                </a>
+                            </td>
+                        </ng-container>
+                        <ng-container matColumnDef="capa">
+                            <th mat-header-cell *matHeaderCellDef
+                                style="text-align: center;width: 4%;text-align: center;padding-right: 10px;">CAPA</th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: center">
+                                <a class="link" title="view CAPA" (click)="ViewCAPA(definitions.kpI_ID)"
+                                    *ngIf="getslaStatusforKPI(definitions) == 'Not Met'">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                            </td>
+                        </ng-container>
+                        <ng-container matColumnDef="isaccepted">
+                            <th *matHeaderCellDef mat-header-cell
+                                style="text-align: center;width: 4%;text-align: center;padding-right: 10px;">Accept/Deny
+                            </th>
+                            <td mat-cell *matCellDef="let definitions" style="text-align: center">
+                                <mat-form-field
+                                    *ngIf="selection.isSelected(definitions) && (!_access.IsAllowed(83, 2, '', '') && (isPM && definitions.slA_Rejection_data?.slA_REJECTION_KPI_DETAILS?.statuS_ID1 == 1))">
+                                    <mat-select name="check{{definitions.kpI_ID}}"
+                                        [(ngModel)]="definitions.slA_Rejection_data.slA_REJECTION_KPI_DETAILS.statuS_ID">
+                                        <!-- <mat-option [value]="0">Select</mat-option> -->
+                                        <mat-option [value]="2">Accept</mat-option>
+                                        <mat-option [value]="3">Deny</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </td>
+                        </ng-container>
+                        <ng-container matColumnDef="isRejected">
+                            <th mat-header-cell *matHeaderCellDef style="width: 1%;">Reject</th>
+                            <td mat-cell *matCellDef="let definitions">
+                                <div >
+                                    <mat-checkbox (click)="$event.stopPropagation()"
+                                        (change)="$event ? selectionKPI.toggle(definitions) : null" [(ngModel)]="definitions.kpI_DETAILS_COMMENT.isRejected"
+                                        [checked]="selectionKPI.isSelected(definitions)" *ngIf="_access.IsAllowed(102, 1, '', '') && selection.isSelected(definitions)">
+                                    </mat-checkbox>
+                                </div>
+                            </td>
+                        </ng-container>
+                        <ng-container matColumnDef="header-row-first-group">
+                            <th mat-header-cell *matHeaderCellDef [style.text-align]="'center'" [attr.colspan]="2">
+
+                            </th>
+                        </ng-container>
+                        <ng-container matColumnDef="header-row-second-group">
+                            <th mat-header-cell *matHeaderCellDef style="text-align: center;" [attr.colspan]="3">
+                                Service Level </th>
+                        </ng-container>
+                        <ng-container matColumnDef="header-row-Third-group">
+                            <th mat-header-cell *matHeaderCellDef style="text-align: center;" [attr.colspan]="3">
+                                Service Level Status </th>
+                        </ng-container>
+
+                        <tr mat-header-row
+                            *matHeaderRowDef="['header-row-first-group', 'header-row-second-group','header-row-Third-group' ]">
+                        </tr>
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns1; sticky: true"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns1;"></tr>
+                    </table>
+                    <div #paginator>
+                        <mat-paginator [pageSize]="10" [pageSizeOptions]="[10, 20, 30]"></mat-paginator>
+                    </div>
+
+                </div>
+                <div *ngIf="showMetrics && isProdView" class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fa fa-trophy"></i>
+                    </div>
+                    <div class="empty-title">No Service Level Achievements</div>
+                    <div class="empty-message">
+                        No Service Level Achievements available for this Period.
+                    </div>
+                </div>
+                <div *ngIf="goalDetails?.length > 1 && !isProdView">
+                    <table class="contentTable">
+                        <thead style="font-size: 15px;">
+                            <tr>
+                                <th style="padding-bottom : 10px;padding-left: 13px;width: 255px;max-width: 255px;">
+                                    {{this.headerName}}</th>
+                                <th style="padding-bottom : 10px;width: 255px;max-width: 255px;">Achievement</th>
+                                <th style="width: 255px;max-width: 255px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody *ngFor="let goal of goalDetails | slice:1; let i = index">
+                            <tr style="height: 40px !important;font-size: 14px;  box-shadow : -1.5px 2px 2.5px 1px lightgray; cursor: pointer;"
+                                (click)="ShowKPIDetails(i)">
+                                <td
+                                    style="width: 255px;max-width: 255px; padding-left: 13px; padding-right: 15px; white-space: nowrap;overflow-x: hidden; text-overflow: ellipsis">
+                                    <span *ngIf="selGroupBy=='1'">{{$any(goal).kpiArea.split('|')[0]}}</span>
+                                    <span *ngIf="selGroupBy=='2'">{{$any(goal).goal.split('|')[0]}}</span>
+                                    <span *ngIf="selGroupBy=='3'">{{$any(goal).kpiArea.split('|')[0]}}</span>
+                                </td>
+                                <!-- <td style="padding-left: 5px;width: 255px;max-width: 255px;">
+                                    <img *ngIf="goal.goal.split('|')[2] >= 98" src="assets/images/like (3).png">
+                                    <img *ngIf="goal.goal.split('|')[2] >= 90 && goal.goal.split('|')[2] < 98" src="assets/images/thumbs-down-silhouette.png">
+                                    <img *ngIf="goal.goal.split('|')[2] < 90" src="assets/images/thumbs-down-silhouette.png"> {{goal.goal.split('|')[2] + ' %'}}
+                                </td> -->
+
+                                <td style="padding-left: 5px;width: 255px;max-width: 255px;">
+                                    <!-- <img *ngIf="goal.goal.split('|')[2] >= 98" src="assets/images/like (3).png">
+                                    <img *ngIf="goal.goal.split('|')[2] >= 90 && goal.goal.split('|')[2] < 98" src="assets/images/thumbs-down-silhouette.png">
+                                    <img *ngIf="goal.goal.split('|')[2] < 90" src="assets/images/thumbs-down-silhouette.png"> -->
+                                    <span matTooltip="Achievement Threshold : {{achievementPer}} %"
+                                        *ngIf="showThumbsForKPI($any(goal).goal.split('|')[2]) == 'Under Control'"><i
+                                            style="width: 20px;height: auto;" class="fa fa-thumbs-up"></i></span>
+                                    <span matTooltip="Achievement Threshold : {{achievementPer}} %"
+                                        *ngIf="showThumbsForKPI($any(goal).goal.split('|')[2]) == 'Need Focus'"><i
+                                            style="width: 20px;height: auto;" class="fa fa-thumbs-down"></i></span>
+                                    <span matTooltip="Achievement Threshold : NA"
+                                        *ngIf="showThumbsForKPI($any(goal).goal.split('|')[2]) == '-'"><i
+                                            style="width: 20px;height: auto;"
+                                            class="fa fa-exclamation-circle"></i></span>
+                                    {{$any(goal).goal.split('|')[2] }}
+                                </td>
+                                <!-- <td style="padding-left: 5px;width: 255px;max-width: 255px;"  *ngIf="goal.goal.split('|')[2].toString() ==  '-'">
+                                    -
+                                </td> -->
+                                <td
+                                    style="cursor: pointer;text-align: right;padding-right: 22px;width: 255px;max-width: 255px;">
+                                    &#9660;</td>
+                            </tr>
+                            <tr *ngIf="KPIIndex === i"
+                                style="padding: 0!important;font-size: 11px;box-shadow : 0px 0.5px 2.5px lightgray;">
+                                <td colspan="3">
+                                    <table style="width :100%; margin: 0px !important"
+                                        class="KPITable table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th style="text-align:center;vertical-align:middle"
+                                                    [rowSpan]="$any(col).rowSpan" [colSpan]="$any(col).colSpan"
+                                                    *ngFor="let col of goalDetails[0].details[0] | slice:1">{{$any(col).text}}
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th style="height:4px;padding:0px!important"
+                                                    [style.border-color]="$any(col).color"
+                                                    [style.background-color]="$any(col).color"
+                                                    *ngFor="let col of goalDetails[0].details[1]"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let row of $any(goal).details" style="vertical-align: middle;">
+                                                <td *ngFor="let cell of $any(row) | slice:1" [rowSpan]="$any(cell).rowSpan"
+                                                    [colSpan]="$any(cell).colSpan">
+                                                    <div style="float: left;margin-right: 5px;" *ngIf="$any(cell).color">
+                                                        <mat-icon [matTooltip]='$any(cell).toolTip' style="font-size:15px"
+                                                            [style.color]="$any(cell).color">fiber_manual_record</mat-icon>
+                                                    </div>
+                                                    <span *ngIf="$any(cell).celltype != 'link'" [matTooltip]="$any(cell).text">{{
+                                                        $any(cell).text}}</span>
+                                                    <a *ngIf="$any(cell).celltype == 'link' && selGroupBy=='2'"
+                                                        style="color: skyblue;font-weight: bold; cursor: pointer;"
+                                                        (click)="displayGraph($any(cell).text,$any(goal).goal)">
+                                                        View Trend
+                                                    </a>
+                                                    <a *ngIf="$any(cell).celltype == 'link' && selGroupBy=='3' && $any(row).length>10"
+                                                        style="color: skyblue;font-weight: bold; cursor: pointer;"
+                                                        (click)="displayGraph($any(cell).text,$any(row)[1].text)">
+                                                        View Trend
+                                                    </a>
+                                                    <a *ngIf="$any(cell).celltype == 'link' && selGroupBy=='3'  && $any(row).length<=10"
+                                                        style="color: skyblue;font-weight: bold; cursor: pointer;"
+                                                        (click)="displayGraph($any(cell).text,$any(row)[0].text)">
+                                                        View Trend
+                                                    </a>
+                                                    <a *ngIf="$any(cell).celltype == 'link' && selGroupBy=='1' && $any(row).length>10"
+                                                        style="color: skyblue;font-weight: bold; cursor: pointer;"
+                                                        (click)="displayGraph($any(cell).text,$any(row)[1].text)">
+                                                        View Trend
+                                                    </a>
+                                                    <a *ngIf="$any(cell).celltype == 'link' && selGroupBy=='1'  && $any(row).length<=10"
+                                                        style="color: skyblue;font-weight: bold; cursor: pointer;"
+                                                        (click)="displayGraph($any(cell).text,$any(row)[0].text)">
+                                                        View Trend
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div *ngIf="goalDetails?.length == 1 || goalDetails?.length == 0 && !isProdView"
+                    class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fa fa-chart-line"></i>
+                    </div>
+                    <div class="empty-title">No Data Available</div>
+                    <div class="empty-message">
+                        No goals defined / KPI achievement details not updated for the period
+                    </div>
+                </div>
+                <div *ngIf="!goalDetails && !isProdView" class="empty-state">
+                    <i class="fa fa-circle-o-notch fa-spin" style="font-size: 48px; color: #007AFF;"></i>
+                    <div class="empty-title" style="margin-top: 24px;">Loading...</div>
+                </div>
+            </div>
+        </mat-sidenav-content>
+    </mat-sidenav-container>
+
+</div>

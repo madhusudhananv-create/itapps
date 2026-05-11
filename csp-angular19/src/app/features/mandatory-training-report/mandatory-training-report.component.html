@@ -1,0 +1,200 @@
+<!-- =====================================================================
+     Mandatory Training Compliance Report
+     Migrated from LEGACY-SOURCE/src/app/pages/layout/mandatory-training-report/
+     ===================================================================== -->
+
+<app-navbar-new [ShowMenu]="false"></app-navbar-new>
+
+<div class="page-wrapper">
+
+  <!-- ── Overview Header ──────────────────────────────────────────────────── -->
+  <div class="overview-header">
+    <div class="header-left">
+      <button mat-icon-button class="back-btn"
+              [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+              matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <img class="cust-logo"
+           src="assets/images/{{ _layoutService.selectedCust }}.png"
+           onerror="this.src='assets/images/CustomerLogo.png'"
+           alt="Customer Logo" />
+      <span class="header-title">Mandatory Training Compliance Report</span>
+    </div>
+    <div class="header-right">
+      <a *ngIf="showTable"
+         class="export-link"
+         (click)="ExportTOExcel()"
+         matTooltip="Export to Excel">
+        <mat-icon class="excel-icon">download</mat-icon>
+        <span>Download</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Filter Bar ─────────────────────────────────────────────────────── -->
+  <div class="filter-bar">
+    <mat-form-field appearance="outline" class="filter-field date-field">
+      <mat-label>Start Date</mat-label>
+      <input matInput [(ngModel)]="startDate" name="dateStart"
+             [matDatepicker]="pickerStartDate" />
+      <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+      <mat-datepicker #pickerStartDate></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field date-field">
+      <mat-label>End Date</mat-label>
+      <input matInput [(ngModel)]="endDate" name="dateEnd"
+             [min]="startDate"
+             [matDatepicker]="pickerEndDate" />
+      <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+      <mat-datepicker #pickerEndDate></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field proj-field">
+      <mat-label>Select Project(s)</mat-label>
+      <mat-select [(ngModel)]="input_projectid" name="ddProjects" multiple>
+        <mat-option *ngFor="let proj of projNames"
+                    [value]="proj.proJ_ID"
+                    [title]="proj.proJ_NM">
+          {{ proj.proJ_NM }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary"
+            class="get-details-btn"
+            (click)="bindData()"
+            [disabled]="!showGetDetails">
+      <mat-icon>search</mat-icon> Get Details
+    </button>
+  </div>
+
+  <!-- ── Progress Bar ──────────────────────────────────────────────────────── -->
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate" class="loading-bar"></mat-progress-bar>
+
+  <!-- ── Note ──────────────────────────────────────────────────────────────── -->
+  <p class="note-text" *ngIf="finalData.length > 0">
+    <mat-icon class="note-icon">info_outline</mat-icon>
+    <strong>Note:</strong> A blank status indicates the course assessment has not been assigned,
+    or has been assigned but the assessment has not been taken up.
+  </p>
+
+  <!-- ── Data Table ─────────────────────────────────────────────────────────── -->
+  <div #TABLE class="table-container" [hidden]="finalData.length <= 0">
+    <div class="table-scroll-wrapper">
+      <table mat-table #table [dataSource]="dataSource" matSort class="report-table">
+
+        <!-- No. -->
+        <ng-container matColumnDef="index">
+          <th mat-header-cell *matHeaderCellDef class="col-index">#</th>
+          <td mat-cell *matCellDef="let element = index" class="col-index">
+            {{ element + 1 }}
+          </td>
+        </ng-container>
+
+        <!-- Project Name -->
+        <ng-container matColumnDef="proj_nm">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-name">Project Name</th>
+          <td mat-cell *matCellDef="let x" class="col-name nowrap">{{ x.proj_nm }}</td>
+        </ng-container>
+
+        <!-- Employee -->
+        <ng-container matColumnDef="emp_name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-name">Employee</th>
+          <td mat-cell *matCellDef="let x" class="col-name nowrap">{{ x.emp_name }}</td>
+        </ng-container>
+
+        <!-- Allocation End Date -->
+        <ng-container matColumnDef="allocation_End_Date">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Alloc. End Date</th>
+          <td mat-cell *matCellDef="let x">{{ x.allocation_End_Date }}</td>
+        </ng-container>
+
+        <!-- Quality SPOC -->
+        <ng-container matColumnDef="quality_spoc">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="nowrap">Quality SPOC</th>
+          <td mat-cell *matCellDef="let x" class="nowrap">{{ x.quality_spoc }}</td>
+        </ng-container>
+
+        <!-- Fundamentals of Quality -->
+        <ng-container matColumnDef="fundamentals_of_Quality_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fundamentals of Quality</th>
+          <td mat-cell *matCellDef="let x" [class.status-done]="x.fundamentals_of_Quality_Certification">
+            {{ x.fundamentals_of_Quality_Certification }}
+          </td>
+        </ng-container>
+
+        <!-- HIPAA -->
+        <ng-container matColumnDef="hipaA_Internal_Compliance_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>HIPAA Compliance</th>
+          <td mat-cell *matCellDef="let x">{{ x.hipaA_Internal_Compliance_Certification }}</td>
+        </ng-container>
+
+        <!-- Information Security -->
+        <ng-container matColumnDef="information_Security_Awareness_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Info Security</th>
+          <td mat-cell *matCellDef="let x">{{ x.information_Security_Awareness_Certification }}</td>
+        </ng-container>
+
+        <!-- OHSAS -->
+        <ng-container matColumnDef="ohsaS_Internal_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>OHSAS</th>
+          <td mat-cell *matCellDef="let x">{{ x.ohsaS_Internal_Certification }}</td>
+        </ng-container>
+
+        <!-- PCI DSS -->
+        <ng-container matColumnDef="pcI_DSS_Compliance_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>PCI DSS</th>
+          <td mat-cell *matCellDef="let x">{{ x.pcI_DSS_Compliance_Certification }}</td>
+        </ng-container>
+
+        <!-- GDPR -->
+        <ng-container matColumnDef="gdpR_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>GDPR</th>
+          <td mat-cell *matCellDef="let x">{{ x.gdpR_Certification }}</td>
+        </ng-container>
+
+        <!-- Secure Coding OWASP -->
+        <ng-container matColumnDef="secure_Coding_OWASP_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Secure Coding (OWASP)</th>
+          <td mat-cell *matCellDef="let x">{{ x.secure_Coding_OWASP_Certification }}</td>
+        </ng-container>
+
+        <!-- Infrastructure Overview -->
+        <ng-container matColumnDef="infrastructure_Overview_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Infrastructure Overview</th>
+          <td mat-cell *matCellDef="let x">{{ x.infrastructure_Overview_Certification }}</td>
+        </ng-container>
+
+        <!-- General Compliance -->
+        <ng-container matColumnDef="general_Compliance_and_Combating_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>General Compliance</th>
+          <td mat-cell *matCellDef="let x">{{ x.general_Compliance_and_Combating_Certification }}</td>
+        </ng-container>
+
+        <!-- Continual Improvement -->
+        <ng-container matColumnDef="continual_Improvement_Awareness_Certification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Continual Improvement</th>
+          <td mat-cell *matCellDef="let x">{{ x.continual_Improvement_Awareness_Certification }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumnsTab; sticky: true" class="header-row"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumnsTab;" class="data-row"></tr>
+
+      </table>
+    </div>
+
+    <mat-paginator [pageSize]="10"
+                   [pageSizeOptions]="[5, 10, 20, 50]"
+                   showFirstLastButtons>
+    </mat-paginator>
+  </div>
+
+  <!-- ── Empty State ──────────────────────────────────────────────────────── -->
+  <div class="empty-state" *ngIf="showGetDetails && !_loading && finalData.length === 0 && showTable">
+    <mat-icon>search_off</mat-icon>
+    <p>No training data found for the selected filters.</p>
+  </div>
+
+</div>

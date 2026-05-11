@@ -1,0 +1,91 @@
+<div class="sliding-up-content" [ngClass]="{'show': showCSSViewdetails}">
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="popup-header">
+      <h2>CSS View Details</h2>
+      <button mat-icon-button (click)="onClose()" class="close-btn">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Account</label>
+          <select [(ngModel)]="selectedCust" (change)="toggleCustomerSelection($event)" class="filter-select">
+            <option *ngFor="let cust of popupCusts" [value]="cust">{{ cust }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Project</label>
+          <select [(ngModel)]="selectedProject" class="filter-select">
+            <option *ngFor="let proj of popupProjects" [value]="proj">{{ proj }}</option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-raised-button color="primary" (click)="Apply()" class="apply-btn">
+            Apply
+          </button>
+          <button mat-raised-button (click)="Reset()" class="reset-btn">
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-row">
+        <div class="search-container">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input 
+            type="text" 
+            [(ngModel)]="ipSearch" 
+            (keyup.enter)="Search()" 
+            placeholder="Search..."
+            class="search-input"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Project</th>
+            <th>Period</th>
+            <th>Respondent</th>
+            <th>Score</th>
+            <th>NPS Score</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            *ngFor="let item of vwcustomerSuccessSurvey" 
+            [class.selected]="item === isSelectedRow"
+            (click)="navigateToDetails(item)"
+            class="data-row"
+          >
+            <td>{{ item.customeR_NAME || 'N/A' }}</td>
+            <td>{{ item.projecT_NAME || 'N/A' }}</td>
+            <td>{{ item.perioD_NAME || 'N/A' }}</td>
+            <td>{{ item.respondenT_NAME || 'N/A' }}</td>
+            <td>{{ item.csaT_SCORE || 0 }}</td>
+            <td>{{ item.npS_SCORE || 0 }}</td>
+            <td class="comments-cell" [title]="item.comments">
+              {{ item.comments || 'No comments' }}
+            </td>
+          </tr>
+          <tr *ngIf="vwcustomerSuccessSurvey.length === 0">
+            <td colspan="7" class="no-data">No data available</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

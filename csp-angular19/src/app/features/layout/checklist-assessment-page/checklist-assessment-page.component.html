@@ -1,0 +1,562 @@
+<div class="page-wrap">
+
+  <!-- ══════════════════════════════════════════════
+       PROJECT SELECTOR
+  ══════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card__header">
+      <div class="card__header-left">
+        <button class="back-btn" [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <img class="customer-logo" src="assets/images/{{_layoutService.selectedCust}}.png"
+          onerror="this.src='assets/images/CustomerLogo.png'" alt="Customer Logo">
+        <mat-icon>folder_open</mat-icon>
+        <div>
+          <div class="card__title">Project Selection</div>
+          <div class="card__sub">Select a project to view checklist assessments</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding: 16px 20px;">
+      <mat-form-field appearance="outline" class="project-select-field">
+        <mat-label>Select Project</mat-label>
+        <mat-select [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange()">
+          <div class="dropdown-search">
+            <mat-form-field>
+              <input matInput placeholder="Search project"
+                (keydown)="$event.stopPropagation()"
+                (keyup)="filterProjects()"
+                [(ngModel)]="searchProjectValue">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+          </div>
+          <p *ngIf="filteredProjects.length === 0" class="no-results">No results found</p>
+          <mat-option *ngFor="let proj of filteredProjects" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
+            {{proj.proJ_NM}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Page Title -->
+  <div style="padding: 0 4px;">
+    <h1 class="page-title">Checklist Assessment</h1>
+  </div>
+
+  <!-- Loading bar -->
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate" color="primary"></mat-progress-bar>
+
+  <!-- ══════════════════════════════════════════════
+       PLANNED ASSESSMENT ACCORDION
+  ══════════════════════════════════════════════ -->
+  <mat-accordion>
+    <mat-expansion-panel [expanded]="IsSavedAuditsLoaded" class="card" style="border-radius:12px!important;"
+      (opened)="setOpened()" (closed)="setClosed()">
+
+      <mat-expansion-panel-header style="background:#F1F5F9; padding:14px 20px; min-height:52px;">
+        <mat-panel-title>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <mat-icon style="color:#1A56DB;font-size:18px;width:18px;height:18px;">assignment</mat-icon>
+            <div>
+              <div class="card__title">Planned Assessment</div>
+              <div class="card__sub">View list of planned assessments for the selected project</div>
+            </div>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <!-- Include Completed Checkbox - Above table -->
+      <div *ngIf="isDisplayText" class="filter-bar">
+        <mat-checkbox [(ngModel)]="completed" (ngModelChange)="filterList()">
+          <span style="font-size:12px;font-weight:500;">Include Completed Assessments</span>
+        </mat-checkbox>
+      </div>
+
+      <!-- Planned Audits Table -->
+      <div class="assessment-table-wrap" *ngIf="plannedAudits && plannedAudits.length > 0">
+        <table class="assessment-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Planned Date</th>
+              <th>Actual Start</th>
+              <th>Due Date</th>
+              <th>Compliance % (Audit date)</th>
+              <th>Current Compliance %</th>
+              <th>Total Findings</th>
+              <th>Open</th>
+              <th>Closed</th>
+              <th>Status</th>
+              <th>Check</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let list of plannedAudits; let i = index">
+              <td data-label="Title">
+                <a class="link-cell"
+                  (click)="GetAuditAssesment(i, list.id, list.servicE_AREA_ID, list.description,
+                    list.scheduleD_START_DATE, list.duE_DATE, list.auditoR_ID, list.auditesS_ID,
+                    list.status, list.scheduleD_DURATION, list.actuaL_DURATION,
+                    list.actuaL_START_DATE, list.actuaL_END_DATE)">
+                  {{ list.description }}
+                </a>
+              </td>
+              <td data-label="Planned Date">{{ list.scheduleD_START_DATE?.slice(0,10) }}</td>
+              <td data-label="Actual Start">{{ list.actuaL_AUDIT_START_DATE?.slice(0,10) || '—' }}</td>
+              <td data-label="Due Date">{{ list.duE_DATE?.slice(0,10) }}</td>
+              <td data-label="Compliance % (Audit)">{{ list.procesS_COMPLIANCE_AS_ON_AUDIT_DATE || '—' }}</td>
+              <td data-label="Current Compliance %">{{ list.currenT_PROCESS_COMPLIANCE || '—' }}</td>
+              <td data-label="Total Findings">{{ findings && findings.length > 0 ? getFindingsCount(list.id) : 0 }}</td>
+              <td data-label="Open">{{ findings && findings.length > 0 ? getOpenFindingCount(list.id) : 0 }}</td>
+              <td data-label="Closed">{{ findings && findings.length > 0 ? getClosedFindingsCount(list.id) : 0 }}</td>
+              <td data-label="Status">
+                <span class="badge"
+                  [ngClass]="{
+                    'badge--planned':    list.status?.toLowerCase() === 'planned',
+                    'badge--submitted':  list.status?.toLowerCase()?.includes('submit'),
+                    'badge--inprogress': list.status?.toLowerCase()?.includes('progress'),
+                    'badge--completed':  list.status?.toLowerCase() === 'completed'
+                  }">
+                  {{ list.status?.charAt(0) + list.status?.slice(1).toLowerCase() }}
+                </span>
+              </td>
+              <td data-label="Check" style="text-align:center;">
+                <mat-icon [style.color]="list.iS_CHECKED ? 'blue' : 'lightgray'">done</mat-icon>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No results message -->
+      <div *ngIf="!plannedAudits || plannedAudits.length === 0" style="padding: 24px; text-align: center; color: #94A3B8;">
+        <mat-icon style="font-size: 48px; width: 48px; height: 48px; opacity: 0.3;">assignment</mat-icon>
+        <p style="margin-top: 8px; font-size: 13px;">No planned assessments found for this project</p>
+      </div>
+
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <!-- ══════════════════════════════════════════════
+       ASSESSMENT FORM SECTION
+  ══════════════════════════════════════════════ -->
+  <div class="card" *ngIf="auditDataTitle">
+    
+    <!-- ══ FIELDS SECTION ══ -->
+    <div class="fields-section">
+
+      <!-- ── ROW 1: Title | Appraiser | Appraisee | Planned Start | Planned End | Planned Hrs | Actual Hrs ── -->
+      <div class="fields-row fields-row--row1">
+
+        <div class="field-wrap">
+          <label>Assessment Title <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="modern-field field-textarea">
+            <textarea matInput [(ngModel)]="auditDataTitle" [readonly]="true" [disabled]="true" rows="2"></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap" [class.field-error]="validationAttempted && hasAppraiserError">
+          <label>Appraiser Name <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <mat-select [(ngModel)]="selectedAuditor" 
+              (ngModelChange)="onAppraiserChange()" 
+              [disabled]="IsSubmitted" required>
+              <mat-option *ngFor="let list of auditorList" [value]="list.emP_ID">{{ list.frsT_NM }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap" [class.field-error]="validationAttempted && hasAppraiseeError">
+          <label>Appraisee Name(s) <span class="req">*</span></label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <mat-select [(ngModel)]="selectedAuditees" 
+              (ngModelChange)="onAppraiseeChange()" 
+              multiple [disabled]="IsSubmitted" required>
+              <mat-option *ngFor="let list of auditeesList" [value]="list.emP_ID">{{ list.frsT_NM }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Planned Start Date</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput [matDatepicker]="picker1" [(ngModel)]="startDate" [readonly]="true" [disabled]="true">
+            <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+            <mat-datepicker #picker1></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Planned End Date</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput [matDatepicker]="picker2" [(ngModel)]="endDate" [readonly]="true" [disabled]="true">
+            <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+            <mat-datepicker #picker2></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Planned Hrs</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput type="number" [(ngModel)]="plannedHours" [readonly]="true" [disabled]="true">
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Actual Hrs</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput type="number" [(ngModel)]="actualHours" [disabled]="IsSubmitted">
+          </mat-form-field>
+        </div>
+
+      </div><!-- /row1 -->
+
+      <!-- ── ROW 2: Checklist | Version | Score | Compliance | [Score Today] | [Compliance Today] | Actual Start | Actual End ── -->
+      <div class="fields-row fields-row--row2">
+
+        <div class="field-wrap">
+          <label>Choose a Checklist</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <mat-select [(ngModel)]="selectedchecklist" [disabled]="IsSubmitted" (selectionChange)="setChecklistData()">
+              <mat-option *ngFor="let list of checklist" [value]="list.checklisT_ID">
+                {{ list.checklisT_NAME }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Version</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput type="number" [(ngModel)]="checklistversion" [readonly]="true" [disabled]="true">
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Score</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput type="number" [(ngModel)]="checklistScore" [readonly]="true" [disabled]="true">
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Process Compliance (%)</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput type="number" [(ngModel)]="checklistScorePercentage" [readonly]="true" [disabled]="true">
+          </mat-form-field>
+        </div>
+
+        <!-- Submitted-only extra fields -->
+        <ng-container *ngIf="IsSubmitted">
+          <div class="field-wrap">
+            <label>Score (Today)</label>
+            <mat-form-field appearance="outline" class="modern-field">
+              <input matInput [(ngModel)]="updatedChecklistScore" [readonly]="true" [disabled]="true">
+            </mat-form-field>
+          </div>
+          <div class="field-wrap">
+            <label>Compliance % (Today)</label>
+            <mat-form-field appearance="outline" class="modern-field">
+              <input matInput [(ngModel)]="updatedChecklistScorePercentage" [readonly]="true" [disabled]="true">
+            </mat-form-field>
+          </div>
+        </ng-container>
+
+        <div class="field-wrap" [class.field-error]="validationAttempted && hasActualStartError">
+          <label>Actual Start Date</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput [matDatepicker]="picker3" [(ngModel)]="actualstartDate" 
+              (ngModelChange)="onActualStartDateChange()" 
+              [disabled]="IsSubmitted">
+            <mat-datepicker-toggle matIconSuffix [for]="picker3"></mat-datepicker-toggle>
+            <mat-datepicker #picker3></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap" [class.field-error]="validationAttempted && hasActualEndError">
+          <label>Actual End Date</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <input matInput [matDatepicker]="picker4" [(ngModel)]="actualendDate" 
+              (ngModelChange)="onActualEndDateChange()" 
+              [disabled]="IsSubmitted">
+            <mat-datepicker-toggle matIconSuffix [for]="picker4"></mat-datepicker-toggle>
+            <mat-datepicker #picker4></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+      </div><!-- /row2 -->
+
+      <!-- ── ROW 3: CC List | To List | Service Tower | Maturity Btn ── -->
+      <div class="fields-row fields-row--row3">
+
+        <div class="field-wrap">
+          <label>CC List</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <mat-select [(ngModel)]="selectedCCs" multiple (openedChange)="sortCCList()" [disabled]="IsSubmitted">
+              <div class="dropdown-search">
+                <mat-form-field>
+                  <input matInput placeholder="Search employee"
+                    (keydown)="$event.stopPropagation()"
+                    (keyup)="filterCCEmployees()"
+                    [(ngModel)]="searchCCValue">
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+              </div>
+              <p *ngIf="cclist.length === 0" class="no-results">No results found</p>
+              <mat-option *ngFor="let c of cclist" [value]="c.emP_ID">{{ c.frsT_NM }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>To List</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <mat-select [(ngModel)]="selectedTos" multiple (openedChange)="sortToList()" [disabled]="IsSubmitted">
+              <div class="dropdown-search">
+                <mat-form-field>
+                  <input matInput placeholder="Search employee"
+                    (keydown)="$event.stopPropagation()"
+                    (keyup)="filterToEmployees()"
+                    [(ngModel)]="searchToValue">
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+              </div>
+              <p *ngIf="tolist.length === 0" class="no-results">No results found</p>
+              <mat-option *ngFor="let c of tolist" [value]="c.emP_ID">{{ c.frsT_NM }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="field-wrap">
+          <label>Applicable Service Tower</label>
+          <mat-form-field appearance="outline" class="modern-field">
+            <mat-select [(ngModel)]="selectedServiceArea" multiple [disabled]="true">
+              <mat-option *ngFor="let list of serviceAreaNew" [value]="list.id">{{ list.title }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Maturity button sits at the end of row3, aligned to bottom -->
+        <button class="maturity-btn" (click)="onClickMaturityLink()">
+          <mat-icon>bar_chart</mat-icon>
+          View Maturity Level
+        </button>
+
+      </div><!-- /row3 -->
+
+    </div><!-- /fields-section -->
+
+    <!-- Loading bar -->
+    <mat-progress-bar *ngIf="!isdataSubmitted" mode="indeterminate"></mat-progress-bar>
+
+    <!-- ══════════════════════════════════════
+         CHECKLIST DATA HIERARCHY
+    ══════════════════════════════════════ -->
+    <ng-container *ngFor="let data of checkListDataNew; let i = index">
+
+      <!-- ── Service Tower Panel ── -->
+      <mat-expansion-panel [expanded]="true" class="tower-panel">
+
+        <mat-expansion-panel-header>
+          <mat-panel-title class="tower-panel__title-wrap">
+            <mat-icon>dns</mat-icon>
+            <span class="tower-panel__name">
+              Service Tower: <strong>{{ data.servicE_AREA_NAME }}</strong>
+            </span>
+          </mat-panel-title>
+
+          <mat-panel-description class="tower-panel__actions">
+            <div class="tower-panel__na">
+              <mat-checkbox [(ngModel)]="data.isSelected"
+                (change)="selectAllServiceArea($event, data)">
+              </mat-checkbox>
+              <label>N/A</label>
+            </div>
+            <span class="tower-panel__score">
+              <ng-container *ngIf="isMaturityLevelApplicable">
+                ML: {{ getServiceAreaMaturityLevel(data.percentage) }} &nbsp;|&nbsp;
+              </ng-container>
+              Score: {{ getServiceAreaScore(data) }} / {{ getServiceAreaMaxScore(data) }}
+              ({{ getServiceAreaPercentage(data) }}%)
+              <ng-container *ngIf="IsSubmitted">
+                &nbsp;|&nbsp; Today: {{ getServiceAreaUpdatedScore(data) }} / {{ getServiceAreaMaxScore(data) }}
+                ({{ getServiceAreaUpdatedPercentage(data) }}%)
+              </ng-container>
+            </span>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <!-- ── Process Model ── -->
+        <ng-container *ngFor="let processModel of data.checkpointS_BY_PROCESS_MODEL">
+          <div class="pm-block">
+            <div class="pm-block__header">
+              <div class="pm-block__left">
+                <span class="pm-block__title">
+                  Process Model: <strong>{{ processModel.procesS_MODEL_NAME }}</strong>
+                </span>
+                <div class="pm-block__na">
+                  <mat-checkbox [(ngModel)]="processModel.isSelected"
+                    (change)="selectAllProcessModel($event, processModel)">
+                  </mat-checkbox>
+                  <label>N/A</label>
+                </div>
+              </div>
+              <span class="pm-block__score">
+                <ng-container *ngIf="isMaturityLevelApplicable">
+                  ML: {{ getProcessModelMaturityLevel(getProcessModelPercentage(processModel)) }} &nbsp;|&nbsp;
+                </ng-container>
+                Score: {{ getProcessModelScore(processModel) }} / {{ getProcessModelMaxScore(processModel) }}
+                ({{ getProcessModelPercentage(processModel) }}%)
+                <ng-container *ngIf="IsSubmitted">
+                  &nbsp;|&nbsp; Today: {{ getProcessModelUpdatedScore(processModel) }} / {{ getProcessModelMaxScore(processModel) }}
+                  ({{ getProcessModelUpdatedPercentage(processModel) }}%)
+                </ng-container>
+              </span>
+            </div>
+
+            <!-- ── Process Area ── -->
+            <ng-container *ngFor="let processArea of processModel.checkpointS_BY_PROCESS_AREA">
+              <div class="pa-block">
+                <div class="pa-block__header">
+                  <div class="pa-block__left">
+                    <span class="pa-block__title">
+                      Process Area: <strong>{{ processArea.procesS_AREA_NAME }}</strong>
+                    </span>
+                    <div class="pa-block__na">
+                      <mat-checkbox [(ngModel)]="processArea.isSelected"
+                        (change)="selectAllProcessArea($event, processArea)">
+                      </mat-checkbox>
+                      <label>N/A</label>
+                    </div>
+                  </div>
+                  <span class="pa-block__score">
+                    <ng-container *ngIf="isMaturityLevelApplicable">
+                      ML: {{ getProcessAreaMaturityLevel(processArea.percentage) }} &nbsp;|&nbsp;
+                    </ng-container>
+                    Score: {{ getProcessAreaScore(processArea) }} / {{ getProcessAreaMaxScore(processArea) }}
+                    ({{ getProcessAreaPercentage(processArea) }}%)
+                    <ng-container *ngIf="IsSubmitted">
+                      &nbsp;|&nbsp; Today: {{ getProcessAreaUpdatedScore(processArea) }} / {{ getProcessAreaMaxScore(processArea) }}
+                      ({{ getProcessAreaUpdatedercentage(processArea) }}%)
+                    </ng-container>
+                  </span>
+                </div>
+
+                <!-- ── Process ── -->
+                <ng-container *ngFor="let process of processArea.checkpointS_BY_PROCESS">
+                  <div class="proc-block">
+                    <div class="proc-block__header">
+                      <div class="proc-block__left">
+                        <span class="proc-block__title">
+                          Process: <strong>{{ process.procesS_NAME }}</strong>
+                        </span>
+                        <div class="proc-block__na">
+                          <mat-checkbox [(ngModel)]="process.isSelected"
+                            (change)="selectAllProcess($event, process)">
+                          </mat-checkbox>
+                          <label>N/A</label>
+                        </div>
+                      </div>
+                      <span class="proc-block__score">
+                        Score: {{ getProcessScore(process) }} / {{ getProcessMaxScore(process) }}
+                        ({{ getProcessPercentage(process) }}%)
+                        <ng-container *ngIf="IsSubmitted">
+                          &nbsp;|&nbsp; Today: {{ getProcessUpdatedScore(process) }} / {{ getProcessMaxScore(process) }}
+                          ({{ getProcessUpdatedPercentage(process) }}%)
+                        </ng-container>
+                      </span>
+                    </div>
+
+                    <!-- ── Checkpoint Table ── -->
+                    <div class="cp-wrap">
+                      <table class="cp-table">
+                        <thead>
+                          <tr>
+                            <th class="col-sno">S.No</th>
+                            <th class="col-wt" *ngIf="!hideweightage">Weightage</th>
+                            <th class="col-look">Look For</th>
+                            <th class="col-st">Status</th>
+                            <th class="col-sc">Score</th>
+                            <th class="col-notes">Notes</th>
+                            <th class="col-find">Findings</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let row of process.checkpoints; let ci = index"
+                              [class.missing-findings-highlight]="needsFindingsHighlight(row)"
+                              [class.missing-status-highlight]="needsStatusHighlight(row)">
+                            <td class="col-sno">{{ ci + 1 }}</td>
+                            <td *ngIf="!hideweightage">
+                              <span class="wt-badge">{{ row.weightagE_TITLE }}</span>
+                            </td>
+                            <td class="look-for">{{ row.looK_FOR }}</td>
+                            <td>
+                              <mat-form-field appearance="outline" class="cp-status-field">
+                                <mat-select [(ngModel)]="row.statuS_VALUE_ID"
+                                  (ngModelChange)="setStatusCategory(row, process, processArea, data)"
+                                  [disabled]="row.issubmitted">
+                                  <mat-option *ngFor="let val of checklistStatusValues" [value]="val.id">
+                                    {{ val.statuS_LIST_VALUE }}
+                                  </mat-option>
+                                </mat-select>
+                              </mat-form-field>
+                            </td>
+                            <td>
+                              <mat-form-field appearance="outline" class="cp-score-field">
+                                <input matInput type="number" [(ngModel)]="row.score" [readonly]="true">
+                              </mat-form-field>
+                            </td>
+                            <td>
+                              <mat-form-field appearance="outline" class="cp-notes-field">
+                                <textarea matInput [(ngModel)]="row.notes"
+                                  (keyup)="autoGrowTextZone($event)"
+                                  [readonly]="IsSubmitted || isCreateAccessDisabled"
+                                  placeholder="Add notes..."></textarea>
+                              </mat-form-field>
+                            </td>
+                            <td class="col-find">
+                              <button class="findings-btn"
+                                *ngIf="row.statuS_CATEGORY === 'MET' || row.statuS_CATEGORY === 'NMET'"
+                                (click)="showFindingPopup(row, ci)"
+                                title="Add / Edit Findings">
+                                <mat-icon>note_add</mat-icon>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div><!-- /cp-wrap -->
+
+                  </div><!-- /proc-block -->
+                </ng-container>
+              </div><!-- /pa-block -->
+            </ng-container>
+          </div><!-- /pm-block -->
+        </ng-container>
+
+      </mat-expansion-panel><!-- /tower-panel -->
+    </ng-container>
+
+    <!-- ── Action Footer ── -->
+    <div class="action-footer" *ngIf="checkListDataNew && checkListDataNew.length > 0">
+      <button class="btn-save"
+        [disabled]="IsSubmitted || isCreateAccessDisabled"
+        (click)="SaveCheckListExecutionNew('Save')">
+        <mat-icon>save</mat-icon>
+        Save Draft
+      </button>
+      <button class="btn-submit"
+        [disabled]="issubmitenabled || isCreateAccessDisabled || IsSubmitted"
+        (click)="SaveCheckListExecutionNew('AFSubmit')">
+        <mat-icon>send</mat-icon>
+        Submit
+      </button>
+    </div>
+
+    <mat-progress-bar *ngIf="!isdataSubmitted" mode="indeterminate"></mat-progress-bar>
+
+  </div>
+
+</div>

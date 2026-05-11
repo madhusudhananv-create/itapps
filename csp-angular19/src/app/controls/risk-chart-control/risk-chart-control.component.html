@@ -1,0 +1,205 @@
+<div class="risk-control-container">
+  <!-- Loading Progress -->
+  <mat-progress-bar *ngIf="_loading" mode="indeterminate" class="loading-bar"></mat-progress-bar>
+
+  <!-- Risk Summary Cards -->
+  <div class="risk-summary" *ngIf="overAllData != null && overAllData != undefined">
+    <mat-card class="risk-card catastrophic" elevation="3">
+      <div class="risk-icon">
+        <span class="material-icons">crisis_alert</span>
+      </div>
+      <div class="risk-content">
+        <div class="risk-label">Catastrophic</div>
+        <div class="risk-count">{{overAllData.catastrophicCount}}</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="risk-card high" elevation="3">
+      <div class="risk-icon">
+        <span class="material-icons">warning</span>
+      </div>
+      <div class="risk-content">
+        <div class="risk-label">High</div>
+        <div class="risk-count">{{overAllData.highCount}}</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="risk-card moderate" elevation="3">
+      <div class="risk-icon">
+        <span class="material-icons">error_outline</span>
+      </div>
+      <div class="risk-content">
+        <div class="risk-label">Moderate</div>
+        <div class="risk-count">{{overAllData.moderateCount}}</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="risk-card low" elevation="3">
+      <div class="risk-icon">
+        <span class="material-icons">check_circle</span>
+      </div>
+      <div class="risk-content">
+        <div class="risk-label">Low</div>
+        <div class="risk-count">{{overAllData.lowCount}}</div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Risk Matrix Card -->
+  <mat-card class="risk-matrix-card" elevation="2">
+    <mat-card-header>
+      <mat-card-title>
+        <span class="material-icons title-icon">grid_on</span>
+        Risk Rating Matrix
+      </mat-card-title>
+      <span class="instruction-text">Click on any cell to view detailed risk information</span>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="matrix-wrapper">
+        <table class="risk-matrix-table">
+          <!-- Header Row -->
+          <thead>
+            <tr>
+              <th class="matrix-header corner">
+                <div class="header-label">Risk Rating</div>
+              </th>
+              <th class="matrix-header" colspan="5">
+                <div class="header-label">Consequences</div>
+              </th>
+            </tr>
+            <tr>
+              <th class="matrix-header">
+                <div class="header-label vertical">Likelihood</div>
+              </th>
+              <th class="consequence-header">Critical</th>
+              <th class="consequence-header">Major</th>
+              <th class="consequence-header">Significant</th>
+              <th class="consequence-header">Minor</th>
+              <th class="consequence-header">Insignificant</th>
+            </tr>
+          </thead>
+          
+          <!-- Matrix Body -->
+          <tbody>
+            <!-- Frequent Row -->
+            <tr>
+              <td class="likelihood-label">Frequent</td>
+              <td class="risk-cell critical" (click)="openDialog(5, 5)">
+                <span class="cell-value">{{getvalue(5, 5)}}</span>
+              </td>
+              <td class="risk-cell critical" (click)="openDialog(5, 4)">
+                <span class="cell-value">{{getvalue(5, 4)}}</span>
+              </td>
+              <td class="risk-cell high" (click)="openDialog(5, 3)">
+                <span class="cell-value">{{getvalue(5, 3)}}</span>
+              </td>
+              <td class="risk-cell high" (click)="openDialog(5, 2)">
+                <span class="cell-value">{{getvalue(5, 2)}}</span>
+              </td>
+              <td class="risk-cell moderate" (click)="openDialog(5, 1)">
+                <span class="cell-value">{{getvalue(5, 1)}}</span>
+              </td>
+            </tr>
+
+            <!-- Likely Row -->
+            <tr>
+              <td class="likelihood-label">Likely</td>
+              <td class="risk-cell critical" (click)="openDialog(4, 5)">
+                <span class="cell-value">{{getvalue(4, 5)}}</span>
+              </td>
+              <td class="risk-cell high" (click)="openDialog(4, 4)">
+                <span class="cell-value">{{getvalue(4, 4)}}</span>
+              </td>
+              <td class="risk-cell high" (click)="openDialog(4, 3)">
+                <span class="cell-value">{{getvalue(4, 3)}}</span>
+              </td>
+              <td class="risk-cell moderate" (click)="openDialog(4, 2)">
+                <span class="cell-value">{{getvalue(4, 2)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(4, 1)">
+                <span class="cell-value">{{getvalue(4, 1)}}</span>
+              </td>
+            </tr>
+
+            <!-- Moderate Row -->
+            <tr>
+              <td class="likelihood-label">Moderate</td>
+              <td class="risk-cell high" (click)="openDialog(3, 5)">
+                <span class="cell-value">{{getvalue(3, 5)}}</span>
+              </td>
+              <td class="risk-cell high" (click)="openDialog(3, 4)">
+                <span class="cell-value">{{getvalue(3, 4)}}</span>
+              </td>
+              <td class="risk-cell moderate" (click)="openDialog(3, 3)">
+                <span class="cell-value">{{getvalue(3, 3)}}</span>
+              </td>
+              <td class="risk-cell moderate" (click)="openDialog(3, 2)">
+                <span class="cell-value">{{getvalue(3, 2)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(3, 1)">
+                <span class="cell-value">{{getvalue(3, 1)}}</span>
+              </td>
+            </tr>
+
+            <!-- Remote Row -->
+            <tr>
+              <td class="likelihood-label">Remote</td>
+              <td class="risk-cell high" (click)="openDialog(2, 5)">
+                <span class="cell-value">{{getvalue(2, 5)}}</span>
+              </td>
+              <td class="risk-cell moderate" (click)="openDialog(2, 4)">
+                <span class="cell-value">{{getvalue(2, 4)}}</span>
+              </td>
+              <td class="risk-cell moderate" (click)="openDialog(2, 3)">
+                <span class="cell-value">{{getvalue(2, 3)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(2, 2)">
+                <span class="cell-value">{{getvalue(2, 2)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(2, 1)">
+                <span class="cell-value">{{getvalue(2, 1)}}</span>
+              </td>
+            </tr>
+
+            <!-- Rare Row -->
+            <tr>
+              <td class="likelihood-label">Rare</td>
+              <td class="risk-cell moderate" (click)="openDialog(1, 5)">
+                <span class="cell-value">{{getvalue(1, 5)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(1, 4)">
+                <span class="cell-value">{{getvalue(1, 4)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(1, 3)">
+                <span class="cell-value">{{getvalue(1, 3)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(1, 2)">
+                <span class="cell-value">{{getvalue(1, 2)}}</span>
+              </td>
+              <td class="risk-cell low" (click)="openDialog(1, 1)">
+                <span class="cell-value">{{getvalue(1, 1)}}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Reference Links -->
+  <div class="reference-links">
+    <mat-card class="reference-card" elevation="1">
+      <a href="/assets/images/risk_rating.png" target="_blank" class="reference-link">
+        <span class="material-icons">info</span>
+        View Risk Rating Guide
+      </a>
+    </mat-card>
+    <mat-card class="reference-card" elevation="1">
+      <a href="/assets/images/risk_map_legend.png" target="_blank" class="reference-link">
+        <span class="material-icons">map</span>
+        View Risk Matrix Legend
+      </a>
+    </mat-card>
+  </div>
+</div>

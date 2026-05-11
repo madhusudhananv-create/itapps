@@ -1,0 +1,14 @@
+<nav class="main-nav">
+  <div class="nav-container">
+    <h1 class="nav-title">Business Continuity Management (BCM)</h1>
+    <div class="nav-links">
+      <a routerLink="/bcp" routerLinkActive="active">BCP</a>
+      <a routerLink="/scp" routerLinkActive="active">SCP</a>
+    </div>
+    <div class="nav-right" *ngIf="roleContext.role$ | async as role">
+      <span class="role-chip">{{ role }}</span>
+    </div>
+  </div>
+</nav>
+
+<router-outlet></router-outlet>

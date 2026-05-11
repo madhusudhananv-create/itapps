@@ -1,0 +1,1262 @@
+// Process Area Component Styles - Compact Modern Design
+
+// Component host — let content flow naturally
+:host {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+// Remove internal scroll, let page/modal scroll naturally
+.modal-container,
+.map-process-panel,
+.side-panel,
+.dialog-content,
+.mat-mdc-dialog-content {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+// Table container — no internal scroll
+.table-scroll-container {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+// Table grows naturally
+mat-table,
+.mat-mdc-table {
+  width: 100% !important;
+  height: auto !important;
+  display: table !important;
+}
+
+// If inside mat-dialog — dialog scrolls, not table
+::ng-deep .mat-mdc-dialog-container,
+::ng-deep .mdc-dialog__surface {
+  max-height: 95vh !important;
+  overflow-y: auto !important;
+}
+
+::ng-deep .mdc-dialog__content,
+::ng-deep .mat-mdc-dialog-content {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.top-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+.tab-content {
+  padding: 12px;
+  background-color: #fafafa;
+  min-height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+// Top Bar with Search, Filter, and Action Buttons
+.top-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 8px 0 12px 0 !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 12px;
+}
+
+.top-bar-left {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
+
+.search-wrapper {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  width: 280px !important;
+  min-width: unset !important;
+  max-width: 280px !important;
+
+  input {
+    width: 280px !important;
+    height: 36px !important;
+    border: 1.5px solid #D2D2D7 !important;
+    border-radius: 8px !important;
+    padding: 0 36px 0 12px !important;
+    font-size: 12.5px !important;
+    color: #1D1D1F !important;
+    box-sizing: border-box !important;
+    outline: none;
+
+    &::placeholder {
+      color: #8E8E93 !important;
+      font-size: 12px !important;
+    }
+
+    &:focus {
+      border-color: #0071E3 !important;
+    }
+  }
+
+  mat-icon {
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #8E8E93 !important;
+    font-size: 18px !important;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.process-area-filter {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+
+  span {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #1D1D1F !important;
+  }
+}
+
+.process-area-select {
+  width: 240px !important;
+  margin: 0 !important;
+
+  // Remove default mat-form-field spacing
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none !important;
+  }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    height: 36px !important;
+    border-radius: 8px !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding: 0px 37px 6px 12px !important;
+    min-height: unset !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  ::ng-deep .mat-mdc-select {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  ::ng-deep .mat-mdc-select-trigger {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  ::ng-deep .mat-mdc-select-value {
+    text-align: center !important;
+    font-size: 12.5px !important;
+    color: #1D1D1F !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  ::ng-deep .mat-mdc-select-value-text {
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  ::ng-deep .mat-mdc-select-placeholder {
+    text-align: center !important;
+    font-size: 12px !important;
+    color: #8E8E93 !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  ::ng-deep .mat-mdc-select-arrow-wrapper {
+    position: absolute !important;
+    right: 12px !important;
+  }
+
+  // Outline border
+  ::ng-deep .mdc-notched-outline__leading,
+  ::ng-deep .mdc-notched-outline__notch,
+  ::ng-deep .mdc-notched-outline__trailing {
+    border-color: #D2D2D7 !important;
+  }
+
+  &:hover ::ng-deep .mdc-notched-outline__leading,
+  &:hover ::ng-deep .mdc-notched-outline__notch,
+  &:hover ::ng-deep .mdc-notched-outline__trailing {
+    border-color: #0071E3 !important;
+  }
+}
+
+// Clear option styling in dropdown
+::ng-deep .clear-option {
+  background: #F5F5F7 !important;
+  font-weight: 500 !important;
+  border-bottom: 2px solid #E5E5EA !important;
+  
+  &:hover {
+    background: #E8E8ED !important;
+  }
+
+  .mat-mdc-option-text {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+
+  .clear-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    color: #0071E3 !important;
+  }
+
+  span {
+    font-size: 13px !important;
+    color: #0071E3 !important;
+    font-weight: 500 !important;
+  }
+}
+
+.top-bar-right {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 1 !important;
+  flex-shrink: 0 !important;
+  justify-content: flex-end !important;
+}
+
+// Primary button - Add New Process Area (Green)
+// Primary button - Add New Process Area (Green Outlined)
+.btn-primary {
+  background: #ffffff !important;
+  color: #34C759 !important;
+  border: 1.5px solid #34C759 !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: background 150ms ease !important;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: #E8F5E9 !important;
+  }
+}
+
+// Outlined button - Add/Map Process (Purple)
+.btn-outlined {
+  background: #ffffff !important;
+  color: #5856D6 !important;
+  border: 1.5px solid #5856D6 !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: background 150ms ease !important;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: #F0EFFF !important;
+  }
+}
+
+// Success button - Green filled Save button
+button.mat-mdc-raised-button.btn-success {
+  --mdc-protected-button-container-color: #34C759 !important;
+  --mdc-protected-button-label-text-color: #ffffff !important;
+  --mat-protected-button-state-layer-color: #34C759 !important;
+  --mat-protected-button-ripple-color: rgba(255, 255, 255, 0.1) !important;
+  
+  background: #34C759 !important;
+  background-color: #34C759 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+
+  &:hover {
+    --mdc-protected-button-container-color: #2DB04B !important;
+    --mat-protected-button-state-layer-color: #2DB04B !important;
+    background: #2DB04B !important;
+    background-color: #2DB04B !important;
+  }
+
+  &:disabled {
+    background-color: #34C759 !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+  }
+
+  ::ng-deep .mat-mdc-button-persistent-ripple {
+    background-color: #34C759 !important;
+  }
+  
+  ::ng-deep .mdc-button__label {
+    color: #ffffff !important;
+    z-index: 1;
+  }
+
+  ::ng-deep mat-icon {
+    color: #ffffff !important;
+  }
+
+  ::ng-deep .mat-icon {
+    color: #ffffff !important;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Additional scoped style within button-row
+.button-row {
+  button.mat-mdc-raised-button.btn-success {
+    background-color: #34C759 !important;
+    color: #ffffff !important;
+    
+    .mat-mdc-button-persistent-ripple {
+      background-color: #34C759 !important;
+    }
+    
+    .mdc-button__label,
+    mat-icon,
+    .mat-icon {
+      color: #ffffff !important;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: #2DB04B !important;
+      
+      .mat-mdc-button-persistent-ripple {
+        background-color: #2DB04B !important;
+      }
+    }
+    
+    &:disabled {
+      background-color: #34C759 !important;
+      opacity: 0.5 !important;
+    }
+  }
+}
+
+// Additional global override
+::ng-deep button.btn-success.mat-mdc-raised-button {
+  background: #34C759 !important;
+  background-color: #34C759 !important;
+  
+  .mat-mdc-button-persistent-ripple {
+    background: #34C759 !important;
+    background-color: #34C759 !important;
+  }
+  
+  .mdc-button__label,
+  mat-icon,
+  .mat-icon {
+    color: #ffffff !important;
+  }
+
+  &:hover {
+    background: #2DB04B !important;
+    background-color: #2DB04B !important;
+    
+    .mat-mdc-button-persistent-ripple {
+      background: #2DB04B !important;
+      background-color: #2DB04B !important;
+    }
+  }
+}
+
+// Header Section
+// Header Section
+.header-section {
+  margin-bottom: 12px;
+}
+
+// Process Area Form Section
+.process-area-form-section {
+  margin-bottom: 16px;
+
+  .form-table-container {
+    display: flex;
+    gap: 16px;
+
+    .form-card {
+      flex: 0 0 35%;
+      background: #ffffff !important;
+      border-radius: 12px !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10) !important;
+      padding: 16px !important;
+      min-width: 320px !important;
+      overflow: visible;
+
+      .form-card-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin-bottom: 14px !important;
+        padding-bottom: 10px !important;
+        border-bottom: 1px solid #F0F0F0 !important;
+        background: transparent !important;
+
+        mat-icon {
+          color: #0071E3 !important;
+          font-size: 16px !important;
+          width: 16px;
+          height: 16px;
+        }
+
+        h3 {
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          color: #1D1D1F !important;
+          margin: 0 !important;
+        }
+      }
+
+      .form-content {
+        padding: 0;
+
+        mat-form-field {
+          width: 100% !important;
+          margin-bottom: 10px !important;
+          font-size: 13px;
+
+          ::ng-deep .mat-mdc-form-field-infix {
+            padding-top: 8px;
+            padding-bottom: 8px;
+            min-height: 36px;
+          }
+
+          ::ng-deep .mat-mdc-text-field-wrapper {
+            border: 1.5px solid #D2D2D7 !important;
+            border-radius: 8px !important;
+            background: #ffffff !important;
+            padding: 0 8px !important;
+            transition: border-color 150ms ease !important;
+            padding-bottom: 0 !important;
+
+            &:focus-within {
+              border-color: #0071E3 !important;
+            }
+          }
+
+          ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+            display: none !important;
+          }
+
+          ::ng-deep input.mat-mdc-input-element {
+            height: 36px !important;
+            font-size: 12.5px !important;
+            color: #1D1D1F !important;
+            padding: 6px 10px !important;
+            box-sizing: border-box !important;
+
+            &::placeholder {
+              color: #8E8E93 !important;
+              font-size: 12.5px !important;
+            }
+          }
+
+          ::ng-deep textarea.mat-mdc-input-element {
+            min-height: 80px !important;
+            font-size: 12.5px !important;
+            color: #1D1D1F !important;
+            padding: 8px 10px !important;
+            resize: vertical !important;
+            line-height: 1.4 !important;
+
+            &::placeholder {
+              color: #8E8E93 !important;
+              font-size: 12.5px !important;
+            }
+          }
+
+          ::ng-deep .mat-mdc-form-field-label {
+            color: #8E8E93 !important;
+            font-size: 12.5px !important;
+          }
+        }
+
+        .button-row {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          gap: 8px !important;
+          padding-top: 12px !important;
+          border-top: 1px solid #F0F0F0 !important;
+          margin-top: 4px !important;
+
+          button {
+            border-radius: 8px !important;
+            height: 34px !important;
+            padding: 0 20px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            cursor: pointer !important;
+            transition: all 150ms ease !important;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+              margin-right: 0 !important;
+            }
+
+            // Save button
+            &[color="primary"] {
+              background: #0071E3 !important;
+              color: #ffffff !important;
+              border: none !important;
+
+              &:hover:not(:disabled) {
+                background: #005BBB !important;
+              }
+
+              &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+              }
+            }
+
+            // Save button with green styling
+            &.btn-success {
+              --mdc-protected-button-container-color: #34C759 !important;
+              --mdc-protected-button-label-text-color: #ffffff !important;
+              --mat-protected-button-state-layer-color: #34C759 !important;
+              
+              background: #34C759 !important;
+              background-color: #34C759 !important;
+              color: #ffffff !important;
+              border: none !important;
+
+              ::ng-deep .mat-mdc-button-persistent-ripple {
+                background-color: #34C759 !important;
+              }
+
+              ::ng-deep .mdc-button__label {
+                color: #ffffff !important;
+              }
+
+              mat-icon {
+                color: #ffffff !important;
+              }
+
+              &:hover:not(:disabled) {
+                --mdc-protected-button-container-color: #2DB04B !important;
+                --mat-protected-button-state-layer-color: #2DB04B !important;
+                
+                background: #2DB04B !important;
+                background-color: #2DB04B !important;
+
+                ::ng-deep .mat-mdc-button-persistent-ripple {
+                  background-color: #2DB04B !important;
+                }
+              }
+
+              &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+              }
+            }
+
+            // Clear button (no color attribute)
+            &:not([color]) {
+              background: transparent !important;
+              color: #3A3A3C !important;
+              border: 1.5px solid #C7C7CC !important;
+              padding: 0 16px !important;
+
+              &:hover {
+                border-color: #0071E3 !important;
+                color: #0071E3 !important;
+              }
+
+              // Close button - check for close icon
+              mat-icon[fonticon="close"] {
+                & {
+                  color: #6E6E73 !important;
+                }
+              }
+            }
+
+            // Specific styling for close button based on position
+            &:last-child {
+              background: transparent !important;
+              color: #6E6E73 !important;
+              border: 1.5px solid #E5E5EA !important;
+              padding: 0 16px !important;
+
+              &:hover {
+                border-color: #C7C7CC !important;
+                color: #1D1D1F !important;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .table-card {
+      flex: 1;
+      background: #ffffff !important;
+      border: 1px solid #E0E0E0 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+      overflow: hidden !important;
+      display: flex;
+      flex-direction: column;
+
+      .table-card-header {
+        background: #E8F4FD !important;
+        padding: 12px 16px !important;
+        border-bottom: 2px solid #B8D4E8 !important;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        mat-icon {
+          color: #0071E3 !important;
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+
+        h3 {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1D1D1F !important;
+        }
+      }
+
+      .table-container {
+        flex: 1;
+        overflow: visible !important;
+        overflow-y: visible !important;
+        max-height: none !important;
+        height: auto !important;
+        background: #ffffff !important;
+      }
+
+      mat-paginator {
+        background-color: #F9FAFB !important;
+        border-top: 1px solid #E0E0E0 !important;
+        
+        ::ng-deep .mat-mdc-paginator-container {
+          min-height: 56px !important;
+          padding: 8px 16px !important;
+        }
+        
+        ::ng-deep .mat-mdc-paginator-page-size-select {
+          font-size: 13px !important;
+          margin: 0 4px !important;
+          /* Arrow positioning handled by global styles.scss */
+        }
+      }
+    }
+  }
+}
+
+// Action Icons - Horizontal Layout for Edit/Delete Icons
+.action-icons {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+
+  // Make sure nested spans also use flex row (for conditional buttons)
+  span {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  button,
+  [mat-icon-button] {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    min-width: unset !important;
+    margin: 0 !important;
+  }
+
+  mat-icon {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+  }
+}
+
+// Action Column Specific Styling
+td.mat-column-action,
+td.mat-mdc-cell.mat-column-action,
+.action-cell {
+  width: 80px !important;
+  min-width: 80px !important;
+  vertical-align: middle !important;
+  text-align: center !important;
+  padding: 0 8px !important;
+}
+
+// Filter Search Field inside Dropdowns
+.filter-search {
+  padding: 8px 12px;
+  width: 100% !important;
+
+  input {
+    font-size: 12px;
+  }
+}
+
+.no-results {
+  padding: 10px;
+  font-weight: bold;
+  font-size: 12px;
+  color: #999;
+}
+
+// ========================================
+// ENHANCED TABLE STYLING - Clean & Professional
+// ========================================
+
+// Main Table Section
+::ng-deep .main-table-section {
+  background: #ffffff !important;
+  border: 1px solid #E0E0E0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+
+  table {
+    width: 100% !important;
+    background: #ffffff !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    table-layout: auto !important;
+
+    thead {
+      background-color: #E8F4FD !important;
+      
+      tr {
+        height: 48px !important;
+      }
+      
+      th {
+        background-color: #E8F4FD !important;
+        color: #1D1D1F !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        padding: 14px 16px !important;
+        border-bottom: 2px solid #B8D4E8 !important;
+        text-align: left !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        letter-spacing: 0.2px !important;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        box-shadow: none !important;
+
+        &.sno-column {
+          width: 60px !important;
+          max-width: 60px !important;
+          text-align: center !important;
+        }
+
+        &.action-column {
+          width: 80px !important;
+          text-align: center !important;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        background: #ffffff !important;
+        height: auto !important;
+        min-height: 52px !important;
+        transition: background-color 0.2s ease !important;
+        border-bottom: 1px solid #E0E0E0 !important;
+
+        &:hover {
+          background: #F7FBFF !important;
+          
+          td {
+            background: #F7FBFF !important;
+          }
+        }
+
+        &.edit-row {
+          background-color: #FFF9E6 !important;
+          
+          td {
+            background-color: #FFF9E6 !important;
+          }
+        }
+
+        // Last row doesn't need border
+        &:last-child {
+          border-bottom: none !important;
+        }
+
+        td {
+          color: #1D1D1F !important;
+          font-size: 13px !important;
+          padding: 12px 16px !important;
+          vertical-align: top !important;
+          line-height: 1.5 !important;
+          border-bottom: none !important;
+          background: #ffffff !important;
+          transition: background-color 0.2s ease !important;
+          -webkit-font-smoothing: antialiased !important;
+          -moz-osx-font-smoothing: grayscale !important;
+
+          &:first-child {
+            width: 60px !important;
+            text-align: center !important;
+            font-weight: 500 !important;
+            color: #6B7280 !important;
+          }
+
+          &.action-cell {
+            text-align: center !important;
+            white-space: nowrap !important;
+            width: 80px !important;
+            min-width: 80px !important;
+            padding: 12px 8px !important;
+            vertical-align: middle !important;
+          }
+
+          .edit-field {
+            width: 100%;
+            margin: 0;
+
+            ::ng-deep .mat-mdc-form-field-infix {
+              padding-top: 6px;
+              padding-bottom: 6px;
+              min-height: 32px;
+            }
+
+            ::ng-deep .mat-mdc-text-field-wrapper {
+              border: 1.5px solid #D2D2D7 !important;
+              border-radius: 6px !important;
+            }
+
+            input, textarea {
+              font-size: 12.5px !important;
+              color: #1D1D1F !important;
+            }
+
+            textarea {
+              max-height: 60px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  mat-paginator {
+    background-color: #F9FAFB !important;
+    border-top: 1px solid #E0E0E0 !important;
+    border-radius: 0 0 8px 8px !important;
+    font-size: 12px;
+
+    ::ng-deep .mat-mdc-paginator-container {
+      min-height: 56px !important;
+      padding: 8px 16px !important;
+    }
+    
+    ::ng-deep .mat-mdc-paginator-page-size-label,
+    ::ng-deep .mat-mdc-paginator-range-label {
+      font-size: 13px !important;
+      color: #6B7280 !important;
+      margin: 0 8px !important;
+    }
+    
+    ::ng-deep .mat-mdc-paginator-page-size-select {
+      font-size: 13px !important;
+      margin: 0 4px !important;
+      /* Arrow positioning handled by global styles.scss */
+    }
+    
+    ::ng-deep .mat-mdc-icon-button {
+      width: 32px !important;
+      height: 32px !important;
+      padding: 4px !important;
+      
+      mat-icon {
+        font-size: 20px !important;
+        color: #6B7280 !important;
+      }
+      
+      &:not([disabled]):hover {
+        background-color: rgba(0, 113, 227, 0.08) !important;
+        
+        mat-icon {
+          color: #0071E3 !important;
+        }
+      }
+      
+      &[disabled] {
+        opacity: 0.3 !important;
+      }
+    }
+  }
+
+  // Column widths for main process table
+  .mat-column-index,
+  .mat-column-sno {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+    flex: 0 0 60px !important;
+  }
+
+  .mat-column-procesS_AREA_ID {
+    width: 14% !important;
+    min-width: 140px !important;
+    flex: 0 0 14% !important;
+  }
+
+  .mat-column-title {
+    width: 16% !important;
+    min-width: 150px !important;
+    flex: 0 0 16% !important;
+  }
+
+  .mat-column-description {
+    width: 26% !important;
+    min-width: 200px !important;
+    flex: 0 0 26% !important;
+  }
+
+  .mat-column-clausE_REFERENCE {
+    width: 32% !important;
+    min-width: 250px !important;
+    flex: 0 0 32% !important;
+  }
+
+  .mat-column-action {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    flex: 0 0 80px !important;
+  }
+}
+
+// Process Area Table - Enhanced Styling with Visible Borders
+.table-card {
+  ::ng-deep .process-area-table {
+    width: 100%;
+    background: #ffffff !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+
+    tr.mat-mdc-header-row {
+      background-color: #E8F4FD !important;
+      height: 48px !important;
+    }
+
+    th.mat-mdc-header-cell {
+      background-color: #E8F4FD !important;
+      color: #1D1D1F !important;
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      padding: 14px 16px !important;
+      border-bottom: 2px solid #B8D4E8 !important;
+      text-align: left !important;
+      vertical-align: middle !important;
+      letter-spacing: 0.2px !important;
+      box-shadow: none !important;
+    }
+
+    tr.mat-mdc-row {
+      background: #ffffff !important;
+      height: auto !important;
+      min-height: 52px !important;
+      transition: background-color 0.2s ease !important;
+      border-bottom: 1px solid #E0E0E0 !important;
+      
+      &:hover {
+        background: #F7FBFF !important;
+        
+        td {
+          background: #F7FBFF !important;
+        }
+      }
+      
+      &:last-child {
+        border-bottom: none !important;
+      }
+    }
+
+    td.mat-mdc-cell {
+      color: #1D1D1F !important;
+      font-size: 13px !important;
+      padding: 12px 16px !important;
+      vertical-align: top !important;
+      line-height: 1.5 !important;
+      border-bottom: none !important;
+      background: #ffffff !important;
+      transition: background-color 0.2s ease !important;
+
+      &:first-child {
+        width: 60px !important;
+        text-align: center !important;
+        font-weight: 500 !important;
+        color: #6B7280 !important;
+      }
+
+      &.action-cell {
+        text-align: center !important;
+        white-space: nowrap !important;
+        width: 80px !important;
+        min-width: 80px !important;
+        padding: 12px 8px !important;
+        vertical-align: middle !important;
+      }
+    }
+  }
+}
+
+// Table container styling
+::ng-deep .table-container {
+  background: #ffffff !important;
+  border: 1px solid #E0E0E0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+// Enhanced header cell styling for all tables
+::ng-deep th.mat-mdc-header-cell {
+  background-color: #E8F4FD !important;
+  color: #1D1D1F !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 14px 16px !important;
+  border-bottom: 2px solid #B8D4E8 !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.2px !important;
+  box-shadow: none !important;
+}
+
+::ng-deep .mat-mdc-header-row {
+  background-color: #E8F4FD !important;
+  height: 48px !important;
+  
+  &:hover {
+    background-color: #D6ECFA !important;
+    
+    th {
+      background-color: #D6ECFA !important;
+    }
+  }
+}
+
+// Enhanced row styling - Visible borders
+::ng-deep .mat-mdc-table tr.mat-mdc-row {
+  background: #ffffff !important;
+  height: auto !important;
+  min-height: 52px !important;
+  transition: background-color 0.2s ease !important;
+  border-bottom: 1px solid #E0E0E0 !important;
+  
+  &:hover {
+    background: #F7FBFF !important;
+    
+    td {
+      background: #F7FBFF !important;
+    }
+  }
+  
+  &:last-child {
+    border-bottom: none !important;
+  }
+}
+
+// Enhanced data cell styling
+::ng-deep td.mat-mdc-cell {
+  color: #1D1D1F !important;
+  font-size: 13px !important;
+  padding: 12px 16px !important;
+  vertical-align: top !important;
+  line-height: 1.5 !important;
+  border-bottom: none !important;
+  background: #ffffff !important;
+  transition: background-color 0.2s ease !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+// Enhanced checkbox styling within tables
+::ng-deep .mat-mdc-table {
+  mat-checkbox {
+    .mdc-checkbox {
+      width: 20px !important;
+      height: 20px !important;
+      padding: 0 !important;
+    }
+    
+    .mdc-checkbox__background {
+      width: 20px !important;
+      height: 20px !important;
+      border-radius: 4px !important;
+      border-width: 2px !important;
+      border-color: #D1D5DB !important;
+      
+      svg {
+        width: 20px !important;
+        height: 20px !important;
+      }
+    }
+    
+    &:hover .mdc-checkbox__background {
+      border-color: #0071E3 !important;
+    }
+    
+    .mdc-checkbox--selected .mdc-checkbox__background {
+      background-color: #0071E3 !important;
+      border-color: #0071E3 !important;
+    }
+  }
+}
+
+// Checkbox column styling
+td.mat-mdc-cell:has(mat-checkbox),
+th.mat-mdc-header-cell:has(mat-checkbox) {
+  width: 60px !important;
+  text-align: center !important;
+  padding: 12px 8px !important;
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .form-table-container {
+    flex-direction: column;
+
+    .form-card,
+    .table-card {
+      flex: 1 !important;
+      max-width: 100% !important;
+    }
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .top-bar-left {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-wrapper {
+    max-width: 100% !important;
+  }
+
+  .process-area-select {
+    flex: 1;
+    width: 100% !important;
+  }
+
+  .top-bar-right {
+    width: 100%;
+    
+    button {
+      flex: 1;
+    }
+  }
+}
+
+// Global Material Overrides for compact layout
+::ng-deep {
+  .mat-mdc-form-field-subscript-wrapper {
+    margin-top: 0.25em !important;
+  }
+
+  .mat-mdc-select-panel {
+    max-height: 300px !important;
+  }
+
+  .mat-mdc-option {
+    font-size: 13px !important;
+    min-height: 40px !important;
+  }
+
+  .mat-mdc-optgroup-label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #1976d2 !important;
+  }
+}

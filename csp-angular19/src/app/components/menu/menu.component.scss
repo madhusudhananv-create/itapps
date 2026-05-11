@@ -1,0 +1,350 @@
+/* ===================================================================
+   APPLE HIG — PROJECT NAVIGATION PANEL
+   Slide-in from top-right corner, frosted glass aesthetic
+   =================================================================== */
+
+/* SF Pro-style font stack */
+$font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+
+/* Palette */
+$bg-glass:   rgba(248, 248, 252, 0.97);
+$border:     rgba(0, 0, 0, 0.08);
+$text-primary: #1c1c1e;
+$text-secondary: #6e6e73;
+$text-label:  #aeaeb2;
+$accent-blue: #007aff;
+$hover-bg:    rgba(0, 122, 255, 0.06);
+$active-bg:   rgba(0, 122, 255, 0.10);
+$divider:     rgba(0, 0, 0, 0.06);
+
+/* ─── Panel container ─── */
+.dashboardMenu {
+  position: fixed;
+  top: 46px;
+  right: 0;
+  width: 248px;
+  height: calc(100vh - 46px);
+  z-index: 1000;
+
+  /* Frosted glass */
+  background: $bg-glass;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+
+  /* Apple-style shadow — deep but soft */
+  box-shadow:
+    -1px 0 0 $border,
+    -4px 0 16px rgba(0, 0, 0, 0.06),
+    -12px 0 40px rgba(0, 0, 0, 0.10);
+
+  border-left: 1px solid $border;
+  border-radius: 0 0 0 16px;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  /* Slide in from right */
+  animation: sfSlideIn 0.28s cubic-bezier(0.52, 0.04, 0.30, 1.00) both;
+
+  /* Subtle scrollable body */
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+  }
+}
+
+@keyframes sfSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ─── Project header card ─── */
+.menu-project-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px 12px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  position: relative;
+  flex-shrink: 0;
+
+  .project-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, $accent-blue 0%, #5ac8fa 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35);
+
+    span {
+      font-family: $font;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+  }
+
+  .project-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+
+    .project-label {
+      font-family: $font;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+    }
+
+    .project-name {
+      font-family: $font;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+  }
+
+  /* Live indicator dot */
+  .header-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #30d158;
+    box-shadow: 0 0 0 2px rgba(48, 209, 88, 0.25);
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(48, 209, 88, 0.25); }
+  50%       { box-shadow: 0 0 0 5px rgba(48, 209, 88, 0.08); }
+}
+
+/* ─── Section labels ─── */
+.menu-section-label {
+  font-family: $font;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  color: $text-label;
+  text-transform: uppercase;
+  padding: 14px 16px 4px;
+  flex-shrink: 0;
+}
+
+/* ─── Navigation group ─── */
+.menu-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px;
+  gap: 1px;
+}
+
+/* ─── Individual menu item ─── */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none !important;
+  transition:
+    background 0.15s ease,
+    transform  0.12s ease;
+
+  &:hover {
+    background: $hover-bg;
+    transform: none;
+
+    .menu-label {
+      color: $accent-blue;
+    }
+
+    .menu-icon svg {
+      color: $accent-blue;
+    }
+
+    .menu-chevron {
+      color: $accent-blue;
+      opacity: 1;
+    }
+  }
+
+  &.active {
+    background: $active-bg;
+
+    .menu-label {
+      color: $accent-blue;
+      font-weight: 600;
+    }
+
+    .menu-icon svg {
+      color: $accent-blue;
+    }
+
+    .menu-chevron {
+      color: $accent-blue;
+      opacity: 1;
+    }
+  }
+
+  &:active {
+    transform: scale(0.97);
+    background: $active-bg;
+  }
+}
+
+/* ─── Icon bubble ─── */
+.menu-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+
+  svg {
+    transition: color 0.15s ease;
+  }
+}
+
+/* Icon color themes — Apple system colors */
+.overview-icon  { background: rgba(  0, 122, 255, 0.10); color: #007aff; svg { color: #007aff; } }
+.scope-icon     { background: rgba( 88, 86,  214, 0.10); color: #5856d6; svg { color: #5856d6; } }
+.people-icon    { background: rgba( 52, 199, 89,  0.10); color: #34c759; svg { color: #34c759; } }
+.process-icon   { background: rgba(255, 149,  0,  0.10); color: #ff9500; svg { color: #ff9500; } }
+.delivery-icon  { background: rgba(  0, 199, 190, 0.10); color: #00c7be; svg { color: #00c7be; } }
+.goals-icon     { background: rgba(255,  45,  85, 0.10); color: #ff2d55; svg { color: #ff2d55; } }
+.voc-icon       { background: rgba( 90, 200, 250, 0.12); color: #5ac8fa; svg { color: #5ac8fa; } }
+.lessons-icon   { background: rgba(255, 204,  0,  0.12); color: #c9a800; svg { color: #c9a800; } }
+.best-icon      { background: rgba(255, 149,  0,  0.10); color: #ff9500; svg { color: #ff9500; } }
+.feedback-icon  { background: rgba(255,  45,  85, 0.10); color: #ff2d55; svg { color: #ff2d55; } }
+.appr-icon      { background: rgba( 52, 199,  89, 0.10); color: #34c759; svg { color: #34c759; } }
+.kpi-icon       { background: rgba(  0, 122, 255, 0.10); color: #007aff; svg { color: #007aff; } }
+.contacts-icon  { background: rgba( 88,  86, 214, 0.10); color: #5856d6; svg { color: #5856d6; } }
+.planner-icon   { background: rgba(  0, 199, 190, 0.10); color: #00c7be; svg { color: #00c7be; } }
+.migrate-icon   { background: rgba(255, 149,   0, 0.10); color: #ff9500; svg { color: #ff9500; } }
+.crisp-icon     { background: rgba(  0, 122, 255, 0.10); color: #007aff; svg { color: #007aff; } }
+.checklist-icon { background: rgba( 52, 199,  89, 0.10); color: #34c759; svg { color: #34c759; } }
+.findings-icon  { background: rgba(255,  59,  48, 0.10); color: #ff3b30; svg { color: #ff3b30; } }
+.config-icon    { background: rgba( 99,  99, 102, 0.10); color: #636366; svg { color: #636366; } }
+
+/* ─── Label text ─── */
+.menu-label {
+  font-family: $font;
+  font-size: 13px;
+  font-weight: 400;
+  color: $text-primary;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+  transition: color 0.15s ease;
+  letter-spacing: -0.1px;
+}
+
+/* ─── Chevron ─── */
+.menu-chevron {
+  font-size: 17px;
+  font-weight: 300;
+  color: $text-label;
+  opacity: 0.6;
+  line-height: 1;
+  transition: color 0.15s ease, opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+/* ─── Section divider between nav groups ─── */
+.menu-nav + .menu-section-label {
+  margin-top: 4px;
+
+  &::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: $divider;
+    margin: 0 0 10px;
+  }
+}
+
+/* ─── Bottom spacer ─── */
+.menu-bottom-spacer {
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* ─── Staggered item animation ─── */
+.menu-item {
+  opacity: 0;
+  animation: sfFadeUp 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@for $i from 1 through 20 {
+  .menu-nav .menu-item:nth-child(#{$i}) {
+    animation-delay: #{0.06 + ($i * 0.025)}s;
+  }
+}
+
+@keyframes sfFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Hide legacy table ─── */
+.menuList {
+  display: none !important;
+}
+
+/* ─── Responsive: slightly narrower on small screens ─── */
+@media (max-width: 480px) {
+  .dashboardMenu {
+    width: 220px;
+    border-radius: 0;
+  }
+}
+
+
