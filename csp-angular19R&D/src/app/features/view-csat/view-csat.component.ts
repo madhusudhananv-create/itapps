@@ -7,6 +7,7 @@ import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -49,6 +50,7 @@ import { PresurveyConnectComponent } from '../presurvey-connect/presurvey-connec
     MatSortModule,
     MatSelectModule,
     MatFormFieldModule,
+    MatInputModule,
     MatRadioModule,
     MatButtonModule,
     MatIconModule,
@@ -77,6 +79,10 @@ export class ViewCsatComponent implements OnInit {
   sub: any;
   projNames: any[] = [];
   custNames: any[] = [];
+  filteredProjNames: any[] = [];
+  filteredCustNames: any[] = [];
+  projectSearchTerm: string = '';
+  respondentSearchTerm: string = '';
   reportRec: any[] = [];
   input_projectid: string = '';
   input_customerid: string = '';
@@ -223,12 +229,75 @@ export class ViewCsatComponent implements OnInit {
   }
 
   /**
+   * Filter project dropdown based on search term
+   */
+  filterProjects() {
+    const searchTerm = this.projectSearchTerm.toLowerCase().trim();
+    if (!searchTerm) {
+      this.filteredProjNames = this.projNames;
+    } else {
+      this.filteredProjNames = this.projNames.filter(proj => 
+        proj.proJ_NM && proj.proJ_NM.toLowerCase().includes(searchTerm)
+      );
+    }
+  }
+
+  /**
+   * Filter respondent dropdown based on search term
+   */
+  filterRespondents() {
+    const searchTerm = this.respondentSearchTerm.toLowerCase().trim();
+    if (!searchTerm) {
+      this.filteredCustNames = this.custNames;
+    } else {
+      this.filteredCustNames = this.custNames.filter(cust => 
+        cust.displaY_NAME && cust.displaY_NAME.toLowerCase().includes(searchTerm)
+      );
+    }
+  }
+
+  /**
+   * Clear project search
+   */
+  clearProjectSearch() {
+    this.projectSearchTerm = '';
+    this.filteredProjNames = this.projNames;
+  }
+
+  /**
+   * Clear respondent search
+   */
+  clearRespondentSearch() {
+    this.respondentSearchTerm = '';
+    this.filteredCustNames = this.custNames;
+  }
+
+  /**
+   * Get selected project name for display
+   */
+  get selectedProjectName(): string {
+    if (!this.input_projectid) return 'Select Project';
+    const project = this.projNames.find(p => p.proJ_ID === this.input_projectid);
+    return project ? project.proJ_NM : 'Select Project';
+  }
+
+  /**
+   * Get selected respondent name for display
+   */
+  get selectedRespondentName(): string {
+    if (!this.input_userid) return 'Select Respondent';
+    const respondent = this.custNames.find(c => c.emailid === this.input_userid);
+    return respondent ? respondent.displaY_NAME : 'Select Respondent';
+  }
+
+  /**
    * Get all projects for the selected customer
    */
   getAllProjectsFromCustomer() {
     this._appService.GetCustomerProjectsName(this.input_customerid, false).subscribe(
       (data: any) => {
         this.projNames = data;
+        this.filteredProjNames = data; // Initialize filtered array
 
         if (this.projNames != undefined && this.projNames != null && this.projNames.length > 0) {
           if (!this.input_projectid)
@@ -253,6 +322,7 @@ export class ViewCsatComponent implements OnInit {
     this._layoutService.GetAllCustomerUser(customerId, projectId, isMonthly ?? false, formattedStartDate, formattedEndDate).subscribe(
       (data: any) => {
         this.custNames = data;
+        this.filteredCustNames = data; // Initialize filtered array
         if (this.input_respondedid == 0) {
           this.input_userid = "";
           this.disablebtn = false;

@@ -434,10 +434,32 @@ export class PspdComponent implements OnInit {
             panelClass: ['success-snackbar']
           });
           this.btnLoadData_OnClick();
-        }, error => { 
+        }, error => {
+          // Extract the actual error message from API response
+          let errorMessage = 'Failed to delete Service Tower';
+          
+          if (error.error) {
+            // If error.error is a string, use it directly
+            if (typeof error.error === 'string') {
+              errorMessage = error.error;
+            }
+            // If error.error is an object with a message property
+            else if (error.error.message || error.error.Message) {
+              errorMessage = error.error.message || error.error.Message;
+            }
+            // If error.error is an object, try to extract any meaningful text
+            else if (typeof error.error === 'object') {
+              errorMessage = JSON.stringify(error.error);
+            }
+          }
+          // Fallback to error.message if available
+          else if (error.message) {
+            errorMessage = error.message;
+          }
+          
           this._util.serviceError(error);
-          this._snackBar.open('Failed to delete Service Tower', '✕', {
-            duration: 3000,
+          this._snackBar.open(errorMessage, '✕', {
+            duration: 5000, // Increased duration for longer messages
             horizontalPosition: 'end',
             verticalPosition: 'top',
             panelClass: ['error-snackbar']

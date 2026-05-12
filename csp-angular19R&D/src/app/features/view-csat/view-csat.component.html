@@ -33,8 +33,27 @@
         <mat-form-field *ngIf="showProjectDropdown" appearance="outline" class="filter-field">
           <mat-label>Select Project</mat-label>
           <mat-select [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange()">
-            <mat-option *ngFor="let proj of projNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
+            <mat-select-trigger>
+              {{selectedProjectName}}
+            </mat-select-trigger>
+            <div class="search-box-container" (click)="$event.stopPropagation()">
+              <mat-form-field appearance="outline" class="search-box">
+                <mat-label>Search Project</mat-label>
+                <input matInput 
+                       [(ngModel)]="projectSearchTerm" 
+                       (ngModelChange)="filterProjects()"
+                       placeholder="Type to search..."
+                       autocomplete="off">
+                <button mat-icon-button matSuffix *ngIf="projectSearchTerm" (click)="clearProjectSearch()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+            <mat-option *ngFor="let proj of filteredProjNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
               {{proj.proJ_NM}}
+            </mat-option>
+            <mat-option *ngIf="filteredProjNames.length === 0" disabled>
+              No projects found
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -61,8 +80,27 @@
         <mat-form-field appearance="outline" class="filter-field respondent-field">
           <mat-label>Select Respondent</mat-label>
           <mat-select [(ngModel)]="input_userid" (selectionChange)="onUserChange()">
-            <mat-option *ngFor="let cust of custNames" [value]="cust.emailid" [title]="cust.displaY_NAME">
+            <mat-select-trigger>
+              {{selectedRespondentName}}
+            </mat-select-trigger>
+            <div class="search-box-container" (click)="$event.stopPropagation()">
+              <mat-form-field appearance="outline" class="search-box">
+                <mat-label>Search Respondent</mat-label>
+                <input matInput 
+                       [(ngModel)]="respondentSearchTerm" 
+                       (ngModelChange)="filterRespondents()"
+                       placeholder="Type to search..."
+                       autocomplete="off">
+                <button mat-icon-button matSuffix *ngIf="respondentSearchTerm" (click)="clearRespondentSearch()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+            <mat-option *ngFor="let cust of filteredCustNames" [value]="cust.emailid" [title]="cust.displaY_NAME">
               {{cust.displaY_NAME}}
+            </mat-option>
+            <mat-option *ngIf="filteredCustNames.length === 0" disabled>
+              No respondents found
             </mat-option>
           </mat-select>
         </mat-form-field>
