@@ -18,7 +18,9 @@
   padding: 16px 24px 16px;
   max-width: 1400px;
   margin: 0 auto;
-  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;  // was 'hidden' — removing this prevents clipping on small screens
 }
 
 // ===================================================================
@@ -95,58 +97,41 @@
     display: flex;
     align-items: flex-end;
     gap: 12px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    
-    // Custom scrollbar for horizontal overflow
-    &::-webkit-scrollbar {
-      height: 6px;
-    }
-    
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.15);
-      border-radius: 3px;
-      
-      &:hover {
-        background: rgba(0, 0, 0, 0.25);
-      }
-    }
+    flex-wrap: wrap;        // allow items to wrap onto next line
+    overflow-x: visible;    // no horizontal scroll
   }
   
   .filter-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    min-width: 270px; // Increased width by 20px for better readability
-    max-width: 290px; // Constrain maximum width
-    flex: 0 0 auto;
+    flex: 1 1 200px;        // grow/shrink freely, base 200px
+    min-width: 160px;       // never go below 160px
+    max-width: 320px;       // never stretch too wide
     
     &.action-group {
-      min-width: 140px;
+      flex: 0 0 auto;       // action buttons don't grow
+      min-width: 120px;
       justify-content: flex-end;
       padding-bottom: 2px;
       
-      // Even smaller for icon-only buttons
       &:has(.btn-icon-only) {
         min-width: 50px;
       }
     }
     
-    // Smaller width for date input containers
+    // Date inputs are a bit narrower
     &:has(.date-input) {
-      min-width: 180px;
-      max-width: 200px;
+      flex: 1 1 150px;
+      min-width: 140px;
+      max-width: 220px;
     }
   }
   
   // Spacer to push Export button to the right
   .spacer {
     flex: 1 1 auto;
-    min-width: 20px;
+    min-width: 0;
   }
   
   // Labels
@@ -185,8 +170,8 @@
 .modern-select,
 .modern-input {
   width: 100%;
-  min-width: 270px; // Increased width by 20px for better readability
-  max-width: 290px; // Constrain maximum width
+  min-width: 0;    // let the parent flex: 1 1 200px control width
+  max-width: 100%;
   padding: 9px 12px;
   border: 1.5px solid rgba(0, 0, 0, 0.12);
   border-radius: 10px;
@@ -222,14 +207,14 @@
 // Date Input
 .date-wrapper {
   width: 100%;
-  min-width: 180px;
-  max-width: 200px; // Compact date field layout
+  min-width: 0;
+  max-width: 100%;
 }
 
 .date-input {
   width: 100%;
-  min-width: 180px !important; // Reduced width for date fields
-  max-width: 200px; // Constrain maximum width for better compact layout
+  min-width: 0 !important;
+  max-width: 100%;
 }
 
 // ===================================================================
