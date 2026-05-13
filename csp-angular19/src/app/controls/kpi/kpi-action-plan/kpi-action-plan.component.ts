@@ -221,6 +221,11 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   getSelectedVal() {
+    if (!this.rootCauseIds || this.rootCauseIds.length === 0) {
+      this.findingStatus.capA_SUBMISSION.capa = [];
+      this._util.showWarning('Please select at least one cause');
+      return;
+    }
     this._appservice.getAuditFindingsCappa(this.findingStatus, this.rootCauseIds, 0).subscribe(
       (data: any) => {
         this.auditFindingCappa = data;
