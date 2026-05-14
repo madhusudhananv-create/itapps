@@ -12,6 +12,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { AppsService, EmpInfoModel, ProcessModelNew, AuditQualifiedStandardModel } from '../../core/services/apps.service';
 import { AccessControl } from '../../shared/access-control';
@@ -49,6 +50,7 @@ import { NavbarNewComponent } from '../../components/navbar-new/navbar-new.compo
     MatNativeDateModule,
     MatIconModule,
     MatButtonModule,
+    MatCheckboxModule,
     NavbarNewComponent
   ],
   templateUrl: './auditqualitystandards.component.html',
@@ -67,6 +69,7 @@ export class AuditqualitystandardsComponent implements OnInit {
   readonlymode: boolean = true;
   empList: EmpInfoModel[] = [];
   ProcessModelList: ProcessModelNew[] = [];
+  allProcessModelsSelected: boolean = false;
 
   @ViewChild(MatSort) set content(sort: MatSort) {
     this.dataSource.sort = sort;
@@ -121,7 +124,7 @@ export class AuditqualitystandardsComponent implements OnInit {
 
   SubmitForm(isValid: any) {
     if (!isValid) {
-      alert("Please enter valid values for required fields");
+      this._util.showWarningPopup("Please enter valid values for required fields", "Validation Error");
       return;
     }
     this.editItem.procesS_MODEL_ID = '';
@@ -143,7 +146,7 @@ export class AuditqualitystandardsComponent implements OnInit {
 
   UpdateAuditor(item: AuditQualifiedStandardModel) {
     this._appservice.UpdateAuditor(item).subscribe(data => {
-      alert("Data Save Successfully");
+      this._util.showSuccessPopup("Data saved successfully", "Success");
       this.readonlymode = true;
       this.editmode = false;
       this.getAuditorQualityStandardDetails();
@@ -172,6 +175,10 @@ export class AuditqualitystandardsComponent implements OnInit {
       this.editItem.title = title;
     }
     this.Edit_onClick();
+    // Update select all checkbox state after loading process models
+    setTimeout(() => {
+      this.onProcessModelSelectionChange();
+    }, 100);
   }
 
   Cancel_onClick() {
@@ -179,5 +186,41 @@ export class AuditqualitystandardsComponent implements OnInit {
     this.editmode = false;
     this.neweditItem();
     this.getAuditorQualityStandardDetails();
+  }
+
+  /**
+   * Toggle all process models selection
+   */
+  toggleAllProcessModels() {
+    if (this.allProcessModelsSelected) {
+      // Select all
+      this.editItem.title = this.ProcessModelList.map(model => model.title);
+    } else {
+      // Deselect all
+      this.editItem.title = [];
+    }
+  }
+
+  /**
+   * Check if some (but not all) process models are selected
+   * Used for indeterminate checkbox state
+   */
+  someProcessModelsSelected(): boolean {
+    if (!this.editItem.title || !this.ProcessModelList.length) {
+      return false;
+    }
+    const selectedCount = this.editItem.title.length;
+    return selectedCount > 0 && selectedCount < this.ProcessModelList.length;
+  }
+
+  /**
+   * Update the "Select All" checkbox state when individual options are selected/deselected
+   */
+  onProcessModelSelectionChange() {
+    if (!this.editItem.title || !this.ProcessModelList.length) {
+      this.allProcessModelsSelected = false;
+      return;
+    }
+    this.allProcessModelsSelected = this.editItem.title.length === this.ProcessModelList.length;
   }
 }
