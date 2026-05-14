@@ -113,7 +113,7 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
 
   // Inputs from parent component
   @Input() custid: string = '';
-  @Input() reset: boolean = true;
+  @Input() reset: boolean = false;  // Default to false to show current month data
 
   // Component properties
   customerid: string = '';
@@ -356,6 +356,10 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
     this.eventTasksHighValues = this.createEmptyTasksEventsSummary('high');
     this.eventTasksLowValues = this.createEmptyTasksEventsSummary('low');
     this.eventTasksMediumValues = this.createEmptyTasksEventsSummary('medium');
+    
+    // CRITICAL FIX: Initialize month/year in constructor
+    // This must run before ngOnChanges (which can call loadCustomerData)
+    this.initializeMonthYear();
   }
 
   get isMobile(): boolean {
@@ -375,8 +379,8 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
       this.isGAVSUser = userInfo.isGAVSUser || false;
     }
 
-    // Initialize month/year to current date
-    this.initializeMonthYear();
+    // Month/year already initialized in constructor
+    // (must be there to run before ngOnChanges)
 
     // NOTE: Don't load data here if custid is provided as Input
     // ngOnChanges will handle it (it runs before ngOnInit)
@@ -388,7 +392,10 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
     this.subscriptions.add(
       this.route.params.subscribe(params => {
         this.customerid = params['customerid'] || '';
-        this.reset = params['reset'] === 'true' || params['reset'] === true || params['reset'] === undefined;
+        
+        // CRITICAL FIX: Default reset to false to show current month data
+        // Only use last updated (reset=true) if explicitly passed in URL
+        this.reset = params['reset'] === 'true' || params['reset'] === true;
 
         if (this.customerid) {
           this.isBaseMeasureEnabled = this._util.IsBaseMeasureEnabledCustomer(this.customerid);
@@ -400,18 +407,40 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('=== Dashboard Customer ngOnChanges ===');
+    console.log('Changes:', changes);
+    
     // Handle changes to Input properties
+    
+    // Handle reset input changes
+    if (changes['reset'] && !changes['reset'].firstChange) {
+      this.reset = changes['reset'].currentValue;
+      console.log('Reset input changed to:', this.reset);
+    }
+    
     if (changes['custid']) {
       const custidChange = changes['custid'];
+      console.log('custid changed:', custidChange);
+      console.log('currentValue:', custidChange.currentValue);
+      console.log('previousValue:', custidChange.previousValue);
+      console.log('firstChange:', custidChange.firstChange);
+      
       // Load data when custid changes and has a value
       // On first change, previousValue will be undefined, so we need to check firstChange as well
       if (custidChange.currentValue && (custidChange.firstChange || custidChange.currentValue !== custidChange.previousValue)) {
         this.customerid = this.custid;
+        console.log('AFTER assignment - this.customerid:', this.customerid);
+        console.log('AFTER assignment - this.custid:', this.custid);
+        console.log('AFTER assignment - custidChange.currentValue:', custidChange.currentValue);
+        
         this.isBaseMeasureEnabled = this._util.IsBaseMeasureEnabledCustomer(this.customerid);
         this.setCustomerFlags();
         this.loadCustomerData();
+      } else {
+        console.log('NOT loading data - custid is empty or unchanged');
       }
     }
+    console.log('=====================================');
   }
 
   private setCustomerFlags(): void {
@@ -433,7 +462,10 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
     const currentDate = new Date();
     this.sMonth = this.monthNames[currentDate.getMonth()];
     this.iYear = currentDate.getFullYear().toString();
-    this.availableYears = this._util.Years(3);
+    
+    // Generate year dropdown - show last 10 years for historical data analysis
+    // Current year (2026) down to 10 years ago (2017)
+    this.availableYears = this._util.Years(10);
     
     // Initialize dashboard util filter properties
     this._dashboardUtil.csG_FILTER_MONTH = this.sMonth;
@@ -442,6 +474,15 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
 
   private loadCustomerData(): void {
     this.progress = true;
+    
+    // DEBUG: Log filter values being sent to API
+    console.log('=== Dashboard Loading ===');
+    console.log('Month:', this.sMonth);
+    console.log('Year:', this.iYear);
+    console.log('Reset flag:', this.reset);
+    console.log('Customer ID (this.customerid):', this.customerid);
+    console.log('Selected Customer:', this.selectedCustomer?.cusT_ID);
+    console.log('========================');
     
     // Parallelize customer list and dashboard details loading
     const requests = {
@@ -604,6 +645,10 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
 
           // Load CAPA data
           this.GetProjectCAPACount();
+          
+          // IMPORTANT: After filter applied and data loaded, keep reset=false
+          // so the achievement trend uses the same filtered dates
+          // Only reset back to true on page navigation or customer change
         },
         error: (error: any) => {
           console.error('Error loading project scores:', error);
@@ -792,7 +837,11 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
     dialogConfig.autoFocus = true;
     dialogConfig.data = {
       'custid': this.selectedCustomer.cusT_ID,
-      'projids': projId
+      'projids': projId,
+      // CRITICAL FIX: Pass filter month/year to achievement trend
+      // Trend will show 6 months ending at the filtered date
+      'filterMonth': this.sMonth,  // e.g., "Apr"
+      'filterYear': this.iYear     // e.g., "2024"
     };
     dialogConfig.maxWidth = "95vw";
     dialogConfig.height = "600px";
@@ -832,6 +881,11 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
 
   applySuccessGoalFilter(): void {
     this.showSuccessGoalFilter = false;
+    
+    // CRITICAL FIX: Set reset = false when user explicitly selects month/year
+    // This tells backend to use the selected dates, not last updated
+    this.reset = false;
+    
     // Reload dashboard data with new month/year filter
     this.loadCustomerData();
   }

@@ -241,7 +241,7 @@ export class SuccessgoalComponent implements OnInit {
         if (result === true) {
           this._appService.revertProductKPIDetails(this.prodId, this.tableMonth, this.tableYear).subscribe((data: any) => {
             alert("Metrics have been Updated as Draft Status");
-            this.router.navigate(['/serviceleveldashboard/cust', this.input_custId, true])
+            this.router.navigate(['/serviceleveldashboard/cust', this.input_custId, false])
           }, error => {
             this._util.serviceError(error);
           });
@@ -272,16 +272,7 @@ export class SuccessgoalComponent implements OnInit {
     if (this._util.IsPremier(this.input_custId) && this.prodId != undefined) {
       this._chartsService.getTrendHighChartDetailsForProductKPI(this.input_custId, String(this.prodId), date, this._util.AppSettings.token, this.viewBy).subscribe(
         (data: any) => {
-          if (data.length > 0) {
-            for (let i = 0; i < data.length; i++) {
-              if (data[i].trendHighChart.length > 0) {
-                for (let j = 0; j < data[i].trendHighChart.length; j++) {
-                  data[i].trendHighChart[j].trendHighChart = new Chart(data[i].trendHighChart[j].trendHighChart);
-                }
-
-              }
-            }
-          }
+          // Don't wrap in Chart() - highcharts-chart component needs raw options
           this.trendHighChart = data;
         }, error => {
           this._util.serviceError(error);
@@ -291,16 +282,7 @@ export class SuccessgoalComponent implements OnInit {
     else {
       this._chartsService.getTrendHighChartDetails(this.input_custId, this.input_projId, date, this._util.AppSettings.token).subscribe(
         (data: any) => {
-          if (data.length > 0) {
-            for (let i = 0; i < data.length; i++) {
-              if (data[i].trendHighChart.length > 0) {
-                for (let j = 0; j < data[i].trendHighChart.length; j++) {
-                  data[i].trendHighChart[j].trendHighChart = new Chart(data[i].trendHighChart[j].trendHighChart);
-                }
-
-              }
-            }
-          }
+          // Don't wrap in Chart() - highcharts-chart component needs raw options
           this.trendHighChart = data;
         },
         error => {
@@ -392,8 +374,15 @@ export class SuccessgoalComponent implements OnInit {
   }
 
   displayGraph(kpiid: any, goalname: any) {
+    console.log('displayGraph called with:', { kpiid, goalname });
+    console.log('trendHighChart data:', this.trendHighChart);
+    
+    if (!this.trendHighChart || this.trendHighChart.length === 0) {
+      console.error('No trend chart data available');
+      alert('No trend data available. Please try refreshing the page.');
+      return;
+    }
 
-    let selectedGraph = this.trendHighChart.filter((x: any) => x.goalName == goalname.split('|')[0])[0].trendHighChart.filter((x: any) => x.kpiId == kpiid)[0].trendHighChart;
     const dialogConfig = new MatDialogConfig();
     let dialogSendData = {
       'KPIId': kpiid,

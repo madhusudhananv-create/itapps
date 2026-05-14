@@ -37,6 +37,10 @@ export class AchievementTrendComponent implements OnInit {
   custId: string = '';
   projId: string = '';  // Single project ID, not array
   Highcharts = Highcharts;
+  
+  // Filter dates from parent dashboard
+  filterMonth: string = '';  // e.g., "Apr"
+  filterYear: string = '';   // e.g., "2024"
 
   constructor(
     private dialogRef: MatDialogRef<AchievementTrendComponent>,
@@ -52,17 +56,54 @@ export class AchievementTrendComponent implements OnInit {
       this.custId = this.data.custid;
       // Backend expects single project ID string, not array
       this.projId = Array.isArray(this.data.projids) ? this.data.projids[0] : this.data.projids;
+      
+      // Get filter dates from parent dashboard
+      this.filterMonth = this.data.filterMonth || '';
+      this.filterYear = this.data.filterYear || '';
     }
     this.setStartAndEndDate(this.DateSelection);
     this.service_GetAchievementTrendByMonthLine();
   }
 
   /**
-   * Set start and end dates for the trend chart (last 6 months)
+   * Set start and end dates for the trend chart
+   * 
+   * CRITICAL FIX: Respects dashboard filter selection
+   * - If user filtered to Apr-2024, shows trend ending at Apr-2024
+   * - Backend recalculates START date based on database config (ACHIEVEMENT_TREND)
+   * - Backend typically shows 6 months of data
+   * 
+   * @param DateSelection - Date selection model to populate
    */
   setStartAndEndDate(DateSelection: DateSelectionModel): void {
-    DateSelection.endDate = new Date();
-    DateSelection.startDate.setMonth(DateSelection.endDate.getMonth() - 6);
+    // Use filter date if provided, otherwise use current date
+    if (this.filterMonth && this.filterYear) {
+      // Convert month abbreviation to month index (0-11)
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthIndex = monthNames.indexOf(this.filterMonth);
+      
+      if (monthIndex >= 0) {
+        const year = parseInt(this.filterYear);
+        
+        // Use the filtered month/year as END date
+        // Set to LAST day of the month to include the entire month
+        DateSelection.endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59);
+        
+        // Calculate START date (backend will recalculate based on config, but we set it for consistency)
+        // Typically 6 months before the filtered date
+        DateSelection.startDate = new Date(DateSelection.endDate.getFullYear(), DateSelection.endDate.getMonth() - 6, 1);
+      } else {
+        // Fallback if month parsing fails
+        DateSelection.endDate = new Date();
+        DateSelection.startDate = new Date();
+        DateSelection.startDate.setMonth(DateSelection.endDate.getMonth() - 6);
+      }
+    } else {
+      // No filter provided - use current date
+      DateSelection.endDate = new Date();
+      DateSelection.startDate = new Date();
+      DateSelection.startDate.setMonth(DateSelection.endDate.getMonth() - 6);
+    }
 
     DateSelection.selectedEndMonth = this._util.getMonthAbr(DateSelection.endDate.getMonth());
     DateSelection.selectedEndYear = DateSelection.endDate.getFullYear();

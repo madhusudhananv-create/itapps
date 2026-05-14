@@ -142,18 +142,18 @@
                 <mat-form-field appearance="outline" class="filter-dropdown">
                   <mat-label>Select Month</mat-label>
                   <mat-select name="tableMonth" [(ngModel)]="sMonth" required>
-                    <mat-option value="JAN">January</mat-option>
-                    <mat-option value="FEB">February</mat-option>
-                    <mat-option value="MAR">March</mat-option>
-                    <mat-option value="APR">April</mat-option>
-                    <mat-option value="MAY">May</mat-option>
-                    <mat-option value="JUN">June</mat-option>
-                    <mat-option value="JUL">July</mat-option>
-                    <mat-option value="AUG">August</mat-option>
-                    <mat-option value="SEP">September</mat-option>
-                    <mat-option value="OCT">October</mat-option>
-                    <mat-option value="NOV">November</mat-option>
-                    <mat-option value="DEC">December</mat-option>
+                    <mat-option value="Jan">January</mat-option>
+                    <mat-option value="Feb">February</mat-option>
+                    <mat-option value="Mar">March</mat-option>
+                    <mat-option value="Apr">April</mat-option>
+                    <mat-option value="May">May</mat-option>
+                    <mat-option value="Jun">June</mat-option>
+                    <mat-option value="Jul">July</mat-option>
+                    <mat-option value="Aug">August</mat-option>
+                    <mat-option value="Sep">September</mat-option>
+                    <mat-option value="Oct">October</mat-option>
+                    <mat-option value="Nov">November</mat-option>
+                    <mat-option value="Dec">December</mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>
@@ -165,7 +165,7 @@
                 <mat-form-field appearance="outline" class="filter-dropdown">
                   <mat-label>Select Year</mat-label>
                   <mat-select name="tableYear" [(ngModel)]="iYear" required>
-                    <mat-option *ngFor="let year of availableYears" [value]="year">{{year}}</mat-option>
+                    <mat-option *ngFor="let year of availableYears" [value]="year.toString()">{{year}}</mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>

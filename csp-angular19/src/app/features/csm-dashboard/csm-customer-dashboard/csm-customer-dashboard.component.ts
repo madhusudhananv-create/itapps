@@ -92,7 +92,13 @@ export class CsmCustomerDashboardComponent implements OnInit, OnChanges, OnDestr
   compilanceBar: number = 0;
   valueBar: number = 0;
   projectScores: any[] = [];
+  tempScoresArray: any[] = [];
+  successGoalScores: any[] = [];
+  overallScore: string = '0%';
   gaugeData: any[] = [['Label', 'Value'], ['Score', 0]];
+  
+  // Filter state
+  reset: boolean = false;
 
   // Account Health Data (Premier customers)
   healthData: any[] = [];
@@ -181,14 +187,10 @@ export class CsmCustomerDashboardComponent implements OnInit, OnChanges, OnDestr
 
     this.progress = true;
 
-    // TODO: Load actual dashboard data from APIs
-    // For Phase 1, we're setting up the structure
-    // Data loading will be implemented in Phase 2
-
-    // Simulate data loading
-    setTimeout(() => {
-      this.progress = false;
-    }, 500);
+    // Load success goal scores for the period
+    // bLastUpdated = true tells backend to use the most recent month with data
+    // This handles cases where current month has no data yet
+    this.loadSuccessGoalForPeriod(true, this.fromDate.toDateString(), this.toDate.toDateString());
   }
 
   /**
@@ -218,7 +220,77 @@ export class CsmCustomerDashboardComponent implements OnInit, OnChanges, OnDestr
   periodSelectionChange(period: string): void {
     this.selectedPeriod = period;
     this.updateDateLabels();
-    this.loadDashboardData();
+    // Use reset = false to use the filtered dates, not last updated
+    this.loadSuccessGoalForPeriod(false, this.fromDate.toDateString(), this.toDate.toDateString());
+  }
+
+  /**
+   * Load Success Goal scores for a specific period
+   * Migrated from legacy csm-customer-dashboard.component.ts
+   * 
+   * @param bLastUpdated - If true, backend returns most recent month with data
+   *                       If false, backend uses the specified fromDate/toDate
+   * @param fromDate - Start date for filtering (date string)
+   * @param toDate - End date for filtering (date string)
+   */
+  loadSuccessGoalForPeriod(bLastUpdated: boolean, fromDate: string, toDate: string): void {
+    this.progress = true;
+
+    this.appService.getSuccessGoalScoreForAPeriodNew(
+      this.customerId,
+      fromDate,
+      toDate,
+      bLastUpdated
+    ).subscribe({
+      next: (data: any) => {
+        console.log('Success Goal Data:', data);
+        
+        // Store project scores
+        this.projectScores = data.projecT_SCORES || data.PROJECT_SCORES || [];
+        this.tempScoresArray = this.projectScores;
+        
+        // Filter by selected projects if any
+        if (this.projId && this.projId.length > 0 && this.projectScores) {
+          this.projectScores = this.projectScores.filter((f: any) => 
+            this.projId.includes(f.proJ_ID)
+          );
+        }
+        
+        // Success goal scores (for single project customers)
+        this.successGoalScores = data.succesS_GOALS_SCORES || data.SUCCESS_GOALS_SCORES || [];
+        
+        // Overall scores
+        this.overallScore = data.overalL_SCORE || data.OVERALL_SCORE || '0%';
+        this.quality = data.quality || data.QUALITY || '0%';
+        this.value = data.value || data.VALUE || '0%';
+        this.performance = data.performance || data.PERFORMANCE || '0%';
+        this.compliance = data.compliance || data.COMPLIANCE || '0%';
+        
+        // IMPORTANT: Update month/year from backend response
+        // Backend returns the actual month/year where data exists
+        // This handles the case where current month has no data
+        if (data.month || data.MONTH) {
+          this.sMonth = data.month || data.MONTH;
+        }
+        if (data.year || data.YEAR) {
+          this.iYear = data.year || data.YEAR;
+        }
+        
+        // Update bar values for display
+        this.performanceBar = parseFloat(this.performance?.replace('%', '') || '0');
+        this.qualityBar = parseFloat(this.quality?.replace('%', '') || '0');
+        this.compilanceBar = parseFloat(this.compliance?.replace('%', '') || '0');
+        this.valueBar = parseFloat(this.value?.replace('%', '') || '0');
+        
+        this.progress = false;
+      },
+      error: (error: any) => {
+        this._util.serviceError(error);
+        this.projectScores = [];
+        this.successGoalScores = [];
+        this.progress = false;
+      }
+    });
   }
 
   /**

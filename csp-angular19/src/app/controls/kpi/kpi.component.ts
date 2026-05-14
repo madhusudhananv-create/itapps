@@ -385,7 +385,7 @@ export class KpiComponent implements OnInit {
       this.router.navigate(['/newdashboard/cust', custId, false]);
     } else if (this._util.IsPremier(custId) || this._util.IsBaseMeasureEnabledCustomer(custId)) {
       // Premier/BaseMeasure customer - navigate to service level dashboard
-      this.router.navigate(['/serviceleveldashboard/cust', custId, true]);
+      this.router.navigate(['/serviceleveldashboard/cust', custId, false]);
     } else {
       // CSM Dashboard
       localStorage.removeItem('selectedCustomer');

@@ -89,9 +89,20 @@ export class DashboardNavigationComponent implements OnInit, OnDestroy {
     
     // Subscribe to route parameters
     this.sub = this.route.params.subscribe(params => {
+      console.log('=== Dashboard Navigation Route Params ===');
+      console.log('Route params:', params);
+      console.log('customerid from params:', params['customerid']);
+      console.log('reset from params:', params['reset']);
+      
       this.customerid = params['customerid'] || '';
-      this.reset = params['reset'] !== undefined ? params['reset'] === 'true' : false;
+      // CRITICAL FIX: Default to false to show current month data
+      // Only set to true if explicitly passed as 'true' in URL
+      this.reset = params['reset'] === 'true';
       this.role = localStorage.getItem('role') || '';
+      
+      console.log('Final customerid:', this.customerid);
+      console.log('Final reset:', this.reset);
+      console.log('========================================');
     });
 
     // Check if SLA is available for this customer
@@ -110,10 +121,8 @@ export class DashboardNavigationComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Set default reset value if not provided
-    if (this.reset === undefined) {
-      this.reset = true;
-    }
+    // reset is already initialized to false at line 93, no need to override
+    // User can explicitly pass reset=true in URL if they want last updated data
 
     // Show menu for GAVS users, hide for Customer role
     // Menu is used to toggle dashboard options

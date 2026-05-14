@@ -776,9 +776,9 @@ export class DashboardCustomerMultipleComponent implements OnInit, OnDestroy {
             // Use replaceUrl to avoid adding enterprise dashboard to history
             // This ensures back button returns to previous page, not enterprise dashboard
             if (singleAccount.iS_SLA_AVAILABLE) {
-              this.router.navigate(['/serviceleveldashboard/cust', singleAccount.cusT_ID, true], { replaceUrl: true });
+              this.router.navigate(['/serviceleveldashboard/cust', singleAccount.cusT_ID, false], { replaceUrl: true });
             } else {
-              this.router.navigate(['/newdashboard/cust', singleAccount.cusT_ID, true], { replaceUrl: true });
+              this.router.navigate(['/newdashboard/cust', singleAccount.cusT_ID, false], { replaceUrl: true });
             }
           }
         } else {
@@ -826,9 +826,9 @@ export class DashboardCustomerMultipleComponent implements OnInit, OnDestroy {
     localStorage.setItem('csG_FILTER_YEAR', this.myUtility.Year().toString());
     // Route to SLA dashboard if SLA is available, otherwise to regular dashboard
     if (isSlaAvailable) {
-      this.router.navigate(['/serviceleveldashboard/cust', customer_id, true]);
+      this.router.navigate(['/serviceleveldashboard/cust', customer_id, false]);
     } else {
-      this.router.navigate(['/newdashboard/cust', customer_id, true]);
+      this.router.navigate(['/newdashboard/cust', customer_id, false]);
     }
   }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -12,6 +12,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import { AppsService, EmpInfoModel, ProcessModelNew, AuditQualifiedStandardModel } from '../../core/services/apps.service';
 import { AccessControl } from '../../shared/access-control';
@@ -49,6 +51,8 @@ import { NavbarNewComponent } from '../../components/navbar-new/navbar-new.compo
     MatNativeDateModule,
     MatIconModule,
     MatButtonModule,
+    MatSnackBarModule,
+    MatDialogModule,
     NavbarNewComponent
   ],
   templateUrl: './auditqualitystandards.component.html',
@@ -78,7 +82,9 @@ export class AuditqualitystandardsComponent implements OnInit {
     private _shared: SharedService, 
     public _util: MyUtility, 
     private changeDetectorRefs: ChangeDetectorRef, 
-    public _access: AccessControl
+    public _access: AccessControl,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -121,13 +127,18 @@ export class AuditqualitystandardsComponent implements OnInit {
 
   SubmitForm(isValid: any) {
     if (!isValid) {
-      alert("Please enter valid values for required fields");
+      this.snackBar.open('Please enter valid values for required fields', 'Close', {
+        duration: 4000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['toast-warning']
+      });
       return;
     }
     this.editItem.procesS_MODEL_ID = '';
     if (this.editItem.title) {
       this.editItem.title.forEach((i: any) => {
-        const matchingModel = this.ProcessModelList.filter(x => x.title == i)[0];
+        const matchingModel = this.ProcessModelList.filter((x: any) => x.title == i)[0];
         if (matchingModel) {
           this.editItem.procesS_MODEL_ID += matchingModel.id + ",";
         }
@@ -142,14 +153,77 @@ export class AuditqualitystandardsComponent implements OnInit {
   }
 
   UpdateAuditor(item: AuditQualifiedStandardModel) {
-    this._appservice.UpdateAuditor(item).subscribe(data => {
-      alert("Data Save Successfully");
+    this._appservice.UpdateAuditor(item).subscribe((data: any) => {
+      this.snackBar.open('✓ Data saved successfully', '', {
+        duration: 3000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top',
+        panelClass: ['toast-success']
+      });
       this.readonlymode = true;
       this.editmode = false;
       this.getAuditorQualityStandardDetails();
     },
-    (error) => {
-      this._util.serviceError(error);
+    (error: any) => {
+      // Extract error message from API response
+      let errorMessage = 'Failed to save data';
+      
+      if (error.error) {
+        if (typeof error.error === 'string') {
+          errorMessage = error.error;
+        } else if (error.error.message) {
+          errorMessage = error.error.message;
+        } else if (error.error.Message) {
+          errorMessage = error.error.Message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show error message in snackbar
+      this.snackBar.open(errorMessage, 'Close', {
+        duration: 5000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['toast-error']
+      });
+    })
+  }
+  
+
+  DeleteAuditor(item: any) {
+    this._appservice.DeleteAuditor(item).subscribe((data: any) => {
+      this.snackBar.open('✓ Record deleted successfully', '', {
+        duration: 3000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top',
+        panelClass: ['toast-success']
+      });
+      this.getAuditorQualityStandardDetails();
+    },
+    (error: any) => {
+      // Extract error message from API response
+      let errorMessage = 'Failed to delete record';
+      
+      if (error.error) {
+        if (typeof error.error === 'string') {
+          errorMessage = error.error;
+        } else if (error.error.message) {
+          errorMessage = error.error.message;
+        } else if (error.error.Message) {
+          errorMessage = error.error.Message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show error message in snackbar
+      this.snackBar.open(errorMessage, 'Close', {
+        duration: 5000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['toast-error']
+      });
     })
   }
 
@@ -174,10 +248,46 @@ export class AuditqualitystandardsComponent implements OnInit {
     this.Edit_onClick();
   }
 
+  DeleteRow_onClick(element: any) {
+    const dialogRef = this.dialog.open(ConfirmDeleteDialog, {
+      width: '400px',
+      data: { message: 'Are you sure you want to delete this record?' }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.DeleteAuditor(element);
+      }
+    });
+  }
+
   Cancel_onClick() {
     this.readonlymode = true;
     this.editmode = false;
     this.neweditItem();
     this.getAuditorQualityStandardDetails();
   }
+}
+
+// Confirm Delete Dialog Component
+@Component({
+  selector: 'confirm-delete-dialog',
+  standalone: true,
+  imports: [MatDialogModule, MatButtonModule],
+  template: `
+    <h2 mat-dialog-title>Confirm Delete</h2>
+    <mat-dialog-content>
+      <p>{{ data.message }}</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancel</button>
+      <button mat-raised-button color="warn" [mat-dialog-close]="true">OK</button>
+    </mat-dialog-actions>
+  `
+})
+export class ConfirmDeleteDialog {
+  constructor(
+    public dialogRef: MatDialogRef<ConfirmDeleteDialog>,
+    @Inject(MAT_DIALOG_DATA) public data: { message: string }
+  ) {}
 }

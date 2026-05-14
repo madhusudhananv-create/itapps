@@ -356,10 +356,14 @@ export class AppsService {
    * Get Achievement Trend By Month Line
    * Gets achievement trend data for line chart display
    * Migrated from legacy apps.service.ts -> GetAchievementTrendByMonthLine()
+   * 
+   * IMPORTANT: Backend ignores START_DATE and recalculates it based on database config
+   * Backend expects UPPERCASE property names (CUST_ID, PROJ_ID, START_DATE, END_DATE)
+   * 
    * @param custId Customer ID
    * @param projid Project ID or array of project IDs
-   * @param startdate Start date for trend data
-   * @param enddate End date for trend data
+   * @param startdate Start date for trend data (sent but backend recalculates)
+   * @param enddate End date for trend data - THIS IS USED BY BACKEND
    * @returns Observable of achievement trend chart data
    */
   GetAchievementTrendByMonthLine(
@@ -368,11 +372,12 @@ export class AppsService {
     startdate: Date,
     enddate: Date
   ): Observable<any> {
+    // Backend expects UPPERCASE property names to match C# model
     const data = {
-      cust_id: custId,
-      proj_id: projid,
-      start_date: startdate,
-      end_date: enddate
+      CUST_ID: custId,
+      PROJ_ID: projid,
+      START_DATE: startdate.toISOString(),  // ISO format for proper deserialization
+      END_DATE: enddate.toISOString()
     };
     
     return this.http.post<any>(
@@ -444,6 +449,33 @@ export class AppsService {
   getSuccessGoalScoresForProject(customerId: string): Observable<any[]> {
     return this.http.get<any[]>(
       `${this.apiurl}/GetSuccessGoalScoresForProject?CustomerId=${customerId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Get Success Goal Score For A Period (New Version)
+   * Gets success goal scores for a date range (used by CSM Dashboard)
+   * Migrated from legacy apps.service.ts -> getSuccessGoalScoreForAPeriodNew()
+   * 
+   * IMPORTANT: When bLastUpdated=true, backend finds the most recent month with data
+   * and returns that month/year in the response. This handles cases where current
+   * month has no KPI data yet (e.g., showing April data when May filter is selected)
+   * 
+   * @param custId - Customer ID
+   * @param fromDate - Start date (Date string format)
+   * @param toDate - End date (Date string format)
+   * @param bLastUpdated - If true, backend returns most recent month with data
+   * @returns Observable of success goal scores with month/year adjusted by backend
+   */
+  getSuccessGoalScoreForAPeriodNew(
+    custId: string,
+    fromDate: string,
+    toDate: string,
+    bLastUpdated: boolean
+  ): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiurl}/GetSuccessGoalScoreForAPeriodNew?CustomerId=${custId}&fromDate=${fromDate}&toDate=${toDate}&bLastUpdated=${bLastUpdated}`,
       { headers: this.getAuthHeaders() }
     );
   }
@@ -4314,6 +4346,18 @@ export class AppsService {
     );
   }
 
+  /**
+   * Delete auditor quality standard
+   */
+  DeleteAuditor(item: AuditQualifiedStandardModel): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.post<any>(
+      `${this.apiurl}/DeleteAuditor`,
+      item,
+      { headers }
+    );
+  }
+
   // ============================================
   // BENCHMARK KPI METHODS
   // ============================================
@@ -5172,7 +5216,7 @@ export class AppsService {
     const headers = new HttpHeaders({
       'Accept': 'application/json',
       'token': this._util.AppSettings.token,
-      'empId': localStorage.getItem('empid') || '',
+      'empId': localStorage.getItem('empid') || '0',
       'causeIds': (causeIds && causeIds.length > 0) ? causeIds.toString() : '0',
       'isFromFinding': isFromFinding.toString()
     });
