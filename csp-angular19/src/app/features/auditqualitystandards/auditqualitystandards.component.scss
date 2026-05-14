@@ -520,7 +520,7 @@ div[class*="TABLE"] {
 
   .toast-success {
     .mdc-snackbar__surface { background: linear-gradient(135deg, #1a9e4e 0%, #1db954 100%) !important; }
-    .mat-mdc-snack-bar-label { color: #fff !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '✓  '; font-weight: 700; } }
     .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
   }
 
@@ -1057,6 +1057,30 @@ $font-system     : -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe U
         background: rgba(255, 255, 255, 0.15) !important;
       }
     }
+  }
+
+  .toast-success {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #1a9e4e 0%, #1db954 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '✓  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
+  }
+
+  .toast-error {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '✕  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
+  }
+
+  .toast-warning {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: '⚠  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
+  }
+
+  .toast-info {
+    .mdc-snackbar__surface { background: linear-gradient(135deg, #0051a8 0%, #0071e3 100%) !important; }
+    .mat-mdc-snack-bar-label { color: #fff !important; &::before { content: 'ℹ  '; font-weight: 700; } }
+    .mat-mdc-button.mat-mdc-snack-bar-action { color: rgba(255,255,255,0.85) !important; }
   }
 
   // Confirmation dialog Apple style
