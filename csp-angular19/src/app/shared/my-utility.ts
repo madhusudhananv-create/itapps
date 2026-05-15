@@ -595,12 +595,15 @@ export class MyUtility {
       this.showAlert('Duplicate values in excel not copied');
     } else if (error.status === 400) {
       const errMsg = this.GetErrorMessage(error);
-      if (errMsg.trim().toLowerCase() !== 'ok') {
-        this.showAlert(errMsg);
-      }
       if (errMsg.includes('Authorization Issue')) {
-        this.RepeatedError = true;
-        this.authService.logout();
+        // Access restriction: user is not allocated to this project/resource.
+        // Show a warning and stay on the page — do NOT log out.
+        this.showWarningPopup(
+          'Access Restricted: You do not have permission to access this project. Please contact your manager to get the required allocation.',
+          'Access Restricted'
+        );
+      } else if (errMsg.trim().toLowerCase() !== 'ok') {
+        this.showAlert(errMsg);
       }
     } else if (error.status === 401) {
       

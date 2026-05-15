@@ -178,50 +178,67 @@ $font-weight-bold:      700;
   // Search option styling
   ::ng-deep .search-option {
     height: auto !important;
-    padding: 4px 8px !important;
+    padding: 8px 8px 4px !important;
     cursor: default !important;
-    background: #f8f9fa !important;
+    background: #ffffff !important;
     border-bottom: 1px solid #e0e0e0 !important;
     pointer-events: auto !important;
 
     &:hover {
-      background: #f8f9fa !important;
+      background: #ffffff !important;
     }
 
     .search-input {
       width: 100%;
       margin: 0;
 
+      // Fill appearance: gray background, blue underline, no outline border
       .mat-mdc-text-field-wrapper {
-        background: white;
-        border-radius: 4px;
+        background: #f0f0f0 !important;
+        border-radius: 6px 6px 0 0 !important;
+        padding: 0 12px !important;
+      }
+
+      .mdc-notched-outline {
+        display: none !important;
+      }
+
+      .mdc-line-ripple {
+        &::before { border-bottom-color: #bdbdbd !important; }
+        &::after  { border-bottom-color: #1a73e8 !important; border-bottom-width: 2px !important; }
       }
 
       .mat-mdc-form-field-infix {
-        padding-top: 4px;
-        padding-bottom: 4px;
-        min-height: 28px;
+        padding-top: 10px;
+        padding-bottom: 8px;
+        min-height: 40px;
       }
 
-      .mat-mdc-form-field-subscript-wrapper {
-        display: none;
-      }
+      .mat-mdc-form-field-subscript-wrapper { display: none; }
 
       input {
-        font-size: 12px;
+        font-size: 13px;
+        color: #1a1a1a;
+        caret-color: #1a73e8;
       }
 
       mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        color: #666;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #5f6368;
       }
 
-      button mat-icon {
-        font-size: 14px;
-        width: 14px;
-        height: 14px;
+      button {
+        width: 28px;
+        height: 28px;
+        line-height: 28px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
       }
     }
   }

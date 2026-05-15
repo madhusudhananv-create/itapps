@@ -22,13 +22,13 @@
         <mat-label>Select Project</mat-label>
         <mat-select [(ngModel)]="input_projectid" (ngModelChange)="onProjectChange()">
           <mat-option class="search-option">
-            <mat-form-field appearance="outline" class="search-input" (click)="$event.stopPropagation()">
-              <mat-icon matPrefix>search</mat-icon>
+            <mat-form-field appearance="fill" class="search-input" (click)="$event.stopPropagation()">
               <input matInput 
                      [(ngModel)]="projectSearchText" 
                      (ngModelChange)="filterProjects()"
                      placeholder="Search project..."
                      (keydown)="$event.stopPropagation()">
+              <mat-icon matSuffix *ngIf="!projectSearchText">search</mat-icon>
               <button mat-icon-button matSuffix *ngIf="projectSearchText" 
                       (click)="projectSearchText=''; filterProjects(); $event.stopPropagation()">
                 <mat-icon>close</mat-icon>
