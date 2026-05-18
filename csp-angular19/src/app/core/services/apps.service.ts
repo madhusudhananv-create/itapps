@@ -6089,11 +6089,10 @@ export class AppsService {
   service_DowloadFile(type: string, custId: string, projId: string, auditId: number): Observable<Blob> {
     const headers = this.getAuthHeaders();
     return this.http.get(
-      `${this.apiurl}/DownloadFile?type=${type}&custId=${custId}&projId=${projId}&id=${auditId}`,
+      `${this.apiurl}DownloadFile?category=${type}&custId=${custId}&projectId=${projId}&id=${auditId}`,
       { headers, responseType: 'blob' }
     );
   }
-
   /**
    * Save auditee acceptance status for findings
    * Migrated from legacy apps.service.ts -> SaveAuditeeAcceptanceStatus()

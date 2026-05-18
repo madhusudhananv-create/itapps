@@ -15,7 +15,7 @@
   <div *ngIf="checkListFindings.length > 0" class="findings-container">
     
     <!-- Action Buttons at Top -->
-    <div class="action-buttons-top" *ngIf="showCheck || showForQATeam">
+    <div class="action-buttons-top" *ngIf="showCheck || showForQATeam || _access.IsAllowed(108, 1, '', '')">
       <mat-checkbox [(ngModel)]="selectAll" (change)="selectallFindings()">
       </mat-checkbox>
       

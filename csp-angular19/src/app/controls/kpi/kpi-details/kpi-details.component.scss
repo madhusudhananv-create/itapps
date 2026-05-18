@@ -292,6 +292,140 @@
   }
 }
 
+// 🎨 RAG Status Legend
+.rag-status-legend {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+
+  .legend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--accent-blue);
+    }
+  }
+
+  .legend-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-primary);
+    border: 1px solid var(--border-light);
+    transition: var(--transition-swift);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+      min-width: 70px;
+    }
+
+    .legend-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.3;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    // Status-specific colors
+    &.status-exceeded {
+      border-left: 3px solid #00bfff;
+      
+      mat-icon {
+        color: #00bfff;
+      }
+      
+      .legend-label {
+        color: #0095c7;
+      }
+    }
+
+    &.status-met {
+      border-left: 3px solid #237f00;
+      
+      mat-icon {
+        color: #237f00;
+      }
+      
+      .legend-label {
+        color: #1a6000;
+      }
+    }
+
+    &.status-below {
+      border-left: 3px solid #f9a400;
+      
+      mat-icon {
+        color: #f9a400;
+      }
+      
+      .legend-label {
+        color: #c78200;
+      }
+    }
+
+    &.status-not-met {
+      border-left: 3px solid #f60000;
+      
+      mat-icon {
+        color: #f60000;
+      }
+      
+      .legend-label {
+        color: #c70000;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .legend-items {
+      grid-template-columns: 1fr;
+    }
+
+    .legend-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+
+      .legend-label {
+        min-width: unset;
+      }
+    }
+  }
+}
+
 // 🔄 Loading State with Skeletons
 .loading-state {
   display: flex;

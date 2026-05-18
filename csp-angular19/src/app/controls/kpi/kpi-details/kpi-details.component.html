@@ -41,6 +41,36 @@
   </div>
 </div>
 
+  <!-- 🎨 RAG Status Legend -->
+  <div class="rag-status-legend" *ngIf="!_loading && (ShowMonthTable() || ShowWeeklyTable() || ShowQuarterlyTable())">
+    <div class="legend-header">
+      <mat-icon>info</mat-icon>
+      <span>RAG Status Guide - Automated Color Coding</span>
+    </div>
+    <div class="legend-items">
+      <div class="legend-item status-exceeded">
+        <mat-icon>trending_up</mat-icon>
+        <span class="legend-label">Exceeded</span>
+        <span class="legend-desc">Performance exceeds targets</span>
+      </div>
+      <div class="legend-item status-met">
+        <mat-icon>check_circle</mat-icon>
+        <span class="legend-label">Met</span>
+        <span class="legend-desc">Performance meets targets</span>
+      </div>
+      <div class="legend-item status-below">
+        <mat-icon>warning</mat-icon>
+        <span class="legend-label">Below Target</span>
+        <span class="legend-desc">Performance below targets (CAPA required)</span>
+      </div>
+      <div class="legend-item status-not-met">
+        <mat-icon>error</mat-icon>
+        <span class="legend-label">Not Met</span>
+        <span class="legend-desc">Performance not met (CAPA required)</span>
+      </div>
+    </div>
+  </div>
+
   <!-- 📝 Info Banner -->
   <div class="info-banner" *ngIf="!_loading && !ShowMonthTable() && !ShowWeeklyTable() && !ShowQuarterlyTable()">
     <div class="banner-icon">ℹ️</div>

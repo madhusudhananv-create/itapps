@@ -9,6 +9,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { COODashboardCommon } from '../../../../models/coo-dashboard-common.model';
 import { COODashboardService } from '../../../../services/coo-dashboard.service';
+import { KpiRagStatusService } from '../../../../shared/kpi-rag-status.service';
 
 interface GoalDetail {
   goal?: string;
@@ -49,7 +50,8 @@ export class CustomersuccessgoalKpiperformanceComponent implements OnInit {
 
   constructor(
     private _cooDashboardService: COODashboardService,
-    private _sanitizer: DomSanitizer
+    private _sanitizer: DomSanitizer,
+    private ragStatusService: KpiRagStatusService
   ) {}
 
   ngOnInit(): void {
@@ -133,19 +135,29 @@ export class CustomersuccessgoalKpiperformanceComponent implements OnInit {
     }, 500);
   }
 
+  /**
+   * Get status based on score percentage
+   * Now uses centralized RAG status service with predefined benchmarks
+   * Automatically color-codes: Red/Amber/Green/Blue based on performance
+   */
   getStatus(score1: string): SafeHtml {
     let ophtml = '';
     const scoreStr = score1.replace('%', '').trim();
     const score = Number.parseInt(scoreStr);
 
-    if (score >= 95) {
-      ophtml = `<img class="targetImg" style="height: 10px;margin-right: 5px;" src="assets/images/up-arrow.png" /> Above Target`;
-    } else if (score >= 85) {
-      ophtml = `<img class="targetImg" style="height: 14px;margin-right: 5px;" src="assets/images/target.png" /> On Target`;
-    } else if (score >= 70) {
-      ophtml = `<img class="targetImg" style="height: 10px;margin-right: 5px;" src="assets/images/down-arrow.png" /> Below Target`;
+    // Get color code from RAG status service based on predefined benchmarks
+    const colorCode = this.ragStatusService.getColorByPercentage(score);
+    const statusLabel = this.ragStatusService.getStatusLabel(colorCode);
+    
+    // Map color codes to visual indicators
+    if (colorCode === this.ragStatusService.RAG_COLORS.BLUE) {
+      ophtml = `<img class="targetImg" style="height: 10px;margin-right: 5px;" src="assets/images/up-arrow.png" /> ${statusLabel}`;
+    } else if (colorCode === this.ragStatusService.RAG_COLORS.GREEN) {
+      ophtml = `<img class="targetImg" style="height: 14px;margin-right: 5px;" src="assets/images/target.png" /> ${statusLabel}`;
+    } else if (colorCode === this.ragStatusService.RAG_COLORS.AMBER) {
+      ophtml = `<img class="targetImg" style="height: 10px;margin-right: 5px;" src="assets/images/down-arrow.png" /> ${statusLabel}`;
     } else {
-      ophtml = `<img class="targetImg" style="height: 10px;margin-right: 5px;" src="assets/images/down-arrow.png" /> Needs Improvement`;
+      ophtml = `<img class="targetImg" style="height: 10px;margin-right: 5px;" src="assets/images/down-arrow.png" /> ${statusLabel}`;
     }
 
     return this.transform(ophtml);

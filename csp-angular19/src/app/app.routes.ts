@@ -899,6 +899,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/project-data-configuration/project-data-configuration.component')
       .then(m => m.ProjectDataConfigurationComponent),
   },
+  {
+    path: 'accesscontrolrequest/:custId/:projectId/:requestId/:accessTypeText/:accessType/:approveval',
+    canActivate: [authGuard],
+    loadComponent: () => import('./components/accesscontrol-management/accesscontrol-management.component')
+      .then(m => m.AccesscontrolManagementComponent),
+  },
 
   // Wildcard - 404 redirect (must be last)
   {

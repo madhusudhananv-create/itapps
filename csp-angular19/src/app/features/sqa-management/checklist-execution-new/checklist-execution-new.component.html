@@ -117,9 +117,13 @@
                 </a>
               </td>
               <td data-label="Report">
-                <button class="pdf-btn" (click)="handlePdfExport(i, list)" title="Export to PDF">
+                 <button *ngIf="list.status && (list.status.toLowerCase().includes('submit') || list.status.toLowerCase() === 'completed')" 
+                  class="pdf-btn" 
+                  (click)="handlePdfExport(i, list)" 
+                  title="Export to PDF">
                   <mat-icon>picture_as_pdf</mat-icon>
                 </button>
+                
               </td>
             </tr>
           </tbody>

@@ -1,3 +1,11 @@
+<!-- Loading Overlay - shown while processing approve/reject -->
+<div *ngIf="isProcessing" class="loading-overlay">
+  <div class="loading-spinner-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Processing {{ confirmAction }}...</p>
+  </div>
+</div>
+
 <!-- Request Access Button -->
 <!-- Shown when parent sets showAccessRequestButton=true AND user does not already have access -->
 <div *ngIf="showAccessRequestButton && !_access.IsAllowed(resourceId, accessType, '', '')"
@@ -78,14 +86,12 @@
   <mat-dialog-actions class="dialog-actions">
     <button mat-button
       [mat-dialog-close]="'1'"
-      class="btn btn-primary"
-      (click)="onConfirm(true)">
+      class="btn btn-primary">
       Yes
     </button>
     <button mat-button
       [mat-dialog-close]="'0'"
-      class="btn btn-warning"
-      (click)="onConfirm(false)">
+      class="btn btn-warning">
       No
     </button>
   </mat-dialog-actions>

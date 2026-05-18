@@ -47,6 +47,36 @@
     
   </div>
 
+  <!-- 🎨 RAG Status Legend -->
+  <div class="rag-status-legend" *ngIf="showMonth || showQuarter || showRelease">
+    <div class="legend-header">
+      <mat-icon>info</mat-icon>
+      <span>RAG Status Guide - Automated Color Coding</span>
+    </div>
+    <div class="legend-items">
+      <div class="legend-item status-exceeded">
+        <mat-icon>trending_up</mat-icon>
+        <span class="legend-label">Exceeded</span>
+        <span class="legend-desc">Performance exceeds targets</span>
+      </div>
+      <div class="legend-item status-met">
+        <mat-icon>check_circle</mat-icon>
+        <span class="legend-label">Met</span>
+        <span class="legend-desc">Performance meets targets</span>
+      </div>
+      <div class="legend-item status-below">
+        <mat-icon>warning</mat-icon>
+        <span class="legend-label">Below Target</span>
+        <span class="legend-desc">Performance below targets (CAPA required)</span>
+      </div>
+      <div class="legend-item status-not-met">
+        <mat-icon>error</mat-icon>
+        <span class="legend-label">Not Met</span>
+        <span class="legend-desc">Performance not met (CAPA required)</span>
+      </div>
+    </div>
+  </div>
+
   <div *ngIf="!showMonth && !showQuarter && !showRelease"
     class="table-section-header" style="color: #e53e3e;">KPI not
     available
@@ -119,12 +149,20 @@
       </td>
     </ng-container>
     <ng-container matColumnDef="slaStatus">
-      <th mat-header-cell *matHeaderCellDef style="width: 100px;">Service Level Status</th>
-      <td style="text-align: center;" mat-cell *matCellDef="let metricslist"
-      [ngClass]="{'Red':getslaStatusforKPI(metricslist) == 'Not Met'}">{{getslaStatusforKPI(metricslist)}}
-        <a class="link" (click)="ViewCAPA(metricslist.kpI_ID)"
-          *ngIf="addDatas && isCapaVisible && checkIfCAPARequired(metricslist)"><i
-            class="fa fa-pencil"></i></a>
+      <th mat-header-cell *matHeaderCellDef style="width: 150px;">Service Level Status</th>
+      <td style="text-align: center; padding: 8px;" mat-cell *matCellDef="let metricslist">
+        <div class="status-chip-container">
+          <span class="status-chip" [ngClass]="getStatusClass(metricslist)">
+            <mat-icon class="status-icon">{{getStatusIcon(metricslist)}}</mat-icon>
+            <span class="status-text">{{getslaStatusforKPI(metricslist)}}</span>
+          </span>
+          <button mat-icon-button class="capa-action-btn"
+            *ngIf="addDatas && isCapaVisible && checkIfCAPARequired(metricslist)"
+            (click)="ViewCAPA(metricslist.kpI_ID)"
+            matTooltip="View/Edit Corrective Action Plan">
+            <mat-icon>assignment</mat-icon>
+          </button>
+        </div>
       </td>
     </ng-container>
     <tr mat-header-row *matHeaderRowDef="displayedColumns2"></tr>
@@ -199,12 +237,20 @@
       </td>
     </ng-container>
     <ng-container matColumnDef="slaStatus">
-      <th mat-header-cell *matHeaderCellDef style="width: 100px;">Service Level Status</th>
-      <td style="text-align: center;" mat-cell *matCellDef="let metricslist"
-      [ngClass]="{'Red':getslaStatusforKPI(metricslist) == 'Not Met'}">{{getslaStatusforKPI(metricslist)}}
-          <a class="link" (click)="ViewCAPA(metricslist.kpI_ID)"
-          *ngIf="addDatas && isCapaVisible && checkIfCAPARequired(metricslist)"><i
-            class="fa fa-pencil"></i></a>
+      <th mat-header-cell *matHeaderCellDef style="width: 150px;">Service Level Status</th>
+      <td style="text-align: center; padding: 8px;" mat-cell *matCellDef="let metricslist">
+        <div class="status-chip-container">
+          <span class="status-chip" [ngClass]="getStatusClass(metricslist)">
+            <mat-icon class="status-icon">{{getStatusIcon(metricslist)}}</mat-icon>
+            <span class="status-text">{{getslaStatusforKPI(metricslist)}}</span>
+          </span>
+          <button mat-icon-button class="capa-action-btn"
+            *ngIf="addDatas && isCapaVisible && checkIfCAPARequired(metricslist)"
+            (click)="ViewCAPA(metricslist.kpI_ID)"
+            matTooltip="View/Edit Corrective Action Plan">
+            <mat-icon>assignment</mat-icon>
+          </button>
+        </div>
       </td>
     </ng-container>
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -280,12 +326,20 @@
       </td>
     </ng-container>
     <ng-container matColumnDef="slaStatus">
-      <th mat-header-cell *matHeaderCellDef style="width: 100px;">Service Level Status</th>
-      <td style="text-align: center;" mat-cell *matCellDef="let metricslist"
-      [ngClass]="{'Red':getslaStatusforKPI(metricslist) == 'Not Met'}">{{getslaStatusforKPI(metricslist)}}
-        <a class="link" (click)="ViewCAPA(metricslist.kpI_ID)"
-          *ngIf="addDatas && isCapaVisible && checkIfCAPARequired(metricslist)"><i
-            class="fa fa-pencil"></i></a>
+      <th mat-header-cell *matHeaderCellDef style="width: 150px;">Service Level Status</th>
+      <td style="text-align: center; padding: 8px;" mat-cell *matCellDef="let metricslist">
+        <div class="status-chip-container">
+          <span class="status-chip" [ngClass]="getStatusClass(metricslist)">
+            <mat-icon class="status-icon">{{getStatusIcon(metricslist)}}</mat-icon>
+            <span class="status-text">{{getslaStatusforKPI(metricslist)}}</span>
+          </span>
+          <button mat-icon-button class="capa-action-btn"
+            *ngIf="addDatas && isCapaVisible && checkIfCAPARequired(metricslist)"
+            (click)="ViewCAPA(metricslist.kpI_ID)"
+            matTooltip="View/Edit Corrective Action Plan">
+            <mat-icon>assignment</mat-icon>
+          </button>
+        </div>
       </td>
     </ng-container>
     <ng-container matColumnDef="period">

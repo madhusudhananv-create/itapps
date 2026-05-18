@@ -22,6 +22,7 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 // Services
 import { MyUtility as myUtility } from '../../../shared/my-utility';
 import { AppsService } from '../../../core/services/apps.service';
+import { KpiRagStatusService } from '../../../shared/kpi-rag-status.service';
 
 // Components
 import { KpiActionPlanComponent } from '../kpi-action-plan/kpi-action-plan.component';
@@ -70,6 +71,7 @@ export class KpiDetailsComponent implements OnInit, OnChanges {
   public _util: any = inject(myUtility as any);
   private _appservice: any = inject(AppsService as any);
   public dialog: any = inject(MatDialog);
+  public ragStatusService = inject(KpiRagStatusService);
 
   @Input('custId') custId: string = '';
   @Input('projId') projId: string = '';
@@ -534,34 +536,35 @@ export class KpiDetailsComponent implements OnInit, OnChanges {
 
   /**
    * Get status icon based on color code and status
+   * Now uses centralized RAG status service for consistency
    */
   getStatusIcon(colorCode: string, status: string): string {
     if (status === 'NA') return 'remove_circle';
-    
-    const icons: { [key: string]: string } = {
-      '#f60000': 'cancel',        // Not Met - Red
-      '#f9a400': 'warning',       // Below Target - Orange
-      '#237f00': 'check_circle',  // Met - Green  
-      '#00bfff': 'verified'       // Exceeded - Blue
-    };
-    
-    return icons[colorCode] || 'fiber_manual_record';
+    return this.ragStatusService.getStatusIcon(colorCode);
   }
 
   /**
    * Get status label based on color code and status
+   * Now uses centralized RAG status service for consistency
    */
   getStatusLabel(colorCode: string, status: string): string {
     if (status === 'NA') return 'N/A';
-    
-    const labels: { [key: string]: string } = {
-      '#f60000': 'Not Met',
-      '#f9a400': 'Below Target',
-      '#237f00': 'Met',
-      '#00bfff': 'Exceeded'
-    };
-    
-    return labels[colorCode] || 'Unknown';
+    return this.ragStatusService.getStatusLabel(colorCode);
+  }
+
+  /**
+   * Get benchmark information for display
+   * Shows users what the RAG status thresholds are
+   */
+  getBenchmarkInfo(): any {
+    return this.ragStatusService.getBenchmarkDescription();
+  }
+
+  /**
+   * Check if CAPA is required based on RAG status
+   */
+  requiresCAPA(colorCode: string): boolean {
+    return this.ragStatusService.requiresCAPA(colorCode);
   }
 
   // ============================================

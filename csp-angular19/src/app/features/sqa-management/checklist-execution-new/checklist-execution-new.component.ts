@@ -727,7 +727,31 @@ export class ChecklistExecutionNewComponent implements OnInit {
         this._utility.showSuccessPopup('File downloaded successfully');
       },
       error => {
-        this._utility.serviceError(error);
+        // Handle Blob errors (file download endpoints that return JSON errors)
+        if (error.error instanceof Blob && error.error.type === 'application/json') {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const errorText = reader.result as string;
+              const errorJson = JSON.parse(errorText);
+              
+              // Extract error message from backend
+              const errorMessage = errorJson.Message || errorJson.message || 
+                                 errorJson.ExceptionMessage || errorJson.exceptionMessage ||
+                                 'An error occurred while generating the report';
+              
+              this._utility.showError(errorMessage);
+            } catch {
+              this._utility.serviceError(error);
+            }
+          };
+          reader.onerror = () => {
+            this._utility.serviceError(error);
+          };
+          reader.readAsText(error.error);
+        } else {
+          this._utility.serviceError(error);
+        }
       });
   }
 

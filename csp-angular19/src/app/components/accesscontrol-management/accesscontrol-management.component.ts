@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, TemplateRef, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, Input, ViewChild, TemplateRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -42,7 +42,7 @@ import { AccessRequestModel } from '../../models/access-control.model';
   templateUrl: './accesscontrol-management.component.html',
   styleUrls: ['./accesscontrol-management.component.scss']
 })
-export class AccesscontrolManagementComponent implements OnInit {
+export class AccesscontrolManagementComponent implements OnInit, AfterViewInit {
 
   // ── Dependency injection ────────────────────────────────────────────────
   public  _access      = inject(AccessControl);
@@ -78,6 +78,12 @@ export class AccesscontrolManagementComponent implements OnInit {
    *  component re-renders and page navigation. */
   alreadyRequested: boolean = false;
   isRequestingAccess: boolean = false;
+  
+  /** Flag to show loading indicator while processing approve/reject */
+  isProcessing: boolean = false;
+  
+  /** Flag to defer dialog opening until after view initialization */
+  private shouldOpenDialog: boolean = false;
 
   /** localStorage key scoped to employee + resourceId. */
   private get _pendingKey(): string {
@@ -91,10 +97,72 @@ export class AccesscontrolManagementComponent implements OnInit {
     this.alreadyRequested = localStorage.getItem(this._pendingKey) === 'true';
 
     this.route.params.subscribe(params => {
-      if (params['requestid']) {
-        this.acceptOrRejectRequestAccess();
+      // Support both old query param format and new route param format
+      if (params['requestid'] || params['requestId']) {
+        this.shouldOpenDialog = true;
+        // Prepare the access request data from route params
+        this.prepareAccessRequestData(params);
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    // If we detected approval route params in ngOnInit but view wasn't ready,
+    // open dialog now that template is available
+    if (this.shouldOpenDialog && this.confirmationDialogAccessTemplate) {
+      setTimeout(() => this.confirmDialogOpen(), 0);
+    }
+  }
+
+  /**
+   * Prepares access request data from route params
+   * Extracted to avoid double subscription and ensure data is ready before dialog opens
+   * Legacy route: accesscontrolrequest/:custid/:projid/:requestid/:accesstypetext/:accesstype/:approveval
+   */
+  private prepareAccessRequestData(params: any): void {
+    this.accessRequestData = {} as AccessRequestModel;
+    
+    // Support new route param format (from email link)
+    if (params['custId']) {
+      this.accessRequestData.id            = params['requestId'] || params['requestid'];
+      this.accessRequestData.accesS_LEVEL  = params['accessType'] || params['accesstype'];
+      this.accessRequestData.proJ_ID       = params['projectId'] || params['projid'];
+      this.accessRequestData.cusT_ID       = params['custId'] || params['custid'];
+      this.accessRequestData.feature       = params['accessTypeText'] || params['accesstypetext'] || params['feature'] || '';
+      this.accessRequestData.approveR_ID   = localStorage.getItem('empid') ?? '';
+      this.accessRequestData.approvaL_DATE = new Date();
+
+      // Legacy logic: approveval === "1" means approve, else reject
+      if (params['approveval'] === '1') {
+        this.confirmAction    = 'approve';
+        this.accessRequestData.status = 'Approved';
+        this.showReasonInput  = false;
+      } else {
+        this.confirmAction    = 'reject';
+        this.accessRequestData.status = 'Rejected';
+        this.showReasonInput  = true;
+      }
+    } 
+    // Support old query param format (backward compatibility)
+    else {
+      this.accessRequestData.id            = params['requestid'];
+      this.accessRequestData.accesS_LEVEL  = params['accesstype'];
+      this.accessRequestData.proJ_ID       = params['projid'];
+      this.accessRequestData.cusT_ID       = params['custid'];
+      this.accessRequestData.feature       = params['feature'] || params['accesstypetext'];
+      this.accessRequestData.approveR_ID   = localStorage.getItem('empid') ?? '';
+      this.accessRequestData.approvaL_DATE = new Date();
+
+      if (params['approveval'] === '1') {
+        this.confirmAction    = 'approve';
+        this.accessRequestData.status = 'Approved';
+        this.showReasonInput  = false;
+      } else {
+        this.confirmAction    = 'reject';
+        this.accessRequestData.status = 'Rejected';
+        this.showReasonInput  = true;
+      }
+    }
   }
 
   // ── Request Access (button click) ───────────────────────────────────────
@@ -160,36 +228,6 @@ export class AccesscontrolManagementComponent implements OnInit {
 
   // ── Accept / Reject flow (approver deep-link) ───────────────────────────
   /**
-   * Reads route params set by the approval email link and prepares the
-   * confirmation dialog.
-   * Migrated from legacy acceptOrRejectRequestAccess()
-   */
-  acceptOrRejectRequestAccess(): void {
-    this.route.params.subscribe(params => {
-      this.accessRequestData = {} as AccessRequestModel;
-      this.accessRequestData.id            = params['requestid'];
-      this.accessRequestData.accesS_LEVEL  = params['accesstype'];
-      this.accessRequestData.proJ_ID       = params['projid'];
-      this.accessRequestData.cusT_ID       = params['custid'];
-      this.accessRequestData.feature       = params['feature'];
-      this.accessRequestData.approveR_ID   = localStorage.getItem('empid') ?? '';
-      this.accessRequestData.approvaL_DATE = new Date();
-
-      if (params['approveval'] === '1') {
-        this.confirmAction    = 'approve';
-        this.accessRequestData.status = 'Approved';
-        this.showReasonInput  = false;
-      } else {
-        this.confirmAction    = 'reject';
-        this.accessRequestData.status = 'Rejected';
-        this.showReasonInput  = true;
-      }
-
-      this.confirmDialogOpen();
-    });
-  }
-
-  /**
    * Opens the Material dialog using the inline template.
    * Migrated from legacy confirmDialogOpen()
    */
@@ -237,15 +275,18 @@ export class AccesscontrolManagementComponent implements OnInit {
    * Migrated from legacy processApproveReject()
    */
   processApproveReject(): void {
+    this.isProcessing = true;
     this._appservice.saveApproveRejectRequestAccess(this.accessRequestData).subscribe({
       next: () => {
         // Clear any pending-access localStorage keys for this resource
         localStorage.removeItem(this._pendingKey);
+        this.isProcessing = false;
         this.router.navigateByUrl('/newdashboard/custm');
         this._util.showSuccess('Access ' + this.accessRequestData.status + ' successfully.');
         this.reasonText = '';
       },
       error: (error: any) => {
+        this.isProcessing = false;
         this.reasonText = '';
         this._util.serviceError(error);
       }
