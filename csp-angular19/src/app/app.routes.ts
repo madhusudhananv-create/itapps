@@ -478,6 +478,12 @@ export const routes: Routes = [
           .then(m => m.IssuesPageComponent)
       },
       // Checklist Findings routes - ✅ COMPLETE
+      // Resubmit approval route (from email link) - must be before generic :custid route
+      {
+        path: 'checklistfindings/resubmit/:custid/:projid/:auditid/:isApproveReject',
+        loadComponent: () => import('./features/sqa-management/checklist-execution-new/checklist-execution-new.component')
+          .then(m => m.ChecklistExecutionNewComponent)
+      },
       {
         path: 'checklistfindings/:custid',
         loadComponent: () => import('./pages/layout/checklist-findings-page/checklist-findings-page.component')

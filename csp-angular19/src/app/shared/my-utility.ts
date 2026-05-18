@@ -455,7 +455,7 @@ export class MyUtility {
     dialogConfig.width = '500px';
 
     const dialogRef = this.matDialog.open(WarningPopupComponent, dialogConfig);
-    return dialogRef;
+    return dialogRef.afterClosed();
   }
 
   // ========================================
