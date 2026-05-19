@@ -136,7 +136,7 @@ export class ChecklistFindingsPageComponent implements OnInit {
   // ── Pagination ──────────────────────────────────────────────────────────
   pagedAudits: any[] = [];       // slice shown in the table
   filteredAudits: any[] = [];    // search-filtered list
-  pageSize: number = 5;
+  pageSize: number = 10;
   pageIndex: number = 0;
   pageSizeOptions: number[] = [5, 10, 20];
   searchQuery: string = '';

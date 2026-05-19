@@ -92,7 +92,7 @@ describe('ChecklistFindingsPageComponent', () => {
     expect(component.allproj).toBe(false);
     expect(component.isLoading).toBe(false);
     expect(component.issubmitenabled).toBe(false);
-    expect(component.pageSize).toBe(5);
+    expect(component.pageSize).toBe(10);
     expect(component.pageIndex).toBe(0);
   });
 
