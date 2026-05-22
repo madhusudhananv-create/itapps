@@ -122,6 +122,8 @@ export class TaskAddComponent implements OnInit, OnChanges {
   ];
 
   isSubmit: boolean = true;
+  // UI validation state for showing errors without triggering popups
+  uiValidationAttempted: boolean = false;
   isLoading: boolean = false;
   showMoreDetails: boolean = false;
   showServiceTower: boolean = false;
@@ -507,7 +509,7 @@ export class TaskAddComponent implements OnInit, OnChanges {
     return this.IsValidForm();
   }
 
-  IsValidForm(): boolean {
+ IsValidForm(): boolean {
     const empId = localStorage.getItem('empid') || '';
     
     if (this.Auditees.length == 0) {
@@ -554,22 +556,36 @@ export class TaskAddComponent implements OnInit, OnChanges {
       }
     }
 
-    // Validate Appraiser & Appraisees for audit tasks
+    // Validate Service Tower, Appraiser & Appraisees for audit tasks
     if (this.taskService.selectedTask.isAudit && !this.taskService.selectedTask.isAllDisabled && 
         this.taskService.selectedTask.tasK_TYPE_ID == 2 && !this.showServiceTower && 
         this.taskService.selectedTask.iS_DRAFT == false) {
-      if (this.taskService.auditSchedule.auditoR_EMP_ID == undefined) {
+      
+      const serviceTower = this.taskService.auditSchedule?.servicE_AREA_ID;
+      const appraiser = this.taskService.auditSchedule?.auditoR_EMP_ID;
+      const appraisee = this.taskService.auditSchedule?.auditeE_EMP_ID;
+      
+      const isServiceTowerMissing = serviceTower == undefined || serviceTower == null || (Array.isArray(serviceTower) && serviceTower.length === 0);
+      const isAppraiserMissing = appraiser == undefined || appraiser == null || appraiser.trim() === '';
+      const isAppraiseeMissing = appraisee == undefined || appraisee == null || appraisee.length === 0;
+
+      if (isServiceTowerMissing) {
+        this._util.showWarningPopup("Please select a Service Tower");
+        return false;
+      }
+
+      if (isAppraiserMissing) {
         this._util.showWarningPopup("Please select an Appraiser");
         return false;
       }
-      if (this.taskService.auditSchedule.auditeE_EMP_ID == undefined || 
-          (Array.isArray(this.taskService.auditSchedule.auditeE_EMP_ID) && this.taskService.auditSchedule.auditeE_EMP_ID.length == 0)) {
+
+      if (isAppraiseeMissing) {
         this._util.showWarningPopup("Please select an Appraisee");
         return false;
       }
     }
 
-    if (this.taskService.selectedTask.status.toLowerCase() == "re-schedule") {
+    if (this.taskService.selectedTask.status && this.taskService.selectedTask.status.toLowerCase() == "re-schedule") {
       if (this.taskService.selectedTask.reschedulE_DATE == null) { this._util.showWarningPopup("Please enter Re-Scheduled Date"); return false; }
       if (this.taskService.selectedTask.reschedulE_REASON == null || this.taskService.selectedTask.reschedulE_REASON == "") { this._util.showWarningPopup("Please enter Reason for Re-schedule"); return false; }
       if (this.taskService.selectedTask.reschedulE_REQUESTER == null) { this._util.showWarningPopup("Please select Requester"); return false; }
@@ -662,7 +678,6 @@ export class TaskAddComponent implements OnInit, OnChanges {
 
     return isValid;
   }
-
   SaveRow_onClick(isDraft: boolean): void {
     const specialCharPattern = /^[!@#$%^&*(),.?":{}|<>~`_\-+=\[\]\\\/\s]+$/;
     const numberPattern = /^[0-9\s]+$/;
@@ -741,9 +756,45 @@ export class TaskAddComponent implements OnInit, OnChanges {
       }
     }
 
+    // Mark UI validation attempt to show inline errors
+    this.uiValidationAttempted = true;
     if (this.IsValidForm()) {
       this.service_AddTask(this.taskService.selectedTask);
     }
+  }
+
+  // UI-only check used to enable/disable submit button and show error styling
+  isAuditFieldsValidForUI(): boolean {
+    try {
+      if (!this.taskService.selectedTask) return true;
+      if (!this.taskService.selectedTask.isAudit) return true;
+      if (this.taskService.selectedTask.isAllDisabled) return true;
+      if (this.taskService.selectedTask.tasK_TYPE_ID != 2) return true;
+      if (this.showServiceTower) return true;
+
+      const serviceTower = this.taskService.auditSchedule?.servicE_AREA_ID;
+      const appraiser = this.taskService.auditSchedule?.auditoR_EMP_ID;
+      const appraisee = this.taskService.auditSchedule?.auditeE_EMP_ID;
+
+      // Verification conditions for all mandatory fields in audit tasks
+      const hasServiceTower = serviceTower !== undefined && serviceTower !== null && Array.isArray(serviceTower) && serviceTower.length > 0;
+      const hasAppraiser = appraiser !== undefined && appraiser !== null && (typeof appraiser === 'string' ? appraiser.trim() !== '' && appraiser !== '0' : true);
+      const hasAppraisee = appraisee !== undefined && appraisee !== null && Array.isArray(appraisee) && appraisee.length > 0;
+
+      return hasServiceTower && hasAppraiser && hasAppraisee;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  isAppraiserValidForUI(): boolean {
+    const appraiser = this.taskService.auditSchedule?.auditoR_EMP_ID;
+    return !(appraiser == undefined || appraiser == null || (typeof appraiser === 'string' && (appraiser.trim() === '' || appraiser === '0')));
+  }
+
+  isAppraiseeValidForUI(): boolean {
+    const appraisee = this.taskService.auditSchedule?.auditeE_EMP_ID;
+    return Array.isArray(appraisee) && appraisee.length > 0;
   }
 
   service_AddTask(task: TaskModel): void {

@@ -165,14 +165,14 @@
 
               <div class="field-wrap">
                 <label>Assessment Title</label>
-                <mat-form-field appearance="outline" class="modern-field field-textarea">
+                <mat-form-field appearance="outline" class="modern-field field-textarea" [matTooltip]="auditDataTitle" matTooltipPosition="above">
                   <textarea matInput [(ngModel)]="auditDataTitle" [readonly]="true" [disabled]="true" rows="2"></textarea>
                 </mat-form-field>
               </div>
 
               <div class="field-wrap" [class.field-error]="validationAttempted && hasAppraiserError">
                 <label>Appraiser Name <span class="req">*</span></label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="appraiserTooltip" matTooltipPosition="above">
                   <mat-select [(ngModel)]="selectedAuditor" 
                     (ngModelChange)="onAppraiserChange()" 
                     [disabled]="IsSubmitted || isCreateAccessDisabled" required>
@@ -183,7 +183,7 @@
 
               <div class="field-wrap" [class.field-error]="validationAttempted && hasAppraiseeError">
                 <label>Appraisee Name(s) <span class="req">*</span></label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="appraiseeTooltip" matTooltipPosition="above">
                   <mat-select [(ngModel)]="selectedAuditees" 
                     (ngModelChange)="onAppraiseeChange()" 
                     multiple [disabled]="IsSubmitted || isCreateAccessDisabled" required>
@@ -194,7 +194,7 @@
 
               <div class="field-wrap">
                 <label>Planned Start Date</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="startDate | date:'yyyy-MM-dd'" matTooltipPosition="above">
                   <input matInput [matDatepicker]="picker1" [(ngModel)]="startDate" [readonly]="true" [disabled]="true">
                   <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
                   <mat-datepicker #picker1></mat-datepicker>
@@ -203,7 +203,7 @@
 
               <div class="field-wrap">
                 <label>Planned End Date</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="endDate | date:'yyyy-MM-dd'" matTooltipPosition="above">
                   <input matInput [matDatepicker]="picker2" [(ngModel)]="endDate" [readonly]="true" [disabled]="true">
                   <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
                   <mat-datepicker #picker2></mat-datepicker>
@@ -212,14 +212,14 @@
 
               <div class="field-wrap">
                 <label>Planned Hrs</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="plannedHours.toString()" matTooltipPosition="above">
                   <input matInput type="number" [(ngModel)]="plannedHours" [readonly]="true" [disabled]="true">
                 </mat-form-field>
               </div>
 
               <div class="field-wrap">
                 <label>Actual Hrs</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="actualHours.toString()" matTooltipPosition="above">
                   <input matInput type="number" [(ngModel)]="actualHours" [disabled]="IsSubmitted || isCreateAccessDisabled">
                 </mat-form-field>
               </div>
@@ -231,7 +231,7 @@
 
               <div class="field-wrap">
                 <label>Choose a Checklist</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="selectedChecklistTooltip" matTooltipPosition="above">
                   <mat-select [(ngModel)]="selectedchecklist"
                     [disabled]="IsChecklistDisabled || IsSubmitted || isCreateAccessDisabled"
                     (selectionChange)="setChecklistData()">
@@ -244,21 +244,21 @@
 
               <div class="field-wrap">
                 <label>Version</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="checklistversion?.toString()" matTooltipPosition="above">
                   <input matInput type="number" [(ngModel)]="checklistversion" [readonly]="true" [disabled]="true">
                 </mat-form-field>
               </div>
 
               <div class="field-wrap">
                 <label>Score</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="checklistScore?.toString()" matTooltipPosition="above">
                   <input matInput type="number" [(ngModel)]="checklistScore" [readonly]="true" [disabled]="true">
                 </mat-form-field>
               </div>
 
               <div class="field-wrap">
                 <label>Process Compliance (%)</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="checklistScorePercentage?.toString()" matTooltipPosition="above">
                   <input matInput type="number" [(ngModel)]="checklistScorePercentage" [readonly]="true" [disabled]="true">
                 </mat-form-field>
               </div>
@@ -281,7 +281,7 @@
 
               <div class="field-wrap" [class.field-error]="validationAttempted && hasActualStartError">
                 <label>Actual Start Date</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="actualstartDate | date:'yyyy-MM-dd'" matTooltipPosition="above">
                   <input matInput [matDatepicker]="picker3" [(ngModel)]="actualstartDate"
                     (ngModelChange)="onActualStartDateChange()"
                     [min]="startDate" [max]="_utility.Today()"
@@ -293,7 +293,7 @@
 
               <div class="field-wrap" [class.field-error]="validationAttempted && hasActualEndError">
                 <label>Actual End Date</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="actualendDate | date:'yyyy-MM-dd'" matTooltipPosition="above">
                   <input matInput [matDatepicker]="picker4" [(ngModel)]="actualendDate"
                     (ngModelChange)="onActualEndDateChange()"
                     [min]="startDate" [max]="_utility.Today()" [disabled]="IsSubmitted">
@@ -304,7 +304,7 @@
 
               <div class="field-wrap">
                 <label>Customer</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="customerTooltip" matTooltipPosition="above">
                   <mat-select [(ngModel)]="custIds" multiple (selectionChange)="LoadCustomerID()"
                     (openedChange)="sortCustomer()" [disabled]="IsSubmitted || isCreateAccessDisabled">
                     <div class="dropdown-search">
@@ -323,7 +323,7 @@
 
               <div class="field-wrap">
                 <label>CC List</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="ccTooltip" matTooltipPosition="above">
                   <mat-select [(ngModel)]="selectedCCs" multiple (openedChange)="sortCCList()"
                     [disabled]="IsSubmitted || isCreateAccessDisabled">
                     <div class="dropdown-search">
@@ -343,7 +343,7 @@
 
               <div class="field-wrap">
                 <label>To List</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="toTooltip" matTooltipPosition="above">
                   <mat-select [(ngModel)]="selectedTos" multiple (openedChange)="sortToList()"
                     [disabled]="IsSubmitted || isCreateAccessDisabled">
                     <div class="dropdown-search">
@@ -363,7 +363,7 @@
 
               <div class="field-wrap">
                 <label>Applicable Service Tower</label>
-                <mat-form-field appearance="outline" class="modern-field">
+                <mat-form-field appearance="outline" class="modern-field" [matTooltip]="serviceAreaTooltip" matTooltipPosition="above">
                   <mat-select [(ngModel)]="selectedServiceArea" multiple [disabled]="true">
                     <mat-option *ngFor="let list of serviceAreaNew" [value]="list.id">{{ list.title }}</mat-option>
                   </mat-select>

@@ -12,6 +12,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatRadioModule, MatRadioGroup } from '@angular/material/radio';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog, MatDialogRef, MatDialogConfig, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatNativeDateModule } from '@angular/material/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -55,6 +56,7 @@ export class PlannedAuditData {
     MatExpansionModule,
     MatTabsModule,
     MatRadioModule,
+    MatTooltipModule,
     MatDialogModule,
     ProjectSelectorComponent,
     ChecklistAuditeeComponent
@@ -419,6 +421,12 @@ export class ChecklistExecutionNewComponent implements OnInit {
         this.auditorList = this.ddData.auditoR_LIST;
         this.serviceArea = this.ddData.servicE_AREA;
         this.serviceAreaNew = this.ddData.procesS_SERVICE_AREA_NEW;
+
+        // If a selectedAuditor was set earlier (from planned audits), normalize it now
+        if (this.selectedAuditor && this.auditorList && this.auditorList.length > 0) {
+          const found = this.auditorList.find((a: any) => a.emP_ID === this.selectedAuditor || a.id === this.selectedAuditor || (a.frsT_NM && this.selectedAuditor && a.frsT_NM.toLowerCase().includes(this.selectedAuditor.toString().toLowerCase())));
+          if (found) this.selectedAuditor = found.emP_ID;
+        }
       }, error => { this._utility.serviceError(error); });
   }
 
@@ -592,8 +600,20 @@ export class ChecklistExecutionNewComponent implements OnInit {
     if (this.checklistSummaryRec.audiT_ACTUAL_HOURS != null)
       this.actualHours = this.checklistSummaryRec.audiT_ACTUAL_HOURS;
 
-    if (this.checklistSummaryRec.auditoR_ID != "0")
+    // Preserve any previously-set auditor (e.g., from planned-audit row) if checklist does not provide a valid auditor
+    const prevSelectedAuditor = this.selectedAuditor;
+    if (this.checklistSummaryRec.auditoR_ID && this.checklistSummaryRec.auditoR_ID !== '0') {
       this.selectedAuditor = this.checklistSummaryRec.auditoR_ID;
+    } else {
+      // keep prevSelectedAuditor (do nothing) so UI doesn't briefly show then disappear
+      this.selectedAuditor = prevSelectedAuditor || '';
+    }
+
+    // Normalize auditor id to match `auditorList` entries (they use `emP_ID`)
+    if (this.selectedAuditor && this.auditorList && this.auditorList.length > 0) {
+      const found = this.auditorList.find((a: any) => a.emP_ID === this.selectedAuditor || a.id === this.selectedAuditor || (a.frsT_NM && this.selectedAuditor && a.frsT_NM.toLowerCase().includes(this.selectedAuditor.toString().toLowerCase())));
+      if (found) this.selectedAuditor = found.emP_ID;
+    }
 
     if (checklist.auditeE_NAMES != null && checklist.auditeE_NAMES.length > 0)
       this.selectedAuditees = checklist.auditeE_NAMES;
@@ -702,6 +722,59 @@ export class ChecklistExecutionNewComponent implements OnInit {
 
   getMinDate(): Date {
     return this.startDate ? this.startDate : new Date();
+  }
+
+  get appraiserTooltip(): string {
+    // Try to find by emP_ID first, then id, then by name contains
+    let auditor = this.auditorList?.find((item: any) => item.emP_ID === this.selectedAuditor);
+    if (!auditor)
+      auditor = this.auditorList?.find((item: any) => item.id === this.selectedAuditor || (item.frsT_NM && this.selectedAuditor && item.frsT_NM.toLowerCase().includes(this.selectedAuditor.toString().toLowerCase())));
+    return auditor?.frsT_NM || this.selectedAuditor || '';
+  }
+
+  get appraiseeTooltip(): string {
+    if (!this.selectedAuditees?.length) {
+      return '';
+    }
+    const names = this.auditeesList?.filter((item: any) => this.selectedAuditees.includes(item.emP_ID)).map((item: any) => item.frsT_NM);
+    return names?.length ? names.join(', ') : this.selectedAuditees.join(', ');
+  }
+
+  get selectedChecklistTooltip(): string {
+    const selected = this.checklist?.find((item: any) => item.checklisT_ID === this.selectedchecklist);
+    return selected ? `${selected.checklisT_NAME} (${selected.versioN_ID} - ${selected.checklisT_EFFECTIVE_FROM?.slice(0,10)})` : '';
+  }
+
+  get customerTooltip(): string {
+    if (!this.custIds?.length) {
+      return '';
+    }
+    const names = this.Customer?.filter((item: any) => this.custIds.includes(item.cusT_ID)).map((item: any) => item.cusT_NM);
+    return names?.length ? names.join(', ') : this.custIds.join(', ');
+  }
+
+  get ccTooltip(): string {
+    if (!this.selectedCCs?.length) {
+      return '';
+    }
+    const names = this.originalCCList?.filter((item: any) => this.selectedCCs.includes(item.emP_ID)).map((item: any) => item.frsT_NM);
+    return names?.length ? names.join(', ') : this.selectedCCs.join(', ');
+  }
+
+  get toTooltip(): string {
+    if (!this.selectedTos?.length) {
+      return '';
+    }
+    const names = this.originalToList?.filter((item: any) => this.selectedTos.includes(item.emP_ID)).map((item: any) => item.frsT_NM);
+    return names?.length ? names.join(', ') : this.selectedTos.join(', ');
+  }
+
+  get serviceAreaTooltip(): string {
+    if (!this.selectedServiceArea?.length) {
+      return '';
+    }
+    const names = this.serviceAreaNew?.filter((item: any) => this.selectedServiceArea.includes(item.id)).map((item: any) => item.title);
+    return names?.length ? names.join(', ') : this.selectedServiceArea.join(', ');
   }
 
   getMandatoryFindingTypeForFailedStatus() {
