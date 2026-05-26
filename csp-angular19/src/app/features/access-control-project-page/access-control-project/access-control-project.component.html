@@ -35,7 +35,7 @@
             </mat-select>
           </mat-form-field>
 
-          <button mat-raised-button class="btn-update-inline" [disabled]="isCreateAccessDisabled" (click)="UpdateResourceAdminDetails_OnClick()">Update Role</button>
+          <button mat-raised-button class="btn-update-inline" [disabled]="isCreateAccessDisabled" (click)="UpdateResourceAdminDetails_OnClick()" *ngIf="_access.IsAllowed(828, 1, '', '')" >Update Role</button>
         </div>
         
         <div class="admin-process-buttons" *ngIf="_util.is102802()" style="margin-top: 15px;">

@@ -7123,11 +7123,11 @@ export class AppsService {
   }
 
 
-  updateEmpInfo(EmpInfoDetailedModel: any): Observable<any> {
+updateEmpInfo(empId: string, csmtitleId: number): Observable<any> {
     const headers = this.getAuthHeaders();
     return this.http.post<any>(
-      `${this.apiurl}/UpdateEmpInfoDetails`,
-      EmpInfoDetailedModel,
+      `${this.apiurl}/UpdateEmpInfoDetails?empId=${empId}&csmtitleId=${csmtitleId}`,
+      {}, 
       { headers }
     );
 }

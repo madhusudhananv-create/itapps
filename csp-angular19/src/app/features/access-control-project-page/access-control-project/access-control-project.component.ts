@@ -73,7 +73,7 @@ export class AccessControlProjectComponent implements OnInit {
 
   // Configuration properties for UI state rules and role dropdown lookup array
   rolesList: any[] = [];
-  selectedRoleId: number | null = null;
+  selectedRoleId: number = 0;
   isDetailsLoaded: boolean = false; // Controls dropdown display initialization state
 
   constructor(
@@ -173,7 +173,7 @@ export class AccessControlProjectComponent implements OnInit {
       this.service_GetProjectResourceByEmpId(selectedResource.emP_ID);
       
       // Map row elements and flip validation flag
-      this.selectedRoleId = selectedResource.csM_TITLE_ID || null;
+      this.selectedRoleId = selectedResource.csM_TITLE_ID || 0;
       this.isDetailsLoaded = true; 
     }
     else {
@@ -188,12 +188,9 @@ export class AccessControlProjectComponent implements OnInit {
     if (this.myControl.value != null && this.myControl.value != "") {
       const empId = this.myControl.value.emP_ID;
       
-      const payload = {
-        EMP_ID: empId,
-        CSM_TITLE_ID: this.selectedRoleId
-      };
 
-      this._appservice.updateEmpInfo(payload).subscribe({
+
+      this._appservice.updateEmpInfo(empId, this.selectedRoleId).subscribe({
         next: (data) => {
           this._util.showSuccessPopup("Resource changes saved successfully!");
           this.myControl.value.csM_TITLE_ID = this.selectedRoleId;
