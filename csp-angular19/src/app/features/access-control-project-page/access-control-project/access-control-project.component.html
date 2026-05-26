@@ -20,16 +20,36 @@
         <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
           <mat-option *ngFor="let option of filteredOptions | async" [value]="option" [title]="option.frsT_NM">{{option.frsT_NM}}</mat-option>
         </mat-autocomplete>
-        <button mat-raised-button color="primary" (click)="GetDetails_Onclick()">Get Details</button>
-        <button *ngIf="_util.is102802()" (click)="ProcessPSA()">Process PSA </button>
-        <input *ngIf="_util.is102802()" type="text"  [(ngModel)]="crispMonth" >
-        <input *ngIf="_util.is102802()" type="text"  [(ngModel)]="crispYear" >
-        <button *ngIf="_util.is102802()" (click)="ProcessCrisp()">Process Crisp </button>
-        <button *ngIf="_util.is102802()" (click)="ProcessCrispPM()">Process Crisp PM</button>
-        <button *ngIf="_util.is102802()" (click)="ProcessC()">Process C</button>
-        <button *ngIf="_util.is102802()" (click)="CreateNewProject()">Create New Project</button>
-        <button  *ngIf="_util.is102802()"  (click)="GeneralMethod()">General Method Call</button>  
-        <button  *ngIf="_util.IsQuality()"  (click)="ProcessExternalKPI()">Process External KPIs</button>  
+        
+        <div class="search-actions-container">
+          <button mat-raised-button color="primary" (click)="GetDetails_Onclick()">Get Details</button>
+        </div>
+
+        <div class="admin-inline-row" *ngIf="isDetailsLoaded && myControl.value">
+          <mat-form-field class="role-dropdown-field">
+            <mat-label>Employee Role</mat-label>
+            <mat-select [(ngModel)]="selectedRoleId">
+              <mat-option *ngFor="let role of rolesList" [value]="role.id">
+                {{role.name}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-raised-button class="btn-update-inline" [disabled]="isCreateAccessDisabled" (click)="UpdateResourceAdminDetails_OnClick()">Update Role</button>
+        </div>
+        
+        <div class="admin-process-buttons" *ngIf="_util.is102802()" style="margin-top: 15px;">
+          <button (click)="ProcessPSA()">Process PSA </button>
+          <input type="text"  [(ngModel)]="crispMonth" >
+          <input type="text"  [(ngModel)]="crispYear" >
+    
+          <button (click)="ProcessCrisp()">Process Crisp </button>
+          <button (click)="ProcessCrispPM()">Process Crisp PM</button>
+          <button (click)="ProcessC()">Process C</button>
+          <button (click)="CreateNewProject()">Create New Project</button>
+          <button (click)="GeneralMethod()">General Method Call</button>  
+        </div>
+        <button *ngIf="_util.IsQuality()" (click)="ProcessExternalKPI()">Process External KPIs</button>  
       </mat-card-content>
     </mat-card>
   </div>

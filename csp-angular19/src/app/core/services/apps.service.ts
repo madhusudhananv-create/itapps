@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
 // Import models
 import type { 
   AppAccessControlsModel, 
@@ -7122,6 +7121,16 @@ export class AppsService {
       { headers: this.getAuthHeaders() }
     );
   }
+
+
+  updateEmpInfo(EmpInfoDetailedModel: any): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.post<any>(
+      `${this.apiurl}/UpdateEmpInfoDetails`,
+      EmpInfoDetailedModel,
+      { headers }
+    );
+}
 }
 
 // ============================================

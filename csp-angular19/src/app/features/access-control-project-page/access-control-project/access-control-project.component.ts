@@ -12,6 +12,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
+import { MatSelectModule } from '@angular/material/select'; // Angular Material Dropdown
 
 import { EmpInfoModel, ProjectResourceByEmpIdModel, ProjectResourceModel } from '../../../models/emp-info.model';
 import { MyUtility } from '../../../shared/my-utility';
@@ -24,15 +25,6 @@ import { AddProjectsModel } from '../../../models/projects.model';
 /**
  * Access Control Project Component (Resource wise Projects)
  * Allows assigning projects to resources
- * 
- * Features:
- * - Search resource by name (autocomplete)
- * - View resource's assigned projects
- * - Add new project to resource
- * - Edit/Delete project assignments
- * - Set project resource flag and billable flag
- * - Start/End date management
- * - Admin functions (Process PSA, CRISP, etc.)
  */
 @Component({
   selector: 'app-access-control-project',
@@ -50,6 +42,7 @@ import { AddProjectsModel } from '../../../models/projects.model';
     MatProgressBarModule,
     MatSlideToggleModule,
     MatTableModule,
+    MatSelectModule, 
     ProjectSelectorComponent,
     DialogYesNoComponent
   ],
@@ -58,7 +51,6 @@ import { AddProjectsModel } from '../../../models/projects.model';
 })
 export class AccessControlProjectComponent implements OnInit {
   @ViewChild(ProjectSelectorComponent) _projectSelector!: ProjectSelectorComponent;
-  
   custId: string = '';
   projId: string = '';
   isBillable: boolean = false;
@@ -70,7 +62,7 @@ export class AccessControlProjectComponent implements OnInit {
   dataSource: ProjectResourceByEmpIdModel[] = [];
   displayedColumns = ['cusT_NM', 'proJ_NM', 'curR_INDC', 'bilL_FLG', 'starT_DATE', 'enD_DATE', 'delete'];
 
-  startdate: any = new Date().toISOString().split('T')[0];   //GenerateCurrentDate
+  startdate: any = new Date().toISOString().split('T')[0];
   enddate: any = new Date();
   year: number = new Date().getFullYear();
   crispMonth: string = '';
@@ -79,17 +71,21 @@ export class AccessControlProjectComponent implements OnInit {
   isCreateAccessDisabled: boolean = true;
   AddNewProjectObj: any;
 
+  // Configuration properties for UI state rules and role dropdown lookup array
+  rolesList: any[] = [];
+  selectedRoleId: number | null = null;
+  isDetailsLoaded: boolean = false; // Controls dropdown display initialization state
+
   constructor(
     public _util: MyUtility,
     public _appservice: AppsService,
     public _access: AccessControl,
     private dialog: MatDialog
   ) {
-    if (this._access.IsAllowed(39, 2, '', '')) { // check user have create access right
-      this.isCreateAccessDisabled = false;// used directly in disabled field
+    if (this._access.IsAllowed(39, 2, '', '')) { 
+      this.isCreateAccessDisabled = false;
     }
     
-    // Initialize filtered options
     this.filteredOptions = this.myControl.valueChanges
       .pipe(
         startWith<string | EmpInfoModel>(''),
@@ -100,6 +96,13 @@ export class AccessControlProjectComponent implements OnInit {
 
   ngOnInit() {
     this.LoadData();
+    this.LoadRolesLookup(); 
+    
+    // Reset layout condition flag on search initialization
+    this.myControl.valueChanges.subscribe(() => {
+      this.isDetailsLoaded = false;
+    });
+
     if (this._util.getMonthAbr(new Date().getMonth()) == "Jan") {
       this.crispMonth = "Dec";
     }
@@ -127,6 +130,24 @@ export class AccessControlProjectComponent implements OnInit {
     this.service_GetEmpInfo();
   }
 
+  LoadRolesLookup() {
+    this.rolesList = [
+      { id: 1, name: 'Customer Success Manager' },
+      { id: 2, name: 'Project Manager' },
+      { id: 3, name: 'Team Member' },
+      { id: 4, name: 'BU – Head IMS' },
+      { id: 5, name: 'Customer' },
+      { id: 6, name: 'PMO' },
+      { id: 7, name: 'Quality' },
+      { id: 8, name: 'Finance' },
+      { id: 9, name: 'Functional Manager' },
+      { id: 10, name: 'HR' },
+      { id: 11, name: 'Account Manager' },
+      { id: 12, name: 'Marketing' },
+      { id: 13, name: 'GSLab' }
+    ];
+  }
+
   AddProject_OnClick() {
     if (this._access.IsAllowed(39, 2, '', '') && this.projId && this.myControl.value != null && this.myControl.value != "") {
       let pr: ProjectResourceModel = new ProjectResourceModel();
@@ -137,22 +158,48 @@ export class AccessControlProjectComponent implements OnInit {
       pr.createD_BY = localStorage.getItem("empid") || '';
       pr.starT_DATE = this.startdate;
       pr.enD_DATE = this.enddate;
-
       this.service_checkIfResourceAlreadyExistsByDates(pr);
     }
     else {
-      alert("Please choose Resource Name,Customer and Project");
+      this._util.showWarningPopup("Please choose Resource Name, Customer and Project");
       return;
     }
   }
 
+  // Modified: Explicitly handles displaying dropdown block on verification success
   GetDetails_Onclick() {
     if (this.myControl.value != null && this.myControl.value != "") {
-      this.service_GetProjectResourceByEmpId(this.myControl.value.emP_ID);
+      const selectedResource = this.myControl.value;
+      this.service_GetProjectResourceByEmpId(selectedResource.emP_ID);
+      
+      // Map row elements and flip validation flag
+      this.selectedRoleId = selectedResource.csM_TITLE_ID || null;
+      this.isDetailsLoaded = true; 
     }
     else {
-      alert("Please enter Resource Name");
+      this._util.showWarningPopup("Please enter Resource Name");
+      this.isDetailsLoaded = false;
       return;
+    }
+  }
+
+  // Updates parameters via direct single object binding target mapping parameters
+  UpdateResourceAdminDetails_OnClick() {
+    if (this.myControl.value != null && this.myControl.value != "") {
+      const empId = this.myControl.value.emP_ID;
+      
+      const payload = {
+        EMP_ID: empId,
+        CSM_TITLE_ID: this.selectedRoleId
+      };
+
+      this._appservice.updateEmpInfo(payload).subscribe({
+        next: (data) => {
+          this._util.showSuccessPopup("Resource changes saved successfully!");
+          this.myControl.value.csM_TITLE_ID = this.selectedRoleId;
+        },
+        error: (error) => { this._util.serviceError(error); }
+      });
     }
   }
 
@@ -163,7 +210,6 @@ export class AccessControlProjectComponent implements OnInit {
         message: 'Are you sure you want to delete the record?'
       }
     });
-
     dialogRef.afterClosed().subscribe((result: boolean) => {
       if (result === true) {
         this._appservice.deleteProjectResource(element).subscribe({
@@ -191,7 +237,7 @@ export class AccessControlProjectComponent implements OnInit {
     this._appservice.addProjectResource(pr).subscribe({
       next: (data) => {
         this.service_GetProjectResourceByEmpId(this.myControl.value.emP_ID);
-        alert("Project added successfully");
+        this._util.showSuccessPopup("Project added successfully");
       },
       error: (error) => {
         this._util.serviceError(error);
@@ -210,7 +256,7 @@ export class AccessControlProjectComponent implements OnInit {
       error: (error) => {
         this._util.serviceError(error);
         this.errorStr = error.error;
-        alert(this.errorStr);
+        this._util.showWarningPopup(this.errorStr);
         this.errorStr = "";
       }
     });
@@ -218,49 +264,31 @@ export class AccessControlProjectComponent implements OnInit {
 
   ProcessPSA() {
     this._appservice.ProcessPSARequests().subscribe({
-      next: (e) => {
-        alert("done!");
-      },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      next: (e) => { this._util.showSuccessPopup("done!"); },
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 
   ProcessCrisp() {
     this._appservice.ProcessCrispScoresForPeriod(this.crispMonth, this.crispYear.toString(), true).subscribe({
-      next: (e) => {
-        alert("done!");
-      },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      next: (e) => { this._util.showSuccessPopup("done!"); },
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 
-  ProcessExternalKPI() {
-    // Placeholder for external KPI processing
-  }
+  ProcessExternalKPI() { }
 
   ProcessC() {
     this._appservice.ProcessCScoreForPeriod(this.crispMonth, this.year.toString(), true).subscribe({
-      next: (e) => {
-        alert("done!");
-      },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      next: (e) => { this._util.showSuccessPopup("done!"); },
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 
   ProcessCrispPM() {
     this._appservice.ProcessCrispScoresForPeriodPM(this.crispMonth, this.year.toString()).subscribe({
-      next: (e) => {
-        alert("done!");
-      },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      next: (e) => { this._util.showSuccessPopup("done!"); },
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 
@@ -272,10 +300,9 @@ export class AccessControlProjectComponent implements OnInit {
     this.AddNewProjectObj.cusT_ID = '201100010';
     this.AddNewProjectObj.proJ_PM_EMP_ID = '102802';
     this.AddNewProjectObj.createD_BY = '102802';
-
     this._appservice.addNewProject(this.AddNewProjectObj).subscribe({
       next: (data) => {
-        alert("Project Added Successfully");
+        this._util.showSuccessPopup("Project Added Successfully");
       },
       error: (error) => {
         this._util.serviceError(error);
@@ -283,13 +310,10 @@ export class AccessControlProjectComponent implements OnInit {
         var getErrorJson = JSON.parse(getError);
         var getExactError = getErrorJson.error;
 
-        //Project Name Duplication Check
-        if (getExactError.includes("Violation") && getExactError.includes("UNIQUE KEY") && getExactError.includes("PROJ_NM") && getExactError.includes("Cannot insert duplicate key in object 'dbo.PROJECT'")) {
-          // this.ProjectNameAlreadyExist = true;   
+        if (getExactError.includes("Violation") && getExactError.includes("UNIQUE KEY") && 
+            getExactError.includes("PROJ_NM") && getExactError.includes("Cannot insert duplicate key in object 'dbo.PROJECT'")) {
         }
-        //Project ID Duplication Check
         else if (getExactError.includes("Violation") && getExactError.includes("PRIMARY KEY constraint") && getExactError.includes("PROJECT_PK") && getExactError.includes("Cannot insert duplicate key in object 'dbo.PROJECT")) {
-          // this.ProjectIdAlreadyExist = true;   
         }
       }
     });
@@ -297,30 +321,22 @@ export class AccessControlProjectComponent implements OnInit {
 
   GeneralMethod() {
     this._appservice.GeneralMethod().subscribe({
-      next: (e) => {
-        alert("done!");
-      },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      next: (e) => { this._util.showSuccessPopup("done!"); },
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 
   service_GetEmpInfo() {
     this._appservice.getEmpInfo().subscribe({
-      next: (data) => {
-        this.empinfo = data;
-      },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      next: (data) => { this.empinfo = data; },
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 
   service_GetProjectResourceByEmpId(EmpId: string) {
     this._appservice.getProjectResourceByEmpId(EmpId).subscribe({
       next: (data) => {
-        let tmpstrtDate: any;   // 2020-12-31T00:00:00  
+        let tmpstrtDate: any;   
         let tmpEndDate: any;
 
         data.forEach((element: any) => {
@@ -334,9 +350,7 @@ export class AccessControlProjectComponent implements OnInit {
         this.projectResource = data;
         this.dataSource = data;
       },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 
@@ -350,12 +364,10 @@ export class AccessControlProjectComponent implements OnInit {
   service_GetProjEndDateByProjId(pid: string) {
     this._appservice.GetProjEndDateByProjId(pid).subscribe({
       next: (data) => {
-        let tmpEndDate: any = data.enD_DATE;  // 2020-12-31T00:00:00        
+        let tmpEndDate: any = data.enD_DATE;          
         this.enddate = tmpEndDate.split('T')[0];
       },
-      error: (error) => {
-        this._util.serviceError(error);
-      }
+      error: (error) => { this._util.serviceError(error); }
     });
   }
 }

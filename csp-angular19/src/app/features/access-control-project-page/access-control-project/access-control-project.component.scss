@@ -1,5 +1,5 @@
 /**
- * Access Control Project Component — Resource wise Projects tab
+ * Access Control Project Component   Resource wise Projects tab
  * Apple-inspired Modern UI
  */
 
@@ -53,7 +53,7 @@ $font-system     : -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe U
   cursor: pointer;
   transition: box-shadow $transition-fast, transform $transition-fast;
   border: 1px solid $surface-border;
-
+  
   &:hover {
     box-shadow: $shadow-elevated;
     transform: scale(1.06);
@@ -107,7 +107,6 @@ $font-system     : -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe U
   mat-progress-bar {
     border-radius: 4px !important;
     margin-bottom: 10px !important;
-
     .mdc-linear-progress__bar-inner {
       border-color: $brand-primary !important;
     }
@@ -150,13 +149,11 @@ $font-system     : -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe U
     box-shadow: $shadow-elevated !important;
     border: 1px solid $surface-border !important;
     overflow: hidden !important;
-
     .mat-mdc-option {
       font-family: $font-system !important;
       font-size: 13px !important;
       color: $text-primary !important;
       transition: background $transition-fast !important;
-
       &:hover,
       &.mat-mdc-option-active { background: $brand-subtle !important; }
     }
@@ -219,12 +216,10 @@ button.mat-mdc-raised-button {
   text-transform: none !important;
   transition: background $transition-fast, box-shadow $transition-fast, transform $transition-fast !important;
   box-shadow: none !important;
-
   &[color="primary"],
   &.mat-primary {
     background: $brand-primary !important;
     color: #ffffff !important;
-
     &:hover:not([disabled]) {
       background: $brand-hover !important;
       transform: translateY(-1px) !important;
@@ -235,6 +230,55 @@ button.mat-mdc-raised-button {
       background: darken($surface-border, 5%) !important;
       color: $text-muted !important;
       cursor: not-allowed !important;
+    }
+  }
+}
+
+// Layout wrapper for search row button actions
+.search-actions-container {
+  display: flex;
+  margin-bottom: 12px;
+  
+  button {
+    width: 100%;
+  }
+}
+
+// Added Side-by-Side Flex Layout Row for Dropdown and Update Button
+.admin-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+  animation: fadeSlideUp $transition-std both;
+
+  // Reduced width allocation layout rules for the dropdown form-field
+  .role-dropdown-field {
+    flex: 0 0 58%;
+    width: 58%;
+    
+    // Adjust bottom spacer layout bounds
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none !important;
+    }
+  }
+
+  // Update button placed directly next to the condensed role selector dropdown
+  .btn-update-inline {
+    flex: 1;
+    height: 44px !important; // Match design heights with form field borders
+    border-radius: $radius-md !important;
+    margin-top: -12px !important;
+    background: $surface-raised !important;
+    color: $brand-primary !important;
+    border: 1px solid rgba(0, 113, 227, 0.25) !important;
+    font-size: 12px !important;
+    padding: 0 8px !important;
+    
+    &:hover:not([disabled]) {
+      background: $brand-subtle !important;
+      transform: translateY(-1px) !important;
     }
   }
 }
@@ -309,7 +353,6 @@ button:not([mat-raised-button]):not([mat-button]):not([mat-icon-button]) {
     animation: rowEnter 0.22s both;
 
     &:last-child { border-bottom: none !important; }
-
     &:hover { background: rgba($brand-subtle, 0.55) !important; }
   }
 
@@ -346,14 +389,12 @@ button:not([mat-raised-button]):not([mat-button]):not([mat-icon-button]) {
   cursor: pointer;
   text-decoration: none;
   transition: background $transition-fast, color $transition-fast, transform $transition-fast;
-
   i.fa-edit  { color: $brand-primary; font-size: 14px; }
   i.fa-trash { color: $danger; font-size: 14px; }
 
   &:hover {
     background: rgba($brand-primary, 0.1);
     transform: scale(1.15);
-
     i.fa-trash { color: darken($danger, 10%); background: rgba($danger, 0.1); border-radius: 50%; }
   }
 }
@@ -383,7 +424,6 @@ button:not([mat-raised-button]):not([mat-button]):not([mat-icon-button]) {
 }
 
 // --- Advanced Search link ------------------------------------------------------
-// Scoped so it doesn't bleed
 .table-actions {
   display: flex;
   align-items: center;
@@ -395,4 +435,10 @@ button:not([mat-raised-button]):not([mat-button]):not([mat-icon-button]) {
   color: $brand-primary;
   cursor: pointer;
   gap: 4px;
+}
+
+
+::ng-deep .mat-mdc-form-field:not(.mat-form-field-disabled) 
+.mat-mdc-floating-label.mdc-floating-label {
+    margin-top: 4px !important;
 }
