@@ -866,26 +866,18 @@
                 </mat-form-field>
               </div>
 
-              <div class="journeyMapContent"
-                style="max-height: 78%; overflow-y: auto; overflow-x: hidden; position: relative; bottom: 13%;">
-                <div *ngIf="!highlights" style="display: flex; align-items: center; justify-content: center; height: 150px; font-size: 13px; color: #6B7280;">
+              <div class="journeyMapContent highlights-content">
+                <div *ngIf="highlights === null || highlights === undefined" style="display: flex; align-items: center; justify-content: center; height: 150px; font-size: 13px; color: #6B7280;">
                   <i class="fa fa-circle-o-notch fa-spin" style="margin-right: 10px; font-size: 21px;"></i>Loading...
                 </div>
                 <ul class="a" *ngIf="highlights && highlights.length > 0">
-                  <li
-                    style="padding: 5px;white-space: normal; word-wrap:break-word; width:98%;font-size: 12px;font-family: sans-serif;color: #808080"
-                    *ngFor="let h of highlights">
+                  <li *ngFor="let h of highlights">
                     {{h.description}}
                   </li>
                 </ul>
-                <div *ngIf="highlights?.length == 0"
+                <div *ngIf="highlights && highlights.length === 0"
                   style="display: flex; align-items: center; justify-content: center; height: 150px; font-size: 13px; color: #9CA3AF; font-style: italic; text-align: center;">
                   No Highlights for this Period
-                </div>
-                <div style="font-size: 11px; color: #94d3f1; text-align: right ">
-                  <a style="margin-left: auto">
-                    <!-- <u>View More</u> -->
-                  </a>
                 </div>
               </div>
               

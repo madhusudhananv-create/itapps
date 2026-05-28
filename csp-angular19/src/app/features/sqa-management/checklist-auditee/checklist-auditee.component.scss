@@ -130,7 +130,7 @@ $transition-medium: 0.25s ease;
     background: $background-white;
     border-radius: $radius-md;
     box-shadow: $shadow-sm;
-    overflow: hidden;
+    overflow: visible;
 
     // Action Buttons Bar
     .action-buttons-top {
@@ -157,6 +157,14 @@ $transition-medium: 0.25s ease;
       }
     }
 
+    .accept-reject-progress {
+      height: 3px;
+      width: 100%;
+      border-radius: 0;
+      --mdc-linear-progress-active-indicator-color: #4e5882;
+      --mdc-linear-progress-track-color: #d0d3e8;
+    }
+
     // ----------------------------------------------------------
     // Expansion Panel (per question)
     // ----------------------------------------------------------
@@ -168,6 +176,11 @@ $transition-medium: 0.25s ease;
       &:last-child { border-bottom: none; }
 
       mat-expansion-panel-header {
+        height: auto !important;
+        min-height: 48px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        align-items: flex-start;
         background: $background-white;
         transition: background $transition-fast;
 
@@ -177,6 +190,8 @@ $transition-medium: 0.25s ease;
           font-size: 12px;
           font-weight: 500;
           color: $text-primary;
+          white-space: normal;
+          overflow: visible;
         }
       }
 
@@ -855,8 +870,20 @@ $transition-medium: 0.25s ease;
       border-radius: 0 !important;
     }
 
+    // Allow header to grow with long question text
+    .mat-expansion-panel-header {
+      height: auto !important;
+      min-height: 48px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      align-items: flex-start;
+      white-space: normal;
+    }
+
     .mat-expansion-panel-header-title {
-      align-items: center;
+      align-items: flex-start;
+      white-space: normal;
+      overflow: visible;
     }
 
     .mat-mdc-checkbox {
@@ -998,4 +1025,93 @@ $transition-medium: 0.25s ease;
     min-width: 280px !important;
     max-width: 280px !important;
   }
+}
+
+// ============================================================
+// CAPA Reminder Banner
+// ============================================================
+.capa-reminder-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(135deg, #4e5882 0%, #6770a5 100%);
+  color: #ffffff;
+  border-radius: $radius-md;
+  padding: 16px 20px;
+  margin: 0 0 16px 0;
+  box-shadow: 0 4px 12px rgba(78, 88, 130, 0.35);
+  position: relative;
+  animation: banner-slide-in 0.4s ease;
+
+  .capa-reminder-icon {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    mat-icon { font-size: 24px; width: 24px; height: 24px; }
+  }
+
+  .capa-reminder-body {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.5;
+
+    .capa-stages-list {
+      margin: 8px 0 6px 0;
+      padding-left: 0;
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+
+      li {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 3px 10px 3px 6px;
+
+        .stage-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    .capa-reminder-note {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 4px;
+      font-style: italic;
+
+      .note-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+      }
+    }
+  }
+
+  .capa-reminder-close {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: -4px;
+    &:hover { color: #ffffff; }
+  }
+}
+
+@keyframes banner-slide-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

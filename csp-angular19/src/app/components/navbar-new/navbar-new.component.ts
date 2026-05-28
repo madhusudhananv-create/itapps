@@ -81,6 +81,12 @@ export class NavbarNewComponent implements OnInit {
   readonly canLogout = computed(() => this.isLoggedIn() && !this.isLoggingOut());
   readonly logoutButtonText = computed(() => this.isLoggingOut() ? 'Logging out...' : 'Logout');
 
+  /** Show Integrated Apps menu if user has access to at least one integrated app */
+  readonly hasIntegratedAppsAccess = computed(() =>
+    this._access.IsAllowed(827, 1, '', '')
+    // Add more app permission checks here with ||
+  );
+
   // Legacy compatibility property
   status: { isopen: boolean } = { isopen: false };
 constructor(

@@ -15,6 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 
 import { AppsService } from '../../../core/services/apps.service';
@@ -42,6 +43,7 @@ import { environment } from '../../../../environments/environment';
     MatFormFieldModule,
     MatButtonModule,
     MatSelectModule,
+    MatTooltipModule,
     FormsModule,
     NavbarNewComponent
   ],

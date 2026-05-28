@@ -2603,24 +2603,38 @@ div[style*="display: flex"][style*="flex-direction: column"][style*="min-width: 
   }
   
   // Content
-  .journeyMapContent {
-    ul.a li {
-      font-family: var(--font-primary) !important;
-      font-size: 10px !important;
-      color: var(--color-gray-700) !important;
-      background: var(--color-gray-50) !important;
-      border-left: 3px solid var(--color-info) !important;
-      border-radius: var(--radius-sm) !important;
-      padding: var(--spacing-md) !important;
-      margin-bottom: var(--spacing-sm);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
-      transition: all 150ms ease !important;
-      margin-left: 86px;
-      &:hover {
-        background: #FFFFFF !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        transform: translateX(4px);
-        border-left-color: #2563EB !important;
+  .journeyMapContent.highlights-content {
+    max-height: 220px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 4px;
+
+    ul.a {
+      padding-left: 0 !important;
+      margin: 0 !important;
+      list-style: none !important;
+
+      li {
+        font-size: 12px !important;
+        font-family: 'Inter', sans-serif !important;
+        color: #374151 !important;
+        background: #F9FAFB !important;
+        border-left: 3px solid #3B82F6 !important;
+        border-radius: 4px !important;
+        padding: 8px 10px !important;
+        margin-bottom: 6px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        width: auto !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        transition: all 150ms ease !important;
+
+        &:hover {
+          background: #ffffff !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+          transform: translateX(4px);
+          border-left-color: #2563EB !important;
+        }
       }
     }
   }

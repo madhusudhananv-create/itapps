@@ -586,7 +586,8 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
           if (this.projectScores.length > 0) {
             this.highlights = this.projectScores[0].highlights || [];
           }
-          this.temp = this.projectScores;
+          this.temp = results.projectScores.highlights || [];
+          this.highlights = this.temp.filter((i: any) => i.week == this.SelectedWeek);
           this.GetProjectCAPACount();
 
           // Process tasks/events
@@ -1279,10 +1280,7 @@ export class DashboardCustomerComponent implements OnInit, OnDestroy, OnChanges 
   // Key Highlights methods
   weekChange(event: any): void {
     setTimeout(() => {
-      this.highlights = [];
-      this.highlights = this.temp.filter(i => {
-        return (i.week == event.value);
-      });
+      this.highlights = this.temp.filter(i => i.week == event);
     }, 500);
   }
 

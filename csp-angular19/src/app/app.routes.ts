@@ -906,6 +906,33 @@ export const routes: Routes = [
       .then(m => m.AccesscontrolManagementComponent),
   },
 
+  // FAQ page - protected route (requires authentication)
+  {
+    path: 'faq',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/faq/faq.component')
+      .then(m => m.FaqComponent),
+    title: 'FAQ'
+  },
+
+  // User Manual page - protected route (requires authentication)
+  {
+    path: 'user-manual',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/user-manual/user-manual.component')
+      .then(m => m.UserManualComponent),
+    title: 'User Manual'
+  },
+
+  // Release Notes page - protected route (requires authentication)
+  {
+    path: 'release-notes',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/release-notes/release-notes.component')
+      .then(m => m.ReleaseNotesComponent),
+    title: 'Release Notes'
+  },
+
   // Wildcard - 404 redirect (must be last)
   {
     path: '**',

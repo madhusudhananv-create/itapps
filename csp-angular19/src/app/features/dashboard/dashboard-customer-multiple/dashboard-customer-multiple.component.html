@@ -299,10 +299,16 @@
               csmplatformsupport&#64;{{ domainConfig.domain }}
             </a>
           </span>
-          <span class="footer-timer">
-            <mat-icon class="timer-icon">schedule</mat-icon>
-            Refreshing in <strong>{{ timeLeft }}s</strong>
-          </span>
+          <div class="footer-right">
+            <a class="footer-faq" routerLink="/faq" target="_blank" matTooltip="View Frequently Asked Questions" [matTooltipPosition]="'above'">
+              <i class="fa fa-question-circle faq-icon"></i>
+              <span class="faq-text">Need a quick guide? Check out our FAQs!</span>
+            </a>
+            <span class="footer-timer">
+              <mat-icon class="timer-icon">schedule</mat-icon>
+              Refreshing in <strong>{{ timeLeft }}s</strong>
+            </span>
+          </div>
         </div>
 
       </div>

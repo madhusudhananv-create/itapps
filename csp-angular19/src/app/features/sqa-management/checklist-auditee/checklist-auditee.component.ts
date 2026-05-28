@@ -73,6 +73,9 @@ export class ChecklistAuditeeComponent implements OnInit {
   date: any = new Date().toISOString().split('T')[0];
   auditeeResponses: any[] = [];
   
+  // CAPA reminder banner
+  showCapaReminder: boolean = false;
+
   // CAP workflow state
   viewCAPA: boolean = false;
   actionPlan: any = null;
@@ -265,13 +268,11 @@ export class ChecklistAuditeeComponent implements OnInit {
   initializeStageColors(finding: any): string[] {
     // Default: 4 stages all red (pending)
     const defaultColors = ['#FF5969', '#FF5969', '#FF5969', '#FF5969'];
-    
     // Check if finding has acceptance status
     if (finding.auditeE_ACCEPTANCE_STATUS === 'Accept') {
       // First stage green if accepted
       return ['#3AB376', '#FF5969', '#FF5969', '#FF5969'];
     }
-    
     return defaultColors;
   }
 
@@ -567,6 +568,12 @@ export class ChecklistAuditeeComponent implements OnInit {
       next: (data: any) => {
         this._utility.showSuccess('Status updated successfully');
         this.disableAcceptReject = false;
+
+        // Remind auditee to complete CAPA stages after accepting a finding
+        if (!isAuditorResponse && status === 'Accept') {
+          this.showCapaReminder = true;
+          this._utility.showInfo('Finding accepted! Please complete all 4 CAPA stages to close this finding.');
+        }
 
         // If auditor accepted rejection, mark as submitted
         if (isAuditorResponse && status === 'Accept') {

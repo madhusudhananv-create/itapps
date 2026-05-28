@@ -16,11 +16,6 @@
       </div>
     </div>
     <div class="right-toolbar">
-      <button class="bcm-button" *ngIf="_access.IsAllowed(827, 1, '', '')" (click)="openBCMInNewTab()"
-        matTooltip="Business Continuity Management" [matTooltipPosition]="'below'">
-        <i class="fa fa-external-link-alt"></i>
-        <span class="bcm-text">Business Continuity Management (BCM)</span>
-      </button>
       <div class="user-info">
         @if (isLoggedIn()) {
         <span class="username-text">{{ displayname() }}</span>
@@ -38,15 +33,44 @@
       </div>
       }
       @if (isGAVS()) {
-      <a class="navbar-icon-wrapper changecolor" target="new" href="/assets/helpfiles/CSM_Platform_Release_Notes_neurealm.html"
+      <a class="navbar-icon-wrapper changecolor" routerLink="/release-notes" target="_blank"
         matTooltip="New Release" [matTooltipPosition]="'before'">
         <i class="fa fa-bell fa_fnt navbar-icon"></i>
       </a>
       }
-      <a class="navbar-icon-wrapper" target="_blank" href="/assets/documents/User Manual.html" matTooltip="User Manual"
+      <a class="navbar-icon-wrapper" routerLink="/user-manual" target="_blank" matTooltip="User Manual"
         [matTooltipPosition]="'before'">
         <i class="fa fa-book fa_fnt navbar-icon"></i>
       </a>
+      <!-- Integrated Apps Menu -->
+      @if (hasIntegratedAppsAccess()) {
+      <div class="navbar-icon-wrapper integrated-apps-trigger" [matMenuTriggerFor]="microAppsMenu" matTooltip="Integrated Apps" 
+        [matTooltipPosition]="'before'">
+        <i class="fa fa-th fa_fnt navbar-icon"></i>
+        <mat-menu #microAppsMenu="matMenu" class="micro-apps-menu">
+          <div class="integrated-apps-header" (click)="$event.stopPropagation()">
+            <i class="fa fa-th-large header-icon"></i>
+            <div>
+              <span class="header-title">Integrated Apps</span>
+            </div>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="apps-grid" (click)="$event.stopPropagation()">
+            <button class="app-card" *ngIf="_access.IsAllowed(827, 1, '', '')" (click)="openBCMInNewTab()">
+              <div class="app-icon-wrapper bcm-color">
+                <i class="fa fa-shield-alt"></i>
+              </div>
+              <div class="app-info">
+                <span class="app-name">BCM</span>
+                <span class="app-description">Business Continuity</span>
+              </div>
+              <i class="fa fa-external-link-alt app-launch-icon"></i>
+            </button>
+            <!-- Add more app cards here -->
+          </div>
+        </mat-menu>
+      </div>
+      }
       @if (isEditable() || isHR() || isAllowed(33, 1)) {
       <div class="navbar-icon-wrapper" [matMenuTriggerFor]="menu" matTooltip="Settings" [matTooltipPosition]="'before'">
         <i class="fa fa-cog fa_fnt navbar-icon"></i>

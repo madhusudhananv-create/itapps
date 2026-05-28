@@ -15,6 +15,11 @@ import { HttpInterceptorFn } from '@angular/common/http';
  * This is a functional interceptor (Angular 15+) replacing the old class-based interceptor
  */
 export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
+  // Skip interceptor for static asset requests
+  if (req.url.startsWith('/assets/') || req.url.includes('/assets/')) {
+    return next(req);
+  }
+
   // Get token and empId from localStorage
   const token = localStorage.getItem('token') || '';
   const empId = localStorage.getItem('empid') || '';

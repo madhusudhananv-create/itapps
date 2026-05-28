@@ -5,6 +5,29 @@
     <p *ngIf="dueDate" class="due-date">Due Date: {{ dueDate | date:'dd-MMM-yyyy' }}</p>
   </div>
 
+  <!-- CAPA Stages Reminder Banner — shown after auditee accepts a finding -->
+  <div *ngIf="showCapaReminder" class="capa-reminder-banner">
+    <div class="capa-reminder-icon">
+      <mat-icon>assignment_turned_in</mat-icon>
+    </div>
+    <div class="capa-reminder-body">
+      <strong>Finding Accepted!</strong> You must now complete the following <strong>4 CAPA stages</strong> to close this finding:
+      <ol class="capa-stages-list">
+        <li><mat-icon class="stage-icon">looks_one</mat-icon> <strong>CAP Submission</strong> — Submit your corrective action plan</li>
+        <li><mat-icon class="stage-icon">looks_two</mat-icon> <strong>CAP Approval</strong> — Auditor reviews and approves your plan</li>
+        <li><mat-icon class="stage-icon">looks_3</mat-icon> <strong>CAP Implementation</strong> — Implement the approved corrective actions</li>
+        <li><mat-icon class="stage-icon">looks_4</mat-icon> <strong>CAP Verification</strong> — Auditor verifies the implementation is complete</li>
+      </ol>
+      <span class="capa-reminder-note">
+        <mat-icon class="note-icon">touch_app</mat-icon>
+        To begin: expand the accepted finding below, then click the <strong>"Add Correction Plan"</strong> button to start Stage 1 (CAP Submission).
+      </span>
+    </div>
+    <button mat-icon-button class="capa-reminder-close" (click)="showCapaReminder = false" matTooltip="Dismiss">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
   <!-- No Findings Message -->
   <div *ngIf="checkListFindings.length === 0" class="no-findings">
     <mat-icon>info</mat-icon>
@@ -14,6 +37,9 @@
   <!-- Findings Table -->
   <div *ngIf="checkListFindings.length > 0" class="findings-container">
     
+    <!-- Progress bar at top of findings — shown while Accept/Reject API is in flight -->
+    <mat-progress-bar *ngIf="disableAcceptReject" mode="indeterminate" class="accept-reject-progress"></mat-progress-bar>
+
     <!-- Action Buttons at Top -->
     <div class="action-buttons-top" *ngIf="showCheck || showForQATeam || _access.IsAllowed(108, 1, '', '')">
       <mat-checkbox [(ngModel)]="selectAll" (change)="selectallFindings()">
