@@ -229,6 +229,16 @@
       color: #8e8e93;
     }
   }
+
+  &.status-default {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+
+    .status-icon {
+      color: #6c757d;
+    }
+  }
 }
 
 .capa-action-btn {

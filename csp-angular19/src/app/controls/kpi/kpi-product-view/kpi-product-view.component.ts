@@ -12,13 +12,11 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute } from '@angular/router';
 
 import { AppsService } from '../../../core/services/apps.service';
 import { MyUtility } from '../../../shared/my-utility';
 import { AccessControl } from '../../../shared/access-control';
-import { KpiRagStatusService } from '../../../shared/kpi-rag-status.service';
 import { TableFilterComponent } from '../../../shared/components/table-filter/table-filter.component';
 import { KpiActionPlanComponent } from '../kpi-action-plan/kpi-action-plan.component';
 import { KpiProductDetailViewComponent } from './kpi-product-detail-view/kpi-product-detail-view.component';
@@ -28,7 +26,7 @@ import { KpiProductDetailViewComponent } from './kpi-product-detail-view/kpi-pro
   standalone: true,
   imports: [CommonModule, FormsModule, MatTableModule, MatPaginatorModule, MatSortModule,
     MatFormFieldModule, MatSelectModule, MatInputModule, MatRadioModule, 
-    MatProgressBarModule, MatTooltipModule, MatIconModule, MatButtonModule, TableFilterComponent],
+    MatProgressBarModule, MatTooltipModule, MatIconModule, TableFilterComponent],
   templateUrl: './kpi-product-view.component.html',
   styleUrls: ['./kpi-product-view.component.scss']
 })
@@ -79,8 +77,7 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
     public _access: AccessControl,
     public dialog: MatDialog,
     public _route: ActivatedRoute,
-    private cdr: ChangeDetectorRef,
-    public ragStatusService: KpiRagStatusService
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -250,26 +247,24 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
       return false;
     }
 
-    const dialogRef = this._util.showWarningConfirmation(
+    // showWarningConfirmation already returns an Observable (afterClosed), not a dialogRef
+    this._util.showWarningConfirmation(
       'Entered Service Level Metrics would be Saved As Draft and Would not be considered in Dashboard.',
       'Save As Draft'
-    );
-    
-    
-    dialogRef.afterClosed().subscribe((result: boolean) => {
+    ).subscribe((result: boolean) => {
       if (result === true) {
         this.isLoading = true;
         this._appservice.AddKpiDetailsbyProduct(kpiDetails, d.toString(), status).subscribe((data: any) => {
-        this._util.showSuccessPopup("Data Saved Successfully", "Success");
-        this.freez = false;
-        this.LoadData();
-        this.isLoading = false;
-      }, (err: any) => {
-        this._util.serviceError(err);
-        this.freez = false;
-        this.LoadData();
-        this.isLoading = false;
-      })
+          this._util.showSuccessPopup("Data Saved Successfully", "Success");
+          this.freez = false;
+          this.LoadData();
+          this.isLoading = false;
+        }, (err: any) => {
+          this._util.serviceError(err);
+          this.freez = false;
+          this.LoadData();
+          this.isLoading = false;
+        });
       }
     });
     return true;
@@ -321,12 +316,11 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
       return false;
     }
 
-    const dialogRef = this._util.showWarningConfirmation(
+    // showWarningConfirmation already returns an Observable (afterClosed), not a dialogRef
+    this._util.showWarningConfirmation(
       `Service Level Metrics for ${this.productName} for ${this._util.tableMonth} ${this._util.tableYear} would be Submitted.`,
       'Submit KPI'
-    );
-    
-    dialogRef.afterClosed().subscribe((result: boolean) => {
+    ).subscribe((result: boolean) => {
       if (result === true) {
         this.freez = true;
         this.isLoading = true;
@@ -464,46 +458,6 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
   getslaStatusforKPI(kpiDetail: any): string {
     let status = this._util.GetSLAStatus(kpiDetail, this.includeExclusions);
     return status;
-  }
-
-  /**
-   * Get RAG color code for KPI based on status
-   * Maps status text to color codes for visual indicators
-   */
-  getColorCodeForKPI(kpiDetail: any): string {
-    const status = this.getslaStatusforKPI(kpiDetail);
-    
-    // Map status text to color codes
-    if (status === 'Exceeded' || status === 'Excellent') {
-      return this.ragStatusService.RAG_COLORS.BLUE;
-    } else if (status === 'Met' || status === 'Good') {
-      return this.ragStatusService.RAG_COLORS.GREEN;
-    } else if (status === 'Below Target' || status === 'Below') {
-      return this.ragStatusService.RAG_COLORS.AMBER;
-    } else if (status === 'Not Met' || status === 'Poor') {
-      return this.ragStatusService.RAG_COLORS.RED;
-    } else if (status === 'NA' || status === 'N/A') {
-      return this.ragStatusService.RAG_COLORS.GRAY;
-    }
-    
-    // Default to gray for unknown status
-    return this.ragStatusService.RAG_COLORS.GRAY;
-  }
-
-  /**
-   * Get status icon based on KPI status
-   */
-  getStatusIcon(kpiDetail: any): string {
-    const colorCode = this.getColorCodeForKPI(kpiDetail);
-    return this.ragStatusService.getStatusIcon(colorCode);
-  }
-
-  /**
-   * Get CSS class for status based on color code
-   */
-  getStatusClass(kpiDetail: any): string {
-    const colorCode = this.getColorCodeForKPI(kpiDetail);
-    return this.ragStatusService.getStatusClass(colorCode);
   }
 
   blurcalled(kpiId: any, actualEntered: any): any {
@@ -883,6 +837,30 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
         return true;
     }
     return false;
+  }
+
+  getStatusClass(metricslist: any): string {
+    const status = this.getslaStatusforKPI(metricslist);
+    if (status === 'Met') {
+      return 'status-met';
+    } else if (status === 'Not Met') {
+      return 'status-not-met';
+    } else if (status === 'NA' || status === 'N/A') {
+      return 'status-na';
+    }
+    return 'status-default';
+  }
+
+  getStatusIcon(metricslist: any): string {
+    const status = this.getslaStatusforKPI(metricslist);
+    if (status === 'Met') {
+      return 'check_circle';
+    } else if (status === 'Not Met') {
+      return 'cancel';
+    } else if (status === 'NA' || status === 'N/A') {
+      return 'remove_circle_outline';
+    }
+    return 'help_outline';
   }
 
 }
