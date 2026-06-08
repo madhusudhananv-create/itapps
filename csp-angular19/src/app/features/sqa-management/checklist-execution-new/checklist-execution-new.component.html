@@ -132,13 +132,18 @@
 
       <!-- Confirmation Dialog Template -->
       <ng-template #confirmationDialog let-data>
-        <h2 mat-dialog-title>Confirm Action</h2>
+        <h2 mat-dialog-title>
+          <span>Confirm Action</span>
+          <button mat-icon-button [mat-dialog-close]="null" class="dialog-close-button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </h2>
         <mat-dialog-content>
           Do you want the system to retain the corrective action plan as it is or remove it?
         </mat-dialog-content>
-        <mat-dialog-actions align="end">
-          <button mat-stroked-button [mat-dialog-close]="1" color="primary">Retain</button>
-          <button mat-raised-button [mat-dialog-close]="0" color="warn">Remove</button>
+        <mat-dialog-actions align="end" class="dialog-actions-buttons">
+          <button mat-stroked-button [mat-dialog-close]="1" color="primary" class="dialog-button-retain">Retain</button>
+          <button mat-raised-button [mat-dialog-close]="0" color="warn" class="dialog-button-remove">Remove</button>
         </mat-dialog-actions>
       </ng-template>
 

@@ -997,6 +997,106 @@ $radius-xl:  16px;
 }
 
 // ============================================================
+// Confirmation Dialog Buttons
+// ============================================================
+::ng-deep .confirm-action-dialog {
+  .mat-mdc-dialog-container {
+    .mdc-dialog__container {
+      .mat-mdc-dialog-surface {
+        padding: 0 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+      }
+    }
+  }
+
+  h2[mat-dialog-title],
+  .mat-mdc-dialog-title {
+    padding: 20px 24px !important;
+    margin: 0 !important;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #1a202c !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+
+    .dialog-close-button {
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 32px !important;
+      padding: 0 !important;
+      min-width: unset !important;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        color: #64748b;
+      }
+
+      &:hover {
+        background-color: #f1f5f9 !important;
+        
+        mat-icon {
+          color: #334155;
+        }
+      }
+    }
+  }
+
+  mat-dialog-content,
+  .mat-mdc-dialog-content {
+    padding: 24px !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    color: #475569 !important;
+    line-height: 1.6 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .mat-mdc-dialog-actions,
+  mat-dialog-actions {
+    padding: 16px 24px !important;
+    gap: 12px !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc !important;
+
+    button {
+      min-width: 100px !important;
+      height: 38px !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      margin: 0 !important;
+      padding: 0 24px !important;
+      border-radius: 6px !important;
+      transition: all 0.2s ease !important;
+
+      &:first-child {
+        margin-right: 0 !important;
+      }
+
+      &.mat-stroked-button {
+        border: 1px solid #3b82f6 !important;
+      }
+
+      &.mat-raised-button {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+      }
+    }
+  }
+}
+
+
+// ============================================================
 // Dropdown search inside mat-select panel
 // ============================================================
 .dropdown-search {

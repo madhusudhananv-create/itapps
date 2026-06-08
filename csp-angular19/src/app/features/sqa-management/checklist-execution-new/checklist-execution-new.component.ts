@@ -831,10 +831,19 @@ export class ChecklistExecutionNewComponent implements OnInit {
   resubmitChecklistAssessment(plannedAudit: any): void {
     const dialogRef = this.dialog.open(this.confirmationDialogTemplate, {
       width: '500px',
-      height: '170px',
-      data: plannedAudit
+      maxWidth: '90vw',
+      data: plannedAudit,
+      panelClass: 'confirm-action-dialog',
+      autoFocus: false,
+      restoreFocus: false,
+      disableClose: true  // Prevent closing on backdrop click or ESC key (close icon is allowed)
     });
     dialogRef.afterClosed().subscribe((result: any) => {
+      // Only proceed if user made a valid choice (0 = Remove, 1 = Retain)
+      if (result === undefined || result === null) {
+        return; // User closed dialog without making a choice
+      }
+
       this._utility.showInputDialog(
         'Please provide justification to resubmit',
         'Resubmit Justification',
@@ -842,24 +851,31 @@ export class ChecklistExecutionNewComponent implements OnInit {
         'Justification',
         'Enter justification...'
       ).subscribe((comments: string | null) => {
-        if (!comments || !comments.trim()) {
-          this._utility.showWarningPopup("Please enter justification to resubmit");
-        } else {
-          this.comments = comments.trim();
-          plannedAudit.emp_Id = localStorage.getItem('empid');
-          plannedAudit.assessmenT_STATUS = "Requested";
-          plannedAudit.comments = this.comments;
-          plannedAudit.iS_retaiN_CAPA = result;
-          this._appService.resubmitChecklistAssessment(plannedAudit).subscribe(
-            (data: any) => {
-              this._utility.showSuccessPopup("Mail Sent to Quality Head");
-            },
-            (error: any) => {
-              this._utility.serviceError(error);
-            }
-          );
+        // If user clicked Cancel, just return without showing warning
+        if (comments === null) {
+          return;
         }
         
+        // If user clicked OK but didn't enter text, show warning
+        if (!comments.trim()) {
+          this._utility.showWarningPopup("Please enter justification to resubmit");
+          return;
+        }
+        
+        // Proceed with submission
+        this.comments = comments.trim();
+        plannedAudit.emp_Id = localStorage.getItem('empid');
+        plannedAudit.assessmenT_STATUS = "Requested";
+        plannedAudit.comments = this.comments;
+        plannedAudit.iS_retaiN_CAPA = result;
+        this._appService.resubmitChecklistAssessment(plannedAudit).subscribe(
+          (data: any) => {
+            this._utility.showSuccessPopup("Mail Sent to Quality Head");
+          },
+          (error: any) => {
+            this._utility.serviceError(error);
+          }
+        );
       });
     });
   }
