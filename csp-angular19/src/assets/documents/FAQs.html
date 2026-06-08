@@ -41,7 +41,7 @@
 
   header {
     background: var(--accent);
-    padding: 1.25rem 2rem 1.25rem;
+    padding: 0.75rem 2rem 0.75rem;
     position: relative;
     overflow: hidden;
   }
@@ -72,10 +72,43 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2rem;
+    gap: 1.25rem;
   }
 
-  .header-text { flex: 1; }
+  .logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    background: #ffffff;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .logo img {
+    height: 32px;
+    vertical-align: middle;
+    object-fit: contain;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .logo:hover img {
+    transform: translateY(-1px);
+  }
+
+  .logo:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .header-text { 
+    flex: 1;
+    margin-left: 0.5rem;
+    text-align: left;
+  }
+
+  .header-text * {
+    text-align: left;
+  }
 
   .header-search-wrap {
     flex-shrink: 0;
@@ -83,19 +116,34 @@
   }
 
   .header-label {
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: rgba(255,255,255,0.55);
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    text-align: left;
+  }
+
+  .header-label a {
+    color: rgba(255,255,255,0.65);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .header-label a:hover {
+    color: rgba(255,255,255,0.95);
+    text-decoration: underline;
   }
 
   header h1 {
     font-family: 'DM Serif Display', serif;
-    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
     color: #fff;
     line-height: 1.15;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    text-align: left;
   }
 
   header p {
@@ -104,6 +152,7 @@
     font-weight: 300;
     max-width: 480px;
     line-height: 1.65;
+    text-align: left;
   }
 
   .search-bar {
@@ -387,7 +436,7 @@
   .no-results i { font-size: 32px; display: block; margin-bottom: 0.5rem; }
 
   @media (max-width: 600px) {
-    header { padding: 1.25rem; }
+    header { padding: 0.75rem 1.25rem; }
     .header-inner { flex-direction: column; align-items: flex-start; }
     .header-search-wrap { width: 100%; }
     .main { padding: 1.5rem 1.25rem 3rem; }
@@ -400,9 +449,12 @@
 
 <header>
   <div class="header-inner">
+    <div class="logo">
+      <img src="/assets/images/GAVS_Logo.png" alt="GAVS Logo">
+    </div>
     <div class="header-text">
-      <p class="header-label">CSM Platform Support</p>
-      <h1>Frequently Asked<br><em>Questions</em></h1>
+      <p class="header-label"><a href="https://csmuat.neurealm.com/" target="_blank">CSM Platform Support</a></p>
+      <h1>Frequently Asked <em>Questions</em></h1>
       <p>Everything you need to know about findings, access, notifications, and project allocations.</p>
     </div>
     <div class="header-search-wrap">
