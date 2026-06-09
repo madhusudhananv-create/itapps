@@ -29,7 +29,8 @@
       <!-- Status Field -->
       <mat-form-field appearance="outline" class="form-field">
         <mat-label>Status</mat-label>
-        <mat-select name="ddStatus" [disabled]="isDisabledData" [(ngModel)]="presurveyformData.status" required>
+        <mat-select name="ddStatus" [disabled]="isDisabledData" [(ngModel)]="presurveyformData.status" 
+                    (ngModelChange)="onStatusChange()" required>
           <mat-option value="To Be Planned">To Be Planned</mat-option>
           <mat-option value="Planned">Planned</mat-option>
           <mat-option value="Completed">Completed</mat-option>
@@ -55,8 +56,8 @@
       <!-- Actual Date Field -->
       <mat-form-field appearance="outline" class="form-field">
         <mat-label>Actual Date</mat-label>
-        <input [min]="presurveyformData.planneD_DATE" matInput name="dtActualDate"
-               [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned'" 
+        <input [min]="presurveyformData.planneD_DATE || _util.Today()" matInput name="dtActualDate"
+               [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned' || presurveyformData.status === 'Planned'" 
                [(ngModel)]="presurveyformData.actuaL_DATE" 
                [matDatepicker]="picker1"
                [required]="presurveyformData.status === 'Completed'" 

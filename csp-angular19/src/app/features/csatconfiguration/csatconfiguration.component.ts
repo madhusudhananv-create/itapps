@@ -558,13 +558,31 @@ export class CsatconfigurationComponent implements OnInit {
   }
 
   isRowValid(row: any): boolean {
+    // Check mandatory fields first
     if (!row.respondentName ||
       row.predictedScore === null || row.predictedScore === undefined || row.predictedScore === '' ||
       !row.csatSpoc
     ) {
       return false;
     }
+    
     return true;
+  }
+
+  /**
+   * Check if row has duplicate project + respondent combination
+   */
+  hasDuplicate(row: any): boolean {
+    if (!row.emailId) return false;
+    
+    const duplicate = this.validationData.find(r => 
+      r !== row && 
+      r.projectId === row.projectId && 
+      r.emailId && 
+      r.emailId === row.emailId
+    );
+    
+    return !!duplicate;
   }
 
   /**
@@ -582,10 +600,23 @@ export class CsatconfigurationComponent implements OnInit {
   }
 
   saveRow(row: any) {
+    // First check mandatory fields
     if (!this.isRowValid(row)) {
       row.isValid = false;
       return;
     }
+    
+    // Then check for duplicate project + respondent combination
+    if (this.hasDuplicate(row)) {
+      this.showWarning(
+        `This combination of Project and Respondent already exists in the table. Please select a different respondent.`,
+        "Duplicate Entry",
+        "error"
+      );
+      row.isValid = false;
+      return;
+    }
+    
     row.isValid = true;
     row.isEditing = false;
     row.isNew = false;

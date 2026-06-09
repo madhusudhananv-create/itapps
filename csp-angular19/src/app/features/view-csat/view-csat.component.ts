@@ -194,10 +194,10 @@ export class ViewCsatComponent implements OnInit {
     let y = new Date().getFullYear();
 
     if (m >= 1 && m <= 6) {
-      this.selectedQuarter = 6;
-      this._util.tableYear = y - 1;
+      this.selectedQuarter = 5; // H1
+      this._util.tableYear = y;
     } else if (m >= 7 && m <= 12) {
-      this.selectedQuarter = 5;
+      this.selectedQuarter = 6; // H2
       this._util.tableYear = y;
     }
     this.getBatchDate();

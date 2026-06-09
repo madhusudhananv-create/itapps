@@ -35,13 +35,9 @@
         <div class="table-toolbar">
           <div class="toolbar-left" *ngIf="batchCycles">
             <span class="toolbar-label">Batch Cycle:</span>
-            <mat-form-field class="bulk-dropdown">
-              <mat-select [(ngModel)]="selectedBatchCycle" disableOptionCentering>
-                <mat-option [value]="batchCycles.batch_name">
-                  {{ batchCycles.batch_name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+            <span style="font-weight: 500; margin-left: 8px; color: #333;">
+              {{ batchCycles.batch_name }}
+            </span>
           </div>
           
           <div class="toolbar-center">
@@ -181,7 +177,7 @@
                     [class.mat-form-field-invalid]="!row.isValid && !row.projectId">
                     <mat-select [(ngModel)]="row.projectObj" placeholder="Select Project"
                       (selectionChange)="onNewRowProjectSelected(row, $event.value)">
-                      <mat-option *ngFor="let p of getStep1SelectedProjects()" [value]="p">
+                      <mat-option *ngFor="let p of getStep1SelectedProjects()" [value]="p" [title]="p.name">
                         {{ p.name }}
                       </mat-option>
                     </mat-select>
@@ -266,20 +262,20 @@
                   </button>
                 </div>
 
-                <div *ngIf="row.isEditing">
-                  <!-- Manual save button - only shown if row is still invalid -->
-                  <button *ngIf="!isRowValid(row)" mat-icon-button style="color: #DC2626;"
-                    title="Fill all mandatory fields to auto-save">
-                    <mat-icon>error</mat-icon>
-                  </button>
-                  
-                  <!-- Success indicator when row is valid (auto-saved) -->
+                <div *ngIf="row.isEditing" style="display: flex; gap: 4px; justify-content: center;">
+                  <!-- Save button - shown when row is valid -->
                   <button *ngIf="isRowValid(row)" mat-icon-button style="color: #059669;"
-                    (click)="saveRow(row)" title="All fields filled - Click to confirm save">
+                    (click)="saveRow(row)" matTooltip="Click to save">
                     <mat-icon>check_circle</mat-icon>
                   </button>
+                  
+                  <!-- Error indicator - shown when mandatory fields are missing -->
+                  <button *ngIf="!isRowValid(row)" mat-icon-button style="color: #DC2626;"
+                    matTooltip="Fill all mandatory fields: Respondent, Prediction Score, and CSAT SPOC">
+                    <mat-icon>error</mat-icon>
+                  </button>
 
-                  <button mat-icon-button color="warn" (click)="cancelEdit(row)" title="Cancel Editing">
+                  <button mat-icon-button color="warn" (click)="cancelEdit(row)" matTooltip="Cancel">
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>

@@ -59,7 +59,7 @@
 
   <!-- Additional Fields Card -->
   <div class="additional-fields-card" *ngIf="showCSSFields">
-    <div class="field-row">
+    <!-- <div class="field-row">
       <mat-form-field appearance="outline" class="modern-date-field">
         <mat-label>Date of Meeting</mat-label>
         <input matInput name="meetingDate" [max]="maxDate" [(ngModel)]="meetingDate"
@@ -67,7 +67,7 @@
         <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
         <mat-datepicker #picker1></mat-datepicker>
       </mat-form-field>
-    </div>
+    </div> -->
     
     <div class="field-row">
       <mat-checkbox class="modern-checkbox" [(ngModel)]="isCSMNotified" [disabled]="IsCompleted" name="checkCSMNotified"

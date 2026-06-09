@@ -35,6 +35,7 @@ import { MyUtility } from '../../shared/my-utility';
 import { AccessControl } from '../../shared/access-control';
 import { SharedService } from '../../shared/shared.service';
 import { CssPresurveyConnectModel } from '../../models/css-project-selection-list-model';
+import { WarningPopupComponent, WarningPopupData } from '../../shared/components/warning-popup/warning-popup.component';
 
 @Component({
   selector: 'app-presurvey-connect',
@@ -96,6 +97,16 @@ export class PresurveyConnectComponent implements OnInit {
   }
 
   /**
+   * Handle status change to reset dates when status is "To Be Planned"
+   */
+  onStatusChange() {
+    if (this.presurveyformData.status === 'To Be Planned') {
+      this.presurveyformData.planneD_DATE = null;
+      this.presurveyformData.actuaL_DATE = null;
+    }
+  }
+
+  /**
    * Submit form
    * @param isValid Form validation status
    */
@@ -119,6 +130,15 @@ export class PresurveyConnectComponent implements OnInit {
             this.isDisabledData = this.isDisabled;
           }
           this.presurveyformData = this.overallPreconnectData;
+          
+          // Convert date strings to proper Date objects to avoid timezone issues
+          if (this.presurveyformData.planneD_DATE) {
+            this.presurveyformData.planneD_DATE = this.convertToLocalDate(this.presurveyformData.planneD_DATE);
+          }
+          if (this.presurveyformData.actuaL_DATE) {
+            this.presurveyformData.actuaL_DATE = this.convertToLocalDate(this.presurveyformData.actuaL_DATE);
+          }
+          
           if (!this.presurveyformData.status) {
             this.presurveyformData.status = 'To Be Planned';
           }
@@ -133,18 +153,55 @@ export class PresurveyConnectComponent implements OnInit {
   }
 
   /**
+   * Convert date string to local date object without timezone shift
+   */
+  convertToLocalDate(dateValue: any): Date | null {
+    if (!dateValue) return null;
+    
+    // If it's already a Date object, normalize it to midnight local time
+    if (dateValue instanceof Date) {
+      return new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate(), 0, 0, 0, 0);
+    }
+    
+    // Parse the date string directly to avoid timezone issues
+    // API returns format: "2026-06-11T00:00:00"
+    const dateStr = dateValue.toString();
+    const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    
+    if (match) {
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
+      const day = parseInt(match[3], 10);
+      return new Date(year, month, day, 0, 0, 0, 0);
+    }
+    
+    return new Date(dateValue);
+  }
+
+  /**
+   * Convert date to string format for API without timezone conversion
+   * Formats as: "YYYY-MM-DDTHH:mm:ss"
+   */
+  formatDate(dateValue: Date | null): string | null {
+    if (!dateValue) return null;
+    
+    const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T00:00:00`;
+  }
+
+  /**
    * Save preconnect data
    */
   savePreconnectData() {
     this.isLoading = true;
     const surveyData: CssPresurveyConnectModel = {
       csS_BATCH_CUSTOMER_ID: this.data.batchCustomerId,
-      actuaL_DATE: (this.presurveyformData.actuaL_DATE && this.presurveyformData.actuaL_DATE !== undefined)
-        ? this._util.setLocaleDate(this.presurveyformData.actuaL_DATE)
-        : null,
-      planneD_DATE: (this.presurveyformData.planneD_DATE && this.presurveyformData.planneD_DATE !== undefined)
-        ? this._util.setLocaleDate(this.presurveyformData.planneD_DATE)
-        : null,
+      actuaL_DATE: this.formatDate(this.presurveyformData.actuaL_DATE) as any,
+      planneD_DATE: this.formatDate(this.presurveyformData.planneD_DATE) as any,
       status: this.presurveyformData.status,
       remarks: this.presurveyformData.remarks || '',
       updateD_BY_NAME: ''
@@ -153,11 +210,11 @@ export class PresurveyConnectComponent implements OnInit {
     this._appservice.savePreconnectSurveyData(surveyData).subscribe(
       (data: any) => {
         this.isLoading = false;
-        this.showWarningPopup('Data saved successfully.');
+        this.showWarningPopup('Data saved successfully.', 'Success', 'check_circle');
         this.dialogRef.close(true);
       },
       (error: any) => {
-        this.showWarningPopup('Error saving data: ' + error);
+        this.showWarningPopup('Error saving data: ' + error, 'Error', 'error');
         this.isLoading = false;
       }
     );
@@ -166,10 +223,19 @@ export class PresurveyConnectComponent implements OnInit {
   /**
    * Show warning popup
    * @param message Message to display
+   * @param title Title of the dialog
+   * @param icon Icon to display
    */
-  showWarningPopup(message: string) {
-    // TODO: Replace with proper alert dialog when RatingCriteriaRemarksComponent is available
-    alert(message);
+  showWarningPopup(message: string, title: string = 'Warning', icon: string = 'warning') {
+    this.dialog.open(WarningPopupComponent, {
+      width: '400px',
+      data: {
+        Message: message,
+        title: title,
+        icon: icon,
+        isConfirmation: false
+      } as WarningPopupData
+    });
   }
 
   /**
