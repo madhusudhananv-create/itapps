@@ -70,6 +70,11 @@
           </div>
         </mat-menu>
       </div>
+        <!-- FAQ Document Link -->
+      <a class="navbar-icon-wrapper" routerLink="/faq" matTooltip="FAQ Document"
+        [matTooltipPosition]="'before'">
+        <i class="fa fa-question-circle fa_fnt navbar-icon"></i>
+      </a>
       }
       @if (isEditable() || isHR() || isAllowed(33, 1)) {
       <div class="navbar-icon-wrapper" [matMenuTriggerFor]="menu" matTooltip="Settings" [matTooltipPosition]="'before'">
@@ -111,6 +116,10 @@
             <i class="fa fa-power-off" style="color:red"></i>
             }
             &nbsp;&nbsp;&nbsp;{{ logoutButtonText() }}
+          </button>
+           <button mat-menu-item routerLink="/faq">
+            <i class="fa fa-question-circle"></i>
+               FAQ Document
           </button>
           }
           <mat-divider></mat-divider>
