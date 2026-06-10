@@ -107,6 +107,8 @@ $font-weight-bold: 700;
 .history-menu {
   padding: $spacing-lg;
   max-width: 280px;
+  background: $background-white;
+  border-radius: 8px;
 
   p {
     margin: $spacing-sm 0;

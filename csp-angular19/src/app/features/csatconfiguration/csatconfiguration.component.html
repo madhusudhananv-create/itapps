@@ -35,9 +35,13 @@
         <div class="table-toolbar">
           <div class="toolbar-left" *ngIf="batchCycles">
             <span class="toolbar-label">Batch Cycle:</span>
-            <span style="font-weight: 500; margin-left: 8px; color: #333;">
-              {{ batchCycles.batch_name }}
-            </span>
+            <mat-form-field class="bulk-dropdown">
+              <mat-select [(ngModel)]="selectedBatchCycle" disableOptionCentering disabled>
+                <mat-option [value]="batchCycles.batch_name">
+                  {{ batchCycles.batch_name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
           </div>
           
           <div class="toolbar-center">
@@ -91,7 +95,7 @@
               </td>
               <td style="color: #555;" [title]="proj.account">{{ proj.account }}</td>
               <td [title]="proj.accountHeadcount">{{ proj.accountHeadcount }}</td>
-              <td style="text-align: left;" [title]="proj.name">{{ proj.name }}</td>
+              <td style="text-align: left; word-break: break-word; white-space: normal;" [title]="proj.name">{{ proj.name }}</td>
               <td class="readonly-cell" [title]="proj.headcount">{{ proj.headcount }}</td>
               <td [title]="proj.projectStatus">{{ proj.projectStatus }}</td>
               <td [title]="proj.executionType || '-'">{{ proj.executionType || '-' }}</td>
@@ -165,8 +169,7 @@
                   <th style="width: 10%;text-align: left;text-wrap: inherit;">Prediction Reason</th>
                   <th style="width: 12%;text-align: left;text-wrap: inherit;">CSAT SPOC Email</th>
                   <th style="width: 7%;text-align: left;text-wrap: inherit;">Remarks</th>
-                  <th style="width: 6%; text-align: left;">Action</th>
-                  <th style="width: 6%; text-align: left;text-wrap: inherit;">Link to Contacts</th>
+                  <th style="width: 12%; text-align: center;">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -253,13 +256,18 @@
               
 
               <td style="text-align: center;">
-                <div *ngIf="!row.isEditing">
-                  <button mat-icon-button color="primary" (click)="editRow(row)">
+                <div *ngIf="!row.isEditing" style="display: flex; gap: 4px; justify-content: center; align-items: center;">
+                  <button mat-icon-button color="primary" (click)="editRow(row)" matTooltip="Edit">
                     <mat-icon>edit</mat-icon>
                   </button>
-                  <button mat-icon-button color="warn" (click)="deleteRow(i)">
+                  <button mat-icon-button color="warn" (click)="deleteRow(i)" matTooltip="Delete">
                     <mat-icon>delete</mat-icon>
                   </button>
+                  <a *ngIf="row.custId" mat-icon-button style="color: #1976d2;" 
+                     [routerLink]="['/layout/contacts', row.custId]"
+                     target="_blank" matTooltip="Go to Customer Contacts">
+                    <mat-icon>contact_mail</mat-icon>
+                  </a>
                 </div>
 
                 <div *ngIf="row.isEditing" style="display: flex; gap: 4px; justify-content: center;">
@@ -279,12 +287,6 @@
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>
-              </td>
-              <td style="text-align: center;">
-                <a *ngIf="row.custId" mat-icon-button color="accent" [routerLink]="['/layout/contacts', row.custId]"
-                  target="_blank" title="Go to link the Customer Contacts">
-                  <mat-icon>contact_mail</mat-icon>
-                </a>
               </td>
             </tr>
           </tbody>

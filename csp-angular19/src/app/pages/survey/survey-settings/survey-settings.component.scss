@@ -116,7 +116,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04); // Prompt 5: flat shadow
   
   .table-wrapper {
-    max-height: 210px; // Prompt 5: shows exactly 3-4 survey rows
+    max-height: 300px; // Increased to show 5 rows comfortably
     overflow-y: auto;
     overflow-x: auto;
     
@@ -148,7 +148,7 @@
   width: 100%;
   border-collapse: collapse;
   
-  // Header styling - Prompt 5: reduced padding for 4-row visibility
+  // Header styling - reduced padding for better row visibility
   thead {
     th {
       background: #B8D4F1;
@@ -157,7 +157,7 @@
       text-transform: uppercase;
       color: #000000;
       letter-spacing: 0.5px;
-      padding: 8px 10px;
+      padding: 6px 10px; // Reduced from 8px to 6px
       border-bottom: 1px solid rgba(0, 0, 0, 0.12);
       border-right: 1px solid rgba(0, 0, 0, 0.12);
       text-align: left;
@@ -204,7 +204,7 @@
       }
       
       td {
-        padding: 10px 12px; // Reduced for consistency
+        padding: 8px 12px; // Reduced from 10px to 8px for more compact rows
         color: #000000;
         font-weight: 600;
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
@@ -246,43 +246,37 @@
 // ===================================================================
 .status-badge {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px; // Softer corners
-  font-size: 11px;
-  font-weight: 700; // Bolder for visibility
+  padding: 0;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   white-space: nowrap;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   
   &.status-survey-sent {
-    background: rgba(255, 159, 10, 0.12); // Apple orange tint
-    color: #FF9F0A; // Apple orange
+    color: #FF9F0A; // Orange text
   }
   
   &.status-completed {
-    background: rgba(52, 199, 89, 0.12); // Apple green tint
-    color: #34C759; // Apple green
+    color: #34C759; // Green text
   }
   
   &.status-new {
-    background: rgba(0, 122, 255, 0.12); // Apple blue tint
-    color: #007AFF; // Apple blue
+    color: #007AFF; // Blue text
   }
   
   &.status-active {
-    background: rgba(52, 199, 89, 0.12); // Apple green tint
-    color: #34C759;
+    color: #34C759; // Green text
   }
   
   &.status-created {
-    background: rgba(142, 142, 147, 0.12); // Apple gray tint
-    color: #8E8E93; // Apple gray
+    color: #8E8E93; // Gray text
   }
   
   &.status-default {
-    background: rgba(142, 142, 147, 0.12);
-    color: #8E8E93;
+    color: #8E8E93; // Gray text
   }
 }
 
