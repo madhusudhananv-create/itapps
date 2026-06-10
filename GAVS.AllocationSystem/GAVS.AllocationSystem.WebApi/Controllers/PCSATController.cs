@@ -311,7 +311,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetCurrentActiveBatch()
         {
 
-            return Ok(new { batch_id = 37, batch_name = "Half-Yearly June - Dec 2025" });
+            return Ok(new { batch_id = 38, batch_name = "Half-Yearly January - June 2026" });
         }
 
         [GET("GetDropdownOptions")]
