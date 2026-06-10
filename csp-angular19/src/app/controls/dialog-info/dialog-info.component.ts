@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 /**
  * Dialog data interface for Information dialogs
@@ -10,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 export interface DialogInfoData {
   title: string;
   message: string;
+  messageHtml?: string;     // Optional HTML message (takes precedence over message if provided)
   buttonText?: string;      // Custom text for OK button (default: 'OK')
   icon?: string;            // Optional Material icon name (default: 'info')
   iconColor?: string;       // Icon color (CSS color value)
@@ -42,6 +44,7 @@ export class DialogInfoComponent {
   // Modern Angular 19 dependency injection
   readonly dialogRef = inject(MatDialogRef<DialogInfoComponent>);
   readonly data: DialogInfoData = inject(MAT_DIALOG_DATA);
+  private readonly sanitizer = inject(DomSanitizer);
 
   // Default values for optional properties
   get buttonText(): string {
@@ -54,6 +57,16 @@ export class DialogInfoComponent {
 
   get iconColor(): string {
     return this.data.iconColor || '#3b82f6';
+  }
+
+  get hasHtmlMessage(): boolean {
+    return !!this.data.messageHtml;
+  }
+
+  get sanitizedHtml(): SafeHtml {
+    return this.data.messageHtml 
+      ? this.sanitizer.bypassSecurityTrustHtml(this.data.messageHtml)
+      : '';
   }
 
   /**

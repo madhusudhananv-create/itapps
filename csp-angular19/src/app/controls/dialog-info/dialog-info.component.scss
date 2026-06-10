@@ -171,6 +171,35 @@
     font-size: 14px;
     margin-bottom: 24px;
   }
+
+  // HTML message support - paragraph spacing
+  p {
+    margin: 0 0 12px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  // Link styling - make links prominent and clickable
+  a {
+    color: #0ea5e9 !important;
+    text-decoration: underline !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease;
+    cursor: pointer !important;
+
+    &:hover {
+      color: #0284c7 !important;
+      text-decoration: none !important;
+    }
+
+    &:focus {
+      outline: 2px solid #0ea5e9;
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
 }
 
 // Button container

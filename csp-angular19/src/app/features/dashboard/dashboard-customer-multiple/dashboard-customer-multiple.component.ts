@@ -702,7 +702,8 @@ export class DashboardCustomerMultipleComponent implements OnInit, OnDestroy {
         if (expiringProjects?.trim()) {
           const dialogData: DialogInfoData = {
             title: 'Project Allocation Expiry Notice',
-            message: `The following projects (${expiringProjects}) or allocation to these projects are about to end within the next ten days.\n\nIn case the project/allocation end date is not extended in the PSA system, all those project team members will not be able to access (including view) the projects in the CSM Platform.\n\nPlease review and extend the allocation end date appropriately in the PSA system. In case these projects are about to end then ignore this message.`,
+            message: `The following projects (${expiringProjects}) or allocation to these projects are about to end within the next ten days.`,
+            messageHtml: `<p>The following projects (<strong>${expiringProjects}</strong>) or allocation to these projects are about to end within the next ten days.</p><p>In case the project/allocation end date is not extended in the PSA system, all those project team members will not be able to access (including view) the projects in the CSM Platform.</p><p>Please review and extend the allocation end date appropriately in the PSA system. In case these projects are about to end then ignore this message.</p><p>For more information, refer to the <a href="/faq" target="_blank" style="color: #0ea5e9; font-weight: 600; text-decoration: underline; cursor: pointer;">FAQ Document</a>.</p>`,
             icon: 'warning',
             iconColor: '#f59e0b',
             buttonText: 'OK'
@@ -749,7 +750,8 @@ export class DashboardCustomerMultipleComponent implements OnInit, OnDestroy {
         if (response.length === 0) {
           const dialogData: DialogInfoData = {
             title: 'No Customer Accounts Available',
-            message: `Customer Accounts are visible here based on your allocation in respective projects in PSA.\n\nLooks like there are no active allocations or all the projects you are allocated to have ended.\n\nPlease take it up with your manager and get allocated in required projects for you to manage them in the CSM Platform.\n\nPlease send an email to WFM@${this.domainConfig.domain} for allocation or extending the allocation.`,
+            message: `Customer Accounts are visible here based on your allocation in respective projects in PSA.`,
+            messageHtml: `<p>Customer Accounts are visible here based on your allocation in respective projects in PSA.</p><p>Looks like there are no active allocations or all the projects you are allocated to have ended.</p><p>Please take it up with your manager and get allocated in required projects for you to manage them in the CSM Platform.</p><p>Please send an email to <a href="mailto:WFM@${this.domainConfig.domain}" style="color: #0ea5e9; font-weight: 600; text-decoration: underline; cursor: pointer;">WFM@${this.domainConfig.domain}</a> for allocation or extending the allocation.</p><p>For more information, refer to the <a href="/faq" target="_blank" style="color: #0ea5e9; font-weight: 600; text-decoration: underline; cursor: pointer;">FAQ Document</a>.</p>`,
             icon: 'info',
             iconColor: '#3b82f6',
             buttonText: 'OK'
@@ -772,6 +774,10 @@ export class DashboardCustomerMultipleComponent implements OnInit, OnDestroy {
             sessionStorage.removeItem('skipAutoRedirect'); // Clear flag for next time
             this.service_GetDashboardDetails();
           } else {
+            // IMPORTANT: Check for project allocation expiry BEFORE auto-redirect
+            // This ensures users see the warning popup even with a single project
+            this.CheckProjectAllocationExpiry();
+            
             // Auto-redirect: Single account detected - skip enterprise dashboard UI
             const singleAccount = response[0];
             

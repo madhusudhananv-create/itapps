@@ -18,7 +18,8 @@
     <h2 class="dialog-title">{{ data.title }}</h2>
     
     <!-- Message -->
-    <p class="dialog-message">{{ data.message }}</p>
+    <p class="dialog-message" *ngIf="!hasHtmlMessage">{{ data.message }}</p>
+    <div class="dialog-message" *ngIf="hasHtmlMessage" [innerHTML]="sanitizedHtml"></div>
 
     <!-- Action Button -->
     <div class="dialog-buttons">
