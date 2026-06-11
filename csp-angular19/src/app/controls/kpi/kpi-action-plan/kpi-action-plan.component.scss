@@ -26,6 +26,70 @@ $radius-pill:    999px;
 $transition:     0.2s cubic-bezier(.4,0,.2,1);
 
 // ============================================================
+// Global Z-Index Fix for Material Dropdowns in Dialog
+// ============================================================
+// CRITICAL FIX: mat-select dropdowns need higher z-index than dialog overlay
+// Angular Material dialog: 1000, so dropdowns must be 1001+
+
+// Force all Material dropdowns to appear on top
+::ng-deep {
+  // Custom panel class for CAPA dropdowns
+  .capa-dropdown-panel {
+    z-index: 9999 !important;
+    max-height: 256px !important;
+    
+    // Ensure proper positioning relative to trigger
+    &.mat-mdc-select-panel {
+      z-index: 9999 !important;
+      // CRITICAL: Let Angular calculate position naturally, don't force fixed
+      // The disableOptionCentering should handle alignment
+    }
+  }
+  
+  .cdk-overlay-container {
+    z-index: 9999 !important;
+    position: fixed !important;
+    pointer-events: none !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    
+    .cdk-overlay-backdrop {
+      pointer-events: auto !important;
+    }
+    
+    .cdk-overlay-pane {
+      pointer-events: auto !important;
+      z-index: 9999 !important;
+      
+      // Ensure dropdowns with our custom class are positioned correctly
+      &:has(.capa-dropdown-panel) {
+        z-index: 9999 !important;
+      }
+    }
+  }
+  
+  .mat-mdc-select-panel {
+    z-index: 9999 !important;
+  }
+  
+  // CRITICAL FIX: Ensure proper positioning strategy
+  .cdk-overlay-connected-position-bounding-box {
+    position: fixed !important;
+  }
+  
+  // Ensure dialog container doesn't clip dropdowns
+  .mat-mdc-dialog-container {
+    overflow: visible !important;
+    
+    .mat-mdc-dialog-surface {
+      overflow: visible !important;
+    }
+  }
+}
+
+// ============================================================
 // Dialog Wrapper
 // ============================================================
 .kpi-dialog-wrapper {
@@ -34,10 +98,10 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
   width: 100%;
   min-width: min(92vw, 1100px);
   //max-width: 96vw;
-  max-height: 92vh;
+  height: 100%; // Changed: Use full available height from dialog
   background: $bg-base;
   border-radius: $radius-lg;
-  overflow: hidden;
+  overflow: visible; // CRITICAL: No scroll here, let Material Dialog handle it
   animation: dialogIn .25s cubic-bezier(.4,0,.2,1);
 }
 
@@ -166,11 +230,15 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
-    cursor: default;
+    cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all $transition;
     flex: 1 1 auto;
     min-width: 0;
+
+    &:hover:not(.disabled) {
+      background: rgba($primary, 0.05);
+    }
 
     &.active {
       border-bottom-color: $primary;
@@ -196,6 +264,21 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
         color: #fff;
       }
       .step-info .step-label { color: $success; }
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      pointer-events: none;
+      
+      .step-num {
+        background: #f3f4f6;
+        color: #d1d5db;
+      }
+      
+      .step-info .step-label,
+      .step-info .step-status {
+        color: #d1d5db;
+      }
     }
 
     .step-num {
@@ -251,13 +334,19 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
 // ============================================================
 .kpi-step-content {
   flex: 1;
-  overflow-y: auto;
+  // CRITICAL: No overflow management here - let it flow naturally
+  overflow: visible !important;
   padding: 14px 16px;
   animation: stepIn .2s cubic-bezier(.4,0,.2,1);
-
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: $border; border-radius: $radius-pill; }
+  
+  // Fix for dropdowns in tables
+  table {
+    overflow: visible !important;
+    
+    tbody, tr, td {
+      overflow: visible !important;
+    }
+  }
 }
 
 @keyframes stepIn {
@@ -318,6 +407,8 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
   box-shadow: $shadow-sm;
   border: 1px solid $border;
   margin-bottom: 16px;
+  overflow: visible !important; // CRITICAL: Allow dropdowns to escape
+  position: static !important; // CRITICAL: Don't create positioning context
 }
 
 .capa-table {
@@ -326,9 +417,13 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
   font-size: 12px;
   background: $bg-white;
   table-layout: fixed;
+  position: static !important; // CRITICAL: Don't create positioning context
+  transform: none !important; // Prevent creating stacking context that breaks dropdowns
+  overflow: visible !important; // Allow dropdowns to escape
 
   thead tr {
     background: linear-gradient(90deg, #f1f3ff 0%, #f5f0ff 100%);
+    position: static !important;
 
     th {
       padding: 8px 8px;
@@ -345,8 +440,7 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
   }
 
   tbody tr {
-    border-bottom: 1px solid $border;
-    transition: background $transition;
+    position: static !important; // CRITICAL: Don't create positioning context
 
     &:hover { background: #fafbff; }
     &:last-child { border-bottom: none; }
@@ -355,10 +449,48 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
       padding: 5px 8px;
       vertical-align: middle;
       color: $text-primary;
-
+      overflow: visible !important; // Allow dropdowns to overflow
+      position: static !important; // CRITICAL: Let dropdown calculate from viewport
+      // Style for native select elements (replaced mat-select to fix positioning)
+      select {
+        &:hover:not(:disabled) {
+          border-color: $primary !important;
+        }
+        
+        &:focus {
+          outline: none;
+          border-color: $primary !important;
+          box-shadow: 0 0 0 2px rgba(91, 127, 255, 0.1);
+        }
+        
+        &:disabled {
+          background: #f5f5f5 !important;
+          color: #999 !important;
+          cursor: not-allowed !important;
+        }
+      }
       mat-form-field {
         width: 100%;
         min-width: 0;
+        overflow: visible !important; // Allow dropdowns to overflow
+        position: static !important; // CRITICAL:
+        overflow: visible !important; // Allow dropdowns to overflow
+        position: static !important; // Let dropdown calculate from viewport, not this element
+        
+        ::ng-deep {
+          .mat-mdc-form-field-subscript-wrapper {
+            overflow: visible !important;
+          }
+          
+          .mat-mdc-text-field-wrapper {
+            overflow: visible !important;
+          }
+          
+          // Ensure trigger element provides correct position reference
+          .mat-mdc-select-trigger {
+            position: relative !important;
+          }
+        }
       }
     }
   }
@@ -370,7 +502,7 @@ $transition:     0.2s cubic-bezier(.4,0,.2,1);
 .stage-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
   padding: 12px 0 0;
   border-top: 1px solid $border;

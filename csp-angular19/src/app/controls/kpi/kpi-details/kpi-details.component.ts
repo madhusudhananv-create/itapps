@@ -206,6 +206,8 @@ export class KpiDetailsComponent implements OnInit, OnChanges {
   ViewCAPA(kpiId: any, periodType: any, kpiActual: any) {
     this.additionalData.filter((x: any) => x.kpI_ID == kpiId)[0].kpI_ACTUAL = kpiActual;
     let kpiDetails = this.additionalData.filter((x: any) => x.kpI_ID == kpiId && x.perioD_TYPE == periodType)[0];
+    
+    
     let kpiData = this.detailmonthly;
     let date: String = (this._util.tableYear + "-" + this._util.tableMonth + '-01');
     const dialogRef = new MatDialogConfig();
@@ -219,6 +221,8 @@ export class KpiDetailsComponent implements OnInit, OnChanges {
     dialogRef.maxWidth = "100%";
     dialogRef.width = "99%";
     dialogRef.height = "90%";
+    dialogRef.hasBackdrop = true;
+    dialogRef.panelClass = 'capa-dialog-container'; // Add custom class for dropdown positioning
     const dialog = this.dialog.open(KpiActionPlanComponent, dialogRef);
 
     dialog.afterClosed().subscribe((res: any) => {

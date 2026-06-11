@@ -78,7 +78,12 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
     public dialog: MatDialog,
     public _route: ActivatedRoute,
     private cdr: ChangeDetectorRef
-  ) { }
+  ) {
+    // Enable CAPA (Corrective Action Plan) visibility based on user permissions
+    if (this._access.IsAllowed(75, 1, '', '')) {
+      this.isCapaVisible = true;
+    }
+  }
 
   ngOnInit() {
     
@@ -176,9 +181,8 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
           this.freez = false;
         }
         
-        this.showReleaseKPIs();
-        this.showMonthly();
-        this.showQuarterly();
+        // Note: showReleaseKPIs(), showMonthly(), showQuarterly() are now called 
+        // inside loadAdditionalData after CAPA data is loaded
       } else {
         console.warn('LoadData: No KPI metrics returned from API');
         this.isLoading = false;
@@ -205,7 +209,7 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
           if (addData != null && addData != undefined) {
             d.baseMeasureDataList = addData.baseMeasureDataList;
             d.exclusionBaseMeasureDataList = addData.exclusionBaseMeasureDataList;
-            d.capaStage = addData.capaStage;
+            d.capaStage = addData.capaStage; // CAPA stage loaded from backend
             d.iS_EXCLUSION = addData.iS_EXCLUSION;
             d.exclusioN_COMMENT = addData.exclusioN_COMMENT;
           }
@@ -215,6 +219,11 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
         this.addDatas = true;
         
         const additionalDataEndTime = performance.now();
+        
+        // Update frequency-specific data sources with loaded CAPA data
+        this.showReleaseKPIs();
+        this.showMonthly();
+        this.showQuarterly();
         
         // Turn off loading after all data is loaded and merged
         this.isLoading = false;
@@ -356,12 +365,8 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
         this.freez = false;
       }
       
-      // Show different frequency tables
-      this.showReleaseKPIs();
-      this.showMonthly();
-      this.showQuarterly();
-      
-      this.isLoading = false;
+      // Note: showReleaseKPIs(), showMonthly(), showQuarterly() and isLoading flag
+      // are now handled inside loadAdditionalData after CAPA data is loaded
     }, (err: any) => {
       console.error('Refresh: Error loading KPI data', err);
       this._util.serviceError(err);
@@ -742,6 +747,29 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
     }
 
 
+    // CRITICAL FIX: Check localStorage for latest CAPA data before opening dialog
+    // This ensures we pass the most recent saved data, even if it was just saved
+    const capaStorageKey = "capaforKPI" + id;
+    const storedCapaData = localStorage.getItem(capaStorageKey);
+    if (storedCapaData) {
+      try {
+        const parsedCapaData = JSON.parse(storedCapaData);
+        // Only use stored data if it has actual CAPA items
+        if (parsedCapaData?.capA_SUBMISSION?.capa?.length > 0) {
+          kpiDetail.capaStage = parsedCapaData;
+          console.log('ViewCAPA: Loaded latest CAPA data from localStorage');
+        }
+      } catch (e) {
+        console.warn('ViewCAPA: Error parsing localStorage CAPA data', e);
+      }
+    }
+
+    // CRITICAL FIX: selectedPeriod must be a string in format "YYYY-MonthName-01" 
+    // The API expects this format and does its own date conversion
+    // Legacy format: "2024-January-01"
+    const selectedPeriodString = `${this._util.tableYear}-${this._util.tableMonth}-01`;
+    console.log('ViewCAPA: selectedPeriod:', selectedPeriodString);
+
     const dialogRef = this.dialog.open(KpiActionPlanComponent, {
       width: '90%',
       maxWidth: '1400px',
@@ -750,22 +778,77 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
         editedRow: kpiDetail,
         customerId: this.custId,
         kpI_ID: id,
-        selectedPeriod: new Date(this._util.tableYear, this._util.getMonthNum(this._util.tableMonth), 1),
+        selectedPeriod: selectedPeriodString,
         kpiData: [kpiDetail]
       },
-      disableClose: true
+      disableClose: true,
+      hasBackdrop: true,
+      panelClass: 'capa-dialog-container', // Add custom class for styling
+      scrollStrategy: undefined // Let Material use default positioning
     });
 
     dialogRef.afterClosed().subscribe((result: any) => {
+      const keys = "capaforKPI" + id;
+      
       if (result && result.data) {
-        // Update the CAPA stage data
+        // Update the CAPA stage data with the result from dialog
         const index = this.metricsDetail.findIndex((x: any) => x.kpI_ID == id);
         if (index !== -1) {
           this.metricsDetail[index].capaStage = result.data;
+          
+          // Update the corresponding frequency-specific arrays and data sources
+          this.updateFrequencyDataSources();
+          
+          // Force change detection to reflect the updated CAPA stage in UI
+          this.cdr.detectChanges();
+        }
+      } else {
+        // Fallback: Check localStorage for CAPA data (used when dialog saves but doesn't return data)
+        console.log('ViewCAPA afterClosed: No data from dialog, checking localStorage');
+        const storedData = localStorage.getItem(keys);
+        if (storedData) {
+          const index = this.metricsDetail.findIndex((x: any) => x.kpI_ID == id);
+          if (index !== -1) {
+            this.metricsDetail[index].capaStage = JSON.parse(storedData);
+            this.updateFrequencyDataSources();
+            this.cdr.detectChanges();
+            console.log('ViewCAPA afterClosed: Updated metricsDetail from localStorage');
+          }
+        } else {
+          console.log('ViewCAPA afterClosed: No CAPA data in localStorage');
         }
       }
-      this.Refresh();
+      
+      // Clean up localStorage and clear kpiId to prevent auto-opening on refresh
+      localStorage.removeItem(keys);
+      this.kpiId = 0;  // Reset kpiId after dialog closes
+      this.modeId = 0; // Reset modeId as well
+      
+      // Note: We don't call Refresh() here to preserve the updated CAPA stage
+      // The server data is already up-to-date from the dialog's save operation
     });
+  }
+  
+  /**
+   * Update frequency-specific data sources after CAPA stage changes
+   * Helper method to refresh the data sources without full reload
+   */
+  private updateFrequencyDataSources() {
+    // Re-filter arrays and update data sources with new object references for change detection
+    this.monthlyMetrics = this.metricsDetail.filter((x: any) => x.frequency == 'Monthly').map((item: any) => ({...item}));
+    this.releaseMetrics = this.metricsDetail.filter((x: any) => x.frequency == 'Release').map((item: any) => ({...item}));
+    this.quarterlyMetrics = this.metricsDetail.filter((x: any) => x.frequency == 'Quarterly').map((item: any) => ({...item}));
+    
+    // Update MatTableDataSource with new data
+    if (this.showMonth && this.dataSource) {
+      this.dataSource.data = [...this.monthlyMetrics];
+    }
+    if (this.showRelease && this.dataSource2) {
+      this.dataSource2.data = [...this.releaseMetrics];
+    }
+    if (this.showQuarter && this.dataSource1) {
+      this.dataSource1.data = [...this.quarterlyMetrics];
+    }
   }
 
   Filter_onChange($event: any) {

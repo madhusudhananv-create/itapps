@@ -35,7 +35,7 @@
   <div class="kpi-stepper">
     <div class="stepper-nav">
 
-      <div class="step-tab" [class.active]="step===1" [class.completed]="iscapsubmitbutton">
+      <div class="step-tab" [class.active]="step===1" [class.completed]="iscapsubmitbutton" (click)="step=1" style="cursor: pointer;">
         <div class="step-num">
           <mat-icon *ngIf="iscapsubmitbutton" style="font-size:14px;width:14px;height:14px;">check</mat-icon>
           <span *ngIf="!iscapsubmitbutton">1</span>
@@ -50,7 +50,10 @@
         </div>
       </div>
 
-      <div class="step-tab" [class.active]="step===2" [class.completed]="iscapreviewbutton">
+      <div class="step-tab" [class.active]="step===2" [class.completed]="iscapreviewbutton" 
+           [class.disabled]="!iscapsubmitbutton" (click)="iscapsubmitbutton && (step=2)" 
+           [style.cursor]="iscapsubmitbutton ? 'pointer' : 'not-allowed'" 
+           [style.opacity]="iscapsubmitbutton ? '1' : '0.5'">
         <div class="step-num">
           <mat-icon *ngIf="iscapreviewbutton" style="font-size:14px;width:14px;height:14px;">check</mat-icon>
           <span *ngIf="!iscapreviewbutton">2</span>
@@ -63,7 +66,10 @@
         </div>
       </div>
 
-      <div class="step-tab" [class.active]="step===3" [class.completed]="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete">
+      <div class="step-tab" [class.active]="step===3" [class.completed]="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete"
+           [class.disabled]="!iscapreviewbutton" (click)="iscapreviewbutton && (step=3)"
+           [style.cursor]="iscapreviewbutton ? 'pointer' : 'not-allowed'"
+           [style.opacity]="iscapreviewbutton ? '1' : '0.5'">
         <div class="step-num">
           <mat-icon *ngIf="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete" style="font-size:14px;width:14px;height:14px;">check</mat-icon>
           <span *ngIf="!findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete">3</span>
@@ -77,7 +83,11 @@
         </div>
       </div>
 
-      <div class="step-tab" [class.active]="step===4" [class.completed]="isimplementbutton">
+      <div class="step-tab" [class.active]="step===4" [class.completed]="isimplementbutton"
+           [class.disabled]="!findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete" 
+           (click)="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete && (step=4)"
+           [style.cursor]="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete ? 'pointer' : 'not-allowed'"
+           [style.opacity]="findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete ? '1' : '0.5'">
         <div class="step-num">
           <mat-icon *ngIf="isimplementbutton" style="font-size:14px;width:14px;height:14px;">check</mat-icon>
           <span *ngIf="!isimplementbutton">4</span>
@@ -91,7 +101,10 @@
         </div>
       </div>
 
-      <div class="step-tab" [class.active]="step===5" [class.completed]="isverficationbutton">
+      <div class="step-tab" [class.active]="step===5" [class.completed]="isverficationbutton"
+           [class.disabled]="!isimplementbutton" (click)="isimplementbutton && (step=5)"
+           [style.cursor]="isimplementbutton ? 'pointer' : 'not-allowed'"
+           [style.opacity]="isimplementbutton ? '1' : '0.5'">
         <div class="step-num">
           <mat-icon *ngIf="isverficationbutton" style="font-size:14px;width:14px;height:14px;">check</mat-icon>
           <span *ngIf="!isverficationbutton">5</span>
@@ -112,13 +125,15 @@
   <div class="kpi-step-content">
 
     <!-- ── STAGE 1 : Submission ── -->
+    <ng-container *ngIf="step===1">
     <div class="cause-row" *ngIf="causeCollection != undefined">
       <span class="cause-label">Cause :</span>
       <mat-form-field appearance="outline" class="cause-field">
         <mat-label>Select Cause</mat-label>
         <mat-select (selectionChange)="getSelectedVal()"
           [disabled]="(findingStatus?.capA_SUBMISSION?.capa?.length || 0) > 0 && iscapsubmitbutton && isDraft == false"
-          [(ngModel)]="rootCauseIds" name="cause" multiple>
+          [(ngModel)]="rootCauseIds" name="cause" multiple
+          panelClass="capa-dropdown-panel" disableOptionCentering>
           <mat-option *ngFor="let cause of causeCollection" [value]="cause.id" [title]="cause.causes">
             {{cause.causes}}
           </mat-option>
@@ -158,13 +173,12 @@
               </mat-form-field>
             </td>
             <td>
-              <mat-form-field appearance="outline" style="width:72px">
-                <mat-select name="rootCause{{i}}" [(ngModel)]="st.cappalist.isrootcause"
-                  [disabled]="isCapCauseDisabled()">
-                  <mat-option [value]="true">Yes</mat-option>
-                  <mat-option [value]="false">No</mat-option>
-                </mat-select>
-              </mat-form-field>
+              <select name="rootCause{{i}}" [(ngModel)]="st.cappalist.isrootcause"
+                [disabled]="isCapCauseDisabled()" 
+                style="width:72px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:12px;background:white;color:#111827;cursor:pointer">
+                <option [value]="true">Yes</option>
+                <option [value]="false">No</option>
+              </select>
             </td>
             <td>
               <mat-form-field appearance="outline" style="width:100%">
@@ -190,23 +204,21 @@
               </mat-form-field>
             </td>
             <td *ngIf="isNonPremier">
-              <mat-form-field appearance="outline" style="width:115px">
-                <mat-select name="responsible{{i}}" [disabled]="isCapCauseDisabled()"
-                  [(ngModel)]="st.cappalist.responsible" required>
-                  <mat-option *ngFor="let root of empInfo" [value]="root.emP_ID" [title]="root.frsT_NM">
-                    {{root.frsT_NM}}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+              <select name="responsible{{i}}" [disabled]="isCapCauseDisabled()"
+                [(ngModel)]="st.cappalist.responsible" required
+                style="width:115px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:12px;background:white;color:#111827;cursor:pointer">
+                <option *ngFor="let root of empInfo" [value]="root.emP_ID" [title]="root.frsT_NM">
+                  {{root.frsT_NM}}
+                </option>
+              </select>
             </td>
             <td *ngIf="!isNonPremier">
-              <mat-form-field appearance="outline" style="width:115px">
-                <mat-select name="responsible{{i}}" [disabled]="isCapCauseDisabled()"
-                  [(ngModel)]="st.cappalist.responsible" required>
-                  <mat-option *ngFor="let root of empInfo" [value]="root.responsiblE_EMP_ID"
-                    [title]="root.responsiblE_NAME">{{root.responsiblE_NAME}}</mat-option>
-                </mat-select>
-              </mat-form-field>
+              <select name="responsible{{i}}" [disabled]="isCapCauseDisabled()"
+                [(ngModel)]="st.cappalist.responsible" required
+                style="width:115px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:12px;background:white;color:#111827;cursor:pointer">
+                <option *ngFor="let root of empInfo" [value]="root.responsiblE_EMP_ID"
+                  [title]="root.responsiblE_NAME">{{root.responsiblE_NAME}}</option>
+              </select>
             </td>
             <td>
               <mat-form-field appearance="outline" style="width:100%">
@@ -228,13 +240,16 @@
       <button class="btn-submit" *ngIf="(findingStatus?.capA_SUBMISSION?.capa?.length ?? 0) > 0"
         (click)="SaveCheckListCAPA(findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS)"
         [disabled]="isCAPSubmissionDisabled()">
-        <mat-icon style="font-size:15px;width:15px;height:15px;">save</mat-icon>
-        {{iscapsubmitbutton == true || findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS == 'Corrective Action Plan Resubmit' ? 'Submit' : 'Save'}}
+        <mat-icon style="font-size:15px;width:15px;height:15px;" *ngIf="!iscapsubmitbutton">save</mat-icon>
+        <mat-icon style="font-size:15px;width:15px;height:15px;" *ngIf="iscapsubmitbutton">check_circle</mat-icon>
+        <span *ngIf="!iscapsubmitbutton">{{findingStatus?.capA_SUBMISSION?.status?.stagE_STATUS == 'Corrective Action Plan Resubmit' ? 'Submit' : 'Save'}}</span>
+        <span *ngIf="iscapsubmitbutton">Submitted</span>
       </button>
     </div>
+    </ng-container>
 
     <!-- ── STAGE 2 : Review ── -->
-    <ng-container *ngIf="findingStatus != undefined && findingStatus.capA_REVIEW != undefined && iscapsubmitbutton">
+    <ng-container *ngIf="step===2 && findingStatus != undefined && findingStatus.capA_REVIEW != undefined && iscapsubmitbutton">
       <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:20px">
         <div class="capa-table-wrap" *ngIf="(findingStatus?.capA_REVIEW?.capa?.length ?? 0) > 0">
           <table class="capa-table">
@@ -263,13 +278,12 @@
                 <td>{{getEmployeeName(st.responsible)}}</td>
                 <td>{{st.plaN_FOR_EFFECTIVE_CAP}}</td>
                 <td>
-                  <mat-form-field appearance="outline" style="width:70px">
-                    <mat-select name="checkR{{i}}" [(ngModel)]="st.ischecked" [disabled]="st.issubmitted"
-                      (ngModelChange)="SendIdtoArray(st)">
-                      <mat-option [value]="true">Yes</mat-option>
-                      <mat-option [value]="false">No</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                  <select name="checkR{{i}}" [(ngModel)]="st.ischecked" [disabled]="st.issubmitted"
+                    (ngModelChange)="SendIdtoArray(st)"
+                    style="width:70px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:12px;background:white;color:#111827;cursor:pointer">
+                    <option [value]="true">Yes</option>
+                    <option [value]="false">No</option>
+                  </select>
                 </td>
                 <td>
                   <mat-form-field appearance="outline" style="width:100%">
@@ -298,7 +312,7 @@
 
     <!-- ── STAGE 3 : Customer Approval ── -->
     <ng-container
-      *ngIf="findingStatus != undefined && findingStatus.capA_CUSTOMER_APPROVAL != undefined && iscapreviewbutton && findingStatus.capA_REVIEW?.status?.stagE_STATUS == 'Corrective Action Plan Approved'">
+      *ngIf="checkStage3Visibility()">
       <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:20px">
         <div class="capa-table-wrap" *ngIf="(findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0">
           <table class="capa-table">
@@ -327,14 +341,13 @@
                 <td>{{getEmployeeName(st.capadata.responsible)}}</td>
                 <td>{{st.capadata.plaN_FOR_EFFECTIVE_CAP}}</td>
                 <td>
-                  <mat-form-field appearance="outline" style="width:100px">
-                    <mat-select name="checkA{{i}}" [(ngModel)]="st.statuS_ID"
-                      [disabled]="st.statuS_ID == 1 && st.isactive && findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete"
-                      (ngModelChange)="SendIdtoArray(st)">
-                      <mat-option *ngFor="let list of capaCustomerApprovalStatusList" [value]="list.id"
-                        [title]="list.status">{{list.status}}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                  <select name="checkA{{i}}" [(ngModel)]="st.statuS_ID"
+                    [disabled]="st.statuS_ID == 1 && st.isactive && findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete"
+                    (ngModelChange)="SendIdtoArray(st)"
+                    style="width:100px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:12px;background:white;color:#111827;cursor:pointer">
+                    <option *ngFor="let list of capaCustomerApprovalStatusList" [value]="list.id"
+                      [title]="list.status">{{list.status}}</option>
+                  </select>
                 </td>
                 <td>
                   <mat-form-field appearance="outline" style="width:100%">
@@ -368,7 +381,7 @@
 
     <!-- ── STAGE 4 : Implementation ── -->
     <ng-container
-      *ngIf="findingStatus != undefined && findingStatus.caP_IMPLEMENTATION != undefined && findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete && (findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By Customer' || findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By QASpoc')">
+      *ngIf="step===4 && findingStatus != undefined && findingStatus.caP_IMPLEMENTATION != undefined && findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete && (findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By Customer' || findingStatus.capA_CUSTOMER_APPROVAL?.status?.stagE_STATUS == 'Corrective Action Plan Approved By QASpoc')">
       <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:20px">
         <div class="capa-table-wrap" *ngIf="(findingStatus?.caP_IMPLEMENTATION?.capa?.length ?? 0) > 0">
           <table class="capa-table">
@@ -396,12 +409,11 @@
                 <td>{{getEmployeeName(st.capadata.responsible)}}</td>
                 <td>{{st.capadata.plaN_FOR_EFFECTIVE_CAP}}</td>
                 <td>
-                  <mat-form-field appearance="outline" style="width:72px">
-                    <mat-select name="checkI{{i}}" [(ngModel)]="st.isimplemented" [disabled]="isimplementbutton">
-                      <mat-option [value]="true">Yes</mat-option>
-                      <mat-option [value]="false">No</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                  <select name="checkI{{i}}" [(ngModel)]="st.isimplemented" [disabled]="isimplementbutton"
+                    style="width:72px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:12px;background:white;color:#111827;cursor:pointer">
+                    <option [value]="true">Yes</option>
+                    <option [value]="false">No</option>
+                  </select>
                 </td>
               </tr>
             </tbody>
@@ -423,7 +435,7 @@
 
     <!-- ── STAGE 5 : Verification ── -->
     <ng-container
-      *ngIf="findingStatus != undefined && findingStatus.caP_VERIFICATION != undefined && isimplementbutton && findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS == 'Corrective Action Plan Implemented'">
+      *ngIf="step===5 && findingStatus != undefined && findingStatus.caP_VERIFICATION != undefined && isimplementbutton && findingStatus.caP_IMPLEMENTATION?.status?.stagE_STATUS == 'Corrective Action Plan Implemented'">
       <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:20px">
         <div class="capa-table-wrap" *ngIf="(findingStatus?.caP_VERIFICATION?.capa?.length ?? 0) > 0">
           <table class="capa-table">
@@ -451,20 +463,18 @@
                 <td>{{getEmployeeName(st.capadata.responsible)}}</td>
                 <td>{{st.capadata.plaN_FOR_EFFECTIVE_CAP}}</td>
                 <td>
-                  <mat-form-field appearance="outline" style="width:72px">
-                    <mat-select name="checkV{{i}}" (selectionChange)="clearrecommendedAction(st)"
-                      [disabled]="isverficationbutton" [(ngModel)]="st.isverified">
-                      <mat-option [value]="true">Yes</mat-option>
-                      <mat-option [value]="false">No</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <mat-form-field appearance="outline" style="width:130px" *ngIf="!st.isverified">
-                    <mat-select name="capVerificationV{{i}}" [(ngModel)]="st.recommendeD_ACTION"
-                      [disabled]="isverficationbutton">
-                      <mat-option value="ReSubmit Corrective Action Plan">Re-Submit Corrective Action Plan</mat-option>
-                      <mat-option value="ReImplement Corrective Action Plan">Re-Implement Corrective Action Plan</mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                  <select name="checkV{{i}}" (change)="clearrecommendedAction(st)"
+                    [disabled]="isverficationbutton" [(ngModel)]="st.isverified"
+                    style="width:72px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:12px;background:white;color:#111827;cursor:pointer">
+                    <option [value]="true">Yes</option>
+                    <option [value]="false">No</option>
+                  </select>
+                  <select name="capVerificationV{{i}}" [(ngModel)]="st.recommendeD_ACTION"
+                    [disabled]="isverficationbutton" *ngIf="!st.isverified"
+                    style="width:200px;height:36px;border:1px solid #e5e7eb;border-radius:6px;padding:0 8px;font-size:11px;background:white;color:#111827;cursor:pointer">
+                    <option value="ReSubmit Corrective Action Plan">Re-Submit Corrective Action Plan</option>
+                    <option value="ReImplement Corrective Action Plan">Re-Implement Corrective Action Plan</option>
+                  </select>
                 </td>
               </tr>
             </tbody>

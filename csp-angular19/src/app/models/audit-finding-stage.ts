@@ -57,6 +57,7 @@ export class CapaApprovalByCustomer {
 export class AuditFindingStagesMapping {
   id?: number;
   findinG_ID?: number;
+  kpI_DETAILS_ID?: number;  // KPI Detail ID - required by backend API
   stagE_ID: number = 0;
   stagE_NAME: string = '';
   stagE_STATUS: string = '';

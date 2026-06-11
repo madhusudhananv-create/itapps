@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 // Import models
 import type { 
@@ -5240,6 +5241,9 @@ export class AppsService {
     return this.http.get<any>(
       `${this.apiurl}/GetCAPAStagesForKPI?kpiDetailId=${kpiDetailsId}`,
       { headers }
+    ).pipe(
+      tap(response => {
+      })
     );
   }
 
@@ -5259,6 +5263,9 @@ export class AppsService {
       `${this.apiurl}/AddCAPAForKPI`,
       capaStatus,
       { headers }
+    ).pipe(
+      tap(response => {
+      })
     );
   }
 
@@ -5414,14 +5421,18 @@ export class AppsService {
    * Migrated from legacy apps.service.ts -> IsCAPAApprovalAllowed()
    * 
    * @param prodId - Product ID
-   * @param selectedPeriod - Selected period for the KPI
+   * @param selectedPeriod - Selected period for the KPI (Date object or string)
    * @param kpiDetailsId - KPI Detail ID
    * @returns Observable<any[]> - Array indicating approval permission
    */
   IsCAPAApprovalAllowed(prodId: any, selectedPeriod: any, kpiDetailsId: any): Observable<any[]> {
     const headers = this.getAuthHeadersWithPeriod(selectedPeriod);
+    // Format date properly for URL query parameter
+    const formattedPeriod = selectedPeriod instanceof Date 
+      ? selectedPeriod.toISOString() 
+      : selectedPeriod;
     return this.http.get<any[]>(
-      `${this.apiurl}/IsCAPAApprovalAllowed?prodId=${prodId}&selectedPeriod=${selectedPeriod}&kpiDetailsId=${kpiDetailsId}`,
+      `${this.apiurl}/IsCAPAApprovalAllowed?prodId=${prodId}&selectedPeriod=${encodeURIComponent(formattedPeriod)}&kpiDetailsId=${kpiDetailsId}`,
       { headers }
     );
   }

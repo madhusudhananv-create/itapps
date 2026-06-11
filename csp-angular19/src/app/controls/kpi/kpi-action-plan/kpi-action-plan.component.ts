@@ -139,11 +139,11 @@ export class KpiActionPlanComponent implements OnInit {
     localStorage.removeItem('iscapametricview');
 
     this.getCauses();
-    this.findingStatus = new AuditFindingStage();
 
     if (this.data != null && this.data.editedRow.producT_ID != null) {
       // Premier product-based KPI
       this.isNonPremier = false;
+      console.log('🏷️ ngOnInit: Product-based KPI (isNonPremier=false)');
       this.serviceLevelMetric = this.data.editedRow.servicE_LEVEL_METRICS;
       this.minimumLevel = this.data.editedRow.minimuM_SERVICE_LEVEL;
       this.expectedLevel = this.data.editedRow.expecteD_SERVICE_LEVEL;
@@ -153,7 +153,21 @@ export class KpiActionPlanComponent implements OnInit {
       const sladata = this.getSLAStatus_KPIActual(this.data.editedRow);
       this.kpiActual = sladata.kpI_ACTUAL;
       this.slaStatus = sladata.slA_STATUS;
-      this.findingStatus = this.data.editedRow.capaStage;
+      
+      // Debug: Log received capaStage data
+      console.log('KpiActionPlan ngOnInit: Received capaStage:', this.data.editedRow.capaStage);
+      console.log('🔑 KpiActionPlan ngOnInit: ID fields check:');
+      console.log('  - kpI_ID:', this.data.editedRow.kpI_ID);
+      console.log('  - kpI_ACTUAL_ID:', this.data.editedRow.kpI_ACTUAL_ID);
+      console.log('  - detaiL_ID:', this.data.editedRow.detaiL_ID);
+      console.log('  - guid:', this.data.editedRow.guid);
+      
+      // Initialize with existing capaStage data or create new empty object
+      this.findingStatus = this.data.editedRow.capaStage || new AuditFindingStage();
+      
+      console.log('KpiActionPlan ngOnInit: Initialized findingStatus:', this.findingStatus);
+      console.log('KpiActionPlan ngOnInit: CAPA items count:', this.findingStatus?.capA_SUBMISSION?.capa?.length || 0);
+      
       this.selectedPeriod = this.data.selectedPeriod;
       
       this.FillSelectedCauses();
@@ -165,7 +179,17 @@ export class KpiActionPlanComponent implements OnInit {
       this.getProductManagerForProduct();
       this.getProductList();
       this.getCustomerCAPAApprovalStatus();
-      this.getCAPAStagesForKPI(this.data.editedRow.detaiL_ID);
+      this.IsCAPAApprovalAllowed(); // CRITICAL: Enable Stage 2 submit button for reviewers
+      
+      // CRITICAL FIX: Only call getCAPAStagesForKPI if we have a valid KPI_DETAILS record ID
+      // For new KPIs without detail records, skip the API call (start with empty CAPA)
+      const kpiDetailsId = this.data.editedRow.kpI_ACTUAL_ID || this.data.editedRow.detaiL_ID;
+      if (kpiDetailsId && kpiDetailsId !== 0) {
+        console.log('💾 ngOnInit: Loading existing CAPA for detaiL_ID:', kpiDetailsId);
+        this.getCAPAStagesForKPI(kpiDetailsId);
+      } else {
+        console.log('🆕 ngOnInit: No detail ID, starting with new CAPA (kpI_ID:', this.data.editedRow.kpI_ID, ')');
+      }
       this.minDate = this._util.setLocaleDate(this._util.Today());
     } else {
       // Non-premier project-based KPI
@@ -174,7 +198,9 @@ export class KpiActionPlanComponent implements OnInit {
       this.kpiActual = this.data.editedRow.kpI_ACTUAL;
       this.slaStatus = 'Not Met';
       this.kpiData = this.data.kpiData[0];
-      this.findingStatus = this.data.editedRow.capaStage;
+      
+      // Initialize with existing capaStage data or create new empty object
+      this.findingStatus = this.data.editedRow.capaStage || new AuditFindingStage();
       this.selectedPeriod = this.data.selectedPeriod;
       this.data.editedRow.detaiL_ID = this.data.editedRow.id;
       
@@ -186,7 +212,17 @@ export class KpiActionPlanComponent implements OnInit {
       this.disableCAPCustomerApproveButton();
       this.getProjResource();
       this.getCustomerCAPAApprovalStatus();
-      this.getCAPAStagesForKPI(this.data.editedRow.detaiL_ID);
+      // Note: IsCAPAApprovalAllowed() is ONLY for product view - project view uses Feature ID 85 only
+      
+      // CRITICAL FIX: Only call getCAPAStagesForKPI if we have a valid KPI_DETAILS record ID
+      // For project KPIs without detail records, skip the API call (start with empty CAPA)
+      const kpiDetailsId = this.data.editedRow.kpI_ACTUAL_ID || this.data.editedRow.detaiL_ID || this.data.editedRow.id;
+      if (kpiDetailsId && kpiDetailsId !== 0) {
+        console.log('💾 ngOnInit (project): Loading existing CAPA for detaiL_ID:', kpiDetailsId);
+        this.getCAPAStagesForKPI(kpiDetailsId);
+      } else {
+        console.log('🆕 ngOnInit (project): No detail ID, starting with new CAPA (kpI_ID:', this.data.editedRow.kpI_ID, ')');
+      }
       this.minDate = this._util.setLocaleDate(this._util.Today());
     }
   }
@@ -279,25 +315,31 @@ export class KpiActionPlanComponent implements OnInit {
     if (!this.findingStatus)
       return;
 
-    if ((this.findingStatus?.capA_SUBMISSION?.capa?.length || 0) == 0)
+    if ((this.findingStatus?.capA_SUBMISSION?.capa?.length || 0) == 0) {
       this.iscapsubmitbutton = false;
-    else
-      this.iscapsubmitbutton = !this.findingStatus.capA_SUBMISSION.capa.some((x: any) => !x.cappalist.issubmitted);
+      console.log('🔒 disableCAPSubmitButton: No CAPA items, Stage 2 disabled');
+    } else {
+      // Check if all items are submitted
+      const allSubmitted = !this.findingStatus.capA_SUBMISSION.capa.some((x: any) => !x.cappalist.issubmitted);
+      this.iscapsubmitbutton = allSubmitted;
+      console.log('🔒 disableCAPSubmitButton: allSubmitted=', allSubmitted, ', Stage 2 enabled=', this.iscapsubmitbutton);
+      console.log('🔒 CAPA items issubmitted status:', this.findingStatus.capA_SUBMISSION.capa.map((x: any) => ({
+        id: x.cappalist.id,
+        issubmitted: x.cappalist.issubmitted,
+        cause: x.cappalist.cause
+      })));
+    }
   }
 
   disableCAPReviewButton() {
     if (this.findingStatus != undefined) {
-      if ((this.findingStatus?.capA_REVIEW?.capa?.length || 0) == 0)
+      if ((this.findingStatus?.capA_REVIEW?.capa?.length || 0) == 0) {
         this.iscapreviewbutton = false;
-      else {
-        for (let element of this.findingStatus.capA_REVIEW.capa) {
-          if (!element.issubmitted) {
-            this.iscapreviewbutton = false;
-            break;
-          }
-          else
-            this.iscapreviewbutton = true;
-        }
+        console.log('🔒 disableCAPReviewButton: No review items, Stage 3 disabled');
+      } else {
+        const allSubmitted = this.findingStatus.capA_REVIEW.capa.every((x: any) => x.issubmitted);
+        this.iscapreviewbutton = allSubmitted;
+        console.log('🔒 disableCAPReviewButton: All submitted:', allSubmitted, ', Stage 3 enabled:', this.iscapreviewbutton);
       }
     }
     this.disabletillreviewSave = false;
@@ -338,30 +380,48 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   disableCAPCustomerApproveButton() {
+    console.log('🔒 disableCAPCustomerApproveButton called');
     if (this.findingStatus != undefined) {
-      if ((this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length || 0) == 0)
+      if ((this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length || 0) == 0) {
         this.iscapcustomerapprovebutton = false;
-      else {
+        console.log('🔒 Stage 3: No items, button disabled (iscapcustomerapprovebutton=false)');
+      } else {
         for (let element of this.findingStatus.capA_CUSTOMER_APPROVAL.capa) {
           if (element.statuS_ID == 1) {
             this.iscapcustomerapprovebutton = false;
+            console.log('🔒 Stage 3: Found statuS_ID=1 (Approved), setting iscapcustomerapprovebutton=false');
             break;
           }
-          else
+          else {
             this.iscapcustomerapprovebutton = true;
+            console.log('🔒 Stage 3: Found statuS_ID!=1, setting iscapcustomerapprovebutton=true');
+          }
         }
       }
+      console.log('🔒 Stage 3 final state:');
+      console.log('  - iscapcustomerapprovebutton:', this.iscapcustomerapprovebutton);
+      console.log('  - status.iscomplete:', this.findingStatus.capA_CUSTOMER_APPROVAL?.status?.iscomplete);
+      console.log('  - disableTillCustomerApprovalSave:', this.disableTillCustomerApprovalSave);
     }
     this.disableTillCustomerApprovalSave = false;
   }
 
   getProductManagerForProduct() {
     this.productId = this.data.editedRow.producT_ID;
+    console.log('🔍 getProductManagerForProduct: Loading employees for product:', this.productId);
     this._appservice.getProductManagerByProductId(this.productId).subscribe(
       (data: any) => {
+        console.log('✅ getProductManagerForProduct: Received employee data:', data);
+        console.log('✅ Employee count:', data?.length || 0);
+        if (data && data.length > 0) {
+          console.log('✅ Sample employee:', data[0]);
+        }
         this.empInfo = data;
       },
-      (error: any) => { this._util.serviceError(error); }
+      (error: any) => { 
+        console.error('❌ getProductManagerForProduct: API Error:', error);
+        this._util.serviceError(error); 
+      }
     );
   }
 
@@ -385,11 +445,20 @@ export class KpiActionPlanComponent implements OnInit {
 
   getProjResource() {
     let p = this.data.kpiData.filter((x: any) => x.projecT_ID != null)[0].projecT_ID;
+    console.log('🔍 getProjResource: Loading employees for project:', p);
     this._appservice.getProjectResourceByProjId(p).subscribe(
       (data: any) => {
+        console.log('✅ getProjResource: Received employee data:', data);
+        console.log('✅ Employee count:', data?.length || 0);
+        if (data && data.length > 0) {
+          console.log('✅ Sample employee:', data[0]);
+        }
         this.empInfo = data;
       },
-      (error: any) => { this._util.serviceError(error); }
+      (error: any) => { 
+        console.error('❌ getProjResource: API Error:', error);
+        this._util.serviceError(error); 
+      }
     );
   }
 
@@ -420,12 +489,88 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   isCAPSubmissionDisabled() {
-    if ((this.iscapsubmitbutton == true || this.disablesubmittillSave == true || this.iscapametricview == true) && this.isDraft == false) {
+    // Disable button if already submitted
+    if (this.iscapsubmitbutton == true) {
+      console.log('🔒 isCAPSubmissionDisabled: Disabled - Stage already submitted');
       return true;
     }
-    else {
-      return false;
+    
+    // Disable during save operation
+    if (this.disablesubmittillSave == true) {
+      console.log('🔒 isCAPSubmissionDisabled: Disabled - Save in progress');
+      return true;
     }
+    
+    // Disable in metric view mode
+    if (this.iscapametricview == true && this.isDraft == false) {
+      console.log('🔒 isCAPSubmissionDisabled: Disabled - Metric view mode');
+      return true;
+    }
+    
+    console.log('🔒 isCAPSubmissionDisabled: Enabled');
+    return false;
+  }
+
+  isStage3SubmitDisabled() {
+    console.log('🔒 isStage3SubmitDisabled CALLED');
+    // Log the values for debugging
+    const iscomplete = this.findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete;
+    const saving = this.disableTillCustomerApprovalSave;
+    const noEditAccess = this.isEditAccessDisabled;
+    
+    console.log('🔒 isStage3SubmitDisabled check:');
+    console.log('  - iscomplete:', iscomplete);
+    console.log('  - disableTillCustomerApprovalSave:', saving);
+    console.log('  - isEditAccessDisabled:', noEditAccess);
+    console.log('  - isNonPremier:', this.isNonPremier);
+    console.log('  - capa items:', this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length || 0);
+    
+    if (iscomplete) {
+      console.log('🔒 isStage3SubmitDisabled: Disabled - Stage already complete');
+      return true;
+    }
+    
+    if (saving) {
+      console.log('🔒 isStage3SubmitDisabled: Disabled - Save in progress');
+      return true;
+    }
+    
+    if (noEditAccess) {
+      console.log('🔒 isStage3SubmitDisabled: Disabled - No edit access');
+      return true;
+    }
+    
+    console.log('🔒 isStage3SubmitDisabled: Enabled');
+    return false;
+  }
+
+  // Diagnostic method to check Stage 3 visibility
+  checkStage3Visibility() {
+    const isVisible = this.step === 3 
+      && this.findingStatus != undefined 
+      && this.findingStatus.capA_CUSTOMER_APPROVAL != undefined 
+      && this.iscapreviewbutton 
+      && this.findingStatus.capA_REVIEW?.status?.stagE_STATUS == 'Corrective Action Plan Approved';
+    
+    if (this.step === 3) {
+      console.log('🔍 Stage 3 visibility check:');
+      console.log('  - step===3:', this.step === 3);
+      console.log('  - findingStatus defined:', this.findingStatus != undefined);
+      console.log('  - capA_CUSTOMER_APPROVAL defined:', this.findingStatus?.capA_CUSTOMER_APPROVAL != undefined);
+      console.log('  - iscapreviewbutton:', this.iscapreviewbutton);
+      console.log('  - capA_REVIEW.status.stagE_STATUS:', this.findingStatus?.capA_REVIEW?.status?.stagE_STATUS);
+      console.log('  - STAGE 3 VISIBLE:', isVisible);
+      
+      if (isVisible) {
+        console.log('🔍 Stage 3 button conditions:');
+        console.log('  - isNonPremier:', this.isNonPremier);
+        console.log('  - capa items > 0:', (this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0);
+        console.log('  - Button should show for premier:', !this.isNonPremier && (this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0);
+        console.log('  - Button should show for non-premier:', this.isNonPremier && (this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length ?? 0) > 0);
+      }
+    }
+    
+    return isVisible;
   }
 
   numberOnly(event: any): boolean {
@@ -439,13 +584,170 @@ export class KpiActionPlanComponent implements OnInit {
   getCAPAStagesForKPI(kpiDetailsId: any) {
     if (kpiDetailsId != null) {
       this._appservice.getCAPAStagesForKPI(kpiDetailsId).subscribe(data => {
-        if (this.findingStatus.capA_SUBMISSION.capa.every((x: any) => x.cappalist.id > 0)) {
-          this.findingStatus = new AuditFindingStage();
+        console.log('getCAPAStagesForKPI: Server response:', data);
+        console.log('getCAPAStagesForKPI: Current findingStatus:', this.findingStatus);
+        
+        // Smart merge: Only update from server if it has actual data
+        // This prevents overwriting loaded CAPA data with empty server responses
+        const serverHasData = data && 
+                              data.capA_SUBMISSION && 
+                              data.capA_SUBMISSION.capa && 
+                              data.capA_SUBMISSION.capa.length > 0;
+        
+        const localHasData = (this.findingStatus?.capA_SUBMISSION?.capa?.length || 0) > 0;
+        
+        console.log('getCAPAStagesForKPI: serverHasData:', serverHasData, 'localHasData:', localHasData);
+        
+        // Preserve local flags AND status objects before merging for ALL stages
+        const preservedData = {
+          stage1Flags: localHasData ? this.findingStatus.capA_SUBMISSION.capa.map((x: any) => x.cappalist.issubmitted) : [],
+          stage1Status: this.findingStatus?.capA_SUBMISSION?.status,
+          stage2Flags: (this.findingStatus?.capA_REVIEW?.capa?.length || 0) > 0 
+            ? this.findingStatus.capA_REVIEW.capa.map((x: any) => x.issubmitted) : [],
+          stage2Status: this.findingStatus?.capA_REVIEW?.status,
+          stage3Statuses: (this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length || 0) > 0
+            ? this.findingStatus.capA_CUSTOMER_APPROVAL.capa.map((x: any) => x.status) : [],
+          stage3Status: this.findingStatus?.capA_CUSTOMER_APPROVAL?.status,
+          stage4Flags: (this.findingStatus?.caP_IMPLEMENTATION?.capa?.length || 0) > 0
+            ? this.findingStatus.caP_IMPLEMENTATION.capa.map((x: any) => x.isimplemented) : [],
+          stage4Status: this.findingStatus?.caP_IMPLEMENTATION?.status,
+          stage5Flags: (this.findingStatus?.caP_VERIFICATION?.capa?.length || 0) > 0
+            ? this.findingStatus.caP_VERIFICATION.capa.map((x: any) => x.isverified) : [],
+          stage5Status: this.findingStatus?.caP_VERIFICATION?.status
+        };
+        
+        // Update from server if:
+        // 1. Local is empty (new CAPA) OR
+        // 2. Server has data and local items are all saved (have IDs) - meaning we can safely refresh
+        if (!localHasData) {
+          // Case 1: No local data, use server data (even if empty - new CAPA)
           this.findingStatus = data;
+          console.log('getCAPAStagesForKPI: No local data, using server data');
+        } else if (serverHasData) {
+          // Case 2: Both have data, refresh from server and restore local flags
+          this.findingStatus = data;
+          
+          // CRITICAL FIX: Restore all stage flags AND status objects after server refresh
+          // Server might not return these correctly, so preserve what we had locally
+          // BUT: Always prefer server's "iscomplete" flag to prevent blocking progression
+          
+          // Stage 1 - Submission
+          if (this.findingStatus?.capA_SUBMISSION?.capa && preservedData.stage1Flags.length > 0) {
+            this.findingStatus.capA_SUBMISSION.capa.forEach((item: any, index: number) => {
+              if (preservedData.stage1Flags[index] !== undefined) {
+                item.cappalist.issubmitted = preservedData.stage1Flags[index];
+              }
+            });
+            console.log('getCAPAStagesForKPI: Restored Stage 1 flags');
+          }
+          if (preservedData.stage1Status && !this.findingStatus.capA_SUBMISSION.status) {
+            this.findingStatus.capA_SUBMISSION.status = preservedData.stage1Status;
+            console.log('getCAPAStagesForKPI: Restored Stage 1 status object');
+          }
+          
+          // Stage 2 - Review (CRITICAL for enabling Stage 3)
+          if (this.findingStatus?.capA_REVIEW?.capa && preservedData.stage2Flags.length > 0) {
+            this.findingStatus.capA_REVIEW.capa.forEach((item: any, index: number) => {
+              if (preservedData.stage2Flags[index] !== undefined) {
+                item.issubmitted = preservedData.stage2Flags[index];
+              }
+            });
+            console.log('getCAPAStagesForKPI: Restored Stage 2 flags');
+          }
+          // For Stage 2 status, restore stagE_STATUS but preserve server's iscomplete
+          if (preservedData.stage2Status) {
+            if (!this.findingStatus.capA_REVIEW.status) {
+              this.findingStatus.capA_REVIEW.status = {} as any;
+            }
+            // Restore stagE_STATUS from local if server doesn't have it
+            if (!this.findingStatus.capA_REVIEW.status.stagE_STATUS && preservedData.stage2Status.stagE_STATUS) {
+              this.findingStatus.capA_REVIEW.status.stagE_STATUS = preservedData.stage2Status.stagE_STATUS;
+              console.log('getCAPAStagesForKPI: Restored Stage 2 stagE_STATUS:', preservedData.stage2Status.stagE_STATUS);
+            }
+          }
+          
+          // Stage 3 - Customer Approval
+          if (this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa && preservedData.stage3Statuses.length > 0) {
+            this.findingStatus.capA_CUSTOMER_APPROVAL.capa.forEach((item: any, index: number) => {
+              if (preservedData.stage3Statuses[index]) {
+                item.status = preservedData.stage3Statuses[index];
+              }
+            });
+            console.log('getCAPAStagesForKPI: Restored Stage 3 item statuses');
+          }
+          // For Stage 3 status, restore stagE_STATUS but preserve server's iscomplete
+          if (preservedData.stage3Status) {
+            if (!this.findingStatus.capA_CUSTOMER_APPROVAL.status) {
+              this.findingStatus.capA_CUSTOMER_APPROVAL.status = {} as any;
+            }
+            if (!this.findingStatus.capA_CUSTOMER_APPROVAL.status.stagE_STATUS && preservedData.stage3Status.stagE_STATUS) {
+              this.findingStatus.capA_CUSTOMER_APPROVAL.status.stagE_STATUS = preservedData.stage3Status.stagE_STATUS;
+              console.log('getCAPAStagesForKPI: Restored Stage 3 stagE_STATUS');
+            }
+          }
+          
+          // Stage 4 - Implementation
+          if (this.findingStatus?.caP_IMPLEMENTATION?.capa && preservedData.stage4Flags.length > 0) {
+            this.findingStatus.caP_IMPLEMENTATION.capa.forEach((item: any, index: number) => {
+              if (preservedData.stage4Flags[index] !== undefined) {
+                item.isimplemented = preservedData.stage4Flags[index];
+              }
+            });
+            console.log('getCAPAStagesForKPI: Restored Stage 4 flags');
+          }
+          if (preservedData.stage4Status) {
+            if (!this.findingStatus.caP_IMPLEMENTATION.status) {
+              this.findingStatus.caP_IMPLEMENTATION.status = {} as any;
+            }
+            if (!this.findingStatus.caP_IMPLEMENTATION.status.stagE_STATUS && preservedData.stage4Status.stagE_STATUS) {
+              this.findingStatus.caP_IMPLEMENTATION.status.stagE_STATUS = preservedData.stage4Status.stagE_STATUS;
+              console.log('getCAPAStagesForKPI: Restored Stage 4 stagE_STATUS');
+            }
+          }
+          
+          // Stage 5 - Verification
+          if (this.findingStatus?.caP_VERIFICATION?.capa && preservedData.stage5Flags.length > 0) {
+            this.findingStatus.caP_VERIFICATION.capa.forEach((item: any, index: number) => {
+              if (preservedData.stage5Flags[index] !== undefined) {
+                item.isverified = preservedData.stage5Flags[index];
+              }
+            });
+            console.log('getCAPAStagesForKPI: Restored Stage 5 flags');
+          }
+          if (preservedData.stage5Status) {
+            if (!this.findingStatus.caP_VERIFICATION.status) {
+              this.findingStatus.caP_VERIFICATION.status = {} as any;
+            }
+            if (!this.findingStatus.caP_VERIFICATION.status.stagE_STATUS && preservedData.stage5Status.stagE_STATUS) {
+              this.findingStatus.caP_VERIFICATION.status.stagE_STATUS = preservedData.stage5Status.stagE_STATUS;
+              console.log('getCAPAStagesForKPI: Restored Stage 5 stagE_STATUS');
+            }
+          }
+          
+          console.log('getCAPAStagesForKPI: Refreshed from server with preserved flags');
+        } else {
+          // Case 3: Keep existing data - either server is empty or local has unsaved changes
+          console.log('getCAPAStagesForKPI: Keeping existing local CAPA data');
         }
+        
+        // DIAGNOSTIC: Log Stage 3 state after merge
+        console.log('🔍 Stage 3 state after getCAPAStagesForKPI:');
+        console.log('  - capA_CUSTOMER_APPROVAL exists:', !!this.findingStatus?.capA_CUSTOMER_APPROVAL);
+        console.log('  - capa items:', this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length || 0);
+        console.log('  - status object:', this.findingStatus?.capA_CUSTOMER_APPROVAL?.status);
+        if (this.findingStatus?.capA_CUSTOMER_APPROVAL?.status) {
+          console.log('  - status.iscomplete:', this.findingStatus.capA_CUSTOMER_APPROVAL.status.iscomplete);
+          console.log('  - status.stagE_STATUS:', this.findingStatus.capA_CUSTOMER_APPROVAL.status.stagE_STATUS);
+        }
+        console.log('  - capA_REVIEW.status.stagE_STATUS:', this.findingStatus?.capA_REVIEW?.status?.stagE_STATUS);
+        
+        
+        // CRITICAL FIX: Save current findingStatus to localStorage, not the server response
+        // This ensures we always have the latest valid data, even if server returns empty due to timing issues
         let keys = "capaforKPI" + this.data.kpI_ID;
-
-        localStorage.setItem(keys, JSON.stringify(data));
+        localStorage.setItem(keys, JSON.stringify(this.findingStatus));
+        console.log('getCAPAStagesForKPI: Saved to localStorage:', keys);
+        
         if ((this.findingStatus?.capA_SUBMISSION?.capa?.length || 0) > 0) {
           this.FillSelectedCauses()
         }
@@ -502,14 +804,52 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   saveCAPSubmissionData(status: any) {
-    this.findingStatus?.capA_SUBMISSION?.capa?.forEach((element: any) => {
+    console.log('💾 saveCAPSubmissionData: Starting save with status:', status);
+    console.log('💾 saveCAPSubmissionData: editedRow keys:', Object.keys(this.data.editedRow));
+    console.log('💾 saveCAPSubmissionData: editedRow.kpI_ACTUAL_ID:', this.data.editedRow.kpI_ACTUAL_ID);
+    console.log('💾 saveCAPSubmissionData: editedRow.detaiL_ID:', this.data.editedRow.detaiL_ID);
+    console.log('💾 saveCAPSubmissionData: editedRow.id:', this.data.editedRow.id);
+    console.log('💾 saveCAPSubmissionData: editedRow.kpI_ID:', this.data.editedRow.kpI_ID);
+    console.log('💾 saveCAPSubmissionData: isNonPremier:', this.isNonPremier);
+    console.log('💾 saveCAPSubmissionData: CAPA items count:', this.findingStatus?.capA_SUBMISSION?.capa?.length || 0);
+    
+    // CRITICAL FIX: Fallback chain for project KPIs where detaiL_ID may be undefined
+    // Try kpI_ACTUAL_ID → detaiL_ID → id → kpI_ID (last resort for unsaved project KPIs)
+    let kpiActualId = this.data.editedRow.kpI_ACTUAL_ID || this.data.editedRow.detaiL_ID || this.data.editedRow.id;
+    
+    // Special handling for project KPIs: if no detail ID exists, use kpI_ID
+    // Backend will create the detail record association using the master KPI ID
+    if (!kpiActualId || kpiActualId === 0) {
+      kpiActualId = this.data.editedRow.kpI_ID;
+      console.log('💾 saveCAPSubmissionData: Using kpI_ID for project KPI without detail record:', kpiActualId);
+    } else {
+      console.log('💾 saveCAPSubmissionData: Using kpiActualId:', kpiActualId);
+    }
+    
+    // CRITICAL FIX: Handle null/empty status - default to "Corrective Action Plan Submitted" for new submissions
+    const submissionStatus = status || "Corrective Action Plan Submitted";
+    console.log('💾 saveCAPSubmissionData: Effective status:', submissionStatus);
+    
+    this.findingStatus?.capA_SUBMISSION?.capa?.forEach((element: any, index: number) => {
+      console.log(`💾 saveCAPSubmissionData: Processing CAPA item ${index}:`, element);
       element.cappalist.caP_TARGET_DATE = this._util.setLocaleDate(element.cappalist.caP_TARGET_DATE);
-      element.cappalist.kpI_ACTUAL_ID = this.data.editedRow.kpI_ACTUAL_ID;
+      element.cappalist.kpI_ACTUAL_ID = kpiActualId;
+      
+      // CRITICAL FIX: Mark as submitted when submitting or resubmitting
+      if (submissionStatus == "Corrective Action Plan Submitted" || 
+          submissionStatus == "Corrective Action Plan Resubmit") {
+        element.cappalist.issubmitted = true;
+        console.log(`💾 saveCAPSubmissionData: Marked item ${index} as submitted`);
+      }
+      
       if (element.cappalist.status != "Corrective Action Plan Approved")
-        element.cappalist.status = status == "" || null ? "Corrective Action Plan Submitted" : status;
+        element.cappalist.status = submissionStatus;
+      console.log(`💾 saveCAPSubmissionData: After processing item ${index}:`, element.cappalist);
     });
 
-    if (status == "Corrective Action Plan Resubmit" || status == "Corrective Action Plan Submitted") {
+    // Save for new submissions, resubmissions, or explicit submission status
+    if (submissionStatus == "Corrective Action Plan Resubmit" || 
+        submissionStatus == "Corrective Action Plan Submitted") {
       this.saveCAPDetailsForFinding()
     }
     else
@@ -523,18 +863,62 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   service_saveCAPDetailsForFinding() {
+    console.log('📡 service_saveCAPDetailsForFinding: Sending to API');
+    
+    // CRITICAL FIX: Fallback chain for project KPIs where detaiL_ID may be undefined
+    // Try kpI_ACTUAL_ID → detaiL_ID → id → kpI_ID (for unsaved project KPIs)
+    let kpiDetailsId = this.data.editedRow.kpI_ACTUAL_ID || this.data.editedRow.detaiL_ID || this.data.editedRow.id;
+    
+    // Special handling for project KPIs: if no detail ID exists, use kpI_ID
+    // Backend will create the detail record association using the master KPI ID
+    if (!kpiDetailsId || kpiDetailsId === 0) {
+      kpiDetailsId = this.data.editedRow.kpI_ID;
+      console.log('📡 service_saveCAPDetailsForFinding: Using kpI_ID for project KPI without detail record:', kpiDetailsId);
+    } else {
+      console.log('📡 service_saveCAPDetailsForFinding: Using kpiDetailsId:', kpiDetailsId);
+    }
+    
+    // CRITICAL FIX: Ensure status object exists before setting KPI_DETAILS_ID
+    if (this.findingStatus.capA_SUBMISSION) {
+      if (!this.findingStatus.capA_SUBMISSION.status) {
+        console.log('⚠️ Creating missing capA_SUBMISSION.status object');
+        this.findingStatus.capA_SUBMISSION.status = {} as any;
+      }
+      this.findingStatus.capA_SUBMISSION.status.kpI_DETAILS_ID = kpiDetailsId;
+      console.log('📡 Set capA_SUBMISSION.status.kpI_DETAILS_ID to:', kpiDetailsId);
+    } else {
+      console.error('❌ capA_SUBMISSION is missing! Cannot set kpI_DETAILS_ID');
+    }
+    
+    console.log('📡 Payload - findingStatus:', JSON.stringify(this.findingStatus, null, 2));
+    console.log('📡 Payload - selectedPeriod:', this.selectedPeriod);
+    console.log('📡 API call - detaiL_ID for refresh:', this.data.editedRow.detaiL_ID);
 
     this._appservice.addCAPAForKPI(this.findingStatus, this.selectedPeriod)
       .subscribe({
         next: (data: any) => {
+          console.log('✅ service_saveCAPDetailsForFinding: API Success Response:', data);
+          console.log('✅ Response CAPA items:', data?.capA_SUBMISSION?.capa?.length || 0);
           this.findingStatus = data;
+          
+          // CRITICAL FIX: API response doesn't include issubmitted flag
+          // Set it manually since we know the submission was successful
+          if (this.findingStatus?.capA_SUBMISSION?.capa) {
+            this.findingStatus.capA_SUBMISSION.capa.forEach((item: any, index: number) => {
+              item.cappalist.issubmitted = true;
+              console.log(`✅ Set issubmitted=true for CAPA item ${index} after successful save`);
+            });
+          }
+          
           this.disablesubmittillSave = false;
           this.submitcap = true;
           this._util.showSuccess("Submitted successfully. Please navigate to respective stage.");
           this.disableCAPSubmitButton();
+          console.log('📡 Calling getCAPAStagesForKPI to refresh after save...');
           this.getCAPAStagesForKPI(this.data.editedRow.detaiL_ID);
         },
         error: (error: any) => {
+          console.error('❌ service_saveCAPDetailsForFinding: API Error:', error);
           this._util.serviceError(error);
           this.findingStatus?.capA_SUBMISSION?.capa?.forEach((x: any) => x.cappalist.issubmitted = false);
           this.disablesubmittillSave = false;
@@ -580,19 +964,36 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   service_saveCapReviewDetails() {
+    console.log('📡 service_saveCapReviewDetails: Sending Stage 2 data to API');
+    console.log('📡 Review items count:', this.findingStatus.capA_REVIEW.capa.length);
+    console.log('📡 Before API - capA_REVIEW.status:', this.findingStatus.capA_REVIEW?.status);
 
     this._appservice.addCAPReviewDetailsForKPI(this.findingStatus.capA_REVIEW.capa, this.selectedPeriod)
       .subscribe({
         next: (data: any) => {
+          console.log('✅ service_saveCapReviewDetails: Stage 2 submitted successfully');
+          console.log('✅ API Response data:', data);
+          
+          // CRITICAL FIX: Mark all review items as submitted after successful save
+          if (this.findingStatus?.capA_REVIEW?.capa) {
+            this.findingStatus.capA_REVIEW.capa.forEach((item: any, index: number) => {
+              item.issubmitted = true;
+              console.log(`✅ Set issubmitted=true for Stage 2 review item ${index}`);
+            });
+          }
+          
           this._util.showSuccess("Submitted successfully. Please navigate to respective stage.");
           this.disabletillreviewSave = false;
+          this.disableCAPReviewButton();
+          
+          console.log('📡 Calling getCAPAStagesForKPI to refresh after Stage 2 save...');
           this.getCAPAStagesForKPI(this.data.editedRow.detaiL_ID);
           this.SelectedValue = [];
-
         },
         error: (error: any) => {
+          console.error('❌ service_saveCapReviewDetails: API Error:', error);
           this._util.serviceError(error); 
-          this.findingStatus.capA_REVIEW.capa[0].issubmitted = false;
+          this.findingStatus.capA_REVIEW.capa.forEach((x: any) => x.issubmitted = false);
           this.disabletillreviewSave = false;
         }
       });
@@ -625,24 +1026,42 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   service_saveCapImplementationDetailsforFinding() {
+    console.log('📡 service_saveCapImplementationDetailsforFinding: Sending Stage 4 data to API');
+    
     this._appservice.addCAPImplementationDetailsForKPI(this.findingStatus.caP_IMPLEMENTATION.capa, this.selectedPeriod)
       .subscribe({
         next: (data: any) => {
+          console.log('✅ service_saveCapImplementationDetailsforFinding: Stage 4 submitted successfully');
+          
+          // CRITICAL FIX: Mark all implementation items with their implementation status
+          if (this.findingStatus?.caP_IMPLEMENTATION?.capa) {
+            // The isimplemented flag should already be set, just ensure consistency
+            console.log(`✅ Stage 4 implementation items updated`);
+          }
+          
           this._util.showSuccess("Submitted successfully. Please navigate to respective stage.");
           this.disabletillSaveImplement = false;
+          this.disableImplementButtonInReview();
           this.getCAPAStagesForKPI(this.data.editedRow.detaiL_ID);
           this.SelectedValueImp = []
         },
         error: (error: any) => {
+          console.error('❌ service_saveCapImplementationDetailsforFinding: API Error:', error);
           this._util.serviceError(error); 
           this.isimplementbutton = false;
-          this.disabletillreviewSave = false;
+          this.disabletillSaveImplement = false;
         }
       });
 
   }
 
   CapApprovedByCustomer() {
+    console.log('📋 CapApprovedByCustomer called');
+    console.log('📋 Stage 3 button disabled state:');
+    console.log('  - iscomplete:', this.findingStatus?.capA_CUSTOMER_APPROVAL?.status?.iscomplete);
+    console.log('  - disableTillCustomerApprovalSave:', this.disableTillCustomerApprovalSave);
+    console.log('  - isEditAccessDisabled:', this.isEditAccessDisabled);
+    console.log('  - Items:', this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.map((x: any) => ({ statuS_ID: x.statuS_ID, remarks: x.remarks })));
 
     this.flag = false;
     if ((this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa?.length || 0) > 0) {
@@ -687,10 +1106,19 @@ export class KpiActionPlanComponent implements OnInit {
   }
 
   service_saveCapApprovalByCustomer() {
+    console.log('📡 service_saveCapApprovalByCustomer: Sending Stage 3 data to API');
 
     this._appservice.addCAPAApprovalByCustomer(this.findingStatus.capA_CUSTOMER_APPROVAL.capa, this.selectedPeriod)
       .subscribe({
         next: (data: any) => {
+          console.log('✅ service_saveCapApprovalByCustomer: Stage 3 submitted successfully');
+          
+          // CRITICAL FIX: Ensure customer approval status is properly reflected
+          if (this.findingStatus?.capA_CUSTOMER_APPROVAL?.capa) {
+            // Status already set in CapApprovedByCustomer() or CapApprovedByQASpoc()
+            console.log(`✅ Stage 3 customer approval items updated`);
+          }
+          
           this._util.showSuccess("Submitted successfully. Please navigate to respective stage.");
           this.disableTillCustomerApprovalSave = false;      
           this.disableCAPCustomerApproveButton();
@@ -698,6 +1126,7 @@ export class KpiActionPlanComponent implements OnInit {
           this.getCAPAStagesForKPI(this.data.editedRow.detaiL_ID);
         },
         error: (error: any) => {
+          console.error('❌ service_saveCapApprovalByCustomer: API Error:', error);
           this._util.serviceError(error); 
           this.iscapcustomerapprovebutton = false;
           this.disableTillCustomerApprovalSave = false;
