@@ -397,7 +397,17 @@ export class CsatconfigurationComponent implements OnInit {
     this.isLoading = true;
     this._appservice.getCSATContactListForDP(this.dpId, this.batchId).subscribe({
       next: (data: any[]) => {
-        this.validationData = data.map(row => ({
+        // Get list of project IDs that were chosen as 'Yes' in Step 1
+        const selectedProjectIds = this.step1ProjectList
+          .filter(p => p.chosen === 'Yes')
+          .map(p => p.projId);
+        
+        // Filter validation data to only include projects chosen as 'Yes'
+        const filteredData = data.filter(row => 
+          selectedProjectIds.includes(row.proJ_ID)
+        );
+        
+        this.validationData = filteredData.map(row => ({
           id: row.id,
           batchId: row.batcH_ID,
           custId: row.cusT_ID,
@@ -447,6 +457,17 @@ export class CsatconfigurationComponent implements OnInit {
   getStep1SelectedProjects() {
     // Return projects marked as 'Yes' in the dropdown
     return this.step1ProjectList.filter(p => p.chosen === 'Yes');
+  }
+
+  /**
+   * Handler when project status (Yes/No) changes
+   * If Yes is selected, clear and disable the reason field
+   */
+  onProjectStatusChange(proj: any) {
+    if (proj.chosen === 'Yes') {
+      proj.reasonNotChosen = '';
+      proj.isValid = true;
+    }
   }
 
   addValidationRow() {

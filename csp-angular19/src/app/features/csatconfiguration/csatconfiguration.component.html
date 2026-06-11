@@ -105,7 +105,7 @@
                   [class.mat-form-field-invalid]="!proj.isValid">
 
                   <mat-select [(ngModel)]="proj.chosen" placeholder="Select for PCSAT"
-                    (selectionChange)="proj.isValid = true" [class.color-yes]="proj.chosen === 'Yes'"
+                    (selectionChange)="onProjectStatusChange(proj)" [class.color-yes]="proj.chosen === 'Yes'"
                     [class.color-no]="proj.chosen === 'No'"
                     [style.color]="proj.chosen === 'Yes' ? '#059669' : proj.chosen === 'No' ? '#DC2626' : 'inherit'">
                     <mat-option value="Yes" class="color-yes">Yes</mat-option>
