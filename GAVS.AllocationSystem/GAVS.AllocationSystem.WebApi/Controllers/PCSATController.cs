@@ -15,6 +15,13 @@ using Newtonsoft.Json;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
+    // Wrapper class for SaveCSATContactListForDP request
+    public class SaveCSATContactListRequest
+    {
+        public List<CSS_BATCH_CUSTOMERS> modifiedBatchCustomerList { get; set; }
+        public List<CSS_BATCH_CUSTOMERS> deletedBatchCustomerList { get; set; }
+    }
+
     public partial class AllSysController
     {
         //step 1
@@ -63,7 +70,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var stopwatch = Stopwatch.StartNew();
             LogRequest(content: JsonConvert.SerializeObject(batchProjectList));
-            var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID || x.QUALITY_SPOC == dpID ) && x.ISACTIVE).ToList();
+            var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID || x.QUALITY_SPOC == dpID) && x.ISACTIVE).ToList();
             var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.BATCH_ID == batchId);
             //loop the results and save.
             foreach (var item in batchProjectList)
@@ -84,7 +91,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         var existingBatchCustomers = batchCustomers.Where(x => x.PROJ_ID == item.PROJ_ID).ToList();
                         foreach (var item1 in existingBatchCustomers)
                         {
-                           
+
                             UpdateAuditFields(item1);
                             item1.ISACTIVE = false;
                             CSPdb.CSS_BATCH_CUSTOMERS.Update(item1);
@@ -196,35 +203,45 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [POST("SaveCSATContactListForDP")]
         [ActionName("SaveCSATContactListForDP")]
         [HttpPost]
-        public IHttpActionResult SaveCSATContactListForDP([FromBody] List<CSS_BATCH_CUSTOMERS> batchCustomerList, string dpId, int batchId)
+        public IHttpActionResult SaveCSATContactListForDP([FromBody] SaveCSATContactListRequest request, string dpId, int batchId)
         {
             var stopwatch = Stopwatch.StartNew();
-            LogRequest(content: JsonConvert.SerializeObject(batchCustomerList));
+            var modifiedIds = new List<int>();
+            var newIds = new List<int>(); // Separate list for newly added records
+            var modifiedBatchCustomerList = request.modifiedBatchCustomerList ?? new List<CSS_BATCH_CUSTOMERS>();
+            var deletedBatchCustomerList = request.deletedBatchCustomerList ?? new List<CSS_BATCH_CUSTOMERS>();
+            var deletedIds = deletedBatchCustomerList.Select(x => x.ID).ToList();
+            LogRequest(content: JsonConvert.SerializeObject(modifiedBatchCustomerList));
             //perform validation
             var existingRecords = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE).ToList();
-            var cssProjIds = batchCustomerList.Select(x => x.PROJ_ID).Distinct().ToList();
-            var projIds = batchCustomerList.Where(x => x.ID > 0).Select(x => x.ID).ToList();
-            var recordsToDelete = existingRecords.Where(x => cssProjIds.Contains(x.PROJ_ID) && !projIds.Contains(x.ID)).ToList();
-            foreach (var delItem in recordsToDelete)
+            var cssProjIds = modifiedBatchCustomerList.Select(x => x.PROJ_ID).Distinct().ToList();
+            //var projIds = batchCustomerList.Where(x => x.ID > 0).Select(x => x.ID).ToList();
+            //var recordsToDelete = existingRecords.Where(x => cssProjIds.Contains(x.PROJ_ID) && !projIds.Contains(x.ID)).ToList();
+            foreach (var delItem in deletedBatchCustomerList)
             {
-
-                UpdateAuditFields(delItem);
-                delItem.ISACTIVE = false;
-                CSPdb.CSS_BATCH_CUSTOMERS.Update(delItem);
+                var toDelete = existingRecords.FirstOrDefault(x => x.ID == delItem.ID);
+                if (toDelete == null) continue;
+                UpdateAuditFields(toDelete);
+                toDelete.ISACTIVE = false;
+                CSPdb.CSS_BATCH_CUSTOMERS.Update(toDelete);
+                deletedIds.Add(toDelete.ID);
             }
             var lastAcsatBatchId = 36;
             int.TryParse(helper.GetDBConfig("LAST_ACSAT_BATCH_ID", "-1"), out lastAcsatBatchId);
 
             var batchCustomers = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.ISACTIVE && x.SURVEY_SENT_DATE.HasValue && x.BATCH_ID == lastAcsatBatchId).ToList();
 
+            // Track new items to get their IDs after commit
+            var newItems = new List<CSS_BATCH_CUSTOMERS>();
+
             //loop the results and save.
-            foreach (var item in batchCustomerList)
+            foreach (var item in modifiedBatchCustomerList)
             {
                 if (batchCustomers.Any(x => x.EMAIL_ID == item.EMAIL_ID))
                 {
                     return BadRequest($"Please choose a different CSAT Respondent as {item.DISPLAY_NAME} - {item.EMAIL_ID} was polled during last ACSAT cycle");
                 }
-                int countList = batchCustomerList.Count(x => x.PROJ_ID == item.PROJ_ID && x.EMAIL_ID.ToLower() == item.EMAIL_ID.ToLower());
+                int countList = modifiedBatchCustomerList.Count(x => x.PROJ_ID == item.PROJ_ID && x.EMAIL_ID.ToLower() == item.EMAIL_ID.ToLower());
                 bool alreadyExists = existingRecords.Any(x => x.PROJ_ID == item.PROJ_ID && x.EMAIL_ID.ToLower() == item.EMAIL_ID.ToLower() && x.ID != item.ID);
 
                 if (countList > 1 || alreadyExists)
@@ -236,8 +253,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     item.BATCH_ID = batchId;
                     item.STATUS = "CREATED";
+                    item.IS_VERIFIED = true;
                     UpdateAuditFields(item);
                     CSPdb.CSS_BATCH_CUSTOMERS.Add(item);
+                    // Track new items to get their IDs after commit
+                    newItems.Add(item);
                 }
                 else
                 {
@@ -251,20 +271,33 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         batchRecords.PREDICTED_SCORE = item.PREDICTED_SCORE;
                         batchRecords.PREDICTED_REASON = item.PREDICTED_REASON;
                         batchRecords.REMARKS = item.REMARKS;
+                        batchRecords.IS_VERIFIED = item.IS_VERIFIED;
+                        batchRecords.STATUS = item.STATUS;
                         UpdateAuditFields(batchRecords);
                         CSPdb.CSS_BATCH_CUSTOMERS.Update(batchRecords);
+                        // Track modified record ID for email notification
+                        modifiedIds.Add(batchRecords.ID);
                     }
 
                 }
             }
             CSPdb.Commit();
 
+            // After commit, add the newly generated IDs to newIds (not modifiedIds)
+            foreach (var newItem in newItems)
+            {
+                if (newItem.ID > 0)
+                {
+                    newIds.Add(newItem.ID);
+                }
+            }
+
             var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.QUALITY_SPOC == dpId) && x.IS_SELECTED && x.ISACTIVE).ToList();
             bool isQualitySpoc = batchProjects.Any(x => x.QUALITY_SPOC == dpId);
             var mailList = new List<string>();
             if (!isQualitySpoc)
             {
-                SendPCSATAcknowledgementEmail(dpId, null, dpId, batchId, false);
+                SendPCSATAcknowledgementEmail(dpId, null, dpId, batchId, false, newIds, modifiedIds, deletedIds);
                 mailList.Add(dpId);
             }
 
@@ -275,7 +308,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string pmId = item.Key;
                     if (!string.IsNullOrEmpty(pmId) && !mailList.Contains(pmId))
                     {
-                        SendPCSATAcknowledgementEmail(pmId, isQualitySpoc ? dpId : null, dpId, batchId, true);
+                        SendPCSATAcknowledgementEmail(pmId, isQualitySpoc ? dpId : null, dpId, batchId, true, newIds, modifiedIds, deletedIds);
                         mailList.Add(pmId);
                     }
                 }
@@ -285,7 +318,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     string accountDpId = item.Key;
                     if (!string.IsNullOrEmpty(accountDpId) && !mailList.Contains(accountDpId))
                     {
-                        SendPCSATAcknowledgementEmail(accountDpId, isQualitySpoc ? dpId : null, dpId, batchId, false);
+                        SendPCSATAcknowledgementEmail(accountDpId, isQualitySpoc ? dpId : null, dpId, batchId, false, newIds, modifiedIds, deletedIds);
                         mailList.Add(accountDpId);
                     }
                 }
@@ -356,7 +389,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             return result;
         }
-        private void SendPCSATAcknowledgementEmail(string dpId, string qualitySpoc, string currentUserId, int batchId, bool isForPM)
+        private void SendPCSATAcknowledgementEmail(string dpId, string qualitySpoc, string currentUserId, int batchId, bool isForPM, List<int> newBatchCustomers, List<int> modifiedBatchCustomers, List<int> deletedBatchCustomers)
         {
             try
             {
@@ -372,17 +405,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 var selectedProjIds = selectedProjects.Select(x => x.PROJ_ID).ToList();
 
-                var respondents = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x => x.BATCH_ID == batchId && x.ISACTIVE && selectedProjIds.Contains(x.PROJ_ID)).ToList();
+                // Get new, modified, and deleted records
+                var respondents = CSPdb.CSS_BATCH_CUSTOMERS.GetAll().Where(x =>
+                    x.BATCH_ID == batchId &&
+                    selectedProjIds.Contains(x.PROJ_ID) &&
+                    (
+                        (x.ISACTIVE && newBatchCustomers.Contains(x.ID)) ||       // Newly added records
+                        (x.ISACTIVE && modifiedBatchCustomers.Contains(x.ID)) ||  // Modified records
+                        (!x.ISACTIVE && deletedBatchCustomers.Contains(x.ID))     // Deleted records
+                    )
+                ).ToList();
+
+                // Filter projects to only show those that have changes (new/modified/deleted respondents)
+                var projectsWithChanges = respondents.Select(r => r.PROJ_ID).Distinct().ToList();
+                var filteredSelectedProjects = selectedProjects.Where(p => projectsWithChanges.Contains(p.PROJ_ID)).ToList();
 
                 var sbProjects = new StringBuilder();
                 int sno = 1;
-                var custIds = selectedProjects.Select(p => p.CUST_ID).Distinct().ToList();
-                var projIds = selectedProjects.Select(p => p.PROJ_ID).Distinct().ToList();
+                var custIds = filteredSelectedProjects.Select(p => p.CUST_ID).Distinct().ToList();
+                var projIds = filteredSelectedProjects.Select(p => p.PROJ_ID).Distinct().ToList();
 
                 var accounts = Cldb.CUSTOMER.GetAll().Where(t => custIds.Contains(t.CUST_ID)).ToList();
                 var projects = Cldb.PROJECT.GetAll().Where(t => projIds.Contains(t.PROJ_ID)).ToList();
 
-                foreach (var proj in selectedProjects)
+                foreach (var proj in filteredSelectedProjects)
                 {
                     var accName = accounts.FirstOrDefault(c => c.CUST_ID == proj.CUST_ID)?.CUST_NM;
                     var projectDetails = projects.FirstOrDefault(p => p.PROJ_ID == proj.PROJ_ID);
@@ -400,19 +446,75 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var sbRespondents = new StringBuilder();
                 int respSNo = 1;
                 string updatedBy = currentUserId;
-                foreach (var row in respondents)
+
+                // Separate new, modified, and deleted records using the ID lists
+                var newRespondents = respondents.Where(r => newBatchCustomers.Contains(r.ID)).ToList();
+                var modifiedRespondents = respondents.Where(r => modifiedBatchCustomers.Contains(r.ID)).ToList();
+                var deletedRespondents = respondents.Where(r => deletedBatchCustomers.Contains(r.ID)).ToList();
+
+                // Display newly added records first (if any)
+                if (newRespondents.Any())
                 {
-                    string projName = GetProjectName(row.PROJ_ID);
-                    
-                    sbRespondents.Append("<tr>");
-                    sbRespondents.Append($"<td style = text-align:center;'>{respSNo++}</td>");
-                    sbRespondents.Append($"<td>{projName}</td>");
-                    sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
-                    sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
-                    sbRespondents.Append($"<td style = 'text-align:center;'>{row.PREDICTED_SCORE}</td>");
-                    sbRespondents.Append($"<td>{row.SPOC}</td>");
-                    sbRespondents.Append("</tr>");
+                    sbRespondents.Append("<tr><td colspan='6' style='background-color:#d4edda; padding:10px; text-align:center; font-weight:bold; border-top:2px solid #28a745;'>");
+                    sbRespondents.Append("The following records have been newly added to this PCSAT cycle");
+                    sbRespondents.Append("</td></tr>");
+
+                    foreach (var row in newRespondents)
+                    {
+                        string projName = GetProjectName(row.PROJ_ID);
+                        sbRespondents.Append("<tr style='background-color:#e8f5e9;'>");
+                        sbRespondents.Append($"<td style='text-align:center;'>{respSNo++}</td>");
+                        sbRespondents.Append($"<td>{projName}</td>");
+                        sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
+                        sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
+                        sbRespondents.Append($"<td style='text-align:center;'>{row.PREDICTED_SCORE}</td>");
+                        sbRespondents.Append($"<td>{row.SPOC}</td>");
+                        sbRespondents.Append("</tr>");
+                    }
                 }
+
+                // Display modified records (if any)
+                if (modifiedRespondents.Any())
+                {
+                    sbRespondents.Append("<tr><td colspan='6' style='background-color:#d1ecf1; padding:10px; text-align:center; font-weight:bold; border-top:2px solid #17a2b8;'>");
+                    sbRespondents.Append("The following records have been updated in this PCSAT cycle");
+                    sbRespondents.Append("</td></tr>");
+
+                    foreach (var row in modifiedRespondents)
+                    {
+                        string projName = GetProjectName(row.PROJ_ID);
+                        sbRespondents.Append("<tr style='background-color:#e7f4f7;'>");
+                        sbRespondents.Append($"<td style='text-align:center;'>{respSNo++}</td>");
+                        sbRespondents.Append($"<td>{projName}</td>");
+                        sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
+                        sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
+                        sbRespondents.Append($"<td style='text-align:center;'>{row.PREDICTED_SCORE}</td>");
+                        sbRespondents.Append($"<td>{row.SPOC}</td>");
+                        sbRespondents.Append("</tr>");
+                    }
+                }
+
+                // Add separator and deleted records section if any exist
+                if (deletedRespondents.Any())
+                {
+                    sbRespondents.Append("<tr><td colspan='6' style='background-color:#fff3cd; padding:10px; text-align:center; font-weight:bold; border-top:2px solid #856404;'>");
+                    sbRespondents.Append("The following records have been removed from this PCSAT cycle");
+                    sbRespondents.Append("</td></tr>");
+
+                    foreach (var row in deletedRespondents)
+                    {
+                        string projName = GetProjectName(row.PROJ_ID);
+                        sbRespondents.Append("<tr style='color:#dc3545; background-color:#ffebee;'>");
+                        sbRespondents.Append($"<td style='text-align:center;'>{respSNo++}</td>");
+                        sbRespondents.Append($"<td>{projName}</td>");
+                        sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
+                        sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
+                        sbRespondents.Append($"<td style='text-align:center;'>{row.PREDICTED_SCORE}</td>");
+                        sbRespondents.Append($"<td>{row.SPOC}</td>");
+                        sbRespondents.Append("</tr>");
+                    }
+                }
+
                 string baseImageUrl = ConfigurationManager.AppSettings["BaseImageUrl"];
                 string ccMail = string.Empty;
                 string validityDate = string.Empty;
