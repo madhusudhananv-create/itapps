@@ -64,6 +64,8 @@ export class CsatconfigurationComponent implements OnInit {
   filteredProjectList: any[] = [];
   searchText: string = '';
   validationData: any[] = [];
+  originalValidationData: any[] = []; // Track original data for change detection
+  deletedRecords: any[] = []; // Track deleted records
   validationSearchText: string = '';
   isLoading: boolean = false;
   dpId: string = localStorage.getItem('empid') || '';
@@ -329,6 +331,7 @@ export class CsatconfigurationComponent implements OnInit {
 
   goForwardStep1(stepper: MatStepper) {
     let isFormValid = true;
+    let hasHighHeadcountNoSelection = false;
 
     // Validate Row-by-Row
     this.step1ProjectList.forEach(proj => {
@@ -342,13 +345,19 @@ export class CsatconfigurationComponent implements OnInit {
       }
       if (proj.chosen === 'No' && proj.accountHeadcount >= 10 && !proj.reasonNotChosen) {
         proj.isValid = false;
-        this.showWarning(
-          "Please select at least one project for PCSAT with headcount >= 10",
-          "Validation Error",
-          "error"
-        );
+        hasHighHeadcountNoSelection = true;
       }
     });
+
+    // Show warning for high headcount projects with no selection (only once)
+    if (hasHighHeadcountNoSelection) {
+      this.showWarning(
+        "Please select at least one project for PCSAT with headcount >= 10",
+        "Validation Error",
+        "error"
+      );
+      return;
+    }
 
     // Trigger Warning if validation failed
     if (!isFormValid) {
@@ -393,19 +402,31 @@ export class CsatconfigurationComponent implements OnInit {
   }
 
   // --- STEP 2 ---
-  loadValidationData() {
+  loadValidationData(skipFiltering: boolean = false) {
     this.isLoading = true;
     this._appservice.getCSATContactListForDP(this.dpId, this.batchId).subscribe({
       next: (data: any[]) => {
-        // Get list of project IDs that were chosen as 'Yes' in Step 1
-        const selectedProjectIds = this.step1ProjectList
-          .filter(p => p.chosen === 'Yes')
-          .map(p => p.projId);
+        console.log('Raw data from API:', data);
         
-        // Filter validation data to only include projects chosen as 'Yes'
-        const filteredData = data.filter(row => 
-          selectedProjectIds.includes(row.proJ_ID)
-        );
+        let filteredData = data;
+        
+        // Only filter by step1ProjectList when initially loading, not after save
+        if (!skipFiltering) {
+          // Get list of project IDs that were chosen as 'Yes' in Step 1
+          const selectedProjectIds = this.step1ProjectList
+            .filter(p => p.chosen === 'Yes')
+            .map(p => p.projId);
+          
+          console.log('Selected Project IDs:', selectedProjectIds);
+          console.log('Step1 Project List:', this.step1ProjectList);
+          
+          // Filter validation data to only include projects chosen as 'Yes'
+          filteredData = data.filter(row => 
+            selectedProjectIds.includes(row.proJ_ID)
+          );
+        }
+        
+        console.log('Filtered data:', filteredData);
         
         this.validationData = filteredData.map(row => ({
           id: row.id,
@@ -427,6 +448,11 @@ export class CsatconfigurationComponent implements OnInit {
           executionType: row.executioN_TYPE,
           engagementType: row.engagemenT_TYPE
         }));
+
+        // Store deep copy of original data for change detection
+        this.originalValidationData = JSON.parse(JSON.stringify(this.validationData));
+        // Reset deleted records when loading fresh data
+        this.deletedRecords = [];
 
         this.uniqueCustIds = Array.from(new Set(this.validationData.map(v => v.custId)));
         const step1CustIds = this.projectSelection.selected.map(p => p.custId);
@@ -689,6 +715,10 @@ export class CsatconfigurationComponent implements OnInit {
 
     } else {
       // If other rows exist for this project, just delete this single row
+      // Track deletion if the row has an ID (existing record in database)
+      if (rowToDelete.id > 0) {
+        this.deletedRecords.push(rowToDelete);
+      }
       this.validationData.splice(index, 1);
     }
   }
@@ -738,7 +768,29 @@ export class CsatconfigurationComponent implements OnInit {
 
     this.isLoading = true;
 
-    const payload = this.validationData.map(row => ({
+    // Detect modified records (new or changed)
+    const modifiedRecords = this.validationData.filter(row => {
+      if (row.id === 0 || row.isNew) {
+        return true; // New record
+      }
+      // Find original record
+      const original = this.originalValidationData.find(orig => orig.id === row.id);
+      if (!original) return true; // Shouldn't happen, but treat as new
+      
+      // Check if any field changed
+      return (
+        row.respondentName !== original.respondentName ||
+        row.emailId !== original.emailId ||
+        row.predictedScore !== original.predictedScore ||
+        row.reasonPrediction !== original.reasonPrediction ||
+        row.csatSpoc !== original.csatSpoc ||
+        row.csatSpocEmail !== original.csatSpocEmail ||
+        (row.remarks || '') !== (original.remarks || '')
+      );
+    });
+
+    // Prepare payload for modified records
+    const modifiedPayload = modifiedRecords.map(row => ({
       ID: row.id,
       BATCH_ID: row.batchId,
       CUST_ID: row.custId,
@@ -755,7 +807,34 @@ export class CsatconfigurationComponent implements OnInit {
       STATUS: 'CREATED'
     }));
 
-    this._appservice.saveCSATContactListForDP(payload, this.dpId, this.batchId).subscribe({
+    // Prepare payload for deleted records
+    const deletedPayload = this.deletedRecords.map(row => ({
+      ID: row.id,
+      BATCH_ID: row.batchId,
+      CUST_ID: row.custId,
+      PROJ_ID: row.projectId,
+      DISPLAY_NAME: row.respondentName,
+      EMAIL_ID: row.emailId,
+      PREDICTED_SCORE: row.predictedScore,
+      PREDICTED_REASON: row.reasonPrediction,
+      SPOC: row.csatSpoc,
+      SPOC_EMAIL: row.csatSpocEmail,
+      REMARKS: row.remarks,
+      ISACTIVE: false
+    }));
+
+    // Only call API if there are changes
+    if (modifiedPayload.length === 0 && deletedPayload.length === 0) {
+      this.showWarning(
+        "No changes detected. Nothing to save.",
+        "No Changes",
+        "info"
+      );
+      this.isLoading = false;
+      return;
+    }
+
+    this._appservice.saveCSATContactListForDP(modifiedPayload, deletedPayload, this.dpId, this.batchId).subscribe({
       next: (res) => {
         this.showWarning(
           "Data saved successfully.",
@@ -763,7 +842,8 @@ export class CsatconfigurationComponent implements OnInit {
           "check_circle"
         );
         this.isLoading = false;
-        this.loadValidationData();
+        // Skip filtering when reloading after save - show all active records
+        this.loadValidationData(true);
       },
       error: (err) => {
         console.error("Save Error:", err);

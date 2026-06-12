@@ -914,14 +914,35 @@ describe('CsatconfigurationComponent', () => {
           isValid: true
         }
       ];
+      // Initialize originalValidationData with different data to simulate a change
+      component.originalValidationData = [
+        {
+          id: 1,
+          batchId: 1,
+          custId: 'CUST001',
+          projectId: 'PROJ001',
+          respondentName: 'Jane', // Different name to trigger change detection
+          emailId: 'john@example.com',
+          predictedScore: 8,
+          reasonPrediction: 'Good',
+          csatSpoc: 'spoc@example.com',
+          csatSpocEmail: 'spoc@example.com',
+          remarks: 'Test',
+          isEditing: false,
+          isValid: true
+        }
+      ];
+      component.deletedRecords = [];
 
       component.saveFinalList();
 
       setTimeout(() => {
         expect(mockAppsService.saveCSATContactListForDP).toHaveBeenCalled();
-        const payload = mockAppsService.saveCSATContactListForDP.calls.mostRecent().args[0];
-        expect(payload.length).toBe(1);
-        expect(payload[0].DISPLAY_NAME).toBe('John');
+        const modifiedPayload = mockAppsService.saveCSATContactListForDP.calls.mostRecent().args[0];
+        const deletedPayload = mockAppsService.saveCSATContactListForDP.calls.mostRecent().args[1];
+        expect(modifiedPayload.length).toBe(1);
+        expect(modifiedPayload[0].DISPLAY_NAME).toBe('John');
+        expect(deletedPayload.length).toBe(0);
         expect(component.showWarning).toHaveBeenCalledWith('Data saved successfully.', 'Success', 'check_circle');
         expect(component.loadValidationData).toHaveBeenCalled();
         done();
@@ -951,6 +972,25 @@ describe('CsatconfigurationComponent', () => {
           remarks: ''
         }
       ];
+      // Initialize originalValidationData with different data to simulate a change
+      component.originalValidationData = [
+        {
+          isEditing: false,
+          respondentName: 'Jane', // Different to trigger change detection
+          predictedScore: 8,
+          csatSpoc: 'spoc@example.com',
+          isValid: true,
+          id: 1,
+          batchId: 1,
+          custId: 'C1',
+          projectId: 'P1',
+          emailId: 'j@test.com',
+          reasonPrediction: '',
+          csatSpocEmail: '',
+          remarks: ''
+        }
+      ];
+      component.deletedRecords = [];
 
       component.saveFinalList();
 
