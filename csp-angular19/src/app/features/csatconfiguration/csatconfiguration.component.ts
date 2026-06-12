@@ -750,7 +750,9 @@ export class CsatconfigurationComponent implements OnInit {
       SPOC: row.csatSpoc,
       SPOC_EMAIL: row.csatSpocEmail,
       REMARKS: row.remarks,
-      ISACTIVE: true
+      ISACTIVE: true,
+      IS_VERIFIED: true,
+      STATUS: 'CREATED'
     }));
 
     this._appservice.saveCSATContactListForDP(payload, this.dpId, this.batchId).subscribe({
