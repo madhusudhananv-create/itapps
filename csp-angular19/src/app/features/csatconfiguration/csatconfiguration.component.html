@@ -50,9 +50,44 @@
               <input name="txtwildcard" matInput [(ngModel)]="searchText" (keyup)="applyFilter()" />
             </mat-form-field>
             <button mat-flat-button class="clear-btn" (click)="clearFilter()" [disabled]="isLoading">Clear</button>
+            
+            <!-- Filter Dropdown -->
+            <button mat-icon-button [matMenuTriggerFor]="filterMenu" class="filter-icon-btn" 
+                    matTooltip="Filter by status"
+                    [class.filter-active]="statusFilter !== 'all'">
+              <mat-icon>filter_list</mat-icon>
+            </button>
+            <mat-menu #filterMenu="matMenu">
+              <button mat-menu-item (click)="applyStatusFilter('all')" [class.active]="statusFilter === 'all'">
+                <mat-icon>list</mat-icon>
+                <span>All Projects</span>
+              </button>
+              <button mat-menu-item (click)="applyStatusFilter('pending')" [class.active]="statusFilter === 'pending'">
+                <mat-icon style="color: #F59E0B;">pending</mat-icon>
+                <span>Pending Only</span>
+              </button>
+              <button mat-menu-item (click)="applyStatusFilter('yes')" [class.active]="statusFilter === 'yes'">
+                <mat-icon style="color: #10B981;">check_circle</mat-icon>
+                <span>Yes Only</span>
+              </button>
+              <button mat-menu-item (click)="applyStatusFilter('no')" [class.active]="statusFilter === 'no'">
+                <mat-icon style="color: #EF4444;">cancel</mat-icon>
+                <span>No Only</span>
+              </button>
+            </mat-menu>
           </div>
 
           <div class="toolbar-right">
+            <button mat-raised-button 
+                    class="bulk-action-btn bulk-yes-btn" 
+                    (click)="applyBulkYes()"
+                    [disabled]="isLoading || projectSelection.selected.length === 0"
+                    matTooltip="Set all selected projects to 'Yes'"
+                    style="margin-right: 12px;">
+              <mat-icon style="font-size: 18px; width: 18px; height: 18px; margin-right: 4px;">check_circle</mat-icon>
+              Bulk update to Yes
+            </button>
+
             <mat-form-field class="bulk-dropdown">
               <mat-select [(ngModel)]="bulkReasonProject" disableOptionCentering
                 placeholder="Select common reason for CHECKED">
@@ -62,7 +97,7 @@
               </mat-select>
             </mat-form-field>
 
-            <button mat-flat-button class="small-btn" (click)="applyBulkReasonProject()">Apply</button>
+            <button mat-flat-button class="small-btn" (click)="applyBulkReasonProject()" [disabled]="isLoading">Apply</button>
           </div>
         </div>
 
@@ -169,7 +204,7 @@
                   <th style="width: 10%;text-align: left;text-wrap: inherit;">Prediction Reason</th>
                   <th style="width: 12%;text-align: left;text-wrap: inherit;">CSAT SPOC Email</th>
                   <th style="width: 7%;text-align: left;text-wrap: inherit;">Remarks</th>
-                  <th style="width: 12%; text-align: center;">Action</th>
+                  <th style="width: 7%; text-align: center;">Action</th>
             </tr>
           </thead>
           <tbody>

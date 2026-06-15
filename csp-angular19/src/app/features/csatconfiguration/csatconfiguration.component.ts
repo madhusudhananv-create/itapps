@@ -15,6 +15,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { SelectionModel } from '@angular/cdk/collections';
 import { Observable, map, startWith } from 'rxjs';
 import { AppsService } from '../../core/services/apps.service';
@@ -47,6 +48,7 @@ import { WarningPopupComponent, WarningPopupData } from '../../shared/components
     MatProgressBarModule,
     MatTooltipModule,
     MatDialogModule,
+    MatMenuModule,
     NavbarNewComponent
   ]
 })
@@ -63,6 +65,7 @@ export class CsatconfigurationComponent implements OnInit {
   step1ProjectList: any[] = [];
   filteredProjectList: any[] = [];
   searchText: string = '';
+  statusFilter: string = 'all'; // 'all', 'pending', 'yes', 'no'
   validationData: any[] = [];
   originalValidationData: any[] = []; // Track original data for change detection
   deletedRecords: any[] = []; // Track deleted records
@@ -291,28 +294,69 @@ export class CsatconfigurationComponent implements OnInit {
     this.bulkReasonProject = '';
   }
 
+  // Status filter methods
+  applyStatusFilter(filter: string) {
+    this.statusFilter = filter;
+    this.applyFilter();
+  }
+
   applyFilter() {
-    if (!this.searchText || this.searchText.trim() === '') {
-      this.filteredProjectList = [...this.step1ProjectList];
-      return;
+    let filtered = [...this.step1ProjectList];
+
+    // Apply text search filter
+    if (this.searchText && this.searchText.trim() !== '') {
+      const searchLower = this.searchText.toLowerCase();
+      filtered = filtered.filter(proj => {
+        return (
+          (proj.account && proj.account.toLowerCase().includes(searchLower)) ||
+          (proj.name && proj.name.toLowerCase().includes(searchLower)) ||
+          (proj.projectStatus && proj.projectStatus.toLowerCase().includes(searchLower)) ||
+          (proj.executionType && proj.executionType.toLowerCase().includes(searchLower)) ||
+          (proj.engagementType && proj.engagementType.toLowerCase().includes(searchLower)) ||
+          (proj.reasonNotChosen && proj.reasonNotChosen.toLowerCase().includes(searchLower))
+        );
+      });
     }
 
-    const searchLower = this.searchText.toLowerCase();
-    this.filteredProjectList = this.step1ProjectList.filter(proj => {
-      return (
-        (proj.account && proj.account.toLowerCase().includes(searchLower)) ||
-        (proj.name && proj.name.toLowerCase().includes(searchLower)) ||
-        (proj.projectStatus && proj.projectStatus.toLowerCase().includes(searchLower)) ||
-        (proj.executionType && proj.executionType.toLowerCase().includes(searchLower)) ||
-        (proj.engagementType && proj.engagementType.toLowerCase().includes(searchLower)) ||
-        (proj.reasonNotChosen && proj.reasonNotChosen.toLowerCase().includes(searchLower))
-      );
-    });
+    // Apply status filter
+    if (this.statusFilter === 'yes') {
+      filtered = filtered.filter(proj => proj.chosen === 'Yes');
+    } else if (this.statusFilter === 'no') {
+      filtered = filtered.filter(proj => proj.chosen === 'No');
+    } else if (this.statusFilter === 'pending') {
+      filtered = filtered.filter(proj => !proj.chosen || proj.chosen === '');
+    }
+
+    this.filteredProjectList = filtered;
   }
 
   clearFilter() {
     this.searchText = '';
+    this.statusFilter = 'all';
     this.filteredProjectList = [...this.step1ProjectList];
+  }
+
+  // Progress tracking methods
+  getYesCount(): number {
+    return this.step1ProjectList.filter(proj => proj.chosen === 'Yes').length;
+  }
+
+  getNoCount(): number {
+    return this.step1ProjectList.filter(proj => proj.chosen === 'No').length;
+  }
+
+  getPendingCount(): number {
+    return this.step1ProjectList.filter(proj => !proj.chosen || proj.chosen === '').length;
+  }
+
+  getYesPercentage(): number {
+    const total = this.step1ProjectList.length;
+    return total > 0 ? (this.getYesCount() / total) * 100 : 0;
+  }
+
+  getNoPercentage(): number {
+    const total = this.step1ProjectList.length;
+    return total > 0 ? (this.getNoCount() / total) * 100 : 0;
   }
 
   applyBulkReasonProject() {
@@ -327,6 +371,36 @@ export class CsatconfigurationComponent implements OnInit {
         proj.isValid = true;
       }
     });
+  }
+
+  applyBulkYes() {
+    const selectedCount = this.projectSelection.selected.length;
+    
+    if (selectedCount === 0) {
+      this.dialog.open(WarningPopupComponent, {
+        width: '400px',
+        data: {
+          Message: 'Please select at least one project to update.',
+          title: 'No Selection'
+        } as WarningPopupData
+      });
+      return;
+    }
+
+    // Directly apply "Yes" to all selected projects - no confirmation needed
+    this.step1ProjectList.forEach(proj => {
+      if (this.projectSelection.isSelected(proj)) {
+        proj.chosen = 'Yes';
+        proj.reasonNotChosen = ''; // Clear reason when set to Yes
+        proj.isValid = true;
+      }
+    });
+
+    // Show success notification
+    this._util.showSuccess(`Successfully set ${selectedCount} project(s) to "Yes" for PCSAT`);
+
+    // Clear selection after bulk update
+    this.projectSelection.clear();
   }
 
   goForwardStep1(stepper: MatStepper) {
