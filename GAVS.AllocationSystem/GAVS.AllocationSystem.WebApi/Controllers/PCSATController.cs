@@ -292,7 +292,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
 
-            var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpId || x.QUALITY_SPOC == dpId) && x.IS_SELECTED && x.ISACTIVE).ToList();
+            // Get project IDs that have changes (new/modified/deleted)
+            var allChangedRecordIds = new List<int>();
+            allChangedRecordIds.AddRange(newIds);
+            allChangedRecordIds.AddRange(modifiedIds);
+            allChangedRecordIds.AddRange(deletedIds);
+
+            // Get the project IDs that have changes
+            var changedProjectIds = CSPdb.CSS_BATCH_CUSTOMERS.GetAll()
+                .Where(x => x.BATCH_ID == batchId && allChangedRecordIds.Contains(x.ID))
+                .Select(x => x.PROJ_ID)
+                .Distinct()
+                .ToList();
+
+            // Only get batch projects that have changes
+            var batchProjects = Cldb.CSS_BATCH_PROJECTS.GetAll()
+                .Where(x => x.BATCH_ID == batchId &&
+                       (x.DP_ID == dpId || x.QUALITY_SPOC == dpId) &&
+                       x.IS_SELECTED &&
+                       x.ISACTIVE &&
+                       changedProjectIds.Contains(x.PROJ_ID))
+                .ToList();
+
             bool isQualitySpoc = batchProjects.Any(x => x.QUALITY_SPOC == dpId);
             var mailList = new List<string>();
             if (!isQualitySpoc)
@@ -415,6 +436,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         (!x.ISACTIVE && deletedBatchCustomers.Contains(x.ID))     // Deleted records
                     )
                 ).ToList();
+
+                // If there are no respondents with changes for this person, don't send email
+                if (!respondents.Any()) return;
 
                 // Filter projects to only show those that have changes (new/modified/deleted respondents)
                 var projectsWithChanges = respondents.Select(r => r.PROJ_ID).Distinct().ToList();
