@@ -159,7 +159,7 @@
             <mat-form-field appearance="outline" class="form-field">
               <mat-label>Phone</mat-label>
               <input name="txtPhone" matInput [(ngModel)]="newContacts.contacT_PHONE"
-                [pattern]="phonePattern" #phone="ngModel" required>
+                [pattern]="phonePattern" #phone="ngModel">
               <mat-error *ngIf="phone.errors?.['pattern']">Phone number is not valid.</mat-error>
             </mat-form-field>
 
