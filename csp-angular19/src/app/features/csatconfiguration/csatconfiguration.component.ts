@@ -195,6 +195,8 @@ export class CsatconfigurationComponent implements OnInit {
 
             this._appservice.getCSATListforDP(this.dpId, this.batchId).subscribe({
               next: (csatData) => {
+                console.log('✅ API Response - First Record:', csatData[0]);
+                console.log('✅ DP_ID:', csatData[0]?.dP_ID, 'PROJ_PM_EMP_ID:', csatData[0]?.proJ_PM_EMP_ID, 'QUALITY_SPOC:', csatData[0]?.qualitY_SPOC);
                 this.csatList = csatData;
                 this.loadProjects();
                 this.isLoading = false;
@@ -237,6 +239,9 @@ export class CsatconfigurationComponent implements OnInit {
         engagementType: dbRow.engagamenT_TYPE,
         Spoc: dbRow.csaT_SPOC,
         SpocEmail: dbRow.csaT_SPOC_EMAIL,
+        dpId: dbRow.dP_ID,
+        projPmEmpId: dbRow.proJ_PM_EMP_ID,
+        qualitySpoc: dbRow.qualitY_SPOC,
         chosen: dbRow.iS_SELECTED ? 'Yes' : 'No',
         reasonNotChosen: '',
         isValid: true,
@@ -457,12 +462,17 @@ export class CsatconfigurationComponent implements OnInit {
         BATCH_ID: this.batchId,
         CUST_ID: proj.custId,
         PROJ_ID: proj.projId,
-        DP_ID: this.dpId,
+        DP_ID: proj.dpId,
+        PROJ_PM_EMP_ID: proj.projPmEmpId,
+        QUALITY_SPOC: proj.qualitySpoc,
         IS_SELECTED: isChosen,
         REASON: isChosen ? null : proj.reasonNotChosen,
         ISACTIVE: true
       };
     });
+
+    console.log('📤 Sending to SaveCSATListForDP - First Record:', saveCSATData[0]);
+    console.log('📤 DP_ID:', saveCSATData[0]?.DP_ID, 'PROJ_PM_EMP_ID:', saveCSATData[0]?.PROJ_PM_EMP_ID, 'QUALITY_SPOC:', saveCSATData[0]?.QUALITY_SPOC);
 
     this._appservice.saveCSATListForDP(saveCSATData, this.dpId, this.batchId).subscribe({
       next: (response) => {

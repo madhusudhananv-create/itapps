@@ -82,15 +82,14 @@
                     class="bulk-action-btn bulk-yes-btn" 
                     (click)="applyBulkYes()"
                     [disabled]="isLoading || projectSelection.selected.length === 0"
-                    matTooltip="Set all selected projects to 'Yes'"
-                    style="margin-right: 12px;">
+                    matTooltip="Set all selected projects to 'Yes'">
               <mat-icon style="font-size: 18px; width: 18px; height: 18px; margin-right: 4px;">check_circle</mat-icon>
-              Bulk update to Yes
+               Yes
             </button>
 
-            <mat-form-field class="bulk-dropdown">
+            <mat-form-field class="bulk-dropdown" >
               <mat-select [(ngModel)]="bulkReasonProject" disableOptionCentering
-                placeholder="Select common reason for CHECKED">
+                placeholder="Select reason for checked"   style="margin-bottom: -7px !important">
                 <mat-option *ngFor="let reason of rejectionReasons" [value]="reason">
                   {{ reason }}
                 </mat-option>
