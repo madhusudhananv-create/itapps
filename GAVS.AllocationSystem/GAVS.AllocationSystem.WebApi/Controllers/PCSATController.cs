@@ -479,20 +479,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 // Display newly added records first (if any)
                 if (newRespondents.Any())
                 {
-                    sbRespondents.Append("<tr><td colspan='6' style='background-color:#d4edda; padding:10px; text-align:center; font-weight:bold; border-top:2px solid #28a745;'>");
-                    sbRespondents.Append("The following records have been newly added to this PCSAT cycle");
+                    sbRespondents.Append("<tr><td colspan='6' class='section-header-added'>");
+                    sbRespondents.Append("✓ The following records have been newly added to this PCSAT cycle");
                     sbRespondents.Append("</td></tr>");
 
                     foreach (var row in newRespondents)
                     {
                         string projName = GetProjectName(row.PROJ_ID);
-                        sbRespondents.Append("<tr style='background-color:#e8f5e9;'>");
-                        sbRespondents.Append($"<td style='text-align:center;'>{respSNo++}</td>");
-                        sbRespondents.Append($"<td>{projName}</td>");
-                        sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
-                        sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
-                        sbRespondents.Append($"<td style='text-align:center;'>{row.PREDICTED_SCORE}</td>");
-                        sbRespondents.Append($"<td>{row.SPOC}</td>");
+                        sbRespondents.Append("<tr class='row-added'>");
+                        sbRespondents.Append($"<td class='cell-sno cell-sno-added'>{respSNo++}</td>");
+                        sbRespondents.Append($"<td class='cell-project'>{projName}</td>");
+                        sbRespondents.Append($"<td class='cell-name'>{row.DISPLAY_NAME}</td>");
+                        sbRespondents.Append($"<td class='cell-email'>{row.EMAIL_ID}</td>");
+                        sbRespondents.Append($"<td class='cell-score cell-score-added'>{row.PREDICTED_SCORE}</td>");
+                        sbRespondents.Append($"<td class='cell-spoc'>{row.SPOC}</td>");
                         sbRespondents.Append("</tr>");
                     }
                 }
@@ -500,20 +500,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 // Display modified records (if any)
                 if (modifiedRespondents.Any())
                 {
-                    sbRespondents.Append("<tr><td colspan='6' style='background-color:#d1ecf1; padding:10px; text-align:center; font-weight:bold; border-top:2px solid #17a2b8;'>");
-                    sbRespondents.Append("The following records have been updated in this PCSAT cycle");
+                    sbRespondents.Append("<tr><td colspan='6' class='section-header-modified'>");
+                    sbRespondents.Append("ⓘ The following records have been updated in this PCSAT cycle");
                     sbRespondents.Append("</td></tr>");
 
                     foreach (var row in modifiedRespondents)
                     {
                         string projName = GetProjectName(row.PROJ_ID);
-                        sbRespondents.Append("<tr style='background-color:#e7f4f7;'>");
-                        sbRespondents.Append($"<td style='text-align:center;'>{respSNo++}</td>");
-                        sbRespondents.Append($"<td>{projName}</td>");
-                        sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
-                        sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
-                        sbRespondents.Append($"<td style='text-align:center;'>{row.PREDICTED_SCORE}</td>");
-                        sbRespondents.Append($"<td>{row.SPOC}</td>");
+                        sbRespondents.Append("<tr class='row-modified'>");
+                        sbRespondents.Append($"<td class='cell-sno cell-sno-modified'>{respSNo++}</td>");
+                        sbRespondents.Append($"<td class='cell-project'>{projName}</td>");
+                        sbRespondents.Append($"<td class='cell-name'>{row.DISPLAY_NAME}</td>");
+                        sbRespondents.Append($"<td class='cell-email'>{row.EMAIL_ID}</td>");
+                        sbRespondents.Append($"<td class='cell-score cell-score-modified'>{row.PREDICTED_SCORE}</td>");
+                        sbRespondents.Append($"<td class='cell-spoc'>{row.SPOC}</td>");
                         sbRespondents.Append("</tr>");
                     }
                 }
@@ -521,20 +521,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 // Add separator and deleted records section if any exist
                 if (deletedRespondents.Any())
                 {
-                    sbRespondents.Append("<tr><td colspan='6' style='background-color:#fff3cd; padding:10px; text-align:center; font-weight:bold; border-top:2px solid #856404;'>");
-                    sbRespondents.Append("The following records have been removed from this PCSAT cycle");
+                    sbRespondents.Append("<tr><td colspan='6' class='section-header-deleted'>");
+                    sbRespondents.Append("⚠ The following records have been removed from this PCSAT cycle");
                     sbRespondents.Append("</td></tr>");
 
                     foreach (var row in deletedRespondents)
                     {
                         string projName = GetProjectName(row.PROJ_ID);
-                        sbRespondents.Append("<tr style='color:#dc3545; background-color:#ffebee;'>");
-                        sbRespondents.Append($"<td style='text-align:center;'>{respSNo++}</td>");
-                        sbRespondents.Append($"<td>{projName}</td>");
-                        sbRespondents.Append($"<td>{row.DISPLAY_NAME}</td>");
-                        sbRespondents.Append($"<td>{row.EMAIL_ID}</td>");
-                        sbRespondents.Append($"<td style='text-align:center;'>{row.PREDICTED_SCORE}</td>");
-                        sbRespondents.Append($"<td>{row.SPOC}</td>");
+                        sbRespondents.Append("<tr class='row-deleted'>");
+                        sbRespondents.Append($"<td class='cell-sno cell-sno-deleted'>{respSNo++}</td>");
+                        sbRespondents.Append($"<td class='cell-project cell-project-deleted'>{projName}</td>");
+                        sbRespondents.Append($"<td class='cell-name cell-name-deleted'>{row.DISPLAY_NAME}</td>");
+                        sbRespondents.Append($"<td class='cell-email cell-email-deleted'>{row.EMAIL_ID}</td>");
+                        sbRespondents.Append($"<td class='cell-score cell-score-deleted'>{row.PREDICTED_SCORE}</td>");
+                        sbRespondents.Append($"<td class='cell-spoc cell-spoc-deleted'>{row.SPOC}</td>");
                         sbRespondents.Append("</tr>");
                     }
                 }

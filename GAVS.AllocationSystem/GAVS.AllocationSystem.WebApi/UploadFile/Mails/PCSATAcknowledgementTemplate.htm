@@ -113,6 +113,144 @@
                 border-right: none !important;
                 border-bottom: none !important;
             }
+
+        /* Professional email table styling for change tracking */
+        .section-header-added {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            padding: 14px 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #155724;
+            border-top: 3px solid #28a745;
+            border-bottom: 1px solid #c3e6cb;
+            letter-spacing: 0.3px;
+        }
+
+        .section-header-modified {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            padding: 14px 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #0c5460;
+            border-top: 3px solid #17a2b8;
+            border-bottom: 1px solid #bee5eb;
+            letter-spacing: 0.3px;
+        }
+
+        .section-header-deleted {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            padding: 14px 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #856404;
+            border-top: 3px solid #ffc107;
+            border-bottom: 1px solid #ffeaa7;
+            letter-spacing: 0.3px;
+        }
+
+        .row-added {
+            background-color: #f1f9f2;
+            border-left: 3px solid #28a745;
+            transition: background-color 0.2s;
+        }
+
+        .row-modified {
+            background-color: #f0f8fa;
+            border-left: 3px solid #17a2b8;
+            transition: background-color 0.2s;
+        }
+
+        .row-deleted {
+            background-color: #fff9e6;
+            border-left: 3px solid #ffc107;
+            opacity: 0.85;
+            transition: background-color 0.2s;
+        }
+
+        .cell-sno {
+            text-align: center;
+            padding: 12px 8px;
+            font-weight: 500;
+        }
+
+        .cell-sno-added {
+            color: #155724;
+        }
+
+        .cell-sno-modified {
+            color: #0c5460;
+        }
+
+        .cell-sno-deleted {
+            color: #856404;
+            text-decoration: line-through;
+        }
+
+        .cell-project {
+            padding: 12px 10px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .cell-project-deleted {
+            color: #6c757d;
+            text-decoration: line-through;
+        }
+
+        .cell-name {
+            padding: 12px 10px;
+            color: #34495e;
+        }
+
+        .cell-name-deleted {
+            color: #6c757d;
+            text-decoration: line-through;
+        }
+
+        .cell-email {
+            padding: 12px 10px;
+            color: #3498db;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .cell-email-deleted {
+            color: #95a5a6;
+            text-decoration: line-through;
+        }
+
+        .cell-score {
+            text-align: center;
+            padding: 12px 8px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .cell-score-added {
+            color: #155724;
+        }
+
+        .cell-score-modified {
+            color: #0c5460;
+        }
+
+        .cell-score-deleted {
+            color: #856404;
+            text-decoration: line-through;
+        }
+
+        .cell-spoc {
+            padding: 12px 10px;
+            color: #34495e;
+        }
+
+        .cell-spoc-deleted {
+            color: #6c757d;
+            text-decoration: line-through;
+        }
     </style>
 
 </head>
@@ -122,16 +260,16 @@
     <p class=MsoNormal>Dear Leaders, </p>
     <br />
     <p class=MsoNormal> Please find the Project and Respondent selection details for  Half yearly PCSAT survey (H1 2026) for  your respective Account(s) /Project(s) below updated by {{UPDATED_BY}}. This will only be considered for the upcoming Half yearly PCSAT survey.</p>
-      <br />
-      <p class=MsoNormal>Changes can be done until {{VALID_DATE}}.</p>
-        <br />
-        <p class=MsoNormal>CSAT SPOC has to do the Presurvey connect with all the CSAT Respondents for their Project(s).</p>
-       <br />
-       <p class=MsoNormal>For any queries, reach out to Delivery Excellence Partners of the Account or email to CSAT support group csatsupport@neurealm.com</p>
-        <br />
-        <br />
+    <br />
+    <p class=MsoNormal>Changes can be done until {{VALID_DATE}}.</p>
+    <br />
+    <p class=MsoNormal>CSAT SPOC has to do the Presurvey connect with all the CSAT Respondents for their Project(s).</p>
+    <br />
+    <p class=MsoNormal>For any queries, reach out to Delivery Excellence Partners of the Account or email to CSAT support group csatsupport@neurealm.com</p>
+    <br />
+    <br />
 
-<p class=MsoNormal>
+    <p class=MsoNormal>
         <b> Account & Project Selection Summary:</b>
         <br />
         <br />
