@@ -3114,17 +3114,23 @@ export class AppsService {
   }
 
   /**
-   * Save CSAT Contact List for DP
-   * @param cssBatchData CSAT batch data
+   * Save CSAT Contact List for Delivery Partner
+   * @param modifiedBatchCustomerList Modified or new customer records
+   * @param deletedBatchCustomerList Deleted customer records
    * @param dpId Delivery Partner ID
    * @param batchId Batch ID
    * Migrated from legacy apps.service.ts -> saveCSATContactListForDP()
    */
-  saveCSATContactListForDP(cssBatchData: any[], dpId: string, batchId: number): Observable<any[]> {
+  saveCSATContactListForDP(modifiedBatchCustomerList: any[], deletedBatchCustomerList: any[], dpId: string, batchId: number): Observable<any[]> {
     const headers = this.getAuthHeaders();
+    // Send as wrapper object to match C# controller's SaveCSATContactListRequest class
+    const payload = {
+      modifiedBatchCustomerList: modifiedBatchCustomerList,
+      deletedBatchCustomerList: deletedBatchCustomerList
+    };
     return this.http.post<any[]>(
       `${this.apiurl}/SaveCSATContactListForDP?dpId=${dpId}&batchId=${batchId}`,
-      cssBatchData,
+      payload,
       { headers }
     );
   }
