@@ -507,6 +507,18 @@
   flex-shrink: 0;
 }
 
+/* Batch Cycle Display */
+.batch-cycle-display {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1976d2;
+  background: #e3f2fd;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #bbdefb;
+  white-space: nowrap;
+}
+
 .toolbar-center {
   display: flex;
   align-items: center;

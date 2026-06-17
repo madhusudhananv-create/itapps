@@ -477,7 +477,11 @@ export class CsatconfigurationComponent implements OnInit {
     this._appservice.saveCSATListForDP(saveCSATData, this.dpId, this.batchId).subscribe({
       next: (response) => {
         stepper.next();
-        this.loadValidationData();
+        // Only reload validation data if validation data is empty
+        // This preserves any unsaved edits when returning from Step 1
+        if (this.validationData.length === 0) {
+          this.loadValidationData();
+        }
       },
       error: (error) => {
         console.error('Error saving project selection', error);

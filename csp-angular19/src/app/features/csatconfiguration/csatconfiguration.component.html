@@ -35,13 +35,7 @@
         <div class="table-toolbar">
           <div class="toolbar-left" *ngIf="batchCycles">
             <span class="toolbar-label">Batch Cycle:</span>
-            <mat-form-field class="bulk-dropdown">
-              <mat-select [(ngModel)]="selectedBatchCycle" disableOptionCentering disabled>
-                <mat-option [value]="batchCycles.batch_name">
-                  {{ batchCycles.batch_name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+            <span class="batch-cycle-display">{{ selectedBatchCycle }}</span>
           </div>
           
           <div class="toolbar-center">

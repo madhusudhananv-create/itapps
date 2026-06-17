@@ -9,7 +9,7 @@ export interface ConfirmationDialogData {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  type?: 'warning' | 'danger' | 'info';
+  type?: 'warning' | 'danger' | 'info' | 'success';
 }
 
 @Component({
@@ -28,11 +28,13 @@ export interface ConfirmationDialogData {
         <p class="dialog-message">{{ data.message }}</p>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-button (click)="onCancel()">
-          {{ data.cancelText || 'Cancel' }}
-        </button>
-        <button mat-raised-button [color]="data.type === 'danger' ? 'warn' : 'primary'" (click)="onConfirm()">
-          {{ data.confirmText || 'Confirm' }}
+        @if (data.type !== 'success') {
+          <button mat-button (click)="onCancel()">
+            {{ data.cancelText || 'Cancel' }}
+          </button>
+        }
+        <button mat-raised-button [color]="getButtonColor()" (click)="onConfirm()">
+          {{ data.confirmText || (data.type === 'success' ? 'OK' : 'Confirm') }}
         </button>
       </mat-dialog-actions>
     </div>
@@ -66,6 +68,10 @@ export interface ConfirmationDialogData {
 
       &.info {
         color: #2196f3;
+      }
+
+      &.success {
+        color: #4caf50;
       }
     }
 
@@ -106,9 +112,20 @@ export class ConfirmationDialogComponent {
         return 'warning';
       case 'info':
         return 'info';
+      case 'success':
+        return 'check_circle';
       default:
         return 'help';
     }
+  }
+
+  getButtonColor(): string {
+    if (this.data.type === 'danger') {
+      return 'warn';
+    } else if (this.data.type === 'success') {
+      return 'primary';
+    }
+    return 'primary';
   }
 
   onConfirm(): void {

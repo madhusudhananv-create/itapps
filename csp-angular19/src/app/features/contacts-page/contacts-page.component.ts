@@ -40,6 +40,7 @@ import { ContactsModel, ContactsRolesModel } from '../../core/models/contacts-mo
 import { EmpInfoModel } from '../../models/emp-info-model';
 import { environment } from '../../../environments/environment';
 import { DialogYesNoComponent } from '../../controls/dialog-yes-no/dialog-yes-no.component';
+import { ConfirmationDialogComponent, ConfirmationDialogData } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-contacts-page',
@@ -287,27 +288,23 @@ export class ContactsPageComponent implements OnInit {
 
       this._appservice.addContacts(this.newContacts).subscribe(
         (data: any) => {
-          this.contacts.push(data);
-          this.showToast('Saved successfully', 'success', 3000);
-
-          const dialogRef = this.dialog.open(DialogYesNoComponent, {
+          // Show success dialog
+          this.dialog.open(ConfirmationDialogComponent, {
+            width: '450px',
+            disableClose: false,
             data: {
-              title: 'Contact Added',
-              message: msg
-            }
+              title: 'Success',
+              message: 'Contact added successfully!',
+              confirmText: 'OK',
+              type: 'success'
+            } as ConfirmationDialogData
           });
-
-          dialogRef.afterClosed().subscribe((result: boolean) => {
-            if (result === true) {
-              const newWindow = window.open(url, '_blank');
-              if (newWindow) {
-                newWindow.focus();
-              }
-            }
-          });
+          
+          // Refresh contacts list to show the new contact
+          this.LoadDetails();
         },
         (error: any) => {
-          this.showToast('Something went wrong', 'error', 4000);
+          this.showToast('Failed to add contact. Please try again.', 'error', 4000);
           this._util.serviceError(error);
         }
       );
@@ -315,27 +312,23 @@ export class ContactsPageComponent implements OnInit {
       // Update existing contact
       this._appservice.updateContacts(this.newContacts).subscribe(
         (data: any) => {
-          this.LoadDetails();
-          this.showToast('Saved successfully', 'success', 3000);
-
-          const dialogRef = this.dialog.open(DialogYesNoComponent, {
+          // Show success dialog
+          this.dialog.open(ConfirmationDialogComponent, {
+            width: '450px',
+            disableClose: false,
             data: {
-              title: 'Contact Updated',
-              message: msg
-            }
+              title: 'Success',
+              message: 'Contact updated successfully!',
+              confirmText: 'OK',
+              type: 'success'
+            } as ConfirmationDialogData
           });
-
-          dialogRef.afterClosed().subscribe((result: boolean) => {
-            if (result === true) {
-              const newWindow = window.open(url, '_blank');
-              if (newWindow) {
-                newWindow.focus();
-              }
-            }
-          });
+          
+          // Refresh contacts list to show the updated contact
+          this.LoadDetails();
         },
         (error: any) => {
-          this.showToast('Something went wrong', 'error', 4000);
+          this.showToast('Failed to update contact. Please try again.', 'error', 4000);
           this._util.serviceError(error);
         }
       );
