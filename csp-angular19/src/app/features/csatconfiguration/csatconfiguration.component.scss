@@ -492,7 +492,7 @@
   border-bottom: 0.5px solid #E5E7EB;
   border-radius: 12px 12px 0 0;
   min-height: auto;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: nowrap;
   overflow: visible;
 }
@@ -513,6 +513,7 @@
   gap: 8px;
   flex: 1;
   justify-content: flex-start;
+  min-width: 0;
 }
 
 .toolbar-right {
@@ -520,6 +521,7 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* --- BULK YES BUTTON STYLING --- */
@@ -610,7 +612,7 @@
   width: 380px;
   min-width: 380px;
   margin: 0;
-  height: 65px;
+  height: 36px;
 }
 
 /* Batch Cycle dropdown - narrower */
@@ -627,18 +629,21 @@
   min-width: 200px;
 }
 
-/* Select common reason dropdown - wider */
+/* Select common reason dropdown */
+.toolbar-left .bulk-dropdown,
 .toolbar-right .bulk-dropdown {
-  width: 290px;
-  min-width: 440px;
+  width: 220px;
+  min-width: 220px;
 }
 
+.toolbar-left .bulk-dropdown ::ng-deep .mat-form-field-flex,
 .toolbar-right .bulk-dropdown ::ng-deep .mat-form-field-flex {
-  min-width: 440px;
+  min-width: 220px;
 }
 
+.toolbar-left .bulk-dropdown ::ng-deep .mat-form-field-infix,
 .toolbar-right .bulk-dropdown ::ng-deep .mat-form-field-infix {
-  min-width: 400px;
+  min-width: 200px;
 }
 
 .bulk-dropdown ::ng-deep .mat-form-field-wrapper {
@@ -651,7 +656,7 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 0 8px;
-  height: 32px;
+  height: 36px;
   display: flex;
   align-items: center;
   min-width: 380px;
@@ -741,7 +746,7 @@
 .search-input {
   width: 180px;
   margin: 0;
-  height: 65px;
+  height: 36px;
 }
 
 .search-input ::ng-deep .mat-form-field-wrapper {
@@ -754,7 +759,7 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 0 8px;
-  height: 32px;
+  height: 36px;
   display: flex;
   align-items: center;
 }
@@ -779,8 +784,8 @@
 
 /* --- BUTTON ALIGNMENT --- */
 .small-btn {
-  height: 32px;
-  line-height: 32px;
+  height: 36px;
+  line-height: 36px;
   padding: 0 20px;
   font-size: 14px;
   background-color: #ff9800 !important;
@@ -798,8 +803,8 @@
 }
 
 .clear-btn {
-  height: 32px;
-  line-height: 32px;
+  height: 36px;
+  line-height: 36px;
   padding: 0 20px;
   font-size: 14px;
   background-color: #5DADE2 !important;
