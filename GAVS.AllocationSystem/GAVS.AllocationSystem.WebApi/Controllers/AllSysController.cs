@@ -25970,7 +25970,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                "</table><div style='margin-top:10px'>" + validations + "</div></div> ";
             }
             mailsignature = "<p>Note: The portal is best viewed in Chrome browsers</p><br><p>Regards,</p><br><p>Process Quality Assurance Team</p><p>Neurealm (Formerly GS Lab | GAVS Technologies)</p><p>7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur Chennai - 600 119</p>" +
-                "<p>Phone: +91 44 66694287</p><p>Email: Quality@neurealm.com<mailto:Quality@neurealm.com></p><p>Web: www.neurealm.com<http://www.neurealm.com></p>";
+                "<p>Phone: +91 44 66694287</p><p>Email: csmsupport@neurealm.com<mailto:csmsupport@neurealm.com></p><p>Web: www.neurealm.com<http://www.neurealm.com></p>";
             htmlcontent = " <style>p{margin: 0;padding: 0;font - size:60px;line - height:30px;}table,td,th{border: 1px solid #A49D9C;border-collapse:collapse;text-align:left;font-family:calibri}</style>" + mailbody + "" + htmlcontent + "" + mailsignature;
             return htmlcontent;
         }
