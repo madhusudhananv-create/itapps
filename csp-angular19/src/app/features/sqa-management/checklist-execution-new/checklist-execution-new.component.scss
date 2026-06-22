@@ -49,6 +49,47 @@ $radius-xl:  16px;
 .visually-hidden { display: none; }
 
 // ============================================================
+// Dashboard Action Bar
+// ============================================================
+.dashboard-action-bar {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+
+  .dashboard-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #1A56DB 0%, #1E40AF 100%);
+    color: white;
+    border: none;
+    border-radius: $radius-md;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+      box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// ============================================================
 // Page Wrapper
 // ============================================================
 .page-wrap {

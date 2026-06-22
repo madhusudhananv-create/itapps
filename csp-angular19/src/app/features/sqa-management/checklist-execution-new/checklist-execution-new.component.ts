@@ -166,6 +166,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
   updatedChecklistScore: any;
   updatedChecklistScorePercentage: any;
   checklistScorePercentage: any;
+  averageScore: number = 0;
   auditReportData: any[] = [];
   isMaturityLevelApplicable: boolean = false;
   maturityLevelMappings: any[] = [];
@@ -682,6 +683,9 @@ export class ChecklistExecutionNewComponent implements OnInit {
       this.issubmitenabled = false;
     else
       this.issubmitenabled = true;
+    
+    // Calculate average score when checklist data is loaded
+    this.calculateAverageScore();
   }
 
   setChecklistData() {
@@ -1092,6 +1096,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
     });
     this.checklistScore = oscore;
     this.updatedChecklistScore = oscore;
+    this.calculateAverageScore();
   }
 
   getScoreInPercentage(row: any) {
@@ -1119,6 +1124,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
       this.updatedChecklistScorePercentage = this.checklistScorePercentage;
     }
     this.setMaturityLevel();
+    this.calculateAverageScore();
   }
 
   setMaturityLevel() {
@@ -1135,6 +1141,36 @@ export class ChecklistExecutionNewComponent implements OnInit {
         this.checklistmaturitylevel = '';
       }
     }
+  }
+
+  /**
+   * Calculate average score from all checkpoints
+   * Only counts questions that have a score > 0 (excludes N/A status)
+   */
+  calculateAverageScore() {
+    let totalScore = 0;
+    let questionCount = 0;
+
+    this.checkListDataNew.forEach((serviceArea: any) => {
+      serviceArea.checkpointS_BY_PROCESS_MODEL.forEach((processModel: any) => {
+        processModel.checkpointS_BY_PROCESS_AREA.forEach((processArea: any) => {
+          processArea.checkpointS_BY_PROCESS.forEach((process: any) => {
+            process.checkpoints.forEach((checkpoint: any) => {
+              if (checkpoint.score !== undefined && checkpoint.score !== null) {
+                const score = parseFloat(checkpoint.score.toString());
+                // Only count questions with score > 0 (exclude N/A status)
+                if (score > 0) {
+                  totalScore += score;
+                  questionCount++;
+                }
+              }
+            });
+          });
+        });
+      });
+    });
+
+    this.averageScore = questionCount > 0 ? +(totalScore / questionCount).toFixed(2) : 0;
   }
 
   // Assessment Utility wrapper methods
@@ -1675,9 +1711,39 @@ export class ChecklistExecutionNewComponent implements OnInit {
   }
 
   /**
+   * Check if current checklist is RunOps/IT Operations checklist
+   */
+  isRunOpsChecklist(): boolean {
+    const selected = this.checklist?.find((item: any) => item.checklisT_ID === this.selectedchecklist);
+    const checklistName = selected?.checklisT_NAME?.toLowerCase() || '';
+    
+    return checklistName.includes('it operation') || 
+           checklistName.includes('runops') || 
+           checklistName.includes('run ops');
+  }
+
+  /**
    * Open maturity level image in new window
    */
   onClickMaturityLink() {
-    window.open('/assets/images/maturitylevelaudit.png', '_blank');
+    // Check if checklist name contains "IT Operation" or "RunOps"
+    if (this.isRunOpsChecklist()) {
+      // Open IT Operations Maturity Assessment PNG
+      window.open('/assets/images/Maturity_level_Definition.png', '_blank');
+    } else {
+      // Open default maturity level audit image
+      window.open('/assets/images/maturitylevelaudit.png', '_blank');
+    }
+  }
+
+  /**
+   * Navigate to IT Operations Dashboard
+   */
+  openITOpsDashboard(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this._router.navigate(['/sqamanagement/dashboard-itops']);
   }
 }

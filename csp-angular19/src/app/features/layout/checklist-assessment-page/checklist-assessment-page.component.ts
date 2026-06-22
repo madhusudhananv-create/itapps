@@ -317,7 +317,20 @@ export class ChecklistAssessmentPageComponent implements OnInit {
   }
 
   onClickMaturityLink() {
-    window.open('/assets/images/maturitylevelaudit.png', '_blank');
+    // Check if checklist name contains "IT Operation" or "RunOps"
+    const selected = this.checklist?.find(x => x.checklisT_ID === this.selectedchecklist);
+    const checklistName = selected?.checklisT_NAME?.toLowerCase() || '';
+    
+    // Check if it's an IT Operations maturity checklist
+    if (checklistName.includes('it operation') || 
+        checklistName.includes('runops') || 
+        checklistName.includes('run ops')) {
+      // Open IT Operations Maturity Assessment PNG
+      window.open('/assets/images/Maturity_level_Definition.png', '_blank');
+    } else {
+      // Open default maturity level audit image
+      window.open('/assets/images/maturitylevelaudit.png', '_blank');
+    }
   }
 
   getCCList() {
