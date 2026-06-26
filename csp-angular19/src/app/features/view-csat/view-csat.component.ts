@@ -363,10 +363,14 @@ export class ViewCsatComponent implements OnInit {
         this.surveyGuid = data;
         this.batchCustomerId = data.batchCustomerId;
 
+        // Get employee ID from localStorage directly as fallback
+        const empId = this._util.AppSettings.empid || localStorage.getItem('empid') || '';
+
         if ((data.status == "CREATED" || data.status == "MAIL SENT" || data.status == "MAIL RE-SENT" || 
              data.status == "DRAFT" || data.status == "COMPLETED")) {
           this.showPreconnect = true;
-          if (data.spoc == this._util.AppSettings.empid || data.dex == this._util.AppSettings.empid) {
+          
+          if (data.spoc == empId || data.dex == empId) {
             this.isEditable = true;
           }
         }
@@ -622,7 +626,7 @@ export class ViewCsatComponent implements OnInit {
     dialogConfig.height = "70%";
     dialogConfig.data = {
       batchCustomerId: this.batchCustomerId,
-      isDisabled: true,
+      isDisabled: !this.isEditable,  // Fixed: Set based on edit permission
       isEditable: this.isEditable
     };
     const dialogRef = this.dialog.open(PresurveyConnectComponent, dialogConfig);
