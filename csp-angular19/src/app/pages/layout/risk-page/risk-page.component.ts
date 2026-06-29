@@ -37,6 +37,7 @@ import { RiskTreatmentPopupComponent } from '../risk-treatment-popup/risk-treatm
 import { EntityBaseInfoComponent } from '../entity-base-info/entity-base-info.component';
 import { WarningPopupComponent } from '../../../shared/components/warning-popup/warning-popup.component';
 import { NoopScrollStrategy } from '@angular/cdk/overlay';
+import { MyUtility } from '@app/shared/my-utility';
 
 enum enumRoles {
   BUHeadIMS = 10,
@@ -106,6 +107,7 @@ export class RiskPageComponent implements OnInit, AfterViewInit {
   _layoutService = inject(LayoutService);
   _shared = inject(SharedService);
   _util = inject(UtilityService);
+  _export = inject(MyUtility);
   _access = inject(AccessControl);
 
   displayedColumns: string[] = ['index', 'Portfolio_Name', 'proJ_NM', 'identifieD_DATE', 'description', 'impact', 'owner', 'probabilitY_SCALE', 'impacT_SCALE', 'rating', 'matrix', 'status', 'iS_PLAN_EXISTS', 'actuaL_DATE', 'edit'];
@@ -658,7 +660,15 @@ export class RiskPageComponent implements OnInit, AfterViewInit {
 
   ExportTOExcel() {
     let name = 'Risks';
-    this._util.exportToExcel(this.table.nativeElement, name);
+    
+    // Clone the table to remove action columns before export
+    const tableClone = this.table.nativeElement.cloneNode(true) as HTMLElement;
+    
+    // Remove all elements with 'no-export' class
+    const noExportElements = tableClone.querySelectorAll('.no-export');
+    noExportElements.forEach((element: any) => element.remove());
+    
+    this._export.exportToExcel(tableClone, name);
   }
 
   DeleteRow_onClick(element: RiskModelExt): void {

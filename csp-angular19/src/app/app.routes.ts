@@ -261,7 +261,7 @@ export const routes: Routes = [
         path: 'dashboard-itops',
         loadComponent: () => import('./features/sqa-management/dashboard-itops/dashboard-itops.component')
           .then(m => m.DashboardItopsComponent),
-        title: 'IT Operations Dashboard'
+        //title: 'IT Operations Dashboard'
       },
       // Task Planner page
       {

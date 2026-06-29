@@ -1,0 +1,269 @@
+<div class="dashboard-container">
+  
+  <!-- Header with Back Button -->
+  <div class="dashboard-header">
+    <button class="back-btn" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Back to Checklist</span>
+    </button>
+    <h1 class="dashboard-title">
+      <mat-icon>dashboard</mat-icon>
+      IT Operations Maturity Dashboard
+    </h1>
+  </div>
+
+  <!-- Filters Section - Apple-inspired Design -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <mat-icon>filter_list</mat-icon>
+      <h2>Dashboard Filters</h2>
+    </div>
+    
+    <div class="filters-grid">
+      
+      <!-- Account Dropdown -->
+      <div class="filter-item">
+        <label>Account</label>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-select [(ngModel)]="selectedAccount" 
+                      (selectionChange)="onAccountChange()" 
+                      placeholder="Select Account">
+            <mat-option *ngFor="let account of accounts" [value]="account.id">
+              {{ account.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Project Dropdown -->
+      <div class="filter-item">
+        <label>Project</label>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-select [(ngModel)]="selectedProject" 
+                      (selectionChange)="onProjectChange()"
+                      placeholder="Select Project"
+                      [disabled]="!selectedAccount || projects.length === 0">
+            <mat-option *ngIf="selectedAccount && projects.length === 0" disabled>
+              No projects available
+            </mat-option>
+            <mat-option *ngFor="let project of projects" [value]="project.id">
+              {{ project.name }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="!selectedAccount">Please select an account first</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Audits/Assessments Dropdown with All option -->
+      <div class="filter-item">
+        <label>Audits / Assessments <span class="required">*</span></label>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-select [(ngModel)]="selectedAudits" 
+                      (selectionChange)="updateAllAuditsCheckbox()"
+                      placeholder="Select Audit(s)" 
+                      [disabled]="!selectedProject || audits.length === 0"
+                      multiple>
+            <!-- All checkbox option -->
+            <mat-option class="all-option">
+              <mat-checkbox [(ngModel)]="allAuditsSelected" 
+                            (ngModelChange)="toggleAllAudits()"
+                            (click)="$event.stopPropagation()">
+                All
+              </mat-checkbox>
+            </mat-option>
+            <!-- Individual audit options -->
+            <mat-option *ngIf="selectedProject && audits.length === 0" disabled>
+              No audits available
+            </mat-option>
+            <mat-option *ngFor="let audit of audits" [value]="audit.id">
+              {{ audit.name }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="!selectedProject">Please select a project first</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Start Date -->
+      <div class="filter-item">
+        <label>Start Date</label>
+        <mat-form-field appearance="outline" class="filter-field">
+          <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDate" placeholder="Select Start Date">
+          <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <!-- End Date -->
+      <div class="filter-item">
+        <label>End Date</label>
+        <mat-form-field appearance="outline" class="filter-field">
+          <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDate" placeholder="Select End Date">
+          <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="filters-actions">
+      <button class="btn-reset" (click)="resetFilters()">
+        <mat-icon>restart_alt</mat-icon>
+        Reset
+      </button>
+      <button class="btn-apply" (click)="applyFilters()" [disabled]="selectedAudits.length === 0">
+        <mat-icon>search</mat-icon>
+        Apply Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="showDashboard && !isLoading" class="dashboard-content">
+
+    <!-- Domain Maturity Scorecard -->
+    <div class="scorecard-section">
+      <div class="section-header">
+        <mat-icon>assessment</mat-icon>
+        <h2>Domain Maturity Scorecard</h2>
+      </div>
+
+      <div class="scorecard-table-container">
+        <table class="scorecard-table">
+          <thead>
+            <tr>
+              <th>Sr. No</th>
+              <th>Technology Domain</th>
+              <th>No. of Parameters</th>
+              <th>Sum of Scores</th>
+              <th>Max Possible</th>
+              <th>Average Score (1-5)</th>
+              <th>Maturity %</th>
+              <th>Maturity Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of domainMaturityData">
+              <td>{{ item.srNo }}</td>
+              <td class="domain-name clickable-domain" (click)="filterParametersByDomain(item.domain)">
+                {{ item.domain }}
+                <mat-icon class="expand-icon">chevron_right</mat-icon>
+              </td>
+              <td>{{ item.noOfParameters }}</td>
+              <td>{{ item.sumOfScores }}</td>
+              <td>{{ item.maxPossible }}</td>
+              <td class="average-score">{{ item.averageScore }}</td>
+              <td class="maturity-percent">{{ item.maturityPercent }}%</td>
+              <td>
+                <span class="maturity-badge" [ngClass]="getMaturityLevelClass(item.maturityLevel)">
+                  {{ item.maturityLevel }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Parameter Scores Section - Only show when a domain is clicked -->
+    <div class="parameters-section" *ngIf="showParameterScores && filteredParameterScoresData && filteredParameterScoresData.length > 0">
+      <div class="section-header">
+        <mat-icon>list_alt</mat-icon>
+        <h2>
+          {{ selectedDomainForParameters }} - Parameter Scores
+          <button class="btn-close-details" (click)="clearDomainFilter()">
+            <mat-icon>close</mat-icon>
+            Close
+          </button>
+        </h2>
+      </div>
+
+      <div class="parameters-table-container">
+        <table class="parameters-table">
+          <thead>
+            <tr>
+              <th>Sr. No</th>
+              <th>Category</th>
+              <th>Parameter</th>
+              <th>Your Score</th>
+              <th>Target (5)</th>
+              <th>Gap</th>
+              <th>% Score</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let param of filteredParameterScoresData">
+              <td>{{ param.srNo }}</td>
+              <td class="category-cell">{{ param.category }}</td>
+              <td class="parameter-cell">{{ param.parameter }}</td>
+              <td class="score-cell">{{ param.yourScore }}</td>
+              <td>{{ param.target }}</td>
+              <td class="gap-cell">{{ param.gap }}</td>
+              <td class="percent-cell">{{ param.percentScore }}%</td>
+              <td>
+                <span class="recommendation-badge" [ngClass]="getRecommendationClass(param.recommendation)">
+                  {{ param.recommendation }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Overall Estate Summary -->
+    <div class="overall-estate" *ngIf="overallEstate">
+      <div class="section-header">
+        <mat-icon>pie_chart</mat-icon>
+        <h2>Overall Estate</h2>
+      </div>
+
+      <div class="estate-grid">
+        <div class="estate-card">
+          <div class="estate-label">Total Parameters</div>
+          <div class="estate-value">{{ overallEstate.totalParameters }}</div>
+        </div>
+        <div class="estate-card">
+          <div class="estate-label">Total Scores</div>
+          <div class="estate-value">{{ overallEstate.totalScores }}</div>
+        </div>
+        <div class="estate-card">
+          <div class="estate-label">Max Possible</div>
+          <div class="estate-value">{{ overallEstate.maxPossible }}</div>
+        </div>
+        <div class="estate-card">
+          <div class="estate-label">Average Score</div>
+          <div class="estate-value highlight">{{ overallEstate.averageScore }}</div>
+        </div>
+        <div class="estate-card">
+          <div class="estate-label">Maturity %</div>
+          <div class="estate-value highlight">{{ overallEstate.maturityPercent }}%</div>
+        </div>
+        <div class="estate-card">
+          <div class="estate-label">Maturity Level</div>
+          <div class="estate-value">
+            <span class="maturity-badge" [ngClass]="getMaturityLevelClass(overallEstate.maturityLevel)">
+              {{ overallEstate.maturityLevel }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!showDashboard && !isLoading" class="empty-state">
+    <mat-icon>bar_chart</mat-icon>
+    <h3>Select a Service Tower to View Dashboard</h3>
+    <p>Choose filters above and click "Apply Filters" to display the maturity dashboard</p>
+  </div>
+
+</div>
