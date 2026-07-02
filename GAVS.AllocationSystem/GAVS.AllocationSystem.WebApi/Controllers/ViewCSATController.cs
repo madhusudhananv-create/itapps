@@ -131,14 +131,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             if (!string.IsNullOrWhiteSpace(batchCustomer.SPOC))
                                 spoc = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.DOR == null && x.EMAIL_ID == batchCustomer.SPOC)?.EMP_ID;
                             dex = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID)?.QUALITY_SPOC;
-                            dp = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID)?.DP_ID;
+                            dp = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID)?.PROJ_DM_EMP_ID;
                         }
 
 
                     }
                 }
             }
-            return Ok(new { guid = guid, status = status, batchCustomerId = custbatchId.GetValueOrDefault(), spoc = spoc, dex = dex });
+            return Ok(new { guid = guid, status = status, batchCustomerId = custbatchId.GetValueOrDefault(), spoc = spoc, dex = dex, dp = dp});
         }
 
         [GET("GetReportDetails")]
