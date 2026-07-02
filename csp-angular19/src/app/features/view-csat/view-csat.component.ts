@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -64,7 +64,7 @@ import { PresurveyConnectComponent } from '../presurvey-connect/presurvey-connec
   templateUrl: './view-csat.component.html',
   styleUrls: ['./view-csat.component.scss']
 })
-export class ViewCsatComponent implements OnInit {
+export class ViewCsatComponent implements OnInit, OnDestroy {
   // Dependency injection using Angular 19 inject()
   private route = inject(ActivatedRoute);
   public _layoutService = inject(LayoutService);
@@ -78,6 +78,9 @@ export class ViewCsatComponent implements OnInit {
   // Component state properties
   sub: any;
   projNames: any[] = [];
+  // Style injector for overlay fix (scoped to this component)
+  private overlayFixStyleId = 'view-csat-overlay-fix';
+  private styleElement: HTMLStyleElement | null = null;
   custNames: any[] = [];
   filteredProjNames: any[] = [];
   filteredCustNames: any[] = [];
@@ -122,6 +125,8 @@ export class ViewCsatComponent implements OnInit {
   @ViewChild('paginatorTable') paginator!: MatPaginator;
 
   ngOnInit() {
+    // Inject overlay CSS scoped to this component so dropdowns behave correctly here only
+    this.addOverlayFixStyle();
     this.sub = this.route.params.subscribe((params: any) => {
       this.input_customerid = params['custid'];
       this.input_projectid = params['projid'];
@@ -147,6 +152,60 @@ export class ViewCsatComponent implements OnInit {
     // this.month = this._util.getmonthsBasedonYear(this._util.tableYear);
     this._layoutService.selectedCust = this.input_customerid;
     this.getDBConfig();
+  }
+
+  ngOnDestroy(): void {
+    // Clean up injected style when leaving the component
+    this.removeOverlayFixStyle();
+    if (this.sub && typeof this.sub.unsubscribe === 'function') {
+      this.sub.unsubscribe();
+    }
+  }
+
+  /** Injects scoped CSS into document head to hide CDK backdrop for this component */
+  private addOverlayFixStyle(): void {
+    try {
+      if (typeof document === 'undefined') return;
+      if (document.getElementById(this.overlayFixStyleId)) return;
+      const css = `
+/* Hide full-page CDK backdrop for small overlays (mat-select) when this component is active */
+.cdk-overlay-backdrop.cdk-overlay-backdrop-showing {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+
+/* Restore visible backdrop when a dialog container exists (modern browsers only) */
+.cdk-overlay-container:has(.mat-mdc-dialog-container) .cdk-overlay-backdrop.cdk-overlay-backdrop-showing {
+  background: rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(3px) !important;
+  pointer-events: auto !important;
+  z-index: 1000 !important;
+}
+      `;
+      const style = document.createElement('style');
+      style.id = this.overlayFixStyleId;
+      style.appendChild(document.createTextNode(css));
+      document.head.appendChild(style);
+      this.styleElement = style;
+    } catch (e) {
+      console.warn('Failed to inject overlay fix style', e);
+    }
+  }
+
+  /** Removes the injected scoped CSS */
+  private removeOverlayFixStyle(): void {
+    try {
+      if (this.styleElement && this.styleElement.parentNode) {
+        this.styleElement.parentNode.removeChild(this.styleElement);
+        this.styleElement = null;
+      } else {
+        const el = document.getElementById(this.overlayFixStyleId);
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   /**
@@ -196,26 +255,36 @@ export class ViewCsatComponent implements OnInit {
    * Determine current quarter or month based on current date
    */
   getQuarterorMonth() {
-    let m = new Date().getMonth() + 1;
-    let y = new Date().getFullYear();
+    // Respect route params when provided (do not override explicit selection)
+    const routeFreqType = this.route.snapshot?.params?.['frequencytype'];
+    const routeFreq = this.route.snapshot?.params?.['frequency'];
+    if (routeFreqType === 'Monthly') {
+      // Monthly handled elsewhere
+      return;
+    }
+    if (routeFreq !== undefined && routeFreq !== null && routeFreq !== 0) {
+      // Quarter was provided via route params — keep it
+      this.getBatchDate();
+      return;
+    }
 
-    // Default to H1 (value 5) for January-June
+    // Default to the previous completed half-year:
+    // - If current month is Jan-Jun (we are in H1), previous completed half is H2 of previous year
+    // - If current month is Jul-Dec (we are in H2), previous completed half is H1 of current year
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const y = now.getFullYear();
+
     if (m >= 1 && m <= 6) {
-      this.selectedQuarter = 5; // H1
-      this._util.tableYear = y;
-    } 
-    // H2 (value 6) for July-December
-    else if (m >= 7 && m <= 12) {
+      // In H1 -> default to previous H2 (previous year)
       this.selectedQuarter = 6; // H2
+      this._util.tableYear = y - 1;
+    } else {
+      // In H2 -> default to previous H1 (same year)
+      this.selectedQuarter = 5; // H1
       this._util.tableYear = y;
     }
-    
-    // If no quarter selected yet (initial load), default to H1 of current year
-    if (!this.selectedQuarter || this.selectedQuarter === 0) {
-      this.selectedQuarter = 5; // H1
-      this._util.tableYear = new Date().getFullYear();
-    }
-    
+
     this.getBatchDate();
   }
 
@@ -337,18 +406,25 @@ export class ViewCsatComponent implements OnInit {
 
     this._layoutService.GetAllCustomerUser(customerId, projectId, isMonthly ?? false, formattedStartDate, formattedEndDate).subscribe(
       (data: any) => {
-        this.custNames = data;
-        this.filteredCustNames = data; // Initialize filtered array
+        // Ensure we always have an array to avoid null .length access
+        this.custNames = Array.isArray(data) ? data : [];
+        this.filteredCustNames = this.custNames; // Initialize filtered array
+
         if (this.input_respondedid == 0) {
           this.input_userid = "";
           this.disablebtn = false;
-          if (this.custNames.length > 0)
-            this.input_userid = this.custNames[0].emailid;
-          else
+          if (this.custNames.length > 0) {
+            this.input_userid = this.custNames[0].emailid || "";
+          } else {
             this.disablebtn = true;
+          }
         } else {
-          if (this.custNames.length > 0)
-            this.input_userid = this.custNames.filter(x => x.id == this.input_respondedid)[0].emailid;
+          if (this.custNames.length > 0) {
+            const found = this.custNames.find((x: any) => x.id == this.input_respondedid);
+            this.input_userid = found ? found.emailid : "";
+          } else {
+            this.input_userid = "";
+          }
         }
       },
       error => {
