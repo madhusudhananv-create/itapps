@@ -65,6 +65,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             int batchCustomerId = 0;
             string spoc = "";
             string dex = "";
+            string dp = "";
             if (surveyCriteria != null)
             {
                 if (surveyCriteria.QUARTER == 5 || surveyCriteria.QUARTER == 6)
@@ -130,6 +131,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             if (!string.IsNullOrWhiteSpace(batchCustomer.SPOC))
                                 spoc = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.DOR == null && x.EMAIL_ID == batchCustomer.SPOC)?.EMP_ID;
                             dex = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID)?.QUALITY_SPOC;
+                            dp = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID)?.DP_ID;
                         }
 
 
