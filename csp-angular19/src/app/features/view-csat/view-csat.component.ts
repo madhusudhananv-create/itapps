@@ -90,7 +90,7 @@ export class ViewCsatComponent implements OnInit {
   input_respondedid: number = 0;
   ddyear: number[] = [];
   batchCustomerId: number = 0;
-  selectedQuarter: number = 0;
+  selectedQuarter: number = 5; // Default to H1
   surveyGuid: any;
   surveyPram = new SurveyModel();
   guid: any;
@@ -125,14 +125,20 @@ export class ViewCsatComponent implements OnInit {
     this.sub = this.route.params.subscribe((params: any) => {
       this.input_customerid = params['custid'];
       this.input_projectid = params['projid'];
-      this._util.tableYear = params['year'] != undefined ? Number(params['year']) : this._util.tableYear;
+      this._util.tableYear = params['year'] != undefined ? Number(params['year']) : new Date().getFullYear();
       this.input_respondedid = params['respondedid'] != undefined ? Number(params['respondedid']) : 0;
       
       if (params['frequencytype'] == "Monthly") {
         this.showMonthly = true;
         this.tableMonth = Number(params['frequency']);
       } else {
-        this.selectedQuarter = params['frequency'] != undefined ? Number(params['frequency']) : 0;
+        // Set default quarter based on params or current date
+        if (params['frequency'] != undefined && params['frequency'] !== 0) {
+          this.selectedQuarter = Number(params['frequency']);
+        } else {
+          // Default to H1 if no frequency specified
+          this.selectedQuarter = 5; // H1
+        }
         this.showMonthly = false;
         this.tableMonth = 0;
       }
@@ -193,13 +199,23 @@ export class ViewCsatComponent implements OnInit {
     let m = new Date().getMonth() + 1;
     let y = new Date().getFullYear();
 
+    // Default to H1 (value 5) for January-June
     if (m >= 1 && m <= 6) {
       this.selectedQuarter = 5; // H1
       this._util.tableYear = y;
-    } else if (m >= 7 && m <= 12) {
+    } 
+    // H2 (value 6) for July-December
+    else if (m >= 7 && m <= 12) {
       this.selectedQuarter = 6; // H2
       this._util.tableYear = y;
     }
+    
+    // If no quarter selected yet (initial load), default to H1 of current year
+    if (!this.selectedQuarter || this.selectedQuarter === 0) {
+      this.selectedQuarter = 5; // H1
+      this._util.tableYear = new Date().getFullYear();
+    }
+    
     this.getBatchDate();
   }
 
@@ -370,7 +386,8 @@ export class ViewCsatComponent implements OnInit {
              data.status == "DRAFT" || data.status == "COMPLETED")) {
           this.showPreconnect = true;
           
-          if (data.spoc == empId || data.dex == empId) {
+          // Allow SPOC, DEX, and DP (Delivery Principal) to edit
+          if (data.spoc == empId || data.dex == empId || data.dp == empId) {
             this.isEditable = true;
           }
         }

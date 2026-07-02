@@ -52,7 +52,7 @@
             <mat-option *ngFor="let proj of filteredProjNames" [value]="proj.proJ_ID" [title]="proj.proJ_NM">
               {{proj.proJ_NM}}
             </mat-option>
-            <mat-option *ngIf="filteredProjNames.length === 0" disabled>
+            <mat-option *ngIf="!filteredProjNames || filteredProjNames.length === 0" disabled>
               No projects found
             </mat-option>
           </mat-select>
@@ -99,7 +99,7 @@
             <mat-option *ngFor="let cust of filteredCustNames" [value]="cust.emailid" [title]="cust.displaY_NAME">
               {{cust.displaY_NAME}}
             </mat-option>
-            <mat-option *ngIf="filteredCustNames.length === 0" disabled>
+            <mat-option *ngIf="!filteredCustNames || filteredCustNames.length === 0" disabled>
               No respondents found
             </mat-option>
           </mat-select>
