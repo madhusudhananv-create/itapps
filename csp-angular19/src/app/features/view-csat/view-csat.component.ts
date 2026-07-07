@@ -172,7 +172,6 @@ export class ViewCsatComponent implements OnInit, OnDestroy {
 .cdk-overlay-backdrop.cdk-overlay-backdrop-showing {
   background: transparent !important;
   backdrop-filter: none !important;
-  pointer-events: none !important;
 }
 
 /* Restore visible backdrop when a dialog container exists (modern browsers only) */

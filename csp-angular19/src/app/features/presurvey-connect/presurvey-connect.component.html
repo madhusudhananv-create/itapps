@@ -39,9 +39,13 @@
       </mat-form-field>
 
       <!-- Planned Date Field -->
+      <!-- FIX: only enforce "min = today" when the field doesn't already have an existing
+           saved value (i.e. it's being set for the first time). Existing planned dates that
+           are in the past must remain valid, otherwise the form is permanently invalid
+           and Save stays disabled. -->
       <mat-form-field appearance="outline" class="form-field">
         <mat-label>Planned Date</mat-label>
-        <input [min]="_util.Today()" matInput name="dtPlannedDate" 
+        <input [min]="plannedDateMin" matInput name="dtPlannedDate" 
                [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned'"
                [(ngModel)]="presurveyformData.planneD_DATE" 
                [matDatepicker]="picker2"
@@ -54,9 +58,11 @@
       </mat-form-field>
 
       <!-- Actual Date Field -->
+      <!-- FIX: same issue can occur here if actuaL_DATE was saved before planneD_DATE was
+           edited to a later value. Use actualDateMin instead of a live-recalculated min. -->
       <mat-form-field appearance="outline" class="form-field">
         <mat-label>Actual Date</mat-label>
-        <input [min]="presurveyformData.planneD_DATE || _util.Today()" matInput name="dtActualDate"
+        <input [min]="actualDateMin" matInput name="dtActualDate"
                [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned' || presurveyformData.status === 'Planned'" 
                [(ngModel)]="presurveyformData.actuaL_DATE" 
                [matDatepicker]="picker1"

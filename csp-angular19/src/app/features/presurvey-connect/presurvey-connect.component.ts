@@ -77,6 +77,12 @@ export class PresurveyConnectComponent implements OnInit {
   isLoading: boolean = false;
   presurveyformData: CssPresurveyConnectModel = new CssPresurveyConnectModel();
 
+  // FIX: track the ORIGINAL saved values separately from the live form values.
+  // These back the [min] bindings in the template so that an existing date
+  // that is already in the past never fails matDatepickerMin validation.
+  private originalPlannedDate: Date | null = null;
+  private originalActualDate: Date | null = null;
+
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
     this.isDisabled = data.isDisabled;
     this.isEditable = data.isEditable;
@@ -90,6 +96,30 @@ export class PresurveyConnectComponent implements OnInit {
   }
 
   /**
+   * FIX: min for Planned Date.
+   * - If a planned date was already saved (editing an existing record), don't
+   *   impose a "today or later" floor on it - that would invalidate any
+   *   legitimately-past planned date and permanently disable Save.
+   * - Only new/unset planned dates are restricted to today or later.
+   */
+  get plannedDateMin(): Date {
+    return this.originalPlannedDate ? this.originalPlannedDate : this._util.Today();
+  }
+
+  /**
+   * FIX: min for Actual Date.
+   * - If an actual date was already saved, don't re-floor it against the
+   *   (possibly since-edited) planned date or today's date.
+   * - Only a new/unset actual date is restricted to >= planned date (or today).
+   */
+  get actualDateMin(): Date {
+    if (this.originalActualDate) {
+      return this.originalActualDate;
+    }
+    return this.presurveyformData.planneD_DATE || this._util.Today();
+  }
+
+  /**
    * Close the dialog
    */
   closePopup() {
@@ -98,12 +128,15 @@ export class PresurveyConnectComponent implements OnInit {
 
   /**
    * Handle status change to reset dates when status is "To Be Planned"
+   * FIX: also re-run setDisabledState() so isDisabledData reflects the
+   * status the user just picked, not just whatever it was on initial load.
    */
   onStatusChange() {
     if (this.presurveyformData.status === 'To Be Planned') {
       this.presurveyformData.planneD_DATE = null;
       this.presurveyformData.actuaL_DATE = null;
     }
+    this.setDisabledState();
   }
 
   /**
@@ -138,6 +171,11 @@ export class PresurveyConnectComponent implements OnInit {
           if (this.presurveyformData.actuaL_DATE) {
             this.presurveyformData.actuaL_DATE = this.convertToLocalDate(this.presurveyformData.actuaL_DATE);
           }
+
+          // FIX: snapshot the originally-loaded dates so the [min] getters
+          // above can tell "existing saved date" apart from "new pick".
+          this.originalPlannedDate = this.presurveyformData.planneD_DATE as any;
+          this.originalActualDate = this.presurveyformData.actuaL_DATE as any;
           
           if (!this.presurveyformData.status) {
             this.presurveyformData.status = 'To Be Planned';
