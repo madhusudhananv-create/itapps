@@ -222,6 +222,8 @@ export class ViewCsatComponent implements OnInit, OnDestroy {
     this.showSurveyGuid = false;
     this.showSurveyText = false;
     this.surveyGuid = null;
+    this.showPreconnect = false;
+    this.isEditable = false;
     this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly, this.startDate, this.endDate);
   }
 
@@ -293,22 +295,32 @@ export class ViewCsatComponent implements OnInit, OnDestroy {
   onYearChange() {
     // this.month = this._util.getmonthsBasedonYear(this._util.tableYear);
     this.guid = [];
+    this.showPreconnect = false;
+    this.isEditable = false;
   }
 
   onMonthChange() {
     this.guid = [];
+    this.showPreconnect = false;
+    this.isEditable = false;
   }
 
   onQuarterChange() {
     this.guid = [];
+    this.showPreconnect = false;
+    this.isEditable = false;
   }
 
   onUserChange() {
     this.guid = [];
+    this.showPreconnect = false;
+    this.isEditable = false;
   }
 
   onProjectChange() {
     this.guid = [];
+    this.showPreconnect = false;
+    this.isEditable = false;
     this.getAllCustomerUser(this.input_customerid, this.input_projectid, this.isMonthly, this.startDate, this.endDate);
   }
 
@@ -438,6 +450,8 @@ export class ViewCsatComponent implements OnInit, OnDestroy {
   bindData() {
     this.disablebtn = true;
     this.showQualitativeFeedback = false;
+    this.isEditable = false;
+    this.showPreconnect = false;
     this.surveyPram.cusT_ID = this.input_customerid;
     this.surveyPram.proJ_ID = this.input_projectid;
     this.surveyPram.montH = this.tableMonth;

@@ -36,29 +36,39 @@
 
   <!-- Findings Table -->
   <div *ngIf="checkListFindings.length > 0" class="findings-container">
-    
+
     <!-- Progress bar at top of findings — shown while Accept/Reject API is in flight -->
     <mat-progress-bar *ngIf="disableAcceptReject" mode="indeterminate" class="accept-reject-progress"></mat-progress-bar>
 
-    <!-- Action Buttons at Top -->
+    <!-- Action Buttons at Top (Auditee / PM / DM / QA Team) -->
     <div class="action-buttons-top" *ngIf="showCheck || showForQATeam || _access.IsAllowed(108, 1, '', '')">
       <mat-checkbox [(ngModel)]="selectAll" (change)="selectallFindings()">
       </mat-checkbox>
-      
-      <button mat-flat-button 
+
+      <button mat-flat-button
               color="primary"
               (click)="SaveResponse('Accept')"
               [disabled]="disableAcceptReject">
         <mat-icon>check_circle</mat-icon> Accept
       </button>
-      
-      <button mat-flat-button 
+
+      <button mat-flat-button
               color="warn"
               (click)="SaveResponse('Reject')"
               [disabled]="disableAcceptReject">
         <mat-icon>cancel</mat-icon> Reject
       </button>
     </div>
+
+    <!-- Informational note for the auditor when findings are awaiting decision.
+         Actual Accept/Revert action happens per-finding, one at a time,
+         via buttons in the Add Action Plan column (see findings-table below). -->
+    <div class="auditor-review-note-bar" *ngIf="showForAuditor && hasAuditorPendingReview()">
+      <mat-icon class="note-icon">info</mat-icon>
+      {{ getAuditorPendingCount() }} finding(s) rejected by the auditee are awaiting your decision.
+      Use the Accept/Revert buttons next to each finding below.
+    </div>
+
 
     <!-- Access Control Management: Request Access button for users without CAPA role -->
     <!-- resourceId=108 (Accept/Reject), resourceIds=[108,109,111] covers all CAPA stages 1 & 3 -->
@@ -94,18 +104,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let finding of question.findings; let j = index" 
+          <tr *ngFor="let finding of question.findings; let j = index"
               [class.selected]="finding.ischecked"
               [attr.id]="'finding-' + finding.id">
             <ng-container *ngIf="finding.findinG_DESCRIPTION && finding.findinG_DESCRIPTION.trim().length > 0">
 
-              <!-- Checkbox Column: Show checkbox for auditor to accept rejection (stage 1 green, rest red) -->
+              <!-- Checkbox Column: Show checkbox for auditor to accept/revert rejection (stage 1 green, rest red) -->
               <td>
-                <div *ngIf="getAuditeeResponse(finding.id) === 'Reject' 
+                <div *ngIf="getAuditeeResponse(finding.id) === 'Reject'
                              && finding.stagE_COLORS && finding.stagE_COLORS[0] === '#3AB376'
                              && finding.stagE_COLORS[1] === '#FF5969'
                              && finding.stagE_COLORS[2] === '#FF5969'
-                             && finding.stagE_COLORS[3] === '#FF5969'">
+                             && finding.stagE_COLORS[3] === '#FF5969'"
+                     [matTooltip]="'Rejected by auditee — ' + (finding.remarks || 'no remarks provided')"
+                     matTooltipPosition="right">
                   <mat-checkbox [(ngModel)]="finding.ischecked"></mat-checkbox>
                 </div>
               </td>
@@ -134,17 +146,48 @@
                 <div class="action-cell-content">
 
                   <!-- Display status text for accepted/rejected findings (matches legacy exactly) -->
-                  <div *ngIf="getAuditeeResponse(finding.id) === 'Accept' 
+                  <div *ngIf="getAuditeeResponse(finding.id) === 'Accept'
                               || getAuditeeResponse(finding.id) === 'Rejected-Complet'
                               || (getAuditeeResponse(finding.id) === 'Reject' && isAllStagesGreen(finding.stagE_COLORS))
-                              || (getAuditeeResponse(finding.id) === 'Reject' && isAllStagesRed(finding.stagE_COLORS))"
+                              || (getAuditeeResponse(finding.id) === 'Reject' && isAllStagesRed(finding.stagE_COLORS) && !(showForAuditor && isAuditorPendingReview(finding)))"
                        class="status-text" style="margin-right: 4px;">
                     <b>{{ getAuditeeResponse(finding.id) }}ed</b>
                   </div>
 
+                  <!-- Auditor Accept/Revert — one finding at a time.
+                       Visible ONLY to the logged-in auditor (showForAuditor),
+                       and only while this specific finding is rejected by the
+                       auditee and not yet actioned by the auditor. This is the
+                       in-UI equivalent of the email "Accept"/"Revert" links
+                       (previously only handled in
+                       QaassessmentdetailsComponent.processAcceptReject()) —
+                       both now call the same saveAuditorAcceptanceStatus() API
+                       via SaveResponse(). -->
+                  <div *ngIf="showForAuditor && isAuditorPendingReview(finding)"
+                       class="auditor-decision-block">
+                    <span class="auditor-decision-label">Rejected by Auditee — please Accept or Revert</span>
+                    <div class="auditor-decision-buttons">
+                      <button mat-icon-button
+                              color="primary"
+                              (click)="acceptOrRevertFinding(finding, 'Accept')"
+                              [disabled]="disableAcceptReject"
+                              matTooltip="Accept the auditee's rejection reason and close this finding">
+                        <mat-icon>check_circle</mat-icon>
+                      </button>
+                      <button mat-icon-button
+                              color="warn"
+                              (click)="acceptOrRevertFinding(finding, 'Revert')"
+                              [disabled]="disableAcceptReject"
+                              matTooltip="Revert this finding back to the auditee for re-response">
+                        <mat-icon>undo</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
                   <!-- Empty div for rejected findings with specific stage colors (legacy compatibility) -->
-                  <div *ngIf="getAuditeeResponse(finding.id) === 'Reject' 
-                              && (isAllStagesRed(finding.stagE_COLORS) || isStage1GreenRestRed(finding.stagE_COLORS))"
+                  <div *ngIf="getAuditeeResponse(finding.id) === 'Reject'
+                              && (isAllStagesRed(finding.stagE_COLORS) || isStage1GreenRestRed(finding.stagE_COLORS))
+                              && !(showForAuditor && isAuditorPendingReview(finding))"
                        style="margin-right: 4px;">
                     <b></b>
                   </div>
@@ -156,8 +199,8 @@
                   </div>
 
                   <!-- Add Action Plan button for accepted MANDATORY findings -->
-                  <div *ngIf="getAuditeeResponse(finding.id) === 'Accept' 
-                              && finding.findinG_CATEGORY === 'MANDATORY' 
+                  <div *ngIf="getAuditeeResponse(finding.id) === 'Accept'
+                              && finding.findinG_CATEGORY === 'MANDATORY'
                               && !disableCap(finding.id)">
                     <button mat-icon-button
                             (click)="AddActionPlan(question, finding, i, j)"
@@ -183,18 +226,32 @@
                             rows="2"></textarea>
                 </mat-form-field>
 
-                <!-- Reject stage-1 complete (stage-1 green, rest red): editable -->
+                <!-- Reject stage-1 complete (stage-1 green, rest red): editable,
+                     same read-only-for-auditor exception as below (Revert
+                     now happens via the dialog, not this inline box). -->
                 <mat-form-field appearance="outline" class="remarks-field"
                   *ngIf="getAuditeeResponse(finding.id) === 'Reject' && isStage1GreenRestRed(finding.stagE_COLORS)">
-                  <textarea matInput [(ngModel)]="finding.remarks" rows="2"></textarea>
+                  <textarea matInput [(ngModel)]="finding.remarks"
+                            (focus)="onRemarksFocus(finding)"
+                            [disabled]="showForAuditor && isAuditorPendingReview(finding)"
+                            rows="2"></textarea>
                 </mat-form-field>
 
-                <!-- No response / Auditor Rejected / Reject all-red: editable -->
+                <!-- No response / Auditor Rejected / Reject all-red: editable.
+                     EXCEPTION: when this row is the auditor's own pending
+                     Revert decision (showForAuditor && isAuditorPendingReview),
+                     the field is shown read-only — the auditor now enters
+                     their remarks through the dedicated Revert dialog (a
+                     full-size textarea) instead of this small 2-row inline
+                     box, which forced inner-scrolling once history piled up. -->
                 <mat-form-field appearance="outline" class="remarks-field"
                   *ngIf="!getAuditeeResponse(finding.id)
                       || getAuditeeResponse(finding.id) === 'Auditor Rejected'
                       || (getAuditeeResponse(finding.id) === 'Reject' && isAllStagesRed(finding.stagE_COLORS))">
-                  <textarea matInput [(ngModel)]="finding.remarks" rows="2"></textarea>
+                  <textarea matInput [(ngModel)]="finding.remarks"
+                            (focus)="onRemarksFocus(finding)"
+                            [disabled]="showForAuditor && isAuditorPendingReview(finding)"
+                            rows="2"></textarea>
                 </mat-form-field>
               </td>
 
@@ -714,3 +771,43 @@
     </button>
   </div> -->
 </div>
+
+<!-- ================================================================
+     Auditor Revert-Remarks Dialog
+     Opened via openRevertDialog() when the auditor clicks the Revert
+     icon. Gives a proper full-size textarea instead of typing into the
+     small 2-row inline table cell, which forced awkward inner-scrolling
+     once the auditee's history text had already filled the box.
+================================================================ -->
+<ng-template #revertRemarksDialogTpl>
+  <div class="revert-dialog">
+    <h2 mat-dialog-title class="revert-dialog-title">
+      <mat-icon class="revert-dialog-title-icon">undo</mat-icon>
+      Revert Finding to Auditee
+    </h2>
+
+    <mat-dialog-content class="revert-dialog-content">
+      <p class="revert-dialog-question" *ngIf="revertTargetFinding">
+        <strong>Finding:</strong> {{ revertTargetFinding.findinG_DESCRIPTION }}
+      </p>
+
+      <label class="revert-dialog-label">Remarks history</label>
+      <div class="revert-dialog-history">{{ revertTargetFinding?.remarks || 'No remarks yet.' }}</div>
+
+      <label class="revert-dialog-label" for="revertRemarksInput">Your remarks (required)</label>
+      <textarea id="revertRemarksInput"
+                class="revert-dialog-textarea"
+                [(ngModel)]="revertRemarksDraft"
+                rows="8"
+                placeholder="Explain why this finding is being sent back to the auditee..."
+                autofocus></textarea>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end" class="revert-dialog-actions">
+      <button mat-button (click)="cancelRevertDialog()">Cancel</button>
+      <button mat-flat-button color="warn" (click)="submitRevertDialog()">
+        <mat-icon>undo</mat-icon> Revert Finding
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

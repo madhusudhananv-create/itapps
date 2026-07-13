@@ -4,7 +4,7 @@
  * This is a simplified version - full implementation with 5-stage CAPA workflow to be completed
  */
 
-import { Component, OnInit, Input, Output, EventEmitter, ElementRef, ViewChild, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ElementRef, ViewChild, TemplateRef, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -19,6 +19,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 import { AppsService } from '../../../core/services/apps.service';
 import { MyUtility } from '../../../shared/my-utility';
@@ -44,24 +45,25 @@ import { AccesscontrolManagementComponent } from '../../../components/accesscont
     MatNativeDateModule,
     MatTooltipModule,
     MatProgressBarModule,
+    MatDialogModule,
     AccesscontrolManagementComponent
   ],
   templateUrl: './checklist-auditee.component.html',
   styleUrls: ['./checklist-auditee.component.scss']
 })
 export class ChecklistAuditeeComponent implements OnInit {
-  
+
   // Input properties from parent component
   @Input() checklistSummaryRec: any = {};
   @Input() checkListData: any[] = [];
   @Input() originalPlannedAudits: any[] = [];
-  
+
   // Output event to notify parent of changes
   @Output() selectedChecklist: EventEmitter<any[]> = new EventEmitter<any[]>();
-  
+
   // ViewChild reference for CAPA container scroll functionality
   @ViewChild('capaContainer', { static: false }) capaContainer!: ElementRef;
-  
+
   // Component state
   checkListFindings: any[] = [];
   selectAll: boolean = false;
@@ -72,7 +74,7 @@ export class ChecklistAuditeeComponent implements OnInit {
   dueDate: Date | null = null;
   date: any = new Date().toISOString().split('T')[0];
   auditeeResponses: any[] = [];
-  
+
   // CAPA reminder banner
   showCapaReminder: boolean = false;
 
@@ -87,19 +89,19 @@ export class ChecklistAuditeeComponent implements OnInit {
   selectedRow: number = -1;
   selectedQuest: number = -1;
   projSpocs: any = null;
-  
+
   // CAP button states
   iscapsubmitbutton: boolean = false;
   iscapreviewbutton: boolean = false;
   isimplementbutton: boolean = false;
   isverficationbutton: boolean = false;
-  
+
   // Loading states
   disablesubmittillSave: boolean = false;
   disabletillreviewSave: boolean = false;
   disabletillSaveImplement: boolean = false;
   disableTillSaveVerification: boolean = false;
-  
+
   // Evidence mappings for stages 3 & 4
   stage3EvidenceMappings: any[] = [];
   stage4EvidenceMappings: any[] = [];
@@ -114,10 +116,10 @@ export class ChecklistAuditeeComponent implements OnInit {
   SelectedValueImp: any[] = [];
   auditFindingCappa: any;
   project: string[] = [];
-  
+
   // Max target date for CAP
   maxTargetDate: Date = new Date();
-  
+
   // Access control
   projectId: string = '';
   custId: string = '';
@@ -128,6 +130,17 @@ export class ChecklistAuditeeComponent implements OnInit {
   // Inject ElementRef for DOM manipulation
   private elementRef = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
+  private dialog = inject(MatDialog);
+
+  // ── Auditor "Revert" remarks dialog ─────────────────────────────────
+  // Instead of typing new remarks into the small inline table textarea
+  // (which forces awkward inner-scrolling once history piles up from
+  // earlier auditee/auditor rounds), reverting opens this dialog with a
+  // full-size textarea and the prior history shown read-only above it.
+  @ViewChild('revertRemarksDialogTpl') revertRemarksDialogTpl!: TemplateRef<any>;
+  revertTargetFinding: any = null;
+  revertRemarksDraft: string = '';
+  private activeRevertDialogRef: MatDialogRef<any> | null = null;
 
   constructor(
     public _access: AccessControl,
@@ -136,14 +149,14 @@ export class ChecklistAuditeeComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    
+
     if (this.originalPlannedAudits && this.originalPlannedAudits.length > 0 && this.checklistSummaryRec) {
       const audit = this.originalPlannedAudits.find((x: any) => x.id == this.checklistSummaryRec.assessmenT_ID);
       if (audit) {
         this.dueDate = audit.duE_DATE;
       }
     }
-    
+
     // Get all auditee responses
     this.getAllAuditeeResponses();
 
@@ -177,8 +190,13 @@ export class ChecklistAuditeeComponent implements OnInit {
   }
 
   /**
-   * Populate remarks on each finding from the loaded auditeeResponses
-   * Mirrors legacy setauditeeRemarks()
+   * Populate remarks on each finding from the loaded auditeeResponses.
+   * Mirrors legacy setauditeeRemarks(), and additionally snapshots the
+   * remarks into auditeeOriginalRemarks — an immutable baseline used to
+   * detect whether the auditor has actually typed something new before
+   * reverting (see isRemarksEffectivelyEmpty()). Without this snapshot, the
+   * remarks-required check for Revert always passes trivially because the
+   * textarea is pre-filled with the auditee's own rejection remarks.
    */
   setauditeeRemarks() {
     this.checkListFindings.forEach((question: any) => {
@@ -186,6 +204,11 @@ export class ChecklistAuditeeComponent implements OnInit {
         const rec = this.auditeeResponses.find((x: any) => x.findinG_ID === find.id);
         if (rec !== undefined) {
           find.remarks = rec.remarks || '';
+          find.auditeeOriginalRemarks = rec.remarks || '';
+          // Reset so the next time this textarea is focused, a fresh
+          // "<Role> Remarks(date): " label gets inserted for this round.
+          find.remarksPromptApplied = false;
+          find.remarksBaselineAfterPrompt = '';
         }
       });
     });
@@ -221,12 +244,12 @@ export class ChecklistAuditeeComponent implements OnInit {
           for (let j = 0; j < this.checkListData[i].checkpointS_BY_PROCESS_MODEL[n].checkpointS_BY_PROCESS_AREA[p].checkpointS_BY_PROCESS.length; j++) {
             for (let k = 0; k < this.checkListData[i].checkpointS_BY_PROCESS_MODEL[n].checkpointS_BY_PROCESS_AREA[p].checkpointS_BY_PROCESS[j].checkpoints.length; k++) {
               const checkpoint = this.checkListData[i].checkpointS_BY_PROCESS_MODEL[n].checkpointS_BY_PROCESS_AREA[p].checkpointS_BY_PROCESS[j].checkpoints[k];
-              
+
               if (checkpoint.findings && checkpoint.findings.length > 0) {
-                const findingsWithDescription = checkpoint.findings.filter((f: any) => 
+                const findingsWithDescription = checkpoint.findings.filter((f: any) =>
                   f.findinG_DESCRIPTION && f.findinG_DESCRIPTION.trim().length > 0
                 );
-                
+
                 if (findingsWithDescription.length > 0) {
                   // Initialize stage colors and other properties for each finding
                   const processedFindings = findingsWithDescription.map((f: any) => ({
@@ -235,9 +258,16 @@ export class ChecklistAuditeeComponent implements OnInit {
                     remarks: f.remarks || '',
                     addActionPlan: false,
                     // Parse stage colors - can be string or array
-                    stagE_COLORS: this.parseStageColors(f.stagE_COLORS)
+                    stagE_COLORS: this.parseStageColors(f.stagE_COLORS),
+                    // Remarks-round tracking (see isRemarksEffectivelyEmpty /
+                    // onRemarksFocus). Initialized here defensively so a
+                    // brand-new finding with no auditeeResponses record yet
+                    // never has these as `undefined`.
+                    auditeeOriginalRemarks: f.remarks || '',
+                    remarksPromptApplied: false,
+                    remarksBaselineAfterPrompt: ''
                   }));
-                  
+
                   this.checkListFindings.push({
                     looK_FOR: checkpoint.looK_FOR,
                     findings: processedFindings
@@ -250,11 +280,11 @@ export class ChecklistAuditeeComponent implements OnInit {
       }
     }
 
-    
+
     // Load stage colors from backend (updates stagE_COLORS on each finding)
     // then load auditee responses (sets remarks + acceptance status)
     this.getChecklistFindingStages();
-    
+
     // Determine access rights
     const empId = localStorage.getItem('empid');
     this.determineAccessRights(empId);
@@ -283,17 +313,17 @@ export class ChecklistAuditeeComponent implements OnInit {
     if (!stageColors) {
       return this.getDefaultStageColors();
     }
-    
+
     // If already an array, return it
     if (Array.isArray(stageColors)) {
       return stageColors;
     }
-    
+
     // If string, split by comma
     if (typeof stageColors === 'string') {
       return stageColors.split(',').map(c => c.trim());
     }
-    
+
     return this.getDefaultStageColors();
   }
 
@@ -331,6 +361,9 @@ export class ChecklistAuditeeComponent implements OnInit {
                 if (existing) {
                   f.ischecked = existing.ischecked ?? false;
                   f.remarks   = existing.remarks   ?? f.remarks ?? '';
+                  f.auditeeOriginalRemarks = existing.auditeeOriginalRemarks ?? f.auditeeOriginalRemarks ?? '';
+                  f.remarksPromptApplied = existing.remarksPromptApplied ?? false;
+                  f.remarksBaselineAfterPrompt = existing.remarksBaselineAfterPrompt ?? '';
                 }
               });
             }
@@ -428,7 +461,7 @@ export class ChecklistAuditeeComponent implements OnInit {
    */
   scrollToFinding(findingId: any) {
     if (!findingId) return;
-    
+
     const findingRow = this.elementRef.nativeElement.querySelector('#finding-' + findingId);
     if (findingRow) {
       findingRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -437,24 +470,251 @@ export class ChecklistAuditeeComponent implements OnInit {
     }
   }
 
+  // -----------------------------------------------------------------------
+  // Auditor Accept/Revert helpers
+  // -----------------------------------------------------------------------
+  // These back the auditor-only action bar in the template. They identify
+  // findings that the auditee has rejected and that are still awaiting the
+  // auditor's decision (stage 1 green = auditee rejection recorded, stages
+  // 2-4 red = nothing decided yet). This is the exact same state the email
+  // "Accept"/"Revert" links target via QaassessmentdetailsComponent, so no
+  // new backend logic is introduced — SaveResponse() already routes these
+  // through saveAuditorAcceptanceStatus() once isAuditorResponse is true.
+  // -----------------------------------------------------------------------
+
+  /**
+   * True if a specific finding is rejected by the auditee and still
+   * awaiting the auditor's Accept/Revert decision.
+   *
+   * IMPORTANT: this checks status === 'Reject' ONLY. It does NOT also
+   * check getsubmittedstatus()/issubmitted — that flag is set to true by
+   * SaveResponse() on EVERY save, including the auditee's very first
+   * rejection, so it can't be used to tell "freshly rejected, pending
+   * auditor" apart from "already resolved". Once the auditor actually
+   * accepts a rejection, getAuditeeResponse() flips to 'Accept' and these
+   * buttons disappear on their own via the existing status-text branch in
+   * the template — no extra flag required.
+   */
+  isAuditorPendingReview(finding: any): boolean {
+    return this.getAuditeeResponse(finding.id) === 'Reject';
+  }
+
+  /**
+   * True if at least one finding anywhere in the list is awaiting the
+   * auditor's decision. Used only for an informational summary note.
+   */
+  hasAuditorPendingReview(): boolean {
+    return this.checkListFindings.some((q: any) =>
+      q.findings.some((f: any) => this.isAuditorPendingReview(f))
+    );
+  }
+
+  /**
+   * Count of findings currently awaiting the auditor's Accept/Revert decision.
+   */
+  getAuditorPendingCount(): number {
+    let count = 0;
+    this.checkListFindings.forEach((q: any) => {
+      q.findings.forEach((f: any) => {
+        if (this.isAuditorPendingReview(f)) count++;
+      });
+    });
+    return count;
+  }
+
+  /**
+   * Accept or Revert a SINGLE finding — one at a time.
+   * Temporarily checks only this finding (unchecking everything else so
+   * SaveResponse()'s selection logic only picks this one up), then
+   * delegates to the existing SaveResponse().
+   *
+   * IMPORTANT: on Revert we send status 'Reject' (same string the auditee's
+   * original rejection used) — NOT 'Auditor Rejected'. Per
+   * SaveAuditorAcceptanceStatus() on the backend, the controller itself does
+   * this translation: when it receives STATUS == "Reject" together with
+   * IS_AUDITOR_ACCEPT == true, IT sets rec.STATUS = "Auditor Rejected" and
+   * runs UpdateFindingStatusForAuditorRejection(). Sending 'Auditor Rejected'
+   * directly would match neither of the backend's two recognized branches
+   * ("Accept" / "Reject") and silently do nothing.
+   */
+  /**
+   * Inserts a dated "<Role> Remarks(date): " label into the remarks
+   * textarea the first time it's focused for a given load of the finding,
+   * appended after any existing text (so prior history — e.g. the
+   * auditee's original rejection remarks — is preserved, not overwritten).
+   * The person then types their own remarks directly after the label.
+   *
+   * Role is inferred from context: if the logged-in user is the auditor
+   * and this finding is currently awaiting their Accept/Revert decision,
+   * the label reads "Auditor Remarks(...)"; otherwise "Auditee Remarks(...)".
+   *
+   * Runs at most once per load — remarksPromptApplied is reset to false
+   * whenever setauditeeRemarks() reloads fresh data from the backend, so
+   * a finding gets exactly one label inserted per round of the workflow.
+   */
+  onRemarksFocus(finding: any): void {
+    if (finding.remarksPromptApplied) return;
+
+    const role = (this.showForAuditor && this.isAuditorPendingReview(finding)) ? 'Auditor' : 'Auditee';
+    const label = `${role} Remarks(${this.date}): `;
+    const existing = (finding.remarks || '').trim();
+
+    finding.remarks = existing.length > 0 ? `${existing}\n${label}` : label;
+    finding.remarksPromptApplied = true;
+    // Snapshot the text right after inserting the label (before any typing),
+    // used by isRemarksEffectivelyEmpty() to tell "just the label" apart from
+    // "the label plus something the person actually typed".
+    finding.remarksBaselineAfterPrompt = finding.remarks;
+  }
+
+  /**
+   * True if the remarks field is effectively empty for the purpose of a
+   * rejection/revert — i.e. either genuinely blank, OR containing only the
+   * auto-inserted "<Role> Remarks(date): " label from onRemarksFocus() with
+   * nothing typed after it. A plain "is it non-empty?" check is NOT enough
+   * here: the moment the textarea is focused, onRemarksFocus() inserts that
+   * label, so the field is technically non-empty even if the person never
+   * actually wrote a reason. This compares against the exact post-label
+   * baseline captured in onRemarksFocus() to catch that case.
+   *
+   * Used both for the auditee's initial Reject and the auditor's Revert —
+   * both require the person to have actually typed something of their own.
+   */
+  isRemarksEffectivelyEmpty(finding: any): boolean {
+    const current = (finding.remarks || '').trim();
+
+    // Never focused the field this round — compare directly against
+    // whatever was persisted from the previous round. This could be blank
+    // (a brand new finding) or a previous responder's full remarks history
+    // (a finding bouncing back between auditor and auditee). Either way, if
+    // the text is unchanged from what was loaded, THIS person hasn't added
+    // anything of their own yet — even though the field isn't literally
+    // empty. Without this comparison, an old round's leftover remarks (e.g.
+    // "Auditor Remarks(date): testtt" from a prior revert) would silently
+    // satisfy the "must have remarks" requirement for the current actor,
+    // who never typed a word.
+    if (!finding.remarksPromptApplied) {
+      const original = (finding.auditeeOriginalRemarks || '').trim();
+      return current.length === 0 || current === original;
+    }
+
+    // Field was focused this round, so onRemarksFocus() already inserted a
+    // fresh "<Role> Remarks(date): " label. Compare against that exact
+    // post-label snapshot to tell "just the label" apart from "the label
+    // plus something the person actually typed".
+    const baseline = (finding.remarksBaselineAfterPrompt || '').trim();
+    return current.length === 0 || current === baseline;
+  }
+
+  /**
+   * Accept a single finding immediately (no remarks needed), or kick off
+   * the Revert dialog for entering remarks (see openRevertDialog()).
+   */
+  acceptOrRevertFinding(finding: any, action: 'Accept' | 'Revert') {
+    if (action === 'Accept') {
+      this.checkListFindings.forEach((q: any) => {
+        q.findings.forEach((f: any) => { f.ischecked = false; });
+      });
+      finding.ischecked = true;
+      this.SaveResponse('Accept');
+      return;
+    }
+
+    this.openRevertDialog(finding);
+  }
+
+  /**
+   * Opens a dedicated dialog for the auditor to write their revert remarks
+   * in a proper full-size textarea, with the finding's prior remarks
+   * history shown read-only above it for context. This replaces typing
+   * directly into the small inline table cell, which forced the person to
+   * scroll inside a 2-row box once any history had accumulated.
+   */
+  openRevertDialog(finding: any): void {
+    this.revertTargetFinding = finding;
+    this.revertRemarksDraft = '';
+    this.activeRevertDialogRef = this.dialog.open(this.revertRemarksDialogTpl, {
+      width: '640px',
+      maxWidth: '90vw',
+      panelClass: 'revert-remarks-dialog-panel',
+      disableClose: true
+    });
+  }
+
+  /**
+   * Validates and commits the Revert dialog. Kept separate from
+   * cancelRevertDialog() so an empty submit can show an error and leave
+   * the dialog open, rather than closing it either way.
+   */
+  submitRevertDialog(): void {
+    const draft = (this.revertRemarksDraft || '').trim();
+    if (draft.length === 0) {
+      this._utility.showError('Please enter your remarks before reverting this finding to the auditee.');
+      return;
+    }
+
+    const finding = this.revertTargetFinding;
+    this.activeRevertDialogRef?.close();
+    this.activeRevertDialogRef = null;
+    this.commitRevert(finding, draft);
+  }
+
+  cancelRevertDialog(): void {
+    this.activeRevertDialogRef?.close();
+    this.activeRevertDialogRef = null;
+    this.revertTargetFinding = null;
+    this.revertRemarksDraft = '';
+  }
+
+  /**
+   * Builds the final remarks text (prior history + a freshly dated
+   * "Auditor Remarks(date): " label + the auditor's typed draft), selects
+   * only this finding, and delegates to the existing SaveResponse('Reject')
+   * — same as the rest of the workflow.
+   */
+  private commitRevert(finding: any, draft: string): void {
+    const existing = (finding.remarks || '').trim();
+    const label = `Auditor Remarks(${this.date}): `;
+    finding.remarks = existing.length > 0 ? `${existing}\n${label}${draft}` : `${label}${draft}`;
+
+    // Mark this round's prompt as "applied" with the draft already
+    // included, so SaveResponse()'s own isRemarksEffectivelyEmpty() safety
+    // check sees genuinely new content and doesn't (redundantly) block.
+    finding.remarksPromptApplied = true;
+    finding.remarksBaselineAfterPrompt = existing.length > 0 ? `${existing}\n${label}` : label;
+
+    this.checkListFindings.forEach((q: any) => {
+      q.findings.forEach((f: any) => { f.ischecked = false; });
+    });
+    finding.ischecked = true;
+
+    this.SaveResponse('Reject');
+  }
+
   /**
    * Save auditee/auditor response (Accept/Reject)
    * Determines if this is an auditor responding to a rejection or auditee initial response
    * Mirrors legacy SaveResponse() and SaveAuditorResponse() logic
+   *
+   * NOTE: This same method now backs BOTH the auditee Accept/Reject bar and
+   * the auditor Accept/Revert bar in the template. The auditor path is
+   * detected automatically below (currentResponse === 'Reject') and routed
+   * to saveAuditorAcceptanceStatus() — identical to what previously only
+   * happened via the email Accept/Revert links.
    */
   SaveResponse(status: string) {
     this.disableAcceptReject = true;
-    
+
     let selectedFindings: any[] = [];
     let findingIds: number[] = [];
     let isAuditorResponse = false;
-    
+
     // Collect selected findings - check if any have 'Reject' status (auditor response scenario)
     this.checkListFindings.forEach((question) => {
       question.findings.forEach((find: any) => {
         if (find.ischecked) {
           const currentResponse = this.getAuditeeResponse(find.id);
-          
+
           // If finding has 'Reject' status, this is auditor accepting/rejecting the rejection
           if (currentResponse === 'Reject') {
             isAuditorResponse = true;
@@ -481,55 +741,68 @@ export class ChecklistAuditeeComponent implements OnInit {
       return;
     }
 
-    // Validate remarks for rejection - only for findings with no previous response (auditor rejection)
-    if (status === 'Reject' && isAuditorResponse) {
+    // Validate remarks for rejection — checked PER FINDING, based on that
+    // finding's OWN current status, not the single shared isAuditorResponse
+    // flag above. isAuditorResponse is computed once across the WHOLE batch
+    // of checked findings in this click; if the same person can act as both
+    // auditor and auditee/QA (a common role overlap), a single bulk submit
+    // can mix an auditor-pending finding (status 'Reject', needs a revert
+    // remark) together with a fresh, never-responded finding (needs a
+    // reject remark) — a real case we hit where the auditor-pending finding
+    // set isAuditorResponse=true for the whole batch, so the fresh finding's
+    // OWN reject-remarks requirement was silently skipped. Validating each
+    // finding against its own status closes that gap.
+    if (status === 'Reject') {
       for (let i = 0; i < this.checkListFindings.length; i++) {
         for (let j = 0; j < this.checkListFindings[i].findings.length; j++) {
           const finding = this.checkListFindings[i].findings[j];
-          if (this.getAuditeeResponse(finding.id) === 'Reject') {
-            if (finding.findinG_DESCRIPTION && finding.findinG_DESCRIPTION.trim().length > 0
-                && finding.ischecked && (!finding.remarks || finding.remarks.length === 0)) {
-              this._utility.showError('Please enter remarks for the findings to reject');
-              this.disableAcceptReject = false;
-              return;
-            }
+          if (!finding.ischecked) continue;
+          if (!finding.findinG_DESCRIPTION || finding.findinG_DESCRIPTION.trim().length === 0) continue;
+
+          const currentResponse = this.getAuditeeResponse(finding.id);
+          const isThisFindingAuditorRevert = currentResponse === 'Reject';
+          const isThisFindingFreshAuditeeReject = !currentResponse || currentResponse === 'Auditor Rejected';
+
+          if (isThisFindingAuditorRevert && this.isRemarksEffectivelyEmpty(finding)) {
+            this._utility.showError('Please add your own remarks before reverting this finding to the auditee — the current text is only the auditee\'s remarks.');
+            this.disableAcceptReject = false;
+            return;
           }
-        }
-      }
-    }
-    // Validate remarks for rejection - for auditee rejecting findings
-    else if (status === 'Reject' && !isAuditorResponse) {
-      for (let i = 0; i < this.checkListFindings.length; i++) {
-        for (let j = 0; j < this.checkListFindings[i].findings.length; j++) {
-          const finding = this.checkListFindings[i].findings[j];
-          if (!this.getAuditeeResponse(finding.id)) {
-            if (finding.findinG_DESCRIPTION && finding.findinG_DESCRIPTION.trim().length > 0
-                && finding.ischecked && (!finding.remarks || finding.remarks.length === 0)) {
-              this._utility.showError('Please enter remarks for the findings to reject');
-              this.disableAcceptReject = false;
-              return;
-            }
+          if (isThisFindingFreshAuditeeReject && this.isRemarksEffectivelyEmpty(finding)) {
+            this._utility.showError('Please enter remarks for the findings to reject');
+            this.disableAcceptReject = false;
+            return;
           }
         }
       }
     }
 
-    // Prepare acceptance list - different labels for auditor vs auditee
+
+    // Prepare acceptance list.
+    // NOTE: remarks are saved verbatim now — the "<Role> Remarks(date): "
+    // label is inserted into the textarea the moment the person focuses it
+    // (see onRemarksFocus()), as a prefix ready for them to type after,
+    // preserving prior history. Previously this label was appended AFTER
+    // whatever the person typed at save time, which put the label in the
+    // wrong place (e.g. "test 3 Auditee Remarks(date):" instead of
+    // "Auditee Remarks(date): test 3").
     const acceptanceList: any[] = [];
-    const remarkLabel = isAuditorResponse 
-      ? ` Auditor Remarks(${this.date}): `  
-      : ` Auditee Remarks(${this.date}): `;
-      
+
     this.checkListFindings.forEach((question) => {
       question.findings.forEach((find: any) => {
-        // For auditor: only process findings with 'Reject' status
+        // For auditor: only process findings with 'Reject' status.
+        // IS_AUDITOR_ACCEPT is REQUIRED — SaveAuditorAcceptanceStatus() on the
+        // backend only enters its processing branch `if (results.IS_AUDITOR_ACCEPT)`.
+        // Without this flag the backend still returns Ok(resultList) (a false
+        // "success"), but never actually updates the record or finding status.
         if (isAuditorResponse && find.ischecked && this.getAuditeeResponse(find.id) === 'Reject') {
           acceptanceList.push({
             findinG_ID: find.id,
             status: status,
-            remarks: find.remarks ? find.remarks + remarkLabel : '',
+            remarks: (find.remarks || '').trim(),
             isactive: true,
-            issubmitted: true  // Mark as submitted when auditor accepts/rejects
+            issubmitted: true,  // Mark as submitted when auditor accepts/rejects
+            iS_AUDITOR_ACCEPT: true
           });
         }
         // For auditee: Findings with no previous response
@@ -537,7 +810,7 @@ export class ChecklistAuditeeComponent implements OnInit {
           acceptanceList.push({
             findinG_ID: find.id,
             status: status,
-            remarks: find.remarks ? find.remarks + remarkLabel : '',
+            remarks: (find.remarks || '').trim(),
             isactive: true,
             issubmitted: true
           });
@@ -547,7 +820,7 @@ export class ChecklistAuditeeComponent implements OnInit {
           acceptanceList.push({
             findinG_ID: find.id,
             status: status,
-            remarks: find.remarks ? find.remarks + remarkLabel : '',
+            remarks: (find.remarks || '').trim(),
             isactive: true,
             issubmitted: true
           });
@@ -580,8 +853,12 @@ export class ChecklistAuditeeComponent implements OnInit {
           this.updateSubmittedStatusForAcceptedRejections(findingIds, true);
           this.emitchanges();
         }
-        // If status is Reject (auditee), mark as not submitted
-        else if (!isAuditorResponse && status === 'Reject') {
+        // If auditor reverted the rejection back to the auditee, OR the
+        // auditee rejected a finding for the first time — both are sent
+        // to the API as status 'Reject', distinguished only by
+        // isAuditorResponse. Either way, mark as not-submitted so the
+        // finding is flagged as awaiting a fresh response.
+        else if (status === 'Reject') {
           this.updateSubmittedStatusForAcceptedRejections(findingIds, false);
           this.emitchanges();
         }
@@ -661,9 +938,9 @@ export class ChecklistAuditeeComponent implements OnInit {
    */
   isAllStagesGreen(stageColors: string[]): boolean {
     if (!stageColors || stageColors.length !== 4) return false;
-    return stageColors[0] === '#3AB376' && 
-           stageColors[1] === '#3AB376' && 
-           stageColors[2] === '#3AB376' && 
+    return stageColors[0] === '#3AB376' &&
+           stageColors[1] === '#3AB376' &&
+           stageColors[2] === '#3AB376' &&
            stageColors[3] === '#3AB376';
   }
 
@@ -672,9 +949,9 @@ export class ChecklistAuditeeComponent implements OnInit {
    */
   isAllStagesRed(stageColors: string[]): boolean {
     if (!stageColors || stageColors.length !== 4) return false;
-    return stageColors[0] === '#FF5969' && 
-           stageColors[1] === '#FF5969' && 
-           stageColors[2] === '#FF5969' && 
+    return stageColors[0] === '#FF5969' &&
+           stageColors[1] === '#FF5969' &&
+           stageColors[2] === '#FF5969' &&
            stageColors[3] === '#FF5969';
   }
 
@@ -683,9 +960,9 @@ export class ChecklistAuditeeComponent implements OnInit {
    */
   isStage1GreenRestRed(stageColors: string[]): boolean {
     if (!stageColors || stageColors.length !== 4) return false;
-    return stageColors[0] === '#3AB376' && 
-           stageColors[1] === '#FF5969' && 
-           stageColors[2] === '#FF5969' && 
+    return stageColors[0] === '#3AB376' &&
+           stageColors[1] === '#FF5969' &&
+           stageColors[2] === '#FF5969' &&
            stageColors[3] === '#FF5969';
   }
 
@@ -693,26 +970,26 @@ export class ChecklistAuditeeComponent implements OnInit {
    * Add action plan for a finding (CAPA workflow)
    */
   AddActionPlan(question: any, finding: any, questionIndex: number, findingIndex: number) {
-    
+
     this.viewCAPA = true;
     this.rootCauseIds = [];
     this.stage3EvidenceMappings = [];
     this.stage4EvidenceMappings = [];
-    
+
     this.actionPlan = finding;
     this.actionPlanQiestion = question;
     this.selectedRow = findingIndex;
     this.selectedQuest = questionIndex;
-    
+
     // Get finding stages/status
     this.getFindingStatusdetails(finding);
-    
+
     // Get project resources for responsibility assignment
     this.getProjResource();
-    
+
     // Force change detection to render the CAPA section, then scroll
     this.cdr.detectChanges();
-    
+
     setTimeout(() => {
       this.scrollToCapaContainer();
     }, 150);
