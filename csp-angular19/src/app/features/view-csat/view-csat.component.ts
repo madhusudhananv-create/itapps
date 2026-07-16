@@ -582,13 +582,20 @@ export class ViewCsatComponent implements OnInit, OnDestroy {
    */
   getBatchDate() {
     if (this.selectedQuarter == 5) {
-      this.startDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-01-01"));
-      this.endDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-06-30"));
+      this.startDate = this.createLocalDate(this._util.tableYear, 1, 1);
+      this.endDate = this.createLocalDate(this._util.tableYear, 6, 30);
     }
     if (this.selectedQuarter == 6) {
-      this.startDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-07-01"));
-      this.endDate = this._util.setLocaleDate(new Date(this._util.tableYear + "-12-31"));
+      this.startDate = this.createLocalDate(this._util.tableYear, 7, 1);
+      this.endDate = this.createLocalDate(this._util.tableYear, 12, 31);
     }
+  }
+
+  /**
+   * Create a local Date instance to avoid timezone shifts from yyyy-MM-dd string parsing.
+   */
+  private createLocalDate(year: number, month: number, day: number): Date {
+    return new Date(year, month - 1, day);
   }
 
   /**
@@ -623,23 +630,23 @@ export class ViewCsatComponent implements OnInit, OnDestroy {
           this.endDate   = new Date(this._util.tableYear, this.tableMonth, 0);
         } else {
           if (this.selectedQuarter == 1) {
-            this.startDate = new Date(this._util.tableYear + "-04-01");
-            this.endDate   = new Date(this._util.tableYear + "-06-30");
+            this.startDate = this.createLocalDate(this._util.tableYear, 4, 1);
+            this.endDate   = this.createLocalDate(this._util.tableYear, 6, 30);
           } else if (this.selectedQuarter == 2) {
-            this.startDate = new Date(this._util.tableYear + "-07-01");
-            this.endDate   = new Date(this._util.tableYear + "-09-30");
+            this.startDate = this.createLocalDate(this._util.tableYear, 7, 1);
+            this.endDate   = this.createLocalDate(this._util.tableYear, 9, 30);
           } else if (this.selectedQuarter == 3) {
-            this.startDate = new Date(this._util.tableYear + "-10-01");
-            this.endDate   = new Date(this._util.tableYear + "-12-31");
+            this.startDate = this.createLocalDate(this._util.tableYear, 10, 1);
+            this.endDate   = this.createLocalDate(this._util.tableYear, 12, 31);
           } else if (this.selectedQuarter == 4) {
-            this.startDate = new Date((this._util.tableYear + 1) + "-01-01");
-            this.endDate   = new Date((this._util.tableYear + 1) + "-03-31");
+            this.startDate = this.createLocalDate(this._util.tableYear + 1, 1, 1);
+            this.endDate   = this.createLocalDate(this._util.tableYear + 1, 3, 31);
           } else if (this.selectedQuarter == 5) {
-            this.startDate = new Date((this._util.tableYear + 1) + "-01-01");
-            this.endDate   = new Date((this._util.tableYear + 1) + "-06-30");
+            this.startDate = this.createLocalDate(this._util.tableYear + 1, 1, 1);
+            this.endDate   = this.createLocalDate(this._util.tableYear + 1, 6, 30);
           } else if (this.selectedQuarter == 6) {
-            this.startDate = new Date((this._util.tableYear + 1) + "-07-01");
-            this.endDate   = new Date((this._util.tableYear + 1) + "-12-31");
+            this.startDate = this.createLocalDate(this._util.tableYear + 1, 7, 1);
+            this.endDate   = this.createLocalDate(this._util.tableYear + 1, 12, 31);
           }
           this.selectedqrt = 'Q' + this.selectedQuarter;
         }
