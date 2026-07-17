@@ -9,6 +9,9 @@ using System.Text;
 using System.Web;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
+using System;
+using System.Diagnostics;
+using System.Web.Http.Filters;
 
 namespace GAVS.AllocationSystem.WebApi
 {
@@ -111,7 +114,7 @@ namespace GAVS.AllocationSystem.WebApi
                     }
                 }
                 log.METHOD = request.Method.ToString();
-                  if (request.Content != null)
+                if (request.Content != null)
                     log.CONTENT = request.Content.ReadAsStringAsync().Result;
                 logger.logWithEmailid(log);
             }
@@ -209,6 +212,35 @@ namespace GAVS.AllocationSystem.WebApi
                 log.METHOD = context.Request.Method.ToString();
                 logger.logWithEmailid(log);
             }
+        }
+
+        private string GetLineNumber(Exception exception)
+        {
+            var result = string.Empty;
+
+            if (exception != null)
+            {
+                try
+                {
+                    // 2. Capture the stack trace including source file information
+                    StackTrace stackTrace = new StackTrace(exception, true);
+
+                    // 3. Get the first frame (where the exception originated)
+                    StackFrame frame = stackTrace.GetFrame(0);
+
+                    if (frame != null)
+                    {
+                        // 4. Extract the exact line number
+                        int lineNumber = frame.GetFileLineNumber();
+                        string fileName = frame.GetFileName();
+
+                        result = $"{fileName}:{lineNumber}";
+                    }
+                }
+                catch { }
+                 
+            }
+            return result;
         }
     }
 }

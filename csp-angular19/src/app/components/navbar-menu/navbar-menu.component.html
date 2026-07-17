@@ -19,9 +19,6 @@
   <i class="fa fa-star" style="color: green;"></i>&nbsp;&nbsp;&nbsp;SQA
   Management
 </button>
-<button mat-menu-item [routerLink]="['/sqamanagement/dashboard-itops']" routerLinkActive="active-menu-item" *ngIf="_access.IsAllowed(42, 1, '', '')">
-  <mat-icon style="color: #007AFF;">dashboard</mat-icon>&nbsp;IT Operations Dashboard
-</button>
 <button mat-menu-item [routerLink]="['/csatconfiguration']" routerLinkActive="active-menu-item" *ngIf="_access.IsAllowed(826, 1, '', '')">
   <mat-icon>track_changes</mat-icon>CSAT Configuration
 </button>

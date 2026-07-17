@@ -1046,7 +1046,27 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return result;
         }
 
-       
+        public string GetCcQPMailsByBusinessUnit(PROJECT project)
+        {
+            if (project == null || string.IsNullOrWhiteSpace(project.BUSINESS_UNIT))
+                return string.Empty;
+
+            switch (project.BUSINESS_UNIT.ToLower())
+            {
+                case "health care":
+                    return GetDBConfig("CSS_REQUEST_CC_QP_LIST_HEALTHCARE", "-1");
+                case "tech":
+                    return GetDBConfig("CSS_REQUEST_CC_QP_LIST_TECH", "-1");
+                case "india & gcc":
+                    return GetDBConfig("CSS_REQUEST_CC_QP_LIST_INDIA_GCC", "-1");
+                case "cit":
+                    return GetDBConfig("CSS_REQUEST_CC_QP_LIST_CIT", "-1");
+                case "sead":
+                    return GetDBConfig("CSS_REQUEST_CC_QP_LIST_SEAD", "-1");
+                default:
+                    return string.Empty;
+            }
+        }
 
     }
 

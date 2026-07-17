@@ -19,6 +19,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         internal const string GRC_Team_Email = "GRC_Team@" + DOMAIN;
         internal const string DEVX_MAIL = "devx@" + DOMAIN;
         internal const string DEVX_LEAD = "devxleads@" + DOMAIN;
-        internal const string AUDITOR_LEAD = "shalot.leely@" + DOMAIN;
+        internal const string AUDITOR_LEAD = "vinayak.jadhav@neurealm.com@" + DOMAIN;
     }
 }

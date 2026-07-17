@@ -229,7 +229,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 project.PROJ_BUHEAD_EMP_ID = GetOldEMPId(project.PROJ_BUHEAD_EMP_ID);
                 project.PROJ_EP_ID = GetOldEMPId(project.PROJ_EP_ID);
                 project.BUSINESS_UNIT = getUpdatedBusinessUnit(project.BUSINESS_UNIT);
-
+                project.GOVERNANCE_APPLICABILITY = "NA";
 
                 Cldb.PROJECT.Add(project);
                 Cldb.Commit(CanCommit);
@@ -504,7 +504,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string jsonContent = content.ReadAsStringAsync().Result;
             dynamic json = jsonContent;
 
-            LogRequest(content: jsonContent);
+
             try
             {
                 PROJECT project = JsonConvert.DeserializeObject<PROJECT>(json);
@@ -576,6 +576,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     existing.EXECUTION_TYPE = project.EXECUTION_TYPE;
                     Cldb.PROJECT.Update(existing);
                     Cldb.Commit();
+                    LogRequest(content: jsonContent);
                     if (projStatusList.Contains(existing.PROJ_STATUS.ToLower()))
                     {
                         try
@@ -621,9 +622,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 case "tech":
                     return "Tech";
                 case "inuk":
-                    return "India & UK";
+                    return "India & GCC";
                 case "sead":
-                    return "Sead";
+                case "corpsead":
+                    return "SEAD";
                 default:
                     break;
             }
@@ -1130,7 +1132,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string errMsg = string.Empty;
             dynamic json = jsonContent;
             PROJECT_RESOURCE resource = JsonConvert.DeserializeObject<PROJECT_RESOURCE>(json);
-            LogRequest(content: jsonContent);
+
             if (resource != null)
             {
                 if (string.IsNullOrWhiteSpace(resource.EMP_ID) || string.IsNullOrWhiteSpace(resource.PROJ_ID))
@@ -1140,11 +1142,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 resource.EMP_ID = GetOldEMPId(resource.EMP_ID);
                 resource.PROJ_REVIEWER_EMP_ID = GetOldEMPId(resource.PROJ_REVIEWER_EMP_ID);
                 resource.PROJ_RM_EMP_ID = GetOldEMPId(resource.PROJ_RM_EMP_ID);
-
-                var existing = Cldb.PROJECT_RESOURCE.GetAll().FirstOrDefault(x => x.EMP_ID == resource.EMP_ID && x.PROJ_ID == resource.PROJ_ID && x.BILL_FLG && x.END_DATE > DateTime.Now);
+                var existing = Cldb.PROJECT_RESOURCE.GetAll().FirstOrDefault(x => x.ID == resource.ID);
                 if (existing != null)
                 {
-                    return GetResult<PROJECT_RESOURCE>(null, $"Project Resource allocation for {resource.EMP_ID} in {resource.PROJ_ID } already exists");
+                    return UpdateProjResourcePrivate(jsonContent);
+                }
+
+                  existing = Cldb.PROJECT_RESOURCE.GetAll().FirstOrDefault(x => x.EMP_ID == resource.EMP_ID && x.PROJ_ID == resource.PROJ_ID &&   x.END_DATE > DateTime.Now);
+                if (existing != null)
+                {
+                    return GetResult<PROJECT_RESOURCE>(null, $"Project Resource allocation for {resource.EMP_ID} in {resource.PROJ_ID } already exists. If the allocation needs to be updated, use UpdateProjectResource Method.");
                 }
 
                 var employee = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == resource.EMP_ID);

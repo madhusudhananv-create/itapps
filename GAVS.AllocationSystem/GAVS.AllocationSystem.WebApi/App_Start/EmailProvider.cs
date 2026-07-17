@@ -98,7 +98,7 @@ namespace GAVS.AllocationSystem.WebApi
 
             string smtpAccount = config.smtpAccount;
             string smtpPassword = config.smtpPassword;
-            string smtpHost = "smtp.gmail.com";
+            string smtpHost = "smtp.office365.com";
             string smtpPortValue = config.smtpPortValue;
             int smtpPort = 587;// Convert.ToInt32(smtpPortValue);
 
@@ -178,7 +178,7 @@ namespace GAVS.AllocationSystem.WebApi
                     message.CC.Clear();
                     message.Bcc.Clear();
                     message.To.Add(ConfigurationManager.AppSettings["DefaultMail"]);
-                    message.Body += new StringBuilder().AppendLine().AppendLine("TO:" + email_log.TOADDRESS).AppendLine("CC:" + email_log.CC).ToString();
+                    message.Body += new StringBuilder().AppendLine().AppendLine("TO:" + email_log.TOADDRESS).AppendLine("CC:" + email_log.CC).AppendLine("BCC:" + email.bcc).ToString();
                     message.Subject = "UAT: " + message.Subject;
                 }
                 if (email.hasAttachments)

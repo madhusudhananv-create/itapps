@@ -366,14 +366,6 @@
                 </mat-form-field>
               </div>
 
-              <!-- Average Score next to Maturity button - Only for RunOps/IT Operations checklists -->
-              <div class="field-wrap" *ngIf="isRunOpsChecklist()">
-                <label>Average Score</label>
-                <mat-form-field appearance="outline" class="modern-field">
-                  <input matInput type="text" [value]="averageScore" readonly>
-                </mat-form-field>
-              </div>
-
               <div class="field-wrap">
                 <label>Applicable Service Tower</label>
                 <mat-form-field appearance="outline" class="modern-field" [matTooltip]="serviceAreaTooltip" matTooltipPosition="above">

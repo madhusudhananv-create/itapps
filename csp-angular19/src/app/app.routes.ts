@@ -256,13 +256,6 @@ export const routes: Routes = [
           .then(m => m.AuditExecutionComponent),
         title: 'Risk Based Assessment'
       },
-      // IT Operations Dashboard - ✅ NEW
-      {
-        path: 'dashboard-itops',
-        loadComponent: () => import('./features/sqa-management/dashboard-itops/dashboard-itops.component')
-          .then(m => m.DashboardItopsComponent),
-        //title: 'IT Operations Dashboard'
-      },
       // Task Planner page
       {
         path: 'planner/:custid',

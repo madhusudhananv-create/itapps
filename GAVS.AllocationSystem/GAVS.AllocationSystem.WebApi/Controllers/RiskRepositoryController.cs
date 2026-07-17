@@ -116,7 +116,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             actionItem.UPDATED_DATE = DateTime.Now;
             actionItem.ISACTIVE = true;
             actionItem.RISK_ID = overview.ID;
-            AddActionItemInternal(actionItem);
+            AddActionItemInternal(actionItem, project);
             if (results.ISO_STD_ID != null)
             {
                 foreach (var item in results.ISO_STD_ID)

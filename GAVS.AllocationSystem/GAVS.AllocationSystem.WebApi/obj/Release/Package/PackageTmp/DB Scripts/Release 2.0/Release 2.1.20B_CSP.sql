@@ -421,21 +421,30 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE
-getAllIdeas
-AS
-BEGIN
-	select I.ID, I.DESCRIPTION, I.IDENTIFIED_DATE,IIP.ESTIMATED_TARGET_DATE
-	,(select top 1 frst_nm from bas..EMP_INFO where EMP_ID = I.IDENTIFIED_BY) [Responsible]
-	,(select top 1 type from IDEA_IMPROVEMENT_TYPE IMP where ID = I.IDEA_IMPROVEMENT_TYPE_ID) [Type]
-	,(select top 1 title from IDEA_STATUS where ID = I.IDEA_STATUS_ID) [Status]
-	,(select top 1 PROJ_NM from BAS..PROJECT where PROJ_ID = I.PROJECT_ID) [Project_Name]
-	 from IDEA I
-	 join IDEA_IMPLEMENTATION_PLAN IIP on I.ID = IIP.IDEA_ID 
-	 where I.ISACTIVE = 1
-	order by I.IDENTIFIED_DATE desc
-
-END
+CREATE PROCEDURE      
+ getAllIdeas  
+  
+ @customerid varchar(max),
+ @startdate date,      
+ @enddate date  
+  
+ AS      
+ BEGIN      
+     
+    select I.ID, I.DESCRIPTION, I.IDENTIFIED_DATE,max(IIP.ESTIMATED_TARGET_DATE) [TARGET_DATE]  
+   ,(select top 1 frst_nm from bas..EMP_INFO where EMP_ID = I.IDENTIFIED_BY)[Identified_By]  
+  --,(select top 1 frst_nm from bas..EMP_INFO where EMP_ID = IIP.RESPONSIBLE) [Responsible]      
+ ,(select top 1 type from IDEA_IMPROVEMENT_TYPE IMP where ID = I.IDEA_IMPROVEMENT_TYPE_ID) [Type],      
+  I.IDEA_STATUS_ID [IDEA_STATUS_ID],(select top 1 title from IDEA_STATUS where ID = I.IDEA_STATUS_ID) [Status]      
+ ,(select top 1 PROJ_NM from BAS..PROJECT where PROJ_ID = I.PROJECT_ID) [Project_Name]      
+  from IDEA I      
+  left join IDEA_IMPLEMENTATION_PLAN IIP on I.ID = IIP.IDEA_ID AND IIP.ISACTIVE = 1      
+  join BAS..Project P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))        
+  where I.ISACTIVE = 1 and I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate
+  group  by I.ID,I.IDENTIFIED_DATE,I.DESCRIPTION,I.IDENTIFIED_BY,I.IDEA_IMPROVEMENT_TYPE_ID,I.IDEA_STATUS_ID,I.PROJECT_ID  
+ order by I.IDENTIFIED_DATE desc  
+      
+ END  
 
 GO
 
@@ -456,23 +465,6 @@ begin
 	* from IDEA_STAGE_STATUS stg
 	WHERE STG.IDEA_ID = @ideaId
 	ORDER BY STG.ID
-end
-
-GO
-
-IF EXISTS(Select 1 from sys.procedures where name ='getIdeabyId' AND type='P')
-BEGIN
-       DROP PROCEDURE [dbo].[getIdeabyId]
-END
-GO
-
-create procedure
-getIdeabyId
-@id int
-as
-begin
-select  (select top 1 cust_id from bas..PROJECT where PROJ_ID = I.PROJECT_ID) [cust_id],
-* from IDEA I where ID = @id and ISACTIVE = 1
 end
 
 GO
@@ -529,27 +521,7 @@ IF not exists(select 1 from [CSP].[dbo].[APP_CONTROLS] where RESOURCE_ID=53) BEG
 
 	GO
 
-	IF EXISTS(Select 1 from sys.procedures where name ='getAllIdeas' AND type='P')
-	BEGIN
-		   DROP PROCEDURE [dbo].[getAllIdeas]
-	END
-	GO
-
-	CREATE PROCEDURE  
-	getAllIdeas  
-	AS  
-	BEGIN  
-	 select I.ID, I.DESCRIPTION, I.IDENTIFIED_DATE , I.IDEA_STATUS_ID
-	 ,(select top 1 frst_nm from bas..EMP_INFO where EMP_ID = I.IDENTIFIED_BY) [Responsible]  
-	 ,(select top 1 type from IDEA_IMPROVEMENT_TYPE IMP where ID = I.IDEA_IMPROVEMENT_TYPE_ID) [Type]  
-	 ,(select top 1 PROJ_NM from BAS..PROJECT where PROJ_ID = I.PROJECT_ID) [Project_Name]  
-	  from IDEA I  
-	  where ISACTIVE = 1  
-	 order by I.IDENTIFIED_DATE desc  
-  
-	END  
-
-	GO
+	
 
 	IF EXISTS(Select 1 from sys.procedures where name ='usp_qualitative_benefits1' AND type='P')
 	BEGIN
@@ -559,29 +531,32 @@ IF not exists(select 1 from [CSP].[dbo].[APP_CONTROLS] where RESOURCE_ID=53) BEG
 
 CREATE PROCEDURE    
 usp_qualitative_benefits1    
-@beneficiaryid varchar(100),  
-@customerid varchar(max),    
-@benefitpillarid varchar(200),    
-@startdate date,    
-@enddate date    
-    
-as    
-begin    
-    
-select  BDS.Benefit_title, IBS.TYPE_ID  from BENEFIT_DETAILS_QUALITATIVE BDS      
+@beneficiaryid varchar(100),    
+@customerid varchar(max),  
+@projectid varchar(max),  
+@identifiedby varchar(max),
+@benefitpillarid varchar(200),      
+@startdate date,      
+@enddate date      
       
-join IDEA_BENEFIT_SUMMARY IBS on IBS.ID = BDS.BENEFIT_SUMMARY_ID AND IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))    
-    
-and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))      
+as      
+begin      
       
-join Idea I on IBS.IDEA_ID = I.ID      
-    
-join BAS..PROJECT P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))    
+select  BDS.Benefit_title, IBS.TYPE_ID  from BENEFIT_DETAILS_QUALITATIVE BDS        
+        
+join IDEA_BENEFIT_SUMMARY IBS on IBS.ID = BDS.BENEFIT_SUMMARY_ID AND IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))      
       
-where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1    
-    
+and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))        
+        
+join Idea I on IBS.IDEA_ID = I.ID  and (@identifiedby = '' or I.IDENTIFIED_BY in (SELECT * FROM [DBO].[FN_SPLITSTRING](@identifiedby,',')))      
+      
+join BAS..PROJECT P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))   
+  
+AND (@projectid = '' or P.PROJ_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@projectid,',')))  
+        
+where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1  and isnull(BDS.Benefit_title,'') <> ''    
+      
 end
-
 GO
 
 IF EXISTS(Select 1 from sys.procedures where name ='getIdeaStatusCountByImprovementType' AND type='P')
@@ -592,41 +567,45 @@ GO
 
 CREATE PROCEDURE
 	getIdeaStatusCountByImprovementType
-	@customerid varchar(max),  
-	@startdate date,  
-	@enddate date,
-	@beneficiaryid varchar(100),
-	@benefitpillarid varchar(200)
-as
-begin
-	SELECT 'Value' [Type], TYPE.TYPE [Improvement Type],
-	SUM(CASE WHEN I.IDEA_STATUS_ID = 2 THEN 1 ELSE 0 END) AS 'Submitted',
-	SUM(CASE WHEN I.IDEA_STATUS_ID = 4 THEN 1 ELSE 0 END) AS 'Execution',
-	SUM(CASE WHEN I.IDEA_STATUS_ID = 3 THEN 1 ELSE 0 END) AS 'Implemented'
-		FROM IDEA_IMPROVEMENT_TYPE TYPE
-	INNER JOIN IDEA I ON I.IDEA_IMPROVEMENT_TYPE_ID = TYPE.ID  AND IDEA_IMPROVEMENT_TYPE_ID IN (6, 7, 8)
-	INNER JOIN BAS..PROJECT P ON I.PROJECT_ID = P.PROJ_ID AND P.END_DATE >= GETDATE()
-	AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))  
-	WHERE I.IDENTIFIED_DATE >= @startdate AND I.IDENTIFIED_DATE <= @enddate AND I.ISACTIVE = 1
-	AND EXISTS (SELECT 1 FROM IDEA_BENEFIT_SUMMARY WHERE IDEA_ID = I.ID AND ISACTIVE = 1 AND TYPE_ID = 1
-	AND BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))
-	AND BENEFICIARY_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))) 
-	GROUP BY TYPE.TYPE
-	UNION ALL
-	SELECT 'Value_Add' [Type], TYPE.TYPE [Improvement Type],
-	SUM(CASE WHEN I.IDEA_STATUS_ID = 2 THEN 1 ELSE 0 END) AS 'Submitted',
-	SUM(CASE WHEN I.IDEA_STATUS_ID = 4 THEN 1 ELSE 0 END) AS 'Execution',
-	SUM(CASE WHEN I.IDEA_STATUS_ID = 3 THEN 1 ELSE 0 END) AS 'Implemented'
-		FROM IDEA_IMPROVEMENT_TYPE TYPE
-	INNER JOIN IDEA I ON I.IDEA_IMPROVEMENT_TYPE_ID = TYPE.ID  AND IDEA_IMPROVEMENT_TYPE_ID IN (6, 7, 8)
-	INNER JOIN BAS..PROJECT P ON I.PROJECT_ID = P.PROJ_ID AND P.END_DATE >= GETDATE()
-	AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))  
-	WHERE I.IDENTIFIED_DATE >= @startdate AND I.IDENTIFIED_DATE <= @enddate AND I.ISACTIVE = 1
-	AND EXISTS (SELECT 1 FROM IDEA_BENEFIT_SUMMARY WHERE IDEA_ID = I.ID AND ISACTIVE = 1 AND TYPE_ID = 2
-	AND BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))
-	AND BENEFICIARY_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))) 
-	GROUP BY TYPE.TYPE
-end
+ @customerid varchar(max),
+ @projectid varchar(max),
+ @identifiedby varchar(max),
+ @startdate date,    
+ @enddate date,  
+ @beneficiaryid varchar(100),  
+ @benefitpillarid varchar(200)  
+ as  
+ begin  
+  SELECT 'Value' [Type], TYPE.TYPE [Improvement Type],  
+  SUM(CASE WHEN I.IDEA_STATUS_ID = 2 THEN 1 ELSE 0 END) AS 'Submitted',  
+  SUM(CASE WHEN I.IDEA_STATUS_ID = 4 THEN 1 ELSE 0 END) AS 'Execution',  
+  SUM(CASE WHEN I.IDEA_STATUS_ID = 3 THEN 1 ELSE 0 END) AS 'Implemented'  
+   FROM IDEA_IMPROVEMENT_TYPE TYPE  
+  INNER JOIN IDEA I ON I.IDEA_IMPROVEMENT_TYPE_ID = TYPE.ID  AND IDEA_IMPROVEMENT_TYPE_ID IN (6, 7, 8) and (@identifiedby = '' or I.IDENTIFIED_BY in (SELECT * FROM [DBO].[FN_SPLITSTRING](@identifiedby,',')))       
+  INNER JOIN BAS..PROJECT P ON I.PROJECT_ID = P.PROJ_ID AND P.END_DATE >= GETDATE()  
+  AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))    
+  AND (@projectid = '' or P.PROJ_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@projectid,',')))
+  WHERE I.IDENTIFIED_DATE >= @startdate AND I.IDENTIFIED_DATE <= @enddate AND I.ISACTIVE = 1  
+  AND EXISTS (SELECT 1 FROM IDEA_BENEFIT_SUMMARY WHERE IDEA_ID = I.ID AND ISACTIVE = 1 AND TYPE_ID = 1  
+  AND BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))  
+  AND BENEFICIARY_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,',')))   
+  GROUP BY TYPE.TYPE  
+  UNION ALL  
+  SELECT 'Value_Add' [Type], TYPE.TYPE [Improvement Type],  
+  SUM(CASE WHEN I.IDEA_STATUS_ID = 2 THEN 1 ELSE 0 END) AS 'Submitted',  
+  SUM(CASE WHEN I.IDEA_STATUS_ID = 4 THEN 1 ELSE 0 END) AS 'Execution',  
+  SUM(CASE WHEN I.IDEA_STATUS_ID = 3 THEN 1 ELSE 0 END) AS 'Implemented'  
+   FROM IDEA_IMPROVEMENT_TYPE TYPE  
+  INNER JOIN IDEA I ON I.IDEA_IMPROVEMENT_TYPE_ID = TYPE.ID  AND IDEA_IMPROVEMENT_TYPE_ID IN (6, 7, 8)  and (@identifiedby = '' or I.IDENTIFIED_BY in (SELECT * FROM [DBO].[FN_SPLITSTRING](@identifiedby,',')))      
+  INNER JOIN BAS..PROJECT P ON I.PROJECT_ID = P.PROJ_ID AND P.END_DATE >= GETDATE()  
+  AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))    
+  AND (@projectid = '' or P.PROJ_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@projectid,',')))
+  WHERE I.IDENTIFIED_DATE >= @startdate AND I.IDENTIFIED_DATE <= @enddate AND I.ISACTIVE = 1  
+  AND EXISTS (SELECT 1 FROM IDEA_BENEFIT_SUMMARY WHERE IDEA_ID = I.ID AND ISACTIVE = 1 AND TYPE_ID = 2  
+  AND BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))  
+  AND BENEFICIARY_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,',')))   
+  GROUP BY TYPE.TYPE  
+ end
 
 GO
 
@@ -640,39 +619,43 @@ IF EXISTS(Select 1 from sys.procedures where name ='usp_quantitative_benefits' A
 
 CREATE PROCEDURE usp_quantitative_benefits
 
-@beneficiaryid varchar(100),
-@customerid varchar(max),
-@benefitPillarid varchar(200),
-@startdate date,
-@enddate date,
-@uom int 
+@beneficiaryid varchar(100),  
+@customerid varchar(max),  
+@projectid varchar(max),
+@identifiedby varchar(max),
+@benefitPillarid varchar(200),  
+@startdate date,  
+@enddate date,  
+@uom int   
+  
+AS  
+BEGIN  
+  
 
-AS
-BEGIN
 
+select CASE WHEN IBS.BENEFIT_PILLAR_ID = 1 then 'People'   
+WHEN IBS.BENEFIT_PILLAR_ID = 2 then 'Process'  
+WHEN IBS.BENEFIT_PILLAR_ID = 3 then 'Technology'  
+WHEN IBS.BENEFIT_PILLAR_ID = 4 then 'Facilities'  
+WHEN IBS.BENEFIT_PILLAR_ID = 5 then 'Assets'  
+  
+END Benefit_Pillar,isnull(SUM(BDQ.NET_BENEFITS_YEAR),0) Net_Benefits,IBS.TYPE_ID from BENEFIT_DETAILS_QUANTITATIVE BDQ  
+  
+join IDEA_BENEFIT_SUMMARY IBS on BDQ.BENEFIT_SUMMARY_ID = IBS.ID and IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))  
+  
+and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))  
+  
+join Idea I on IBS.IDEA_ID = I.ID  and (@identifiedby = '' or I.IDENTIFIED_BY in (SELECT * FROM [DBO].[FN_SPLITSTRING](@identifiedby,',')))      
+  
+join UOM U on BDQ.UOM_ID = U.ID and BDQ.UOM_ID = @uom  
+  
+join BAS..Project P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))  
 
-
-select CASE WHEN IBS.BENEFIT_PILLAR_ID = 1 then 'People' 
-WHEN IBS.BENEFIT_PILLAR_ID = 2 then 'Process'
-WHEN IBS.BENEFIT_PILLAR_ID = 3 then 'Technology'
-WHEN IBS.BENEFIT_PILLAR_ID = 4 then 'Facilities'
-WHEN IBS.BENEFIT_PILLAR_ID = 5 then 'Assets'
-
-END Benefit_Pillar,SUM(BDQ.NET_BENEFITS_YEAR) Net_Benefits,IBS.TYPE_ID from BENEFIT_DETAILS_QUANTITATIVE BDQ
-
-join IDEA_BENEFIT_SUMMARY IBS on BDQ.BENEFIT_SUMMARY_ID = IBS.ID and IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))
-
-and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))
-
-join Idea I on IBS.IDEA_ID = I.ID
-
-join UOM U on BDQ.UOM_ID = U.ID and BDQ.UOM_ID = @uom
-
-join BAS..Project P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))
-
-where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1
-
-group by IBS.BENEFIT_PILLAR_ID,IBS.TYPE_ID
+AND (@projectid = '' or P.PROJ_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@projectid,',')))
+  
+where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1  and  isnull(BDQ.NET_BENEFITS_YEAR,0) <> 0
+  
+group by IBS.BENEFIT_PILLAR_ID,IBS.TYPE_ID  
 
 
 END
@@ -692,7 +675,7 @@ CREATE PROCEDURE usp_GetAllUOM
   
   BEGIN
   
-  select ID,Title + '(' + DATATYPE + ')' AS TITLE from UOM where FLAG = 1
+  select ID,Title + '(' + DATATYPE + ')' AS TITLE from UOM where ISACTIVE = 1
   
   END
 
@@ -706,44 +689,51 @@ IF EXISTS(Select 1 from sys.procedures where name ='usp_quantitative_benefit_mon
 
 CREATE PROCEDURE usp_quantitative_benefit_monthly
 
-@beneficiaryid varchar(100),
-@customerid varchar(max),
-@benefitpillarid varchar(200),
-@startdate date,
-@enddate date,
-@uom int
+@beneficiaryid varchar(100), 
+@customerid varchar(max), 
+@projectid varchar(max),
+@identifiedby varchar(max),
+@benefitpillarid varchar(200), 
+@startdate date, 
+@enddate date, 
+@uom int     
 
-AS
-
-BEGIN
-
-select CASE WHEN IBS.BENEFIT_PILLAR_ID = 1 then 'People' 
-WHEN IBS.BENEFIT_PILLAR_ID = 2 then 'Process'
-WHEN IBS.BENEFIT_PILLAR_ID = 3 then 'Technology'
-WHEN IBS.BENEFIT_PILLAR_ID = 4 then 'Facilities'
-WHEN IBS.BENEFIT_PILLAR_ID = 5 then 'Assets'
-END Benefit_Pillar, FORMAT(I.IDENTIFIED_DATE,'MMM') Months,SUM(BDQ.NET_BENEFITS_YEAR) Net_Benefits,IBS.TYPE_ID
-
-from BENEFIT_DETAILS_QUANTITATIVE BDQ
-
-join IDEA_BENEFIT_SUMMARY IBS on BDQ.BENEFIT_SUMMARY_ID = IBS.ID and IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))
-
-and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,',')) 
-
-join Idea I on IBS.IDEA_ID = I.ID
-
-join UOM U on BDQ.UOM_ID = U.ID and BDQ.UOM_ID = @uom
-
-join BAS..Project P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))
-
-where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1
-
-group by IBS.BENEFIT_PILLAR_ID,FORMAT(I.IDENTIFIED_DATE,'MMM'),MONTH(I.IDENTIFIED_DATE),IBS.TYPE_ID
-
-order by MONTH(I.IDENTIFIED_DATE)
+AS    
+    
+BEGIN    
 
 
-END
+
+    
+select CASE WHEN IBS.BENEFIT_PILLAR_ID = 1 then 'People'     
+WHEN IBS.BENEFIT_PILLAR_ID = 2 then 'Process'    
+WHEN IBS.BENEFIT_PILLAR_ID = 3 then 'Technology'    
+WHEN IBS.BENEFIT_PILLAR_ID = 4 then 'Facilities'    
+WHEN IBS.BENEFIT_PILLAR_ID = 5 then 'Assets'    
+END Benefit_Pillar, FORMAT(I.IDENTIFIED_DATE,'MMM') Months,isnull(SUM(BDQ.NET_BENEFITS_YEAR),0) Net_Benefits,IBS.TYPE_ID    
+    
+from BENEFIT_DETAILS_QUANTITATIVE BDQ    
+    
+join IDEA_BENEFIT_SUMMARY IBS on BDQ.BENEFIT_SUMMARY_ID = IBS.ID and IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))    
+    
+and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))     
+    
+join Idea I on IBS.IDEA_ID = I.ID    and (@identifiedby = '' or I.IDENTIFIED_BY in (SELECT * FROM [DBO].[FN_SPLITSTRING](@identifiedby,','))) 
+    
+join UOM U on BDQ.UOM_ID = U.ID and BDQ.UOM_ID = @uom    
+    
+join BAS..Project P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))   
+
+AND (@projectid = '' or P.PROJ_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@projectid,',')))
+    
+where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1    and  isnull(BDQ.NET_BENEFITS_YEAR,0) <> 0
+    
+group by IBS.BENEFIT_PILLAR_ID,FORMAT(I.IDENTIFIED_DATE,'MMM'),MONTH(I.IDENTIFIED_DATE),IBS.TYPE_ID    
+    
+order by MONTH(I.IDENTIFIED_DATE)    
+    
+    
+END 
 
 GO
 
@@ -756,38 +746,41 @@ GO
 	    
 CREATE PROCEDURE usp_qualitative_benefits_detail
 
-@beneficiaryid varchar(100),      
-@customerid varchar(max),        
-@benefitpillarid varchar(200),        
-@startdate date,        
-@enddate date        
-      	 
-AS        
+@beneficiaryid varchar(100),        
+@customerid varchar(max),          
+@projectid varchar(max),
+@identifiedby varchar(max),
+@benefitpillarid varchar(200),          
+@startdate date,          
+@enddate date          
+       
+    
+  AS          
+    
+    BEGIN  
+        
+select CONVERT(varchar(12),I.IDENTIFIED_DATE,100) AS [Identified_Date],BDS.Benefit_title AS [Benefit_Title],E.FRST_NM AS [Responsible],PSA.TITLE AS [Area],I.DESCRIPTION AS [Idea], IBS.TYPE_ID  from BENEFIT_DETAILS_QUALITATIVE BDS          
+          
+join IDEA_BENEFIT_SUMMARY IBS on IBS.ID = BDS.BENEFIT_SUMMARY_ID AND IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))        
+        
+and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))          
+          
+join Idea I on IBS.IDEA_ID = I.ID  and (@identifiedby = '' or I.IDENTIFIED_BY in (SELECT * FROM [DBO].[FN_SPLITSTRING](@identifiedby,',')))              
   
-BEGIN
-   
-      
-      
-select CONVERT(varchar(12),I.IDENTIFIED_DATE,100) AS [Identified_Date],BDS.Benefit_title AS [Benefit_Title],E.FRST_NM AS [Responsible],PSA.TITLE AS [Area],I.DESCRIPTION AS [Idea], IBS.TYPE_ID  from BENEFIT_DETAILS_QUALITATIVE BDS        
+join IDEA_IMPLEMENTATION_PLAN IIP on I.ID = IIP.IDEA_ID  
+  
+join PROCESS_SERVICE_AREA_NEW PSA on I.SERVICE_AREA_ID = PSA.ID  
+  
+join BAS..EMP_INFO E on IIP.RESPONSIBLE = E.EMP_ID  
         
-join IDEA_BENEFIT_SUMMARY IBS on IBS.ID = BDS.BENEFIT_SUMMARY_ID AND IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))      
-      
-and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))        
+join BAS..PROJECT P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))
+
+AND (@projectid = '' or P.PROJ_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@projectid,',')))
+          
+where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1 and isnull(BDS.Benefit_title,'') <> ''       
         
-join Idea I on IBS.IDEA_ID = I.ID        
-
-join IDEA_IMPLEMENTATION_PLAN IIP on I.ID = IIP.IDEA_ID
-
-join PROCESS_SERVICE_AREA_NEW PSA on I.SERVICE_AREA_ID = PSA.ID
-
-join BAS..EMP_INFO E on IIP.RESPONSIBLE = E.EMP_ID
-      
-join BAS..PROJECT P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))      
-        
-where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1      
-      
-
-END
+  
+  END
 
 GO
 
@@ -799,49 +792,225 @@ GO
 
 CREATE PROCEDURE usp_quantitative_benefits_detail  
   
-@beneficiaryid varchar(100),        
-@customerid varchar(max),          
-@benefitpillarid varchar(200),          
-@startdate date,          
-@enddate date,
-@uom int   
-          
-as          
-begin             
+@beneficiaryid varchar(100),          
+@customerid varchar(max),      
+@projectid varchar(max),      
+@identifiedby varchar(max),
+@benefitpillarid varchar(200),            
+@startdate date,            
+@enddate date,  
+@uom int     
+            
+as            
+begin               
         
-select CASE WHEN IBS.BENEFIT_PILLAR_ID = 1 then 'People'   
-WHEN IBS.BENEFIT_PILLAR_ID = 2 then 'Process'  
-WHEN IBS.BENEFIT_PILLAR_ID = 3 then 'Technology'  
-WHEN IBS.BENEFIT_PILLAR_ID = 4 then 'Facilities'  
-WHEN IBS.BENEFIT_PILLAR_ID = 5 then 'Assets'  
+		
+select CASE WHEN IBS.BENEFIT_PILLAR_ID = 1 then 'People'     
+WHEN IBS.BENEFIT_PILLAR_ID = 2 then 'Process'    
+WHEN IBS.BENEFIT_PILLAR_ID = 3 then 'Technology'    
+WHEN IBS.BENEFIT_PILLAR_ID = 4 then 'Facilities'    
+WHEN IBS.BENEFIT_PILLAR_ID = 5 then 'Assets'    
+    
+END Benefit_Pillar, CONVERT(varchar(12),I.IDENTIFIED_DATE,100) AS [Identified_Date],SUM(BDQ.NET_BENEFITS_YEAR) AS [Net_Benefits],E.FRST_NM AS [Responsible],PSA.TITLE AS [Area],I.DESCRIPTION AS [Idea],   
   
-END Benefit_Pillar, CONVERT(varchar(12),I.IDENTIFIED_DATE,100) AS [Identified_Date],SUM(BDQ.NET_BENEFITS_YEAR) AS [Net_Benefits],E.FRST_NM AS [Responsible],PSA.TITLE AS [Area],I.DESCRIPTION AS [Idea], 
-
-IBS.TYPE_ID  from BENEFIT_DETAILS_QUANTITATIVE BDQ
+IBS.TYPE_ID  from BENEFIT_DETAILS_QUANTITATIVE BDQ  
+            
+join IDEA_BENEFIT_SUMMARY IBS on IBS.ID = BDQ.BENEFIT_SUMMARY_ID AND IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))          
           
-join IDEA_BENEFIT_SUMMARY IBS on IBS.ID = BDQ.BENEFIT_SUMMARY_ID AND IBS.BENEFIT_PILLAR_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@benefitpillarid,','))        
-        
-and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))          
+and IBS.BENEFICIARY_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@beneficiaryid,','))            
+            
+join Idea I on IBS.IDEA_ID = I.ID   and (@identifiedby = '' or I.IDENTIFIED_BY in (SELECT * FROM [DBO].[FN_SPLITSTRING](@identifiedby,',')))          
+  
+join UOM U on BDQ.UOM_ID = U.ID and BDQ.UOM_ID = @uom    
+    
+join BAS..PROJECT P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))          
+
+AND (@projectid = '' or P.PROJ_ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@projectid,',')))
+  
+join IDEA_IMPLEMENTATION_PLAN IIP on I.ID = IIP.IDEA_ID    
+    
+join PROCESS_SERVICE_AREA_NEW PSA on I.SERVICE_AREA_ID = PSA.ID    
+    
+join BAS..EMP_INFO E on IIP.RESPONSIBLE = E.EMP_ID    
           
-join Idea I on IBS.IDEA_ID = I.ID          
-
-join UOM U on BDQ.UOM_ID = U.ID and BDQ.UOM_ID = @uom  
   
-join BAS..PROJECT P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))        
-
-join IDEA_IMPLEMENTATION_PLAN IIP on I.ID = IIP.IDEA_ID  
+            
+where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1          
   
-join PROCESS_SERVICE_AREA_NEW PSA on I.SERVICE_AREA_ID = PSA.ID  
-  
-join BAS..EMP_INFO E on IIP.RESPONSIBLE = E.EMP_ID  
-        
-
+group by IBS.BENEFIT_PILLAR_ID,CONVERT(varchar(12),I.IDENTIFIED_DATE,100),E.FRST_NM,PSA.TITLE,I.DESCRIPTION,IBS.TYPE_ID  
           
-where I.IDENTIFIED_DATE >= @startdate and I.IDENTIFIED_DATE <= @enddate and I.isactive = 1        
-
-group by IBS.BENEFIT_PILLAR_ID,CONVERT(varchar(12),I.IDENTIFIED_DATE,100),E.FRST_NM,PSA.TITLE,I.DESCRIPTION,IBS.TYPE_ID
-        
-  
+    
   END
 
   GO
+
+  IF EXISTS(Select 1 from sys.procedures where name ='usp_updateIdeaStatus' AND type='P')
+BEGIN
+ DROP PROCEDURE [dbo].usp_updateIdeaStatus
+END
+GO
+
+CREATE PROCEDURE usp_updateIdeaStatus
+
+@Id varchar(max),
+@Status varchar(50)
+as
+
+Begin
+
+IF(@Status = 'Approve')
+
+Begin
+
+Update IDEA SET IDEA_STATUS_ID = 4 where ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@Id,','))
+
+
+End
+
+ELSE IF(@Status = 'Reject')
+
+Begin
+
+Update IDEA SET IDEA_STATUS_ID = 5 where ID in (SELECT * FROM [DBO].[FN_SPLITSTRING](@Id,','))
+
+
+
+End
+  select I.ID, I.DESCRIPTION, I.IDENTIFIED_DATE,IIP.ESTIMATED_TARGET_DATE [TARGET_DATE]  
+   ,(select top 1 frst_nm from bas..EMP_INFO where EMP_ID = I.IDENTIFIED_BY)[Identified_By],  
+  (select top 1 frst_nm from bas..EMP_INFO where EMP_ID = IIP.RESPONSIBLE) [Responsible]      
+ ,(select top 1 type from IDEA_IMPROVEMENT_TYPE IMP where ID = I.IDEA_IMPROVEMENT_TYPE_ID) [Type],      
+  I.IDEA_STATUS_ID [IDEA_STATUS_ID],(select top 1 title from IDEA_STATUS where ID = I.IDEA_STATUS_ID) [Status]      
+ ,(select top 1 PROJ_NM from BAS..PROJECT where PROJ_ID = I.PROJECT_ID) [Project_Name]      
+  from IDEA I      
+  left join IDEA_IMPLEMENTATION_PLAN IIP on I.ID = IIP.IDEA_ID       
+  --join BAS..Project P ON P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))        
+  where I.ISACTIVE = 1      
+ order by I.IDENTIFIED_DATE desc        
+ 
+
+End
+
+GO
+
+  IF EXISTS(Select 1 from sys.procedures where name ='getIdentifiedBy' AND type='P')
+BEGIN
+ DROP PROCEDURE [dbo].getIdentifiedBy
+END
+GO
+
+
+ CREATE PROCEDURE getIdentifiedBy
+ @customerid varchar(max)
+ 
+ AS
+ BEGIN
+
+ 
+  Select E.FRST_NM, E.EMP_ID, C.CUST_NM, C.CUST_ID from IDEA I  
+ join BAS..PROJECT P on P.PROJ_ID = I.PROJECT_ID AND P.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@customerid,','))    
+ join BAS..customer C on P.CUST_ID = C.CUST_ID  
+ join BAS..emp_info E on I.IDENTIFIED_BY = e.emp_id  
+ group by E.FRST_NM, E.EMP_ID, C.CUST_NM, C.CUST_ID
+ order by E.FRST_NM 
+ 
+ END
+ GO
+
+   IF EXISTS(Select 1 from sys.procedures where name ='getImplementedIdea' AND type='P')
+BEGIN
+ DROP PROCEDURE [dbo].getImplementedIdea
+END
+GO
+
+CREATE PROC getImplementedIdea  
+  
+@Id int  
+  
+AS  
+  
+BEGIN  
+  
+select  P.CUST_ID,P.PROJ_ID AS PROJECT_ID,I.IDENTIFIED_DATE,PSA.TITLE AS PROCESS_AREA,I.DESCRIPTION,IIP.ACTUAL_START_DATE,IIP.ESTIMATED_START_DATE,IDS.TITLE AS STATUS,E.FRST_NM AS RESPONSIBLE    
+from IDEA I  
+inner join PROCESS_SERVICE_AREA_NEW PSA on PSA.ID = I.SERVICE_AREA_ID  
+inner join BAS..PROJECT P on P.PROJ_ID = I.PROJECT_ID  
+inner join IDEA_IMPLEMENTATION_PLAN IIP on IIP.IDEA_ID = I.ID  
+inner join BAS..EMP_INFO E on IIP.RESPONSIBLE = E.EMP_ID  
+inner join IDEA_STATUS IDS on IDS.ID = I.IDEA_STATUS_ID  
+  
+where I.ID = @Id and I.ISACTIVE = 1  
+  
+  
+END
+
+GO
+ 
+ 
+    
+IF not exists(select 1 from [CSP].[dbo].[APP_CONTROLS] where RESOURCE_ID=54) BEGIN
+INSERT INTO [CSP].[dbo].[APP_CONTROLS] ([RESOURCE_ID],[RESOURCE_TYPE],[RESOURCE_NAME],[COMMENTS],[CREATED_BY],[CREATED_DATE],[UPDATED_BY],[UPDATED_DATE],[ISACTIVE])
+VALUES(54, 'Control', 'Dashboard > CSM Dashboard', null, 103245, GETDATE(), 103245, GETDATE(),1)
+END
+GO
+
+ select * from APP_CONTROLS order by RESOURCE_ID desc
+ IF not exists(select 1 from [CSP].[dbo].[APP_CONTROL_FEATURES] where RESOURCE_ID=54 and FEATURE='VIEW')
+BEGIN
+insert into csp.dbo.APP_CONTROL_FEATURES values (54,'VIEW', null, 103245, GETDATE(), 103245, GETDATE(),1)
+END
+GO
+
+ IF not exists(select 1 from [CSP].[dbo].[APP_ACCESS_CONTROLS] where RESOURCE_ID=54)
+BEGIN
+insert into csp.dbo.APP_ACCESS_CONTROLS values
+(54, 1, 1, '',null,'', 1,1,1,1,1,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 2, '',null,'', 1,1,1,1,1,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 3, '',null,'', 1,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 4, '',null,'', 0,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 5, '',null,'', 0,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 6, '',null,'', 0,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 7, '',null,'', 1,1,1,1,1,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 8, '',null,'', 0,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 9, '',null,'', 0,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 10, '',null,'', 0,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1),
+(54, 1, 11, '',null,'', 0,0,0,0,0,null , 103245, GETDATE(), 103245, GETDATE(),1)
+END
+GO
+
+IF not exists(SELECT 1 FROM FILTER_PREFERENCE where [TABLE_NAME] ='IDEA' and [FIELD_NAME] = 'description')
+BEGIN
+INSERT INTO FILTER_PREFERENCE VALUES('IDEA','description','Description','string',1,0,0,null,104211,GETDATE(),104211,GETDATE(),1)
+END
+GO
+
+IF not exists(SELECT 1 FROM FILTER_PREFERENCE where [TABLE_NAME] ='IDEA' and [FIELD_NAME] = 'type')
+BEGIN
+
+INSERT INTO FILTER_PREFERENCE VALUES('IDEA','type','Type','number',1,0,0,null,104211,GETDATE(),104211,GETDATE(),1)
+END
+GO
+
+IF not exists(SELECT 1 FROM FILTER_PREFERENCE where [TABLE_NAME] ='IDEA' and [FIELD_NAME] = 'projecT_NAME')
+BEGIN
+INSERT INTO FILTER_PREFERENCE VALUES('IDEA','projecT_NAME','Project','number',1,0,0,null,104211,GETDATE(),104211,GETDATE(),1)
+END
+GO
+
+IF not exists(SELECT 1 FROM FILTER_PREFERENCE where [TABLE_NAME] ='IDEA' and [FIELD_NAME] = 'identified_By')
+BEGIN
+INSERT INTO FILTER_PREFERENCE VALUES('IDEA','identified_By','Identified By','number',1,0,0,null,104211,GETDATE(),104211,GETDATE(),1)
+END
+GO
+
+IF not exists(SELECT 1 FROM FILTER_PREFERENCE where [TABLE_NAME] ='IDEA' and [FIELD_NAME] = 'responsible')
+BEGIN
+INSERT INTO FILTER_PREFERENCE VALUES('IDEA','responsible','Responsible','string',1,0,0,null,104211,GETDATE(),104211,GETDATE(),1)
+END
+GO
+
+IF not exists(SELECT 1 FROM FILTER_PREFERENCE where [TABLE_NAME] ='IDEA' and [FIELD_NAME] = 'status')
+BEGIN
+INSERT INTO FILTER_PREFERENCE VALUES('IDEA','status','Status','number',1,0,0,null,104211,GETDATE(),104211,GETDATE(),1)
+END
+GO

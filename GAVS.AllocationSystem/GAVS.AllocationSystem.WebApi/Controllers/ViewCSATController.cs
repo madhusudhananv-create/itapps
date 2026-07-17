@@ -18,6 +18,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetAllCustomerUser(string customerId, string projId, bool isMonthly, DateTime startDate, DateTime endDate)
         {
+            LogRequest(content: JsonConvert.SerializeObject(new { customerId, projId, isMonthly, startDate, endDate }), prefix: "GetAllCustomerUser");
             List<CUSTOMER_USERS> usersData = new List<CUSTOMER_USERS>();
             List<int> ids = new List<int>();
             var userIds = new List<CSS_BATCH_CUSTOMERS>();
@@ -130,9 +131,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             guid = CSPdb.CSS_SURVEY_ITERATION.GetAll().FirstOrDefault(t => t.BATCH_CUSTOMERS_ID == custbatchId && t.ISACTIVE)?.SURVEY_ID;
                             if (!string.IsNullOrWhiteSpace(batchCustomer.SPOC))
                                 spoc = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.DOR == null && x.EMAIL_ID == batchCustomer.SPOC)?.EMP_ID;
-                            var projectDetails = Cldb.PROJECT.GetAll().Where(x => x.PROJ_ID == batchCustomer.PROJ_ID).Select(x => new { x.QUALITY_SPOC, x.PROJ_DM_EMP_ID }).FirstOrDefault();
-                            dex = projectDetails?.QUALITY_SPOC;
-                            dp = projectDetails?.PROJ_DM_EMP_ID;
+                            var projectDetails = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == batchCustomer.PROJ_ID);
+                            if (projectDetails != null)
+                            {
+                                dex = projectDetails.QUALITY_SPOC;
+                                dp = projectDetails.PROJ_DM_EMP_ID;
+                            }
                         }
 
 

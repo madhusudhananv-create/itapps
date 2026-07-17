@@ -19,5 +19,7 @@ namespace GAVS.AllocationSystem.Model.CSP
         public decimal TOTAL_KPIS { get; set; }
         public decimal MET_KPIS { get; set; }
         public decimal TOTAL_KPI_AREA { get; set; }
+
+        public string BUSINESS_UNIT { get; set; }
     }
 }
