@@ -93,6 +93,31 @@
             display: none;
             font-family: "Calibri",sans-serif;
         }
+        table {
+            font-family: "Calibri",sans-serif;
+            border-collapse: collapse;
+            border: 1px solid black;
+            width: 100%
+        }
+
+        td {
+            padding: 4px 2px;
+            font-size: 12px;
+            font-weight: 300;
+            border: 1px solid black;
+            font-family: "Calibri",sans-serif;
+        }
+
+        th {
+            padding: 4px;
+            background-color: #CCCCFF;
+            color: black;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: "Calibri",sans-serif;
+            border: 1px solid black;
+            height: 10px;
+        }
     </style>
 
 </head>
@@ -105,22 +130,28 @@
         Please find below the status of event <b>{{AUDIT_TITLE}}</b> Planned on {{AUDIT_PLANNED_DATE}} and Completed on {{AUDIT_COMPLETED_DATE}}
         <br />
         <br />
-        Stage : <b>{{STAGE}} </b>
+        <b> Stage: </b>{{STAGE}}
         <br />
-        Status : <b>{{STATUS}}</b>
+        <b> Status: </b>{{STATUS}}
         <br />
-        SLA Target Timeline :- <b>{{TARGET}}</b> 
+        <b>SLA Target Timeline: </b>{{TARGET}}
         <br />
-        <!--<span>
-        Score : <b>{{SCORE}}</b>
-    </span>
-    <br />
-    <span>
-        Score in Percentage : <b>{{SCORE_PERCENTAGE}} %</b>
-    </span>
-    <br />-->
-        Action Required : <b>{{ACTION}}</b>
-        <br />
+        <b>Action Required: </b>{{ACTION}}
+        <br /> <br />
+        <b>List of Findings:</b> <br />
+        <table style="width:100%">
+            <tr>
+                <th style="width:5%; text-align:left">S.No</th>
+                <th style="width:15%; text-align:left">Finding Type</th>
+                <th style="width:30%; text-align:left">Finding Description</th>
+                <th style="width:10%; text-align:left">Status</th>
+                <th style="width:25%; text-align:left">Remarks</th>
+                <th style="width:15%; text-align:left">Action</th>
+            </tr>
+            {{FINDINGS_TABLE}}
+        </table>
+
+
         {{NEXT_ACTION}}
         <br />
         {{FINDING_DETAILS_MSG}}
@@ -137,11 +168,11 @@
             </b><br>
             <b>
                 <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>
-                    GS Lab | GAVS Technologies Pvt Ltd.
+                    Neurealm (Formerly GS Lab | GAVS Technologies)
                 </span>
             </b><br>
             <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;
-  background:white'>#11 |Old Mahabalipuram Road | Sholinganallur</span><br>
+  background:white'>7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur</span><br>
             <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;
   background:white'>Chennai - 600 119</span><br>
             <b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>Phone:</span></b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>
@@ -150,13 +181,13 @@
             </span><br>
             <b><span style='font-size:10.0pt'>Email: </span></b><b>
                 <span style='font-size:9.0pt;font-family:"Arial",sans-serif'>
-                    <a href="mailto:Quality@gavstech.com">Quality@gavstech.com</a>
+                    <a href="mailto:csmsupport@neurealm.com">csmsupport@neurealm.com</a>
                 </span>
             </b><br>
             <b><span style='font-size:10.0pt'>Web: </span></b><b>
                 <span style='font-size:
   9.0pt;font-family:"Arial",sans-serif'>
-                    <a href="http://www.gavstech.com">www.gavstech.com</a>
+                    <a href="http://www.neurealm.com">www.neurealm.com</a>
                 </span>
             </b>
         </p>

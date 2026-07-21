@@ -1097,7 +1097,7 @@
           <ScalarProperty Name="OWNER" ColumnName="OWNER" />
           <ScalarProperty Name="DESCRIPTION" ColumnName="DESCRIPTION" />
           <ScalarProperty Name="NOTES" ColumnName="NOTES" />
-          <ScalarProperty Name="CUST_IT" ColumnName="CUST_IT" />
+          <ScalarProperty Name="CUST_ID" ColumnName="CUST_ID" />
           <ScalarProperty Name="PROJ_ID" ColumnName="PROJ_ID" />
           <ScalarProperty Name="SUB_PROJ_ID" ColumnName="SUB_PROJ_ID" />
           <ScalarProperty Name="OPENED_DATE" ColumnName="OPENED_DATE" />
@@ -1154,7 +1154,7 @@
         <MappingFragment StoreEntitySet="PROJMGT_SUBPROJECT">
           <ScalarProperty Name="ID" ColumnName="ID" />
           <ScalarProperty Name="NAME" ColumnName="NAME" />
-          <ScalarProperty Name="CUST_IT" ColumnName="CUST_IT" />
+          <ScalarProperty Name="CUST_ID" ColumnName="CUST_ID" />
           <ScalarProperty Name="PROJ_ID" ColumnName="PROJ_ID" />
           <ScalarProperty Name="CREATED_BY" ColumnName="CREATED_BY" />
           <ScalarProperty Name="CREATED_DATE" ColumnName="CREATED_DATE" />
@@ -1180,7 +1180,7 @@
           <ScalarProperty Name="OWNER" ColumnName="OWNER" />
           <ScalarProperty Name="DESCRIPTION" ColumnName="DESCRIPTION" />
           <ScalarProperty Name="NOTES" ColumnName="NOTES" />
-          <ScalarProperty Name="CUST_IT" ColumnName="CUST_IT" />
+          <ScalarProperty Name="CUST_ID" ColumnName="CUST_ID" />
           <ScalarProperty Name="PROJ_ID" ColumnName="PROJ_ID" />
           <ScalarProperty Name="SUB_PROJ_ID" ColumnName="SUB_PROJ_ID" />
           <ScalarProperty Name="CREATED_BY" ColumnName="CREATED_BY" />
@@ -1204,7 +1204,7 @@
       <EntityTypeMapping TypeName="RasModel.PROJMGT_TEAM">
         <MappingFragment StoreEntitySet="PROJMGT_TEAM">
           <ScalarProperty Name="ID" ColumnName="ID" />
-          <ScalarProperty Name="CUST_IT" ColumnName="CUST_IT" />
+          <ScalarProperty Name="CUST_ID" ColumnName="CUST_ID" />
           <ScalarProperty Name="PROJ_ID" ColumnName="PROJ_ID" />
           <ScalarProperty Name="SUB_PROJ_ID" ColumnName="SUB_PROJ_ID" />
           <ScalarProperty Name="EMP_ID" ColumnName="EMP_ID" />

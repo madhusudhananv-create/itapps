@@ -1,0 +1,109 @@
+﻿<html>
+<head>
+    <meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+    <meta name=Generator content="Microsoft Word 15 (filtered)">
+    <style>
+        /* Font Definitions */
+        @font-face {
+            font-family: "Cambria Math";
+            panose-1: 2 4 5 3 5 4 6 3 2 4;
+        }
+
+        @font-face {
+            font-family: Calibri;
+            panose-1: 2 15 5 2 2 2 4 3 2 4;
+        }
+        /* Base styles */
+        body {
+            font-family: "Calibri", sans-serif;
+            font-size: 14pt;
+            margin: 0;
+            padding: 20px;
+        }
+        /* Simple table styling */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #CCCCFF;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .customer-info {
+            font-size: 11pt;
+        }
+
+        .header {
+            background-color: #d0e2f3;
+            text-align: center;
+            font-size: larger;
+        }
+        /* Styling for changed values table */
+        .changed-values-table {
+            color: red !important;
+            font-weight: bold !important;
+        }
+    </style>
+</head>
+<body>
+    <p>Hi Team,</p>
+    <span style='font-size: larger;'><strong>{{CUSTOMER_NAME}}</strong> contact has been added / updated in CSM PLATFORM - Customer Details Screen</span>
+    <br />
+    <p class="customer-info">
+        Customer Contact : <b>{{CUSTOMER_USER_NAME}}</b><br />
+        Account : <b>{{CUSTOMER_NAME}}</b><br />
+        Email : <b>{{CUSTOMER_EMAIL_ID}}</b><br />
+        Updated Date : <b>{{UPDATED_DATE}}</b><br />
+        Updated By : <b>{{UPDATED_BY}}</b><br />
+        <br />
+        <table>
+            <tr><td class="header"><b>Updated Values</b></td><td class="header"><b>Old Values</b></td></tr>
+            <tr>
+                <td>
+                    <table border='0' style='width: 100%;'>
+                        <tr>
+                            <th>Project</th>
+                            <th>CSAT Frequency</th>
+                            <th>Reporting Manager</th>
+                            <th>CSAT Survey</th>
+                        </tr>
+                        {{NEW_VALUE_TABLE}}
+                    </table>
+                </td>
+                <td>
+                    <table border='0' style='width: 100%;' {{IS_CHANGED_ATTRIBUTE}}>
+                        <tr>
+                            <th>Project</th>
+                            <th>CSAT Frequency</th>
+                            <th>Reporting Manager</th>
+                            <th>CSAT Survey</th>
+                        </tr>
+                        {{OLD_VALUE_TABLE}}
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <br />
+    </p>
+    <p>Regards,</p>
+    <p>
+        <b>Quality Assurance</b><br />
+        <b>Neurealm (Formerly GS Lab | GAVS Technologies)</b><br />
+        7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur<br />
+        Chennai - 600 119<br />
+        <b>Phone:</b> +91 44 66694287<br />
+        <b>Web:</b> <a href="http://www.neurealm.com">www.neurealm.com</a>
+    </p>
+</body>
+</html>

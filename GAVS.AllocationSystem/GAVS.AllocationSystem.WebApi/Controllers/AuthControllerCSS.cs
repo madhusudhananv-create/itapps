@@ -298,7 +298,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string tomail = acsat ? csmMails : pmMails;
 
             string ccMail = string.Join(",", cclist.Distinct().ToList());
-            ccMail = helper.ConcatEmails(new List<string>() { ccMail, csmMails, qualitySpoc });
+            string buCcMailQP = helper.GetCcQPMailsByBusinessUnit(project);
+            ccMail = helper.ConcatEmails(new List<string>() { ccMail, csmMails, qualitySpoc, buCcMailQP });
             string bcc = string.Empty;
             bcc = helper.GetDBConfig("CSS_BCC", "-1");
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -1291,9 +1292,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (string.IsNullOrWhiteSpace(bu)) return result;
 
 
-            switch (bu.ToUpper())
+            switch (bu.ToUpper().Trim())
             {
                 case "INDIA & UK":
+                case "INDIA & GCC":
                     result = helper.GetDBConfig("CSS_CC_LIST_INDIAUK", null);
                     break;
                 case "NEW GROWTH":
@@ -1307,6 +1309,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     result = helper.GetDBConfig("CSS_CC_LIST_HEALTHCARE", null);
                     break;
                 case "SEAD":
+                case "CORPSEAD":
                     result = helper.GetDBConfig("CSS_CC_LIST_SEAD", null);
                     break;
 

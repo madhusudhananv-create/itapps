@@ -193,6 +193,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string requestorEmpId = accessRequestEty.REQUESTED_BY;
             var accessTypeValue = AccessTypeValue(accessRequestEty.ACCESS_LEVEL);
             accessRequestEty.APPROVER_ID = accessRequestData.APPROVER_ID;
+            accessRequestEty.STATUS = accessRequestData.STATUS;
             accessRequestEty.APPROVAL_DATE = accessRequestData.APPROVAL_DATE;
             accessRequestEty.REJECT_REASON = accessRequestData.REJECT_REASON;
             string logoutUrl = string.Empty;

@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Schema Namespace="RasModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
   <ComplexType Name="fn_GetPivot_Result">
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="BASE_CNTRY_ID" Type="Int16" Nullable="false" />
-    <Property Name="MANAGER_EMP_ID" Type="Int32" Nullable="false" />
-    <Property Name="REVIEWER_EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="MANAGER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
+    <Property Name="REVIEWER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="EMPL_TYPE" Type="String" MaxLength="30" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="FRST_NM" Type="String" MaxLength="100" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="MIDDLE_NM" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
@@ -68,7 +68,7 @@
     <Property Name="CREATED_DATE" Type="DateTime" Precision="3" />
     <Property Name="UPDATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="UPDATED_DATE" Type="DateTime" Precision="3" />
-    <Property Name="BU_HEAD_EMP_ID" Type="Int32" />
+    <Property Name="BU_HEAD_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
     <NavigationProperty Name="EMP_INFO" Relationship="Self.BU_HEAD_EMP_ID_FK" FromRole="BU_INFO" ToRole="EMP_INFO" />
     <NavigationProperty Name="DEPT_INFO" Relationship="Self.DEPT_INFO_BU_ID_FK" FromRole="BU_INFO" ToRole="DEPT_INFO" />
     <NavigationProperty Name="PROJECTs" Relationship="Self.FK__PROJECT__BU_ID__6339AFF7" FromRole="BU_INFO" ToRole="PROJECT" />
@@ -123,7 +123,7 @@
     </Key>
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="TITLE_ID" Type="Int32" Nullable="false" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="EMP_NAME" Type="String" MaxLength="100" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="DATE_OF_COMPLETION" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="ATTEMPTED" Type="Int32" Nullable="false" />
@@ -143,7 +143,7 @@
     </Key>
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="TITLE_ID" Type="Int32" Nullable="false" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="EMP_NAME" Type="String" MaxLength="100" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="DATE_OF_COMPLETION" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="ATTEMPTED" Type="Int32" Nullable="false" />
@@ -200,7 +200,7 @@
       <PropertyRef Name="CUST_ADDR_ID" />
     </Key>
     <Property Name="CUST_ADDR_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-    <Property Name="CUST_ID" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="CNTRY_ID" Type="Int16" Nullable="false" />
     <Property Name="HG_FLG" Type="Boolean" Nullable="false" />
     <Property Name="ADDR_1" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
@@ -223,7 +223,7 @@
     <Key>
       <PropertyRef Name="CUST_ID" />
     </Key>
-    <Property Name="CUST_ID" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="CUST_NM" Type="String" MaxLength="100" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="INDUSTRY_TYPE" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
     <Property Name="URL" Type="String" MaxLength="30" FixedLength="false" Unicode="false" />
@@ -290,7 +290,7 @@
     <Property Name="CREATED_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="UPDATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="UPDATED_DATE" Type="DateTime" Nullable="false" Precision="3" />
-    <Property Name="DEPT_HEAD_EMP_ID" Type="Int32" />
+    <Property Name="DEPT_HEAD_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
     <Property Name="BU_ID" Type="Int16" />
     <NavigationProperty Name="BU_INFO" Relationship="Self.DEPT_INFO_BU_ID_FK" FromRole="DEPT_INFO" ToRole="BU_INFO" />
     <NavigationProperty Name="PROJECTs" Relationship="Self.DEPT_ID_FK" FromRole="DEPT_INFO" ToRole="PROJECT" />
@@ -331,10 +331,10 @@
     <Key>
       <PropertyRef Name="EMP_ID" />
     </Key>
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="BASE_CNTRY_ID" Type="Int16" Nullable="false" />
-    <Property Name="MANAGER_EMP_ID" Type="Int32" Nullable="false" />
-    <Property Name="REVIEWER_EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="MANAGER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
+    <Property Name="REVIEWER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="EMPL_TYPE" Type="String" MaxLength="30" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="FRST_NM" Type="String" MaxLength="100" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="MIDDLE_NM" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
@@ -396,7 +396,7 @@
       <PropertyRef Name="PASSPORT_ID" />
     </Key>
     <Property Name="PASSPORT_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="COUNTRY_ID" Type="Int16" Nullable="false" />
     <Property Name="PASSPORT_NO" Type="String" MaxLength="20" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="VALID_FROM" Type="DateTime" Nullable="false" Precision="0" />
@@ -438,7 +438,7 @@
       <PropertyRef Name="EMP_SS_MATRIX_ID" />
     </Key>
     <Property Name="EMP_SS_MATRIX_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="SKILLSET_ID" Type="Int16" Nullable="false" />
     <Property Name="SKILL_CATEGORY" Type="String" MaxLength="600" FixedLength="false" Unicode="false" />
     <Property Name="EMP_SELF_RATING" Type="Int16" Nullable="false" />
@@ -531,10 +531,10 @@
     </Key>
     <Property Name="PROJ_RESRC_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" Nullable="false" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="EMP_PROJ_ROLE_MAP_ID" Type="Int32" />
-    <Property Name="PROJ_RM_EMP_ID" Type="Int32" />
-    <Property Name="PROJ_REVIEWER_EMP_ID" Type="Int32" />
+    <Property Name="PROJ_RM_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="PROJ_REVIEWER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
     <Property Name="START_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="END_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="BILL_FLG" Type="Boolean" Nullable="false" />
@@ -580,7 +580,7 @@
     </Key>
     <Property Name="PROJ_RESRC_TIME_ENTRY_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" Nullable="false" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="DATE_ID" Type="Int32" Nullable="false" />
     <Property Name="PROJ_TASK_ID" Type="Int16" />
     <Property Name="TASK_DESC" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
@@ -632,7 +632,7 @@
     </Key>
     <Property Name="PROJ_REV_APPRL_WF_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="PROJ_REV_ID" Type="Int32" Nullable="false" />
-    <Property Name="APPR_EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="APPR_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="APPRL_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="APPR_REMARK" Type="String" MaxLength="150" FixedLength="false" Unicode="false" />
     <Property Name="APPRL_STS" Type="String" MaxLength="10" FixedLength="false" Unicode="false" Nullable="false" />
@@ -747,20 +747,20 @@
     <Property Name="END_DATE" Type="DateTime" Precision="3" />
     <Property Name="BILL_TYPE" Type="Boolean" Nullable="false" />
     <Property Name="PROC_TYPE" Type="String" MaxLength="25" FixedLength="false" Unicode="false" Nullable="false" />
-    <Property Name="LVL_1_APPR_EMP_ID" Type="Int32" />
-    <Property Name="LVL_2_APPR_EMP_ID" Type="Int32" />
-    <Property Name="LVL_3_APPR_EMP_ID" Type="Int32" />
-    <Property Name="LVL_4_APPR_EMP_ID" Type="Int32" />
-    <Property Name="PROJ_BUHEAD_EMP_ID" Type="Int32" />
-    <Property Name="PROJ_DM_EMP_ID" Type="Int32" />
-    <Property Name="PROJ_PM_EMP_ID" Type="Int32" />
-    <Property Name="PROJ_AM_EMP_ID" Type="Int32" />
+    <Property Name="LVL_1_APPR_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="LVL_2_APPR_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="LVL_3_APPR_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="LVL_4_APPR_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="PROJ_BUHEAD_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="PROJ_DM_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="PROJ_PM_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="PROJ_AM_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
     <Property Name="CREATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="CREATED_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="UPDATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="UPDATED_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="DEPT_ID" Type="Int16" />
-    <Property Name="CUST_ID" Type="Int32" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" />
     <Property Name="BU_ID" Type="Int16" />
     <Property Name="PARENT_PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
     <Property Name="PROJ_ALIAS_NM" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
@@ -797,7 +797,7 @@
     </Key>
     <Property Name="PROJECT_EXPENSE_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="SOW_ID" Type="Int32" Nullable="false" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="EXPENSE_ITEM_ID" Type="Int32" Nullable="false" />
     <Property Name="AMOUNT" Type="Decimal" Precision="18" Scale="2" Nullable="false" />
     <Property Name="COMMENT" Type="String" MaxLength="1000" FixedLength="false" Unicode="false" />
@@ -829,8 +829,8 @@
     </Key>
     <Property Name="TEMP_PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="PROJ_NAME" Type="String" MaxLength="200" FixedLength="false" Unicode="false" Nullable="false" />
-    <Property Name="PROJ_DM_EMP_ID" Type="Int32" />
-    <Property Name="PROJ_BU_EMP_ID" Type="Int32" />
+    <Property Name="PROJ_DM_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="PROJ_BU_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
     <Property Name="PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
     <Property Name="CREATED_BY" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
     <Property Name="CREATED_DATE" Type="DateTime" Precision="3" />
@@ -912,8 +912,8 @@
     <Property Name="RESRC_RQST_ID" Type="Int16" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="CNTRY_ID" Type="Int16" Nullable="false" />
-    <Property Name="RESRC_MANAGER_EMP_ID" Type="Int32" Nullable="false" />
-    <Property Name="RESRC_REVIEWER_EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="RESRC_MANAGER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
+    <Property Name="RESRC_REVIEWER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="RESRC_TYPE" Type="String" MaxLength="15" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="RESRC_LEVEL" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="BILL_FLG" Type="Boolean" Nullable="false" />
@@ -928,7 +928,7 @@
     <Property Name="OTHER_SKILL" Type="String" MaxLength="4000" FixedLength="false" Unicode="false" />
     <Property Name="COMMENTS" Type="String" MaxLength="4000" FixedLength="false" Unicode="false" />
     <Property Name="REQUEST_TYPE" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
-    <Property Name="REPLACEMENT_EMP_ID" Type="Int32" />
+    <Property Name="REPLACEMENT_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="EXPERIENCE" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
     <Property Name="SFDC_STATUS" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="SOW_STATUS" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
@@ -959,8 +959,8 @@
     <Property Name="RR_WF_ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="RESRC_RQST_ID" Type="Int16" />
     <Property Name="RR_WF_STAGE_ID" Type="Int16" />
-    <Property Name="STAGE_OWNER_EMP_ID" Type="Int32" />
-    <Property Name="TAG_EMP_ID" Type="Int32" />
+    <Property Name="STAGE_OWNER_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="TAG_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
     <Property Name="STAGE_START_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="STAGE_END_DATE" Type="DateTime" Precision="3" />
     <Property Name="STAGE_CURR_INDC" Type="String" MaxLength="1" FixedLength="true" Unicode="false" Nullable="false" />
@@ -1099,7 +1099,7 @@
     <Property Name="CREATED_DATE" Type="DateTime" Precision="3" />
     <Property Name="UPDATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="UPDATED_DATE" Type="DateTime" Precision="3" />
-    <Property Name="CUSTOMER_ID" Type="Int32" />
+    <Property Name="CUSTOMER_ID" Type="String" MaxLength="50" />
     <Property Name="PROJECT_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
     <NavigationProperty Name="CUSTOMER" Relationship="Self.USER_RIGHTS_CUSTOMER_ID_FK" FromRole="USER_RIGHTS" ToRole="CUSTOMER" />
     <NavigationProperty Name="PROJECT" Relationship="Self.USER_RIGHTS_PROJECT_ID_FK" FromRole="USER_RIGHTS" ToRole="PROJECT" />
@@ -1176,7 +1176,7 @@
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="KEY" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
     <Property Name="VALUE" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-    <Property Name="CUST_ID" Type="Int32" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" />
     <Property Name="PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
     <Property Name="COMMENTS" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
     <Property Name="ISENCRYPT" Type="Boolean" Nullable="false" />
@@ -1203,8 +1203,8 @@
     <Property Name="DEPT_ID" Type="Int16" Nullable="false" />
     <Property Name="DEPT_CD" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
     <Property Name="Department_Name" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-    <Property Name="PROJ_BUHEAD_EMP_ID" Type="Int32" />
-    <Property Name="DEPT_HEAD_EMP_ID" Type="Int32" />
+    <Property Name="PROJ_BUHEAD_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
+    <Property Name="DEPT_HEAD_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="true" />
   </EntityType>
   <EntityType Name="EMP_NEWS">
     <Key>
@@ -1235,7 +1235,7 @@
     </Key>
     <Property Name="PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="DATE_ID" Type="Int32" Nullable="false" />
-    <Property Name="UPLD_EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="UPLD_EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="UPLD_DATE" Type="DateTime" Precision="3" />
     <Property Name="TIMESHEET_NAME" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="TIMESHEET_DATA" Type="Binary" MaxLength="Max" FixedLength="false" />
@@ -1252,7 +1252,7 @@
       <PropertyRef Name="ID" />
     </Key>
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-    <Property Name="CUSTOMER_ID" Type="Int32" />
+    <Property Name="CUSTOMER_ID" Type="String" MaxLength="50" />
     <Property Name="PROJECT_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
     <Property Name="COURSE_ID" Type="Int32" />
     <Property Name="ISACTIVE" Type="Boolean" />
@@ -1264,7 +1264,7 @@
       <PropertyRef Name="PREFERENCE_TITLE" />
       <PropertyRef Name="ALLOW" />
     </Key>
-    <Property Name="CUST_ID" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="PREFERENCE_TITLE" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="ALLOW" Type="Boolean" Nullable="false" />
@@ -1276,7 +1276,7 @@
       <PropertyRef Name="USERSTORY_ID" />
       <PropertyRef Name="SUBMITTED_BY" />
       <PropertyRef Name="DEFECT_STATE" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="OPENED_DATE" />
       <PropertyRef Name="CREATED_BY" />
@@ -1307,7 +1307,7 @@
     <Property Name="OWNER" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
     <Property Name="DESCRIPTION" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
     <Property Name="NOTES" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
-    <Property Name="CUST_IT" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="Int32" />
     <Property Name="OPENED_DATE" Type="DateTime" Nullable="false" Precision="3" />
@@ -1337,7 +1337,7 @@
     <Property Name="ITERATION_ID" Type="Int32" Nullable="false" />
     <Property Name="NAME" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
     <Property Name="RELEASE_ID" Type="Int32" Nullable="false" />
-    <Property Name="CUST_ID" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="Int32" />
     <Property Name="START_DATE" Type="DateTime" Nullable="false" Precision="3" />
@@ -1368,7 +1368,7 @@
     <Property Name="NAME" Type="String" MaxLength="100" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="START_DATE" Type="DateTime" Nullable="false" Precision="3" />
     <Property Name="END_DATE" Type="DateTime" Nullable="false" Precision="3" />
-    <Property Name="CUST_ID" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="Int32" />
     <Property Name="CREATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
@@ -1381,7 +1381,7 @@
     <Key>
       <PropertyRef Name="ID" />
       <PropertyRef Name="NAME" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="CREATED_BY" />
       <PropertyRef Name="CREATED_DATE" />
@@ -1391,7 +1391,7 @@
     </Key>
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
     <Property Name="NAME" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
-    <Property Name="CUST_IT" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="CREATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="CREATED_DATE" Type="DateTime" Nullable="false" Precision="3" />
@@ -1406,7 +1406,7 @@
       <PropertyRef Name="USERSTORY_ID" />
       <PropertyRef Name="STATE" />
       <PropertyRef Name="OWNER" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="CREATED_BY" />
       <PropertyRef Name="CREATED_DATE" />
@@ -1427,7 +1427,7 @@
     <Property Name="OWNER" Type="String" MaxLength="255" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="DESCRIPTION" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
     <Property Name="NOTES" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
-    <Property Name="CUST_IT" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="Int32" />
     <Property Name="CREATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
@@ -1449,7 +1449,7 @@
   <EntityType Name="PROJMGT_TEAM">
     <Key>
       <PropertyRef Name="ID" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="OWNER" />
       <PropertyRef Name="ADMIN" />
@@ -1460,10 +1460,10 @@
       <PropertyRef Name="ISACTIVE" />
     </Key>
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-    <Property Name="CUST_IT" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="Int32" />
-    <Property Name="EMP_ID" Type="Int32" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
     <Property Name="OWNER" Type="Boolean" Nullable="false" />
     <Property Name="ADMIN" Type="Boolean" Nullable="false" />
     <Property Name="CREATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
@@ -1499,7 +1499,7 @@
     <Property Name="OWNER" Type="String" MaxLength="255" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="DESCRIPTION" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
     <Property Name="NOTES" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
-    <Property Name="CUST_ID" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="Int32" />
     <Property Name="CREATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
@@ -1582,7 +1582,7 @@
       <PropertyRef Name="ISACTIVE" />
     </Key>
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-    <Property Name="CUST_ID" Type="Int32" Nullable="false" />
+    <Property Name="CUST_ID" Type="String" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
     <Property Name="TIME_ENTRY_PERIOD" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
     <Property Name="CREATED_BY" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
@@ -1609,7 +1609,7 @@
       <PropertyRef Name="EMP_ID" />
     </Key>
     <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-    <Property Name="EMP_ID" Type="Int32" Nullable="false" />
+    <Property Name="EMP_ID" Type="String" MaxLength="50" FixedLength="false" Nullable="false" />
   </EntityType>
   <Association Name="PROJECT_ID__BILLING_CYCLE_FK">
     <End Role="PROJECT" Type="Self.PROJECT" Multiplicity="0..1" />
@@ -3246,13 +3246,13 @@
       <Parameter Name="ProjectId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="csp_get_ProjectResourceByEmpid" ReturnType="Collection(RasModel.csp_get_ProjectResourceByEmpid_Result)">
-      <Parameter Name="EmpId" Mode="In" Type="Int32" />
+      <Parameter Name="EmpId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="csp_get_ProjectResourceByProjId" ReturnType="Collection(RasModel.csp_get_ProjectResourceByProjId_Result)">
       <Parameter Name="ProjId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="csp_get_ResourceDetailsByManager" ReturnType="Collection(RasModel.csp_get_ResourceDetailsByManager_Result)">
-      <Parameter Name="EmpId" Mode="In" Type="Int32" />
+      <Parameter Name="EmpId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="ELMAH_GetErrorsXml" ReturnType="Collection(String)">
       <Parameter Name="Application" Mode="In" Type="String" />
@@ -3278,7 +3278,7 @@
     </FunctionImport>
     <FunctionImport Name="get_CSMList" ReturnType="Collection(RasModel.get_CSMList_Result)" />
     <FunctionImport Name="get_EmployeeById" ReturnType="Collection(RasModel.get_EmployeeById_Result)">
-      <Parameter Name="EmpId" Mode="In" Type="Int32" />
+      <Parameter Name="EmpId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="get_Premier_Portfolios" ReturnType="Collection(RasModel.get_Premier_Portfolios_Result)" />
     <FunctionImport Name="get_report_TimeSheetSummary" ReturnType="Collection(RasModel.get_report_TimeSheetSummary_Result)">
@@ -3291,7 +3291,7 @@
     </FunctionImport>
     <FunctionImport Name="getauditeesdetails">
       <Parameter Name="PROJECT_ID" Mode="In" Type="String" />
-      <Parameter Name="CUSTOMER_ID" Mode="In" Type="Int32" />
+      <Parameter Name="CUSTOMER_ID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="getauditordetails" ReturnType="Collection(RasModel.getauditordetails_Result)" />
     <FunctionImport Name="spGetAllSps" ReturnType="Collection(RasModel.spGetAllSps_Result)" />
@@ -3299,7 +3299,7 @@
       <Parameter Name="sid" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_ApproveSkillSet">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ApproverID" Mode="In" Type="Int32" />
       <Parameter Name="XmlString" Mode="In" Type="String" />
     </FunctionImport>
@@ -3321,7 +3321,7 @@
     <FunctionImport Name="usp_check_project_additionalcost" ReturnType="Collection(Int32)">
       <Parameter Name="PROJECT_EXPENSE_ID" Mode="In" Type="Int32" />
       <Parameter Name="SOW_ID" Mode="In" Type="Int32" />
-      <Parameter Name="EMP_ID" Mode="In" Type="Int32" />
+      <Parameter Name="EMP_ID" Mode="In" Type="String" />
       <Parameter Name="EXPENSE_ITEM_ID" Mode="In" Type="Int32" />
       <Parameter Name="AMOUNT" Mode="In" Type="Decimal" />
       <Parameter Name="COMMENT" Mode="In" Type="String" />
@@ -3396,7 +3396,7 @@
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="Duration" Mode="In" Type="String" />
       <Parameter Name="Status" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_airfare_perdiem" ReturnType="Collection(RasModel.usp_get_airfare_perdiem_Result)">
       <Parameter Name="countryid" Mode="In" Type="Int32" />
@@ -3407,8 +3407,8 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_all_Resource" ReturnType="Collection(RasModel.usp_get_all_Resource_Result)">
       <Parameter Name="ProjectID" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
-      <Parameter Name="ManagerID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
+      <Parameter Name="ManagerID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_AllocationReport">
       <Parameter Name="Xml" Mode="In" Type="String" />
@@ -3432,16 +3432,16 @@
       <Parameter Name="ProjId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_BAS_Staff_Assigned_Projects" ReturnType="Collection(RasModel.usp_get_BAS_Staff_Assigned_Projects_Result)">
-      <Parameter Name="CustId" Mode="In" Type="Int32" />
+      <Parameter Name="CustId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_BAS_Staff_Project_Details" ReturnType="Collection(RasModel.usp_get_BAS_Staff_Project_Details_Result)">
       <Parameter Name="ProjId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_BAS_Staff_Project_Summary" ReturnType="Collection(RasModel.usp_get_BAS_Staff_Project_Summary_Result)">
-      <Parameter Name="CustId" Mode="In" Type="Int32" />
+      <Parameter Name="CustId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_BAS_Staff_Summary" ReturnType="Collection(RasModel.usp_get_BAS_Staff_Summary_Result)">
-      <Parameter Name="CustId" Mode="In" Type="Int32" />
+      <Parameter Name="CustId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_BenchReport" ReturnType="Collection(RasModel.usp_get_BenchReport_Result)" />
     <FunctionImport Name="usp_get_BillingCycle_by_Project" ReturnType="Collection(RasModel.usp_get_BillingCycle_by_Project_Result)">
@@ -3473,14 +3473,14 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_CurrencyList" ReturnType="Collection(RasModel.usp_get_CurrencyList_Result)" />
     <FunctionImport Name="usp_get_customer_based_project_list" ReturnType="Collection(RasModel.usp_get_customer_based_project_list_Result)">
-      <Parameter Name="custid" Mode="In" Type="Int32" />
-      <Parameter Name="empID" Mode="In" Type="Int32" />
+      <Parameter Name="custid" Mode="In" Type="String" />
+      <Parameter Name="empID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_customer_list" ReturnType="Collection(RasModel.usp_get_customer_list_Result)">
-      <Parameter Name="empID" Mode="In" Type="Int32" />
+      <Parameter Name="empID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_customer_timesheet" ReturnType="Collection(RasModel.usp_get_customer_timesheet_Result)">
-      <Parameter Name="custid" Mode="In" Type="Int32" />
+      <Parameter Name="custid" Mode="In" Type="String" />
       <Parameter Name="month" Mode="In" Type="Int16" />
       <Parameter Name="year" Mode="In" Type="Int16" />
     </FunctionImport>
@@ -3493,7 +3493,7 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_CustomerProjectDetails" ReturnType="Collection(RasModel.usp_get_CustomerProjectDetails_Result)" />
     <FunctionImport Name="usp_get_customerprojectids" ReturnType="Collection(RasModel.usp_get_customerprojectids_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_dashboard_billingadvice" ReturnType="Collection(RasModel.usp_get_dashboard_billingadvice_Result)">
       <Parameter Name="projectid" Mode="In" Type="Int32" />
@@ -3526,11 +3526,11 @@
     <FunctionImport Name="usp_get_DepartmentList" ReturnType="Collection(RasModel.usp_get_DepartmentList_Result)" />
     <FunctionImport Name="usp_get_DSR">
       <Parameter Name="Date" Mode="In" Type="DateTime" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_DSR_1">
       <Parameter Name="Date" Mode="In" Type="DateTime" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_DT_Allocation" ReturnType="Collection(RasModel.usp_get_DT_Allocation_Result)" />
     <FunctionImport Name="usp_get_DT_BUInfo" ReturnType="Collection(RasModel.usp_get_DT_BUInfo_Result)" />
@@ -3548,7 +3548,7 @@
     <FunctionImport Name="usp_get_DT_SkillMaster" ReturnType="Collection(RasModel.usp_get_DT_SkillMaster_Result)" />
     <FunctionImport Name="usp_get_DT_SubRole" ReturnType="Collection(RasModel.usp_get_DT_SubRole_Result)" />
     <FunctionImport Name="usp_get_DummyProjectList" ReturnType="Collection(RasModel.usp_get_DummyProjectList_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_Get_Email_List" ReturnType="Collection(RasModel.usp_Get_Email_List_Result)">
       <Parameter Name="projID" Mode="In" Type="String" />
@@ -3561,7 +3561,7 @@
       <Parameter Name="ProjectID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_EmployeeDetails">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_employeeid_list" ReturnType="Collection(RasModel.usp_get_employeeid_list_Result)">
       <Parameter Name="ProjectID" Mode="In" Type="String" />
@@ -3573,7 +3573,7 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_EmployeeType" ReturnType="Collection(String)" />
     <FunctionImport Name="usp_get_EmpPrjHistoryReport" ReturnType="Collection(RasModel.usp_get_EmpPrjHistoryReport_Result)">
-      <Parameter Name="EmpId" Mode="In" Type="Int32" />
+      <Parameter Name="EmpId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_ExitReport" ReturnType="Collection(RasModel.usp_get_ExitReport_Result)" />
     <FunctionImport Name="usp_get_FinancialYear" ReturnType="Collection(RasModel.usp_get_FinancialYear_Result)" />
@@ -3585,7 +3585,7 @@
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="Duration" Mode="In" Type="String" />
       <Parameter Name="Status" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_GetCurrencyRateConversion">
       <Parameter Name="Year" Mode="In" Type="Int16" />
@@ -3595,7 +3595,7 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_masterlist" ReturnType="Collection(RasModel.usp_get_masterlist_Result)" />
     <FunctionImport Name="usp_get_MyTeamTimesheet">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="DateID" Mode="In" Type="Int32" />
       <Parameter Name="ResourceID" Mode="In" Type="Int32" />
@@ -3603,44 +3603,44 @@
     <FunctionImport Name="usp_get_MyTimesheet">
       <Parameter Name="DateID" Mode="In" Type="Int32" />
       <Parameter Name="TaskYear" Mode="In" Type="Int32" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_MyTimesheet_app">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="WeekNo" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_get_MytimesheetDatewise" ReturnType="Collection(RasModel.usp_get_MytimesheetDatewise_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="StartDate" Mode="In" Type="DateTime" />
       <Parameter Name="EndDate" Mode="In" Type="DateTime" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_MyTimesheetPending">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_OccupiedResource">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_oldestTimesheetAvailableForApproval" ReturnType="Collection(DateTime)">
-      <Parameter Name="CustId" Mode="In" Type="Int32" />
+      <Parameter Name="CustId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_PassportCountry" ReturnType="Collection(RasModel.usp_get_PassportCountry_Result)" />
     <FunctionImport Name="usp_get_PassportVisaDetails" ReturnType="Collection(RasModel.usp_get_PassportVisaDetails_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="Type" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_PendingApprovalCount">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_PendingApprovalList">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ReqID" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_get_Proj_Tasks" ReturnType="Collection(RasModel.usp_get_Proj_Tasks_Result)">
       <Parameter Name="taskId" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_project" ReturnType="Collection(RasModel.usp_get_project_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_project_additionalcost" ReturnType="Collection(RasModel.usp_get_project_additionalcost_Result)">
@@ -3696,11 +3696,11 @@
       <Parameter Name="projectid" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_project_withBillingProj" ReturnType="Collection(RasModel.usp_get_project_withBillingProj_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_project2" ReturnType="Collection(RasModel.usp_get_project2_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_ProjectByRRF" ReturnType="Collection(String)">
@@ -3708,7 +3708,7 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_ProjectDetails" ReturnType="Collection(RasModel.usp_get_ProjectDetails_Result)">
       <Parameter Name="ProjectID" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="Category" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_Get_Projection_HalfYearly_Report">
@@ -3757,10 +3757,10 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_ProjectList_App">
       <Parameter Name="WeekNo" Mode="In" Type="Int32" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_ProjectListRRF" ReturnType="Collection(RasModel.usp_get_ProjectListRRF_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_ProjectResourceReport">
       <Parameter Name="EmpID" Mode="In" Type="String" />
@@ -3782,7 +3782,7 @@
       <Parameter Name="ReqID" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_get_ReleasedResourceDetails" ReturnType="Collection(RasModel.usp_get_ReleasedResourceDetails_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_resource_map_count">
       <Parameter Name="projid" Mode="In" Type="String" />
@@ -3790,7 +3790,7 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_ResourceHistory" ReturnType="Collection(RasModel.usp_get_ResourceHistory_Result)">
       <Parameter Name="ProjectID" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_ResourceReleaseDtl" ReturnType="Collection(RasModel.usp_get_ResourceReleaseDtl_Result)">
       <Parameter Name="ResourceID" Mode="In" Type="Int32" />
@@ -3819,7 +3819,7 @@
     <FunctionImport Name="usp_get_Sentmail" ReturnType="Collection(RasModel.usp_get_Sentmail_Result)">
       <Parameter Name="Category" Mode="In" Type="String" />
       <Parameter Name="ProjID" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="OtherID" Mode="In" Type="String" />
       <Parameter Name="Status" Mode="In" Type="String" />
       <Parameter Name="Level" Mode="In" Type="String" />
@@ -3829,12 +3829,12 @@
       <Parameter Name="Exp" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_get_Skillset" ReturnType="Collection(RasModel.usp_get_Skillset_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_SkillsetGroup" ReturnType="Collection(String)" />
     <FunctionImport Name="usp_get_SkillsetList" ReturnType="Collection(RasModel.usp_get_SkillsetList_Result)" />
     <FunctionImport Name="usp_get_SkillSetPending" ReturnType="Collection(RasModel.usp_get_SkillSetPending_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_SOW_by_Project" ReturnType="Collection(RasModel.usp_get_SOW_by_Project_Result)">
       <Parameter Name="projectID" Mode="In" Type="String" />
@@ -3852,7 +3852,7 @@
     </FunctionImport>
     <FunctionImport Name="usp_get_subroles" ReturnType="Collection(RasModel.usp_get_subroles_Result)" />
     <FunctionImport Name="usp_get_TeamTimesheetPending">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_Get_TimeSheet_Billing">
       <Parameter Name="ProjectId" Mode="In" Type="String" />
@@ -3882,12 +3882,12 @@
     <FunctionImport Name="usp_get_Timesheet_Details">
       <Parameter Name="StartDate" Mode="In" Type="DateTime" />
       <Parameter Name="EndDate" Mode="In" Type="DateTime" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="Category" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_Timesheet_Details_Monthly_Emp" ReturnType="Collection(RasModel.usp_get_Timesheet_Details_Monthly_Emp_Result)">
-      <Parameter Name="EMPID" Mode="In" Type="Int32" />
+      <Parameter Name="EMPID" Mode="In" Type="String" />
       <Parameter Name="PROJID" Mode="In" Type="String" />
       <Parameter Name="BILLINGPROJID" Mode="In" Type="String" />
       <Parameter Name="STARTDATE" Mode="In" Type="DateTime" />
@@ -3905,7 +3905,7 @@
       <Parameter Name="year" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_get_TimesheetReport">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="Year" Mode="In" Type="Int32" />
       <Parameter Name="ClientID" Mode="In" Type="Int32" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
@@ -3920,18 +3920,18 @@
       <Parameter Name="year" Mode="InOut" Type="Int16" />
     </FunctionImport>
     <FunctionImport Name="usp_get_UnAssignedResource">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_unbillclass" ReturnType="Collection(String)" />
     <FunctionImport Name="usp_get_user_mapped_customer" ReturnType="Collection(RasModel.usp_get_user_mapped_customer_Result)">
-      <Parameter Name="empid" Mode="In" Type="Int32" />
+      <Parameter Name="empid" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_UserInfo" ReturnType="Collection(RasModel.usp_get_UserInfo_Result)">
       <Parameter Name="Email" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_UserRights" ReturnType="Collection(RasModel.usp_get_UserRights_Result)">
       <Parameter Name="Year" Mode="In" Type="Int32" />
-      <Parameter Name="CustomerId" Mode="In" Type="Int32" />
+      <Parameter Name="CustomerId" Mode="In" Type="String" />
       <Parameter Name="ProjectId" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_get_UtilizationReport">
@@ -3942,7 +3942,7 @@
       <Parameter Name="ClientID" Mode="In" Type="Int32" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="Duration" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_ValidationMessage_Projections">
       <Parameter Name="ProjectId" Mode="In" Type="String" />
@@ -3957,7 +3957,7 @@
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="Duration" Mode="In" Type="String" />
       <Parameter Name="Status" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_VisaDetailsReport">
       <Parameter Name="Country" Mode="In" Type="String" />
@@ -3967,17 +3967,17 @@
       <Parameter Name="Location" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_WaitingRelease">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_get_WFMPendingList" ReturnType="Collection(RasModel.usp_get_WFMPendingList_Result)">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="USP_GETCNTRYHOLIDAYS_HWM" ReturnType="Collection(RasModel.USP_GETCNTRYHOLIDAYS_HWM_Result)">
       <Parameter Name="CNTRY_ID" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_getnewresrcfrctrevempid">
       <Parameter Name="projid" Mode="In" Type="String" />
-      <Parameter Name="empid" Mode="In" Type="Int32" />
+      <Parameter Name="empid" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_getresrcempid">
       <Parameter Name="projid" Mode="In" Type="String" />
@@ -3998,7 +3998,7 @@
       <Parameter Name="countryid" Mode="In" Type="Int16" />
     </FunctionImport>
     <FunctionImport Name="usp_insert_customer">
-      <Parameter Name="CUST_ID" Mode="In" Type="Int32" />
+      <Parameter Name="CUST_ID" Mode="In" Type="String" />
       <Parameter Name="CUST_NM" Mode="In" Type="String" />
       <Parameter Name="INDUSTRY_TYPE" Mode="In" Type="String" />
       <Parameter Name="URL" Mode="In" Type="String" />
@@ -4008,10 +4008,10 @@
       <Parameter Name="UPDATED_DATE" Mode="In" Type="DateTime" />
     </FunctionImport>
     <FunctionImport Name="usp_insert_employee">
-      <Parameter Name="EMP_ID" Mode="In" Type="Int32" />
+      <Parameter Name="EMP_ID" Mode="In" Type="String" />
       <Parameter Name="BASE_CNTRY_ID" Mode="In" Type="Int16" />
-      <Parameter Name="MANAGER_EMP_ID" Mode="In" Type="Int32" />
-      <Parameter Name="REVIEWER_EMP_ID" Mode="In" Type="Int32" />
+      <Parameter Name="MANAGER_EMP_ID" Mode="In" Type="String" />
+      <Parameter Name="REVIEWER_EMP_ID" Mode="In" Type="String" />
       <Parameter Name="EMPL_TYPE" Mode="In" Type="String" />
       <Parameter Name="FRST_NM" Mode="In" Type="String" />
       <Parameter Name="MIDDLE_NM" Mode="In" Type="String" />
@@ -4056,11 +4056,11 @@
       <Parameter Name="ProjName" Mode="In" Type="String" />
       <Parameter Name="ProjDM" Mode="In" Type="Int32" />
       <Parameter Name="ProjBU" Mode="In" Type="Int32" />
-      <Parameter Name="CreateBy" Mode="In" Type="Int32" />
+      <Parameter Name="CreateBy" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_insert_project_additionalcost">
       <Parameter Name="SOW_ID" Mode="In" Type="Int32" />
-      <Parameter Name="EMP_ID" Mode="In" Type="Int32" />
+      <Parameter Name="EMP_ID" Mode="In" Type="String" />
       <Parameter Name="EXPENSE_ITEM_ID" Mode="In" Type="Int32" />
       <Parameter Name="AMOUNT" Mode="In" Type="Decimal" />
       <Parameter Name="COMMENT" Mode="In" Type="String" />
@@ -4084,7 +4084,7 @@
       <Parameter Name="MilestoneId" Mode="InOut" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_insert_project_resource" ReturnType="Collection(String)">
-      <Parameter Name="EmpId" Mode="In" Type="Int32" />
+      <Parameter Name="EmpId" Mode="In" Type="String" />
       <Parameter Name="ProjectId" Mode="In" Type="String" />
       <Parameter Name="IsBillable" Mode="In" Type="Boolean" />
       <Parameter Name="AllctPct" Mode="In" Type="Int32" />
@@ -4137,7 +4137,7 @@
     <FunctionImport Name="usp_insert_update_currencyrateconversion" />
     <FunctionImport Name="usp_insert_update_proj_reven_apprl">
       <Parameter Name="projrevid" Mode="In" Type="Int32" />
-      <Parameter Name="apprempid" Mode="In" Type="Int32" />
+      <Parameter Name="apprempid" Mode="In" Type="String" />
       <Parameter Name="apprlsts" Mode="In" Type="String" />
       <Parameter Name="apprllevel" Mode="In" Type="Int16" />
       <Parameter Name="username" Mode="In" Type="String" />
@@ -4182,7 +4182,7 @@
     </FunctionImport>
     <FunctionImport Name="usp_Insert_Update_UserRights">
       <Parameter Name="year" Mode="In" Type="Int32" />
-      <Parameter Name="CustomerId" Mode="In" Type="Int32" />
+      <Parameter Name="CustomerId" Mode="In" Type="String" />
       <Parameter Name="projectId" Mode="In" Type="Int32" />
       <Parameter Name="XmlString" Mode="In" Type="String" />
       <Parameter Name="EmpID" Mode="In" Type="String" />
@@ -4199,7 +4199,7 @@
       <Parameter Name="TODO" Mode="In" Type="Int32" />
       <Parameter Name="OWNER" Mode="In" Type="String" />
       <Parameter Name="DESCRIPTION" Mode="In" Type="String" />
-      <Parameter Name="CUST_ID" Mode="In" Type="Int32" />
+      <Parameter Name="CUST_ID" Mode="In" Type="String" />
       <Parameter Name="PROJ_ID" Mode="In" Type="String" />
       <Parameter Name="SUB_PROJ_ID" Mode="In" Type="Int32" />
       <Parameter Name="CREATED_BY" Mode="In" Type="String" />
@@ -4268,7 +4268,7 @@
     <FunctionImport Name="usp_update_project_additionalcost">
       <Parameter Name="PROJECT_EXPENSE_ID" Mode="In" Type="Int32" />
       <Parameter Name="SOW_ID" Mode="In" Type="Int32" />
-      <Parameter Name="EMP_ID" Mode="In" Type="Int32" />
+      <Parameter Name="EMP_ID" Mode="In" Type="String" />
       <Parameter Name="EXPENSE_ITEM_ID" Mode="In" Type="Int32" />
       <Parameter Name="AMOUNT" Mode="In" Type="Decimal" />
       <Parameter Name="COMMENT" Mode="In" Type="String" />
@@ -4377,7 +4377,7 @@
       <Parameter Name="TODO" Mode="In" Type="Int32" />
       <Parameter Name="OWNER" Mode="In" Type="String" />
       <Parameter Name="DESCRIPTION" Mode="In" Type="String" />
-      <Parameter Name="CUST_ID" Mode="In" Type="Int32" />
+      <Parameter Name="CUST_ID" Mode="In" Type="String" />
       <Parameter Name="PROJ_ID" Mode="In" Type="String" />
       <Parameter Name="SUB_PROJ_ID" Mode="In" Type="Int32" />
       <Parameter Name="UPDATED_BY" Mode="In" Type="String" />
@@ -4387,15 +4387,15 @@
     <FunctionImport Name="usp_UpdateComments">
       <Parameter Name="ResID" Mode="In" Type="Int32" />
       <Parameter Name="Comments" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateCountryMaster">
       <Parameter Name="XmlString" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateCurrencyMaster">
       <Parameter Name="XmlString" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateCustomerDetails">
       <Parameter Name="ClientID" Mode="In" Type="Int32" />
@@ -4406,7 +4406,7 @@
       <Parameter Name="ModifiedBy" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateEmployeeDetails">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="FirstName" Mode="In" Type="String" />
       <Parameter Name="MiddleName" Mode="In" Type="String" />
       <Parameter Name="LastName" Mode="In" Type="String" />
@@ -4415,8 +4415,8 @@
       <Parameter Name="DOB" Mode="In" Type="DateTime" />
       <Parameter Name="Gender" Mode="In" Type="String" />
       <Parameter Name="DepartmentID" Mode="In" Type="Int32" />
-      <Parameter Name="ReportingManagerID" Mode="In" Type="Int32" />
-      <Parameter Name="ReviewManagerID" Mode="In" Type="Int32" />
+      <Parameter Name="ReportingManagerID" Mode="In" Type="String" />
+      <Parameter Name="ReviewManagerID" Mode="In" Type="String" />
       <Parameter Name="EmployeeLevel" Mode="In" Type="String" />
       <Parameter Name="EmployeeTittle" Mode="In" Type="String" />
       <Parameter Name="EmployeeType" Mode="In" Type="String" />
@@ -4437,23 +4437,23 @@
       <Parameter Name="Promotion" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateEmployeeDetailsBulk">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="FirstName" Mode="In" Type="String" />
       <Parameter Name="DOJ" Mode="In" Type="DateTime" />
       <Parameter Name="Gender" Mode="In" Type="String" />
-      <Parameter Name="ReportingManagerID" Mode="In" Type="Int32" />
-      <Parameter Name="ReviewManagerID" Mode="In" Type="Int32" />
+      <Parameter Name="ReportingManagerID" Mode="In" Type="String" />
+      <Parameter Name="ReviewManagerID" Mode="In" Type="String" />
       <Parameter Name="MobileNo" Mode="In" Type="String" />
       <Parameter Name="Email" Mode="In" Type="String" />
       <Parameter Name="RRF" Mode="In" Type="Int32" />
       <Parameter Name="ModifiedBy" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateEmployeeRole">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="XmlString" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateMyTeamTimesheet">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="StartDate" Mode="In" Type="DateTime" />
       <Parameter Name="EndDate" Mode="In" Type="DateTime" />
@@ -4465,7 +4465,7 @@
       <Parameter Name="XmlString" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdatePassportDetails">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="Passport" Mode="In" Type="String" />
       <Parameter Name="PlaceOfIssue" Mode="In" Type="String" />
       <Parameter Name="Country" Mode="In" Type="Int32" />
@@ -4493,30 +4493,30 @@
       <Parameter Name="AccountManager" Mode="In" Type="Int32" />
       <Parameter Name="ModifiedBy" Mode="In" Type="Int32" />
       <Parameter Name="DepartmentId" Mode="In" Type="Int32" />
-      <Parameter Name="CustomerId" Mode="In" Type="Int32" />
+      <Parameter Name="CustomerId" Mode="In" Type="String" />
       <Parameter Name="BUID" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateProjectMapping">
       <Parameter Name="DummyID" Mode="In" Type="String" />
       <Parameter Name="ProjID" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateResourceAssign">
       <Parameter Name="ReqID" Mode="In" Type="Int32" />
       <Parameter Name="Status" Mode="In" Type="String" />
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="Reason" Mode="In" Type="String" />
       <Parameter Name="ModifiedBy" Mode="In" Type="Int32" />
       <Parameter Name="Priority" Mode="In" Type="String" />
       <Parameter Name="RequestType" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateResourceDetails">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="CountryID" Mode="In" Type="Int32" />
       <Parameter Name="Billability" Mode="In" Type="Boolean" />
-      <Parameter Name="ReviewManagerID" Mode="In" Type="Int32" />
-      <Parameter Name="ReportingManagerID" Mode="In" Type="Int32" />
+      <Parameter Name="ReviewManagerID" Mode="In" Type="String" />
+      <Parameter Name="ReportingManagerID" Mode="In" Type="String" />
       <Parameter Name="Allocation" Mode="In" Type="Int32" />
       <Parameter Name="StartDate" Mode="In" Type="DateTime" />
       <Parameter Name="EndDate" Mode="In" Type="DateTime" />
@@ -4529,7 +4529,7 @@
       <Parameter Name="ModifiedBy" Mode="In" Type="Int32" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateResourceRelease">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="ProjectID" Mode="In" Type="String" />
       <Parameter Name="ReleaseDate" Mode="In" Type="DateTime" />
       <Parameter Name="ReleaseReason" Mode="In" Type="String" />
@@ -4561,40 +4561,40 @@
       <Parameter Name="BehavioralDesc" Mode="In" Type="String" />
       <Parameter Name="AdditionalDesc" Mode="In" Type="String" />
       <Parameter Name="RRFType" Mode="In" Type="String" />
-      <Parameter Name="EmployeeID" Mode="In" Type="Int32" />
+      <Parameter Name="EmployeeID" Mode="In" Type="String" />
       <Parameter Name="SFDCStatus" Mode="In" Type="String" />
       <Parameter Name="SOWStatus" Mode="In" Type="String" />
       <Parameter Name="WorkHour" Mode="In" Type="String" />
       <Parameter Name="ClientInterview" Mode="In" Type="Boolean" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateSkillSet">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="XmlString" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateSkillsetMaster">
       <Parameter Name="XmlString" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateTimesheet">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="XmlString" Mode="In" Type="String" />
       <Parameter Name="StartDate" Mode="In" Type="DateTime" />
       <Parameter Name="EndDate" Mode="In" Type="DateTime" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateTimesheet_old">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="XmlString" Mode="In" Type="String" />
       <Parameter Name="WeekNo" Mode="In" Type="Int32" />
       <Parameter Name="TaskStatus" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_UpdateTimesheetExtend">
-      <Parameter Name="EmpID" Mode="In" Type="Int32" />
+      <Parameter Name="EmpID" Mode="In" Type="String" />
       <Parameter Name="XmlString" Mode="In" Type="String" />
       <Parameter Name="Date" Mode="In" Type="DateTime" />
     </FunctionImport>
     <FunctionImport Name="usp_UploadExcelFile">
       <Parameter Name="proj_ID" Mode="In" Type="String" />
       <Parameter Name="date_ID" Mode="In" Type="Int32" />
-      <Parameter Name="upld_Emp_ID" Mode="In" Type="Int32" />
+      <Parameter Name="upld_Emp_ID" Mode="In" Type="String" />
       <Parameter Name="upld_Date" Mode="In" Type="DateTime" />
       <Parameter Name="timesheet_Name" Mode="In" Type="String" />
       <Parameter Name="timesheet_Data" Mode="In" Type="Binary" />
@@ -4617,13 +4617,13 @@
       <Parameter Name="XmlString" Mode="In" Type="String" />
     </FunctionImport>
     <FunctionImport Name="usp_validateuser">
-      <Parameter Name="empid" Mode="In" Type="Int32" />
+      <Parameter Name="empid" Mode="In" Type="String" />
       <Parameter Name="count" Mode="InOut" Type="Int32" />
     </FunctionImport>
   </EntityContainer>
   <ComplexType Name="csp_get_ProjectResource_Result">
     <Property Type="String" Name="PROJECT_ID" Nullable="true" MaxLength="20" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="NAME" Nullable="false" MaxLength="301" />
     <Property Type="String" Name="TITLE" Nullable="false" MaxLength="100" />
     <Property Type="Int32" Name="CSM_TITLE_ID" Nullable="true" />
@@ -4631,9 +4631,9 @@
   </ComplexType>
   <ComplexType Name="csp_get_ProjectResourceByEmpid_Result">
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="DateTime" Name="START_DATE" Nullable="false" Precision="23" />
@@ -4644,9 +4644,9 @@
   </ComplexType>
   <ComplexType Name="csp_get_ProjectResourceByProjId_Result">
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="Boolean" Name="BILL_FLG" Nullable="false" />
@@ -4655,10 +4655,10 @@
     <Property Type="DateTime" Name="END_DATE" Nullable="false" Precision="23" />
   </ComplexType>
   <ComplexType Name="csp_get_ResourceDetailsByManager_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="Int16" Name="BASE_CNTRY_ID" Nullable="false" />
-    <Property Type="Int32" Name="MANAGER_EMP_ID" Nullable="false" />
-    <Property Type="Int32" Name="REVIEWER_EMP_ID" Nullable="false" />
+    <Property Type="String" Name="MANAGER_EMP_ID" Nullable="false" MaxLength="50" />
+    <Property Type="String" Name="REVIEWER_EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="MIDDLE_NM" Nullable="true" MaxLength="100" />
@@ -4691,10 +4691,10 @@
     <Property Type="String" Name="CSM" Nullable="true" />
   </ComplexType>
   <ComplexType Name="get_EmployeeById_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="Int16" Name="BASE_CNTRY_ID" Nullable="false" />
-    <Property Type="Int32" Name="MANAGER_EMP_ID" Nullable="false" />
-    <Property Type="Int32" Name="REVIEWER_EMP_ID" Nullable="false" />
+    <Property Type="String" Name="MANAGER_EMP_ID" Nullable="false" MaxLength="50" />
+    <Property Type="String" Name="REVIEWER_EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="MIDDLE_NM" Nullable="true" MaxLength="100" />
@@ -4729,16 +4729,16 @@
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
   </ComplexType>
   <ComplexType Name="get_report_TimeSheetSummary_Result">
     <Property Type="String" Name="PROJECT_NAME" Nullable="true" MaxLength="100" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="Decimal" Name="TOTAL_HRS" Nullable="true" Precision="38" Scale="2" />
   </ComplexType>
   <ComplexType Name="getauditordetails_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="true" />
+    <Property Type="String" Name="EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="FRST_NM" Nullable="true" MaxLength="100" />
     <Property Type="String" Name="EMAIL_ID" Nullable="true" MaxLength="100" />
     <Property Type="String" Name="MIDDLE_NM" Nullable="true" MaxLength="100" />
@@ -4762,7 +4762,7 @@
   <ComplexType Name="usp_DownloadMultipleExcelFile_Result">
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="UPLD_EMP_ID" Nullable="false" />
+    <Property Type="String" Name="UPLD_EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="DateTime" Name="UPLD_DATE" Nullable="true" Precision="23" />
     <Property Type="String" Name="TIMESHEET_NAME" Nullable="true" MaxLength="50" />
     <Property Type="Binary" Name="TIMESHEET_DATA" Nullable="true" />
@@ -4778,10 +4778,10 @@
     <Property Type="Decimal" Name="RIMBS_AMT" Nullable="false" Precision="10" Scale="2" />
   </ComplexType>
   <ComplexType Name="usp_get_all_allocation_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="Emp_Name" Nullable="true" MaxLength="402" />
     <Property Type="String" Name="CNTRY_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" Name="CUST_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
@@ -4795,18 +4795,18 @@
   </ComplexType>
   <ComplexType Name="usp_get_all_Resource_Result">
     <Property Type="Int32" Name="PROJ_RESRC_ID" Nullable="false" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="Emp_Name" Nullable="true" MaxLength="402" />
     <Property Type="String" Name="LEVEL" Nullable="true" MaxLength="111" />
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="CNTRY_NM" Nullable="false" MaxLength="100" />
     <Property Type="Boolean" Name="BILL_FLG" Nullable="false" />
-    <Property Type="Int32" Name="Emp_ReportingManagerID" Nullable="true" />
+    <Property Type="String" Name="Emp_ReportingManagerID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="Emp_ReportingManager" Nullable="true" MaxLength="435" />
     <Property Type="String" Name="Emp_ReviewingManager" Nullable="true" MaxLength="435" />
-    <Property Type="Int32" Name="Emp_ReviewingManagerID" Nullable="true" />
+    <Property Type="String" Name="Emp_ReviewingManagerID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="Emp_ProjectManager" Nullable="true" MaxLength="435" />
-    <Property Type="Int32" Name="Emp_ProjectManagerID" Nullable="true" />
+    <Property Type="String" Name="Emp_ProjectManagerID" Nullable="true" MaxLength="50" />
     <Property Type="Decimal" Name="allocation" Nullable="false" Precision="5" Scale="2" />
     <Property Type="String" Name="startdate" Nullable="true" MaxLength="11" />
     <Property Type="String" Name="enddate" Nullable="true" MaxLength="11" />
@@ -4815,7 +4815,7 @@
     <Property Type="String" Name="STATUS" Nullable="false" MaxLength="1" />
   </ComplexType>
   <ComplexType Name="usp_get_BAS_employee_list_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="301" />
   </ComplexType>
   <ComplexType Name="usp_get_BAS_project_Result">
@@ -4829,8 +4829,8 @@
   <ComplexType Name="usp_get_BAS_Staff_Assigned_ProjectDetails_Result">
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PARENT_PROJ_ID" Nullable="true" MaxLength="20" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="CUST_ID" Nullable="false" MaxLength="50" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="Int32" Name="CSM_TITLE_ID" Nullable="true" />
     <Property Type="String" Name="EMP_NAME" Nullable="false" MaxLength="301" />
     <Property Type="String" Name="PROJECT_NAME" Nullable="false" MaxLength="100" />
@@ -4870,7 +4870,7 @@
   </ComplexType>
   <ComplexType Name="usp_get_BenchReport_Result">
     <Property Type="Int32" Name="PROJ_RESRC_ID" Nullable="false" />
-    <Property Type="Int32" Name="EmpID" Nullable="false" />
+    <Property Type="String" Name="EmpID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="Emp_Name" Nullable="true" MaxLength="402" />
     <Property Type="String" Name="Emp_Type" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="Start_Date" Nullable="true" MaxLength="11" />
@@ -4933,7 +4933,7 @@
   </ComplexType>
   <ComplexType Name="usp_get_customer_list_Result">
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
   </ComplexType>
   <ComplexType Name="usp_get_customer_timesheet_Result">
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
@@ -4942,7 +4942,7 @@
     <Property Type="Int32" Name="ACTL_HOURS" Nullable="true" />
   </ComplexType>
   <ComplexType Name="usp_get_CustomerAddress_Result">
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="INDUSTRY_TYPE" Nullable="true" MaxLength="100" />
     <Property Type="String" Name="URL" Nullable="true" MaxLength="30" />
@@ -4964,23 +4964,23 @@
     <Property Type="String" Name="LOCATION" Nullable="false" MaxLength="203" />
   </ComplexType>
   <ComplexType Name="usp_get_CustomerProjectDetails_Result">
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" Name="CUST_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
     <Property Type="DateTime" Name="START_DATE" Nullable="true" Precision="23" />
     <Property Type="DateTime" Name="END_DATE" Nullable="true" Precision="23" />
-    <Property Type="Int32" Name="PROJ_BUHEAD_EMP_ID" Nullable="true" />
-    <Property Type="Int32" Name="PROJ_DM_EMP_ID" Nullable="true" />
-    <Property Type="Int32" Name="PROJ_PM_EMP_ID" Nullable="true" />
-    <Property Type="Int32" Name="PROJ_AM_EMP_ID" Nullable="true" />
+    <Property Type="String" Name="PROJ_BUHEAD_EMP_ID" Nullable="true" MaxLength="50" />
+    <Property Type="String" Name="PROJ_DM_EMP_ID" Nullable="true" MaxLength="50" />
+    <Property Type="String" Name="PROJ_PM_EMP_ID" Nullable="true" MaxLength="50" />
+    <Property Type="String" Name="PROJ_AM_EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="PARENT_PROJ_ID" Nullable="true" MaxLength="20" />
     <Property Type="String" Name="PROJ_ALIAS_NM" Nullable="true" MaxLength="100" />
   </ComplexType>
   <ComplexType Name="usp_get_customerprojectids_Result">
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="true" />
+    <Property Type="String" Name="CUST_ID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
   </ComplexType>
   <ComplexType Name="usp_get_dashboard_billingadvice_Result">
@@ -5028,7 +5028,7 @@
     <Property Type="String" Name="DEPT_NAME" Nullable="false" MaxLength="100" />
   </ComplexType>
   <ComplexType Name="usp_get_DT_Allocation_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="LAST_NM" Nullable="true" MaxLength="200" />
@@ -5053,7 +5053,7 @@
   </ComplexType>
   <ComplexType Name="usp_get_DT_ClientAddrDetails_Result">
     <Property Type="Int32" Name="CUST_ADDR_ID" Nullable="false" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="Int16" Name="CNTRY_ID" Nullable="false" />
     <Property Type="Boolean" Name="HG_FLG" Nullable="false" />
     <Property Type="String" Name="ADDR_1" Nullable="true" MaxLength="100" />
@@ -5070,7 +5070,7 @@
     <Property Type="DateTime" Name="UPDATED_DATE" Nullable="false" Precision="23" />
   </ComplexType>
   <ComplexType Name="usp_get_DT_ClientDetails_Result">
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="INDUSTRY_TYPE" Nullable="true" MaxLength="100" />
     <Property Type="String" Name="URL" Nullable="true" MaxLength="30" />
@@ -5106,11 +5106,11 @@
     <Property Type="DateTime" Name="UPDATED_DATE" Nullable="false" Precision="23" />
   </ComplexType>
   <ComplexType Name="usp_get_DT_EmployeeDetails_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="Int16" Name="BASE_CNTRY_ID" Nullable="false" />
     <Property Type="Int16" Name="DEPT_ID" Nullable="true" />
-    <Property Type="Int32" Name="MANAGER_EMP_ID" Nullable="false" />
-    <Property Type="Int32" Name="REVIEWER_EMP_ID" Nullable="false" />
+    <Property Type="String" Name="MANAGER_EMP_ID" Nullable="false" MaxLength="50" />
+    <Property Type="String" Name="REVIEWER_EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="MIDDLE_NM" Nullable="true" MaxLength="100" />
@@ -5132,7 +5132,7 @@
   </ComplexType>
   <ComplexType Name="usp_get_DT_EmpSkillset_Result">
     <Property Type="Int32" Name="EMP_SS_MATRIX_ID" Nullable="false" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="Int16" Name="SKILLSET_ID" Nullable="false" />
     <Property Type="String" Name="SKILL_CATEGORY" Nullable="true" MaxLength="600" />
     <Property Type="Int16" Name="EMP_SELF_RATING" Nullable="false" />
@@ -5151,10 +5151,10 @@
     <Property Type="DateTime" Name="END_DATE" Nullable="true" Precision="23" />
     <Property Type="Boolean" Name="BILL_TYPE" Nullable="false" />
     <Property Type="String" Name="PROC_TYPE" Nullable="false" MaxLength="25" />
-    <Property Type="Int32" Name="LVL_1_APPR_EMP_ID" Nullable="true" />
-    <Property Type="Int32" Name="LVL_2_APPR_EMP_ID" Nullable="true" />
-    <Property Type="Int32" Name="LVL_3_APPR_EMP_ID" Nullable="true" />
-    <Property Type="Int32" Name="LVL_4_APPR_EMP_ID" Nullable="true" />
+    <Property Type="String" Name="LVL_1_APPR_EMP_ID" Nullable="true" MaxLength="50" />
+    <Property Type="String" Name="LVL_2_APPR_EMP_ID" Nullable="true" MaxLength="50" />
+    <Property Type="String" Name="LVL_3_APPR_EMP_ID" Nullable="true" MaxLength="50" />
+    <Property Type="String" Name="LVL_4_APPR_EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="CREATED_BY" Nullable="true" MaxLength="50" />
     <Property Type="DateTime" Name="CREATED_DATE" Nullable="false" Precision="23" />
     <Property Type="String" Name="UPDATED_BY" Nullable="true" MaxLength="50" />
@@ -5163,10 +5163,10 @@
   <ComplexType Name="usp_get_DT_ProjectResource_Result">
     <Property Type="Int32" Name="PROJ_RESRC_ID" Nullable="false" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="Int32" Name="EMP_PROJ_ROLE_MAP_ID" Nullable="true" />
-    <Property Type="Int32" Name="PROJ_RM_EMP_ID" Nullable="true" />
-    <Property Type="Int32" Name="PROJ_REVIEWER_EMP_ID" Nullable="true" />
+    <Property Type="String" Name="PROJ_RM_EMP_ID" Nullable="true" MaxLength="50" />
+    <Property Type="String" Name="PROJ_REVIEWER_EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="DateTime" Name="START_DATE" Nullable="false" Precision="23" />
     <Property Type="DateTime" Name="END_DATE" Nullable="false" Precision="23" />
     <Property Type="Boolean" Name="BILL_FLG" Nullable="false" />
@@ -5239,12 +5239,12 @@
     <Property Type="Boolean" Name="ENABLED" Nullable="false" />
   </ComplexType>
   <ComplexType Name="usp_get_employee_list_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="435" />
     <Property Type="String" Name="EMP_BAS_ROLE" Nullable="true" MaxLength="50" />
   </ComplexType>
   <ComplexType Name="usp_get_employeeid_list_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="435" />
     <Property Type="String" Name="EMP_BAS_ROLE" Nullable="true" MaxLength="50" />
   </ComplexType>
@@ -5253,7 +5253,7 @@
     <Property Type="String" Name="TITLE" Nullable="true" MaxLength="113" />
   </ComplexType>
   <ComplexType Name="usp_get_EmployeeRole_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="402" />
     <Property Type="String" Name="DEPT_NAME" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="CNTRY_NM" Nullable="false" MaxLength="100" />
@@ -5261,12 +5261,12 @@
     <Property Type="String" Name="EMP_BAS_ROLE" Nullable="true" MaxLength="50" />
   </ComplexType>
   <ComplexType Name="usp_get_employees_in_project_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="435" />
     <Property Type="Int32" Name="PROJ_RESRC_ID" Nullable="false" />
   </ComplexType>
   <ComplexType Name="usp_get_EmpPrjHistoryReport_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
     <Property Type="DateTime" Name="START_DATE" Nullable="true" Precision="23" />
@@ -5275,20 +5275,20 @@
   </ComplexType>
   <ComplexType Name="usp_get_ExitReport_Result">
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="402" />
     <Property Type="Int16" Name="CNTRY_ID" Nullable="true" />
     <Property Type="String" Name="CNTRY_NM" Nullable="true" MaxLength="100" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" Name="CUST_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="CUST_NM" Nullable="true" MaxLength="100" />
     <Property Type="String" Name="PROC_TYPE" Nullable="true" MaxLength="25" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PROJ_NM" Nullable="true" MaxLength="100" />
     <Property Type="Boolean" Name="POTENTIAL_TO_BILL" Nullable="false" />
     <Property Type="Boolean" Name="BILL_FLG" Nullable="false" />
-    <Property Type="Int32" Name="PROJ_RM_EMP_ID" Nullable="false" />
+    <Property Type="String" Name="PROJ_RM_EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="REP_MANAGER_NAME" Nullable="true" MaxLength="435" />
-    <Property Type="Int32" Name="PROJ_REVIEWER_EMP_ID" Nullable="false" />
+    <Property Type="String" Name="PROJ_REVIEWER_EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="REV_MANAGER_NAME" Nullable="true" MaxLength="435" />
     <Property Type="String" Name="START_DATE" Nullable="true" MaxLength="11" />
     <Property Type="String" Name="END_DATE" Nullable="true" MaxLength="11" />
@@ -5311,10 +5311,10 @@
     <Property Type="String" Name="FText" Nullable="true" MaxLength="35" />
   </ComplexType>
   <ComplexType Name="usp_get_loginuser_info_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="Int16" Name="BASE_CNTRY_ID" Nullable="false" />
-    <Property Type="Int32" Name="MANAGER_EMP_ID" Nullable="false" />
-    <Property Type="Int32" Name="REVIEWER_EMP_ID" Nullable="false" />
+    <Property Type="String" Name="MANAGER_EMP_ID" Nullable="false" MaxLength="50" />
+    <Property Type="String" Name="REVIEWER_EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="MIDDLE_NM" Nullable="true" MaxLength="100" />
@@ -5388,7 +5388,7 @@
     <Property Type="Int32" Name="PROJECT_EXPENSE_ID" Nullable="false" />
     <Property Type="Int32" Name="MASTER_ID" Nullable="false" />
     <Property Type="String" Name="NAME" Nullable="false" MaxLength="50" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="402" />
     <Property Type="String" Name="COMMENT" Nullable="true" MaxLength="1000" />
     <Property Type="Decimal" Name="COST" Nullable="false" Precision="18" Scale="2" />
@@ -5405,14 +5405,14 @@
     <Property Type="String" Name="BILLING_PROJ_ID" Nullable="false" MaxLength="1" />
     <Property Type="String" Name="BILLING_PROJ_NM" Nullable="false" MaxLength="1" />
     <Property Type="Boolean" Name="BILL_FLG" Nullable="true" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="true" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="true" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="UPDATED_DATE" Nullable="false" MaxLength="1" />
   </ComplexType>
   <ComplexType Name="usp_get_Project_List_Result">
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="Int32" Name="CUST_ADDR_ID" Nullable="false" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
     <Property Type="Boolean" Name="BILL_TYPE" Nullable="false" />
@@ -5459,7 +5459,7 @@
     <Property Type="Decimal" Name="OtherExpenses" Nullable="true" Precision="8" Scale="2" />
   </ComplexType>
   <ComplexType Name="usp_get_project_resources_additionalcost_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="402" />
   </ComplexType>
   <ComplexType Name="usp_get_project_role_Result">
@@ -5491,7 +5491,7 @@
     <Property Type="Decimal" Name="BILLING_RATE_PER_HOUR" Nullable="true" Precision="18" Scale="2" />
     <Property Type="Byte" Name="MAX_BILLING_HOURS_PER_DAY" Nullable="true" />
     <Property Type="Int32" Name="PROJ_RESRC_ID" Nullable="false" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="402" />
   </ComplexType>
   <ComplexType Name="usp_get_project_role_mapping_setup_Result">
@@ -5527,7 +5527,7 @@
   <ComplexType Name="usp_get_ProjectDetails_Result">
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="START_DATE" Nullable="true" MaxLength="11" />
     <Property Type="String" Name="END_DATE" Nullable="true" MaxLength="11" />
@@ -5547,11 +5547,11 @@
   <ComplexType Name="usp_Get_Projection_Monthly_Report_Result">
     <Property Type="String" Name="Role_Name" Nullable="true" MaxLength="100" />
     <Property Type="String" Name="Type" Nullable="false" MaxLength="8" />
-    <Property Type="Int32" Name="Employee_ID" Nullable="false" />
+    <Property Type="String" Name="Employee_ID" Nullable="false" />
     <Property Type="String" Name="Name" Nullable="true" MaxLength="301" />
     <Property Type="String" Name="Project_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="Project_Name" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="Customer_ID" Nullable="true" />
+    <Property Type="String" MaxLength="50" Name="Customer_ID" Nullable="true" />
     <Property Type="String" Name="Customer_Name" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="Capable_Billing_Hours" Nullable="false" MaxLength="1" />
     <Property Type="String" Name="Currency_Code" Nullable="false" MaxLength="3" />
@@ -5564,11 +5564,11 @@
   <ComplexType Name="usp_Get_Projection_Monthly_Report_FixedBid_Result">
     <Property Type="String" Name="Role_Name" Nullable="true" MaxLength="100" />
     <Property Type="String" Name="Type" Nullable="false" MaxLength="8" />
-    <Property Type="Int32" Name="Employee_ID" Nullable="false" />
+    <Property Type="String" Name="Employee_ID" Nullable="false" />
     <Property Type="String" Name="Name" Nullable="true" MaxLength="301" />
     <Property Type="String" Name="Project_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="Project_Name" Nullable="false" MaxLength="100" />
-    <Property Type="Int32" Name="Customer_ID" Nullable="true" />
+    <Property Type="String" MaxLength="50" Name="Customer_ID" Nullable="true" />
     <Property Type="String" Name="Customer_Name" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="Capable_Billing_Hours" Nullable="false" MaxLength="1" />
     <Property Type="String" Name="Currency_Code" Nullable="false" MaxLength="3" />
@@ -5599,7 +5599,7 @@
     <Property Type="String" Name="PROJ_TASK_NAME" Nullable="false" MaxLength="50" />
   </ComplexType>
   <ComplexType Name="usp_get_RejectedResourceDtl_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="true" />
+    <Property Type="String" Name="EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="8000" />
     <Property Type="String" Name="LEVEL" Nullable="true" MaxLength="10" />
     <Property Type="String" Name="STAGE_REMARK" Nullable="true" MaxLength="4000" />
@@ -5614,15 +5614,15 @@
     <Property Type="Int16" Name="PERF_RATING" Nullable="true" />
   </ComplexType>
   <ComplexType Name="usp_get_ResourceHistory_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="Emp_Name" Nullable="true" MaxLength="402" />
     <Property Type="String" Name="LEVEL" Nullable="true" MaxLength="10" />
     <Property Type="String" Name="EMPL_TYPE" Nullable="false" MaxLength="30" />
     <Property Type="String" Name="CNTRY_NM" Nullable="false" MaxLength="100" />
     <Property Type="Boolean" Name="BILL_FLG" Nullable="false" />
-    <Property Type="Int32" Name="Emp_ReportingManagerID" Nullable="true" />
+    <Property Type="String" Name="Emp_ReportingManagerID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="Emp_ReportingManager" Nullable="true" MaxLength="402" />
-    <Property Type="Int32" Name="Emp_ReviewingManagerID" Nullable="true" />
+    <Property Type="String" Name="Emp_ReviewingManagerID" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="Emp_ReviewingManager" Nullable="true" MaxLength="402" />
     <Property Type="Decimal" Name="allocation" Nullable="false" Precision="5" Scale="2" />
     <Property Type="String" Name="startdate" Nullable="true" MaxLength="11" />
@@ -5631,7 +5631,7 @@
     <Property Type="String" Name="Updated_Date" Nullable="true" MaxLength="11" />
   </ComplexType>
   <ComplexType Name="usp_get_ResourceReleaseDtl_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="8000" />
     <Property Type="String" Name="END_DATE" Nullable="true" MaxLength="11" />
     <Property Type="String" Name="RELEASE_REMARK" Nullable="true" MaxLength="2000" />
@@ -5656,7 +5656,7 @@
   </ComplexType>
   <ComplexType Name="usp_get_rsrc_forecast_actual_revenue_Result">
     <Property Type="Int32" Name="PROJ_RESRC_ID" Nullable="false" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="LAST_NM" Nullable="true" MaxLength="200" />
     <Property Type="String" Name="MIDDLE_NM" Nullable="true" MaxLength="100" />
@@ -5695,12 +5695,12 @@
     <Property Type="String" Name="SGROUP" Nullable="true" MaxLength="600" />
   </ComplexType>
   <ComplexType Name="usp_get_SkillSetPending_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="FRST_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_NM" Nullable="false" MaxLength="100" />
     <Property Type="String" Name="PROJ_ID" Nullable="false" MaxLength="20" />
     <Property Type="String" Name="SKILLSET_STATUS" Nullable="true" MaxLength="20" />
-    <Property Type="Int32" Name="PROJ_RM_EMP_ID" Nullable="true" />
+    <Property Type="String" Name="PROJ_RM_EMP_ID" Nullable="true" MaxLength="50" />
   </ComplexType>
   <ComplexType Name="usp_get_SOW_by_Project_Result">
     <Property Type="Int32" Name="SOW_ID" Nullable="false" />
@@ -5724,7 +5724,7 @@
     <Property Type="Int32" Name="PROJ_RESRC_TIME_ENTRY_ID" Nullable="true" />
     <Property Type="String" Name="PROJ_ID" Nullable="true" MaxLength="20" />
     <Property Type="String" Name="BILLING_PROJ_ID" Nullable="true" MaxLength="20" />
-    <Property Type="Int32" Name="EMP_ID" Nullable="true" />
+    <Property Type="String" Name="EMP_ID" Nullable="true" MaxLength="50" />
     <Property Type="Int16" Name="PROJ_TASK_ID" Nullable="true" />
     <Property Type="String" Name="TASK_DESC" Nullable="true" />
     <Property Type="Decimal" Name="CLOCKED_MINS" Nullable="true" Precision="38" Scale="2" />
@@ -5762,11 +5762,11 @@
     <Property Type="Decimal" Name="ACTL_RIMBS_AMT" Nullable="false" Precision="12" Scale="2" />
   </ComplexType>
   <ComplexType Name="usp_get_user_mapped_customer_Result">
-    <Property Type="Int32" Name="CUST_ID" Nullable="false" />
+    <Property Type="String" MaxLength="50" Name="CUST_ID" Nullable="false" />
     <Property Type="String" Name="CUST_NM" Nullable="false" MaxLength="100" />
   </ComplexType>
   <ComplexType Name="usp_get_UserInfo_Result">
-    <Property Type="Int32" Name="EMP_ID" Nullable="false" />
+    <Property Type="String" Name="EMP_ID" Nullable="false" MaxLength="50" />
     <Property Type="String" Name="EMP_NAME" Nullable="true" MaxLength="402" />
     <Property Type="String" Name="EMP_ROLE" Nullable="true" MaxLength="50" />
     <Property Type="String" Name="EMP_BAS_ROLE" Nullable="true" MaxLength="50" />
@@ -5783,7 +5783,7 @@
     <Property Type="String" Name="FORECAST_ENDDATE" Nullable="true" MaxLength="11" />
     <Property Type="String" Name="ACTUAL_STARTDATE" Nullable="true" MaxLength="11" />
     <Property Type="String" Name="ACTUAL_ENDDATE" Nullable="true" MaxLength="11" />
-    <Property Type="Int32" Name="CUSTOMER_ID" Nullable="true" />
+    <Property Type="String" MaxLength="50" Name="CUSTOMER_ID" Nullable="true" />
     <Property Type="String" Name="PROJECT_ID" Nullable="true" MaxLength="20" />
   </ComplexType>
   <ComplexType Name="usp_get_WFMPendingList_Result">

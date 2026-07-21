@@ -270,7 +270,8 @@
       "PROJECT_ID:string",
       "QA_SPOC:string",
       "CERTIFICATION_SCOPE:int[]",
-      "ISO_STANDARD:int[]"
+      "ISO_STANDARD:int[]",
+      "GOVERNANCE_APPLICABILITY:string"
     ]
   },
   {
@@ -291,7 +292,8 @@
       "CERTIFICATION_SCOPES_NAME:string",
       "ISO_STANDARDS_NAME:string",
       "DP:string",
-      "DP_NAME:string"
+      "DP_NAME:string",
+      "GOVERNANCE_APPLICABILITY:string"
     ]
   },
   {

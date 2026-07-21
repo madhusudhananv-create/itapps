@@ -131,17 +131,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
 
-        public IHttpActionResult AddActionItemInternal(ActionItemsViewDetails results)
+        public IHttpActionResult AddActionItemInternal(ActionItemsViewDetails results, PROJECT project = null)
         {
 
 
             //AddActionItemNew Mail_End
-            AddActionItemInternalPrivate(results);
+            AddActionItemInternalPrivate(results, project);
 
             return Ok(results);
         }
 
-        protected PROJECT_ACTIONITEM AddActionItemInternalPrivate(ActionItemsViewDetails results)
+        protected PROJECT_ACTIONITEM AddActionItemInternalPrivate(ActionItemsViewDetails results, PROJECT project = null)
         {
             string projid = ((ActionItemsViewDetails)results).PROJ_ID;
             PROJECT_ACTIONITEM overview = new PROJECT_ACTIONITEM();
@@ -199,7 +199,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             //AddActionItemNew Mail_Start
 
-            var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == overview.PROJECT_ID);
+            if (project == null)
+                project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == overview.PROJECT_ID);
 
             if (project == null)
                 return null;

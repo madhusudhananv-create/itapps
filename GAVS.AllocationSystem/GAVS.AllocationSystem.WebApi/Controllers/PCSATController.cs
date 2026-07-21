@@ -11,6 +11,7 @@ using System.Text;
 using System.Configuration;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using System.Net;
 
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
@@ -30,7 +31,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetCSATListForDP(string dpId, int batchId)
         {
-            var stopwatch = Stopwatch.StartNew();
+            return Content(HttpStatusCode.Conflict, "Since PCSAT has been triggered already, you can no longer use this page. Please get in touch with your DEX partner if you need any last minute changes.");
+           var stopwatch = Stopwatch.StartNew();
             var result = new List<CSS_BATCH_PROJECTS>();
             var batch = CSPdb.CSS_BATCHES.GetById(batchId);
             if (batch == null) return Ok();
@@ -68,6 +70,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult SaveCSATListForDP([FromBody] List<CSS_BATCH_PROJECTS> batchProjectList, string dpID, int batchId)
         {
+            return Content(HttpStatusCode.Conflict, "Since PCSAT has been triggered already, you can no longer use this page. Please get in touch with your DEX partner if you need any last minute changes.");
             var stopwatch = Stopwatch.StartNew();
             LogRequest(content: JsonConvert.SerializeObject(batchProjectList));
             var existingRecords = Cldb.CSS_BATCH_PROJECTS.GetAll().Where(x => x.BATCH_ID == batchId && (x.DP_ID == dpID || x.PROJ_PM_EMP_ID == dpID || x.QUALITY_SPOC == dpID) && x.ISACTIVE).ToList();
@@ -118,6 +121,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetCSATContactListForDP(string dpId, int batchId)
         {
+            return Content(HttpStatusCode.Conflict, "Since PCSAT has been triggered already, you can no longer use this page. Please get in touch with your DEX partner if you need any last minute changes.");
             var stopwatch = Stopwatch.StartNew();
             LogRequest();
             var firstResult = new List<CSS_BATCH_CUSTOMERS>();
@@ -205,6 +209,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult SaveCSATContactListForDP([FromBody] SaveCSATContactListRequest request, string dpId, int batchId)
         {
+            return Content(HttpStatusCode.Conflict, "Since PCSAT has been triggered already, you can no longer use this page. Please get in touch with your DEX partner if you need any last minute changes.");
             var stopwatch = Stopwatch.StartNew();
             var modifiedIds = new List<int>();
             var newIds = new List<int>(); // Separate list for newly added records

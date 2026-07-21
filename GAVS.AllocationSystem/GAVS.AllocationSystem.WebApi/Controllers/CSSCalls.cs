@@ -331,7 +331,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var additionlCC = helper.GetDBConfig("CSS_REQUEST_CC", cust.CUST_ID);
             if (!string.IsNullOrWhiteSpace(additionlCC))
                 csmMails += "," + additionlCC;
-            ccmail = helper.ConcatEmails(new List<string>() { csmMails, pm, qualitySpoc, cust.SPOC });
+            string buCcMailQP = helper.GetCcQPMailsByBusinessUnit(project);
+
+            ccmail = helper.ConcatEmails(new List<string>() { csmMails, pm, qualitySpoc, cust.SPOC , buCcMailQP });
             string bcc = string.Empty;
             bcc = helper.GetDBConfig("CSS_BCC", "-1");
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -347,9 +349,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //EmailContentValues.Add("PROJECTLIST", string.Join(",", projects));
                 //subject = $"Half yearly Pulse Survey for {cust.CUST_NM} | {projectText}, Feedback period {period}";
 
-                templateFile = project?.BUSINESS_UNIT.ToLower() == "sead" ? "CustomerSuccessSurveyRequestIGN.htm" : "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
+                templateFile = (project?.BUSINESS_UNIT.ToLower() == "seadxx" || project?.BUSINESS_UNIT.ToLower() == "corpseadxx") ? "CustomerSuccessSurveyRequestIGN.htm" : "CustomerSuccessSurveySurveyRequestHalfYearly.htm";
 
-                if (project?.BUSINESS_UNIT != null && project.BUSINESS_UNIT.ToLower() == "sead")
+                if (project?.BUSINESS_UNIT != null && (project?.BUSINESS_UNIT.ToLower() == "sead" || project?.BUSINESS_UNIT.ToLower() == "corpsead"))
                 {
                     var ignccMail = string.Join(", ", helper.GetDBConfig("CSS_REQUEST_CC_LIST_SEAD", "-1"));
                     if (!string.IsNullOrWhiteSpace(ignccMail))
@@ -357,7 +359,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         var allccList = (ccmail + "," + ignccMail).Split(',').Select(e => e.Trim()).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct(StringComparer.OrdinalIgnoreCase);
                         ccmail = string.Join(",", allccList);
                     }
-                    subject = $" Ignitarium (A Neurealm Company) {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
+                    //subject = $" Ignitarium (A Neurealm Company) {batch.FREQUENCY} Customer Satisfaction Survey for the period: " + PreviousPeriod;
                 }
                 else
                 {
@@ -675,16 +677,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 templateFile = "CustomerSuccessSurveySurveyReminder.htm";
 
-                if(project?.BUSINESS_UNIT != null && project.BUSINESS_UNIT.ToLower() == "sead")
+                if (project?.BUSINESS_UNIT != null && project.BUSINESS_UNIT.ToLower() == "seadxx")
                 {
                     subject = " A Friendly Reminder - Ignitarium (A Neurealm Company) " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
                 }
                 else
                 {
                     subject = " A Friendly Reminder - Neurealm " + Frequency + " Customer Satisfaction Survey for the period: " + PreviousPeriod;
-                   
+
                 }
-                
+
             }
 
             ccmail = helper.ConcatEmails(cclist);
@@ -874,7 +876,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             batchesExt = helper.FillCustomerAndProjectNames(batches);
             var emailIds = batchesExt.Select(b => b.EMAIL_ID).ToList();
             var contactsList = CSPdb.CONTACTS.GetAll()
-                  .Where(x => emailIds.Contains(x.CONTACT_EMAILID))
+                  .Where(x => emailIds.Contains(x.CONTACT_EMAILID) && x.ISACTIVE)
                   .ToList();
 
             foreach (var b in batchesExt)
@@ -1373,7 +1375,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private void GenerateBatchCustomers(int BatchId, string Frequency, string EmpId)
         {
 
-            List<CUSTOMER_PROJECTS> customersProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CSAT_SURVEY && t.CSAT_FREQUENCY == Frequency).ToList();
+            List<CUSTOMER_PROJECTS> customersProjects = CSPdb.CUSTOMER_PROJECTS.GetAll().Where(t => t.CSAT_SURVEY && t.CSAT_FREQUENCY == Frequency && t.ISACTIVE).ToList();
             List<int> CustomerId = customersProjects.Select(t => t.CUSTOMER_USER_ID).Distinct().ToList();
             List<CUSTOMER_USERS> customers = CSPdb.CUSTOMER_USERS.GetAll().Where(t => CustomerId.Contains(t.ID)).ToList();
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(x => x.ID == BatchId);
@@ -1577,7 +1579,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 //{
                 if (existingCustomers.Any(x => x.PROD_ID == item.PRODUCT_ID && x.EMAIL_ID.ToLower().Trim() == item.EMP_ID.ToLower().Trim())) continue;
                 var product = products.FirstOrDefault(x => x.ID == item.PRODUCT_ID);
-                var cuser = CSPdb.CONTACTS.GetAll().FirstOrDefault(x => x.CONTACT_EMAILID == item.EMP_ID);
+                var cuser = CSPdb.CONTACTS.GetAll().FirstOrDefault(x => x.CONTACT_EMAILID == item.EMP_ID && x.ISACTIVE);
                 if (cuser == null) continue;
                 var projId = prodResponsible.FirstOrDefault(x => x.PRODUCT_ID == product.ID && x.MANAGEMENT_TYPE == 7);
                 AddBatchCustomer(batch, cuser.CONTACT_EMAILID, cuser.CONTACT_NAME, empId, product.CUST_ID, projId != null ? projId.PROJECT_ID : "", product.ID, null);

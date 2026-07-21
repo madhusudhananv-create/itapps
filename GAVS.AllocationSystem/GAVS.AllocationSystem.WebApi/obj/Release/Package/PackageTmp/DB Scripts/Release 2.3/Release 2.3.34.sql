@@ -1,0 +1,490 @@
+﻿IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getActionItemsViewDetails' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getActionItemsViewDetails]
+END
+GO
+CREATE PROCEDURE [dbo].[getActionItemsViewDetails]              
+@PROJIDS VARCHAR(MAX)              
+  AS              
+  BEGIN              
+            
+  SELECT DISTINCT P.CUST_ID AS CUST_ID, [PROJECT_ID] AS PROJ_ID, P.PROJ_NM, PP.PORTFOLIO_ID, PF.TITLE AS PORTFOLIO_NAME, A.ID AS ACTION_ITEM_ID, A.RAG, A.DESCRIPTION, A.SOURCE, A.source_description, A.OWNER, A.IDENTIFIED_DATE, A.TARGET_DATE, A.STATUS,              
+  A.PRIORITY, A.COMPLETION_DATE, A.COMMENTS, A.CREATED_DATE, A.CREATED_BY, A.UPDATED_BY, A.UPDATED_DATE,              
+              
+   CASE WHEN (A.TARGET_DATE < GETDATE() AND A.STATUS  IN ('Planned' , 'Started', 'Identified')) THEN 'PAST_DUE_DATE'        
+  WHEN  (A.TARGET_DATE >= GETDATE() AND A.STATUS  IN ('Planned' , 'Started',  'Identified')) THEN 'DUE_FOR_CLOSURE'        
+        
+   END  AS STATUS_TYPE, A.ISACTIVE              
+    FROM [PROJECT_ACTIONITEM] A              
+              
+    INNER JOIN PROJECT P  ON a.PROJECT_ID = p.PROJ_ID AND P.PROJ_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@PROJIDS,','))  AND A.ISACTIVE = 1         
+    LEFT OUTER JOIN PORTFOLIO_PROJECT PP ON PP.PROJ_ID =  A.PROJECT_ID              
+    LEFT OUTER JOIN PORTFOLIO PF ON PF.ID = PP.PORTFOLIO_ID              
+          
+    ORDER BY A.IDENTIFIED_DATE desc        
+END
+GO
+
+IF NOT EXISTS (SELECT 1 from FILTER_PREFERENCE WHERE TABLE_NAME='CONFIG_EXT')
+BEGIN
+
+INSERT into FILTER_PREFERENCE values
+('CONFIG_EXT', 'key', 'key', 'string', 1, 0, 0, NULL, 104861, GETDATE(), 104861, GETDATE(), 1),
+('CONFIG_EXT', 'value', 'Value', 'string', 1, 0, 0, NULL, 104861, GETDATE(), 104861, GETDATE(), 1)
+
+END
+GO
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getProjectCertificationScopes' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].getProjectCertificationScopes
+END
+GO
+
+CREATE PROCEDURE getProjectCertificationScopes
+
+AS
+BEGIN
+
+SELECT PIS.STANDARD_NAME, PCS.SCOPE_NAME ,PCS.ID AS PROJECT_SCOPE_ID, PCS.ISO_STANDARD_ID
+FROM PROJECT_CERTIFICATION_SCOPE PCS INNER JOIN PROJECT_ISO_STANDARD PIS ON PCS.ISO_STANDARD_ID = PIS.ID
+WHERE PCS.ISACTIVE=1 AND PIS.ISACTIVE=1
+ORDER BY PCS.SCOPE_NAME, PIS.STANDARD_NAME
+
+END
+GO
+
+
+IF EXISTS(Select 1 from sys.tables where name ='PROJECT_CERTIFICATION_SCOPE' AND type='U')
+BEGIN
+
+DROP TABLE PROJECT_CERTIFICATION_SCOPE
+
+END
+GO
+
+IF NOT EXISTS(Select 1 from sys.tables where name ='PROJECT_CERTIFICATION_SCOPE' AND type='U')
+BEGIN
+
+CREATE TABLE PROJECT_CERTIFICATION_SCOPE
+(
+	ID int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+	SCOPE_NAME varchar(250) NOT NULL,
+	ISO_STANDARD_ID INT NOT NULL, FOREIGN KEY(ISO_STANDARD_ID) REFERENCES PROJECT_ISO_STANDARD(ID),
+	CREATED_BY varchar(20) NOT NULL,
+	CREATED_DATE Datetime NOT NULL,
+	UPDATED_BY varchar(20) NOT NULL,
+	UPDATED_DATE Datetime NOT NULL,
+	ISACTIVE bit NOT NULL
+)
+
+END
+GO
+
+IF NOT EXISTS (SELECT 1 from PROJECT_CERTIFICATION_SCOPE)
+BEGIN
+
+Insert into PROJECT_CERTIFICATION_SCOPE (SCOPE_NAME, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE, ISACTIVE, ISO_STANDARD_ID)
+values
+('Provision of End to End Enterprise Solutions Services including IT Infrastructure Managed Services driven through AI and automation', '104859', GETDATE(), '104859', GETDATE(), 1, 1),
+('Application Management Services', '104859', GETDATE(), '104859', GETDATE(), 1, 1),
+('Data Management Services', '104859', GETDATE(), '104859', GETDATE(), 1, 1),
+('Quality Assurance & Testing Services', '104859', GETDATE(), '104859', GETDATE(), 1, 1),
+('Information Security Services', '104859', GETDATE(), '104859', GETDATE(), 1, 1),
+('Automation-led digital transformation services', '104859', GETDATE(), '104859', GETDATE(), 1, 1),
+('IP led Solution using Zero Incident Framework TM (ZIF)', '104859', GETDATE(), '104859', GETDATE(), 1, 1),
+
+('Service Management System which supports Managed IT infrastructure Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('Virtualization Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('Automation Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('AI based Real-time IT Infrastructure Monitoring Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('Predictive Analytic Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('Auto Discovery Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('Auto Self-healing Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('Digital Transformation Services', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+('Machine Learning as a Service', '104859', GETDATE(), '104859', GETDATE(), 1, 2),
+
+('Providing IT Infrastructure Managed Services Driven through AI and Automation', '104859', GETDATE(), '104859', GETDATE(), 1, 3),
+('Virtual Desktop as a service', '104859', GETDATE(), '104859', GETDATE(), 1, 3),
+('Application Management & Support Services', '104859', GETDATE(), '104859', GETDATE(), 1, 3),
+('Data Management Services', '104859', GETDATE(), '104859', GETDATE(), 1, 3),
+('Information Security Services', '104859', GETDATE(), '104859', GETDATE(), 1, 3),
+('IP led Solution using Zero Incident Framework TM (ZIF) for Healthcare Sector Customers.', '104859', GETDATE(), '104859', GETDATE(), 1, 3),
+
+('HSE Management System applies to End to End Enterprise Solutions Services including IT Infrastructure Managed Services driven through AI and automation', '104859', GETDATE(), '104859', GETDATE(), 1, 4),
+('Application Management Services', '104859', GETDATE(), '104859', GETDATE(), 1, 4),
+('Data Management Services', '104859', GETDATE(), '104859', GETDATE(), 1, 4),
+('Quality Assurance & Testing Services', '104859', GETDATE(), '104859', GETDATE(), 1, 4),
+('Information Security Services', '104859', GETDATE(), '104859', GETDATE(), 1, 4),
+('Automation-led digital transformation services', '104859', GETDATE(), '104859', GETDATE(), 1, 4),
+('IP led solution and Zero Incident Framework TM (ZIF)', '104859', GETDATE(), '104859', GETDATE(), 1, 4),
+
+('Information Security Management System applies to End to End Enterprise Solutions Services including Infrastructure Managed Services Driven through AI and Automation', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Application Management Services', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Data Management Services', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Quality Assurance & Testing Services', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Automation-led digital transformation services', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('IP led Solution and Zero Incident Framework TM (ZIF) Supported by HR & Training', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Physical & Environmental security', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('IT', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Finance & Legal', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('HR', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Marketing', '104859', GETDATE(), '104859', GETDATE(), 1, 5),
+('Quality and Senior Management Functions', '104859', GETDATE(), '104859', GETDATE(), 1, 5)
+
+
+END
+GO
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getProjectMembersByProject' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].getProjectMembersByProject
+END
+GO
+
+CREATE PROCEDURE getProjectMembersByProject      
+
+@projectId varchar(25)   
+
+AS      
+
+BEGIN 
+
+SELECT 
+    p.PROJ_BUHEAD_EMP_ID as BUHEAD,      
+    buhead.FRST_NM AS BUHEAD_NAME,      
+    p.PROJ_DM_EMP_ID as CSM,      
+    dm.FRST_NM AS CSM_NAME,      
+    p.PROJ_PM_EMP_ID as PM,      
+    pm.FRST_NM AS PJT_MNGR_NAME,      
+    p.PROJ_AM_EMP_ID AS AM,      
+    am.FRST_NM AS ACNT_MNGR_NAME,      
+    spoc.EMP_ID AS QA,      
+    spoc.FRST_NM AS QSPOC_NAME,
+    STUFF(
+        (SELECT ',' + CONVERT(VARCHAR(10), CERTIFICATION_SCOPE_ID)
+         FROM PROJECT_CERTIFICATION_SCOPE_MAPPING
+         WHERE PROJECT_ID = @projectId AND ISACTIVE = 1
+         FOR XML PATH('')), 1, 1, '') AS CERTIFICATION_SCOPES,
+    STUFF(
+		(SELECT ',' + CONVERT(VARCHAR(10), ISO_STANDARD_ID)
+         FROM PROJECT_ISO_STANDARD_MAPPING
+         WHERE PROJECT_ID = @projectId AND ISACTIVE = 1
+         FOR XML PATH('')), 1, 1, '') AS ISO_STANDARDS,
+    STUFF(
+		(SELECT ', ' + PIS.STANDARD_NAME + ' - ' + PCS.SCOPE_NAME
+         FROM PROJECT_CERTIFICATION_SCOPE PCS
+         INNER JOIN PROJECT_CERTIFICATION_SCOPE_MAPPING PCM ON PCS.ID = PCM.CERTIFICATION_SCOPE_ID
+         INNER JOIN PROJECT_ISO_STANDARD PIS ON PIS.ID = PCS.ISO_STANDARD_ID
+         WHERE PROJECT_ID = @projectId AND PCS.ISACTIVE = 1 AND PCM.ISACTIVE = 1
+         FOR XML PATH('')), 1, 2, '') AS CERTIFICATION_SCOPES_NAME,
+    STUFF(
+        (SELECT ', ' + PIS.STANDARD_NAME
+         FROM PROJECT_ISO_STANDARD PIS INNER JOIN PROJECT_ISO_STANDARD_MAPPING PIM on PIS.ID = PIM.ISO_STANDARD_ID
+         WHERE PROJECT_ID = @projectId AND PIS.ISACTIVE = 1 and PIM.ISACTIVE=1
+         FOR XML PATH('')), 1, 1, '') AS ISO_STANDARDS_NAME
+
+FROM 
+    PROJECT p  (NOLOCK)    
+LEFT JOIN 
+    EMP_INFO buhead  (NOLOCK) ON buhead.emp_id = p.PROJ_BUHEAD_EMP_ID      
+LEFT JOIN 
+    EMP_INFO dm (NOLOCK) ON dm.emp_id = p.PROJ_DM_EMP_ID      
+LEFT JOIN 
+    EMP_INFO pm (NOLOCK) ON pm.emp_id = p.PROJ_PM_EMP_ID      
+LEFT JOIN 
+    EMP_INFO am (NOLOCK) ON am.emp_id = p.PROJ_AM_EMP_ID        
+LEFT JOIN 
+    EMP_INFO spoc (NOLOCK) ON spoc.emp_id = p.QUALITY_SPOC AND SPOC.DOR IS NULL
+
+WHERE p.PROJ_ID = @projectId AND  ISNULL(p.PROJ_STATUS,'') != 'Close' 
+
+END   
+GO
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getAllMappedProcessByProcessModel' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getAllMappedProcessByProcessModel]
+END
+GO
+
+CREATE PROCEDURE [dbo].[getAllMappedProcessByProcessModel]      
+ 
+ as      
+ begin      
+
+SELECT 
+    ML.ID AS PROCESS_MODEL_ID, 
+    ML.TITLE AS PROCESS_MODEL_NAME, 
+    PA.TITLE AS PROCESS_AREA, 
+    PA.ID AS PROCESS_AREA_ID,      
+    P.ID AS PROCESS_ID,      
+    P.TITLE AS PROCESS_TITLE, 
+    P.DESCRIPTION AS PROCESS_DESCRIPTION, 
+    STRING_AGG(PMR.ID, ',') AS REFERENCE_COLUMN  
+FROM 
+    PROCESS P 
+INNER JOIN 
+    PROCESS_MODEL_PROCESS_MAPPING MP ON P.ID = MP.PROCESS_ID 
+INNER JOIN 
+    PROCESS_MODEL ML ON MP.PROCESS_MODEL_ID = ML.ID       
+INNER JOIN 
+    PROCESS_AREA PA ON P.PROCESS_AREA_ID = PA.ID  
+LEFT JOIN
+    PROCESS_AREA_MODEL_REFERENCE PAR ON PAR.PROCESS_ID = P.ID
+LEFT JOIN
+    PROCESS_MODEL_REFERENCE PMR ON PMR.ID = PAR.PROCESS_MODEL_REFERENCE_ID
+WHERE 
+    MP.ISACTIVE = 1 AND ML.ISACTIVE = 1 AND PA.ISACTIVE = 1 AND P.SHOW_IN_MASTER = 1 AND P.ISACTIVE=1
+	AND (PMR.ISACTIVE = 1 OR PMR.ID IS NULL) AND (PAR.ISACTIVE = 1 OR PAR.ID IS NULL)  
+GROUP BY
+    ML.ID, ML.TITLE, PA.TITLE, PA.ID, P.ID, P.TITLE, P.DESCRIPTION
+ORDER BY  
+    ML.TITLE, PA.TITLE, P.TITLE
+
+End
+Go
+
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getAllMappedProcessByServiceArea' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getAllMappedProcessByServiceArea]
+END
+GO
+
+CREATE procedure getAllMappedProcessByServiceArea  
+
+@serviceAreaId int=0  
+
+as  
+begin  
+
+SELECT DISTINCT
+    SA.ID AS SERVICE_AREA_ID,
+    SA.TITLE AS SERVICE_AREA_NAME,
+    PA.TITLE AS PROCESS_AREA,
+    PA.ID AS PROCESS_AREA_ID,
+    P.ID AS PROCESS_ID,
+    P.TITLE AS PROCESS_TITLE,
+    P.DESCRIPTION AS PROCESS_DESCRIPTION,
+    STRING_AGG(PMR.ID, ',') AS REFERENCE_COLUMN  
+FROM
+    PROCESS P
+INNER JOIN
+    PROCESS_SERVICE_AREA_MAPPING MP  ON P.ID = MP.PROCESS_ID
+INNER JOIN
+    PROCESS_SERVICE_AREA_NEW SA ON MP.SERVICE_AREA_ID = SA.ID
+INNER JOIN
+    PROCESS_AREA PA ON P.PROCESS_AREA_ID = PA.ID
+LEFT JOIN
+    PROCESS_AREA_MODEL_REFERENCE PAR ON PAR.PROCESS_ID = P.ID
+LEFT JOIN
+    PROCESS_MODEL_REFERENCE PMR ON PMR.ID = PAR.PROCESS_MODEL_REFERENCE_ID
+WHERE
+    MP.ISACTIVE = 1 AND SA.ISACTIVE = 1 AND PA.ISACTIVE = 1 AND PA.SHOW_IN_MASTER = 1 AND P.ISACTIVE=1
+	AND (PMR.ISACTIVE = 1 OR PMR.ID IS NULL) AND (PAR.ISACTIVE = 1 OR PAR.ID IS NULL)
+    AND P.SHOW_IN_MASTER = 1 AND (ISNULL(@SERVICEAREAID, 0) = 0 OR (@SERVICEAREAID = SA.ID))
+GROUP BY
+	SA.ID,SA.TITLE,PA.TITLE,PA.ID,P.ID,P.TITLE,P.DESCRIPTION
+ORDER BY
+    SA.TITLE,PA.TITLE,P.TITLE
+
+END
+GO
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getTaskDetailsByDateRange' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getTaskDetailsByDateRange]
+END
+GO
+
+CREATE PROCEDURE [dbo].[getTaskDetailsByDateRange]            
+
+@START_DATE DATETIME,            
+@END_DATE DATETIME  ,          
+@EMP_ID varchar(20)   ,
+@CUSTOMER_ID varchar(MAX) = '-1',      
+@PROJECT_ID varchar(MAX) = '-1',      
+@TASK_CATEGORY varchar(MAX) = '-1',      
+@Range varchar(1) ='Y'    
+
+AS    
+
+BEGIN                
+           
+ IF @Range<>'A'      
+ BEGIN       
+ SELECT distinct  T.ID, DATEPART(M, coalesce(T.SCHEDULED_START_DATE, t.due_date)) MONTH_ID,      
+ DATEPART(Q, coalesce(T.SCHEDULED_START_DATE, t.due_date)) QUARTER_ID,      
+ DATEPART(WK, coalesce(T.SCHEDULED_START_DATE, t.due_date)) WEEK_ID,      
+ DATEPART(D, coalesce(T.SCHEDULED_START_DATE, t.due_date)) DAY_ID,       
+ DATENAME(dw,coalesce(T.SCHEDULED_START_DATE, t.due_date)) DATE_NAME,      
+ cast(DATEADD( DAY , 2 - DATEPART(WEEKDAY, coalesce(T.SCHEDULED_START_DATE, t.due_date)), CAST (coalesce(T.SCHEDULED_START_DATE, t.due_date) AS DATE )) as varchar(10)) [Week_Start_Date],      
+  cast(DATEADD( DAY , 8 - DATEPART(WEEKDAY, coalesce(T.SCHEDULED_START_DATE, t.due_date)), CAST (coalesce(T.SCHEDULED_START_DATE, t.due_date) AS DATE )) as varchar(10))  [Week_End_Date],      
+ T.CUST_ID, C.CUST_NM, T.PROJ_ID, P.PROJ_NM, TT.ID TASK_TYPE_ID, TT.TITLE TASK_TYPE,TC.ID TASK_CATEGORY_ID, TC.TITLE TASK_CATEGORY, T.DESCRIPTION, T.STATUS,         
+ T.SCHEDULED_START_DATE, T.SCHEDULED_DURATION, T.DUE_DATE, TC.COLOR_BG, TC.COLOR_MG, T.OWNER, T.Assigned_to, A.AUDITOR_EMP_ID           
+ ,'' AS FREQUENCY       
+ FROM [TASK] T   (NOLOCK)       
+  INNER JOIN TASK_TYPE TT  (NOLOCK)  ON TT.ID =  T.TASK_TYPE_ID and T.ISACTIVE = 1       
+  INNER JOIN TASK_CATEGORY TC  (NOLOCK)  ON TC.ID = T.TASK_CATEGORY_ID            
+  LEFT JOIN AUDIT_SCHEDULE A   (NOLOCK) ON T.ID = A.TASK_ID          
+  LEFT JOIN AUDIT_SCHEDULE_REF AE   (NOLOCK) on AE.AUDIT_SCHEDULE_ID = A.id and [key] = 'AUDITEE_EMP_ID'          
+  LEFT JOIN CUSTOMER C   (NOLOCK) ON C.CUST_ID = T.CUST_ID            
+  LEFT JOIN PROJECT P  (NOLOCK)  ON P.PROJ_ID = T.PROJ_ID            
+  LEFT JOIN PROJ_RESOURCE PR on p.proj_id = pr.proj_id and pr.emp_id = @emp_id and pr.end_date > Getdate()     
+ WHERE Due_Date is not null and ((coalesce(T.SCHEDULED_START_DATE, t.due_date) >= @START_DATE and  coalesce(T.SCHEDULED_START_DATE, t.due_date) <= @END_DATE  ))          
+ and (@EMP_ID ='-99' OR t.OWNER= @EMP_ID OR T.ASSIGNED_TO= @EMP_ID OR A.AUDITOR_EMP_ID = @EMP_ID OR AE.VALUE= @EMP_ID or pr.emp_id = @emp_id)
+AND (
+    (@CUSTOMER_ID = '-1' AND @PROJECT_ID = '-1')
+	OR
+    (@CUSTOMER_ID <> '-1' AND @PROJECT_ID = '-1' AND C.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER_ID, ',')))
+    OR
+    (@CUSTOMER_ID <> '-1' AND @PROJECT_ID <> '-1' AND P.PROJ_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@PROJECT_ID, ','))))
+AND (@TASK_CATEGORY = '-1' OR T.TASK_CATEGORY_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@TASK_CATEGORY, ',')))
+
+END       
+ 
+ELSE       
+ 
+BEGIN       
+       
+ SELECT distinct  T.ID, DATEPART(M, coalesce(T.SCHEDULED_START_DATE, t.due_date)) MONTH_ID,      
+ DATEPART(Q, coalesce(T.SCHEDULED_START_DATE, t.due_date)) QUARTER_ID,      
+ DATEPART(WK, coalesce(T.SCHEDULED_START_DATE, t.due_date)) WEEK_ID,      
+ DATEPART(D, coalesce(T.SCHEDULED_START_DATE, t.due_date)) DAY_ID,       
+ DATENAME(dw,coalesce(T.SCHEDULED_START_DATE, t.due_date)) DATE_NAME,      
+ cast(DATEADD( DAY , 2 - DATEPART(WEEKDAY, coalesce(T.SCHEDULED_START_DATE, t.due_date)), CAST (coalesce(T.SCHEDULED_START_DATE, t.due_date) AS DATE )) as varchar(10)) [Week_Start_Date],      
+ cast(DATEADD( DAY , 8 - DATEPART(WEEKDAY, coalesce(T.SCHEDULED_START_DATE, t.due_date)), CAST (coalesce(T.SCHEDULED_START_DATE, t.due_date) AS DATE )) as varchar(10))  [Week_End_Date],      
+ T.CUST_ID, C.CUST_NM, T.PROJ_ID, P.PROJ_NM, TT.ID TASK_TYPE_ID, TT.TITLE TASK_TYPE,TC.ID TASK_CATEGORY_ID, TC.TITLE TASK_CATEGORY, T.DESCRIPTION, T.STATUS,         
+ T.SCHEDULED_START_DATE, T.SCHEDULED_DURATION, T.DUE_DATE, TC.COLOR_BG, TC.COLOR_MG, T.OWNER, T.Assigned_to, A.AUDITOR_EMP_ID     ,      
+ ISNULL(TR.FREQUENCY ,'On-Going') AS FREQUENCY      
+ FROM [TASK] T   (NOLOCK)       
+  INNER JOIN TASK_TYPE TT  (NOLOCK)  ON TT.ID =  T.TASK_TYPE_ID and T.ISACTIVE = 1          
+  INNER JOIN TASK_CATEGORY TC  (NOLOCK)  ON TC.ID = T.TASK_CATEGORY_ID            
+  LEFT JOIN AUDIT_SCHEDULE A   (NOLOCK) ON T.ID = A.TASK_ID         
+  LEFT JOIN AUDIT_SCHEDULE_REF AE   (NOLOCK) on AE.AUDIT_SCHEDULE_ID = A.id and [key] = 'AUDITEE_EMP_ID'          
+  LEFT JOIN CUSTOMER C   (NOLOCK) ON C.CUST_ID = T.CUST_ID            
+  LEFT JOIN PROJECT P  (NOLOCK)  ON P.PROJ_ID = T.PROJ_ID
+  LEFT JOIN PROJ_RESOURCE PR on p.proj_id = pr.proj_id and pr.emp_id = @emp_id and pr.end_date > Getdate()            
+  LEFT JOIN TASK_RECURRENCE TR (NOLOCK) ON T.ID =TR.TASK_ID      
+ 
+WHERE Due_Date is not null and ((  coalesce(T.SCHEDULED_START_DATE, t.due_date) >= @START_DATE and       
+coalesce(T.SCHEDULED_START_DATE, t.due_date) <= @END_DATE  )) AND t.TASK_TYPE_ID=1      
+AND (
+    (@CUSTOMER_ID = '-1' AND @PROJECT_ID = '-1')
+	OR
+    (@CUSTOMER_ID <> '-1' AND @PROJECT_ID = '-1' AND C.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER_ID, ',')))
+    OR
+    (@CUSTOMER_ID <> '-1' AND @PROJECT_ID <> '-1' AND P.PROJ_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@PROJECT_ID, ','))))
+AND (@TASK_CATEGORY = '-1' OR T.TASK_CATEGORY_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@TASK_CATEGORY, ',')))
+
+END 
+ 
+END  
+GO  
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getOverallTaskDetails' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[getOverallTaskDetails]
+END
+GO
+
+CREATE PROCEDURE getOverallTaskDetails
+
+@START_DATE DATETIME,            
+@END_DATE DATETIME  ,          
+@CUSTOMER_ID varchar(MAX) = '-1',      
+@PROJECT_ID varchar(MAX) = '-1',      
+@TASK_CATEGORY varchar(MAX) = '-1'     
+
+AS    
+
+BEGIN                
+
+declare @skipInternalAuditId int = (select ID from PROJECT_CONFIGURATION_SETTING where SETTING_NAME='SKIP INTERNAL AUDIT' and ISACTIVE=1)          
+
+;WITH AUDITS AS (
+    SELECT
+        T.CUST_ID,T.PROJ_ID,T.ID, T.STATUS
+    FROM
+        TASK T LEFT JOIN AUDIT_SCHEDULE ASCH ON ASCH.TITLE = T.DESCRIPTION AND ASCH.CUST_ID = T.CUST_ID AND ASCH.PROJ_ID = T.PROJ_ID 
+		AND ASCH.ISACTIVE = 1 AND (T.PARENT_TASK_ID = ASCH.TASK_ID OR T.ID = ASCH.TASK_ID)
+        LEFT JOIN AUDIT_SCHEDULE_REF ASREF ON ASREF.AUDIT_SCHEDULE_ID = ASCH.ID AND ASREF.ISACTIVE = 1
+        LEFT JOIN AUDIT_CHECKLIST_EXECUTION_SUMMARY ACT ON T.ID = ACT.ASSESSMENT_ID AND ACT.ISACTIVE = 1
+    WHERE
+        T.STATUS NOT IN ('CANCELLED') AND T.ISACTIVE = 1 AND T.DUE_DATE IS NOT NULL
+        AND COALESCE(T.SCHEDULED_START_DATE, T.DUE_DATE) BETWEEN @START_DATE AND @END_DATE
+    GROUP BY
+        T.CUST_ID, T.PROJ_ID, T.ID, T.STATUS
+)
+
+SELECT   
+    C.CUST_NM, P.PROJ_NM, 
+    ISO_STANDARDS = STUFF((
+        SELECT ', ' + PIS.STANDARD_NAME
+        FROM PROJECT_ISO_STANDARD PIS 
+        INNER JOIN PROJECT_ISO_STANDARD_MAPPING PIM ON PIS.ID = PIM.ISO_STANDARD_ID
+        WHERE PIM.PROJECT_ID = P.PROJ_ID AND PIS.ISACTIVE = 1
+        FOR XML PATH('')), 1, 2, ''),
+    CERTIFICATION_SCOPES = STUFF((
+        SELECT ', ' + PIS.STANDARD_NAME + ' - ' + PCS.SCOPE_NAME
+        FROM PROJECT_CERTIFICATION_SCOPE PCS 
+        INNER JOIN PROJECT_CERTIFICATION_SCOPE_MAPPING PCM ON PCS.ID = PCM.CERTIFICATION_SCOPE_ID
+        INNER JOIN PROJECT_ISO_STANDARD PIS ON PIS.ID = PCS.ISO_STANDARD_ID
+        WHERE PCM.PROJECT_ID = P.PROJ_ID AND PCS.ISACTIVE = 1
+        FOR XML PATH('')), 1, 2, ''),
+    CONVERT(VARCHAR, P.START_DATE, 107) AS START_DATE,
+    CONVERT(VARCHAR, P.END_DATE, 107) AS END_DATE,
+    HEADCOUNT = COUNT(PR.PROJ_ID),
+    AUDIT_TITLE = MAX(T.DESCRIPTION),
+	AUDIT_STATUS = MAX(T.STATUS),
+    LAST_AUDITED_DATE = CONVERT(VARCHAR, MAX(ACES.ACTUAL_AUDIT_END_DATE), 107),
+    FREQUENCY = MAX(TR.FREQUENCY),
+    AUDITS_PLANNED = (SELECT COUNT(ID) FROM AUDITS WHERE STATUS NOT IN ('CANCELLED','COMPLETED') AND CUST_ID = C.CUST_ID AND PROJ_ID = P.PROJ_ID),
+    AUDITS_COMPLETED = (SELECT COUNT(ID) FROM AUDITS WHERE STATUS IN ('COMPLETED') AND CUST_ID = C.CUST_ID AND PROJ_ID = P.PROJ_ID),
+    P.PROJ_ID, C.CUST_ID
+FROM 
+    PROJECT P 
+INNER JOIN 
+    CUSTOMER C ON P.CUST_ID = C.CUST_ID  
+LEFT JOIN 
+    PROJ_RESOURCE PR ON PR.PROJ_ID = P.PROJ_ID AND PR.BILL_FLG = 1 AND PR.CURR_INDC = 'Y' AND PR.END_DATE >= GETDATE()
+LEFT JOIN 
+    AUDIT_CHECKLIST_EXECUTION_SUMMARY ACES ON ACES.PROJECT_ID = P.PROJ_ID AND ACES.ISACTIVE = 1 AND ACES.ISSUBMITTED = 1
+LEFT JOIN 
+    TASK T ON ACES.ASSESSMENT_ID = T.ID AND T.ISACTIVE = 1 AND ISNULL(T.STATUS,'')!='CANCELLED' 
+LEFT JOIN
+    TASK_RECURRENCE TR ON T.ID = TR.TASK_ID AND TR.ISACTIVE=1
+	
+WHERE 
+    T.DUE_DATE IS NOT NULL 
+	AND P.PROJ_ID NOT IN (SELECT PROJ_ID FROM PROJECT_CONFIGURATION_DATA where ISACTIVE = 1 AND IS_APPROVED=1 AND 
+		CONFIGURATION_SETTING_ID = @skipInternalAuditId) 
+    AND ((COALESCE(T.SCHEDULED_START_DATE, T.DUE_DATE) >= @START_DATE 
+        AND COALESCE(T.SCHEDULED_START_DATE, T.DUE_DATE) <= @END_DATE))
+    AND ((@CUSTOMER_ID = '-1' AND @PROJECT_ID = '-1')
+        OR
+        (@CUSTOMER_ID <> '-1' AND @PROJECT_ID = '-1' AND C.CUST_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@CUSTOMER_ID, ',')))
+        OR
+        (@CUSTOMER_ID <> '-1' AND @PROJECT_ID <> '-1' AND P.PROJ_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@PROJECT_ID, ','))))
+    AND (@TASK_CATEGORY = '-1' OR T.TASK_CATEGORY_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@TASK_CATEGORY, ',')))
+
+GROUP BY
+    C.CUST_NM, P.PROJ_NM, P.START_DATE, P.END_DATE, P.PROJ_ID, C.CUST_ID
+ORDER BY 
+    C.CUST_NM, P.PROJ_NM
+
+END
+GO
+
+IF NOT EXISTS (SELECT 1 from TASK_CATEGORY WHERE TITLE='External Assessment')
+BEGIN
+
+Insert into TASK_CATEGORY values (99,'External Assessment','#cde6f7','#99c8e9','104859',GETDATE(),'104859',GETDATE(),1,1)
+
+Declare @TaskId int = (SELECT ID from TASK_CATEGORY WHERE TITLE='External Assessment')
+
+Insert into PARAMETER_TABLE values ('AUDIT_CATEGORY',@TaskId,1,1,0)
+
+END
+GO

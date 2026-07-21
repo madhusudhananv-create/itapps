@@ -60,7 +60,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.ACTIVITY_LOGS_old' does not have a pri
     <Property Name="CREATED_DATE" Type="datetime" />
     <Property Name="UPDATED_BY" Type="varchar" MaxLength="50" />
     <Property Name="UPDATED_DATE" Type="datetime" />
-    <Property Name="BU_HEAD_EMP_ID" Type="int" />
+    <Property Name="BU_HEAD_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
   </EntityType>
   <EntityType Name="CNTRY_HOLIDAY">
     <Key>
@@ -116,7 +116,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.COMPLIANCE_TRAINING_ASSESSMENT_HEADER'
     </Key>
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="TITLE_ID" Type="int" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="EMP_NAME" Type="varchar" MaxLength="100" Nullable="false" />
     <Property Name="DATE_OF_COMPLETION" Type="datetime" Nullable="false" />
     <Property Name="ATTEMPTED" Type="int" Nullable="false" />
@@ -136,7 +136,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.COMPLIANCE_TRAINING_ASSESSMENT_HEADER'
     </Key>
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="TITLE_ID" Type="int" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="EMP_NAME" Type="varchar" MaxLength="100" Nullable="false" />
     <Property Name="DATE_OF_COMPLETION" Type="datetime" Nullable="false" />
     <Property Name="ATTEMPTED" Type="int" Nullable="false" />
@@ -169,7 +169,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.CONFIGURATION_EXT' does not have a pri
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="KEY" Type="nvarchar(max)" Nullable="false" />
     <Property Name="VALUE" Type="nvarchar(max)" />
-    <Property Name="CUST_ID" Type="int" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="20" />
     <Property Name="COMMENTS" Type="nvarchar(max)" />
     <Property Name="ISENCRYPT" Type="bit" Nullable="false" />
@@ -228,7 +228,7 @@ warning 6013: The table/view 'BAS_DEV.dbo.Currency_Conversion$' does not have a 
       <PropertyRef Name="CUST_ADDR_ID" />
     </Key>
     <Property Name="CUST_ADDR_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-    <Property Name="CUST_ID" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="CNTRY_ID" Type="smallint" Nullable="false" />
     <Property Name="HG_FLG" Type="bit" Nullable="false" />
     <Property Name="ADDR_1" Type="varchar" MaxLength="100" />
@@ -248,7 +248,7 @@ warning 6013: The table/view 'BAS_DEV.dbo.Currency_Conversion$' does not have a 
     <Key>
       <PropertyRef Name="CUST_ID" />
     </Key>
-    <Property Name="CUST_ID" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="CUST_NM" Type="varchar" MaxLength="100" Nullable="false" />
     <Property Name="INDUSTRY_TYPE" Type="varchar" MaxLength="100" />
     <Property Name="URL" Type="varchar" MaxLength="30" />
@@ -306,8 +306,8 @@ warning 6002: The table/view 'BAS_DEV.dbo.DEPT_BU_INFO' does not have a primary 
     <Property Name="DEPT_ID" Type="smallint" Nullable="false" />
     <Property Name="DEPT_CD" Type="nvarchar" MaxLength="255" />
     <Property Name="Department_Name" Type="nvarchar" MaxLength="255" />
-    <Property Name="PROJ_BUHEAD_EMP_ID" Type="int" />
-    <Property Name="DEPT_HEAD_EMP_ID" Type="int" />
+    <Property Name="PROJ_BUHEAD_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="DEPT_HEAD_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
   </EntityType>
   <EntityType Name="DEPT_INFO">
     <Key>
@@ -321,7 +321,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.DEPT_BU_INFO' does not have a primary 
     <Property Name="CREATED_DATE" Type="datetime" Nullable="false" />
     <Property Name="UPDATED_BY" Type="varchar" MaxLength="50" />
     <Property Name="UPDATED_DATE" Type="datetime" Nullable="false" />
-    <Property Name="DEPT_HEAD_EMP_ID" Type="int" />
+    <Property Name="DEPT_HEAD_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
     <Property Name="BU_ID" Type="smallint" />
   </EntityType>
   <EntityType Name="ELMAH_Error">
@@ -358,17 +358,17 @@ warning 6002: The table/view 'BAS_DEV.dbo.DEPT_BU_INFO' does not have a primary 
       <PropertyRef Name="EMP_ID" />
       <PropertyRef Name="DEPT_ID" />
     </Key>
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="DEPT_ID" Type="smallint" Nullable="false" />
   </EntityType>
   <EntityType Name="EMP_INFO">
     <Key>
       <PropertyRef Name="EMP_ID" />
     </Key>
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="BASE_CNTRY_ID" Type="smallint" Nullable="false" />
-    <Property Name="MANAGER_EMP_ID" Type="int" Nullable="false" />
-    <Property Name="REVIEWER_EMP_ID" Type="int" Nullable="false" />
+    <Property Name="MANAGER_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
+    <Property Name="REVIEWER_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="EMPL_TYPE" Type="varchar" MaxLength="30" Nullable="false" />
     <Property Name="FRST_NM" Type="varchar" MaxLength="100" Nullable="false" />
     <Property Name="MIDDLE_NM" Type="varchar" MaxLength="100" />
@@ -422,7 +422,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.EMP_NEWS' does not have a primary key 
       <PropertyRef Name="PASSPORT_ID" />
     </Key>
     <Property Name="PASSPORT_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="COUNTRY_ID" Type="smallint" Nullable="false" />
     <Property Name="PASSPORT_NO" Type="varchar" MaxLength="20" Nullable="false" />
     <Property Name="VALID_FROM" Type="date" Nullable="false" />
@@ -464,7 +464,7 @@ warning 6013: The table/view 'BAS_DEV.dbo.EMP_SECONDARY_SKILL$' does not have a 
       <PropertyRef Name="EMP_SS_MATRIX_ID" />
     </Key>
     <Property Name="EMP_SS_MATRIX_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="SKILLSET_ID" Type="smallint" Nullable="false" />
     <Property Name="SKILL_CATEGORY" Type="varchar" MaxLength="600" />
     <Property Name="EMP_SELF_RATING" Type="smallint" Nullable="false" />
@@ -723,10 +723,10 @@ warning 6013: The table/view 'BAS_DEV.dbo.Master_Data' does not have a primary k
     </Key>
     <Property Name="PROJ_RESRC_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="20" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="EMP_PROJ_ROLE_MAP_ID" Type="int" />
-    <Property Name="PROJ_RM_EMP_ID" Type="int" />
-    <Property Name="PROJ_REVIEWER_EMP_ID" Type="int" />
+    <Property Name="PROJ_RM_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="PROJ_REVIEWER_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
     <Property Name="START_DATE" Type="datetime" Nullable="false" />
     <Property Name="END_DATE" Type="datetime" Nullable="false" />
     <Property Name="BILL_FLG" Type="bit" Nullable="false" />
@@ -757,7 +757,7 @@ warning 6013: The table/view 'BAS_DEV.dbo.Master_Data' does not have a primary k
     </Key>
     <Property Name="PROJ_RESRC_TIME_ENTRY_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="20" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="DATE_ID" Type="int" Nullable="false" />
     <Property Name="PROJ_TASK_ID" Type="smallint" />
     <Property Name="TASK_DESC" Type="varchar(max)" />
@@ -801,7 +801,7 @@ warning 6013: The table/view 'BAS_DEV.dbo.Master_Data' does not have a primary k
     </Key>
     <Property Name="PROJ_REV_APPRL_WF_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="PROJ_REV_ID" Type="int" Nullable="false" />
-    <Property Name="APPR_EMP_ID" Type="int" Nullable="false" />
+    <Property Name="APPR_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="APPRL_DATE" Type="datetime" Nullable="false" />
     <Property Name="APPR_REMARK" Type="varchar" MaxLength="150" />
     <Property Name="APPRL_STS" Type="varchar" MaxLength="10" Nullable="false" />
@@ -903,7 +903,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJ_TIMESHEET' does not have a primar
     </Key>
     <Property Name="PROJ_ID" Type="varchar" MaxLength="20" Nullable="false" />
     <Property Name="DATE_ID" Type="int" Nullable="false" />
-    <Property Name="UPLD_EMP_ID" Type="int" Nullable="false" />
+    <Property Name="UPLD_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="UPLD_DATE" Type="datetime" />
     <Property Name="TIMESHEET_NAME" Type="varchar" MaxLength="50" />
     <Property Name="TIMESHEET_DATA" Type="varbinary(max)" />
@@ -924,20 +924,20 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJ_TIMESHEET' does not have a primar
     <Property Name="END_DATE" Type="datetime" />
     <Property Name="BILL_TYPE" Type="bit" Nullable="false" />
     <Property Name="PROC_TYPE" Type="varchar" MaxLength="25" Nullable="false" />
-    <Property Name="LVL_1_APPR_EMP_ID" Type="int" />
-    <Property Name="LVL_2_APPR_EMP_ID" Type="int" />
-    <Property Name="LVL_3_APPR_EMP_ID" Type="int" />
-    <Property Name="LVL_4_APPR_EMP_ID" Type="int" />
-    <Property Name="PROJ_BUHEAD_EMP_ID" Type="int" />
-    <Property Name="PROJ_DM_EMP_ID" Type="int" />
-    <Property Name="PROJ_PM_EMP_ID" Type="int" />
-    <Property Name="PROJ_AM_EMP_ID" Type="int" />
-    <Property Name="CREATED_BY" Type="varchar" MaxLength="50" />
+    <Property Name="LVL_1_APPR_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="LVL_2_APPR_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="LVL_3_APPR_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="LVL_4_APPR_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="PROJ_BUHEAD_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="PROJ_DM_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="PROJ_PM_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="PROJ_AM_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="CREATED_BY" Type="varchar" MaxLength="50" Nullable="true" />
     <Property Name="CREATED_DATE" Type="datetime" Nullable="false" />
-    <Property Name="UPDATED_BY" Type="varchar" MaxLength="50" />
+    <Property Name="UPDATED_BY" Type="varchar" MaxLength="50" Nullable="true" />
     <Property Name="UPDATED_DATE" Type="datetime" Nullable="false" />
     <Property Name="DEPT_ID" Type="smallint" />
-    <Property Name="CUST_ID" Type="int" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" />
     <Property Name="BU_ID" Type="smallint" />
     <Property Name="PARENT_PROJ_ID" Type="varchar" MaxLength="20" />
     <Property Name="PROJ_ALIAS_NM" Type="varchar" MaxLength="100" />
@@ -972,7 +972,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJECT_COURSE_MAPPING' does not have 
       <PropertyRef Name="ID" />
     </Key>
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-    <Property Name="CUSTOMER_ID" Type="int" />
+    <Property Name="CUSTOMER_ID" Type="varchar" MaxLength="50" />
     <Property Name="PROJECT_ID" Type="varchar" MaxLength="20" />
     <Property Name="COURSE_ID" Type="int" />
     <Property Name="ISACTIVE" Type="bit" />
@@ -983,7 +983,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJECT_COURSE_MAPPING' does not have 
     </Key>
     <Property Name="PROJECT_EXPENSE_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="SOW_ID" Type="int" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="EXPENSE_ITEM_ID" Type="int" Nullable="false" />
     <Property Name="AMOUNT" Type="numeric" Precision="18" Scale="2" Nullable="false" />
     <Property Name="COMMENT" Type="varchar" MaxLength="1000" />
@@ -1023,8 +1023,8 @@ warning 6013: The table/view 'BAS_DEV.dbo.PROJECT_MASTER$' does not have a prima
     </Key>
     <Property Name="TEMP_PROJ_ID" Type="varchar" MaxLength="20" Nullable="false" />
     <Property Name="PROJ_NAME" Type="varchar" MaxLength="200" Nullable="false" />
-    <Property Name="PROJ_DM_EMP_ID" Type="int" />
-    <Property Name="PROJ_BU_EMP_ID" Type="int" />
+    <Property Name="PROJ_DM_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="PROJ_BU_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="20" />
     <Property Name="CREATED_BY" Type="varchar" MaxLength="20" />
     <Property Name="CREATED_DATE" Type="datetime" />
@@ -1040,7 +1040,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJECT_PREFERENCE' does not have a pr
       <PropertyRef Name="PREFERENCE_TITLE" />
       <PropertyRef Name="ALLOW" />
     </Key>
-    <Property Name="CUST_ID" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="20" Nullable="false" />
     <Property Name="PREFERENCE_TITLE" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="ALLOW" Type="bit" Nullable="false" />
@@ -1054,7 +1054,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_DEFECT' does not have a primar
       <PropertyRef Name="USERSTORY_ID" />
       <PropertyRef Name="SUBMITTED_BY" />
       <PropertyRef Name="DEFECT_STATE" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="OPENED_DATE" />
       <PropertyRef Name="CREATED_BY" />
@@ -1085,7 +1085,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_DEFECT' does not have a primar
     <Property Name="OWNER" Type="varchar" MaxLength="255" />
     <Property Name="DESCRIPTION" Type="varchar(max)" />
     <Property Name="NOTES" Type="varchar(max)" />
-    <Property Name="CUST_IT" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="int" />
     <Property Name="OPENED_DATE" Type="datetime" Nullable="false" />
@@ -1117,7 +1117,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_ITERATION' does not have a pri
     <Property Name="ITERATION_ID" Type="int" Nullable="false" />
     <Property Name="NAME" Type="varchar" MaxLength="100" />
     <Property Name="RELEASE_ID" Type="int" Nullable="false" />
-    <Property Name="CUST_ID" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="int" />
     <Property Name="START_DATE" Type="datetime" Nullable="false" />
@@ -1150,7 +1150,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_RELEASE' does not have a prima
     <Property Name="NAME" Type="varchar" MaxLength="100" Nullable="false" />
     <Property Name="START_DATE" Type="datetime" Nullable="false" />
     <Property Name="END_DATE" Type="datetime" Nullable="false" />
-    <Property Name="CUST_ID" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="int" />
     <Property Name="CREATED_BY" Type="varchar" MaxLength="50" Nullable="false" />
@@ -1165,7 +1165,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_SUBPROJECT' does not have a pr
     <Key>
       <PropertyRef Name="ID" />
       <PropertyRef Name="NAME" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="CREATED_BY" />
       <PropertyRef Name="CREATED_DATE" />
@@ -1175,7 +1175,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_SUBPROJECT' does not have a pr
     </Key>
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="NAME" Type="varchar" MaxLength="50" Nullable="false" />
-    <Property Name="CUST_IT" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="CREATED_BY" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="CREATED_DATE" Type="datetime" Nullable="false" />
@@ -1192,7 +1192,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_TASK' does not have a primary 
       <PropertyRef Name="USERSTORY_ID" />
       <PropertyRef Name="STATE" />
       <PropertyRef Name="OWNER" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="CREATED_BY" />
       <PropertyRef Name="CREATED_DATE" />
@@ -1213,7 +1213,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_TASK' does not have a primary 
     <Property Name="OWNER" Type="varchar" MaxLength="255" Nullable="false" />
     <Property Name="DESCRIPTION" Type="varchar(max)" />
     <Property Name="NOTES" Type="varchar(max)" />
-    <Property Name="CUST_IT" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="int" />
     <Property Name="CREATED_BY" Type="varchar" MaxLength="50" Nullable="false" />
@@ -1239,7 +1239,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_TEAM' does not have a primary 
   <EntityType Name="PROJMGT_TEAM">
     <Key>
       <PropertyRef Name="ID" />
-      <PropertyRef Name="CUST_IT" />
+      <PropertyRef Name="CUST_ID" />
       <PropertyRef Name="PROJ_ID" />
       <PropertyRef Name="OWNER" />
       <PropertyRef Name="ADMIN" />
@@ -1250,10 +1250,10 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_TEAM' does not have a primary 
       <PropertyRef Name="ISACTIVE" />
     </Key>
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-    <Property Name="CUST_IT" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="int" />
-    <Property Name="EMP_ID" Type="int" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="OWNER" Type="bit" Nullable="false" />
     <Property Name="ADMIN" Type="bit" Nullable="false" />
     <Property Name="CREATED_BY" Type="varchar" MaxLength="50" Nullable="false" />
@@ -1291,7 +1291,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.PROJMGT_USERSTORY' does not have a pri
     <Property Name="OWNER" Type="varchar" MaxLength="255" Nullable="false" />
     <Property Name="DESCRIPTION" Type="varchar(max)" />
     <Property Name="NOTES" Type="varchar(max)" />
-    <Property Name="CUST_ID" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="SUB_PROJ_ID" Type="int" />
     <Property Name="CREATED_BY" Type="varchar" MaxLength="50" Nullable="false" />
@@ -1405,8 +1405,8 @@ warning 6002: The table/view 'BAS_DEV.dbo.REPORTS_SP_DETAILS' does not have a pr
     <Property Name="RESRC_RQST_ID" Type="smallint" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="20" Nullable="false" />
     <Property Name="CNTRY_ID" Type="smallint" Nullable="false" />
-    <Property Name="RESRC_MANAGER_EMP_ID" Type="int" Nullable="false" />
-    <Property Name="RESRC_REVIEWER_EMP_ID" Type="int" Nullable="false" />
+    <Property Name="RESRC_MANAGER_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
+    <Property Name="RESRC_REVIEWER_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="RESRC_TYPE" Type="varchar" MaxLength="15" Nullable="false" />
     <Property Name="RESRC_LEVEL" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="BILL_FLG" Type="bit" Nullable="false" />
@@ -1421,7 +1421,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.REPORTS_SP_DETAILS' does not have a pr
     <Property Name="OTHER_SKILL" Type="varchar" MaxLength="4000" />
     <Property Name="COMMENTS" Type="varchar" MaxLength="4000" />
     <Property Name="REQUEST_TYPE" Type="varchar" MaxLength="20" />
-    <Property Name="REPLACEMENT_EMP_ID" Type="int" />
+    <Property Name="REPLACEMENT_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="EXPERIENCE" Type="varchar" MaxLength="20" />
     <Property Name="SFDC_STATUS" Type="varchar" MaxLength="50" />
     <Property Name="SOW_STATUS" Type="varchar" MaxLength="50" />
@@ -1464,8 +1464,8 @@ warning 6002: The table/view 'BAS_DEV.dbo.RESRC_RQST_SKILLSET' does not have a p
     <Property Name="RR_WF_ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
     <Property Name="RESRC_RQST_ID" Type="smallint" />
     <Property Name="RR_WF_STAGE_ID" Type="smallint" />
-    <Property Name="STAGE_OWNER_EMP_ID" Type="int" />
-    <Property Name="TAG_EMP_ID" Type="int" />
+    <Property Name="STAGE_OWNER_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
+    <Property Name="TAG_EMP_ID" Type="varchar" MaxLength="50" Nullable="true" />
     <Property Name="STAGE_START_DATE" Type="datetime" Nullable="false" />
     <Property Name="STAGE_END_DATE" Type="datetime" />
     <Property Name="STAGE_CURR_INDC" Type="char" MaxLength="1" Nullable="false" />
@@ -1595,7 +1595,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.TIMESHEET_SETTINGS' does not have a pr
       <PropertyRef Name="ISACTIVE" />
     </Key>
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-    <Property Name="CUST_ID" Type="int" Nullable="false" />
+    <Property Name="CUST_ID" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="PROJ_ID" Type="varchar" MaxLength="50" />
     <Property Name="TIME_ENTRY_PERIOD" Type="varchar" MaxLength="50" Nullable="false" />
     <Property Name="CREATED_BY" Type="varchar" MaxLength="50" />
@@ -1684,7 +1684,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.TOKEN' does not have a primary key def
     <Property Name="CREATED_DATE" Type="datetime" />
     <Property Name="UPDATED_BY" Type="varchar" MaxLength="50" />
     <Property Name="UPDATED_DATE" Type="datetime" />
-    <Property Name="CUSTOMER_ID" Type="int" />
+    <Property Name="CUSTOMER_ID" Type="varchar" MaxLength="50" />
     <Property Name="PROJECT_ID" Type="varchar" MaxLength="20" />
   </EntityType>
   <EntityType Name="VISA_DETAILS">
@@ -1766,7 +1766,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
       <PropertyRef Name="EMP_ID" />
     </Key>
     <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-    <Property Name="EMP_ID" Type="int" Nullable="false" />
+    <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
   </EntityType>
   <Association Name="BILL_CRNCY_ID_FK">
     <End Role="CRNCY_INFO" Type="Self.CRNCY_INFO" Multiplicity="1" />
@@ -2940,13 +2940,13 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ProjectId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="csp_get_ProjectResourceByEmpid" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpId" Type="int" Mode="In" />
+    <Parameter Name="EmpId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="csp_get_ProjectResourceByProjId" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="csp_get_ResourceDetailsByManager" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpId" Type="int" Mode="In" />
+    <Parameter Name="EmpId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="DateConvert" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar">
     <Parameter Name="Date" Type="datetime" Mode="In" />
@@ -2980,10 +2980,10 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <ReturnType>
       <CollectionType>
         <RowType>
-          <Property Name="EMP_ID" Type="int" Nullable="false" />
+          <Property Name="EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
           <Property Name="BASE_CNTRY_ID" Type="smallint" Nullable="false" />
-          <Property Name="MANAGER_EMP_ID" Type="int" Nullable="false" />
-          <Property Name="REVIEWER_EMP_ID" Type="int" Nullable="false" />
+          <Property Name="MANAGER_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="REVIEWER_EMP_ID" Type="varchar" MaxLength="50" Nullable="false" />
           <Property Name="EMPL_TYPE" Type="varchar" MaxLength="30" Nullable="false" />
           <Property Name="FRST_NM" Type="varchar" MaxLength="100" Nullable="false" />
           <Property Name="MIDDLE_NM" Type="varchar" MaxLength="100" />
@@ -3019,7 +3019,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="id" Type="int" Mode="In" />
   </Function>
   <Function Name="fn_IsMyTeamMember" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="int">
-    <Parameter Name="EmployeeId" Type="int" Mode="In" />
+    <Parameter Name="EmployeeId" Type="varchar" Mode="In" />
     <Parameter Name="TeamMemberId" Type="int" Mode="In" />
   </Function>
   <Function Name="fn_IsRoleExists" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="int">
@@ -3052,7 +3052,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="get_CSMList" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="get_EmployeeById" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpId" Type="int" Mode="In" />
+    <Parameter Name="EmpId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="get_Premier_Portfolios" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="get_report_TimeSheetSummary" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -3065,7 +3065,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="getauditeesdetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="PROJECT_ID" Type="varchar" Mode="In" />
-    <Parameter Name="CUSTOMER_ID" Type="int" Mode="In" />
+    <Parameter Name="CUSTOMER_ID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="getauditordetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="GetTotalWorkingDays" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="int">
@@ -3085,7 +3085,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="Date" Type="datetime" Mode="In" />
   </Function>
   <Function Name="usp_ApproveSkillSet" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ApproverID" Type="int" Mode="In" />
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
   </Function>
@@ -3107,7 +3107,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_check_project_additionalcost" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="PROJECT_EXPENSE_ID" Type="int" Mode="In" />
     <Parameter Name="SOW_ID" Type="int" Mode="In" />
-    <Parameter Name="EMP_ID" Type="int" Mode="In" />
+    <Parameter Name="EMP_ID" Type="varchar" Mode="In" />
     <Parameter Name="EXPENSE_ITEM_ID" Type="int" Mode="In" />
     <Parameter Name="AMOUNT" Type="numeric" Mode="In" />
     <Parameter Name="COMMENT" Type="varchar" Mode="In" />
@@ -3182,7 +3182,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="Duration" Type="varchar" Mode="In" />
     <Parameter Name="Status" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_airfare_perdiem" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="countryid" Type="int" Mode="In" />
@@ -3193,8 +3193,8 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_all_Resource" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
-    <Parameter Name="ManagerID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
+    <Parameter Name="ManagerID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_AllocationReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Xml" Type="varchar(max)" Mode="In" />
@@ -3218,16 +3218,16 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ProjId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_BAS_Staff_Assigned_Projects" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="CustId" Type="int" Mode="In" />
+    <Parameter Name="CustId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_BAS_Staff_Project_Details" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_BAS_Staff_Project_Summary" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="CustId" Type="int" Mode="In" />
+    <Parameter Name="CustId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_BAS_Staff_Summary" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="CustId" Type="int" Mode="In" />
+    <Parameter Name="CustId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_BenchReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_BillingCycle_by_Project" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -3259,14 +3259,14 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_CurrencyList" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_customer_based_project_list" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="custid" Type="int" Mode="In" />
-    <Parameter Name="empID" Type="int" Mode="In" />
+    <Parameter Name="custid" Type="varchar" Mode="In" />
+    <Parameter Name="empID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_customer_list" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="empID" Type="int" Mode="In" />
+    <Parameter Name="empID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_customer_timesheet" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="custid" Type="int" Mode="In" />
+    <Parameter Name="custid" Type="varchar" Mode="In" />
     <Parameter Name="month" Type="smallint" Mode="In" />
     <Parameter Name="year" Type="smallint" Mode="In" />
   </Function>
@@ -3279,7 +3279,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_CustomerProjectDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_customerprojectids" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_dashboard_billingadvice" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="projectid" Type="int" Mode="In" />
@@ -3312,11 +3312,11 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_get_DepartmentList" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_DSR" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Date" Type="date" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_DSR_1" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Date" Type="date" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_DT_Allocation" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_DT_BUInfo" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
@@ -3334,7 +3334,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_get_DT_SkillMaster" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_DT_SubRole" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_DummyProjectList" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_Get_Email_List" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="projID" Type="varchar" Mode="In" />
@@ -3347,7 +3347,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_EmployeeDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_employeeid_list" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
@@ -3359,7 +3359,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_EmployeeType" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_EmpPrjHistoryReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpId" Type="int" Mode="In" />
+    <Parameter Name="EmpId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_ExitReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_FinancialYear" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
@@ -3371,7 +3371,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="Duration" Type="varchar" Mode="In" />
     <Parameter Name="Status" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_GetCurrencyRateConversion" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Year" Type="smallint" Mode="In" />
@@ -3381,7 +3381,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_masterlist" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_MyTeamTimesheet" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="DateID" Type="int" Mode="In" />
     <Parameter Name="ResourceID" Type="int" Mode="In" />
@@ -3389,44 +3389,44 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_get_MyTimesheet" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="DateID" Type="int" Mode="In" />
     <Parameter Name="TaskYear" Type="int" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_MyTimesheet_app" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="WeekNo" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_get_MytimesheetDatewise" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="StartDate" Type="datetime" Mode="In" />
     <Parameter Name="EndDate" Type="datetime" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_MyTimesheetPending" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_OccupiedResource" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_oldestTimesheetAvailableForApproval" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="CustId" Type="int" Mode="In" />
+    <Parameter Name="CustId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_PassportCountry" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_PassportVisaDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="Type" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_PendingApprovalCount" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_PendingApprovalList" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ReqID" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_get_Proj_Tasks" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="taskId" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_project" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_project_additionalcost" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -3482,11 +3482,11 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="projectid" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_project_withBillingProj" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_project2" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_ProjectByRRF" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -3494,7 +3494,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_ProjectDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="Category" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_Get_Projection_HalfYearly_Report" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -3543,10 +3543,10 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_ProjectList_App" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="WeekNo" Type="int" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_ProjectListRRF" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_ProjectResourceReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="EmpID" Type="varchar" Mode="In" />
@@ -3568,7 +3568,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ReqID" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_get_ReleasedResourceDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_resource_map_count" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="projid" Type="varchar" Mode="In" />
@@ -3576,7 +3576,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_ResourceHistory" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_ResourceReleaseDtl" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ResourceID" Type="int" Mode="In" />
@@ -3605,7 +3605,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_get_Sentmail" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Category" Type="varchar" Mode="In" />
     <Parameter Name="ProjID" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="OtherID" Type="varchar" Mode="In" />
     <Parameter Name="Status" Type="varchar" Mode="In" />
     <Parameter Name="Level" Type="varchar" Mode="In" />
@@ -3615,12 +3615,12 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="Exp" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_get_Skillset" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_SkillsetGroup" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_SkillsetList" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_SkillSetPending" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_SOW_by_Project" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="projectID" Type="varchar" Mode="In" />
@@ -3638,7 +3638,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_get_subroles" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_TeamTimesheetPending" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_Get_TimeSheet_Billing" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjectId" Type="varchar" Mode="In" />
@@ -3668,12 +3668,12 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_get_Timesheet_Details" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="StartDate" Type="datetime" Mode="In" />
     <Parameter Name="EndDate" Type="datetime" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="Category" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_Timesheet_Details_Monthly_Emp" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EMPID" Type="int" Mode="In" />
+    <Parameter Name="EMPID" Type="varchar" Mode="In" />
     <Parameter Name="PROJID" Type="varchar" Mode="In" />
     <Parameter Name="BILLINGPROJID" Type="varchar" Mode="In" />
     <Parameter Name="STARTDATE" Type="datetime" Mode="In" />
@@ -3691,7 +3691,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="year" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_get_TimesheetReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="Year" Type="int" Mode="In" />
     <Parameter Name="ClientID" Type="int" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
@@ -3706,18 +3706,18 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="year" Type="smallint" Mode="InOut" />
   </Function>
   <Function Name="usp_get_UnAssignedResource" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_unbillclass" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_get_user_mapped_customer" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="empid" Type="int" Mode="In" />
+    <Parameter Name="empid" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_UserInfo" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Email" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_UserRights" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Year" Type="int" Mode="In" />
-    <Parameter Name="CustomerId" Type="int" Mode="In" />
+    <Parameter Name="CustomerId" Type="varchar" Mode="In" />
     <Parameter Name="ProjectId" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_get_UtilizationReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -3728,7 +3728,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ClientID" Type="int" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="Duration" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_ValidationMessage_Projections" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ProjectId" Type="varchar" Mode="In" />
@@ -3743,7 +3743,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="Duration" Type="varchar" Mode="In" />
     <Parameter Name="Status" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_VisaDetailsReport" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="Country" Type="varchar" Mode="In" />
@@ -3753,17 +3753,17 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="Location" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_WaitingRelease" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_get_WFMPendingList" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="USP_GETCNTRYHOLIDAYS_HWM" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="CNTRY_ID" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_getnewresrcfrctrevempid" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="projid" Type="varchar" Mode="In" />
-    <Parameter Name="empid" Type="int" Mode="In" />
+    <Parameter Name="empid" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_getresrcempid" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="projid" Type="varchar" Mode="In" />
@@ -3784,7 +3784,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="countryid" Type="smallint" Mode="In" />
   </Function>
   <Function Name="usp_insert_customer" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="CUST_ID" Type="int" Mode="In" />
+    <Parameter Name="CUST_ID" Type="varchar" Mode="In" />
     <Parameter Name="CUST_NM" Type="varchar" Mode="In" />
     <Parameter Name="INDUSTRY_TYPE" Type="varchar" Mode="In" />
     <Parameter Name="URL" Type="varchar" Mode="In" />
@@ -3794,10 +3794,10 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="UPDATED_DATE" Type="datetime" Mode="In" />
   </Function>
   <Function Name="usp_insert_employee" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EMP_ID" Type="int" Mode="In" />
+    <Parameter Name="EMP_ID" Type="varchar" Mode="In" />
     <Parameter Name="BASE_CNTRY_ID" Type="smallint" Mode="In" />
-    <Parameter Name="MANAGER_EMP_ID" Type="int" Mode="In" />
-    <Parameter Name="REVIEWER_EMP_ID" Type="int" Mode="In" />
+    <Parameter Name="MANAGER_EMP_ID" Type="varchar" Mode="In" />
+    <Parameter Name="REVIEWER_EMP_ID" Type="varchar" Mode="In" />
     <Parameter Name="EMPL_TYPE" Type="varchar" Mode="In" />
     <Parameter Name="FRST_NM" Type="varchar" Mode="In" />
     <Parameter Name="MIDDLE_NM" Type="varchar" Mode="In" />
@@ -3842,11 +3842,11 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ProjName" Type="varchar" Mode="In" />
     <Parameter Name="ProjDM" Type="int" Mode="In" />
     <Parameter Name="ProjBU" Type="int" Mode="In" />
-    <Parameter Name="CreateBy" Type="int" Mode="In" />
+    <Parameter Name="CreateBy" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_insert_project_additionalcost" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="SOW_ID" Type="int" Mode="In" />
-    <Parameter Name="EMP_ID" Type="int" Mode="In" />
+    <Parameter Name="EMP_ID" Type="varchar" Mode="In" />
     <Parameter Name="EXPENSE_ITEM_ID" Type="int" Mode="In" />
     <Parameter Name="AMOUNT" Type="numeric" Mode="In" />
     <Parameter Name="COMMENT" Type="varchar" Mode="In" />
@@ -3870,7 +3870,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="MilestoneId" Type="int" Mode="InOut" />
   </Function>
   <Function Name="usp_insert_project_resource" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpId" Type="int" Mode="In" />
+    <Parameter Name="EmpId" Type="varchar" Mode="In" />
     <Parameter Name="ProjectId" Type="varchar" Mode="In" />
     <Parameter Name="IsBillable" Type="bit" Mode="In" />
     <Parameter Name="AllctPct" Type="int" Mode="In" />
@@ -3923,7 +3923,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_insert_update_currencyrateconversion" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
   <Function Name="usp_insert_update_proj_reven_apprl" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="projrevid" Type="int" Mode="In" />
-    <Parameter Name="apprempid" Type="int" Mode="In" />
+    <Parameter Name="apprempid" Type="varchar" Mode="In" />
     <Parameter Name="apprlsts" Type="varchar" Mode="In" />
     <Parameter Name="apprllevel" Type="smallint" Mode="In" />
     <Parameter Name="username" Type="varchar" Mode="In" />
@@ -3968,7 +3968,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   </Function>
   <Function Name="usp_Insert_Update_UserRights" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="year" Type="int" Mode="In" />
-    <Parameter Name="CustomerId" Type="int" Mode="In" />
+    <Parameter Name="CustomerId" Type="varchar" Mode="In" />
     <Parameter Name="projectId" Type="int" Mode="In" />
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
     <Parameter Name="EmpID" Type="varchar" Mode="In" />
@@ -3985,7 +3985,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="TODO" Type="int" Mode="In" />
     <Parameter Name="OWNER" Type="varchar" Mode="In" />
     <Parameter Name="DESCRIPTION" Type="varchar(max)" Mode="In" />
-    <Parameter Name="CUST_ID" Type="int" Mode="In" />
+    <Parameter Name="CUST_ID" Type="varchar" Mode="In" />
     <Parameter Name="PROJ_ID" Type="varchar" Mode="In" />
     <Parameter Name="SUB_PROJ_ID" Type="int" Mode="In" />
     <Parameter Name="CREATED_BY" Type="varchar" Mode="In" />
@@ -4054,7 +4054,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_update_project_additionalcost" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="PROJECT_EXPENSE_ID" Type="int" Mode="In" />
     <Parameter Name="SOW_ID" Type="int" Mode="In" />
-    <Parameter Name="EMP_ID" Type="int" Mode="In" />
+    <Parameter Name="EMP_ID" Type="varchar" Mode="In" />
     <Parameter Name="EXPENSE_ITEM_ID" Type="int" Mode="In" />
     <Parameter Name="AMOUNT" Type="numeric" Mode="In" />
     <Parameter Name="COMMENT" Type="varchar" Mode="In" />
@@ -4163,7 +4163,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="TODO" Type="int" Mode="In" />
     <Parameter Name="OWNER" Type="varchar" Mode="In" />
     <Parameter Name="DESCRIPTION" Type="varchar(max)" Mode="In" />
-    <Parameter Name="CUST_ID" Type="int" Mode="In" />
+    <Parameter Name="CUST_ID" Type="varchar" Mode="In" />
     <Parameter Name="PROJ_ID" Type="varchar" Mode="In" />
     <Parameter Name="SUB_PROJ_ID" Type="int" Mode="In" />
     <Parameter Name="UPDATED_BY" Type="varchar" Mode="In" />
@@ -4173,15 +4173,15 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
   <Function Name="usp_UpdateComments" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ResID" Type="int" Mode="In" />
     <Parameter Name="Comments" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_UpdateCountryMaster" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_UpdateCurrencyMaster" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_UpdateCustomerDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ClientID" Type="int" Mode="In" />
@@ -4192,7 +4192,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ModifiedBy" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_UpdateEmployeeDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="FirstName" Type="varchar" Mode="In" />
     <Parameter Name="MiddleName" Type="varchar" Mode="In" />
     <Parameter Name="LastName" Type="varchar" Mode="In" />
@@ -4201,8 +4201,8 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="DOB" Type="datetime" Mode="In" />
     <Parameter Name="Gender" Type="char" Mode="In" />
     <Parameter Name="DepartmentID" Type="int" Mode="In" />
-    <Parameter Name="ReportingManagerID" Type="int" Mode="In" />
-    <Parameter Name="ReviewManagerID" Type="int" Mode="In" />
+    <Parameter Name="ReportingManagerID" Type="varchar" Mode="In" />
+    <Parameter Name="ReviewManagerID" Type="varchar" Mode="In" />
     <Parameter Name="EmployeeLevel" Type="varchar" Mode="In" />
     <Parameter Name="EmployeeTittle" Type="varchar" Mode="In" />
     <Parameter Name="EmployeeType" Type="varchar" Mode="In" />
@@ -4223,23 +4223,23 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="Promotion" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_UpdateEmployeeDetailsBulk" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="FirstName" Type="varchar" Mode="In" />
     <Parameter Name="DOJ" Type="datetime" Mode="In" />
     <Parameter Name="Gender" Type="varchar" Mode="In" />
-    <Parameter Name="ReportingManagerID" Type="int" Mode="In" />
-    <Parameter Name="ReviewManagerID" Type="int" Mode="In" />
+    <Parameter Name="ReportingManagerID" Type="varchar" Mode="In" />
+    <Parameter Name="ReviewManagerID" Type="varchar" Mode="In" />
     <Parameter Name="MobileNo" Type="varchar" Mode="In" />
     <Parameter Name="Email" Type="varchar" Mode="In" />
     <Parameter Name="RRF" Type="int" Mode="In" />
     <Parameter Name="ModifiedBy" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_UpdateEmployeeRole" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
   </Function>
   <Function Name="usp_UpdateMyTeamTimesheet" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="StartDate" Type="datetime" Mode="In" />
     <Parameter Name="EndDate" Type="datetime" Mode="In" />
@@ -4251,7 +4251,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
   </Function>
   <Function Name="usp_UpdatePassportDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="Passport" Type="varchar" Mode="In" />
     <Parameter Name="PlaceOfIssue" Type="varchar" Mode="In" />
     <Parameter Name="Country" Type="int" Mode="In" />
@@ -4279,30 +4279,30 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="AccountManager" Type="int" Mode="In" />
     <Parameter Name="ModifiedBy" Type="int" Mode="In" />
     <Parameter Name="DepartmentId" Type="int" Mode="In" />
-    <Parameter Name="CustomerId" Type="int" Mode="In" />
+    <Parameter Name="CustomerId" Type="varchar" Mode="In" />
     <Parameter Name="BUID" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_UpdateProjectMapping" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="DummyID" Type="varchar" Mode="In" />
     <Parameter Name="ProjID" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_UpdateResourceAssign" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="ReqID" Type="int" Mode="In" />
     <Parameter Name="Status" Type="varchar" Mode="In" />
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="Reason" Type="varchar" Mode="In" />
     <Parameter Name="ModifiedBy" Type="int" Mode="In" />
     <Parameter Name="Priority" Type="varchar" Mode="In" />
     <Parameter Name="RequestType" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_UpdateResourceDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="CountryID" Type="int" Mode="In" />
     <Parameter Name="Billability" Type="bit" Mode="In" />
-    <Parameter Name="ReviewManagerID" Type="int" Mode="In" />
-    <Parameter Name="ReportingManagerID" Type="int" Mode="In" />
+    <Parameter Name="ReviewManagerID" Type="varchar" Mode="In" />
+    <Parameter Name="ReportingManagerID" Type="varchar" Mode="In" />
     <Parameter Name="Allocation" Type="int" Mode="In" />
     <Parameter Name="StartDate" Type="date" Mode="In" />
     <Parameter Name="EndDate" Type="date" Mode="In" />
@@ -4315,7 +4315,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="ModifiedBy" Type="int" Mode="In" />
   </Function>
   <Function Name="usp_UpdateResourceRelease" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="ProjectID" Type="varchar" Mode="In" />
     <Parameter Name="ReleaseDate" Type="date" Mode="In" />
     <Parameter Name="ReleaseReason" Type="varchar" Mode="In" />
@@ -4347,40 +4347,40 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="BehavioralDesc" Type="varchar" Mode="In" />
     <Parameter Name="AdditionalDesc" Type="varchar" Mode="In" />
     <Parameter Name="RRFType" Type="varchar" Mode="In" />
-    <Parameter Name="EmployeeID" Type="int" Mode="In" />
+    <Parameter Name="EmployeeID" Type="varchar" Mode="In" />
     <Parameter Name="SFDCStatus" Type="varchar" Mode="In" />
     <Parameter Name="SOWStatus" Type="varchar" Mode="In" />
     <Parameter Name="WorkHour" Type="varchar" Mode="In" />
     <Parameter Name="ClientInterview" Type="bit" Mode="In" />
   </Function>
   <Function Name="usp_UpdateSkillSet" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
   </Function>
   <Function Name="usp_UpdateSkillsetMaster" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
   </Function>
   <Function Name="usp_UpdateTimesheet" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
     <Parameter Name="StartDate" Type="datetime" Mode="In" />
     <Parameter Name="EndDate" Type="datetime" Mode="In" />
   </Function>
   <Function Name="usp_UpdateTimesheet_old" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
     <Parameter Name="WeekNo" Type="int" Mode="In" />
     <Parameter Name="TaskStatus" Type="varchar" Mode="In" />
   </Function>
   <Function Name="usp_UpdateTimesheetExtend" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="EmpID" Type="int" Mode="In" />
+    <Parameter Name="EmpID" Type="varchar" Mode="In" />
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
     <Parameter Name="Date" Type="datetime" Mode="In" />
   </Function>
   <Function Name="usp_UploadExcelFile" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
     <Parameter Name="proj_ID" Type="varchar" Mode="In" />
     <Parameter Name="date_ID" Type="int" Mode="In" />
-    <Parameter Name="upld_Emp_ID" Type="int" Mode="In" />
+    <Parameter Name="upld_Emp_ID" Type="varchar" Mode="In" />
     <Parameter Name="upld_Date" Type="datetime" Mode="In" />
     <Parameter Name="timesheet_Name" Type="varchar" Mode="In" />
     <Parameter Name="timesheet_Data" Type="varbinary(max)" Mode="In" />
@@ -4403,7 +4403,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <Parameter Name="XmlString" Type="varchar(max)" Mode="In" />
   </Function>
   <Function Name="usp_validateuser" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-    <Parameter Name="empid" Type="int" Mode="In" />
+    <Parameter Name="empid" Type="varchar" Mode="In" />
     <Parameter Name="count" Type="int" Mode="InOut" />
   </Function>
   <Function Name="utvf_SPlit" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -4606,7 +4606,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     [PROJMGT_DEFECT].[OWNER] AS [OWNER], 
     [PROJMGT_DEFECT].[DESCRIPTION] AS [DESCRIPTION], 
     [PROJMGT_DEFECT].[NOTES] AS [NOTES], 
-    [PROJMGT_DEFECT].[CUST_IT] AS [CUST_IT], 
+    [PROJMGT_DEFECT].[CUST_ID] AS [CUST_ID], 
     [PROJMGT_DEFECT].[PROJ_ID] AS [PROJ_ID], 
     [PROJMGT_DEFECT].[SUB_PROJ_ID] AS [SUB_PROJ_ID], 
     [PROJMGT_DEFECT].[OPENED_DATE] AS [OPENED_DATE], 
@@ -4657,7 +4657,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
       <DefiningQuery>SELECT 
     [PROJMGT_SUBPROJECT].[ID] AS [ID], 
     [PROJMGT_SUBPROJECT].[NAME] AS [NAME], 
-    [PROJMGT_SUBPROJECT].[CUST_IT] AS [CUST_IT], 
+    [PROJMGT_SUBPROJECT].[CUST_ID] AS [CUST_ID], 
     [PROJMGT_SUBPROJECT].[PROJ_ID] AS [PROJ_ID], 
     [PROJMGT_SUBPROJECT].[CREATED_BY] AS [CREATED_BY], 
     [PROJMGT_SUBPROJECT].[CREATED_DATE] AS [CREATED_DATE], 
@@ -4681,7 +4681,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     [PROJMGT_TASK].[OWNER] AS [OWNER], 
     [PROJMGT_TASK].[DESCRIPTION] AS [DESCRIPTION], 
     [PROJMGT_TASK].[NOTES] AS [NOTES], 
-    [PROJMGT_TASK].[CUST_IT] AS [CUST_IT], 
+    [PROJMGT_TASK].[CUST_ID] AS [CUST_ID], 
     [PROJMGT_TASK].[PROJ_ID] AS [PROJ_ID], 
     [PROJMGT_TASK].[SUB_PROJ_ID] AS [SUB_PROJ_ID], 
     [PROJMGT_TASK].[CREATED_BY] AS [CREATED_BY], 
@@ -4701,7 +4701,7 @@ warning 6002: The table/view 'BAS_DEV.dbo.WFM_LWD' does not have a primary key d
     <EntitySet Name="PROJMGT_TEAM" EntityType="Self.PROJMGT_TEAM" store:Type="Tables" store:Schema="dbo">
       <DefiningQuery>SELECT 
     [PROJMGT_TEAM].[ID] AS [ID], 
-    [PROJMGT_TEAM].[CUST_IT] AS [CUST_IT], 
+    [PROJMGT_TEAM].[CUST_ID] AS [CUST_ID], 
     [PROJMGT_TEAM].[PROJ_ID] AS [PROJ_ID], 
     [PROJMGT_TEAM].[SUB_PROJ_ID] AS [SUB_PROJ_ID], 
     [PROJMGT_TEAM].[EMP_ID] AS [EMP_ID], 

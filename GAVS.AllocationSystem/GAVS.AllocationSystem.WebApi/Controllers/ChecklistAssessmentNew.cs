@@ -2149,7 +2149,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 selectedccs = string.Join(",", Cldb.EMP_INFO.GetAll().Where(x => checklistSendMail.CC_LIST.Contains(x.EMP_ID) && x.DOR == null).Select(X => X.EMAIL_ID));
 
             var auditorMail = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == checklistSendMail.AUDITOR_ID && x.DOR == null);
-
+            var qualityHeadMail = string.Join(", ", helper.GetDBConfig("QUALITY_HEAD_MAIL", "-1"));
             var subject = $"Project: {checklistSendMail.PROJECT_NAME} - {checklistSendMail.SUBJECT}";
             var recipientDtls = recipientsDetails.FirstOrDefault(x => !x.IsCC);
             if (recipientDtls != null)
@@ -2172,7 +2172,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ccMailId = string.Join(",", ccMailIds.Select(x => x.MailID));
             }
             var qspoc = GetQSPOCMailforAssessment(proj);
-            ccmail = helper.ConcatEmails(new List<string>() { pmMails, csmMails, ccMailId, selectedccs, qspoc, Constants.DEVX_LEAD, Constants.AUDITOR_LEAD }); // quality spoc , auditor
+            ccmail = helper.ConcatEmails(new List<string>() { pmMails, csmMails, ccMailId, selectedccs, qspoc, qualityHeadMail, Constants.DEVX_LEAD }); // quality spoc , auditor
             bool showCapaTable = checklistSendMail.SUBJECT.ToLower().Contains("corrective action plan");
             var htmlCapaTable = string.Empty;
             if (showCapaTable)
@@ -3222,6 +3222,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var project = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projId);
             var task = CSPdb.TASK.GetAll().FirstOrDefault(x => x.ID == assessmentId);
             var audit = CSPdb.AUDIT_SCHEDULE.GetAll().FirstOrDefault(x => x.TASK_ID == task.ID);
+            if (audit == null)
+            {
+                throw new InvalidOperationException($"No audit schedule found for task : {task.DESCRIPTION}");
+            }
+
             var auditScheduleRef = CSPdb.AUDIT_SCHEDULE_REF.GetAll().Where(x => x.AUDIT_SCHEDULE_ID == audit.ID).ToList();
             var auditExecutionSummary = CSPdb.AUDIT_CHECKLIST_EXECUTION_SUMMARY.GetAll().FirstOrDefault(x => x.ASSESSMENT_ID == assessmentId);
 

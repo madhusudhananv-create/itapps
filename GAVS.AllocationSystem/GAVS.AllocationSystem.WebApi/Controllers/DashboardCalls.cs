@@ -1045,7 +1045,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     PROJECT_PLAN_URL = project.PROJECT_PLAN_URL,
                     TOTAL_KPIS = GetTotalKPIsCount(projectKPIs),
                     MET_KPIS = GetMetKPIsCount(projectKPIs),
-                    TOTAL_KPI_AREA = kpiAreas
+                    TOTAL_KPI_AREA = kpiAreas,
+                    BUSINESS_UNIT = project.BUSINESS_UNIT
                 };
 
                 scores.Add(goalScore);
@@ -3304,13 +3305,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             //Update QASpoc
-            if (!string.IsNullOrEmpty(projectDetails.QA_SPOC))
+            if (!string.IsNullOrEmpty(projectDetails.QA_SPOC) || !string.IsNullOrEmpty(projectDetails.GOVERNANCE_APPLICABILITY))
             {
-                selectedProject.QUALITY_SPOC = projectDetails.QA_SPOC;
+                if (!string.IsNullOrEmpty(projectDetails.QA_SPOC))
+                    selectedProject.QUALITY_SPOC = projectDetails.QA_SPOC;
+
+                if (!string.IsNullOrEmpty(projectDetails.GOVERNANCE_APPLICABILITY))
+                    selectedProject.GOVERNANCE_APPLICABILITY = projectDetails.GOVERNANCE_APPLICABILITY;
+
                 selectedProject.UPDATED_DATE = DateTime.Today;
                 selectedProject.UPDATED_BY = empId.ToString();
                 Cldb.PROJECT.Update(selectedProject);
             }
+
 
             //Update Certification Scope
             var existingScopes = Cldb.PROJECT_CERTIFICATION_SCOPE_MAPPING.GetAll().Where(x => x.PROJECT_ID == projectDetails.PROJECT_ID && x.ISACTIVE).ToList();
@@ -3410,6 +3417,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             emailContentValues.Add("PROJECT_NAME", selectedProject.PROJ_NM);
             emailContentValues.Add("QUALITY_SPOC", projectPeople.QSPOC_NAME);
             emailContentValues.Add("CERTIFICATION_SCOPES_NAME", projectPeople.CERTIFICATION_SCOPES_NAME);
+            emailContentValues.Add("GOVERNANCE_APPLICABILITY", projectPeople.GOVERNANCE_APPLICABILITY);
             emailContentValues.Add("ISO_STANDARDS_NAME", projectPeople.ISO_STANDARDS_NAME);
             emailContentValues.Add("UPDATED_BY", updatedBy);
             emailContentValues.Add("UPDATED_DATE", DateTime.Now.ToString(_dateformat));

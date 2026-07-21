@@ -14196,12 +14196,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 int causeIdOrRootCauseId = Convert.ToInt32(i);
 
-                var res = isFromFinding ? capaSubmission.FirstOrDefault(x => x.CAPPALIST.ROOT_CAUSE_ID == causeIdOrRootCauseId) : capaSubmission.FirstOrDefault(x => x.CAUSE_ID == causeIdOrRootCauseId);
+                var res = isFromFinding ? capaSubmission.FirstOrDefault(x => x.CAPPALIST.ROOT_CAUSE_ID.GetValueOrDefault() == causeIdOrRootCauseId) : capaSubmission.FirstOrDefault(x => x.CAUSE_ID == causeIdOrRootCauseId);
 
                 var rootcause = isFromFinding ? rootcauseList.FirstOrDefault(x => x.ID == causeIdOrRootCauseId) : rootcauseList.FirstOrDefault(x => x.CAUSE_ID == causeIdOrRootCauseId);
 
-                if (res == null)
+                if (res == null && rootcause != null)
                 {
+
                     cause = new AUDIT_FINDING_CAPPA_EXT();
                     cause.CAUSE_ID = isFromFinding ? rootcause.CAUSE_ID : causeIdOrRootCauseId;
                     cause.CAPPALIST = new AUDIT_FINDINGS_CAPA();
@@ -26367,6 +26368,36 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 sb.Append("</tr>");
             }
             return sb.ToString();
+        }
+
+        [POST("UpdateEmpInfoDetails")]
+        [ActionName("UpdateEmpInfoDetails")]
+        [HttpPost]
+        public IHttpActionResult UpdateEmpInfoDetails(string empId, int csmtitleId)
+        {
+            if (string.IsNullOrEmpty(empId))
+            {
+                return BadRequest("Invalid or missing employee ID.");
+            }
+            try
+            {
+                EMP_INFO e = Cldb.EMP_INFO.GetById(empId);
+
+                if (e == null)
+                {
+                    return NotFound(); 
+                }
+
+                e.CSM_TITLE_ID = csmtitleId;
+                Cldb.EMP_INFO.Update(e);
+                Cldb.Commit(CanCommit);
+
+                return Ok(new { message = "Updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
         }
 
 

@@ -40,6 +40,7 @@ interface CellDetail {
   color?: string;
   toolTip?: string;
   celltype?: string;
+  
   [key: string]: any; // Allow additional properties
 }
 

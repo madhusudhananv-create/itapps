@@ -57,9 +57,10 @@ namespace GAVS.AllocationSystem.Model.AllSys
         public string PROJ_EP_ID { get; set; }
         public string EXECUTION_TYPE { get; set; }
         public string ENGAGAMENT_TYPE { get; set; }
-        
 
-            
+        public string GOVERNANCE_APPLICABILITY { get; set; }
+
+
     }
 
     public class PROJECTSPOC

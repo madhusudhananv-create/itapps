@@ -265,6 +265,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string QA_SPOC {get; set;}
         public int[] CERTIFICATION_SCOPE {get; set;}
         public int[] ISO_STANDARD {get; set;}
+        public string GOVERNANCE_APPLICABILITY {get; set;}
     }
 
     public partial class ProjectHeads  
@@ -285,6 +286,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public string ISO_STANDARDS_NAME {get; set;}
         public string DP {get; set;}
         public string DP_NAME {get; set;}
+        public string GOVERNANCE_APPLICABILITY {get; set;}
     }
 
     public partial class ProjectCertificationScopes  

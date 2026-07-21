@@ -580,6 +580,7 @@
     <Compile Include="App_Start\NinjectDependencyResolver.cs" />
     <Compile Include="App_Start\NinjectDependencyScope.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\AccessManagementController.cs" />
     <Compile Include="Controllers\ActionItemController.cs" />
     <Compile Include="Controllers\AuthControllerCSS.cs" />
     <Compile Include="Controllers\ChecklistMergeController.cs" />
