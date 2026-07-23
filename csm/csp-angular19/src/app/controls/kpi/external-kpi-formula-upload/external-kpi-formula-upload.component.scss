@@ -1,0 +1,543 @@
+/**
+ * Apple-Inspired Modern UI for KPI Formula Upload
+ * Design Philosophy: Clean, Minimal, Delightful
+ * Matches external-kpi-data-upload component styling
+ */
+
+// Design Tokens
+$primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$success: #34c759;
+$error: #ff3b30;
+$text-primary: #1d1d1f;
+$text-secondary: #6e6e73;
+$border: #e5e5ea;
+$radius-lg: 16px;
+$radius-md: 12px;
+$shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+$transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// Global Material Dialog Overrides
+:host ::ng-deep {
+  .modern-dialog-container {
+    .mat-mdc-dialog-container {
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      border-radius: $radius-lg !important;
+      overflow: visible !important;
+      max-height: none !important;
+      
+      .mat-mdc-dialog-surface {
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: $radius-lg !important;
+        overflow: visible !important;
+      }
+    }
+  }
+}
+
+// Modern Dialog Container
+.modern-dialog {
+  position: relative;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: $radius-lg;
+  overflow: visible;
+  box-shadow: $shadow;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  min-height: auto;
+}
+
+// Header
+.dialog-header {
+  background: $primary;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+  border-radius: $radius-lg $radius-lg 0 0;
+  
+  .header-content {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex: 1;
+  }
+  
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: $transition;
+    
+    &:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+  
+  .header-icon {
+    color: white;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .header-text {
+    flex: 1;
+  }
+  
+  .dialog-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+  
+  .dialog-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  
+  .close-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transition: $transition;
+    border-radius: 50%;
+    flex-shrink: 0;
+    
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg) scale(1.1);
+    }
+  }
+}
+
+// Progress
+.progress-container {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  
+  .modern-progress {
+    height: 4px;
+  }
+}
+
+// Body
+.dialog-body {
+  padding: 32px;
+  flex: 1;
+  overflow: visible;
+}
+
+.form-section {
+  margin-bottom: 28px;
+  animation: fadeIn $transition;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: 12px;
+  
+  .label-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #667eea;
+  }
+  
+  .label-hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: $text-secondary;
+    margin-left: 4px;
+  }
+}
+
+// Select Dropdown
+.select-wrapper {
+  position: relative;
+  
+  .modern-select {
+    width: 100%;
+    padding: 14px 40px 14px 16px;
+    font-size: 15px;
+    border: 2px solid $border;
+    border-radius: $radius-md;
+    background: white;
+    color: $text-primary;
+    cursor: pointer;
+    transition: $transition;
+    appearance: none;
+    
+    &:hover:not(:disabled) {
+      border-color: #667eea;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    &:disabled {
+      background: #f5f5f7;
+      cursor: not-allowed;
+    }
+  }
+  
+  .select-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: $text-secondary;
+    font-size: 24px;
+  }
+}
+
+// Upload Container
+.upload-container {
+  animation: fadeIn $transition;
+}
+
+// Drop Zone
+.drop-zone {
+  border: 2px dashed $border;
+  border-radius: $radius-md;
+  padding: 40px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: $transition;
+  background: #fafafa;
+  
+  &:hover:not(.has-file) {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.02);
+    transform: translateY(-2px);
+  }
+  
+  &.drag-over {
+    border-color: #667eea;
+    border-style: solid;
+    background: rgba(102, 126, 234, 0.05);
+    
+    .upload-icon {
+      animation: bounce 0.5s ease infinite;
+    }
+  }
+  
+  &.has-file {
+    border-color: $success;
+    border-style: solid;
+    background: rgba(52, 199, 89, 0.02);
+    padding: 24px;
+  }
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.upload-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #667eea;
+  margin-bottom: 8px;
+}
+
+.drop-zone-text {
+  font-size: 15px;
+  color: $text-primary;
+  margin: 0;
+  
+  strong {
+    color: #667eea;
+    font-weight: 600;
+  }
+}
+
+.drop-zone-hint {
+  font-size: 13px;
+  color: $text-secondary;
+  margin: 0;
+}
+
+// File Preview
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: $radius-md;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  .file-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #667eea;
+    flex-shrink: 0;
+  }
+  
+  .file-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .file-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .file-size {
+    font-size: 12px;
+    color: $text-secondary;
+    margin: 0;
+  }
+  
+  .remove-file-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: rgba(255, 59, 48, 0.1);
+    color: $error;
+    flex-shrink: 0;
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+    
+    &:hover {
+      background: rgba(255, 59, 48, 0.15);
+      transform: rotate(90deg) scale(1.1);
+    }
+  }
+}
+
+// Footer
+.dialog-footer {
+  padding: 20px 32px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid $border;
+  background: #fafafa;
+  border-radius: 0 0 $radius-lg $radius-lg;
+  flex-shrink: 0;
+}
+
+.cancel-btn {
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  color: $text-primary;
+  border-radius: $radius-md;
+  transition: $transition;
+  
+  &:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.upload-btn {
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  background: $primary;
+  color: white;
+  border-radius: $radius-md;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: $transition;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+  
+  mat-spinner {
+    margin-right: 4px;
+  }
+  
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Animations
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .dialog-header {
+    padding: 16px 20px;
+    
+    .icon-wrapper {
+      width: 40px;
+      height: 40px;
+    }
+    
+    .dialog-title {
+      font-size: 18px;
+    }
+    
+    .dialog-subtitle {
+      font-size: 12px;
+    }
+  }
+  
+  .dialog-body {
+    padding: 24px 20px;
+  }
+  
+  .dialog-footer {
+    padding: 16px 20px;
+  }
+  
+  .drop-zone {
+    padding: 32px 24px;
+  }
+}
+
+// Dark Mode Support
+@media (prefers-color-scheme: dark) {
+  .modern-dialog {
+    background: rgba(30, 30, 30, 0.98);
+  }
+  
+  .dialog-body {
+    background: transparent;
+  }
+  
+  .form-label {
+    color: #f5f5f7;
+  }
+  
+  .modern-select {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #f5f5f7;
+  }
+  
+  .drop-zone {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .file-preview {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .dialog-footer {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+// Accessibility
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus visible
+*:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}

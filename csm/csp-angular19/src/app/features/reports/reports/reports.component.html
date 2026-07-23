@@ -1,0 +1,288 @@
+<!-- ===================================================================
+     REPORTS PAGE - MODERN REDESIGN
+     Apple-Inspired Clean UI with Enhanced UX
+     =================================================================== -->
+
+<div class="reports-container">
+
+  <!-- Filters Card (includes compact "Reports" heading) -->
+  <div class="filters-card">
+    <div class="card-heading">
+      <mat-icon>assessment</mat-icon>
+      <span>Reports</span>
+    </div>
+    <div class="filters-row">
+      
+      <!-- Report Type Selection -->
+      <div class="filter-group">
+        <label class="filter-label">
+          <mat-icon class="label-icon">description</mat-icon>
+          Report Type
+        </label>
+        <mat-select 
+          class="modern-select" 
+          [(ngModel)]="selectedSP" 
+          name="ddProcess" 
+          (ngModelChange)="service_getAllparamsbyId()"
+          placeholder="Select a Report">
+          <mat-select-trigger>
+            {{selectedSP?.sP_DISPLAY_NAME}}
+          </mat-select-trigger>
+          <mat-option class="search-option" disabled>
+            <mat-form-field class="search-field" appearance="outline">
+              <mat-icon matPrefix>search</mat-icon>
+              <input 
+                matInput 
+                [(ngModel)]="reportSearchText" 
+                placeholder="Search reports..."
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()">
+            </mat-form-field>
+          </mat-option>
+          <mat-option *ngFor="let type of getFilteredReports()" [value]="type" [title]="type.sP_DISPLAY_NAME">
+            {{type.sP_DISPLAY_NAME}}
+          </mat-option>
+        </mat-select>
+      </div>
+
+      <!-- Dynamic Parameters -->
+      <div *ngFor="let p of paramData; let i = index" class="filter-group">
+        <label class="filter-label">
+          {{p.paraM_NAME}}
+          <span *ngIf="p.paraM_TYPE=='DATE'" class="date-format-hint">(DD/MM/YYYY)</span>
+        </label>
+        
+        <!-- Integer Input -->
+        <input 
+          *ngIf="p.paraM_TYPE=='INTEGER'" 
+          type="number" 
+          class="modern-input" 
+          [(ngModel)]="p.paraM_VALUE"
+          [placeholder]="'Enter ' + p.paraM_NAME">
+        
+        <!-- String Input -->
+        <input 
+          *ngIf="p.paraM_TYPE=='STRING'" 
+          type="text" 
+          class="modern-input" 
+          [(ngModel)]="p.paraM_VALUE"
+          [placeholder]="'Enter ' + p.paraM_NAME">
+        
+        <!-- Date Input -->
+        <div *ngIf="p.paraM_TYPE=='DATE'" class="date-wrapper">
+          <input 
+            type="date" 
+            class="modern-input date-input" 
+            [(ngModel)]="p.paraM_VALUE">
+        </div>
+        
+        <!-- Customer Dropdown -->
+        <mat-select 
+          *ngIf="p.paraM_TYPE=='CUSTOMERID'" 
+          class="modern-select" 
+          name="ddProject"
+          [(ngModel)]="selectedCustomer"
+          placeholder="Select Customer" #multiselect>
+          <mat-select-trigger>
+            {{selectedCustomer?.cusT_NM}}
+          </mat-select-trigger>
+          <mat-option class="search-option" disabled>
+            <mat-form-field class="search-field" appearance="outline">
+              <mat-icon matPrefix>search</mat-icon>
+              <input 
+                matInput 
+                [(ngModel)]="customerSearchText" 
+                placeholder="Search customers..."
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()">
+            </mat-form-field>
+          </mat-option>
+          <mat-option *ngFor="let c of getFilteredCustomers()" [value]="c" [title]="c.cusT_NM">
+            {{c.cusT_NM}}
+          </mat-option>
+        </mat-select>
+        
+        <!-- Product Dropdown -->
+        <mat-select 
+          *ngIf="p.paraM_TYPE=='PRODUCTID'" 
+          class="modern-select" 
+          name="ddProduct"
+          [(ngModel)]="selectedProduct"
+          placeholder="Select Product">
+          <mat-option *ngFor="let p of products" [value]="p" [title]="p.producT_TITLE">
+            {{p.producT_TITLE}}
+          </mat-option>
+        </mat-select>
+        
+        <!-- Portfolio Dropdown -->
+        <mat-select 
+          *ngIf="p.paraM_TYPE=='PORTFOLIOID'" 
+          class="modern-select" 
+          name="ddPort"
+          [(ngModel)]="selectedPort"
+          placeholder="Select Portfolio">
+          <mat-option *ngFor="let p of portfolio" [value]="p" [title]="p.title">
+            {{p.title}}
+          </mat-option>
+        </mat-select>
+        
+        <!-- Checklist Dropdown -->
+        <mat-select 
+          *ngIf="p.paraM_TYPE=='CHECKLIST'" 
+          class="modern-select" 
+          name="ddChecklist"
+          [(ngModel)]="selectedChecklist"
+          placeholder="Select Checklist">
+          <mat-option *ngFor="let c of checklist" [value]="c" [title]="c.title === 'All' ? 'All' : (c.title +' - '+ c.version)">
+            {{c.title === 'All' ? 'All' : (c.title +' - '+ c.version)}}
+          </mat-option>
+        </mat-select>
+      </div>
+
+      <!-- Get Details Button -->
+      <div class="filter-group action-group">
+        <label class="filter-label">&nbsp;</label>
+        <button 
+          *ngIf="showDisplayButton"
+          class="btn-primary btn-compact" 
+          (click)="bindData()" 
+          [disabled]="isdisabled">
+          <mat-icon>search</mat-icon>
+          Get Details
+        </button>
+      </div>
+
+      <!-- Spacer -->
+      <div class="spacer"></div>
+
+      <!-- Export to Excel Button -->
+      <div *ngIf="selectedSP?.sP_NAME" class="filter-group action-group">
+        <label class="filter-label">&nbsp;</label>
+        <button 
+          class="btn-secondary excel-btn btn-icon-only" 
+          (click)="ExportTOExcel()"
+          title="Export to Excel">
+          <mat-icon>file_download</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <mat-progress-bar 
+      *ngIf="showDisplayButton && isdisabled" 
+      mode="indeterminate"
+      class="modern-progress">
+    </mat-progress-bar>
+  </div>
+
+  <!-- Data Table -->
+  <div class="table-card" #TABLE>
+
+    <!-- Table toolbar: wild search + row count + column controls -->
+    <div class="table-toolbar" *ngIf="displayedColumns.length > 0">
+      <div class="toolbar-left">
+        <div class="global-search">
+          <mat-icon>search</mat-icon>
+          <input
+            type="text"
+            [(ngModel)]="globalSearchText"
+            (ngModelChange)="applyGlobalFilter()"
+            placeholder="Search all columns...">
+          <button *ngIf="globalSearchText" class="clear-search-btn" (click)="clearGlobalFilter()" matTooltip="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <span class="row-count-badge">
+          <mat-icon>table_rows</mat-icon>
+          {{ filteredRowCount }}<ng-container *ngIf="globalSearchText"> / {{ totalRowCount }}</ng-container> rows
+        </span>
+      </div>
+
+      <div class="toolbar-right" *ngIf="hasScrollableColumns">
+        <span class="col-nav-info">
+          <mat-icon>view_column</mat-icon>
+          {{ visibleColumnCount }} / {{ allColumns.length }} columns
+          <span class="col-nav-hint">· Use arrows to navigate</span>
+        </span>
+
+        <!-- Column filter picker -->
+        <button class="col-filter-btn" [matMenuTriggerFor]="colMenu" matTooltip="Show/hide columns">
+          <mat-icon>tune</mat-icon>
+          Columns
+        </button>
+
+        <mat-menu #colMenu="matMenu" class="col-picker-menu">
+          <!-- Search -->
+          <div class="col-picker-search" (click)="$event.stopPropagation()">
+            <mat-icon>search</mat-icon>
+            <input
+              [(ngModel)]="columnSearchText"
+              placeholder="Search columns..."
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()">
+          </div>
+          <!-- Select all -->
+          <div class="col-picker-all" (click)="$event.stopPropagation()">
+            <mat-checkbox
+              [checked]="allColumnsSelected"
+              [indeterminate]="visibleColumnCount > 0 && !allColumnsSelected"
+              (change)="toggleAllColumns()">
+              <span class="col-picker-all-label">Select all</span>
+            </mat-checkbox>
+          </div>
+          <div class="col-picker-divider"></div>
+          <!-- Column list -->
+          <div class="col-picker-list">
+            <div *ngFor="let col of filteredColumnNames"
+                 class="col-picker-item"
+                 (click)="$event.stopPropagation()">
+              <mat-checkbox
+                [checked]="columnVisibility[col]"
+                (change)="toggleColumn(col)">
+                <span class="col-picker-label" [title]="col | uppercase">{{ col | uppercase }}</span>
+              </mat-checkbox>
+            </div>
+            <div *ngIf="filteredColumnNames.length === 0" class="col-picker-empty">
+              No columns match
+            </div>
+          </div>
+        </mat-menu>
+
+        <!-- Scroll arrows -->
+        <button class="col-nav-btn" (click)="scrollTable('left')" matTooltip="Scroll left">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button class="col-nav-btn" (click)="scrollTable('right')" matTooltip="Scroll right">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper" #tableScrollContainer>
+      <table mat-table [dataSource]="dataSource" matSort class="modern-table">
+        
+        <ng-container *ngFor="let hdr of displayedColumns; let colIndex = index" [matColumnDef]="hdr">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{hdr | uppercase}}
+          </th>
+          <td mat-cell *matCellDef="let element">
+            {{element[hdr]}}
+          </td>
+        </ng-container>
+        
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <!-- No Data Message -->
+      <div *ngIf="showNoDataMessage && (!FinalTabData || FinalTabData.length === 0)" 
+           class="no-data-message">
+        <mat-icon>info_outline</mat-icon>
+        <p>No records found!</p>
+        <span>Try adjusting your filters or selecting a different report.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+

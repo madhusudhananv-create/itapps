@@ -1,0 +1,309 @@
+// Inlined from layout.tables.style.scss (since we're using standalone components)
+.List {
+  background-color: white;
+  border-radius: 9px;
+  margin: 5px 10px 5px 10px;
+  min-height: 600px;
+  box-shadow: 1px 2px 3px 1px #c7c7c7;
+  padding: 15px;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0 0px !important;
+  border-radius: 3px;
+  font-family: 'Roboto', sans-serif;
+  width: 100% !important;
+}
+
+.table th {
+  color: black !important;
+  font-size: 14px;
+  font-weight: 700;
+  //  height: 30px !important;
+  background-color: #e8e8e8;
+  vertical-align: middle;
+}
+
+.table td {
+  font-size: 12px;
+  //   width: 90px;
+  //    max-height: 40px !important;
+  white-space: normal;
+  // max-width: 100px;
+  vertical-align: middle;
+}
+
+.table th.mat-header-cell {
+  border-bottom-width: 0px !important;
+  border-bottom-style: none !important;
+  //  height: 30px !important;
+}
+// .table td.mat-cell{
+//   border-bottom-width: 4px !important;
+//   border-bottom-style: solid !important;
+//   margin-bottom: 4px !important;
+// }
+
+.table th,
+.table td {
+  padding: 0.75rem;
+}
+
+.mat-header-row {
+  color: black !important;
+  background-color: #e8e8e8;
+}
+
+.disable {
+  opacity: 0.5;
+  cursor: default !important;
+}
+
+// Component-specific styles
+.header {
+  text-align: right;
+  padding: 10px 30px 0 0;
+}
+
+.link {
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 20px;
+  color: steelblue;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.row {
+  padding-bottom: 0px;
+  margin-right: 0px !important;
+  padding-left: 13px;
+  padding-top: 18px;
+}
+
+.mat-cell {
+  word-break: break-word;
+  padding-left: 10px;
+}
+
+textarea.mat-input-element {
+  height: 8vh;  // Reduced from 10vh for more compact layout
+  min-height: 60px;  // Minimum height to prevent too small
+}
+
+// Compact form field styling
+::ng-deep mat-form-field {
+  &.mat-mdc-form-field {
+    // Reduce overall form field height
+    .mat-mdc-text-field-wrapper {
+      padding-bottom: 0;
+    }
+
+    // Compact infix padding
+    .mat-mdc-form-field-infix {
+      padding-top: 12px !important;  // Reduced from default 16px
+      padding-bottom: 6px !important;  // Reduced from default 8px
+      min-height: 40px;  // Reduced from default 56px
+    }
+
+    // Compact textarea
+    textarea.mat-mdc-input-element {
+      margin-top: 4px;
+      padding: 8px 0;  // Compact padding
+    }
+
+    // Compact input fields
+    input.mat-mdc-input-element {
+      padding: 8px 0;  // Compact padding
+    }
+
+    // Reduce hint/error spacing
+    .mat-mdc-form-field-subscript-wrapper {
+      margin-top: 2px;  // Reduced spacing
+      min-height: 16px;  // Compact hint area
+    }
+
+    .mat-mdc-form-field-hint-wrapper,
+    .mat-mdc-form-field-error-wrapper {
+      padding: 0;
+    }
+  }
+}
+
+.mat-header-cell {
+  color: black !important;
+  background-color: #c6ddf9;
+  font-size: 1em;
+  border-color: #f3f4f8;
+  padding-left: 10px;
+}
+
+.mat-tab-header {
+  background: #ccc;
+}
+
+mat-tab-group {
+  background-color: white;
+}
+
+::ng-deep mat-tab-body {
+  border: solid 1px rgb(226, 226, 226) !important;
+}
+
+::ng-deep .mat-tab-labels {
+  color: black;
+  font-family: calibri;
+  background-color: #ccc;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  margin: 1px;
+}
+
+::ng-deep .mat-tab-label {
+  height: 30px !important;
+  // border-top:solid 1px grey !important;
+  // border-left:solid 1px grey !important;
+  // border-right:solid 1px grey !important; //rebeccapurple
+}
+
+::ng-deep .mat-tab-label-active {
+  color: black;
+  font-family: calibri;
+  font-weight: 600;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: #59a3fd;
+}
+
+::ng-deep .mat-tab-header mat-ink-bar {
+  background-color: white !important;
+}
+
+::ng-deep .custom-tooltip {
+  white-space: pre-line;
+  max-width: 700px !important;
+  font-size: 13px;
+}
+
+::ng-deep .custom-dropdown .mat-select {
+  width: 290px !important;
+}
+
+.fixed-width-action {
+  width: 110px;
+  text-align: center;
+}
+
+// ========================================
+// Toast/Snackbar Styling
+// ========================================
+
+::ng-deep {
+  // Success toast
+  .toast-success {
+    .mdc-snackbar__surface {
+      background-color: #28a745 !important;
+      color: white !important;
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: white !important;
+      font-weight: 500;
+    }
+
+    .mat-mdc-button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  // Error toast
+  .toast-error {
+    .mdc-snackbar__surface {
+      background-color: #dc3545 !important;
+      color: white !important;
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: white !important;
+      font-weight: 500;
+    }
+
+    .mat-mdc-button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  // Warning toast
+  .toast-warning {
+    .mdc-snackbar__surface {
+      background-color: #ffc107 !important;
+      color: #2b2a2a !important;
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: #2b2a2a !important;
+      font-weight: 500;
+    }
+
+    .mat-mdc-button {
+      color: #2b2a2a !important;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+    }
+  }
+
+  // Info toast
+  .toast-info {
+    .mdc-snackbar__surface {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: white !important;
+      font-weight: 500;
+    }
+
+    .mat-mdc-button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    }
+  }
+
+  // Common toast styling
+  .mat-mdc-snack-bar-container {
+    .mdc-snackbar__surface {
+      border-radius: 8px;
+      min-width: 300px;
+      max-width: 500px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .mat-mdc-snack-bar-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .mat-mdc-button {
+      font-weight: 600;
+      border-radius: 4px;
+      transition: all 150ms ease-in-out;
+    }
+  }
+}

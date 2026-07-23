@@ -1,0 +1,28 @@
+﻿USE BAS
+GO
+
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getAppreciationDetails' AND TYPE='P')
+BEGIN
+ DROP PROCEDURE getAppreciationDetails          
+END
+GO
+
+
+CREATE PROCEDURE [dbo].[getAppreciationDetails]     
+@projIds VARCHAR(MAX)                  
+  AS                  
+  BEGIN                  
+                
+    SELECT DISTINCT A.ID,P.CUST_ID AS CUST_ID,     
+    P.PROJ_ID, P.PROJ_NM, PP.PORTFOLIO_ID, PF.TITLE AS PORTFOLIO_NAME,     
+    A.APPRECIATED_BY,A.COMMENTS,A.RECIPIENT,E.FRST_NM as RECIPIENT_NM,A.DESIGNATION,    
+    A.RECEIVED_DATE,A.CREATED_BY,A.CREATED_DATE,A.UPDATED_BY,A.UPDATED_DATE,A.ISACTIVE    
+    FROM [APPRECIATION] A     
+    INNER JOIN BAS.DBO.PROJECT P  ON a.PROJ_ID = p.PROJ_ID     
+ AND P.PROJ_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@projIds,','))  AND A.ISACTIVE = 1  
+  LEFT OUTER join BAS..EMP_INFO E on E.EMP_ID = A.RECIPIENT           
+    LEFT OUTER JOIN PORTFOLIO_PROJECT PP ON PP.PROJ_ID =  A.PROJ_ID                  
+    LEFT OUTER JOIN PORTFOLIO PF ON PF.ID = PP.PORTFOLIO_ID     
+    ORDER BY A.RECEIVED_DATE desc, proj_nm             
+ END  
+GO

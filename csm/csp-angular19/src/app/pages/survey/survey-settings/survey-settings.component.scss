@@ -1,0 +1,1081 @@
+// ===================================================================
+// CUSTOMER SATISFACTION SURVEY SETTINGS - APPLE-INSPIRED REDESIGN
+// Clean, Minimal, User-Friendly Design
+// ===================================================================
+
+// DESIGN SYSTEM - APPLE PRINCIPLES
+// ===================================================================
+// Typography:
+//   - SF Pro Display/Text font family (-apple-system fallback)
+//   - Title: 28px, weight 600, tight tracking (-0.5px)
+//   - Section headers: 17px, weight 600
+//   - Body text: 13px, weight 400/500
+//   - Labels: 11px, weight 500, uppercase
+//
+// Colors:
+//   - Background: #F5F5F7 (Apple's light gray)
+//   - Primary: #007AFF (Apple blue)
+//   - Success: #34C759 (Apple green)
+//   - Warning: #FF9F0A (Apple orange)
+//   - Text Primary: #1d1d1f (Apple's dark)
+//   - Text Secondary: #86868B (Apple's gray)
+//
+// Spacing:
+//   - Base unit: 4px (Apple's grid system)
+//   - Cards: 16px border-radius, 20-24px margins
+//   - Padding: 14-16px standard, 20-24px comfortable
+//
+// Shadows:
+//   - Soft: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)
+//   - Elevation: subtle, layered approach
+//
+// Interactions:
+//   - Transitions: 200ms cubic-bezier(0.4, 0, 0.2, 1)
+//   - Hover: subtle opacity (.7) or background tint
+//   - Active: minimal translateY
+//   - Focus: 3px outline with 0.4 opacity
+//
+// Scrollbars:
+//   - Width: 6px (thinner, more refined)
+//   - Transparent track, rgba(0,0,0,0.2) thumb
+//   - Rounded 3px corners
+// ===================================================================
+
+// ===================================================================
+// MAIN CONTAINER
+// ===================================================================
+.survey-settings-container {
+  background: #F5F5F7; // Apple's light gray
+  padding: 16px 24px 32px;
+  padding-bottom: 100px; // Add space for fixed action bar at bottom
+  max-width: 1280px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+// ===================================================================
+// PAGE HEADER - ADVANCED MODERN DESIGN
+// ===================================================================
+.page-header {
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 12px;
+  padding: 10px 24px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    inset 0 -1px 0 rgba(0, 122, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  
+  // Subtle gradient overlay accent
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+      rgba(0, 122, 255, 0.6) 0%, 
+      rgba(52, 199, 89, 0.6) 50%, 
+      rgba(255, 159, 10, 0.6) 100%);
+    opacity: 0.8;
+  }
+  
+  .page-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #1d1d1f 0%, #007AFF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: -0.8px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
+    position: relative;
+  }
+  
+  mat-divider {
+    display: none;
+  }
+}
+
+// ===================================================================
+// SURVEY SETTINGS TABLE CARD
+// ===================================================================
+.survey-table-card {
+  background: #ffffff;
+  border: none; // NO border per Prompt 1
+  border-radius: 12px; // Prompt 5: consistent 12px
+  margin-bottom: 8px; // Prompt 5: reduce spacing
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04); // Prompt 5: flat shadow
+  
+  .table-wrapper {
+    max-height: 300px; // Increased to show 5 rows comfortably
+    overflow-y: auto;
+    overflow-x: auto;
+    
+    // Custom scrollbar styling - Apple style
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+}
+
+// ===================================================================
+// SURVEY SETTINGS TABLE STYLING
+// ===================================================================
+.survey-settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  
+  // Header styling - reduced padding for better row visibility
+  thead {
+    th {
+      background: #B8D4F1;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #000000;
+      letter-spacing: 0.5px;
+      padding: 6px 10px; // Reduced from 8px to 6px
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      border-right: 1px solid rgba(0, 0, 0, 0.12);
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      
+      &:last-child {
+        border-right: none;
+      }
+    }
+  }
+  
+  // Body styling - Prompt 1 exact specs
+  tbody {
+    tr {
+      font-size: 11px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      
+      &:hover:not(.selected-row) {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      
+      &.selected-row {
+        background: rgba(255, 193, 7, 0.15) !important; // Light amber tint
+        border-left: 4px solid #FFC107 !important; // Amber border
+        box-shadow: inset 0 0 0 1px rgba(255, 193, 7, 0.25) !important;
+        
+        &:hover {
+          background: rgba(255, 193, 7, 0.22) !important;
+        }
+        
+        td {
+          font-weight: 700 !important; // Bolder text for selected row
+          color: #F57C00 !important; // Dark amber text color for selected row
+        }
+        
+        td:first-child {
+          padding-left: 12px !important;
+        }
+      }
+      
+      td {
+        padding: 8px 12px; // Reduced from 10px to 8px for more compact rows
+        color: #000000;
+        font-weight: 600;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+        
+        &:last-child {
+          border-right: none;
+        }
+        
+        &.numeric-cell {
+          color: #000000; // Changed from blue to black for better visibility
+          font-weight: 700;
+          font-variant-numeric: tabular-nums;
+        }
+        
+        a.clickable-value,
+        span.clickable-value {
+          cursor: pointer !important;
+          text-decoration: none !important;
+          color: #000000;
+          font-weight: 600;
+          transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+          display: inline-block;
+          position: relative;
+          
+          &:hover {
+            opacity: 0.7 !important;
+            text-decoration: underline !important;
+            text-underline-offset: 2px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ===================================================================
+// STATUS BADGES - APPLE STYLE
+// ===================================================================
+.status-badge {
+  display: inline-block;
+  padding: 0;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  
+  &.status-survey-sent {
+    color: #FF9F0A; // Orange text
+  }
+  
+  &.status-completed {
+    color: #34C759; // Green text
+  }
+  
+  &.status-new {
+    color: #007AFF; // Blue text
+  }
+  
+  &.status-active {
+    color: #34C759; // Green text
+  }
+  
+  &.status-created {
+    color: #8E8E93; // Gray text
+  }
+  
+  &.status-default {
+    color: #8E8E93; // Gray text
+  }
+}
+
+// ===================================================================
+// SECTION HEADER ROW (Customer Details + Batch Controls)
+// ===================================================================
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 16px; // Reduced from 8px to save space
+  background: #ffffff;
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-width: 900px;
+  height: 54px;
+  .section-title-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    
+    .section-title {
+      font-size: 15px; // Reduced from 17px to save space
+      font-weight: 700;
+      color: #000000;
+      white-space: nowrap;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+      letter-spacing: -0.3px;
+    }
+    
+    .title-separator {
+      flex: 1;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+  }
+  
+  // Filter Search Box - Apple Style
+  .filter-search-box {
+    margin: 0 16px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    
+    .filter-field {
+      width: 220px;
+      
+      // Make the entire mat-form-field fit within the container
+      ::ng-deep .mat-mdc-form-field {
+        width: 100%;
+        height: 45px !important;
+        display: flex;
+        align-items: center;
+      }
+      
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        width: 100%;
+        height: 45px !important;
+        padding-bottom: 0 !important;
+        display: flex;
+        align-items: center;
+      }
+      
+      ::ng-deep .mat-form-field-wrapper {
+        padding-bottom: 0 !important;
+        margin-bottom: -19px !important;
+        height: 45px !important;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-flex {
+        height: 45px !important;
+        align-items: center !important;
+      }
+      
+      ::ng-deep .mat-form-field-outline {
+        color: rgba(0, 0, 0, 0.1);
+      }
+      
+      ::ng-deep .mat-form-field-outline-thick {
+        color: #007AFF;
+      }
+      
+      ::ng-deep .mat-form-field-infix {
+        padding: 10px 0 !important;
+        border-top: 0 !important;
+        min-height: auto !important;
+        height: auto !important;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        display: none !important;
+      }
+      
+      ::ng-deep input {
+        font-size: 13px;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+        color: #000000;
+        font-weight: 600;
+        margin-top: 0 !important;
+        
+        &::placeholder {
+          color: #86868B;
+          opacity: 1;
+        }
+      }
+      
+      ::ng-deep mat-icon {
+        color: #86868B;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+  
+  .batch-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    
+    .batch-details-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      .batch-details-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: #000000;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+        white-space: nowrap;
+      }
+      
+      .refresh-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #007AFF;
+        padding: 4px;
+        transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 6px;
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+        
+        &:hover {
+          background: rgba(0, 122, 255, 0.08);
+          transform: rotate(90deg);
+        }
+        
+        &:active {
+          transform: rotate(90deg) scale(0.95);
+        }
+      }
+    }
+    
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: none; // Remove border for cleaner look
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      background: rgba(0, 122, 255, 0.08); // Blue tint
+      color: #007AFF;
+      cursor: pointer;
+      transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+      
+      &:hover {
+        background: rgba(0, 122, 255, 0.15);
+        transform: translateY(-1px);
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+      
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        
+        &:hover {
+          background: rgba(0, 122, 255, 0.08);
+          transform: none;
+        }
+      }
+      
+      &.excel-btn {
+        background: rgba(52, 199, 89, 0.08); // Green tint for Excel
+        color: #34C759; // Green
+        
+        &:hover {
+          background: rgba(52, 199, 89, 0.15);
+        }
+        
+        &:disabled {
+          &:hover {
+            background: rgba(52, 199, 89, 0.08);
+          }
+        }
+      }
+    }
+  }
+}
+
+// ===================================================================
+// CUSTOMER DETAILS TABLE CARD
+// ===================================================================
+.customer-table-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 12px; // Prompt 3
+  margin-bottom: 12px; // Prompt 3
+  overflow-x: auto;
+  overflow-y: visible;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04); // Prompt 5: flat shadow
+  
+  .table-wrapper {
+    min-height: 340px; // Shows 5 rows: header (~44px) + 5 rows × ~58px
+    max-height: 500px;
+    overflow-x: auto;
+    overflow-y: auto;
+    
+    // Custom scrollbar styling - Apple style
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+}
+
+// ===================================================================
+// CUSTOMER DETAILS TABLE STYLING
+// ===================================================================
+.customer-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1400px; // Further reduced to fit more columns
+  
+  // Header styling - Prompt 5: reduced padding for 4-row visibility
+  thead {
+    th {
+      background: #B8D4F1;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #000000;
+      letter-spacing: 0.3px;
+      padding: 4px 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      border-right: 1px solid rgba(0, 0, 0, 0.12);
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      
+      &:last-child {
+        border-right: none;
+      }
+      
+      &.checkbox-column {
+        width: 30px;
+        text-align: center;
+        padding: 6px 4px;
+      }
+      
+      &.no-column {
+        width: 35px;
+        text-align: center;
+      }
+    }
+  }
+  
+  // Body styling
+  tbody {
+    tr {
+      font-size: 11px; // Increased for readability
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08); // Prompt 3
+      transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.02); // Prompt 3
+      }
+      
+      td {
+        padding: 8px 10px; // Further reduced padding
+        color: #000000;
+        font-weight: 600;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+        
+        &:last-child {
+          border-right: none;
+        }
+        
+        &.checkbox-column {
+          width: 30px;
+          text-align: center;
+          padding: 8px 4px;
+        }
+        
+        &.no-column {
+          width: 35px;
+          text-align: center;
+          font-weight: 700;
+          color: #000000;
+          font-variant-numeric: tabular-nums;
+        }
+        
+        &.email-cell {
+          color: #000000;
+          font-size: 11px;
+          font-weight: 600;
+        }
+        
+        // Copy/Edit icon styling
+        .link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: opacity 200ms;
+          
+          mat-icon {
+            color: #007AFF !important;
+          }
+          
+          &:hover {
+            opacity: 0.7;
+          }
+        }
+      }
+    }
+  }
+  
+  // Material checkbox styling - Apple blue
+  ::ng-deep .mat-checkbox-inner-container {
+    width: 18px;
+    height: 18px;
+  }
+  
+  ::ng-deep .mat-checkbox-frame {
+    border-color: rgba(0, 0, 0, 0.2);
+    border-width: 1.5px;
+    border-radius: 4px;
+  }
+  
+  ::ng-deep .mat-checkbox-checked .mat-checkbox-background {
+    background-color: #007AFF;
+  }
+  
+  ::ng-deep .mat-checkbox-indeterminate .mat-checkbox-background {
+    background-color: #007AFF;
+  }
+}
+
+// ===================================================================
+// STICKY BOTTOM ACTION BAR - APPLE STYLE
+// ===================================================================
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px 12px 0 0;
+  padding: 12px 16px;
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12), 0 -1px 4px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  
+  .action-bar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    background: rgba(139, 92, 246, 0.08);
+    color: #8B5CF6;
+    min-width: auto;
+    flex-shrink: 0;
+    text-align: center;
+    cursor: pointer;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    line-height: 1.4;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    
+    strong {
+      font-weight: 600;
+    }
+    
+    &:hover {
+      background: rgba(139, 92, 246, 0.15);
+      transform: translateY(-1px);
+      
+      mat-icon {
+        color: #8B5CF6;
+      }
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+    
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      
+      &:hover {
+        background: rgba(0, 122, 255, 0.08);
+        transform: none;
+        
+        mat-icon {
+          color: #007AFF;
+        }
+      }
+    }
+  }
+}
+
+// ===================================================================
+// MATERIAL TABLE GLOBAL OVERRIDES
+// ===================================================================
+::ng-deep .survey-table-card {
+  // Force header background color
+  thead th,
+  tr.mat-mdc-header-row,
+  tr.mat-header-row {
+    background: #B8D4F1 !important;
+  }
+  
+  th.mat-mdc-header-cell,
+  th.mat-header-cell {
+    background: #B8D4F1 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+    
+    &:last-child {
+      border-right: none !important;
+    }
+  }
+  
+  // Force font size for all table cells
+  tr.mat-mdc-row,
+  tr.mat-row {
+    font-size: 11px !important;
+    
+    td, .mat-mdc-cell {
+      font-size: 11px !important;
+      padding: 10px 12px !important;
+      border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+      
+      &:last-child {
+        border-right: none !important;
+      }
+    }
+  }
+  
+  // Selected row highlighting
+  tr.mat-mdc-row.selected-row,
+  tr.mat-row.selected-row {
+    background: rgba(255, 193, 7, 0.15) !important;
+    border-left: 4px solid #FFC107 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 193, 7, 0.25) !important;
+    
+    &:hover {
+      background: rgba(255, 193, 7, 0.22) !important;
+    }
+    
+    td, .mat-mdc-cell {
+      font-weight: 700 !important;
+      color: #F57C00 !important;
+    }
+    
+    td:first-child, .mat-mdc-cell:first-child {
+      padding-left: 12px !important;
+    }
+  }
+}
+
+// Customer table font size override
+::ng-deep .customer-table-card {
+  // Force header background color
+  thead th,
+  tr.mat-mdc-header-row,
+  tr.mat-header-row {
+    background: #B8D4F1 !important;
+  }
+  
+  th.mat-mdc-header-cell,
+  th.mat-header-cell {
+    background: #B8D4F1 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+    letter-spacing: 0.3px !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+    
+    &:last-child {
+      border-right: none !important;
+    }
+  }
+  
+  tr.mat-mdc-row,
+  tr.mat-row {
+    font-size: 11px !important;
+    
+    td, .mat-mdc-cell {
+      font-size: 11px !important;
+      padding: 8px 10px !important;
+      border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+      
+      &:last-child {
+        border-right: none !important;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// MATERIAL PROGRESS BAR CUSTOMIZATION - APPLE STYLE
+// ===================================================================
+::ng-deep .mat-progress-bar {
+  height: 2px; // Thinner, more refined
+  border-radius: 1px;
+  margin-bottom: 20px;
+  
+  .mat-progress-bar-fill::after {
+    background-color: #007AFF; // Apple blue
+  }
+  
+  .mat-progress-bar-buffer {
+    background-color: rgba(0, 122, 255, 0.1);
+  }
+}
+
+// ===================================================================
+// RESPONSIVE DESIGN - APPLE STYLE
+// ===================================================================
+@media (max-width: 768px) {
+  .survey-settings-container {
+    padding: 16px 16px 100px;
+  }
+  
+  .page-header {
+    .page-title {
+      font-size: 24px; // Slightly smaller on mobile
+      letter-spacing: -0.4px;
+    }
+  }
+  
+  .section-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+    
+    .section-title-container {
+      margin-bottom: 14px;
+      
+      .section-title {
+        font-size: 15px;
+      }
+    }
+    
+    .batch-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      
+      .action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+  
+  .survey-table-card {
+    .table-wrapper {
+      max-height: 200px;
+    }
+  }
+  
+  .customer-table-card {
+    .table-wrapper {
+      max-height: 400px; // Responsive: still show ~5 rows on mobile
+    }
+  }
+  
+  // Hide non-essential columns on mobile
+  .customer-details-table {
+    .hide-mobile {
+      display: none;
+    }
+  }
+  
+  .action-bar {
+    flex-direction: column;
+    padding: 12px 16px 14px;
+    gap: 8px;
+    
+    .action-bar-btn {
+      width: 100%;
+      min-width: unset;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .action-bar {
+    .action-bar-btn {
+      min-width: 140px;
+      padding: 9px 16px;
+      font-size: 12px;
+    }
+  }
+}
+
+// ===================================================================
+// UTILITY CLASSES
+// ===================================================================
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+// ===================================================================
+// LOADING STATE - APPLE STYLE
+// ===================================================================
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  border-radius: 16px;
+}
+
+// ===================================================================
+// EMPTY STATE - APPLE STYLE
+// ===================================================================
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: #86868B;
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  
+  mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 20px;
+    color: rgba(0, 0, 0, 0.15);
+  }
+  
+  p {
+    margin: 8px 0;
+    line-height: 1.5;
+    
+    &:first-of-type {
+      font-weight: 700;
+      color: #000000;
+      font-size: 17px;
+    }
+  }
+}
+
+// ===================================================================
+// ACCESSIBILITY ENHANCEMENTS - APPLE STYLE
+// ===================================================================
+.action-btn,
+.action-bar-btn {
+  &:focus-visible {
+    outline: 3px solid rgba(0, 122, 255, 0.4);
+    outline-offset: 2px;
+  }
+}
+
+.clickable-value {
+  &:focus-visible {
+    outline: 2px solid rgba(0, 122, 255, 0.4);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+// Improve tap targets on mobile
+@media (max-width: 768px) {
+  .action-btn,
+  .action-bar-btn,
+  .clickable-value {
+    min-height: 44px; // Apple's minimum tap target
+  }
+}
+
+// ===================================================================
+// PRINT STYLES
+// ===================================================================
+@media print {
+  .action-bar,
+  .batch-controls {
+    display: none !important;
+  }
+  
+  .survey-settings-container {
+    padding-bottom: 0;
+    background: white;
+  }
+  
+  .table-wrapper {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  .survey-table-card,
+  .customer-table-card,
+  .section-header-row {
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+  }
+}

@@ -1,0 +1,627 @@
+<div class="modern-task-container">
+  <!-- Progress Bar -->
+  <mat-progress-bar *ngIf="!isSubmit" mode="indeterminate" class="top-progress"></mat-progress-bar>
+
+  <!-- Form Body -->
+  <div class="form-body">
+    <!-- Section 1: Basic Information -->
+    <div class="form-section">
+      <div class="section-header">
+        <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <circle cx="12" cy="12" r="10" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4M12 8h.01" />
+        </svg>
+        <div class="section-title">BASIC INFORMATION</div>
+      </div>
+
+      <div class="section-content">
+        <!-- Type & Category Row -->
+        <div class="grid-2col">
+          <div class="field-group">
+            <label class="field-label">Type <span class="required">*</span></label>
+            <select class="field-input" [(ngModel)]="taskService.selectedTask.tasK_TYPE_ID"
+              (change)="onTaskTypeChange()" [disabled]="taskService.selectedTask.isAllDisabled" required>
+              <option value="" disabled selected hidden>Select Type</option>
+              <option *ngFor="let item of TaskTypeList" [value]="item.id">{{item.title}}</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Category <span class="required">*</span></label>
+            <select class="field-input" [(ngModel)]="taskService.selectedTask.tasK_CATEGORY_ID"
+              (change)="onCategoryChange()" [disabled]="taskService.selectedTask.isAllDisabled" required>
+              <option value="" disabled selected hidden>Select Category</option>
+              <option *ngFor="let item of TaskCategoryList" [value]="item.id">{{item.title}}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="field-group">
+          <label class="field-label">Description <span class="required">*</span></label>
+          <input class="field-input" type="text" [(ngModel)]="taskService.selectedTask.description"
+            [disabled]="taskService.selectedTask.isAllDisabled" maxlength="200" placeholder="Enter task description"
+            required />
+          <div class="field-hint">(Max 200 Characters)</div>
+        </div>
+
+        <!-- Requirement Reference -->
+        <div class="field-group">
+          <label class="field-label">Requirement Reference</label>
+          <textarea class="field-input" [(ngModel)]="taskService.selectedTask.requiremenT_REFERENCE"
+            [disabled]="taskService.selectedTask.isAllDisabled" rows="3"
+            placeholder="Enter requirement reference details"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Section 2: Scheduling & Status -->
+    <div class="form-section">
+      <div class="section-header">
+        <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <circle cx="12" cy="12" r="10" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+        </svg>
+        <div class="section-title">SCHEDULING & STATUS</div>
+      </div>
+
+      <div class="section-content">
+        <!-- Priority, Scheduled Start, Due Date Row -->
+        <div class="grid-3col">
+          <div class="field-group">
+            <label class="field-label">Priority <span class="required">*</span></label>
+            <select class="field-input" [(ngModel)]="taskService.selectedTask.priority"
+              [disabled]="taskService.selectedTask.isAllDisabled" required>
+              <option value="" disabled selected></option>
+              <option *ngFor="let p of priority" [value]="p.value">{{p.viewValue}}</option>
+            </select>
+          </div>
+
+          <div class="field-group" *ngIf="!taskService.selectedTask.seT_RECURRENCE">
+            <label class="field-label">Scheduled Start Date <span class="required">*</span></label>
+            <mat-form-field appearance="outline" class="date-field">
+              <input matInput [matDatepicker]="pickerStart" [(ngModel)]="taskService.selectedTask.scheduleD_START_DATE"
+                [disabled]="taskService.selectedTask.isAllDisabled || taskService.selectedTask.status?.toLowerCase() == 're-schedule'"
+                required>
+              <mat-datepicker-toggle matIconSuffix [for]="pickerStart"></mat-datepicker-toggle>
+              <mat-datepicker #pickerStart></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="field-group" *ngIf="taskService.selectedTask.seT_RECURRENCE">
+            <label class="field-label">Recurrence Start <span class="required">*</span></label>
+            <mat-form-field appearance="outline" class="date-field">
+              <input matInput [matDatepicker]="pickerRecurStart"
+                [(ngModel)]="taskService.selectedTask.recurrence.starT_DATE"
+                [disabled]="taskService.selectedTask.isAllDisabled" required>
+              <mat-datepicker-toggle matIconSuffix [for]="pickerRecurStart"></mat-datepicker-toggle>
+              <mat-datepicker #pickerRecurStart></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="field-group" *ngIf="!taskService.selectedTask.seT_RECURRENCE">
+            <label class="field-label">Due Date <span class="required">*</span></label>
+            <mat-form-field appearance="outline" class="date-field">
+              <input matInput [matDatepicker]="pickerDue" [(ngModel)]="taskService.selectedTask.duE_DATE"
+                [min]="getMinDate()"
+                [disabled]="taskService.selectedTask.isAllDisabled || taskService.selectedTask.status?.toLowerCase() == 're-schedule'"
+                required>
+              <mat-datepicker-toggle matIconSuffix [for]="pickerDue"></mat-datepicker-toggle>
+              <mat-datepicker #pickerDue></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="field-group" *ngIf="taskService.selectedTask.seT_RECURRENCE">
+            <label class="field-label">Recurrence End <span class="required">*</span></label>
+            <mat-form-field appearance="outline" class="date-field">
+              <input matInput [matDatepicker]="pickerRecurEnd"
+                [(ngModel)]="taskService.selectedTask.recurrence.enD_DATE"
+                [disabled]="taskService.selectedTask.isAllDisabled" required>
+              <mat-datepicker-toggle matIconSuffix [for]="pickerRecurEnd"></mat-datepicker-toggle>
+              <mat-datepicker #pickerRecurEnd></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Status, Actual Start, Actual End Row -->
+        <div class="grid-3col">
+          <div class="field-group">
+            <label class="field-label">Status</label>
+            <select class="field-input" [(ngModel)]="taskService.selectedTask.status"
+              (change)="onStatusChange(taskService.selectedTask.status)"
+              [disabled]="taskService.selectedTask.isAllDisabled">
+              <option value="" disabled selected></option>
+              <option *ngFor="let s of statusOptions" [value]="s.value" [disabled]="getStatusDisabled(s)">
+                {{s.viewValue}}
+              </option>
+            </select>
+          </div>
+
+          <div class="field-group" *ngIf="taskService.selectedTask.status?.toLowerCase() != 're-schedule'">
+            <label class="field-label">Actual Start Date</label>
+            <mat-form-field appearance="outline" class="date-field">
+              <input matInput [matDatepicker]="pickerActualStart"
+                [(ngModel)]="taskService.selectedTask.actuaL_START_DATE"
+                [disabled]="taskService.selectedTask.status?.toLowerCase() == 're-schedule'">
+              <mat-datepicker-toggle matIconSuffix [for]="pickerActualStart"></mat-datepicker-toggle>
+              <mat-datepicker #pickerActualStart></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="field-group" *ngIf="taskService.selectedTask.status?.toLowerCase() != 're-schedule'">
+            <label class="field-label">Actual End Date</label>
+            <mat-form-field appearance="outline" class="date-field">
+              <input matInput [matDatepicker]="pickerActualEnd" [(ngModel)]="taskService.selectedTask.actuaL_END_DATE"
+                [min]="getActualMinDate()" [disabled]="taskService.selectedTask.status?.toLowerCase() == 're-schedule'">
+              <mat-datepicker-toggle matIconSuffix [for]="pickerActualEnd"></mat-datepicker-toggle>
+              <mat-datepicker #pickerActualEnd></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="field-group" *ngIf="taskService.selectedTask.status?.toLowerCase() == 're-schedule'">
+            <label class="field-label">Re-Schedule Date <span class="required">*</span></label>
+            <mat-form-field appearance="outline" class="date-field">
+              <input matInput [matDatepicker]="pickerReschedule" [(ngModel)]="taskService.selectedTask.reschedulE_DATE"
+                [disabled]="taskService.selectedTask.isAllDisabled">
+              <mat-datepicker-toggle matIconSuffix [for]="pickerReschedule"></mat-datepicker-toggle>
+              <mat-datepicker #pickerReschedule></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Recurrence Checkbox -->
+        <div class="field-group">
+          <label class="checkbox-wrapper">
+            <input type="checkbox" class="checkbox-input" [(ngModel)]="taskService.selectedTask.seT_RECURRENCE"
+              (change)="recurrenceCheck(taskService.selectedTask.seT_RECURRENCE)"
+              [disabled]="taskService.selectedTask.isAllDisabled" />
+            <span class="checkbox-label">Recurrence</span>
+          </label>
+        </div>
+
+        <!-- Conditional Fields for Reschedule -->
+        <div *ngIf="taskService.selectedTask.status?.toLowerCase() == 're-schedule'">
+          <div class="field-group">
+            <label class="field-label">Reason for Re-schedule <span class="required">*</span></label>
+            <textarea class="field-input" [(ngModel)]="taskService.selectedTask.reschedulE_REASON"
+              [disabled]="taskService.selectedTask.isAllDisabled" rows="3" placeholder="Enter reason for re-schedule"
+              required></textarea>
+          </div>
+
+          <div class="grid-2col">
+            <div class="field-group">
+              <label class="field-label">Requester <span class="required">*</span></label>
+              <select class="field-input" [(ngModel)]="taskService.selectedTask.reschedulE_REQUESTER"
+                [disabled]="taskService.selectedTask.isAllDisabled" required>
+                <option value="" disabled selected></option>
+                <option value="Appraisee">Appraisee</option>
+                <option value="Appraiser">Appraiser</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cancellation Reason -->
+        <div class="field-group" *ngIf="taskService.selectedTask.status == 'CANCELLED'">
+          <label class="field-label">Reason For Cancellation <span class="required">*</span></label>
+          <textarea class="field-input" [(ngModel)]="taskService.selectedTask.reasoN_FOR_CANCEL"
+            [disabled]="taskService.selectedTask.isAllDisabled" rows="3" placeholder="Enter reason for cancellation"
+            required></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Section 3: Customer & Assignment -->
+    <div class="form-section">
+      <div class="section-header">
+        <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <div class="section-title">CUSTOMER & ASSIGNMENT</div>
+      </div>
+
+      <div class="section-content">
+        <!-- Customer & Project and Event Row -->
+        <div class="grid-2col">
+          <div class="field-group">
+            <label class="field-label">Customer and Project <span class="required">*</span></label>
+            <div *ngIf="!showServiceTower">
+              <app-project-selector [allcust]="allCust" [allproj]="allProj" [skipNonAuditProjects]="true"
+                [disabled]="taskService.selectedTask.isAllDisabled" [custId]="taskService.selectedTask.cusT_ID"
+                [custNM]="taskService.selectedTask.cusT_NM" [projNM]="taskService.selectedTask.proJ_NM"
+                [projId]="taskService.selectedTask.proJ_ID" (onChange)="project_onChange($event)">
+              </app-project-selector>
+            </div>
+            <div *ngIf="showServiceTower">
+              <app-project-selector-multiple (onChange)="getCustomerAndProjects($event)" [allcust]="allCust"
+                [allproj]="allProj" [skipNonAuditProjects]="true">
+              </app-project-selector-multiple>
+            </div>
+          </div>
+
+          <!-- Event Dropdown -->
+          <div class="field-group" *ngIf="taskService.selectedTask.isTask">
+            <label class="field-label">Event</label>
+            <mat-select class="mat-dropdown-plain" [(ngModel)]="taskService.selectedTask.parenT_EVENT_ID"
+              [disabled]="taskService.selectedTask.isAllDisabled" (selectionChange)="eventChange()"
+              style="width:100% !important" required>
+              <mat-option *ngFor="let item of taskService.EventList" [value]="item.id">
+                <span>{{ item.description }}</span> (
+                <span>{{ item.scheduleD_START_DATE | date:'shortDate' }}</span> -
+                <span>{{ item.duE_DATE | date:'shortDate' }}</span> )
+              </mat-option>
+            </mat-select>
+          </div>
+        </div>
+
+        <!-- Multiple Project Selection Link -->
+        <div class="field-group">
+          <a *ngIf="!showServiceTower" class="link-text" (click)="showMultiSelect()">
+            Click here for Multiple Project Selection
+          </a>
+          <a *ngIf="showServiceTower" class="link-text" (click)="showSingleSelect()">
+            Cancel
+          </a>
+        </div>
+
+        <!-- Owner & Responsible Info Row -->
+        <div class="info-row">
+          <div class="info-col">
+            <div class="info-label">OWNER</div>
+            <div class="info-value">{{ getOwnerDisplayName() }}</div>
+          </div>
+          <div class="info-col" *ngIf="shouldShowResponsibleForExecution()">
+            <div class="info-label">RESPONSIBLE FOR EXECUTION</div>
+            <div class="info-value" *ngIf="!taskService.selectedTask.isEmpSelVisible">
+              {{ taskService.selectedTask.empName }}
+              <a *ngIf="taskService.selectedTask.isOwner" class="change-link" (click)="changeResponsible()">Change</a>
+            </div>
+            <div *ngIf="taskService.selectedTask.isEmpSelVisible" class="employee-search-wrapper">
+              <app-employee-search (onChange)="employeeSearch_onChange($event)" [multiSelect]="false"
+                [emP_ID]="taskService.selectedTask.assigneD_TO">
+              </app-employee-search>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service Tower (for Audit Tasks) -->
+        <div class="field-group"
+          *ngIf="taskService.selectedTask.isAudit && taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
+          <label class="field-label">Service Tower <span class="required">*</span></label>
+          <div style="width:50%">
+            <mat-select class="mat-dropdown-plain" [(ngModel)]="taskService.auditSchedule.servicE_AREA_ID"
+              [disabled]="taskService.selectedTask.isAllDisabled" placeholder="Select Service Tower" multiple
+              style="width:100% !important" required>
+              <mat-option *ngFor="let list of taskService.serviceAreaProjectMappingList" [value]="list.id"
+                [title]="GetServiceAreaTitle(list.id)">
+                {{GetServiceAreaTitle(list.id)}}
+              </mat-option>
+            </mat-select>
+          </div>
+        </div>
+
+        <!-- Appraiser & Appraisee (for Audit Tasks) -->
+        <div class="grid-2col"
+          *ngIf="taskService.selectedTask.isAudit && taskService.selectedTask.tasK_TYPE_ID==2 && !showServiceTower">
+          <div class="field-group" [class.field-error]="uiValidationAttempted && !isAppraiserValidForUI()">
+            <label class="field-label">Appraiser <span class="required">*</span></label>
+            <mat-select class="mat-dropdown-plain" [(ngModel)]="taskService.auditSchedule.auditoR_EMP_ID"
+              [disabled]="taskService.selectedTask.isAllDisabled" placeholder="Select Appraiser"
+              style="width:100% !important">
+              <mat-option *ngFor="let emp of Auditors" [value]="emp.emP_ID" [title]="emp.frsT_NM">
+                {{emp.frsT_NM}}
+              </mat-option>
+            </mat-select>
+          </div>
+
+          <div class="field-group" [class.field-error]="uiValidationAttempted && !isAppraiseeValidForUI()">
+            <label class="field-label">Appraisee <span class="required">*</span></label>
+            <mat-select class="mat-dropdown-plain" [(ngModel)]="taskService.auditSchedule.auditeE_EMP_ID"
+              [disabled]="taskService.selectedTask.isAllDisabled" placeholder="Select Appraisee" multiple
+              style="width:100% !important">
+              <mat-option *ngFor="let emp of Auditees" [value]="emp.emP_ID" [title]="emp.frsT_NM">
+                {{emp.frsT_NM}} <b>({{emp.emP_CSP_ROLE}})</b>
+              </mat-option>
+            </mat-select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Footer & Actions -->
+    <div class="form-footer">
+      <a class="more-details-link" (click)="toggleMoreDetails()">
+        {{ taskService.selectedTask.moreText || 'More Details...' }}
+      </a>
+    </div>
+
+    <!-- More Details Content (Expandable) -->
+    <div class="more-details-content" *ngIf="taskService.selectedTask.isMoredetailsShown">
+
+      <!-- Remind/Notify -->
+      <div class="form-section">
+        <div class="form-field full-width">
+          <div class="checkbox-wrapper">
+            <mat-checkbox [(ngModel)]="taskService.selectedTask.seT_REMINDER"
+              [disabled]="taskService.selectedTask.isAllDisabled" class="apple-checkbox">
+              <span class="checkbox-label">
+                <mat-icon class="inline-icon">notifications</mat-icon>
+                Remind/Notify me
+              </span>
+            </mat-checkbox>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Duration Fields (for Tasks only) -->
+      <div class="form-section" *ngIf="taskService.selectedTask.isTask">
+        <div class="section-header">
+          <mat-icon>timer</mat-icon>
+          <h2>Duration</h2>
+        </div>
+
+        <div class="field-group compact-field">
+          <div class="form-grid compact-grid">
+            <div class="form-field">
+              <label class="field-label">Scheduled Duration (Hours)</label>
+              <mat-form-field appearance="outline" class="apple-field">
+                <input matInput type="number" [(ngModel)]="taskService.selectedTask.scheduleD_DURATION"
+                  [disabled]="taskService.selectedTask.isAllDisabled" min="0" step="1" placeholder="Hours">
+                <mat-icon matIconSuffix>schedule</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label">Actual Hours Spent</label>
+              <mat-form-field appearance="outline" class="apple-field">
+                <input matInput type="number" [(ngModel)]="taskService.selectedTask.actuaL_DURATION"
+                  [disabled]="taskService.selectedTask.isAllDisabled" min="0" step="1" placeholder="Hours">
+                <mat-icon matIconSuffix>timer</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Recurrence Options -->
+      <div class="form-section" *ngIf="taskService.selectedTask.seT_RECURRENCE">
+        <div class="section-header">
+          <mat-icon>repeat</mat-icon>
+          <h2>Recurrence Pattern</h2>
+        </div>
+
+        <mat-radio-group [(ngModel)]="taskService.selectedTask.recurrence.frequency" class="apple-radio-group">
+
+          <!-- Daily -->
+          <div class="recurrence-option">
+            <div class="recurrence-header">
+              <mat-radio-button value="Daily" class="apple-radio">Daily</mat-radio-button>
+            </div>
+            <div class="recurrence-content" *ngIf="!IsDisabled('Daily')">
+              <div class="checkbox-grid">
+                <mat-checkbox [(ngModel)]="taskService.selectedTask.recurrence.dailY_IS_MONDAY"
+                  [disabled]="IsDisabled('Daily')">Mon</mat-checkbox>
+                <mat-checkbox [(ngModel)]="taskService.selectedTask.recurrence.dailY_IS_TUESDAY"
+                  [disabled]="IsDisabled('Daily')">Tue</mat-checkbox>
+                <mat-checkbox [(ngModel)]="taskService.selectedTask.recurrence.dailY_IS_WEDNESDAY"
+                  [disabled]="IsDisabled('Daily')">Wed</mat-checkbox>
+                <mat-checkbox [(ngModel)]="taskService.selectedTask.recurrence.dailY_IS_THURSDAY"
+                  [disabled]="IsDisabled('Daily')">Thu</mat-checkbox>
+                <mat-checkbox [(ngModel)]="taskService.selectedTask.recurrence.dailY_IS_FRIDAY"
+                  [disabled]="IsDisabled('Daily')">Fri</mat-checkbox>
+                <mat-checkbox [(ngModel)]="taskService.selectedTask.recurrence.dailY_IS_SATURDAY"
+                  [disabled]="IsDisabled('Daily')">Sat</mat-checkbox>
+                <mat-checkbox [(ngModel)]="taskService.selectedTask.recurrence.dailY_IS_SUNDAY"
+                  [disabled]="IsDisabled('Daily')">Sun</mat-checkbox>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly -->
+          <div class="recurrence-option">
+            <div class="recurrence-header">
+              <mat-radio-button value="Weekly" class="apple-radio">Weekly</mat-radio-button>
+            </div>
+            <div class="recurrence-content" *ngIf="!IsDisabled('Weekly')">
+              <mat-radio-group [(ngModel)]="taskService.selectedTask.recurrence.weeklY_SELECTED_DAY"
+                class="day-selector">
+                <mat-radio-button *ngFor="let day of WeekDays" [value]="day.value" [disabled]="IsDisabled('Weekly')"
+                  class="day-option">
+                  {{day.viewValue}}
+                </mat-radio-button>
+              </mat-radio-group>
+            </div>
+          </div>
+
+          <!-- Fortnightly -->
+          <div class="recurrence-option">
+            <div class="recurrence-header">
+              <mat-radio-button value="Fortnightly" class="apple-radio">
+                Fortnightly
+                <span class="helper-text">(Once every two weeks)</span>
+              </mat-radio-button>
+            </div>
+            <div class="recurrence-content" *ngIf="!IsDisabled('Fortnightly')">
+              <mat-radio-group [(ngModel)]="taskService.selectedTask.recurrence.fortnightlY_SELECTED_DAY"
+                class="day-selector">
+                <mat-radio-button *ngFor="let day of WeekDays" [value]="day.value"
+                  [disabled]="IsDisabled('Fortnightly')" class="day-option">
+                  {{day.viewValue}}
+                </mat-radio-button>
+              </mat-radio-group>
+            </div>
+          </div>
+
+          <!-- Monthly -->
+          <div class="recurrence-option">
+            <div class="recurrence-header">
+              <mat-radio-button value="Monthly" class="apple-radio">Monthly</mat-radio-button>
+            </div>
+            <div class="recurrence-content" *ngIf="!IsDisabled('Monthly')">
+              <div class="inline-selectors">
+                <span class="selector-label">The</span>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.monthlY_SKIP_DAYS"
+                    [disabled]="IsDisabled('Monthly')">
+                    <mat-option *ngFor="let week of Weeks" [value]="week.value">{{week.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.monthlY_SELECTED_DAY"
+                    [disabled]="IsDisabled('Monthly')">
+                    <mat-option *ngFor="let day of WeekDays" [value]="day.value">{{day.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quarterly -->
+          <div class="recurrence-option">
+            <div class="recurrence-header">
+              <mat-radio-button value="Quarterly" class="apple-radio">Quarterly</mat-radio-button>
+            </div>
+            <div class="recurrence-content" *ngIf="!IsDisabled('Quarterly')">
+              <div class="inline-selectors">
+                <span class="selector-label">The</span>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.quarterlY_SKIP_DAYS"
+                    [disabled]="IsDisabled('Quarterly')">
+                    <mat-option *ngFor="let week of Weeks" [value]="week.value">{{week.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.quarterlY_SELECTED_DAY"
+                    [disabled]="IsDisabled('Quarterly')">
+                    <mat-option *ngFor="let day of WeekDays" [value]="day.value">{{day.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <span class="selector-label">of the quarter</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Half-Yearly -->
+          <div class="recurrence-option">
+            <div class="recurrence-header">
+              <mat-radio-button value="Half-Yearly" class="apple-radio">Half-Yearly</mat-radio-button>
+            </div>
+            <div class="recurrence-content" *ngIf="!IsDisabled('Half-Yearly')">
+              <div class="inline-selectors">
+                <span class="selector-label">The</span>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.biannuaL_FIRST_SKIP_DAYS"
+                    [disabled]="IsDisabled('Half-Yearly')">
+                    <mat-option *ngFor="let week of Weeks" [value]="week.value">{{week.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.biannuaL_FIRST_SELECTED_DAY"
+                    [disabled]="IsDisabled('Half-Yearly')">
+                    <mat-option *ngFor="let day of WeekDays" [value]="day.value">{{day.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <span class="selector-label">of the period</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Yearly -->
+          <div class="recurrence-option">
+            <div class="recurrence-header">
+              <mat-radio-button value="Yearly" class="apple-radio">Yearly</mat-radio-button>
+            </div>
+            <div class="recurrence-content" *ngIf="!IsDisabled('Yearly')">
+              <div class="inline-selectors">
+                <span class="selector-label">The</span>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.annuaL_SKIP_DAYS"
+                    [disabled]="IsDisabled('Yearly')">
+                    <mat-option *ngFor="let week of Weeks" [value]="week.value">{{week.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.annuaL_SELECTED_DAY"
+                    [disabled]="IsDisabled('Yearly')">
+                    <mat-option *ngFor="let day of WeekDays" [value]="day.value">{{day.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <span class="selector-label">of</span>
+                <mat-form-field appearance="outline" class="apple-field compact">
+                  <mat-select [(ngModel)]="taskService.selectedTask.recurrence.annuaL_SELECTED_MONTH"
+                    [disabled]="IsDisabled('Yearly')">
+                    <mat-option *ngFor="let month of Months" [value]="month.value">{{month.viewValue}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-radio-group>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Service Tower and Appraiser/Appraisee moved to main form -->
+
+      <div class="section-divider"></div>
+
+      <!-- Comments -->
+      <div class="form-section" *ngIf="taskService.selectedTask.isAudit && taskService.selectedTask.tasK_TYPE_ID==2">
+        <div class="field-group">
+          <label class="field-label">Comments</label>
+          <textarea class="field-input" [(ngModel)]="taskService.auditSchedule.comments"
+            [disabled]="taskService.selectedTask.isAllDisabled" placeholder="Comments" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit/Cancel/Save as Draft Buttons Row -->
+    <div class="action-buttons">
+      <button *ngIf="taskService.selectedTask.iS_DRAFT || taskService.selectedTask.isNew" class="btn btn-warning"
+        (click)="onSaveAsDraftClick()" [disabled]="!isSubmit || taskService.selectedTask.isAllDisabled" type="button">
+        Save as Draft
+      </button>
+      <button class="btn btn-success" (click)="onSaveClick()"
+        [disabled]="!isSubmit || taskService.selectedTask.isAllDisabled || (taskService.selectedTask.isAudit && taskService.selectedTask.tasK_TYPE_ID==2 && !isAuditFieldsValidForUI())"
+        type="button">
+        Submit
+      </button>
+      <button class="btn btn-outlined" (click)="onCancelClick()" [disabled]="!isSubmit" type="button">
+        Cancel
+      </button>
+    </div>
+
+    <!-- Important Information Box -->
+    <div class="info-box">
+      <div class="info-box-header">
+        <strong>Note:</strong>
+      </div>
+      <div class="info-box-content">
+        <div class="info-box-item">
+          <strong>Save As Draft:</strong> Use this option to partially save the data (Data will not be considered for
+          audit purpose).
+        </div>
+        <div class="info-box-item">
+          <strong>Submit:</strong> Use this option to submit the data.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

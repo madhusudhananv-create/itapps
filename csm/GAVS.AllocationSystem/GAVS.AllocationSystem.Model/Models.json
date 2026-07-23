@@ -1,0 +1,554 @@
+[
+  {
+    "name": "RiskDashboardInputHolder",
+    "props": [
+      "CUSTOMER_IDS:string",
+      "START_DATE:DateTime?",
+      "END_DATE:DateTime?",
+      "RISK_STATUS:string",
+      "PROJECT_IDS:string",
+      "BUSINESS_UNITS:string"
+    ]
+  },
+  {
+    "name": "GetOverallRiskForRiskDashboard",
+    "props": [
+      "ID:int",
+      "PROJ_ID:string",
+      "CUST_ID:string",
+      "CUST_NM:string",
+      "PROJ_NM:string",
+      "BUSINESS_UNIT:string",
+      "DESCRIPTION:string",
+      "PROBABILITY_SCALE:int",
+      "IMPACT_SCALE:int",
+      "IMPACT:string",
+      "OWNER:string",
+      "AREA:string",
+      "IDENTIFIED_BY:string",
+      "IDENTIFIED_DATE:DateTime?",
+      "RISK_TREATMENT_STRATEGY:string",
+      "TARGET_DATE:DateTime?",
+      "STATUS:string",
+      "ACTION_TAKEN:string",
+      "LINK:string",
+      "RISK_LEVEL:string"
+    ]
+  },
+  {
+    "name": "PlannedAudits",
+    "props": [
+      "ID:int",
+      "DESCRIPTION:string",
+      "PRIORITY:string",
+      "SCHEDULED_START_DATE:DateTime?",
+      "DUE_DATE:DateTime?",
+      "ACTUAL_START_DATE:DateTime?",
+      "ACTUAL_END_DATE:DateTime?",
+      "SCHEDULED_DURATION:decimal?",
+      "ACTUAL_DURATION:decimal?",
+      "STATUS:string",
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "AUDITOR_EMP_ID:string",
+      "ISSUBMITTED:bool?",
+      "KEY:string",
+      "VALUE:string",
+      "PROCESS_COMPLIANCE_AS_ON_AUDIT_DATE:decimal?",
+      "CURRENT_PROCESS_COMPLIANCE:decimal?",
+      "ACTUAL_AUDIT_START_DATE:DateTime?",
+      "ACTUAL_AUDIT_END_DATE:DateTime?"
+    ]
+  },
+  {
+    "name": "PlannedAuditsConsolidated",
+    "props": [
+      "ID:int",
+      "DESCRIPTION:string",
+      "PRIORITY:string",
+      "SCHEDULED_START_DATE:DateTime?",
+      "DUE_DATE:DateTime?",
+      "ACTUAL_START_DATE:DateTime?",
+      "ACTUAL_END_DATE:DateTime?",
+      "SCHEDULED_DURATION:decimal?",
+      "ACTUAL_DURATION:decimal?",
+      "STATUS:string",
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "AUDITOR_ID:string",
+      "AUDITESS_ID:List<string>",
+      "SERVICE_AREA_ID:List<string>",
+      "ACTUAL_AUDIT_START_DATE:DateTime?",
+      "ACTUAL_AUDIT_END_DATE:DateTime?",
+      "EMP_ID: string",
+      "ASSESSMENT_STATUS:string",
+      "COMMENTS:string",
+      "PROCESS_COMPLIANCE_AS_ON_AUDIT_DATE:decimal?",
+      "CURRENT_PROCESS_COMPLIANCE:decimal?",
+      "IS_RETAIN_CAPA:bool",
+      "ISSUBMITTED:bool"
+    ]
+  },
+  {
+    "name": "PlannedAuditData",
+    "props": [
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "ASSESSMENT_ID:int",
+      "EMP_ID:string",
+      "STATUS:string",
+      "COMMENTS:string"
+    ]
+  },
+  {
+    "name": "TASK_AUDIT_VM",
+    "props": [
+      "Task:TASK",
+      "Audit:AUDIT_SCHEDULE",
+      "TASK_CATEGORY_TITLE:string",
+      "CUST_NM:string",
+      "PROJ_NM:string",
+      "PROJ_IDS:List<string>",
+      "isAudit:bool",
+      "CSS_SCORE:string",
+      "CSS_URL:string",
+      "IS_SUBMIT:bool"
+    ]
+  },
+  {
+    "name": "AuditTaskInputs",
+    "props": [
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "PROJ_NM:string",
+      "PROJ_PM_ID:string",
+      "CATEGORY_ID:int",
+      "CREATED_BY:string",
+      "AUDITOR_EMP_ID:string",
+      "TASK_DESCRIPTION:string",
+      "SCHEDULED_START_DATE:DateTime",
+      "DUE_DATE:DateTime",
+      "CSS_SCORE:string",
+      "CSS_URL:string"
+    ]
+  },
+  {
+    "name": "IdeaViewModel",
+    "props": [
+      "ID:int",
+      "PROJECT_NAME:string",
+      "PROJ_ID:string",
+      "STATUS:string",
+      "IDEA_STATUS_ID:int",
+      "DESCRIPTION:string",
+      "POTENTIAL_SOLUTION_DESCRIPTION:string",
+      "IDENTIFIED_DATE:DateTime?",
+      "TARGET_DATE:DateTime?",
+      "RESPONSIBLE:string",
+      "Identified_By:string",
+      "TYPE:string",
+      "BENEFIT_TYPE:string"
+    ]
+  },
+  {
+    "name": "IdeaStatusUpdate",
+    "props": [
+      "IdeaId:int[]",
+      "Status:int"
+    ]
+  },
+  {
+    "name": "RiskRepository",
+    "props": [
+      "SERVICE_TOWER_TITLE:string",
+      "DESCRIPTION:string",
+      "IMPACT:string",
+      "PROBABILITY_SCALE:int",
+      "IMPACT_SCALE:int",
+      "RISK_TREATMENT_STRATEGY:string",
+      "RISK_REPOSITORY_ID:int",
+      "SERVICE_TOWER_ID:int",
+      "THREATS:string",
+      "VULNERABILITIES:string"
+    ]
+  },
+  {
+    "name": "FolderData",
+    "props": [
+      "FolderName:string",
+      "ParentFolderId:int",
+      "FolderList:List<FolderData>",
+      "FileList:List<FileData>"
+
+    ]
+  },
+  {
+    "name": "FileData",
+    "props": [
+      "FileName:string",
+      "FolderId:int",
+      "FilePath:string",
+      "FileExtension:string",
+      "FileType:string"
+    ]
+  },
+  {
+    "name": "ProcessModelReference",
+    "props": [
+      "PROCESS_MODEL_NAME:string",
+      "SECTION_REFERENCE:string",
+      "PROCESS_MODEL_ID:int",
+      "PROCESS_MODEL_REFERENCE_LIST:int"
+    ]
+  },
+  {
+    "name": "AllProcessList",
+    "props": [
+      "PROCESS_MODEL_ID:int?",
+      "PROCESS_MODEL_NAME:string",
+      "PROCESS_AREA:string",
+      "PROCESS_AREA_ID:int",
+      "PROCESS_ID:int",
+      "PROCESS_TITLE:string",
+      "PROCESS_DESCRIPTION:string",
+      "REFERENCE_COLUMN:string",
+      "REFERENCE_LIST:int[]"
+    ]
+  },
+  {
+    "name": "AllProcessByServiceAreaList",
+    "props": [
+      "SERVICE_AREA_ID:int?",
+      "SERVICE_AREA_NAME:string",
+      "PROCESS_AREA:string",
+      "PROCESS_AREA_ID:int",
+      "PROCESS_ID:int",
+      "PROCESS_TITLE:string",
+      "PROCESS_DESCRIPTION:string",
+      "REFERENCE_COLUMN:string",
+      "REFERENCE_LIST:int[]"
+    ]
+  },
+  {
+    "name": "KPIMasterList",
+    "props": [
+      "KPI_MASTER_ID:int",
+      "KPI_TARGET_MASTER_ID:int",
+      "CUSTOMER_ID:string",
+      "PROJECT_ID:string",
+      "PRODUCT_ID:int",
+      "GOAL_ID:int",
+      "MODE_ID:int?",
+      "GLOBAL_KPI_CATEGORY_ID:int",
+      "PRODUCT_SERVICE_LEVEL_METRICS_ID:int",
+      "BASE_MEASURE_ID:int",
+      "SERVICE_AREA:string",
+      "KPI_NAME:string",
+      "EXPECTED_SERVICE_LEVEL:decimal?",
+      "MINIMUM_SERVICE_LEVEL:decimal?",
+      "SLA_TARGET_UNIT_OF_MEASUREMENT:string",
+      "FREQUENCY:string",
+      "SPECIFICATION_LIMIT:string",
+      "SERVICE_LEVEL:string",
+      "SLA_CATEGORY:string",
+      "REFERENCE:string",
+      "START_DATE:DateTime",
+      "END_DATE:DateTime"
+    ]
+  },
+  {
+    "name": "ProjectInputHolder",
+    "props": [
+      "QAList:List<EMP_INFO>",
+      "CertificationScopeList:List<PROJECT_CERTIFICATION_SCOPE>",
+      "IsoStandardList:List<PROJECT_ISO_STANDARD>"
+    ]
+  },
+  {
+    "name": "ProjectInputDetails",
+    "props": [
+      "PROJECT_ID:string",
+      "QA_SPOC:string",
+      "CERTIFICATION_SCOPE:int[]",
+      "ISO_STANDARD:int[]",
+      "GOVERNANCE_APPLICABILITY:string"
+    ]
+  },
+  {
+    "name": "ProjectHeads",
+    "props": [
+      "BUHEAD:string",
+      "CSM:string",
+      "PM:string",
+      "AM:string",
+      "QA:string",
+      "BUHEAD_NAME:string",
+      "CSM_NAME:string",
+      "PJT_MNGR_NAME:string",
+      "ACNT_MNGR_NAME:string",
+      "QSPOC_NAME:string",
+      "CERTIFICATION_SCOPES:string",
+      "ISO_STANDARDS:string",
+      "CERTIFICATION_SCOPES_NAME:string",
+      "ISO_STANDARDS_NAME:string",
+      "DP:string",
+      "DP_NAME:string",
+      "GOVERNANCE_APPLICABILITY:string"
+    ]
+  },
+  {
+    "name": "ProjectCertificationScopes",
+    "props": [
+      "STANDARD_NAME:string",
+      "SCOPE_NAME:string",
+      "PROJECT_SCOPE_ID:int",
+      "ISO_STANDARD_ID:int"
+    ]
+  },
+  {
+    "name": "OverallTaskDetails",
+    "props": [
+      "CUST_NM:string",
+      "PROJ_NM:string",
+      "ISO_STANDARDS:string",
+      "CERTIFICATION_SCOPES:string",
+      "START_DATE:string",
+      "END_DATE:string",
+      "HEADCOUNT:int?",
+      "LAST_AUDITED_DATE:string",
+      "AUDIT_STATUS:string",
+      "FREQUENCY:string",
+      "PROJ_ID:string",
+      "CUST_ID:string",
+      "AUDIT_TITLE:string",
+      "AUDITS_PLANNED:int?",
+      "AUDITS_COMPLETED:int?"
+    ]
+  },
+  {
+    "name": "OpenFindingsCount",
+    "props": [
+      "AUDIT_ID:int",
+      "OPEN_FINDINGS:int",
+      "CLOSED_FINDINGS:int",
+      "TOTAL_FINDINGS:int"
+    ]
+  },
+  {
+    "name": "GetSimilarIdeas",
+    "props": [
+      "IDEA_ID:int",
+      "DESCRIPTION:string",
+      "IDENTIFIED_DATE:DateTime?",
+      "STATUS:string",
+      "IDENTIFIED_BY:string",
+      "PROJECT_NAME:string",
+      "CUSTOMER_NAME:string"
+    ]
+  },
+  {
+    "name": "PROJECT_SCOPES",
+    "props": [
+      "PROJECT_SCOPE:PROJECT_SCOPE",
+      "PROJECT_INSCOPE_DETAILS:List<PROJECT_INSCOPE_DETAILS>"
+
+    ]
+  },
+  {
+    "name": "IdeaInputs",
+    "props": [
+      "CUSTOMER_ID:string",
+      "START_DATE:DateTime",
+      "END_DATE:DateTime"
+    ]
+  },
+  {
+    "name": "OverallKPIList",
+    "props": [
+      "KPI_ID:int",
+      "KPI_NAME:string",
+      "FREQUENCY:string",
+      "SLA_TARGET_UNIT_OF_MEASUREMENT:string",
+      "SERVICE_AREA:string",
+      "BASE_MEASURE_ID:int",
+      "NUMERATORDESCRIPTION:string",
+      "DENOMINATORDESCRIPTION:string",
+      "BASE_MEASURE_FORMULA_TYPE_ID:int",
+      "FORMULA_DESCRIPTION:string",
+      "FORMULA:string",
+      "SLA_FORMULA:string"
+    ]
+  },
+  {
+    "name": "ScpConfiguration",
+    "props": [
+      "CUST_NM:string",
+      "PROJ_NM:string",
+      "START_DATE:DateTime",
+      "END_DATE:DateTime",
+      "FREQUENCY:string",
+      "SERVICE_TOWER:string",
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "SERVICE_TOWER_ID:string",
+      "IS_SCP_APPLICABLE:bool"
+    ]
+  },
+  {
+    "name": "ScpInputDetails",
+    "props": [
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "START_DATE:DateTime",
+      "END_DATE:DateTime",
+      "FREQUENCY:string",
+      "IS_SCP_APPLICABLE:bool",
+      "SERVICE_TOWER:int []"
+    ]
+  },
+  {
+    "name": "PROJECT_CAPA_DETAILS",
+    "props": [
+      "PROJECT_ID:string",
+      "PROJECT_TITLE:string",
+      "NOT_MET:int",
+      "DUE_FOR_SUBMISSION:int",
+      "DUE_FOR_REVIEW:int",
+      "DUE_FOR_QA_APPROVAL:int",
+      "DUE_FOR_IMPLEMENTATION:int",
+      "DUE_FOR_VERIFICATION:int",
+      "CLOSED:int"
+    ]
+  },
+  {
+    "name": "BATCH_DATA_FORMATTED",
+    "props": [
+      "BATCH_NAME:string",
+      "START_DATE:DateTime",
+      "END_DATE:DateTime"
+    ]
+  },
+  {
+    "name": "CUSTOMER_CONTACTS",
+    "props": [
+
+      "EMAIL_ID:string",
+      "DISPLAY_NAME:string",
+      "IS_ACTIVE:bool"
+    ]
+  },
+  {
+    "name": "GET_QUESTION_MODEL",
+    "props": [
+      "QUESTION_MODEL_ID:int"
+    ]
+  },
+  {
+    "name": "PROJECT_BY_RESOURCE",
+    "props": [
+      "PROJ_ID:string",
+      "CNT:int"
+    ]
+  },
+  {
+    "name": "CSS_CUSTOMER_VERIFICATION",
+    "props": [
+      "CUST_NM:string",
+      "PROJ_NM:string",
+      "CSS_Eligible:string",
+      "REASON:string",
+      "HEAD_COUNT:int",
+      "START_DateTime:DateTime",
+      "END_DateTime:DateTime",
+      "CSS_CONFIGURED:string",
+      "CUSTOMER_CONTACT_VERIFICATION:string",
+      "VERIFICATION_COMMENTS:string",
+      "VERIFIED_BY:string",
+      "APPROVAL_DateTime:DateTime",
+      "RESPONDENT_NAME:string",
+      "RESPONDENT_MAIL:string",
+      "ROLE:string",
+      "ROLE_TYPE:string",
+      "PROJ_STATUS:string",
+      "PROJECT_TYPE:string",
+      "BUSINESS_UNIT:string",
+      "DEPARTMENT:string",
+      "PROJECT_GROUP:string",
+      "CONTRACTING_UNIT:string",
+      "REVENUE_TYPE:string",
+      "COUNTRY:string",
+      "METHODOLOGY:string",
+      "TYPE_OF_ACCOUNT:string",
+      "ACCOUNT_OWNER:string",
+      "PM:string",
+      "PM_MAIL:string",
+      "CSM:string",
+      "CSM_MAIL_ID:string",
+      "ACCOUNT_MANAGER:string",
+      "AM_MAIL_ID:string",
+      "BU_HEAD:string",
+      "BU_MAIL:string",
+      "QUALITY_SPOC:string",
+      "CSM_REVIEWER_MAIL_ID:string",
+      "SKIP_CSAT:string",
+      "SKIP_CSAT_COMMENTS:string",
+      "PROJ_ID:string",
+      "CUST_ID:string",
+      "BATCH_ID:int?",
+      "BATCH_CUSTOMER_ID:int?",
+      "BATCH_MONTHLY_ID:int?",
+      "BATCH_CUSTOMER_MONTHLY_ID:int?",
+      "CSM_EMP_ID:string",
+      "CONTACTS_LINK:string",
+      "SKIP_CSAT_LINK:string"
+    ]
+  },
+  {
+    "name": "CSAT_PROJECT_SELECTION_LIST",
+    "props": [
+      "CUST_ID:string",
+      "CUST_NM:string",
+      "PROJ_ID:string",
+      "PROJ_NM:string",
+      "IS_SELECTED:bool",
+      "IS_REASON_MANDATORY:string",
+      "PROJECT_HEAD_COUNT:int",
+      "ACCOUNT_HEAD_COUNT:int",
+      "DEFAULT_REASON:string",
+      "REASON:string",
+      "PREDICTED_SCORE:decimal?",
+      "PREDICTED_REASON:string",
+      "PROJECT_IN_PCSAT:bool",
+      "ACCOUNT_IN_ACSAT:bool",
+      "START_DATE:DateTime?",
+      "END_DATE:DateTime?",
+      "FREQUENCY:string",
+      "PROJ_STATUS:string",
+      "RESPONDENT_MAIL:string",
+      "CONTACT_ROLE:string",
+      "QUALITY_SPOC:string",
+      "CSAT_SPOC_EMAIL:string",
+      "PROJECT_TYPE:string",
+      "EXECUTION_TYPE:string",
+      "ENGAGAMENT_TYPE:string",
+      "BUSINESS_UNIT:string",
+      "DEPARTMENT:string",
+      "PROJECT_GROUP:string",
+      "CONTRACTING_UNIT:string",
+      "REVENUE_TYPE:string",
+      "COUNTRY:string",
+      "METHODOLOGY:string",
+      "PROJ_PM_EMP_ID:string",
+      "DP_ID:string"
+    ]
+  },
+  {
+    "name": "DROPDOWN_OPTION",
+    "props": [
+      "DD_VALUE:string",
+      "DD_TEXT:string" 
+    
+    ]
+  }
+
+]

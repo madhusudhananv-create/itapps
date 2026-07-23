@@ -1,0 +1,51 @@
+<div class="pageborder">
+  <div class="row">
+    <h4 class="dialog-title">Approval Section</h4>
+
+    <form
+      style="background: white; padding-left: 10px; padding-bottom: 10px;"
+      #projectDataForm="ngForm"
+      (ngSubmit)="SubmitForm(projectDataForm.valid)"
+    >
+      <div>
+
+        <div class="row">
+          <mat-form-field style="width: 90%;" appearance="outline">
+            <mat-label>Approval Comments</mat-label>
+            <textarea
+              name="txtComments"
+              maxlength="2000"
+              [(ngModel)]="approvalComments"
+              matInput
+              placeholder="Approval Comments"
+              style="height: 100px;"
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="row action-buttons">
+          <button
+            type="submit"
+            mat-raised-button
+            color="primary"
+            class="btn-approve"
+          >
+            Approve
+          </button>
+
+          &nbsp;&nbsp;
+
+          <button
+            type="button"
+            mat-stroked-button
+            (click)="close()"
+            class="btn-close"
+          >
+            Close
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>

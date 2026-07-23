@@ -1,0 +1,220 @@
+// ================================================================
+// Qualitative Benefits Card
+// ================================================================
+
+$font-sf: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+$blue:    #4B4EB1;
+$green:   #34c759;
+$orange:  #ff9500;
+$purple:  #af52de;
+$teal:    #00bcd4;
+$text:    #1c1c1e;
+$text2:   #6e6e73;
+$border:  #e8eaef;
+
+.qlb-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 18px 20px 12px;
+  font-family: $font-sf;
+}
+
+// ── Header ──────────────────────────────────────────────────────
+.qlb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.qlb-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qlb-title-bar {
+  display: block;
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: $green;
+  margin-bottom: 4px;
+}
+
+.qlb-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: $text;
+  letter-spacing: -0.1px;
+}
+
+// ── View By mock dropdown ────────────────────────────────────────
+.qlb-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qlb-control-label {
+  font-size: 11.5px;
+  color: $text2;
+  white-space: nowrap;
+}
+
+.qlb-view-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 10px;
+  border: 0.5px solid #d2d8ee;
+  border-radius: 8px;
+  background: #f8f9ff;
+  font-size: 12px;
+  color: $text;
+  cursor: default;
+}
+
+// ── Benefits list ────────────────────────────────────────────────
+.qlb-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 200px;
+  padding: 4px 0;
+}
+
+.qlb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fafbff;
+  border: 0.5px solid $border;
+  transition: background 0.12s;
+
+  &:hover { background: #f0f2ff; }
+}
+
+// Left accent bar
+.qlb-benefit-bar {
+  display: block;
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+
+  &--blue    { background: $blue; }
+  &--green   { background: $green; }
+  &--orange  { background: $orange; }
+  &--purple  { background: $purple; }
+  &--teal    { background: $teal; }
+  &--default { background: #c7c7cc; }
+}
+
+.qlb-benefit-name {
+  flex: 1;
+  font-size: 12.5px;
+  color: $text;
+  font-weight: 500;
+}
+
+// Category pill (People / Process / Technology)
+.qlb-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+
+  &--blue    { background: rgba($blue, 0.10);   color: $blue;   }
+  &--green   { background: rgba($green, 0.12);  color: darken($green, 10%); }
+  &--orange  { background: rgba($orange, 0.12); color: darken($orange, 10%); }
+  &--purple  { background: rgba($purple, 0.12); color: $purple; }
+  &--teal    { background: rgba($teal, 0.12);   color: darken($teal, 10%); }
+  &--default { background: rgba(0,0,0,0.05);    color: $text2;  }
+}
+
+// ── Empty state ─────────────────────────────────────────────────
+.qlb-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  min-height: 160px;
+  text-align: center;
+}
+
+.qlb-empty-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba($green, 0.10);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.qlb-empty-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text;
+  margin-bottom: 4px;
+}
+
+.qlb-empty-sub {
+  font-size: 11.5px;
+  color: $text2;
+}
+
+// ── Loading dots ─────────────────────────────────────────────────
+.qlb-loading-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+
+  span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: $blue;
+    opacity: 0.3;
+    animation: qlb-pulse 1.2s infinite ease-in-out;
+
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes qlb-pulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%           { opacity: 1;   transform: scale(1);   }
+}
+
+// ── Footer: View More ─────────────────────────────────────────────
+.qlb-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  margin-top: 8px;
+}
+
+.qlb-view-more {
+  font-size: 12px;
+  font-weight: 500;
+  color: $blue;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.7; }
+}

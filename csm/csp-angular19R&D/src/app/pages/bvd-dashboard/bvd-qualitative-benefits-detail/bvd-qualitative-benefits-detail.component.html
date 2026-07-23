@@ -1,0 +1,66 @@
+<div class="dialog-container">
+  <!-- Dialog Header -->
+  <div class="dialog-header" mat-dialog-title>
+    <label class="dialog-title">Qualitative Benefits</label>
+    <button mat-icon-button class="close-button" (click)="onClose()" aria-label="Close dialog">
+      <mat-icon class="close-icon">close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Dialog Content -->
+  <div mat-dialog-content class="dialog-content">
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" class="benefits-table mat-elevation-z0" matSort>
+        
+        <!-- Identified Date Column -->
+        <ng-container matColumnDef="identifiedDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Identified Date</th>
+          <td mat-cell *matCellDef="let row">{{ row.identified_Date }}</td>
+        </ng-container>
+
+        <!-- Idea Column -->
+        <ng-container matColumnDef="idea">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Idea</th>
+          <td mat-cell *matCellDef="let row">{{ row.idea }}</td>
+        </ng-container>
+
+        <!-- Area Column -->
+        <ng-container matColumnDef="area">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Area</th>
+          <td mat-cell *matCellDef="let row">{{ row.area }}</td>
+        </ng-container>
+
+        <!-- Responsible Column -->
+        <ng-container matColumnDef="responsible">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Responsible</th>
+          <td mat-cell *matCellDef="let row">{{ row.responsible }}</td>
+        </ng-container>
+
+        <!-- Benefit Column -->
+        <ng-container matColumnDef="benefit">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Benefit</th>
+          <td mat-cell *matCellDef="let row">{{ row.benefit_Title }}</td>
+        </ng-container>
+
+        <!-- Table Rows -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <!-- No Data Row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+            No qualitative benefits data available
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Paginator -->
+    <mat-paginator 
+      [pageSize]="5" 
+      [pageSizeOptions]="[5, 10, 20]"
+      showFirstLastButtons
+      aria-label="Select page of qualitative benefits">
+    </mat-paginator>
+  </div>
+</div>

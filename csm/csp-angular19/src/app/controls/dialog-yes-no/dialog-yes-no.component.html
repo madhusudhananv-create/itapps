@@ -1,0 +1,55 @@
+<div class="modern-logout-dialog">
+  <!-- Animated Background Gradient -->
+  <div class="dialog-bg-gradient"></div>
+  
+  <!-- Content Container -->
+  <div class="dialog-content-wrapper">
+    <!-- Animated Icon Container -->
+    <div class="icon-container">
+      <div class="icon-ring ring-1"></div>
+      <div class="icon-ring ring-2"></div>
+      <div class="icon-ring ring-3"></div>
+      <div class="icon-inner">
+        @if (icon) {
+          <mat-icon class="logout-icon">{{ icon }}</mat-icon>
+        } @else {
+          <mat-icon class="logout-icon">logout</mat-icon>
+        }
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h2 class="dialog-title">{{ data.title }}</h2>
+    
+    <!-- Message -->
+    <p class="dialog-message">{{ data.message }}</p>
+
+    <!-- User Avatar Pill (optional visual) -->
+    <div class="session-info">
+      <div class="session-dot"></div>
+      <span>Active session will be terminated</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="dialog-buttons">
+      <button 
+        class="btn-cancel"
+        (click)="onCancel()"
+        [disabled]="isProcessing()">
+        <span class="btn-text">{{ cancelText }}</span>
+      </button>
+      
+      <button 
+        class="btn-confirm"
+        (click)="onConfirm()"
+        [disabled]="isProcessing()">
+        @if (isProcessing()) {
+          <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+        } @else {
+          <mat-icon class="btn-icon">logout</mat-icon>
+        }
+        <span class="btn-text">{{ confirmText }}</span>
+      </button>
+    </div>
+  </div>
+</div>

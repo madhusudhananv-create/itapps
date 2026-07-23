@@ -1,0 +1,43 @@
+.dialog-content {
+  padding: 16px 24px;
+  max-height: calc(80vh - 120px);
+  overflow-y: auto;
+  
+  p {
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  
+  b {
+    display: block;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    color: #333;
+  }
+}
+
+.pointed-paragraph {
+  background-color: #e8e8e8;
+  padding: 12px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.pointed-paragraph::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 10px solid transparent;
+  border-top-color: #e8e8e8;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}

@@ -1,0 +1,201 @@
+﻿
+    <mat-card class="section-card">
+      <mat-card-content>
+        <form [formGroup]="tiaForm" (ngModelChange)="onFormChange()">
+          <input type="hidden" formControlName="id">
+          <input type="hidden" formControlName="activity">
+          <table mat-table [dataSource]="tiaList" class="data-table mat-elevation-z1 full-width">
+            <ng-container matColumnDef="activity">
+              <th mat-header-cell *matHeaderCellDef>Activity / Services</th>
+              <td mat-cell *matCellDef="let row">
+                <ng-container *ngIf="editingRowId === row.id; else viewActivity">
+                  <div class="read-only activity-field-in-edit">
+                    {{ tiaForm.get('activity')?.value || row.activity }}
+                  </div>
+                </ng-container> <ng-template #viewActivity>
+                 <div class="read-only">{{ row.activity }}</div>
+                 </ng-template>
+                 </td>
+                 </ng-container>
+
+<ng-template #impactCell let-row let-impactKey="impactKey">
+    <ng-container *ngIf="editingRowId === row.id; else viewImpact">
+        <div class="impact-cell-container">
+            <mat-form-field appearance="outline" class="impact-field">
+                <input matInput 
+                       type="time"
+                       formControlName="{{impactKey}}" 
+                       placeholder="HH:MM">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="impact-field">
+                <mat-select 
+                    placeholder="Impact Rating"
+                    formControlName="{{impactKey}}Rating">
+                    <mat-option *ngFor="let r of impactRatings" [value]="r">
+                        {{ r }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </ng-container>
+    
+    <ng-template #viewImpact>
+        <div class="read-only">
+            <div>{{ row[impactKey] }}</div> <div>{{ row[impactKey + 'Rating'] }}</div> </div>
+    </ng-template>
+</ng-template>
+
+<ng-container matColumnDef="impactA">
+<th mat-header-cell *matHeaderCellDef>
+<mat-icon class="impact-icon impact-a">warning</mat-icon>
+ Impact [A] (Insignificant) 
+ <mat-icon matTooltip="Operational losses within risk appetite" 
+                           matTooltipPosition="above" class="help-icon">help</mat-icon>
+ </th>
+<td mat-cell *matCellDef="let row">
+<ng-container *ngTemplateOutlet="impactCell; context: { $implicit: row, impactKey: 'impactA' }">
+</ng-container>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="impactB">
+<th mat-header-cell *matHeaderCellDef>
+<mat-icon class="impact-icon impact-b">warning</mat-icon>
+Impact [B] (Medium)
+<mat-icon matTooltip="Temporary operational losses" 
+                           matTooltipPosition="above" class="help-icon">help</mat-icon>
+</th>
+<td mat-cell *matCellDef="let row">
+<ng-container *ngTemplateOutlet="impactCell; context: { $implicit: row, impactKey: 'impactB' }">
+</ng-container>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="impactC">
+<th mat-header-cell *matHeaderCellDef>
+<mat-icon class="impact-icon impact-c">warning</mat-icon>
+Impact [C] (High)
+<mat-icon matTooltip="Long-term operational losses, possible billing loss" 
+                           matTooltipPosition="above" class="help-icon">help</mat-icon>
+</th>
+<td mat-cell *matCellDef="let row">
+<ng-container *ngTemplateOutlet="impactCell; context: { $implicit: row, impactKey: 'impactC' }">
+</ng-container>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="impactD">
+<th mat-header-cell *matHeaderCellDef>
+<mat-icon class="impact-icon impact-d">warning</mat-icon>
+Impact [D] (Very High)
+<mat-icon matTooltip="Extremely high consequences (contract cancellation)" 
+                           matTooltipPosition="above" class="help-icon">help</mat-icon>
+</th>
+<td mat-cell *matCellDef="let row">
+<ng-container
+*ngTemplateOutlet="impactCell; context: { $implicit: row, impactKey: 'impactD' }">
+</ng-container>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="mtpd">
+<th mat-header-cell *matHeaderCellDef>
+<mat-icon class="impact-icon mtpd-icon">timer</mat-icon>
+MTPD Time (HH:MM)
+<mat-icon matTooltip="Maximum Tolerable Period of Disruption. Defaults to Impact D, can be changed to Impact C with justification" 
+                           matTooltipPosition="above" class="help-icon">help</mat-icon>
+</th>
+<td mat-cell *matCellDef="let row">
+        <ng-container *ngIf="editingRowId === row.id; else viewMtpd">
+            <mat-form-field appearance="outline" class="impact-field">
+ <input matInput type="time" formControlName="mtpd" placeholder="00:00" maxlength="5" aria-label="MTPD Time">
+ <mat-icon matSuffix>timer</mat-icon>
+ <mat-error *ngIf="tiaForm.get('mtpd')?.hasError('required')">Required</mat-error>
+ <mat-error *ngIf="tiaForm.get('mtpd')?.hasError('pattern')">Invalid format (HH:MM)</mat-error>
+ <mat-error *ngIf="tiaForm.get('mtpd')?.hasError('invalidMTPD')">Must be Impact D or C only</mat-error>
+            </mat-form-field>
+        </ng-container>
+        <ng-template #viewMtpd>
+            <div class="read-only">{{ row.mtpd }}</div>
+        </ng-template>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="dependency">
+<th mat-header-cell *matHeaderCellDef>
+<mat-icon class="impact-icon">description</mat-icon>
+ Explain Dependency 
+ <mat-icon matTooltip="Required when MTPD differs from Impact D. Example: Vendor Dependency" 
+                           matTooltipPosition="above" class="help-icon">help</mat-icon>
+ </th>
+<td mat-cell *matCellDef="let row">
+        <ng-container *ngIf="editingRowId === row.id; else viewDependency">
+            <mat-form-field appearance="outline" class="w-100">
+ <input matInput formControlName="explainDependency" placeholder="e.g., Vendor Dependency" maxlength="500">
+ <mat-icon matSuffix matTooltip="Required when MTPD differs from Impact D" matTooltipPosition="above">description</mat-icon>
+<mat-error *ngIf="tiaForm.get('explainDependency')?.hasError('required')">Explanation required</mat-error>
+            </mat-form-field>
+        </ng-container>
+        <ng-template #viewDependency>
+            <div class="read-only">{{ row.explainDependency }}</div>
+        </ng-template>
+ </td>
+</ng-container>
+
+<ng-container matColumnDef="action">
+<th mat-header-cell *matHeaderCellDef>Edit / Delete</th>
+<td mat-cell *matCellDef="let row">
+<ng-container *ngIf="editingRowId === row.id; else showEditButton">
+<button mat-icon-button class="save-button" (click)="saveRow()" [disabled]="tiaForm.invalid">
+<mat-icon>check</mat-icon>
+</button>
+<button mat-icon-button class="cancel-button" (click)="cancelEdit()">
+<mat-icon>close</mat-icon>
+</button>
+</ng-container>
+<ng-template #showEditButton>
+<button mat-icon-button class="edit-button" (click)="editRow(row)">
+ <mat-icon>edit</mat-icon>
+</button>
+<button mat-icon-button class="delete-button" (click)="deleteRow(row.id)">
+<mat-icon>delete</mat-icon>
+</button>
+</ng-template>
+</td>
+</ng-container>
+
+
+<tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+<tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+          </table>
+        </form>
+      </mat-card-content>
+  
+      <mat-card-actions class="section-actions">
+        <div class="spacer"></div>
+        <br/>
+        <!-- Consistency Warning -->
+              <div class="form-field full-width" *ngIf="showConsistencyWarning">
+                <div class="consistency-warning">
+                  <mat-icon color="warn">warning</mat-icon>
+                  <span>Times should generally follow A â‰¤ B â‰¤ C â‰¤ D sequence</span>
+                </div>
+              </div>
+              <br/>
+        
+        <div class="validation-status" *ngIf="tiaForm.invalid && tiaForm.touched">
+          <mat-icon color="warn">warning</mat-icon>
+          <span>Please complete all required fields</span>
+        </div>
+        
+        <div class="validation-status success" *ngIf="tiaForm.valid">
+          <mat-icon color="primary">check_circle</mat-icon>
+          <span>Section completed</span>
+        </div>
+        
+
+      </mat-card-actions>
+    </mat-card>
+  

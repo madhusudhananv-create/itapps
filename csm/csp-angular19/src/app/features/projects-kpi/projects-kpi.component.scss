@@ -1,0 +1,742 @@
+// Main container - Compact styling
+.mainDiv {
+  background-color: white;
+  border-radius: 6px;
+  display: block;
+  margin: 5px 8px;
+  min-height: 600px;
+  height: auto;
+  padding: 12px;
+  width: calc(100% - 16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  
+  // Hide any scrollbars
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+// Base styles for project-kpi
+.project-kpi {
+  font-size: 12px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  word-wrap: normal;
+  line-height: 1.4;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  
+  // Hide any scrollbars
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+// Compact page header
+.page-header {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #5461a2;
+}
+
+.page-title {
+  font-size: 18px;
+  color: #5461a2;
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+}
+
+// Compact filter container - Single row layout
+.filter-container {
+  margin-bottom: 12px;
+  width: 100%;
+  overflow: visible;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  
+  // Hide any potential scrollbars
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.filter-row-single {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  
+  // Hide any potential scrollbars
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.filter-kpi {
+  flex: 0 0 220px !important;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  display: block;
+}
+
+.filter-project-selector-inline {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 450px;
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  
+  // Ensure child elements don't cause overflow
+  > * {
+    overflow: visible !important;
+  }
+  
+  // Hide any potential scrollbars
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.filter-service {
+  flex: 0 0 220px !important;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  display: block;
+}
+
+.date-range-inline {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+// Compact Material form fields - PSPD style (plain dropdown)
+.filter-kpi,
+.filter-service {
+  display: block;
+  
+  ::ng-deep .mat-dropdown-plain {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: 40px;
+    border: 1.5px solid #D2D2D7;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 0;
+    font-size: 13px;
+    color: #1D1D1F;
+    position: relative;
+    transition: border-color 0.2s ease;
+    display: block;
+
+    &:hover {
+      border-color: #B0B0B5;
+    }
+
+    &:focus,
+    &.mat-mdc-select-focused {
+      border-color: #0071E3;
+      outline: none;
+    }
+
+    .mat-mdc-select-trigger {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      padding: 0 40px 0 12px;
+    }
+
+    .mat-mdc-select-value {
+      font-size: 13px;
+      color: #1D1D1F;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mat-mdc-select-placeholder {
+      font-size: 13px;
+      color: #8E8E93;
+      text-align: left;
+    }
+
+    .mat-mdc-select-arrow {
+      color: #8E8E93;
+    }
+
+    .mat-mdc-select-arrow-wrapper {
+      position: absolute;
+      right: 12px;
+    }
+    
+    .mat-mdc-select-value-text {
+      font-size: 13px !important;
+      color: #1D1D1F !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  
+  // Search option styling
+  ::ng-deep .search-option {
+    pointer-events: auto !important;
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #E5E5EA !important;
+    
+    &:hover {
+      background-color: #f8f9fa !important;
+    }
+  }
+}
+
+// Search input styling
+.search-input {
+  width: calc(100% - 16px);
+  padding: 8px;
+  margin: 4px 8px;
+  border: 1px solid #D2D2D7;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  
+  &:focus {
+    border-color: #0071E3;
+  }
+}
+
+// Keep compact-field for backward compatibility (if used elsewhere)
+.compact-field {
+  width: 100%;
+  display: block;
+  
+  ::ng-deep {
+    .mat-mdc-form-field {
+      width: 100%;
+    }
+    
+    .mat-mdc-text-field-wrapper {
+      height: 40px !important;
+      background-color: #ffffff !important;
+    }
+    
+    .mat-mdc-form-field-infix {
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+      min-height: 40px !important;
+      min-width: 0 !important;
+    }
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none !important;
+    }
+
+    .mat-mdc-select,
+    .mat-mdc-input-element {
+      font-size: 13px !important;
+    }
+
+    .mat-mdc-select-trigger {
+      height: 40px !important;
+    }
+
+    .mat-mdc-form-field-flex {
+      align-items: center !important;
+      height: 40px !important;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #D2D2D7 !important;
+      border-width: 1.5px !important;
+    }
+    
+    .mdc-notched-outline__leading {
+      border-radius: 8px 0 0 8px !important;
+    }
+    
+    .mdc-notched-outline__trailing {
+      border-radius: 0 8px 8px 0 !important;
+    }
+    
+    &:hover .mdc-notched-outline__leading,
+    &:hover .mdc-notched-outline__notch,
+    &:hover .mdc-notched-outline__trailing {
+      border-color: #B0B0B5 !important;
+    }
+    
+    &.mat-focused .mdc-notched-outline__leading,
+    &.mat-focused .mdc-notched-outline__notch,
+    &.mat-focused .mdc-notched-outline__trailing {
+      border-color: #0071E3 !important;
+      border-width: 2px !important;
+    }
+    
+    .mat-mdc-select-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .mat-mdc-select-value-text {
+      font-size: 13px !important;
+      color: #1D1D1F !important;
+    }
+    
+    .mat-mdc-select-placeholder {
+      font-size: 13px !important;
+      color: #8E8E93 !important;
+    }
+    
+    .mat-mdc-select-arrow {
+      color: #8E8E93 !important;
+    }
+    
+    label {
+      font-size: 13px !important;
+      color: #8E8E93 !important;
+    }
+  }
+}
+
+// Compact project selector wrapper - Inline (component handles its own layout)
+.filter-project-selector-inline {
+  display: block;
+  width: 100%;
+}
+
+// Compact native select dropdowns - PSPD style
+.compact-select {
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1.5px solid #D2D2D7;
+  border-radius: 8px;
+  height: 40px;
+  background-color: white;
+  min-width: 55px;
+  width: 70px;
+  color: #1D1D1F;
+  transition: border-color 0.2s ease;
+  
+  &:hover {
+    border-color: #B0B0B5;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #0071E3;
+    border-width: 2px;
+  }
+}
+
+
+
+.date-separator {
+  font-weight: 600;
+  padding: 0 4px;
+  color: #666;
+  font-size: 13px;
+}
+
+.btn-apply {
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  height: 40px !important;
+  line-height: 1.4 !important;
+  margin-left: 6px !important;
+  white-space: nowrap;
+  border-radius: 8px !important;
+}
+
+// Compact view options
+.view-options-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.compact-radio-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  ::ng-deep {
+    .mat-mdc-radio-button {
+      margin-right: 0 !important;
+      
+      .mdc-label {
+        font-size: 12px !important;
+      }
+    }
+  }
+}
+
+.radio-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-right: 8px;
+}
+
+.download-link {
+  cursor: pointer;
+  color: #5461a2;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: #3a4270;
+  }
+  
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Compact notes section with collapsible
+.notes-section {
+  margin-bottom: 10px;
+  font-size: 11px;
+}
+
+.notes-collapsible {
+  background-color: #fffbea;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  padding: 6px 10px;
+  
+  summary {
+    cursor: pointer;
+    user-select: none;
+    color: #92400e;
+    font-size: 12px;
+    padding: 2px 0;
+    
+    &:hover {
+      color: #78350f;
+    }
+  }
+}
+
+.notes-list {
+  margin: 6px 0 0 0;
+  padding-left: 20px;
+  color: #78350f;
+  
+  li {
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+}
+
+// Compact table styles
+.table {
+  font-size: 10px;
+  margin-bottom: 10px;
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  
+  thead th {
+    vertical-align: middle;
+    text-align: center;
+    padding: 4px 2px !important;
+    font-weight: 600;
+    background-color: #c6ddf9 !important;
+    font-size: 10px;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+
+  tbody td {
+    vertical-align: middle;
+    text-align: center;
+    padding: 3px 2px !important;
+    font-size: 10px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  &.table-bordered {
+    border: 1px solid #dee2e6;
+    
+    th,
+    td {
+      border: 1px solid #dee2e6;
+    }
+  }
+  
+  &.table-responsive {
+    display: table;
+    overflow-x: visible;
+  }
+  
+  // Specific column widths for better layout - applies to both th and td
+  th:nth-child(1), td:nth-child(1) { width: 8%; } // Project Name / Enterprise KPI name
+  th:nth-child(2), td:nth-child(2) { width: 6%; } // KPI Area
+  th:nth-child(3), td:nth-child(3) { width: 10%; } // Project KPI Description
+  th:nth-child(4), td:nth-child(4) { width: 4%; } // Priority
+  th:nth-child(5), td:nth-child(5) { width: 5%; } // Measure Frequency
+  th:nth-child(6), td:nth-child(6) { width: 5%; } // YTD - KPI Achievement Score
+  th:nth-child(7), td:nth-child(7) { width: 5%; } // YTD - KPI Score
+  th:nth-child(8), td:nth-child(8) { width: 4%; } // KPI Target value
+  th:nth-child(9), td:nth-child(9) { width: 4%; } // Above target
+  th:nth-child(10), td:nth-child(10) { width: 4%; } // On target
+  th:nth-child(11), td:nth-child(11) { width: 4%; } // Under target
+  th:nth-child(12), td:nth-child(12) { width: 3%; } // UOM
+}
+
+.targetclass {
+  text-align: center;
+}
+
+.actualclass {
+  text-align: center;
+}
+
+// Popup/Tooltip styling
+.popuptext {
+  position: absolute;
+  height: auto;
+  width: 280px;
+  border-radius: 6px;
+  z-index: 500 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid #204d74;
+  left: -100px;
+  background-color: #031c45;
+  padding: 10px;
+  color: white;
+  font-size: 11px;
+}
+
+.targetdetail {
+  font-size: 11px;
+  
+  tbody td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 3px !important;
+  }
+
+  thead th {
+    text-align: left !important;
+    padding: 4px !important;
+    font-size: 11px;
+  }
+}
+
+// Column spacing
+.col-lg-9,
+.col-md-9,
+.col-sm-9,
+.col-lg-10,
+.col-md-10,
+.col-sm-10 {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+
+// Responsive adjustments
+@media only screen and (max-width: 1366px) {
+  .project-kpi {
+    font-size: 10px;
+  }
+
+  .table {
+    font-size: 10px;
+    
+    thead th,
+    tbody td {
+      font-size: 10px;
+      padding: 3px 2px !important;
+    }
+  }
+
+  .targetclass {
+    width: 6% !important;
+  }
+
+  .compact-select {
+    font-size: 12px;
+    padding: 6px 8px;
+    height: 36px;
+    width: 65px;
+  }
+  
+  .filter-kpi {
+    width: 180px !important;
+  }
+  
+  .filter-service {
+    width: 180px !important;
+  }
+  
+  .filter-project-selector-inline {
+    max-width: 380px;
+  }
+  
+  .btn-apply {
+    height: 36px !important;
+    font-size: 12px !important;
+    padding: 6px 14px !important;
+  }
+}
+
+@media only screen and (max-width: 1200px) {
+  .filter-container {
+    overflow-x: auto;
+  }
+  
+  .filter-row-single {
+    min-width: 1000px;
+  }
+}
+
+// Loading state
+.row {
+  &:has(.fa-circle-o-notch) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    font-size: 14px;
+    color: #5461a2;
+  }
+}
+
+// Data table sections
+[class*="gcategory"],
+[class*="project"] {
+  overflow-x: auto;
+  
+  table {
+    min-width: 100%;
+    table-layout: fixed;
+  }
+}
+
+// Category headers in tables
+tbody tr[style*="background-color: #c6ddf9"] td {
+  font-weight: 600;
+  padding: 5px 8px !important;
+  font-size: 11px;
+}
+
+// Button styling
+.btn-primary {
+  background-color: #5461a2;
+  border-color: #5461a2;
+  font-size: 12px;
+  padding: 5px 14px;
+  
+  &:hover {
+    background-color: #3a4270;
+    border-color: #3a4270;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgba(84, 97, 162, 0.25);
+  }
+}
+
+::ng-deep .mat-radio-button.mat-accent .mat-radio-inner-circle {
+  background-color: #031c45 !important;
+}
+
+::ng-deep .mat-radio-button.mat-accent.mat-radio-checked .mat-radio-outer-circle {
+  border-color: #031c45 !important;
+}
+
+label{
+   font-family: Roboto,"Helvetica Neue",sans-serif;
+}
+
+// .col-lg-2, .col-md-2,  .col-sm-2
+// {
+//   padding-left: 0px !important;
+//   padding-right: 0px !important;
+// }
+
+// .tooltip {
+//   position: relative;
+//   display: inline-block;
+//   border-bottom: 1px dotted black;
+// }
+
+// .tooltip .tooltiptext {
+//   width: 120px;
+//   background-color: #555;
+//   color: #fff;
+//   text-align: center;
+//   border-radius: 6px;
+//   padding: 5px 0;
+//   position: absolute;
+//   z-index: 1;
+//   bottom: 125%;
+//   left: 50%;
+//   margin-left: -60px;
+//   opacity: 0;
+//   transition: opacity 0.3s;
+// }
+
+// .tooltip .tooltiptext::after {
+//   content: "";
+//   position: absolute;
+//   top: 100%;
+//   left: 50%;
+//   margin-left: -5px;
+//   border-width: 5px;
+//   border-style: solid;
+//   border-color: #555 transparent transparent transparent;
+// }

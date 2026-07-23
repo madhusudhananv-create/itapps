@@ -1,0 +1,266 @@
+﻿// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Mandatory Training Compliance Report â€” Component Styles
+//  Full rewrite: compact, information-dense, viewport-fit layout
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+// â”€â”€ Design tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+$primary:       #667eea;
+$primary-dark:  #764ba2;
+$bg-page:       #f8f9fa;
+$bg-card:       #ffffff;
+$text-main:     #2d3748;
+$text-muted:    #718096;
+$border:        #e2e8f0;
+$header-height: 52px;
+$filter-height: 56px;
+
+// â”€â”€ Page wrapper â€” full viewport, no outer scroll â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: $bg-page;
+  overflow: hidden;
+}
+
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: $bg-page;
+}
+
+// â”€â”€ Overview header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: $header-height;
+  background: linear-gradient(9deg, #132658 0%, #774ba3 100%);
+  color: #fff;
+  flex-shrink: 0;
+  border-radius: 12px;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .back-btn {
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .cust-logo {
+    height: 30px;
+    object-fit: contain;
+  }
+
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+
+  .export-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .excel-icon {
+      font-size: 18px;
+      color: #69f0ae;
+    }
+  }
+}
+
+// â”€â”€ Filter bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px;
+  background: $bg-card;
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+
+  .filter-field {
+    font-size: 11px;
+
+    ::ng-deep .mat-mdc-form-field-infix {
+      padding-top: 6px !important;
+      padding-bottom: 6px !important;
+      min-height: unset !important;
+    }
+
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      padding: 0 8px !important;
+    }
+  }
+
+  .date-field  { width: 140px; }
+  .proj-field  { width: 220px; }
+
+  .get-details-btn {
+    height: 36px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
+    flex-shrink: 0;
+
+    mat-icon { font-size: 16px; }
+  }
+}
+
+// â”€â”€ Loading bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.loading-bar {
+  flex-shrink: 0;
+}
+
+// â”€â”€ Note â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.note-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 6px 16px 2px;
+  font-size: 11px;
+  color: $text-muted;
+  flex-shrink: 0;
+  line-height: 1.4;
+
+  .note-icon {
+    font-size: 11px;
+    margin-top: 1px;
+    color: $primary;
+    flex-shrink: 0;
+  }
+}
+
+// â”€â”€ Table container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.table-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  margin: 0 8px 8px;
+
+  .table-scroll-wrapper {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid $border;
+    border-radius: 6px 6px 0 0;
+    background: $bg-card;
+  }
+}
+
+// â”€â”€ Report table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.report-table {
+  width: 100%;
+  font-size: 11px;
+  border-collapse: collapse;
+
+  // Sticky header
+  .header-row th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, #132658 0%, #774ba3 100%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 8px 10px;
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .data-row {
+    transition: background 0.15s;
+
+    &:hover { background: #f0f4ff; }
+    &:nth-child(even) { background: #fafbff; }
+
+    td {
+      padding: 5px 10px;
+      border-bottom: 1px solid $border;
+      border-right: 1px solid $border;
+      color: $text-main;
+      font-size: 11px;
+      word-break: break-word;
+      max-width: 160px;
+    }
+  }
+
+  // Fixed-width columns
+  .col-index { width: 36px; text-align: center; }
+  .col-name  { min-width: 120px; max-width: 180px; }
+  .nowrap    { white-space: nowrap; }
+
+  // Cert value badge
+  td.status-done {
+    font-weight: 600;
+    color: #2d6a4f;
+  }
+}
+
+// â”€â”€ Paginator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+mat-paginator {
+  border: 1px solid $border;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  background: $bg-card;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+// â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  color: $text-muted;
+  gap: 8px;
+  flex: 1;
+
+  mat-icon { font-size: 40px; }
+  p        { font-size: 11px; margin: 0; }
+}
+
+// â”€â”€ Snackbar overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+::ng-deep {
+  .success-snackbar .mdc-snackbar__surface { background: #2e7d32 !important; }
+  .warn-snackbar    .mdc-snackbar__surface { background: #e65100 !important; }
+  .error-snackbar   .mdc-snackbar__surface { background: #c62828 !important; }
+
+  .success-snackbar,
+  .warn-snackbar,
+  .error-snackbar {
+    .mdc-snackbar__label,
+    .mat-mdc-snack-bar-action { color: #fff !important; }
+  }
+}

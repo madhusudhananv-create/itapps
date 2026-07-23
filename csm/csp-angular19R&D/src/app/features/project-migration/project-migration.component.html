@@ -1,0 +1,120 @@
+<div class="migration-container">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button class="back-button"
+        [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+        matTooltip="Back to Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="client-logo-container">
+        <img class="client-logo"
+          [src]="'assets/images/' + _layoutService.selectedCust + '.png'"
+          (error)="$any($event.target).src='assets/images/CustomerLogo.png'"
+          alt="Customer Logo">
+      </div>
+      <span class="page-title">Project Data Migration</span>
+    </div>
+  </div>
+
+  <!-- Selectors Row -->
+  <div class="selectors-panel">
+    <div class="selector-group">
+      <label class="selector-label">Source (Old Project)</label>
+      <mat-select class="proj-select" placeholder="Select Old Project"
+        [(ngModel)]="input_oldprojectid" (selectionChange)="onProjectChange('old')">
+        <mat-option *ngFor="let proj of oldProjNames" [value]="proj.proJ_ID">
+          {{ proj.proJ_NM }}
+        </mat-option>
+      </mat-select>
+    </div>
+
+    <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+
+    <div class="selector-group">
+      <label class="selector-label">Destination (New Project)</label>
+      <mat-select class="proj-select" placeholder="Select New Project"
+        [(ngModel)]="input_newprojectid" (selectionChange)="onProjectChange('new')">
+        <mat-option *ngFor="let proj of newProjNames" [value]="proj.proJ_ID">
+          {{ proj.proJ_NM }}
+        </mat-option>
+      </mat-select>
+    </div>
+
+    <button *ngIf="input_oldprojectid && !showMessage"
+      mat-flat-button color="primary" class="migrate-btn"
+      (click)="MigrateProjectData()">
+      <mat-icon>sync_alt</mat-icon> Migrate Data
+    </button>
+  </div>
+
+  <!-- Project Details Comparison -->
+  <div class="comparison-panel" *ngIf="input_oldprojectid">
+    <div class="proj-card old-proj">
+      <div class="proj-card-header">
+        <mat-icon>folder_open</mat-icon>
+        <span>Old Project Details</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div class="proj-card-body">
+        <div class="proj-name">{{ oldProjDetails.proJ_NM }}</div>
+        <div class="proj-detail-row">
+          <span class="detail-label">Project ID</span>
+          <span class="detail-value">{{ input_oldprojectid }}</span>
+        </div>
+        <div class="proj-detail-row">
+          <span class="detail-label">Start Date</span>
+          <span class="detail-value">{{ oldProjDetails.starT_DATE | date:'dd-MMM-yyyy' }}</span>
+        </div>
+        <div class="proj-detail-row">
+          <span class="detail-label">End Date</span>
+          <span class="detail-value">{{ oldProjDetails.enD_DATE | date:'dd-MMM-yyyy' }}</span>
+        </div>
+        <div class="proj-detail-row">
+          <span class="detail-label">Status</span>
+          <span class="status-badge">{{ oldProjDetails.Proj_Status }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="comparison-arrow">
+      <mat-icon>arrow_forward</mat-icon>
+    </div>
+
+    <div class="proj-card new-proj">
+      <div class="proj-card-header">
+        <mat-icon>folder</mat-icon>
+        <span>New Project Details</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div class="proj-card-body">
+        <div class="proj-name">{{ newProjDetails.proJ_NM }}</div>
+        <div class="proj-detail-row">
+          <span class="detail-label">Project ID</span>
+          <span class="detail-value">{{ input_newprojectid }}</span>
+        </div>
+        <div class="proj-detail-row">
+          <span class="detail-label">Start Date</span>
+          <span class="detail-value">{{ newProjDetails.starT_DATE | date:'dd-MMM-yyyy' }}</span>
+        </div>
+        <div class="proj-detail-row">
+          <span class="detail-label">End Date</span>
+          <span class="detail-value">{{ newProjDetails.enD_DATE | date:'dd-MMM-yyyy' }}</span>
+        </div>
+        <div class="proj-detail-row">
+          <span class="detail-label">Status</span>
+          <span class="status-badge">{{ newProjDetails.Proj_Status }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Banner -->
+  <div *ngIf="showMessage" class="success-banner">
+    <mat-icon class="success-icon">check_circle</mat-icon>
+    <span>Project data of <strong>{{ oldProjDetails.proJ_NM }}</strong> successfully migrated to
+      <strong>{{ newProjDetails.proJ_NM }}</strong></span>
+  </div>
+
+</div>

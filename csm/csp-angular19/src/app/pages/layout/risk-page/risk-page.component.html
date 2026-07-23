@@ -1,0 +1,749 @@
+<div class="page-container" *ngIf="readonlymode">
+  <!-- Unified Header Row with Logo -->
+  <div class="unified-header">
+
+    <!-- Back Button -->
+    <button *ngIf="!isPopOpened" class="btn-back" [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]"
+      matTooltip="Back to Dashboard">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <button *ngIf="isPopOpened" class="btn-back" (click)="closeDialog()" matTooltip="Back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+
+        <!-- Logo Placeholder -->
+    <div class="logo-placeholder">
+      <img src="assets/images/CustomerLogo.png" alt="Logo">
+    </div>
+
+
+    <!-- Project Selector -->
+    <app-portfolio-project-selector [custId]="_layoutService.selectedCust" [portinput]="_shared.selectedPortfolios"
+      [projinput]="_shared.selectedProjects" [allproj]="false" (projectsSelected)="projectSelected($event)">
+    </app-portfolio-project-selector>
+
+    <!-- Status Filters -->
+    <div class="status-group">
+      <label class="filter-label">Status:</label>
+      <mat-checkbox class="status-checkbox" [(ngModel)]="AllChecked"
+        (ngModelChange)="showFilteredRows()" (click)="uncheckOthers()">
+        All
+      </mat-checkbox>
+      <mat-checkbox class="status-checkbox open-past-due" color="warn" [(ngModel)]="PastDueChecked" [disabled]="AllChecked"
+        (ngModelChange)="showFilteredRows()">
+        Open - Past Due Date
+      </mat-checkbox>
+      <mat-checkbox class="status-checkbox open-due-closure" color="accent" [(ngModel)]="DueClosureChecked" [disabled]="AllChecked"
+        (ngModelChange)="showFilteredRows()">
+        Due For Closure
+      </mat-checkbox>
+    </div>
+
+    <!-- Right Side: Action Buttons -->
+    <div class="header-actions">
+      <button mat-stroked-button class="action-btn" (click)="ExportTOExcel()" matTooltip="Export to Excel">
+        <mat-icon>download</mat-icon>
+      </button>
+      <button mat-stroked-button class="action-btn" id="filter" (click)="ToggleFilter_onClick()"
+        [matTooltip]="toggle + ' Filter'">
+        <mat-icon>filter_list</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" class="action-btn-primary" (click)="Edit_onClick()"
+        *ngIf="_access.IsAllowed(9, 2, '', '')" matTooltip="Add Risk">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Card (Collapsible) -->
+  <div class="filters-card" *ngIf="bShowFilter">
+    <div class="advanced-filter-section">
+      <app-table-filter [data]="input" tableName='PROJECT_RISK' (onChange)="Filter_onChange($event)"
+        (OnAdd)="showAll($event)"></app-table-filter>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <h1 class="page-title">Risks</h1>
+    <div class="action-bar-right">
+      <a *ngIf="!isPopOpened" class="help-link" href="/assets/images/risk_map_legend.png" target="_blank">
+        <mat-icon>grid_on</mat-icon>
+        Risk Matrix
+      </a>
+      <button mat-button class="guideline-button" (click)="showRiskGuideline()">
+        <mat-icon>description</mat-icon>
+        Risk Statement Guideline
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading and Empty States -->
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="progress-bar"></mat-progress-bar>
+
+  <div *ngIf="_access.IsAllowed(2, 1, '', input_projectid)">
+    <div *ngIf="input?.length == 0 && !isLoading" class="empty-state">
+      <mat-icon class="empty-icon">warning</mat-icon>
+      <h3>No Risks Found</h3>
+      <p>No risks are defined for the projects assigned to you.</p>
+    </div>
+  </div>
+
+  <!-- Data Table Card -->
+  <div #TABLE *ngIf="_access.IsAllowed(2, 1, '', input_projectid)" class="table-card">
+    <div class="table-container mat-elevation-z2" *ngIf="(input?.length ?? 0) > 0">
+      <table mat-table [dataSource]="dataSource" matSort class="modern-table">
+        <ng-container matColumnDef="index">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-index">No.</th>
+          <td mat-cell *matCellDef="let risk; let element = index" class="col-index" [style.border-left-color]="risk.rag"
+            [ngClass]="'borderSolid'">
+            <span class="index-badge">{{((paginator?.pageIndex || 0) * (paginator?.pageSize || 5)) + element + 1}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Portfolio_Name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Portfolio</th>
+          <td mat-cell *matCellDef="let risk">
+            {{risk.portfoliO_NM}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="proJ_NM">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Project</th>
+          <td mat-cell *matCellDef="let risk">
+            {{risk.proJ_NM}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="identifieD_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Identified On</th>
+          <td mat-cell *matCellDef="let risk" class="date-cell">
+            {{risk.identifieD_DATE | date:'dd-MMM-yyyy'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
+          <td mat-cell *matCellDef="let risk" [matTooltip]="risk.description" class="description-cell">
+            {{risk.description}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="impact">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Business Impact</th>
+          <td mat-cell *matCellDef="let risk" [matTooltip]="risk.impact" class="description-cell">
+            {{risk.impact}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="owner">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Owner</th>
+          <td mat-cell *matCellDef="let risk">
+            <div class="owner-chip">
+              <span>{{getOwnerName(risk)}}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="probabilitY_SCALE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Likelihood</th>
+          <td mat-cell *matCellDef="let risk">
+            <span class="scale-badge likelihood">{{_util.prob[risk.probabilitY_SCALE - 1]}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="impacT_SCALE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Consequences</th>
+          <td mat-cell *matCellDef="let risk">
+            <span class="scale-badge consequences">{{_util.impact[risk.impacT_SCALE - 1]}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="rating">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Risk Rating</th>
+          <td mat-cell *matCellDef="let risk" class="rating-cell">
+            <span class="rating-badge">{{risk.risK_RATING}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="matrix">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Risk Level</th>
+          <td mat-cell *matCellDef="let risk">
+            <span class="risk-level-badge" [ngClass]="'level-' + risk.risK_LEVEL?.toLowerCase()">
+              {{risk.risK_LEVEL}}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Risk Status</th>
+          <td mat-cell *matCellDef="let risk">
+            <span class="status-badge" [ngClass]="'status-' + risk.status?.toLowerCase().replace('-', '')">
+              {{risk.status}}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="iS_PLAN_EXISTS">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Risk Treatment Plan</th>
+          <td mat-cell *matCellDef="let risk" class="treatment-plan-cell">
+            <span class="plan-status" [ngClass]="{'available': risk.iS_PLAN_EXISTS, 'not-available': !risk.iS_PLAN_EXISTS}">
+              {{risk.iS_PLAN_EXISTS ? 'Available' : 'Not Available'}}
+            </span>
+            <a *ngIf="risk.iS_PLAN_EXISTS" class="action-link view-plan-btn" (click)="ViewTrtPlan_onClick(risk)"
+              matTooltip="View Treatment Plan">
+              <mat-icon>assignment_turned_in</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actuaL_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Date Occurred/<br>Closed</th>
+          <td mat-cell *matCellDef="let risk" class="date-cell">
+            {{risk.actuaL_DATE | date:'dd-MMM-yyyy'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="edit">
+          <th mat-header-cell *matHeaderCellDef class="action-col">Actions</th>
+          <td mat-cell *matCellDef="let element" class="action-col">
+            <a class="action-link info-btn" (click)="OpenEntityInfoPopup(element)" matTooltip="View Details">
+              <mat-icon>info</mat-icon>
+            </a>
+            <a class="action-link edit-btn" (click)="EditRow_onClick(element)"
+              *ngIf="element.iS_EDIT_ALLOWED && _access.IsAllowed(2, 3, '', input_projectid)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </a>
+            <a class="action-link delete-btn" (click)="DeleteRow_onClick(element)"
+              *ngIf="_access.IsAllowed(2, 4, '', input_projectid)" matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"
+          [ngClass]="{'draft-row': row.iS_DRAFT, 'isClicked': isSelectedRow === row}"></tr>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <a *ngIf="!isPopOpened" class="rating-link" href="/assets/images/risk_rating.png" target="_blank">
+        <mat-icon>trending_up</mat-icon>
+        View Risk Rating Guide
+      </a>
+      <mat-paginator #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Form -->
+<div *ngIf="editmode" class="edit-form-container">
+  <!-- Form Header -->
+  <div class="form-header">
+    <div class="form-title-section">
+      <mat-icon class="form-icon">security</mat-icon>
+      <h2 class="form-title">{{ (EditRisk.id || 0) > 0 ? 'Edit Risk' : 'Add New Risk' }}</h2>
+    </div>
+    <div class="form-actions-header">
+      <button mat-raised-button class="save-btn-header" type="submit" form="riskForm" *ngIf="isEditAllowed">
+        <mat-icon>save</mat-icon>
+      </button>
+      <button mat-stroked-button class="cancel-btn-header" type="button" (click)="Cancel_onClick()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-content-wrapper">
+    <form id="riskForm" class="modern-form" #riskForm="ngForm" (ngSubmit)="SubmitForm(riskForm.valid ?? false)">
+    <mat-accordion class="risk-accordion">
+      <!-- Section 1: Risk Identification -->
+      <mat-expansion-panel class="form-panel" (click)="showRiskTreatmentPlanTable()">
+        <mat-expansion-panel-header class="panel-header">
+          <mat-panel-title>
+            <mat-icon class="panel-icon">flag</mat-icon>
+            <span class="panel-title-text">1 - Risk Identification</span>
+            <span class="panel-subtitle">(Capture Risk Description and Impact)</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="panel-content">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 50%;">
+              <mat-label>Project Name</mat-label>
+              <mat-select name="ddProjectName" [(ngModel)]="EditRisk.projecT_ID"
+                (ngModelChange)="EditRisk.projecT_ID && loadData(EditRisk.projecT_ID)" [disabled]="(EditRisk.id || 0) > 0" required>
+                <mat-option [value]="p.proJ_ID" *ngFor="let p of projNames" [title]="p.proJ_NM">
+                  {{ p.proJ_NM }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>folder</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Risk Description</mat-label>
+              <textarea spellcheck="true" name='txtDescription' [(ngModel)]="EditRisk.description" matInput
+                cdkTextareaAutosize rows="3" required></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Business Impact Description</mat-label>
+              <textarea name='txtImpact' [(ngModel)]="EditRisk.impact" matInput cdkTextareaAutosize rows="3" required></textarea>
+              <mat-icon matPrefix>trending_down</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Location</mat-label>
+              <mat-select name="location" [(ngModel)]="EditRisk.location" required>
+                <mat-option [value]="r.locatioN_NAME" *ngFor="let r of riskLocations" [title]="r.locatioN_NAME">
+                  {{ r.locatioN_NAME }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>location_on</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Risk Category</mat-label>
+              <mat-select name="riskCategory" [(ngModel)]="EditRisk.risK_CATEGORY" required>
+                <mat-option [value]="r.category" *ngFor="let r of riskCategories" [title]="r.category">
+                  {{ r.category }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 50%;">
+              <mat-label>ISO Standard</mat-label>
+              <mat-select name="isoStandardList" [(ngModel)]="EditRisk.isO_STD_ID" multiple>
+                <mat-option *ngFor="let r of filteredIsoStandardList" [value]="r.id">
+                  {{ r.standarD_NAME }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>verified</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Identified By</mat-label>
+              <input name='txtIdentified' maxlength="100" [(ngModel)]="EditRisk.identifieD_BY" matInput required>
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Identified Date</mat-label>
+              <input [max]="_util.Today()" name='dtIdentifiedDate' [(ngModel)]='EditRisk.identifieD_DATE' matInput
+                [matDatepicker]="pickerRisk1" required>
+              <mat-datepicker-toggle matSuffix [for]="pickerRisk1"></mat-datepicker-toggle>
+              <mat-datepicker #pickerRisk1></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Section 2: Risk Analysis -->
+      <mat-expansion-panel class="form-panel" (click)="showRiskTreatmentPlanTable()">
+        <mat-expansion-panel-header class="panel-header">
+          <mat-panel-title>
+            <mat-icon class="panel-icon">analytics</mat-icon>
+            <span class="panel-title-text">2 - Risk Analysis</span>
+            <span class="panel-subtitle">(Risk Assessment before implementation of Risk Treatment)</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="panel-content">
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Current Consequences Scale</mat-label>
+              <mat-select name='ddImpactScale' [(ngModel)]="EditRisk.impacT_SCALE" (ngModelChange)="calculateRisk()" required>
+                <mat-option [value]='1'>Insignificant</mat-option>
+                <mat-option [value]='2'>Minor</mat-option>
+                <mat-option [value]='3'>Significant</mat-option>
+                <mat-option [value]='4'>Major</mat-option>
+                <mat-option [value]='5'>Critical</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>trending_down</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Current Likelihood Scale</mat-label>
+              <mat-select name='probabilityscale' [(ngModel)]="EditRisk.probabilitY_SCALE" (ngModelChange)="calculateRisk()" required>
+                <mat-option [value]='1'>Rare</mat-option>
+                <mat-option [value]='2'>Remote</mat-option>
+                <mat-option [value]='3'>Moderate</mat-option>
+                <mat-option [value]='4'>Likely</mat-option>
+                <mat-option [value]='5'>Frequent</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>trending_up</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Current Risk Level</mat-label>
+              <input matInput name='riskLevel' [(ngModel)]="EditRisk.risK_LEVEL" [readonly]="true">
+              <mat-icon matPrefix>assessment</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Owner</mat-label>
+              <input name='txtOwner' maxlength="100" [(ngModel)]="EditRisk.owner" matInput required>
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Status</mat-label>
+              <mat-select #ddStatus name='ddStatus' [(ngModel)]="EditRisk.status" required>
+                <mat-option value='Identified'>Identified</mat-option>
+                <mat-option value='Assessed'>Assessed</mat-option>
+                <mat-option value='Planned'>Planned</mat-option>
+                <mat-option value='In-Process'>In-Process</mat-option>
+                <mat-option value='Occurred'>Occurred</mat-option>
+                <mat-option value='Not-Occurred'>Not Occurred</mat-option>
+                <mat-option value='Closed'>Closed</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>flag</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field"
+              *ngIf="ddStatus.value == 'Closed' || ddStatus.value == 'Occurred' || EditRisk.status == 'Closed' || EditRisk.status == 'Occurred'">
+              <mat-label>{{EditRisk.status}} Date</mat-label>
+              <input [max]="_util.Today()" name='dtActualDate' [(ngModel)]='EditRisk.actuaL_DATE' matInput
+                [matDatepicker]="pickerActualRisk" required>
+              <mat-datepicker-toggle matSuffix [for]="pickerActualRisk"></mat-datepicker-toggle>
+              <mat-datepicker #pickerActualRisk></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 50%;">
+              <mat-label>Next Risk Assessment Date</mat-label>
+              <input [min]="_util.Today()" [max]="maxAssessmentDate" matInput name="actionItemAssessmentDate"
+                [(ngModel)]="EditRisk.neW_RISK_ASSESSMENT_DATE" [matDatepicker]="picker4">
+              <mat-datepicker-toggle matSuffix [for]="picker4"></mat-datepicker-toggle>
+              <mat-datepicker #picker4></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Section 3: Risk Treatment Plan -->
+      <mat-expansion-panel #expansionPanel class="form-panel" (click)="showRiskTreatmentPlanTable()">
+        <mat-expansion-panel-header class="panel-header">
+          <mat-panel-title>
+            <mat-icon class="panel-icon">healing</mat-icon>
+            <span class="panel-title-text">3 - Risk Treatment Plan</span>
+            <span class="panel-subtitle">(RTP)</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="panel-content">
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Risk Treatment Strategy</mat-label>
+              <mat-select name='ddStrategy' [(ngModel)]="EditRisk.risK_TREATMENT_STRATEGY"
+                (selectionChange)="strategy_change()" required>
+                <mat-option value='Avoid'>Avoid</mat-option>
+                <mat-option value='Reduce'>Reduce</mat-option>
+                <mat-option value='Transfer'>Transfer</mat-option>
+                <mat-option value='Accept'>Accept</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>shield</mat-icon>
+            </mat-form-field>
+
+            <div class="accept-till-group" *ngIf="EditRisk.risK_TREATMENT_STRATEGY=='Accept'">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Accept Till</mat-label>
+                <input [min]="_util.Today()" name='dtAcceptTill' [(ngModel)]='EditRisk.accepT_TILL' matInput
+                  [matDatepicker]="pickeraccepttill" [disabled]="EditRisk.forever || false">
+                <mat-datepicker-toggle matSuffix [for]="pickeraccepttill"></mat-datepicker-toggle>
+                <mat-datepicker #pickeraccepttill></mat-datepicker>
+                <mat-icon matPrefix>event</mat-icon>
+              </mat-form-field>
+              <mat-checkbox name="chkforever" #chkforever (click)="checkforever(chkforever.checked)"
+                [(ngModel)]="EditRisk.forever" class="forever-checkbox">Accept Forever</mat-checkbox>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Risk Treatment Description</mat-label>
+              <textarea name='txtActionItemDescription' [(ngModel)]="EditRisk.actioN_ITEM_DESCRIPTION" matInput
+                cdkTextareaAutosize rows="3" required></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Responsible Person</mat-label>
+              <input name='txtResponsible' maxlength="100" [(ngModel)]="EditRisk.actioN_ITEM_OWNER" matInput required>
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Identified Date</mat-label>
+              <input [max]="_util.Today()" matInput name="actionItemIdentifiedDate"
+                [(ngModel)]="EditRisk.actioN_ITEM_IDENTIFIED_DATE" [matDatepicker]="pickerIdentifiedDate" required>
+              <mat-datepicker-toggle matSuffix [for]="pickerIdentifiedDate"></mat-datepicker-toggle>
+              <mat-datepicker #pickerIdentifiedDate></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Target Date</mat-label>
+              <input [min]="_util.Today()" name='dtTargetDate' [(ngModel)]='EditRisk.actioN_ITEM_TARGET_DATE' matInput
+                [matDatepicker]="pickerTargetDate" required>
+              <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+              <mat-datepicker #pickerTargetDate></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Risk Treatment Status</mat-label>
+              <mat-select name="actionItemStatus" [(ngModel)]="EditRisk.actioN_ITEM_STATUS"
+                (selectionChange)="EditRisk.actioN_ITEM_STATUS && OpenRiskPopup(EditRisk.actioN_ITEM_STATUS)">
+                <mat-option value="Planned">Planned</mat-option>
+                <mat-option value="Started">Started</mat-option>
+                <mat-option value="Completed">Completed</mat-option>
+                <mat-option value="Cancelled">Cancelled</mat-option>
+                <mat-option value="Suspended">Suspended</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>flag</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div *ngIf="EditRisk.actioN_ITEM_STATUS == 'Completed'" class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 50%;">
+              <mat-label>Completion Date</mat-label>
+              <input [min]="_util.Today()" matInput name="actionItemCompletionDate"
+                [(ngModel)]="EditRisk.actioN_ITEM_COMPLETION_DATE" [matDatepicker]="picker3">
+              <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
+              <mat-datepicker #picker3></mat-datepicker>
+              <mat-icon matPrefix>event_available</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <ng-template #confirmationDialog let-data>
+          <h2 mat-dialog-title class="confirm-dialog-title">Confirm</h2>
+          <mat-dialog-content class="confirm-dialog-content">
+            Now the risk treatment has been implemented, does the inherited risk remains same as the residual risk?
+          </mat-dialog-content>
+          <mat-dialog-actions class="confirm-dialog-actions">
+            <button mat-raised-button color="primary" [mat-dialog-close]="1">Yes</button>
+            <button mat-stroked-button [mat-dialog-close]="0">No</button>
+          </mat-dialog-actions>
+        </ng-template>
+      </mat-expansion-panel>
+
+      <!-- Section 4: Risk Evaluation -->
+      <mat-expansion-panel class="form-panel" (click)="showRiskTreatmentPlanTable()">
+        <mat-expansion-panel-header class="panel-header">
+          <mat-panel-title>
+            <mat-icon class="panel-icon">assessment</mat-icon>
+            <span class="panel-title-text">4 - Risk Evaluation</span>
+            <span class="panel-subtitle">(Residual risk after implementation of proposed Risk Treatment)</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="panel-content">
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Estimated Consequences Scale</mat-label>
+              <mat-select name='actionItemImpactScale' [(ngModel)]="EditRisk.neW_CONSEQUENCES_SCALE"
+                (ngModelChange)="calculateNewRisk()">
+                <mat-option [value]='1'>Insignificant</mat-option>
+                <mat-option [value]='2'>Minor</mat-option>
+                <mat-option [value]='3'>Significant</mat-option>
+                <mat-option [value]='4'>Major</mat-option>
+                <mat-option [value]='5'>Critical</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>trending_down</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Estimated Likelihood Scale</mat-label>
+              <mat-select name='actionItemprobabilityscale' [(ngModel)]="EditRisk.neW_LIKELIHOOD_SCALE"
+                (ngModelChange)="calculateNewRisk()">
+                <mat-option [value]='1'>Rare</mat-option>
+                <mat-option [value]='2'>Remote</mat-option>
+                <mat-option [value]='3'>Moderate</mat-option>
+                <mat-option [value]='4'>Likely</mat-option>
+                <mat-option [value]='5'>Frequent</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>trending_up</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 50%;">
+              <mat-label>Estimated Risk Level</mat-label>
+              <input matInput name='actionItemRiskLevel' [(ngModel)]="EditRisk.neW_RISK_LEVEL" [readonly]="true">
+              <mat-icon matPrefix>assessment</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Section 5: Risk Treatment Effectiveness -->
+      <mat-expansion-panel class="form-panel" (click)="showRiskTreatmentPlanTable()">
+        <mat-expansion-panel-header class="panel-header">
+          <mat-panel-title>
+            <mat-icon class="panel-icon">verified</mat-icon>
+            <span class="panel-title-text">5 - Risk Treatment Effectiveness Verification</span>
+            <span class="panel-subtitle">(For Quality Team)</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="panel-content">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Risk Treatment Effectiveness Status</mat-label>
+              <textarea name="riskEffectivenessStatus" [(ngModel)]="EditRisk.risK_TREATMENT_EFFECTIVENESS_STATUS" matInput
+                cdkTextareaAutosize rows="2"></textarea>
+              <mat-icon matPrefix>check_circle</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Verified By</mat-label>
+              <input name="riskEffectivenessVerifiedBy" [(ngModel)]="EditRisk.risK_TREATMENT_EFFECTIVENESS_VERIFIED_BY" matInput>
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Verified Date</mat-label>
+              <input [min]="_util.Today()" matInput name="riskEffectivenessVerifiedDate"
+                [(ngModel)]="EditRisk.risK_TREATMENT_EFFECTIVENESS_VERIFIED_DATE" [matDatepicker]="picker5">
+              <mat-datepicker-toggle matSuffix [for]="picker5"></mat-datepicker-toggle>
+              <mat-datepicker #picker5></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Comments</mat-label>
+              <textarea name="actionItemComments" [(ngModel)]="EditRisk.actioN_ITEM_COMMENTS" matInput
+                cdkTextareaAutosize rows="3"></textarea>
+              <mat-icon matPrefix>comment</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+
+    <div *ngIf="isEditAllowed" class="form-submit-section">
+      <button mat-raised-button color="primary" type="submit" class="submit-btn">
+        <mat-icon>save</mat-icon>
+        Save Risk
+      </button>
+    </div>
+  </form>
+
+  <!-- Risk Treatment Plan Table (Side Panel) -->
+  <div *ngIf="showtable && isEditAllowed" class="side-panel">
+    <div class="side-panel-header">
+      <h4>Risk Treatment Plan</h4>
+      <button mat-button color="primary" (click)="Add_ActionItem()">
+        <mat-icon>add</mat-icon>
+        Add Treatment Plan
+      </button>
+    </div>
+
+    <div class="side-panel-content">
+      <table mat-table [dataSource]="dataSource1" matSort class="treatment-table">
+        <ng-container matColumnDef="index">
+          <th mat-header-cell *matHeaderCellDef>S.No</th>
+          <td mat-cell *matCellDef="let element = index">{{element + 1}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
+          <td mat-cell *matCellDef="let actionItem" [matTooltip]="actionItem.description">{{actionItem.description}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="owner">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Owner</th>
+          <td mat-cell *matCellDef="let actionItem">{{actionItem.owner}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="targeT_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Date</th>
+          <td mat-cell *matCellDef="let actionItem">{{actionItem.targeT_DATE | date:'dd-MMM-yyyy'}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="identifieD_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Identified Date</th>
+          <td mat-cell *matCellDef="let actionItem">{{actionItem.identifieD_DATE | date:'dd-MMM-yyyy'}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let actionItem">
+            <span class="status-badge" [ngClass]="'status-' + actionItem.status?.toLowerCase()">{{actionItem.status}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+          <td mat-cell *matCellDef="let actionItem">
+            <span class="priority-badge" [ngClass]="'priority-' + actionItem.priority?.toLowerCase()">{{actionItem.priority}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="updateD_BY">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated By</th>
+          <td mat-cell *matCellDef="let actionItem">{{actionItem.updateD_BY}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="updateD_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated Date</th>
+          <td mat-cell *matCellDef="let actionItem">{{actionItem.updateD_DATE | date:'dd-MMM-yyyy'}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="edit">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let actionItem">
+            <a *ngIf="isEditAllowed" class="action-link edit-btn" (click)="Edit_ActionItem(actionItem)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="delete">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let element">
+            <a *ngIf="element.status != 'Completed' && element.createD_BY != 'SYSTEM' && isEditAllowed"
+              class="action-link delete-btn" (click)="Delete_ActionItem(element)" matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns1"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns1;"></tr>
+      </table>
+    </div>
+  </div>
+  </div>
+</div>

@@ -1,0 +1,218 @@
+﻿
+    <div class="dialog-container">
+      <h2 mat-dialog-title>
+        <mat-icon>{{ data.mode === 'add' ? 'add' : 'edit' }}</mat-icon>
+        {{ data.mode === 'add' ? 'Add' : 'Edit' }} Activity / Service
+      </h2>
+
+      <mat-dialog-content class="dialog-content">
+        <form [formGroup]="serviceForm" class="service-form">
+          <div class="form-grid">
+            <!-- Activity/Service -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Activity / Service</mat-label>
+              <input
+                matInput
+                [formControl]="activityServiceControl"
+                [matAutocomplete]="activityServiceAuto"
+                placeholder="e.g., Incident Management"
+                maxlength="100"
+                [attr.aria-label]="'Activity or Service input with autocomplete'"
+                [attr.aria-autocomplete]="'list'"
+                [attr.aria-expanded]="activityServiceControl.value ? 'true' : 'false'"
+              />
+              <mat-autocomplete
+                #activityServiceAuto="matAutocomplete"
+                [displayWith]="displayActivityService"
+                (optionSelected)="onActivityServiceSelected($event)">
+                <mat-option *ngFor="let option of filteredActivityServices$ | async" [value]="option">
+                  {{ option }}
+                </mat-option>
+              </mat-autocomplete>
+              <mat-icon matSuffix matTooltip="Start typing to search ITSM services" matTooltipPosition="above">work</mat-icon>
+              <mat-error *ngIf="serviceForm.get('activityService')?.hasError('required')">
+                Activity/Service is required
+              </mat-error>
+              <mat-error *ngIf="serviceForm.get('activityService')?.hasError('maxlength')">
+                Maximum 100 characters allowed
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Criticality -->
+            <mat-form-field appearance="outline">
+              <mat-label>Criticality</mat-label>
+              <mat-select formControlName="criticality">
+                <mat-option value="Company Critical">Company Critical</mat-option>
+                <mat-option value="Project Critical">Project Critical</mat-option>
+              </mat-select>
+              <mat-icon matSuffix>priority_high</mat-icon>
+              <mat-error *ngIf="serviceForm.get('criticality')?.hasError('required')">
+                Criticality selection is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Contractual -->
+            <mat-form-field appearance="outline">
+              <mat-label>Contractual</mat-label>
+              <mat-select formControlName="contractual">
+                <mat-option value="Yes">Yes</mat-option>
+                <mat-option value="No">No</mat-option>
+              </mat-select>
+              <mat-icon matSuffix matTooltip="Select if there are contractual obligations" matTooltipPosition="above">description</mat-icon>
+              <mat-error *ngIf="serviceForm.get('contractual')?.hasError('required')">
+                Contractual selection is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Customer Impact -->
+            <mat-form-field appearance="outline">
+              <mat-label>Customer Impact</mat-label>
+              <mat-select formControlName="customerImpact">
+                <mat-option value="Yes">Yes</mat-option>
+                <mat-option value="No">No</mat-option>
+              </mat-select>
+              <mat-icon matSuffix>people</mat-icon>
+              <mat-error *ngIf="serviceForm.get('customerImpact')?.hasError('required')">
+                Customer Impact selection is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Regulatory -->
+            <mat-form-field appearance="outline">
+              <mat-label>Regulatory</mat-label>
+              <mat-select formControlName="regulatory">
+                <mat-option value="Yes">Yes</mat-option>
+                <mat-option value="No">No</mat-option>
+              </mat-select>
+              <mat-icon matSuffix>gavel</mat-icon>
+              <mat-error *ngIf="serviceForm.get('regulatory')?.hasError('required')">
+                Regulatory selection is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Type of Regulatory - Conditional -->
+            <mat-form-field appearance="outline" *ngIf="isRegulatoryYes">
+              <mat-label>Type of Regulatory</mat-label>
+              <mat-select formControlName="typeOfRegulatory" multiple>
+                <mat-option value="ISO 27001">ISO 27001</mat-option>
+                <mat-option value="SOC II">SOC II</mat-option>
+                <mat-option value="PCI-DSS">PCI-DSS</mat-option>
+                <mat-option value="Others">Others</mat-option>
+              </mat-select>
+              <mat-icon matSuffix matTooltip="Select all applicable regulatory types" matTooltipPosition="above">security</mat-icon>
+              <mat-error *ngIf="serviceForm.get('typeOfRegulatory')?.hasError('required')">
+                At least one regulatory type must be selected
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Penalty Details - Conditional -->
+            <mat-form-field appearance="outline" class="full-width" *ngIf="isContractualYes">
+              <mat-label>Penalty Details</mat-label>
+              <textarea
+                matInput
+                formControlName="penaltyDetails"
+                placeholder="Describe penalty details if applicable"
+                rows="3"
+                maxlength="500"
+              ></textarea>
+              <mat-icon matSuffix matTooltip="Optional: Provide details about penalties for non-compliance" matTooltipPosition="above">warning</mat-icon>
+            </mat-form-field>
+
+            <!-- Engagement Period -->
+            <mat-form-field appearance="outline">
+              <mat-label>Engagement Period (months)</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="engagementPeriod"
+                placeholder="e.g., 12"
+                min="1"
+                max="120"
+              />
+              <mat-icon matSuffix matTooltip="Enter duration in months (1-120)" matTooltipPosition="above">schedule</mat-icon>
+              <mat-error *ngIf="serviceForm.get('engagementPeriod')?.hasError('required')">
+                Engagement Period is required
+              </mat-error>
+              <mat-error *ngIf="serviceForm.get('engagementPeriod')?.hasError('min')">
+                Minimum 1 month required
+              </mat-error>
+              <mat-error *ngIf="serviceForm.get('engagementPeriod')?.hasError('max')">
+                Maximum 120 months allowed
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Technology -->
+            <mat-form-field appearance="outline">
+              <mat-label>Technology</mat-label>
+              <input
+                matInput
+                [formControl]="technologyControl"
+                [matAutocomplete]="technologyAuto"
+                placeholder="e.g., JAVA, SAP, Oracle"
+                maxlength="200"
+                [attr.aria-label]="'Technology input with autocomplete'"
+                [attr.aria-autocomplete]="'list'"
+                [attr.aria-expanded]="technologyControl.value ? 'true' : 'false'"
+              />
+              <mat-autocomplete
+                #technologyAuto="matAutocomplete"
+                [displayWith]="displayTechnology"
+                (optionSelected)="onTechnologySelected($event)">
+                <mat-option *ngFor="let option of filteredTechnologies$ | async" [value]="option">
+                  {{ option }}
+                </mat-option>
+              </mat-autocomplete>
+              <mat-icon matSuffix matTooltip="Search or enter technology used for delivery" matTooltipPosition="above">computer</mat-icon>
+              <mat-error *ngIf="serviceForm.get('technology')?.hasError('required')">
+                Technology is required
+              </mat-error>
+              <mat-error *ngIf="serviceForm.get('technology')?.hasError('maxlength')">
+                Maximum 200 characters allowed
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Primary Delivery Site -->
+            <mat-form-field appearance="outline">
+              <mat-label>Primary Delivery Site</mat-label>
+              <mat-select formControlName="primaryDeliverySite">
+                <mat-option value="India (Chennai)">India (Chennai)</mat-option>
+                <mat-option value="India (Pune)">India (Pune)</mat-option>
+                <mat-option value="India (Vadodara)">India (Vadodara)</mat-option>
+                <mat-option value="US (Princeton)">US (Princeton)</mat-option>
+              </mat-select>
+              <mat-icon matSuffix>location_on</mat-icon>
+              <mat-error *ngIf="serviceForm.get('primaryDeliverySite')?.hasError('required')">
+                Primary Delivery Site selection is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </form>
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end" class="dialog-actions">
+        <button mat-button (click)="onCancel()">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="onSave()"
+          [disabled]="serviceForm.invalid"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        <button
+          *ngIf="data.mode === 'add'"
+          mat-raised-button
+          color="accent"
+          (click)="onSaveAndAdd()"
+          [disabled]="serviceForm.invalid"
+        >
+          <mat-icon>add</mat-icon>
+          Save and Add New Service
+        </button>
+      </mat-dialog-actions>
+    </div>
+  

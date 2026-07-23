@@ -1,0 +1,250 @@
+﻿
+    <div class="dialog-container">
+      <h2 mat-dialog-title>
+        <mat-icon>{{ data.mode === 'add' ? 'add' : 'edit' }}</mat-icon>
+        {{ data.mode === 'add' ? 'Add' : 'Edit' }} Key Planning Parameter
+      </h2>
+
+      <mat-dialog-content class="dialog-content">
+        <form [formGroup]="parameterForm" class="parameter-form">
+          <div class="form-grid">
+            <!-- Activity -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Activity / Service</mat-label>
+              <ng-container *ngIf="data.availableActivities && data.availableActivities.length > 0; else manualActivityInput">
+                <mat-select formControlName="activity" [disabled]="data.mode === 'edit'">
+                  <mat-option *ngFor="let activity of data.availableActivities" [value]="activity">
+                    {{ activity }}
+                  </mat-option>
+                </mat-select>
+              </ng-container>
+              <ng-template #manualActivityInput>
+                <input
+                  matInput
+                  formControlName="activity"
+                  placeholder="Enter Activity/Service name"
+                  maxlength="100"
+                  [readonly]="data.mode === 'edit'"
+                />
+              </ng-template>
+              <mat-icon matSuffix matTooltip="Activity/Service from Section 1 or enter manually" matTooltipPosition="above">work</mat-icon>
+              <mat-error *ngIf="parameterForm.get('activity')?.hasError('required')">
+                Activity/Service is required
+              </mat-error>
+              <mat-error *ngIf="parameterForm.get('activity')?.hasError('maxlength')">
+                Maximum 100 characters allowed
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Configurable Item -->
+            <mat-form-field appearance="outline">
+              <mat-label>Configurable Item</mat-label>
+              <mat-select formControlName="configurableItem">
+                <mat-option value="neurealm">neurealm</mat-option>
+                <mat-option value="Customer">Customer</mat-option>
+              </mat-select>
+              <mat-icon matSuffix matTooltip="Who is responsible for Backup and Restore" matTooltipPosition="above">account_balance</mat-icon>
+              <mat-error *ngIf="parameterForm.get('configurableItem')?.hasError('required')">
+                Configurable Item is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Is Backup at Offsite -->
+            <mat-form-field appearance="outline">
+              <mat-label>Is Backup at Offsite</mat-label>
+              <mat-select formControlName="isBackupAtOffsite">
+                <mat-option value="NA">NA</mat-option>
+                <mat-option value="Yes">Yes</mat-option>
+                <mat-option value="No">No</mat-option>
+              </mat-select>
+              <mat-icon matSuffix matTooltip="Whether backup is stored at offsite location" matTooltipPosition="above">storage</mat-icon>
+            </mat-form-field>
+
+            <!-- Backup Frequency - Conditional -->
+            <mat-form-field appearance="outline" *ngIf="isBackupAtOffsiteYes">
+              <mat-label>Backup Frequency</mat-label>
+              <input
+                matInput
+                formControlName="backupFrequency"
+                placeholder="e.g., Daily, Weekly, Monthly"
+                maxlength="200"
+              />
+              <mat-icon matSuffix matTooltip="Schedule for backups" matTooltipPosition="above">schedule</mat-icon>
+              <mat-error *ngIf="parameterForm.get('backupFrequency')?.hasError('required')">
+                Backup Frequency is required when Backup at Offsite is Yes
+              </mat-error>
+            </mat-form-field>
+
+            <!-- RPO -->
+            <mat-form-field appearance="outline">
+              <mat-label>RPO (minutes)</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="rpo"
+                placeholder="e.g., 60"
+                min="0"
+              />
+              <mat-icon matSuffix matTooltip="Point to which information used by an activity must be restored to enable the activity to operate on resumption. NOTE: can also be referred to as &quot;maximum data loss&quot;" matTooltipPosition="above">timer</mat-icon>
+              <mat-error *ngIf="parameterForm.get('rpo')?.hasError('required')">
+                RPO is required
+              </mat-error>
+              <mat-error *ngIf="parameterForm.get('rpo')?.hasError('min')">
+                RPO must be a positive number
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Type of Business -->
+            <mat-form-field appearance="outline">
+              <mat-label>Type of Business</mat-label>
+              <input
+                matInput
+                formControlName="typeOfBusiness"
+                placeholder="e.g., Financial Services, Healthcare"
+                maxlength="200"
+              />
+              <mat-icon matSuffix matTooltip="Type of business or industry" matTooltipPosition="above">business</mat-icon>
+            </mat-form-field>
+
+            <!-- RTO Guidance -->
+            <mat-form-field appearance="outline">
+              <mat-label>RTO Guidance</mat-label>
+              <mat-select formControlName="rtoGuidance">
+                <mat-option value="Contract (SLA, Milestone)">Contract (SLA, Milestone)</mat-option>
+                <mat-option value="Organization (TIA-based)">Organization (TIA-based)</mat-option>
+                <mat-option value="Legal">Legal</mat-option>
+              </mat-select>
+              <mat-icon matSuffix matTooltip="Mention the main factor that RTO is based on:&#10;&#10;â€¢ Contract (e.g. explicit RTO defined, SLA, milestones)&#10;&#10;â€¢ Organizational Decision (e.g. based on TIA)&#10;&#10;â€¢ Legal requirements" matTooltipPosition="above">gavel</mat-icon>
+              <mat-error *ngIf="parameterForm.get('rtoGuidance')?.hasError('required')">
+                RTO Guidance is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Minimum SLA -->
+            <mat-form-field appearance="outline">
+              <mat-label>Minimum SLA (HH:MM)</mat-label>
+              <input
+                matInput
+                formControlName="minimumSLA"
+                placeholder="e.g., 4:00"
+                maxlength="5"
+              />
+              <mat-icon matSuffix matTooltip="Lowest value of SLA (Response or Resolution)" matTooltipPosition="above">schedule</mat-icon>
+              <mat-error *ngIf="parameterForm.get('minimumSLA')?.hasError('required')">
+                Minimum SLA is required
+              </mat-error>
+              <mat-error *ngIf="parameterForm.get('minimumSLA')?.hasError('pattern')">
+                Please enter valid time format (HH:MM)
+              </mat-error>
+            </mat-form-field>
+
+            <!-- MTPD -->
+            <mat-form-field appearance="outline">
+              <mat-label>MTPD (HH:MM)</mat-label>
+              <input
+                matInput
+                formControlName="mtpd"
+                placeholder="e.g., 8:00"
+                maxlength="5"
+                [readonly]="!!data.mtpdFromSection2"
+              />
+              <mat-icon matSuffix matTooltip="Maximum Tolerable Period of Disruption (from Section 2 if available)" matTooltipPosition="above">hourglass_empty</mat-icon>
+              <mat-error *ngIf="parameterForm.get('mtpd')?.hasError('pattern')">
+                Please enter valid time format (HH:MM)
+              </mat-error>
+            </mat-form-field>
+
+            <!-- RTO -->
+            <mat-form-field appearance="outline" [class.error-field]="parameterForm.get('rto')?.hasError('rtoExceedsMTPD')">
+              <mat-label>RTO (HH:MM)</mat-label>
+              <input
+                matInput
+                formControlName="rto"
+                placeholder="e.g., 3:30"
+                maxlength="5"
+              />
+              <mat-icon matSuffix matTooltip="Recovery Time Objective (RTO must be &lt; MTPD)" matTooltipPosition="above">timer</mat-icon>
+              <mat-error *ngIf="parameterForm.get('rto')?.hasError('required')">
+                RTO is required
+              </mat-error>
+              <mat-error *ngIf="parameterForm.get('rto')?.hasError('pattern')">
+                Please enter valid time format (HH:MM)
+              </mat-error>
+              <mat-error *ngIf="parameterForm.get('rto')?.hasError('rtoExceedsMTPD')">
+                RTO must be less than MTPD
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Final Recovery Priority -->
+            <mat-form-field appearance="outline">
+              <mat-label>Final Recovery Priority</mat-label>
+              <input
+                matInput
+                formControlName="finalRecoveryPriority"
+                placeholder="e.g., High, Medium, Low"
+                maxlength="200"
+              />
+              <mat-icon matSuffix matTooltip="Final recovery priority level" matTooltipPosition="above">priority_high</mat-icon>
+            </mat-form-field>
+
+            <!-- MBCO -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>MBCO</mat-label>
+              <textarea
+                matInput
+                formControlName="mbco"
+                placeholder="Minimum Business Continuity Objectives"
+                rows="3"
+                maxlength="500"
+              ></textarea>
+              <mat-icon matSuffix matTooltip="Minimum Business Continuity Objectives" matTooltipPosition="above">assignment</mat-icon>
+              <mat-error *ngIf="parameterForm.get('mbco')?.hasError('required')">
+                MBCO is required
+              </mat-error>
+              <mat-error *ngIf="parameterForm.get('mbco')?.hasError('maxlength')">
+                Maximum 500 characters allowed
+              </mat-error>
+            </mat-form-field>
+
+            <!-- RTO Warning for MTPD -->
+            <div class="rto-mtpd-info full-width" *ngIf="data.mtpdFromSection2 && parameterForm.get('rto')?.valid && parameterForm.get('mtpd')?.value">
+              <mat-icon>info</mat-icon>
+              <span>MTPD from Section 2: {{ data.mtpdFromSection2 }} (RTO must be &lt; {{ data.mtpdFromSection2 }})</span>
+            </div>
+
+            <!-- RTO Warning -->
+            <div class="rto-warning full-width" *ngIf="showRTOLessThanSLAWarning && parameterForm.get('rto')?.valid">
+              <mat-icon color="warn">warning</mat-icon>
+              <span>RTO should ideally be less than Minimum SLA</span>
+            </div>
+          </div>
+        </form>
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end" class="dialog-actions">
+        <button mat-button (click)="onCancel()">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="onSave()"
+          [disabled]="parameterForm.invalid"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+        <button
+          *ngIf="data.mode === 'add'"
+          mat-raised-button
+          color="accent"
+          (click)="onSaveAndAdd()"
+          [disabled]="parameterForm.invalid"
+        >
+          <mat-icon>add</mat-icon>
+          Save and Add New
+        </button>
+      </mat-dialog-actions>
+    </div>
+  

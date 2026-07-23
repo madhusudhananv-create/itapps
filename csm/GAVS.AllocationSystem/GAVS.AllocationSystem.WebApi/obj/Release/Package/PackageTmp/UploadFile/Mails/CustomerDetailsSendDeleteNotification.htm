@@ -1,0 +1,91 @@
+﻿<html>
+<head>
+    <meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+    <meta name=Generator content="Microsoft Word 15 (filtered)">
+    <style>
+        /* Font Definitions */
+        @font-face {
+            font-family: "Cambria Math";
+            panose-1: 2 4 5 3 5 4 6 3 2 4;
+        }
+
+        @font-face {
+            font-family: Calibri;
+            panose-1: 2 15 5 2 2 2 4 3 2 4;
+        }
+
+        /* Base styles */
+        body {
+            font-family: "Calibri", sans-serif;
+            font-size: 12pt;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Simple table styling */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #CCCCFF;
+            font-weight: bold;
+        }
+
+        .customer-info {
+            font-size: 11pt;
+        }
+    </style>
+</head>
+<body>
+    <p>Hi Team,</p>
+    <span style='font-size: larger;'><strong>{{CUSTOMER_NAME}}</strong> contact has been removed in CSM PLATFORM - Customer Details Screen</span>
+    <br />
+    <p class="customer-info">
+        Customer Contact : <b>{{CUSTOMER_USER_NAME}}</b><br />
+        Account : <b>{{CUSTOMER_NAME}}</b><br />
+        Email : <b>{{CUSTOMER_EMAIL_ID}}</b><br />
+        Updated Date : <b>{{UPDATED_DATE}}</b><br />
+        Deleted By : <b>{{UPDATED_BY}}</b><br />
+        <br />
+        <table>
+            <tr>
+                <th style='text-align: center; border-bottom: 1px solid #ddd;'>Project</th>
+                <th style='text-align: center; border-bottom: 1px solid #ddd;'>CSAT Frequency</th>
+                <th style='text-align: center; border-bottom: 1px solid #ddd;'>Reporting Manager</th>
+                <th style='text-align: center; border-bottom: 1px solid #ddd;'>CSAT Survey</th>
+            </tr>
+            <tr>
+                {{NEW_VALUE_TABLE}}
+            </tr>
+        </table>
+    </p>
+
+    <br />
+    <br />
+    <p class=MsoNormal>Regards,</p>
+    <div>
+        <p class=xmsonormal>
+            <b>
+                <span style='font-size:10.0pt;font-family:"Arial",sans-serif;color:#1F497D'>Quality Assurance</span>
+            </b><br>
+            <b>
+                <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'> Neurealm (Formerly GS Lab | GAVS Technologies)</span>
+            </b><br>
+                <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur</span><br>
+            <span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#666666;background:white'>Chennai - 600 119</span><br>
+            <b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>Phone:</span></b><span style='font-size:9.0pt;font-family:"Arial",sans-serif;color:#595959'>+91 44 66694287</span><br>
+            <b><span style='font-size:10.0pt'>Web: </span></b><b><span style='font-size:9.0pt;font-family:"Arial",sans-serif'><a href="http://www.neurealm.com">www.neurealm.com</a></span></b>
+        </p>
+    </div>
+    </p>
+</body>
+</html>

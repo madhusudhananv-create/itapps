@@ -1,0 +1,34 @@
+<!-- Portfolio & Product Selector - Horizontal Layout -->
+<div class="portfolio-product-container">
+  <!-- Portfolio Dropdown -->
+  <div class="selector-field" *ngIf="includePortfolio">
+    <mat-form-field appearance="outline">
+      <mat-label>Portfolio</mat-label>
+      <mat-select #select [(ngModel)]="portArray"
+        (selectionChange)="getProductList(portArray)">
+        <mat-option *ngFor="let port of portfolioList" [value]="port.id">{{port.title}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  
+  <!-- Product Dropdown -->
+  <div class="selector-field">
+    <mat-form-field appearance="outline">
+      <mat-label>Product</mat-label>
+      <mat-select #mySel [(ngModel)]="prodArray" (ngModelChange)="ddProduct_Onchange()"
+        (openedChange)="resetFilterValue($event)">
+        <mat-form-field class="filter-scope">
+          <input matInput #searchInput (keyup)="applyFilterForScope(searchInput.value)"
+            placeholder="Search Product">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+        <mat-option *ngFor="let prod of productList" [value]="prod.id">{{prod.producT_TITLE}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
+
+<!-- Loading Progress Bar - only render container when loading -->
+<div class="progress-container" *ngIf="isLoading">
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+</div>

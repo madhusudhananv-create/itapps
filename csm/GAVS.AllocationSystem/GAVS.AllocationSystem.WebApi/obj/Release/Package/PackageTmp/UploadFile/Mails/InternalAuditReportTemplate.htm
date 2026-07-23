@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+    <meta name=Generator content="Microsoft Word 15 (filtered)">
+    <style>
+        /* Font Definitions */
+        @font-face {
+            font-family: "Cambria Math";
+            panose-1: 2 4 5 3 5 4 6 3 2 4;
+        }
+
+        @font-face {
+            font-family: Calibri;
+            panose-1: 2 15 5 2 2 2 4 3 2 4;
+        }
+
+        /* Style Definitions */
+        p.MsoNormal, li.MsoNormal, div.MsoNormal {
+            margin: 0in;
+            margin-bottom: .0001pt;
+            font-size: 11.0pt;
+            font-family: "Calibri",sans-serif;
+        }
+
+        p {
+            margin-right: 0in;
+            margin-left: 0in;
+            font-size: 12.0pt;
+            font-family: "Calibri",sans-serif;
+        }
+
+        .MsoChpDefault {
+            font-family: "Calibri",sans-serif;
+        }
+
+        @page WordSection1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in 1.0in 1.0in 1.0in;
+        }
+
+        div.WordSection1 {
+            page: WordSection1;
+        }
+
+        table {
+            font-family: "Calibri",sans-serif;
+            border-collapse: collapse;
+            border: 1px solid black;
+            width: 100%
+        }
+
+        td {
+            padding: 4px 2px;
+            font-size: 12px;
+            font-weight: 300;
+            border: 1px solid black;
+            font-family: "Calibri",sans-serif;
+        }
+
+        th {
+            padding: 4px;
+            background-color: #CCCCFF;
+            color: black;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: "Calibri",sans-serif;
+            border: 1px solid black;
+            height: 10px;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .section-header {
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+
+        @page:first {
+            @bottom-left {
+                content: none;
+            }
+
+            @bottom-right {
+                content: none;
+            }
+
+            @top-left {
+                content: none;
+            }
+
+            @top-right {
+                content: none;
+            }
+        }
+
+        @page {
+            @bottom-left {
+                content: "Confidential";
+            }
+
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+            }
+
+            @top-left {
+                content: "Internal Audit Report";
+                border-bottom: 2px solid black;
+                font-weight: bold;
+                font-size: medium;
+                margin-bottom: 10px
+            }
+
+            @top-right {
+                content: url(gslab_logo.png);
+                border-bottom: 2px solid black;
+                margin-bottom: 10px
+            }
+
+            margin-bottom: 80pt;
+        }
+    </style>
+</head>
+
+<body lang=EN-US>
+
+    <div class="WordSection1">
+        <img src="gslab_cover.png" style="width: 700px; height: 500px" />
+        <p class="header" style="color: #191970">Internal Audit Report</p>
+        <p class="header" style="color: #191970">{{ACCOUNT_NAME}} – {{PROJECT_NAME}}</p>
+        <img src="gslab_image.png" style="display: block;margin-left: auto;margin-right: auto;" />
+        <br /><br /><br />
+        <h3><strong>Document History</strong></h3>
+        <table style="margin-bottom: 20px">
+            <tr>
+                <th>Date</th>
+                <th>Version</th>
+                <th>Summary</th>
+                <th>Auditor</th>
+                <th>Approved By</th>
+            </tr>
+
+            <tr>
+                <td>{{AUDIT_SUBMITTED_DATE}}</td>
+                <td>{{VERSION}}</td>
+                <td>{{PROJECT_NAME}} internal Audit report</td>
+                <td>{{AUDITOR_NAME}}</td>
+                <td>{{QUALITY_DIRECTOR}}</td>
+            </tr>
+        </table>
+
+        <!-- Report Header -->
+        <p class="header">{{ACCOUNT_NAME}} – Internal Audit Report</p>
+
+        <table style="margin-bottom: 20px">
+            <tr>
+                <td style="width: 30%"><b>Report Date:</b></td>
+                <td>{{AUDIT_SUBMITTED_DATE}}</td>
+            </tr>
+            <tr>
+                <td style="width: 30%"><b>Auditor(s):</b></td>
+                <td>{{AUDITOR_NAME}}</td>
+            </tr>
+            <tr>
+                <td style="width: 30%"><b>Auditee(s):</b></td>
+                <td>{{AUDITEE_NAME}}</td>
+            </tr>
+            <tr>
+                <td style="width: 30%"><b>Audited Department/Function:</b></td>
+                <td>{{PROJECT_NAME}}</td>
+            </tr>
+            <tr>
+                <td style="width: 30%"><b>Audit Period:</b></td>
+                <td>{{AUDIT_START_DATE}}</td>
+            </tr>
+        </table>
+
+        <!-- Scope -->
+        <p class="section-header">1. Scope:</p>
+        <p><b>Criteria:</b> {{REQUIREMENT_REFERENCE}}</p>
+        <p><b>Location:</b> ODC at Neurealm (Formerly GS Lab | GAVS Technologies) Chennai Office located at 7th Floor, Block B, Futura Tech Park, 334, Rajiv Gandhi Salai (OMR) Sholinganallur, Chennai - 600119</p>
+
+        <!-- Objectives -->
+        <p class="section-header">2. Objectives:</p>
+        <p>The objective of the assessment is to evaluate the adherence to the {{PROCESS_MODEL}} Control/Clause in delivering the {{SERVICE_TOWER}} to {{ACCOUNT_NAME}}</p>
+
+        <!-- Methodology -->
+        <p class="section-header">3. Methodology:</p>
+        <p>Based on the interview with auditee and evaluating the process artifacts that are shown from the project repository and CSM platform (Customer Success Management Platform).</p>
+
+        <!-- Findings -->
+
+        <p>
+            {{FINDINGS_TABLE}}
+        </p>
+
+
+        <p class="section-header">8. Next Step</p>
+        <p>PM and CSM shall go through this audit report and get back with the corrective action plan within five working days. All these findings are submitted in the Customer Success Management platform, and would have received an email with a link to submit the corrective action plan for all the findings.</p>
+
+        <p class="section-header">Approval:</p>
+        This audit report is approved by:<br>
+        {{QUALITY_DIRECTOR}}<br>
+        Director - Quality
+
+
+    </div>
+</body>
+</html>

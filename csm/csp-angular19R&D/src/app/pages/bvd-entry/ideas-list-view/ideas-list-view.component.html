@@ -1,0 +1,244 @@
+<app-navbar-new [ShowMenu]="false"></app-navbar-new>
+
+<div class="ilv-page">
+
+  <!-- ── Full-screen navigation overlay (view idea click) ──────────── -->
+  <div class="ilv-nav-overlay" *ngIf="isNavigating">
+    <div class="ilv-nav-overlay__box">
+      <div class="ilv-spinner"></div>
+      <span class="ilv-nav-overlay__text">Loading idea...</span>
+    </div>
+  </div>
+
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <div class="ilv-header">
+    <div class="ilv-header-left">
+      <a class="ilv-back" (click)="resetValuesAndGoBack()">
+        <span class="ilv-back-arrow">‹</span>
+      </a>
+      <h1 class="ilv-title">Ideas &amp; Improvements</h1>
+      <span class="ilv-count-badge">{{ dataSource.length }} items</span>
+    </div>
+    <div class="ilv-header-right">
+      <button class="ilv-btn ilv-btn--refresh" (click)="getAllIdeas()" [disabled]="isLoading" title="Refresh list">
+        <svg class="ilv-refresh-icon" [class.ilv-refresh-icon--spinning]="isLoading"
+          xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+      <button class="ilv-btn ilv-btn--primary" (click)="addNewIdea()">
+        Add New
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Filter panel ───────────────────────────────────────────────── -->
+  <div class="ilv-filter-panel">
+
+    <!-- Filter by toggle -->
+    <div class="ilv-filter-toggle" (click)="toggleFilter()">
+      <span>Filter by...</span>
+      <span class="ilv-chevron" [class.ilv-chevron--open]="filterOpen">&#8964;</span>
+    </div>
+
+    <!-- Search + actions row -->
+    <div class="ilv-filter-search-row">
+      <div class="ilv-search-wrap">
+        <span class="ilv-search-icon">&#9906;</span>
+        <input
+          class="ilv-search-input"
+          type="text"
+          placeholder="Search ideas, problems, solutions..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="applySearch()" />
+      </div>
+      <button class="ilv-btn ilv-btn--apply" (click)="applySearch()">Apply</button>
+      <button class="ilv-btn ilv-btn--clear" (click)="clearSearch()">Clear</button>
+
+      <!-- Pending Approval -->
+      <label class="ilv-pending-label">
+        <input type="checkbox" class="ilv-pending-check" [(ngModel)]="forApproval" (change)="onForApprovalChange()" />
+        <span>Pending - For Approval</span>
+      </label>
+    </div>
+
+    <!-- Bulk action row (CSM only) -->
+    <div class="ilv-bulk-row" *ngIf="_util.IsCSM()">
+      <label class="ilv-ctrl-label">Action</label>
+      <mat-form-field appearance="outline" class="ilv-action-field">
+        <mat-select [(ngModel)]="selectedStatus" placeholder="Select Action">
+          <mat-option value="Approved">Approve</mat-option>
+          <mat-option value="Rejected">Reject</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button class="ilv-btn ilv-btn--submit" (click)="submitBulkAction()">Submit</button>
+    </div>
+  </div>
+
+  <!-- ── KPI summary cards ──────────────────────────────────────────── -->
+  <div class="ilv-kpi-row">
+    <div class="ilv-kpi-card">
+      <div class="ilv-kpi-label">TOTAL IDEAS</div>
+      <div class="ilv-kpi-value">{{ ideas.length }}</div>
+      <div class="ilv-kpi-sub ilv-kpi-sub--blue">All time</div>
+    </div>
+    <div class="ilv-kpi-card">
+      <div class="ilv-kpi-label">PENDING APPROVAL</div>
+      <div class="ilv-kpi-value ilv-kpi-value--orange">{{ getPendingCount() }}</div>
+      <div class="ilv-kpi-sub ilv-kpi-sub--orange">Needs action</div>
+    </div>
+    <div class="ilv-kpi-card">
+      <div class="ilv-kpi-label">APPROVED</div>
+      <div class="ilv-kpi-value ilv-kpi-value--green">{{ getApprovedCount() }}</div>
+      <div class="ilv-kpi-sub ilv-kpi-sub--green">In progress</div>
+    </div>
+    <div class="ilv-kpi-card">
+      <div class="ilv-kpi-label">UNDER REVIEW</div>
+      <div class="ilv-kpi-value ilv-kpi-value--blue2">{{ getUnderReviewCount() }}</div>
+      <div class="ilv-kpi-sub ilv-kpi-sub--blue2">Active</div>
+    </div>
+  </div>
+
+  <!-- ── Table ──────────────────────────────────────────────────────── -->
+  <div class="ilv-table-wrap">
+
+    <!-- Record count -->
+    <div class="ilv-record-count">{{ dataSource.length }} of {{ ideas.length }} records</div>
+
+    <!-- ── List-loading spinner row ── -->
+    <div class="ilv-list-loading" *ngIf="isLoading">
+      <div class="ilv-spinner"></div>
+      <span>Refreshing ideas...</span>
+    </div>
+
+    <table class="ilv-table">
+      <thead>
+        <tr>
+          <th class="ilv-th ilv-th--check" *ngIf="_util.IsCSM()">
+            <input type="checkbox" class="ilv-check"
+              (change)="$event ? masterToggle() : null"
+              [checked]="selection.hasValue() && isAllSelected()"
+              [indeterminate]="selection.hasValue() && !isAllSelected()" />
+          </th>
+          <th class="ilv-th">PROJECT</th>
+          <th class="ilv-th">PROBLEM DESCRIPTION</th>
+          <th class="ilv-th">IDEA / PROPOSED SOLUTION</th>
+          <th class="ilv-th">TYPE</th>
+          <th class="ilv-th">IDENTIFIED BY</th>
+          <th class="ilv-th">STATUS</th>
+          <th class="ilv-th">IDENTIFIED DATE</th>
+          <th class="ilv-th">TARGET DATE</th>
+          <th class="ilv-th ilv-th--action">ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of pagedData()"
+            class="ilv-tr"
+            [class.ilv-tr--selected]="selection.isSelected(row)">
+
+          <!-- Checkbox -->
+          <td class="ilv-td ilv-td--check" *ngIf="_util.IsCSM()">
+            <input type="checkbox" class="ilv-check"
+              (click)="$event.stopPropagation()"
+              (change)="$event ? selection.toggle(row) : null"
+              [checked]="selection.isSelected(row)"
+              [disabled]="isRowCheckboxDisabled(row)" />
+          </td>
+
+          <!-- Project -->
+          <td class="ilv-td ilv-td--project" (click)="getIdeasDetailsById(row.id)">
+            <span class="ilv-proj-dot" [style.background]="getProjectColor(row.projecT_NAME)"></span>
+            <span class="ilv-proj-name">{{ row.projecT_NAME }}</span>
+          </td>
+
+          <!-- Problem Description -->
+          <td class="ilv-td ilv-td--desc" (click)="getIdeasDetailsById(row.id)">
+            <div class="ilv-desc-main">{{ row.description }}</div>
+          </td>
+
+          <!-- Idea / Proposed Solution -->
+          <td class="ilv-td ilv-td--solution" (click)="getIdeasDetailsById(row.id)">
+            —
+          </td>
+
+          <!-- Type badge -->
+          <td class="ilv-td" (click)="getIdeasDetailsById(row.id)">
+            <span class="ilv-type-badge" [ngClass]="getTypeBadgeClass(row.type)">{{ row.type }}</span>
+          </td>
+
+          <!-- Identified By (avatar) -->
+          <td class="ilv-td ilv-td--person" (click)="getIdeasDetailsById(row.id)">
+            <span class="ilv-avatar" [style.background]="getAvatarColor(row.identified_By)">
+              {{ getInitials(row.identified_By) }}
+            </span>
+            <span class="ilv-person-name">{{ row.identified_By }}</span>
+          </td>
+
+          <!-- Status dot -->
+          <td class="ilv-td" (click)="getIdeasDetailsById(row.id)">
+            <span class="ilv-status-dot" [ngClass]="'ilv-status-dot--' + getStatusKey(row.status)"></span>
+            <span class="ilv-status-text" [ngClass]="'ilv-status--' + getStatusKey(row.status)">{{ row.status }}</span>
+          </td>
+
+          <!-- Identified Date -->
+          <td class="ilv-td ilv-td--date" (click)="getIdeasDetailsById(row.id)">
+            {{ row.identifieD_DATE | date:'dd MMM yyyy' }}
+          </td>
+
+          <!-- Target Date -->
+          <td class="ilv-td ilv-td--date" (click)="getIdeasDetailsById(row.id)">
+            {{ row.targeT_DATE | date:'dd MMM yyyy' }}
+          </td>
+
+          <!-- Actions: View + Delete -->
+          <td class="ilv-td ilv-td--action">
+            <button class="ilv-view-btn" (click)="getIdeasDetailsById(row.id)"
+              title="View Idea" [disabled]="isNavigating">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button class="ilv-delete-btn" (click)="deleteIdeaById(row.id, row.status)"
+              title="Delete Idea" [disabled]="isNavigating">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+
+        <!-- Empty state -->
+        <tr *ngIf="dataSource.length === 0">
+          <td [attr.colspan]="_util.IsCSM() ? 10 : 9" class="ilv-empty">
+            <div class="ilv-empty-icon">💡</div>
+            <div>No ideas found</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ── Custom paginator ───────────────────────────────────────── -->
+    <div class="ilv-paginator">
+      <span class="ilv-page-label">Rows per page:</span>
+      <div class="ilv-page-size-wrap">
+        <select class="ilv-page-size-select" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
+        </select>
+        <span class="ilv-select-arrow">&#8964;</span>
+      </div>
+      <span class="ilv-page-info">
+        {{ pageStart }}–{{ pageEnd }} of {{ dataSource.length }}
+      </span>
+      <button class="ilv-page-btn" (click)="prevPage()" [disabled]="currentPage === 0">&#8249;</button>
+      <button class="ilv-page-btn ilv-page-btn--active">{{ currentPage + 1 }}</button>
+      <button class="ilv-page-btn" (click)="nextPage()" [disabled]="pageEnd >= dataSource.length">&#8250;</button>
+    </div>
+  </div>
+
+</div>

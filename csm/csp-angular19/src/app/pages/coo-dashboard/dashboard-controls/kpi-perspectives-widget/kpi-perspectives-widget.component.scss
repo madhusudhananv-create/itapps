@@ -1,0 +1,174 @@
+// KPI Perspectives Widget Component Styles
+// Modern Angular 19 version
+
+.kpi-container {
+  max-height: 150px;
+  overflow-y: auto;
+  
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cac9c9;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #929292;
+  }
+}
+
+.kpi-row {
+  margin-top: 5px;
+  margin-bottom: 8px;
+  clear: both;
+  overflow: hidden;
+}
+
+// Progress bar styling
+::ng-deep mat-progress-bar {
+  height: 5px;
+  opacity: 1;
+  border-radius: 3px;
+  overflow: hidden;
+  
+  .mat-progress-bar-buffer {
+    background-color: #e8e8e8 !important;
+  }
+  
+  .mdc-linear-progress__buffer {
+    background-color: #e8e8e8 !important;
+  }
+}
+
+// Overall Score - Orange
+::ng-deep .overallBar {
+  .mat-progress-bar-fill::after,
+  .mdc-linear-progress__bar-inner {
+    background-color: #ff9933 !important;
+  }
+}
+
+// Performance - Light Blue
+::ng-deep .performanceBar {
+  .mat-progress-bar-fill::after,
+  .mdc-linear-progress__bar-inner {
+    background: #82D3E5 !important;
+  }
+}
+
+// Quality - Orange-Red
+::ng-deep .qualityBar {
+  .mat-progress-bar-fill::after,
+  .mdc-linear-progress__bar-inner {
+    background: #FD7F56 !important;
+  }
+}
+
+// Compliance - Green
+::ng-deep .complianceBar {
+  .mat-progress-bar-fill::after,
+  .mdc-linear-progress__bar-inner {
+    background: #60BF66 !important;
+  }
+}
+
+// Value - Blue
+::ng-deep .valueBar {
+  .mat-progress-bar-fill::after,
+  .mdc-linear-progress__bar-inner {
+    background: #99B5F4 !important;
+  }
+}
+
+// Backlog - Purple
+::ng-deep .backlogBar {
+  .mat-progress-bar-fill::after,
+  .mdc-linear-progress__bar-inner {
+    background: #c650b2 !important;
+  }
+}
+
+// Non-Backlog - Yellow
+::ng-deep .non-backlogBar {
+  .mat-progress-bar-fill::after,
+  .mdc-linear-progress__bar-inner {
+    background: #fff716 !important;
+  }
+}
+
+// Label styles
+label {
+  margin-bottom: 2px;
+  font-size: 11px;
+  color: #5c5b5b;
+  font-weight: 300;
+}
+
+.floatleft {
+  float: left !important;
+}
+
+.floatright {
+  float: right !important;
+}
+
+.verysmalltextblack {
+  font-size: 11px;
+  color: #5c5b5b;
+  text-decoration: none !important;
+  font-weight: 300;
+  
+  b {
+    font-weight: 600;
+    color: #4a90e2;
+  }
+}
+
+.smalltext {
+  font-size: 12px;
+  color: #494a4d;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.smalltextblack {
+  font-size: 11px;
+  color: #474646;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.verysmalltext {
+  font-size: 11px;
+  text-decoration: none !important;
+  text-align: center;
+  font-weight: 300;
+}
+
+// Row layout
+.row {
+  margin: 0;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .kpi-container {
+    max-height: 120px;
+  }
+  
+  .kpi-row {
+    margin-top: 3px;
+    margin-bottom: 6px;
+  }
+  
+  label {
+    font-size: 10px;
+  }
+}

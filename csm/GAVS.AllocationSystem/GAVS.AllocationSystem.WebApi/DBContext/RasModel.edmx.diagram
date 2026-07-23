@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="02beb917c41c4dfb8f0df7d984775a25" Name="Diagram1">
+        <EntityTypeShape EntityType="RasModel.BILLING_CYCLE" Width="1.5" PointX="15.75" PointY="54.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.BU_INFO" Width="1.5" PointX="11.25" PointY="48" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CNTRY_HOLIDAY" Width="1.5" PointX="3" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CNTRY_INFO" Width="1.5" PointX="0.75" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CNTRY_WEEKEND" Width="1.5" PointX="3" PointY="52.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.COMPLIANCE_TRAINING_ASSESSMENT_RESULT" Width="1.5" PointX="5.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.COMPLIANCE_TRAINING_ASSESSMENT_RESULT_old" Width="1.5" PointX="5.75" PointY="5.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CONFIGURATION" Width="1.5" PointX="7.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CRNCY_INFO" Width="1.5" PointX="11.25" PointY="53.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CURRENCY_RATE_CONVERSION" Width="1.5" PointX="7.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CUST_ADDR" Width="1.5" PointX="6" PointY="49.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CUSTOMER" Width="1.5" PointX="3.75" PointY="59" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.DATE_DIM" Width="1.5" PointX="16.5" PointY="35" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.DEPT_INFO" Width="1.5" PointX="16.5" PointY="49.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.ELMAH_Error" Width="1.5" PointX="7.75" PointY="7.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.EMAIL_TEMPLATE" Width="1.5" PointX="0.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.EMP_INFO" Width="1.5" PointX="9" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.EMP_PASSPORT" Width="1.5" PointX="3" PointY="44.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.EMP_PROJ_ROLE_MAP" Width="1.5" PointX="18.75" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.EMP_SKILLSET_MATRIX" Width="1.5" PointX="16.25" PointY="44.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.EXCHANGE_RATE" Width="1.5" PointX="13.5" PointY="58.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.LKP_RIMBS_PRE_DEFINED_AMT" Width="1.5" PointX="3" PointY="55.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.MASTER_LOOKUP" Width="1.5" PointX="3" PointY="5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.MASTER_TYPE" Width="1.5" PointX="0.75" PointY="5.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PASSPORT_COUNTRY" Width="1.5" PointX="2.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_RESOURCE" Width="1.5" PointX="24" PointY="47.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_RESOURCE_ROLE_MAP_BILLING" Width="1.5" PointX="26.25" PointY="58.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_RESRC_TIME_ENTRY" Width="1.5" PointX="18.75" PointY="43.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_REV" Width="1.5" PointX="29.25" PointY="49.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_REV_APPRL_WF" Width="1.5" PointX="31.5" PointY="49.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_ROLE" Width="1.5" PointX="16.5" PointY="30.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_ROLE_BILLING_ALLOCATION" Width="1.5" PointX="20.25" PointY="76.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_ROLE_LOC" Width="1.5" PointX="16.5" PointY="71.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_ROLE_MAP_BILLING" Width="1.5" PointX="18" PointY="65.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_SUB_ROLE" Width="1.5" PointX="16.5" PointY="75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_TASK" Width="1.5" PointX="16.5" PointY="58.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJECT" Width="1.5" PointX="13.5" PointY="46.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJECT_EXPENSE" Width="1.5" PointX="21" PointY="63.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJECT_MILESTONE" Width="1.5" PointX="21" PointY="67.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJECT_NEW" Width="1.5" PointX="11.25" PointY="57.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RESRC_REV" Width="1.5" PointX="26.25" PointY="43.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RESRC_RIMBS" Width="1.5" PointX="29.25" PointY="43.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RESRC_RIMBS_OTHERS" Width="1.5" PointX="18.75" PointY="55" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RESRC_RQST" Width="1.5" PointX="21.75" PointY="47.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RESRC_RQST_WF" Width="1.5" PointX="27" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RIMBS_FILES" Width="1.5" PointX="31.5" PointY="44.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RIMBS_TYPE" Width="1.5" PointX="27" PointY="39.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.ROLE_INFO" Width="1.5" PointX="0.75" PointY="1.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RR_WF_STAGE_INFO" Width="1.5" PointX="24.75" PointY="39.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.SKILLSET_INFO" Width="1.5" PointX="19.5" PointY="59.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.SOW_INFO" Width="1.5" PointX="15.75" PointY="85.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.SP_DETAILS" Width="1.5" PointX="9.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.USER_INFO" Width="1.5" PointX="3" PointY="0.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.USER_RIGHTS" Width="1.5" PointX="21.75" PointY="41.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.VISA_DETAILS" Width="1.5" PointX="5.25" PointY="44.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.ACTIVITY_LOGS" Width="1.5" PointX="9.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.ACTIVITY_LOGS_old" Width="1.5" PointX="9.75" PointY="7.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.COMPLIANCE_TRAINING_ASSESSMENT_HEADER" Width="1.5" PointX="4.75" PointY="10.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CONFIGURATION_EXT" Width="1.5" PointX="11.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.CSM_TITLES" Width="1.5" PointX="11.75" PointY="4.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.DEPT_BU_INFO" Width="1.5" PointX="6.75" PointY="11.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.EMP_NEWS" Width="1.5" PointX="11.75" PointY="7.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJ_TIMESHEET" Width="1.5" PointX="21.75" PointY="58" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJECT_COURSE_MAPPING" Width="1.5" PointX="8.75" PointY="11.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJECT_PREFERENCE" Width="1.5" PointX="10.75" PointY="11.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_DEFECT" Width="1.5" PointX="0.75" PointY="12.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_ITERATION" Width="1.5" PointX="12.75" PointY="11.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_RELEASE" Width="1.5" PointX="13.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_SUBPROJECT" Width="1.5" PointX="13.75" PointY="5.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_TASK" Width="1.5" PointX="2.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_TASK_STATE" Width="1.5" PointX="8.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_TEAM" Width="1.5" PointX="14.75" PointY="9.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_USERSTORY" Width="1.5" PointX="14.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.PROJMGT_USERSTORY_STATE" Width="1.5" PointX="15.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.REPORTS_PARAMS" Width="1.5" PointX="15.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.REPORTS_SP_DETAILS" Width="1.5" PointX="4.75" PointY="15.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.RESRC_RQST_SKILLSET" Width="1.5" PointX="21.75" PointY="72.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.tblParametersForAllSP" Width="1.5" PointX="15.75" PointY="6.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.TIMESHEET_SETTINGS" Width="1.5" PointX="16.75" PointY="9.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.TOKEN" Width="1.5" PointX="10.75" PointY="16.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="RasModel.WFM_LWD" Width="1.5" PointX="16.75" PointY="13.75" IsExpanded="true" />
+        <AssociationConnector Association="RasModel.PROJECT_ID__BILLING_CYCLE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.BU_HEAD_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.DEPT_INFO_BU_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.FK__PROJECT__BU_ID__6339AFF7" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.CNTRY_ID_CNTRY_HOLIDAY_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.CNTRY_ID_CNTRY_WEEKEND_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.COUNTRY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.CUST_ADDR_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_INFO_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RIMBS_CNTRY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RIMBS_TYPE_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.VISA_DETAILS_CNTRY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.BILL_CRNCY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EXCHANGE_RATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_CRNCY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RIMBS_TYPE_CRNCYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.CUST_ADDR_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECTCUST_ADDR_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECTCUST_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.USER_RIGHTS_CUSTOMER_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESCRC_PROJID_FK_2" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_REV_DATE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_TIMESHEET_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_REV_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RIMBS_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RIMBS_OTHERS_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RIMBS_FILES_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.DEPT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.DEPT_INFO_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_DEPT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_ID_PROJECT_EXPENSE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_INFO_MANAGER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_INFO_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_SKILLSET_MATRIX_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESOURCE_EMPID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESOURCE_PROJ_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESOURCE_PROJ_RM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESRC_TIME_ENTRY_EMP_ID_FK_2" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RP_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_TIMESHEET_UPLD_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_NEW_PROJ_BU_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_NEW_PROJ_DM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_PROJ_AM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_PROJ_BUHEAD_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_PROJ_DM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_PROJ_PM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_MANAGER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_WF_STAGE_OWNER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_WF_TAG_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.VISA_DETAILS_PASSPORT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_PROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_PROJ_ROLE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_PROJ_ROLE_MAPID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_PROJ_SUBROLE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_PROJ_SUBROLE_LOC_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_SKILLSET_SKILLSETID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RIMBS_TYPE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.MASTER_TYPE_MASTER_LOOKUP_fk" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESOURCE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESRC_ID_PROJ_RESOURCE_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESRCID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_REV_PROJ_RESRC_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RIMBS_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RIMBS_FILES_PROJ_RESRC_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_ROLE_MAP_BILLING_ID_PROJ_RESOURCE_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESCRC_PROJ_ID_FK_2" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_RESCRC_PROJTASK_FK_2" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_REV_WF_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_REVPROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.ROLE_ID_PROJ_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_ROLE_MAP_BILLING_ID_PROJ_ROLE_BILLING_ALLOCATION_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.SOW_ID_PROJ_ROLE_BILLING_ALLOCATION_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.ROJECT_ID_PROJ_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.SOW_ID_PROJ_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJ_TIMESHEET_PROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_ID__PROJECT_MILESTONE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PROJECT_ID_SOW_INFO_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RIMBS_OTHERS_PROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.USER_RIGHTS_PROJECT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.SOW_ID_PROJECT_EXPENSE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.SOW_ID_ROJECT_MILESTONE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RIMBSTYPEID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RIMBS_FILES_REF_RIMBS_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.PRMY_SKILLSET_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_WF_RESRC_RQST_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.SCDRY_SKILLSET_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_WF_RR_WF_STAGE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.USER_INFO_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.RESRC_RQST_SKILLSET_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="RasModel.EMP_DEPARTMENT" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

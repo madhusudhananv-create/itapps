@@ -1,0 +1,67 @@
+export class RiskModel {
+	id?: number;
+	projecT_ID?: string;
+	rag?: string;
+	description?: string;
+	impact?: string;
+	probabilitY_SCALE?: number | null;
+	impacT_SCALE?: number | null;
+	owner?: string;
+	area?: string;
+	identifieD_BY?: string;
+	identifieD_DATE?: Date | null;
+	risK_TREATMENT_STRATEGY?: string;
+	targeT_DATE?: Date | null;
+	actuaL_DATE?: Date | null;
+	status?: string;
+	actioN_TAKEN?: string;
+	createD_BY?: string;
+	createD_DATE?: Date;
+	updateD_BY?: string;
+	updateD_DATE?: Date;
+	isactive?: Boolean;
+	accepT_TILL?: Date | null;
+	portfoliO_NAME?: string;
+	owneR_NAME?: string;
+	ownernametext?: string;
+	identifiedbytext?: string;
+	forever?: boolean;
+	risK_REPOSITORY_ID?: number;
+	iS_DRAFT?: boolean;
+	risK_CATEGORY?: string;
+	location?: string;
+	risK_RATING?: number;
+	risK_LEVEL?: string;
+	neW_CONSEQUENCES_SCALE?: number | null;
+	neW_LIKELIHOOD_SCALE?: number | null;
+	neW_RISK_RATING?: number;
+	neW_RISK_LEVEL?: string;
+	actioN_ITEM_IDENTIFIED_DATE?: Date | null;
+	actioN_ITEM_TARGET_DATE?: Date | null;
+	actioN_ITEM_COMPLETION_DATE?: Date | null;
+	risK_TREATMENT_EFFECTIVENESS_STATUS?: string;
+	risK_TREATMENT_EFFECTIVENESS_VERIFIED_BY?: string;
+	neW_RISK_ASSESSMENT_DATE?: Date | null;
+	risK_TREATMENT_EFFECTIVENESS_VERIFIED_DATE?: Date | null;
+	isO_STD_ID?: number[];
+	// Action item properties (required for action item integration)
+	actioN_ITEM_DESCRIPTION?: string;
+	actioN_ITEM_OWNER?: string;
+	actioN_ITEM_STATUS?: string;
+	actioN_ITEM_COMMENTS?: string;
+}
+
+export class RiskModelExt extends RiskModel {
+	cusT_ID?: string;
+	cusT_NM?: string;
+	portfoliO_ID?: number;
+	portfoliO_NM?: string;
+	proJ_NM?: string;
+	rating?: string;
+	matrix?: string;
+	iS_PLAN_EXISTS: boolean = false;
+	iS_EDIT_ALLOWED: boolean = false;
+	actioN_ITEM_ID?: number;
+	// Note: actioN_ITEM_DESCRIPTION, actioN_ITEM_OWNER, actioN_ITEM_STATUS, actioN_ITEM_COMMENTS 
+	// are inherited from RiskModel base class
+}

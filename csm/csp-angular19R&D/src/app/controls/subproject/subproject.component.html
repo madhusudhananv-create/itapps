@@ -1,0 +1,329 @@
+<mat-tab-group class="modern-tabs" dynamicHeight>
+  <!-- Milestones & Tasks Tab -->
+  <mat-tab label="Milestones & Tasks">
+    <div class="tab-content-wrapper">
+      <!-- Header Actions -->
+      <div class="section-header">
+        <div class="header-left">
+          <mat-icon class="section-icon">assignment</mat-icon>
+          <h2>Key Milestones / Tasks</h2>
+        </div>
+        <div class="header-actions">
+          <mat-form-field appearance="outline" class="filter-select">
+            <mat-label>Filter by SubProject</mat-label>
+            <mat-select name="ddSubProjectFilter" [(ngModel)]="SubProjectId" (ngModelChange)="SubProjectFilter_onChange()">
+              <mat-option [value]='0'>All SubProjects</mat-option>
+              <mat-option *ngFor="let subproj of subProjects" [value]='subproj.id'>{{subproj.subprojecT_NM}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <button mat-raised-button color="primary" (click)="AddTask_onClick()" class="add-button">
+            <mat-icon>add</mat-icon>
+            Add Milestone/Task
+          </button>
+        </div>
+      </div>
+
+      <!-- Tasks Table -->
+      <div class="table-container">
+        <div class="table-wrapper">
+          <table class="modern-table">
+            <thead>
+              <tr class="table-header-row">
+                <th class="text-center col-no" rowspan="2">No.</th>
+                <th class="text-center col-icon" rowspan="2">
+                  <mat-icon matTooltip="Milestone" class="header-icon">flag</mat-icon>
+                </th>
+                <th class="text-center col-icon" rowspan="2">
+                  <mat-icon matTooltip="Show in Success Journey Map" class="header-icon">show_chart</mat-icon>
+                </th>
+                <th class="text-center col-subproject" rowspan="2">SubProject</th>
+                <th class="text-center col-description" rowspan="2">Description</th>
+                <th class="text-center col-responsibility" rowspan="2">Responsibility</th>
+                <th class="text-center col-date-group" colspan="2">Planned</th>
+                <th class="text-center col-date-group" colspan="2">Actual</th>
+                <th class="text-center col-status" rowspan="2">Status</th>
+                <th class="text-center col-percent" rowspan="2">Completion %</th>
+                <th class="text-center col-actions" rowspan="2">Actions</th>
+              </tr>
+              <tr class="table-subheader-row">
+                <th class="text-center col-date">Start Date</th>
+                <th class="text-center col-date">End Date</th>
+                <th class="text-center col-date">Start Date</th>
+                <th class="text-center col-date">End Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let task of filteredProjectTasks; let id = index" 
+                  [class.edit-row]="id == iEditIndex"
+                  class="table-data-row">
+                <!-- Row Number -->
+                <td class="text-center">{{id + 1}}</td>
+
+                <!-- Milestone Icon -->
+                <td class="text-center icon-cell">
+                  <mat-icon *ngIf="id != iEditIndex && task.ismilestone" 
+                            matTooltip="Milestone" 
+                            class="milestone-icon">flag</mat-icon>
+                  <mat-checkbox *ngIf="id == iEditIndex" 
+                               name="chkMilestone[{{id}}]" 
+                               [(ngModel)]="task.ismilestone"
+                               color="primary"
+                               class="compact-checkbox"></mat-checkbox>
+                </td>
+
+                <!-- Chart Icon -->
+                <td class="text-center icon-cell">
+                  <mat-icon *ngIf="id != iEditIndex && task.shoW_IN_CHART" 
+                            matTooltip="Show in Success Journey Map" 
+                            class="chart-icon">show_chart</mat-icon>
+                  <mat-checkbox *ngIf="id == iEditIndex" 
+                               name="chkChart[{{id}}]" 
+                               [(ngModel)]="task.shoW_IN_CHART"
+                               color="primary"
+                               class="compact-checkbox"></mat-checkbox>
+                </td>
+
+                <!-- SubProject -->
+                <td>
+                  <span *ngIf="id != iEditIndex">{{GetSubProjectName(task.subprojecT_ID)}}</span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field">
+                    <mat-select [(ngModel)]="task.subprojecT_ID">
+                      <mat-option *ngFor="let subproj of subProjects" [value]="subproj.id">
+                        {{subproj.subprojecT_NM}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+
+                <!-- Description -->
+                <td class="description-cell">
+                  <span *ngIf="id != iEditIndex" class="description-text" [matTooltip]="task.description">
+                    {{task.description}}
+                  </span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field">
+                    <textarea matInput 
+                             [(ngModel)]='task.description' 
+                             name="txtDescription[{{id}}]"
+                             rows="2"></textarea>
+                  </mat-form-field>
+                </td>
+
+                <!-- Responsibility -->
+                <td>
+                  <mat-form-field *ngIf="task.responsibility!=null || id == iEditIndex" 
+                                 appearance="outline" 
+                                 class="inline-field">
+                    <mat-select [disabled]="id != iEditIndex" 
+                               name="txtresponsibility[{{id}}]" 
+                               [(ngModel)]="task.responsibility" 
+                               placeholder="Select Responsibility">
+                      <mat-option *ngFor="let resp of responsibilityList" 
+                                 [value]="resp.emP_ID" 
+                                 [title]="resp.name">
+                        {{resp.name}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+
+                <!-- Expected Start Date -->
+                <td>
+                  <span *ngIf="id != iEditIndex">{{task.expecteD_START_DATE|date:'dd-MMM-yyyy'}}</span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field date-field">
+                    <input name='dtExpStartDate' 
+                          [(ngModel)]='task.expecteD_START_DATE' 
+                          matInput 
+                          [matDatepicker]="pickerExpStartDate" 
+                          placeholder="Start Date">
+                    <mat-datepicker-toggle matSuffix [for]="pickerExpStartDate"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerExpStartDate></mat-datepicker>
+                  </mat-form-field>
+                </td>
+
+                <!-- Expected End Date -->
+                <td>
+                  <span *ngIf="id != iEditIndex">{{task.expecteD_END_DATE|date:'dd-MMM-yyyy'}}</span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field date-field">
+                    <input name='dtExpEndDate' 
+                          [disabled]="!task.expecteD_START_DATE" 
+                          [min]="task.expecteD_START_DATE" 
+                          [(ngModel)]='task.expecteD_END_DATE'
+                          matInput 
+                          [matDatepicker]="pickerExpEndDate" 
+                          placeholder="End Date">
+                    <mat-datepicker-toggle matSuffix [for]="pickerExpEndDate"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerExpEndDate></mat-datepicker>
+                  </mat-form-field>
+                </td>
+
+                <!-- Actual Start Date -->
+                <td>
+                  <span *ngIf="id != iEditIndex">{{task.actuaL_START_DATE|date:'dd-MMM-yyyy'}}</span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field date-field">
+                    <input name='dtActStartDate' 
+                          [disabled]="!task.expecteD_START_DATE" 
+                          [min]="task.expecteD_START_DATE" 
+                          [(ngModel)]='task.actuaL_START_DATE'
+                          matInput 
+                          [matDatepicker]="pickerActStartDate" 
+                          placeholder="Start Date">
+                    <mat-datepicker-toggle matSuffix [for]="pickerActStartDate"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerActStartDate></mat-datepicker>
+                  </mat-form-field>
+                </td>
+
+                <!-- Actual End Date -->
+                <td>
+                  <span *ngIf="id != iEditIndex">{{task.actuaL_END_DATE|date:'dd-MMM-yyyy'}}</span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field date-field">
+                    <input name='dtActEndDate' 
+                          [disabled]="!task.expecteD_START_DATE" 
+                          [min]="task.actuaL_START_DATE" 
+                          [max]="_util.Today()" 
+                          [(ngModel)]='task.actuaL_END_DATE'
+                          matInput 
+                          [matDatepicker]="pickerActEndDate" 
+                          placeholder="End Date">
+                    <mat-datepicker-toggle matSuffix [for]="pickerActEndDate"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerActEndDate></mat-datepicker>
+                  </mat-form-field>
+                </td>
+
+                <!-- Status -->
+                <td class="status-cell">
+                  <span *ngIf="id != iEditIndex && task.status" 
+                        [class]="'status-badge status-' + (task.status ? task.status.toLowerCase().replace(' ', '-').replace('-process', '-progress') : '')">
+                    {{task.status}}
+                  </span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field">
+                    <mat-select #ddStatus name='ddStatus' [(ngModel)]="task.status" placeholder="Status" required>
+                      <mat-option value='Identified'>Identified</mat-option>
+                      <mat-option value='Planned'>Planned</mat-option>
+                      <mat-option value='In-Process'>In-Progress</mat-option>
+                      <mat-option value='Completed'>Completed</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+
+                <!-- Completion Percent -->
+                <td class="text-center">
+                  <span *ngIf="id != iEditIndex" class="completion-text">{{task.completioN_PERCENT}}%</span>
+                  <mat-form-field *ngIf="id == iEditIndex" appearance="outline" class="inline-field percent-field">
+                    <input matInput 
+                          type="number" 
+                          [max]="100" 
+                          [min]="0"
+                          [(ngModel)]="task.completioN_PERCENT"
+                          placeholder="%">
+                  </mat-form-field>
+                </td>
+
+                <!-- Actions -->
+                <td class="text-center action-cell">
+                  <div *ngIf="id != iEditIndex" class="action-buttons">
+                    <button mat-icon-button color="primary" (click)="EditTask_onClick(id)" matTooltip="Edit">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="DeleteTask_onClick(task)" matTooltip="Delete">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                  <div *ngIf="id === iEditIndex" class="action-buttons">
+                    <button mat-icon-button color="primary" (click)="SaveTask_onClick(task)" matTooltip="Save">
+                      <mat-icon>save</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="CancelTask_onClick()" matTooltip="Cancel">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </mat-tab>
+
+  <!-- SubProjects Tab -->
+  <mat-tab label="SubProjects">
+    <div class="tab-content-wrapper">
+      <div class="subproject-form-card">
+        <div class="form-header">
+          <mat-icon class="section-icon">folder</mat-icon>
+          <h2>SubProject Details</h2>
+        </div>
+        
+        <div class="form-content">
+          <!-- SubProject Name -->
+          <div class="form-row">
+            <label class="form-label required">SubProject Name</label>
+            <div class="form-control">
+              <mat-form-field *ngIf="!bShowAddSubProject" appearance="outline" class="full-width">
+                <mat-label>Select SubProject</mat-label>
+                <mat-select name="ddGoals" [(ngModel)]="newSubProject" (ngModelChange)="SubProject_onChange($event)">
+                  <mat-option *ngFor="let subproj of subProjects" [value]="subproj" [title]="subproj.subprojecT_NM">
+                    {{subproj.subprojecT_NM}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field *ngIf="bShowAddSubProject" appearance="outline" class="full-width">
+                <mat-label>SubProject Name</mat-label>
+                <input matInput maxlength="100" [(ngModel)]="newSubProject.subprojecT_NM" placeholder="Enter subproject name">
+                <mat-hint align="end">{{newSubProject.subprojecT_NM?.length || 0}}/100</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Owner -->
+          <div class="form-row">
+            <label class="form-label required">Owner</label>
+            <div class="form-control">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Select Owner</mat-label>
+                <mat-select [(ngModel)]="newSubProject.owneR_ID">
+                  <mat-option *ngFor="let resource of projectResource" [value]="resource.emP_ID">
+                    {{resource.frsT_NM}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Objectives -->
+          <div class="form-row">
+            <label class="form-label required">Objectives</label>
+            <div class="form-control">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Objectives</mat-label>
+                <textarea matInput 
+                         maxlength="255" 
+                         [(ngModel)]="newSubProject.objectives" 
+                         rows="4"
+                         placeholder="Enter subproject objectives"></textarea>
+                <mat-hint align="end">{{newSubProject.objectives?.length || 0}}/255</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button mat-raised-button color="primary" (click)="SaveSubProject_onclick()">
+              <mat-icon>save</mat-icon>
+              Save
+            </button>
+            <button mat-raised-button *ngIf="!bShowAddSubProject" (click)="AddSubProject_onClick()">
+              <mat-icon>add</mat-icon>
+              New
+            </button>
+            <button mat-stroked-button *ngIf="bShowAddSubProject" (click)="CancelSubProject_onclick()">
+              <mat-icon>close</mat-icon>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-tab>
+</mat-tab-group>

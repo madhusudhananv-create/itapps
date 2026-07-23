@@ -1,0 +1,676 @@
+﻿// ============================================================================
+// Overview Page - Modern Angular 19 Material Design
+// Following MASTER_UI_UPGRADE_PROMPT.md Specifications
+// ============================================================================
+
+// Design System Variables
+$primary-color: #667eea;
+$primary-dark: #764ba2;
+$primary-light: #e8eaf6;
+$success-color: #28a745;
+$info-color: #17a2b8;
+$text-primary: #2b2a2a;
+$text-secondary: #535d85;
+$text-muted: #6c757d;
+$background-light: #f8f9fa;
+$background-white: #ffffff;
+$border-color: #e0e0e0;
+
+// Spacing
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 8px;
+$spacing-xl: 11px;
+$spacing-xxl: 48px;
+
+// Shadows
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.12);
+$shadow-hover-md: 0 6px 12px rgba(0, 0, 0, 0.15);
+
+// Border Radius
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+
+// Transitions
+$transition-fast: 150ms ease-in-out;
+$transition-medium: 250ms ease-in-out;
+$transition-slow: 400ms ease-in-out;
+
+// Typography
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ============================================================================
+// Main Container
+// ============================================================================
+
+.overview-container {
+  //max-width: 1400px;
+  margin: 0 auto;
+  padding: $spacing-xl;
+  background: $background-light;
+  //min-height: calc(100vh - 100px);
+  animation: fadeIn 400ms ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================================================
+// Header Section
+// ============================================================================
+
+.overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(9deg, #132658 0%, #774ba3 100%);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  color: white;
+  animation: slideDown 400ms ease-out;
+  min-height: 65px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+}
+
+.back-button {
+  color: white !important;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateX(-4px);
+  }
+}
+
+.client-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: white;
+  border-radius: $radius-md;
+  padding: $spacing-sm;
+  box-shadow: $shadow-md;
+}
+
+.client-logo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.header-title {
+  h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    margin: $spacing-xs 0 0 0;
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+}
+
+.header-right {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+}
+
+.edit-button {
+  background: white !important;
+  color: $primary-color !important;
+  font-weight: 600 !important;
+  box-shadow: $shadow-sm !important;
+  transition: all $transition-fast !important;
+
+  &:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: $shadow-hover-md !important;
+  }
+}
+
+.edit-actions {
+  display: flex;
+  gap: $spacing-sm;
+
+  .save-button {
+    background: white !important;
+    color: $success-color !important;
+    font-weight: 600 !important;
+    box-shadow: $shadow-sm !important;
+
+    &:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: $shadow-hover-md !important;
+    }
+  }
+
+  .cancel-button {
+    background: white !important;
+    color: $text-secondary !important;
+    font-weight: 500 !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.9) !important;
+    }
+  }
+}
+
+// ============================================================================
+// Content Section
+// ============================================================================
+
+.overview-content {
+  animation: fadeInUp 500ms ease-out;
+  animation-delay: 200ms;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-xl;
+}
+
+// ============================================================================
+// Info Cards
+// ============================================================================
+
+.info-card {
+  background: $background-white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+  transition: all $transition-medium;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, $primary-color 0%, $primary-dark 100%);
+  }
+
+  &:hover {
+    box-shadow: $shadow-hover-md;
+    transform: translateY(-4px);
+  }
+}
+
+.client-card {
+  &::before {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  }
+}
+
+.partnership-card {
+  &::before {
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+  }
+}
+
+.card-header {
+  padding: $spacing-lg;
+  border-bottom: 1px solid $border-color;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(102, 126, 234, 0.02) 0%, transparent 100%);
+}
+
+.card-title-section {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.card-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  
+  &.client-icon {
+    color: $primary-color;
+  }
+
+  &.partnership-icon {
+    color: #f5576c;
+  }
+}
+
+.card-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1.2;
+}
+
+.card-badge {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-xl;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.client-badge {
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+  }
+
+  &.partnership-badge {
+    background: rgba(#f5576c, 0.1);
+    color: #f5576c;
+  }
+}
+
+.card-content {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $background-light;
+    border-radius: $radius-sm;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-color;
+    border-radius: $radius-sm;
+
+    &:hover {
+      background: darken($border-color, 10%);
+    }
+  }
+}
+
+.description-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: $text-secondary;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.card-footer {
+  padding: $spacing-md $spacing-lg;
+  border-top: 1px solid $border-color;
+  background: $background-light;
+}
+
+.footer-label {
+  font-size: 13px;
+  color: $text-muted;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  &::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: $primary-color;
+  }
+}
+
+// ============================================================================
+// Edit Mode Styles
+// ============================================================================
+
+.edit-mode {
+  .info-card {
+    border: 2px solid $primary-light;
+  }
+
+  .edit-card {
+    &:hover {
+      border-color: $primary-color;
+    }
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.edit-textarea {
+  font-size: 15px;
+  line-height: 1.7;
+  font-family: inherit;
+  resize: vertical;
+}
+
+// Material Form Field Customization
+::ng-deep {
+  .mat-mdc-form-field {
+    width: 100%;
+
+    .mat-mdc-text-field-wrapper {
+      background: $background-white;
+    }
+
+    .mdc-text-field--outlined {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: $border-color !important;
+      }
+
+      &:hover {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: $primary-color !important;
+        }
+      }
+
+      &.mdc-text-field--focused {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: $primary-color !important;
+          border-width: 2px !important;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Responsive Design
+// ============================================================================
+
+// Tablet
+@media (max-width: 1199px) and (min-width: 768px) {
+  .cards-container {
+    gap: $spacing-lg;
+  }
+
+  .info-card {
+    min-height: 350px;
+  }
+}
+
+// Mobile
+@media (max-width: 767px) {
+  .overview-container {
+    padding: $spacing-md;
+  }
+
+  .overview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-md;
+    padding: $spacing-md;
+
+    .header-left {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .header-right {
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    .header-title h1 {
+      font-size: 22px;
+    }
+  }
+
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+
+  .info-card {
+    min-height: 300px;
+  }
+
+  .card-title {
+    font-size: 18px;
+  }
+
+  .edit-actions {
+    flex-direction: column;
+    width: 100%;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// ============================================================================
+// Accessibility
+// ============================================================================
+
+// Focus styles for keyboard navigation
+button,
+a {
+  &:focus-visible {
+    outline: 2px solid $primary-color;
+    outline-offset: 2px;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .info-card {
+    border: 2px solid $text-primary;
+  }
+
+  .card-badge {
+    border: 1px solid currentColor;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Print styles
+@media print {
+  .overview-header {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid black;
+  }
+
+  .header-right,
+  .back-button {
+    display: none !important;
+  }
+
+  .info-card {
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid black;
+  }
+}
+
+// ========================================
+// Toast/Snackbar Styling
+// ========================================
+
+::ng-deep {
+  // Success toast
+  .toast-success {
+    .mdc-snackbar__surface {
+      background-color: $success-color !important;
+      color: white !important;
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: white !important;
+      font-weight: $font-weight-medium;
+    }
+
+    .mat-mdc-button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  // Error toast
+  .toast-error {
+    .mdc-snackbar__surface {
+      background-color: #dc3545 !important;
+      color: white !important;
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: white !important;
+      font-weight: $font-weight-medium;
+    }
+
+    .mat-mdc-button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  // Warning toast
+  .toast-warning {
+    .mdc-snackbar__surface {
+      background-color: #ffc107 !important;
+      color: #2b2a2a !important;
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: #2b2a2a !important;
+      font-weight: $font-weight-medium;
+    }
+
+    .mat-mdc-button {
+      color: #2b2a2a !important;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+    }
+  }
+
+  // Info toast
+  .toast-info {
+    .mdc-snackbar__surface {
+      background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%) !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .mat-mdc-snack-bar-label {
+      color: white !important;
+      font-weight: $font-weight-medium;
+    }
+
+    .mat-mdc-button {
+      color: white !important;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    }
+  }
+
+  // Common toast styling
+  .mat-mdc-snack-bar-container {
+    .mdc-snackbar__surface {
+      border-radius: $radius-md;
+      min-width: 300px;
+      max-width: 500px;
+      box-shadow: $shadow-lg;
+    }
+
+    .mat-mdc-snack-bar-label {
+      font-family: $font-family;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .mat-mdc-button {
+      font-weight: $font-weight-semibold;
+      border-radius: $radius-sm;
+      transition: all $transition-fast;
+    }
+  }
+}

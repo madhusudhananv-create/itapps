@@ -1,0 +1,1393 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props" Condition="Exists('..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A7FA6C9A-CBB3-4371-B558-1B9352BFABAB}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GAVS.AllocationSystem.WebApi</RootNamespace>
+    <AssemblyName>GAVS.AllocationSystem.WebApi</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <Use64BitIISExpress />
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AttributeRouting, Version=3.5.6.0, Culture=neutral, PublicKeyToken=c10f85d521a011a9, processorArchitecture=MSIL">
+      <HintPath>..\packages\AttributeRouting.Core.3.5.6\lib\net40\AttributeRouting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AttributeRouting.Web, Version=3.5.6.0, Culture=neutral, PublicKeyToken=c10f85d521a011a9, processorArchitecture=MSIL">
+      <HintPath>..\packages\AttributeRouting.Core.Web.3.5.6\lib\net40\AttributeRouting.Web.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AttributeRouting.Web.Mvc, Version=3.5.6.0, Culture=neutral, PublicKeyToken=c10f85d521a011a9, processorArchitecture=MSIL">
+      <HintPath>..\packages\AttributeRouting.3.5.6\lib\net40\AttributeRouting.Web.Mvc.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.5.0, Culture=neutral, PublicKeyToken=0e99375e54769942, processorArchitecture=MSIL">
+      <HintPath>..\packages\Portable.BouncyCastle.1.8.5\lib\net40\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
+    <Reference Include="Common.Logging, Version=3.4.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.3.4.1\lib\net40\Common.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="Common.Logging.Core, Version=3.4.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.Core.3.4.1\lib\net40\Common.Logging.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml, Version=2.8.1.0, Culture=neutral, PublicKeyToken=8fb06cb64d019a17, processorArchitecture=MSIL">
+      <HintPath>..\packages\DocumentFormat.OpenXml.2.8.1\lib\net40\DocumentFormat.OpenXml.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="itext.barcodes, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.barcodes.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.forms, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.forms.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.html2pdf, Version=2.1.7.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.html2pdf.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.io, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.io.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.kernel, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.kernel.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.layout, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.layout.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.pdfa, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.pdfa.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.sign, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.sign.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.styledxmlparser, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.styledxmlparser.dll</HintPath>
+    </Reference>
+    <Reference Include="itext.svg, Version=7.1.10.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DLL\itext.svg.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.Agent.Intercept, Version=2.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.Agent.Intercept.2.4.0\lib\net45\Microsoft.AI.Agent.Intercept.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AI.DependencyCollector, Version=2.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.4.1\lib\net45\Microsoft.AI.DependencyCollector.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AI.PerfCounterCollector, Version=2.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.4.1\lib\net45\Microsoft.AI.PerfCounterCollector.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AI.ServerTelemetryChannel, Version=2.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.4.0\lib\net45\Microsoft.AI.ServerTelemetryChannel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AI.Web, Version=2.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.Web.2.4.1\lib\net45\Microsoft.AI.Web.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AI.WindowsServer, Version=2.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.WindowsServer.2.4.1\lib\net45\Microsoft.AI.WindowsServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.ApplicationInsights, Version=2.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ApplicationInsights.2.4.0\lib\net45\Microsoft.ApplicationInsights.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.TelemetryCorrelation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.TelemetryCorrelation.1.0.0\lib\net45\Microsoft.AspNet.TelemetryCorrelation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=1.0.8.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.IdentityModel.Logging, Version=5.2.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Logging.5.2.1\lib\net451\Microsoft.IdentityModel.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.IdentityModel.Tokens, Version=5.2.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Tokens.5.2.1\lib\net451\Microsoft.IdentityModel.Tokens.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Ninject, Version=3.3.4.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ninject.3.3.4\lib\net45\Ninject.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RestSharp, Version=106.0.0.0, Culture=neutral, PublicKeyToken=598062e77f915f75, processorArchitecture=MSIL">
+      <HintPath>..\packages\RestSharp.106.10.1\lib\net452\RestSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Swashbuckle.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cd1bb07a5ac7c7bc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Swashbuckle.Core.5.6.0\lib\net40\Swashbuckle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.2.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Diagnostics.DiagnosticSource.4.4.1\lib\net45\System.Diagnostics.DiagnosticSource.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.DirectoryServices">
+      <HintPath>..\packages\System.DirectoryServices.4.0.0\lib\System.DirectoryServices.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.DirectoryServices.AccountManagement" />
+    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=5.2.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IdentityModel.Tokens.Jwt.5.2.1\lib\net451\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.7\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Web.Cors, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Cors.5.2.7\lib\net45\System.Web.Cors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Http, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.7\lib\net45\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.Cors, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Cors.5.2.7\lib\net45\System.Web.Http.Cors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WebActivator, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebActivator.1.0.0.0\lib\WebActivator.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="WebActivatorEx, Version=2.0.0.0, Culture=neutral, PublicKeyToken=7b26dc2a43f6a0d4, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebActivatorEx.2.0\lib\net40\WebActivatorEx.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Web.Razor">
+      <HintPath>..\packages\Microsoft.AspNet.Razor.3.2.3\lib\net45\System.Web.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Webpages">
+      <HintPath>..\packages\Microsoft.AspNet.Webpages.3.2.3\lib\net45\System.Web.Webpages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Webpages.Deployment">
+      <HintPath>..\packages\Microsoft.AspNet.Webpages.3.2.3\lib\net45\System.Web.Webpages.Deployment.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Webpages.Razor">
+      <HintPath>..\packages\Microsoft.AspNet.Webpages.3.2.3\lib\net45\System.Web.Webpages.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Helpers">
+      <HintPath>..\packages\Microsoft.AspNet.Webpages.3.2.3\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.Infrastructure">
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Mvc">
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.3\lib\net45\System.Web.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.3\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\csp_get_ProjectResourceByProjId.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getActionItemsForProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getActionItemsViewDetails.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAllAccounts.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAllIdeas.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAllIdeasByCustomer.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAllIdeasreport.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAllMappedProcessByProcessModel.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAllMappedProcessByServiceArea.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAllMasterKPIs.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAuditorDetailsByCertifiedStandards.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getAuditQualityStandards.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getCAPAStageID.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getContractStatusForProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getCSSTableForPeriod1.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getEngagementLevelKPI.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\GetKPIWiseDataForPeriod.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\GetKPIWiseDetailDataForPeriod.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getListofPlannedAudits.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getOpenFindingsForEachAudit.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getOverallKPIList.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getOverallTaskDetails.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProcessModelReferences.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProductMappedCSATProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProductsbyPorfolio.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProductWiseKPICount.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProjectCertificationScopes.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProjectMembersByProject.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProjectWiseCAPACount.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getSimilarIdeas.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getTaskDetailsByDateRange.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getTasksEventsDetails.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getTasksEventsSummary.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getTrendDataForEngagementLevelKPI.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\get_RiskDetailsByCustomerId.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_CSAT_Combined.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getCRISPScores.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getCSSInitatedDetails.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getKPIComplainaceStatus.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getListofEventsandTasks.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getMaturityLevelForProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getMonthlyProcessHealthbyAudits.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getServiceTowersMappedForProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getCSSTableForProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getCustomerUsersList.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getEmployeeListfromCustomer.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getIssuesForProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getKPIDataAcrossProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getKPIDetails.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getMonthActionItems.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getMonthlyIssuesData.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getMonthlyRisksData.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getOverallProductWiseKPIData.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getOverallRisksForRiskDashboard.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getOverAllRisksReport.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getPortfolioProductResponsibleList.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getPremierKPIRemainderMailReport.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProductResponsibleList.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getProductWiseCAPACount.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\getRisksForProjects.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_CSATDUMP_Monthly.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getAllAssessmentFindings.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\reports_getQualitySpocs.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\usp_get_AllKPIBy_Mode.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\usp_get_ExternalKPIstoProcess.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\usp_get_KPIReference_ByCustomer.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\usp_get_projectIds.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\usp_insert_ExternalKPIData.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\BAS\usp_update_ExistingBaseMeasureKPIdataMap.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getProductWiseKPICount.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\usp_get_servicelevel_Metrics.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getEngagementLevelKPI.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getAllFindingsForCustomer.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getAllFindingsByTypeforCustomer.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getAllFindingsForCustomer_V1.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getEngagementLevelKPI.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\GetKPIWiseDetailDataForPeriod.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getMonthlyFindingsByTime.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getTaskDetailsByDateRange.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\getTrendDataForEngagementLevelKPI.sql" />
+    <Content Include="DB Scripts\01 StoredProcedure\CSP\Premier Dashboard sps.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.2.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.1.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.3.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.4.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.5.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.6.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.7.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.8.1.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.8.2.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.8.3.sql" />
+    <Content Include="DB Scripts\2025\Release 2.4\Release 2.4.8.4.sql" />
+    <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.1.sql" />
+    <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.2.sql" />
+    <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.3.sql" />
+    <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.4.sql" />
+    <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.5.sql" />
+    <Content Include="DB Scripts\2025\Release 2.5\Release 2.5.6.sql" />
+    <Content Include="DB Scripts\2026\Release 2.6\Release 2.6.1.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\BAS_CustID_procs_updates.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\BAS_EMPID_procs_updates.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\CSP_CustID_procs_updates.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\CSP_EMPID_procs_updates.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\DBMissingScripts_CSP.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\executed_inDB_BAS_CUST.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\executed_inDB_BAS_EMP.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\executed_inDB_CSP_CUST.sql" />
+    <Content Include="DB Scripts\GSLabIntegration\executed_inDB_CSP_EMP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.11_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.12_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.12_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.13_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.16_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.16_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.15_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.14_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.15_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.16_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.17_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.18_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.19_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.20A_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.20B_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.20C_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.20E_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.20D_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.20_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.20_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.21_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.22_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.8_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.7_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.6_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.6_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.7_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.8_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.9_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.0\Release 2.1.10_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.10_CSP .sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.11_Premier_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.12A_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.12_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.13_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.13_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.1_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.2_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.2_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.3_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.3_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.4A_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.4_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.4_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.5_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.6_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.6_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.7A_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.7_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.8A_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.8A_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.8B_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.8_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.8_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.9_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.2\Release 2.2.9_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.10_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.12_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.11_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.12_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.11_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.15_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.16_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.18_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.17_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.18_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.17_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.16_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.15_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.14_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.13_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.1_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.1_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.20.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.21.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.23.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.24.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.25.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.26.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.27.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.28.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.29.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.2_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.30.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.31.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.32.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.34.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.35.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.36.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.37.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.38.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.39.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.40.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.41.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.42.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.43.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.4_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.5_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.4_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.5_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.7_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.8_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.9_BAS.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.10_CSP.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.9_CSP.sql" />
+    <Content Include="DBContext\RasModel.Context.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>RasModel.edmx</DependentUpon>
+      <LastGenOutput>RasModel.Context.cs</LastGenOutput>
+    </Content>
+    <Content Include="DBContext\RasModel.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>RasModel.edmx</DependentUpon>
+      <LastGenOutput>RasModel.cs</LastGenOutput>
+    </Content>
+    <Content Include="Global.asax" />
+    <Content Include="Scripts\angular-mocks.js" />
+    <Content Include="Scripts\angular.js" />
+    <Content Include="Scripts\angular.min.js" />
+    <Content Include="UploadFile\Images\Instagram.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\LinkedIn.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\neurealm.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\twitter.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Images\Youtube.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UploadFile\Mails\ActionItemCustomerUpdate.htm" />
+    <Content Include="UploadFile\Mails\ActionItemRejectionUpdate.htm" />
+    <Content Include="UploadFile\Mails\ActionItemUpdateToCSM.htm" />
+    <Content Include="UploadFile\Mails\AddActionItem.htm" />
+    <Content Include="UploadFile\Mails\AddAuditTaskForCSAT.htm" />
+    <Content Include="UploadFile\Mails\AddInnovation.htm" />
+    <Content Include="UploadFile\Mails\AddNewActionItem.htm" />
+    <Content Include="UploadFile\Mails\AddNewIssue.htm" />
+    <Content Include="UploadFile\Mails\AuditScoreNotSubmitted.htm" />
+    <Content Include="UploadFile\Mails\AuditNotCompleted.htm" />
+    <Content Include="UploadFile\Mails\AddNewTask.htm" />
+    <Content Include="UploadFile\Mails\AssessmentRevertApproveReject.htm" />
+    <Content Include="UploadFile\Mails\AssessmentRevertRequest.htm" />
+    <Content Include="UploadFile\Mails\CapaSendMailForKPI_NonPremier.htm" />
+    <Content Include="UploadFile\Mails\CapaSendMailForKPI_Customer.htm" />
+    <Content Include="UploadFile\Mails\CSSReadiness.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveyQualitativeFeedback.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMailAnnual.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySuccessMail.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedback.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyFeedbackAnnual.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminder.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyReminderAnnual.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestAnnual.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestHalfYearly.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequest.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveyVerification.htm" />
+    <Content Include="UploadFile\Mails\InternalAuditReportTemplate.htm" />
+    <Content Include="UploadFile\Mails\CustomerDetailsSendAddUpdateNotification.htm" />
+    <Content Include="UploadFile\Mails\CustomerDetailsSendDeleteNotification.htm" />
+    <Content Include="UploadFile\Mails\MappingUpdateNotification.htm" />
+    <Content Include="UploadFile\Mails\DataUpdateNotification.htm" />
+    <Content Include="UploadFile\Mails\ProductResponsible.htm" />
+    <Content Include="UploadFile\Mails\ProjectClosureNotification.htm" />
+    <Content Include="UploadFile\Mails\ProjectMailToPexTeam.htm" />
+    <Content Include="UploadFile\Mails\ReleaseAssessmentEmail.htm" />
+    <Content Include="UploadFile\Mails\AddNewActionItemList.htm" />
+    <Content Include="UploadFile\Mails\AddNewActionItemListAnnual.htm" />
+    <Content Include="UploadFile\Mails\SendCSSGroupVerificationApprovalMail.htm" />
+    <Content Include="UploadFile\Mails\SendCSSVerificationApprovalMail.htm" />
+    <Content Include="UploadFile\Mails\SendMailForConfigEXT.htm" />
+    <Content Include="UploadFile\Mails\SendMailForQspocChange.htm" />
+    <Content Include="UploadFile\Mails\SendMailForRiskRepo.htm" />
+    <Content Include="UploadFile\Mails\ResourceAccessRequest.htm" />
+    <Content Include="UploadFile\Mails\AccessRequestStatus.htm" />
+    <Content Include="UploadFile\Mails\SLARejectionAcceptRejectByProductManagers.htm" />
+    <Content Include="UploadFile\Mails\SLARejectionByCustomer.htm" />
+    <Content Include="UploadFile\Mails\SubmittedSlaMetrics.htm" />
+    <Content Include="UploadFile\Mails\CapaSendMailForKPI_Premier.htm" />
+    <Content Include="UploadFile\Mails\ChecklistAuditSendEmail.htm" />
+    <Content Include="UploadFile\Mails\ChecklistAuditAppraiserSendEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditSubmissionEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditReviewEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditImplementationEmail.htm" />
+    <Content Include="UploadFile\Mails\CAPAAuditVerificationEmail.htm" />
+    <Content Include="UploadFile\Mails\CheckListAuditSendMailForAssessmentCompleted.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveySurveyRequestMonthly.htm" />
+    <Content Include="UploadFile\Mails\CustomerSuccessSurveyRequestIGN.htm" />
+    <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
+    <Content Include="UploadFile\Mails\ProjectDataRejected.htm" />
+    <Content Include="UploadFile\Mails\PCSATAcknowledgementTemplate.htm" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ActionFilters\ActivityLogger.cs" />
+    <Compile Include="ActionFilters\BearerTokenAuthorization.cs" />
+    <Compile Include="ActionFilters\ExceptionFilter.cs" />
+    <Compile Include="ActionFilters\ResponseTimeActionFilter.cs" />
+    <Compile Include="App_Start\AttributeRoutingConfig.cs" />
+    <Compile Include="App_Start\EmailProvider.cs" />
+    <Compile Include="App_Start\GlobalConfig.cs" />
+    <Compile Include="App_Start\IocConfig.cs" />
+    <Compile Include="App_Start\Logger.cs" />
+    <Compile Include="App_Start\NinjectDependencyResolver.cs" />
+    <Compile Include="App_Start\NinjectDependencyScope.cs" />
+    <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\AccessManagementController.cs" />
+    <Compile Include="Controllers\ActionItemController.cs" />
+    <Compile Include="Controllers\AuthControllerCSS.cs" />
+    <Compile Include="Controllers\ChecklistMergeController.cs" />
+    <Compile Include="Controllers\ConfigurationExtController.cs" />
+    <Compile Include="Controllers\AuditQualityStandardController.cs" />
+    <Compile Include="Controllers\COODashboardController.cs" />
+    <Compile Include="Controllers\AllSysController.cs" />
+    <Compile Include="Controllers\ApiControllerBase.cs" />
+    <Compile Include="Controllers\AppreciationController.cs" />
+    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Controllers\AssessmentFindingsController.cs" />
+    <Compile Include="Controllers\BenchmarkKPIData.cs" />
+    <Compile Include="Controllers\BVD Entry.cs" />
+    <Compile Include="Controllers\BVDDashboard.cs" />
+    <Compile Include="Controllers\CAPAController.cs" />
+    <Compile Include="Controllers\ChecklistAssessmentNew.cs" />
+    <Compile Include="Controllers\CITrackerController.cs" />
+    <Compile Include="Controllers\ControllerHelper.cs" />
+    <Compile Include="Controllers\CrispDashboardController.cs" />
+    <Compile Include="Controllers\CrispScoreController.cs" />
+    <Compile Include="Controllers\CSATInsightsController.cs" />
+    <Compile Include="Controllers\CSSCalls.cs" />
+    <Compile Include="Controllers\DashboardCalls.cs" />
+    <Compile Include="Controllers\EmployeesController.cs" />
+    <Compile Include="Controllers\EnterpriseDashboardController.cs" />
+    <Compile Include="Controllers\ERMDashboardController.cs" />
+    <Compile Include="Controllers\FileManagerController.cs" />
+    <Compile Include="Controllers\FlowController.cs" />
+    <Compile Include="Controllers\FMEAController.cs" />
+    <Compile Include="Controllers\FMEAControllerRevised.cs" />
+    <Compile Include="Controllers\InsightsController.cs" />
+    <Compile Include="Controllers\IssueController.cs" />
+    <Compile Include="Controllers\KPIConfigurationController.cs" />
+    <Compile Include="Controllers\LayoutController.cs" />
+    <Compile Include="Controllers\LMSController.cs" />
+    <Compile Include="Controllers\MandatoryTrainingReportController.cs" />
+    <Compile Include="Controllers\OpenXMLcls.cs" />
+    <Compile Include="Controllers\AutoAuditController.cs" />
+    <Compile Include="Controllers\PCSATController.cs" />
+    <Compile Include="Controllers\ProcessKPIController.cs" />
+    <Compile Include="Controllers\ProductCRUDcontroller.cs" />
+    <Compile Include="Controllers\ProductKPI.cs" />
+    <Compile Include="Controllers\ProductResponsibleController.cs" />
+    <Compile Include="Controllers\ProjectConfigurationController.cs" />
+    <Compile Include="Controllers\ProjectMigrationController.cs" />
+    <Compile Include="Controllers\PSACalls.cs" />
+    <Compile Include="Controllers\RequirementReferenceController.cs" />
+    <Compile Include="Controllers\ReusableComponentCalls.cs" />
+    <Compile Include="Controllers\RiskRepositoryController.cs" />
+    <Compile Include="Controllers\SLARejectionController.cs" />
+    <Compile Include="Controllers\SQAManagementController.cs" />
+    <Compile Include="Controllers\SupportDataRequestController.cs" />
+    <Compile Include="Controllers\TaskControllerHelper.cs" />
+    <Compile Include="Controllers\TimesheetController.cs" />
+    <Compile Include="Controllers\ViewCSATController.cs" />
+    <Compile Include="Controllers\_constants.cs" />
+    <Compile Include="Controllers\_overrides.cs" />
+    <Compile Include="DBContext\ACTIVITY_LOGS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\ACTIVITY_LOGS_old.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\BILLING_CYCLE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\BU_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CNTRY_HOLIDAY.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CNTRY_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CNTRY_WEEKEND.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\COMPLIANCE_TRAINING_ASSESSMENT_HEADER.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\COMPLIANCE_TRAINING_ASSESSMENT_RESULT.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\COMPLIANCE_TRAINING_ASSESSMENT_RESULT_old.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CONFIGURATION.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CONFIGURATION_EXT.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CRNCY_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CSM_TITLES.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\csp_get_ProjectResourceByEmpid_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\csp_get_ProjectResourceByProjId_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\csp_get_ProjectResource_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\csp_get_ResourceDetailsByManager_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CURRENCY_RATE_CONVERSION.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CUSTOMER.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\CUST_ADDR.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\DATE_DIM.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\DEPT_BU_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\DEPT_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\ELMAH_Error.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\EMAIL_TEMPLATE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\EMP_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\EMP_NEWS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\EMP_PASSPORT.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\EMP_PROJ_ROLE_MAP.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\EMP_SKILLSET_MATRIX.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\EXCHANGE_RATE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\fn_GetPivot_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\fn_MVParam_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\fn_SplitString_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\getauditordetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\get_CSMList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\get_EmployeeById_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\get_Premier_Portfolios_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\get_report_TimeSheetSummary_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\LKP_RIMBS_PRE_DEFINED_AMT.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\MASTER_LOOKUP.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\MASTER_TYPE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PASSPORT_COUNTRY.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJECT.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJECT_COURSE_MAPPING.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJECT_EXPENSE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJECT_MILESTONE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJECT_NEW.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJECT_PREFERENCE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_DEFECT.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_ITERATION.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_RELEASE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_SUBPROJECT.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_TASK.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_TASK_STATE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_TEAM.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_USERSTORY.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJMGT_USERSTORY_STATE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_RESOURCE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_RESOURCE_ROLE_MAP_BILLING.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_RESRC_TIME_ENTRY.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_REV.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_REV_APPRL_WF.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_ROLE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_ROLE_BILLING_ALLOCATION.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_ROLE_LOC.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_ROLE_MAP_BILLING.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_SUB_ROLE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_TASK.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\PROJ_TIMESHEET.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RasModel.Context.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RasModel.Context.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RasModel.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RasModel.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RasModel.edmx</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\REPORTS_PARAMS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\REPORTS_SP_DETAILS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RESRC_REV.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RESRC_RIMBS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RESRC_RIMBS_OTHERS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RESRC_RQST.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RESRC_RQST_SKILLSET.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RESRC_RQST_WF.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RIMBS_FILES.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RIMBS_TYPE.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\ROLE_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\RR_WF_STAGE_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\SKILLSET_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\SOW_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\spGetAllSps_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\spGetSpsParams_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\SP_DETAILS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\tblParametersForAllSP.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\TIMESHEET_SETTINGS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\TOKEN.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\USER_INFO.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\USER_RIGHTS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_DownloadMultipleExcelFile_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_DownloadRevenueFile_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\USP_GETCNTRYHOLIDAYS_HWM_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_airfare_perdiem_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_all_allocation_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_all_Resource_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_employee_list_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_project_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_roles_in_project_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_Staff_Assigned_ProjectDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_Staff_Assigned_Projects_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_Staff_Project_Details_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_Staff_Project_Summary_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BAS_Staff_Summary_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BenchReport_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BillingCycle_by_Project_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_businees_unit_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_business_unit_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_BU_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_cntry_info_HWM_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_cntry_weekend_HWM_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_configuration_list_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_country_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_CurrencyCode_roleMappingSetup_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_CurrencyList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_CustomerAddress_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_CustomerLocation_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_CustomerProjectDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_customerprojectids_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_customer_based_project_list_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_customer_list_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_customer_timesheet_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_dashboard_billingadvice_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_dashboard_forecast_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_date_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DepartmentList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_Allocation_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_BUInfo_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_ClientAddrDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_ClientDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_CountryInfo_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_CurrencyInfo_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_DeptInfo_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_EmployeeDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_EmpSkillset_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_ProjectDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_ProjectResource_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_RoleMap_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_Role_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_SkillMaster_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DT_SubRole_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_DummyProjectList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_Get_Email_List_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_email_template_list_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_employeeid_list_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_EmployeeLevel_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_EmployeeRole_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_employees_in_project_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_employee_list_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_EmpPrjHistoryReport_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ExitReport_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_FinancialYear_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_loginuser_info_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_masterlist_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_MytimesheetDatewise_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_PassportCountry_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_PassportVisaDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project2_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ProjectDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_Get_Projection_Monthly_Report_FixedBid_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_Get_Projection_Monthly_Report_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ProjectListRRF_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ProjectResourceType_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ProjectRoleList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ProjectSubRoleList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ProjectTask_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_additionalcostitems_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_additionalcost_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_cspcustomer_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_Project_List_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_PROJECT_MILESTONE_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_resources_additionalcost_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_resource_actual_travel_revenue_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_resource_travel_revenue_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_role_billing_rates_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_role_mapping_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_role_mapping_setup_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_role_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_travel_revenue_others_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_project_withBillingProj_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_Proj_Tasks_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_RejectedResourceDtl_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ReleasedResourceDetails_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ResourceHistory_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_ResourceReleaseDtl_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_RightsStatus_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_rolelocation_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_roles_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_rsrc_forecast_actual_revenue_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_Sentmail_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_SkillsetList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_SkillSetPending_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_Skillset_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_SOW_by_Project_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_subroles_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_TimesheetDate_Monthly_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_TimesheetDate_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_Timesheet_Details_Monthly_Emp_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_token_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_travel_revenue_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_UserInfo_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_UserRights_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_user_mapped_customer_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_get_WFMPendingList_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\usp_report_ForecastSubmissionStatus_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\utvf_SPlit_Result.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\VISA_DETAILS.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\WFM_LWD.cs">
+      <DependentUpon>RasModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DBContext\_overrides.cs" />
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Model1.cs" />
+    <Compile Include="Models\Employee.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Shared\DataTableHelper.cs" />
+    <Compile Include="Shared\OpenXML.Excel.cs" />
+    <Compile Include="TASK_RECURRENCE.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\web.config" />
+    <Content Include="packages.config" />
+    <Content Include="ApplicationInsights.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\angular.min.js.map" />
+    <Content Include="ClassDiagram1.cd" />
+    <EntityDeploy Include="DBContext\RasModel.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>RasModel.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+    <Content Include="DBContext\RasModel.edmx.diagram">
+      <DependentUpon>RasModel.edmx</DependentUpon>
+    </Content>
+    <Content Include="ClassDiagram2.cd" />
+    <Content Include="DB Scripts\GSLabIntegration\DBChanges deployment_steps.docx" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.22.sql" />
+    <Content Include="DB Scripts\Release 2.3\Release 2.3.33.sql" />
+    <None Include="Properties\PublishProfiles\Prod Deployment.pubxml" />
+    <None Include="Properties\PublishProfiles\Test Deployment.pubxml" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\" />
+    <Folder Include="Views\ConfigurationExt\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GAVS.AllocationSystem.Data.Contracts\GAVS.AllocationSystem.Data.Contracts.csproj">
+      <Project>{2368563d-34ec-42a4-8e1e-c6a44417a963}</Project>
+      <Name>GAVS.AllocationSystem.Data.Contracts</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GAVS.AllocationSystem.Data\GAVS.AllocationSystem.Data.csproj">
+      <Project>{feeafbae-64ad-4f38-a494-2b7e4ea8d05e}</Project>
+      <Name>GAVS.AllocationSystem.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GAVS.AllocationSystem.Model\GAVS.AllocationSystem.Model.csproj">
+      <Project>{6a613ce9-0313-4276-9c88-924f015749a9}</Project>
+      <Name>GAVS.AllocationSystem.Model</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>65383</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:53505/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Net.Compilers.2.4.0\build\Microsoft.Net.Compilers.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\build\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,646 @@
+<div class="page-container" *ngIf="readonlymode">
+  <!-- Unified Header Row with Logo -->
+  <div class="unified-header">
+    <!-- Logo Placeholder -->
+   
+    <!-- Back Button -->
+    <button *ngIf="!isPopOpened" class="btn-back" [routerLink]="['/newdashboard/cust', selectedCust, false]"
+      matTooltip="Back to Dashboard">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <button *ngIf="isPopOpened" class="btn-back" (click)="closeDialog()" matTooltip="Back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+     <div class="logo-placeholder">
+      <img src="assets/images/CustomerLogo.png" alt="Logo">
+    </div>
+
+
+    <!-- Project Selector -->
+    <app-portfolio-project-selector [custId]="selectedCust" [portinput]="_shared.selectedPortfolios"
+      [projinput]="_shared.selectedProjects" [allproj]="false" (projectsSelected)="projectSelected($event)">
+    </app-portfolio-project-selector>
+
+    <!-- Status Filters -->
+    <div class="status-group">
+      <label class="filter-label">Status:</label>
+      <mat-checkbox class="status-checkbox" [(ngModel)]="AllChecked"
+        (ngModelChange)="showFilteredRows()" (click)="uncheckOthers()">
+        All
+      </mat-checkbox>
+      <mat-checkbox class="status-checkbox open-past-due" color="warn" [(ngModel)]="PastDueChecked" [disabled]="AllChecked"
+        (ngModelChange)="showFilteredRows()">
+        Open - Past Due Date
+      </mat-checkbox>
+      <mat-checkbox class="status-checkbox open-due-closure" color="accent" [(ngModel)]="DueClosureChecked" [disabled]="AllChecked"
+        (ngModelChange)="showFilteredRows()">
+        Open - Due For Closure
+      </mat-checkbox>
+    </div>
+
+    <!-- Right Side: Action Buttons -->
+    <div class="header-actions">
+      <button mat-stroked-button class="action-btn" (click)="ExportTOExcel()" matTooltip="Export to Excel">
+        <mat-icon>download</mat-icon>
+      </button>
+      <button mat-stroked-button class="action-btn" id="filter" (click)="ToggleFilter_onClick()"
+        [matTooltip]="toggle + ' Filter'">
+        <mat-icon>filter_list</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" class="action-btn-primary" (click)="Edit_onClick()"
+        *ngIf="_access.IsAllowed(9, 2, '', '')" matTooltip="Add Action Item">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Card (Collapsible) -->
+  <div class="filters-card" *ngIf="bShowFilter">
+    <div class="advanced-filter-section">
+      <app-table-filter [data]="result" tableName='PROJECT_ACTIONITEM' [filterCriteria]="filterCriteria"
+        (onChange)="Filter_onChange($event)" (OnAdd)="showAll($event)"></app-table-filter>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+   
+  <div class="action-bar">
+          <h1 class="page-title">Action Items</h1>
+    <div class="action-bar-right">
+      
+      <button mat-button class="mom-button" (click)="showMoM()" *ngIf="_util.IsGAVS()" >
+        <mat-icon>description</mat-icon>
+        Minutes of Meeting
+      </button>
+    </div>
+  </div>
+  <!-- Loading and Empty States -->
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="progress-bar"></mat-progress-bar>
+
+  <div *ngIf="_access.IsAllowed(9, 1, '', '')">
+    <div *ngIf="result?.length == 0" class="empty-state">
+      <mat-icon class="empty-icon">inbox</mat-icon>
+      <h3>No Action Items Found</h3>
+      <p>No action items are defined for the projects assigned to you.</p>
+    </div>
+  </div>
+
+  <div *ngIf="_access.IsAllowed(9, 1, '', '')">
+    <div *ngIf="!result" class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading action items...</p>
+    </div>
+  </div>
+
+  <!-- Data Table Card -->
+  <div #TABLE *ngIf="_access.IsAllowed(9, 1, '', '')" class="table-card">
+    <div class="table-container mat-elevation-z2" *ngIf="result?.length > 0">
+      <table mat-table #table [dataSource]="dataSource" matSort class="modern-table">
+        <ng-container matColumnDef="index">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-index">No.</th>
+          <td mat-cell *matCellDef="let element = index; let actionItem" class="col-index">
+            <span class="index-badge">{{element + 1}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="proJ_NM">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Project</th>
+          <td mat-cell *matCellDef="let actionItem" [matTooltip]="actionItem.proJ_NM">
+            <span class="text-truncate">{{actionItem.proJ_NM}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="portfoliO_NAME">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Portfolio</th>
+          <td mat-cell *matCellDef="let actionItem" [matTooltip]="actionItem.portfoliO_NAME">
+            <span class="text-truncate">{{actionItem.portfoliO_NAME}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
+          <td mat-cell *matCellDef="let actionItem" [matTooltip]="actionItem.description" class="description-cell">
+            {{actionItem.description}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="owner">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Owner</th>
+          <td mat-cell *matCellDef="let actionItem">
+            <div class="owner-chip">
+              <span>{{actionItem.owner}}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="targeT_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Date</th>
+          <td mat-cell *matCellDef="let actionItem" class="date-cell">
+            {{actionItem.targeT_DATE | date :'dd-MMM-yyyy'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="identifieD_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Identified Date</th>
+          <td mat-cell *matCellDef="let actionItem" class="date-cell">
+            {{actionItem.identifieD_DATE | date :'dd-MMM-yyyy'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let actionItem">
+            <span class="status-badge" [ngClass]="'status-' + actionItem.status?.toLowerCase().replace(' ', '-')">
+              {{actionItem.status}}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+          <td mat-cell *matCellDef="let actionItem">
+            <span class="priority-badge" [ngClass]="'priority-' + actionItem.priority?.toLowerCase()">
+              {{actionItem.priority}}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
+          <td mat-cell *matCellDef="let actionItem">
+            <span class="source-text">{{actionItem.source}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="completioN_DATE">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Completion Date</th>
+          <td mat-cell *matCellDef="let actionItem" class="date-cell">
+            {{actionItem.planneD_ACTUAL_DATE | date :'dd-MMM-yyyy'}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="info">
+          <th mat-header-cell *matHeaderCellDef class="action-col"></th>
+          <td mat-cell *matCellDef="let element" class="action-col">
+            <a class="action-link info-btn" (click)="OpenEntityInfoPopup(element)" matTooltip="View Details"
+              style="cursor: pointer;">
+              <mat-icon>info</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="edit">
+          <th mat-header-cell *matHeaderCellDef class="action-col">
+            <div *ngIf="_access.IsAllowed(9, 3, '', '')"></div>
+          </th>
+          <td mat-cell *matCellDef="let actionItem" class="action-col">
+            <a class="action-link edit-btn" (click)="EditRow_onClick(actionItem)"
+              *ngIf="_access.IsAllowed(9, 3, '', '')" matTooltip="Edit" style="cursor: pointer;">
+              <mat-icon>edit</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="delete">
+          <th mat-header-cell *matHeaderCellDef class="action-col">
+            <div *ngIf="_access.IsAllowed(9, 4, '', '')"></div>
+          </th>
+          <td mat-cell *matCellDef="let element" class="action-col">
+            <a class="action-link delete-btn" (click)="DeleteRow_onClick(element)"
+              *ngIf="_access.IsAllowed(9, 4, '', '')" matTooltip="Delete" style="cursor: pointer;">
+              <mat-icon>delete</mat-icon>
+            </a>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+      </table>
+      <div>
+        <mat-paginator #paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="editmode" class="edit-form-container">
+  <!-- Form Header -->
+  <div class="form-header">
+    <div class="form-title-section">
+      <mat-icon class="form-icon">assignment</mat-icon>
+      <h2 class="form-title">{{ (EditActionitem.actioN_ITEM_ID || 0) > 0 ? 'Edit Action Item' : 'Add New Action Item' }}
+      </h2>
+    </div>
+    <div class="form-actions-header">
+      <button mat-raised-button class="save-btn-header" type="submit" form="actionitemForm"
+        [disabled]="isCustomerUpdated">
+        <mat-icon>save</mat-icon>
+      </button>
+      <button mat-stroked-button class="cancel-btn-header" type="button" (click)="Cancel_onClick()">
+        <mat-icon>close</mat-icon>
+      </button>
+
+    </div>
+  </div>
+
+  <form id="actionitemForm" class="modern-form" #actionitemForm="ngForm" (ngSubmit)="SubmitForm(actionitemForm.valid)">
+    <!-- Basic Information Card -->
+    <div class="form-card">
+      <div class="card-header basic-info-header">
+        <mat-icon>info</mat-icon>
+        <h3>Basic Information</h3>
+      </div>
+      <div class="card-content">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field" style="width: 50%;">
+            <mat-label>Project Name</mat-label>
+            <mat-select name="ddProjectName" [(ngModel)]="EditActionitem.proJ_ID" required
+              (ngModelChange)="getotherDetails()" [disabled]="(EditActionitem.actioN_ITEM_ID || 0) > 0">
+              <mat-option [value]="p.proJ_ID" *ngFor="let p of projNames" [title]="p.proJ_NM">
+                {{ p.proJ_NM }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>folder</mat-icon>
+          </mat-form-field>
+          <button *ngIf="canUpdateToCustomer && csatBased" mat-raised-button color="accent" type="button"
+            (click)="SendUpdateToCustomer(EditActionitem)" [disabled]="true" class="update-customer-btn">
+            <mat-icon>send</mat-icon>
+            Send Update to Customer
+          </button>
+        </div>
+
+        <div class="form-row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && EditActionitem.portfoliO_NAME != ''">
+          <mat-form-field appearance="outline" class="form-field" style="width: 50%;">
+            <mat-label>Portfolio</mat-label>
+            <textarea cdkTextareaAutosize name='txtportfolio' maxlength="2000"
+              [(ngModel)]="EditActionitem.portfoliO_NAME" matInput [disabled]="true"></textarea>
+            <mat-icon matPrefix>work</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row" *ngIf="!csatBased">
+          <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+            <mat-label>Action Plan Description</mat-label>
+            <textarea cdkTextareaAutosize name='txtDescription' maxlength="4000"
+              [(ngModel)]="EditActionitem.description" matInput (input)="validateDescription()" required></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+            <mat-hint align="end">{{EditActionitem.description?.length || 0}}/4000</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field compact-field" style="width: 70%;">
+            <mat-label>Source Category</mat-label>
+            <input name='txtSourceCategory' maxlength="100" [(ngModel)]="EditActionitem.source"
+              matInput [disabled]="EditActionitem.createD_BY == 'SYSTEM'" required>
+            <mat-icon matPrefix>category</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row" *ngIf="EditActionitem.sourcE_DESCRIPTION != null">
+          <mat-form-field appearance="outline" class="form-field compact-field" style="width: 100%;">
+            <mat-label>Source</mat-label>
+            <input name='txtSource' [disabled]="true" [(ngModel)]="EditActionitem.sourcE_DESCRIPTION"
+              matInput>
+            <mat-icon matPrefix>source</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row two-col">
+          <mat-form-field appearance="outline" class="form-field compact-field" style="width: 70%;">
+            <mat-label>Owner</mat-label>
+            <input name='txtOwner' maxlength="100" [(ngModel)]="EditActionitem.owner" matInput required>
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field" style="width: 58%;margin-left: -50px">
+            <mat-label>Priority</mat-label>
+            <mat-select name="ddPriority" [(ngModel)]="EditActionitem.priority" required>
+              <mat-option value="Critical">
+                <span class="priority-option critical">Critical</span>
+              </mat-option>
+              <mat-option value="High">
+                <span class="priority-option high">High</span>
+              </mat-option>
+              <mat-option value="Medium">
+                <span class="priority-option medium">Medium</span>
+              </mat-option>
+              <mat-option value="Low">
+                <span class="priority-option low">Low</span>
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>flag</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSAT Information Card (Conditional) -->
+    <div class="form-card" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
+      <div class="card-header csat-header">
+        <mat-icon>feedback</mat-icon>
+        <h3>CSAT Feedback Details</h3>
+      </div>
+      <div class="card-content">
+        <div class="form-row two-col">
+          <mat-form-field appearance="outline" class="form-field compact-field" style="width: 70%;">
+            <mat-label>Perspective</mat-label>
+            <input name="txtPerspective" maxlength="200" [(ngModel)]="EditActionitem.perspective" matInput
+              disabled="true">
+            <mat-icon matPrefix>visibility</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field compact-field" style="width: 28%;">
+            <mat-label>Score</mat-label>
+            <input name="txtScore" maxlength="3" [(ngModel)]="EditActionitem.score" matInput
+              disabled="true">
+            <mat-icon matPrefix>star</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+            <mat-label>Customer Remarks</mat-label>
+            <textarea name="txtCustomerRemarks" maxlength="2000" [(ngModel)]="EditActionitem.customeR_REMARKS" matInput
+              disabled="true" required></textarea>
+            <mat-icon matPrefix>comment</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Plan Details Card -->
+    <div class="form-card">
+      <div class="card-header action-plan-header">
+        <mat-icon>build</mat-icon>
+        <h3>Action Plan Details</h3>
+      </div>
+      <div class="card-content">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+            <mat-label>Root Cause</mat-label>
+            <textarea name="txtRootCause" maxlength="2000" [(ngModel)]="EditActionitem.rooT_CAUSE" matInput
+              required></textarea>
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-hint align="end">{{EditActionitem.rooT_CAUSE?.length || 0}}/2000</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
+          <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+            <mat-label>Corrective Action Plan</mat-label>
+            <textarea name='txtCorrectiveActionPlan' maxlength="2000" [(ngModel)]="EditActionitem.description" matInput
+              (input)="validateDescription()" required></textarea>
+            <mat-icon matPrefix>build_circle</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div *ngIf="showDescriptionError" class="error-message">
+          <mat-icon>error</mat-icon>
+          Invalid Description - Please enter alphanumeric or numeric values.
+        </div>
+
+        <div class="form-row" *ngIf="EditActionitem.createD_BY == 'SYSTEM' && csatBased">
+          <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+            <mat-label>Preventive Action Plan</mat-label>
+            <textarea name="txtPreventiveActionPlan" maxlength="2000"
+              [(ngModel)]="EditActionitem.preventivE_ACTION_PLAN" matInput required></textarea>
+            <mat-icon matPrefix>shield</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dates & Status Card -->
+    <div class="form-card">
+      <div class="card-header dates-status-header">
+        <mat-icon>event</mat-icon>
+        <h3>Dates & Status</h3>
+      </div>
+      <div class="card-content">
+        <div class="form-row three-col">
+          <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+            <mat-label>Identified Date</mat-label>
+            <input [max]="_util.Today()" matInput name="dtIdentifiedDate" [(ngModel)]="EditActionitem.identifieD_DATE"
+              [matDatepicker]="picker1" required>
+            <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+            <mat-datepicker #picker1></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field" style="width: 70%;margin-left: 40px;">
+            <mat-label>Status</mat-label>
+            <mat-select name="ddStatus" [(ngModel)]="EditActionitem.status"
+              [disabled]="EditActionitem.status === 'Completed'" required
+              (selectionChange)="showCheckBoxVisibility($event.value)">
+              <mat-option value="Open" disabled>Open</mat-option>
+              <mat-option value="In Progress" matTooltip="Planned Activities Commenced">In Progress</mat-option>
+              <mat-option value="Completed">Completed</mat-option>
+              <mat-option *ngIf="isQATeam" [disabled]="EditActionitem.status !== 'Completed'"
+                value="Verified">Verified</mat-option>
+              <mat-option value="Cancelled">Cancelled</mat-option>
+              <mat-option value="Suspended">Suspended</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>hourglass_empty</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- CSAT Based Dates -->
+        <div *ngIf="csatBased" class="dates-section">
+          <h4 class="section-subtitle">
+            <mat-icon>schedule</mat-icon>
+            Action Plan Submission
+          </h4>
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field" style="width: 60%;">
+              <mat-label>Target Date</mat-label>
+              <input [min]="EditActionitem.identifieD_DATE" [max]="maxTargetDate" matInput name="dtTargetDate"
+                [(ngModel)]="EditActionitem.targeT_DATE" [matDatepicker]="picker2"
+                [disabled]="(EditActionitem.actioN_ITEM_ID || 0) > 0" required>
+              <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+              <mat-datepicker #picker2></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field" style="width: 60%;margin-left: -100px;"
+              [matTooltip]="'Action plan to be submitted to Customer within 7 days from feedback date'">
+              <mat-label>Actual Date</mat-label>
+              <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="dtCompletionDate"
+                [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker3"
+                [required]="EditActionitem.status ==='In Progress'">
+              <mat-datepicker-toggle matSuffix [for]="picker3"></mat-datepicker-toggle>
+              <mat-datepicker #picker3></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <h4 class="section-subtitle">
+            <mat-icon>check_circle</mat-icon>
+            Action Plan Completion
+          </h4>
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field" style="width: 60%;">
+              <mat-label>Target Date</mat-label>
+              <input [min]="EditActionitem.identifieD_DATE" [max]="maxActualPlanTargetDate" matInput
+                name="planneD_TARGET_DATE" [(ngModel)]="EditActionitem.planneD_TARGET_DATE" [matDatepicker]="picker5">
+              <mat-datepicker-toggle matSuffix [for]="picker5"></mat-datepicker-toggle>
+              <mat-datepicker #picker5></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field" style="width: 60%;margin-left: -100px;"
+              matTooltip="Action plan to be implemented within 4 weeks from feedback date">
+              <mat-label>Actual Date</mat-label>
+              <input [min]="EditActionitem.identifieD_DATE" [max]="_util.Today()" matInput name="planneD_ACTUAL_DATE"
+                [(ngModel)]="EditActionitem.planneD_ACTUAL_DATE" [matDatepicker]="picker6"
+                [required]="EditActionitem.status ==='Completed'">
+              <mat-datepicker-toggle matSuffix [for]="picker6"></mat-datepicker-toggle>
+              <mat-datepicker #picker6></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Non-CSAT Based Dates -->
+        <div *ngIf="!csatBased" class="dates-section">
+          <h4 class="section-subtitle">
+            <mat-icon>check_circle</mat-icon>
+            Action Plan Completion
+          </h4>
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline" class="form-field" style="width: 60%;">
+              <mat-label>Target Date</mat-label>
+              <input [min]="EditActionitem.identifieD_DATE" [max]="maxTargetDate" matInput name="dtTargetDate"
+                [(ngModel)]="EditActionitem.targeT_DATE" [matDatepicker]="picker7"
+                [disabled]="(EditActionitem.actioN_ITEM_ID || 0) > 0" required>
+              <mat-datepicker-toggle matSuffix [for]="picker7"></mat-datepicker-toggle>
+              <mat-datepicker #picker7></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field" style="width: 60%;margin-left:-100px">
+              <mat-label>Actual Date</mat-label>
+              <input [min]="EditActionitem.identifieD_DATE" matInput name="dtCompletionDate"
+                [(ngModel)]="EditActionitem.completioN_DATE" [matDatepicker]="picker8">
+              <mat-datepicker-toggle matSuffix [for]="picker8"></mat-datepicker-toggle>
+              <mat-datepicker #picker8></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+            <mat-label>Comments</mat-label>
+            <textarea name="txtComments" maxlength="2000" [(ngModel)]="EditActionitem.comments" matInput
+              placeholder="Details if any dependency/approval"
+              [required]="EditActionitem.status ==='Completed'"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+            <mat-hint align="end">{{EditActionitem.comments?.length || 0}}/2000</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Declaration Card (CSAT Only) -->
+    <div class="form-card declaration-card" *ngIf="EditActionitem.status !== 'Open' && csatBased">
+      <div class="card-header declaration-header">
+        <mat-icon>verified</mat-icon>
+        <h3>Declaration</h3>
+        <mat-icon class="info-trigger" (click)="toggleInfo()" matTooltip="Click for more info">info</mat-icon>
+      </div>
+
+      <div *ngIf="showInfo" class="info-banner">
+        <mat-icon>lightbulb</mat-icon>
+        <div class="info-content">
+          <p><strong>Note:</strong> Only one option can be selected at a time</p>
+          <ul>
+            <li>Select first checkbox only if the action plan has been mutually agreed upon with the customer.</li>
+            <li>Select second checkbox only if the plan has not yet been communicated externally.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card-content">
+        <div class="error-message" *ngIf="showCommCheckboxError && EditActionitem.status !== 'Open' && csatBased">
+          <mat-icon>warning</mat-icon>
+          Please select any one declaration to proceed.
+        </div>
+        <div class="error-message" *ngIf="showSelectChecboxError && EditActionitem.status !== 'Open' && csatBased">
+          <mat-icon>warning</mat-icon>
+          You are allowed to select only one option to proceed.
+        </div>
+        <div class="error-message" *ngIf="showCommCheckboxErrorComplete && csatBased">
+          <mat-icon>warning</mat-icon>
+          Please select closure declaration and provide Actual Date of Customer Communication to proceed.
+        </div>
+
+        <!-- Declaration Option 1 -->
+        <div class="declaration-option" *ngIf="declarationVisibility.actual && csatBased">
+          <mat-checkbox color="primary" name="actuaL_PLAN_DECLARATION" id="declarationCheckbox1"
+            [(ngModel)]="actuaL_PLAN_DECLARATION" [disabled]="disableActualPlanCheckbox"
+            #actuaL_PLAN_DECLARATIONRef="ngModel" (change)="onCheckBoxChange('actuaL_PLAN_DECLARATION')">
+            The action plan has been discussed with the Customer and mutually agreed on the plan with timelines for
+            implementation.
+          </mat-checkbox>
+
+          <div class="declaration-date" *ngIf="actuaL_PLAN_DECLARATION && declarationVisibility.actual && csatBased">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Actual Date of Customer Communication</mat-label>
+              <input [max]="_util.Today()" matInput name="actuaL_CUST_DATE"
+                [(ngModel)]="EditActionitem.actuaL_CUST_DATE" [matDatepicker]="picker9"
+                [disabled]="disableActualPlanDate" [required]="actuaL_PLAN_DECLARATION">
+              <mat-datepicker-toggle matSuffix [for]="picker9"></mat-datepicker-toggle>
+              <mat-datepicker #picker9></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Declaration Option 2 -->
+        <div class="declaration-option" *ngIf="declarationVisibility.plan && csatBased">
+          <mat-checkbox color="primary" name="planneD_DECLARATION" id="declarationCheckbox2"
+            [(ngModel)]="planneD_DECLARATION" #planneD_DECLARATIONRef="ngModel"
+            (change)="onCheckBoxChange('planneD_DECLARATION')" [disabled]="disablePlannedCheckbox">
+            The action plan has been discussed internally and Communication to the Customer is planned
+          </mat-checkbox>
+
+          <div class="declaration-date" *ngIf="planneD_DECLARATION && declarationVisibility.plan && csatBased">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Planned Date of Customer Communication</mat-label>
+              <input matInput name="planneD_CUST_DATE" [(ngModel)]="EditActionitem.planneD_CUST_DATE"
+                [matDatepicker]="picker10" [disabled]="disablePlannedDate" [required]="planneD_DECLARATION">
+              <mat-datepicker-toggle matSuffix [for]="picker10"></mat-datepicker-toggle>
+              <mat-datepicker #picker10></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Declaration Option 3 -->
+        <div class="declaration-option" *ngIf="declarationVisibility.closure && csatBased">
+          <mat-checkbox color="primary" name="closurE_ACKNOWLEDGE" id="declarationCheckbox3"
+            [(ngModel)]="closurE_ACKNOWLEDGE" #closurE_ACKNOWLEDGERef="ngModel"
+            (change)="onCheckBoxChange('closurE_ACKNOWLEDGE')" [disabled]="disableClosurePlanCheckbox">
+            Customer has been informed about the implementation of the action plan and Customer has acknowledged it for
+            closure.
+          </mat-checkbox>
+
+          <div class="declaration-date" *ngIf="closurE_ACKNOWLEDGE && declarationVisibility.closure && csatBased">
+            <mat-form-field appearance="outline" class="form-field" style="width: 100%;">
+              <mat-label>Actual Date of Customer Communication</mat-label>
+              <input [max]="_util.Today()" matInput name="closurE_ACTUAL_CUST_DATE"
+                [(ngModel)]="EditActionitem.closurE_ACTUAL_CUST_DATE" [matDatepicker]="picker11"
+                [disabled]="disableClosureDate" [required]="EditActionitem.status === 'Completed'">
+              <mat-datepicker-toggle matSuffix [for]="picker11"></mat-datepicker-toggle>
+              <mat-datepicker #picker11></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Footer -->
+    <div class="form-footer">
+      <button mat-stroked-button type="button" (click)="Cancel_onClick()" class="cancel-btn">
+        <mat-icon>close</mat-icon>
+        Cancel
+      </button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="isCustomerUpdated" class="save-btn">
+        <mat-icon>save</mat-icon>
+        Save Action Item
+      </button>
+    </div>
+  </form>
+</div>

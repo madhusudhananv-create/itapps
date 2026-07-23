@@ -1,0 +1,117 @@
+// Top 3 Performing Component Styles
+// Modern Angular 19 version
+
+.Top3Performing {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.thumb-icon {
+  margin-right: 8px;
+  font-size: 20px;
+  
+  &.green-icon {
+    color: #60BF66;
+  }
+  
+  &.red-icon {
+    color: #ff8888;
+  }
+}
+
+.compact-select {
+  width: 170px;
+  margin-top: -10px;
+  margin-bottom: -10px;
+  font-size: 12px;
+  
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding: 0;
+    min-height: 32px;
+  }
+  
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding: 0;
+  }
+  
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.marginleft-10px {
+  margin-left: -10px;
+}
+
+.marginleft-15px {
+  margin-left: -15px;
+}
+
+// Tab group styling
+.Top3Perform {
+  .row {
+    background-image: linear-gradient(to right, #e3e0e0, #f9f9f9);
+    margin-bottom: 3px;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 11px;
+    font-weight: 100;
+    vertical-align: middle;
+    color: black;
+    
+    .col-lg-10 {
+      padding-left: 4px !important;
+      padding-right: 2px !important;
+    }
+    
+    .col-lg-2 {
+      padding-left: 2px !important;
+      padding-right: 4px !important;
+      text-align: right;
+      font-weight: 600;
+      color: #4a90e2;
+    }
+  }
+  
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    padding-top: 4px;
+  }
+  
+  ::ng-deep .mdc-tab__text-label {
+    font-size: 11px;
+  }
+}
+
+.top3Performvalues {
+  display: inline-block;
+  width: 100%;
+  max-width: 210px;
+  white-space: nowrap;
+  overflow: hidden !important;
+  text-overflow: ellipsis;
+  height: 12px;
+  font-size: 11px;
+}
+
+// Row layout
+.row {
+  margin: 0;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .compact-select {
+    width: 150px;
+    font-size: 10px;
+  }
+  
+  .top3Performvalues {
+    max-width: 150px;
+    font-size: 10px;
+  }
+  
+  .Top3Perform .row {
+    font-size: 10px;
+  }
+}

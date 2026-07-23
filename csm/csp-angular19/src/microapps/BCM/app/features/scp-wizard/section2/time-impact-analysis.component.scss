@@ -1,0 +1,409 @@
+﻿
+    /* General Table and Card Styles */
+    .data-table { 
+      width: 100%; 
+      border-collapse: collapse; /* Ensure cells touch */
+    }
+    .scroll-table {
+      overflow-x: auto;
+      width: 100%;
+    }
+    
+    /* Ensure Read-Only text has proper padding/height */
+    .data-table .read-only {
+      min-height: 24px; 
+      padding: 8px 4px; /* Matches form field padding visually */
+      display: block;
+      white-space: pre-wrap;
+    }
+    
+    /* Fix for Form Fields inside Table Cells (CRITICAL) */
+    .data-table mat-form-field { 
+      line-height: normal; /* Override table/default line height */
+      margin: 0 !important; 
+      padding: 0 !important;
+    }
+    
+    /* NEW: Target the internal mat-form-field structure to remove excess height/padding */
+    .data-table .mat-mdc-text-field-wrapper {
+      /* Remove default Material padding from top/bottom */
+      padding: 0; 
+      margin: 0;
+      height: 48px; /* Standard height for inputs/selects */
+    }
+    
+    /* NEW: Fix the inner Mat Select/Input content spacing */
+    .data-table .mat-mdc-form-field-flex {
+      padding: 0 4px; /* Minimal side padding */
+      align-items: center;
+      height: 100%;
+    }
+    
+    /* NEW: Fix for the dropdown arrow position */
+    .data-table .mat-mdc-select-trigger {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    
+    .data-table th {
+        background-color: #f5f5f5;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 1rem 0.75rem;
+        text-align: left;
+        border-bottom: 2px solid #e0e0e0;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+
+    .section-card {
+      margin-top: 16px;
+    }
+
+
+    .form-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0.75rem 0.75rem 0 0.75rem;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .form-flex {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+      justify-content: flex-start;
+      flex: 1;
+      overflow: hidden;
+      padding-top: 0.5rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-field:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-color: #c0c0c0;
+    }
+
+    .form-field.half-width {
+      grid-column: span 1;
+    }
+
+    .form-field.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .field-group-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .field-group-title {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 0.95rem;
+      flex: 1;
+    }
+
+    .impact-icon {
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      color: #555;
+    }
+
+    .impact-icon.impact-a {
+      color: #4caf50;
+    }
+
+    .impact-icon.impact-b {
+      color: #ff9800;
+    }
+
+    .impact-icon.impact-c {
+      color: #ff5722;
+    }
+
+    .impact-icon.impact-d {
+      color: #f44336;
+    }
+
+    .impact-icon.mtpd-icon {
+      color: #2196f3;
+    }
+
+    .help-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+      color: #7f8c8d;
+      cursor: help;
+    }
+
+    .mtpd-header {
+      border-bottom-color: #2196f3;
+    }
+
+    .mtpd-field {
+      background-color: #e3f2fd;
+      border-color: #90caf9;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .mat-mdc-form-field {
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 0.5rem;
+    }
+
+    .mat-mdc-form-field .mat-mdc-form-field-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.6);
+      margin-bottom: 0.25rem;
+    }
+
+    .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+      margin-top: 0.25rem;
+    }
+
+    .consistency-warning {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background-color: #fff3cd;
+      border: 2px solid #ffeaa7;
+      border-radius: 8px;
+      color: #856404;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+
+    .consistency-warning mat-icon {
+      color: #f57c00;
+    }
+
+
+    .spacer {
+      flex: 1;
+    }
+
+    .validation-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      margin-left: 1rem;
+    }
+
+    .validation-status.success {
+      color: #4caf50;
+    }
+
+    .validation-status:not(.success) {
+      color: #f44336;
+    }
+    
+    /* Button Styles */
+    .edit-button {
+      background-color: white;
+      border: none;
+      cursor: pointer;
+      color: #3f51b5;
+      padding-right: 20px;
+    }
+    
+    .delete-button {
+      background-color: white;
+      border: none;
+      cursor: pointer;
+      color: #f44336; 
+  }
+      .save-button {
+      background-color: white;
+      border: none;
+      cursor: pointer;
+      color: #4caf50; 
+      padding-right: 20px;
+  }
+      .cancel-button {
+      background-color: white;
+      border: none;
+      cursor: pointer;
+      color: #f44336; 
+  }
+/* Main container for stacking Time and Rating vertically */
+.impact-cell-container {
+  display: flex;
+  flex-direction: column; 
+  padding: 4px 0; /* Minimal vertical padding inside the cell */
+  gap: 6px; /* Space between Time and Rating fields */
+}
+
+/* Ensure form fields component doesn't add extra vertical space */
+.data-table mat-form-field {
+  width: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: normal;
+}
+
+/* HIGH SPECIFICITY FIX: Target the internal Material wrapper directly */
+.data-table .mat-mdc-text-field-wrapper {
+  /* This is the key to removing vertical height */
+  padding: 0 8px 0 8px !important; 
+  min-height: 40px !important;
+  max-height: 40px !important;
+}
+
+/* Fix vertical alignment for the input element itself */
+.data-table .mat-mdc-form-field-input-control {
+  padding: 0 !important; 
+  height: 40px; 
+  line-height: 40px; /* Center text vertically */
+}
+
+/* Fix for Mat Select dropdown alignment */
+.data-table .mat-mdc-select-trigger {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: 40px !important;
+}
+
+
+/* VIEW MODE ALIGNMENT */
+
+/* Styling for read-only cells (Must match edit height) */
+.data-table .read-only {
+  /* Set fixed height equal to the two stacked form fields + gap */
+  /* Estimate: 40px (Time Field) + 40px (Rating Field) + 6px (Gap) = 86px */
+  min-height: 86px; 
+  height: 100%;
+  padding: 4px 8px; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: space-around; /* Distribute Time/Rating content */
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
+
+/* Styles for the individual Time and Rating lines in view mode */
+.read-only > div {
+  line-height: 1.2;
+}
+
+/* Ensure Activity field text aligns properly */
+.activity-field-in-edit {
+  font-weight: 500;
+  color: #333;
+}
+
+    /* Responsive design */
+    @media (max-width: 1200px) {
+      .form-flex {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .form-flex {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .form-field {
+        padding: 0.875rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .form-flex {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding-top: 0.25rem;
+      }
+
+      .form-field {
+        padding: 0.75rem;
+      }
+
+      .field-group-header {
+        margin-bottom: 0.375rem;
+        padding-bottom: 0.5rem;
+      }
+
+      .field-group-title {
+        font-size: 0.9rem;
+      }
+
+      .impact-icon {
+        font-size: 1.1rem;
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .form-container {
+        padding: 0.75rem 0.75rem 0 0.75rem;
+      }
+
+      .form-flex {
+        gap: 0.75rem;
+      }
+
+      .form-field {
+        padding: 0.625rem;
+      }
+
+      .field-group-title {
+        font-size: 0.85rem;
+      }
+
+      .impact-icon {
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .consistency-warning {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+      }
+    }
+.full-width {
+  width: 100%;
+}
+
+.impact-cell-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.impact-field {
+  width: 100%;
+}
+  

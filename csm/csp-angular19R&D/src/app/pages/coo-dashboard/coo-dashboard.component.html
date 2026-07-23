@@ -1,0 +1,17 @@
+<!-- Navbar Header -->
+  <app-navbar-new></app-navbar-new>
+<div class="coo-dashboard-container">
+  <!-- Dashboard Filter Component -->
+  <div class="filter-section">
+    <app-dashboard-filter
+      [projId]="projId"
+      [custId]="custId"
+      (onChange)="onFilterChange($event)">
+    </app-dashboard-filter>
+  </div>
+  
+  <!-- Dashboard Main Content -->
+  <div class="dashboard-content">
+    <app-dashboard-main></app-dashboard-main>
+  </div>
+</div>

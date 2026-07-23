@@ -1,0 +1,108 @@
+<div class="risk-dashboard-container">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-left">
+      <button *ngIf="_util.IsGAVS()" mat-icon-button class="back-button" [routerLink]="['/newdashboard/custm']">
+        <span class="material-icons">arrow_back</span>
+      </button>
+      <img class="customer-logo" src="assets/images/{{selectedCust}}.png"
+        onerror="this.src='assets/images/CustomerLogo.png'" alt="Customer Logo">
+      <div class="header-title">
+        <h1>Risk Dashboard</h1>
+        <p class="subtitle">Monitor and analyze risk metrics</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <mat-card class="filters-card" elevation="2">
+    <mat-card-content>
+      <div class="filters-grid">
+        <!-- Row 1: Dropdowns -->
+        <div class="filter-field">
+          <mat-select class="mat-dropdown-plain" panelClass="risk-dropdown-panel" [(ngModel)]="customeR_IDS" multiple #selectCustomer 
+                      placeholder="Account" (openedChange)="resetAccountFilterValue($event)">
+            <!-- Search Input -->
+            <mat-option class="search-option" (click)="$event.stopPropagation()">
+              <div class="dropdown-search" (click)="$event.stopPropagation()">
+                <mat-icon>search</mat-icon>
+                <input [(ngModel)]="accountSearchText"
+                       (ngModelChange)="onAccountSearchChange()"
+                       (keydown)="$event.stopPropagation()"
+                       (click)="$event.stopPropagation()"
+                       placeholder="Search accounts..."
+                       class="search-input">
+              </div>
+            </mat-option>
+            
+            <mat-option #allCustomerSelected (click)="toggleSelectionForCustomer()" [value]="'-1'">
+              <strong>All</strong>
+            </mat-option>
+            <ng-container *ngFor="let cust of filteredCustomers">
+              <mat-option *ngIf="(cust.cusT_ID || cust.customerId) !== '-1'" 
+                          [value]="cust.cusT_ID || cust.customerId">
+                {{cust.cusT_NM || cust.customerName}}
+              </mat-option>
+            </ng-container>
+          </mat-select>
+        </div>
+
+        <div class="filter-field">
+          <mat-select class="mat-dropdown-plain" panelClass="risk-dropdown-panel" [(ngModel)]="businessUnit" multiple #selectBusinessUnit (click)="getOverallBusinessUnits()" placeholder="Business Unit">
+            <mat-option #allBusinessUnitSelected (click)="toggleSelectionForBusinessUnit()" [value]="'-1'">
+              <strong>All Business Units</strong>
+            </mat-option>
+            <mat-option *ngFor="let business of businessUnits" [value]="business">
+              {{business}}
+            </mat-option>
+          </mat-select>
+        </div>
+
+        <div class="filter-field">
+          <mat-select class="mat-dropdown-plain" panelClass="risk-dropdown-panel" [(ngModel)]="riskStatus" multiple #select placeholder="Risk Status">
+            <mat-option #allSelected (click)="toggleSelection()" [value]="'-1'">
+              <strong>All Statuses</strong>
+            </mat-option>
+            <mat-option *ngFor="let status of riskStatusList" [value]="status">
+              {{status}}
+            </mat-option>
+          </mat-select>
+        </div>
+
+        <!-- Row 2: Date Range + Actions -->
+        <div class="filter-field date-field">
+          <mat-form-field class="mat-datepicker-plain">
+            <input matInput [matDatepicker]="picker" [(ngModel)]="fromDate" placeholder="From Date">
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-field date-field">
+          <mat-form-field class="mat-datepicker-plain">
+            <input matInput [matDatepicker]="picker1" [(ngModel)]="toDate" placeholder="To Date">
+            <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+            <mat-datepicker #picker1></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-primary" (click)="loadData()">
+            <span class="material-icons btn-icon">analytics</span>
+            Generate Chart
+          </button>
+          <button class="btn-warning" (click)="reset()">
+            <span class="material-icons btn-icon">refresh</span>
+            Reset
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Chart Section -->
+  <div class="chart-section">
+    <app-risk-chart-control [isValid]="isValid" [inputs]="riskDashboardInputs">
+    </app-risk-chart-control>
+  </div>
+</div>

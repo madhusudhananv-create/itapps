@@ -1,0 +1,56 @@
+<div class="date-picker-container">
+  <div class="date-picker-card">
+    <!-- Radio Group -->
+    <div class="filter-group">
+      <mat-radio-group 
+        class="radio-group"
+        [(ngModel)]="selectedOption" 
+        (change)="DateChange()">
+        <mat-radio-button value="quarter" class="radio-option">
+          Quarter
+        </mat-radio-button>
+        <mat-radio-button value="range" class="radio-option">
+          Year to Quarter
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <!-- Year Selector -->
+    <div class="filter-group">
+      <mat-form-field appearance="outline" class="year-field">
+        <mat-label>Year</mat-label>
+        <mat-select 
+          [(ngModel)]="selectedYear" 
+          (selectionChange)="DateChange()">
+          <mat-option [value]="year" *ngFor="let year of years">
+            {{year}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Quarter Slider -->
+    <div class="filter-group slider-group">
+      <span class="quarter-label">Q1</span>
+      <mat-slider 
+        class="quarter-slider"
+        (input)="onInputChange($event)" 
+        (change)="DateChange()" 
+        [max]="QuarterSlideMax" 
+        [min]="QuarterSlideMin" 
+        [step]="step"
+        discrete>
+        <input matSliderThumb [(ngModel)]="selectedQuarter">
+      </mat-slider>
+      <span class="quarter-label">Q4</span>
+    </div>
+
+    <!-- Current Selection Display -->
+    <div class="selection-display">
+      <mat-icon class="display-icon">date_range</mat-icon>
+      <span class="display-text">
+        Q{{selectedQuarter}} {{selectedYear}}
+      </span>
+    </div>
+  </div>
+</div>

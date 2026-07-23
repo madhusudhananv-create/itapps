@@ -1,0 +1,283 @@
+<!-- =====================================================================
+     Ideas & Innovations Matrix Dialog
+     Migrated from LEGACY-SOURCE/src/app/ideas-innovation-matrix/
+     ===================================================================== -->
+
+<app-navbar-new [ShowMenu]="false"></app-navbar-new>
+
+<!-- ── Dialog Header ────────────────────────────────────────────────────── -->
+<div class="dialog-header">
+  <div class="header-content">
+    <mat-icon class="header-icon">lightbulb</mat-icon>
+    <span class="header-title">Ideas &amp; Innovations Matrix</span>
+  </div>
+  <button mat-icon-button class="close-btn" (click)="CancelOnClick()" matTooltip="Close">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<!-- ── Filter Bar ─────────────────────────────────────────────────────────── -->
+<div class="filter-bar">
+  <span class="filter-label">Filter by Date:</span>
+
+  <mat-form-field appearance="outline" class="filter-field date-field">
+    <mat-label>Start Date</mat-label>
+    <input matInput [(ngModel)]="startDate" name="dateStart"
+           [matDatepicker]="pickerStartDate" />
+    <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+    <mat-datepicker #pickerStartDate></mat-datepicker>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-field date-field">
+    <mat-label>End Date</mat-label>
+    <input matInput [(ngModel)]="endDate" name="dateEnd"
+           [matDatepicker]="pickerEndDate" />
+    <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+    <mat-datepicker #pickerEndDate></mat-datepicker>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-field">
+    <mat-label>Category</mat-label>
+    <mat-select [(ngModel)]="ideasType" name="ddIdeaType">
+      <mat-option *ngFor="let type of ddideatype" [value]="type" [title]="type">
+        {{ type }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-field">
+    <mat-label>Process Area</mat-label>
+    <mat-select [(ngModel)]="input_processarea" name="ddProcess">
+      <mat-option *ngFor="let type of ddProcessArea" [value]="type" [title]="type">
+        {{ type }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" class="apply-btn"
+          (click)="getIdeasInnovation()">
+    <mat-icon>search</mat-icon> Apply
+  </button>
+
+  <!-- Legend swatch trigger -->
+  <div class="legend-trigger"
+       (mouseenter)="enablestatus()"
+       (mouseleave)="disablestatus()"
+       matTooltip="Status Legend">
+    <mat-icon>palette</mat-icon>
+  </div>
+
+  <!-- Legend popup (absolute) -->
+  <div *ngIf="legend" class="legend-popup">
+    <table class="legend-table">
+      <tr>
+        <td colspan="2" class="legend-title">Legend</td>
+      </tr>
+      <tr>
+        <td><div class="round" style="background-color:#aeafaf"></div></td>
+        <td>Identified</td>
+      </tr>
+      <tr>
+        <td><div class="round" style="background-color:#feeb84"></div></td>
+        <td>Planning</td>
+      </tr>
+      <tr>
+        <td><div class="round" style="background-color:#3db1e7"></div></td>
+        <td>Execution</td>
+      </tr>
+      <tr>
+        <td><div class="round" style="background-color:#44c444"></div></td>
+        <td>Completed</td>
+      </tr>
+      <tr>
+        <td><div class="round" style="background-color:#242323"></div></td>
+        <td>Not Applicable</td>
+      </tr>
+      <tr>
+        <td><div class="round" style="background-color:#f03d3d"></div></td>
+        <td>Not Implemented</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── Progress Bar ────────────────────────────────────────────────────────── -->
+<mat-progress-bar *ngIf="_loading" mode="indeterminate" class="loading-bar"></mat-progress-bar>
+
+<!-- ── Tab Group ─────────────────────────────────────────────────────────── -->
+<div class="tabs-container">
+  <mat-tab-group [(selectedIndex)]="itVertical"
+                 (focusChange)="selectedTab($event)"
+                 animationDuration="200ms">
+
+    <!-- ── IMS Tab ─────────────────────────────────────────────────────── -->
+    <mat-tab label="IMS">
+      <ng-template matTabContent>
+        <ng-container *ngTemplateOutlet="matrixTable"></ng-container>
+      </ng-template>
+    </mat-tab>
+
+    <!-- ── ADM Tab ─────────────────────────────────────────────────────── -->
+    <mat-tab label="ADM">
+      <ng-template matTabContent>
+        <ng-container *ngTemplateOutlet="matrixTable"></ng-container>
+      </ng-template>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>
+
+<!-- ── Shared Matrix Table Template ──────────────────────────────────────── -->
+<ng-template #matrixTable>
+  <div class="table-wrapper" *ngIf="matrixdata.length > 0; else noData">
+    <table class="matrix-table">
+      <!-- Header row 1 -->
+      <thead>
+        <tr>
+          <th rowspan="2" class="col-innovation">Ideas / Innovations</th>
+          <th colspan="6" class="col-status-header">Status</th>
+        </tr>
+        <!-- Header row 2 -->
+        <tr>
+          <th>Identified</th>
+          <th>Planning</th>
+          <th>Execution</th>
+          <th>Completed</th>
+          <th>Not Applicable</th>
+          <th>Not Implemented</th>
+        </tr>
+      </thead>
+
+      <!-- Data rows (sliced for current page) -->
+      <tbody>
+        <tr *ngFor="let bp of pagedData">
+          <!-- Innovation name -->
+          <td class="td-innovation">{{ bp.innovation }}</td>
+
+          <!-- Identified -->
+          <td class="td-status">
+            <div class="fixedheight">
+              <ng-container *ngFor="let mat of bp.matrix">
+                <div *ngIf="mat.status === 'Identified'" class="cell-row">
+                  <div class="round" [style.background-color]="GetColor(mat.status)"></div>
+                  <span class="proj-name">{{ GetProjName(mat.proJ_ID) }}</span>
+                </div>
+              </ng-container>
+            </div>
+          </td>
+
+          <!-- Planning -->
+          <td class="td-status">
+            <div class="fixedheight">
+              <ng-container *ngFor="let mat of bp.matrix">
+                <div *ngIf="mat.status === 'Planning'" class="cell-row">
+                  <div class="round" [style.background-color]="GetColor(mat.status)"></div>
+                  <span class="proj-name">{{ GetProjName(mat.proJ_ID) }}</span>
+                </div>
+              </ng-container>
+            </div>
+          </td>
+
+          <!-- Execution -->
+          <td class="td-status">
+            <div class="fixedheight">
+              <ng-container *ngFor="let mat of bp.matrix">
+                <div *ngIf="mat.status === 'Execution'" class="cell-row">
+                  <div class="round" [style.background-color]="GetColor(mat.status)"></div>
+                  <span class="proj-name">{{ GetProjName(mat.proJ_ID) }}</span>
+                </div>
+              </ng-container>
+            </div>
+          </td>
+
+          <!-- Completed -->
+          <td class="td-status">
+            <div class="fixedheight">
+              <ng-container *ngFor="let mat of bp.matrix">
+                <div *ngIf="mat.status === 'Completed'" class="cell-row">
+                  <div class="round" [style.background-color]="GetColor(mat.status)"></div>
+                  <span class="proj-name">{{ GetProjName(mat.proJ_ID) }}</span>
+                </div>
+              </ng-container>
+            </div>
+          </td>
+
+          <!-- Not Applicable -->
+          <td class="td-status">
+            <div class="fixedheight">
+              <ng-container *ngFor="let mat of bp.matrix">
+                <div *ngIf="mat.status === 'Not Applicable'" class="cell-row">
+                  <div class="round" [style.background-color]="GetColor(mat.status)"></div>
+                  <span class="proj-name">{{ GetProjName(mat.proJ_ID) }}</span>
+                </div>
+              </ng-container>
+            </div>
+          </td>
+
+          <!-- Not Implemented (with optional checkbox for editable users) -->
+          <td class="td-status">
+            <div class="fixedheight">
+              <ng-container *ngFor="let mat of bp.matrix">
+                <div *ngIf="mat.status === 'Not Implemented'" class="cell-row">
+                  <div class="round" [style.background-color]="GetColor(mat.status)"></div>
+                  <mat-checkbox *ngIf="_util.IsEditable()"
+                                class="select-cb"
+                                title="Scope for Implementation"
+                                (change)="OnChange(bp, mat, $event)">
+                  </mat-checkbox>
+                  <span class="proj-name">{{ GetProjName(mat.proJ_ID) }}</span>
+                </div>
+              </ng-container>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Paginator -->
+    <mat-paginator
+      *ngIf="matrixdata.length > pageSize"
+      [length]="matrixdata.length"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      [pageIndex]="p - 1"
+      (page)="onPageChange($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
+
+  <!-- Empty state -->
+  <ng-template #noData>
+    <div class="no-data" *ngIf="!_loading">
+      <mat-icon>search_off</mat-icon>
+      <p>No data found. Adjust the filters and click <strong>Apply</strong>.</p>
+    </div>
+  </ng-template>
+</ng-template>
+
+<!-- ── Radio Group (bulk status) ─────────────────────────────────────────── -->
+<div class="radio-section" *ngIf="matrixdata.length > 0 && _util.IsEditable()">
+  <mat-radio-group [(ngModel)]="statusChange" name="statusChangeGroup" class="radio-group">
+    <mat-radio-button value="Planning" class="radio-btn">
+      Mark as Scope for Implementation
+    </mat-radio-button>
+    <mat-radio-button value="Not Applicable" class="radio-btn">
+      Mark as Not Applicable
+    </mat-radio-button>
+  </mat-radio-group>
+</div>
+
+<!-- ── Action Buttons ─────────────────────────────────────────────────────── -->
+<div class="action-row">
+  <button mat-raised-button color="primary"
+          *ngIf="statusCheck()"
+          (click)="SaveStatus(matrixdata)"
+          class="action-btn">
+    <mat-icon>save</mat-icon> Save
+  </button>
+  <button mat-stroked-button
+          (click)="CancelOnClick()"
+          class="action-btn">
+    <mat-icon>close</mat-icon> Close
+  </button>
+</div>
