@@ -1,0 +1,314 @@
+/* ManageKpiMetricsComponent Styles */
+/* Migrated from LEGACY Angular 8 to Angular 19 */
+
+// ============================================================================
+// Variables (matching manageproduct reference styles)
+// ============================================================================
+$primary: #667eea;
+$primary-dark: #764ba2;
+$success: #28a745;
+$danger: #dc3545;
+$warn: #f59e0b;
+$text-primary: #2b2a2a;
+$text-secondary: #535d85;
+$text-muted: #6c757d;
+$border: #e0e0e0;
+$bg-white: #ffffff;
+$bg-light: #f8f9fa;
+$radius-sm: 4px;
+$radius-md: 8px;
+$shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+$transition: 150ms ease-in-out;
+
+// ============================================================================
+// Host
+// ============================================================================
+:host {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+// ============================================================================
+// Container
+// ============================================================================
+.metrics-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// ============================================================================
+// Toolbar
+// ============================================================================
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: $bg-white;
+  border-radius: $radius-md;
+  border-bottom: 2px solid $border;
+  flex-wrap: wrap;
+
+  .toolbar-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: $text-secondary;
+    white-space: nowrap;
+    margin-right: 8px;
+  }
+
+  .toolbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .toolbar-field {
+    width: 200px;
+    flex-shrink: 0;
+
+    ::ng-deep {
+      .mat-mdc-text-field-wrapper { height: 40px; }
+      .mat-mdc-form-field-infix {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+        min-height: 40px;
+      }
+      .mat-mdc-floating-label { top: 20px; }
+    }
+  }
+
+  .get-details-btn {
+    height: 40px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 16px;
+    border-radius: $radius-sm;
+    white-space: nowrap;
+  }
+
+  .add-btn {
+    color: $primary;
+    width: 40px;
+    height: 40px;
+    margin-left: auto;
+
+    &:hover { background: rgba($primary, 0.08); }
+
+    mat-icon { font-size: 24px; width: 24px; height: 24px; }
+  }
+}
+
+// ============================================================================
+// Progress Bar
+// ============================================================================
+.progress-bar {
+  border-radius: $radius-sm;
+  height: 3px;
+}
+
+// ============================================================================
+// Filter Row
+// ============================================================================
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: $bg-white;
+  border-radius: $radius-md;
+  border: 1px solid $border;
+  flex-wrap: wrap;
+
+  .filter-field {
+    width: 220px;
+
+    ::ng-deep {
+      .mat-mdc-text-field-wrapper { height: 40px; }
+      .mat-mdc-form-field-infix {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+        min-height: 40px;
+      }
+      .mat-mdc-floating-label { top: 20px; }
+    }
+
+    &.tier-field {
+      width: 120px;
+    }
+  }
+}
+
+// ============================================================================
+// Table
+// ============================================================================
+.table-wrapper {
+  background: $bg-white;
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.metrics-table {
+  width: 100%;
+
+  .mat-mdc-header-cell {
+    background: $bg-light;
+    font-size: 11px;
+    font-weight: 700;
+    color: $text-primary;
+    letter-spacing: 0.4px;
+    padding: 10px 12px;
+    border-bottom: 2px solid $border;
+    white-space: nowrap;
+  }
+
+  .mat-mdc-cell {
+    font-size: 13px;
+    color: $text-secondary;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba($border, 0.6);
+    vertical-align: middle;
+  }
+
+  .mat-mdc-row {
+    transition: background $transition;
+
+    &:hover { background: rgba($primary, 0.03); }
+
+    &:last-child .mat-mdc-cell { border-bottom: none; }
+  }
+
+  .kpi-name {
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  .description-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .level-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &.expected {
+      background: rgba($primary, 0.12);
+      color: $primary-dark;
+    }
+
+    &.min {
+      background: rgba($warn, 0.12);
+      color: darken($warn, 15%);
+    }
+  }
+
+  .delete-btn {
+    color: rgba($danger, 0.6);
+    width: 34px;
+    height: 34px;
+
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+    &:hover {
+      color: $danger;
+      background: rgba($danger, 0.08);
+    }
+  }
+
+  .no-data-row .mat-cell {
+    text-align: center;
+    padding: 20px;
+    color: $text-muted;
+    font-style: italic;
+    font-size: 13px;
+  }
+}
+
+.mat-mdc-paginator {
+  border-top: 1px solid $border;
+  background: $bg-white;
+  border-radius: 0 0 $radius-md $radius-md;
+  font-size: 13px;
+}
+
+// ============================================================================
+// Toast Snackbar Styles
+// ============================================================================
+::ng-deep {
+  .success-snackbar .mdc-snackbar__surface {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+  }
+
+  .warn-snackbar .mdc-snackbar__surface {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4) !important;
+  }
+
+  .error-snackbar .mdc-snackbar__surface {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+  }
+
+  .success-snackbar,
+  .warn-snackbar,
+  .error-snackbar {
+    .mat-mdc-snack-bar-label {
+      color: white !important;
+      font-weight: 500 !important;
+      font-size: 14px !important;
+    }
+    .mat-mdc-button {
+      color: white !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+// ============================================================================
+// Responsive
+// ============================================================================
+@media (max-width: 768px) {
+  .toolbar,
+  .filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .toolbar-field,
+  .filter-field {
+    width: 100% !important;
+  }
+}
+
+
+.link {
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.editWidth {
+  width: 80px;
+}
+
+.maticonbutton {
+  color: #3f51b5;
+  text-decoration: none;
+}
+
+.maticonbutton:hover {
+  color: #303f9f;
+}

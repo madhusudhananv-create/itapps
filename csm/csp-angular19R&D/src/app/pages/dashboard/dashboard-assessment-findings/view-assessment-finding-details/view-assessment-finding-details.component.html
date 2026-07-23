@@ -1,0 +1,187 @@
+<div class="modern-dialog-container">
+  <!-- Header -->
+  <div class="dialog-header" mat-dialog-title>
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>assessment</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">Assessment Finding Details</h2>
+        <p class="dialog-subtitle">Comprehensive account-level findings analysis</p>
+      </div>
+    </div>
+    <button class="close-button" (click)="onClose()" mat-icon-button aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="progress-container" *ngIf="_loading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dialog-body" *ngIf="!_loading">
+    <div class="table-container">
+      <!-- Table Header -->
+      <div class="table-header">
+        <div class="header-cell expand-cell"></div>
+        <div class="header-cell account-cell">
+          <mat-icon class="cell-icon">business</mat-icon>
+          Account
+        </div>
+        <div class="header-cell stat-cell" 
+             *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Strength')">
+          <mat-icon class="cell-icon strength-icon">trending_up</mat-icon>
+          Strength
+        </div>
+        <div class="header-cell stat-cell" 
+             *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Weakness')">
+          <mat-icon class="cell-icon weakness-icon">warning</mat-icon>
+          Weakness
+        </div>
+        <div class="header-cell stat-cell" 
+             *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Opportunity')">
+          <mat-icon class="cell-icon opportunity-icon">lightbulb</mat-icon>
+          Opportunity
+        </div>
+        <div class="header-cell stat-cell" 
+             *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Threat')">
+          <mat-icon class="cell-icon threat-icon">shield</mat-icon>
+          Threat
+        </div>
+      </div>
+
+      <!-- Table Body -->
+      <div class="table-body">
+        <ng-container *ngFor="let cust of assessmentFindingsViewDetailsData?.assessmenT_FINDINGS_DETAILS; let i = index">
+          <!-- Main Account Row -->
+          <div class="account-card" [class.expanded]="cust.isexpanded">
+            <div class="account-row" (click)="setProjectIndex(i, $event)">
+              <div class="expand-cell">
+                <button class="expand-button" mat-icon-button>
+                  <mat-icon class="expand-icon">expand_more</mat-icon>
+                </button>
+              </div>
+              
+              <div class="account-cell">
+                <div class="account-info">
+                  <span class="account-name">{{ cust.cusT_NM }}</span>
+                  <span class="account-badge" *ngIf="cust.projecT_ASSESSMENT_DETAILS?.length > 0">
+                    {{ cust.projecT_ASSESSMENT_DETAILS.length }} Projects
+                  </span>
+                </div>
+              </div>
+              
+              <div class="stat-cell strength-stat" 
+                   *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Strength')">
+                <a *ngIf="cust.strengtH_URL_FOR_CUSTOMER" 
+                   class="stat-link strength-link"
+                   (click)="openWin(cust.strengtH_URL_FOR_CUSTOMER); $event.stopPropagation()">
+                  <span class="stat-value">{{ cust.strengtH_FOR_CUSTOMER }}</span>
+                  <mat-icon class="link-icon">open_in_new</mat-icon>
+                </a>
+                <span *ngIf="!cust.strengtH_URL_FOR_CUSTOMER" class="stat-value empty">—</span>
+              </div>
+              
+              <div class="stat-cell weakness-stat" 
+                   *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Weakness')">
+                <a *ngIf="cust.weaknesS_URL_FOR_CUSTOMER" 
+                   class="stat-link weakness-link"
+                   (click)="openWin(cust.weaknesS_URL_FOR_CUSTOMER); $event.stopPropagation()">
+                  <span class="stat-value">{{ cust.weaknesS_FOR_CUSTOMER }}</span>
+                  <mat-icon class="link-icon">open_in_new</mat-icon>
+                </a>
+                <span *ngIf="!cust.weaknesS_URL_FOR_CUSTOMER" class="stat-value empty">—</span>
+              </div>
+              
+              <div class="stat-cell opportunity-stat" 
+                   *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Opportunity')">
+                <a *ngIf="cust.opportunitY_URL_FOR_CUSTOMER" 
+                   class="stat-link opportunity-link"
+                   (click)="openWin(cust.opportunitY_URL_FOR_CUSTOMER); $event.stopPropagation()">
+                  <span class="stat-value">{{ cust.opportunitY_FOR_CUSTOMER }}</span>
+                  <mat-icon class="link-icon">open_in_new</mat-icon>
+                </a>
+                <span *ngIf="!cust.opportunitY_URL_FOR_CUSTOMER" class="stat-value empty">—</span>
+              </div>
+              
+              <div class="stat-cell threat-stat" 
+                   *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Threat')">
+                <a *ngIf="cust.threaT_URL_FOR_CUSTOMER" 
+                   class="stat-link threat-link"
+                   (click)="openWin(cust.threaT_URL_FOR_CUSTOMER); $event.stopPropagation()">
+                  <span class="stat-value">{{ cust.threaT_FOR_CUSTOMER }}</span>
+                  <mat-icon class="link-icon">open_in_new</mat-icon>
+                </a>
+                <span *ngIf="!cust.threaT_URL_FOR_CUSTOMER" class="stat-value empty">—</span>
+              </div>
+            </div>
+
+            <!-- Expanded Project Details -->
+            <div class="project-details" *ngIf="cust.isexpanded && cust.projecT_ASSESSMENT_DETAILS?.length > 0">
+              <div class="project-list">
+                <div class="project-item" *ngFor="let proj of cust.projecT_ASSESSMENT_DETAILS">
+                  <div class="project-info-cell">
+                    <mat-icon class="project-icon">folder_open</mat-icon>
+                    <div class="project-details-text">
+                      <a *ngIf="proj.url" 
+                         class="project-link" 
+                         (click)="openWin(proj.url); $event.stopPropagation()">
+                        {{ proj.proJ_NM }}
+                        <mat-icon class="inline-icon">open_in_new</mat-icon>
+                      </a>
+                      <span *ngIf="!proj.url" class="project-name">{{ proj.proJ_NM }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="project-stats">
+                    <div class="project-stat" 
+                         *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Strength')">
+                      <a *ngIf="proj.strengtH_URL_FOR_PROJECT" 
+                         class="project-stat-link strength-link"
+                         (click)="openWin(proj.strengtH_URL_FOR_PROJECT); $event.stopPropagation()">
+                        {{ proj.strengtH_FOR_PROJECT }}
+                      </a>
+                      <span *ngIf="!proj.strengtH_URL_FOR_PROJECT" class="empty-stat">—</span>
+                    </div>
+                    
+                    <div class="project-stat" 
+                         *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Weakness')">
+                      <a *ngIf="proj.weaknesS_URL_FOR_PROJECT" 
+                         class="project-stat-link weakness-link"
+                         (click)="openWin(proj.weaknesS_URL_FOR_PROJECT); $event.stopPropagation()">
+                        {{ proj.weaknesS_FOR_PROJECT }}
+                      </a>
+                      <span *ngIf="!proj.weaknesS_URL_FOR_PROJECT" class="empty-stat">—</span>
+                    </div>
+                    
+                    <div class="project-stat" 
+                         *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Opportunity')">
+                      <a *ngIf="proj.opportunitY_URL_FOR_PROJECT" 
+                         class="project-stat-link opportunity-link"
+                         (click)="openWin(proj.opportunitY_URL_FOR_PROJECT); $event.stopPropagation()">
+                        {{ proj.opportunitY_FOR_PROJECT }}
+                      </a>
+                      <span *ngIf="!proj.opportunitY_URL_FOR_PROJECT" class="empty-stat">—</span>
+                    </div>
+                    
+                    <div class="project-stat" 
+                         *ngIf="assessmentFindingInputs?.findinG_TYPE?.includes('Threat')">
+                      <a *ngIf="proj.threaT_URL_FOR_PROJECT" 
+                         class="project-stat-link threat-link"
+                         (click)="openWin(proj.threaT_URL_FOR_PROJECT); $event.stopPropagation()">
+                        {{ proj.threaT_FOR_PROJECT }}
+                      </a>
+                      <span *ngIf="!proj.threaT_URL_FOR_PROJECT" class="empty-stat">—</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

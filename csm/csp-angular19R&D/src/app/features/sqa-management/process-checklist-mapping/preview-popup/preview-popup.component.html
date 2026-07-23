@@ -1,0 +1,103 @@
+<div class="preview-container">
+  <div class="preview-header">
+    <div class="header-info">
+      <div class="checklist-info">
+        <strong>Checklist Name:</strong> <u>{{ checklistname + ' - ' + version }}</u>
+      </div>
+      <div class="effective-date">
+        <strong>Checklist Effective from:</strong> <u>{{ effectivefrom | date: 'dd-MMM-yyyy' }}</u>
+      </div>
+    </div>
+    <div class="close-button" *ngIf="!isMergeView" (click)="closepopup()" title="Close">
+      &#10005;
+    </div>
+  </div>
+
+  <!-- Loading indicator -->
+  <div *ngIf="isLoading" class="loading-indicator">
+    <div class="spinner"></div>
+    <p>Loading preview data...</p>
+  </div>
+
+  <div class="preview-content" [class.loading]="isLoading">
+    <div *ngFor="let sa of renderedData; trackBy: trackByServiceTower" class="service-tower-section">
+      <!-- Service Tower Header -->
+      <div class="service-tower-header">
+        <input 
+          *ngIf="showSelectColumn" 
+          type="checkbox" 
+          [id]="'serviceTower_' + sa.service_AREA_NAME"
+          [(ngModel)]="sa.iS_SERVICE_TOWER_SELECTED" 
+          (change)="onCheckboxChange('serviceTower', sa)">
+        <span>Service Tower: {{ sa.servicE_AREA_NAME }}</span>
+      </div>
+
+      <!-- Process Area Section -->
+      <div *ngFor="let pa of sa.questionS_BY_PROCESS_AREA; trackBy: trackByProcessArea" class="process-area-section">
+        <div class="process-area-header">
+          <div class="process-area-left">
+            <input 
+              *ngIf="showSelectColumn" 
+              type="checkbox" 
+              [id]="'processArea_' + pa.procesS_AREA_NAME"
+              [(ngModel)]="pa.iS_PROCESS_AREA_SELECTED" 
+              (change)="onCheckboxChange('processArea', pa, sa)">
+            <span>Process Area: {{ pa.procesS_AREA_NAME }}</span>
+          </div>
+          <div class="process-area-right">
+            <span>Process Model: {{ pa.procesS_MODEL }}</span>
+          </div>
+        </div>
+
+        <!-- Process Section -->
+        <div *ngFor="let p of pa.questionS_BY_PROCESS; trackBy: trackByProcess" class="process-section">
+          <div class="process-header">
+            <input 
+              *ngIf="showSelectColumn" 
+              type="checkbox" 
+              [id]="'process_' + p.procesS_NAME"
+              [(ngModel)]="p.iS_PROCESS_SELECTED" 
+              (change)="onCheckboxChange('process', p, pa, sa)">
+            <span>Process: {{ p.procesS_NAME }}</span>
+          </div>
+
+          <!-- Questions Table -->
+          <div class="table-container">
+            <table class="questions-table">
+              <thead>
+                <tr>
+                  <th *ngIf="showSelectColumn" class="select-column">Select</th>
+                  <th class="sno-column">S.No</th>
+                  <th class="question-column">Question name</th>
+                  <th *ngIf="isweightageApplicable" class="weightage-column">Weightage</th>
+                  <th class="category-column">Category</th>
+                  <th *ngIf="ismaturityApplicable" class="maturity-column">Maturity Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let question of p.questions; let id = index; trackBy: trackByQuestion">
+                  <tr>
+                    <td *ngIf="showSelectColumn" class="select-cell">
+                      <input 
+                        type="checkbox" 
+                        [id]="'question_' + sa.checklisT_NAME + '_' + id"
+                        [(ngModel)]="question.iS_CHECKED" 
+                        (change)="onCheckboxChange(question, 'question', p)">
+                    </td>
+                    <td class="sno-cell">{{ id + 1 }}</td>
+                    <td class="question-cell">{{ question.question }}</td>
+                    <td *ngIf="isweightageApplicable" class="weightage-cell">
+                    {{ question.weightage | formatWeightage: question.weightagE_SCORE }}
+                    </td>
+                    <td class="category-cell">{{ question.category }}</td>
+                    <td *ngIf="ismaturityApplicable" class="maturity-cell">{{ question.maturitY_LEVEL }}</td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

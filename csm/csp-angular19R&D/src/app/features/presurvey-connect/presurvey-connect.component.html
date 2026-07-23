@@ -1,0 +1,100 @@
+<div class="presurvey-dialog">
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h2 class="dialog-title">PCSAT Presurvey Connect</h2>
+        <button mat-icon-button [matTooltip]="'History'" [matMenuTriggerFor]="historyMenu" class="info-btn">
+          <mat-icon>info</mat-icon>
+        </button>
+        <mat-menu #historyMenu="matMenu">
+          <div class="history-menu">
+            <p><strong>Updated By:</strong> {{ presurveyformData.updateD_BY_NAME || 'NA' }}</p>
+            <p><strong>Updated Date:</strong> {{ presurveyformData.updateD_DATE ? (presurveyformData.updateD_DATE | date: 'dd-MM-yyyy') : 'NA' }}</p>
+          </div>
+        </mat-menu>
+      </div>
+      <button mat-icon-button class="close-btn" matTooltip="Close" (click)="closePopup()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="loading-bar"></mat-progress-bar>
+
+  <!-- Form Content -->
+  <form class="dialog-form" #presurveyconnectForm="ngForm" (ngSubmit)="SubmitForm(presurveyconnectForm.valid)">
+    <div class="form-content">
+      <!-- Status Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Status</mat-label>
+        <mat-select name="ddStatus" [disabled]="isDisabledData" [(ngModel)]="presurveyformData.status" required>
+          <mat-option value="To Be Planned">To Be Planned</mat-option>
+          <mat-option value="Planned">Planned</mat-option>
+          <mat-option value="Completed">Completed</mat-option>
+        </mat-select>
+        <mat-error>Status is required</mat-error>
+      </mat-form-field>
+
+      <!-- Planned Date Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Planned Date</mat-label>
+        <input [min]="_util.Today()" matInput name="dtPlannedDate" 
+               [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned'"
+               [(ngModel)]="presurveyformData.planneD_DATE" 
+               [matDatepicker]="picker2"
+               [required]="presurveyformData.status === 'Planned' || presurveyformData.status === 'Completed'">
+        <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+        <mat-datepicker #picker2></mat-datepicker>
+        <mat-error *ngIf="presurveyformData.status === 'Planned' || presurveyformData.status === 'Completed'">
+          Planned Date is required for {{presurveyformData.status}} status
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Actual Date Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Actual Date</mat-label>
+        <input [min]="presurveyformData.planneD_DATE" matInput name="dtActualDate"
+               [disabled]="isDisabledData || presurveyformData.status === 'To Be Planned'" 
+               [(ngModel)]="presurveyformData.actuaL_DATE" 
+               [matDatepicker]="picker1"
+               [required]="presurveyformData.status === 'Completed'" 
+               #actualDate="ngModel">
+        <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+        <mat-error *ngIf="presurveyformData.status === 'Completed'">
+          Actual Date is required for Completed status
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Remarks Field -->
+      <mat-form-field appearance="outline" class="form-field remarks-field">
+        <mat-label>Remarks</mat-label>
+        <textarea name="txtRemarks" 
+                  [(ngModel)]="presurveyformData.remarks" 
+                  maxlength="2000" 
+                  matInput
+                  [disabled]="isDisabledData"
+                  matTextareaAutosize 
+                  matAutosizeMinRows="4"
+                  matAutosizeMaxRows="8"></textarea>
+        <mat-hint align="end">{{presurveyformData.remarks?.length || 0}}/2000</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="dialog-actions">
+      <button mat-raised-button color="primary" type="submit" 
+              [disabled]="isDisabledData || isLoading || !presurveyconnectForm.valid"
+              class="action-btn save-btn">
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+      <button mat-stroked-button type="button" (click)="closePopup()" class="action-btn cancel-btn">
+        <mat-icon>close</mat-icon>
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

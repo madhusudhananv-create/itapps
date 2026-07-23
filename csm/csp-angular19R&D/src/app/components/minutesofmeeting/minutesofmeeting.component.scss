@@ -1,0 +1,86 @@
+.td, .table {
+  font-family: calibri;
+  background: white;
+}
+
+table tr td {
+  padding: 5px;
+  padding-left: 8px;
+  border: 1px solid #dee2e6;
+  vertical-align: top;
+}
+
+table.table-bordered {
+  border-collapse: collapse;
+  border: 1px solid #dee2e6;
+}
+
+.buttona {
+  color: #757272;
+  cursor: pointer;
+  border: 1px solid #cac0c0;
+  border-radius: 4px 4px 0 0;
+  text-align: center;
+  font-family: calibri;
+  margin-right: 15px;
+  box-shadow: 1px 1px 2px #adadad;
+  background: #f3f4f8;
+  float: right;
+}
+
+// Remove underline from mat-form-fields
+::ng-deep .no-line .mat-form-field-underline {
+  display: none;
+}
+
+// Remove background color from mat-form-fields
+::ng-deep .no-line .mat-mdc-text-field-wrapper {
+  background-color: transparent !important;
+}
+
+::ng-deep .no-line .mat-mdc-form-field-focus-overlay {
+  background-color: transparent !important;
+}
+
+// Make input fields transparent
+::ng-deep .no-line input.mat-mdc-input-element,
+::ng-deep .no-line textarea.mat-mdc-input-element {
+  background-color: transparent !important;
+}
+
+// Style for mat-select to remove background
+::ng-deep .no-line .mat-mdc-select {
+  background-color: transparent !important;
+}
+
+.mat-checkbox-inner-container {
+  height: 15px!important;
+  width: 15px!important;
+}
+
+// Add labels styling
+.field-label {
+  font-family: calibri;
+  font-size: 12px;
+  font-weight: normal;
+  color: #666;
+  margin-bottom: 2px;
+  display: block;
+}
+
+// Ensure table cells have proper borders
+table.table-bordered td,
+table.table-bordered th {
+  border: 1px solid #dee2e6 !important;
+}
+
+// Style textareas
+textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: calibri;
+  resize: vertical;
+  min-height: 40px;
+  padding: 5px;
+}

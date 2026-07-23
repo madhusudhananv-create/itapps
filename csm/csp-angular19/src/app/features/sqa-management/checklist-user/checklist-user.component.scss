@@ -1,0 +1,1018 @@
+// ============================================================================
+// Apple-Inspired Level 3: Numbered Step Strip
+// Minimal, elegant inline steps with small badges
+// ============================================================================
+
+// Component host - no height constraints
+:host {
+  display: block;
+  height: auto !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+// Apple Colors
+$apple-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+$apple-blue: #0071E3;
+$apple-gray: #1D1D1F;
+$apple-light-gray: #86868B;
+$apple-divider: #D2D2D7;
+$apple-badge-gray: #E8E8ED;
+
+.apple-process-container {
+  font-family: $apple-font;
+  background: #FAFAFA;
+  min-height: 100vh;
+}
+
+// ============================================================================
+// Level 3: Step Strip - Horizontal scrollable with small badges
+// ============================================================================
+.step-strip-wrapper {
+  background: #FFFFFF;
+  border-bottom: 1px solid $apple-divider;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+// ============================================================================
+// Loading Progress Bar
+// ============================================================================
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 3px !important;
+  
+  ::ng-deep .mat-mdc-progress-bar-fill::after {
+    background-color: $apple-blue !important;
+  }
+  
+  ::ng-deep .mat-mdc-progress-bar-buffer {
+    background-color: rgba(0, 113, 227, 0.2) !important;
+  }
+}
+
+.apple-step-strip {
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      border-bottom: 1px solid #E5E7EB !important;
+      background: #FFFFFF !important;
+      height: auto !important;
+      padding: 12px 16px !important;
+      overflow: visible;
+    }
+    
+    // Enable horizontal scrolling
+    .mat-mdc-tab-label-container {
+      overflow-x: auto;
+      overflow-y: hidden;
+      
+      // Hide scrollbar but keep functionality
+      scrollbar-width: none; // Firefox
+      -ms-overflow-style: none; // IE/Edge
+      
+      &::-webkit-scrollbar {
+        display: none; // Chrome/Safari
+      }
+    }
+    
+    .mat-mdc-tab-list {
+      background: transparent !important;
+      gap: 8px !important;
+      flex-grow: 0;
+      padding: 0 !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      flex-wrap: wrap !important;
+    }
+    
+    .mat-mdc-tab {
+      min-width: auto !important;
+      max-width: none !important;
+      width: fit-content !important;
+      flex-grow: 0 !important;
+      height: auto !important;
+      padding: 8px 20px !important;
+      margin: 0 !important;
+      opacity: 1 !important;
+      border-radius: 6px !important;
+      transition: all 200ms ease !important;
+      cursor: pointer !important;
+      border: 1.5px solid #D1D5DB !important;
+      background: #FFFFFF !important;
+      
+      .mdc-tab__content {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 6px;
+      }
+      
+      // Step badge (number prefix like "1.")
+      .step-badge {
+        font-family: $apple-font;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 200ms ease;
+        &::after {
+          content: '.';
+        }
+      }
+      
+      // Step label (text)
+      .step-label {
+        font-family: $apple-font;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        transition: all 200ms ease;
+      }
+      
+      // Inactive state - bordered white
+      &:not(.mdc-tab--active) {
+        background: #FFFFFF !important;
+        border-color: #D1D5DB !important;
+        
+        .step-badge,
+        .step-label {
+          color: #4B5563 !important;
+        }
+        
+        &:hover {
+          background: #F9FAFB !important;
+          border-color: #8B5CF6 !important;
+          
+          .step-badge,
+          .step-label {
+            color: #8B5CF6 !important;
+          }
+        }
+      }
+      
+      // Active state - purple filled
+      &.mdc-tab--active {
+        background: #8B5CF6 !important;
+        border-color: #8B5CF6 !important;
+        box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2) !important;
+        
+        .step-badge {
+          color: #FFFFFF !important;
+          font-weight: 600 !important;
+          opacity: 1 !important;
+        }
+        
+        .step-label {
+          font-weight: 600 !important;
+          color: #FFFFFF !important;
+          opacity: 1 !important;
+        }
+      }
+    }
+    
+    // Scroll arrows (if present)
+    .mat-mdc-tab-header-pagination {
+      &:hover {
+        .mat-mdc-tab-header-pagination-chevron {
+          border-color: #8B5CF6;
+        }
+      }
+    }
+    
+    // Hide Material indicator
+    .mdc-tab-indicator {
+      display: none !important;
+    }
+    
+    .mat-mdc-tab-ripple {
+      display: none !important;
+    }
+    
+    // Content area
+    .mat-mdc-tab-body-wrapper {
+      padding: 0;
+      background: #FAFAFA;
+    }
+  }
+}
+
+// ============================================================================
+// Tab Content Styling
+// ============================================================================
+.tab-content {
+  padding: 8px 24px 24px 24px;
+  background: #FAFAFA;
+  min-height: calc(100vh - 140px);
+  margin-top: 0 !important;
+  
+  // Smooth scrolling
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.25);
+    }
+  }
+}
+
+// ============================================================================
+// Responsive Adjustments
+// ============================================================================
+@media (max-width: 1024px) {
+  .apple-step-strip ::ng-deep {
+    .mat-mdc-tab {
+      padding: 7px 18px !important;
+      
+      .step-label {
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .apple-step-strip ::ng-deep {
+    .mat-mdc-tab {
+      padding: 7px 16px !important;
+      
+      .step-label {
+        font-size: 11px;
+      }
+    }
+  }
+  
+  .tab-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .apple-step-strip ::ng-deep {
+    .mat-mdc-tab {
+      padding: 6px 12px !important;
+      
+      .step-label {
+        font-size: 10px;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Original Form and Table Styling (Preserved)
+// ============================================================================
+
+.page-header {
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  border-radius: 6px;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+
+  h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  .subtitle {
+    margin: 4px 0 0 32px;
+    font-size: 12px;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+}
+
+.form-table-container {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: flex-start;
+  height: auto !important;
+  overflow: visible !important;
+  padding: 0 16px 12px 16px;
+  margin-top: 0 !important;
+}
+
+// Router outlet and wrapper spacing resets
+router-outlet + *,
+.route-content,
+.page-wrapper,
+.content-area {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.form-section {
+  width: 35%;
+  min-width: 300px;
+  flex-shrink: 0;
+}
+
+.form-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  overflow: hidden !important;
+  overflow-y: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0 !important;
+  padding: 12px 16px 16px 16px !important;
+
+  .form-card-header {
+    padding: 8px 16px;
+    border-bottom: 1px solid #E5E5EA;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    background: #ffffff;
+    margin-bottom: 8px !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+
+    mat-icon {
+      color: #0071E3;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1D1D1F;
+    }
+  }
+
+  form {
+    padding: 12px 16px;
+    flex: 1;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    min-height: 0 !important;
+  }
+
+  .form-row {
+    margin-bottom: 6px;
+  }
+
+  mat-form-field {
+    font-size: 13px;
+    margin-bottom: 6px !important;
+    width: 100% !important;
+
+    &.full-width {
+      width: 100%;
+    }
+
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      background-color: #ffffff;
+      padding: 0 8px !important;
+    }
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none !important;
+    }
+
+    ::ng-deep .mat-mdc-form-field-focus-overlay {
+      background-color: transparent;
+    }
+
+    ::ng-deep .mdc-notched-outline {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-radius: 8px;
+        border-color: #D2D2D7;
+      }
+    }
+
+    ::ng-deep .mat-mdc-form-field-focus-overlay {
+      background-color: transparent;
+    }
+
+    &.mat-focused ::ng-deep .mdc-notched-outline {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #0071E3 !important;
+        border-width: 2px;
+      }
+    }
+
+    ::ng-deep .mat-mdc-form-field-infix {
+      padding-top: 8px;
+      padding-bottom: 8px;
+      min-height: 40px;
+    }
+
+    ::ng-deep .mat-icon {
+      color: #0071E3;
+      margin-right: 8px;
+      font-size: 18px;
+    }
+
+    textarea,
+    textarea.mat-input-element,
+    .mat-mdc-input-element {
+      font-size: 12.5px !important;
+      line-height: 1.3 !important;
+      min-height: 36px !important;
+      max-height: 36px !important;
+      height: 36px !important;
+      color: #1D1D1F;
+      resize: none !important;
+      overflow-y: auto !important;
+      padding: 6px 8px !important;
+    }
+
+    input {
+      font-size: 12.5px;
+      color: #1D1D1F;
+    }
+
+    ::ng-deep .mat-mdc-floating-label {
+      color: #86868B;
+      font-size: 13px;
+    }
+
+    // Date picker specific
+    &.mat-mdc-form-field.date-field,
+    &.date-picker-wrapper {
+      margin-bottom: 6px !important;
+    }
+
+    ::ng-deep .mat-date-range-input,
+    ::ng-deep input.mat-date-range-input-inner {
+      font-size: 12.5px !important;
+      padding: 4px 0 !important;
+    }
+  }
+
+  // Field wrappers
+  .field-wrapper,
+  .input-with-icon {
+    padding: 4px 8px !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #F0F0F0 !important;
+    flex-shrink: 0 !important;
+
+    button {
+      font-size: 13px !important;
+      padding: 0 20px !important;
+      height: 34px !important;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 150ms ease;
+      box-shadow: none;
+
+      mat-icon {
+        margin-right: 6px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      // Save button (Green - for new records)
+      &.mat-mdc-raised-button.mat-accent {
+        background: #34C759 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(52, 199, 89, 0.2) !important;
+
+        &:hover:not(:disabled) {
+          background: #2FB350 !important;
+          box-shadow: 0 3px 10px rgba(52, 199, 89, 0.35) !important;
+          transform: translateY(-1px);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+          box-shadow: 0 1px 3px rgba(52, 199, 89, 0.2) !important;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      // Update button (Blue - for existing records)
+      &.mat-mdc-raised-button.mat-primary {
+        background: #0071E3 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(0, 113, 227, 0.2) !important;
+
+        &:hover:not(:disabled) {
+          background: #005BBB !important;
+          box-shadow: 0 3px 10px rgba(0, 113, 227, 0.35) !important;
+          transform: translateY(-1px);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+          box-shadow: 0 1px 3px rgba(0, 113, 227, 0.2) !important;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      // Submit/Approve button (Purple)
+      &.mat-mdc-raised-button.mat-warn {
+        background: #5856D6 !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(88, 86, 214, 0.2) !important;
+
+        &:hover:not(:disabled) {
+          background: #4644C0 !important;
+          box-shadow: 0 3px 10px rgba(88, 86, 214, 0.35) !important;
+          transform: translateY(-1px);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+          box-shadow: 0 1px 3px rgba(88, 86, 214, 0.2) !important;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      // Secondary button (Clear/Cancel)
+      &.mat-mdc-raised-button:not(.mat-primary):not(.mat-accent):not(.mat-warn) {
+        background: transparent !important;
+        border: 1.5px solid #C7C7CC !important;
+        color: #3A3A3C !important;
+        box-shadow: none !important;
+
+        &:hover:not(:disabled) {
+          border-color: #8E8E93 !important;
+          color: #1D1D1F !important;
+          background: rgba(0, 0, 0, 0.04) !important;
+          transform: translateY(-1px);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+          background: rgba(0, 0, 0, 0.02) !important;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
+
+.table-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.table-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0 !important;
+
+  .table-card-header {
+    background: #ffffff;
+    padding: 8px 16px;
+    border-bottom: 1px solid #E5E5EA;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        color: #0071E3;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1D1D1F;
+        line-height: 1.2;
+      }
+    }
+
+    .record-count {
+      background: linear-gradient(135deg, #00C7BE 0%, #00A39A 100%);
+      color: #ffffff;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      box-shadow: 0 1px 3px rgba(0, 199, 190, 0.25);
+    }
+  }
+}
+
+// Table container - no scrolling, natural height
+.table-scroll-container {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  display: block;
+
+  .process-models-table {
+    width: 100%;
+    flex: 0 0 auto;
+    border: 1px solid #E5E5EA !important;
+    border-radius: 8px;
+    overflow: hidden;
+    border-collapse: collapse;
+    
+    // Material table header styling
+    ::ng-deep .mat-mdc-header-row {
+      background: #F5F5F7 !important;
+      height: 36px !important;
+    }
+
+    ::ng-deep .mat-mdc-header-cell {
+      background: #F5F5F7 !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      color: #6E6E73 !important;
+      letter-spacing: 0.5px !important;
+      border-bottom: 2px solid #E5E5EA !important;
+      padding: 6px 12px !important;
+      height: 36px;
+      line-height: 1.2 !important;
+
+      &:first-child {
+        padding-left: 16px !important;
+      }
+
+      &:last-child {
+        padding-right: 16px !important;
+      }
+    }
+
+    // Column widths and min-widths
+    ::ng-deep .mat-column-sno {
+      flex: 0 0 56px !important;
+      width: 56px !important;
+      min-width: 56px !important;
+    }
+
+    ::ng-deep .mat-column-title {
+      flex: 0 0 20% !important;
+      width: 20% !important;
+      min-width: 140px !important;
+    }
+
+    ::ng-deep .mat-column-description {
+      flex: 0 0 38% !important;
+      width: 38% !important;
+      min-width: 220px !important;
+    }
+
+    ::ng-deep .mat-column-releaseVersion {
+      flex: 0 0 11% !important;
+      width: 11% !important;
+      min-width: 70px !important;
+    }
+
+    ::ng-deep .mat-column-releaseDate {
+      flex: 0 0 13% !important;
+      width: 13% !important;
+      min-width: 100px !important;
+    }
+
+    ::ng-deep .mat-column-actions,
+    ::ng-deep .mat-mdc-column-actions {
+      flex: 0 0 100px !important;
+      width: 100px !important;
+      min-width: 100px !important;
+      text-align: center !important;
+      justify-content: center !important;
+      vertical-align: middle !important;
+      padding: 0 12px !important;
+    }
+
+    // Actions header cell alignment
+    ::ng-deep th.mat-column-actions,
+    ::ng-deep th.mat-mdc-column-actions {
+      text-align: center !important;
+      vertical-align: middle !important;
+    }
+
+    // Actions data cell alignment
+    ::ng-deep td.mat-column-actions,
+    ::ng-deep td.mat-mdc-column-actions {
+      text-align: center !important;
+      vertical-align: middle !important;
+      padding: 0 12px !important;
+    }
+
+    // Material table row styling
+    ::ng-deep .mat-mdc-row {
+      border-bottom: 1px solid #E5E5EA;
+      transition: all 150ms ease;
+      background-color: #ffffff;
+      min-height: 36px !important;
+      height: auto !important;
+      display: flex;
+      align-items: center;
+
+      &:hover {
+        background-color: #F0F4FF !important;
+      }
+
+      &:nth-child(odd) {
+        background-color: #ffffff;
+      }
+
+      &:nth-child(even) {
+        background-color: #FAFAFA;
+
+        &:hover {
+          background-color: #F0F4FF !important;
+        }
+      }
+    }
+
+    ::ng-deep .mat-mdc-cell {
+      padding: 6px 12px !important;
+      font-size: 12.5px !important;
+      color: #1D1D1F !important;
+      border-bottom: none !important;
+      white-space: normal !important;
+      word-break: break-word !important;
+      vertical-align: middle !important;
+      line-height: 1.35 !important;
+      overflow: visible !important;
+      text-overflow: unset !important;
+
+      &:first-child {
+        padding-left: 16px !important;
+      }
+
+      &:last-child {
+        padding-right: 16px !important;
+      }
+
+      &.title-cell {
+        font-weight: 500;
+        color: #1D1D1F;
+      }
+
+      &.action-cell {
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
+        word-break: normal !important;
+
+        .action-icons {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 4px !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+
+        button,
+        .action-button {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          vertical-align: middle !important;
+          line-height: 1 !important;
+          padding: 4px !important;
+          margin: 0 !important;
+          width: 28px !important;
+          height: 28px !important;
+          transition: all 150ms ease;
+
+          &:hover {
+            transform: scale(1.15);
+          }
+
+          &.mat-mdc-icon-button.mat-primary {
+            mat-icon {
+              color: #0071E3;
+            }
+          }
+
+          &.mat-mdc-icon-button.mat-warn {
+            mat-icon {
+              color: #FF3B30;
+            }
+          }
+        }
+
+        mat-icon {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 16px !important;
+          width: 16px !important;
+          height: 16px !important;
+          line-height: 16px !important;
+          vertical-align: middle !important;
+        }
+      }
+
+      &.no-data {
+        text-align: center;
+        padding: 40px 30px;
+        color: #999;
+        font-style: italic;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        mat-icon {
+          font-size: 36px;
+          width: 36px;
+          height: 36px;
+          color: #ccc;
+        }
+
+        span {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+// Material paginator styling - sits naturally at bottom
+.table-card {
+  mat-paginator,
+  ::ng-deep mat-paginator,
+  ::ng-deep .mat-mdc-paginator {
+    flex-shrink: 0;
+    background: #ffffff !important;
+    border-top: 1px solid #E5E5EA !important;
+    border-radius: 0 0 12px 12px;
+    padding: 4px 8px !important;
+    display: block !important;
+    min-height: 36px !important;
+    font-size: 12px;
+    
+    .mat-mdc-paginator-container {
+      min-height: 36px !important;
+      padding: 0 8px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      font-size: 12px !important;
+    }
+
+    .mat-mdc-paginator-page-size-label,
+    .mat-mdc-paginator-range-label {
+      font-size: 12px !important;
+      color: #6E6E73 !important;
+      margin: 0 8px !important;
+    }
+
+    .mat-mdc-paginator-page-size-select {
+      font-size: 12px !important;
+      margin: 0 4px !important;
+      width: 60px !important;
+    }
+
+    .mat-mdc-select-trigger {
+      height: 28px !important;
+      font-size: 12px !important;
+    }
+
+    .mat-mdc-icon-button {
+      color: #0071E3 !important;
+      width: 40px !important;
+      height: 40px !important;
+      padding: 8px !important;
+
+      &[disabled] {
+        color: #C7C7CC !important;
+      }
+
+      &:not([disabled]):hover {
+        background-color: rgba(0, 113, 227, 0.04) !important;
+      }
+    }
+
+    .mat-mdc-paginator-range-actions {
+      display: flex !important;
+      align-items: center !important;
+    }
+  }
+}
+
+.action-button {
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Responsive design for smaller screens
+@media (max-width: 768px) {
+  .form-table-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .form-section {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .table-section {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .table-container {
+    max-height: 400px;
+  }
+
+  .form-card,
+  .table-card {
+    border-radius: 8px;
+  }
+}
+
+// Override Material styles for compact layout
+::ng-deep {
+  .mat-mdc-tab-body-content {
+    overflow: hidden !important;
+  }
+
+  .mat-mdc-tab-header {
+    margin-bottom: 0px;
+  }
+}

@@ -1,0 +1,252 @@
+// =====================================================================
+// APPLE iOS SETTINGS STYLE — Settings / Gear-icon Dropdown Menu
+// Dark panel · Rounded card groups · Colored icon bubbles · SF Pro font
+// =====================================================================
+
+$font-sf: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+
+// ─── Design tokens ────────────────────────────────────────────────────
+$panel-bg:      #1c1c1e;          // iOS dark-mode sheet background
+$group-bg:      #2c2c2e;          // grouped row background
+$group-bg-hover:#3a3a3c;          // hover state
+$separator:     rgba(255,255,255,0.08);
+$text-primary:  rgba(255,255,255,0.92);
+$text-secondary:rgba(255,255,255,0.45);
+$accent:        #007aff;
+
+// ─── Panel / mat-menu container ───────────────────────────────────────
+::ng-deep .mat-mdc-menu-panel {
+  background: $panel-bg !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.55),
+    0  4px 16px rgba(0,0,0,0.35) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  padding: 0 !important;
+  min-width: 280px !important;
+  max-width: 320px !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  animation: iosMenuIn 0.22s cubic-bezier(0.52,0.04,0.30,1.00) both;
+}
+
+@keyframes iosMenuIn {
+  from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+// ─── Scroll area ──────────────────────────────────────────────────────
+::ng-deep .mat-mdc-menu-content {
+  padding: 0 !important;
+  overflow-y: auto;
+  max-height: 80vh;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+  }
+}
+
+// ─── Divider → section gap ────────────────────────────────────────────
+::ng-deep .mat-divider {
+  border-top-color: transparent !important;
+  border-top-width: 0 !important;
+  margin: 6px 0 !important;
+  height: 6px !important;
+  background: transparent !important;
+}
+
+// ─── Every mat-menu-item ──────────────────────────────────────────────
+::ng-deep .mat-mdc-menu-item {
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 14px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  background: $group-bg !important;
+  color: $text-primary !important;
+  font-family: $font-sf !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.1px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  transition: background 0.14s ease !important;
+  position: relative !important;
+
+  // hairline separator between rows in same group
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 54px;
+    right: 0;
+    height: 0.5px;
+    background: $separator;
+    pointer-events: none;
+  }
+
+  &:hover,
+  &:focus {
+    background: $group-bg-hover !important;
+    color: $text-primary !important;
+    transform: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  &:active {
+    background: rgba(255,255,255,0.07) !important;
+    transform: none !important;
+  }
+
+  // Active route
+  &.active-menu-item {
+    background: $group-bg !important;
+    color: $accent !important;
+    font-weight: 500 !important;
+    border-left: none !important;
+    box-shadow: none !important;
+
+    i, mat-icon { color: $accent !important; }
+  }
+
+  // ── Icon bubble ────────────────────────────────────────────────
+  i, mat-icon {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    margin-right: 12px !important;
+    flex-shrink: 0 !important;
+    transition: none !important;
+  }
+
+  // ── Chevron (›) ────────────────────────────────────────────────
+  &::before {
+    content: '›';
+    position: absolute;
+    right: 14px;
+    font-size: 20px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.25);
+    line-height: 1;
+    pointer-events: none;
+  }
+}
+
+// ─── Colored icon backgrounds (iOS system palette) ────────────────────
+::ng-deep .mat-mdc-menu-item {
+  // fa-street-view  → Customer Details / COO Dashboard  → indigo
+  &:has(i.fa-street-view) i {
+    background: #5856d6 !important;
+    color: #fff !important;
+  }
+
+  // fa-cogs         → App Access Control                → orange
+  &:has(i.fa-cogs) i {
+    background: #ff9500 !important;
+    color: #fff !important;
+  }
+
+  // fa-star (CRISP, SQA, Benchmark KPI, CI LeaderBoard, Compliance) → green
+  &:has(i.fa-star) i {
+    background: #34c759 !important;
+    color: #fff !important;
+  }
+
+  // fa-chart-line   → CRISP Report                      → teal
+  &:has(i.fa-chart-line) i {
+    background: #30b0c7 !important;
+    color: #fff !important;
+  }
+
+  // mat-icon track_changes (CSAT Config, CSS, Verification, Monthly) → blue
+  &:has(mat-icon) mat-icon {
+    background: #007aff !important;
+    color: #fff !important;
+    font-size: 16px !important;
+  }
+
+  // fa-clipboard    → Project Access Control            → blue
+  &:has(i.fa-clipboard) i {
+    background: #007aff !important;
+    color: #fff !important;
+  }
+
+  // fa-users        → Resource Allocation               → purple
+  &:has(i.fa-users) i {
+    background: #bf5af2 !important;
+    color: #fff !important;
+  }
+
+  // fa-chart-bar    → Reports, ConfigExt, Risk, Auditor, COO (fallback) → emerald
+  &:has(i.fa-chart-bar) i {
+    background: #34c759 !important;
+    color: #fff !important;
+  }
+
+  // fa-line-chart   → CI LeaderBoard                    → pink
+  &:has(i.fa-line-chart) i {
+    background: #ff2d55 !important;
+    color: #fff !important;
+  }
+}
+
+// ─── First + last item in each visual group get rounded corners ───────
+// Group 1: rows before first divider
+::ng-deep .mat-mdc-menu-content {
+  // Top of entire list = first item rounded top
+  .mat-mdc-menu-item:first-child {
+    border-radius: 12px 12px 0 0 !important;
+  }
+  // Item immediately after a divider = rounded top of new group
+  .mat-divider + .mat-mdc-menu-item {
+    border-radius: 12px 12px 0 0 !important;
+  }
+  // Item immediately before a divider = rounded bottom of group
+  .mat-mdc-menu-item:has(+ .mat-divider) {
+    border-radius: 0 0 12px 12px !important;
+    &::after { display: none; }         // no separator on last row
+  }
+  // Last item in entire list
+  .mat-mdc-menu-item:last-child {
+    border-radius: 0 0 12px 12px !important;
+    &::after { display: none; }
+  }
+}
+
+// ─── Outer padding to make group cards float on dark bg ───────────────
+::ng-deep .mat-mdc-menu-content {
+  padding: 10px 12px 12px !important;
+  background: $panel-bg;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+// ─── Backdrop ─────────────────────────────────────────────────────────
+::ng-deep .cdk-overlay-backdrop {
+  backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.35) !important;
+}
+
+// ─── Mobile ───────────────────────────────────────────────────────────
+@media (max-width: 480px) {
+  ::ng-deep .mat-mdc-menu-panel {
+    min-width: 260px !important;
+    max-width: 92vw !important;
+  }
+  ::ng-deep .mat-mdc-menu-item {
+    font-size: 14px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+}

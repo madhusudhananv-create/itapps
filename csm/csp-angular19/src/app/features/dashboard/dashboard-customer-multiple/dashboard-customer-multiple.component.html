@@ -1,0 +1,317 @@
+<div class="dashboard-root" [class.is-mobile]="mobileQuery.matches">
+  <app-navbar-new [ShowMenu]="false"></app-navbar-new>
+
+  <mat-sidenav-container class="sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav-content class="main-content">
+
+      <!-- CRISP Summary Bar -->
+      <div class="crisp-bar">
+        <div class="crisp-pill" *ngFor="let item of crispItems">
+          <div class="crisp-pill-letter">{{ item.letter }}</div>
+          <div class="crisp-pill-body">
+            <span class="crisp-pill-label">{{ item.label }} <span class="crisp-pill-sub">({{ item.letter }})</span></span>
+          </div>
+          <div class="crisp-pill-score" [style.color]="getColorByCustomer(item.key)">
+            {{ getTitleByCustomer(item.key) === '0' ? '' : getTitleByCustomer(item.key) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Area -->
+      <div class="dashboard-body">
+
+        <!-- Dashboard Header with BU Selector -->
+        <div class="dashboard-header-section">
+          <div class="header-left">
+            <h1 class="page-title">Enterprise Overview Dashboard</h1>
+          </div>
+          <div class="header-right">
+            <div class="bu-dropdown-container" [class.loading]="!buMappingLoaded">
+              <mat-icon class="dropdown-icon">business</mat-icon>
+              <mat-select 
+                [(ngModel)]="selectedBU"
+                (ngModelChange)="onBUChange()"
+                (openedChange)="onDropdownOpenedChange($event)"
+                class="bu-mat-select" 
+                panelClass="bu-dropdown-panel">
+                <mat-select-trigger>
+                  <span class="trigger-text">{{ selectedBU === 'All' ? (buMappingLoaded ? 'All Business Units' : 'Loading...') : selectedBU }}</span>
+                </mat-select-trigger>
+                <mat-option [value]="'All'" class="bu-option-all" [class.selected]="selectedBU === 'All'">
+                  <span class="option-text">{{ buMappingLoaded ? 'All Business Units' : 'Loading... (refreshing counts)' }}</span>
+                  <mat-icon *ngIf="selectedBU === 'All'" class="check-icon">check</mat-icon>
+                </mat-option>
+                <mat-option 
+                  *ngFor="let bu of buOptions.slice(1); trackBy: trackByBU" 
+                  [value]="bu" 
+                  [class.selected]="selectedBU === bu"
+                  class="bu-option-item">
+                  <span class="option-text">{{ bu }}</span>
+                  <mat-icon *ngIf="selectedBU === bu" class="check-icon">check</mat-icon>
+                </mat-option>
+              </mat-select>
+              <mat-icon class="dropdown-arrow">arrow_drop_down</mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- New Two-Column Layout -->
+        <div class="main-layout">
+          
+          <!-- Left Main Content -->
+          <div class="main-content-area">
+
+            <!-- Top Metric Summary Cards -->
+            <div class="overview-metrics-row">
+              <div class="overview-metric-card">
+                <mat-icon class="metric-icon" style="color: #8b5cf6;">groups</mat-icon>
+                <div class="metric-title">Active Accounts</div>
+                <div class="metric-value" style="color: #8b5cf6;">{{ buFilteredCustomerList.length }}</div>
+                <div class="metric-subtitle positive">
+                  <span class="trend-icon">▲</span>
+                  <span *ngIf="selectedBU === 'All'">Your allocated accounts</span>
+                  <span *ngIf="selectedBU !== 'All' && buMappingLoaded">Filtered by {{ selectedBU }}</span>
+                  <span *ngIf="selectedBU !== 'All' && !buMappingLoaded" style="color: #10b981;">🔄 Updating... ({{ buFilteredCustomerList.length }} so far)</span>
+                </div>
+              </div>
+
+              <div class="overview-metric-card">
+                <mat-icon class="metric-icon" style="color: #3b82f6;">verified</mat-icon>
+                <div class="metric-title">SLA Compliance</div>
+                <div class="metric-value" style="color: #3b82f6; display: flex; align-items: center; justify-content: flex-start; margin-bottom: 4px;">
+                  <mat-icon style="font-size: 28px; width: 28px; height: 28px;">hourglass_empty</mat-icon>
+                </div>
+                <div class="metric-subtitle neutral" style="margin: 0; padding: 2px 6px; font-size: 10px;">
+                  Work in Progress
+                </div>
+              </div>
+
+              <div class="overview-metric-card" >
+                <mat-icon class="metric-icon" style="color: #f97316; position: absolute; top: 12px; right: 12px;">warning_amber</mat-icon>
+                <div class="metric-title" style="margin-bottom: 12px;">Total Risks / Issues</div>
+                <div class="metric-value" style="font-size: 23px; font-weight: 600;">
+                  <span style="color: #f39965;">{{ getFilteredTotal('RISK_TOTAL') || '0' }}</span> 
+                  <span style="color: #64748b;"> / </span>
+                  <span style="color: #ef4444;">{{ getFilteredTotal('ISSUE_TOTAL') || '0' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="statistics-card">
+              <div class="statistics-header">
+                <div class="statistics-title-row">
+                  <h2 class="statistics-title">Account Health Trend</h2>
+                  <div class="statistics-meta">
+                  <div class="statistics-date">
+                    <button mat-icon-button class="month-nav-btn" (click)="goToPreviousMonth()" title="Previous Month">
+                      <mat-icon>chevron_left</mat-icon>
+                    </button>
+                    <mat-icon class="calendar-icon">calendar_month</mat-icon>
+                    <span class="month-year-text">{{ getCurrentMonthYear() }}</span>
+                    <button mat-icon-button class="month-nav-btn" (click)="goToNextMonth()" [disabled]="!canGoToNextMonth()" title="Next Month">
+                      <mat-icon>chevron_right</mat-icon>
+                    </button>
+                  </div>
+                  <div class="statistics-note">
+                    <mat-icon class="info-icon">info</mat-icon>
+                    <span>Click any account in My Account(s) panel to access detailed dashboard →</span>
+                  </div>
+                </div>
+                </div>
+              
+              </div>
+              <div class="chart-container work-in-progress-container">
+                <div class="work-in-progress">
+                  <mat-icon class="wip-icon">construction</mat-icon>
+                  <h3 class="wip-title">Work in Progress</h3>
+                  <p class="wip-description">Account health trend visualization is being enhanced. Check back soon for improved analytics and insights.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Account Repository Panel -->
+          <div class="account-panel">
+            <div class="account-panel-header">
+              <div class="account-panel-title">
+                <span class="panel-title-text">My Account(s)</span>
+                
+                <!-- Sort Dropdown Button -->
+                <div class="sort-dropdown-container">
+                  <button class="sort-button" 
+                          (click)="toggleSortMenu()"
+                          [class.active]="sortMenuOpen"
+                          title="Sort Accounts"
+                          type="button">
+                    <mat-icon class="sort-icon">{{ getCurrentSortIcon() }}</mat-icon>
+                    <mat-icon class="dropdown-arrow">{{sortMenuOpen ? 'expand_less' : 'expand_more'}}</mat-icon>
+                  </button>
+                  
+                  <!-- Sort Dropdown Menu -->
+                  <div class="sort-menu" 
+                       *ngIf="sortMenuOpen"
+                       (click)="$event.stopPropagation()">
+                    <div class="sort-menu-header">
+                      <mat-icon class="menu-icon">sort</mat-icon>
+                      <span>Sort Accounts By</span>
+                      <button class="close-btn" 
+                              (click)="closeSortMenu()"
+                              type="button">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                    <div class="sort-menu-options">
+                      <button class="sort-option" 
+                              *ngFor="let option of sortOptions"
+                              [class.selected]="sortField === option.value"
+                              (click)="onSortChange(option.value)"
+                              type="button">
+                        <mat-icon class="option-icon">{{ option.icon }}</mat-icon>
+                        <span class="option-label">{{ option.label }}</span>
+                        <mat-icon class="check-icon" *ngIf="sortField === option.value">check</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="account-summary">
+                <ng-container *ngIf="filteredCustomerList.length === customerList.length && selectedBU === 'All'; else filtered">
+                  <strong>{{ customerList.length }}</strong> active Accounts
+                </ng-container>
+                <ng-template #filtered>
+                  Showing <strong>{{ filteredCustomerList.length }}</strong> of <strong>{{ customerList.length }}</strong> Accounts
+                </ng-template>
+              </div>
+              <img *ngIf="progress" class="spinner-img-small" src="assets/images/loading_spinner.gif"
+                onerror="this.src='assets/images/CustomerLogo.png'">
+            </div>
+
+            <!-- Advanced Search Box -->
+            <div class="search-box">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input type="text" 
+                     placeholder="Search: name, initials (e.g., 'ABC'), keywords..." 
+                     [(ngModel)]="searchTerm"
+                     (input)="filterAccounts()"
+                     class="search-input"
+                     title="Smart search supports:&#10;• Full name or partial match&#10;• Initials (e.g., 'ABC')&#10;• Word starts (e.g., partial name matching)&#10;• Fuzzy matching for typos">
+              <button class="clear-search-btn" 
+                      *ngIf="searchTerm && searchTerm.length > 0"
+                      (click)="searchTerm = ''; filterAccounts()"
+                      type="button"
+                      title="Clear search">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <!-- Active Filters Indicator -->
+            <div class="active-filters" *ngIf="searchTerm || selectedBU !== 'All' || sortField !== 'name-asc'">
+              <div class="filter-chips">
+                <div class="filter-chip" *ngIf="searchTerm">
+                  <mat-icon>search</mat-icon>
+                  <span>Search: "{{ searchTerm }}"</span>
+                  <button (click)="searchTerm = ''; filterAccounts()" type="button">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <div class="filter-chip" *ngIf="selectedBU !== 'All'">
+                  <mat-icon>business</mat-icon>
+                  <span>BU: {{ selectedBU }}</span>
+                  <button (click)="selectedBU = 'All'; onBUChange()" type="button">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <div class="filter-chip sort-chip" *ngIf="sortField !== 'name-asc'">
+                  <mat-icon>{{ getCurrentSortIcon() }}</mat-icon>
+                  <span>{{ getCurrentSortLabel() }}</span>
+                </div>
+              </div>
+              <button class="clear-all-btn" 
+                      (click)="searchTerm = ''; selectedBU = 'All'; sortField = 'name-asc'; onBUChange()"
+                      type="button">
+                Clear All
+              </button>
+            </div>
+
+            <!-- Scrollable Accounts List -->
+            <div class="accounts-list">
+              <!-- Loading Skeleton -->
+              <ng-container *ngIf="progress">
+                <div class="skeleton-account-item" *ngFor="let i of [1,2,3,4,5]"></div>
+              </ng-container>
+
+              <!-- Actual Account Items -->
+              <div class="account-item" 
+                   *ngFor="let p of filteredCustomerList; trackBy: trackByCustomerId"
+                   (click)="ResetFilter(p.cusT_ID, p.iS_SLA_AVAILABLE ?? false)"
+                   [title]="'Click to navigate to ' + p.cusT_NM + ' dashboard. Number in parentheses indicate active project count'"
+                   style="cursor: pointer;">
+                
+                <!-- Account Item Header -->
+                <div class="account-item-header">
+                  <div class="account-name">
+                    <span [innerHTML]="highlightSearchTerm(p.cusT_NM)"></span>
+                    <span style="color: #64748b; font-weight: 400; margin-left: 4px;" [title]="'Active project count'">({{ getProjectCount(p.cusT_ID) }})</span>
+                  </div>
+                  <div class="account-status"
+                       [style.background-color]="getColorByCustomerId('OVERALL_HEALTH', p.cusT_ID)"
+                       [style.opacity]="0.2">
+
+                  </div>
+                </div>
+
+                <!-- Account Metrics Summary -->
+                <div class="account-meta">
+                  <div class="account-meta-item">
+                    <span class="meta-label">Risks:</span>
+                    <span class="meta-value" style="color: #f39965;">{{ getTitleByCustomerId('RISK_TOTAL', p.cusT_ID) || '0' }}</span>
+                  </div>
+                  <div class="account-meta-item">
+                    <span class="meta-label">Issues:</span>
+                    <span class="meta-value" style="color: #ef4444;">{{ getTitleByCustomerId('ISSUE_TOTAL', p.cusT_ID) || '0' }}</span>
+                  </div>
+                  <div class="account-meta-item">
+                    <span class="meta-label">Action Items:</span>
+                    <span class="meta-value" style="color: #3b82f6;">{{ getTitleByCustomerId('OPEN_ACTION_ITEMS', p.cusT_ID) || '0' }}</span>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Empty State -->
+              <div class="empty-state" *ngIf="filteredCustomerList.length === 0">
+                <mat-icon class="empty-icon">search_off</mat-icon>
+                <p>No accounts found</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="dashboard-footer">
+          <span class="footer-support">
+            For support:
+            <a class="footer-link" [href]="'mailto:csmplatformsupport@' + domainConfig.domain">
+              csmplatformsupport&#64;{{ domainConfig.domain }}
+            </a>
+          </span>
+          <div class="footer-right">
+            <a class="footer-faq" routerLink="/faq" target="_blank" matTooltip="View Frequently Asked Questions" [matTooltipPosition]="'above'">
+              <i class="fa fa-question-circle faq-icon"></i>
+              <span class="faq-text">Need a quick guide? Check out our FAQs!</span>
+            </a>
+            <span class="footer-timer">
+              <mat-icon class="timer-icon">schedule</mat-icon>
+              Refreshing in <strong>{{ timeLeft }}s</strong>
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

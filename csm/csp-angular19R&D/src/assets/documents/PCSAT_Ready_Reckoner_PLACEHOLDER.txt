@@ -1,0 +1,19 @@
+PCSAT Ready Reckoner - Placeholder Document
+
+NOTE: This is a placeholder file. The actual PCSAT_Ready_Reckoner.pdf should be provided by the business team.
+
+To replace this placeholder:
+1. Obtain the official PCSAT Ready Reckoner PDF document
+2. Replace this file with: PCSAT_Ready_Reckoner.pdf
+3. Ensure the filename is exactly: PCSAT_Ready_Reckoner.pdf
+
+Expected Content:
+- PCSAT Survey Guidelines
+- Project Selection Criteria  
+- Respondent Selection Best Practices
+- Survey Timing and Scheduling
+- Score Interpretation Guide
+- FAQs
+- Support Contact Information
+
+For development/testing: You can use any PDF file renamed to PCSAT_Ready_Reckoner.pdf

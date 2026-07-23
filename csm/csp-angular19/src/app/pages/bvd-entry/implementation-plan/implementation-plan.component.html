@@ -1,0 +1,261 @@
+<div class="ip-page">
+
+  <!-- ── Top Stepper ─────────────────────────────────────────── -->
+  <div class="ie-stepper">
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle ie-step-circle--done">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Idea<br>Submission</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--done">
+      <div class="ie-step-circle ie-step-circle--done">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Evaluate<br>Benefits</span></div>
+    </div>
+    <div class="ie-step-line ie-step-line--done"></div>
+    <div class="ie-step ie-step--active">
+      <div class="ie-step-circle ie-step-circle--active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation<br>Plan</span></div>
+    </div>
+    <div class="ie-step-line"></div>
+    <div class="ie-step">
+      <div class="ie-step-circle">4</div>
+      <div class="ie-step-label"><span class="ie-step-name">Review &amp;<br>Approve</span></div>
+    </div>
+    <div class="ie-step-line"></div>
+    <div class="ie-step">
+      <div class="ie-step-circle">5</div>
+      <div class="ie-step-label"><span class="ie-step-name">Implementation</span></div>
+    </div>
+  </div>
+
+  <!-- Loading Bar -->
+  <mat-progress-bar *ngIf="isSubmitted" mode="indeterminate" class="ip-loading-bar"></mat-progress-bar>
+
+  <!-- ── Form card ─────────────────────────────────────────────── -->
+  <div class="ip-form-card">
+
+    <!-- Card header -->
+    <div class="ip-card-header">
+      <div class="ip-card-header-left">
+        <button class="ip-back-btn" type="button" (click)="setBack()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="ip-card-title-wrap">
+          <span class="ip-card-title">Implementation</span>
+          <span class="ip-card-title">Plan</span>
+        </div>
+      </div>
+      <div class="ip-card-header-actions">
+        <button class="ip-btn ip-btn--submit" type="button"
+          [disabled]="_bvdService.isIdeaSubmitted" (click)="submitForm('Submit')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save &amp; Submit
+        </button>
+      </div>
+    </div>
+
+    <!-- Form body -->
+    <form #impForm="ngForm" class="ip-form-body">
+
+      <div class="ip-section-label">MILESTONE DETAILS</div>
+
+      <!-- Row 1: Milestone & Task + Description -->
+      <div class="ip-field-row">
+        <div class="ip-field-group ip-field-group--half">
+          <label class="ip-label">Milestone &amp; Task <span class="ip-required">*</span></label>
+          <mat-form-field appearance="outline" class="ip-mat-field">
+            <input required [readonly]="_bvdService.isIdeaSubmitted" type="text" name="milestone"
+              [(ngModel)]="implementationPlan.milestone" matInput placeholder="Enter milestone or task name">
+          </mat-form-field>
+        </div>
+        <div class="ip-field-group ip-field-group--half">
+          <label class="ip-label">Description</label>
+          <mat-form-field appearance="outline" class="ip-mat-field">
+            <input [readonly]="_bvdService.isIdeaSubmitted" type="text" name="description"
+              [(ngModel)]="implementationPlan.description" matInput placeholder="Enter description">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Row 2: Left col (Efforts + Responsible + Dates) + Right col (Comments) -->
+      <div class="ip-field-row ip-field-row--main">
+
+        <!-- Left: sub-grid -->
+        <div class="ip-left-col">
+          <div class="ip-field-row">
+            <div class="ip-field-group ip-field-group--half">
+              <label class="ip-label">Estimated Efforts <span class="ip-required">*</span></label>
+              <mat-form-field appearance="outline" class="ip-mat-field">
+                <input required [readonly]="_bvdService.isIdeaSubmitted" type="number" name="hours"
+                  [(ngModel)]="implementationPlan.estimateD_EFFORTS" matInput placeholder="Person hours">
+              </mat-form-field>
+            </div>
+            <div class="ip-field-group ip-field-group--half">
+              <label class="ip-label">Responsible for Implementation <span class="ip-required">*</span></label>
+              <mat-form-field appearance="outline" class="ip-mat-field">
+                <mat-select required name="ddlResp" [disabled]="_bvdService.isIdeaSubmitted"
+                  [(ngModel)]="implementationPlan.responsible">
+                  <mat-option *ngFor="let res of _bvdService.resources" [value]="res.emP_ID.toString()">
+                    {{ res.frsT_NM }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <span class="ip-warn" *ngIf="_bvdService.resources.length == 0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                No active employee allocations for this project
+              </span>
+            </div>
+          </div>
+
+          <div class="ip-field-row">
+            <div class="ip-field-group ip-field-group--half">
+              <label class="ip-label">Estimated Start Date <span class="ip-required">*</span></label>
+              <mat-form-field appearance="outline" class="ip-mat-field">
+                <input required [readonly]="_bvdService.isIdeaSubmitted" name="dateStart"
+                  [(ngModel)]="estStartDate" matInput [matDatepicker]="pickerStartDate" placeholder="dd-mm-yyyy">
+                <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerStartDate></mat-datepicker>
+              </mat-form-field>
+            </div>
+            <div class="ip-field-group ip-field-group--half">
+              <label class="ip-label">Estimated Target Date <span class="ip-required">*</span></label>
+              <mat-form-field appearance="outline" class="ip-mat-field">
+                <input required [readonly]="_bvdService.isIdeaSubmitted" [min]="estStartDate"
+                  name="TargetDate" [(ngModel)]="estEndDate" matInput [matDatepicker]="pickerTargetDate"
+                  placeholder="dd-mm-yyyy">
+                <mat-datepicker-toggle matSuffix [for]="pickerTargetDate"></mat-datepicker-toggle>
+                <mat-datepicker #pickerTargetDate></mat-datepicker>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Comments -->
+        <div class="ip-field-group ip-field-group--comments">
+          <label class="ip-label">Comments</label>
+          <mat-form-field appearance="outline" class="ip-mat-field ip-mat-field--textarea">
+            <textarea [readonly]="_bvdService.isIdeaSubmitted" name="cmt"
+              [(ngModel)]="implementationPlan.comments" matInput rows="5"
+              placeholder="Enter your comments"></textarea>
+          </mat-form-field>
+        </div>
+
+      </div><!-- /ip-field-row--main -->
+
+      <!-- Milestone action bar -->
+      <div class="ip-milestone-actions">
+        <span class="ip-note">
+          Note: Fields marked with <span class="ip-required">*</span> are mandatory for submission.
+        </span>
+        <div class="ip-action-btns">
+          <button class="ip-btn ip-btn--cancel" type="button" (click)="cancelUpdate()">Cancel</button>
+          <button class="ip-btn ip-btn--add" type="button" *ngIf="!_edit"
+            [disabled]="_bvdService.isIdeaSubmitted" (click)="saveSchdule()">Add</button>
+          <button class="ip-btn ip-btn--add" type="button" *ngIf="_edit"
+            [disabled]="_bvdService.isIdeaSubmitted" (click)="updateSchdule()">Save</button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ── Implementation Schedule table ─────────────────────────── -->
+  <div class="ip-schedule-card" *ngIf="implementationSchdules && implementationSchdules.length > 0">
+
+    <!-- Schedule header (collapsible) -->
+    <div class="ip-schedule-header" (click)="scheduleExpanded = !scheduleExpanded">
+      <div class="ip-schedule-header-left">
+        <span class="ip-schedule-title">Implementation Schedule</span>
+        <span class="ip-schedule-badge"
+          matTooltip="Use this feature for improvements that take longer durations and need milestone tracking.">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </span>
+      </div>
+      <button class="ip-collapse-btn" type="button">
+        <svg *ngIf="scheduleExpanded" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        <svg *ngIf="!scheduleExpanded" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="ip-table-wrap" *ngIf="scheduleExpanded">
+      <table mat-table [dataSource]="dataSource" class="ip-table">
+
+        <ng-container matColumnDef="milestonetask">
+          <th mat-header-cell *matHeaderCellDef class="ip-th">Milestone &amp; Task</th>
+          <td mat-cell *matCellDef="let element" class="ip-td">{{ element.milestone }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef class="ip-th">Description</th>
+          <td mat-cell *matCellDef="let element" class="ip-td ip-td--desc">{{ element.description }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="efforts">
+          <th mat-header-cell *matHeaderCellDef class="ip-th">Efforts</th>
+          <td mat-cell *matCellDef="let element" class="ip-td">{{ element.estimateD_EFFORTS }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="responsible">
+          <th mat-header-cell *matHeaderCellDef class="ip-th">Responsible</th>
+          <td mat-cell *matCellDef="let element" class="ip-td">{{ _bvdService.getEmployeeName(element.responsible) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="comments">
+          <th mat-header-cell *matHeaderCellDef class="ip-th">Comments</th>
+          <td mat-cell *matCellDef="let element" class="ip-td ip-td--desc">{{ element.comments }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="estimatedDates">
+          <th mat-header-cell *matHeaderCellDef class="ip-th">Estimated Dates</th>
+          <td mat-cell *matCellDef="let element" class="ip-td">
+            <div class="ip-date-row">
+              <span class="ip-date-label">Start:</span>
+              <span>{{ element.estimateD_START_DATE | date:'dd-MMM-yyyy' }}</span>
+            </div>
+            <div class="ip-date-row">
+              <span class="ip-date-label">End:</span>
+              <span>{{ element.estimateD_TARGET_DATE | date:'dd-MMM-yyyy' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="ip-th">Actions</th>
+          <td mat-cell *matCellDef="let element" class="ip-td">
+            <div class="ip-row-actions" *ngIf="!_bvdService.isIdeaSubmitted">
+              <button class="ip-icon-btn ip-icon-btn--edit" type="button"
+                (click)="editRow(element)" matTooltip="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="ip-icon-btn ip-icon-btn--delete" type="button"
+                (click)="deleteRow(element)" matTooltip="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="ip-tr"></tr>
+      </table>
+    </div>
+
+  </div><!-- /ip-schedule-card -->
+
+  <!-- Footer progress -->
+  <div class="ip-card-footer">
+    <span class="ip-footer-step">Step 3 of 5</span>
+    <div class="ip-progress-track">
+      <div class="ip-progress-fill" style="width:60%"></div>
+    </div>
+    <span class="ip-footer-pct">60% complete</span>
+  </div>
+
+</div>

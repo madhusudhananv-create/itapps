@@ -1,0 +1,1957 @@
+﻿// ============================================================================
+// Apple-Inspired Design System
+// ============================================================================
+
+// Color Palette
+$apple-blue: #007AFF;
+$apple-purple: #5856D6;
+$apple-green: #34C759;
+$apple-orange: #FF9500;
+$apple-red: #FF3B30;
+$apple-gray: #8E8E93;
+$apple-light-gray: #F2F2F7;
+$apple-white: #FFFFFF;
+$apple-dark: #1C1C1E;
+$text-primary: #1D1D1F;
+$text-secondary: #6E6E73;
+$border-light: rgba(0, 0, 0, 0.08);
+$shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.04);
+$shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
+$shadow-strong: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+// Typography
+$font-primary: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+
+// Transitions
+$transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+// ============================================================================
+// Status Colors
+// ============================================================================
+
+.Green {
+  color: $apple-green;
+  font-weight: 600;
+}
+
+.Red {
+  color: $apple-red;
+  font-weight: 600;
+}
+
+.Orange {
+  color: $apple-orange;
+  font-weight: 600;
+}
+
+.black {
+  color: $text-primary;
+}
+
+.orange {
+  color: $apple-orange;
+}
+
+.row {
+  padding: 0px;
+  margin: 0px;
+}
+
+.custom {
+  margin-left: 30px !important;
+}
+
+#grdRejections .mat-select-value {
+  width: 25% !important;
+}
+
+#grdRejections .mat-form-field-infix {
+  width: 30px !important;
+}
+
+.status1 {
+  color: $apple-orange;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(255, 149, 0, 0.12);
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status2 {
+  color: $apple-green;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(52, 199, 89, 0.12);
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status3 {
+  color: $apple-red;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(255, 59, 48, 0.12);
+  border-radius: 12px;
+  display: inline-block;
+}
+
+// ============================================================================
+// Main Container - Apple Style
+// ============================================================================
+
+.mainDiv {
+  background: linear-gradient(135deg, #FAFAFA 0%, #FFFFFF 100%);
+  border-radius: 20px;
+  margin: 16px;
+  min-height: 600px;
+  width: calc(100% - 32px);
+  position: relative;
+  box-shadow: $shadow-medium;
+  border: 1px solid $border-light;
+  overflow: hidden;
+  font-family: $font-primary;
+  transition: $transition-smooth;
+
+  &:hover {
+    box-shadow: $shadow-strong;
+  }
+}
+
+// ============================================================================
+// Modern Header Section
+// ============================================================================
+
+.apple-header-section {
+  padding: 16px 24px 12px;
+  border-bottom: 1px solid $border-light;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, $apple-blue 0%, $apple-purple 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .project-info {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: $apple-white;
+    border-radius: 10px;
+    box-shadow: $shadow-subtle;
+    border: 1px solid $border-light;
+    transition: $transition-smooth;
+    margin-left: 2px;
+
+    &:hover {
+      box-shadow: $shadow-medium;
+    }
+
+    .project-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: $text-secondary;
+      margin-right: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .project-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+  }
+}
+
+// ============================================================================
+// iOS-Style Segmented Control for View By Options
+// ============================================================================
+
+.view-by-section {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-left: 2px;
+
+  .view-by-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-right: 8px;
+    line-height: 1;
+  }
+
+  ::ng-deep mat-radio-group {
+    display: inline-flex;
+    background: $apple-light-gray;
+    border-radius: 8px;
+    padding: 2px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  ::ng-deep mat-radio-button {
+    margin: 0;
+
+    .mdc-form-field {
+      padding: 0;
+    }
+
+    .mdc-radio {
+      display: none;
+    }
+
+    .mdc-label {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: $text-secondary;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: $transition-smooth;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    &.mat-mdc-radio-checked .mdc-label {
+      background: $apple-white;
+      color: $apple-blue;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    &:hover:not(.mat-mdc-radio-checked) .mdc-label {
+      color: $text-primary;
+    }
+  }
+
+  // Modern dropdown for Service Tower
+  ::ng-deep mat-form-field {
+    max-width: 320px;
+    width: 320px;
+    flex-shrink: 0;
+    
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+
+    .mat-mdc-text-field-wrapper {
+      background: $apple-white;
+      border-radius: 8px;
+      border: 1.5px solid $border-light;
+      padding: 0;
+      transition: $transition-smooth;
+
+      &:hover {
+        border-color: $apple-blue;
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.08);
+      }
+    }
+
+    .mat-mdc-form-field-flex {
+      padding: 6px 12px;
+      align-items: center;
+    }
+
+    .mat-mdc-form-field-infix {
+      padding: 0;
+      border: none;
+      min-height: auto;
+      width: 100%;
+    }
+
+    .mat-mdc-select {
+      font-size: 13px;
+      font-weight: 500;
+      color: $text-primary;
+    }
+
+    .mat-mdc-select-arrow {
+      color: $apple-blue;
+    }
+
+    &.mat-focused {
+      .mat-mdc-text-field-wrapper {
+        border-color: $apple-blue;
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+      }
+    }
+  }
+
+  // Modern Apply Button
+  .btn-primary {
+    background: linear-gradient(135deg, $apple-blue 0%, $apple-purple 100%);
+    color: $apple-white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: $transition-smooth;
+    box-shadow: 0 3px 10px rgba(0, 122, 255, 0.25);
+    text-transform: none;
+    letter-spacing: 0.3px;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(0, 122, 255, 0.35);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+    }
+  }
+}
+
+// ============================================================================
+// Service Tower Dropdown and Apply Button Styles
+// ============================================================================
+
+::ng-deep .service-tower-dropdown {
+  max-width: 350px !important;
+  width: 350px !important;
+  flex-shrink: 0;
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .mat-mdc-text-field-wrapper {
+    background: $apple-white;
+    border-radius: 8px;
+    border: 1.5px solid $border-light;
+    padding: 0;
+    transition: $transition-smooth;
+
+    &:hover {
+      border-color: $apple-blue;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.08);
+    }
+  }
+
+  .mat-mdc-form-field-flex {
+    padding: 8px 12px;
+    align-items: center;
+  }
+
+  .mat-mdc-form-field-infix {
+    padding: 0;
+    border: none;
+    min-height: auto;
+    width: 100%;
+  }
+
+  .mat-mdc-select {
+    font-size: 13px;
+    font-weight: 500;
+    color: $text-primary;
+  }
+
+  .mat-mdc-select-arrow {
+    color: $apple-blue;
+  }
+
+  &.mat-focused {
+    .mat-mdc-text-field-wrapper {
+      border-color: $apple-blue;
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+    }
+  }
+}
+
+.service-tower-apply {
+  background: linear-gradient(135deg, $apple-blue 0%, $apple-purple 100%) !important;
+  color: $apple-white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 24px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: $transition-smooth !important;
+  box-shadow: 0 3px 10px rgba(0, 122, 255, 0.25) !important;
+  text-transform: none !important;
+  letter-spacing: 0.3px !important;
+  height: auto !important;
+  line-height: 1.2 !important;
+
+  &:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 5px 14px rgba(0, 122, 255, 0.35) !important;
+  }
+
+  &:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2) !important;
+  }
+}
+
+// ============================================================================
+// Modern Filter Sidebar with Glassmorphism
+// ============================================================================
+
+.sideNav,
+.sideNavOpened {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  transition: $transition-smooth;
+  padding: 20px 16px;
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.sideNav {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.sideNavOpened {
+  width: 260px;
+  opacity: 1;
+}
+
+// Filter sidebar content
+.sideNavOpened {
+  .fa {
+    color: $text-secondary;
+    transition: $transition-smooth;
+    cursor: pointer;
+    line-height: 1;
+
+    &:hover {
+      color: $apple-red;
+      transform: rotate(90deg);
+    }
+  }
+
+  b {
+    font-size: 16px;
+    font-weight: 700;
+    color: $text-primary;
+    background: linear-gradient(135deg, $apple-blue 0%, $apple-purple 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  select {
+    width: 100%;
+    height: 36px;
+    border: 1.5px solid $border-light;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: $text-primary;
+    background: $apple-white;
+    cursor: pointer;
+    transition: $transition-smooth;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23007AFF' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+
+    &:hover {
+      border-color: $apple-blue;
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.08);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $apple-blue;
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+    }
+  }
+
+  .btn-primary {
+    flex: 1;
+    background: linear-gradient(135deg, $apple-blue 0%, $apple-purple 100%);
+    color: $apple-white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: $transition-smooth;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .btn-secondary,
+  button[style*="background-color: #262626"] {
+    flex: 1;
+    background: $apple-light-gray !important;
+    color: $text-primary !important;
+    border: none !important;
+    border-radius: 6px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: $transition-smooth;
+
+    &:hover {
+      background: darken($apple-light-gray, 5%) !important;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// ============================================================================
+// Page design css
+// ============================================================================
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.client {
+  transition: $transition-smooth;
+}
+
+.client:hover {
+  opacity: 0.8;
+}
+
+.client_txt {
+  padding: 15px 6px 15px 2px;
+  height: 54px;
+  font-family: $font-primary;
+}
+
+.project_txt {
+  padding: 15px 6px 15px 20px;
+  height: 54px;
+  font-family: $font-primary;
+}
+
+.rag_colors {
+  border-right: 5px solid;
+}
+
+.project {
+  transition: $transition-smooth;
+}
+
+.project:hover {
+  opacity: 0.8;
+}
+
+// ============================================================================
+// Modern Content Tables
+// ============================================================================
+
+.contentTable {
+  width: calc(100% - 80px);
+  margin: 24px 40px;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  font-family: $font-primary;
+  table-layout: auto;
+
+  thead {
+    th {
+      background: transparent;
+      color: $text-secondary;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      border: none;
+      text-align: left;
+    }
+  }
+
+  tbody {
+    tr {
+      background: $apple-white;
+      border-radius: 12px;
+      box-shadow: $shadow-subtle;
+      transition: $transition-smooth;
+      cursor: pointer;
+
+      &:hover {
+        box-shadow: $shadow-medium;
+        transform: translateY(-2px);
+      }
+
+      td {
+        padding: 18px 16px;
+        border: 1px solid $border-light;
+        background: $apple-white;
+        font-size: 15px;
+        color: $text-primary;
+
+        &:first-child {
+          border-top-left-radius: 12px;
+          border-bottom-left-radius: 12px;
+          border-left: 3px solid $apple-blue;
+        }
+
+        &:last-child {
+          border-top-right-radius: 12px;
+          border-bottom-right-radius: 12px;
+        }
+      }
+
+      .fa-thumbs-up {
+        color: $apple-green;
+        font-size: 18px;
+      }
+
+      .fa-thumbs-down {
+        color: $apple-red;
+        font-size: 18px;
+      }
+
+      .fa-exclamation-circle {
+        color: $apple-orange;
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+// KPI Detail Table
+.KPITable {
+  width: 100%;
+  margin: 12px 0;
+  border-collapse: collapse;
+  font-family: $font-primary;
+  background: $apple-light-gray;
+  border-radius: 8px;
+  overflow: visible;
+  table-layout: auto;
+
+  thead {
+    background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F7 100%);
+
+    th {
+      padding: 14px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: $text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      border: 1px solid $border-light;
+    }
+  }
+
+  tbody {
+    td {
+      padding: 12px;
+      font-size: 13px;
+      color: $text-primary;
+      text-align: center;
+      border: 1px solid $border-light;
+      background: $apple-white;
+      min-width: 80px;
+
+      a {
+        color: $apple-blue;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: $transition-smooth;
+        white-space: nowrap;
+        display: inline-block;
+
+        &:hover {
+          color: $apple-purple;
+          text-decoration: underline;
+        }
+      }
+
+      mat-icon {
+        vertical-align: middle;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}
+
+// Product KPI Table
+.prodKPITable {
+  width: calc(100% - 80px);
+  margin: 0 40px 24px;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  font-family: $font-primary;
+
+  thead {
+    tr {
+      th, td {
+        background: transparent;
+        color: $text-secondary;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 10px 12px;
+        border: none;
+        text-align: left;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      background: $apple-white;
+      border-radius: 12px;
+      box-shadow: $shadow-subtle;
+      transition: $transition-smooth;
+      cursor: pointer;
+
+      &:hover {
+        box-shadow: $shadow-medium;
+        transform: translateY(-2px);
+      }
+
+      td {
+        padding: 16px 12px;
+        border: 1px solid $border-light;
+        background: $apple-white;
+        font-size: 14px;
+        color: $text-primary;
+
+        &:first-child {
+          border-top-left-radius: 12px;
+          border-bottom-left-radius: 12px;
+          border-left: 3px solid $apple-blue;
+        }
+
+        &:last-child {
+          border-top-right-radius: 12px;
+          border-bottom-right-radius: 12px;
+        }
+
+        .fa-thumbs-up,
+        .fa-thumbs-down {
+          font-size: 16px;
+          vertical-align: middle;
+        }
+
+        .fa-thumbs-up {
+          color: $apple-green;
+        }
+
+        .fa-thumbs-down {
+          color: $apple-red;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Modern Empty State
+// ============================================================================
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  min-height: 300px;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 64px;
+    color: $apple-gray;
+    margin-bottom: 24px;
+    opacity: 0.4;
+  }
+
+  .empty-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 8px;
+  }
+
+  .empty-message {
+    font-size: 16px;
+    color: $text-secondary;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+}
+
+// ============================================================================
+// Modern Material Table Styling
+// ============================================================================
+
+.mat-elevation-z8 {
+  box-shadow: none !important;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid $border-light;
+  background: $apple-white;
+  width: calc(100% - 80px) !important;
+  margin: 24px 40px !important;
+}
+
+::ng-deep {
+  .mat-mdc-table {
+    background: transparent;
+    font-family: $font-primary;
+  }
+
+  .mat-mdc-header-row {
+    background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F7 100%);
+    height: 56px;
+  }
+
+  .mat-mdc-header-cell {
+    color: $text-secondary;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid $border-light;
+    padding: 16px;
+  }
+
+  .mat-mdc-row {
+    height: auto;
+    transition: $transition-smooth;
+
+    &:hover {
+      background: rgba(0, 122, 255, 0.04);
+    }
+  }
+
+  .mat-mdc-cell {
+    color: $text-primary;
+    font-size: 14px;
+    border-bottom: 1px solid $border-light;
+    padding: 16px;
+
+    textarea {
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      font-family: $font-primary;
+      border: 1.5px solid $border-light;
+      transition: $transition-smooth;
+
+      &:focus {
+        outline: none;
+        border-color: $apple-blue;
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.08);
+      }
+    }
+
+    .mat-mdc-select {
+      border-radius: 8px;
+      background: $apple-light-gray;
+    }
+
+    a, .link {
+      color: $apple-blue;
+      cursor: pointer;
+      transition: $transition-smooth;
+      text-decoration: none;
+
+      &:hover {
+        color: $apple-purple;
+      }
+
+      i {
+        font-size: 16px;
+      }
+    }
+  }
+
+  // Paginator
+  .mat-mdc-paginator {
+    background: transparent;
+    border-top: 1px solid $border-light;
+    font-family: $font-primary;
+    padding: 16px;
+
+    .mat-mdc-paginator-page-size-label,
+    .mat-mdc-paginator-range-label {
+      color: $text-secondary;
+      font-size: 13px;
+    }
+
+    .mat-mdc-icon-button {
+      color: $apple-blue;
+
+      &:hover {
+        background: rgba(0, 122, 255, 0.08);
+      }
+    }
+  }
+
+  // Checkbox styling
+  .mat-mdc-checkbox {
+    .mdc-checkbox__native-control:enabled:checked~.mdc-checkbox__background {
+      background-color: $apple-blue;
+      border-color: $apple-blue;
+    }
+
+    .mdc-checkbox__native-control:enabled:indeterminate~.mdc-checkbox__background {
+      background-color: $apple-blue;
+      border-color: $apple-blue;
+    }
+  }
+
+  // Progress bar
+  .mat-mdc-progress-bar {
+    height: 3px;
+    border-radius: 3px;
+
+    .mdc-linear-progress__bar-inner {
+      border-top-width: 3px;
+      border-color: $apple-blue;
+    }
+  }
+}
+
+.login_bg {
+  background: linear-gradient(135deg, #FAFAFA 0%, #FFFFFF 100%) !important;
+}
+
+.mat-progress-bar {
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  position: relative;
+  transform: translateZ(0);
+  transition: opacity 250ms linear;
+  width: 100%;
+  border-radius: 3px;
+}
+
+.proj_status {
+  padding: 2px;
+  vertical-align: top;
+}
+
+.proj_green {
+  border-left: $apple-green 4px solid;
+}
+
+.landing_bg {
+  background: #F5F7FA;
+}
+
+.proj_txts {
+  font-size: 14px;
+  font-family: $font-primary;
+  color: $text-secondary;
+}
+
+.bordered-table th,
+.bordered-table td {
+  border: none;
+}
+
+.bordered_content {
+  font-size: 13px;
+  font-family: $font-primary;
+  border: 1px solid $border-light;
+  width: 90%;
+  color: $text-primary;
+  padding: 16px;
+  display: block;
+  background: $apple-white;
+  box-shadow: $shadow-subtle;
+  margin: 35px 9px;
+  border-radius: 12px;
+  transition: $transition-smooth;
+
+  &:hover {
+    box-shadow: $shadow-medium;
+  }
+}
+
+.bordered_content-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid $border-light;
+  top: 20px;
+  left: 11px;
+  position: relative;
+  float: right;
+}
+
+.color_swatch {
+  background: url("/assets/images/color_swatch.png") no-repeat;
+  width: 14px;
+  height: 14px;
+  padding-right: 37px;
+  float: right;
+  cursor: pointer;
+  transition: $transition-smooth;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+// ============================================================================
+// Modern Tab Styling (if needed)
+// ============================================================================
+
+.tab {
+  float: left;
+  border: 1px solid $border-light;
+  background: $apple-light-gray;
+  width: 15%;
+  height: 300px;
+  border-radius: 12px 0 0 12px;
+}
+
+.tab button {
+  display: block;
+  background: transparent;
+  color: $text-primary;
+  padding: 18px 16px;
+  width: 100%;
+  border: none;
+  outline: none;
+  text-align: left;
+  cursor: pointer;
+  transition: $transition-smooth;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: $font-primary;
+
+  &:hover {
+    background: rgba(0, 122, 255, 0.08);
+    color: $apple-blue;
+  }
+
+  &.active {
+    background: $apple-white;
+    color: $apple-blue;
+    font-weight: 600;
+    box-shadow: $shadow-subtle;
+  }
+}
+
+.tabcontent {
+  float: left;
+  padding: 20px;
+  border: 1px solid $border-light;
+  width: 70%;
+  border-left: none;
+  height: 300px;
+  background: $apple-white;
+  border-radius: 0 12px 12px 0;
+}
+
+// ============================================================================
+// Responsive Mobile Styles
+// ============================================================================
+
+@media only screen and (max-width: 600px) {
+  .mainDiv {
+    margin: 8px;
+    width: calc(100% - 16px);
+    border-radius: 16px;
+  }
+
+  .apple-header-section {
+    padding: 12px 16px;
+
+    .header-title {
+      font-size: 16px !important;
+      margin-bottom: 6px !important;
+    }
+
+    .project-info {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 8px 12px;
+      margin-top: 8px;
+    }
+  }
+
+  .view-by-section {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 8px;
+
+    ::ng-deep mat-radio-group {
+      flex-direction: column;
+
+      mat-radio-button .mdc-label {
+        padding: 10px 14px;
+      }
+    }
+  }
+
+  .sideNavOpened {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .contentTable,
+  .prodKPITable,
+  .mat-elevation-z8 {
+    width: calc(100% - 32px) !important;
+    margin: 16px !important;
+  }
+}
+
+// ============================================================================
+// Container and Layout Styles
+// ============================================================================
+
+.example-is-mobile .example-toolbar {
+  position: fixed;
+  z-index: 2;
+}
+
+h1.example-app-name {
+  margin-left: 8px;
+}
+
+.example-sidenav-container {
+  flex: 1;
+}
+
+.example-is-mobile .example-sidenav-container {
+  flex: 1 0 auto;
+}
+
+.mat-sidenav {
+  width: 250px;
+}
+
+.gavs_logo {
+  background: url(/assets/images/GAVS_Logo.png) no-repeat 51px 6px;
+  width: 200px;
+  float: right;
+  background-size: 40%;
+  height: 35px;
+}
+
+.disp_name {
+  padding: 9px 0 0 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+mat-toolbar {
+  width: 100%;
+  height: 50px;
+  font-size: 16px;
+  background: $apple-white;
+  border-bottom: solid $border-light 2px;
+  padding: 0px;
+  font-family: $font-primary;
+}
+
+.user_options {
+  display: inline-block;
+  text-align: center;
+  padding: 8px 0 0 17px;
+}
+
+.clientName {
+  margin-top: 0;
+  padding-bottom: 5px;
+  position: relative;
+  font-family: $font-primary;
+}
+
+.clientName::before {
+  content: "";
+  position: absolute;
+  width: 50px;
+  height: 2px;
+  bottom: 0;
+  left: 1.6%;
+  background: linear-gradient(90deg, $apple-blue 0%, $apple-purple 100%);
+  border-radius: 2px;
+}
+
+.navbar-brand {
+  padding: 9px 0 0 0 !important;
+}
+
+// ============================================================================
+// Filter and Action Button Sections
+// ============================================================================
+
+.btn-warning {
+  background: linear-gradient(135deg, $apple-orange 0%, #FF9F0A 100%) !important;
+  color: $apple-white !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 11px 24px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: $transition-smooth;
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.25) !important;
+  text-transform: none !important;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 149, 0, 0.35) !important;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+// ============================================================================
+// Icon and Button Enhancements
+// ============================================================================
+
+.fa-info-circle {
+  color: $apple-blue;
+  cursor: help;
+  transition: $transition-smooth;
+
+  &:hover {
+    color: $apple-purple;
+    transform: scale(1.1);
+  }
+}
+
+.fa-line-chart {
+  color: $apple-blue;
+  font-size: 16px;
+  transition: $transition-smooth;
+
+  &:hover {
+    color: $apple-purple;
+    transform: scale(1.2);
+  }
+}
+
+.fa-eye {
+  color: $apple-green;
+  font-size: 16px;
+  transition: $transition-smooth;
+
+  &:hover {
+    color: darken($apple-green, 10%);
+    transform: scale(1.2);
+  }
+}
+
+// ============================================================================
+// Loading Spinner
+// ============================================================================
+
+.fa-circle-o-notch {
+  color: $apple-blue;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================================================
+// Tooltip Customization
+// ============================================================================
+
+.custom-tooltip {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: $font-primary;
+}
+
+// ============================================================================
+// Utility Classes
+// ============================================================================
+
+// ============================================================================
+// Additional Content Padding
+// ============================================================================
+
+.mainDiv > div:not(.apple-header-section) {
+  padding: 24px 0;
+}
+
+// ============================================================================
+// Enhanced Button Styling
+// ============================================================================
+
+::ng-deep {
+  .btn {
+    font-family: $font-primary !important;
+    transition: $transition-smooth !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15) !important;
+    }
+  }
+}
+
+// ============================================================================
+// Filter Icon Enhancements
+// ============================================================================
+
+.fa {
+  &:hover {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+// ============================================================================
+// Additional Table Enhancements
+// ============================================================================
+
+.mat-mdc-table {
+  .mat-mdc-row:last-child .mat-mdc-cell {
+    border-bottom: none;
+  }
+}
+
+// ============================================================================
+// Checkbox Base Measure Section
+// ============================================================================
+
+::ng-deep .mat-mdc-checkbox {
+  .mdc-form-field {
+    font-family: $font-primary;
+    font-size: 14px;
+    color: $text-primary;
+  }
+
+  .mdc-checkbox__native-control:enabled:checked~.mdc-checkbox__background,
+  .mdc-checkbox__native-control:enabled:indeterminate~.mdc-checkbox__background {
+    background-color: $apple-blue !important;
+    border-color: $apple-blue !important;
+  }
+
+  &:hover {
+    .mdc-checkbox__native-control:enabled~.mdc-checkbox__background {
+      border-color: $apple-blue;
+    }
+  }
+}
+
+// ============================================================================
+// Action Button Row Styling
+// ============================================================================
+
+.action-button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 40px;
+  background: $apple-light-gray;
+  border-top: 1px solid $border-light;
+  border-bottom: 1px solid $border-light;
+  margin-bottom: 16px;
+
+  > div {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+}
+
+// ============================================================================
+// Responsive Adjustments
+// ============================================================================
+
+@media only screen and (max-width: 768px) {
+  .apple-header-section {
+    padding: 12px 16px 10px;
+
+    .header-title {
+      font-size: 16px !important;
+    }
+
+    .project-info {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 4px;
+      padding: 8px 12px;
+      margin-left: 0 !important;
+    }
+  }
+
+  .view-by-section {
+    gap: 8px !important;
+    padding-left: 0 !important;
+
+    ::ng-deep mat-radio-group {
+      flex-direction: column !important;
+      
+      mat-radio-button .mdc-label {
+        padding: 8px 12px;
+      }
+    }
+
+    ::ng-deep mat-form-field {
+      width: 100% !important;
+      max-width: 100% !important;
+      
+      .mat-mdc-form-field-infix {
+        width: 100% !important;
+      }
+    }
+  }
+
+  .contentTable,
+  .prodKPITable {
+    font-size: 12px !important;
+
+    th, td {
+      padding: 12px 8px !important;
+    }
+  }
+
+  .action-button-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch !important;
+
+    > div {
+      flex-direction: column;
+      width: 100%;
+
+      button {
+        width: 100% !important;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// Smooth Scroll Behavior
+// ============================================================================
+
+.mainDiv {
+  scroll-behavior: smooth;
+}
+
+// ============================================================================
+// Focus Visible Improvements
+// ============================================================================
+
+:focus-visible {
+  outline: 2px solid $apple-blue;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid $apple-blue;
+  outline-offset: 2px;
+}
+
+// ============================================================================
+// Print Styles (Optional)
+// ============================================================================
+
+@media print {
+  .mainDiv {
+    box-shadow: none;
+    border: none;
+  }
+
+  .apple-header-section {
+    background: white;
+  }
+
+  .btn, .fa {
+    display: none !important;
+  }
+}
+
+.mat-icon-button {
+  padding: 0px 0;
+}
+
+.header {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+}
+
+.header-mobile {
+  //display: inline-block;
+  width: 100%;
+  text-align: center;
+  display: none;
+}
+
+.left-toolbar {
+  float: left;
+}
+
+.right-toolbar {
+  float: right;
+  padding-right: 10px;
+}
+
+.center-toolbar {
+  display: inline-block;
+  margin: 0 auto;
+}
+
+@media screen and (max-width: 600px) {
+  .header {
+    display: none;
+  }
+
+  .header-mobile {
+    display: inline-block;
+  }
+}
+
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  left: -119px;
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content a:hover {
+  background-color: #ddd
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.governance {
+  padding: 12px;
+  border: 1px grey;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0px;
+}
+
+.badge-info {
+  color: #151b1e;
+  background-color: #63c2de;
+}
+
+.changecolor {
+  -webkit-animation: colorchange 1s infinite alternate;
+  animation: colorchange 1s infinite alternate;
+}
+
+@-webkit-keyframes colorchange {
+  0% {
+    color: red;
+  }
+
+  100% {
+    color: #f1c40f;
+  }
+}
+
+@keyframes colorchange {
+  0% {
+    color: red;
+  }
+
+  100% {
+    color: #f1c40f;
+  }
+}
+
+.glow {
+  //font-size: 80px;
+  color: #fff;
+  text-align: center;
+  -webkit-animation: glow 1s ease-in-out infinite alternate;
+  -moz-animation: glow 1s ease-in-out infinite alternate;
+  animation: glow 1s ease-in-out infinite alternate;
+}
+
+@-webkit-keyframes glow {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
+  }
+
+  to {
+    text-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6, 0 0 50px #ff4da6, 0 0 60px #ff4da6, 0 0 70px #ff4da6, 0 0 80px #ff4da6;
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
+  }
+
+  to {
+    text-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6, 0 0 50px #ff4da6, 0 0 60px #ff4da6, 0 0 70px #ff4da6, 0 0 80px #ff4da6;
+  }
+}
+
+//----------------- Styles for body content------------------------------------------------//
+
+.title {
+  height: 40px;
+  border-radius: 20px;
+  background-color: #f5f5f5;
+  padding: 8px 170px 10px 180px;
+  margin-bottom: 25px;
+}
+
+
+.headerTable tr :nth-child(1) {
+  width: 32%;
+}
+
+.headerTable tr :not(:first-child) {
+  width: 22%;
+}
+
+
+// .mainDiv{
+//   background-color:white; 
+//   border-radius:9px;
+//   display:Â inline-block;
+//   margin: 5px 10px 5px 10px;
+//   min-height:400px;
+//   height: calc(100vh - 57px);
+//   box-shadow: 1px 2px 3px 1px #c7c7c7;
+// }
+
+
+//---------------------------------
+
+.contentTable {
+  width: 100%;
+}
+
+// .contentTable thead tr th {
+//   width: 255px;
+//   max-width: 255px;
+// }
+
+// .contentTable tbody tr td {
+//   width: 255px;
+//   max-width: 255px;
+// }
+
+.contentTable tbody tr td {
+  padding-right: 15px;
+}
+
+.KPITable thead th {
+  font-weight: bold;
+  font-size: 13px;
+}
+
+
+.contentTable td {
+  border-collapse: collapse;
+}
+
+.KPITable th,
+.KPITable td {
+  padding: 3px;
+}
+
+.KPITable thead tr th {
+  width: auto;
+  min-width: 80px;
+}
+
+// Ensure Achievement column header has adequate space
+.KPITable thead tr th:last-child {
+  min-width: 150px !important;
+  width: auto !important;
+}
+
+.KPITable tbody tr td {
+  width: auto;
+  min-width: 80px;
+}
+
+// Ensure last column (Achievement with View Trend) has adequate space
+.KPITable tbody tr td:last-child {
+  min-width: 150px !important;
+  width: auto !important;
+  white-space: nowrap !important;
+}
+
+.KPITable tbody tr :nth-child(4) {
+  width: 10px;
+}
+
+
+
+
+
+
+//------------------ customize scroll bar------------------------------//
+
+.contentTable ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.contentTable ::-webkit-scrollbar-track {
+  // box-shadow: inset 0 0 5px grey; 
+  background: white;
+  border-radius: 10px;
+}
+
+.contentTable ::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  height: 0px;
+  background: #888;
+}
+
+.contentTable ::-webkit-scrollbar-thumb:vertical {
+  height: 18px;
+}
+
+.contentTable ::-webkit-scrollbar-track-piece :start {
+  background: transparent;
+  margin-top: 80px;
+}
+
+.contentTable ::-webkit-scrollbar-track-piece:end {
+  background: transparent;
+  margin-bottom: 80px;
+}
+
+.sideNav {
+  //height: 80%; /* 100% Full-height */
+  width: 0px;
+  /* 0 width - change this with JavaScript */
+  position: absolute;
+  /* Stay in place */
+  /*fixed*/
+  z-index: 1;
+  /* Stay on top */
+  top: 0;
+  /* Stay at the top */
+  right: 0;
+  margin-right: 15px;
+  background-color: #f2f2f2;
+  margin-top: 100px;
+  margin-bottom: 60px;
+  box-shadow: 0px 0.5px 12px gray;
+  border-radius: 7px;
+  overflow-x: hidden;
+  /* Disable horizontal scroll */
+  padding: 15px 5px 15px 15px;
+  transition: width 0.5s;
+  /* 0.5 second transition effect to slide in the sidenav */
+}
+
+.sideNavOpened {
+  //height: 80%; /* 100% Full-height */
+  width: 250px;
+  /* 0 width - change this with JavaScript */
+  position: absolute;
+  /* Stay in place */
+  z-index: 1;
+  /* Stay on top */
+  top: 0;
+  /* Stay at the top */
+  right: 0;
+  margin-right: 15px;
+  background-color: #f2f2f2;
+  margin-top: 100px;
+  margin-bottom: 60px;
+  box-shadow: 0px 0.5px 12px gray;
+  border-radius: 7px;
+  overflow-x: hidden;
+  /* Disable horizontal scroll */
+  padding: 15px 5px 15px 15px;
+  transition: width 0.5s;
+  /* 0.5 second transition effect to slide in the sidenav */
+}
+
+#grdRejections .mat-select-content {
+  font-size: 12px !important;
+}
+.mat-mdc-radio-button  .mat-mdc-radio-button {
+  margin-left: 10px;
+  font-size: 12px !important;
+}
+.mat-radio-group{
+   display: inline-block;
+   margin: 0px !important;
+}
+.mat-radio-button { 
+  margin-left: 10px;
+  font-size: 13px !important;
+}
+
+#selSeviceTower .mat-select-value{width:90% !important ;}
+.mat-radio-label-content { 
+  padding-left: 3px !important;
+}
+// .mat-select-arrow-wrapper{   
+//   margin-left: 160px !important;
+//   position: fixed;
+// }
+#grdRejections ::ng-deep .mat-select .mat-select-trigger {
+  min-width: 150px;
+}
+
+#grdRejections  .mat-select-trigger {
+  min-width: 180px;
+}
+
+.mat-tooltip {
+  font-size: 14px !important;
+}
+
+.disabled {
+  pointer-events: none;
+}
+
+.example-margin {
+  margin: 0 12px;
+}
+
+::ng-deep .mat-checkbox-checked.mat-accent .mat-checkbox-ripple .mat-ripple-element {
+  opacity: 0.03 !important;
+  background-color: #005691 !important;
+}
+
+::ng-deep .mat-checkbox-checked.mat-accent .mat-checkbox-background,
+.mat-checkbox-indeterminate.mat-accent .mat-checkbox-background {
+  background-color: #005691;
+}
+
+::ng-deep .mat-checkbox-checked .mat-checkbox-background,
+.mat-checkbox-indeterminate .mat-checkbox-background {
+  background-color: #005691 !important;
+}
+
+.fa-thumbs-up {
+  color: green;
+  text-shadow: 1px 1px 1px #ccc;
+  font-size: 1.0em;
+}
+
+.fa-thumbs-down {
+  color: red;
+  text-shadow: 1px 1px 1px #ccc;
+  font-size: 1.0em;
+}
+
+.fa-exclamation-circle {
+  color: orange;
+  text-shadow: 1px 1px 1px #ccc;
+  font-size: 1.0em;
+}
+
+.Red {
+  color: red;
+  font-weight: 100;
+}
+
+::ng-deep .custom-tooltip {
+  white-space: pre-line;
+  max-width: 700px !important;
+  //background-color: lightgray;
+  font-size: 13px;
+}
+
+::ng-deep .custom-tooltip .custom-tooltip .bottom .custom-tooltip.tooltip-arrow {
+  top: 0;
+  left: 50%;
+  margin-left: -5px;
+  border-bottom-color: #000000;
+  /* black */
+  border-width: 0 5px 5px;
+}

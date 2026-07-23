@@ -1,0 +1,187 @@
+<div class="findings-dialog-container">
+  <!-- Header with Look For -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <label class="header-label">Look For:</label>
+      <span class="header-text">{{ checkListdata.looK_FOR }}</span>
+    </div>
+    <button mat-icon-button class="close-button" (click)="CancelOnClick()" aria-label="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Note Section -->
+  <div class="note-section">
+    <mat-icon class="note-icon">info</mat-icon>
+    <span class="note-text">
+      Please input description of the problem/failure and evidence where there is a non-conformity / non-fulfillment of requirements
+    </span>
+  </div>
+
+  <!-- Main Content Wrapper with Single Scroll -->
+  <div class="dialog-content-wrapper">
+    <!-- Findings Section -->
+    <div class="findings-section">
+    <h3 class="section-title">Findings</h3>
+    <div class="findings-list">
+      <div *ngFor="let f of checkListdata.findings; let id = index" class="finding-row">
+        <mat-form-field appearance="outline" class="finding-type-field">
+          <mat-label>Finding Type</mat-label>
+          <input matInput
+                 [disabled]="true"
+                 [(ngModel)]="f.findinG_TYPE"
+                 name="findingtype{{id}}">
+        </mat-form-field>
+        
+        <span class="separator">:</span>
+        
+        <mat-form-field appearance="outline" class="finding-description-field">
+          <mat-label>Description</mat-label>
+          <textarea matInput
+                    [disabled]="checkListdata.issubmitted"
+                    [(ngModel)]="f.findinG_DESCRIPTION"
+                    name="findingdesc{{id}}"
+                    rows="2"
+                    placeholder="Enter finding description"></textarea>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+
+  <!-- Samples Audited Section -->
+  <div class="samples-section">
+    <div class="section-header">
+      <h3 class="section-title">Samples Audited</h3>
+      <button mat-raised-button
+              color="primary"
+              [disabled]="checkListdata.issubmitted"
+              (click)="AddNewRow(checkListdata)"
+              class="add-sample-btn">
+        <mat-icon>add</mat-icon>
+        Add Sample
+      </button>
+    </div>
+
+    <!-- Samples Table -->
+    <div *ngIf="checkListdata.checklisT_SAMPLE_AUDITED.length > 0" class="samples-table-container">
+      <table class="samples-table">
+        <thead>
+          <tr>
+            <th class="col-employee">Employee Name</th>
+            <th class="col-number">Tickets Audited</th>
+            <th class="col-number">Tickets Passed</th>
+            <th class="col-number">Tickets Failed</th>
+            <th class="col-number">Compliance %</th>
+            <th class="col-comments">Comments</th>
+            <th class="col-action">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let samp of checkListdata.checklisT_SAMPLE_AUDITED; let i = index" class="sample-row">
+            <td class="col-employee">
+              <mat-form-field appearance="outline" class="full-width compact-field">
+                <mat-select [disabled]="checkListdata.issubmitted"
+                           name="employee{{i}}"
+                           [(ngModel)]="samp.emP_ID"
+                           placeholder="Select Employee">
+                  <mat-option *ngFor="let emp of empList"
+                             [value]="emp.emP_ID"
+                             [title]="emp.frsT_NM">
+                    {{ emp.frsT_NM }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+            <td class="col-number">
+              <mat-form-field appearance="outline" class="compact-field number-field">
+                <input matInput
+                       type="number"
+                       [disabled]="checkListdata.issubmitted"
+                       [(ngModel)]="samp.totaL_SAMPLES_AUDITED"
+                       name="audited{{i}}"
+                       placeholder="0"
+                       min="0">
+              </mat-form-field>
+            </td>
+            <td class="col-number">
+              <mat-form-field appearance="outline" class="compact-field number-field">
+                <input matInput
+                       type="number"
+                       [disabled]="checkListdata.issubmitted"
+                       [max]="(samp.totaL_SAMPLES_AUDITED + 1)"
+                       (change)="FillNotCompletedData(samp)"
+                       [(ngModel)]="samp.sampleS_COMPLIED"
+                       name="passed{{i}}"
+                       placeholder="0"
+                       min="0">
+              </mat-form-field>
+            </td>
+            <td class="col-number">
+              <mat-form-field appearance="outline" class="compact-field number-field">
+                <input matInput
+                       type="number"
+                       [disabled]="checkListdata.issubmitted"
+                       [(ngModel)]="samp.sampleS_NOTCOMPLIED"
+                       name="failed{{i}}"
+                       placeholder="0"
+                       min="0">
+              </mat-form-field>
+            </td>
+            <td class="col-number">
+              <mat-form-field appearance="outline" class="compact-field number-field">
+                <input matInput
+                       type="number"
+                       [disabled]="checkListdata.issubmitted"
+                       [(ngModel)]="samp.percentage"
+                       name="percentage{{i}}"
+                       placeholder="0"
+                       min="0"
+                       max="100">
+              </mat-form-field>
+            </td>
+            <td class="col-comments">
+              <mat-form-field appearance="outline" class="full-width compact-field">
+                <textarea matInput
+                         [disabled]="checkListdata.issubmitted"
+                         name="comments{{i}}"
+                         [(ngModel)]="samp.comments"
+                         rows="1"
+                         placeholder="Comments"></textarea>
+              </mat-form-field>
+            </td>
+            <td class="col-action">
+              <button mat-icon-button
+                      color="warn"
+                      [disabled]="checkListdata.issubmitted"
+                      (click)="deleteSample(samp)"
+                      matTooltip="Delete Sample"
+                      aria-label="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /dialog-content-wrapper -->
+
+  <!-- Action Buttons -->
+  <div class="dialog-actions">
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="SaveRows_onClick()"
+            [disabled]="checkListdata.issubmitted">
+      <mat-icon>save</mat-icon>
+      Save
+    </button>
+    <button mat-raised-button
+            type="button"
+            (click)="CancelOnClick()">
+      <mat-icon>cancel</mat-icon>
+      Cancel
+    </button>
+  </div>
+</div>

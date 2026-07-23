@@ -1,0 +1,42 @@
+<!-- <div class="csat-dashboard-container" style="margin-top:0;margin-left: 0%;padding: 0 16px;"> -->
+<!-- Header Section -->
+<!-- <div class="dashboard-header" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 20px; background: #ffffff; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 4px; border: 1px solid #e2e8f0;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div *ngIf="_util.IsGAVS()" class="backbuttonlink" [routerLink]="['/newdashboard/custm']" (click)="resetValues()"
+           style="display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #f8fafc, #f1f5f9); transition: all 0.2s ease; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+        <img src="assets/images/back_round.png" style="width: 20px; height: 20px;">
+      </div>
+      <img class="customer-logo" style="height: 40px; padding: 6px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: white; object-fit: contain;"
+        src="assets/images/{{custId}}.png" onerror="this.src='assets/images/CustomerLogo.png'">
+    </div>
+  </div> -->
+<!-- </div> -->
+
+<!-- Filter Section with integrated Prev/Next -->
+<div style="margin-left: 0.5%; margin-top: 0;">
+  <app-cssdashboard-filter [allCust]="allCust" [custId]="customerId" [currIndex]="currIndex"
+    (getCssInputEmitter)="receivedCssInput($event)" (prevClicked)="onPrev()" (nextClicked)="onNext()"
+    ></app-cssdashboard-filter>
+</div>
+
+<!-- Heat Map Table Page -->
+<div *ngIf="currIndex == 0" style="width: 99%; margin-left: 1%; margin-top: 8px;">
+  <app-cssdashboard-css-table class="portfolioCard verysmalltextblack "
+    [cssDashboardInputs]="cssInputs"></app-cssdashboard-css-table>
+</div>
+
+<!-- Charts Page 1 -->
+<div *ngIf="currIndex == 1" style="height: 100%">
+  <app-cssdashboard-next-page1 [customerId]="customerId" [fromDate]="fromDate" [toDate]="toDate"
+    [customerIds]="cssInputs.customeR_IDS" [allCust]="allCust" [frequency]="cssInputs.frequency"
+    [selectedQuarter]="selectedQuarter">
+  </app-cssdashboard-next-page1>
+</div>
+
+<!-- Charts Page 2 -->
+<div *ngIf="currIndex == 2" style="height: 100%">
+  <app-cssdashboard-next-page2 [customerId]="customerId" [fromDate]="fromDate" [toDate]="toDate"
+    [customerIds]="cssInputs.customeR_IDS" [allCust]="allCust" [frequency]="cssInputs.frequency"
+    [trendQuarter]="trendQuarter">
+  </app-cssdashboard-next-page2>
+</div>

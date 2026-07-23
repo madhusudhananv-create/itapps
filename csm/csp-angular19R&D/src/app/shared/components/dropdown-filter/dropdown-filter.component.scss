@@ -1,0 +1,62 @@
+// Modern dropdown styling
+.mat-dropdown-plain {
+  width: 220px;
+  height: 36px;
+  border: 1.5px solid #D2D2D7;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 0;
+  font-size: 12.5px;
+  color: #1D1D1F;
+  position: relative;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #B0B0B5;
+  }
+
+  &:focus,
+  &.mat-mdc-select-focused {
+    border-color: #0071E3;
+    outline: none;
+  }
+
+  // Fix for Material internal structure
+  ::ng-deep .mat-mdc-select-trigger {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 40px 0 12px;
+  }
+
+  ::ng-deep .mat-mdc-select-value {
+    font-size: 12.5px;
+    color: #1D1D1F;
+    text-align: left;
+  }
+
+  ::ng-deep .mat-mdc-select-placeholder {
+    font-size: 12px;
+    color: #8E8E93;
+    text-align: left;
+  }
+
+  ::ng-deep .mat-mdc-select-arrow {
+    color: #8E8E93;
+  }
+
+  ::ng-deep .mat-mdc-select-arrow-wrapper {
+    position: absolute;
+    right: 12px;
+  }
+}
+
+// Filter search field inside dropdown
+.filter-dropdown {
+  padding: 8px 12px;
+  
+  input {
+    font-size: 12px;
+    color: #1D1D1F;
+  }
+}

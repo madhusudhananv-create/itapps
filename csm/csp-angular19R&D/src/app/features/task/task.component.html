@@ -1,0 +1,42 @@
+<div class="example-container" style="margin: 0; padding: 0;">
+  <app-navbar-new (showDashboardMenu)="onMenuToggleChange($event)"></app-navbar-new>
+  
+  <div class="col-lg-12 col-md-12 col-sm-12" style="text-align: left;">
+    <div style="display: inline-block; margin-right: 10px; cursor: pointer; text-decoration: none; outline: none"
+      [routerLink]="['/newdashboard/cust', _layoutService.selectedCust, false]">
+      <img src="assets/images/back_round.png" alt="Back">
+    </div>
+    <img class="image" style="height:45px;padding:5px" 
+      [src]="'assets/images/' + _layoutService.selectedCust + '.png'"
+      onerror="this.src='assets/images/CustomerLogo.png'"
+      alt="Customer Logo">
+  </div>
+
+  <mat-sidenav-container class="example-sidenav-container">
+    <mat-sidenav-content style="background-color:#eaeaea">
+      <!-- Menu component would go here if needed -->
+      <!-- <app-menu *ngIf="menuToggleStatus"></app-menu> -->
+      
+      <div class="mainDiv">
+        <mat-tab-group>
+          <mat-tab label="Planner">
+            <mat-tab-group class="nested-tabs-left-align" (selectedTabChange)="tabChange($event)">
+              <mat-tab label="View Planner">
+                <!-- Audit Plan Component -->
+                <app-audit-plan></app-audit-plan>
+              </mat-tab>
+              
+              <mat-tab *ngIf="_access.IsAllowed(116, 1, '', '')" label="Add Event/Task">
+                <!-- Task Add Component - Standalone mode -->
+                <app-task-add 
+                  (onSave)="handleTaskSave($event)"
+                  (onCancel)="handleTaskCancel()">
+                </app-task-add>
+              </mat-tab>
+            </mat-tab-group>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="2e3eaf966bc84fcd82dc313386d23062" Name="Diagram1">
+        <EntityTypeShape EntityType="BAS_TESTModel.BILLING_CYCLE" Width="1.5" PointX="15.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.BU_INFO" Width="1.5" PointX="11.25" PointY="44.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CNTRY_HOLIDAY" Width="1.5" PointX="3" PointY="46.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CNTRY_INFO" Width="1.5" PointX="0.75" PointY="46.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CNTRY_WEEKEND" Width="1.5" PointX="3" PointY="48.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.COMPLIANCE_TRAINING_ASSESSMENT_RESULT" Width="1.5" PointX="5.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CONFIGURATION" Width="1.5" PointX="5.75" PointY="5.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CRNCY_INFO" Width="1.5" PointX="11.25" PointY="49.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CURRENCY_RATE_CONVERSION" Width="1.5" PointX="7.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CUST_ADDR" Width="1.5" PointX="6" PointY="46.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CUSTOMER" Width="1.5" PointX="3.75" PointY="55.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.DATE_DIM" Width="1.5" PointX="19.5" PointY="32.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.DEPT_INFO" Width="1.5" PointX="16.5" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.ELMAH_Error" Width="1.5" PointX="7.75" PointY="4.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EMAIL_TEMPLATE" Width="1.5" PointX="0.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EMP_INFO" Width="1.5" PointX="21.75" PointY="30.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EMP_INFO_old" Width="1.5" PointX="9" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EMP_PASSPORT" Width="1.5" PointX="3" PointY="41.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EMP_PROJ_ROLE_MAP" Width="1.5" PointX="18.75" PointY="46.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EMP_SKILLSET_MATRIX" Width="1.5" PointX="16.25" PointY="41.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EXCHANGE_RATE" Width="1.5" PointX="13.5" PointY="54.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.LKP_RIMBS_PRE_DEFINED_AMT" Width="1.5" PointX="3" PointY="51.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.MASTER_LOOKUP" Width="1.5" PointX="3" PointY="5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.MASTER_TYPE" Width="1.5" PointX="0.75" PointY="5.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PASSPORT_COUNTRY" Width="1.5" PointX="2.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_RESOURCE" Width="1.5" PointX="24" PointY="44.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_RESOURCE_ROLE_MAP_BILLING" Width="1.5" PointX="26.25" PointY="53.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_REV" Width="1.5" PointX="29.25" PointY="46" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_REV_APPRL_WF" Width="1.5" PointX="31.5" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_ROLE" Width="1.5" PointX="16.5" PointY="36.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_ROLE_BILLING_ALLOCATION" Width="1.5" PointX="20.25" PointY="69" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_ROLE_LOC" Width="1.5" PointX="16.5" PointY="55.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_ROLE_MAP_BILLING" Width="1.5" PointX="18" PointY="59.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_SUB_ROLE" Width="1.5" PointX="16.5" PointY="65.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_TASK" Width="1.5" PointX="4.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJECT" Width="1.5" PointX="13.5" PointY="43.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJECT_EXPENSE" Width="1.5" PointX="21" PointY="57.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJECT_MILESTONE" Width="1.5" PointX="21" PointY="61.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJECT_NEW" Width="1.5" PointX="11.25" PointY="53.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RESRC_REV" Width="1.5" PointX="26.25" PointY="40.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RESRC_RIMBS" Width="1.5" PointX="29.25" PointY="39.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RESRC_RIMBS_OTHERS" Width="1.5" PointX="18.75" PointY="41.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RESRC_RQST" Width="1.5" PointX="21.75" PointY="43.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RESRC_RQST_WF" Width="1.5" PointX="27" PointY="46.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RIMBS_FILES" Width="1.5" PointX="31.5" PointY="41.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RIMBS_TYPE" Width="1.5" PointX="27" PointY="36.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.ROLE_INFO" Width="1.5" PointX="0.75" PointY="1.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RR_WF_STAGE_INFO" Width="1.5" PointX="24.75" PointY="56.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.SKILLSET_INFO" Width="1.5" PointX="19.5" PointY="28" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.SOW_INFO" Width="1.5" PointX="15.75" PointY="76.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.SP_DETAILS" Width="1.5" PointX="6.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.sysdiagram" Width="1.5" PointX="8.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.USER_INFO" Width="1.5" PointX="3" PointY="0.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.USER_RIGHTS" Width="1.5" PointX="18.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.VISA_DETAILS" Width="1.5" PointX="5.25" PointY="41.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.ACTIVITY_LOGS" Width="1.5" PointX="9.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.ACTIVITY_LOGS_old" Width="1.5" PointX="9.75" PointY="4.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.AUDIT_EXECUTION" Width="1.5" PointX="10.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.AUDIT_EXECUTION1" Width="1.5" PointX="11.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.BUSINESS_SERVICES" Width="1.5" PointX="6.75" PointY="11.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.COMPLIANCE_TRAINING_ASSESSMENT_HEADER" Width="1.5" PointX="0.75" PointY="12.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CONFIGURATION_EXT" Width="1.5" PointX="2.75" PointY="12.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CSM_TITLES" Width="1.5" PointX="12.75" PointY="6.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.CSM_TITLES_old" Width="1.5" PointX="12.75" PointY="9.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.DEPT_BU_INFO" Width="1.5" PointX="13.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EMP_NEWS" Width="1.5" PointX="14.75" PointY="4.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.EXECUTION_IMPACT_MAPPING" Width="1.5" PointX="4.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_RESRC_TIME_ENTRY" Width="1.5" PointX="6.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_RESRC_TIME_ENTRY_odl2" Width="1.5" PointX="14.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_RESRC_TIME_ENTRY_oldl" Width="1.5" PointX="8.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_TIME_ENTRY_MODULES" Width="1.5" PointX="14.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJ_TIMESHEET" Width="1.5" PointX="21.75" PointY="38.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.project_bk15July2019" Width="1.5" PointX="16.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJECT_COURSE_MAPPING" Width="1.5" PointX="0.75" PointY="16.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJECT_PREFERENCE" Width="1.5" PointX="16.75" PointY="7.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_DEFECT" Width="1.5" PointX="16.75" PointY="10.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_ITERATION" Width="1.5" PointX="10.75" PointY="16.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_RELEASE" Width="1.5" PointX="18.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_SUBPROJECT" Width="1.5" PointX="2.75" PointY="18.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_TASK" Width="1.5" PointX="18.75" PointY="5.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_TASK_STATE" Width="1.5" PointX="18.75" PointY="11.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_TEAM" Width="1.5" PointX="12.75" PointY="18.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_USERSTORY" Width="1.5" PointX="18.75" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.PROJMGT_USERSTORY_STATE" Width="1.5" PointX="14.75" PointY="18.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.RESRC_RQST_SKILLSET" Width="1.5" PointX="21.75" PointY="27.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.tblParametersForAllSP" Width="1.5" PointX="20.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.TIMESHEET_SETTINGS" Width="1.5" PointX="20.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.tmptable1" Width="1.5" PointX="4.75" PointY="20.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAS_TESTModel.TOKEN" Width="1.5" PointX="6.75" PointY="20.75" IsExpanded="true" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_ID__BILLING_CYCLE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.BU_HEAD_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.DEPT_INFO_BU_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.FK__PROJECT__BU_ID__6339AFF7" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.CNTRY_ID_CNTRY_HOLIDAY_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.CNTRY_ID_CNTRY_WEEKEND_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.COUNTRY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.CUST_ADDR_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_INFO_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RIMBS_CNTRY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RIMBS_TYPE_CNTRYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.VISA_DETAILS_CNTRY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.BILL_CRNCY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EXCHANGE_RATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_CRNCY_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RIMBS_TYPE_CRNCYID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.CUST_ADDR_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECTCUST_ADDR_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECTCUST_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.USER_RIGHTS_CUSTOMER_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_REV_DATE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_TIMESHEET_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_REV_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RIMBS_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RIMBS_OTHERS_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RIMBS_FILES_DATE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.DEPT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.DEPT_INFO_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_DEPT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RESOURCE_EMPID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_ID_PROJECT_EXPENSE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_INFO_MANAGER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_INFO_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_SKILLSET_MATRIX_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RESOURCE_PROJ_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RESOURCE_PROJ_RM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RP_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_TIMESHEET_UPLD_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_NEW_PROJ_BU_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_NEW_PROJ_DM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_PROJ_AM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_PROJ_BUHEAD_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_PROJ_DM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_PROJ_PM_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_MANAGER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_REVIEWER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_WF_STAGE_OWNER_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_WF_TAG_EMP_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.VISA_DETAILS_PASSPORT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_PROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_PROJ_ROLE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_PROJ_ROLE_MAPID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_PROJ_SUBROLE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_PROJ_SUBROLE_LOC_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_SKILLSET_SKILLSETID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RIMBS_TYPE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.MASTER_TYPE_MASTER_LOOKUP_fk" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.FK_PROJ_RESOURCE_PROJ_RESOURCE" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RESOURCE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RESRC_ID_PROJ_RESOURCE_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_RESRCID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_REV_PROJ_RESRC_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RIMBS_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RIMBS_FILES_PROJ_RESRC_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_ROLE_MAP_BILLING_ID_PROJ_RESOURCE_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_REV_WF_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_REVPROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.ROLE_ID_PROJ_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_ROLE_MAP_BILLING_ID_PROJ_ROLE_BILLING_ALLOCATION_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.SOW_ID_PROJ_ROLE_BILLING_ALLOCATION_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.ROJECT_ID_PROJ_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.SOW_ID_PROJ_ROLE_MAP_BILLING_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJ_TIMESHEET_PROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_ID__PROJECT_MILESTONE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PROJECT_ID_SOW_INFO_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RIMBS_OTHERS_PROJ_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.USER_RIGHTS_PROJECT_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.SOW_ID_PROJECT_EXPENSE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.SOW_ID_ROJECT_MILESTONE_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RIMBSTYPEID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RIMBS_FILES_REF_RIMBS_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.PRMY_SKILLSET_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_WF_RESRC_RQST_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.SCDRY_SKILLSET_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_WF_RR_WF_STAGE_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.USER_INFO_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.RESRC_RQST_SKILLSET_ID_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="BAS_TESTModel.EMP_DEPARTMENT" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

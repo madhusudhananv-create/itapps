@@ -1,0 +1,626 @@
+// ============================================================
+// kpi-action-plan.component.scss  — Apple-inspired redesign
+// ============================================================
+
+// --- Design Tokens ---
+$primary:        #5b7fff;
+$primary-dark:   #3a57e8;
+$primary-light:  #eef1ff;
+$accent:         #7c3aed;
+$success:        #22c55e;
+$danger:         #ef4444;
+$warn:           #f59e0b;
+$text-primary:   #111827;
+$text-secondary: #374151;
+$text-muted:     #9ca3af;
+$bg-base:        #f5f6fa;
+$bg-white:       #ffffff;
+$border:         #e5e7eb;
+$shadow-sm:      0 1px 4px rgba(0,0,0,.06);
+$shadow-md:      0 4px 16px rgba(0,0,0,.10);
+$shadow-lg:      0 8px 32px rgba(0,0,0,.14);
+$radius-sm:      6px;
+$radius-md:      10px;
+$radius-lg:      16px;
+$radius-pill:    999px;
+$transition:     0.2s cubic-bezier(.4,0,.2,1);
+
+// ============================================================
+// Global Z-Index Fix for Material Dropdowns in Dialog
+// ============================================================
+// CRITICAL FIX: mat-select dropdowns need higher z-index than dialog overlay
+// Angular Material dialog: 1000, so dropdowns must be 1001+
+
+// Force all Material dropdowns to appear on top
+::ng-deep {
+  // Custom panel class for CAPA dropdowns
+  .capa-dropdown-panel {
+    z-index: 9999 !important;
+    max-height: 256px !important;
+    
+    // Ensure proper positioning relative to trigger
+    &.mat-mdc-select-panel {
+      z-index: 9999 !important;
+      // CRITICAL: Let Angular calculate position naturally, don't force fixed
+      // The disableOptionCentering should handle alignment
+    }
+  }
+  
+  .cdk-overlay-container {
+    z-index: 9999 !important;
+    position: fixed !important;
+    pointer-events: none !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    
+    .cdk-overlay-backdrop {
+      pointer-events: auto !important;
+    }
+    
+    .cdk-overlay-pane {
+      pointer-events: auto !important;
+      z-index: 9999 !important;
+      
+      // Ensure dropdowns with our custom class are positioned correctly
+      &:has(.capa-dropdown-panel) {
+        z-index: 9999 !important;
+      }
+    }
+  }
+  
+  .mat-mdc-select-panel {
+    z-index: 9999 !important;
+  }
+  
+  // CRITICAL FIX: Ensure proper positioning strategy
+  .cdk-overlay-connected-position-bounding-box {
+    position: fixed !important;
+  }
+  
+  // Ensure dialog container doesn't clip dropdowns
+  .mat-mdc-dialog-container {
+    overflow: visible !important;
+    
+    .mat-mdc-dialog-surface {
+      overflow: visible !important;
+    }
+  }
+}
+
+// ============================================================
+// Dialog Wrapper
+// ============================================================
+.kpi-dialog-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: min(92vw, 1100px);
+  //max-width: 96vw;
+  height: 100%; // Changed: Use full available height from dialog
+  background: $bg-base;
+  border-radius: $radius-lg;
+  overflow: visible; // CRITICAL: No scroll here, let Material Dialog handle it
+  animation: dialogIn .25s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: translateY(12px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// ============================================================
+// Dialog Header
+// ============================================================
+.kpi-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #5b7fff 0%, #7c3aed 100%);
+  flex-shrink: 0;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .header-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,.2);
+      border-radius: $radius-sm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      mat-icon {
+        color: #fff;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .header-title {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      margin: 0;
+    }
+  }
+
+  .btn-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: rgba(255,255,255,.18);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background $transition;
+    flex-shrink: 0;
+
+    mat-icon {
+      color: #fff;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover { background: rgba(255,255,255,.35); }
+  }
+}
+
+// ============================================================
+// KPI Meta Bar
+// ============================================================
+.kpi-meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 10px 20px;
+  background: $bg-white;
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+
+    .meta-label {
+      color: $text-muted;
+      font-weight: 500;
+    }
+
+    .meta-value {
+      color: $text-primary;
+      font-weight: 600;
+    }
+
+    .meta-value.not-met { color: $danger; }
+    .meta-value.met     { color: $success; }
+  }
+}
+
+// ============================================================
+// Custom Stepper
+// ============================================================
+.kpi-stepper {
+  flex-shrink: 0;
+  background: $bg-white;
+  border-bottom: 1px solid $border;
+  padding: 0 12px;
+
+  .stepper-nav {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .step-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all $transition;
+    flex: 1 1 auto;
+    min-width: 0;
+
+    &:hover:not(.disabled) {
+      background: rgba($primary, 0.05);
+    }
+
+    &.active {
+      border-bottom-color: $primary;
+      background: $primary-light;
+
+      .step-num {
+        background: $primary;
+        color: #fff;
+      }
+
+      .step-info .step-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: $primary;
+        white-space: normal;
+        word-break: break-word;
+      }
+    }
+
+    &.completed {
+      .step-num {
+        background: $success;
+        color: #fff;
+      }
+      .step-info .step-label { color: $success; }
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      pointer-events: none;
+      
+      .step-num {
+        background: #f3f4f6;
+        color: #d1d5db;
+      }
+      
+      .step-info .step-label,
+      .step-info .step-status {
+        color: #d1d5db;
+      }
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: $text-muted;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all $transition;
+    }
+
+    .step-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+      overflow: hidden;
+
+      .step-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: $text-secondary;
+        transition: color $transition;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .step-status {
+        font-size: 10px;
+        color: $text-muted;
+        font-style: italic;
+        white-space: normal;
+      }
+    }
+
+    .step-divider {
+      width: 32px;
+      height: 1px;
+      background: $border;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// ============================================================
+// Step Content Area
+// ============================================================
+.kpi-step-content {
+  flex: 1;
+  // CRITICAL: No overflow management here - let it flow naturally
+  overflow: visible !important;
+  padding: 14px 16px;
+  animation: stepIn .2s cubic-bezier(.4,0,.2,1);
+  
+  // Fix for dropdowns in tables
+  table {
+    overflow: visible !important;
+    
+    tbody, tr, td {
+      overflow: visible !important;
+    }
+  }
+}
+
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+// ============================================================
+// Cause Selector Row
+// ============================================================
+.cause-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  .cause-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: $text-secondary;
+    white-space: nowrap;
+  }
+
+  .cause-field {
+    min-width: 240px;
+    flex: 1;
+    max-width: 360px;
+  }
+
+  .guide-link {
+    margin-left: auto;
+    font-size: 11px;
+    color: $primary;
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid $primary;
+    border-radius: $radius-pill;
+    transition: all $transition;
+
+    &:hover {
+      background: $primary;
+      color: #fff;
+    }
+  }
+}
+
+// ============================================================
+// CAPA Table
+// ============================================================
+.capa-table-wrap {
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
+  border: 1px solid $border;
+  margin-bottom: 16px;
+  overflow: visible !important; // CRITICAL: Allow dropdowns to escape
+  position: static !important; // CRITICAL: Don't create positioning context
+}
+
+.capa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: $bg-white;
+  table-layout: fixed;
+  position: static !important; // CRITICAL: Don't create positioning context
+  transform: none !important; // Prevent creating stacking context that breaks dropdowns
+  overflow: visible !important; // Allow dropdowns to escape
+
+  thead tr {
+    background: linear-gradient(90deg, #f1f3ff 0%, #f5f0ff 100%);
+    position: static !important;
+
+    th {
+      padding: 8px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: $text-secondary;
+      text-align: left;
+      border-bottom: 2px solid $border;
+      white-space: nowrap;
+      letter-spacing: .3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  tbody tr {
+    position: static !important; // CRITICAL: Don't create positioning context
+
+    &:hover { background: #fafbff; }
+    &:last-child { border-bottom: none; }
+
+    td {
+      padding: 5px 8px;
+      vertical-align: middle;
+      color: $text-primary;
+      overflow: visible !important; // Allow dropdowns to overflow
+      position: static !important; // CRITICAL: Let dropdown calculate from viewport
+      // Style for native select elements (replaced mat-select to fix positioning)
+      select {
+        &:hover:not(:disabled) {
+          border-color: $primary !important;
+        }
+        
+        &:focus {
+          outline: none;
+          border-color: $primary !important;
+          box-shadow: 0 0 0 2px rgba(91, 127, 255, 0.1);
+        }
+        
+        &:disabled {
+          background: #f5f5f5 !important;
+          color: #999 !important;
+          cursor: not-allowed !important;
+        }
+      }
+      mat-form-field {
+        width: 100%;
+        min-width: 0;
+        overflow: visible !important; // Allow dropdowns to overflow
+        position: static !important; // CRITICAL:
+        overflow: visible !important; // Allow dropdowns to overflow
+        position: static !important; // Let dropdown calculate from viewport, not this element
+        
+        ::ng-deep {
+          .mat-mdc-form-field-subscript-wrapper {
+            overflow: visible !important;
+          }
+          
+          .mat-mdc-text-field-wrapper {
+            overflow: visible !important;
+          }
+          
+          // Ensure trigger element provides correct position reference
+          .mat-mdc-select-trigger {
+            position: relative !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ============================================================
+// Stage Footer (buttons)
+// ============================================================
+.stage-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 0 0;
+  border-top: 1px solid $border;
+  flex-wrap: wrap;
+
+  mat-progress-bar {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+}
+
+// ============================================================
+// Buttons
+// ============================================================
+.btn-submit,
+.btn-close-action {
+  height: 34px;
+  border-radius: $radius-pill;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 20px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all $transition;
+  letter-spacing: .3px;
+
+  &:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, $primary 0%, $accent 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(91,127,255,.3);
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(91,127,255,.45);
+    transform: translateY(-1px);
+  }
+  &:active:not(:disabled) { transform: translateY(0); }
+}
+
+.btn-close-action {
+  background: $bg-white;
+  color: $text-secondary;
+  border: 1px solid $border;
+
+  &:hover { background: $bg-base; border-color: #c0c8d8; }
+}
+
+// ============================================================
+// Empty / Pending Stage
+// ============================================================
+.stage-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 10px;
+  color: $text-muted;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: .4;
+  }
+
+  p {
+    font-size: 13px;
+    margin: 0;
+  }
+}
+
+// ============================================================
+// Status Badge
+// ============================================================
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: $radius-pill;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .3px;
+
+  &.new       { background: #e0f2fe; color: #0369a1; }
+  &.submitted { background: #dcfce7; color: #166534; }
+  &.review    { background: #fef9c3; color: #854d0e; }
+  &.approved  { background: #d1fae5; color: #065f46; }
+  &.rejected  { background: #fee2e2; color: #991b1b; }
+}
+
+// ============================================================
+// Material overrides — disabled inputs stay readable
+// ============================================================
+::ng-deep {
+  .mat-mdc-input-element:disabled,
+  .mat-input-element:disabled,
+  .mat-mdc-form-field-disabled textarea,
+  .mat-mdc-form-field-disabled input {
+    color: $text-primary !important;
+  }
+
+  .mat-mdc-select-disabled .mat-mdc-select-value,
+  .mat-select-disabled .mat-select-value {
+    color: $text-primary !important;
+  }
+
+  // hide the legacy material stepper so our custom one takes over
+  .kpi-dialog-wrapper mat-horizontal-stepper,
+  .kpi-dialog-wrapper .mat-horizontal-stepper-wrapper {
+    display: none !important;
+  }
+}

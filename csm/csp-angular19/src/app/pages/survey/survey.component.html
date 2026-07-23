@@ -1,0 +1,322 @@
+<div *ngIf="questions" class="modern-survey-container">
+  <!-- Page Header -->
+  <div class="survey-header" *ngIf="!displayTemp">
+    <img src="assets/images/GAVS_Logo.png" class="survey-logo" alt="Company Logo">
+    <h1 class="survey-title">Customer Satisfaction Survey</h1>
+  </div>
+  
+  <!-- Information Card -->
+  <div class="info-card">
+    <div class="info-grid" *ngIf="isMonthly && (pName == '' || pName == null)">
+      <div class="info-row full-width">
+        <div class="info-label">Account Name</div>
+        <div class="info-value">{{cust}}</div>
+      </div>
+    </div>
+
+
+    <div class="info-grid" *ngIf="!isMonthly && proj != '' && proj != null">
+      <div class="info-row">
+        <div class="info-label">Account Name</div>
+        <div class="info-value">{{cust}}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">{{projtext}}</div>
+        <div class="info-value">{{proj}}</div>
+      </div>
+    </div>
+
+
+    <div class="info-grid" *ngIf="!isMonthly && (proj == '' || proj == null)">
+      <div class="info-row full-width">
+        <div class="info-label">Account Name</div>
+        <div class="info-value">{{cust}}</div>
+      </div>
+    </div>
+
+    <div class="info-grid" *ngIf="isMonthly && pName != '' && pName != null">
+      <div class="info-row">
+        <div class="info-label">Account Name</div>
+        <div class="info-value">{{cust}}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">{{projtext}}</div>
+        <div class="info-value">{{pName}}</div>
+      </div>
+    </div>
+    
+    <div class="info-grid">
+      <div class="info-row">
+        <div class="info-label">Feedback for the period</div>
+        <div class="info-value">{{questions.surveY_PERIOD}}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Respondent Name</div>
+        <div class="info-value">{{displayname}}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Fields Card -->
+  <div class="additional-fields-card" *ngIf="showCSSFields">
+    <!-- <div class="field-row">
+      <mat-form-field appearance="outline" class="modern-date-field">
+        <mat-label>Date of Meeting</mat-label>
+        <input matInput name="meetingDate" [max]="maxDate" [(ngModel)]="meetingDate"
+          [matDatepicker]="picker1" [disabled]="IsCompleted" required>
+        <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+      </mat-form-field>
+    </div> -->
+    
+    <div class="field-row">
+      <mat-checkbox class="modern-checkbox" [(ngModel)]="isCSMNotified" [disabled]="IsCompleted" name="checkCSMNotified"
+        (change)="onCheckboxChange($event)">
+        Customer Success Manager / Delivery Partner is aware of the client feedback
+      </mat-checkbox>
+    </div>
+    
+    <div class="field-row" *ngIf="!IsCompleted">
+      <a class="template-link" (click)="viewTemplate('CustomerSuccessSurveyQualitativeFeedback')">
+        <mat-icon>email</mat-icon>
+        Click here to view the mail template that will be sent to customer
+      </a>
+    </div>
+
+    <div *ngIf="showTemplate">
+      <app-view-template [templateName]="templateName" [templateHeading]="templateHeading"
+        (onChange)="changeEvent($event)"></app-view-template>
+    </div>
+  </div>
+  <!-- <p>At {{ companyName }} {{formerlyText}}, Customer Advocacy Group administers the Annual Customer Satisfaction Survey with our key Customers and you are one of them! This survey feedback is incredibly valuable for our partnership. <br /><br />
+
+The insights we gain from your feedback will guide the strategic actions we take to enhance your experience with us and to strengthen our partnership. Look forward to your positive response to this Survey.
+</p><br /> 
+ <p>We would like you to rate the services provided by {{ companyName }} on the aspects mentioned below.</p>
+   -->
+  <!-- Introduction Text -->
+  <div class="intro-text">
+    <p *ngIf="questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Annual Customer Satisfaction
+      Survey. Your inputs will help us to enhance the overall value of the partnership and help prepare for your strategic
+      priorities.</p>
+    <p *ngIf="!questions_NPS">In our endeavor to improve continuously, we seek your valuable feedback through this Half yearly Customer Satisfaction Survey.</p>
+  </div>
+  
+  <!-- Survey Questions Card -->
+  <div class="survey-card">
+    <table class="modern-survey-table">
+    <thead>
+      <!-- NPS Question Row -->
+      <tr *ngIf="questions_NPS" class="nps-question-row">
+        <td colspan="3" class="nps-question">
+          <span *ngIf="!showQualitativeFeedback" class="required">*</span>
+          {{questions_NPS.question}}
+        </td>
+      </tr>
+      
+      <!-- NPS Rating Row -->
+      <tr *ngIf="questions_NPS">
+        <td colspan="2" class="nps-rating-cell">
+          <div class="rating-container">
+            <div class="rating-pills">
+              <a class="pillStart" (click)="Rating_OnClick('0')"
+                [style.background-color]="npsRating == 0 ? '#0073f7':'#FF0000'">0</a>
+              <a class="pill" (click)="Rating_OnClick('1')"
+                [style.background-color]="npsRating == 1 ? '#0073f7':'#FF0000'">1</a>
+              <a class="pill" (click)="Rating_OnClick('2')"
+                [style.background-color]="npsRating == 2 ? '#0073f7':'#FF0000'">2</a>
+              <a class="pill" (click)="Rating_OnClick('3')"
+                [style.background-color]="npsRating == 3 ? '#0073f7':'#FF0000'">3</a>
+              <a class="pill" (click)="Rating_OnClick('4')"
+                [style.background-color]="npsRating == 4 ? '#0073f7':'#FF0000'">4</a>
+              <a class="pill" (click)="Rating_OnClick('5')"
+                [style.background-color]="npsRating == 5 ? '#0073f7':'#FF0000'">5</a>
+              <a class="pill" (click)="Rating_OnClick('6')"
+                [style.background-color]="npsRating == 6 ? '#0073f7':'#FF0000'">6</a>
+              <a class="pill" (click)="Rating_OnClick('7')"
+                [style.background-color]="npsRating == 7 ? '#0073f7':'#Ffbf00'">7</a>
+              <a class="pill" (click)="Rating_OnClick('8')"
+                [style.background-color]="npsRating == 8 ? '#0073f7':'#Ffbf00'">8</a>
+              <a class="pill" (click)="Rating_OnClick('9')"
+                [style.background-color]="npsRating == 9 ? '#0073f7':'#008000'">9</a>
+              <a class="pillEnd" (click)="Rating_OnClick('10')"
+                [style.background-color]="npsRating == 10 ? '#0073f7':'#008000'">10</a>
+            </div>
+
+            <div class="rating-label">
+              <span class="label-left">Not at all likely</span>
+              <span class="label-right">Extremely likely</span>
+            </div>
+          </div>
+        </td>
+        
+        <!-- NPS Comments -->
+        <td *ngIf="questions_NPS && bShowNpsComments" colspan="1" class="nps-comments-cell">
+          <div class="survey-textarea">
+            <span class="comments-hint">
+              <span class="required">*</span>
+              Please share your inputs if you have rated less than 9.
+            </span>
+            <textarea name="txtNPSDesc" class="modern-textarea"
+              [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange()" [disabled]="IsCompleted"
+              maxlength="500"
+              [class.highlight]="hasRatingBeenSelected && questions_NPS.rating !== undefined && questions_NPS.rating < 9 && !questions_NPS.ratinG_DESCRIPTION"></textarea>
+            <span class="char-count">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
+          </div>
+        </td>
+      </tr>
+    </thead>
+    
+    <!-- Table Header for Criteria Questions -->
+    <thead class="criteria-header">
+      <tr>
+        <th class="question-header">
+          <mat-icon class="header-icon">help_outline</mat-icon>
+          Survey Question
+        </th>
+        <th class="rating-header">
+          <mat-icon class="header-icon">star</mat-icon>
+          Rating
+        </th>
+        <th class="remarks-header">
+          <mat-icon class="header-icon">comment</mat-icon>
+          Remarks
+          <span class="remarks-hint"><span class="required">*</span> Please share your inputs if you have rated less than 4 stars</span>
+        </th>
+      </tr>
+    </thead>
+    <!-- Criteria Questions Body -->
+    <tbody *ngIf="questions_Criteria">
+      <tr *ngFor="let criteria of questions_Criteria;let i = index" class="criteria-row">
+        <td class="criteria-question">
+          <span class="required">*</span>
+          {{criteria.question}}
+          <mat-icon  *ngIf="criteria.questioN_DETAIL && criteria.questioN_DETAIL.trim() !== ''" 
+           class="info-icon"
+           (click)="tooltip.toggle()" 
+           #tooltip="matTooltip"  
+           [matTooltip]="getDetail(criteria.questioN_DETAIL)" 
+            matTooltipClass="custom-tooltip"
+            matTooltipPosition="above"
+            (click)="onInfoIconClick($event, tooltip)"
+            (mousedown)="$event.stopPropagation()"
+            (touchstart)="$event.stopPropagation()">
+            info
+          </mat-icon>
+        </td>
+        
+        <td class="star-rating-cell">
+          <div class="perspective-label" *ngIf="proj != '' && proj != null">
+            {{criteria.perspective}}
+          </div>
+          <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE ?? 1" [rating]="criteria.rating ?? 0"
+            [starCount]="starCount" [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
+        </td>
+        
+        <td class="remarks-cell">
+          <div class="textarea-wrapper">
+            <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
+              class="modern-textarea" [disabled]="IsCompleted" maxlength="500"
+              [class.highlight]="criteria.rating !== undefined && criteria.rating < 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
+            </textarea>
+            <span class="char-count">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/500</span>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+    <!-- Additional Questions -->
+    <tbody *ngIf="questions_Others[0]">
+      <tr class="additional-question-row">
+        <td colspan="3" class="additional-question">
+          <span *ngIf="showQualitativeFeedback" class="required">*</span>
+          {{questions_Others[0].question}}
+        </td>
+      </tr>
+      <tr>
+        <td colspan="3" class="additional-answer">
+          <div class="textarea-wrapper">
+            <textarea name="txtOthersDesc0" [(ngModel)]="questions_Others[0].ratinG_DESCRIPTION"
+              class="modern-textarea" [disabled]="IsCompleted" maxlength="300"></textarea>
+            <span class="char-count">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/300</span>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody *ngIf="questions_Others[1]">
+      <tr class="additional-question-row">
+        <td colspan="3" class="additional-question">
+          <span *ngIf="showQualitativeFeedback" class="required">*</span>
+          {{questions_Others[1].question}}
+        </td>
+      </tr>
+      <tr>
+        <td colspan="3" class="additional-answer">
+          <div class="textarea-wrapper">
+            <textarea name="txtOthersDesc1" [(ngModel)]="questions_Others[1].ratinG_DESCRIPTION"
+              class="modern-textarea" [disabled]="IsCompleted" maxlength="300"></textarea>
+            <span class="char-count">{{getRemaining(questions_Others[1].ratinG_DESCRIPTION)}}/300</span>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+
+    <!-- Footer Info -->
+    <tfoot>
+      <tr>
+        <td colspan="3" class="footer-info">
+          Questions and Fields marked with (<span class="required">*</span>) are mandatory.
+          <br><br>
+          Thank you very much for taking time to complete this survey. Your feedback is valued and very much
+          appreciated!
+        </td>
+      </tr>
+      
+      <!-- Action Buttons -->
+      <tr *ngIf="!IsCompleted">
+        <td colspan="3" class="action-buttons">
+          <button type="button" (click)="SubmitForm(1)" class="btn-draft" [disabled]="disableSubmit">
+            <mat-icon>save</mat-icon>
+            Save as Draft
+          </button>
+          <button type="button" (click)="SubmitForm(0)" class="btn-submit" [disabled]="disableSubmit">
+            <mat-icon>send</mat-icon>
+            Submit
+          </button>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+  </div>
+</div>
+<ng-template #confirmationDialog>
+  <div class="modern-dialog">
+    <div class="dialog-header">
+      <div class="dialog-icon">
+        <mat-icon>{{ dialogSuccess ? 'info' : 'help_outline' }}</mat-icon>
+      </div>
+      <h2 *ngIf="dialogHeading" mat-dialog-title class="dialog-title">
+        {{dialogHeading}}
+      </h2>
+    </div>
+    <mat-dialog-content class="dialog-content">
+      <p class="dialog-message">{{ dialogMessage }}</p>
+    </mat-dialog-content>
+    <mat-dialog-actions *ngIf="!dialogSuccess" class="dialog-actions">
+      <button class="dialog-btn btn-cancel" mat-button [mat-dialog-close]="0">
+        <mat-icon>close</mat-icon>
+        <span>No</span>
+      </button>
+      <button class="dialog-btn btn-confirm" mat-button [mat-dialog-close]="1">
+        <mat-icon>check</mat-icon>
+        <span>Yes</span>
+      </button>
+    </mat-dialog-actions>
+    <mat-dialog-actions *ngIf="dialogSuccess" class="dialog-actions single">
+      <button class="dialog-btn btn-confirm" mat-button [mat-dialog-close]="1">
+        <mat-icon>check_circle</mat-icon>
+        <span>OK</span>
+      </button>
+    </mat-dialog-actions>
+  </div>
+</ng-template>

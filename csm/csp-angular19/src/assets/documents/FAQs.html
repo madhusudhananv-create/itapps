@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSM Platform — FAQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #f4f5f9;
+    --surface: #ffffff;
+    --surface-alt: #eef0f6;
+    --ink: #1a1814;
+    --ink-muted: #6b6860;
+    --ink-faint: #b0aca4;
+    --accent: #4e5882;
+    --accent-light: #eef0f8;
+    --accent-mid: #6c7aa8;
+    --tag-open: #fdf0e0;
+    --tag-open-ink: #7a4f1a;
+    --tag-closed: #eef0f8;
+    --tag-closed-ink: #3a4570;
+    --tag-process: #eee8f8;
+    --tag-process-ink: #4a3080;
+    --border: rgba(78,88,130,0.12);
+    --border-strong: rgba(78,88,130,0.25);
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--accent);
+    padding: 0.75rem 2rem 0.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 40%;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    background: #ffffff;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .logo img {
+    height: 32px;
+    vertical-align: middle;
+    object-fit: contain;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .logo:hover img {
+    transform: translateY(-1px);
+  }
+
+  .logo:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .header-text { 
+    flex: 1;
+    margin-left: 0.5rem;
+    text-align: left;
+  }
+
+  .header-text * {
+    text-align: left;
+  }
+
+  .header-search-wrap {
+    flex-shrink: 0;
+    width: 280px;
+  }
+
+  .header-label {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    text-align: left;
+  }
+
+  .header-label a {
+    color: rgba(255,255,255,0.65);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .header-label a:hover {
+    color: rgba(255,255,255,0.95);
+    text-decoration: underline;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    text-align: left;
+  }
+
+  header p {
+    color: rgba(255,255,255,0.65);
+    font-size: 15px;
+    font-weight: 300;
+    max-width: 480px;
+    line-height: 1.65;
+    text-align: left;
+  }
+
+  .search-bar {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50px;
+    padding: 0 1.25rem;
+    gap: 10px;
+    width: 100%;
+    transition: background 0.2s;
+  }
+
+  .search-bar:focus-within {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.4);
+  }
+
+  .search-bar i { color: rgba(255,255,255,0.5); font-size: 18px; }
+
+  .search-bar input {
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 0.7rem 0;
+    width: 100%;
+  }
+
+  .search-bar input::placeholder { color: rgba(255,255,255,0.45); }
+
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+  }
+
+  .categories {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .cat-btn {
+    padding: 6px 16px;
+    border-radius: 50px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .cat-btn:hover, .cat-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 2rem 0 1rem;
+    font-weight: 500;
+  }
+
+  .faq-list { display: flex; flex-direction: column; gap: 1px; }
+
+  .faq-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+    margin-bottom: 8px;
+  }
+
+  .faq-card:hover { border-color: var(--border-strong); }
+
+  .faq-card.hidden { display: none; }
+
+  .faq-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .faq-icon-wrap {
+    width: 36px; height: 36px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    margin-top: 1px;
+  }
+
+  .icon-green { background: var(--tag-closed); color: #2d5c46; }
+  .icon-amber { background: var(--tag-open); color: #7a4f1a; }
+  .icon-purple { background: var(--tag-process); color: #4a3080; }
+  .icon-blue { background: #e6edf8; color: #1a4a8c; }
+
+  .faq-question {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .faq-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 50px;
+    letter-spacing: 0.02em;
+  }
+
+  .tag-access { background: var(--tag-open); color: var(--tag-open-ink); }
+  .tag-process { background: var(--tag-process); color: var(--tag-process-ink); }
+  .tag-notification { background: var(--tag-closed); color: var(--tag-closed-ink); }
+  .tag-capa { background: #e8f0ed; color: #2d5c46; }
+  .tag-d365 { background: #e6edf8; color: #1a4a8c; }
+  .tag-login { background: #ede8f8; color: #4e2d9c; }
+  .tag-reports { background: #fff3e0; color: #e65100; }
+
+  .faq-toggle {
+    font-size: 18px;
+    color: var(--ink-faint);
+    transition: transform 0.25s, color 0.2s;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  .faq-card.open .faq-toggle {
+    transform: rotate(180deg);
+    color: var(--accent);
+  }
+
+  .faq-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .faq-card.open .faq-body { max-height: 1200px; }
+
+  .faq-body-inner {
+    border-top: 1px solid var(--border);
+    padding: 1.25rem 1.25rem 1.25rem 3.5rem;
+  }
+
+  .answer-text {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--ink-muted);
+    margin-bottom: 1rem;
+  }
+
+  .answer-text:last-child { margin-bottom: 0; }
+
+  .step-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0.75rem 0;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-text {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
+
+  .step-text strong { color: var(--ink); font-weight: 500; }
+
+  .info-box {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent-mid);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+  }
+
+  .info-box p {
+    font-size: 13px;
+    color: var(--accent);
+    line-height: 1.65;
+  }
+
+  .info-box p strong { font-weight: 500; }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    margin: 0.75rem 0;
+  }
+
+  .role-card {
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+  }
+
+  .role-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .role-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.55;
+  }
+
+  .approver-list {
+    display: flex; flex-direction: column; gap: 4px;
+    margin: 0.5rem 0;
+  }
+
+  .approver-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13.5px;
+    color: var(--ink-muted);
+  }
+
+  .approver-item i { color: var(--accent); font-size: 15px; }
+
+  .no-results {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--ink-faint);
+    font-size: 15px;
+    display: none;
+  }
+
+  .no-results i { font-size: 32px; display: block; margin-bottom: 0.5rem; }
+
+  @media (max-width: 600px) {
+    header { padding: 0.75rem 1.25rem; }
+    .header-inner { flex-direction: column; align-items: flex-start; }
+    .header-search-wrap { width: 100%; }
+    .main { padding: 1.5rem 1.25rem 3rem; }
+    .faq-body-inner { padding-left: 1.25rem; }
+    .role-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <img src="/assets/images/GAVS_Logo.png" alt="GAVS Logo">
+    </div>
+    <div class="header-text">
+      <p class="header-label"><a href="https://csmuat.neurealm.com/" target="_blank">CSM Platform Support</a></p>
+      <h1>Frequently Asked <em>Questions</em></h1>
+      <p>Everything you need to know about findings, access, notifications, and project allocations.</p>
+    </div>
+    <div class="header-search-wrap">
+      <div class="search-bar">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" id="searchInput" placeholder="Search questions…" aria-label="Search FAQ">
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <div class="categories" role="group" aria-label="Filter by category">
+    <button class="cat-btn active" data-cat="all">All topics</button>
+    <button class="cat-btn" data-cat="login">Login Access</button>
+    <button class="cat-btn" data-cat="d365">Project Allocation Access</button>
+    <button class="cat-btn" data-cat="access">Findings & CAPA Closure Access</button>
+    <button class="cat-btn" data-cat="capa">Findings Closure Process</button>
+    <button class="cat-btn" data-cat="notifications">Findings Closure Notifications</button>
+    <button class="cat-btn" data-cat="reports">Reports</button>
+  </div>
+
+  <div id="faqContainer">
+
+    <!-- LOGIN ACCESS -->
+    <p class="section-label" data-section="login">Login Access</p>
+
+    <article class="faq-card" data-cat="login" data-keywords="who can access CSM platform login employees default all">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-blue"><i class="ti ti-users" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Who can access the CSM Platform?</p>
+          <div class="faq-meta">
+            <span class="tag tag-login">Login Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">All employees have <strong>default login access</strong> to the CSM Platform. However, the projects visible to each employee depend on their <strong>active project allocations</strong> configured in D365 — employees will only see the projects they have been allocated to.</p>
+          <div class="info-box"><p>If you can log in but cannot see a specific project, check that your allocation for that project is active in D365. For allocation-related requests, contact <strong><a href="mailto:WFM@neurealm.com" style="color:var(--accent)">WFM@neurealm.com</a></strong>.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="login" data-keywords="contractors access CSM platform employees only default login">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-blue"><i class="ti ti-id-badge" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Is CSM platform access available to contractors, or only employees?</p>
+          <div class="faq-meta">
+            <span class="tag tag-login">Login Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Contractors are granted <strong>default access</strong> to the CSM platform. Access is based on project allocation configured in D365 — contractors can view any project they are allocated to within the CSM platform.</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- PROJECT ALLOCATIONS -->
+    <p class="section-label" data-section="d365">Project Allocation Access</p>
+
+    <article class="faq-card" data-cat="d365" data-keywords="project not appearing dashboard missing allocation expiry 10 days alert">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-amber"><i class="ti ti-layout-dashboard" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Why does a project not appear on my dashboard?</p>
+          <div class="faq-meta">
+            <span class="tag tag-d365">Project Allocation Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Projects are displayed on your dashboard only when you have an <strong>active allocation</strong> for that project in D365. If your allocation has expired or not yet been created, the project will not be visible.</p>
+          <div class="info-box"><p>⚠️ If your allocation is expiring within <strong>10 days</strong>, the platform will show an alert. Contact <strong><a href="mailto:WFM@neurealm.com" style="color:var(--accent)">WFM@neurealm.com</a></strong> to request an extension before it expires.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="d365" data-keywords="extend access project allocation D365 PROJ1722 Gamma">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-blue"><i class="ti ti-folders" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">How do I extend or add access to a project in the CSM platform?</p>
+          <div class="faq-meta">
+            <span class="tag tag-d365">Project Allocation Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Project allocations and extensions must be managed within <strong>D365</strong>. Once updated in D365, the data will automatically synchronize with the CSM platform — no separate action is needed in CSM.</p>
+          <div class="info-box"><p>To request a new allocation or extension in D365, contact the WFM team at <strong><a href="mailto:WFM@neurealm.com" style="color:var(--accent)">WFM@neurealm.com</a></strong>.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="d365" data-keywords="risk logging other projects not visible current allocation CSM portal">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-blue"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">A user cannot see their other projects when logging a risk. How is this fixed?</p>
+          <div class="faq-meta">
+            <span class="tag tag-d365">Project Allocation Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Risks can only be logged for projects with a <strong>current active allocation</strong>. If a user cannot see certain projects, their allocation in D365 must be updated. Changes made in D365 will synchronize automatically with the CSM portal.</p>
+          <div class="info-box"><p>To update project allocations in D365, contact the WFM team at <strong><a href="mailto:WFM@neurealm.com" style="color:var(--accent)">WFM@neurealm.com</a></strong>.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="d365" data-keywords="D365 allocation extended revised but not showing CSM portal discrepancy">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-blue"><i class="ti ti-refresh-alert" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">An allocation was revised in D365 but the project still doesn't appear in the CSM portal. What next?</p>
+          <div class="faq-meta">
+            <span class="tag tag-d365">Project Allocation Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">If the allocation has been extended in D365 but is still not visible in the CSM portal, there may be a data discrepancy. To resolve this:</p>
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num">1</span><span class="step-text">Take a screenshot of the D365 allocation showing the revised/extended dates.</span></li>
+            <li class="step-item"><span class="step-num">2</span><span class="step-text">Contact the WFM team at <strong><a href="mailto:WFM@neurealm.com" style="color:var(--accent)">WFM@neurealm.com</a></strong> to verify the D365 allocation update.</span></li>
+            <li class="step-item"><span class="step-num">3</span><span class="step-text">If the issue persists in the CSM portal after D365 is updated, forward the request with the screenshot to <strong><a href="mailto:csmplatformsupport@neurealm.com" style="color:var(--accent)">csmplatformsupport@neurealm.com</a></strong> for a discrepancy review.</span></li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- ACCESS & ROLES -->
+    <p class="section-label" data-section="access">Findings & CAPA Closure Access</p>
+
+    <article class="faq-card" data-cat="access" data-keywords="accept reject button who can see auditee PM CSM quality roles">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-green"><i class="ti ti-users" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Who can see the Accept/Reject button for findings?</p>
+          <div class="faq-meta">
+            <span class="tag tag-access">Findings &amp; CAPA Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">The <strong>Accept/Reject</strong> button is visible to the following roles:</p>
+          <div class="role-grid">
+            <div class="role-card"><div class="role-title">Auditee</div><div class="role-desc">Primary responsible party</div></div>
+            <div class="role-card"><div class="role-title">PM</div><div class="role-desc">Project Manager</div></div>
+            <div class="role-card"><div class="role-title">CSM</div><div class="role-desc">Customer Success Manager</div></div>
+            <div class="role-card"><div class="role-title">Quality</div><div class="role-desc">Quality role</div></div>
+          </div>
+          <p class="answer-text" style="margin-top:0.75rem">Project team members who do not have one of these roles will see a <strong>Request Access</strong> button instead.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="access" data-keywords="request access approvers who approves project team member">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-green"><i class="ti ti-user-check" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Who approves access requests for project team members?</p>
+          <div class="faq-meta">
+            <span class="tag tag-access">Findings &amp; CAPA Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Project team members see a <strong>Request Access</strong> button in place of Accept/Reject. The following people are designated approvers for those requests:</p>
+          <div class="approver-list">
+            <div class="approver-item"><i class="ti ti-circle-check" aria-hidden="true"></i> Shalot Leely</div>
+            <div class="approver-item"><i class="ti ti-circle-check" aria-hidden="true"></i> Ambrish Sethi</div>
+            <div class="approver-item"><i class="ti ti-circle-check" aria-hidden="true"></i> Vinayak Jadhav</div>
+            <div class="approver-item"><i class="ti ti-circle-check" aria-hidden="true"></i> Benet Zacharis</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="access" data-keywords="submit button stage 2 stage 4 auditor quality CAPA approver approval verification">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-green"><i class="ti ti-send" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Who can submit the CAP Approval and Verification stages?</p>
+          <div class="faq-meta">
+            <span class="tag tag-access">Findings &amp; CAPA Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">The <strong>Submit</strong> button for Stages 2 (CAP Approval) and 4 (CAP Verification) is accessible to:</p>
+          <div class="role-grid">
+            <div class="role-card"><div class="role-title">Auditor</div><div class="role-desc">Primary auditing role</div></div>
+            <div class="role-card"><div class="role-title">Quality</div><div class="role-desc">Quality oversight role</div></div>
+            <div class="role-card"><div class="role-title">CAPA Approver</div><div class="role-desc">Designated CAPA approver</div></div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="access" data-keywords="submit button stage 1 stage 3 auditee CAPA submission implementation">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-green"><i class="ti ti-user-edit" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Who can submit the CAP Submission and Implementation stages?</p>
+          <div class="faq-meta">
+            <span class="tag tag-access">Findings &amp; CAPA Access</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">The <strong>Submit</strong> button for Stages 1 (CAP Submission) and 3 (CAP Implementation) is accessible to the <strong>Auditee</strong> only:</p>
+          <div class="role-grid">
+            <div class="role-card"><div class="role-title">Auditee</div><div class="role-desc">Responsible for submitting the corrective action plan and implementation evidence</div></div>
+          </div>
+          <div class="info-box"><p>The Auditee must complete Stage 1 (CAP Submission) before the Auditor can proceed with Stage 2 (Approval), and Stage 3 (Implementation) before Stage 4 (Verification) can begin.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- CAPA PROCESS -->
+    <p class="section-label" data-section="capa">Findings Closure Process</p>
+
+    <article class="faq-card" data-cat="capa" data-keywords="finding resolution process accept reject auditor auditee stages workflow">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-git-branch" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">What is the full finding closure process?</p>
+          <div class="faq-meta">
+            <span class="tag tag-process">Findings Closure Process</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">After the <strong>Auditor</strong> creates a finding, the <strong>Auditee</strong> must accept or reject it. The path differs based on that decision:</p>
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num">①</span><span class="step-text"><strong>Auditee Rejects:</strong> The Auditor is notified and can either accept the rejection (status → Rejection-Complete) or revert the finding back to step one.</span></li>
+            <li class="step-item"><span class="step-num">②</span><span class="step-text"><strong>Auditee Accepts:</strong> The finding proceeds through four CAPA stages (see below).</span></li>
+          </ul>
+          <div class="info-box"><p>Evidence is mandatory in either Stage 3 (Implementation) or Stage 4 (Verification). Duplicate evidence cannot be uploaded for the same finding.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="capa" data-keywords="corrective action plan CAPA stages submission approval implementation verification">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-list-check" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">What are the four CAPA stages an accepted finding must go through?</p>
+          <div class="faq-meta">
+            <span class="tag tag-capa">Findings Closure Process</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num">1</span><span class="step-text"><strong>CAP Submission (Auditee):</strong> Submit a plan covering Potential Cause, Root Cause (Yes/No), Correction (immediate fix), Corrective Action Plan, Target Date, Responsibility, and Plan for Verifying Effectiveness.</span></li>
+            <li class="step-item"><span class="step-num">2</span><span class="step-text"><strong>CAP Approval (Auditor):</strong> Auditor reviews and approves the submitted corrective action plan, optionally adding remarks.</span></li>
+            <li class="step-item"><span class="step-num">3</span><span class="step-text"><strong>CAP Implementation (Auditee):</strong> Auditee selects the IsImplemented status (Yes/No) and provides remarks. Evidence is mandatory here or in Stage 4.</span></li>
+            <li class="step-item"><span class="step-num">4</span><span class="step-text"><strong>CAP Verification (Auditor):</strong> Auditor selects IsCompleted/Closed (Yes/No). If No, they choose to <em>Re-submit CAP</em> (back to Stage 1) or <em>Re-implement CAP</em> (back to Stage 3).</span></li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="capa" data-keywords="RAG color stage indicator red green grey CAPA status pending complete rejection">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-traffic-lights" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">What do the coloured stage indicators on each finding mean?</p>
+          <div class="faq-meta">
+            <span class="tag tag-capa">Findings Closure Process</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Each finding shows four numbered stage circles that act as a <strong>RAG</strong> status indicator for the CAPA workflow:</p>
+          <div style="overflow-x:auto;margin:12px 0;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr style="background:#f5f5f5;">
+                  <th style="padding:8px 12px;text-align:left;border:1px solid #e0e0e0;font-weight:600;">Colour</th>
+                  <th style="padding:8px 12px;text-align:left;border:1px solid #e0e0e0;font-weight:600;">Meaning</th>
+                  <th style="padding:8px 12px;text-align:left;border:1px solid #e0e0e0;font-weight:600;">When it applies</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                      <span style="width:20px;height:20px;border-radius:50%;background:#FF5969;display:inline-block;flex-shrink:0;"></span>
+                      <strong>Red</strong>
+                    </span>
+                  </td>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">Pending / Not yet completed</td>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">Default state for all 4 stages. Remains red when the Auditee first accepts the finding and CAPA has not yet started.</td>
+                </tr>
+                <tr style="background:#fafafa;">
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                      <span style="width:20px;height:20px;border-radius:50%;background:#3AB376;display:inline-block;flex-shrink:0;"></span>
+                      <strong>Green</strong>
+                    </span>
+                  </td>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">Completed</td>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">A stage turns green when successfully completed. All 4 circles are green when the finding is fully closed through CAPA.</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                      <span style="width:20px;height:20px;border-radius:50%;background:#9E9E9E;display:inline-block;flex-shrink:0;"></span>
+                      <strong>Grey</strong>
+                    </span>
+                  </td>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">Not applicable (Rejection-Complete)</td>
+                  <td style="padding:8px 12px;border:1px solid #e0e0e0;">All 4 circles turn grey when the Auditee rejects the finding and the Auditor accepts the rejection — status becomes <strong>Rejection-Complete</strong>. No CAPA is required.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-box">
+            <p><strong>Example:</strong> If Stage 1 and Stage 2 are done but Stage 3 is pending, you will see <span style="font-family:monospace;">&#x1F7E2; &#x2192; &#x1F7E2; &#x2192; &#x1F534; &#x2192; &#x1F534;</span></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="capa" data-keywords="stage 2 locked approval unlock stage 1 submitted CAP">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-lock" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Why is Stage 2 (CAP Approval) locked?</p>
+          <div class="faq-meta">
+            <span class="tag tag-capa">Findings Closure Process</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Stage 2 (CAP Approval) is only unlocked after the <strong>Auditee</strong> successfully submits <strong>Stage 1 (CAP Submission)</strong>. Until Stage 1 is submitted, the Auditor cannot proceed with the review.</p>
+          <div class="info-box"><p>The Auditee must expand the accepted finding and click <strong>"Add Correction Plan"</strong> to begin Stage 1.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="capa" data-keywords="stage 3 locked implementation unlock stage 2 approved CAP">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-lock" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Why is Stage 3 (CAP Implementation) locked?</p>
+          <div class="faq-meta">
+            <span class="tag tag-capa">Findings Closure Process</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Stage 3 (CAP Implementation) unlocks only after the <strong>Auditor</strong> approves Stage 2 with the status <strong>"Corrective Action Plan Approved"</strong>. If Stage 2 is still pending or rejected, Stage 3 remains locked.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="capa" data-keywords="stage 4 locked verification unlock stage 3 implemented CAP">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-purple"><i class="ti ti-lock" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Why is Stage 4 (CAP Verification) locked?</p>
+          <div class="faq-meta">
+            <span class="tag tag-capa">Findings Closure Process</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Stage 4 (CAP Verification) unlocks only after the <strong>Auditee</strong> submits Stage 3 with the status <strong>"Corrective Action Plan Implemented"</strong>. The Auditor can then verify and close the finding.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="capa" data-keywords="stage 4 rejected re-submit re-implement CAP verification recommended action">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-amber"><i class="ti ti-arrow-back-up" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">What happens if Stage 4 (CAP Verification) is not approved?</p>
+          <div class="faq-meta">
+            <span class="tag tag-capa">Findings Closure Process</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">If the Auditor selects <strong>"No"</strong> for Is Completed/Closed in Stage 4, they must choose a recommended action:</p>
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num">1</span><span class="step-text"><strong>Re-Submit CAP</strong> — Sends the finding back to Stage 1 (CAP Submission) for the Auditee to revise the corrective action plan.</span></li>
+            <li class="step-item"><span class="step-num">2</span><span class="step-text"><strong>Re-Implement CAP</strong> — Sends the finding back to Stage 3 (CAP Implementation) for the Auditee to re-implement and provide updated evidence.</span></li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- NOTIFICATIONS -->
+    <p class="section-label" data-section="notifications">Findings Closure Notifications</p>
+
+    <article class="faq-card" data-cat="notifications" data-keywords="audit findings link email cannot see view allocation auditee project">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-blue"><i class="ti ti-eye-off" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Why can't I access Audit Findings from the notification email link?</p>
+          <div class="faq-meta">
+            <span class="tag tag-notification">Findings Closure Notifications</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Access to view assessments and findings requires a <strong>current project allocation</strong>, even if the user is listed as the Auditee. Please confirm that the user has an active allocation for the project in question.</p>
+          <div class="info-box"><p>Being named as the Auditee does not automatically grant access — the project allocation in D365 must be current and active.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="notifications" data-keywords="automated email open findings notifications triggered error">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-amber"><i class="ti ti-bell" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Why am I receiving repeated automated emails about open findings assessment?</p>
+          <div class="faq-meta">
+            <span class="tag tag-notification">Findings Closure Notifications</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">These daily <strong>Open Findings Assessment</strong> emails are not a technical error. They are triggered because certain findings still require action. There are two main causes:</p>
+          <ul class="step-list">
+            <li class="step-item"><span class="step-num">1</span><span class="step-text"><strong>Accepted findings:</strong> Some findings have been accepted but the Corrective Action Plan (CAPA) stages have not been completed.</span></li>
+            <li class="step-item"><span class="step-num">2</span><span class="step-text"><strong>Pending decisions:</strong> Other findings have not yet been accepted or rejected, so they cannot progress.</span></li>
+          </ul>
+          <div class="info-box"><p>Completing the required CAPA stages or accepting/rejecting the pending findings will stop the automated notifications.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="faq-card" data-cat="notifications" data-keywords="who receives open findings assessment email daily recipients">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-amber"><i class="ti ti-mail" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Who receives the daily Open Findings Assessment emails?</p>
+          <div class="faq-meta">
+            <span class="tag tag-notification">Findings Closure Notifications</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">The standard daily recipients for Open Findings Assessment emails are:</p>
+          <div class="role-grid">
+            <div class="role-card"><div class="role-title">Project Manager</div><div class="role-desc">PM assigned to the project</div></div>
+            <div class="role-card"><div class="role-title">Auditee</div><div class="role-desc">The party responsible for findings</div></div>
+            <div class="role-card"><div class="role-title">CSM</div><div class="role-desc">Customer Success Manager</div></div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- REPORTS -->
+    <p class="section-label" data-section="reports">Reports</p>
+
+    <article class="faq-card" data-cat="reports" data-keywords="assessment finding details report all submitted findings where to find">
+      <div class="faq-header" role="button" tabindex="0" aria-expanded="false">
+        <div class="faq-icon-wrap icon-green"><i class="ti ti-report" aria-hidden="true"></i></div>
+        <div style="flex:1">
+          <p class="faq-question">Where can I find all assessment finding details?</p>
+          <div class="faq-meta">
+            <span class="tag tag-reports">Reports</span>
+          </div>
+        </div>
+        <i class="ti ti-chevron-down faq-toggle" aria-hidden="true"></i>
+      </div>
+      <div class="faq-body" role="region">
+        <div class="faq-body-inner">
+          <p class="answer-text">Please check the <strong>"All Assessment Submitted Findings"</strong> report, which contains all the necessary assessment finding details — including finding descriptions, types, stages, and statuses across all submitted assessments.</p>
+          <div class="info-box"><p>You can access this report from the <strong>Reports</strong> section in the Settings menu (top-right navigation).</p></div>
+        </div>
+      </div>
+    </article>
+
+  </div><!-- /#faqContainer -->
+
+  <div class="no-results" id="noResults">
+    <i class="ti ti-mood-sad" aria-hidden="true"></i>
+    No questions match your search. Try a different keyword.
+  </div>
+
+</main>
+
+<script>
+  const cards = document.querySelectorAll('.faq-card');
+  const catBtns = document.querySelectorAll('.cat-btn');
+  const searchInput = document.getElementById('searchInput');
+  const noResults = document.getElementById('noResults');
+  const sectionLabels = document.querySelectorAll('.section-label');
+  let activeCat = 'all';
+
+  function applyFilters() {
+    const q = searchInput.value.toLowerCase().trim();
+    let visible = 0;
+
+    cards.forEach(card => {
+      const cat = card.dataset.cat;
+      const keywords = (card.dataset.keywords || '') + ' ' + card.querySelector('.faq-question').textContent;
+      const catMatch = activeCat === 'all' || cat === activeCat;
+      const searchMatch = !q || keywords.toLowerCase().includes(q);
+      const show = catMatch && searchMatch;
+      card.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+
+    sectionLabels.forEach(label => {
+      const sec = label.dataset.section;
+      const hasVisible = [...cards].some(c => c.dataset.cat === sec && !c.classList.contains('hidden'));
+      label.style.display = (activeCat === 'all' || activeCat === sec) && hasVisible ? '' : 'none';
+    });
+
+    noResults.style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  catBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      catBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCat = btn.dataset.cat;
+      applyFilters();
+    });
+  });
+
+  searchInput.addEventListener('input', applyFilters);
+
+  cards.forEach(card => {
+    const header = card.querySelector('.faq-header');
+    header.addEventListener('click', () => {
+      const isOpen = card.classList.contains('open');
+      cards.forEach(c => { c.classList.remove('open'); c.querySelector('.faq-header').setAttribute('aria-expanded','false'); });
+      if (!isOpen) { card.classList.add('open'); header.setAttribute('aria-expanded','true'); }
+    });
+    header.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); header.click(); } });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<mat-progress-bar *ngIf="!isProcessAreaAdded" mode="indeterminate" class="top-progress"></mat-progress-bar>
+
+<div class="tab-content">
+  <!-- Top Bar with Search, Filter, and Action Buttons -->
+  <div class="top-bar" *ngIf="!bAddNewProcessArea">
+    <!-- Left group: Search and Filter -->
+    <div class="top-bar-left">
+      <div class="search-wrapper">
+        <input #mainSearch (keyup)="applyFilter(mainSearch.value)" (keydown)="$event.stopPropagation()" placeholder="Search by Process Area, Title, Description">
+        <mat-icon>search</mat-icon>
+      </div>
+      <div class="process-area-filter">
+        <span>Process Area:</span>
+        <mat-form-field appearance="outline" class="process-area-select">
+          <mat-select (selectionChange)="applySelectionFilter($event)" placeholder="Choose Process Area">
+            <mat-form-field class="filter-search">
+              <input matInput #filterSearch (keydown)="$event.stopPropagation()" (keyup)="applyFilterProcessArea(filterSearch.value)" placeholder="Search Process Area">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+            <mat-option [value]="null" class="clear-option">
+              <mat-icon class="clear-icon">clear_all</mat-icon>
+              <span>All Process Areas</span>
+            </mat-option>
+            <mat-divider></mat-divider>
+            <div *ngIf="ProcessList_Map.length == 0" class="no-results">
+              No results found
+            </div>
+            <mat-option *ngFor="let c of ProcessList_Map" [value]="c" [title]="c.title" [style.color]="getMappedColor(c)">
+              {{c.title}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Right group: Action Buttons -->
+    <div class="top-bar-right">
+      <button mat-raised-button class="btn-primary" (click)="btnAddProcessArea_Onclick()">
+        <mat-icon>add</mat-icon> Add New Process Area
+      </button>
+      <button mat-raised-button class="btn-outlined" (click)="btnAddProcess_Onclick()">
+        <mat-icon>add_box</mat-icon> Add/ Map Process to Process Area
+      </button>
+    </div>
+  </div>
+
+  <!-- Process Area Form -->
+  <div class="header-section">
+    <div class="process-area-form-section" *ngIf="bAddNewProcessArea">
+      <div class="form-table-container">
+        <!-- Form Card -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <mat-icon>note_add</mat-icon>
+            <h3>New Process Area</h3>
+          </div>
+          <div class="form-content">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Process Area Title *</mat-label>
+              <input matInput [(ngModel)]="newProcessArea.title" autocomplete="off">
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Process Area Description</mat-label>
+              <textarea matInput [(ngModel)]="newProcessArea.description" rows="2"></textarea>
+            </mat-form-field>
+            
+            <div class="button-row">
+              <button mat-raised-button class="btn-success" [disabled]="!isProcessAreaAdded" (click)="btnSaveProcessArea_Onclick()">
+                <mat-icon>save</mat-icon> Save
+              </button>
+              <button mat-raised-button (click)="btnClearProcessArea_Onclick()">
+                <mat-icon>clear</mat-icon> Clear
+              </button>
+              <button mat-raised-button (click)="btnCancelProcessArea_Onclick()">
+                <mat-icon>close</mat-icon> Close
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Process Area List Table -->
+        <div class="table-card">
+          <div class="table-card-header">
+            <mat-icon>list</mat-icon>
+            <h3>Process Area List</h3>
+          </div>
+          <div class="table-container">
+            <table mat-table [dataSource]="processAreaDataSource" class="process-area-table">
+              <ng-container matColumnDef="index">
+                <th mat-header-cell *matHeaderCellDef>S.No</th>
+                <td mat-cell *matCellDef="let element; let i = index">{{ processAreaPaginator.pageIndex * processAreaPaginator.pageSize + i + 1 }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="title">
+                <th mat-header-cell *matHeaderCellDef>Process Area</th>
+                <td mat-cell *matCellDef="let element">{{element.title}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Process Area Description</th>
+                <td mat-cell *matCellDef="let element">{{element.description}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef style="width: 10%;">Action</th>
+                <td mat-cell *matCellDef="let element" class="action-cell">
+                  <div class="action-icons">
+                    <button mat-icon-button color="primary" (click)="ProcessEditRow_onClick(element)" matTooltip="Edit">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="ProcessDeleteRow_onClick(element)" matTooltip="Delete">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="processAreaDisplayedColumns; sticky: true"></tr>
+              <tr mat-row *matRowDef="let row; columns: processAreaDisplayedColumns;"></tr>
+            </table>
+          </div>
+          <mat-paginator #processAreaPaginator [pageSize]="5" [pageSizeOptions]="[5, 10, 15]"></mat-paginator>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Process Table -->
+  <div class="main-table-section">
+    <table mat-table [dataSource]="dataSource" matSort class="process-table">
+      <ng-container matColumnDef="index">
+        <th mat-header-cell *matHeaderCellDef class="sno-column">S.No</th>
+        <td mat-cell *matCellDef="let element; let i = index">{{i + 1}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="procesS_AREA_ID">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Process Area</th>
+        <td mat-cell *matCellDef="let element; let id = index">
+          <mat-form-field appearance="outline" *ngIf="id == iEditIndex" class="edit-field">
+            <mat-select [(ngModel)]="element.procesS_AREA_ID" placeholder="Select Process Area *">
+              <mat-form-field class="filter-search">
+                <input matInput #searcharea (keyup)="applyProcessAreaFilter(searcharea.value)" 
+                       (keydown)="$event.stopPropagation()" placeholder="Search Process Area">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+              <mat-option *ngFor="let c of FilteredProcessAreaList" [value]="c.id" [title]="c.title">
+                {{c.title}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <span *ngIf="id != iEditIndex">{{getProcessArea(element.procesS_AREA_ID)}}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="title">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Process Title</th>
+        <td mat-cell *matCellDef="let element; let id = index">
+          <mat-form-field appearance="outline" *ngIf="id == iEditIndex" class="edit-field">
+            <input matInput [(ngModel)]="element.title" placeholder="Process Title *">
+          </mat-form-field>
+          <span *ngIf="id != iEditIndex">{{element.title}}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Process Description</th>
+        <td mat-cell *matCellDef="let element; let id = index">
+          <mat-form-field appearance="outline" *ngIf="id == iEditIndex" class="edit-field">
+            <textarea matInput [(ngModel)]="element.description" placeholder="Process Description *" rows="1"></textarea>
+          </mat-form-field>
+          <span *ngIf="id != iEditIndex">{{element.description}}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="clausE_REFERENCE">
+        <th mat-header-cell *matHeaderCellDef>ISO/Process Model - Section/Clause Reference</th>
+        <td mat-cell *matCellDef="let element; let id = index">
+          <mat-form-field appearance="outline" *ngIf="id == iEditIndex" class="edit-field">
+            <mat-select #selectControl placeholder="Select Section/Clause Reference *" 
+                       [(ngModel)]="element.procesS_MODEL_REFERENCE_LIST"
+                       (openedChange)="resetFilterValue($event, element.procesS_MODEL_REFERENCE_LIST)" multiple>
+              <mat-form-field class="filter-search">
+                <input matInput #searchInput
+                       (keyup)="applyFilterForISO(searchInput.value, element.procesS_MODEL_REFERENCE_LIST)"
+                       placeholder="Search ISO Reference">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+              <ng-container *ngFor="let p of ProcessModelReferenceList">
+                <mat-optgroup *ngIf="p.items && p.items.length > 0" [label]="p.procesS_MODEL_NAME">
+                  <mat-option *ngFor="let item of p.items" [value]="item.procesS_MODEL_REFERENCE_LIST" [title]="item.sectioN_REFERENCE">
+                    {{item.sectioN_REFERENCE}}
+                  </mat-option>
+                </mat-optgroup>
+              </ng-container>
+            </mat-select>
+          </mat-form-field>
+          <span *ngIf="id != iEditIndex" [innerHTML]="getProcessModelReference(element.procesS_MODEL_REFERENCE_LIST)"></span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef class="action-column" style="width:10%">Action</th>
+        <td mat-cell *matCellDef="let element; let id = index" class="action-cell">
+          <div class="action-icons">
+            <span *ngIf="id != iEditIndex">
+              <button mat-icon-button color="primary" (click)="EditRow_onClick(element, id)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </span>
+            <span *ngIf="id === iEditIndex">
+              <button mat-icon-button color="primary" (click)="SaveRow_onClick(element)" matTooltip="Save">
+                <mat-icon>save</mat-icon>
+              </button>
+              <button mat-icon-button (click)="CancelEdit_onClick(element)" matTooltip="Cancel">
+                <mat-icon>close</mat-icon>
+              </button>
+            </span>
+            <button mat-icon-button color="warn" (click)="DeleteRow_onClick(element)" matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.edit-row]="ProcessList.indexOf(row) === iEditIndex"></tr>
+    </table>
+    <mat-paginator #paginator [pageSize]="20" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+  </div>
+</div>

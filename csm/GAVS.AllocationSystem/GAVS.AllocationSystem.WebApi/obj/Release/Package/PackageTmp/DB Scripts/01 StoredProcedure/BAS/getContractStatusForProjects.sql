@@ -1,0 +1,32 @@
+USE BAS
+GO
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='getContractStatusForProjects' AND TYPE='P')
+BEGIN
+DROP PROCEDURE getContractStatusForProjects          
+END
+GO
+  
+CREATE PROCEDURE [dbo].[getContractStatusForProjects]        
+@startDate Date,
+@EndDate Date,
+@PROJIDS VARCHAR(MAX)  
+AS            
+BEGIN   
+
+SELECT 
+E.EMP_ID, E.FRST_NM EMP_NAME,
+P.PROJ_ID,P.PROJ_NM,
+E.TITLE,P.END_DATE, M.FRST_NM MNGR_NM
+FROM PROJ_RESOURCE PR (NOLOCK)
+INNER JOIN PROJECT P (NOLOCK)
+ON PR.PROJ_ID = p.PROJ_ID 
+INNER JOIN EMP_INFO E (NOLOCK)
+ON E.EMP_ID= PR.EMP_ID
+INNER JOIN EMP_INFO M  (NOLOCK)
+ON E.MANAGER_EMP_ID =M.EMP_ID
+Where PR.BILL_FLG = 1 AND PR.END_DATE > getdate()  
+and P.PROJ_ID IN (SELECT * FROM [DBO].[FN_SPLITSTRING](@PROJIDS,','))                  
+AND (P.END_DATE BETWEEN @startDate AND @EndDate )
+ORDER BY P.END_DATE  desc      
+
+END 

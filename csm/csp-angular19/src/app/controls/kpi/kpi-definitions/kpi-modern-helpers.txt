@@ -1,0 +1,33 @@
+// KPI Definitions - Modern UI Helper Methods
+// Add these methods to your kpi-definitions.component.ts
+
+/**
+ * Check if there are any expired KPIs in the current dataset
+ * @returns true if any KPI has isExpired flag set
+ */
+hasExpiredKpis(): boolean {
+  return this.dataSource && this.dataSource.length > 0 && 
+         this.dataSource.some((kpi: any) => kpi.isExpired === true);
+}
+
+/**
+ * Track by function for Angular performance optimization
+ * @param index Row index
+ * @param item KPI row data
+ * @returns Unique identifier for the row
+ */
+trackById(index: number, item: any): number {
+  return item.id || index;
+}
+
+/**
+ * Handle row click event
+ * @param row The clicked KPI row
+ */
+onRowClick(row: any): void {
+  console.log('KPI Row clicked:', row);
+  // Can be used for row selection or navigation if needed
+}
+
+// Note: EditRow_onClick() and DeleteRow_onClick() already exist in the component
+// The actions column buttons will call these existing methods

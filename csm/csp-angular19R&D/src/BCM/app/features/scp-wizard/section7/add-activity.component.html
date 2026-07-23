@@ -1,0 +1,38 @@
+﻿
+    <div class="dialog-container">
+      <h2 mat-dialog-title>
+        <mat-icon>add</mat-icon>
+        Add Activity / Service
+      </h2>
+
+      <mat-dialog-content class="dialog-content">
+          <mat-form-field appearance="outline" class="full-width">
+          <div class="checkbox-grid-container">
+           <label class="list-label">Choose Activity / Service to Add</label>
+            <div class="grid-layout">
+              <div *ngFor="let act of data.itemServiceNames" class="checkbox-item">
+                <mat-checkbox 
+                  [checked]="selectedActivities.includes(act)"
+                  (change)="onCheckboxChange($event, act)">
+                  {{ act }}
+                </mat-checkbox>
+              </div>
+            </div>
+          </div>
+          </mat-form-field>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end" class="dialog-actions">
+        <button mat-button (click)="onCancel()">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button
+          matButton="filled"
+          color="primary"
+          (click)="onAdd()" class="add-button">
+          <mat-icon>save</mat-icon>
+          Add Row(s)
+        </button>
+      </mat-dialog-actions>
+    </div>
+  

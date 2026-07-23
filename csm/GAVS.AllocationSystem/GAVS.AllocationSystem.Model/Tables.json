@@ -1,0 +1,331 @@
+[
+  {
+    "name": "BASE_MEASURE_EXTERNAL_KPI_DATA",
+    "props": [
+      "KPI_BASE_MEASURE_VALUE_ID:int",
+      "EXTERNAL_KPI_DATA_ID:int?",
+      "KPI_DATA_JSON:string",
+      "KPI_DATATYPE:int"
+    ]
+  },
+  //{
+  //  "name": "KPI_2_PRODUCT",
+  //  "props": [
+  //    "KPI_ID:int",
+  //    "PRODUCT_ID:int",
+  //    "MODE_ID:int?"
+  //  ]
+  //},
+  {
+    "name": "PRODUCT_RESPONSIBLE",
+    "props": [
+      "PRODUCT_ID:int",
+      "EMP_ID:string",
+      "PROJECT_ID:string",
+      "MANAGEMENT_TYPE:int"
+    ]
+  },
+
+  {
+    "name": "ASSESSMENT_STATUS_HISTORY",
+    "props": [
+      "ASSESSMENT_ID:int",
+      "STATUS:string",
+      "REQUESTED_EMP_ID:string",
+      "APPROVER_EMP_ID:string",
+      "REQUEST_COMMENTS:string",
+      "APPROVE_REJECT_COMMENTS:string",
+      "IS_RETAIN_CAPA:bool"
+    ]
+  },
+  {
+    "name": "KPI_DETAILS_COMMENT",
+    "props": [
+      "KPI_DETAILS_ID:int",
+      "COMMENT:string",
+      "COMMENT_BY:string",
+      "COMMENT_TIMESTAMP:DateTime"
+
+    ]
+  },
+  {
+    "name": "RISK_REPOSITORY",
+    "props": [
+      "RISK_DESCRIPTION:string",
+      "RISK_IMPACT:string",
+      "LIKELIHOOD:int",
+      "CONSEQUENCES:int",
+      "RISK_TREATMENT_STRATEGY:string",
+      "THREATS:string",
+      "VULNERABILITIES:string"
+    ]
+  },
+  {
+    "name": "RISK_REPOSITORY2SERVICE_TOWER",
+    "props": [
+      "RISK_REPOSITORY_ID:int",
+      "SERVICE_TOWER_ID:int"
+    ]
+  },
+  {
+    "name": "PORTFOLIO_PROJECT",
+    "props": [
+      "PORTFOLIO_ID:int",
+      "CUST_ID:string",
+      "PROJ_ID:string"
+    ]
+  },
+  {
+    "name": "FOLDER_DATA",
+    "props": [
+      "FOLDER_NAME:string",
+      "PROJ_ID:string",
+      "CUSTOMER_ID:string",
+      "PARENT_FOLDER_ID:int",
+      "ADDED_DATE:DateTime",
+      "ADDED_BY:string"
+    ]
+  },
+  {
+    "name": "FILE_DATA",
+    "props": [
+      "FILE_NAME:string",
+      "FOLDER_ID:int",
+      "FILE_GUID:string",
+      "FILE_EXTENSION:string",
+      "FILE_TYPE:string",
+      "UPLOAD_DATE:DateTime",
+      "UPLOADED_BY:string"
+    ]
+  },
+  {
+    "name": "PROCESS_MODEL_REFERENCE",
+    "props": [
+      "SECTION_REFERENCE:string",
+      "CONTROL_REFERENCE:string",
+      "PROCESS_MODEL_ID:int"
+    ]
+  },
+
+  {
+    "name": "PROCESS_AREA_MODEL_REFERENCE",
+    "props": [
+      "PROCESS_ID:int",
+      "PROCESS_MODEL_REFERENCE_ID:int"
+    ]
+  },
+
+  {
+    "name": "KPI_MASTER2PRODUCT_SERVICE_LEVEL_METRICS",
+    "props": [
+      "KPI_MASTER_ID:int",
+      "PRODUCT_SERVICE_LEVEL_METRICS_ID:int"
+    ]
+  },
+
+  {
+    "name": "KPI_MASTER2BASE_MEASURE_CONFIG",
+    "props": [
+      "BASE_MEASURE_ID:int",
+      "KPI_MASTER_ID:int",
+      "DISPLAY_ORDER:int"
+    ]
+  },
+
+  {
+    "name": "PROJECT_CERTIFICATION_SCOPE",
+    "props": [
+      "SCOPE_NAME:string",
+      "ISO_STANDARD_ID:int"
+    ]
+  },
+
+  {
+    "name": "PROJECT_ISO_STANDARD",
+    "props": [
+      "STANDARD_NAME:string"
+    ]
+  },
+
+  {
+    "name": "PROJECT_CERTIFICATION_SCOPE_MAPPING",
+    "props": [
+      "PROJECT_ID:string",
+      "CERTIFICATION_SCOPE_ID:int"
+    ]
+  },
+
+  {
+    "name": "PROJECT_ISO_STANDARD_MAPPING",
+    "props": [
+      "PROJECT_ID:string",
+      "ISO_STANDARD_ID:int"
+    ]
+  },
+  {
+    "name": "LOCATION",
+    "props": [
+      "LOCATION_NAME:string"
+    ]
+  },
+  {
+    "name": "RISK_CATEGORY",
+    "props": [
+      "CATEGORY:string"
+    ]
+  },
+  {
+    "name": "IDEA_IDENTIFIER",
+    "props": [
+      "IDEA_ID:int",
+      "IDENTIFIED_BY:string"
+    ]
+  },
+  {
+    "name": "PROJECT_INSCOPE_DETAILS",
+    "props": [
+      "SERVICE_AREA_ID:int",
+      "TOOLS:string",
+      "TECHNOLOGY:string",
+      "PROJECT_ID:string"
+    ]
+  },
+  {
+    "name": "KPI_MASTER",
+    "props": [
+      "SERVICE_AREA:string",
+      "ABBREVIATION:string",
+      "KPI_NAME:string",
+      "SUPPORT_WINDOW:string",
+      "FREQUENCY:string",
+      "PRIORITY:string",
+      "SLA_TARGET_UNIT_OF_MEASUREMENT:string",
+      "GLOBAL_KPI_CATEGORY_ID:int",
+      "MODE_ID:int"
+    ]
+  },
+  {
+    "name": "SCP_APPLICABLE_CONFIG",
+    "props": [
+      "START_DATE:DateTime",
+      "END_DATE:DateTime",
+      "PROJ_ID:string",
+      "IS_SCP_APPLICABLE:bool",
+      "FREQUENCY:string"
+    ]
+  },
+  {
+    "name": "SCP_PROJECT_SERVICE_TOWER",
+    "props": [
+      "SCP_CONFIG_ID:int",
+      "SERVICE_TOWER_ID:int"
+    ]
+  },
+  {
+    "name": "RISK_ISO_STANDARD_MAPPING",
+    "props": [
+      "ID:int",
+      "RISK_ID :int",
+      "ISO_STANDARD_ID:int"
+    ]
+  },
+  {
+    "name": "ACCESS_REQUEST",
+    "props": [
+      "RESOURCE_ID:string",
+      "ACCESS_LEVEL:int",
+      "FEATURE:string",
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "STATUS:string",
+      "APPROVER_ID :string",
+      "APPROVAL_DATE: DateTime?",
+      "REJECT_REASON : string",
+      "REQUESTED_BY :string",
+      "REQUESTED_DATE : DateTime?"
+    ]
+
+  },
+  {
+    "name": "PROJECT_SCOPE_VALUES",
+    "props": [
+      "PROJ_ID:string",
+      "FIELD_NAME:string",
+      "FIELD_VALUE :string",
+      "FIELD_TYPE: string",
+      "IS_MANDATORY : bool"
+    ]
+
+  },
+  {
+    "name": "INTEGRATION_REQUEST_DATA",
+    "props": [
+      "REQUEST_TYPE:string",
+      "REQUEST_DATA:string",
+      "PROJ_ID:string",
+      "IS_PROCESSED :bool",
+      "PROCESSED_DATE: DateTime?",
+      "ERROR_INFO: string"
+    ]
+
+  },
+  {
+    "name": "CSS_BATCH_PROJECTS",
+    "props": [
+      "CUST_ID:string",
+      "PROJ_ID:string",
+      "REASON:string",
+      "DP_ID:string",
+      "PROJ_PM_EMP_ID:string",
+      "QUALITY_SPOC:string",
+      "IS_SELECTED :bool",
+      "BATCH_ID:int"
+
+    ]
+
+  },
+  {
+    "name": "ENTITY_HISTORY",
+    "props": [
+      "ENTITY_NAME:string",
+      "ENTITY_CONTENT:string"
+
+
+    ]
+
+  },
+  {
+    "name": "CSS_PRECONNECT",
+    "props": [
+      "PLANNED_DATE:DateTime?",
+      "ACTUAL_DATE:DateTime?",
+      "REMARKS:string",
+      "STATUS:string",
+      "CSS_BATCH_CUSTOMER_ID:int"
+    ]
+  },
+  {
+    "name": "DROPDOWN_OPTIONS",
+    "props": [
+      "DD_NAME:string",
+      "DD_VALUE:string",
+      "DD_TEXT:string"
+    ]
+
+  },
+  {
+    "name": "AUDIT_EVIDENCE_DATA",
+    "props": [
+      "FINDING_ID:int",
+      "STAGE_ID:int",
+      "ROOTCAUSE_ID :int",
+      "FILE_DATA_ID:int",
+
+    ]
+  }
+ 
+
+
+
+
+]

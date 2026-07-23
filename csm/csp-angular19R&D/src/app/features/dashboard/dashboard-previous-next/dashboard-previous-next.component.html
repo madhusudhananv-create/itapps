@@ -1,0 +1,131 @@
+<div class="row" style="background-color: #fff;">
+  <div class="col-lg-8 col-md-8 col-sm-8" style="width: 57%; color: #4e5882; font-size: 15px;font-weight: 700;">
+    <!-- Back button for GAVS users -->
+    <div *ngIf="_util.IsGAVS()" class="backbuttonlink" [routerLink]="['/newdashboard/custm']">
+      <img src="assets/images/back_round.png" alt="Back">
+    </div>
+    
+    <!-- Customer logo and name -->
+    <img class="image" style="height:45px;padding:5px" 
+         [src]="'assets/images/' + customerId + '.png'"
+         onerror="this.src='assets/images/CustomerLogo.png'"
+         [alt]="customerName">
+    {{ customerName }}
+  </div>
+
+  <div class="col-lg-4 col-md-4 col-sm-4">
+    <div class="prevNext" style="float: right;margin-right: 40px;">
+      <!-- Feedback link for non-GAVS users -->
+      <a *ngIf="!_util.IsGAVS()" 
+         class="link" 
+         [routerLink]="['/layout/feedback-page', customerId]"
+         style="color:steelblue;font-size:20px; margin-right: 10px;cursor: pointer" 
+         matTooltip="Feedback" 
+         [matTooltipPosition]="'before'">
+        <img style="width: 20px" src="assets/images/feedback.png" alt="Feedback">
+      </a>
+      
+      <!-- Filter toggle button -->
+      <button mat-icon-button
+              (click)="showFilter = !showFilter"
+              [class.active-filter]="showFilter"
+              class="filter-btn"
+              matTooltip="Filter"
+              style="position: relative; color: steelblue; margin-right: 10px;">
+        <mat-icon>filter_list</mat-icon>
+        <span *ngIf="showFilter" 
+              style="position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background: #667eea; border-radius: 50%; border: 2px solid white;"></span>
+      </button>
+      
+      <!-- Previous/Next navigation buttons -->
+      <button [disabled]="currIndex == 0" 
+              (click)="onPrev()"
+              class="nav-button prev-button">
+        <i class="fa fa-arrow-left"></i> Previous
+      </button>
+      <button [disabled]="currIndex == 3" 
+              (click)="onNext()"
+              class="nav-button next-button">
+        Next <i class="fa fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Filter panel (collapsible inline) -->
+<div *ngIf="showFilter" style="margin: 0 20px 16px 20px;">
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+    
+    <!-- Filter Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <mat-icon style="font-size: 20px; width: 20px; height: 20px; color: white;">tune</mat-icon>
+        <h3 style="color: white; margin: 0; font-size: 16px; font-weight: 600;">Filter Options</h3>
+        <span style="color: rgba(255,255,255,0.8); font-size: 12px; margin-left: 8px;">- Select portfolios, projects, and products to filter the dashboard</span>
+      </div>
+      <button mat-icon-button 
+              (click)="showFilter = false"
+              style="color: white;">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Filter Content -->
+    <div style="background: white; border-radius: 8px; padding: 12px;">
+      <app-portfolio-project-selector 
+        [custId]="customerId" 
+        [allproj]="false" 
+        [portinput]="_shared.selectedPortfolios"
+        [projinput]="_shared.selectedProjects" 
+        [prodinput]="_shared.selectedProducts"
+        [showProduct]="true"
+        (projectsSelected)="getSelectedProjectsList($event)" 
+        (prodSelected)="getSelectedProdList($event)">
+      </app-portfolio-project-selector>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard Pages -->
+<!-- Page 0: Dashboard Premier (SLA/Service Level Dashboard) -->
+<div class="row" *ngIf="currIndex == 0">
+  <app-dashboard-premier 
+    [projectArray]="projArray" 
+    [productArray]="prodArray" 
+    [portArray]="portArray">
+  </app-dashboard-premier>
+</div>
+
+<!-- Page 1: Dashboard Customer Page 2 -->
+<div class="row" *ngIf="currIndex == 1">
+  <app-dashboard-customer-page2 
+    [customerid]="customerId"
+    [customerName]="selectedCustomer?.cusT_NM || ''"
+    [projectArray]="projArray" 
+    [productArray]="prodArray" 
+    [portArray]="portArray">
+  </app-dashboard-customer-page2>
+</div>
+
+<!-- Page 2: Dashboard Customer Next Page -->
+<div class="row" *ngIf="currIndex == 2">
+  <app-dashboard-customer-next-page 
+       [customerId]="customerId" 
+       [projectArray]="projArray"
+       [month]="currentMonth"
+       [year]="currentYear">
+  </app-dashboard-customer-next-page>
+</div>
+
+<!-- Page 3: Dashboard Success Journey -->
+<div class="row" *ngIf="currIndex == 3">
+  <!-- Debug info -->
+  <div style="background: lightblue; padding: 10px; margin: 10px;">
+    <strong>PARENT DEBUG:</strong> currIndex = {{ currIndex }}, customerId = {{ customerId }}
+  </div>
+  
+  <app-dashboard-success-journey 
+    [custId]="customerId">
+  </app-dashboard-success-journey>
+</div>

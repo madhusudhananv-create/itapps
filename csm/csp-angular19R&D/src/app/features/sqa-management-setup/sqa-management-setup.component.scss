@@ -1,0 +1,112 @@
+.row{
+  margin:0px !important;
+}
+.col-lg-8, .col-lg-7, .col-lg-6, .col-lg-4, .col-lg-3, .col-lg-2, .col-lg-1{
+  padding: 2px 0 2px 0 !important;
+}
+.col-md-8, .col-md-7, .col-md-6, .col-md-4, .col-md-3, .col-md-2, .col-md-1{
+  padding: 2px 0 2px 0 !important;
+}
+.col-sm-8, .col-sm-7, .col-sm-6, .col-sm-4, .col-sm-3, .col-sm-2, .col-sm-1{
+  padding: 2px 0 2px 0 !important;
+}
+.example-container {
+  height: 245px;
+  overflow: auto;
+  padding: 0;
+}
+.deleteWidth{
+  flex: 0 0 25px !important;
+  border-left:none !important;
+}
+.ctrlPadding{
+  padding:0 2px 0 2px;
+}
+.CheckboxWidth{
+  width:60px;
+  text-align: center;
+}
+mat-tab-group{
+  margin: 1px;
+  background-color: #f1f1f1;
+}
+.padding10{
+  padding-right:10px;
+  width:100%;
+} 
+mat-tab-label{
+  height:35px !important;
+}
+.mat-tab-label{
+  height:35px !important;
+}
+.mat-progress-bar {
+  display: block;
+  height: 2px;
+  overflow: hidden;
+  position: relative;
+  transform: translateZ(0);
+  transition: opacity 250ms linear;
+  width: 100%;
+}
+::ng-deep mat-expansion-panel-header{
+  height:34px !important;
+}
+::ng-deep mat-expansion-panel-body{
+  padding: 0 5px 5px !important;
+}
+::ng-deep .mat-expansion-panel-body{
+  padding: 0 5px 5px !important;
+}
+.link {
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: middle;
+  text-align: center;
+}
+.link_add {
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: middle;
+  text-align: center;
+  color:#5cb85c;
+}
+.link_remove {
+  padding-top: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: middle;
+  text-align: center;
+  color:#f0ad4e;
+}
+//////////////////////////////////
+//Bootstrap table
+//////////////////////////////////
+table {
+  width: 100%;
+}
+tr.mat-header-row{
+  height:inherit !important;
+}
+tr.mat-row {
+  height:inherit !important;
+}
+.table > tbody > tr > td, .table > thead > tr > th, 
+.table-bordered > tbody > tr > td, .table-bordered > thead > tr > th {
+  padding: 2px !important;
+  text-align: center;
+  font-size: 10px !important;
+}
+td {
+  padding: 0px !important;
+  text-align: center;
+  font-size: 12px !important;
+}
+.editWidth{
+  padding-left:3px !important;
+  flex: 0 0 25px !important;
+  border-right:none !important;
+}
+.indexWidth{
+  flex: 0 0 40px !important;
+}

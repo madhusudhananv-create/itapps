@@ -1,0 +1,260 @@
+/* Main Container */
+.example-container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.mainDiv {
+  background: #fff 0% 0% no-repeat padding-box;
+  border-radius: 9px;
+  box-shadow: 0px 3px 6px #00000029;
+  opacity: 1;
+  width: 97%;
+  min-height: 648px;
+  padding: 10px 10px;
+  margin-left: 13px;
+}
+
+/* Grid System */
+.row {
+  padding: 0;
+  margin: 0;
+}
+
+.col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-8, .col-lg-12,
+.col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-8, .col-md-12,
+.col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-8, .col-sm-12 {
+  padding: 0;
+  margin: 0;
+}
+
+/* Card Styles */
+.healthCard {
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  box-shadow: 0px 3px 6px #00000029;
+  border-radius: 5px;
+  opacity: 1;
+  margin-left: 15px;
+  width: 275px;
+  height: 280px;
+  padding: 10px;
+}
+
+.successGoalCard {
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  box-shadow: 0px 3px 6px #00000029;
+  border-radius: 5px;
+  opacity: 1;
+  height: 280px;
+  padding: 10px;
+}
+
+.riskIssueCard {
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  box-shadow: 0px 3px 6px #00000029;
+  border-radius: 5px;
+  opacity: 1;
+  margin-left: 15px;
+  margin-top: 15px;
+  width: 575px;
+  height: 160px;
+  padding: 10px;
+}
+
+.containerCard {
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  box-shadow: 0px 3px 6px #00000029;
+  border-radius: 5px;
+  opacity: 1;
+  margin-left: 15px;
+  margin-top: 15px;
+  width: 380px;
+  height: 160px;
+  padding: 10px;
+}
+
+.contractCard {
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  box-shadow: 0px 3px 6px #00000029;
+  border-radius: 5px;
+  opacity: 1;
+  margin-left: 15px;
+  margin-top: 15px;
+  width: 380px;
+  height: 205px;
+  padding: 10px;
+}
+
+/* Chart Placeholders */
+.chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+}
+
+.totalLabel {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* Progress Bars */
+.performanceBar::ng-deep .mat-mdc-progress-bar-fill::after {
+  background-color: #64C7E8 !important;
+}
+
+.qualityBar::ng-deep .mat-mdc-progress-bar-fill::after {
+  background-color: #F2C94C !important;
+}
+
+.compilanceBar::ng-deep .mat-mdc-progress-bar-fill::after {
+  background-color: #BB6BD9 !important;
+}
+
+.valueBar::ng-deep .mat-mdc-progress-bar-fill::after {
+  background-color: #56CCF2 !important;
+}
+
+.progressText {
+  height: 15px;
+  text-align: left;
+  font: normal normal normal 12px/15px Proxima Nova;
+  letter-spacing: 0px;
+  color: #333333;
+  opacity: 1;
+}
+
+/* KPI Perspective */
+.kpiPrespective {
+  text-align: left;
+  margin-bottom: 15px;
+  margin-top: 10px;
+}
+
+/* Success Goal Table */
+.successgoalTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Proxima Nova;
+  
+  thead {
+    background: #4B4EB1 0% 0% no-repeat padding-box;
+    color: #FFFFFF;
+    
+    th {
+      text-align: left;
+      font: normal normal medium 12px/15px Proxima Nova;
+      letter-spacing: 0px;
+      padding: 8px 5px;
+      border: 1px solid #E5E5E5;
+    }
+  }
+  
+  tbody {
+    tr {
+      background: #FAFAFA 0% 0% no-repeat padding-box;
+      border: 1px solid #E5E5E5;
+      
+      &:hover {
+        background: #f0f0f0;
+      }
+      
+      td {
+        padding: 5px;
+        font-size: 11px;
+        color: #333333;
+      }
+    }
+  }
+}
+
+/* Tabs */
+.goalTabGrp {
+  margin-top: 10px;
+  
+  ::ng-deep .mat-mdc-tab-labels {
+    justify-content: center;
+  }
+  
+  ::ng-deep .mat-mdc-tab {
+    min-width: 100px !important;
+    font-size: 11px;
+    font-family: Proxima Nova;
+  }
+  
+  ::ng-deep .mat-mdc-tab-label-active {
+    background: #4B4EB1;
+    color: white;
+  }
+}
+
+/* Date Pickers */
+.stDate, .edDate {
+  width: 120px;
+  margin-right: 10px;
+  
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding: 0;
+  }
+  
+  ::ng-deep input {
+    font-size: 12px;
+    font-family: Proxima Nova;
+  }
+}
+
+.no-line ::ng-deep .mat-mdc-form-field-underline {
+  display: none;
+}
+
+/* Buttons */
+button.primary {
+  background: #4B4EB1 0% 0% no-repeat padding-box;
+  border-radius: 3px;
+  color: #FFFFFF;
+  border: none;
+  padding: 5px 15px;
+  font: normal normal medium 12px/15px Proxima Nova;
+  cursor: pointer;
+  
+  &:hover {
+    background: #3a3d8f;
+  }
+}
+
+/* Links */
+.link {
+  cursor: pointer;
+  text-decoration: none;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+/* Image Styling */
+.image {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mainDiv {
+    width: 100%;
+    margin-left: 0;
+    padding: 5px;
+  }
+  
+  .healthCard, .successGoalCard, .riskIssueCard, .containerCard, .contractCard {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+}

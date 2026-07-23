@@ -1,0 +1,41 @@
+<div class="kpi-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button class="back-button" [routerLink]="['/serviceleveldashboard/cust', custId, true]"
+        matTooltip="Back to Service Level Dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <img class="customer-logo" src="assets/images/{{custId}}.png" 
+           onerror="this.src='assets/images/CustomerLogo.png'" 
+           alt="Customer Logo">
+      <h1 class="page-title">Manage KPI Products</h1>
+    </div>
+  </div>
+
+  <!-- Stepper Content -->
+  <div class="stepper-wrapper">
+    <mat-stepper linear #stepper orientation="horizontal" labelPosition="bottom" class="kpi-stepper">
+      <mat-step>
+        <form>
+          <ng-template matStepLabel>Products</ng-template>
+          <app-manageproduct [custId]="custId"></app-manageproduct>
+        </form>
+      </mat-step>
+      
+      <mat-step>
+        <form>
+          <ng-template matStepLabel>Product Responsible Person</ng-template>
+          <app-product-responsible [IsBackButtonEnabled]="false"></app-product-responsible>
+        </form>
+      </mat-step>
+      
+      <mat-step>
+        <form>
+          <ng-template matStepLabel>Service Level Metrics</ng-template>
+          <app-manage-kpi-metrics [custId]="custId"></app-manage-kpi-metrics>
+        </form>
+      </mat-step>
+    </mat-stepper>
+  </div>
+</div>

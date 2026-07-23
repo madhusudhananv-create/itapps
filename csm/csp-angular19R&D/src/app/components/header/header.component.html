@@ -1,0 +1,8 @@
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches" style="margin: 0; padding: 0;">
+  <app-navbar-new [ShowMenu]="showMenu" (showDashboardMenu)="onMenuToggle($event)"></app-navbar-new>
+  <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+    <mat-sidenav-content style="background-color:#eaeaea">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

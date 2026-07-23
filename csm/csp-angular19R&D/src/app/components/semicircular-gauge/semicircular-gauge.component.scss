@@ -1,0 +1,13 @@
+:host { display: block; }
+
+svg {
+  overflow: visible !important;
+  display: block;
+  margin: 0 auto;
+}
+
+path {
+  transition: stroke-opacity .3s ease, filter .3s ease;
+}
+
+text { pointer-events: none; user-select: none; }
