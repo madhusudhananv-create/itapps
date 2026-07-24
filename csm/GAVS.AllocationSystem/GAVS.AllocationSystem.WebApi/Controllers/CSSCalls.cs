@@ -690,6 +690,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
 
             ccmail = helper.ConcatEmails(cclist);
+            string bcc = string.Empty;
+            bcc = helper.GetDBConfig("CSS_BCC", "-1");
             if (!string.IsNullOrWhiteSpace(cust.SPOC))
                 ccmail += "," + cust.SPOC;
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
@@ -712,7 +714,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             ep.SendEmail
                 (
                 new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
-                new EmailContent { from = _email, to = tomail, cc = ccmail, bcc = Constants.CSS_BCC, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID }
+                new EmailContent { from = _email, to = tomail, cc = ccmail, bcc = bcc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "", ProjId = cust.PROJ_ID }
                 , Request
                 );
 

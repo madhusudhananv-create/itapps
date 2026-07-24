@@ -1639,7 +1639,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = GetCAPAStagesForKPIInternal(kpiDetailId, capaDataCollection);
             return Ok(result);
         }
-
         [POST("AddCAPAForKPI")]
         [ActionName("AddCAPAForKPI")]
         [HttpPost]
@@ -1652,7 +1651,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (results == null)
                 return BadRequest("Request invalid");
 
-            var kpidetailsId = (results?.CAPA_SUBMISSION?.STATUS?.KPI_DETAILS_ID).GetValueOrDefault();
+            var kpidetailsId = results.CAPA_SUBMISSION.STATUS.KPI_DETAILS_ID.GetValueOrDefault();
 
             var kpiDtls = CSPdb.KPI_DETAILS.GetAll().FirstOrDefault(x => x.ID == kpidetailsId && x.ISACTIVE);
             if (kpiDtls == null)
@@ -1660,14 +1659,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "Unable to find the corresponding KPI Details. Please try again after some time");
             }
 
-            var targetKpiId = kpiDtls?.KPI_ID;
+            var kpi = CSPdb.KPI.GetAll().FirstOrDefault(x => x.ID == kpiDtls.KPI_ID && x.ISACTIVE);
             if (kpi == null)
             {
                 return Content(HttpStatusCode.Conflict, "Unable to find the corresponding KPI Details. Please try again after some time");
             }
-            var kpi = CSPdb.KPI.GetAll().FirstOrDefault(x => x.ID == targetKpiId && x.ISACTIVE);
-
-            var result = AddCapaForKPIInternal(results, kpiDtls, kpi?.KPI_NAME, selectedPeriod, empId);
+            var result = AddCapaForKPIInternal(results, kpiDtls, kpi.KPI_NAME, selectedPeriod, empId);
 
             return Ok(results);
         }
