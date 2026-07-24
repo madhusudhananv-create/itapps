@@ -1,0 +1,55 @@
+<div class="role-tab">
+  <div class="row">
+    <mat-form-field style="width:300px">
+      <mat-select placeholder="Select Role" [(ngModel)]="selectedRoleId" (ngModelChange)="ddRoles_Onchange()">
+        <mat-option *ngFor="let role of projectRoles" [value]="role.id" [title]="role.title">
+          {{ role.title }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" style="margin-left:10px" (click)="AddRow_onClick()">
+      <mat-icon>add</mat-icon> Add Row
+    </button>
+  </div>
+
+  <table class="access-table" *ngIf="accessControls.length > 0">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Resource Name</th>
+        <th>Emp Ids</th>
+        <th>View</th>
+        <th>Create</th>
+        <th>Edit</th>
+        <th>Delete</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of accessControls; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>
+          <span *ngIf="row.id !== 0">{{ GetResourceName(row.resourcE_ID) }}</span>
+          <mat-form-field *ngIf="row.id === 0" style="width:100%">
+            <mat-select placeholder="Select Resource" [(ngModel)]="row.resourcE_ID">
+              <mat-option *ngFor="let ctrl of appControls" [value]="ctrl.resourcE_ID" [title]="ctrl.resourcE_NAME">
+                {{ ctrl.resourcE_NAME }}({{ ctrl.resourcE_ID }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </td>
+        <td><input type="text" [(ngModel)]="row.emP_ID"></td>
+        <td><input *ngIf="IsAllowed(row, 'VIEW')" type="checkbox" [(ngModel)]="row.vieW_ACCESS"></td>
+        <td><input *ngIf="IsAllowed(row, 'CREATE')" type="checkbox" [(ngModel)]="row.creatE_ACCESS"></td>
+        <td><input *ngIf="IsAllowed(row, 'EDIT')" type="checkbox" [(ngModel)]="row.ediT_ACCESS"></td>
+        <td><input *ngIf="IsAllowed(row, 'DELETE')" type="checkbox" [(ngModel)]="row.deletE_ACCESS"></td>
+        <td>
+          <a class="link" (click)="SaveRow_onClick(row)" title="Save">
+            <mat-icon>save</mat-icon>
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

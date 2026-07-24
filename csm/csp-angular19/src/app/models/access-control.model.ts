@@ -32,13 +32,18 @@ export interface AppAccessControlsModel {
 
 /**
  * Application controls/resources model
- * Defines available application resources (screens, modules, features)
+ * Backed by GET /GetAppControls (AllSysController -> APP_CONTROLS entity).
+ * NOTE: this endpoint goes through the standard Web API pipeline, which has a global
+ * CamelCasePropertyNamesContractResolver configured (see WebApi/App_Start/GlobalConfig.cs).
+ * That resolver only lowercases LEADING uppercase letters up to the first underscore
+ * (Newtonsoft's ToCamelCase algorithm), so "RESOURCE_ID" -> "resourcE_ID", not "resourceId"
+ * and not "RESOURCE_ID". This is the same convention the legacy Angular 7 app relied on.
  */
 export interface AppControlsModel {
   id: number;
   resourcE_ID: number;
-  resourcE_TYPE: number;
-  resourcE_NAME: number;
+  resourcE_TYPE: string;
+  resourcE_NAME: string;
   comments: string;
   createD_BY: string;
   createD_DATE: Date;
@@ -49,12 +54,42 @@ export interface AppControlsModel {
 
 /**
  * Application control features model
- * Maps features to application resources for granular access control
+ * Backed by GET /GetControlFeatures (AllSysController -> APP_CONTROL_FEATURES entity).
+ * Same camelCase-transform convention as AppControlsModel above.
  */
 export interface AppControlFeaturesModel {
   id: number;
   resourcE_ID: number;
-  feature: number;
+  feature: string;
+  comments: string;
+  createD_BY: string;
+  createD_DATE: Date;
+  updateD_BY: string;
+  updateD_DATE: Date;
+  isactive: boolean;
+}
+
+/**
+ * Access control row as returned by AllSysController's Get/Update/Delete access-control
+ * endpoints (APP_ACCESS_CONTROLS entity, transformed casing - see AppControlsModel note above).
+ *
+ * This is intentionally a SEPARATE type from AppAccessControlsModel below: that one models the
+ * access list embedded in the login payload, which AuthController builds via a manual
+ * JsonConvert.SerializeObject() call that does NOT go through the Web API pipeline's
+ * CamelCasePropertyNamesContractResolver, so it keeps the original ALL-CAPS C# casing.
+ */
+export interface AccessControlRowModel {
+  id: number;
+  resourcE_ID: number;
+  accesS_LEVEL: number;
+  rolE_ID: number | null;
+  cusT_ID: string;
+  proJ_ID: string;
+  emP_ID: string;
+  vieW_ACCESS: boolean;
+  creatE_ACCESS: boolean;
+  ediT_ACCESS: boolean;
+  deletE_ACCESS: boolean;
   comments: string;
   createD_BY: string;
   createD_DATE: Date;

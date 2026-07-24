@@ -1,0 +1,40 @@
+.customer-tab {
+  padding: 15px;
+}
+
+.row {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.access-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+  }
+
+  th {
+    font-weight: 600;
+    color: #6e6e73;
+  }
+}
+
+.link {
+  cursor: pointer;
+  color: #0071e3;
+  margin-left: 10px;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #fff;
+
+  &.default { background: #34c759; }
+}

@@ -1,0 +1,28 @@
+.role-tab {
+  padding: 15px;
+}
+
+.row {
+  margin-bottom: 10px;
+}
+
+.access-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+  }
+
+  th {
+    font-weight: 600;
+    color: #6e6e73;
+  }
+}
+
+.link {
+  cursor: pointer;
+  color: #0071e3;
+}
