@@ -6249,13 +6249,20 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       });
       
       // Find "CSAT received Report" sheet for perspective ratings (Sheet1)
-      const receivedSheetName = file.sheetNames?.find(s => {
+      let receivedSheetName = file.sheetNames?.find(s => {
         const sheetLower = String(s).toLowerCase().trim();
-        return (sheetLower.includes('csat received') && !sheetLower.includes('sent and received')) || 
+        return (sheetLower.includes('csat received') && !sheetLower.includes('sent and received')) ||
                sheetLower === 'sheet1' ||
                sheetLower === 'sheet 1';
       });
-      
+      // Fallback: no sheet matched by name — use the first sheet that isn't the
+      // "sent and received" sheet, so perspective columns aren't silently dropped
+      // just because the uploaded file's sheet names differ from the expected ones.
+      if (!receivedSheetName && file.sheetNames?.length) {
+        receivedSheetName = file.sheetNames.find(s => s !== sentReceivedSheetName) || file.sheetNames[0];
+        console.log('Using fallback sheet as receivedSheetName:', receivedSheetName);
+      }
+
       console.log('Detected sentReceivedSheetName:', sentReceivedSheetName);
       console.log('Detected receivedSheetName:', receivedSheetName);
       
