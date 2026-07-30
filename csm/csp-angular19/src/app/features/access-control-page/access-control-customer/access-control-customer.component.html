@@ -1,0 +1,55 @@
+<div class="customer-tab">
+  <div class="row">
+    <mat-form-field style="width:280px">
+      <mat-select placeholder="Select Customer" [(ngModel)]="selectedCustomer" (ngModelChange)="ddCustomer_Onchange()">
+        <mat-option *ngFor="let cust of customers" [value]="cust" [title]="cust.displaY_NAME">
+          {{ cust.displaY_NAME }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field style="width:280px;margin-left:10px">
+      <mat-select placeholder="Select Project" [(ngModel)]="selectedProject" (ngModelChange)="ddProject_Onchange()">
+        <mat-option *ngFor="let proj of projects" [value]="proj" [title]="proj.proJ_NM">
+          {{ proj.proJ_NM }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <a *ngIf="selectedProject" class="link" (click)="save()" title="Save">
+      <mat-icon>save</mat-icon>
+    </a>
+    <a *ngIf="selectedProject" class="link" (click)="delete()" title="Restore Default Access">
+      <mat-icon>restore</mat-icon>
+    </a>
+  </div>
+
+  <table class="access-table" *ngIf="accessControls.length > 0">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Resource Name</th>
+        <th>Customer Id</th>
+        <th>Project Id(s)</th>
+        <th>Email Ids</th>
+        <th>View</th>
+        <th>Create</th>
+        <th>Edit</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of accessControls; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>{{ GetResourceName(row.resourcE_ID) }}</td>
+        <td>{{ row.cusT_ID }}</td>
+        <td>{{ row.proJ_ID }}</td>
+        <td>{{ row.emP_ID }}</td>
+        <td><input *ngIf="IsAllowed(row, 'VIEW')" type="checkbox" [(ngModel)]="row.vieW_ACCESS"></td>
+        <td><input *ngIf="IsAllowed(row, 'CREATE')" type="checkbox" [(ngModel)]="row.creatE_ACCESS"></td>
+        <td><input *ngIf="IsAllowed(row, 'EDIT')" type="checkbox" [(ngModel)]="row.ediT_ACCESS"></td>
+        <td><input *ngIf="IsAllowed(row, 'DELETE')" type="checkbox" [(ngModel)]="row.deletE_ACCESS"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

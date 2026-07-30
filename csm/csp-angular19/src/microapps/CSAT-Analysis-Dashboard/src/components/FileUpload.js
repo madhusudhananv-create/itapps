@@ -6,12 +6,7 @@ import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 
 // Dashboards not yet ready for use; disabled on the selection grid until re-enabled.
-const TEMPORARILY_DISABLED_DASHBOARD_IDS = new Set([
-  'sentiments',
-  'sentimentsFeedback',
-  'pcsatQualitativeAnalysis',
-  'qualitativeAnalysis'
-]);
+const TEMPORARILY_DISABLED_DASHBOARD_IDS = new Set([]);
 
 const UploadContainer = styled.div`
   background: white;
@@ -557,20 +552,6 @@ const FileUpload = ({
       requiresData: true
     },
     {
-      id: 'sentiments',
-      name: 'Sentiments based on Avg rating(score) - Perspective Wise',
-      description: 'Customer sentiment analysis based on ratings',
-      icon: <MessageCircle size={20} />,
-      requiresData: true
-    },
-    {
-      id: 'sentimentsFeedback',
-      name: 'Sentiments based on Avg Sentiments(Feedback) - Perspective Wise',
-      description: 'Detailed sentiment feedback analysis',
-      icon: <MessageCircle size={20} />,
-      requiresData: true
-    },
-    {
       id: 'accountBUWiseOverallCSATScoreDistribution',
       name: 'Account/BU wise Overall CSAT score -Distribution(Score 1 to 5)',
       description: 'CSAT score distribution analysis',
@@ -593,8 +574,8 @@ const FileUpload = ({
     },
     {
       id: 'trendAnalysis',
-      name: 'Upload data for trend analysis',
-      description: 'Upload historical data for CSAT trend analysis',
+      name: 'Fetch data for trend analysis',
+      description: 'Fetch a comparison period from the Customer Success Survey All PCSAT report for CSAT trend analysis',
       icon: <TrendingUp size={20} />,
       requiresData: true
     }

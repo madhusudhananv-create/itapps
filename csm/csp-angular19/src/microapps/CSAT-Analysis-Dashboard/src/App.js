@@ -2375,6 +2375,7 @@ const App = () => {
           })()
         ) : currentDashboard === 'trendAnalysis' ? (
           <TrendAnalysisUpload
+            title="Fetch data for trend analysis"
             onBack={() => {
               setCurrentDashboard(null);
               setShowExcelData(true);
