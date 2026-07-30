@@ -1894,9 +1894,8 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const custIdCol = Object.keys(firstRow).find(k => /cust_id|customer_id/i.test(String(k)));
 
       const isTop10Account = (row) => {
-        const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim();
-        if (typeOfAccountCol === 'TYPE OF ACCOUNT') return val.toLowerCase() === 'top 10';
-        return val.toUpperCase() === 'Y';
+        const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim().toLowerCase();
+        return val === 'top 10' || val === 'y';
       };
       const isOtherAccount = (row) => {
         const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim().toLowerCase();

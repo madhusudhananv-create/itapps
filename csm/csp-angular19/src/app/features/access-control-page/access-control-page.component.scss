@@ -1,0 +1,124 @@
+/**
+ * Application Access Control Page — Apple-inspired Modern UI
+ * Page shell: tab navigation, sidenav container
+ */
+
+// --- Design Tokens -------------------------------------------------------------
+$brand-primary   : #0071e3;
+$brand-hover     : #0077ed;
+$brand-subtle    : #e8f1fb;
+$text-primary    : #1d1d1f;
+$text-secondary  : #6e6e73;
+$surface-base    : #ffffff;
+$surface-raised  : #f5f5f7;
+$surface-border  : #d2d2d7;
+$radius-md       : 12px;
+$radius-lg       : 18px;
+$shadow-card     : 0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+$transition-fast : 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-std  : 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+$font-system     : -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+
+// --- Animations ----------------------------------------------------------------
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// --- Page Container ------------------------------------------------------------
+.example-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: $surface-raised;
+  font-family: $font-system;
+  position: static;
+  top: unset; bottom: unset; left: unset; right: unset;
+}
+
+.example-is-mobile .example-sidenav-container { flex: 1 0 auto; }
+
+.example-sidenav-container {
+  flex: 1;
+  background: $surface-raised;
+}
+
+.mat-sidenav {
+  width: 250px;
+  background: $surface-base;
+  border-right: 1px solid $surface-border;
+}
+
+.header {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: $text-primary;
+  padding: 14px 0 0;
+}
+
+// --- Tab Group — Apple pill style ---------------------------------------------
+::ng-deep {
+  mat-sidenav-content {
+    background: $surface-raised !important;
+  }
+
+  .mat-mdc-tab-group {
+    animation: fadeSlideUp $transition-std both;
+  }
+
+  .mat-mdc-tab-header {
+    background: $surface-base !important;
+    border-bottom: 1px solid $surface-border !important;
+    padding: 10px 20px 0 !important;
+    box-shadow: $shadow-card;
+  }
+
+  .mat-mdc-tab-label-container {
+    border-bottom: none !important;
+  }
+
+  .mat-mdc-tab {
+    min-width: unset !important;
+    padding: 0 22px !important;
+    height: 36px !important;
+    border-radius: 980px !important;
+    margin-bottom: 10px !important;
+    opacity: 1 !important;
+    transition: background $transition-fast, color $transition-fast !important;
+
+    .mdc-tab__text-label {
+      font-family: $font-system !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      color: $text-secondary !important;
+      letter-spacing: -0.1px !important;
+      transition: color $transition-fast !important;
+    }
+
+    &:hover:not(.mdc-tab--active) {
+      background: $brand-subtle !important;
+      .mdc-tab__text-label { color: $brand-primary !important; }
+    }
+
+    &.mdc-tab--active {
+      background: $brand-primary !important;
+      .mdc-tab__text-label { color: #ffffff !important; font-weight: 600 !important; }
+    }
+  }
+
+  .mdc-tab-indicator { display: none !important; }
+  .mdc-tab__ripple   { display: none !important; }
+
+  .mat-mdc-tab-body-wrapper {
+    background: $surface-raised !important;
+    padding: 0 !important;
+  }
+
+  .mat-mdc-tab-body-content {
+    padding: 20px !important;
+    overflow: visible !important;
+  }
+}

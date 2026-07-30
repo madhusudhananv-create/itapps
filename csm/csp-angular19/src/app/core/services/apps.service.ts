@@ -4,11 +4,16 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 // Import models
-import type { 
-  AppAccessControlsModel, 
+import type {
+  AppAccessControlsModel,
   AppControlFeaturesModel,
+  AppControlsModel,
+  AccessControlRowModel,
   AccessRequestModel
 } from '../../models/access-control.model';
+import type { ProjectRolesModel } from '../../models/project-roles-model';
+import type { CustomerProjectsModel } from '../../models/customer-projects-model';
+import type { ProjectsModel } from '../../models/projects-model';
 import type { DashboardDetailsModel } from '../../models/dashboard-details.model';
 import type { PortfolioModel, ProjectModelNew, ProductModelNew } from '../../models/portfolio.model';
 import type { SqaChartParamsModel } from '../../models/sqa-project-reports-model';
@@ -224,8 +229,8 @@ export class AppsService {
    * Get access controls by role ID
    * @param roleId Role ID to fetch controls for
    */
-  getAccessControlsByRoleId(roleId: number): Observable<AppAccessControlsModel[]> {
-    return this.http.get<AppAccessControlsModel[]>(
+  getAccessControlsByRoleId(roleId: number): Observable<AccessControlRowModel[]> {
+    return this.http.get<AccessControlRowModel[]>(
       `${this.apiurl}/GetAccessControlsByRoleId?RoleId=${roleId}`,
       { headers: this.getAuthHeaders() }
     );
@@ -235,8 +240,8 @@ export class AppsService {
    * Get access controls by employee ID
    * @param empId Employee ID
    */
-  getAccessControlsByEmpId(empId: string): Observable<AppAccessControlsModel[]> {
-    return this.http.get<AppAccessControlsModel[]>(
+  getAccessControlsByEmpId(empId: string): Observable<AccessControlRowModel[]> {
+    return this.http.get<AccessControlRowModel[]>(
       `${this.apiurl}/GetAccessControlsByEmpId?EmpId=${empId}`,
       { headers: this.getAuthHeaders() }
     );
@@ -245,14 +250,94 @@ export class AppsService {
   /**
    * Get customer access controls
    * @param emailId Customer email
-   * @param projid Project ID
+   * @param projid Project ID (PROJ_ID is a string identifier, e.g. "201P000123", not numeric)
    */
   getCustomerAccessControls(
     emailId: string,
-    projid: number
-  ): Observable<AppAccessControlsModel[]> {
-    return this.http.get<AppAccessControlsModel[]>(
+    projid: string
+  ): Observable<AccessControlRowModel[]> {
+    return this.http.get<AccessControlRowModel[]>(
       `${this.apiurl}/GetCustomerAccessControls?EmailId=${emailId}&ProjId=${projid}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Get all application resources (screens/modules/features) available for access control
+   * Migrated from LEGACY-SOURCE/src/app/Services/apps.service.other.ts -> getAppControls()
+   */
+  getAppControls(): Observable<AppControlsModel[]> {
+    return this.http.get<AppControlsModel[]>(
+      `${this.apiurl}/GetAppControls`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Get the list of application roles (used for the Role Level access control dropdown)
+   * Migrated from LEGACY-SOURCE/src/app/Services/apps.service.ts -> GetProjectRoles()
+   */
+  getProjectRoles(): Observable<ProjectRolesModel[]> {
+    return this.http.get<ProjectRolesModel[]>(
+      `${this.apiurl}/GetCSMTitles`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Get customer info (with email/display name) managed by an employee
+   * Migrated from LEGACY-SOURCE/src/app/Services/apps.service.ts -> getCustomerInfo()
+   */
+  getCustomerInfo(managerId: string): Observable<CustomerProjectsModel[]> {
+    return this.http.get<CustomerProjectsModel[]>(
+      `${this.apiurl}/GetCustomerInfo?ManagerId=${managerId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Get projects for a given client/customer
+   * Migrated from LEGACY-SOURCE/src/app/Services/apps.service.ts -> GetClientProjects()
+   */
+  getClientProjects(clientId: string): Observable<ProjectsModel[]> {
+    return this.http.get<ProjectsModel[]>(
+      `${this.apiurl}/GetClientProjects?ClientId=${clientId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Upsert a single access control record
+   * Migrated from LEGACY-SOURCE/src/app/Services/apps.service.ts -> UpdateAccessControl()
+   */
+  updateAccessControl(accessControl: AccessControlRowModel): Observable<AccessControlRowModel> {
+    return this.http.post<AccessControlRowModel>(
+      `${this.apiurl}/UpdateAccessControl`,
+      accessControl,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Upsert multiple access control records
+   * Migrated from LEGACY-SOURCE/src/app/Services/apps.service.ts -> UpdateAccessControls()
+   */
+  updateAccessControls(accessControls: AccessControlRowModel[]): Observable<AccessControlRowModel[]> {
+    return this.http.post<AccessControlRowModel[]>(
+      `${this.apiurl}/UpdateAccessControls`,
+      accessControls,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Soft-delete (restore to default) multiple access control records
+   * Migrated from LEGACY-SOURCE/src/app/Services/apps.service.ts -> DeleteAccessControls()
+   */
+  deleteAccessControls(accessControls: AccessControlRowModel[]): Observable<AccessControlRowModel[]> {
+    return this.http.post<AccessControlRowModel[]>(
+      `${this.apiurl}/DeleteAccessControls`,
+      accessControls,
       { headers: this.getAuthHeaders() }
     );
   }
