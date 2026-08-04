@@ -1281,7 +1281,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
               this._utility.showWarningConfirmation(
                 "Are you sure you want to submit? After submission no change is possible",
                 "Confirm Submission"
-              ).subscribe((result: boolean) => {
+              ).afterClosed().subscribe((result: boolean) => {
                 if (result) {
                   this.ValidateFieldsNew(status);
                 }
@@ -1299,7 +1299,7 @@ export class ChecklistExecutionNewComponent implements OnInit {
   }
 
   confrimMessage(message: string) {
-    this._utility.showWarningConfirmation(message, "Confirm Action").subscribe((result: boolean) => {
+    this._utility.showWarningConfirmation(message, "Confirm Action").afterClosed().subscribe((result: boolean) => {
       if (result) {
         this.getCheckListAuditData(this.selectedAuditId, this.selectedServiceArea, this.auditDataTitle, this.startDate, this.endDate, this.selectedAuditor, this.selectedAuditees, '', this.plannedHours, this.actualHours, this.actualstartDate, this.actualendDate);
       }

@@ -816,7 +816,7 @@ export class ChecklistAssessmentPageComponent implements OnInit {
       this._util.showWarningConfirmation(
         "Are you sure you want to submit? After submission no change is possible",
         "Confirm Submission"
-      ).subscribe((result: boolean) => {
+      ).afterClosed().subscribe((result: boolean) => {
         if (result) {
           this.ValidateFieldsNew(status);
         }

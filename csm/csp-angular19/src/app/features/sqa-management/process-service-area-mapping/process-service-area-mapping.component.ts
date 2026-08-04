@@ -469,7 +469,7 @@ export class ProcessServiceAreaMappingComponent implements OnInit, AfterViewInit
       this._utility.showWarningConfirmation(
         'Updating Service Tower & Process Area mapping will impact checklist questions during assessment. Do you want to continue updating the mapping?',
         'Confirm Update'
-      ).subscribe((confirmed: boolean) => {
+      ).afterClosed().subscribe((confirmed: boolean) => {
         if (confirmed) {
           this.service_UpdateProcessServiceAreaMapping(this.selectedServiceArea1, checkedProcess);
         }
