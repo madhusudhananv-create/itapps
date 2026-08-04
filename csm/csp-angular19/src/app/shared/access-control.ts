@@ -71,8 +71,8 @@ export class AccessControl {
     // Customer-specific access control
     if (!isGAVS) {
       const custAccess = this.accessControlRepository.find(
-        x => x.EMP_ID?.includes(this.empid) && 
-             x.ACCESS_LEVEL === 3 && 
+        x => x.EMP_ID?.some(e => e?.toLowerCase() === this.empid) &&
+             x.ACCESS_LEVEL === 3 &&
              x.RESOURCE_ID === controlId
       );
 
@@ -84,16 +84,16 @@ export class AccessControl {
 
     // Role-based access with employee delegation
     let empDeligate = this.accessControlRepository.find(
-      x => x.ROLE_ID?.toString() === role && 
-           x.EMP_ID?.includes(this.empid) && 
-           x.ACCESS_LEVEL === 1 && 
+      x => x.ROLE_ID?.toString() === role &&
+           x.EMP_ID?.some(e => e?.toLowerCase() === this.empid) &&
+           x.ACCESS_LEVEL === 1 &&
            x.RESOURCE_ID === controlId
     );
 
     if (!empDeligate) {
       empDeligate = this.accessControlRepository.find(
-        x => x.EMP_ID?.includes(this.empid) && 
-             x.ACCESS_LEVEL === 1 && 
+        x => x.EMP_ID?.some(e => e?.toLowerCase() === this.empid) &&
+             x.ACCESS_LEVEL === 1 &&
              x.RESOURCE_ID === controlId
       );
     }
