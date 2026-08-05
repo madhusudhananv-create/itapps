@@ -923,7 +923,12 @@ export const routes: Routes = [
       .then(m => m.UserManualComponent),
     title: 'User Manual'
   },
-
+{
+    path: 'accesscontrol',
+    loadComponent: () => import('./features/access-control-page/access-control-page.component')
+      .then(m => m.AccessControlPageComponent),
+    canActivate: [authGuard]
+  },
   // Release Notes page - protected route (requires authentication)
   {
     path: 'release-notes',
