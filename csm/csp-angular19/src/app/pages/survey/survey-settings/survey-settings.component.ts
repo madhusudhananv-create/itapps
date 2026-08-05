@@ -14,6 +14,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MyUtility } from '../../../shared/my-utility';
 import { AccessControl } from '../../../shared/access-control';
@@ -68,7 +70,9 @@ export interface CustomerDetail {
     MatProgressBarModule,
     MatDividerModule,
     MatRadioModule,
-    MatButtonModule
+    MatButtonModule,
+    MatButtonToggleModule,
+    MatTooltipModule
   ],
   templateUrl: './survey-settings.component.html',
   styleUrls: ['./survey-settings.component.scss']
@@ -279,47 +283,76 @@ export class SurveySettingsComponent implements OnInit, AfterViewInit {
     }
   }
   
+  /** 'contains' (default, substring/"like" match) or 'exact' (whole-value match) */
+  filterMode: 'contains' | 'exact' = 'contains';
+  lastFilterValue: string = '';
+
   /**
    * Apply filter to customer table
    */
   applyFilter(event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value;
+    this.lastFilterValue = filterValue;
+    this.runFilter(filterValue);
+  }
+
+  /**
+   * Re-run the current filter text against the (possibly just-changed) filter mode
+   */
+  onFilterModeChange(mode: 'contains' | 'exact'): void {
+    this.filterMode = mode;
+    this.runFilter(this.lastFilterValue);
+  }
+
+  private runFilter(filterValue: string): void {
     this.customerDataSource.filter = filterValue.trim().toLowerCase();
-    
+
     // Handle filtering for CSM column separately
     if (filterValue) {
       this.customerDataSource.filterPredicate = (data: any, filter: string) =>
-        this.createFilter()(data, filter) || this.GetCSM(data.proJ_ID || '').toLowerCase().includes(filter);
+        this.createFilter()(data, filter) || this.matchesField(this.GetCSM(data.proJ_ID || ''), filter);
     } else {
       this.customerDataSource.filterPredicate = this.createFilter();
     }
   }
-  
+
+  /**
+   * Compares a single field's value against a single search term, honoring filterMode.
+   */
+  private matchesField(value: string | null | undefined, term: string): boolean {
+    if (!value) return false;
+    const normalized = value.toLowerCase();
+    return this.filterMode === 'exact' ? normalized === term : normalized.includes(term);
+  }
+
   /**
    * Create custom filter predicate for all columns
    */
   createFilter(): (data: any, filter: string) => boolean {
     const filterFunction = (data: any, filter: string): boolean => {
-      const searchTerms = filter.toLowerCase().split(' ');
+      // Exact mode compares the whole phrase against each field's whole value
+      // (splitting into words would make a multi-word exact search impossible,
+      // since no field could ever equal just one word of the phrase).
+      const searchTerms = this.filterMode === 'exact' ? [filter.toLowerCase()] : filter.toLowerCase().split(' ');
 
       return searchTerms.every(term => {
         return (
-          (data.businesS_UNIT && data.businesS_UNIT.toLowerCase().includes(term)) ||
-          (data.engagemenT_TYPE && data.engagemenT_TYPE.toLowerCase().includes(term)) ||
-          (data.cusT_NM && data.cusT_NM.toLowerCase().includes(term)) ||
-          (data.proJ_NM && data.proJ_NM.toLowerCase().includes(term)) ||
-          (data.proJ_STATUS && data.proJ_STATUS.toLowerCase().includes(term)) ||
-          (data.displaY_NAME && data.displaY_NAME.toLowerCase().includes(term)) ||
-          (data.emaiL_ID && data.emaiL_ID.toLowerCase().includes(term)) ||
-          (data.contacT_ROLE && data.contacT_ROLE.toLowerCase().includes(term)) ||
-          this.GetCSM(data.proJ_ID).toLowerCase().includes(term) ||
-          (data.spoc && data.spoc.toLowerCase().includes(term)) ||
-          (data.contractinG_UNIT && data.contractinG_UNIT.toLowerCase().includes(term)) ||
-          (data.status && data.status.toLowerCase().includes(term)) ||
-          (data.comments && data.comments.toLowerCase().includes(term)) ||
-          (data.updateD_BY && data.updateD_BY.toLowerCase().includes(term)) ||
-          (!data.iS_VERIFIED && data.comments != null && data.comments.trim() != "" ? "Rejected" : "Not Verified").toLowerCase().includes(term) ||
-          (data.iS_VERIFIED ? "Approved" : "Not Verified").toLowerCase().includes(term)
+          this.matchesField(data.businesS_UNIT, term) ||
+          this.matchesField(data.engagemenT_TYPE, term) ||
+          this.matchesField(data.cusT_NM, term) ||
+          this.matchesField(data.proJ_NM, term) ||
+          this.matchesField(data.proJ_STATUS, term) ||
+          this.matchesField(data.displaY_NAME, term) ||
+          this.matchesField(data.emaiL_ID, term) ||
+          this.matchesField(data.contacT_ROLE, term) ||
+          this.matchesField(this.GetCSM(data.proJ_ID), term) ||
+          this.matchesField(data.spoc, term) ||
+          this.matchesField(data.contractinG_UNIT, term) ||
+          this.matchesField(data.status, term) ||
+          this.matchesField(data.comments, term) ||
+          this.matchesField(data.updateD_BY, term) ||
+          this.matchesField((!data.iS_VERIFIED && data.comments != null && data.comments.trim() != "" ? "Rejected" : "Not Verified"), term) ||
+          this.matchesField((data.iS_VERIFIED ? "Approved" : "Not Verified"), term)
         );
       });
     };
