@@ -647,7 +647,7 @@ export class DashboardCustomerMultipleComponent implements OnInit, OnDestroy {
     this.myUtility.showWarningConfirmation(
       'Are you sure you want to logout?',
       'Logout'
-    ).subscribe((result: boolean) => {
+    ).afterClosed().subscribe((result: boolean) => {
       if (result === true) {
         this.service_Logout();
         if (isGavsUser) {
