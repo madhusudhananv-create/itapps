@@ -256,11 +256,10 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
       return false;
     }
 
-    // showWarningConfirmation already returns an Observable (afterClosed), not a dialogRef
     this._util.showWarningConfirmation(
       'Entered Service Level Metrics would be Saved As Draft and Would not be considered in Dashboard.',
       'Save As Draft'
-    ).subscribe((result: boolean) => {
+    ).afterClosed().subscribe((result: boolean) => {
       if (result === true) {
         this.isLoading = true;
         this._appservice.AddKpiDetailsbyProduct(kpiDetails, d.toString(), status).subscribe((data: any) => {
@@ -325,11 +324,10 @@ export class KpiProductViewComponent implements OnInit, AfterViewInit, OnChanges
       return false;
     }
 
-    // showWarningConfirmation already returns an Observable (afterClosed), not a dialogRef
     this._util.showWarningConfirmation(
       `Service Level Metrics for ${this.productName} for ${this._util.tableMonth} ${this._util.tableYear} would be Submitted.`,
       'Submit KPI'
-    ).subscribe((result: boolean) => {
+    ).afterClosed().subscribe((result: boolean) => {
       if (result === true) {
         this.freez = true;
         this.isLoading = true;

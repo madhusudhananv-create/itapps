@@ -56,7 +56,7 @@
 
         <!-- Add Button -->
         <button mat-icon-button class="add-btn" matTooltip="Add Responsible"
-          (click)="Edit_onClick(0)" *ngIf="_access.IsAllowed(101, 2, '', '')">
+          (click)="Edit_onClick(0)">
           <mat-icon>add_circle</mat-icon>
         </button>
 
@@ -102,11 +102,11 @@
           <th mat-header-cell *matHeaderCellDef>ACTION</th>
           <td mat-cell *matCellDef="let row">
             <button mat-icon-button class="edit-btn" matTooltip="Edit"
-              (click)="EditRow_onClick(row)" *ngIf="_access.IsAllowed(101, 2, '', '')">
+              (click)="EditRow_onClick(row)">
               <mat-icon>edit</mat-icon>
             </button>
             <button mat-icon-button class="delete-btn" matTooltip="Delete"
-              (click)="DeleteRow_onClick(row)" *ngIf="_access.IsAllowed(101, 3, '', '')">
+              (click)="DeleteRow_onClick(row)">
               <mat-icon>delete</mat-icon>
             </button>
           </td>

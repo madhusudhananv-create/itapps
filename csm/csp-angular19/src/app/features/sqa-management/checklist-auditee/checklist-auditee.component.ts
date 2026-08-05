@@ -1511,7 +1511,7 @@ export class ChecklistAuditeeComponent implements OnInit {
     this._utility.showWarningConfirmation(
       'Are you sure you want to delete this evidence file?',
       'Delete Evidence File'
-    ).subscribe((result: boolean) => {
+    ).afterClosed().subscribe((result: boolean) => {
       if (result === true) {
         const fileData = { ID: doc.id, FileName: doc.filE_NAME };
         this._appservice.deleteFile(fileData, this.custId, this.projectId).subscribe({

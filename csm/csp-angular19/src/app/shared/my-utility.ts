@@ -428,9 +428,8 @@ export class MyUtility {
     dialogConfig.scrollStrategy = new NoopScrollStrategy();
     dialogConfig.panelClass = 'warning-popup-dialog';
     dialogConfig.backdropClass = 'warning-popup-backdrop';
-    
-    const dialogRef = this.matDialog.open(WarningPopupComponent, dialogConfig);
-    return dialogRef.afterClosed();
+
+    return this.matDialog.open(WarningPopupComponent, dialogConfig);
   }
 
   public showInputDialog(message: string, title: string = 'Input Required', defaultValue: string = '', inputLabel: string = '', placeholder: string = ''): any {
