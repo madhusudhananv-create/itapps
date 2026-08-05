@@ -721,7 +721,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     newEMP.DOB = employee.DOB;
                     newEMP.DOJ = employee.DOJ;
                     newEMP.DOR = employee.DOR;
-                    newEMP.LEVEL = string.Empty;
+                    newEMP.LEVEL = employee.LEVEL;
                     newEMP.TITLE = employee.TITLE ?? string.Empty;
                     if (employee.CSM_TITLE_ID.HasValue)
                         newEMP.CSM_TITLE_ID = employee.CSM_TITLE_ID.GetValueOrDefault();
@@ -779,6 +779,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
         }
 
+        private int GetCSMTitle(string level, string title)
+        {
+            var result = 3;
+            if (!string.IsNullOrWhiteSpace(level))
+            {
+
+            }
+            else
+            { 
+            
+            }
+            return result;
+        }
         private EMP_INFO GetCorrectEmployeeRecord(string emailId)
         {
             EMP_INFO result = null;
@@ -853,6 +866,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     //existingRow.LAST_NM = employee.LAST_NM;
 
                     existingRow.TITLE = employee.TITLE;
+                    existingRow.LEVEL = employee.LEVEL;
                     if (employee.CSM_TITLE_ID.HasValue)
                         existingRow.CSM_TITLE_ID = employee.CSM_TITLE_ID.GetValueOrDefault();
                     else

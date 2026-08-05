@@ -27,6 +27,7 @@ namespace GAVS.AllocationSystem.Model.AllSys
         public string EMP_ID_NEW { get; set; }
 
         public DateTime UPDATED_DATE { get; set; }
+        public string LEVEL { get; set; }
 
     }
     public class EMP_INFO_DETAILED
