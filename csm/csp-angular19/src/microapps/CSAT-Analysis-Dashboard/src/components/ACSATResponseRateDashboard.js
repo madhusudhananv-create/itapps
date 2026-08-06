@@ -394,13 +394,16 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
       getTrendRowValue(row, buCol, 'BUSINESS UNIT').toString().trim() || 'N/A'
     );
 
+    const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+    const isCompletedStatus = statusVal === 'completed';
+
     if (groupBy === 'bu') {
       const groupKey = businessUnit && businessUnit !== 'N/A' ? businessUnit : 'N/A';
       const agg = ensureGroup(groupKey, { businessUnit: groupKey });
       if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, sentDateCol, 'CSAT SENT DATE'))) {
         agg.polled += 1;
       }
-      if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
+      if (isCompletedStatus && parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
         agg.responded += 1;
       }
       return;
@@ -412,7 +415,7 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
         if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, sentDateCol, 'CSAT SENT DATE'))) {
           otherAccountsPolled += 1;
         }
-        if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
+        if (isCompletedStatus && parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
           otherAccountsResponded += 1;
         }
         return;
@@ -436,7 +439,7 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
     if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, sentDateCol, 'CSAT SENT DATE'))) {
       agg.polled += 1;
     }
-    if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
+    if (isCompletedStatus && parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
       agg.responded += 1;
     }
   });
@@ -1188,7 +1191,11 @@ const ACSATResponseRateDashboard = ({
                     header.toString().toLowerCase().includes('css_received_date'))
         );
         console.log('🔍 Searching for RECEIVED DATE column in:', headerRow, 'Found at index:', receivedDateIndex);
-        
+
+        const statusIndex = headerRow.findIndex(header =>
+          header && header.toString().toLowerCase().trim() === 'status'
+        );
+
         // Find TYPE OF ACCOUNT column in the second sheet
         const typeOfAccountIndex = headerRow.findIndex(header => 
           header && (
@@ -1261,6 +1268,8 @@ const ACSATResponseRateDashboard = ({
           const sentDate = row[sentDateIndex];
           const receivedDate = row[receivedDateIndex];
           const yearQuarter = row[yearQuarterIndex];
+          const statusVal = (statusIndex !== -1 ? row[statusIndex] : '')?.toString().trim().toLowerCase() || '';
+          const isCompletedStatus = statusVal === 'completed';
 
           if (!customerId || !customerName) return;
           
@@ -1410,8 +1419,8 @@ const ACSATResponseRateDashboard = ({
             });
           }
 
-          // Count surveys received (only if received date column exists)
-          if (receivedDateIndex !== -1 && receivedDateValid) {
+          // Count surveys received (only if received date column exists), OR if STATUS is Completed
+          if (isCompletedStatus && (receivedDateIndex !== -1 && receivedDateValid)) {
             groupedData[customerId].surveysReceived++;
             if (rowIndex < 5) {
               console.log(`✅ Incremented surveysReceived for ${customerId} (Row ${rowIndex + 1})`);
@@ -1562,7 +1571,8 @@ const ACSATResponseRateDashboard = ({
           sentDateIndex,
           receivedDateIndex,
           businessUnitIndex,
-          typeOfAccountIndex
+          typeOfAccountIndex,
+          statusIndex
         });
         
         setLoading(false);
@@ -1801,7 +1811,7 @@ const ACSATResponseRateDashboard = ({
     // Only calculate for Top 10 view
     if (!showTop10 || !rawSecondSheetData) return null;
     
-    const { jsonData, headerRow, customerIdIndex, customerNameIndex, yearQuarterIndex, sentDateIndex, receivedDateIndex, typeOfAccountIndex } = rawSecondSheetData;
+    const { jsonData, headerRow, customerIdIndex, customerNameIndex, yearQuarterIndex, sentDateIndex, receivedDateIndex, typeOfAccountIndex, statusIndex } = rawSecondSheetData;
     
     if (!jsonData || jsonData.length < 2) return null;
     
@@ -1826,7 +1836,9 @@ const ACSATResponseRateDashboard = ({
       const yearQuarter = row[yearQuarterIndex];
       const sentDate = row[sentDateIndex];
       const receivedDate = row[receivedDateIndex];
-      
+      const statusVal = (statusIndex !== -1 ? row[statusIndex] : '')?.toString().trim().toLowerCase() || '';
+      const isCompletedStatus = statusVal === 'completed';
+
       // Filter by YEAR - QUARTER if acsatCycle is provided and column exists
       if (acsatCycle && yearQuarterIndex !== -1 && yearQuarter) {
         const rowYearQuarter = yearQuarter.toString().trim();
@@ -1891,8 +1903,8 @@ const ACSATResponseRateDashboard = ({
         debugStats.skippedInvalidSentDate++;
       }
       
-      // Count surveys received - each row with a valid CSAT RECEIVED DATE counts as one
-      if (receivedDateValid) {
+      // Count surveys received - each row with a valid CSAT RECEIVED DATE counts as one, or STATUS = Completed
+      if (isCompletedStatus && receivedDateValid) {
         totalReceived++;
         debugStats.countedReceivedRows++;
       } else {
@@ -1929,7 +1941,7 @@ const ACSATResponseRateDashboard = ({
   const cxoAnalysisData = useMemo(() => {
     if (!showCXOAnalysis || !rawSecondSheetData || !firstSheetData) return null;
     
-    const { jsonData, headerRow, businessUnitIndex, sentDateIndex, receivedDateIndex, yearQuarterIndex, respondentCategoryIndex } = rawSecondSheetData;
+    const { jsonData, headerRow, businessUnitIndex, sentDateIndex, receivedDateIndex, yearQuarterIndex, respondentCategoryIndex, statusIndex } = rawSecondSheetData;
     
     if (!jsonData || jsonData.length < 2 || businessUnitIndex === -1 || sentDateIndex === -1 || receivedDateIndex === -1 || respondentCategoryIndex === -1) {
       console.warn('⚠️ Missing required columns for CXO analysis');
@@ -1961,12 +1973,15 @@ const ACSATResponseRateDashboard = ({
                 header.toString().toLowerCase().includes('css received date') ||
                 header.toString().toLowerCase().includes('css_received_date'))
     );
-    const firstSheetRespondentCategoryIndex = firstSheetHeaders.findIndex(header => 
+    const firstSheetRespondentCategoryIndex = firstSheetHeaders.findIndex(header =>
       header && (header.toString().toLowerCase().includes('respondent category') ||
                 header.toString().toLowerCase().includes('respondent_category') ||
                 header.toString().toLowerCase().includes('respondentcategory'))
     );
-    
+    const firstSheetStatusIndex = firstSheetHeaders.findIndex(header =>
+      header && header.toString().trim().toLowerCase() === 'status'
+    );
+
     // Calculate NPS by BUSINESS UNIT from first sheet (overall NPS)
     const npsByBusinessUnit = {};
     if (firstSheetBusinessUnitIndex !== -1 && firstSheetPerspectiveIndex !== -1 && firstSheetRatingIndex !== -1 && 
@@ -1981,19 +1996,22 @@ const ACSATResponseRateDashboard = ({
         const rating = row[firstSheetRatingIndex];
         const sentDate = row[firstSheetSentDateIndex];
         const receivedDate = row[firstSheetReceivedDateIndex];
-        
+        const statusVal = (firstSheetStatusIndex !== -1 ? row[firstSheetStatusIndex] : '')?.toString().trim().toLowerCase() || '';
+        const isCompletedStatus = statusVal === 'completed';
+
         if (!perspective || rating === undefined || rating === null || rating === '') return;
-        
+
         // Filter by PERSPECTIVE = "NPS"
         const perspectiveStr = perspective.toString().trim();
         if (perspectiveStr.toUpperCase() !== 'NPS') return;
-        
+
         // Filter by date - both sent and received dates should be >= cycle start date
+        // Received date check is bypassed when STATUS = Completed
         const sentDateValid = sentDate && isDateOnOrAfterCycleStart(sentDate, cycleStartDateFormatted);
         const receivedDateValid = receivedDate && isDateOnOrAfterCycleStart(receivedDate, cycleStartDateFormatted);
-        
+
         if (!sentDateValid || !receivedDateValid) return;
-        
+
         // Initialize business unit if not exists
         if (!npsByBusinessUnit[businessUnit]) {
           npsByBusinessUnit[businessUnit] = {
@@ -2030,23 +2048,26 @@ const ACSATResponseRateDashboard = ({
         const sentDate = row[firstSheetSentDateIndex];
         const receivedDate = row[firstSheetReceivedDateIndex];
         const respondentCategory = row[firstSheetRespondentCategoryIndex];
-        
+        const statusVal = (firstSheetStatusIndex !== -1 ? row[firstSheetStatusIndex] : '')?.toString().trim().toLowerCase() || '';
+        const isCompletedStatus = statusVal === 'completed';
+
         if (!perspective || rating === undefined || rating === null || rating === '') return;
-        
+
         // Filter by PERSPECTIVE = "NPS"
         const perspectiveStr = perspective.toString().trim();
         if (perspectiveStr.toUpperCase() !== 'NPS') return;
-        
+
         // Filter by RESPONDENT CATEGORY = "CXO"
         const respondentCategoryStr = respondentCategory ? respondentCategory.toString().trim().toUpperCase() : '';
         if (respondentCategoryStr !== 'CXO') return;
-        
+
         // Filter by date - both sent and received dates should be >= cycle start date
+        // Received date check is bypassed when STATUS = Completed
         const sentDateValid = sentDate && isDateOnOrAfterCycleStart(sentDate, cycleStartDateFormatted);
         const receivedDateValid = receivedDate && isDateOnOrAfterCycleStart(receivedDate, cycleStartDateFormatted);
-        
+
         if (!sentDateValid || !receivedDateValid) return;
-        
+
         // Initialize business unit if not exists
         if (!cxoNpsByBusinessUnit[businessUnit]) {
           cxoNpsByBusinessUnit[businessUnit] = {
@@ -2083,23 +2104,26 @@ const ACSATResponseRateDashboard = ({
         const sentDate = row[firstSheetSentDateIndex];
         const receivedDate = row[firstSheetReceivedDateIndex];
         const respondentCategory = row[firstSheetRespondentCategoryIndex];
-        
+        const statusVal = (firstSheetStatusIndex !== -1 ? row[firstSheetStatusIndex] : '')?.toString().trim().toLowerCase() || '';
+        const isCompletedStatus = statusVal === 'completed';
+
         if (!perspective || rating === undefined || rating === null || rating === '') return;
-        
+
         // Filter by PERSPECTIVE = "NPS"
         const perspectiveStr = perspective.toString().trim();
         if (perspectiveStr.toUpperCase() !== 'NPS') return;
-        
+
         // Filter by RESPONDENT CATEGORY = "Non CXO" (not "CXO")
         const respondentCategoryStr = respondentCategory ? respondentCategory.toString().trim().toUpperCase() : '';
         if (respondentCategoryStr === 'CXO' || respondentCategoryStr === '') return;
-        
+
         // Filter by date - both sent and received dates should be >= cycle start date
+        // Received date check is bypassed when STATUS = Completed
         const sentDateValid = sentDate && isDateOnOrAfterCycleStart(sentDate, cycleStartDateFormatted);
         const receivedDateValid = receivedDate && isDateOnOrAfterCycleStart(receivedDate, cycleStartDateFormatted);
-        
+
         if (!sentDateValid || !receivedDateValid) return;
-        
+
         // Initialize business unit if not exists
         if (!nonCxoNpsByBusinessUnit[businessUnit]) {
           nonCxoNpsByBusinessUnit[businessUnit] = {
@@ -2134,7 +2158,9 @@ const ACSATResponseRateDashboard = ({
       const receivedDate = row[receivedDateIndex];
       const yearQuarter = row[yearQuarterIndex];
       const respondentCategory = row[respondentCategoryIndex];
-      
+      const statusVal = (statusIndex !== -1 ? row[statusIndex] : '')?.toString().trim().toLowerCase() || '';
+      const isCompletedStatus = statusVal === 'completed';
+
       // Filter by YEAR - QUARTER if acsatCycle is provided
       if (acsatCycle && yearQuarterIndex !== -1 && yearQuarter) {
         const rowYearQuarter = yearQuarter.toString().trim();
@@ -2143,15 +2169,15 @@ const ACSATResponseRateDashboard = ({
           return; // Skip if year-quarter doesn't match
         }
       }
-      
+
       // Filter by date - both sent and received dates should be >= cycle start date
       const sentDateValid = sentDate && isDateOnOrAfterCycleStart(sentDate, cycleStartDateFormatted);
       const receivedDateValid = receivedDate && isDateOnOrAfterCycleStart(receivedDate, cycleStartDateFormatted);
-      
+
       // Determine if this is CXO or Non-CXO
       const isCXO = respondentCategory && respondentCategory.toString().trim().toUpperCase() === 'CXO';
       const isNonCXO = respondentCategory && respondentCategory.toString().trim().toUpperCase() !== 'CXO';
-      
+
       // Process CXO data
       if (isCXO) {
         if (!cxoGroupedData[businessUnit]) {
@@ -2161,15 +2187,15 @@ const ACSATResponseRateDashboard = ({
             cxoResponded: 0
           };
         }
-        
+
         if (sentDateValid) {
           cxoGroupedData[businessUnit].cxoPolled++;
         }
-        if (receivedDateValid) {
+        if (isCompletedStatus && receivedDateValid) {
           cxoGroupedData[businessUnit].cxoResponded++;
         }
       }
-      
+
       // Process Non-CXO data
       if (isNonCXO) {
         if (!nonCxoGroupedData[businessUnit]) {
@@ -2179,11 +2205,11 @@ const ACSATResponseRateDashboard = ({
             nonCxoResponded: 0
           };
         }
-        
+
         if (sentDateValid) {
           nonCxoGroupedData[businessUnit].nonCxoPolled++;
         }
-        if (receivedDateValid) {
+        if (isCompletedStatus && receivedDateValid) {
           nonCxoGroupedData[businessUnit].nonCxoResponded++;
         }
       }
@@ -2205,7 +2231,9 @@ const ACSATResponseRateDashboard = ({
       const sentDate = row[sentDateIndex];
       const receivedDate = row[receivedDateIndex];
       const yearQuarter = row[yearQuarterIndex];
-      
+      const statusVal = (statusIndex !== -1 ? row[statusIndex] : '')?.toString().trim().toLowerCase() || '';
+      const isCompletedStatus = statusVal === 'completed';
+
       // Filter by YEAR - QUARTER if acsatCycle is provided
       if (acsatCycle && yearQuarterIndex !== -1 && yearQuarter) {
         const rowYearQuarter = yearQuarter.toString().trim();
@@ -2214,25 +2242,25 @@ const ACSATResponseRateDashboard = ({
           return; // Skip if year-quarter doesn't match
         }
       }
-      
+
       // Filter by date - both sent and received dates should be >= cycle start date
       const sentDateValid = sentDate && isDateOnOrAfterCycleStart(sentDate, cycleStartDateFormatted);
       const receivedDateValid = receivedDate && isDateOnOrAfterCycleStart(receivedDate, cycleStartDateFormatted);
-      
+
       if (!overallResponseData[businessUnit]) {
         overallResponseData[businessUnit] = {
           polled: 0,
           responded: 0
         };
       }
-      
+
       // Count Polled (CSS_SENT_DATE)
       if (sentDateValid) {
         overallResponseData[businessUnit].polled++;
       }
-      
-      // Count Responded (CSAT RECEIVED DATE)
-      if (receivedDateValid) {
+
+      // Count Responded (CSAT RECEIVED DATE), or STATUS = Completed
+      if (isCompletedStatus && receivedDateValid) {
         overallResponseData[businessUnit].responded++;
       }
     });

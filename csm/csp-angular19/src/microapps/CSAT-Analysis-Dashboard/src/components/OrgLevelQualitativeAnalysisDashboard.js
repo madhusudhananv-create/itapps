@@ -1752,6 +1752,14 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                  (lowerHeader.includes('received') && lowerHeader.includes('date'));
         });
 
+        // Find STATUS column - used to fully override the received-date/date-range check
+        // when a row's status is "Completed" (case-insensitive)
+        const statusIndex = headers.findIndex(header => {
+          if (!header) return false;
+          const lowerHeader = header.toString().toLowerCase();
+          return lowerHeader === 'status';
+        });
+
         console.log('Column indices:', {
           businessUnitIndex,
           customerIdIndex,
@@ -1831,7 +1839,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
             if (effectiveCycleStartDateFormatted) {
               const sentDate = row[csatSentDateIndex];
               const receivedDate = row[csatReceivedDateIndex];
-              
+
               // Debug: Log date filtering details for first few rows
               if (dataRows.indexOf(row) < 3) {
                 console.log(`🔍 Date filtering for row ${dataRows.indexOf(row)}:`, {

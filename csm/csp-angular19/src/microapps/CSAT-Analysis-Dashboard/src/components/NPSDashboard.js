@@ -1364,9 +1364,10 @@ const isDateOnOrAfterCsatStart = (dateValue, cycleStartDate) => {
   return isDateGreaterThanOrEqual(parsed, cycleStartDate);
 };
 
-const rowPassesBothCsatCycleDates = (row, cycleStartDate) =>
-  isDateOnOrAfterCsatStart(getCsatSentDateFromRow(row), cycleStartDate) &&
-  isDateOnOrAfterCsatStart(getCsatReceivedDateFromRow(row), cycleStartDate);
+const rowPassesBothCsatCycleDates = (row, cycleStartDate) => {
+  return isDateOnOrAfterCsatStart(getCsatSentDateFromRow(row), cycleStartDate) &&
+    isDateOnOrAfterCsatStart(getCsatReceivedDateFromRow(row), cycleStartDate);
+};
 
 const parseExcelDateToMMDDYYYY = (dateValue) => {
   if (!dateValue || dateValue === '' || dateValue === 'N/A') return '';
@@ -1526,7 +1527,9 @@ const computeOtherAccountTotalsFromSheets = (
       const receivedDate = getCsatReceivedDateFromRow(row);
       const predictedScore = row['PREDICTED SCORE'] || row['PREDICTED_SCORE'];
       const sentDateValid = isDateOnOrAfterCsatStart(sentDate, acsatCycleStartDateFormatted);
-      const receivedDateValid = isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted);
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedDateValid = isCompletedStatus && isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted);
 
       if (sentDateValid) polled++;
       if (receivedDateValid) {
@@ -2042,7 +2045,9 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
       agg.polled += 1;
     }
 
-    const hasReceived = hasNpsTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE');
+    const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+    const isCompletedStatus = statusVal === 'completed';
+    const hasReceived = isCompletedStatus && hasNpsTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE');
     if (hasReceived) {
       agg.responded += 1;
     }
@@ -3681,7 +3686,9 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
         // Responded: CSAT RECEIVED DATE must be present and >= cycle start (MM-DD-YYYY)
         const receivedDate = getCsatReceivedDateFromRow(row);
-        if (isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted)) {
+        const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const isCompletedStatus = statusVal === 'completed';
+        if (isCompletedStatus && isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted)) {
           groupedData[key].receivedCount++;
           secondSheetRespondedIncluded++;
         }
@@ -3972,8 +3979,9 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         const predictedScore = row['PREDICTED SCORE'] || row['PREDICTED_SCORE'];
         const businessUnit = getBusinessUnitFromRow(row);
         const csatReceivedDate = getCsatReceivedDateFromRow(row);
-        
-        const receivedDateValid = isDateOnOrAfterCsatStart(csatReceivedDate, acsatCycleStartDateFormatted);
+        const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const isCompletedStatus = statusVal === 'completed';
+        const receivedDateValid = isCompletedStatus && isDateOnOrAfterCsatStart(csatReceivedDate, acsatCycleStartDateFormatted);
 
         // Targeted debug for customer id 212100001
         if ((customerId || '').toString().trim() === '212100001' || (customerId || '').toString().trim() === '202100007') {
@@ -4519,7 +4527,9 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             
             // Check if both CSAT SENT DATE and CSAT RECEIVED DATE are >= cycle start date (MM-DD-YYYY format)
             const sentDateValid = isDateOnOrAfterCsatStart(sentDate, acsatCycleStartDateFormatted);
-            const receivedDateValid = isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted);
+            const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+            const isCompletedStatus = statusVal === 'completed';
+            const receivedDateValid = isCompletedStatus && isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted);
 
             if (sentDateValid) {
               polled++;
@@ -5453,7 +5463,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       // Check if dates are valid and on or after cycle start date
       const sentDateValid = isDateOnOrAfterCsatStart(csatSentDate, acsatCycleStartDateFormatted);
       const receivedDateValid = isDateOnOrAfterCsatStart(csatReceivedDate, acsatCycleStartDateFormatted);
-      
+
       // Debug date validation
       if (index < 3) {
         console.log(`Row ${index + 1} - Date Validation:`, {

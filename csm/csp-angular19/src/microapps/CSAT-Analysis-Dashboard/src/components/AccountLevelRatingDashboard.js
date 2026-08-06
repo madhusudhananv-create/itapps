@@ -983,7 +983,9 @@ const buildAcsatTop10TrendFromFile = (file, { top10AccountNames }) => {
     sentData.forEach((row) => {
       const bu = normalizeBusinessUnitDisplay(getTrendRowValue(row, sentBuCol, 'BUSINESS UNIT').toString().trim() || 'N/A');
       const sentDateValid = parseExcelDateToMMDDYYYY(getTrendRowValue(row, sentDateCol, 'CSAT SENT DATE'));
-      const receivedDateValid = parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'));
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedDateValid = isCompletedStatus && !!parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'));
 
       if (isTop10AccountRow(row)) {
         if (bu && bu !== 'N/A') {
@@ -1183,7 +1185,9 @@ const buildAcsatBuWiseTrendFromFile = (file) => {
         agg.polled += 1;
         orgPolled += 1;
       }
-      if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      if (isCompletedStatus && parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'))) {
         agg.responded += 1;
         orgResponded += 1;
       }
@@ -1369,7 +1373,9 @@ const buildAcsatAccountWiseTrendFromFile = (file) => {
 
       const bu = normalizeBusinessUnitDisplay(getTrendRowValue(row, sentBuCol, 'BUSINESS UNIT').toString().trim() || 'N/A');
       const sentDateValid = parseExcelDateToMMDDYYYY(getTrendRowValue(row, sentDateCol, 'CSAT SENT DATE'));
-      const receivedDateValid = parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'));
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedDateValid = isCompletedStatus && !!parseExcelDateToMMDDYYYY(getTrendRowValue(row, receivedDateCol, 'CSAT RECEIVED DATE'));
 
       const agg = ensureGroup(groupKey, {
         businessUnit: bu && bu !== 'N/A' ? bu : 'N/A',
@@ -2297,9 +2303,11 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
               const yearQuarter = row['YEAR - QUARTER'] || row['YEAR_QUARTER'] || row['Year Quarter'];
               
               const matchesBU = rowBusinessUnit === businessUnit;
-              const hasValidDate = csatReceivedDate && isDateOnOrAfterCsatStart(csatReceivedDate, acsatCycleStartDateFormatted);
+              const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+              const isCompletedStatus = statusVal === 'completed';
+              const hasValidDate = isCompletedStatus && (csatReceivedDate && isDateOnOrAfterCsatStart(csatReceivedDate, acsatCycleStartDateFormatted));
               const matchesYearQuarter = !acsatCycle || !yearQuarter || yearQuarter === acsatCycle;
-              
+
               // Debug: Log date parsing details for BU received calculation
               if (csatReceivedDate && secondSheetData.indexOf(row) < 3) {
                 console.log(`    Date parsing for BU received row ${secondSheetData.indexOf(row)}:`, {
@@ -2412,8 +2420,10 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
             
             // Collect valid received dates
             const csatReceivedDate = row['CSAT RECEIVED DATE'] || row['CSAT_RECEIVED_DATE'] || row.CSS_RECEIVED_DATE || row['CSS_RECEIVED_DATE'] || row['CSS RECEIVED DATE'];
-            if (csatReceivedDate && matchesYearQuarter && isDateOnOrAfterCsatStart(csatReceivedDate, acsatCycleStartDateFormatted)) {
-              customerGroupsFromSecondSheet[customerId].receivedDates.push(csatReceivedDate);
+            const statusValSecond = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+            const isCompletedStatusSecond = statusValSecond === 'completed';
+            if (matchesYearQuarter && (isCompletedStatusSecond && (csatReceivedDate && isDateOnOrAfterCsatStart(csatReceivedDate, acsatCycleStartDateFormatted)))) {
+              customerGroupsFromSecondSheet[customerId].receivedDates.push(csatReceivedDate || 'COMPLETED_STATUS_OVERRIDE');
             }
           });
 
@@ -2944,7 +2954,9 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
         
         // Check if CSAT RECEIVED DATE is valid (>= cycle start date)
         const receivedDate = row['CSAT RECEIVED DATE'] || row['CSAT_RECEIVED_DATE'] || row.CSS_RECEIVED_DATE || row['CSS_RECEIVED_DATE'] || row['CSS RECEIVED DATE'];
-      const validReceived = receivedDate && isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted);
+      const statusValOther = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatusOther = statusValOther === 'completed';
+      const validReceived = isCompletedStatusOther && (receivedDate && isDateOnOrAfterCsatStart(receivedDate, acsatCycleStartDateFormatted));
 
         // Count surveys sent - each row with a valid CSAT SENT DATE counts as one
         if (validSent) {

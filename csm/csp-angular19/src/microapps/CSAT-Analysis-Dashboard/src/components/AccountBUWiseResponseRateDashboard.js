@@ -561,15 +561,15 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         if (sentFormatted && isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted)) byPractice[practice].polled++;
       }
       const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-      if (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') {
-        const receivedFormatted = parseExcelDateToMMDDYYYY(receivedVal);
-        if (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)) {
-          byPractice[practice].responded++;
-          const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'] ?? (avgScoreCol ? row[avgScoreCol] : undefined);
-          if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
-            const n = parseFloat(scoreVal);
-            if (!isNaN(n)) { byPractice[practice].actualScoreSum += n; byPractice[practice].actualScoreCount++; }
-          }
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      if (isCompletedStatus && (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted))) {
+        byPractice[practice].responded++;
+        const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'] ?? (avgScoreCol ? row[avgScoreCol] : undefined);
+        if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
+          const n = parseFloat(scoreVal);
+          if (!isNaN(n)) { byPractice[practice].actualScoreSum += n; byPractice[practice].actualScoreCount++; }
         }
       }
     });
@@ -625,17 +625,17 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }
 
       const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-      if (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') {
-        const receivedFormatted = parseExcelDateToMMDDYYYY(receivedVal);
-        if (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)) {
-          byKey[key].responded++;
-          const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'];
-          if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
-            const n = parseFloat(scoreVal);
-            if (!isNaN(n)) {
-              byKey[key].actualScoreSum += n;
-              byKey[key].actualScoreCount++;
-            }
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      if (isCompletedStatus && (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted))) {
+        byKey[key].responded++;
+        const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'];
+        if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
+          const n = parseFloat(scoreVal);
+          if (!isNaN(n)) {
+            byKey[key].actualScoreSum += n;
+            byKey[key].actualScoreCount++;
           }
         }
       }
@@ -701,17 +701,17 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }
 
       const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-      if (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') {
-        const receivedFormatted = parseExcelDateToMMDDYYYY(receivedVal);
-        if (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)) {
-          byKey[key].responded++;
-          const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'];
-          if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
-            const n = parseFloat(scoreVal);
-            if (!isNaN(n)) {
-              byKey[key].actualScoreSum += n;
-              byKey[key].actualScoreCount++;
-            }
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      if (isCompletedStatus && (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted))) {
+        byKey[key].responded++;
+        const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'];
+        if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
+          const n = parseFloat(scoreVal);
+          if (!isNaN(n)) {
+            byKey[key].actualScoreSum += n;
+            byKey[key].actualScoreCount++;
           }
         }
       }
@@ -1078,21 +1078,21 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
           // Count CSAT RECEIVED DATE (Responded) with date filtering: >= CSAT cycle start date (MM-DD-YYYY)
           const receivedDateVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-          if (receivedDateVal && receivedDateVal !== '' && receivedDateVal !== 'N/A') {
-            const receivedDateFormatted = parseExcelDateToMMDDYYYY(receivedDateVal);
-            if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
-              buGroups[businessUnit].cssReceivedCount++;
-              
-              // Count for Non Staffing (Time and Material, Fixed Bid, Managed Services)
-              const revenueType = row['REVENUE_TYPE'] || '';
-              if (['Time and Material', 'Fixed Bid', 'Managed Services'].includes(revenueType)) {
-                buGroups[businessUnit].nonStaffingReceivedCount++;
-              }
-              
-              // Count for Staffing (Fixed Monthly)
-              if (revenueType === 'Fixed Monthly') {
-                buGroups[businessUnit].staffingReceivedCount++;
-              }
+          const statusValBu = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const isCompletedStatusBu = statusValBu === 'completed';
+          const receivedDateFormattedBu = (receivedDateVal && receivedDateVal !== '' && receivedDateVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedDateVal) : null;
+          if (isCompletedStatusBu && (receivedDateFormattedBu && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormattedBu, csatCycleStartDateFormatted)))) {
+            buGroups[businessUnit].cssReceivedCount++;
+
+            // Count for Non Staffing (Time and Material, Fixed Bid, Managed Services)
+            const revenueType = row['REVENUE_TYPE'] || '';
+            if (['Time and Material', 'Fixed Bid', 'Managed Services'].includes(revenueType)) {
+              buGroups[businessUnit].nonStaffingReceivedCount++;
+            }
+
+            // Count for Staffing (Fixed Monthly)
+            if (revenueType === 'Fixed Monthly') {
+              buGroups[businessUnit].staffingReceivedCount++;
             }
           }
         }
@@ -1149,11 +1149,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
             }
           }
           const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-          if (receivedVal && receivedVal !== '' && receivedVal !== 'N/A') {
-            const receivedDateFormatted = parseExcelDateToMMDDYYYY(receivedVal);
-            if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
-              buMap[bu][respondedKey]++;
-            }
+          const statusValRow = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const isCompletedStatusRow = statusValRow === 'completed';
+          const receivedDateFormattedRow = (receivedVal && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+          if (isCompletedStatusRow && (receivedDateFormattedRow && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormattedRow, csatCycleStartDateFormatted)))) {
+            buMap[bu][respondedKey]++;
           }
         };
 
@@ -1294,9 +1294,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
         // Count CSAT RECEIVED DATE with date filtering (parse Excel serial or string to MM-DD-YYYY)
         const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-        if (receivedVal && receivedVal !== '' && receivedVal !== 'N/A') {
-          const receivedDateFormatted = parseExcelDateToMMDDYYYY(receivedVal);
-          if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
+        const statusValCg = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const isCompletedStatusCg = statusValCg === 'completed';
+        const receivedDateFormattedCg = (receivedVal && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+        if (isCompletedStatusCg && (receivedDateFormattedCg && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormattedCg, csatCycleStartDateFormatted)))) {
             if (showTop10 && !showBuWise && isTop10Account(row)) {
               customerGroups[customerId].cssReceivedCount++;
               
@@ -1324,7 +1325,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                 customerGroups[customerId].staffingReceivedCount++;
               }
             }
-          }
         }
       }
     });
@@ -1351,9 +1351,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
           // Count CSAT RECEIVED DATE with date filtering (parse Excel serial or string to MM-DD-YYYY)
           const otherReceivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-          if (otherReceivedVal && otherReceivedVal !== '' && otherReceivedVal !== 'N/A') {
-            const receivedDateFormatted = parseExcelDateToMMDDYYYY(otherReceivedVal);
-            if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
+          const statusValOa = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const isCompletedStatusOa = statusValOa === 'completed';
+          const receivedDateFormattedOa = (otherReceivedVal && otherReceivedVal !== '' && otherReceivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(otherReceivedVal) : null;
+          if (isCompletedStatusOa && (receivedDateFormattedOa && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormattedOa, csatCycleStartDateFormatted)))) {
               otherAccountGroup.cssReceivedCount++;
               
               // Count for Non Staffing (Time and Material, Fixed Bid, Managed Services)
@@ -1367,7 +1368,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                 otherAccountGroup.staffingReceivedCount++;
               }
             }
-          }
         }
       });
     }
@@ -1440,11 +1440,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           }
         }
         const fmReceivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-        if (fmReceivedVal && fmReceivedVal !== '' && fmReceivedVal !== 'N/A') {
-          const receivedDateFormatted = parseExcelDateToMMDDYYYY(fmReceivedVal);
-          if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
-            fullyManagedMap[key].fmResponded++;
-          }
+        const fmStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const fmIsCompletedStatus = fmStatusVal === 'completed';
+        const fmReceivedDateFormatted = (fmReceivedVal && fmReceivedVal !== '' && fmReceivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(fmReceivedVal) : null;
+        if (fmIsCompletedStatus && (fmReceivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(fmReceivedDateFormatted, csatCycleStartDateFormatted)))) {
+          fullyManagedMap[key].fmResponded++;
         }
       });
 
@@ -1489,11 +1489,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           }
         }
         const cmReceivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-        if (cmReceivedVal && cmReceivedVal !== '' && cmReceivedVal !== 'N/A') {
-          const receivedDateFormatted = parseExcelDateToMMDDYYYY(cmReceivedVal);
-          if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
-            coManagedMap[key].cmResponded++;
-          }
+        const cmStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const cmIsCompletedStatus = cmStatusVal === 'completed';
+        const cmReceivedDateFormatted = (cmReceivedVal && cmReceivedVal !== '' && cmReceivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(cmReceivedVal) : null;
+        if (cmIsCompletedStatus && (cmReceivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(cmReceivedDateFormatted, csatCycleStartDateFormatted)))) {
+          coManagedMap[key].cmResponded++;
         }
       });
 
@@ -1538,11 +1538,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           }
         }
         const saReceivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
-        if (saReceivedVal && saReceivedVal !== '' && saReceivedVal !== 'N/A') {
-          const receivedDateFormatted = parseExcelDateToMMDDYYYY(saReceivedVal);
-          if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
-            staffAugmentationMap[key].saResponded++;
-          }
+        const saStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const saIsCompletedStatus = saStatusVal === 'completed';
+        const saReceivedDateFormatted = (saReceivedVal && saReceivedVal !== '' && saReceivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(saReceivedVal) : null;
+        if (saIsCompletedStatus && (saReceivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(saReceivedDateFormatted, csatCycleStartDateFormatted)))) {
+          staffAugmentationMap[key].saResponded++;
         }
       });
 
@@ -1690,9 +1690,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           }
         }
         const recvVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'];
-        if (recvVal != null && recvVal !== '' && recvVal !== 'N/A') {
-          const recvFormatted = parseExcelDateToMMDDYYYY(recvVal);
-          if (recvFormatted && isDateGreaterThanOrEqual(recvFormatted, csatCycleStartDateFormatted)) {
+        const statusValBm = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const isCompletedStatusBm = statusValBm === 'completed';
+        const recvFormatted = (recvVal != null && recvVal !== '' && recvVal !== 'N/A') ? parseExcelDateToMMDDYYYY(recvVal) : null;
+        {
+          if (isCompletedStatusBm && (recvFormatted && isDateGreaterThanOrEqual(recvFormatted, csatCycleStartDateFormatted))) {
             buMap[bu].responded += 1;
             const scoreVal = row[actualScoreCol];
             const score = scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A' ? parseFloat(scoreVal) : null;
@@ -1804,10 +1806,13 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
     const group = new Map();
     data.forEach((row) => {
+      const statusVal = (row?.['STATUS'] ?? row?.['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+
       const sentVal = row?.[sentDateCol] ?? row?.['CSS_SENT_DATE'];
-      if (sentVal == null || sentVal === '' || sentVal === 'N/A') return;
-      const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
-      if (!sentFormatted || !isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted)) return;
+      const sentFormatted = (sentVal != null && sentVal !== '' && sentVal !== 'N/A') ? parseExcelDateToMMDDYYYY(sentVal) : null;
+      const isSentValid = sentFormatted && isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted);
+      if (!isSentValid && !isCompletedStatus) return;
 
       const recvVal = row?.[receivedDateCol] ?? row?.['CSS_RECEIVED_DATE'];
       const hasReceived = recvVal != null && recvVal !== '' && recvVal !== 'N/A';
@@ -1821,11 +1826,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         group.set(key, { customerId: custId || '', accountName: accountName || 'N/A', businessUnit, polled: 0, responded: 0, scoreSum: 0, scoreCount: 0 });
       }
       const agg = group.get(key);
-      agg.polled += 1;
+      if (isSentValid) agg.polled += 1;
 
-      if (hasReceived) {
-        const recvFormatted = parseExcelDateToMMDDYYYY(recvVal);
-        if (!recvFormatted || !isDateGreaterThanOrEqual(recvFormatted, csatCycleStartDateFormatted)) return;
+      const recvFormatted = hasReceived ? parseExcelDateToMMDDYYYY(recvVal) : null;
+      const isReceivedValid = recvFormatted && isDateGreaterThanOrEqual(recvFormatted, csatCycleStartDateFormatted);
+      if (isCompletedStatus && isReceivedValid) {
         agg.responded += 1;
         const rawScore = row?.[actualScoreCol];
         const score = rawScore != null && rawScore !== '' && rawScore !== 'N/A' ? parseFloat(rawScore) : null;
@@ -1935,9 +1940,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           }
         }
         const recvVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'];
-        if (recvVal != null && recvVal !== '' && recvVal !== 'N/A') {
-          const recvFormatted = parseExcelDateToMMDDYYYY(recvVal);
-          if (recvFormatted && isDateGreaterThanOrEqual(recvFormatted, csatCycleStartDateFormatted)) {
+        const statusValAm = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const isCompletedStatusAm = statusValAm === 'completed';
+        const recvFormattedAm = (recvVal != null && recvVal !== '' && recvVal !== 'N/A') ? parseExcelDateToMMDDYYYY(recvVal) : null;
+        {
+          if (isCompletedStatusAm && (recvFormattedAm && isDateGreaterThanOrEqual(recvFormattedAm, csatCycleStartDateFormatted))) {
             const scoreVal = row[actualScoreCol];
             const score = scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A' ? parseFloat(scoreVal) : null;
             if (isTop10) {
@@ -2545,8 +2552,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
       const sentFormatted = sentVal ? parseExcelDateToMMDDYYYY(sentVal) : '';
       const receivedFormatted = receivedVal ? parseExcelDateToMMDDYYYY(receivedVal) : '';
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
       const sentValid = sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted));
-      const receivedValid = receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted));
+      const receivedValid = isCompletedStatus && (receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)));
       if (sentValid) totalPolled++;
       if (receivedValid) totalResponded++;
 

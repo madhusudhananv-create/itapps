@@ -854,17 +854,19 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
                 }
                 
                 // Check date filtering
+                const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+                const isCompletedStatus = statusVal === 'completed';
                 const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
                 const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-                
-                if (!sentDateValid || !receivedDateValid) {
+
+                if (!sentDateValid || !isCompletedStatus || !receivedDateValid) {
                   return false;
                 }
-                
-                // Count if CSS_RECEIVED_DATE exists
-                return !!cssReceivedDate;
+
+                // Count if CSS_RECEIVED_DATE exists (or STATUS is Completed, which fully overrides the date check)
+                return isCompletedStatus && !!cssReceivedDate;
               });
-              
+
               surveysReceived = customerSurveys.length;
             }
 
@@ -895,17 +897,19 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
                 }
                 
                 // Check date filtering
+                const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+                const isCompletedStatus = statusVal === 'completed';
                 const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
                 const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-                
-                if (!sentDateValid || !receivedDateValid) {
+
+                if (!sentDateValid || !isCompletedStatus || !receivedDateValid) {
                   return false;
                 }
-                
-                // Count if CSS_RECEIVED_DATE exists
-                return !!cssReceivedDate;
+
+                // Count if CSS_RECEIVED_DATE exists (or STATUS is Completed, which fully overrides the date check)
+                return isCompletedStatus && !!cssReceivedDate;
               });
-              
+
               surveysReceived = buSurveys.length;
             }
 
@@ -947,14 +951,16 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
                   return false;
                 }
                 
+                const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+                const isCompletedStatus = statusVal === 'completed';
                 const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
                 const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-                
-                if (!sentDateValid || !receivedDateValid) {
+
+                if (!sentDateValid || !isCompletedStatus || !receivedDateValid) {
                   return false;
                 }
-                
-                return !!cssReceivedDate;
+
+                return isCompletedStatus && !!cssReceivedDate;
               });
               surveysReceived = customerSurveys.length;
             } else if (viewType === 'bu' && sentReceivedData && sentReceivedData.length > 0 && group.businessUnit) {
@@ -967,14 +973,16 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
                   return false;
                 }
                 
+                const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+                const isCompletedStatus = statusVal === 'completed';
                 const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
                 const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-                
-                if (!sentDateValid || !receivedDateValid) {
+
+                if (!sentDateValid || !isCompletedStatus || !receivedDateValid) {
                   return false;
                 }
-                
-                return !!cssReceivedDate;
+
+                return isCompletedStatus && !!cssReceivedDate;
               });
               surveysReceived = buSurveys.length;
             }
@@ -1351,17 +1359,19 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
               }
               
               // Check date filtering
+              const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+              const isCompletedStatus = statusVal === 'completed';
               const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
               const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-              
-              if (!sentDateValid || !receivedDateValid) {
+
+              if (!sentDateValid || !isCompletedStatus || !receivedDateValid) {
                 return false;
               }
-              
-              // Count if CSS_RECEIVED_DATE exists
-              return !!cssReceivedDate;
+
+              // Count if CSS_RECEIVED_DATE exists (or STATUS is Completed, which fully overrides the date check)
+              return isCompletedStatus && !!cssReceivedDate;
             });
-            
+
             buSurveysReceived = buSurveys.length;
           }
 
@@ -1494,23 +1504,25 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
               }
               
               // Check date filtering
+              const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+              const isCompletedStatus = statusVal === 'completed';
               const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
               const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-              
-              if (!sentDateValid || !receivedDateValid) {
+
+              if (!sentDateValid || !isCompletedStatus || !receivedDateValid) {
                 return false;
               }
-              
+
               // Check Business Unit != 'Unknown'
               const businessUnit = row['BUSINESS UNIT'] || row['BUSSINESS UNIT'] || row['Business Unit'] || 'Unknown';
               if (!businessUnit || businessUnit.toString().trim() === 'Unknown') {
                 return false;
               }
-              
-              // Count if CSS_RECEIVED_DATE exists
-              return !!cssReceivedDate;
+
+              // Count if CSS_RECEIVED_DATE exists (or STATUS is Completed, which fully overrides the date check)
+              return isCompletedStatus && !!cssReceivedDate;
             });
-            
+
             accountSurveysReceived = accountSurveys.length;
           }
 

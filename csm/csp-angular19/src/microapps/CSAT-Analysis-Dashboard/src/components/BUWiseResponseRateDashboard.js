@@ -661,7 +661,9 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
        const businessUnitValue = rawBU === 'N/A' || rawBU === 'No BU Column Found' ? rawBU : normalizeBusinessUnitDisplay(rawBU);
        const cssSentDate = row[cssSentColumn];
        const cssReceivedDate = row[cssReceivedColumn];
-       
+       const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+       const isCompletedStatus = statusVal === 'completed';
+
        if (!businessUnitTotals.has(businessUnitValue)) {
          businessUnitTotals.set(businessUnitValue, {
            surveysSent: 0,
@@ -676,8 +678,8 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
          businessUnitData.surveysSent++;
        }
        
-       // Count CSS_RECEIVED_DATE for business unit
-       if (cssReceivedDate && cssReceivedDate !== '' && cssReceivedDate !== 'N/A' && cssReceivedDate !== null) {
+       // Count CSS_RECEIVED_DATE for business unit, or STATUS = Completed
+       if (isCompletedStatus && (cssReceivedDate && cssReceivedDate !== '' && cssReceivedDate !== 'N/A' && cssReceivedDate !== null)) {
          businessUnitData.surveysReceived++;
        }
      });
