@@ -755,7 +755,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
     // Sort: fixed BU order when BU view
     if (viewBy === 'bu') {
-      const ORDER = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       rows.sort((a, b) => (ORDER.indexOf(a.group) - ORDER.indexOf(b.group)) || a.category.localeCompare(b.category));
     } else {
       rows.sort((a, b) => a.group.localeCompare(b.group) || a.category.localeCompare(b.category));
@@ -1513,7 +1513,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
       });
 
       // Apply fixed BU order for consistency
-      const BU_ORDER = ['Healthcare', 'New Growth or CIT', 'Tech', 'India & UK'];
+      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       const sortedByBU = [...filteredRows].sort((a, b) => {
         const aBU = (a.businessUnit || '').toString().trim();
         const bBU = (b.businessUnit || '').toString().trim();

@@ -1417,7 +1417,7 @@ const AccountWiseResponseRateDashboard = ({ onBack, excelData }) => {
     });
     
     // Sort business units in the specified order
-    const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
     
     const sortedResult = result.sort((a, b) => {
       const indexA = businessUnitOrder.indexOf(a.businessUnit);

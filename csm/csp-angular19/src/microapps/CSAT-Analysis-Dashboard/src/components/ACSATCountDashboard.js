@@ -1191,7 +1191,7 @@ const mapBuWiseTrendGroupToRow = (group, perspectives) => {
   };
 };
 
-const ACSAT_BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+const ACSAT_BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
 
 const sortBuWiseTrendRows = (rows) =>
   [...rows].sort((a, b) => {
@@ -1903,7 +1903,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
 
   // Top 10 account names in order
   const top10AccountNames = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Tufts Medicine',
@@ -1917,7 +1917,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Tufts Medicine',
@@ -2591,7 +2591,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     }
 
     // Apply fixed BU order when BU-wise
-    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
     let ordered = finalResult;
     
     if (groupByBU) {
