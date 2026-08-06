@@ -1256,10 +1256,13 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
             // Get dates from the first sheet (CSAT received Report) for date filtering
             const firstSheetSentDate = getCsatSentDateFromRow(row);
             const firstSheetReceivedDate = getCsatReceivedDateFromRow(row);
-            
+
+            const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+            const isCompletedStatus = statusVal === 'completed';
+
             // Check if both dates meet the cycle start date requirement (both must be >= cycle start date)
             const sentDateValid = !firstSheetSentDate || isDateOnOrAfterCsatStart(firstSheetSentDate, acsatCycleStartDateFormatted);
-            const receivedDateValid = !firstSheetReceivedDate || isDateOnOrAfterCsatStart(firstSheetReceivedDate, acsatCycleStartDateFormatted);
+            const receivedDateValid = (!firstSheetReceivedDate || isDateOnOrAfterCsatStart(firstSheetReceivedDate, acsatCycleStartDateFormatted));
             
             // Check if this record has the specific QUESTION for expectations
             const rating = row.RATING || row['RATING'] || row['Rating'];
@@ -1319,10 +1322,13 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
               const validRecords = customerSecondSheetData.filter(secondRow => {
                 const cssSentDate = getCsatSentDateFromRow(secondRow);
                 const cssReceivedDate = getCsatReceivedDateFromRow(secondRow);
-                
+
+                const secondRowStatusVal = (secondRow['STATUS'] ?? secondRow['Status'] ?? '').toString().trim().toLowerCase();
+                const secondRowIsCompletedStatus = secondRowStatusVal === 'completed';
+
                 const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate, acsatCycleStartDateFormatted);
-                const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate, acsatCycleStartDateFormatted);
-                
+                const receivedDateValid = secondRowIsCompletedStatus || !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate, acsatCycleStartDateFormatted);
+
                 return sentDateValid && receivedDateValid;
               });
               
@@ -1336,11 +1342,14 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
               customerSecondSheetData.forEach(secondRow => {
                 const cssSentDate = getCsatSentDateFromRow(secondRow);
                 const cssReceivedDate = getCsatReceivedDateFromRow(secondRow);
-                
+
+                const secondRowStatusVal = (secondRow['STATUS'] ?? secondRow['Status'] ?? '').toString().trim().toLowerCase();
+                const secondRowIsCompletedStatus = secondRowStatusVal === 'completed';
+
                 if (cssSentDate && isDateOnOrAfterCsatStart(cssSentDate, acsatCycleStartDateFormatted)) {
                   sentCount++;
                 }
-                if (cssReceivedDate && isDateOnOrAfterCsatStart(cssReceivedDate, acsatCycleStartDateFormatted)) {
+                if (secondRowIsCompletedStatus || (cssReceivedDate && isDateOnOrAfterCsatStart(cssReceivedDate, acsatCycleStartDateFormatted))) {
                   receivedCount++;
                 }
               });

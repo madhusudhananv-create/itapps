@@ -1260,13 +1260,15 @@ const AccountWiseResponseRateDashboard = ({ onBack, excelData }) => {
 
       // Count surveys received using detected column
       const receivedValue = row[receivedColumn];
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
       console.log(`  receivedColumn: "${receivedColumn}"`);
       console.log(`  receivedValue: "${receivedValue}" (type: ${typeof receivedValue})`);
-      
-      if (receivedValue && receivedValue !== '' && receivedValue !== 'N/A' && receivedValue !== null && 
+
+      if (isCompletedStatus && (receivedValue && receivedValue !== '' && receivedValue !== 'N/A' && receivedValue !== null &&
           receivedValue !== undefined && receivedValue !== 'NULL' && receivedValue !== 'null' &&
           receivedValue !== 'undefined' && receivedValue !== 'None' && receivedValue !== 'none' &&
-          receivedValue !== ' ' && receivedValue !== '  ' && receivedValue !== '   ') {
+          receivedValue !== ' ' && receivedValue !== '  ' && receivedValue !== '   ')) {
         total.surveysReceived++;
         console.log(`  -> Incrementing surveysReceived to ${total.surveysReceived}`);
       } else {
@@ -1370,7 +1372,9 @@ const AccountWiseResponseRateDashboard = ({ onBack, excelData }) => {
       // Count surveys sent and received
       const sentValue = row[cssSentColumn];
       const receivedValue = row[cssReceivedColumn];
-      
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+
       if (!buGroups.has(businessUnit)) {
         buGroups.set(businessUnit, {
           businessUnit,
@@ -1390,8 +1394,8 @@ const AccountWiseResponseRateDashboard = ({ onBack, excelData }) => {
       }
       
       // Count surveys received
-      if (receivedValue && receivedValue !== '' && receivedValue !== 'N/A' && receivedValue !== null && 
-          receivedValue !== undefined && receivedValue !== 'NULL' && receivedValue !== 'null') {
+      if (isCompletedStatus && (receivedValue && receivedValue !== '' && receivedValue !== 'N/A' && receivedValue !== null &&
+          receivedValue !== undefined && receivedValue !== 'NULL' && receivedValue !== 'null')) {
         buGroup.surveysReceived++;
       }
     });

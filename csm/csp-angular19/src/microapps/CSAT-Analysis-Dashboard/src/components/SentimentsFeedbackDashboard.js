@@ -912,31 +912,37 @@ const SentimentsFeedbackDashboard = ({ onBackToDashboard, excelData }) => {
         const perspectiveValue = perspectiveColumn ? row[perspectiveColumn] : '';
         
         if (!customerId || !ratingDescription) return;
-        
+
+        const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const isCompletedStatus = statusVal === 'completed';
+
         // Apply date filtering if CSAT cycle start date is set
         if (csatCycleStartDateFormatted) {
           const csatSentDate = csatSentDateColumn ? row[csatSentDateColumn] : null;
           const csatReceivedDate = csatReceivedDateColumn ? row[csatReceivedDateColumn] : null;
-          
-          // Check if both dates are available and greater than or equal to CSAT cycle start date
-          let shouldInclude = false;
-          
-          if (csatSentDate && csatReceivedDate) {
+
+          // Check if sent date is valid and (received date is valid OR status is Completed)
+          let sentDateValid = false;
+          let receivedDateValid = false;
+
+          if (csatSentDate) {
             const sentDateFormatted = formatDateToMMDDYYYY(csatSentDate);
-            const receivedDateFormatted = formatDateToMMDDYYYY(csatReceivedDate);
-            
-            if (sentDateFormatted && receivedDateFormatted) {
-              shouldInclude = isDateGreaterThanOrEqual(sentDateFormatted, csatCycleStartDateFormatted) &&
-                            isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted);
-            }
+            sentDateValid = !!sentDateFormatted && isDateGreaterThanOrEqual(sentDateFormatted, csatCycleStartDateFormatted);
           }
-          
+
+          if (csatReceivedDate) {
+            const receivedDateFormatted = formatDateToMMDDYYYY(csatReceivedDate);
+            receivedDateValid = !!receivedDateFormatted && isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted);
+          }
+
+          const shouldInclude = sentDateValid && receivedDateValid;
+
           if (!shouldInclude) return; // Skip this row if it doesn't meet date criteria
         }
-        
+
         // Create a unique key combining customerId and respondentName
         const uniqueKey = `${customerId}_${respondentName}`;
-        
+
         // Store data for aggregation
         if (!customerData.has(uniqueKey)) {
           customerData.set(uniqueKey, {
@@ -1184,11 +1190,15 @@ const SentimentsFeedbackDashboard = ({ onBackToDashboard, excelData }) => {
         col.toLowerCase().includes('csat') && col.toLowerCase().includes('sent') && col.toLowerCase().includes('date')
       );
       
-      const csatReceivedDateColumn = headers.findIndex(col => 
+      const csatReceivedDateColumn = headers.findIndex(col =>
         col === 'CSAT RECEIVED DATE' || col === 'CSAT_RECEIVED_DATE' || col === 'csat_received_date' ||
         col.toLowerCase().includes('csat') && col.toLowerCase().includes('received') && col.toLowerCase().includes('date')
       );
-      
+
+      const statusColumn = headers.findIndex(col =>
+        col === 'STATUS' || col === 'Status' || col === 'status'
+      );
+
       console.log('Column indices:', {
         businessUnitColumn,
         customerIdColumn,
@@ -1197,7 +1207,8 @@ const SentimentsFeedbackDashboard = ({ onBackToDashboard, excelData }) => {
         ratingDescriptionColumn,
         perspectiveColumn,
         csatSentDateColumn,
-        csatReceivedDateColumn
+        csatReceivedDateColumn,
+        statusColumn
       });
       
       if (customerIdColumn === -1 || ratingDescriptionColumn === -1) {
@@ -1227,31 +1238,37 @@ const SentimentsFeedbackDashboard = ({ onBackToDashboard, excelData }) => {
         const perspectiveValue = perspectiveColumn !== -1 ? row[perspectiveColumn] : '';
         
         if (!customerId || !ratingDescription) return;
-        
+
+        const statusVal = ((statusColumn !== -1 ? row[statusColumn] : '') ?? '').toString().trim().toLowerCase();
+        const isCompletedStatus = statusVal === 'completed';
+
         // Apply date filtering if CSAT cycle start date is set
         if (csatCycleStartDateFormatted) {
           const csatSentDate = csatSentDateColumn !== -1 ? row[csatSentDateColumn] : null;
           const csatReceivedDate = csatReceivedDateColumn !== -1 ? row[csatReceivedDateColumn] : null;
-          
-          // Check if both dates are available and greater than or equal to CSAT cycle start date
-          let shouldInclude = false;
-          
-          if (csatSentDate && csatReceivedDate) {
+
+          // Check if sent date is valid and (received date is valid OR status is Completed)
+          let sentDateValid = false;
+          let receivedDateValid = false;
+
+          if (csatSentDate) {
             const sentDateFormatted = formatDateToMMDDYYYY(csatSentDate);
-            const receivedDateFormatted = formatDateToMMDDYYYY(csatReceivedDate);
-            
-            if (sentDateFormatted && receivedDateFormatted) {
-              shouldInclude = isDateGreaterThanOrEqual(sentDateFormatted, csatCycleStartDateFormatted) &&
-                            isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted);
-            }
+            sentDateValid = !!sentDateFormatted && isDateGreaterThanOrEqual(sentDateFormatted, csatCycleStartDateFormatted);
           }
-          
+
+          if (csatReceivedDate) {
+            const receivedDateFormatted = formatDateToMMDDYYYY(csatReceivedDate);
+            receivedDateValid = !!receivedDateFormatted && isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted);
+          }
+
+          const shouldInclude = sentDateValid && receivedDateValid;
+
           if (!shouldInclude) return; // Skip this row if it doesn't meet date criteria
         }
-        
+
         // Create a unique key combining customerId and respondentName
         const uniqueKey = `${customerId}_${respondentName}`;
-        
+
         // Store data for aggregation
         if (!customerData.has(uniqueKey)) {
           customerData.set(uniqueKey, {

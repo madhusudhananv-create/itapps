@@ -1515,10 +1515,12 @@ const buildBuWiseSentReceivedLookupFromFile = (file) => {
     }
 
     const agg = lookup.get(groupKey);
+    const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+    const isCompletedStatus = statusVal === 'completed';
     if (hasTrendSheetDateValue(row, sentDateCol, 'CSAT SENT DATE')) {
       agg.polled += 1;
     }
-    if (hasTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE')) {
+    if (isCompletedStatus && hasTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE')) {
       agg.responded += 1;
     }
   });
@@ -1624,10 +1626,12 @@ const buildTop10SentReceivedLookupFromFile = (file) => {
     }
 
     const agg = lookup.get(groupKey);
+    const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+    const isCompletedStatus = statusVal === 'completed';
     if (hasTrendSheetDateValue(row, sentDateCol, 'CSAT SENT DATE')) {
       agg.polled += 1;
     }
-    if (hasTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE')) {
+    if (isCompletedStatus && hasTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE')) {
       agg.responded += 1;
     }
   });
@@ -1680,8 +1684,10 @@ const aggregateOtherAccountsSentReceivedFromFile = (file) => {
   sentReceivedData.forEach((row) => {
     const typeOfAccount = getTrendRowValue(row, typeOfAccountCol, 'TYPE OF ACCOUNT').toString().trim();
     if (!isBlankEmptyOrNaTypeOfAccount(typeOfAccount)) return;
+    const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+    const isCompletedStatus = statusVal === 'completed';
     if (hasTrendSheetDateValue(row, sentDateCol, 'CSAT SENT DATE')) polled += 1;
-    if (hasTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE')) responded += 1;
+    if (isCompletedStatus && hasTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE')) responded += 1;
   });
 
   return { polled, responded };
@@ -2227,8 +2233,10 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
           }
 
           const csatReceivedDate = getCsatReceivedDateFromRow(row);
-          if (csatReceivedDate && matchesYearQuarter && isDateOnOrAfterCsatStart(csatReceivedDate)) {
-            customerGroupsFromSecondSheet[customerId].receivedDates.push(csatReceivedDate);
+          const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const isCompletedStatus = statusVal === 'completed';
+          if (isCompletedStatus && (csatReceivedDate && matchesYearQuarter && isDateOnOrAfterCsatStart(csatReceivedDate))) {
+            customerGroupsFromSecondSheet[customerId].receivedDates.push(csatReceivedDate || 'Completed');
           }
         });
       }
@@ -2373,15 +2381,17 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             const hasValidSentDate = sentDate && isDateOnOrAfterCsatStart(sentDate);
             const hasValidReceivedDate = receivedDate && isDateOnOrAfterCsatStart(receivedDate);
             const matchesYearQuarter = yearQuarterMatchesCycle(yearQuarter, acsatCycle);
-            
+            const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+            const isCompletedStatus = statusVal === 'completed';
+
             if (rowIndex < 3) {
               console.log(`    BU Match - CSAT Sent Date Valid: ${hasValidSentDate}, CSAT Received Date Valid: ${hasValidReceivedDate}, Year Quarter Match: ${matchesYearQuarter}`);
             }
-            
+
             if (hasValidSentDate && matchesYearQuarter) {
               cssSentCount++;
             }
-            if (hasValidReceivedDate && matchesYearQuarter) {
+            if (isCompletedStatus && (hasValidReceivedDate && matchesYearQuarter)) {
               cssReceivedCount++;
             }
           }
@@ -2754,6 +2764,8 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
         const matchesYearQuarter = yearQuarterMatchesCycle(yearQuarter, acsatCycle);
         const hasValidSentDate = sentDate && isDateOnOrAfterCsatStart(sentDate);
         const hasValidReceivedDate = receivedDate && isDateOnOrAfterCsatStart(receivedDate);
+        const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+        const isCompletedStatus = statusVal === 'completed';
 
         // Determine if this row is an Other Account row (not Top 10)
         let isOtherAccount = true;
@@ -2768,7 +2780,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
 
         if (matchesYearQuarter && isOtherAccount) {
           if (hasValidSentDate) otherSent++;
-          if (hasValidReceivedDate) otherReceived++;
+          if (isCompletedStatus && hasValidReceivedDate) otherReceived++;
         }
       });
     }

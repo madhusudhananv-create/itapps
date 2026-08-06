@@ -255,9 +255,13 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
           }
 
           // Count received date with date filtering
-          if (row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A') {
-            const receivedDateFormatted = formatDateToMMDDYYYY(row[s2ReceivedDateColumn]);
-            if (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted)) {
+          const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const isCompletedStatus = statusVal === 'completed';
+          const hasReceivedDateValue = row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A';
+          const receivedDateFormatted = hasReceivedDateValue ? formatDateToMMDDYYYY(row[s2ReceivedDateColumn]) : null;
+          const receivedDateWithinCycle = hasReceivedDateValue && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted));
+          {
+            if (isCompletedStatus && receivedDateWithinCycle) {
               customerCSSCounts[custId].cssReceivedCount++;
               
               // Count by REVENUE_TYPE for staffing/non-staffing
@@ -298,9 +302,13 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
           }
 
           // Count received date with date filtering for BU
-          if (row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A') {
-            const receivedDateFormatted = formatDateToMMDDYYYY(row[s2ReceivedDateColumn]);
-            if (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted)) {
+          const buStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const buIsCompletedStatus = buStatusVal === 'completed';
+          const buHasReceivedDateValue = row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A';
+          const buReceivedDateFormatted = buHasReceivedDateValue ? formatDateToMMDDYYYY(row[s2ReceivedDateColumn]) : null;
+          const buReceivedDateWithinCycle = buHasReceivedDateValue && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(buReceivedDateFormatted, csatCycleStartDateFormatted));
+          {
+            if (buIsCompletedStatus && buReceivedDateWithinCycle) {
               buCSSCounts[businessUnit].cssReceivedCount++;
               
               // Count by REVENUE_TYPE for staffing/non-staffing by Business Unit
