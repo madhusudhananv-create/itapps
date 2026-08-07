@@ -3027,7 +3027,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
   const top10AccountNames = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Premier - Horizon II - Covenant Health',
@@ -3043,7 +3043,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Tufts Medicine',
@@ -4873,7 +4873,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     if (!sortConfig.key) {
       // Default ordering: if BU view, enforce BU order
       if (groupByBU) {
-        const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+        const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
         return [...processedData.data].sort((a, b) => {
           const aBU = (a.businessUnit || '').toString().trim();
           const bBU = (b.businessUnit || '').toString().trim();
@@ -4942,7 +4942,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     
     // If BU view and sorting not on businessUnit explicitly, apply BU order after sort for tie-breaker
     if (groupByBU && sortConfig.key !== 'businessUnit') {
-      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       sorted.sort((a, b) => {
         const aBU = (a.businessUnit || '').toString().trim();
         const bBU = (b.businessUnit || '').toString().trim();
@@ -5185,7 +5185,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       });
     }
     
-    const BU_ORDER = ['Org Level', 'Healthcare', 'CIT', 'Tech', 'India & UK'];
+    const BU_ORDER = ['Org Level', 'Healthcare', 'CIT', 'Tech', 'India & GCC'];
     return chartDataResult.sort((a, b) => {
       const aName = (a.name || '').toString().trim();
       const bName = (b.name || '').toString().trim();

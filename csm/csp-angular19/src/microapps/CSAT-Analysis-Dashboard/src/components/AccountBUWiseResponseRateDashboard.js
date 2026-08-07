@@ -391,8 +391,8 @@ const getPracticeOrderIndex = (practice) => {
   return idx;
 };
 
-// BUSINESS UNIT display order: Healthcare, CIT, Tech, India & UK, Sead. Used for dashboard and Excel.
-const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK', 'Sead'];
+// BUSINESS UNIT display order: Healthcare, CIT, Tech, India & GCC, Sead. Used for dashboard and Excel.
+const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
 const getBusinessUnitOrderIndex = (bu) => {
   if (bu == null || bu === '') return -1;
   const s = String(bu).trim();
@@ -1582,7 +1582,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       );
     }
 
-    // Default order by BUSINESS UNIT (Health Care/Health care, CIT, Tech, India & UK, Sead) when account-wise and not Top 10
+    // Default order by BUSINESS UNIT (Health Care/Health care, CIT, Tech, India & GCC, Sead) when account-wise and not Top 10
     if (!showBuWise && !showTop10 && filtered.length > 0) {
       filtered = [...filtered].sort((a, b) => {
         const indexA = getBusinessUnitOrderIndex(a.businessUnit);
@@ -1600,7 +1600,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     // Custom sorting for Top 10 accounts (Sr. No. 1–12 in correct order)
     if (showTop10 && !showBuWise) {
       const top10Order = [
-        'Premier Healthcare Solutions Inc (L80)',
+        'Premier Healthcare Solutions Inc',
         'Blue Cross Blue Shield Association BCBSA',
         'Frontier Airlines INC',
         'Premier - Horizon II - Covenant Health',
@@ -1716,7 +1716,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         }
       });
 
-      const order = BUSINESS_UNIT_DISPLAY_ORDER;
       const rows = Object.entries(buMap)
         .map(([bu, v]) => ({
           businessUnit: bu,
@@ -1728,8 +1727,8 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           yearQuarter: v.yearQuarter || acsatCycle || ''
         }))
         .sort((a, b) => {
-          const ia = order.indexOf(a.businessUnit);
-          const ib = order.indexOf(b.businessUnit);
+          const ia = getBusinessUnitOrderIndex(a.businessUnit);
+          const ib = getBusinessUnitOrderIndex(b.businessUnit);
           if (ia >= 0 && ib >= 0) return ia - ib;
           if (ia >= 0) return -1;
           if (ib >= 0) return 1;
@@ -1897,6 +1896,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const typeOfAccountCol = Object.keys(firstRow).find(k => /type\s*of\s*account|top\s*10/i.test(String(k))) || 'TYPE OF ACCOUNT';
       const actualScoreCol = Object.keys(firstRow).find(k => /actual\s*score/i.test(String(k))) || 'ACTUAL SCORE';
       const custIdCol = Object.keys(firstRow).find(k => /cust_id|customer_id/i.test(String(k)));
+      const yearQuarterCol = Object.keys(firstRow).find(k => {
+        const lower = (k || '').toString().toLowerCase().replace(/\s|_/g, '');
+        return lower === 'year-quarter' || lower === 'yearquarter' || (lower.includes('year') && lower.includes('quarter'));
+      }) || 'YEAR - QUARTER';
+      let fileYearQuarter = null;
 
       const isTop10Account = (row) => {
         const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim().toLowerCase();
@@ -1928,6 +1932,12 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         if (isTop10) {
           if (!accountMap[key]) {
             accountMap[key] = { accountName: custName, businessUnit: bu, polled: 0, responded: 0, actualSum: 0, actualCount: 0 };
+          }
+        }
+        if (!fileYearQuarter) {
+          const yqVal = row[yearQuarterCol] ?? row['YEAR_QUARTER'] ?? row['Year Quarter'];
+          if (yqVal != null && yqVal !== '' && yqVal !== 'N/A') {
+            fileYearQuarter = String(yqVal).trim();
           }
         }
         const sentVal = row[sentDateCol] ?? row['CSS_SENT_DATE'];
@@ -1980,8 +1990,28 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           avgCSATScore: a.actualCount > 0 ? Math.round((a.actualSum / a.actualCount) * 100) / 100 : null
         }))
         .sort((a, b) => {
-          const cmp = (a.accountName || '').localeCompare(b.accountName || '');
-          return cmp !== 0 ? cmp : (a.businessUnit || '').localeCompare(b.businessUnit || '');
+          // Same fixed account order as the Top 10 Accounts table (Premier first)
+          const top10FixedOrder = [
+            'Premier Healthcare Solutions Inc',
+            'Blue Cross Blue Shield Association BCBSA',
+            'Frontier Airlines INC',
+            'Premier - Horizon II - Covenant Health',
+            'Tufts Medicine',
+            'BronxCare Health System',
+            'AgFirst Farm Credit Bank',
+            'embecta MEDICAL II LLC',
+            'Northern Trust Company',
+            'Jewish Board of Family and Childrens Services JBFCS',
+            'Healthfirst',
+            'AgileOne'
+          ];
+          const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+          const idxA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
+          const idxB = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(b.accountName));
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          return (a.accountName || '').localeCompare(b.accountName || '');
         });
 
       // Top 10 Accounts grand total row: sum of all TYPE OF ACCOUNT = Top 10
@@ -2027,7 +2057,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         };
       }
 
-      return { saveName: file.saveName, rows, top10GrandTotalRow, otherAccountsRow, overallRow, hasData: rows.length > 0 || otherAgg.polled > 0 || allRowsAgg.polled > 0 };
+      return { saveName: file.saveName, rows, top10GrandTotalRow, otherAccountsRow, overallRow, yearQuarter: fileYearQuarter, hasData: rows.length > 0 || otherAgg.polled > 0 || allRowsAgg.polled > 0 };
     });
   }, [trendAnalysisFiles, csatCycleStartDateFormatted]);
 
@@ -2640,7 +2670,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     if (!showBuWise || !processedData || !processedData.data || !Array.isArray(processedData.data) || processedData.data.length === 0) {
       console.log('No BU-wise data for donut chart, using sample data');
       return [
-        { name: 'India & UK', responseRate: 78, sent: 200, received: 156 },
+        { name: 'India & GCC', responseRate: 78, sent: 200, received: 156 },
         { name: 'US', responseRate: 65, sent: 150, received: 98 },
         { name: 'Europe', responseRate: 82, sent: 100, received: 82 },
         { name: 'Asia Pacific', responseRate: 71, sent: 120, received: 85 },
@@ -6169,7 +6199,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                       <thead>
                         <tr>
                           <Th rowSpan={2} style={{ width: '18%' }}>Business Unit</Th>
-                          <Th colSpan={6} style={{ textAlign: 'center' }}>{acsatCycle || 'H2 2025'}</Th>
+                          <Th colSpan={6} style={{ textAlign: 'center' }}>{fileData.orgLevelRow?.yearQuarter || acsatCycle || 'H2 2025'}</Th>
                         </tr>
                         <tr>
                           <Th style={{ width: '10%' }}>#Polled</Th>
@@ -6716,7 +6746,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                       <thead>
                         <tr>
                           <Th rowSpan={2} style={{ width: '22%' }}>Account Name</Th>
-                          <Th colSpan={5} style={{ textAlign: 'center' }}>{acsatCycle || 'H1 2025'}</Th>
+                          <Th colSpan={5} style={{ textAlign: 'center' }}>{fileData.yearQuarter || acsatCycle || 'H1 2025'}</Th>
                         </tr>
                         <tr>
                           <Th style={{ width: '10%' }}>#Polled</Th>

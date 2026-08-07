@@ -1810,7 +1810,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
   
   // Top 10 account names in order
   const top10AccountNames = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Tufts Medicine',
@@ -1824,7 +1824,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Tufts Medicine',
@@ -2566,7 +2566,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
         });
 
         // Calculate BU level summary - only consider ratings > 4 for average calculation
-        const buOrder = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+        const buOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
         buOrder.forEach(buName => {
           // Handle both "Health Care" and "Healthcare" for backward compatibility
           const buData = processedRows.filter(row => {
@@ -2742,7 +2742,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     if (!searchTerm.trim()) {
       const base = sortedData;
       if (groupByBU) {
-        const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+        const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
         return [...base].sort((a, b) => {
           const aBU = (a.businessUnit || '').toString().trim();
           const bBU = (b.businessUnit || '').toString().trim();
@@ -2788,7 +2788,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
       const filtered = sortedData.filter(row => 
         row.businessUnit.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       return filtered.sort((a, b) => {
         const aBU = (a.businessUnit || '').toString().trim();
         const bBU = (b.businessUnit || '').toString().trim();

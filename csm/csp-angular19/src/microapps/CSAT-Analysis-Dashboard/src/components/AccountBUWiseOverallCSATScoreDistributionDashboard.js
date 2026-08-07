@@ -555,8 +555,8 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       });
   }, []);
 
-  // BUSINESS UNIT display order: Healthcare, CIT, Tech, India & UK, Sead/SEAD (BU-wise, Top 10, Account-wise; dashboard + Excel)
-  const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK', 'Sead'];
+  // BUSINESS UNIT display order: Healthcare, CIT, Tech, India & GCC, Sead/SEAD (BU-wise, Top 10, Account-wise; dashboard + Excel)
+  const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
   const getBusinessUnitOrderIndex = (bu) => {
     if (bu == null || bu === '') return -1;
     const s = String(bu).trim();
@@ -695,10 +695,28 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     const rows = Object.values(groups)
       .filter(g => g.polled > 0 || g.responded > 0)
       .map(g => ({ accountName: g.accountName, businessUnit: g.businessUnit, polled: g.polled, responded: g.responded }));
+    // Same fixed account order as the Top 10 Accounts table (Premier first)
+    const top10FixedOrder = [
+      'Premier Healthcare Solutions Inc',
+      'Blue Cross Blue Shield Association BCBSA',
+      'Frontier Airlines INC',
+      'Premier - Horizon II - Covenant Health',
+      'Tufts Medicine',
+      'BronxCare Health System',
+      'AgFirst Farm Credit Bank',
+      'embecta MEDICAL II LLC',
+      'Northern Trust Company',
+      'Jewish Board of Family and Childrens Services JBFCS',
+      'Healthfirst',
+      'AgileOne'
+    ];
+    const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
     rows.sort((a, b) => {
-      const buA = getBusinessUnitOrderIndex(a.businessUnit);
-      const buB = getBusinessUnitOrderIndex(b.businessUnit);
-      if (buA !== buB) return buA - buB;
+      const idxA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
+      const idxB = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(b.accountName));
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
       return (a.accountName || '').localeCompare(b.accountName || '');
     });
     return rows;
@@ -2116,7 +2134,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         group.ratings[ratingResolved]++;
         
         // Debug logging for first few business units
-        if (businessUnit === 'India & UK' && group.ratings[ratingResolved] <= 10) {
+        if (businessUnit === 'India & GCC' && group.ratings[ratingResolved] <= 10) {
           console.log(`BU ${businessUnit}: Rating ${ratingResolved} count = ${group.ratings[ratingResolved]} (Customer: ${customerId}, Total ratings processed so far: ${Object.values(group.ratings).reduce((sum, count) => sum + count, 0)})`);
         }
       });
@@ -2165,7 +2183,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       }, 0);
       console.log(`Total ratings processed across all BUs: ${totalRatingsProcessedBU}`);
       
-      // Sort by BUSINESS UNIT order: Healthcare, CIT, Tech, India & UK, Sead
+      // Sort by BUSINESS UNIT order: Healthcare, CIT, Tech, India & GCC, Sead
       const sortedResult = result.sort((a, b) => {
         const indexA = getBusinessUnitOrderIndex(a.businessUnit);
         const indexB = getBusinessUnitOrderIndex(b.businessUnit);
@@ -3435,7 +3453,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           row.customerName.toLowerCase().includes(customerNameSearch.toLowerCase())
         );
       }
-      // Default order by BUSINESS UNIT (Healthcare, CIT, Tech, India & UK, Sead) when account-wise and not Top 10
+      // Default order by BUSINESS UNIT (Healthcare, CIT, Tech, India & GCC, Sead) when account-wise and not Top 10
       if (!showTop10 && filtered.length > 0) {
         filtered = [...filtered].sort((a, b) => {
           const indexA = getBusinessUnitOrderIndex(a.businessUnit);
@@ -3449,7 +3467,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     // Top 10: order = Top 10 account rows (Sr.No. 1–12), then "Top 10 Accounts" grand total row, then "Other Accounts" (no Sr.No.), then "Overall"
     if (showTop10 && !showBuWise) {
       const top10Order = [
-        'Premier Healthcare Solutions Inc (L80)',
+        'Premier Healthcare Solutions Inc',
         'Blue Cross Blue Shield Association BCBSA',
         'Frontier Airlines INC',
         'Premier - Horizon II - Covenant Health',
@@ -3548,7 +3566,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
   const getSortedData = (data) => {
     if (!sortConfig.key) return data;
 
-    // If sorting by businessUnit, use BUSINESS UNIT order (Healthcare, CIT, Tech, India & UK, Sead/SEAD)
+    // If sorting by businessUnit, use BUSINESS UNIT order (Healthcare, CIT, Tech, India & GCC, Sead/SEAD)
     if (sortConfig.key === 'businessUnit') {
       return [...data].sort((a, b) => {
         const aVal = a[sortConfig.key];

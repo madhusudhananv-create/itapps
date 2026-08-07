@@ -1019,8 +1019,8 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     if (s.toLowerCase() === 'sead') return 'SEAD';
     return bu;
   };
-  // BUSINESS UNIT display order: Healthcare, CIT, Tech, India & UK, SEAD. Used for dashboard tables and Excel export.
-  const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK', 'SEAD'];
+  // BUSINESS UNIT display order: Healthcare, CIT, Tech, India & GCC, SEAD. Used for dashboard tables and Excel export.
+  const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'SEAD'];
   const getBusinessUnitOrderIndex = (bu) => {
     if (bu == null || bu === '') return -1;
     const s = String(bu).trim();
@@ -1255,7 +1255,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       // Top 10 view: preserve fixed order and Sr. No. (1–12) already set in filteredData
       sorted = [...regularRows];
     } else if (!sortConfig.key) {
-      // Default order: BUSINESS UNIT order (Health Care/Health care, CIT, Tech, India & UK, Sead)
+      // Default order: BUSINESS UNIT order (Health Care/Health care, CIT, Tech, India & GCC, Sead)
       sorted = [...regularRows].sort((a, b) => {
         const indexA = getBusinessUnitOrderIndex(a.businessUnit);
         const indexB = getBusinessUnitOrderIndex(b.businessUnit);
@@ -3760,7 +3760,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     // Custom sorting for Top 10 accounts (fixed order with correct Sr. No. 1–12)
     if (showTop10) {
       const top10Order = [
-        'Premier Healthcare Solutions Inc (L80)',
+        'Premier Healthcare Solutions Inc',
         'Blue Cross Blue Shield Association BCBSA',
         'Frontier Airlines INC',
         'Premier - Horizon II - Covenant Health',
@@ -3842,10 +3842,12 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
                 top10TotalPolled++;
               }
             }
+            const top10TotalStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+            const top10TotalIsCompletedStatus = top10TotalStatusVal === 'completed';
             const receivedDateValue = row['CSAT RECEIVED DATE'] ?? (cssReceivedColumn ? row[cssReceivedColumn] : null) ?? row['CSS_RECEIVED_DATE'];
             if (receivedDateValue && receivedDateValue !== '' && receivedDateValue !== 'N/A') {
               const receivedDateFormatted = parseExcelDateToMMDDYYYY(receivedDateValue);
-              if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
+              if (top10TotalIsCompletedStatus && receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
                 top10TotalResponded++;
               }
             }
@@ -3987,10 +3989,12 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
           });
           let overallResponded = 0;
           secondSheetDataToUse.forEach(row => {
+            const overallStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+            const overallIsCompletedStatus = overallStatusVal === 'completed';
             const receivedDateValue = row['CSAT RECEIVED DATE'] ?? (cssReceivedColumn ? row[cssReceivedColumn] : null) ?? row['CSS_RECEIVED_DATE'];
             if (receivedDateValue && receivedDateValue !== '' && receivedDateValue !== 'N/A') {
               const receivedDateFormatted = parseExcelDateToMMDDYYYY(receivedDateValue);
-              if (receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
+              if (overallIsCompletedStatus && receivedDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted))) {
                 overallResponded++;
               }
             }
@@ -4803,7 +4807,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     return { data, perspectives: saPerspectives, grandTotal };
   }, [uploadedData, excelData, csatCycleStartDateFormatted, businessUnitFilter]);
 
-  // Premier Healthcare Solutions Inc (L80) – Portfolio-wise Average CSAT Scores: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO. Columns: Sr.No., BUSINESS UNIT, PORTFOLIO, Polled, Responded, perspective columns (avg RATING). Polled/Responded from sheet 2 "CSAT sent and received Report", date >= csatCycleStartDateFormatted (MM-DD-YYYY), group by PORTFOLIO.
+  // Premier Healthcare Solutions Inc – Portfolio-wise Average CSAT Scores: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO. Columns: Sr.No., BUSINESS UNIT, PORTFOLIO, Polled, Responded, perspective columns (avg RATING). Polled/Responded from sheet 2 "CSAT sent and received Report", date >= csatCycleStartDateFormatted (MM-DD-YYYY), group by PORTFOLIO.
   const premierHealthcarePortfolioData = useMemo(() => {
     if (!uploadedData || uploadedData.length === 0) return { data: [], perspectives: [] };
     const firstRow = uploadedData[0] || {};
@@ -4814,7 +4818,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       key === 'PERSPECTIVE' || key === 'Perspective' || key.toLowerCase().includes('perspective')
     ) || 'PERSPECTIVE';
 
-    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
     const filtered = uploadedData.filter(row => {
       const custName = (row[customerNameKey] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
       if (custName !== PREMIER_HEALTHCARE_NAME) return false;
@@ -4858,7 +4862,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       }
     });
 
-    // Polled and Responded from sheet 2 "CSAT sent and received Report": count(CSAT SENT DATE) and count(CSAT RECEIVED DATE) where date >= csatCycleStartDateFormatted (MM-DD-YYYY), group by PORTFOLIO, filter by CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)"
+    // Polled and Responded from sheet 2 "CSAT sent and received Report": count(CSAT SENT DATE) and count(CSAT RECEIVED DATE) where date >= csatCycleStartDateFormatted (MM-DD-YYYY), group by PORTFOLIO, filter by CUSTOMER NAME = "Premier Healthcare Solutions Inc"
     const secondSheetDataRaw = excelData?.secondSheetData && Array.isArray(excelData.secondSheetData) ? excelData.secondSheetData : [];
     const premierHealthcareCustomerId = filtered.length > 0 ? (filtered[0]['CUST_ID'] ?? filtered[0]['CUSTOMER_ID']) : null;
     if (secondSheetDataRaw.length > 0 && csatCycleStartDateFormatted) {
@@ -4976,7 +4980,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       .sort(sortByPortfolioOrder)
       .map((row, idx) => ({ ...row, sNo: idx + 1 }));
 
-    // Grand Total: sum/average across ALL portfolios for CUSTOMER NAME="Premier Healthcare Solutions Inc (L80)"
+    // Grand Total: sum/average across ALL portfolios for CUSTOMER NAME="Premier Healthcare Solutions Inc"
     const allGroups = Array.from(groups.values());
     let grandTotal = null;
     if (allGroups.length > 0) {
@@ -5033,7 +5037,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     return { data, perspectives, grandTotal, countRow };
   }, [uploadedData, excelData, csatCycleStartDateFormatted]);
 
-  // Premier Healthcare Solutions Inc (L80) – Portfolio-wise % Satisfied Customers: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO.
+  // Premier Healthcare Solutions Inc – Portfolio-wise % Satisfied Customers: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO.
   // % = (count of RATING 4 or 5 for that perspective in that portfolio) / (count of data input for that perspective in that portfolio) × 100. Do NOT use #Responded. Grand Total = sum of count 4,5 / sum of data input per perspective.
   // Polled/Responded from sheet 2 "CSAT sent and received Report", date >= csatCycleStartDateFormatted (MM-DD-YYYY), group by PORTFOLIO.
   const premierHealthcarePortfolioSatisfiedData = useMemo(() => {
@@ -5046,7 +5050,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       key === 'PERSPECTIVE' || key === 'Perspective' || key.toLowerCase().includes('perspective')
     ) || 'PERSPECTIVE';
 
-    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
     const filtered = uploadedData.filter(row => {
       const custName = (row[customerNameKey] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
       if (custName !== PREMIER_HEALTHCARE_NAME) return false;
@@ -5266,7 +5270,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     return { data, perspectives, grandTotal, countRow };
   }, [uploadedData, excelData, csatCycleStartDateFormatted]);
 
-  // Premier Healthcare Solutions Inc (L80) – Portfolio-wise Overall CSAT Score Distribution: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", PERSPECTIVE = "Overall Experience", group by PORTFOLIO.
+  // Premier Healthcare Solutions Inc – Portfolio-wise Overall CSAT Score Distribution: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", PERSPECTIVE = "Overall Experience", group by PORTFOLIO.
   // Columns: Sr.No., Business Unit, Portfolio, Polled, Responded, Highly Dissatisfied (RATING=1), Dissatisfied (RATING=2), Neutral (RATING=3), Satisfied (RATING=4), Highly Satisfied (RATING=5).
   // Values = count(RATING=X) / Responded * 100
   const premierHealthcarePortfolioDistributionData = useMemo(() => {
@@ -5279,7 +5283,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       key === 'PERSPECTIVE' || key === 'Perspective' || key.toLowerCase().includes('perspective')
     ) || 'PERSPECTIVE';
 
-    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
     // Filter: CUSTOMER NAME = Premier Healthcare, PERSPECTIVE = "Overall Experience", date filtering
     const filtered = uploadedData.filter(row => {
       const custName = (row[customerNameKey] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
@@ -5474,7 +5478,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     return { data, grandTotal };
   }, [uploadedData, excelData, csatCycleStartDateFormatted]);
 
-  // Premier Healthcare (L80) – Portfolio-wise Response Rate from TREND file (Upload data for trend analysis): Sheet2 "CSAT sent and received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO. Columns: Sr.No., BUSINESS UNIT, Portfolio, #Polled, #Responded, Response Rate %, Average CSAT Score. Date filter: CSAT SENT DATE and CSAT RECEIVED DATE >= csatCycleStartDateFormatted (MM-DD-YYYY).
+  // Premier Healthcare (L80) – Portfolio-wise Response Rate from TREND file (Upload data for trend analysis): Sheet2 "CSAT sent and received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO. Columns: Sr.No., BUSINESS UNIT, Portfolio, #Polled, #Responded, Response Rate %, Average CSAT Score. Date filter: CSAT SENT DATE and CSAT RECEIVED DATE >= csatCycleStartDateFormatted (MM-DD-YYYY).
   const premierHealthcareTrendPortfolioData = useMemo(() => {
     if (!trendAnalysisFiles?.length || !csatCycleStartDateFormatted) return { data: [], grandTotal: null, trendFileName: '' };
     const file = trendAnalysisFiles[trendAnalysisFiles.length - 1];
@@ -5513,7 +5517,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     }) || 'CSAT RECEIVED DATE';
     const actualScoreKey = Object.keys(firstRow).find(k => /actual\s*score/i.test(String(k).trim())) || 'ACTUAL SCORE';
 
-    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
     const groups = new Map(); // portfolio -> { businessUnit, polled, responded, scoreSum, scoreCount }
 
     sheetData.forEach(row => {
@@ -5583,7 +5587,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     return { data, grandTotal, trendFileName: file.saveName || 'Trend file' };
   }, [trendAnalysisFiles, csatCycleStartDateFormatted]);
 
-  // Trend portfolio data with perspective-wise avg rating from trend file "CSAT received Report": CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO. Each row has #Polled, #Responded from Sheet2 and perspective columns = avg(RATING) from Sheet1.
+  // Trend portfolio data with perspective-wise avg rating from trend file "CSAT received Report": CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO. Each row has #Polled, #Responded from Sheet2 and perspective columns = avg(RATING) from Sheet1.
   const premierHealthcareTrendPortfolioWithPerspectives = useMemo(() => {
     const base = premierHealthcareTrendPortfolioData;
     if (!trendAnalysisFiles?.length || !base.data.length) return { data: [], grandTotal: null, perspectives: [], trendFileName: base.trendFileName || '' };
@@ -5607,7 +5611,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     const portfolioKey = Object.keys(firstRow).find(k => /^portfolio$/i.test(String(k).trim())) || 'PORTFOLIO';
     const perspectiveCol = Object.keys(firstRow).find(k => k === 'PERSPECTIVE' || String(k).toLowerCase().includes('perspective')) || 'PERSPECTIVE';
     const ratingCol = Object.keys(firstRow).find(k => k === 'RATING' || String(k).toLowerCase() === 'rating') || 'RATING';
-    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
     const byPortfolio = new Map(); // portfolio -> { perspectiveNorm -> { sum, count } }
     const grandSums = {};
     const grandCounts = {};
@@ -5656,12 +5660,12 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     return { data, grandTotal, perspectives: allPerspectives, trendFileName: base.trendFileName };
   }, [trendAnalysisFiles, premierHealthcareTrendPortfolioData]);
 
-  // Trend of Satisfied Customer – Portfolio-wise % Satisfied (by Perspective): Sheet1 "CSAT received Report" for perspective %. Value = (count RATING 4 or 5 per perspective / count of data input for that perspective) × 100, group by PORTFOLIO, CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)". Grand Total = sum(satisfied per perspective) / sum(data input per perspective). Do NOT use #Responded for perspective %. Sheet2 "CSAT sent and received Report" for Polled and Responded only.
+  // Trend of Satisfied Customer – Portfolio-wise % Satisfied (by Perspective): Sheet1 "CSAT received Report" for perspective %. Value = (count RATING 4 or 5 per perspective / count of data input for that perspective) × 100, group by PORTFOLIO, CUSTOMER NAME = "Premier Healthcare Solutions Inc". Grand Total = sum(satisfied per perspective) / sum(data input per perspective). Do NOT use #Responded for perspective %. Sheet2 "CSAT sent and received Report" for Polled and Responded only.
   const premierHealthcareTrendPortfolioSatisfiedPct = useMemo(() => {
     if (!trendAnalysisFiles?.length) return { data: [], perspectives: [], grandTotal: null, trendFileName: '' };
     const file = trendAnalysisFiles[trendAnalysisFiles.length - 1];
     const sheetNamesToCheck = file.sheetNames || (file.sheets ? Object.keys(file.sheets) : []);
-    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
 
     // Sheet 2 "CSAT sent and received Report": Polled = count(CSAT SENT DATE), Responded = count(CSAT RECEIVED DATE), group by Portfolio, date >= csatCycleStartDateFormatted
     let polledByPortfolio = {};
@@ -6177,7 +6181,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     }
     console.log('BU-wise data with correct perspective averages:', filteredResult.slice(0, 3));
     
-    // Sort business units in the specified order: Health Care/Health care, CIT, Tech, India & UK, Sead
+    // Sort business units in the specified order: Health Care/Health care, CIT, Tech, India & GCC, Sead
     const sortedResult = filteredResult.sort((a, b) => {
       const indexA = getBusinessUnitOrderIndex(a.businessUnit);
       const indexB = getBusinessUnitOrderIndex(b.businessUnit);
@@ -6794,20 +6798,30 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
           return rowData;
         })
         .sort((a, b) => {
-          // Sort by Business Unit first, then by Account Name
-          const indexA = getBusinessUnitOrderIndex(a.businessUnit);
-          const indexB = getBusinessUnitOrderIndex(b.businessUnit);
-          if (indexA !== -1 && indexB !== -1) {
-            if (indexA !== indexB) return indexA - indexB;
-          } else if (indexA !== -1) return -1;
-          else if (indexB !== -1) return 1;
-          else {
-            const buCompare = (a.businessUnit || '').localeCompare(b.businessUnit || '');
-            if (buCompare !== 0) return buCompare;
-          }
+          // Same fixed account order as the Top 10 Accounts table (Premier first)
+          const top10FixedOrder = [
+            'Premier Healthcare Solutions Inc',
+            'Blue Cross Blue Shield Association BCBSA',
+            'Frontier Airlines INC',
+            'Premier - Horizon II - Covenant Health',
+            'Tufts Medicine',
+            'BronxCare Health System',
+            'AgFirst Farm Credit Bank',
+            'embecta MEDICAL II LLC',
+            'Northern Trust Company',
+            'Jewish Board of Family and Childrens Services JBFCS',
+            'Healthfirst',
+            'AgileOne'
+          ];
+          const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+          const indexA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
+          const indexB = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(b.accountName));
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
           return (a.accountName || '').localeCompare(b.accountName || '');
         });
-      
+
       // Calculate Top 10 Grand Total
       let top10TotalPolled = 0;
       let top10TotalResponded = 0;
@@ -7153,14 +7167,27 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
           return rowData;
         })
         .sort((a, b) => {
-          const indexA = getBusinessUnitOrderIndex(a.businessUnit);
-          const indexB = getBusinessUnitOrderIndex(b.businessUnit);
-          if (indexA !== -1 && indexB !== -1) {
-            if (indexA !== indexB) return indexA - indexB;
-          } else if (indexA !== -1) return -1;
-          else if (indexB !== -1) return 1;
-          const buCompare = (a.businessUnit || '').localeCompare(b.businessUnit || '');
-          if (buCompare !== 0) return buCompare;
+          // Same fixed account order as the Top 10 Accounts table (Premier first)
+          const top10FixedOrder = [
+            'Premier Healthcare Solutions Inc',
+            'Blue Cross Blue Shield Association BCBSA',
+            'Frontier Airlines INC',
+            'Premier - Horizon II - Covenant Health',
+            'Tufts Medicine',
+            'BronxCare Health System',
+            'AgFirst Farm Credit Bank',
+            'embecta MEDICAL II LLC',
+            'Northern Trust Company',
+            'Jewish Board of Family and Childrens Services JBFCS',
+            'Healthfirst',
+            'AgileOne'
+          ];
+          const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+          const indexA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
+          const indexB = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(b.accountName));
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
           return (a.accountName || '').localeCompare(b.accountName || '');
         });
       
@@ -11258,11 +11285,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         </>
       )}
 
-      {/* Premier Healthcare Solutions Inc (L80) – Portfolio-wise % Satisfied Customers: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO. Columns: Sr.No., Business Unit, Portfolio, perspective columns (% Satisfied = (count of RATING 4 or 5 / Responded) * 100). */}
+      {/* Premier Healthcare Solutions Inc – Portfolio-wise % Satisfied Customers: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO. Columns: Sr.No., Business Unit, Portfolio, perspective columns (% Satisfied = (count of RATING 4 or 5 / Responded) * 100). */}
       {!showBUWiseView && !showTop10 && premierHealthcarePortfolioSatisfiedData.data.length > 0 && (
         <>
           <div style={{ margin: '2rem 1rem 0.5rem', padding: '0.75rem', background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '8px', fontSize: '0.95rem', color: '#92400E', fontWeight: '600', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <span>Premier Healthcare Solutions Inc (L80) – Portfolio-wise % Satisfied Customers (from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc (L80)&quot;, group by Portfolio). Polled = count(CSAT SENT DATE), Responded = count(CSAT RECEIVED DATE) from the Customer Success Survey Status report, date &gt;= CSAT cycle start (MM-DD-YYYY). % = (count of RATING 4 or 5 / count of data input for that perspective in that portfolio) × 100. Grand Total uses sum of count 4,5 / sum of data input per perspective.</span>
+            <span>Premier Healthcare Solutions Inc – Portfolio-wise % Satisfied Customers (from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc&quot;, group by Portfolio). Polled = count(CSAT SENT DATE), Responded = count(CSAT RECEIVED DATE) from the Customer Success Survey Status report, date &gt;= CSAT cycle start (MM-DD-YYYY). % = (count of RATING 4 or 5 / count of data input for that perspective in that portfolio) × 100. Grand Total uses sum of count 4,5 / sum of data input per perspective.</span>
             <button
               type="button"
               onClick={async () => {
@@ -11639,11 +11666,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         </>
       )}
 
-      {/* Premier Healthcare Solutions Inc (L80) – Portfolio-wise Overall CSAT Score Distribution: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", PERSPECTIVE = "Overall Experience", group by PORTFOLIO. */}
+      {/* Premier Healthcare Solutions Inc – Portfolio-wise Overall CSAT Score Distribution: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", PERSPECTIVE = "Overall Experience", group by PORTFOLIO. */}
       {!showBUWiseView && !showTop10 && premierHealthcarePortfolioDistributionData.data.length > 0 && (
         <>
           <div style={{ margin: '2rem 1rem 0.5rem', padding: '0.75rem', background: '#E0E7FF', border: '1px solid #A5B4FC', borderRadius: '8px', fontSize: '0.95rem', color: '#3730A3', fontWeight: '600', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <span>Premier Healthcare Solutions Inc (L80) – Portfolio-wise Overall CSAT Score Distribution (from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc (L80)&quot;, PERSPECTIVE = &quot;Overall Experience&quot;, group by Portfolio). Values = count(RATING) / Responded * 100.</span>
+            <span>Premier Healthcare Solutions Inc – Portfolio-wise Overall CSAT Score Distribution (from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc&quot;, PERSPECTIVE = &quot;Overall Experience&quot;, group by Portfolio). Values = count(RATING) / Responded * 100.</span>
             <button
               type="button"
               onClick={async () => {
@@ -11846,11 +11873,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         </>
       )}
 
-      {/* Premier Healthcare Solutions Inc (L80) – Portfolio-wise Average CSAT Scores: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO. Columns: Sr.No., BUSINESS UNIT, PORTFOLIO, perspective columns (avg RATING). */}
+      {/* Premier Healthcare Solutions Inc – Portfolio-wise Average CSAT Scores: from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO. Columns: Sr.No., BUSINESS UNIT, PORTFOLIO, perspective columns (avg RATING). */}
       {!showBUWiseView && !showTop10 && premierHealthcarePortfolioData.data.length > 0 && (
         <>
           <div style={{ margin: '2rem 1rem 0.5rem', padding: '0.75rem', background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: '8px', fontSize: '0.95rem', color: '#166534', fontWeight: '600', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <span>Premier Healthcare Solutions Inc (L80) – Portfolio-wise Average CSAT Scores (from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc (L80)&quot;, group by Portfolio). Polled = count(CSAT SENT DATE), Responded = count(CSAT RECEIVED DATE) from the Customer Success Survey Status report, date &gt;= CSAT cycle start (MM-DD-YYYY). Perspective columns = average RATING.</span>
+            <span>Premier Healthcare Solutions Inc – Portfolio-wise Average CSAT Scores (from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc&quot;, group by Portfolio). Polled = count(CSAT SENT DATE), Responded = count(CSAT RECEIVED DATE) from the Customer Success Survey Status report, date &gt;= CSAT cycle start (MM-DD-YYYY). Perspective columns = average RATING.</span>
             <button
               type="button"
               onClick={async () => {
@@ -12176,11 +12203,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         </>
       )}
 
-      {/* Premier Healthcare Solutions Inc (L80) – Portfolio-wise Response Rate: from Sheet2 "CSAT sent and received Report", group by Portfolio. Columns: Sr.No., BUSINESS UNIT, Portfolio, #Polled, #Responded, Response Rate %, Average CSAT Score (Avg(ACTUAL SCORE)). */}
+      {/* Premier Healthcare Solutions Inc – Portfolio-wise Response Rate: from Sheet2 "CSAT sent and received Report", group by Portfolio. Columns: Sr.No., BUSINESS UNIT, Portfolio, #Polled, #Responded, Response Rate %, Average CSAT Score (Avg(ACTUAL SCORE)). */}
       {!showBUWiseView && !showTop10 && premierHealthcarePortfolioData.data.length > 0 && (
         <>
           <div style={{ margin: '1rem 1rem 0.5rem', padding: '0.75rem', background: '#EFF6FF', border: '1px solid #93C5FD', borderRadius: '8px', fontSize: '0.95rem', color: '#1E3A8A', fontWeight: '600', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <span>Premier Healthcare Solutions Inc (L80) – Portfolio-wise Response Rate (from the Customer Success Survey Status report, group by Portfolio). #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE), where dates &gt;= CSAT cycle start (MM-DD-YYYY). Response Rate % = #Responded / #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE).</span>
+            <span>Premier Healthcare Solutions Inc – Portfolio-wise Response Rate (from the Customer Success Survey Status report, group by Portfolio). #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE), where dates &gt;= CSAT cycle start (MM-DD-YYYY). Response Rate % = #Responded / #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE).</span>
             <button
               type="button"
               onClick={async () => {
@@ -12243,7 +12270,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
                       return lower === 'csat received date' || lower.includes('csat_received_date') || lower.includes('css_received_date');
                     }) || 'CSAT RECEIVED DATE';
                     const sh2ActualScoreKey = Object.keys(sh2First).find(k => /actual\s*score/i.test(String(k).trim())) || 'ACTUAL SCORE';
-                    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+                    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
 
                     secondSheetDataRaw.forEach((r) => {
                       const custName = (r[sh2CustomerNameKey] ?? r['CUSTOMER NAME'] ?? r['CUST_NM'] ?? '').toString().trim();
@@ -12485,7 +12512,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
                       return lower === 'csat received date' || lower.includes('csat_received_date') || lower.includes('css_received_date');
                     }) || 'CSAT RECEIVED DATE';
                     const sh2ActualScoreKey = Object.keys(sh2First).find(k => /actual\s*score/i.test(String(k).trim())) || 'ACTUAL SCORE';
-                    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+                    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
 
                     let sum = 0;
                     let cnt = 0;
@@ -12550,7 +12577,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
                       return lower === 'csat received date' || lower.includes('csat_received_date') || lower.includes('css_received_date');
                     }) || 'CSAT RECEIVED DATE';
                     const sh2ActualScoreKey = Object.keys(sh2First).find(k => /actual\s*score/i.test(String(k).trim())) || 'ACTUAL SCORE';
-                    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+                    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
                     let sum = 0;
                     let cnt = 0;
                     secondSheetDataRaw.forEach((r) => {
@@ -12613,11 +12640,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         </>
       )}
 
-      {/* Premier Healthcare (L80) – Portfolio-wise Response Rate (Trend Analysis): from trend file Sheet2 "CSAT sent and received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by Portfolio. Same columns and legends. */}
+      {/* Premier Healthcare (L80) – Portfolio-wise Response Rate (Trend Analysis): from trend file Sheet2 "CSAT sent and received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by Portfolio. Same columns and legends. */}
       {!showBUWiseView && !showTop10 && trendAnalysisFiles?.length > 0 && premierHealthcareTrendPortfolioData.data.length > 0 && (
         <>
           <div style={{ margin: '2rem 1rem 0.5rem', padding: '0.75rem', background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '8px', fontSize: '0.95rem', color: '#92400E', fontWeight: '600', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <span>Premier Healthcare Solutions Inc (L80) – Portfolio-wise Response Rate (Trend Analysis). Data from <strong>&quot;Upload data for trend analysis&quot;</strong> file ({premierHealthcareTrendPortfolioData.trendFileName}), the Customer Success Survey Status report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc (L80)&quot;, group by Portfolio. #Polled, #Responded, Response Rate %, Average CSAT Score. Dates &gt;= CSAT cycle start (MM-DD-YYYY).</span>
+            <span>Premier Healthcare Solutions Inc – Portfolio-wise Response Rate (Trend Analysis). Data from <strong>&quot;Upload data for trend analysis&quot;</strong> file ({premierHealthcareTrendPortfolioData.trendFileName}), the Customer Success Survey Status report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc&quot;, group by Portfolio. #Polled, #Responded, Response Rate %, Average CSAT Score. Dates &gt;= CSAT cycle start (MM-DD-YYYY).</span>
             <button
               type="button"
               onClick={async () => {
@@ -12813,11 +12840,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         </>
       )}
 
-      {/* New dashboard: Trend Analysis – Portfolio-wise Perspective wise Avg rating. #Polled/#Responded from Sheet2; perspective columns = avg(RATING) from trend file "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by Portfolio. */}
+      {/* New dashboard: Trend Analysis – Portfolio-wise Perspective wise Avg rating. #Polled/#Responded from Sheet2; perspective columns = avg(RATING) from trend file "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by Portfolio. */}
       {!showBUWiseView && !showTop10 && trendAnalysisFiles?.length > 0 && premierHealthcareTrendPortfolioWithPerspectives.data.length > 0 && (
         <>
           <div style={{ margin: '2rem 1rem 0.5rem', padding: '0.75rem', background: '#DBEAFE', border: '1px solid #3B82F6', borderRadius: '8px', fontSize: '0.95rem', color: '#1E40AF', fontWeight: '600', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <span>Trend Analysis – Portfolio-wise Perspective wise Avg rating. Data from <strong>&quot;Upload data for trend analysis&quot;</strong> file ({premierHealthcareTrendPortfolioWithPerspectives.trendFileName}). #Polled, #Responded from the Customer Success Survey Status report; perspective columns = average RATING from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc (L80)&quot;, group by Portfolio.</span>
+            <span>Trend Analysis – Portfolio-wise Perspective wise Avg rating. Data from <strong>&quot;Upload data for trend analysis&quot;</strong> file ({premierHealthcareTrendPortfolioWithPerspectives.trendFileName}). #Polled, #Responded from the Customer Success Survey Status report; perspective columns = average RATING from the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc&quot;, group by Portfolio.</span>
             <button
               type="button"
               onClick={async () => {
@@ -13010,11 +13037,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         </>
       )}
 
-      {/* Trend of Satisfied Customer – Portfolio-wise % Satisfied (by Perspective): sheet "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO. Value = (count RATING 4 or 5 per perspective / count of data input for that perspective) × 100. Grand Total = sum(satisfied) / sum(data input per perspective). */}
+      {/* Trend of Satisfied Customer – Portfolio-wise % Satisfied (by Perspective): sheet "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO. Value = (count RATING 4 or 5 per perspective / count of data input for that perspective) × 100. Grand Total = sum(satisfied) / sum(data input per perspective). */}
       {!showBUWiseView && !showTop10 && trendAnalysisFiles?.length > 0 && premierHealthcareTrendPortfolioSatisfiedPct.data.length > 0 && (
         <>
           <div style={{ margin: '2rem 1rem 0.5rem', padding: '0.75rem', background: '#D1FAE5', border: '1px solid #059669', borderRadius: '8px', fontSize: '0.95rem', color: '#065F46', fontWeight: '600', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <span>Trend of Satisfied Customer – Portfolio-wise % Satisfied (by Perspective). Data from <strong>&quot;Upload data for trend analysis&quot;</strong> file ({premierHealthcareTrendPortfolioSatisfiedPct.trendFileName}), the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc (L80)&quot;, group by Portfolio. Perspective % = (count of RATING 4 or 5 for that perspective / count of data input for that perspective) × 100. Grand Total = sum(satisfied per perspective) / sum(data input per perspective). Polled/Responded from the Customer Success Survey Status report.</span>
+            <span>Trend of Satisfied Customer – Portfolio-wise % Satisfied (by Perspective). Data from <strong>&quot;Upload data for trend analysis&quot;</strong> file ({premierHealthcareTrendPortfolioSatisfiedPct.trendFileName}), the Customer Success Survey All PCSAT report, CUSTOMER NAME = &quot;Premier Healthcare Solutions Inc&quot;, group by Portfolio. Perspective % = (count of RATING 4 or 5 for that perspective / count of data input for that perspective) × 100. Grand Total = sum(satisfied per perspective) / sum(data input per perspective). Polled/Responded from the Customer Success Survey Status report.</span>
             <button
               type="button"
               onClick={async () => {

@@ -569,7 +569,7 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
 
   // Account order for account-wise dashboard (only for account-wise view)
   const accountOrder = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Tufts Medicine',
@@ -1824,7 +1824,7 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
         });
       } else {
         // Apply default sorting (enforce BU order when BU-wise, sort by account order for account view, alphabetical for respondent view)
-      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+      const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
         sortedRegularData.sort((a, b) => {
         if (viewType === 'bu') {
           const aBU = (a.businessUnit || '').toString().trim();

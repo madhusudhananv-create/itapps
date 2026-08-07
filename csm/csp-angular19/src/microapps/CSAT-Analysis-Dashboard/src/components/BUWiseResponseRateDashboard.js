@@ -711,7 +711,7 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
   const sortedProcessedData = useMemo(() => {
     if (!processedData || processedData.length === 0) return [];
     
-    const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
     
     return processedData.sort((a, b) => {
       const indexA = businessUnitOrder.indexOf(a.businessUnit);
@@ -748,7 +748,7 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
     
     // If sorting by businessUnit, use our custom order
     if (sortConfig.key === 'businessUnit') {
-      const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       return [...data].sort((a, b) => {
         const indexA = businessUnitOrder.indexOf(a.businessUnit);
         const indexB = businessUnitOrder.indexOf(b.businessUnit);
@@ -782,7 +782,7 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       
       // If values are equal, maintain Business Unit order
-      const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       const indexA = businessUnitOrder.indexOf(a.businessUnit);
       const indexB = businessUnitOrder.indexOf(b.businessUnit);
       

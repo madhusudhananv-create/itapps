@@ -238,7 +238,7 @@ const styleTrendDiffExcelCell = (cell, diff) => {
   }
 };
 
-const ACSAT_BU_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+const ACSAT_BU_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
 
 const sortBuTrendRows = (rows) => {
   return [...rows].sort((a, b) => {
@@ -942,7 +942,7 @@ const ACSATResponseRateDashboard = ({
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
   const top10AccountNames = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Premier - Horizon II - Covenant Health',
@@ -958,7 +958,7 @@ const ACSATResponseRateDashboard = ({
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
-    'Premier Healthcare Solutions Inc (L80)',
+    'Premier Healthcare Solutions Inc',
     'Blue Cross Blue Shield Association BCBSA',
     'Frontier Airlines INC',
     'Tufts Medicine',
@@ -1694,7 +1694,7 @@ const ACSATResponseRateDashboard = ({
       ...row,
       responseRate: row.surveysSent > 0 ? (row.surveysReceived / row.surveysSent) * 100 : 0
     }));
-    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
     const sorted = unsorted.sort((a, b) => {
       const aBU = (a.businessUnit || '').toString().trim();
       const bBU = (b.businessUnit || '').toString().trim();
@@ -2311,7 +2311,7 @@ const ACSATResponseRateDashboard = ({
     });
     
     // Sort by Business Unit (case-insensitive matching)
-    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & UK'];
+    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
     combinedData.sort((a, b) => {
       const aBU = (a.businessUnit || '').toString().trim();
       const bBU = (b.businessUnit || '').toString().trim();

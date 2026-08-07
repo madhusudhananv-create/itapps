@@ -47,8 +47,8 @@ const parseExcelDateToMMDDYYYY = (dateValue) => {
   }
 };
 
-// BUSINESS UNIT display order: Healthcare, CIT, Tech, India & UK, Sead/SEAD (account-wise, Top 10, BU-wise; dashboard + Excel). Treat Healthcare/Health care/Health Care and SEAD/Sead as same.
-const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & UK', 'Sead'];
+// BUSINESS UNIT display order: Healthcare, CIT, Tech, India & GCC, Sead/SEAD (account-wise, Top 10, BU-wise; dashboard + Excel). Treat Healthcare/Health care/Health Care and SEAD/Sead as same.
+const BUSINESS_UNIT_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
 const getBusinessUnitOrderIndex = (bu) => {
   if (bu == null || bu === '') return -1;
   const n = normalizeBU(String(bu).trim());
@@ -1049,7 +1049,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       return row;
     });
 
-    // Sort by BUSINESS UNIT order: Healthcare, CIT, Tech, India & UK, Sead/SEAD
+    // Sort by BUSINESS UNIT order: Healthcare, CIT, Tech, India & GCC, Sead/SEAD
     const sortedResult = result.sort((a, b) => {
       const buA = a['BUSINESS UNIT'] ?? a['BUSSINESS UNIT'];
       const buB = b['BUSINESS UNIT'] ?? b['BUSSINESS UNIT'];
@@ -1413,7 +1413,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
 
     // Hardcoded Top 10 order (Sr. No. 1–12)
     const top10Order = [
-      'Premier Healthcare Solutions Inc (L80)',
+      'Premier Healthcare Solutions Inc',
       'Blue Cross Blue Shield Association BCBSA',
       'Frontier Airlines INC',
       'Premier - Horizon II - Covenant Health',
@@ -3087,15 +3087,29 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     const rows = Object.values(groups)
       .filter(g => g.polled > 0 || g.responded > 0)
       .map(g => ({ accountName: g.accountName, businessUnit: g.businessUnit, polled: g.polled, responded: g.responded }));
+    // Same fixed account order as the Top 10 Accounts table (Premier first)
+    const top10FixedOrder = [
+      'Premier Healthcare Solutions Inc',
+      'Blue Cross Blue Shield Association BCBSA',
+      'Frontier Airlines INC',
+      'Premier - Horizon II - Covenant Health',
+      'Tufts Medicine',
+      'BronxCare Health System',
+      'AgFirst Farm Credit Bank',
+      'embecta MEDICAL II LLC',
+      'Northern Trust Company',
+      'Jewish Board of Family and Childrens Services JBFCS',
+      'Healthfirst',
+      'AgileOne'
+    ];
+    const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
     rows.sort((a, b) => {
-      const cmpAccount = (a.accountName || '').localeCompare(b.accountName || '');
-      if (cmpAccount !== 0) return cmpAccount;
-      const idxA = getBusinessUnitOrderIndex(a.businessUnit);
-      const idxB = getBusinessUnitOrderIndex(b.businessUnit);
+      const idxA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
+      const idxB = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(b.accountName));
       if (idxA !== -1 && idxB !== -1) return idxA - idxB;
       if (idxA !== -1) return -1;
       if (idxB !== -1) return 1;
-      return (a.businessUnit || '').localeCompare(b.businessUnit || '');
+      return (a.accountName || '').localeCompare(b.accountName || '');
     });
     return rows;
   }, [trendAnalysisFiles, csatCycleStartDateFormatted]);
@@ -3584,7 +3598,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     return result;
   }, [trendTop10OtherOverallPerspectiveCounts]);
 
-  // Premier Healthcare Solutions Inc (L80) – Portfolio-wise % Satisfied (by Perspective): from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc (L80)", group by PORTFOLIO. Perspective % = (count of RATING 4 or 5 per perspective / count of data input for that perspective) × 100. Grand Total = sum(satisfied per perspective) / sum(data input per perspective). Do NOT use #Responded for perspective %. Responded from sheet 2 only for table column; date >= csatCycleStartDateFormatted (MM-DD-YYYY).
+  // Premier Healthcare Solutions Inc – Portfolio-wise % Satisfied (by Perspective): from "CSAT received Report", CUSTOMER NAME = "Premier Healthcare Solutions Inc", group by PORTFOLIO. Perspective % = (count of RATING 4 or 5 per perspective / count of data input for that perspective) × 100. Grand Total = sum(satisfied per perspective) / sum(data input per perspective). Do NOT use #Responded for perspective %. Responded from sheet 2 only for table column; date >= csatCycleStartDateFormatted (MM-DD-YYYY).
   const premierHealthcarePortfolioSatisfiedData = useMemo(() => {
     if (!uploadedData || uploadedData.length === 0) return { data: [], perspectives: [], grandTotal: null };
     const firstRow = uploadedData[0] || {};
@@ -3599,7 +3613,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       return kk.includes('csat received date') || kk.includes('css_received_date') || kk.includes('received date');
     });
 
-    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc (L80)';
+    const PREMIER_HEALTHCARE_NAME = 'Premier Healthcare Solutions Inc';
     const filtered = uploadedData.filter(row => {
       const custName = (row[customerNameKey] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
       if (custName !== PREMIER_HEALTHCARE_NAME) return false;
@@ -3734,7 +3748,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return filteredData;
 
-    // If sorting by BUSINESS UNIT, use order: Healthcare, CIT, Tech, India & UK, Sead/SEAD
+    // If sorting by BUSINESS UNIT, use order: Healthcare, CIT, Tech, India & GCC, Sead/SEAD
     if (sortConfig.key === 'BUSINESS UNIT' || sortConfig.key === 'BUSSINESS UNIT' || sortConfig.key === 'businessUnit') {
       const businessUnitKey = showBuWise ? 'BUSINESS UNIT' : 'businessUnit';
       const sorted = [...filteredData].sort((a, b) => {
@@ -3821,7 +3835,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
         }
       }
       
-      // If values are equal, maintain BUSINESS UNIT order (Healthcare, CIT, Tech, India & UK, Sead/SEAD)
+      // If values are equal, maintain BUSINESS UNIT order (Healthcare, CIT, Tech, India & GCC, Sead/SEAD)
       const indexA = getBusinessUnitOrderIndex(a[businessUnitKey]);
       const indexB = getBusinessUnitOrderIndex(b[businessUnitKey]);
       if (indexA !== indexB) return indexA - indexB;

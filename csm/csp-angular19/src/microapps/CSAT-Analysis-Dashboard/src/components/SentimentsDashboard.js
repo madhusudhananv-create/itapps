@@ -1210,7 +1210,7 @@ const SentimentsDashboard = ({ onBackToDashboard, excelData }) => {
     }
 
     // Sort by custom Business Unit order
-    const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
     const sortedResult = result.sort((a, b) => {
       const indexA = businessUnitOrder.indexOf(a.businessUnit);
       const indexB = businessUnitOrder.indexOf(b.businessUnit);
@@ -1246,7 +1246,7 @@ const SentimentsDashboard = ({ onBackToDashboard, excelData }) => {
     
     // If sorting by businessUnit, use our custom order
     if (sortConfig.key === 'businessUnit') {
-      const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       return [...data].sort((a, b) => {
         const indexA = businessUnitOrder.indexOf(a.businessUnit);
         const indexB = businessUnitOrder.indexOf(b.businessUnit);
@@ -1282,7 +1282,7 @@ const SentimentsDashboard = ({ onBackToDashboard, excelData }) => {
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       
       // If values are equal, maintain Business Unit order
-      const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       const indexA = businessUnitOrder.indexOf(a.businessUnit);
       const indexB = businessUnitOrder.indexOf(b.businessUnit);
       
