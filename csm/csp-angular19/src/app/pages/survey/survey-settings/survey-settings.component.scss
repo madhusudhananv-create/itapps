@@ -322,8 +322,20 @@
     margin: 0 16px;
     display: flex;
     align-items: center;
+    gap: 10px;
     height: 100%;
-    
+
+    .filter-mode-toggle {
+      height: 36px;
+      flex-shrink: 0;
+
+      ::ng-deep .mat-button-toggle-label-content {
+        line-height: 34px;
+        font-size: 12px;
+        padding: 0 10px;
+      }
+    }
+
     .filter-field {
       width: 220px;
       

@@ -1333,7 +1333,7 @@ const QualitativeAnalysisDashboard = ({ excelData, onBack }) => {
     console.log('All processed data:', result);
 
     // Sort by Business Unit in the specified order
-    const businessUnitOrder = ['Healthcare', 'India & UK', 'New Growth', 'Tech'];
+    const businessUnitOrder = ['Healthcare', 'India & GCC', 'CIT', 'Tech'];
     
     const sortedResult = result.sort((a, b) => {
       const aIndex = businessUnitOrder.indexOf(a.businessUnit);

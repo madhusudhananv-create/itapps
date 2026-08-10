@@ -148,6 +148,11 @@
         <mat-icon matPrefix>search</mat-icon>
         <input matInput (keyup)="applyFilter($event)" placeholder="Filter customers...">
       </mat-form-field>
+      <mat-button-toggle-group class="filter-mode-toggle" [value]="filterMode"
+        (change)="onFilterModeChange($event.value)" aria-label="Filter mode">
+        <mat-button-toggle value="contains" matTooltip="Matches text anywhere in the field (e.g. 'sent' also matches 'Re-sent')">Contains</mat-button-toggle>
+        <mat-button-toggle value="exact" matTooltip="Matches the field's full value exactly">Exact</mat-button-toggle>
+      </mat-button-toggle-group>
     </div>
     
     <div class="batch-controls">

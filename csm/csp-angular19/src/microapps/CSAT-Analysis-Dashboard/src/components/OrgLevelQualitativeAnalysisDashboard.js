@@ -354,7 +354,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
   const combinedChartRef = useRef(null);
 
   // Fixed BU order for consistency
-  const buOrder = ['Healthcare', 'New Growth or CIT', 'Tech', 'India & UK'];
+  const buOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
 
   // Helper: robust column value getter for remarks dataset
   const getRemarksValue = (row, targetHeader) => {
@@ -1752,6 +1752,14 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                  (lowerHeader.includes('received') && lowerHeader.includes('date'));
         });
 
+        // Find STATUS column - used to fully override the received-date/date-range check
+        // when a row's status is "Completed" (case-insensitive)
+        const statusIndex = headers.findIndex(header => {
+          if (!header) return false;
+          const lowerHeader = header.toString().toLowerCase();
+          return lowerHeader === 'status';
+        });
+
         console.log('Column indices:', {
           businessUnitIndex,
           customerIdIndex,
@@ -1831,7 +1839,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
             if (effectiveCycleStartDateFormatted) {
               const sentDate = row[csatSentDateIndex];
               const receivedDate = row[csatReceivedDateIndex];
-              
+
               // Debug: Log date filtering details for first few rows
               if (dataRows.indexOf(row) < 3) {
                 console.log(`🔍 Date filtering for row ${dataRows.indexOf(row)}:`, {
@@ -2275,7 +2283,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       const buWiseData = [];
       Object.entries(buWiseAnalysis).forEach(([area, data]) => {
         const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-          const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+          const ORDER=['Healthcare','CIT','Tech','India & GCC'];
           return ORDER.indexOf(a)-ORDER.indexOf(b);
         });
         const respondentNames = Array.from(data.respondentNames);
@@ -2724,7 +2732,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       const buWiseData = [];
       Object.entries(buWiseAnalysis).forEach(([area, data]) => {
         const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-          const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+          const ORDER=['Healthcare','CIT','Tech','India & GCC'];
           return ORDER.indexOf(a)-ORDER.indexOf(b);
         });
         const respondentNames = Array.from(data.respondentNames);
@@ -2998,7 +3006,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       const buWiseData = [];
       Object.entries(buWiseAnalysis).forEach(([area, data]) => {
         const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-          const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+          const ORDER=['Healthcare','CIT','Tech','India & GCC'];
           return ORDER.indexOf(a)-ORDER.indexOf(b);
         });
         const respondentNames = Array.from(data.respondentNames);
@@ -3272,7 +3280,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       const buWiseData = [];
       Object.entries(buWiseAnalysis).forEach(([area, data]) => {
         const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-          const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+          const ORDER=['Healthcare','CIT','Tech','India & GCC'];
           return ORDER.indexOf(a)-ORDER.indexOf(b);
         });
         const respondentNames = Array.from(data.respondentNames);
@@ -3612,7 +3620,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
         const data = [];
         Object.entries(analysis).forEach(([area, data]) => {
           const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-            const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+            const ORDER=['Healthcare','CIT','Tech','India & GCC'];
             return ORDER.indexOf(a)-ORDER.indexOf(b);
           });
           const respondentNames = Array.from(data.respondentNames);
@@ -4552,7 +4560,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                   const buWiseData = [];
                   Object.entries(buWiseAnalysis).forEach(([area, data]) => {
                     const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-                      const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+                      const ORDER=['Healthcare','CIT','Tech','India & GCC'];
                       return ORDER.indexOf(a)-ORDER.indexOf(b);
                     });
                     const respondentNames = Array.from(data.respondentNames);
@@ -4777,7 +4785,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       const buWiseData = [];
                       Object.entries(buWiseAnalysis).forEach(([area, data]) => {
                         const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-                          const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+                          const ORDER=['Healthcare','CIT','Tech','India & GCC'];
                           return ORDER.indexOf(a)-ORDER.indexOf(b);
                         });
                         const respondentNames = Array.from(data.respondentNames);
@@ -5003,7 +5011,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       const buWiseData = [];
                       Object.entries(buWiseAnalysis).forEach(([area, data]) => {
                         const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-                          const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+                          const ORDER=['Healthcare','CIT','Tech','India & GCC'];
                           return ORDER.indexOf(a)-ORDER.indexOf(b);
                         });
                         const respondentNames = Array.from(data.respondentNames);
@@ -5229,7 +5237,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       const buWiseData = [];
                       Object.entries(buWiseAnalysis).forEach(([area, data]) => {
                         const businessUnits = Array.from(data.businessUnits).sort((a,b)=>{
-                          const ORDER=['Healthcare','New Growth','Tech','India & UK'];
+                          const ORDER=['Healthcare','CIT','Tech','India & GCC'];
                           return ORDER.indexOf(a)-ORDER.indexOf(b);
                         });
                         const respondentNames = Array.from(data.respondentNames);

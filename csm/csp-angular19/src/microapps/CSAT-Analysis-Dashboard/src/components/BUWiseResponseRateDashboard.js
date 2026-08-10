@@ -661,7 +661,9 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
        const businessUnitValue = rawBU === 'N/A' || rawBU === 'No BU Column Found' ? rawBU : normalizeBusinessUnitDisplay(rawBU);
        const cssSentDate = row[cssSentColumn];
        const cssReceivedDate = row[cssReceivedColumn];
-       
+       const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+       const isCompletedStatus = statusVal === 'completed';
+
        if (!businessUnitTotals.has(businessUnitValue)) {
          businessUnitTotals.set(businessUnitValue, {
            surveysSent: 0,
@@ -676,8 +678,8 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
          businessUnitData.surveysSent++;
        }
        
-       // Count CSS_RECEIVED_DATE for business unit
-       if (cssReceivedDate && cssReceivedDate !== '' && cssReceivedDate !== 'N/A' && cssReceivedDate !== null) {
+       // Count CSS_RECEIVED_DATE for business unit, or STATUS = Completed
+       if (isCompletedStatus && (cssReceivedDate && cssReceivedDate !== '' && cssReceivedDate !== 'N/A' && cssReceivedDate !== null)) {
          businessUnitData.surveysReceived++;
        }
      });
@@ -709,7 +711,7 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
   const sortedProcessedData = useMemo(() => {
     if (!processedData || processedData.length === 0) return [];
     
-    const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
     
     return processedData.sort((a, b) => {
       const indexA = businessUnitOrder.indexOf(a.businessUnit);
@@ -746,7 +748,7 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
     
     // If sorting by businessUnit, use our custom order
     if (sortConfig.key === 'businessUnit') {
-      const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       return [...data].sort((a, b) => {
         const indexA = businessUnitOrder.indexOf(a.businessUnit);
         const indexB = businessUnitOrder.indexOf(b.businessUnit);
@@ -780,7 +782,7 @@ const BUWiseResponseRateDashboard = ({ onBackToDashboard }) => {
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       
       // If values are equal, maintain Business Unit order
-      const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
       const indexA = businessUnitOrder.indexOf(a.businessUnit);
       const indexB = businessUnitOrder.indexOf(b.businessUnit);
       

@@ -618,7 +618,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
         // Check if dates are valid and on or after CSAT cycle start date
         const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
         const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-        
+
         // Only include records where both dates are valid (or no dates are present)
         if (!sentDateValid || !receivedDateValid) {
           console.log(`⏰ Skipping first sheet record - dates don't meet cycle start date requirement`);
@@ -672,9 +672,12 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
               }
             }
             
-            // Count CSS_RECEIVED_DATE (non-empty values that are >= CSAT cycle start date)
-            if (row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '') {
-              if (isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE'])) {
+            // Count CSS_RECEIVED_DATE (non-empty values that are >= CSAT cycle start date), or STATUS = Completed
+            {
+              const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+              const isCompletedStatus = statusVal === 'completed';
+              const hasValidReceivedDate = row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '' && isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE']);
+              if (isCompletedStatus && hasValidReceivedDate) {
                 cssCounts[customerId].receivedCount++;
                 console.log('Including CSS_RECEIVED_DATE:', row['CSS_RECEIVED_DATE'], 'for customer:', customerId);
               } else {
@@ -731,9 +734,12 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
                 }
               }
               
-              // Count CSS_RECEIVED_DATE (non-empty values that are >= CSAT cycle start date)
-              if (row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '') {
-                if (isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE'])) {
+              // Count CSS_RECEIVED_DATE (non-empty values that are >= CSAT cycle start date), or STATUS = Completed
+              {
+                const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+                const isCompletedStatus = statusVal === 'completed';
+                const hasValidReceivedDate = row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '' && isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE']);
+                if (isCompletedStatus && hasValidReceivedDate) {
                   totalReceived++;
                   console.log('Including CSS_RECEIVED_DATE for BU:', businessUnit, 'Date:', row['CSS_RECEIVED_DATE']);
                 } else {
@@ -845,13 +851,14 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
             secondSheetData.forEach(row => {
               const rowBusinessUnit = row['BUSSINESS UNIT'] || row['Business Unit'];
               if (rowBusinessUnit && businessUnitsMatch(rowBusinessUnit, businessUnit)) {
-                if (row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '') {
-                  if (isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE'])) {
-                    cssReceivedCount++;
-                    console.log(`✅ Including CSS_RECEIVED_DATE for BU ${businessUnit}:`, row['CSS_RECEIVED_DATE']);
-                  } else {
-                    console.log(`❌ Excluding CSS_RECEIVED_DATE for BU ${businessUnit}:`, row['CSS_RECEIVED_DATE'], '(before CSAT start date)');
-                  }
+                const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+                const isCompletedStatus = statusVal === 'completed';
+                const hasValidReceivedDate = row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '' && isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE']);
+                if (isCompletedStatus && hasValidReceivedDate) {
+                  cssReceivedCount++;
+                  console.log(`✅ Including CSS_RECEIVED_DATE for BU ${businessUnit}:`, row['CSS_RECEIVED_DATE']);
+                } else {
+                  console.log(`❌ Excluding CSS_RECEIVED_DATE for BU ${businessUnit}:`, row['CSS_RECEIVED_DATE'], '(before CSAT start date)');
                 }
               }
             });
@@ -865,13 +872,14 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
             secondSheetData.forEach(row => {
               const rowCustomerId = row['CUSTOMER_ID'] || row['CUST_ID'];
               if (rowCustomerId && rowCustomerId.toString().trim() === customerId.toString().trim()) {
-                if (row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '') {
-                  if (isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE'])) {
-                    cssReceivedCount++;
-                    console.log(`✅ Including CSS_RECEIVED_DATE for customer ${customerId}:`, row['CSS_RECEIVED_DATE']);
-                  } else {
-                    console.log(`❌ Excluding CSS_RECEIVED_DATE for customer ${customerId}:`, row['CSS_RECEIVED_DATE'], '(before CSAT start date)');
-                  }
+                const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+                const isCompletedStatus = statusVal === 'completed';
+                const hasValidReceivedDate = row['CSS_RECEIVED_DATE'] && row['CSS_RECEIVED_DATE'].toString().trim() !== '' && isDateOnOrAfterCsatStart(row['CSS_RECEIVED_DATE']);
+                if (isCompletedStatus && hasValidReceivedDate) {
+                  cssReceivedCount++;
+                  console.log(`✅ Including CSS_RECEIVED_DATE for customer ${customerId}:`, row['CSS_RECEIVED_DATE']);
+                } else {
+                  console.log(`❌ Excluding CSS_RECEIVED_DATE for customer ${customerId}:`, row['CSS_RECEIVED_DATE'], '(before CSAT start date)');
                 }
               }
             });
@@ -1098,7 +1106,7 @@ const ACSATSatisfiedCustomersEachPerspectiveDashboard = ({ excelData, acsatCycle
                 
                 const sentDateValid = !cssSentDate || isDateOnOrAfterCsatStart(cssSentDate);
                 const receivedDateValid = !cssReceivedDate || isDateOnOrAfterCsatStart(cssReceivedDate);
-                
+
                 // Special debugging for BU-wise data
                 if (groupByBU && index < 3) { // Show first 3 rows for debugging
                   console.log(`🔍 BU DEBUG - Row ${index} for BU ${group.businessUnit}:`);

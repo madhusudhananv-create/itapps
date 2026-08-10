@@ -232,8 +232,10 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
         const businessUnit = normalizeBusinessUnitDisplay(row[s2BusinessUnitColumn] || 'N/A');
 
         if (custId) {
-          // Check if this customer is in Top 10
-          if (row['Top 10'] === 'Y' || row['Top 10'] === 'y') {
+          // Check if this customer is in Top 10 (current convention: TYPE OF ACCOUNT = "Top 10";
+          // legacy uploads used a separate "Top 10" = "Y" column - support both)
+          const typeOfAccountVal = (row['TYPE OF ACCOUNT'] ?? '').toString().trim().toLowerCase();
+          if (typeOfAccountVal === 'top 10' || row['Top 10'] === 'Y' || row['Top 10'] === 'y') {
             top10Customers.add(custId);
           }
 
@@ -255,9 +257,13 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
           }
 
           // Count received date with date filtering
-          if (row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A') {
-            const receivedDateFormatted = formatDateToMMDDYYYY(row[s2ReceivedDateColumn]);
-            if (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted)) {
+          const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const isCompletedStatus = statusVal === 'completed';
+          const hasReceivedDateValue = row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A';
+          const receivedDateFormatted = hasReceivedDateValue ? formatDateToMMDDYYYY(row[s2ReceivedDateColumn]) : null;
+          const receivedDateWithinCycle = hasReceivedDateValue && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted));
+          {
+            if (isCompletedStatus && receivedDateWithinCycle) {
               customerCSSCounts[custId].cssReceivedCount++;
               
               // Count by REVENUE_TYPE for staffing/non-staffing
@@ -298,9 +304,13 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
           }
 
           // Count received date with date filtering for BU
-          if (row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A') {
-            const receivedDateFormatted = formatDateToMMDDYYYY(row[s2ReceivedDateColumn]);
-            if (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedDateFormatted, csatCycleStartDateFormatted)) {
+          const buStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+          const buIsCompletedStatus = buStatusVal === 'completed';
+          const buHasReceivedDateValue = row[s2ReceivedDateColumn] && row[s2ReceivedDateColumn] !== '' && row[s2ReceivedDateColumn] !== 'N/A';
+          const buReceivedDateFormatted = buHasReceivedDateValue ? formatDateToMMDDYYYY(row[s2ReceivedDateColumn]) : null;
+          const buReceivedDateWithinCycle = buHasReceivedDateValue && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(buReceivedDateFormatted, csatCycleStartDateFormatted));
+          {
+            if (buIsCompletedStatus && buReceivedDateWithinCycle) {
               buCSSCounts[businessUnit].cssReceivedCount++;
               
               // Count by REVENUE_TYPE for staffing/non-staffing by Business Unit
@@ -461,7 +471,7 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
 
     // Sort BU-wise data by business unit in specified order
     if (showBuWise) {
-      const businessUnitOrder = ['Healthcare', 'New Growth', 'Tech', 'India & UK'];
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'SEAD'];
       
       result = result.sort((a, b) => {
         const indexA = businessUnitOrder.indexOf(a.businessUnit);
@@ -477,6 +487,9 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
         // If neither is in the predefined order, sort alphabetically
         return a.businessUnit.localeCompare(b.businessUnit);
       });
+
+      // Reassign Sr. No. after BU sorting so it reflects the displayed order
+      result = result.map((row, index) => ({ ...row, sNo: index + 1 }));
     }
 
     console.log('Processed result:', result.length, showBuWise ? 'business units' : 'customers');
@@ -515,25 +528,34 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
       );
     }
     
-    // Custom sorting for Top 10 accounts
+    // Custom sorting for Top 10 accounts (fixed order, Premier first)
     if (showTop10) {
       const top10Order = [
-        'Premier Healthcare Solutions Inc (L80)',
+        'Premier Healthcare Solutions Inc',
         'Blue Cross Blue Shield Association BCBSA',
         'Frontier Airlines INC',
-        'Tufts Medicine',
         'Premier - Horizon II - Covenant Health',
+        'Tufts Medicine',
+        'BronxCare Health System',
         'AgFirst Farm Credit Bank',
         'embecta MEDICAL II LLC',
-        'Avaya LLC',
         'Northern Trust Company',
-        'Jewish Board of Family and Childrens Services'
+        'Jewish Board of Family and Childrens Services JBFCS',
+        'Healthfirst',
+        'AgileOne'
       ];
-      
+      const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+      const orderByNormalized = new Map();
+      top10Order.forEach((name, i) => { orderByNormalized.set(normalizeForOrder(name), i); });
+      const getOrderIndex = (customerName) => {
+        const n = normalizeForOrder(customerName);
+        return orderByNormalized.has(n) ? orderByNormalized.get(n) : -1;
+      };
+
       filtered.sort((a, b) => {
-        const indexA = top10Order.indexOf(a.customerName);
-        const indexB = top10Order.indexOf(b.customerName);
-        
+        const indexA = getOrderIndex(a.customerName);
+        const indexB = getOrderIndex(b.customerName);
+
         // If both are in the predefined order, sort by that order
         if (indexA !== -1 && indexB !== -1) {
           return indexA - indexB;

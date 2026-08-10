@@ -380,7 +380,7 @@ function isDateGreaterThanOrEqual(dateStr1, dateStr2) {
   return date1 >= date2;
 }
 
-const buOrder = ['Healthcare', 'New Growth or CIT', 'Tech', 'India & UK'];
+const buOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
 
 // PERSPECTIVE column names (values from "CSAT received Report"); RATING_DESCRIPTION fills the cell
 const PERSPECTIVE_COLUMNS = [
@@ -602,7 +602,7 @@ function scorePositiveSentiment(text) {
   return positiveScore - negativeScore;
 }
 
-const BU_ORDER = ['Healthcare', 'New Growth or CIT', 'Tech', 'India & UK'];
+const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
 
 // Valid categories for Sub Areas of Improvement / Sub Strength / Neutral columns
 const VALID_SUB_CATEGORIES = new Set([
