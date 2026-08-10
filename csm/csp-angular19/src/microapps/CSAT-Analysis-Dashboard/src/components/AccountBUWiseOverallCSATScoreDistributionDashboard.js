@@ -2328,11 +2328,9 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const receivedVal = (firstSheetReceivedKey ? row[firstSheetReceivedKey] : null) ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'];
           const sentFormatted = sentVal != null && sentVal !== '' && sentVal !== 'N/A' ? parseExcelDateToMMDDYYYY(sentVal) : '';
           const receivedFormatted = receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A' ? parseExcelDateToMMDDYYYY(receivedVal) : '';
-          const otherAccStatusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
-          const otherAccIsCompletedStatus = otherAccStatusVal === 'completed';
-          const bothDatesValid = otherAccIsCompletedStatus && (csatCycleStartDateFormatted && sentFormatted && receivedFormatted &&
+          const bothDatesValid = csatCycleStartDateFormatted && sentFormatted && receivedFormatted &&
             isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted) &&
-            isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted));
+            isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted);
           if (csatCycleStartDateFormatted && !bothDatesValid) return;
           const ratingResolved = parseInt(row[ratingColumn], 10);
           if (isNaN(ratingResolved) || ratingResolved < 1 || ratingResolved > 5) return;

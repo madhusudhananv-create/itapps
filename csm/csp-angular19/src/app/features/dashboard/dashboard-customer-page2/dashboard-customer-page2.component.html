@@ -637,8 +637,14 @@
                   <span style="display: block;padding-top: 20px;padding-left: 10px; text-align: center">
                     No Issues
                   </span>
+                  <!-- View Details -->
+                  <div style="margin-top: 44px; text-align: right; padding-right: 8px;">
+                    <a style="font-size: 9px; color: #3B82F6; text-decoration: none; cursor: pointer;" [routerLink]="['/layout/issues', customerid]">
+                      <u>View Details</u>
+                    </a>
+                  </div>
                 </div>
-                
+
                 <!-- Card Body -->
                 <div *ngIf="!isIssuesEmpty" style="display: flex; flex-direction: column; height: 100%; padding: 4px;">
                   <div style="display: flex; flex-direction: row; align-items: flex-start; gap: 0px; margin-bottom: 4px;">
