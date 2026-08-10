@@ -47,6 +47,11 @@
                 "input": "src/microapps/CSAT-Analysis-Dashboard/build",
                 "output": "/csat-analysis-dashboard"
               },
+              {
+                "glob": "**/*",
+                "input": "src/microapps/AIMI/dist",
+                "output": "/aimi"
+              },
               "src/favicon.ico"
             ],
             "styles": [

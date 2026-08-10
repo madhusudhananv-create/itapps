@@ -339,7 +339,14 @@ constructor(
     const csatUrl = window.location.origin + '/csat-analysis-dashboard/index.html';
     window.open(csatUrl, '_blank');
   }
-
+  /**
+   * Open AIMI (AI-driven Insights) in a new tab
+   * Opens the AIMI module in a separate browser tab
+   */
+  openAIMIInNewTab(): void {
+    const aimiUrl = window.location.origin + '/aimi/index.html';
+    window.open(aimiUrl, '_blank');
+  }
    /**
    * Navigate back to enterprise dashboard
    * Used by the back button on account dashboard pages and logo clicks
