@@ -1,0 +1,7 @@
+[compliance] WARNING: skipped 2 leave row(s) with a span over 31 days — likely a mis-parsed From/To date.
+[compliance] 2026-07-20 to 2026-07-26: 2698 tracked, 348 client-location, 1 WFH exception (20.3s)
+[compliance] overflow days captured for adjacent weeks: {'2026-07-19': 1409, '2026-08-02': 9}
+Terminate batch job (Y/N)? [compliance] WARNING: skipped 2 leave row(s) with a span over 31 days — likely a mis-parsed From/To date.
+[compliance] 2026-07-20 to 2026-07-26: 2698 tracked, 348 client-location, 1 WFH exception (22.6s)
+[compliance] overflow days captured for adjacent weeks: {'2026-07-19': 1409, '2026-08-02': 9}
+Terminate batch job (Y/N)? 
