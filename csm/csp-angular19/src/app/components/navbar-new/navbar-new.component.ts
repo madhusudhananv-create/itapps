@@ -344,7 +344,9 @@ constructor(
    * Opens the AIMI module in a separate browser tab
    */
   openAIMIInNewTab(): void {
-    const aimiUrl = window.location.origin + '/aimi/index.html';
+    // Open the SPA root (not index.html) so AIMI's client-side router resolves
+    // the default route instead of 404'ing on the literal "/index.html" path
+    const aimiUrl = window.location.origin + '/aimi/';
     window.open(aimiUrl, '_blank');
   }
    /**
