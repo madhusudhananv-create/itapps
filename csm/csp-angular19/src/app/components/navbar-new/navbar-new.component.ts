@@ -84,7 +84,7 @@ export class NavbarNewComponent implements OnInit {
   /** Show Integrated Apps menu if user has access to at least one integrated app */
   readonly hasIntegratedAppsAccess = computed(() =>
     this._access.IsAllowed(827, 1, '', '') ||
-    this._access.IsAllowed(829, 1, '', '')
+    this._access.IsAllowed(829, 1, '', '') || this._access.IsAllowed(832, 1, '', '')
     // Add more app permission checks here with ||
   );
 
