@@ -159,9 +159,9 @@ The insights we gain from your feedback will guide the strategic actions we take
             </span>
             <textarea name="txtNPSDesc" class="modern-textarea"
               [(ngModel)]="questions_NPS.ratinG_DESCRIPTION" (input)="onInputNpsChange()" [disabled]="IsCompleted"
-              maxlength="500"
+              maxlength="1000"
               [class.highlight]="hasRatingBeenSelected && questions_NPS.rating !== undefined && questions_NPS.rating < 9 && !questions_NPS.ratinG_DESCRIPTION"></textarea>
-            <span class="char-count">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/500</span>
+            <span class="char-count">{{getRemaining(questions_NPS.ratinG_DESCRIPTION)}}/1000</span>
           </div>
         </td>
       </tr>
@@ -216,10 +216,10 @@ The insights we gain from your feedback will guide the strategic actions we take
         <td class="remarks-cell">
           <div class="textarea-wrapper">
             <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
-              class="modern-textarea" [disabled]="IsCompleted" maxlength="500"
+              class="modern-textarea" [disabled]="IsCompleted" maxlength="1000"
               [class.highlight]="criteria.rating !== undefined && criteria.rating < 4 && criteria.rating > 0 && !criteria.ratinG_DESCRIPTION">
             </textarea>
-            <span class="char-count">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/500</span>
+            <span class="char-count">{{getRemaining(criteria.ratinG_DESCRIPTION)}}/1000</span>
           </div>
         </td>
       </tr>
@@ -236,8 +236,8 @@ The insights we gain from your feedback will guide the strategic actions we take
         <td colspan="3" class="additional-answer">
           <div class="textarea-wrapper">
             <textarea name="txtOthersDesc0" [(ngModel)]="questions_Others[0].ratinG_DESCRIPTION"
-              class="modern-textarea" [disabled]="IsCompleted" maxlength="300"></textarea>
-            <span class="char-count">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/300</span>
+              class="modern-textarea" [disabled]="IsCompleted" maxlength="1000"></textarea>
+            <span class="char-count">{{getRemaining(questions_Others[0].ratinG_DESCRIPTION)}}/1000</span>
           </div>
         </td>
       </tr>

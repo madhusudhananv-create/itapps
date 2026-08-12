@@ -214,4 +214,9 @@ export class QSPOCPopupComponent implements OnInit {
     }
   }
 
+  onGovernanceApplicabilityChange() {
+    // User made an explicit choice; stop auto-deriving it from DevEx Partner selection
+    this.hasExistingGovernanceValue = true;
+  }
+
 }
