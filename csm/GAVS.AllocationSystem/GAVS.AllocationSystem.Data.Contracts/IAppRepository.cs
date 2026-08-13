@@ -54,6 +54,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IEnumerable<UserInfo> UserInfo(string EmailId);
         //IEnumerable<EMP_INFO> GetAuditorDetails();
         IEnumerable<EMP_INFO> GetAuditeeDetails(string ProjectId , string CustomerId, bool includeCustomer);
+         IEnumerable<EMP_INFO> GetAccountAssesseeDetails(string CustomerId);
         DateTime GetOldestTimesheetdateAvailableforApproval(string customerid);
         bool UpdateProjectAliasName(string projectid, string projectaliasname);
 

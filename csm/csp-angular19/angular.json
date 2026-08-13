@@ -58,6 +58,11 @@
                 "output": "/erm"
               },
               {
+                "glob": "**/*",
+                "input": "src/microapps/IT-Ops-Maturity-Dashboard/dist/it-ops-maturity-dashboard/browser",
+                "output": "/it-ops-maturity-dashboard"
+              },
+              {
                 "glob": "web.config",
                 "input": ".",
                 "output": "/"

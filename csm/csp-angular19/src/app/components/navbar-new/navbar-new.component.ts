@@ -353,6 +353,38 @@ constructor(
     const aimiUrl = window.location.origin + '/aimi/';
     window.open(aimiUrl, '_blank');
   }
+  
+  /**
+   * Open IT Operations Maturity Dashboard in a new tab
+   * Opens the IT Operations Maturity Dashboard in a separate browser tab,
+   * passing the currently selected account (custid) as a query param so the
+   * micro-app can scope its assessment view to that account.
+   */
+  openITOpsMaturityDashboardInNewTab(): void {
+    let itOpsMaturityUrl = window.location.origin + '/it-ops-maturity-dashboard/index.html';
+    const custId = this.getCurrentCustId();
+    if (custId) {
+      itOpsMaturityUrl += '?custId=' + encodeURIComponent(custId);
+    }
+    window.open(itOpsMaturityUrl, '_blank');
+  }
+
+  /**
+   * Walks the active route tree to find a :custid route param, if the user
+   * is currently on an account-scoped page (e.g. /cssdashboard/:custid/...).
+   */
+  private getCurrentCustId(): string | null {
+    let route = this.router.routerState.snapshot.root;
+    while (route) {
+      const custId = route.params['custid'];
+      if (custId) {
+        return custId;
+      }
+      route = route.firstChild as any;
+    }
+    return null;
+  }
+  /**
    /**
    * Navigate back to enterprise dashboard
    * Used by the back button on account dashboard pages and logo clicks

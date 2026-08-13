@@ -1,0 +1,16 @@
+Sr. No,Technology Domain,No. of Parameters,Sum of Scores,Max Possible,Average Score (1-5),Maturity %,Maturity Level
+1,Windows,17,48,85,2.82,56%,3 - Defined
+2,Linux,14,53,70,3.79,76%,4 - Managed
+3,VMware,17,47,85,2.76,55%,3 - Defined
+4,Citrix VDI,18,60,90,3.33,67%,3 - Defined
+5,Network,32,135,160,4.22,84%,4 - Managed
+6,Hyperconverged Infra,10,18,50,1.80,36%,2 - Developing
+7,Database,13,29,65,2.23,45%,2 - Developing
+8,Cloud (Azure/ AWS/ GCP),48,207,240,4.31,86%,4 - Managed
+9,Storage & Backup,13,22,65,1.69,34%,2 - Developing
+10,NOC,18,68,90,3.78,76%,4 - Managed
+11,Service Desk,22,44,110,2.00,40%,2 - Developing
+12,EUC,22,85,110,3.86,77%,4 - Managed
+13,ITSM,63,191,315,3.03,61%,3 - Defined
+14,DR & BC,11,49,55,4.45,89%,4 - Managed
+,OVERALL ESTATE,287,1056,1435,3.68,74%,4 - Managed
