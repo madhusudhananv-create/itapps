@@ -158,7 +158,7 @@
         <div class="form-grid governance-grid">
           <mat-form-field appearance="outline" class="governance-field">
             <mat-icon matPrefix>rule</mat-icon>
-            <mat-select name="ddGovernance" [(ngModel)]="selectedGovernanceApplicability" panelClass="governance-dropdown-panel" panelWidth="auto">
+            <mat-select name="ddGovernance" [(ngModel)]="selectedGovernanceApplicability" (selectionChange)="onGovernanceApplicabilityChange()" panelClass="governance-dropdown-panel" panelWidth="auto">
               <mat-option [value]="option.value" *ngFor="let option of governanceApplicabilityOptions"
                 [title]="option.label">{{option.label}}</mat-option>
             </mat-select>
