@@ -47,10 +47,20 @@
                 "input": "src/microapps/CSAT-Analysis-Dashboard/build",
                 "output": "/csat-analysis-dashboard"
               },
-              {
+               {
                 "glob": "**/*",
                 "input": "src/microapps/AIMI/dist",
                 "output": "/aimi"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/microapps/ERM/dist/neuronaut-erm/browser",
+                "output": "/erm"
+              },
+              {
+                "glob": "web.config",
+                "input": ".",
+                "output": "/"
               },
               "src/favicon.ico"
             ],

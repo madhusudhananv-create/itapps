@@ -84,7 +84,11 @@ export class NavbarNewComponent implements OnInit {
   /** Show Integrated Apps menu if user has access to at least one integrated app */
   readonly hasIntegratedAppsAccess = computed(() =>
     this._access.IsAllowed(827, 1, '', '') ||
-    this._access.IsAllowed(829, 1, '', '') || this._access.IsAllowed(832, 1, '', '')
+    this._access.IsAllowed(829, 1, '', '') ||
+    this._access.IsAllowed(832, 1, '', '')||
+    this._access.IsAllowed(829, 1, '', '') ||
+    this._access.IsAllowed(830, 1, '', '') ||
+    this._access.IsAllowed(831, 1, '', '') 
     // Add more app permission checks here with ||
   );
 
@@ -326,8 +330,8 @@ constructor(
    * Open ERM (Enterprise Risk Management) in a new tab
    * Opens the ERM module in a separate browser tab
    */
-  openERMInNewTab(): void {
-    const ermUrl = window.location.origin + '/erm';
+   openERMInNewTab(): void {
+     const ermUrl = window.location.origin + '/erm/index.html';
     window.open(ermUrl, '_blank');
   }
 
@@ -343,7 +347,7 @@ constructor(
    * Open AIMI (AI-driven Insights) in a new tab
    * Opens the AIMI module in a separate browser tab
    */
-  openAIMIInNewTab(): void {
+   openAIMIInNewTab(): void {
     // Open the SPA root (not index.html) so AIMI's client-side router resolves
     // the default route instead of 404'ing on the literal "/index.html" path
     const aimiUrl = window.location.origin + '/aimi/';

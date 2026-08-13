@@ -1,0 +1,340 @@
+<div
+  class="enterprise-dashboard animate-flux-fade-up space-y-6 motion-reduce:animate-none"
+>
+  <div
+    class="dashboard-intro flex flex-col gap-3 rounded-xl border border-sky-100/80 bg-gradient-to-br from-white/90 via-sky-50/50 to-slate-100/70 px-4 py-4 shadow-sm md:gap-4 md:px-5 md:py-5"
+  >
+    <div class="min-w-0">
+      <h1 class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
+        Enterprise dashboard
+      </h1>
+      <p class="erm-muted mt-1 max-w-3xl text-sm leading-snug">
+        KPIs and charts use the same rows as
+        <span class="font-medium text-slate-600">Enterprise Risks</span> (ERM Risk Tracker), scoped by the header
+        <span class="font-medium text-slate-600">data scope</span> and the view lens.
+      </p>
+    </div>
+    <div class="flex w-full min-w-0 flex-col gap-1.5">
+      <span class="text-xs font-medium text-slate-400">View</span>
+      <div class="dashboard-lens-bar w-full min-w-0">
+        <p-selectButton
+          styleClass="dashboard-lens-select"
+          [options]="lensOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="risks.dashboardLens()"
+          (ngModelChange)="setLens($event)"
+        />
+      </div>
+    </div>
+  </div>
+
+  @if (risks.dashboardLens() === 'business-unit') {
+    <div class="erm-card dashboard-tile flex max-w-md flex-col gap-2 p-4">
+      <label class="text-xs font-medium text-slate-400">Business unit</label>
+      <p-select
+        [options]="buFilterOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="risks.dashboardBuFilter()"
+        (ngModelChange)="setBuFilter($event)"
+        [appendTo]="'body'"
+        styleClass="w-full"
+      />
+    </div>
+  }
+
+  @if (risks.dashboardLens() === 'function') {
+    <div class="erm-card dashboard-tile flex max-w-md flex-col gap-2 p-4">
+      <label class="text-xs font-medium text-slate-400">Organizational function</label>
+      <p-select
+        [options]="functionFilterOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="risks.dashboardFunctionFilter()"
+        (ngModelChange)="setFunctionFilter($event)"
+        [appendTo]="'body'"
+        styleClass="w-full"
+      />
+    </div>
+  }
+
+  @if (risks.dashboardLens() === 'account') {
+    <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+      <div class="erm-card dashboard-tile flex w-full max-w-md flex-col gap-2 p-4">
+        <label class="text-xs font-medium text-slate-400">Business unit</label>
+        <p-select
+          [options]="accountLensBuFilterOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="risks.dashboardBuFilter()"
+          (ngModelChange)="setBuFilter($event)"
+          [appendTo]="'body'"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="erm-card dashboard-tile flex w-full max-w-md flex-col gap-2 p-4">
+        <label class="text-xs font-medium text-slate-400">Account</label>
+        <p-select
+          [options]="accountFilterOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="risks.dashboardAccountFilter()"
+          (ngModelChange)="setAccountFilter($event)"
+          [appendTo]="'body'"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+  }
+
+  @let stats = risks.dashboardStats();
+
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <p-card
+      header="Portfolio count"
+      subheader="Active register size (filtered)"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none"
+    >
+      <div class="text-3xl font-bold text-slate-900">{{ stats.total }}</div>
+      <p class="erm-muted mt-2 text-xs">Includes open and closed under current filters.</p>
+      <p class="mt-1 text-sm font-semibold text-red-600">
+        {{ stats.open }} open {{ stats.open === 1 ? 'risk' : 'risks' }}
+      </p>
+    </p-card>
+
+    <p-card
+      header="Open vs closed"
+      subheader="Share of filtered risks"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none"
+    >
+      <div class="flex flex-col gap-1.5">
+        <div class="flex flex-wrap gap-6 text-lg font-semibold">
+          <span class="text-red-600"
+            >{{ stats.openPct }}%
+            <span class="text-xs font-normal text-red-600/90">open</span></span
+          >
+          <span class="text-slate-700"
+            >{{ stats.closedPct }}%
+            <span class="text-xs font-normal text-slate-500">closed</span></span
+          >
+        </div>
+        <div class="text-sm font-semibold text-red-600">
+          {{ stats.open }} open {{ stats.open === 1 ? 'risk' : 'risks' }}
+        </div>
+      </div>
+    </p-card>
+
+    <p-card
+      header="Risk exposure"
+      subheader="Sum of residual ratings (Σ residual)"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none"
+    >
+      <div class="flex items-center gap-3">
+        <span class="text-3xl font-bold text-slate-900">{{ stats.exposure }}</span>
+        <span
+          class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+          [ngClass]="{
+            'risk-pill-low': exposureSeverity(stats) === 'low',
+            'risk-pill-medium': exposureSeverity(stats) === 'medium',
+            'risk-pill-high': exposureSeverity(stats) === 'high',
+          }"
+        >
+          {{ exposureSeverity(stats) | uppercase }}
+        </span>
+      </div>
+    </p-card>
+
+    <p-card
+      header="Inherent vs residual"
+      subheader="Average ratings (filtered)"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none"
+    >
+      <div class="grid grid-cols-2 gap-3 text-center">
+        <div
+          class="dashboard-stat-cell rounded-lg border border-sky-100/90 bg-gradient-to-b from-sky-50/90 to-slate-50/80 py-3 transition duration-200 hover:border-sky-200 hover:shadow-sm"
+        >
+          <div class="text-xs text-slate-500">Inherent</div>
+          <div class="text-xl font-semibold text-amber-800">{{ stats.avgInherent }}</div>
+        </div>
+        <div
+          class="dashboard-stat-cell rounded-lg border border-sky-100/90 bg-gradient-to-b from-sky-50/90 to-slate-50/80 py-3 transition duration-200 hover:border-sky-200 hover:shadow-sm"
+        >
+          <div class="text-xs text-slate-500">Residual</div>
+          <div class="text-xl font-semibold text-emerald-800">{{ stats.avgResidual }}</div>
+        </div>
+      </div>
+    </p-card>
+
+    <p-card
+      header="Control effectiveness"
+      subheader="Mean index across filtered risks"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none"
+    >
+      <div class="text-3xl font-bold text-emerald-700">{{ stats.avgControl }}%</div>
+      <p class="erm-muted mt-2 text-xs">Derived from inherent → residual reduction at log time.</p>
+    </p-card>
+
+    <p-card
+      header="Total (reference)"
+      subheader="Matches donut narrative"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none"
+    >
+      <div class="text-3xl font-bold text-slate-900">{{ donutData().total }}</div>
+      <p class="erm-muted mt-2 text-xs">
+        Total =
+        <strong class="text-red-600">{{ stats.open }} open</strong>
+        + {{ stats.closed }} closed for the current filter.
+      </p>
+    </p-card>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <p-card
+      header="Total vs Open vs Closed"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none h-full dashboard-chart-card"
+    >
+      <div class="dashboard-chart-stack">
+        <div
+          class="dashboard-chart-shell dashboard-chart-shell--interactive"
+          title="Click a segment to view matching risk details"
+        >
+          <p-chart
+            type="doughnut"
+            [data]="{ labels: donutData().labels, datasets: donutData().datasets }"
+            [options]="chartOptionsDonut"
+            [height]="chartPlotHeight"
+          />
+        </div>
+        <div class="dashboard-chart-foot">
+          <p class="erm-muted text-center text-xs">
+            Total risks: <strong class="text-slate-800">{{ donutData().total }}</strong> —
+            <strong class="text-red-600">{{ stats.open }} open</strong>
+            <span class="text-slate-500"> / {{ stats.closed }} closed</span>.
+          </p>
+        </div>
+      </div>
+    </p-card>
+
+    <p-card
+      header="Risk categorization"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none h-full dashboard-chart-card"
+    >
+      <div class="dashboard-chart-stack">
+        <div
+          class="dashboard-chart-shell dashboard-chart-shell--interactive"
+          title="Click a bar to view matching risk details"
+        >
+          <p-chart
+            type="bar"
+            [data]="barData()"
+            [options]="chartOptionsBar"
+            [height]="chartPlotHeight"
+          />
+        </div>
+        <div class="dashboard-chart-foot" aria-hidden="true"></div>
+      </div>
+    </p-card>
+
+    <p-card
+      header="Risks by function"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none h-full dashboard-chart-card"
+    >
+      <div class="dashboard-chart-stack">
+        <div
+          class="dashboard-chart-shell dashboard-chart-shell--interactive"
+          title="Click a segment to view matching risk details"
+        >
+          <p-chart
+            type="pie"
+            [data]="pieData()"
+            [options]="chartOptionsPie"
+            [height]="chartPlotHeight"
+          />
+        </div>
+        <div class="dashboard-chart-foot" aria-hidden="true"></div>
+      </div>
+    </p-card>
+
+    <p-card
+      header="Risk trend (logged)"
+      styleClass="erm-card dashboard-tile border-slate-200/90 shadow-none h-full dashboard-chart-card"
+    >
+      <div class="dashboard-chart-stack">
+        <div
+          class="dashboard-chart-shell dashboard-chart-shell--interactive"
+          title="Click a point to view matching risk details"
+        >
+          <p-chart
+            type="line"
+            [data]="lineData()"
+            [options]="chartOptionsLine"
+            [height]="chartPlotHeight"
+          />
+        </div>
+        <div class="dashboard-chart-foot" aria-hidden="true"></div>
+      </div>
+    </p-card>
+  </div>
+
+  <p-dialog
+    [header]="detailDialogTitle"
+    [(visible)]="detailDialogVisible"
+    [modal]="true"
+    [dismissableMask]="true"
+    [style]="{ width: 'min(920px, 92vw)' }"
+    [breakpoints]="{ '640px': '94vw' }"
+    styleClass="dashboard-detail-dialog"
+  >
+    <p class="mb-3 text-xs font-medium text-slate-500">
+      {{ detailDialogRows.length }} matching {{ detailDialogRows.length === 1 ? 'risk' : 'risks' }}
+    </p>
+
+    @if (detailDialogRows.length) {
+      <div class="dashboard-detail-list">
+        @for (risk of detailDialogRows; track risk.id) {
+          <article class="dashboard-detail-row">
+            <div class="flex min-w-0 flex-col gap-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono text-xs font-semibold text-sky-700">#{{ risk.id }}</span>
+                <span class="truncate text-sm font-semibold text-slate-900">{{ risk.title }}</span>
+              </div>
+              <p class="line-clamp-2 text-xs leading-relaxed text-slate-500">{{ risk.description }}</p>
+              <div class="dashboard-detail-fields">
+                @if (risk.threat) {
+                  <span><strong>Threat:</strong> {{ risk.threat }}</span>
+                }
+                @if (risk.vulnerability) {
+                  <span><strong>Vulnerability:</strong> {{ risk.vulnerability }}</span>
+                }
+                @if (risk.businessImpact) {
+                  <span><strong>Impact:</strong> {{ risk.businessImpact }}</span>
+                }
+                @if (risk.riskRemediationPlan) {
+                  <span><strong>Plan:</strong> {{ risk.riskRemediationPlan }}</span>
+                }
+              </div>
+            </div>
+            <div class="dashboard-detail-meta">
+              <span>Status: {{ risk.status }}</span>
+              <span>{{ risk.businessUnit }}</span>
+              @if (risk.account) {
+                <span>{{ risk.account }}</span>
+              }
+              <span>{{ risk.orgFunction }}</span>
+              <span>{{ risk.category }}</span>
+              @if (risk.owner) {
+                <span>Owner: {{ risk.owner }}</span>
+              }
+              <span>Inherent {{ risk.inherentRating }}</span>
+              <span>Residual {{ risk.residualRating }}</span>
+              <span>Logged {{ risk.loggedAt }}</span>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="text-sm text-slate-500">No matching risks found for this data point.</p>
+    }
+  </p-dialog>
+</div>

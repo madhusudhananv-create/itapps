@@ -1397,6 +1397,19 @@ input:checked + .slider:before {
   box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
 }
 
+.itops-maturity-color {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.35);
+}
+// App text info
+.app-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
 // App tile label
 .app-tile-name {
   font-size: 10.5px;

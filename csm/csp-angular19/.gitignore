@@ -3,6 +3,8 @@
 # Compiled output
 /dist
 /dist-test
+/dist-PROD
+/LEGACY-SOURCE
 /tmp
 /out-tsc
 /bazel-out
