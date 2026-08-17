@@ -421,6 +421,8 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
   const [showBuWise, setShowBuWise] = useState(false);
   const [showTop10, setShowTop10] = useState(false);
   const [showPracticeWise, setShowPracticeWise] = useState(false);
+  const [showAccountPracticeWise, setShowAccountPracticeWise] = useState(false);
+  const [showAccountPracticeWiseTop10, setShowAccountPracticeWiseTop10] = useState(false);
   const [practiceBusinessUnitFilter, setPracticeBusinessUnitFilter] = useState('');
   const [showTrendSection, setShowTrendSection] = useState(false);
   const [practiceFileSheet2Data, setPracticeFileSheet2Data] = useState(null);
@@ -436,7 +438,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
   // When "Practice wise Response Rate Dashboard" is shown, load data from fixed local file (Sheet2 "CSAT sent and received Report") if available.
   useEffect(() => {
-    if (!showPracticeWise) return;
+    if (!showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10) return;
     const base = typeof process !== 'undefined' && process.env && process.env.PUBLIC_URL ? process.env.PUBLIC_URL : '';
     const url = (base.replace(/\/$/, '') || '') + PRACTICE_FILE_URL;
     fetch(url)
@@ -453,11 +455,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         setPracticeFileSheet2Data(hasPractice ? data : null);
       })
       .catch(() => setPracticeFileSheet2Data(null));
-  }, [showPracticeWise]);
+  }, [showPracticeWise, showAccountPracticeWise, showAccountPracticeWiseTop10]);
 
   // When "Practice wise Response Rate – Trend Analysis" is shown, load data from fixed trend file Trend-Analysis-H12025.xlsx (Sheet2) if available.
   useEffect(() => {
-    if (!showPracticeWise) return;
+    if (!showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10) return;
     const base = typeof process !== 'undefined' && process.env && process.env.PUBLIC_URL ? process.env.PUBLIC_URL : '';
     const url = (base.replace(/\/$/, '') || '') + PRACTICE_TREND_FILE_URL;
     fetch(url)
@@ -474,7 +476,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         setPracticeTrendFileSheet2Data(hasPractice ? data : null);
       })
       .catch(() => setPracticeTrendFileSheet2Data(null));
-  }, [showPracticeWise]);
+  }, [showPracticeWise, showAccountPracticeWise, showAccountPracticeWiseTop10]);
 
   // Utility function to compare dates (MM-DD-YYYY format)
   const isDateGreaterThanOrEqual = (date1, date2) => {
@@ -748,6 +750,381 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     return rows.map((r, i) => ({ ...r, srNo: i + 1 }));
   };
 
+  // Account + Practice wise Response Rate table (requested):
+  // Sheet2 "CSAT sent and received Report" (New_customer_feedback_analysis_New.xlsx): group by Account (CUSTOMER NAME) + Practice.
+  // #Polled = count(CSS_SENT_DATE), #Responded = count(CSS_RECEIVED_DATE) (date >= CSAT cycle start, STATUS = Completed).
+  // Response Rate% = #Responded/#Polled*100, Average CSAT Score = Avg(ACTUAL SCORE) for responded rows.
+  // Adds a bold "All Practice" roll-up row per account (Response Rate% recomputed from summed Polled/Responded;
+  // Average CSAT Score recomputed from summed actualScoreSum/actualScoreCount across the account's practices)
+  // and a Grand Total row across all accounts.
+  const buildAccountPracticeWiseRows = (source) => {
+    if (!source || !csatCycleStartDateFormatted) return [];
+    const firstRow = source[0] || {};
+    const practiceCol = Object.keys(firstRow).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+    const businessUnitCol =
+      Object.prototype.hasOwnProperty.call(firstRow, COL_BUSINESS_UNIT)
+        ? COL_BUSINESS_UNIT
+        : (Object.prototype.hasOwnProperty.call(firstRow, 'BUSSINESS UNIT') ? 'BUSSINESS UNIT' : COL_BUSINESS_UNIT);
+    const customerNameCol = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+    const sentDateCol = Object.prototype.hasOwnProperty.call(firstRow, COL_SENT_DATE) ? COL_SENT_DATE : (Object.prototype.hasOwnProperty.call(firstRow, 'CSS_SENT_DATE') ? 'CSS_SENT_DATE' : COL_SENT_DATE);
+    const receivedDateCol = Object.prototype.hasOwnProperty.call(firstRow, COL_RECEIVED_DATE) ? COL_RECEIVED_DATE : (Object.prototype.hasOwnProperty.call(firstRow, 'CSS_RECEIVED_DATE') ? 'CSS_RECEIVED_DATE' : COL_RECEIVED_DATE);
+    const actualScoreCol =
+      Object.keys(firstRow).find(k => k && /actual\s*score/i.test(String(k))) ||
+      Object.keys(firstRow).find(k => k && (String(k).trim() === 'ACTUAL SCORE' || String(k).toLowerCase().replace(/\s/g, '') === 'actualscore')) ||
+      'ACTUAL SCORE';
+
+    // key: account||practice
+    const byKey = {};
+    // per-account metadata (business unit for ordering/display)
+    const accountBU = {};
+    source.forEach(row => {
+      const accountName = (row[customerNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
+      const practice = (row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A';
+      const buRaw = (row[businessUnitCol] ?? row[COL_BUSINESS_UNIT] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
+      const businessUnit = normalizeBusinessUnitDisplay(buRaw);
+      if (!accountBU[accountName]) accountBU[accountName] = businessUnit;
+      const key = `${accountName}||${practice}`;
+      if (!byKey[key]) byKey[key] = { accountName, practice, businessUnit, polled: 0, responded: 0, actualScoreSum: 0, actualScoreCount: 0 };
+
+      const sentVal = row[sentDateCol] ?? row['CSS_SENT_DATE'] ?? row['CSAT SENT DATE'];
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        if (sentFormatted && isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted)) byKey[key].polled++;
+      }
+
+      const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      if (isCompletedStatus && (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted))) {
+        byKey[key].responded++;
+        const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'];
+        if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
+          const n = parseFloat(scoreVal);
+          if (!isNaN(n)) {
+            byKey[key].actualScoreSum += n;
+            byKey[key].actualScoreCount++;
+          }
+        }
+      }
+    });
+
+    // Group practice rows by account
+    const byAccount = {};
+    Object.values(byKey).forEach(r => {
+      if (!(r.polled > 0 || r.responded > 0)) return;
+      if (!byAccount[r.accountName]) byAccount[r.accountName] = [];
+      byAccount[r.accountName].push(r);
+    });
+
+    const accountNames = Object.keys(byAccount);
+    accountNames.sort((a, b) => {
+      const bua = getBusinessUnitOrderIndex(accountBU[a]);
+      const bub = getBusinessUnitOrderIndex(accountBU[b]);
+      if (bua !== -1 && bub !== -1 && bua !== bub) return bua - bub;
+      if (bua !== -1 && bub === -1) return -1;
+      if (bua === -1 && bub !== -1) return 1;
+      return (a || '').localeCompare(b || '');
+    });
+
+    const rows = [];
+    let srNo = 0;
+    let grandPolled = 0, grandResponded = 0, grandScoreSum = 0, grandScoreCount = 0;
+    accountNames.forEach(accountName => {
+      const practiceRows = byAccount[accountName].slice();
+      practiceRows.sort((a, b) => {
+        const ia = getPracticeOrderIndex(a.practice);
+        const ib = getPracticeOrderIndex(b.practice);
+        if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
+        if (ia >= 0 && ib < 0) return -1;
+        if (ia < 0 && ib >= 0) return 1;
+        return (a.practice || '').localeCompare(b.practice || '');
+      });
+      const businessUnit = accountBU[accountName];
+      let acctPolled = 0, acctResponded = 0, acctScoreSum = 0, acctScoreCount = 0;
+      practiceRows.forEach(r => {
+        srNo++;
+        acctPolled += r.polled;
+        acctResponded += r.responded;
+        acctScoreSum += r.actualScoreSum;
+        acctScoreCount += r.actualScoreCount;
+        rows.push({
+          srNo,
+          accountName,
+          businessUnit,
+          practice: r.practice,
+          polled: r.polled,
+          responded: r.responded,
+          actualScoreCount: r.actualScoreCount,
+          responseRatePct: r.polled > 0 ? (r.responded / r.polled) * 100 : null,
+          avgActualScore: r.actualScoreCount > 0 ? r.actualScoreSum / r.actualScoreCount : null,
+          isAllPracticeRow: false
+        });
+      });
+      // Bold "All Practice" roll-up row per account
+      rows.push({
+        srNo: null,
+        accountName,
+        businessUnit,
+        practice: 'All Practice',
+        polled: acctPolled,
+        responded: acctResponded,
+        actualScoreCount: acctScoreCount,
+        responseRatePct: acctPolled > 0 ? (acctResponded / acctPolled) * 100 : null,
+        avgActualScore: acctScoreCount > 0 ? acctScoreSum / acctScoreCount : null,
+        isAllPracticeRow: true
+      });
+      grandPolled += acctPolled;
+      grandResponded += acctResponded;
+      grandScoreSum += acctScoreSum;
+      grandScoreCount += acctScoreCount;
+    });
+
+    rows.grandTotal = accountNames.length > 0 ? {
+      accountName: 'Grand Total',
+      businessUnit: '',
+      practice: '',
+      polled: grandPolled,
+      responded: grandResponded,
+      actualScoreCount: grandScoreCount,
+      responseRatePct: grandPolled > 0 ? (grandResponded / grandPolled) * 100 : null,
+      avgActualScore: grandScoreCount > 0 ? grandScoreSum / grandScoreCount : null,
+      isGrandTotalRow: true
+    } : null;
+
+    return rows;
+  };
+
+  // Fixed display order for the 10 named Top 10 accounts (Account_Practice_Wise_Response_Rate_Top10 view).
+  // Accounts flagged Top10 (TYPE OF ACCOUNT = "Top 10" / Top 10 = 'Y') but not in this list append after, alphabetically.
+  const TOP10_FIXED_ACCOUNT_ORDER_AP = [
+    'Premier Healthcare Solutions Inc',
+    'Blue Cross Blue Shield Association BCBSA',
+    'Frontier Airlines INC',
+    'Tufts Medicine',
+    'AgFirst Farm Credit Bank',
+    'embecta MEDICAL II LLC',
+    'Northern Trust Company',
+    'Jewish Board of Family and Childrens Services JBFCS',
+    'Healthfirst',
+    'AgileOne'
+  ];
+  const normalizeAccountNameForTop10OrderAP = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+  const getTop10FixedOrderIndexAP = (accountName) => {
+    const norm = normalizeAccountNameForTop10OrderAP(accountName);
+    return TOP10_FIXED_ACCOUNT_ORDER_AP.findIndex(n => normalizeAccountNameForTop10OrderAP(n) === norm);
+  };
+
+  // Account_Practice_Wise_Response_Rate_Top10: restricts buildAccountPracticeWiseRows' per-account/practice math to the
+  // 10 fixed Top10 accounts (plus any other Top10-flagged account), in the fixed order, then appends 5 dynamically
+  // computed summary rows (Top 10 Accounts / Top10 <Practice> / Other Account NR / Other Account <Practice> / Overall NR).
+  // "Overall NR" is the grand total (Top10 + Other combined) - there is no separate .grandTotal on the result.
+  const buildAccountPracticeWiseTop10Rows = (source) => {
+    if (!source || !csatCycleStartDateFormatted) return [];
+    const firstRow = source[0] || {};
+    const practiceCol = Object.keys(firstRow).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+    const businessUnitCol =
+      Object.prototype.hasOwnProperty.call(firstRow, COL_BUSINESS_UNIT)
+        ? COL_BUSINESS_UNIT
+        : (Object.prototype.hasOwnProperty.call(firstRow, 'BUSSINESS UNIT') ? 'BUSSINESS UNIT' : COL_BUSINESS_UNIT);
+    const customerNameCol = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+    const sentDateCol = Object.prototype.hasOwnProperty.call(firstRow, COL_SENT_DATE) ? COL_SENT_DATE : (Object.prototype.hasOwnProperty.call(firstRow, 'CSS_SENT_DATE') ? 'CSS_SENT_DATE' : COL_SENT_DATE);
+    const receivedDateCol = Object.prototype.hasOwnProperty.call(firstRow, COL_RECEIVED_DATE) ? COL_RECEIVED_DATE : (Object.prototype.hasOwnProperty.call(firstRow, 'CSS_RECEIVED_DATE') ? 'CSS_RECEIVED_DATE' : COL_RECEIVED_DATE);
+    const actualScoreCol =
+      Object.keys(firstRow).find(k => k && /actual\s*score/i.test(String(k))) ||
+      Object.keys(firstRow).find(k => k && (String(k).trim() === 'ACTUAL SCORE' || String(k).toLowerCase().replace(/\s/g, '') === 'actualscore')) ||
+      'ACTUAL SCORE';
+    const typeOfAccountCol = Object.keys(firstRow).find(k => /type\s*of\s*account|top\s*10/i.test(String(k))) || 'TYPE OF ACCOUNT';
+    const isTop10RowFlag = (row) => {
+      const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim().toLowerCase();
+      return val === 'top 10' || val === 'y';
+    };
+
+    // key: account||practice
+    const byKey = {};
+    const accountBU = {};
+    const accountTop10 = {};
+    source.forEach(row => {
+      const accountName = (row[customerNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
+      const practice = (row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A';
+      const buRaw = (row[businessUnitCol] ?? row[COL_BUSINESS_UNIT] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
+      const businessUnit = normalizeBusinessUnitDisplay(buRaw);
+      if (!accountBU[accountName]) accountBU[accountName] = businessUnit;
+      if (isTop10RowFlag(row)) accountTop10[accountName] = true;
+      const key = `${accountName}||${practice}`;
+      if (!byKey[key]) byKey[key] = { accountName, practice, businessUnit, polled: 0, responded: 0, actualScoreSum: 0, actualScoreCount: 0 };
+
+      const sentVal = row[sentDateCol] ?? row['CSS_SENT_DATE'] ?? row['CSAT SENT DATE'];
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        if (sentFormatted && isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted)) byKey[key].polled++;
+      }
+
+      const receivedVal = row[receivedDateCol] ?? row['CSS_RECEIVED_DATE'] ?? row['CSAT RECEIVED DATE'];
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      if (isCompletedStatus && (receivedFormatted && isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted))) {
+        byKey[key].responded++;
+        const scoreVal = row[actualScoreCol] ?? row['ACTUAL SCORE'];
+        if (scoreVal != null && scoreVal !== '' && scoreVal !== 'N/A') {
+          const n = parseFloat(scoreVal);
+          if (!isNaN(n)) {
+            byKey[key].actualScoreSum += n;
+            byKey[key].actualScoreCount++;
+          }
+        }
+      }
+    });
+
+    // Always treat the 10 fixed named accounts as Top10, even if the source file's flag is missing/mismatched.
+    Object.keys(accountBU).forEach(name => {
+      if (getTop10FixedOrderIndexAP(name) !== -1) accountTop10[name] = true;
+    });
+
+    const byAccount = {};
+    Object.values(byKey).forEach(r => {
+      if (!(r.polled > 0 || r.responded > 0)) return;
+      if (!byAccount[r.accountName]) byAccount[r.accountName] = [];
+      byAccount[r.accountName].push(r);
+    });
+
+    const allAccountNames = Object.keys(byAccount);
+    const top10AccountNames = allAccountNames.filter(n => accountTop10[n]);
+    const otherAccountNames = allAccountNames.filter(n => !accountTop10[n]);
+
+    top10AccountNames.sort((a, b) => {
+      const ia = getTop10FixedOrderIndexAP(a);
+      const ib = getTop10FixedOrderIndexAP(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      const bua = getBusinessUnitOrderIndex(accountBU[a]);
+      const bub = getBusinessUnitOrderIndex(accountBU[b]);
+      if (bua !== -1 && bub !== -1 && bua !== bub) return bua - bub;
+      if (bua !== -1 && bub === -1) return -1;
+      if (bua === -1 && bub !== -1) return 1;
+      return (a || '').localeCompare(b || '');
+    });
+
+    const sortPracticeRows = (rows) => rows.slice().sort((a, b) => {
+      const ia = getPracticeOrderIndex(a.practice);
+      const ib = getPracticeOrderIndex(b.practice);
+      if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
+      if (ia >= 0 && ib < 0) return -1;
+      if (ia < 0 && ib >= 0) return 1;
+      return (a.practice || '').localeCompare(b.practice || '');
+    });
+
+    const rows = [];
+    let srNo = 0;
+    const top10DetailRecords = [];
+    let top10Polled = 0, top10Responded = 0, top10ScoreSum = 0, top10ScoreCount = 0;
+
+    top10AccountNames.forEach(accountName => {
+      const practiceRows = sortPracticeRows(byAccount[accountName]);
+      const businessUnit = accountBU[accountName];
+      let acctPolled = 0, acctResponded = 0, acctScoreSum = 0, acctScoreCount = 0;
+      practiceRows.forEach(r => {
+        srNo++;
+        acctPolled += r.polled;
+        acctResponded += r.responded;
+        acctScoreSum += r.actualScoreSum;
+        acctScoreCount += r.actualScoreCount;
+        rows.push({
+          srNo,
+          accountName,
+          businessUnit,
+          practice: r.practice,
+          polled: r.polled,
+          responded: r.responded,
+          actualScoreCount: r.actualScoreCount,
+          responseRatePct: r.polled > 0 ? (r.responded / r.polled) * 100 : null,
+          avgActualScore: r.actualScoreCount > 0 ? r.actualScoreSum / r.actualScoreCount : null,
+          isAllPracticeRow: false
+        });
+        top10DetailRecords.push({ practice: r.practice, polled: r.polled, responded: r.responded, actualScoreSum: r.actualScoreSum, actualScoreCount: r.actualScoreCount });
+      });
+      rows.push({
+        srNo: null,
+        accountName,
+        businessUnit,
+        practice: 'All Practice',
+        polled: acctPolled,
+        responded: acctResponded,
+        actualScoreCount: acctScoreCount,
+        responseRatePct: acctPolled > 0 ? (acctResponded / acctPolled) * 100 : null,
+        avgActualScore: acctScoreCount > 0 ? acctScoreSum / acctScoreCount : null,
+        isAllPracticeRow: true
+      });
+      top10Polled += acctPolled;
+      top10Responded += acctResponded;
+      top10ScoreSum += acctScoreSum;
+      top10ScoreCount += acctScoreCount;
+    });
+
+    // Other (non-Top10) accounts are not shown individually, only rolled into the "Other Account" summary tiers.
+    const otherDetailRecords = [];
+    let otherPolled = 0, otherResponded = 0, otherScoreSum = 0, otherScoreCount = 0;
+    otherAccountNames.forEach(accountName => {
+      byAccount[accountName].forEach(r => {
+        otherPolled += r.polled;
+        otherResponded += r.responded;
+        otherScoreSum += r.actualScoreSum;
+        otherScoreCount += r.actualScoreCount;
+        otherDetailRecords.push({ practice: r.practice, polled: r.polled, responded: r.responded, actualScoreSum: r.actualScoreSum, actualScoreCount: r.actualScoreCount });
+      });
+    });
+
+    const buildSummaryRow = (label, polled, responded, scoreSum, scoreCount, summaryTier) => ({
+      srNo: null,
+      accountName: label,
+      businessUnit: '',
+      practice: '',
+      polled,
+      responded,
+      actualScoreCount: scoreCount,
+      responseRatePct: polled > 0 ? (responded / polled) * 100 : null,
+      avgActualScore: scoreCount > 0 ? scoreSum / scoreCount : null,
+      isSummaryRow: true,
+      isAllPracticeRow: false,
+      summaryTier
+    });
+
+    const distinctPracticesOf = (records) => [...new Set(records.map(r => r.practice))].sort((a, b) => {
+      const ia = getPracticeOrderIndex(a);
+      const ib = getPracticeOrderIndex(b);
+      if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
+      if (ia >= 0 && ib < 0) return -1;
+      if (ia < 0 && ib >= 0) return 1;
+      return (a || '').localeCompare(b || '');
+    });
+
+    const sumRecordsFor = (records, practice) => {
+      const filtered = practice != null ? records.filter(r => r.practice === practice) : records;
+      return filtered.reduce((acc, r) => {
+        acc.polled += r.polled; acc.responded += r.responded; acc.scoreSum += r.actualScoreSum; acc.scoreCount += r.actualScoreCount;
+        return acc;
+      }, { polled: 0, responded: 0, scoreSum: 0, scoreCount: 0 });
+    };
+
+    const summaryRows = [];
+    summaryRows.push(buildSummaryRow('Top 10 Accounts', top10Polled, top10Responded, top10ScoreSum, top10ScoreCount, 'top10-total'));
+    distinctPracticesOf(top10DetailRecords).forEach(practice => {
+      const s = sumRecordsFor(top10DetailRecords, practice);
+      summaryRows.push(buildSummaryRow(`Top10 ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'top10-practice'));
+    });
+    const otherTotals = sumRecordsFor(otherDetailRecords, null);
+    summaryRows.push(buildSummaryRow('Other Account NR', otherTotals.polled, otherTotals.responded, otherTotals.scoreSum, otherTotals.scoreCount, 'other-total'));
+    distinctPracticesOf(otherDetailRecords).forEach(practice => {
+      const s = sumRecordsFor(otherDetailRecords, practice);
+      summaryRows.push(buildSummaryRow(`Other Account ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'other-practice'));
+    });
+    summaryRows.push(buildSummaryRow('Overall NR', top10Polled + otherPolled, top10Responded + otherResponded, top10ScoreSum + otherScoreSum, top10ScoreCount + otherScoreCount, 'overall'));
+
+    return [...rows, ...summaryRows];
+  };
+
   // First dashboard: New_customer_feedback_analysis_New-Practice.xlsx (from Upload data for trend analysis). Sheet2 "CSAT sent and received Report", group by Practice.
   const practiceWiseTableData = useMemo(() => buildPracticeWiseRows(practiceTrendSources.first), [practiceTrendSources.first, csatCycleStartDateFormatted]);
   // Second dashboard: Trend-Analysis-H12025-Practice.xlsx (from Upload data for trend analysis). Sheet2 "CSAT sent and received Report", same columns.
@@ -755,6 +1132,73 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
   // New dashboard (requested): Practice + Business Unit response rate table from Sheet2 "CSAT sent and received Report"
   const practiceBuWiseTableData = useMemo(() => buildPracticeBuWiseRows(practiceTrendSources.first), [practiceTrendSources.first, csatCycleStartDateFormatted]);
+
+  // Account + Practice wise Response Rate Dashboard (requested): current cycle and last cycle ("Last year PCSAT response rate and Avg CSAT score") sub-table.
+  const accountPracticeWiseTableData = useMemo(() => buildAccountPracticeWiseRows(practiceTrendSources.first), [practiceTrendSources.first, csatCycleStartDateFormatted]);
+  const accountPracticeWiseTableDataSecond = useMemo(() => buildAccountPracticeWiseRows(practiceTrendSources.second), [practiceTrendSources.second, csatCycleStartDateFormatted]);
+
+  // Trend diffs (H2 vs H1) for Account + Practice wise rows, keyed by account name + practice (same pattern as practiceWiseTableDataWithTrend).
+  const accountPracticeWiseTableDataWithTrend = useMemo(() => {
+    const normKey = (v) => (v == null ? '' : String(v).trim().toLowerCase());
+    const trendByKey = {};
+    (accountPracticeWiseTableDataSecond || []).forEach(t => {
+      const key = `${normKey(t.accountName)}||${normKey(t.practice)}`;
+      trendByKey[key] = t;
+    });
+    const computeDiffs = (row) => {
+      const trend = trendByKey[`${normKey(row.accountName)}||${normKey(row.practice)}`];
+      const responseRateTrendDiff = (trend != null && row.responseRatePct != null && trend.responseRatePct != null)
+        ? row.responseRatePct - trend.responseRatePct
+        : null;
+      let avgCSATDiffRaw = null;
+      if (trend != null && row.avgActualScore != null && trend.avgActualScore != null) {
+        const dashScore = Math.round(Number(row.avgActualScore) * 100) / 100;
+        let trendScore = Math.round(Number(trend.avgActualScore) * 100) / 100;
+        if (trendScore < 1 && dashScore >= 3 && dashScore <= 5 && (dashScore - trendScore) > 2) {
+          trendScore = trendScore + 4;
+        }
+        avgCSATDiffRaw = dashScore - trendScore;
+      }
+      const avgCSATTrendDiff = avgCSATDiffRaw != null ? Math.round(avgCSATDiffRaw * 100) / 100 : null;
+      return { ...row, responseRateTrendDiff, avgCSATTrendDiff };
+    };
+    const result = (accountPracticeWiseTableData || []).map(computeDiffs);
+    result.grandTotal = accountPracticeWiseTableData?.grandTotal ? computeDiffs(accountPracticeWiseTableData.grandTotal) : null;
+    return result;
+  }, [accountPracticeWiseTableData, accountPracticeWiseTableDataSecond]);
+
+  // Account_Practice_Wise_Response_Rate_Top10 (requested): current cycle and last cycle ("Last year PCSAT response rate and
+  // Avg CSAT score") sub-table, restricted to the 10 fixed Top10 accounts + dynamically computed summary rows.
+  const accountPracticeWiseTop10TableData = useMemo(() => buildAccountPracticeWiseTop10Rows(practiceTrendSources.first), [practiceTrendSources.first, csatCycleStartDateFormatted]);
+  const accountPracticeWiseTop10TableDataSecond = useMemo(() => buildAccountPracticeWiseTop10Rows(practiceTrendSources.second), [practiceTrendSources.second, csatCycleStartDateFormatted]);
+
+  // Trend diffs (H2 vs H1) for Account_Practice_Wise_Response_Rate_Top10 rows, keyed by account name (or summary label) + practice.
+  const accountPracticeWiseTop10TableDataWithTrend = useMemo(() => {
+    const normKey = (v) => (v == null ? '' : String(v).trim().toLowerCase());
+    const trendByKey = {};
+    (accountPracticeWiseTop10TableDataSecond || []).forEach(t => {
+      const key = `${normKey(t.accountName)}||${normKey(t.practice)}`;
+      trendByKey[key] = t;
+    });
+    const computeDiffs = (row) => {
+      const trend = trendByKey[`${normKey(row.accountName)}||${normKey(row.practice)}`];
+      const responseRateTrendDiff = (trend != null && row.responseRatePct != null && trend.responseRatePct != null)
+        ? row.responseRatePct - trend.responseRatePct
+        : null;
+      let avgCSATDiffRaw = null;
+      if (trend != null && row.avgActualScore != null && trend.avgActualScore != null) {
+        const dashScore = Math.round(Number(row.avgActualScore) * 100) / 100;
+        let trendScore = Math.round(Number(trend.avgActualScore) * 100) / 100;
+        if (trendScore < 1 && dashScore >= 3 && dashScore <= 5 && (dashScore - trendScore) > 2) {
+          trendScore = trendScore + 4;
+        }
+        avgCSATDiffRaw = dashScore - trendScore;
+      }
+      const avgCSATTrendDiff = avgCSATDiffRaw != null ? Math.round(avgCSATDiffRaw * 100) / 100 : null;
+      return { ...row, responseRateTrendDiff, avgCSATTrendDiff };
+    };
+    return (accountPracticeWiseTop10TableData || []).map(computeDiffs);
+  }, [accountPracticeWiseTop10TableData, accountPracticeWiseTop10TableDataSecond]);
 
   // New dashboard (requested): Business Unit + Practice response rate table from Sheet2 "CSAT sent and received Report"
   const buPracticeWiseTableData = useMemo(() => buildBuPracticeWiseRows(practiceTrendSources.first), [practiceTrendSources.first, csatCycleStartDateFormatted]);
@@ -3001,6 +3445,370 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     }
   };
 
+  // Download: Account + Practice wise Response Rate Dashboard (current cycle, with trend columns)
+  const downloadAccountPracticeWiseData = async () => {
+    if (!accountPracticeWiseTableDataWithTrend || accountPracticeWiseTableDataWithTrend.length === 0) {
+      alert('No Account + Practice data available for download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Account_Practice_Wise_Response_Rate');
+      const cellBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+      const trendHeaderFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } };
+      const headerRow1 = worksheet.addRow(['', '', '', (acsatCycle || 'H2 2025'), '', '', '', trendHeaderLabel]);
+      const row1 = worksheet.getRow(1);
+      worksheet.mergeCells(1, 5, 1, 8); // E1:H1 = cycle label
+      worksheet.mergeCells(1, 9, 1, 10); // I1:J1 = trend label
+      row1.getCell(5).value = (acsatCycle || 'H2 2025');
+      row1.getCell(9).value = trendHeaderLabel;
+      row1.eachCell(c => { c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      [1, 2, 3, 4, 5, 6, 7, 8].forEach(col => { row1.getCell(col).fill = headerFill; row1.getCell(col).font = { bold: true, color: { argb: 'FFFFFFFF' } }; });
+      [9, 10].forEach(col => { row1.getCell(col).fill = trendHeaderFill; row1.getCell(col).font = { bold: true, color: { argb: 'FF000000' } }; });
+      const headerRow2 = worksheet.addRow(['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', 'Response Rate %', 'Average CSAT Score', 'Response Rate Trend', 'Average CSAT Score Trend']);
+      headerRow2.eachCell(c => { c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      [1, 2, 3, 4, 5, 6, 7, 8].forEach(col => { headerRow2.getCell(col).fill = headerFill; headerRow2.getCell(col).font = { bold: true, color: { argb: 'FFFFFFFF' } }; });
+      [9, 10].forEach(col => { headerRow2.getCell(col).fill = trendHeaderFill; headerRow2.getCell(col).font = { bold: true, color: { argb: 'FF000000' } }; });
+
+      const excelResponseRateFill = (pct, noResp) => {
+        if (noResp) return null;
+        if (pct >= 75) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+        if (pct >= 50) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+        return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+      };
+      const excelAvgCSATFill = (score, noResp) => {
+        if (noResp || score == null) return null;
+        const n = Number(score);
+        if (isNaN(n)) return null;
+        if (n >= 4.5) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+        if (n >= 4) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+        return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+      };
+      const writeRow = (row, isRollup, isGrandTotal) => {
+        // Response Rate cells must be strings WITH the "%" suffix (avoid sibling-file bug of missing "%").
+        const responseRateDisplay = row.responseRatePct != null ? `${row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%` : '-';
+        // Average CSAT Score cells must be plain numbers rounded to 2 decimals, not strings.
+        const avgScoreValue = row.avgActualScore != null ? Number(Number(row.avgActualScore).toFixed(2)) : null;
+        const rrDiff = row.responseRateTrendDiff;
+        const csatDiff = row.avgCSATTrendDiff;
+        const rrTrendDisplay = rrDiff == null ? '-' : `(${rrDiff >= 0 ? '+' : ''}${Number(rrDiff).toFixed(1)}%) ${rrDiff > 0 ? '↑' : rrDiff < 0 ? '↓' : '−'}`;
+        const csatTrendDisplay = csatDiff == null ? '-' : `(${csatDiff >= 0 ? '+' : ''}${Number(csatDiff).toFixed(2)}) ${csatDiff > 0 ? '↑' : csatDiff < 0 ? '↓' : '−'}`;
+        const excelRow = worksheet.addRow([
+          isGrandTotal ? '' : (row.srNo ?? ''),
+          isGrandTotal ? '' : (isRollup ? '' : row.businessUnit),
+          isGrandTotal ? 'Grand Total' : (isRollup ? '' : row.accountName),
+          isGrandTotal ? '' : row.practice,
+          row.polled,
+          row.responded,
+          responseRateDisplay,
+          avgScoreValue,
+          rrTrendDisplay,
+          csatTrendDisplay
+        ]);
+        excelRow.getCell(8).numFmt = '0.00';
+        const rowStyle = isGrandTotal
+          ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }, font: { bold: true, color: { argb: 'FFFFFFFF' } } }
+          : (isRollup ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }, font: { bold: true } } : null);
+        excelRow.eachCell(c => {
+          c.border = cellBorder;
+          c.alignment = { horizontal: (c.col === 2 || c.col === 3 || c.col === 4) ? 'left' : 'center', vertical: 'middle' };
+          if (rowStyle) { c.fill = rowStyle.fill; c.font = rowStyle.font; }
+        });
+        if (!isGrandTotal) {
+          const rrFill = excelResponseRateFill(row.responseRatePct, row.responded === 0);
+          const csatFill = excelAvgCSATFill(row.avgActualScore, row.responded === 0);
+          if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
+          if (csatFill) { excelRow.getCell(8).fill = csatFill; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
+        }
+        const rrTrendColor = rrDiff != null && rrDiff > 0 ? 'FF16a34a' : rrDiff != null && rrDiff < 0 ? 'FFdc2626' : null;
+        const csatTrendColor = csatDiff != null && csatDiff > 0 ? 'FF16a34a' : csatDiff != null && csatDiff < 0 ? 'FFdc2626' : null;
+        if (rrTrendColor) excelRow.getCell(9).font = { color: { argb: rrTrendColor }, bold: !!(isRollup || isGrandTotal) };
+        if (csatTrendColor) excelRow.getCell(10).font = { color: { argb: csatTrendColor }, bold: !!(isRollup || isGrandTotal) };
+      };
+      accountPracticeWiseTableDataWithTrend.forEach(row => writeRow(row, !!row.isAllPracticeRow, false));
+      if (accountPracticeWiseTableDataWithTrend.grandTotal) writeRow(accountPracticeWiseTableDataWithTrend.grandTotal, false, true);
+
+      worksheet.addRow([]);
+      const r1 = worksheet.addRow(['Legend']); r1.getCell(1).font = { bold: true, size: 11 };
+      const r2 = worksheet.addRow(['Response Rate %']); r2.getCell(1).font = { bold: true };
+      const r3 = worksheet.addRow(['Red: <50%']); r3.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; r3.getCell(1).font = { color: { argb: 'FFFFFFFF' } };
+      const r4 = worksheet.addRow(['Orange: 50% to 74%']); r4.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+      const r5 = worksheet.addRow(['Light Green: ≥75%']); r5.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+      const r6 = worksheet.addRow(['Response Rate % = #Responded ÷ #Polled × 100']); r6.getCell(1).font = { italic: true };
+      const r7 = worksheet.addRow(['Average CSAT Score']); r7.getCell(1).font = { bold: true };
+      const r8 = worksheet.addRow(['Red: <4']); r8.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; r8.getCell(1).font = { color: { argb: 'FFFFFFFF' } };
+      const r9 = worksheet.addRow(['Orange: 4 to 4.49']); r9.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+      const r10 = worksheet.addRow(['Light Green: ≥4.5']); r10.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+      worksheet.columns.forEach((col, i) => { col.width = i === 2 ? 28 : (i === 3 ? 24 : (i === 0 ? 10 : (i >= 8 ? 24 : 16))); });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Account_Practice_Wise_Response_Rate_Dashboard.xlsx';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading account+practice data:', err);
+      alert('Error downloading data. Please try again.');
+    }
+  };
+
+  // Download: Account + Practice wise Response Rate - "Last year PCSAT response rate and Avg CSAT score" (no trend columns)
+  const downloadAccountPracticeWiseDataSecond = async () => {
+    if (!accountPracticeWiseTableDataSecond || accountPracticeWiseTableDataSecond.length === 0) {
+      alert('No Account + Practice trend data available for download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Last_Year_PCSAT_Response_Rate');
+      const cellBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      const headerRow = worksheet.addRow(['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', 'Response Rate %', 'Average CSAT Score']);
+      headerRow.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      const excelResponseRateFill = (pct, noResp) => {
+        if (noResp) return null;
+        if (pct >= 75) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+        if (pct >= 50) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+        return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+      };
+      const excelAvgCSATFill = (score, noResp) => {
+        if (noResp || score == null) return null;
+        const n = Number(score);
+        if (isNaN(n)) return null;
+        if (n >= 4.5) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+        if (n >= 4) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+        return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+      };
+      const writeRow = (row, isRollup, isGrandTotal) => {
+        const responseRateDisplay = row.responseRatePct != null ? `${row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%` : '-';
+        const avgScoreValue = row.avgActualScore != null ? Number(Number(row.avgActualScore).toFixed(2)) : null;
+        const excelRow = worksheet.addRow([
+          isGrandTotal ? '' : (row.srNo ?? ''),
+          isGrandTotal ? '' : (isRollup ? '' : row.businessUnit),
+          isGrandTotal ? 'Grand Total' : (isRollup ? '' : row.accountName),
+          isGrandTotal ? '' : row.practice,
+          row.polled,
+          row.responded,
+          responseRateDisplay,
+          avgScoreValue
+        ]);
+        excelRow.getCell(8).numFmt = '0.00';
+        const rowStyle = isGrandTotal
+          ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }, font: { bold: true, color: { argb: 'FFFFFFFF' } } }
+          : (isRollup ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }, font: { bold: true } } : null);
+        excelRow.eachCell(c => {
+          c.border = cellBorder;
+          c.alignment = { horizontal: (c.col === 2 || c.col === 3 || c.col === 4) ? 'left' : 'center', vertical: 'middle' };
+          if (rowStyle) { c.fill = rowStyle.fill; c.font = rowStyle.font; }
+        });
+        if (!isGrandTotal) {
+          const rrFill = excelResponseRateFill(row.responseRatePct, row.responded === 0);
+          const csatFill = excelAvgCSATFill(row.avgActualScore, row.responded === 0);
+          if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
+          if (csatFill) { excelRow.getCell(8).fill = csatFill; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
+        }
+      };
+      accountPracticeWiseTableDataSecond.forEach(row => writeRow(row, !!row.isAllPracticeRow, false));
+      if (accountPracticeWiseTableDataSecond.grandTotal) writeRow(accountPracticeWiseTableDataSecond.grandTotal, false, true);
+
+      worksheet.addRow([]);
+      const s1 = worksheet.addRow(['Legend']); s1.getCell(1).font = { bold: true, size: 11 };
+      const s2 = worksheet.addRow(['Response Rate %']); s2.getCell(1).font = { bold: true };
+      const s3 = worksheet.addRow(['Red: <50%']); s3.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; s3.getCell(1).font = { color: { argb: 'FFFFFFFF' } };
+      const s4 = worksheet.addRow(['Orange: 50% to 74%']); s4.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+      const s5 = worksheet.addRow(['Light Green: ≥75%']); s5.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+      const s6 = worksheet.addRow(['Response Rate % = #Responded ÷ #Polled × 100']); s6.getCell(1).font = { italic: true };
+      const s7 = worksheet.addRow(['Average CSAT Score']); s7.getCell(1).font = { bold: true };
+      const s8 = worksheet.addRow(['Red: <4']); s8.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; s8.getCell(1).font = { color: { argb: 'FFFFFFFF' } };
+      const s9 = worksheet.addRow(['Orange: 4 to 4.49']); s9.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+      const s10 = worksheet.addRow(['Light Green: ≥4.5']); s10.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+      worksheet.columns.forEach((col, i) => { col.width = i === 2 ? 28 : (i === 3 ? 24 : (i === 0 ? 10 : 16)); });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Account_Practice_Wise_Response_Rate_Last_Year.xlsx';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading account+practice trend data:', err);
+      alert('Error downloading data. Please try again.');
+    }
+  };
+
+  // Shared row writer for Account_Practice_Wise_Response_Rate_Top10 downloads (current cycle + last cycle).
+  // Two known bugs avoided (fixed in sibling file AccountBUWiseOverallCSATScoreDistributionDashboard.js and must not
+  // be repeated here): (1) summary-row label/fill are set BEFORE worksheet.mergeCells(...), not after; (2) Response
+  // Rate % cells always carry the literal "%" suffix.
+  const ACCOUNT_PRACTICE_TOP10_SUMMARY_FILL_COLORS = {
+    'top10-total': 'FFFFF2CC',
+    'top10-practice': 'FFFFF9E6',
+    'other-total': 'FFBDD7EE',
+    'other-practice': 'FFDCE9F5',
+    'overall': 'FFE4DFEC'
+  };
+  const writeAccountPracticeWiseTop10Row = (worksheet, row, cellBorder, includeTrend) => {
+    const isSummary = !!row.isSummaryRow;
+    const isRollup = !!row.isAllPracticeRow;
+    // Response Rate % must be a string WITH the "%" suffix (avoid sibling-file bug of missing "%").
+    const responseRateDisplay = row.responseRatePct != null ? `${row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%` : '-';
+    const avgScoreValue = row.avgActualScore != null ? Number(Number(row.avgActualScore).toFixed(2)) : null;
+    const rrDiff = row.responseRateTrendDiff;
+    const csatDiff = row.avgCSATTrendDiff;
+    const rrTrendDisplay = rrDiff == null ? '-' : `(${rrDiff >= 0 ? '+' : ''}${Number(rrDiff).toFixed(1)}%) ${rrDiff > 0 ? '↑' : rrDiff < 0 ? '↓' : '−'}`;
+    const csatTrendDisplay = csatDiff == null ? '-' : `(${csatDiff >= 0 ? '+' : ''}${Number(csatDiff).toFixed(2)}) ${csatDiff > 0 ? '↑' : csatDiff < 0 ? '↓' : '−'}`;
+    const baseValues = [
+      isSummary ? '' : (row.srNo ?? ''),
+      isSummary ? '' : (isRollup ? '' : row.businessUnit),
+      isSummary ? row.accountName : (isRollup ? '' : row.accountName),
+      isSummary ? '' : row.practice,
+      row.polled,
+      row.responded,
+      responseRateDisplay,
+      avgScoreValue
+    ];
+    const excelRow = worksheet.addRow(includeTrend ? [...baseValues, rrTrendDisplay, csatTrendDisplay] : baseValues);
+    excelRow.getCell(8).numFmt = '0.00';
+
+    if (isSummary) {
+      // Bug fix #1: set the label, blank out cols 3-4, and apply the tier fill BEFORE merging.
+      const fillColor = ACCOUNT_PRACTICE_TOP10_SUMMARY_FILL_COLORS[row.summaryTier] || 'FFE2E8F0';
+      const fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+      excelRow.getCell(2).value = row.accountName;
+      excelRow.getCell(3).value = null;
+      excelRow.getCell(4).value = null;
+      excelRow.eachCell(c => { c.fill = fill; c.font = { bold: true, color: { argb: 'FF1F2937' } }; c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      excelRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      worksheet.mergeCells(excelRow.number, 2, excelRow.number, 4);
+      return;
+    }
+
+    const rowStyle = isRollup
+      ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }, font: { bold: true } }
+      : null;
+    excelRow.eachCell(c => {
+      c.border = cellBorder;
+      c.alignment = { horizontal: (c.col === 2 || c.col === 3 || c.col === 4) ? 'left' : 'center', vertical: 'middle' };
+      if (rowStyle) { c.fill = rowStyle.fill; c.font = rowStyle.font; }
+    });
+    const excelResponseRateFillTop10 = (pct, noResp) => {
+      if (noResp) return null;
+      if (pct >= 75) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+      if (pct >= 50) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+      return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+    };
+    const excelAvgCSATFillTop10 = (score, noResp) => {
+      if (noResp || score == null) return null;
+      const n = Number(score);
+      if (isNaN(n)) return null;
+      if (n >= 4.5) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+      if (n >= 4) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+      return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+    };
+    const rrFill = excelResponseRateFillTop10(row.responseRatePct, row.responded === 0);
+    const csatFill = excelAvgCSATFillTop10(row.avgActualScore, row.responded === 0);
+    if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
+    if (csatFill) { excelRow.getCell(8).fill = csatFill; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
+
+    if (includeTrend) {
+      const rrTrendColor = rrDiff != null && rrDiff > 0 ? 'FF16a34a' : rrDiff != null && rrDiff < 0 ? 'FFdc2626' : null;
+      const csatTrendColor = csatDiff != null && csatDiff > 0 ? 'FF16a34a' : csatDiff != null && csatDiff < 0 ? 'FFdc2626' : null;
+      if (rrTrendColor) excelRow.getCell(9).font = { color: { argb: rrTrendColor }, bold: !!isRollup };
+      if (csatTrendColor) excelRow.getCell(10).font = { color: { argb: csatTrendColor }, bold: !!isRollup };
+    }
+  };
+  const writeAccountPracticeWiseTop10Legend = (worksheet) => {
+    worksheet.addRow([]);
+    const r1 = worksheet.addRow(['Legend']); r1.getCell(1).font = { bold: true, size: 11 };
+    const r2 = worksheet.addRow(['Response Rate %']); r2.getCell(1).font = { bold: true };
+    const r3 = worksheet.addRow(['Red: <50%']); r3.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; r3.getCell(1).font = { color: { argb: 'FFFFFFFF' } };
+    const r4 = worksheet.addRow(['Orange: 50% to 74%']); r4.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+    const r5 = worksheet.addRow(['Light Green: ≥75%']); r5.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+    const r6 = worksheet.addRow(['Response Rate % = #Responded ÷ #Polled × 100']); r6.getCell(1).font = { italic: true };
+    const r7 = worksheet.addRow(['Average CSAT Score']); r7.getCell(1).font = { bold: true };
+    const r8 = worksheet.addRow(['Red: <4']); r8.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; r8.getCell(1).font = { color: { argb: 'FFFFFFFF' } };
+    const r9 = worksheet.addRow(['Orange: 4 to 4.49']); r9.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+    const r10 = worksheet.addRow(['Light Green: ≥4.5']); r10.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
+  };
+
+  // Download: Account_Practice_Wise_Response_Rate_Top10 (current cycle, with trend columns)
+  const downloadAccountPracticeWiseTop10Data = async () => {
+    if (!accountPracticeWiseTop10TableDataWithTrend || accountPracticeWiseTop10TableDataWithTrend.length === 0) {
+      alert('No Account + Practice Top10 data available for download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Account_Practice_Wise_Top10');
+      const cellBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+      const trendHeaderFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } };
+      worksheet.addRow(['', '', '', (acsatCycle || 'H2 2025'), '', '', '', trendHeaderLabel]);
+      const row1 = worksheet.getRow(1);
+      worksheet.mergeCells(1, 5, 1, 8);
+      worksheet.mergeCells(1, 9, 1, 10);
+      row1.getCell(5).value = (acsatCycle || 'H2 2025');
+      row1.getCell(9).value = trendHeaderLabel;
+      row1.eachCell(c => { c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      [1, 2, 3, 4, 5, 6, 7, 8].forEach(col => { row1.getCell(col).fill = headerFill; row1.getCell(col).font = { bold: true, color: { argb: 'FFFFFFFF' } }; });
+      [9, 10].forEach(col => { row1.getCell(col).fill = trendHeaderFill; row1.getCell(col).font = { bold: true, color: { argb: 'FF000000' } }; });
+      const headerRow2 = worksheet.addRow(['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', 'Response Rate %', 'Average CSAT Score', 'Response Rate Trend', 'Average CSAT Score Trend']);
+      headerRow2.eachCell(c => { c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      [1, 2, 3, 4, 5, 6, 7, 8].forEach(col => { headerRow2.getCell(col).fill = headerFill; headerRow2.getCell(col).font = { bold: true, color: { argb: 'FFFFFFFF' } }; });
+      [9, 10].forEach(col => { headerRow2.getCell(col).fill = trendHeaderFill; headerRow2.getCell(col).font = { bold: true, color: { argb: 'FF000000' } }; });
+
+      accountPracticeWiseTop10TableDataWithTrend.forEach(row => writeAccountPracticeWiseTop10Row(worksheet, row, cellBorder, true));
+
+      writeAccountPracticeWiseTop10Legend(worksheet);
+      worksheet.columns.forEach((col, i) => { col.width = i === 2 ? 28 : (i === 3 ? 24 : (i === 0 ? 10 : (i >= 8 ? 24 : 16))); });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Account_Practice_Wise_Response_Rate_Top10.xlsx';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading account+practice Top10 data:', err);
+      alert('Error downloading data. Please try again.');
+    }
+  };
+
+  // Download: Account_Practice_Wise_Response_Rate_Top10 - "Last year PCSAT response rate and Avg rating score" (no trend columns)
+  const downloadAccountPracticeWiseTop10DataSecond = async () => {
+    if (!accountPracticeWiseTop10TableDataSecond || accountPracticeWiseTop10TableDataSecond.length === 0) {
+      alert('No Account + Practice Top10 trend data available for download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Last_Year_PCSAT_Top10');
+      const cellBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      const headerRow = worksheet.addRow(['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', 'Response Rate %', 'Average CSAT Score']);
+      headerRow.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+
+      accountPracticeWiseTop10TableDataSecond.forEach(row => writeAccountPracticeWiseTop10Row(worksheet, row, cellBorder, false));
+
+      writeAccountPracticeWiseTop10Legend(worksheet);
+      worksheet.columns.forEach((col, i) => { col.width = i === 2 ? 28 : (i === 3 ? 24 : (i === 0 ? 10 : 16)); });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Account_Practice_Wise_Response_Rate_Top10_Last_Year.xlsx';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading account+practice Top10 trend data:', err);
+      alert('Error downloading data. Please try again.');
+    }
+  };
+
   // Download: Practice + Business Unit Response Rate table (requested)
   const downloadPracticeBuWiseData = async () => {
     if (!filteredPracticeBuWiseTableData || filteredPracticeBuWiseTableData.length === 0) {
@@ -4405,7 +5213,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       });
       
       // If Account-wise view + Trend toggled, include the H1 2025 trend table as a second sheet in the same download
-      if (!showBuWise && !showTop10 && !showPracticeWise && showTrendSection && trendAccountBuH1?.hasData) {
+      if (!showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 && showTrendSection && trendAccountBuH1?.hasData) {
         const trendWs = workbook.addWorksheet('Trend Analysis (H1 2025)');
         const headerRow2 = trendWs.addRow([ACCOUNT_NAME_LABEL, BUSINESS_UNIT_LABEL, POLLED_LABEL, RESPONDED_LABEL, RESPONSE_RATE_LABEL, AVERAGE_CSAT_SCORE_LABEL]);
         headerRow2.eachCell((cell) => {
@@ -4432,7 +5240,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }
 
       // Generate and download the file with name according to current view
-      const viewSuffix = showBuWise ? 'BU_Wise' : (showTop10 ? 'Top10_Accounts' : 'Account_Wise');
+      const viewSuffix = showBuWise ? 'BU_Wise' : (showTop10 ? 'Top10_Accounts' : (showAccountPracticeWise ? 'Account_Practice_Wise' : 'Account_Wise'));
       const downloadFileName = `Account_BU_Wise_Response_Rate_${viewSuffix}.xlsx`;
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -4817,10 +5625,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         )}
         <ButtonContainer>
           <button
-            onClick={() => { setShowBuWise(false); setShowTop10(false); setShowPracticeWise(false); }}
+            onClick={() => { setShowBuWise(false); setShowTop10(false); setShowPracticeWise(false); setShowAccountPracticeWise(false); setShowAccountPracticeWiseTop10(false); }}
             style={{
-              background: !showBuWise && !showTop10 && !showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
-              color: !showBuWise && !showTop10 && !showPracticeWise ? '#1e3a8a' : 'white',
+              background: !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+              color: !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#1e3a8a' : 'white',
               border: '2px solid white',
               borderRadius: '8px',
               padding: '0.4rem 0.9rem',
@@ -4839,14 +5647,14 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
               e.target.style.background = 'rgba(255, 255, 255, 0.35)';
             }}
             onMouseOut={(e) => {
-              e.target.style.background = !showBuWise && !showTop10 && !showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
+              e.target.style.background = !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
             }}
           >
             Show Account-wise View
           </button>
 
           <button
-            onClick={() => { setShowBuWise(true); setShowTop10(false); setShowPracticeWise(false); }}
+            onClick={() => { setShowBuWise(true); setShowTop10(false); setShowPracticeWise(false); setShowAccountPracticeWise(false); setShowAccountPracticeWiseTop10(false); }}
             style={{
               background: showBuWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
               color: showBuWise ? '#1e3a8a' : 'white',
@@ -4875,7 +5683,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           </button>
 
           <button
-            onClick={() => { setShowBuWise(false); setShowTop10(true); setShowPracticeWise(false); }}
+            onClick={() => { setShowBuWise(false); setShowTop10(true); setShowPracticeWise(false); setShowAccountPracticeWise(false); setShowAccountPracticeWiseTop10(false); }}
             style={{
               background: showTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
               color: showTop10 ? '#1e3a8a' : 'white',
@@ -4945,7 +5753,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           )}
 
           <button
-            onClick={() => { setShowBuWise(false); setShowTop10(false); setShowPracticeWise(true); }}
+            onClick={() => { setShowBuWise(false); setShowTop10(false); setShowAccountPracticeWise(false); setShowPracticeWise(true); setShowAccountPracticeWiseTop10(false); }}
             style={{
               background: showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
               color: showPracticeWise ? '#1e3a8a' : 'white',
@@ -4971,6 +5779,64 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
             }}
           >
             Practice wise Response Rate Dashboard
+          </button>
+
+          <button
+            onClick={() => { setShowBuWise(false); setShowTop10(false); setShowPracticeWise(false); setShowAccountPracticeWise(true); setShowAccountPracticeWiseTop10(false); }}
+            style={{
+              background: showAccountPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+              color: showAccountPracticeWise ? '#1e3a8a' : 'white',
+              border: '2px solid white',
+              borderRadius: '8px',
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              minHeight: '32px',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.35)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.background = showAccountPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
+            }}
+          >
+            Account_Practice_Wise_Response_Rate
+          </button>
+
+          <button
+            onClick={() => { setShowBuWise(false); setShowTop10(false); setShowPracticeWise(false); setShowAccountPracticeWise(false); setShowAccountPracticeWiseTop10(true); }}
+            style={{
+              background: showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+              color: showAccountPracticeWiseTop10 ? '#1e3a8a' : 'white',
+              border: '2px solid white',
+              borderRadius: '8px',
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              minHeight: '32px',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.35)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.background = showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
+            }}
+          >
+            Account_Practice_Wise_Response_Rate_Top10
           </button>
         </ButtonContainer>
       </DashboardHeader>
@@ -5342,6 +6208,424 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                               </Td>
                             </tr>
                           )}
+                        </tbody>
+                      </Table>
+                    </TableWrapper>
+                  </TableContainer>
+                )}
+              </div>
+            </div>
+          ) : showAccountPracticeWise ? (
+            <div style={{ marginTop: '1rem' }}>
+              {/* Dashboard: Account + Practice wise Response Rate */}
+              <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#166534' }}>Account_Practice_Wise_Response_Rate</h2>
+                  {accountPracticeWiseTableDataWithTrend.length > 0 && (
+                    <button type="button" onClick={downloadAccountPracticeWiseData} style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Download size={16} />
+                      Download Excel
+                    </button>
+                  )}
+                </div>
+                <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#15803d' }}>
+                  Data from the <strong>Customer Success Survey Status</strong> report. #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE) where date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}, MM-DD-YYYY). Response Rate % = #Responded ÷ #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE). Group by Account and Practice; &quot;All Practice&quot; is the account roll-up.
+                </p>
+                {/* Legend: Response Rate% and Average CSAT Score scales */}
+                <LegendContainer style={{ marginBottom: '1rem' }}>
+                  <LegendSection>
+                    <LegendSectionTitle>{RESPONSE_RATE_LABEL}</LegendSectionTitle>
+                    <LegendItem><LegendColor color="#FF0000" /><span>Red: &lt;50%</span></LegendItem>
+                    <LegendItem><LegendColor color="#FFA500" /><span>Orange: 50% to 74%</span></LegendItem>
+                    <LegendItem><LegendColor color="#c6efce" /><span>Light Green: ≥75%</span></LegendItem>
+                  </LegendSection>
+                  <LegendSection>
+                    <LegendSectionTitle>{AVERAGE_CSAT_SCORE_LABEL}</LegendSectionTitle>
+                    <LegendItem><LegendColor color="#FF0000" /><span>Red: &lt;4</span></LegendItem>
+                    <LegendItem><LegendColor color="#FFA500" /><span>Orange: 4 to 4.49</span></LegendItem>
+                    <LegendItem><LegendColor color="#c6efce" /><span>Light Green: ≥4.5</span></LegendItem>
+                  </LegendSection>
+                </LegendContainer>
+                {!csatCycleStartDateFormatted && (
+                  <div style={{ padding: '1rem', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.875rem', color: '#92400e' }}>CSAT cycle start date is required. Set it in the main upload flow.</div>
+                )}
+                {csatCycleStartDateFormatted && !practiceTrendSources.first && (
+                  <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+                    No Practice data found in the <strong>Customer Success Survey Status</strong> report.
+                  </div>
+                )}
+                {csatCycleStartDateFormatted && practiceTrendSources.first && accountPracticeWiseTableDataWithTrend.length === 0 && (
+                  <div style={{ padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', color: '#64748b' }}>No rows with date ≥ CSAT cycle start.</div>
+                )}
+                {accountPracticeWiseTableDataWithTrend.length > 0 && (
+                  <TableContainer>
+                    <TableWrapper>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <Th style={{ textAlign: 'center' }}></Th>
+                            <Th style={{ textAlign: 'center' }}></Th>
+                            <Th style={{ textAlign: 'center' }}></Th>
+                            <Th colSpan={4} style={{ textAlign: 'center' }}>{acsatCycle || 'H2 2025'}</Th>
+                            {showTrendSection && (
+                              <Th colSpan={2} style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>
+                                {trendHeaderLabel}
+                              </Th>
+                            )}
+                          </tr>
+                          <tr>
+                            <Th style={{ textAlign: 'center' }}>Sr. No.</Th>
+                            <Th style={{ textAlign: 'center' }}>Business Unit</Th>
+                            <Th style={{ textAlign: 'center' }}>Account Name</Th>
+                            <Th style={{ textAlign: 'center' }}>Practice</Th>
+                            <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                            <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                            <Th style={{ textAlign: 'center' }}>Response Rate %</Th>
+                            <Th style={{ textAlign: 'center' }}>Average CSAT Score</Th>
+                            {showTrendSection && <Th style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>Response Rate Trend</Th>}
+                            {showTrendSection && <Th style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>Average CSAT Score Trend</Th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {accountPracticeWiseTableDataWithTrend.map((row, idx) => {
+                            const rrDiff = row.responseRateTrendDiff;
+                            const csatDiff = row.avgCSATTrendDiff;
+                            const rrTrendDisplay = rrDiff == null ? '-' : `(${rrDiff >= 0 ? '+' : ''}${Number(rrDiff).toFixed(1)}%) ${rrDiff > 0 ? '↑' : rrDiff < 0 ? '↓' : '−'}`;
+                            const csatTrendDisplay = csatDiff == null ? '-' : `(${csatDiff >= 0 ? '+' : ''}${Number(csatDiff).toFixed(2)}) ${csatDiff > 0 ? '↑' : csatDiff < 0 ? '↓' : '−'}`;
+                            const rrTrendColor = rrDiff == null ? {} : rrDiff > 0 ? { color: '#16a34a' } : rrDiff < 0 ? { color: '#dc2626' } : {};
+                            const csatTrendColor = csatDiff == null ? {} : csatDiff > 0 ? { color: '#16a34a' } : csatDiff < 0 ? { color: '#dc2626' } : {};
+                            const rowStyle = row.isAllPracticeRow ? { backgroundColor: '#e2e8f0', fontWeight: '700' } : {};
+                            return (
+                              <tr key={`ap-${idx}`} style={rowStyle}>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.srNo ?? ''}</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.businessUnit}</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.accountName}</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.practice}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.polled}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.responded}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getResponseRateColor(row.responseRatePct, row.responded === 0) }}>
+                                  {row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%
+                                </Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getAvgCSATScoreColor(row.avgActualScore, row.responded === 0) }}>
+                                  {row.avgActualScore != null ? Number(row.avgActualScore).toFixed(2) : '-'}
+                                </Td>
+                                {showTrendSection && <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...rrTrendColor }}>{rrTrendDisplay}</Td>}
+                                {showTrendSection && <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...csatTrendColor }}>{csatTrendDisplay}</Td>}
+                              </tr>
+                            );
+                          })}
+                          {accountPracticeWiseTableDataWithTrend.grandTotal && (() => {
+                            const row = accountPracticeWiseTableDataWithTrend.grandTotal;
+                            const rrDiff = row.responseRateTrendDiff;
+                            const csatDiff = row.avgCSATTrendDiff;
+                            const rrTrendDisplay = rrDiff == null ? '-' : `(${rrDiff >= 0 ? '+' : ''}${Number(rrDiff).toFixed(1)}%) ${rrDiff > 0 ? '↑' : rrDiff < 0 ? '↓' : '−'}`;
+                            const csatTrendDisplay = csatDiff == null ? '-' : `(${csatDiff >= 0 ? '+' : ''}${Number(csatDiff).toFixed(2)}) ${csatDiff > 0 ? '↑' : csatDiff < 0 ? '↓' : '−'}`;
+                            const rrTrendColor = rrDiff == null ? {} : rrDiff > 0 ? { color: '#16a34a' } : rrDiff < 0 ? { color: '#dc2626' } : {};
+                            const csatTrendColor = csatDiff == null ? {} : csatDiff > 0 ? { color: '#16a34a' } : csatDiff < 0 ? { color: '#dc2626' } : {};
+                            const gtStyle = { backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: '700' };
+                            return (
+                              <tr key="ap-grand-total" style={gtStyle}>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}></Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...gtStyle }} colSpan={2}>Grand Total</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...gtStyle }}></Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>{row.polled}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>{row.responded}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>
+                                  {row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%
+                                </Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>
+                                  {row.avgActualScore != null ? Number(row.avgActualScore).toFixed(2) : '-'}
+                                </Td>
+                                {showTrendSection && <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle, ...rrTrendColor }}>{rrTrendDisplay}</Td>}
+                                {showTrendSection && <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle, ...csatTrendColor }}>{csatTrendDisplay}</Td>}
+                              </tr>
+                            );
+                          })()}
+                        </tbody>
+                      </Table>
+                    </TableWrapper>
+                  </TableContainer>
+                )}
+              </div>
+
+              {/* Last year PCSAT response rate and Avg CSAT score (from Trend-Analysis-H12025.xlsx, no trend columns) */}
+              <div style={{ padding: '1.5rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e40af' }}>Last year PCSAT response rate and Avg CSAT score</h2>
+                  {accountPracticeWiseTableDataSecond.length > 0 && (
+                    <button type="button" onClick={downloadAccountPracticeWiseDataSecond} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Download size={16} />
+                      Download Excel
+                    </button>
+                  )}
+                </div>
+                <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#1d4ed8' }}>
+                  Data from <strong>Trend-Analysis-H12025.xlsx</strong> (Sheet2: &quot;CSAT sent and received Report&quot;) in <code>public/data/</code>. Same columns: Sr. No., Business Unit, Account Name, Practice, #Polled, #Responded, Response Rate %, Average CSAT Score. Date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}).
+                </p>
+                {csatCycleStartDateFormatted && !practiceTrendSources.second && (
+                  <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+                    No Account/Practice trend data found. Ensure <strong>Trend-Analysis-H12025.xlsx</strong> exists in <code>public/data/</code> and its Sheet2 (&quot;CSAT sent and received Report&quot;) contains <strong>CUSTOMER NAME</strong> and <strong>Practice</strong> columns.
+                  </div>
+                )}
+                {csatCycleStartDateFormatted && practiceTrendSources.second && accountPracticeWiseTableDataSecond.length === 0 && (
+                  <div style={{ padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', color: '#64748b' }}>No rows with date ≥ CSAT cycle start in trend file.</div>
+                )}
+                {accountPracticeWiseTableDataSecond.length > 0 && (
+                  <TableContainer>
+                    <TableWrapper>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <Th style={{ textAlign: 'center' }}>Sr. No.</Th>
+                            <Th style={{ textAlign: 'center' }}>Business Unit</Th>
+                            <Th style={{ textAlign: 'center' }}>Account Name</Th>
+                            <Th style={{ textAlign: 'center' }}>Practice</Th>
+                            <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                            <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                            <Th style={{ textAlign: 'center' }}>Response Rate %</Th>
+                            <Th style={{ textAlign: 'center' }}>Average CSAT Score</Th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {accountPracticeWiseTableDataSecond.map((row, idx) => {
+                            const rowStyle = row.isAllPracticeRow ? { backgroundColor: '#e2e8f0', fontWeight: '700' } : {};
+                            return (
+                              <tr key={`ap2-${idx}`} style={rowStyle}>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.srNo ?? ''}</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.businessUnit}</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.accountName}</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.practice}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.polled}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.responded}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getResponseRateColor(row.responseRatePct, row.responded === 0) }}>
+                                  {row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%
+                                </Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getAvgCSATScoreColor(row.avgActualScore, row.responded === 0) }}>
+                                  {row.avgActualScore != null ? Number(row.avgActualScore).toFixed(2) : '-'}
+                                </Td>
+                              </tr>
+                            );
+                          })}
+                          {accountPracticeWiseTableDataSecond.grandTotal && (() => {
+                            const row = accountPracticeWiseTableDataSecond.grandTotal;
+                            const gtStyle = { backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: '700' };
+                            return (
+                              <tr key="ap2-grand-total" style={gtStyle}>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}></Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...gtStyle }} colSpan={2}>Grand Total</Td>
+                                <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...gtStyle }}></Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>{row.polled}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>{row.responded}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>
+                                  {row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%
+                                </Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...gtStyle }}>
+                                  {row.avgActualScore != null ? Number(row.avgActualScore).toFixed(2) : '-'}
+                                </Td>
+                              </tr>
+                            );
+                          })()}
+                        </tbody>
+                      </Table>
+                    </TableWrapper>
+                  </TableContainer>
+                )}
+              </div>
+            </div>
+          ) : showAccountPracticeWiseTop10 ? (
+            <div style={{ marginTop: '1rem' }}>
+              {/* Dashboard: Account_Practice_Wise_Response_Rate_Top10 */}
+              <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#166534' }}>Account_Practice_Wise_Response_Rate_Top10</h2>
+                  {accountPracticeWiseTop10TableDataWithTrend.length > 0 && (
+                    <button type="button" onClick={downloadAccountPracticeWiseTop10Data} style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Download size={16} />
+                      Download Excel
+                    </button>
+                  )}
+                </div>
+                <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#15803d' }}>
+                  Data from the <strong>Customer Success Survey Status</strong> report, restricted to the 10 named Top 10 accounts (plus any other Top10-flagged account). #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE) where date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}, MM-DD-YYYY). Response Rate % = #Responded ÷ #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE). Group by Account and Practice; &quot;All Practice&quot; is the account roll-up. Summary rows below combine Top10 and non-Top10 (&quot;Other Account&quot;) totals, ending with &quot;Overall NR&quot; as the grand total.
+                </p>
+                {/* Legend: Response Rate% and Average CSAT Score scales */}
+                <LegendContainer style={{ marginBottom: '1rem' }}>
+                  <LegendSection>
+                    <LegendSectionTitle>{RESPONSE_RATE_LABEL}</LegendSectionTitle>
+                    <LegendItem><LegendColor color="#FF0000" /><span>Red: &lt;50%</span></LegendItem>
+                    <LegendItem><LegendColor color="#FFA500" /><span>Orange: 50% to 74%</span></LegendItem>
+                    <LegendItem><LegendColor color="#c6efce" /><span>Light Green: ≥75%</span></LegendItem>
+                  </LegendSection>
+                  <LegendSection>
+                    <LegendSectionTitle>{AVERAGE_CSAT_SCORE_LABEL}</LegendSectionTitle>
+                    <LegendItem><LegendColor color="#FF0000" /><span>Red: &lt;4</span></LegendItem>
+                    <LegendItem><LegendColor color="#FFA500" /><span>Orange: 4 to 4.49</span></LegendItem>
+                    <LegendItem><LegendColor color="#c6efce" /><span>Light Green: ≥4.5</span></LegendItem>
+                  </LegendSection>
+                </LegendContainer>
+                {!csatCycleStartDateFormatted && (
+                  <div style={{ padding: '1rem', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.875rem', color: '#92400e' }}>CSAT cycle start date is required. Set it in the main upload flow.</div>
+                )}
+                {csatCycleStartDateFormatted && !practiceTrendSources.first && (
+                  <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+                    No Practice data found in the <strong>Customer Success Survey Status</strong> report.
+                  </div>
+                )}
+                {csatCycleStartDateFormatted && practiceTrendSources.first && accountPracticeWiseTop10TableDataWithTrend.length === 0 && (
+                  <div style={{ padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', color: '#64748b' }}>No rows with date ≥ CSAT cycle start.</div>
+                )}
+                {accountPracticeWiseTop10TableDataWithTrend.length > 0 && (
+                  <TableContainer>
+                    <TableWrapper>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <Th style={{ textAlign: 'center' }}></Th>
+                            <Th style={{ textAlign: 'center' }}></Th>
+                            <Th style={{ textAlign: 'center' }}></Th>
+                            <Th colSpan={4} style={{ textAlign: 'center' }}>{acsatCycle || 'H2 2025'}</Th>
+                            {showTrendSection && (
+                              <Th colSpan={2} style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>
+                                {trendHeaderLabel}
+                              </Th>
+                            )}
+                          </tr>
+                          <tr>
+                            <Th style={{ textAlign: 'center' }}>Sr. No.</Th>
+                            <Th style={{ textAlign: 'center' }}>Business Unit</Th>
+                            <Th style={{ textAlign: 'center' }}>Account Name</Th>
+                            <Th style={{ textAlign: 'center' }}>Practice</Th>
+                            <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                            <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                            <Th style={{ textAlign: 'center' }}>Response Rate %</Th>
+                            <Th style={{ textAlign: 'center' }}>Average CSAT Score</Th>
+                            {showTrendSection && <Th style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>Response Rate Trend</Th>}
+                            {showTrendSection && <Th style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>Average CSAT Score Trend</Th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {accountPracticeWiseTop10TableDataWithTrend.map((row, idx) => {
+                            const rrDiff = row.responseRateTrendDiff;
+                            const csatDiff = row.avgCSATTrendDiff;
+                            const rrTrendDisplay = rrDiff == null ? '-' : `(${rrDiff >= 0 ? '+' : ''}${Number(rrDiff).toFixed(1)}%) ${rrDiff > 0 ? '↑' : rrDiff < 0 ? '↓' : '−'}`;
+                            const csatTrendDisplay = csatDiff == null ? '-' : `(${csatDiff >= 0 ? '+' : ''}${Number(csatDiff).toFixed(2)}) ${csatDiff > 0 ? '↑' : csatDiff < 0 ? '↓' : '−'}`;
+                            const rrTrendColor = rrDiff == null ? {} : rrDiff > 0 ? { color: '#16a34a' } : rrDiff < 0 ? { color: '#dc2626' } : {};
+                            const csatTrendColor = csatDiff == null ? {} : csatDiff > 0 ? { color: '#16a34a' } : csatDiff < 0 ? { color: '#dc2626' } : {};
+                            const summaryTierColors = {
+                              'top10-total': '#FFF2CC',
+                              'top10-practice': '#FFF9E6',
+                              'other-total': '#BDD7EE',
+                              'other-practice': '#DCE9F5',
+                              'overall': '#E4DFEC'
+                            };
+                            const rowStyle = row.isSummaryRow
+                              ? { backgroundColor: summaryTierColors[row.summaryTier] || '#e2e8f0', fontWeight: '700' }
+                              : (row.isAllPracticeRow ? { backgroundColor: '#e2e8f0', fontWeight: '700' } : {});
+                            return (
+                              <tr key={`apt-${idx}`} style={rowStyle}>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.srNo ?? ''}</Td>
+                                {row.isSummaryRow ? (
+                                  <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }} colSpan={3}>{row.accountName}</Td>
+                                ) : (
+                                  <React.Fragment>
+                                    <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.businessUnit}</Td>
+                                    <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.accountName}</Td>
+                                    <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.practice}</Td>
+                                  </React.Fragment>
+                                )}
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.polled}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.responded}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getResponseRateColor(row.responseRatePct, row.responded === 0) }}>
+                                  {row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%
+                                </Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getAvgCSATScoreColor(row.avgActualScore, row.responded === 0) }}>
+                                  {row.avgActualScore != null ? Number(row.avgActualScore).toFixed(2) : '-'}
+                                </Td>
+                                {showTrendSection && <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...rrTrendColor }}>{rrTrendDisplay}</Td>}
+                                {showTrendSection && <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...csatTrendColor }}>{csatTrendDisplay}</Td>}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </Table>
+                    </TableWrapper>
+                  </TableContainer>
+                )}
+              </div>
+
+              {/* Last year PCSAT response rate and Avg rating score (from Trend-Analysis-H12025.xlsx, no trend columns) */}
+              <div style={{ padding: '1.5rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e40af' }}>Last year PCSAT response rate and Avg rating score</h2>
+                  {accountPracticeWiseTop10TableDataSecond.length > 0 && (
+                    <button type="button" onClick={downloadAccountPracticeWiseTop10DataSecond} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Download size={16} />
+                      Download Excel
+                    </button>
+                  )}
+                </div>
+                <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#1d4ed8' }}>
+                  Data from <strong>Trend-Analysis-H12025.xlsx</strong> (Sheet2: &quot;CSAT sent and received Report&quot;) in <code>public/data/</code>, restricted to the 10 named Top 10 accounts (plus any other Top10-flagged account). Same columns: Sr. No., Business Unit, Account Name, Practice, #Polled, #Responded, Response Rate %, Average CSAT Score. Date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}).
+                </p>
+                {csatCycleStartDateFormatted && !practiceTrendSources.second && (
+                  <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+                    No Account/Practice trend data found. Ensure <strong>Trend-Analysis-H12025.xlsx</strong> exists in <code>public/data/</code> and its Sheet2 (&quot;CSAT sent and received Report&quot;) contains <strong>CUSTOMER NAME</strong> and <strong>Practice</strong> columns.
+                  </div>
+                )}
+                {csatCycleStartDateFormatted && practiceTrendSources.second && accountPracticeWiseTop10TableDataSecond.length === 0 && (
+                  <div style={{ padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', color: '#64748b' }}>No rows with date ≥ CSAT cycle start in trend file.</div>
+                )}
+                {accountPracticeWiseTop10TableDataSecond.length > 0 && (
+                  <TableContainer>
+                    <TableWrapper>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <Th style={{ textAlign: 'center' }}>Sr. No.</Th>
+                            <Th style={{ textAlign: 'center' }}>Business Unit</Th>
+                            <Th style={{ textAlign: 'center' }}>Account Name</Th>
+                            <Th style={{ textAlign: 'center' }}>Practice</Th>
+                            <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                            <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                            <Th style={{ textAlign: 'center' }}>Response Rate %</Th>
+                            <Th style={{ textAlign: 'center' }}>Average CSAT Score</Th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {accountPracticeWiseTop10TableDataSecond.map((row, idx) => {
+                            const summaryTierColors = {
+                              'top10-total': '#FFF2CC',
+                              'top10-practice': '#FFF9E6',
+                              'other-total': '#BDD7EE',
+                              'other-practice': '#DCE9F5',
+                              'overall': '#E4DFEC'
+                            };
+                            const rowStyle = row.isSummaryRow
+                              ? { backgroundColor: summaryTierColors[row.summaryTier] || '#e2e8f0', fontWeight: '700' }
+                              : (row.isAllPracticeRow ? { backgroundColor: '#e2e8f0', fontWeight: '700' } : {});
+                            return (
+                              <tr key={`apt2-${idx}`} style={rowStyle}>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.srNo ?? ''}</Td>
+                                {row.isSummaryRow ? (
+                                  <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }} colSpan={3}>{row.accountName}</Td>
+                                ) : (
+                                  <React.Fragment>
+                                    <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.businessUnit}</Td>
+                                    <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.isAllPracticeRow ? '' : row.accountName}</Td>
+                                    <Td style={{ textAlign: 'left', border: '1px solid #d1d5db', ...rowStyle }}>{row.practice}</Td>
+                                  </React.Fragment>
+                                )}
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.polled}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle }}>{row.responded}</Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getResponseRateColor(row.responseRatePct, row.responded === 0) }}>
+                                  {row.responded === 0 ? '0.0' : formatResponseRateOneDecimal(row.responseRatePct)}%
+                                </Td>
+                                <Td style={{ textAlign: 'center', border: '1px solid #d1d5db', ...rowStyle, ...getAvgCSATScoreColor(row.avgActualScore, row.responded === 0) }}>
+                                  {row.avgActualScore != null ? Number(row.avgActualScore).toFixed(2) : '-'}
+                                </Td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </Table>
                     </TableWrapper>
@@ -5958,7 +7242,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
       {/* Bar Chart for Account-wise Response Rate - Display automatically for Account-wise view */}
       {console.log('Bar chart render check:', { showBuWise, showTop10, barChartDataLength: barChartData?.length, filteredDataLength: filteredData?.length })}
-      {!showBuWise && !showTop10 && (
+      {!showBuWise && !showTop10 && !showAccountPracticeWise && !showAccountPracticeWiseTop10 && (
         <ChartContainer>
           <ChartHeader>
             <ChartTitle>📊 Display Response Rate (%) for accounts</ChartTitle>
@@ -6579,7 +7863,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       )}
 
       {/* Trend Analysis Section - Account-wise (from Trend-Analysis-H12025.xlsx uploaded in trend analysis upload) */}
-      {!showBuWise && !showTop10 && !showPracticeWise && showTrendSection && (
+      {!showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 && showTrendSection && (
         <div style={{ marginTop: '2rem' }}>
           <div style={{
             padding: '1rem 1.25rem',
