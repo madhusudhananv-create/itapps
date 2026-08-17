@@ -978,6 +978,10 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
   const nameByCustomerId = new Map();
   const polledRespondedByAccountPractice = new Map(); // key: `${custId}|||${practiceLower}`
   const polledRespondedByAccount = new Map(); // key: custId (All Practice)
+  // Every practice seen for a customer in the second sheet (Polled/Responded source), even when that
+  // practice has no rated rows yet (e.g. a Draft/pending survey) — used to ensure such practices still
+  // get their own row instead of silently being folded into the account's "All Practice" total only.
+  const practiceNamesByCustomerId = new Map();
   let grandPolled = 0;
   let grandResponded = 0;
 
@@ -1009,6 +1013,10 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
         const existing = practiceByCustomerId.get(custKey);
         if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
       }
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+        if (!practiceNamesByCustomerId.has(custKey)) practiceNamesByCustomerId.set(custKey, new Set());
+        practiceNamesByCustomerId.get(custKey).add(practiceVal);
+      }
       const buVal = (row[buCol2] ?? row['BUSSINESS UNIT'] ?? '').toString().trim();
       if (buVal && !businessUnitByCustomerId.has(custKey)) businessUnitByCustomerId.set(custKey, buVal);
       const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
@@ -1021,6 +1029,8 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
       const recAP = polledRespondedByAccountPractice.get(apKey);
       const recA = polledRespondedByAccount.get(custKey);
 
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+
       const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
       let sentOk = false;
       if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
@@ -1030,7 +1040,6 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
       if (sentOk) { recAP.polled++; recA.polled++; grandPolled++; }
 
       const receivedVal = row[receivedDateCol] ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'] ?? row['CSS RECEIVED DATE'];
-      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
       const isCompletedStatus = statusVal === 'completed';
       const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
       const receivedOk = isCompletedStatus && !!(receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)));
@@ -1112,6 +1121,20 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
     });
     return result;
   };
+
+  // Merge in practices known only from the second sheet (e.g. Draft/pending surveys with no rating
+  // yet) so every practice with a Polled count still gets its own row, not just ones with ratings.
+  practiceNamesByCustomerId.forEach((practiceSet, custKey) => {
+    if (!accountMeta.has(custKey)) {
+      accountMeta.set(custKey, {
+        accountName: nameByCustomerId.get(custKey) || custKey,
+        businessUnit: businessUnitByCustomerId.get(custKey) || 'N/A',
+        practices: new Set()
+      });
+    }
+    const meta = accountMeta.get(custKey);
+    practiceSet.forEach(p => meta.practices.add(p));
+  });
 
   const accountKeys = [...accountMeta.keys()].sort((a, b) => {
     const metaA = accountMeta.get(a);
@@ -1255,6 +1278,10 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
   const polledRespondedByAccount = new Map(); // custKey (All Practice)
   const polledRespondedByTier = new Map(); // 'top10' | 'other' -> { polled, responded }
   const polledRespondedByTierPractice = new Map(); // `${tier}|||${practiceLower}`
+  // Every practice seen for a customer in the second sheet, even when it has no rated rows yet
+  // (e.g. a Draft/pending survey) — ensures such practices still get their own row.
+  const practiceNamesByCustomerId = new Map();
+  const tierPractices = { top10: new Set(), other: new Set() };
   let grandPolled = 0;
   let grandResponded = 0;
 
@@ -1286,6 +1313,10 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
         const existing = practiceByCustomerId.get(custKey);
         if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
       }
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+        if (!practiceNamesByCustomerId.has(custKey)) practiceNamesByCustomerId.set(custKey, new Set());
+        practiceNamesByCustomerId.get(custKey).add(practiceVal);
+      }
       const buVal = (row[buCol2] ?? row['BUSSINESS UNIT'] ?? '').toString().trim();
       if (buVal && !businessUnitByCustomerId.has(custKey)) businessUnitByCustomerId.set(custKey, buVal);
       const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
@@ -1298,6 +1329,10 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
       const practiceKey = (practiceVal || 'n/a').toLowerCase();
       const apKey = `${custKey}|||${practiceKey}`;
       const tpKey = `${tier}|||${practiceKey}`;
+      // Ensures the summary tiers' "Top10 <Practice>" / "Other Account <Practice>" rows still list a
+      // practice whose only survey is Draft/pending (no rating row exists yet to add it via the
+      // Sheet1 loop below).
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') tierPractices[tier].add(practiceVal);
       if (!polledRespondedByAccountPractice.has(apKey)) polledRespondedByAccountPractice.set(apKey, { polled: 0, responded: 0 });
       if (!polledRespondedByAccount.has(custKey)) polledRespondedByAccount.set(custKey, { polled: 0, responded: 0 });
       if (!polledRespondedByTier.has(tier)) polledRespondedByTier.set(tier, { polled: 0, responded: 0 });
@@ -1306,6 +1341,8 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
       const recA = polledRespondedByAccount.get(custKey);
       const recTier = polledRespondedByTier.get(tier);
       const recTP = polledRespondedByTierPractice.get(tpKey);
+
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
 
       const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
       let sentOk = false;
@@ -1316,7 +1353,6 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
       if (sentOk) { recAP.polled++; recA.polled++; recTier.polled++; recTP.polled++; grandPolled++; }
 
       const receivedVal = row[receivedDateCol] ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'] ?? row['CSS RECEIVED DATE'];
-      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
       const isCompletedStatus = statusVal === 'completed';
       const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
       const receivedOk = isCompletedStatus && !!(receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)));
@@ -1331,7 +1367,6 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
   const grandPerspectiveRatings = {};
   const perspectiveSet = new Set();
   const accountMeta = new Map(); // custKey -> { accountName, businessUnit, practices: Set, isTop10 }
-  const tierPractices = { top10: new Set(), other: new Set() };
 
   source.forEach(row => {
     const qc = row['QUESTION_CATEGORY'] ?? row['Question Category'] ?? row['question_category'];
@@ -1416,6 +1451,21 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
     });
     return result;
   };
+
+  // Merge in practices known only from the second sheet (e.g. Draft/pending surveys with no rating
+  // yet) so every practice with a Polled count still gets its own row, not just ones with ratings.
+  practiceNamesByCustomerId.forEach((practiceSet, custKey) => {
+    if (!accountMeta.has(custKey)) {
+      accountMeta.set(custKey, {
+        accountName: nameByCustomerId.get(custKey) || custKey,
+        businessUnit: businessUnitByCustomerId.get(custKey) || 'N/A',
+        practices: new Set(),
+        isTop10: !!top10ByCustomerId.get(custKey)
+      });
+    }
+    const meta = accountMeta.get(custKey);
+    practiceSet.forEach(p => meta.practices.add(p));
+  });
 
   // Individual Top 10 account rows, in the fixed display order.
   const top10AccountKeys = [...accountMeta.keys()]
@@ -1586,6 +1636,9 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
   const nameByCustomerId = new Map();
   const polledRespondedByAccountPractice = new Map();
   const polledRespondedByAccount = new Map();
+  // Every practice seen for a customer in the second sheet, even when it has no rated rows yet
+  // (e.g. a Draft/pending survey) — ensures such practices still get their own row.
+  const practiceNamesByCustomerId = new Map();
   let grandPolled = 0;
   let grandResponded = 0;
 
@@ -1617,6 +1670,10 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
         const existing = practiceByCustomerId.get(custKey);
         if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
       }
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+        if (!practiceNamesByCustomerId.has(custKey)) practiceNamesByCustomerId.set(custKey, new Set());
+        practiceNamesByCustomerId.get(custKey).add(practiceVal);
+      }
       const buVal = (row[buCol2] ?? row['BUSSINESS UNIT'] ?? '').toString().trim();
       if (buVal && !businessUnitByCustomerId.has(custKey)) businessUnitByCustomerId.set(custKey, buVal);
       const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
@@ -1629,6 +1686,8 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
       const recAP = polledRespondedByAccountPractice.get(apKey);
       const recA = polledRespondedByAccount.get(custKey);
 
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+
       const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
       let sentOk = false;
       if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
@@ -1638,7 +1697,6 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
       if (sentOk) { recAP.polled++; recA.polled++; grandPolled++; }
 
       const receivedVal = row[receivedDateCol] ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'] ?? row['CSS RECEIVED DATE'];
-      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
       const isCompletedStatus = statusVal === 'completed';
       const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
       const receivedOk = isCompletedStatus && !!(receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)));
@@ -1708,6 +1766,20 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
     });
     return result;
   };
+
+  // Merge in practices known only from the second sheet (e.g. Draft/pending surveys with no rating
+  // yet) so every practice with a Polled count still gets its own row, not just ones with ratings.
+  practiceNamesByCustomerId.forEach((practiceSet, custKey) => {
+    if (!accountMeta.has(custKey)) {
+      accountMeta.set(custKey, {
+        accountName: nameByCustomerId.get(custKey) || custKey,
+        businessUnit: businessUnitByCustomerId.get(custKey) || 'N/A',
+        practices: new Set()
+      });
+    }
+    const meta = accountMeta.get(custKey);
+    practiceSet.forEach(p => meta.practices.add(p));
+  });
 
   const accountKeys = [...accountMeta.keys()].sort((a, b) => {
     const metaA = accountMeta.get(a);
