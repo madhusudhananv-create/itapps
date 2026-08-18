@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import { Download, ChevronLeft, TrendingUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList, ComposedChart, Line } from 'recharts';
+import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName } from '../utils/top10Accounts';
 
 // Parse dates from Excel (serial numbers or strings) to MM-DD-YYYY for comparison with csatCycleStartDateFormatted
 const parseExcelDateToMMDDYYYY = (dateValue) => {
@@ -895,25 +896,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     return rows;
   };
 
-  // Fixed display order for the 10 named Top 10 accounts (Account_Practice_Wise_Response_Rate_Top10 view).
-  // Accounts flagged Top10 (TYPE OF ACCOUNT = "Top 10" / Top 10 = 'Y') but not in this list append after, alphabetically.
-  const TOP10_FIXED_ACCOUNT_ORDER_AP = [
-    'Premier Healthcare Solutions Inc',
-    'Blue Cross Blue Shield Association BCBSA',
-    'Frontier Airlines INC',
-    'Tufts Medicine',
-    'AgFirst Farm Credit Bank',
-    'embecta MEDICAL II LLC',
-    'Northern Trust Company',
-    'Jewish Board of Family and Childrens Services JBFCS',
-    'Healthfirst',
-    'AgileOne'
-  ];
-  const normalizeAccountNameForTop10OrderAP = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
-  const getTop10FixedOrderIndexAP = (accountName) => {
-    const norm = normalizeAccountNameForTop10OrderAP(accountName);
-    return TOP10_FIXED_ACCOUNT_ORDER_AP.findIndex(n => normalizeAccountNameForTop10OrderAP(n) === norm);
-  };
+  // Fixed display order + membership for the 10 named Top 10 accounts (Account_Practice_Wise_Response_Rate_Top10 view).
+  // Sourced from a single shared config (utils/top10Accounts.js) so the roster only needs updating in one place.
+  const TOP10_FIXED_ACCOUNT_ORDER_AP = TOP10_ACCOUNT_ORDER;
+  const normalizeAccountNameForTop10OrderAP = normalizeTop10AccountName;
+  const getTop10FixedOrderIndexAP = getTop10AccountOrderIndexShared;
 
   // Account_Practice_Wise_Response_Rate_Top10: restricts buildAccountPracticeWiseRows' per-account/practice math to the
   // 10 fixed Top10 accounts (plus any other Top10-flagged account), in the fixed order, then appends 5 dynamically
@@ -934,12 +921,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       Object.keys(firstRow).find(k => k && /actual\s*score/i.test(String(k))) ||
       Object.keys(firstRow).find(k => k && (String(k).trim() === 'ACTUAL SCORE' || String(k).toLowerCase().replace(/\s/g, '') === 'actualscore')) ||
       'ACTUAL SCORE';
-    const typeOfAccountCol = Object.keys(firstRow).find(k => /type\s*of\s*account|top\s*10/i.test(String(k))) || 'TYPE OF ACCOUNT';
-    const isTop10RowFlag = (row) => {
-      const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim().toLowerCase();
-      return val === 'top 10' || val === 'y';
-    };
-
     // key: account||practice
     const byKey = {};
     const accountBU = {};
@@ -950,7 +931,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const buRaw = (row[businessUnitCol] ?? row[COL_BUSINESS_UNIT] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnit = normalizeBusinessUnitDisplay(buRaw);
       if (!accountBU[accountName]) accountBU[accountName] = businessUnit;
-      if (isTop10RowFlag(row)) accountTop10[accountName] = true;
       const key = `${accountName}||${practice}`;
       if (!byKey[key]) byKey[key] = { accountName, practice, businessUnit, polled: 0, responded: 0, actualScoreSum: 0, actualScoreCount: 0 };
 
@@ -977,9 +957,11 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }
     });
 
-    // Always treat the 10 fixed named accounts as Top10, even if the source file's flag is missing/mismatched.
+    // Top 10 membership is defined SOLELY by the fixed named-account list, not by the uploaded data's
+    // TYPE OF ACCOUNT / "Top 10" flag � that flag can be stale (e.g. still marking a previously-Top10
+    // account that has since been replaced). The fixed list is the single source of truth.
     Object.keys(accountBU).forEach(name => {
-      if (getTop10FixedOrderIndexAP(name) !== -1) accountTop10[name] = true;
+      accountTop10[name] = getTop10FixedOrderIndexAP(name) !== -1;
     });
 
     const byAccount = {};
@@ -1456,14 +1438,9 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const practice = row['Practice'] ?? row['PRACTICE'];
       return practice != null && String(practice).trim() !== '' ? String(practice).trim() : 'N/A';
     };
-    // TYPE OF ACCOUNT = "Top 10" (when column is TYPE OF ACCOUNT) or Top 10 = 'Y' (legacy) means Top 10 account
-    const isTop10Account = (row) => {
-      const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim();
-      if (typeOfAccountCol === COL_TYPE_OF_ACCOUNT) {
-        return val.toLowerCase() === 'top 10';
-      }
-      return val.toUpperCase() === 'Y';
-    };
+    // Top 10 membership is defined solely by the shared, curated account list — not by this
+    // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+    const isTop10Account = (row) => isTop10AccountName(getCustomerName(row));
 
     // Get Top 10 customers from the second sheet (TYPE OF ACCOUNT = "Top 10" or Top 10 = 'Y')
     const top10Customers = new Set();
@@ -2043,20 +2020,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     
     // Custom sorting for Top 10 accounts (Sr. No. 1–12 in correct order)
     if (showTop10 && !showBuWise) {
-      const top10Order = [
-        'Premier Healthcare Solutions Inc',
-        'Blue Cross Blue Shield Association BCBSA',
-        'Frontier Airlines INC',
-        'Premier - Horizon II - Covenant Health',
-        'Tufts Medicine',
-        'BronxCare Health System',
-        'AgFirst Farm Credit Bank',
-        'embecta MEDICAL II LLC',
-        'Northern Trust Company',
-        'Jewish Board of Family and Childrens Services JBFCS',
-        'Healthfirst',
-        'AgileOne'
-      ];
+      const top10Order = TOP10_ACCOUNT_ORDER;
       
       filtered.sort((a, b) => {
         const indexA = top10Order.indexOf(a.customerName);
@@ -2346,15 +2310,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }) || 'YEAR - QUARTER';
       let fileYearQuarter = null;
 
-      const isTop10Account = (row) => {
-        const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim().toLowerCase();
-        return val === 'top 10' || val === 'y';
-      };
-      const isOtherAccount = (row) => {
-        const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim().toLowerCase();
-        return val === '' || val === 'n/a';
-      };
-
       const getCustomerId = (row) => {
         const id = custIdCol ? row[custIdCol] : (row['CUST_ID'] ?? row['CUSTOMER_ID']);
         return id != null && id !== '' ? String(id).trim() : '';
@@ -2363,6 +2318,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         const name = row[customerNameCol] ?? row['CUST_NM'];
         return name != null && String(name).trim() !== '' ? String(name).trim() : 'N/A';
       };
+      // Top 10 membership is defined solely by the shared, curated account list — not by this
+      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+      const isTop10Account = (row) => isTop10AccountName(getCustomerName(row));
+      const isOtherAccount = (row) => !isTop10Account(row);
 
       const accountMap = {};
       const otherAgg = { polled: 0, responded: 0, actualSum: 0, actualCount: 0 };
@@ -2435,20 +2394,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         }))
         .sort((a, b) => {
           // Same fixed account order as the Top 10 Accounts table (Premier first)
-          const top10FixedOrder = [
-            'Premier Healthcare Solutions Inc',
-            'Blue Cross Blue Shield Association BCBSA',
-            'Frontier Airlines INC',
-            'Premier - Horizon II - Covenant Health',
-            'Tufts Medicine',
-            'BronxCare Health System',
-            'AgFirst Farm Credit Bank',
-            'embecta MEDICAL II LLC',
-            'Northern Trust Company',
-            'Jewish Board of Family and Childrens Services JBFCS',
-            'Healthfirst',
-            'AgileOne'
-          ];
+          const top10FixedOrder = TOP10_ACCOUNT_ORDER;
           const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
           const idxA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
           const idxB = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(b.accountName));
@@ -2841,11 +2787,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     };
     const avgScore = (sum, count) => (count > 0 ? Math.round((sum / count) * 100) / 100 : null);
 
-    const isTop10Account = (row) => {
-      const val = (row[typeOfAccountCol] ?? row['Top 10'] ?? '').toString().trim();
-      if (typeOfAccountCol === COL_TYPE_OF_ACCOUNT) return val.toLowerCase() === 'top 10';
-      return val.toUpperCase() === 'Y';
-    };
+    const customerNameColTop10Scores = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+    // Top 10 membership is defined solely by the shared, curated account list — not by this
+    // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+    const isTop10Account = (row) => isTop10AccountName(row[customerNameColTop10Scores] ?? row['CUST_NM'] ?? '');
     const norm = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ').replace(/-/g, ' ');
     const isFullyManaged = (et) => norm(et) === 'fully managed';
     const isCoManaged = (et) => norm(et) === 'co managed';
