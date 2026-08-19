@@ -6998,7 +6998,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         <>
           <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
             Same rules as <strong>Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)</strong>, restricted to the <strong>Top 10 accounts</strong> (fixed order) plus any other account flagged <strong>Top 10</strong> in the data.
-            Rating % values are rounded to the <strong>nearest whole percent</strong> (no decimals) in this view.
+            Rating % values are shown to <strong>one decimal place</strong> in this view.
             Below the account rows: <strong>Top 10 Accounts</strong>, <strong>Top10 &lt;Practice&gt;</strong> (one per practice), <strong>Other Account NR</strong>, <strong>Other Account &lt;Practice&gt;</strong> (one per practice), and <strong>Overall NR</strong> (grand total across everyone).
             {showTrendAnalysis && <> Trend columns compare rating % of this dashboard vs the last cycle PCSAT file — difference shown first, then <span style={{ color: '#16a34a', fontWeight: '600' }}>↑</span> (green) for increase or <span style={{ color: '#dc2626', fontWeight: '600' }}>↓</span> (red) for decrease.</>}
             {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
@@ -7094,7 +7094,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                           {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
                             const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
                             const value = row[colName];
-                            const displayVal = isHyphen || value === '-' ? '-' : value;
+                            const displayVal = isHyphen || value === '-' ? '-' : formatDistributionOneDecimal(value);
                             return (
                               <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', ...(displayVal === '-' && rollupBg ? { backgroundColor: rollupBg } : {}) }}>
                                 {displayVal === '-' ? '-' : `${displayVal}%`}
@@ -7190,7 +7190,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                             {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
                               const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
                               const value = row[colName];
-                              const displayVal = isHyphen || value === '-' ? '-' : value;
+                              const displayVal = isHyphen || value === '-' ? '-' : formatDistributionOneDecimal(value);
                               return (
                                 <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', ...(displayVal === '-' && rollupBg ? { backgroundColor: rollupBg } : {}) }}>
                                   {displayVal === '-' ? '-' : `${displayVal}%`}
@@ -7327,7 +7327,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                         const value = accountPracticeWiseGrandTotal[colName];
                         const displayVal = accountPracticeWiseGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
                         return (
-                          <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', backgroundColor: displayVal === '-' ? '#E2E8F0' : undefined }}>
+                          <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
                             {displayVal === '-' ? '-' : `${displayVal}%`}
                           </Td>
                         );
@@ -7458,7 +7458,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                             const value = accountPracticeWiseTrendGrandTotal[colName];
                             const displayVal = accountPracticeWiseTrendGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
                             return (
-                              <Td key={`acct-trend-gt-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', backgroundColor: displayVal === '-' ? '#E2E8F0' : undefined }}>
+                              <Td key={`acct-trend-gt-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
                                 {displayVal === '-' ? '-' : `${displayVal}%`}
                               </Td>
                             );
@@ -7584,7 +7584,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                         const value = practiceWiseGrandTotal[colName];
                         const displayVal = practiceWiseGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
                         return (
-                          <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', backgroundColor: displayVal === '-' ? '#E2E8F0' : undefined }}>
+                          <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
                             {displayVal === '-' ? '-' : `${displayVal}%`}
                           </Td>
                         );
@@ -7720,7 +7720,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                             const value = practiceWiseTrendGrandTotal[colName];
                             const displayVal = practiceWiseTrendGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
                             return (
-                              <Td key={`trend-gt-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', backgroundColor: displayVal === '-' ? '#E2E8F0' : undefined }}>
+                              <Td key={`trend-gt-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
                                 {displayVal === '-' ? '-' : `${displayVal}%`}
                               </Td>
                             );

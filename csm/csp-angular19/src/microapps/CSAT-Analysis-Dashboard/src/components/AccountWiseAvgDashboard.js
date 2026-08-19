@@ -7260,7 +7260,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         perspectives.forEach(p => {
           const satisfied = g.satisfied[p] || 0;
           const dataInputForPerspective = g.totals[p] || 0;
-          row[p] = dataInputForPerspective > 0 ? ((satisfied / dataInputForPerspective) * 100).toFixed(0) : '-';
+          row[p] = dataInputForPerspective > 0 ? ((satisfied / dataInputForPerspective) * 100).toFixed(1) : '-';
         });
         return row;
       })
@@ -7291,7 +7291,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       };
       perspectives.forEach(p => {
         const totalDataInput = globalTotalByPerspective[p] || 0;
-        grandTotal[p] = totalDataInput > 0 ? ((globalSatisfied[p] / totalDataInput) * 100).toFixed(0) : '-';
+        grandTotal[p] = totalDataInput > 0 ? ((globalSatisfied[p] / totalDataInput) * 100).toFixed(1) : '-';
       });
     }
 
