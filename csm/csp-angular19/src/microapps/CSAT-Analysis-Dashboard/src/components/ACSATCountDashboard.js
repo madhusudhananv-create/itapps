@@ -15,6 +15,7 @@ import {
   parseExcelDateToMMDDYYYY,
   yearQuarterMatchesCycle,
 } from '../utils/acsatExcelRowUtils';
+import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -1902,18 +1903,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
   const acsatTrendSectionRef = useRef(null);
 
   // Top 10 account names in order
-  const top10AccountNames = [
-    'Premier Healthcare Solutions Inc',
-    'Blue Cross Blue Shield Association BCBSA',
-    'Frontier Airlines INC',
-    'Tufts Medicine',
-    'Premier - Horizon II - Covenant Health',
-    'AgFirst Farm Credit Bank',
-    'embecta MEDICAL II LLC',
-    'BronxCare Health System',
-    'Northern Trust Company',
-    'Jewish Board of Family and Childrens Services JBFCS'
-  ];
+  const top10AccountNames = TOP10_ACCOUNT_ORDER;
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [

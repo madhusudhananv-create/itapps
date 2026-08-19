@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { Download, ChevronLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
+import { TOP10_ACCOUNT_ORDER, isTop10AccountName } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   max-width: 1400px;
@@ -232,10 +233,10 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
         const businessUnit = normalizeBusinessUnitDisplay(row[s2BusinessUnitColumn] || 'N/A');
 
         if (custId) {
-          // Check if this customer is in Top 10 (current convention: TYPE OF ACCOUNT = "Top 10";
-          // legacy uploads used a separate "Top 10" = "Y" column - support both)
-          const typeOfAccountVal = (row['TYPE OF ACCOUNT'] ?? '').toString().trim().toLowerCase();
-          if (typeOfAccountVal === 'top 10' || row['Top 10'] === 'Y' || row['Top 10'] === 'y') {
+          // Top 10 membership is defined solely by the shared, curated account list — not by this
+          // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+          const customerNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+          if (isTop10AccountName(customerNameForTop10)) {
             top10Customers.add(custId);
           }
 
@@ -490,6 +491,21 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
 
       // Reassign Sr. No. after BU sorting so it reflects the displayed order
       result = result.map((row, index) => ({ ...row, sNo: index + 1 }));
+    } else if (!showTop10) {
+      // "Show All Customers" (default account-wise view): order accounts by Business Unit
+      // (Healthcare, CIT, Tech, India & GCC, SEAD), then by account name within each BU.
+      const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'SEAD'];
+      result = result.sort((a, b) => {
+        const indexA = businessUnitOrder.indexOf(a.businessUnit);
+        const indexB = businessUnitOrder.indexOf(b.businessUnit);
+        if (indexA !== indexB) {
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+        }
+        return (a.customerName || '').localeCompare(b.customerName || '');
+      });
+      result = result.map((row, index) => ({ ...row, sNo: index + 1 }));
     }
 
     console.log('Processed result:', result.length, showBuWise ? 'business units' : 'customers');
@@ -530,20 +546,7 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
     
     // Custom sorting for Top 10 accounts (fixed order, Premier first)
     if (showTop10) {
-      const top10Order = [
-        'Premier Healthcare Solutions Inc',
-        'Blue Cross Blue Shield Association BCBSA',
-        'Frontier Airlines INC',
-        'Premier - Horizon II - Covenant Health',
-        'Tufts Medicine',
-        'BronxCare Health System',
-        'AgFirst Farm Credit Bank',
-        'embecta MEDICAL II LLC',
-        'Northern Trust Company',
-        'Jewish Board of Family and Childrens Services JBFCS',
-        'Healthfirst',
-        'AgileOne'
-      ];
+      const top10Order = TOP10_ACCOUNT_ORDER;
       const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
       const orderByNormalized = new Map();
       top10Order.forEach((name, i) => { orderByNormalized.set(normalizeForOrder(name), i); });
@@ -566,8 +569,10 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
         // If neither is in the predefined order, sort alphabetically
         return a.customerName.localeCompare(b.customerName);
       });
+      // Reassign Sr. No. after Top10 sorting so it reflects the displayed order.
+      filtered = filtered.map((row, index) => ({ ...row, sNo: index + 1 }));
     }
-    
+
     return filtered;
   }, [processedData.data, accountCustomerFilter, customerNameSearch, showTop10]);
 

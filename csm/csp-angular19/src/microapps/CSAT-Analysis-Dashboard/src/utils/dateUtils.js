@@ -119,6 +119,31 @@ export const getHalfYearOptions = () => {
 };
 
 /**
+ * Given a selected CSAT cycle start date (YYYY-MM-DD, the start of the
+ * *current* H1/H2 period), computes the immediately preceding half-year
+ * period — used to dynamically fetch/display "last cycle" PCSAT data
+ * (e.g. current = H1 2026 -> previous = H2 2025) without any manual upload.
+ * @param {string} startDate - Current cycle start date in YYYY-MM-DD format
+ * @returns {{label: string, startDate: string, endDate: string} | null}
+ */
+export const getPreviousHalfYearOption = (startDate) => {
+  if (!startDate) return null;
+
+  const date = new Date(startDate);
+  if (isNaN(date.getTime())) return null;
+
+  const month = date.getMonth() + 1; // 1-12
+  const year = date.getFullYear();
+  const isCurrentH1 = month <= 6;
+  const prevYear = isCurrentH1 ? year - 1 : year;
+  const prevHalf = isCurrentH1 ? 2 : 1;
+
+  return prevHalf === 1
+    ? { label: `H1 ${prevYear}`, startDate: `${prevYear}-01-01`, endDate: `${prevYear}-06-30` }
+    : { label: `H2 ${prevYear}`, startDate: `${prevYear}-07-01`, endDate: `${prevYear}-12-31` };
+};
+
+/**
  * Compares two dates in MM-DD-YYYY format
  * @param {string} date1 - First date in MM-DD-YYYY format
  * @param {string} date2 - Second date in MM-DD-YYYY format
