@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Download, ChevronLeft, Search, ChevronDown, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
+import { groupPracticeName } from '../utils/practiceGroups';
 
 const RESPONDENT_BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'SEAD'];
 const getRespondentBuOrderIndex = (bu) => {
@@ -497,7 +498,7 @@ const buildRespondentAverages = (rows, csatCycleStartDateFormatted, applyDateFil
     if (!map.has(key)) {
       map.set(key, {
         businessUnit: (row[businessUnitColumn] ?? row['BUSINESS UNIT'] ?? row['BUSSINESS UNIT'] ?? 'N/A').toString().trim() || 'N/A',
-        practice: (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? 'N/A').toString().trim() || 'N/A',
+        practice: groupPracticeName((row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? 'N/A').toString().trim() || 'N/A'),
         customerName: (row[customerNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? 'N/A').toString().trim() || 'N/A',
         respondentName,
         email: (row[emailCol] ?? row['EMAIL_ID'] ?? row['Email'] ?? '').toString().trim(),

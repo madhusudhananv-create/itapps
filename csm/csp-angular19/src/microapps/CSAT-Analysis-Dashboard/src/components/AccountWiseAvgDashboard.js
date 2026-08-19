@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY, isDateGreaterThanOrEqual, getPreviousHalfYearOption } from '../utils/dateUtils';
 import { TOP10_ACCOUNT_ORDER, isTop10AccountRowByName, isTop10AccountName } from '../utils/top10Accounts';
+import { groupPracticeName } from '../utils/practiceGroups';
 import { fetchPCSATReportData } from '../services/csatReportsService';
 
 // Helper function to parse various date formats from Excel and convert to MM-DD-YYYY
@@ -666,7 +667,7 @@ const getAccountPracticeBuOrderIndex = (bu) => {
 };
 
 const PRACTICE_AVG_FILE_URL = '/data/New_customer_feedback_analysis_New.xlsx';
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & Analytics', 'Cybersecurity'];
+const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & AI', 'Cybersecurity'];
 const getPracticeOrderIndex = (practice) => {
   if (!practice) return 999;
   const s = String(practice).trim();
@@ -736,7 +737,7 @@ const buildPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDateFormat
     }) || 'CSAT RECEIVED DATE';
 
     secondSheetSource.forEach(row => {
-      const practice = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
+      const practice = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim());
       if (!practice || practice.toLowerCase() === 'n/a') return;
       if (!polledRespondedByPractice.has(practice)) {
         polledRespondedByPractice.set(practice, { polled: 0, responded: 0 });
@@ -800,9 +801,9 @@ const buildPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDateFormat
     const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
     const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
     const practiceFromSecond = customerId ? (practiceByCustomerId.get(String(customerId).trim()) || '') : '';
-    const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a'
+    const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a'
       ? rawPractice
-      : (practiceFromSecond || 'N/A');
+      : (practiceFromSecond || 'N/A'));
     if (!practice || practice === 'N/A') return;
     const perspectiveRaw = row[perspectiveCol] ?? row['PERSPECTIVE'];
     if (!perspectiveRaw || perspectiveRaw === 'Qualitative Feedback') return;
@@ -1009,7 +1010,7 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
       const custKey = normalizeCustomerIdKey(customerId);
       if (!custKey) return;
 
-      const practiceVal = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim();
+      const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim());
       if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
         const existing = practiceByCustomerId.get(custKey);
         if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
@@ -1073,7 +1074,7 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
 
     const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
     const practiceFromSecond = practiceByCustomerId.get(custKey) || '';
-    const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A');
+    const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A'));
     if (!practice || practice === 'N/A') return;
 
     const perspectiveRaw = row[perspectiveCol] ?? row['PERSPECTIVE'];
@@ -1298,7 +1299,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
       const custKey = normalizeCustomerIdKey(customerId);
       if (!custKey) return;
 
-      const practiceVal = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim();
+      const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim());
       if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
         const existing = practiceByCustomerId.get(custKey);
         if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
@@ -1376,7 +1377,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
 
     const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
     const practiceFromSecond = practiceByCustomerId.get(custKey) || '';
-    const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A');
+    const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A'));
     if (!practice || practice === 'N/A') return;
 
     const perspectiveRaw = row[perspectiveCol] ?? row['PERSPECTIVE'];
@@ -1655,7 +1656,7 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
       const custKey = normalizeCustomerIdKey(customerId);
       if (!custKey) return;
 
-      const practiceVal = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim();
+      const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim());
       if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
         const existing = practiceByCustomerId.get(custKey);
         if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
@@ -1722,7 +1723,7 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
 
     const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
     const practiceFromSecond = practiceByCustomerId.get(custKey) || '';
-    const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A');
+    const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A'));
     if (!practice || practice === 'N/A') return;
 
     const rating = parseFloat(row[ratingCol] ?? row['RATING']);
@@ -4550,7 +4551,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         if (!customerId) return;
         const key = String(customerId).trim();
         if (!key) return;
-        const practiceVal = (row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim();
+        const practiceVal = groupPracticeName((row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim());
         if (!practiceVal || practiceVal.toLowerCase() === 'n/a') return;
         const existingVal = practiceByCustomerId.get(key);
         if (!existingVal || existingVal.toLowerCase() === 'n/a') {
@@ -4558,7 +4559,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         }
       });
     }
-    
+
     console.log('AccountWiseAvgDashboard - Data processing debug:', {
       totalUploadedData: uploadedData.length,
       filteredDataLength: filteredData.length,
@@ -4578,9 +4579,9 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       const rawPractice = row[practiceColumn] ?? row['Practice'] ?? row['PRACTICE'] ?? '';
       const practiceFromRow = (rawPractice ?? '').toString().trim();
       const practiceFromSecondSheet = practiceByCustomerId.get(String(customerId).trim()) || '';
-      const practice = practiceFromRow && practiceFromRow.toLowerCase() !== 'n/a'
+      const practice = groupPracticeName(practiceFromRow && practiceFromRow.toLowerCase() !== 'n/a'
         ? practiceFromRow
-        : (practiceFromSecondSheet || 'N/A');
+        : (practiceFromSecondSheet || 'N/A'));
       
       // Debug logging for first few rows
       if (index < 3) {

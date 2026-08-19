@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName } from '../utils/top10Accounts';
+import { groupPracticeName } from '../utils/practiceGroups';
 
 // Helper function to parse various date formats from Excel and convert to MM-DD-YYYY
 const parseExcelDateToMMDDYYYY = (dateValue) => {
@@ -71,7 +72,7 @@ const parseExcelDateToMMDDYYYY = (dateValue) => {
 };
 
 const PRACTICE_DISTRIBUTION_FILE_URL = '/data/New_customer_feedback_analysis_New.xlsx';
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & Analytics', 'Cybersecurity'];
+const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & AI', 'Cybersecurity'];
 const getPracticeOrderIndex = (practice) => {
   if (!practice) return 999;
   const s = String(practice).trim();
@@ -176,13 +177,13 @@ const buildPracticeWiseDistributionData = (source, secondSheetSource, csatCycleS
       const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       if (customerId) {
         const key = String(customerId).trim();
-        const practiceVal = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim();
+        const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim());
         if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
           const existing = practiceByCustomerId.get(key);
           if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(key, practiceVal);
         }
       }
-      const practice = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim();
+      const practice = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim());
       if (!practice || practice.toLowerCase() === 'n/a') return;
       if (!practicePolledResponded[practice]) {
         practicePolledResponded[practice] = { cssSentCount: 0, cssReceivedCount: 0 };
@@ -230,9 +231,9 @@ const buildPracticeWiseDistributionData = (source, secondSheetSource, csatCycleS
       const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
       const practiceFromSecond = customerId ? (practiceByCustomerId.get(String(customerId).trim()) || '') : '';
-      const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a'
+      const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a'
         ? rawPractice
-        : (practiceFromSecond || '');
+        : (practiceFromSecond || ''));
       if (!practice || practice.toLowerCase() === 'n/a') return;
 
       const ratingResolved = parseInt(row[ratingColumn] ?? row['RATING'], 10);
@@ -354,7 +355,7 @@ const buildAccountPracticeWiseDistributionData = (source, secondSheetSource, csa
       const accountNameVal = (row[accountNameCol2] ?? row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
       const businessUnitValRaw = (row[buCol2] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnitVal = normalizeBUForAccountPractice(businessUnitValRaw) || businessUnitValRaw;
-      const practiceVal = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim();
+      const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim());
 
       if (custKey) {
         if (accountNameVal && accountNameVal !== 'N/A') accountNameByCustomerId.set(custKey, accountNameVal);
@@ -419,9 +420,9 @@ const buildAccountPracticeWiseDistributionData = (source, secondSheetSource, csa
       const custKey = customerId != null ? String(customerId).trim() : '';
       const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
       const practiceFromSecond = custKey ? (practiceByCustomerId.get(custKey) || '') : '';
-      const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a'
+      const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a'
         ? rawPractice
-        : (practiceFromSecond || '');
+        : (practiceFromSecond || ''));
       if (!practice || practice.toLowerCase() === 'n/a') return;
 
       const rawAccountName = (row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();

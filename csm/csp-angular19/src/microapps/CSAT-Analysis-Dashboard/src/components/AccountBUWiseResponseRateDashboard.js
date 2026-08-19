@@ -7,6 +7,7 @@ import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList, ComposedChart, Line } from 'recharts';
 import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName } from '../utils/top10Accounts';
+import { groupPracticeName } from '../utils/practiceGroups';
 
 // Parse dates from Excel (serial numbers or strings) to MM-DD-YYYY for comparison with csatCycleStartDateFormatted
 const parseExcelDateToMMDDYYYY = (dateValue) => {
@@ -384,7 +385,7 @@ const normalizeBusinessUnitDisplay = (bu) => {
 };
 
 // Practice column display order for Practice wise Response Rate Dashboard and Trend Analysis (dashboard + Excel).
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & Analytics', 'Cybersecurity'];
+const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & AI', 'Cybersecurity'];
 const getPracticeOrderIndex = (practice) => {
   if (practice == null || practice === '') return -1;
   const s = String(practice).trim();
@@ -556,7 +557,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     });
     const byPractice = {};
     source.forEach(row => {
-      const practice = (row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A';
+      const practice = groupPracticeName((row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A');
       if (!byPractice[practice]) byPractice[practice] = { practice, polled: 0, responded: 0, actualScoreSum: 0, actualScoreCount: 0 };
       const sentVal = row[sentDateCol] ?? row['CSS_SENT_DATE'] ?? row['CSAT SENT DATE'];
       if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
@@ -615,7 +616,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
 
     const byKey = {};
     source.forEach(row => {
-      const practice = (row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A';
+      const practice = groupPracticeName((row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A');
       const buRaw = (row[businessUnitCol] ?? row[COL_BUSINESS_UNIT] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnit = normalizeBusinessUnitDisplay(buRaw);
       const key = `${practice}||${businessUnit}`;
@@ -693,7 +694,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     source.forEach(row => {
       const buRaw = (row[businessUnitCol] ?? row[COL_BUSINESS_UNIT] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnit = normalizeBusinessUnitDisplay(buRaw);
-      const practice = (row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A';
+      const practice = groupPracticeName((row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A');
       const key = `${businessUnit}||${practice}`;
       if (!byKey[key]) byKey[key] = { businessUnit, practice, polled: 0, responded: 0, actualScoreSum: 0, actualScoreCount: 0 };
 
@@ -780,7 +781,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     const accountBU = {};
     source.forEach(row => {
       const accountName = (row[customerNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
-      const practice = (row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A';
+      const practice = groupPracticeName((row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A');
       const buRaw = (row[businessUnitCol] ?? row[COL_BUSINESS_UNIT] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnit = normalizeBusinessUnitDisplay(buRaw);
       if (!accountBU[accountName]) accountBU[accountName] = businessUnit;
@@ -927,7 +928,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     const accountTop10 = {};
     source.forEach(row => {
       const accountName = (row[customerNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
-      const practice = (row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A';
+      const practice = groupPracticeName((row[practiceCol] ?? row['Practice'] ?? '').toString().trim() || 'N/A');
       const buRaw = (row[businessUnitCol] ?? row[COL_BUSINESS_UNIT] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnit = normalizeBusinessUnitDisplay(buRaw);
       if (!accountBU[accountName]) accountBU[accountName] = businessUnit;
@@ -1436,7 +1437,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     };
     const getPracticeName = (row) => {
       const practice = row['Practice'] ?? row['PRACTICE'];
-      return practice != null && String(practice).trim() !== '' ? String(practice).trim() : 'N/A';
+      return groupPracticeName(practice != null && String(practice).trim() !== '' ? String(practice).trim() : 'N/A');
     };
     // Top 10 membership is defined solely by the shared, curated account list — not by this
     // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
