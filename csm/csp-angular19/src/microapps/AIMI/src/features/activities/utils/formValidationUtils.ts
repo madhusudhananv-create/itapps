@@ -62,6 +62,7 @@ export const validateOptionalFields = (formData: ActivityFormData): boolean => {
     formData.hoursSaved > 0 &&
     formData.revenueGenerated &&
     formData.benefitTo &&
+    formData.clientApproved &&
     formData.qualitativeBenefits.length > 0 &&
     formData.comments.trim()
   );
@@ -98,6 +99,7 @@ export const hasFormChanges = (
     formData.applicability !== originalFormData.applicability ||
     formData.aiAdoptionScore !== originalFormData.aiAdoptionScore ||
     formData.aiToolUsed !== originalFormData.aiToolUsed ||
+    formData.clientApproved !== originalFormData.clientApproved ||
     formData.acceleratorsUsed !== originalFormData.acceleratorsUsed ||
     formData.workDoneByAI !== originalFormData.workDoneByAI ||
     formData.hoursSaved !== originalFormData.hoursSaved ||

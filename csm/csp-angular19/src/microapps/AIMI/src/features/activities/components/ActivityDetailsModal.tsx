@@ -18,6 +18,7 @@ import {
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
+  CLIENT_APPROVED_OPTIONS,
   COMMON_AI_TOOLS,
   COMMON_ACCELERATORS,
 } from '../types/activityTypes';
@@ -227,6 +228,19 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
                       {activity.aiToolUsed}
                     </Typography>
                   )}
+                </Box>
+
+                {/* Client Approved */}
+                <Box sx={activityDetailsModalStyles.field}>
+                  <Typography sx={activityDetailsModalStyles.fieldLabel}>
+                    Client Approved
+                  </Typography>
+                  <Typography sx={activityDetailsModalStyles.fieldValue}>
+                    {getLabelFromValue(
+                      activity.clientApproved,
+                      CLIENT_APPROVED_OPTIONS
+                    )}
+                  </Typography>
                 </Box>
 
                 {/* Accelerators Used */}

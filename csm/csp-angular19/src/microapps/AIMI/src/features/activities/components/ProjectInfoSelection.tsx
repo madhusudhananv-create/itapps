@@ -539,9 +539,11 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
         <Box>
           <Tooltip
             title={
-              !formData.businessUnit ? 'Please select business unit first.' : ''
+              !formData.businessUnit ? 'Please select business unit first.' : formData.account || ''
             }
             placement="top"
+            arrow
+            disableHoverListener={!!formData.businessUnit && !formData.account}
           >
             <FormControl fullWidth variant="outlined">
               <InputLabel sx={styles.inputLabel}>Account</InputLabel>
@@ -604,8 +606,11 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
 
         <Box>
           <Tooltip
-            title={!formData.account ? 'Please select account first.' : ''}
+            title={!formData.account ? 'Please select account first.' : formData.project || ''
+            }
             placement="top"
+            arrow
+            disableHoverListener={!!formData.businessUnit && !formData.project}
           >
             <FormControl fullWidth variant="outlined">
               <InputLabel sx={styles.inputLabel}>Project</InputLabel>
@@ -695,6 +700,20 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
         </Box>
 
         <Box>
+          <Tooltip
+            title={
+               formData.practice || ''
+            }
+            placement="top"
+            slotProps={{
+              tooltip: {
+              sx: {
+              maxWidth: 'none',
+              whiteSpace: 'nowrap',
+              },
+              },
+            }}
+          >
           <FormControl fullWidth variant="outlined">
             <InputLabel sx={styles.inputLabel}>Practice</InputLabel>
             <Select
@@ -721,6 +740,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
               ))}
             </Select>
           </FormControl>
+          </Tooltip>
         </Box>
       </Box>
 

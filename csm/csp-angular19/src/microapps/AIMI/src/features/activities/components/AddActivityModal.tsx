@@ -15,6 +15,7 @@ import {
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
+  CLIENT_APPROVED_OPTIONS,
   COMMON_AI_TOOLS,
   COMMON_ACCELERATORS,
 } from '../types/activityTypes';
@@ -87,6 +88,17 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const hasAIToolsOrAccelerators = validateAIToolsOrAccelerators(formData);
 
   const handleSave = () => {
+    const isFullAdoption = formData.aiAdoptionScore === '4'; // Full Adoption value
+
+  if (
+    isFullAdoption &&
+    Number(formData.workDoneByAI) <= 0
+  ) {
+    alert(
+      '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
+    );
+    return;
+  }
     if (isPhaseNA || isFormValid(formData)) {
       // Ensure applicability is NA when phase is NA
       const updatedData = isPhaseNA
@@ -99,6 +111,17 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   };
 
   const handleSaveAndAddNew = () => {
+    const isFullAdoption = formData.aiAdoptionScore === '4'; // Full Adoption value
+
+  if (
+    isFullAdoption &&
+    Number(formData.workDoneByAI) <= 0
+  ) {
+    alert(
+      '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
+    );
+    return;
+  }
     if (isPhaseNA || isFormValid(formData)) {
       const updatedData = isPhaseNA
         ? { ...formData, applicability: 'NA' }
@@ -242,17 +265,9 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   disabled={!applicable || noAIAdoption}
                 />
               </Box>
-            </Box>
 
-            {/* AI Tools and Accelerators - Full Width */}
-            <Box sx={{ mt: 3, mx: 2 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-                  gap: 3,
-                }}
-              >
+              {/* AI Tools Used */}
+              <Box>
                 <CommonAutocomplete
                   value={formData.aiToolUsed}
                   onChange={(value: string | string[]) =>
@@ -272,6 +287,24 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                       : 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom tools'
                   }
                 />
+              </Box>
+
+              {/* Client Approved */}
+              <Box>
+                <SelectField
+                  label="Client Approved"
+                  value={formData.clientApproved}
+                  onChange={(value) =>
+                    handleFormChange('clientApproved', value)
+                  }
+                  options={CLIENT_APPROVED_OPTIONS}
+                  disabled={!applicable || noAIAdoption}
+                  required={needsAIToolsOrAccelerators}
+                />
+              </Box>
+
+              {/* Accelerators Used */}
+              <Box>
                 <CommonAutocomplete
                   value={formData.acceleratorsUsed}
                   onChange={(value: string | string[]) =>
@@ -292,18 +325,18 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   }
                 />
               </Box>
+
+              {/* Qualitative Benefits */}
+              <Box>
+                <QualitativeBenefitsField
+                  value={formData.qualitativeBenefits}
+                  onChange={handleQualitativeBenefitsChange}
+                  disabled={!applicable || noAIAdoption}
+                />
+              </Box>
             </Box>
 
-            {/* Qualitative Benefits */}
-            <Box sx={modalStyles.fullWidthSection}>
-              <QualitativeBenefitsField
-                value={formData.qualitativeBenefits}
-                onChange={handleQualitativeBenefitsChange}
-                disabled={!applicable || noAIAdoption}
-              />
-            </Box>
-
-            {/* Comments */}
+            {/* Comments - Full Width */}
             <Box sx={modalStyles.fullWidthSection}>
               <TextAreaField
                 label="Comments"

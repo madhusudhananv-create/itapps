@@ -24,8 +24,13 @@ import {
 import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
 import { AddActivityModal } from './AddActivityModal';
 import { ActivityCard } from './ActivityCard';
-import type { ActivityFormData, ActivityData } from '../types/activityTypes';
+import type {
+  ActivityFormData,
+  ActivityData,
+  ActivityWithProjectInfo,
+} from '../types/activityTypes';
 import {
+  activityStorageUtils,
   calculateAverageAIAdoptionScore,
   calculateAverageAIAdoptionScoreByPhase,
   areAllActivitiesNotApplicable,
@@ -39,8 +44,10 @@ interface ManageActivitiesProps {
   onAddActivity: (activity: ActivityData) => void;
   onUpdateActivity: (activity: ActivityData) => void;
   onDeleteActivity: (activityId: string) => void;
+  onCommitActivity?: (oldId: string, activity: ActivityData) => void;
   isActivityUnsaved: (activityId: string) => boolean;
   onSubmit?: (activities: ActivityData[]) => Promise<void>;
+  onSaveDraft?: (activities: ActivityData[]) => Promise<void>;
   projectInfo?: {
     businessUnit: string;
     businessHead: string;
@@ -61,8 +68,10 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   onAddActivity,
   onUpdateActivity,
   onDeleteActivity,
+  onCommitActivity,
   isActivityUnsaved,
   onSubmit,
+  onSaveDraft,
   projectInfo,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,6 +99,14 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+
+  // Activities already persisted as drafts can still be submitted even with no local edits
+  const hasDraftActivities = useMemo(
+    () => activities.some((activity) => activity.status !== 'submitted'),
+    [activities]
+  );
+  const canSubmitOrSaveDraft = hasUnsavedChanges || hasDraftActivities;
 
   // Group activities by SDLC Phase
   const groupedActivities = useMemo(() => {
@@ -231,6 +248,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
       mt: 4,
       display: 'flex',
       justifyContent: 'center',
+      gap: 2,
     },
     submitButton: {
       borderRadius: 2,
@@ -245,6 +263,23 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
       },
       '&:disabled': {
         background: 'linear-gradient(135deg, #ccc 0%, #999 100%)',
+      },
+    },
+    saveDraftButton: {
+      borderRadius: 2,
+      textTransform: 'none',
+      fontWeight: 500,
+      px: 4,
+      py: 1.5,
+      border: '1px solid #1976d2',
+      color: '#1976d2',
+      '&:hover': {
+        border: '1px solid #1565c0',
+        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+      },
+      '&:disabled': {
+        border: '1px solid #e0e0e0',
+        color: '#9e9e9e',
       },
     },
     accordion: {
@@ -355,53 +390,121 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
     setDeleteConfirmation({ open: false, activityId: null, activityName: '' });
   };
 
-  const handleSaveActivity = (activityData: ActivityFormData) => {
-    if (editingActivity) {
-      // Update existing activity
-      const updatedActivity: ActivityData = {
-        ...activityData,
-        id: editingActivity.id,
-        createdAt: editingActivity.createdAt,
-        updatedAt: editingActivity.updatedAt,
-      };
-      onUpdateActivity(updatedActivity);
-      setEditingActivity(null);
-      showSnackbar('Activity updated successfully!', 'success');
-    } else {
-      // Add new activity
-      const newActivity: ActivityData = {
-        ...activityData,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-      };
-      onAddActivity(newActivity);
-      showSnackbar('Activity added successfully!', 'success');
+  // Persists a single activity to Firestore as a draft so it isn't lost if the connection drops
+  const persistActivityAsDraft = async (
+    activity: ActivityData
+  ): Promise<ActivityData> => {
+    if (!projectInfo?.projectId) return activity;
+
+    const activityToSave: ActivityWithProjectInfo = {
+      ...activity,
+      status: 'draft',
+      projectId: projectInfo.projectId,
+      project: projectInfo.project,
+      practice: projectInfo.practice,
+      account: projectInfo.account,
+      businessUnit: projectInfo.businessUnit,
+    };
+
+    const [savedActivity] = await activityStorageUtils.upsertActivitiesForProject([
+      activityToSave,
+    ]);
+
+    return {
+      ...activity,
+      id: savedActivity.id,
+      status: savedActivity.status,
+      createdAt: new Date(savedActivity.createdAt),
+      updatedAt: savedActivity.updatedAt
+        ? new Date(savedActivity.updatedAt)
+        : undefined,
+    };
+  };
+
+  // Auto-saves the activity as a draft and syncs local state with the persisted result
+  const persistAndCommitActivity = async (
+    baseActivity: ActivityData,
+    successMessage: string
+  ) => {
+    const oldId = baseActivity.id;
+    const isExisting = activities.some((activity) => activity.id === oldId);
+
+    try {
+      const savedActivity = await persistActivityAsDraft(baseActivity);
+      if (onCommitActivity) {
+        onCommitActivity(oldId, savedActivity);
+      } else if (isExisting) {
+        onUpdateActivity(savedActivity);
+      } else {
+        onAddActivity(savedActivity);
+      }
+      showSnackbar(successMessage, 'success');
+    } catch (error) {
+      console.error('Error saving activity:', error);
+      // Keep the entry locally so nothing is lost; it will show as unsaved until retried
+      if (isExisting) {
+        onUpdateActivity(baseActivity);
+      } else {
+        onAddActivity(baseActivity);
+      }
+      showSnackbar(
+        'Saved locally. We will retry saving automatically.',
+        'error'
+      );
     }
+  };
+
+  const handleSaveActivity = (activityData: ActivityFormData) => {
+    const isEditing = !!editingActivity;
+    const baseActivity: ActivityData = isEditing
+      ? {
+          ...activityData,
+          id: editingActivity!.id,
+          createdAt: editingActivity!.createdAt,
+          updatedAt: editingActivity!.updatedAt,
+          status: editingActivity!.status,
+        }
+      : {
+          ...activityData,
+          id: Date.now().toString(),
+          createdAt: new Date(),
+          status: 'draft',
+        };
+
+    setEditingActivity(null);
     setIsModalOpen(false);
+    void persistAndCommitActivity(
+      baseActivity,
+      isEditing
+        ? 'Activity updated successfully!'
+        : 'Activity added successfully!'
+    );
   };
 
   const handleSaveAndAddNew = (activityData: ActivityFormData) => {
-    if (editingActivity) {
-      // Update existing activity
-      const updatedActivity: ActivityData = {
-        ...activityData,
-        id: editingActivity.id,
-        createdAt: editingActivity.createdAt,
-        updatedAt: editingActivity.updatedAt,
-      };
-      onUpdateActivity(updatedActivity);
-      setEditingActivity(null);
-      showSnackbar('Activity updated successfully!', 'success');
-    } else {
-      // Add new activity
-      const newActivity: ActivityData = {
-        ...activityData,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-      };
-      onAddActivity(newActivity);
-      showSnackbar('Activity added successfully!', 'success');
-    }
+    const isEditing = !!editingActivity;
+    const baseActivity: ActivityData = isEditing
+      ? {
+          ...activityData,
+          id: editingActivity!.id,
+          createdAt: editingActivity!.createdAt,
+          updatedAt: editingActivity!.updatedAt,
+          status: editingActivity!.status,
+        }
+      : {
+          ...activityData,
+          id: Date.now().toString(),
+          createdAt: new Date(),
+          status: 'draft',
+        };
+
+    setEditingActivity(null);
+    void persistAndCommitActivity(
+      baseActivity,
+      isEditing
+        ? 'Activity updated successfully!'
+        : 'Activity added successfully!'
+    );
     // Modal will stay open for adding another activity
   };
 
@@ -434,7 +537,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
       return;
     }
 
-    if (!hasUnsavedChanges) {
+    if (!canSubmitOrSaveDraft) {
       showSnackbar('No changes to submit', 'error');
       return;
     }
@@ -468,6 +571,39 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
     } finally {
       // Reset submitting state regardless of success or failure
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveDraftClick = async () => {
+    if (activities.length === 0) {
+      showSnackbar(
+        'Please add at least one activity before saving a draft',
+        'error'
+      );
+      return;
+    }
+
+    if (!selectedPractice) {
+      showSnackbar('Please select a practice before saving a draft', 'error');
+      return;
+    }
+
+    if (!canSubmitOrSaveDraft) {
+      showSnackbar('No changes to save', 'error');
+      return;
+    }
+
+    setIsSavingDraft(true);
+
+    try {
+      if (onSaveDraft) {
+        await onSaveDraft(activities);
+      }
+    } catch (error) {
+      console.error('Error saving draft activities:', error);
+      showSnackbar('Error saving draft. Please try again.', 'error');
+    } finally {
+      setIsSavingDraft(false);
     }
   };
 
@@ -637,10 +773,18 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
       {totalActivities > 0 && (
         <Box sx={styles.submitButtonContainer}>
           <Button
+            variant="outlined"
+            onClick={handleSaveDraftClick}
+            disabled={!selectedPractice || !canSubmitOrSaveDraft || isSavingDraft || isSubmitting}
+            sx={styles.saveDraftButton}
+          >
+            {isSavingDraft ? 'Saving...' : 'Save as Draft'}
+          </Button>
+          <Button
             variant="contained"
             startIcon={<SendIcon />}
             onClick={handleSubmit}
-            disabled={!selectedPractice || !hasUnsavedChanges || isSubmitting}
+            disabled={!selectedPractice || !canSubmitOrSaveDraft || isSubmitting || isSavingDraft}
             sx={styles.submitButton}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Activities'}

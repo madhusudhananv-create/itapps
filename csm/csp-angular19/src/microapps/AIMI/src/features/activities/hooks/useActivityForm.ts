@@ -11,6 +11,7 @@ const initialFormData: ActivityFormData = {
   applicability: '',
   aiAdoptionScore: '',
   aiToolUsed: '',
+  clientApproved: '',
   acceleratorsUsed: '',
   workDoneByAI: 0,
   hoursSaved: 0,
@@ -41,6 +42,7 @@ export const useActivityForm = (
         applicability: editingActivity.applicability,
         aiAdoptionScore: editingActivity.aiAdoptionScore,
         aiToolUsed: editingActivity.aiToolUsed,
+        clientApproved: editingActivity.clientApproved || '',
         acceleratorsUsed: editingActivity.acceleratorsUsed || '',
         workDoneByAI: editingActivity.workDoneByAI,
         hoursSaved: editingActivity.hoursSaved,
@@ -95,7 +97,7 @@ export const useActivityForm = (
 
       const filteredActivities = activityList.filter(
         (activity) => !existingActivityNames.includes(activity)
-      );
+      ).sort((a, b) => a.localeCompare(b));
 
       setAvailableActivities(filteredActivities);
 
@@ -129,6 +131,7 @@ export const useActivityForm = (
           newFormData.applicability = '';
           newFormData.aiAdoptionScore = '';
           newFormData.aiToolUsed = '';
+          newFormData.clientApproved = '';
           newFormData.acceleratorsUsed = '';
           newFormData.workDoneByAI = 0;
           newFormData.hoursSaved = 0;
@@ -141,6 +144,7 @@ export const useActivityForm = (
           newFormData.applicability = '';
           newFormData.aiAdoptionScore = '';
           newFormData.aiToolUsed = '';
+          newFormData.clientApproved = '';
           newFormData.acceleratorsUsed = '';
           newFormData.workDoneByAI = 0;
           newFormData.hoursSaved = 0;
@@ -152,6 +156,7 @@ export const useActivityForm = (
           // Clear AI adoption score and dependent fields
           newFormData.aiAdoptionScore = '';
           newFormData.aiToolUsed = '';
+          newFormData.clientApproved = '';
           newFormData.acceleratorsUsed = '';
           newFormData.workDoneByAI = 0;
           newFormData.hoursSaved = 0;

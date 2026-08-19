@@ -148,8 +148,14 @@ export function Activities() {
     getOriginalProjectData,
   } = useProjectHierarchy();
   const [isLoading] = useState(false);
-  const { submitSuccess, submitActivities, clearSubmitSuccess } =
-    useActivitySubmission();
+  const {
+    submitSuccess,
+    submitActivities,
+    clearSubmitSuccess,
+    draftSaveSuccess,
+    saveActivitiesAsDraft,
+    clearDraftSaveSuccess,
+  } = useActivitySubmission();
 
   // Tab state
   const [activeTab, setActiveTab] = useState(0);
@@ -193,6 +199,7 @@ export function Activities() {
     addActivity,
     updateActivity,
     deleteActivity,
+    commitActivity,
     isActivityUnsaved,
     markActivitiesAsSaved,
   } = useActivityState({
@@ -214,6 +221,22 @@ export function Activities() {
       }
     },
     [submitActivities, projectInfoFormData, markActivitiesAsSaved]
+  );
+
+  const handleActivitiesSaveDraft = useCallback(
+    async (activities: ActivityData[]) => {
+      try {
+        // Persist as drafts immediately so data isn't lost if the connection drops
+        await saveActivitiesAsDraft(
+          activities,
+          projectInfoFormData,
+          markActivitiesAsSaved
+        );
+      } catch (error) {
+        console.error('Error saving draft activities:', error);
+      }
+    },
+    [saveActivitiesAsDraft, projectInfoFormData, markActivitiesAsSaved]
   );
 
   const handleProjectInfoFormChange = useCallback(
@@ -327,8 +350,10 @@ export function Activities() {
       onAddActivity: addActivity,
       onUpdateActivity: updateActivity,
       onDeleteActivity: deleteActivity,
+      onCommitActivity: commitActivity,
       isActivityUnsaved,
       onSubmit: handleActivitiesSubmit,
+      onSaveDraft: handleActivitiesSaveDraft,
       projectInfo: projectInfoFormData,
     }),
     [
@@ -337,8 +362,10 @@ export function Activities() {
       addActivity,
       updateActivity,
       deleteActivity,
+      commitActivity,
       isActivityUnsaved,
       handleActivitiesSubmit,
+      handleActivitiesSaveDraft,
       projectInfoFormData,
     ]
   );
@@ -359,6 +386,16 @@ export function Activities() {
       severity: 'success' as const,
     }),
     [submitSuccess, clearSubmitSuccess]
+  );
+
+  const draftSnackbarProps = useMemo(
+    () => ({
+      open: draftSaveSuccess,
+      onClose: clearDraftSaveSuccess,
+      message: 'Activities saved as draft!',
+      severity: 'success' as const,
+    }),
+    [draftSaveSuccess, clearDraftSaveSuccess]
   );
 
   useEffect(() => {
@@ -438,6 +475,7 @@ export function Activities() {
 
       {/* Success Message Snackbar */}
       <CommonSnackbar {...snackbarProps} />
+      <CommonSnackbar {...draftSnackbarProps} />
     </Box>
   );
 }

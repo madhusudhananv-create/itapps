@@ -141,6 +141,13 @@ export const activityCardStyles = {
     zIndex: 1,
     ...chipStyles.unsaved,
   },
+  draftChip: {
+    position: 'absolute',
+    top: 0,
+    right: 12,
+    fontWeight: 600,
+    fontSize: '0.75rem',
+  },
   cardContent: {
     p: 2.5,
     backgroundColor: '#fafbfc',

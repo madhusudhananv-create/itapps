@@ -104,7 +104,9 @@ export const CommonAutocomplete: React.FC<CommonAutocompleteProps> = ({
       );
       setSuggestions(filtered);
     } else {
-      setSuggestions(options.slice(0, 10)); // Show first 10 when no input
+      setSuggestions(
+        [...options].sort((a, b) => a.localeCompare(b))
+      );
     }
   }, [inputValue, options]);
 

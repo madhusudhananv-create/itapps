@@ -98,6 +98,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   return (
     <>
       <Card sx={activityCardStyles.card}>
+        {activity.status === 'draft' && (
+          <Chip
+            label="Draft"
+            color="info"
+            size="small"
+            sx={activityCardStyles.draftChip}
+          />
+        )}
         {isUnsaved && (
           <Chip
             label="Unsaved"

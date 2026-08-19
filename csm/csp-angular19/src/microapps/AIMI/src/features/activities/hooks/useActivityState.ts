@@ -39,6 +39,7 @@ export const useActivityState = ({
           applicability: activity.applicability || '',
           aiAdoptionScore: activity.aiAdoptionScore,
           aiToolUsed: activity.aiToolUsed || '',
+          clientApproved: activity.clientApproved || '',
           acceleratorsUsed: activity.acceleratorsUsed || '',
           workDoneByAI: activity.workDoneByAI,
           hoursSaved: activity.hoursSaved,
@@ -46,6 +47,7 @@ export const useActivityState = ({
           benefitTo: activity.benefitTo,
           qualitativeBenefits: activity.qualitativeBenefits,
           comments: activity.comments,
+          status: activity.status || 'submitted',
           createdAt: new Date(activity.createdAt),
           updatedAt: activity.updatedAt
             ? new Date(activity.updatedAt)
@@ -64,6 +66,24 @@ export const useActivityState = ({
     },
     []
   );
+
+  // Recompute unsaved state by id whenever activities/originalActivities change,
+  // so commitActivity (which updates both arrays directly) stays in sync
+  useEffect(() => {
+    if (activities.length !== originalActivities.length) {
+      setHasUnsavedChanges(true);
+      return;
+    }
+
+    const originalMap = new Map(
+      originalActivities.map((activity) => [activity.id, activity])
+    );
+    const changed = activities.some((activity) => {
+      const original = originalMap.get(activity.id);
+      return !original || JSON.stringify(activity) !== JSON.stringify(original);
+    });
+    setHasUnsavedChanges(changed);
+  }, [activities, originalActivities]);
 
   // Check for unsaved changes
   const checkForChanges = useCallback(
@@ -114,6 +134,31 @@ export const useActivityState = ({
     [checkForChanges]
   );
 
+  // Replace a (possibly temporary) activity id with its persisted version and
+  // sync originalActivities too, so an auto-saved draft is no longer flagged as unsaved
+  const commitActivity = useCallback(
+    (oldId: string, savedActivity: ActivityData) => {
+      setActivities((prevActivities) => {
+        const exists = prevActivities.some((activity) => activity.id === oldId);
+        return exists
+          ? prevActivities.map((activity) =>
+              activity.id === oldId ? savedActivity : activity
+            )
+          : [...prevActivities, savedActivity];
+      });
+
+      setOriginalActivities((prevOriginal) => {
+        const exists = prevOriginal.some((activity) => activity.id === oldId);
+        return exists
+          ? prevOriginal.map((activity) =>
+              activity.id === oldId ? savedActivity : activity
+            )
+          : [...prevOriginal, savedActivity];
+      });
+    },
+    []
+  );
+
   // Update existing activity
   const updateActivity = useCallback(
     (updatedActivity: ActivityData) => {
@@ -154,6 +199,7 @@ export const useActivityState = ({
             applicability: activity.applicability,
             aiAdoptionScore: activity.aiAdoptionScore,
             aiToolUsed: activity.aiToolUsed,
+            clientApproved: activity.clientApproved,
             acceleratorsUsed: activity.acceleratorsUsed,
             workDoneByAI: activity.workDoneByAI,
             hoursSaved: activity.hoursSaved,
@@ -161,6 +207,7 @@ export const useActivityState = ({
             benefitTo: activity.benefitTo,
             qualitativeBenefits: activity.qualitativeBenefits,
             comments: activity.comments,
+            status: 'submitted',
             createdAt: activity.createdAt,
             projectId: projectInfo.projectId,
             project: projectInfo.project,
@@ -183,6 +230,7 @@ export const useActivityState = ({
             applicability: activity.applicability,
             aiAdoptionScore: activity.aiAdoptionScore,
             aiToolUsed: activity.aiToolUsed,
+            clientApproved: activity.clientApproved,
             acceleratorsUsed: activity.acceleratorsUsed,
             workDoneByAI: activity.workDoneByAI,
             hoursSaved: activity.hoursSaved,
@@ -190,6 +238,7 @@ export const useActivityState = ({
             benefitTo: activity.benefitTo,
             qualitativeBenefits: activity.qualitativeBenefits,
             comments: activity.comments,
+            status: activity.status,
             createdAt: new Date(activity.createdAt),
             updatedAt: activity.updatedAt
               ? new Date(activity.updatedAt)
@@ -246,6 +295,7 @@ export const useActivityState = ({
     addActivity,
     updateActivity,
     deleteActivity,
+    commitActivity,
     saveActivities,
     markActivitiesAsSaved,
     clearActivities,
