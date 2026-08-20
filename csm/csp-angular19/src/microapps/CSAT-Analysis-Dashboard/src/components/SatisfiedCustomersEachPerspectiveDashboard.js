@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { Download, ArrowLeft, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
-import { isDateGreaterThanOrEqual } from '../utils/dateUtils';
+import { isDateGreaterThanOrEqual, getPreviousHalfYearOption, formatDateToMMDDYYYY } from '../utils/dateUtils';
+import { fetchPCSATReportData } from '../services/csatReportsService';
+import { TOP10_ACCOUNT_ORDER, isTop10AccountRowByName, isTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared } from '../utils/top10Accounts';
+import { groupPracticeName } from '../utils/practiceGroups';
 
 // Parse Excel/string date to MM-DD-YYYY for trend file comparison with csatCycleStartDateFormatted
 const parseExcelDateToMMDDYYYY = (dateValue) => {
@@ -73,7 +76,7 @@ const matchesBusinessUnitFilter = (row, businessUnitFilter) => {
 };
 
 const PRACTICE_SATISFIED_FILE_URL = '/data/New_customer_feedback_analysis_New.xlsx';
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & Analytics', 'Cybersecurity'];
+const PRACTICE_DISPLAY_ORDER = ['Engineering', 'RunOps', 'Data & AI', 'Embedded'];
 const getPracticeOrderIndex = (practice) => {
   if (!practice) return 999;
   const s = String(practice).trim();
@@ -135,7 +138,7 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
       return k === 'CSAT RECEIVED DATE' || lower.includes('csat_received_date') || lower.includes('css_received_date') || lower.includes('received date');
     }) || 'CSAT RECEIVED DATE';
     secondSheetSource.forEach(row => {
-      const practice = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
+      const practice = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim());
       if (!practice || practice.toLowerCase() === 'n/a') return;
       if (!polledRespondedByPractice.has(practice)) {
         polledRespondedByPractice.set(practice, { polled: 0, responded: 0 });
@@ -163,7 +166,7 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
       const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       if (!customerId) return;
       const key = String(customerId).trim();
-      const practiceVal = (row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim();
+      const practiceVal = groupPracticeName((row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim());
       if (!practiceVal || practiceVal.toLowerCase() === 'n/a') return;
       const existingVal = practiceByCustomerId.get(key);
       if (!existingVal || existingVal.toLowerCase() === 'n/a') {
@@ -192,7 +195,7 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
     const qc = row['QUESTION_CATEGORY'] ?? row['Question Category'] ?? row['question_category'];
     if (qc === 'Qualitative Feedback') return;
     const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-    const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
+    const rawPractice = groupPracticeName((row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim());
     const practiceFromSecond = customerId ? (practiceByCustomerId.get(String(customerId).trim()) || '') : '';
     const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a'
       ? rawPractice
@@ -228,8 +231,8 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
         const dataInput = totals[p] || 0;
         const count = satisfied[p] || 0;
         if (dataInput > 0) {
-          const pct = Math.round((count / dataInput) * 100);
-          resultRow[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
+          const pct = Math.round((count / dataInput) * 1000) / 10;
+          resultRow[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
         } else {
           resultRow[p] = '-';
         }
@@ -307,14 +310,606 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
     const dataInput = orgTotals[p] || 0;
     const count = orgSatisfied[p] || 0;
     if (dataInput > 0) {
-      const pct = Math.round((count / dataInput) * 100);
-      orgLevelRow[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
+      const pct = Math.round((count / dataInput) * 1000) / 10;
+      orgLevelRow[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
     } else {
       orgLevelRow[p] = '-';
     }
   });
 
   return { rows, orgLevelRow, perspectives: PRACTICE_PERSPECTIVE_ORDER };
+};
+
+const normalizeCustomerIdKey = (value) => {
+  if (value == null) return '';
+  return String(value).trim().toLowerCase();
+};
+
+// Same Account+Practice grouping/roll-up as buildAccountPracticeWiseAvgFromReceivedReport in
+// AccountWiseAvgDashboard.js, but computing % Satisfied (count RATING 4-5 / count data input × 100)
+// per perspective instead of an average rating.
+const buildAccountPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDateFormatted, secondSheetSource = null) => {
+  if (!source || !Array.isArray(source) || source.length === 0) {
+    return { rows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER, grandTotalRow: null };
+  }
+
+  const firstRow = source[0] || {};
+  const practiceCol = Object.keys(firstRow).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+  const perspectiveCol = Object.keys(firstRow).find(k => k === 'PERSPECTIVE' || String(k).toLowerCase().includes('perspective')) || 'PERSPECTIVE';
+  const ratingCol = Object.keys(firstRow).find(k => k === 'RATING' || String(k).toLowerCase() === 'rating') || 'RATING';
+  const customerNameCol = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+
+  const practiceByCustomerId = new Map();
+  const businessUnitByCustomerId = new Map();
+  const nameByCustomerId = new Map();
+  const polledRespondedByAccountPractice = new Map();
+  const polledRespondedByAccount = new Map();
+  // Every practice seen for a customer in the second sheet, even when it has no rated rows yet
+  // (e.g. a Draft/pending survey) — ensures such practices still get their own row.
+  const practiceNamesByCustomerId = new Map();
+  let grandPolled = 0;
+  let grandResponded = 0;
+
+  if (secondSheetSource && secondSheetSource.length > 0) {
+    const shFirst = secondSheetSource[0] || {};
+    const practiceCol2 = Object.keys(shFirst).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+    const buCol2 = Object.keys(shFirst).find(k => {
+      const t = String(k || '').toLowerCase().replace(/\s/g, '');
+      return t === 'businessunit' || t === 'bussinessunit';
+    }) || 'BUSINESS UNIT';
+    const nameCol2 = Object.keys(shFirst).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+    const sentDateCol = Object.keys(shFirst).find(k => {
+      const lower = String(k || '').toLowerCase();
+      return k === 'CSAT SENT DATE' || lower.includes('csat_sent_date') || lower.includes('css_sent_date') || lower.includes('sent date');
+    }) || 'CSAT SENT DATE';
+    const receivedDateCol = Object.keys(shFirst).find(k => {
+      const lower = String(k || '').toLowerCase();
+      return k === 'CSAT RECEIVED DATE' || lower.includes('csat_received_date') || lower.includes('css_received_date') || lower.includes('received date');
+    }) || 'CSAT RECEIVED DATE';
+
+    secondSheetSource.forEach(row => {
+      const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
+      if (!customerId) return;
+      const custKey = normalizeCustomerIdKey(customerId);
+      if (!custKey) return;
+
+      const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim());
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+        const existing = practiceByCustomerId.get(custKey);
+        if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
+      }
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+        if (!practiceNamesByCustomerId.has(custKey)) practiceNamesByCustomerId.set(custKey, new Set());
+        practiceNamesByCustomerId.get(custKey).add(practiceVal);
+      }
+      const buVal = (row[buCol2] ?? row['BUSSINESS UNIT'] ?? '').toString().trim();
+      if (buVal && !businessUnitByCustomerId.has(custKey)) businessUnitByCustomerId.set(custKey, buVal);
+      const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
+      if (nameVal && !nameByCustomerId.has(custKey)) nameByCustomerId.set(custKey, nameVal);
+
+      const practiceKey = (practiceVal || 'n/a').toLowerCase();
+      const apKey = `${custKey}|||${practiceKey}`;
+      if (!polledRespondedByAccountPractice.has(apKey)) polledRespondedByAccountPractice.set(apKey, { polled: 0, responded: 0 });
+      if (!polledRespondedByAccount.has(custKey)) polledRespondedByAccount.set(custKey, { polled: 0, responded: 0 });
+      const recAP = polledRespondedByAccountPractice.get(apKey);
+      const recA = polledRespondedByAccount.get(custKey);
+
+      const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
+      let sentOk = false;
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        sentOk = !!(sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted)));
+      }
+      if (sentOk) { recAP.polled++; recA.polled++; grandPolled++; }
+
+      const receivedVal = row[receivedDateCol] ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'] ?? row['CSS RECEIVED DATE'];
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      const receivedOk = isCompletedStatus && !!(receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)));
+      if (receivedOk) { recAP.responded++; recA.responded++; grandResponded++; }
+    });
+  }
+
+  // Satisfied (RATING 4 or 5) counts and total data-input counts from Sheet1, per perspective,
+  // grouped by (account, practice) and by account alone (All Practice), plus grand totals.
+  const satisfiedByAccountPractice = new Map();
+  const totalByAccountPractice = new Map();
+  const satisfiedByAccount = new Map();
+  const totalByAccount = new Map();
+  const grandSatisfied = {};
+  const grandTotal = {};
+  const accountMeta = new Map();
+
+  const ensurePerspectiveMap = (map, key) => {
+    if (!map.has(key)) {
+      const obj = {};
+      PRACTICE_PERSPECTIVE_ORDER.forEach(p => { obj[p] = 0; });
+      map.set(key, obj);
+    }
+    return map.get(key);
+  };
+
+  source.forEach(row => {
+    const qc = row['QUESTION_CATEGORY'] ?? row['Question Category'] ?? row['question_category'];
+    if (qc === 'Qualitative Feedback') return;
+
+    const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
+    const custKey = normalizeCustomerIdKey(customerId);
+    if (!custKey) return;
+
+    const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
+    const practiceFromSecond = practiceByCustomerId.get(custKey) || '';
+    const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A'));
+    if (!practice || practice === 'N/A') return;
+
+    const perspectiveNorm = resolvePracticePerspectiveKey(row[perspectiveCol] ?? row['PERSPECTIVE']);
+    if (!perspectiveNorm) return;
+    const ratingNum = parseFloat(row[ratingCol] ?? row['RATING'] ?? row['Rating'] ?? row['rating']);
+    const isSatisfied = !Number.isNaN(ratingNum) && (ratingNum === 4 || ratingNum === 5);
+
+    if (!accountMeta.has(custKey)) {
+      accountMeta.set(custKey, {
+        accountName: (row[customerNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? nameByCustomerId.get(custKey) ?? custKey).toString().trim(),
+        businessUnit: businessUnitByCustomerId.get(custKey) || 'N/A',
+        practices: new Set()
+      });
+    }
+    accountMeta.get(custKey).practices.add(practice);
+
+    const apKey = `${custKey}|||${practice.toLowerCase()}`;
+    const totAP = ensurePerspectiveMap(totalByAccountPractice, apKey);
+    const satAP = ensurePerspectiveMap(satisfiedByAccountPractice, apKey);
+    totAP[perspectiveNorm]++;
+    if (isSatisfied) satAP[perspectiveNorm]++;
+
+    const totA = ensurePerspectiveMap(totalByAccount, custKey);
+    const satA = ensurePerspectiveMap(satisfiedByAccount, custKey);
+    totA[perspectiveNorm]++;
+    if (isSatisfied) satA[perspectiveNorm]++;
+
+    grandTotal[perspectiveNorm] = (grandTotal[perspectiveNorm] || 0) + 1;
+    if (isSatisfied) grandSatisfied[perspectiveNorm] = (grandSatisfied[perspectiveNorm] || 0) + 1;
+  });
+
+  const buildPerspectivePercents = (satisfiedObj, totalObj) => {
+    const result = {};
+    PRACTICE_PERSPECTIVE_ORDER.forEach(p => {
+      const dataInput = totalObj[p] || 0;
+      const count = satisfiedObj[p] || 0;
+      if (dataInput > 0) {
+        const pct = Math.round((count / dataInput) * 1000) / 10;
+        result[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
+      } else {
+        result[p] = '-';
+      }
+    });
+    return result;
+  };
+
+  // Merge in practices known only from the second sheet (e.g. Draft/pending surveys with no rating
+  // yet) so every practice with a Polled count still gets its own row, not just ones with ratings.
+  practiceNamesByCustomerId.forEach((practiceSet, custKey) => {
+    if (!accountMeta.has(custKey)) {
+      accountMeta.set(custKey, {
+        accountName: nameByCustomerId.get(custKey) || custKey,
+        businessUnit: businessUnitByCustomerId.get(custKey) || 'N/A',
+        practices: new Set()
+      });
+    }
+    const meta = accountMeta.get(custKey);
+    practiceSet.forEach(p => meta.practices.add(p));
+  });
+
+  const accountKeys = [...accountMeta.keys()].sort((a, b) => {
+    const metaA = accountMeta.get(a);
+    const metaB = accountMeta.get(b);
+    const buA = getBusinessUnitOrderIndex(metaA.businessUnit);
+    const buB = getBusinessUnitOrderIndex(metaB.businessUnit);
+    if (buA !== buB) return buA - buB;
+    return (metaA.accountName || '').localeCompare(metaB.accountName || '');
+  });
+
+  const rows = [];
+  let sNo = 0;
+  accountKeys.forEach(custKey => {
+    const meta = accountMeta.get(custKey);
+    const allPR = polledRespondedByAccount.get(custKey) || { polled: 0, responded: 0 };
+    sNo += 1;
+    rows.push({
+      sNo,
+      accountKey: custKey,
+      accountName: meta.accountName,
+      businessUnit: meta.businessUnit,
+      practice: 'All Practice',
+      isAllPractice: true,
+      Polled: allPR.polled,
+      Responded: allPR.responded,
+      ...buildPerspectivePercents(satisfiedByAccount.get(custKey) || {}, totalByAccount.get(custKey) || {})
+    });
+
+    const practicesSorted = [...meta.practices].sort((a, b) => {
+      const ia = getPracticeOrderIndex(a);
+      const ib = getPracticeOrderIndex(b);
+      if (ia !== ib) return ia - ib;
+      return (a || '').localeCompare(b || '');
+    });
+    practicesSorted.forEach(practice => {
+      const apKey = `${custKey}|||${practice.toLowerCase()}`;
+      const pr = polledRespondedByAccountPractice.get(apKey) || { polled: 0, responded: 0 };
+      rows.push({
+        sNo: null,
+        accountKey: custKey,
+        accountName: meta.accountName,
+        businessUnit: meta.businessUnit,
+        practice,
+        isAllPractice: false,
+        Polled: pr.polled,
+        Responded: pr.responded,
+        ...buildPerspectivePercents(satisfiedByAccountPractice.get(apKey) || {}, totalByAccountPractice.get(apKey) || {})
+      });
+    });
+  });
+
+  const grandTotalRow = {
+    accountKey: 'GRAND_TOTAL',
+    accountName: '',
+    businessUnit: '',
+    practice: 'Grand Total',
+    isGrandTotal: true,
+    Polled: grandPolled,
+    Responded: grandResponded,
+    ...buildPerspectivePercents(grandSatisfied, grandTotal)
+  };
+
+  return { rows, perspectives: PRACTICE_PERSPECTIVE_ORDER, grandTotalRow };
+};
+
+// Top 10 account membership and order now live in a single shared config (utils/top10Accounts.js)
+// so the roster only needs updating in one place. The curated list is authoritative � the uploaded
+// file's TYPE OF ACCOUNT / "Top 10" column is intentionally NOT consulted, since it can go stale
+// when the roster changes.
+const isTop10AccountRow = (row) => isTop10AccountRowByName(row);
+
+// Fixed display order for the 10 named Top 10 accounts on the "Account_BU_Wise_Satisfied_Customers_Each_Perspective_Top10_Accounts" view.
+const ACCOUNT_PRACTICE_TOP10_ORDER = TOP10_ACCOUNT_ORDER;
+const getTop10AccountOrderIndex = (accountName) => {
+  const s = (accountName || '').toString().trim().toLowerCase();
+  const i = ACCOUNT_PRACTICE_TOP10_ORDER.findIndex(n => n.toLowerCase() === s);
+  return i >= 0 ? i : 999;
+};
+
+/**
+ * Account + Practice wise % Satisfied Customers, restricted to Top 10 accounts. Same grouping/tier
+ * structure as buildAccountPracticeWiseSatisfiedFromReceivedReport's sibling in AccountWiseAvgDashboard.js
+ * (buildAccountPracticeWiseTop10FromReceivedReport), but computing % Satisfied (count RATING 4-5 /
+ * count data input × 100) per perspective instead of an average rating. Individual account rows
+ * (bold "All Practice" + one row per practice) are built only for Top 10-flagged accounts, ordered
+ * per ACCOUNT_PRACTICE_TOP10_ORDER, followed by five dynamic summary tiers:
+ *   - "Top 10 Accounts", "Top10 <Practice>", "Other Account NR", "Other Account <Practice>", "Overall NR"
+ */
+const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCycleStartDateFormatted, secondSheetSource = null) => {
+  if (!source || !Array.isArray(source) || source.length === 0) {
+    return { rows: [], summaryRows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER };
+  }
+
+  const firstRow = source[0] || {};
+  const practiceCol = Object.keys(firstRow).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+  const perspectiveCol = Object.keys(firstRow).find(k => k === 'PERSPECTIVE' || String(k).toLowerCase().includes('perspective')) || 'PERSPECTIVE';
+  const ratingCol = Object.keys(firstRow).find(k => k === 'RATING' || String(k).toLowerCase() === 'rating') || 'RATING';
+  const customerNameCol = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+
+  const practiceByCustomerId = new Map();
+  const businessUnitByCustomerId = new Map();
+  const nameByCustomerId = new Map();
+  const top10ByCustomerId = new Map();
+  const polledRespondedByAccountPractice = new Map();
+  const polledRespondedByAccount = new Map();
+  const polledRespondedByTier = new Map();
+  const polledRespondedByTierPractice = new Map();
+  // Every practice seen for a customer in the second sheet, even when it has no rated rows yet
+  // (e.g. a Draft/pending survey) — ensures such practices still get their own row.
+  const practiceNamesByCustomerId = new Map();
+  const tierPractices = { top10: new Set(), other: new Set() };
+  let grandPolled = 0;
+  let grandResponded = 0;
+
+  if (secondSheetSource && secondSheetSource.length > 0) {
+    const shFirst = secondSheetSource[0] || {};
+    const practiceCol2 = Object.keys(shFirst).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+    const buCol2 = Object.keys(shFirst).find(k => {
+      const t = String(k || '').toLowerCase().replace(/\s/g, '');
+      return t === 'businessunit' || t === 'bussinessunit';
+    }) || 'BUSINESS UNIT';
+    const nameCol2 = Object.keys(shFirst).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+    const sentDateCol = Object.keys(shFirst).find(k => {
+      const lower = String(k || '').toLowerCase();
+      return k === 'CSAT SENT DATE' || lower.includes('csat_sent_date') || lower.includes('css_sent_date') || lower.includes('sent date');
+    }) || 'CSAT SENT DATE';
+    const receivedDateCol = Object.keys(shFirst).find(k => {
+      const lower = String(k || '').toLowerCase();
+      return k === 'CSAT RECEIVED DATE' || lower.includes('csat_received_date') || lower.includes('css_received_date') || lower.includes('received date');
+    }) || 'CSAT RECEIVED DATE';
+
+    secondSheetSource.forEach(row => {
+      const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
+      if (!customerId) return;
+      const custKey = normalizeCustomerIdKey(customerId);
+      if (!custKey) return;
+
+      const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['PRACTICE MAPPED'] ?? row['Practice Mapped'] ?? '').toString().trim());
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+        const existing = practiceByCustomerId.get(custKey);
+        if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
+      }
+      const buVal = (row[buCol2] ?? row['BUSSINESS UNIT'] ?? '').toString().trim();
+      if (buVal && !businessUnitByCustomerId.has(custKey)) businessUnitByCustomerId.set(custKey, buVal);
+      const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
+      if (nameVal && !nameByCustomerId.has(custKey)) nameByCustomerId.set(custKey, nameVal);
+
+      if (isTop10AccountRow(row)) top10ByCustomerId.set(custKey, true);
+      else if (!top10ByCustomerId.has(custKey)) top10ByCustomerId.set(custKey, false);
+
+      const tier = top10ByCustomerId.get(custKey) ? 'top10' : 'other';
+      const practiceKey = (practiceVal || 'n/a').toLowerCase();
+      const apKey = `${custKey}|||${practiceKey}`;
+      const tpKey = `${tier}|||${practiceKey}`;
+      if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+        if (!practiceNamesByCustomerId.has(custKey)) practiceNamesByCustomerId.set(custKey, new Set());
+        practiceNamesByCustomerId.get(custKey).add(practiceVal);
+        tierPractices[tier].add(practiceVal);
+      }
+      if (!polledRespondedByAccountPractice.has(apKey)) polledRespondedByAccountPractice.set(apKey, { polled: 0, responded: 0 });
+      if (!polledRespondedByAccount.has(custKey)) polledRespondedByAccount.set(custKey, { polled: 0, responded: 0 });
+      if (!polledRespondedByTier.has(tier)) polledRespondedByTier.set(tier, { polled: 0, responded: 0 });
+      if (!polledRespondedByTierPractice.has(tpKey)) polledRespondedByTierPractice.set(tpKey, { polled: 0, responded: 0 });
+      const recAP = polledRespondedByAccountPractice.get(apKey);
+      const recA = polledRespondedByAccount.get(custKey);
+      const recTier = polledRespondedByTier.get(tier);
+      const recTP = polledRespondedByTierPractice.get(tpKey);
+
+      const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
+      let sentOk = false;
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        sentOk = !!(sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted)));
+      }
+      if (sentOk) { recAP.polled++; recA.polled++; recTier.polled++; recTP.polled++; grandPolled++; }
+
+      const receivedVal = row[receivedDateCol] ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'] ?? row['CSS RECEIVED DATE'];
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      const receivedOk = isCompletedStatus && !!(receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(receivedFormatted, csatCycleStartDateFormatted)));
+      if (receivedOk) { recAP.responded++; recA.responded++; recTier.responded++; recTP.responded++; grandResponded++; }
+    });
+  }
+
+  const satisfiedByAccountPractice = new Map();
+  const totalByAccountPractice = new Map();
+  const satisfiedByAccount = new Map();
+  const totalByAccount = new Map();
+  const satisfiedByTier = new Map();
+  const totalByTier = new Map();
+  const satisfiedByTierPractice = new Map();
+  const totalByTierPractice = new Map();
+  const grandSatisfied = {};
+  const grandTotal = {};
+  const accountMeta = new Map();
+
+  const ensurePerspectiveMap = (map, key) => {
+    if (!map.has(key)) {
+      const obj = {};
+      PRACTICE_PERSPECTIVE_ORDER.forEach(p => { obj[p] = 0; });
+      map.set(key, obj);
+    }
+    return map.get(key);
+  };
+
+  source.forEach(row => {
+    const qc = row['QUESTION_CATEGORY'] ?? row['Question Category'] ?? row['question_category'];
+    if (qc === 'Qualitative Feedback') return;
+
+    const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
+    const custKey = normalizeCustomerIdKey(customerId);
+    if (!custKey) return;
+
+    const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
+    const practiceFromSecond = practiceByCustomerId.get(custKey) || '';
+    const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a' ? rawPractice : (practiceFromSecond || 'N/A'));
+    if (!practice || practice === 'N/A') return;
+
+    const perspectiveNorm = resolvePracticePerspectiveKey(row[perspectiveCol] ?? row['PERSPECTIVE']);
+    if (!perspectiveNorm) return;
+    const ratingNum = parseFloat(row[ratingCol] ?? row['RATING'] ?? row['Rating'] ?? row['rating']);
+    const isSatisfied = !Number.isNaN(ratingNum) && (ratingNum === 4 || ratingNum === 5);
+
+    const isTop10 = top10ByCustomerId.has(custKey) ? top10ByCustomerId.get(custKey) : isTop10AccountRow(row);
+    const tier = isTop10 ? 'top10' : 'other';
+    tierPractices[tier].add(practice);
+
+    if (!accountMeta.has(custKey)) {
+      accountMeta.set(custKey, {
+        accountName: (row[customerNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? nameByCustomerId.get(custKey) ?? custKey).toString().trim(),
+        businessUnit: businessUnitByCustomerId.get(custKey) || 'N/A',
+        practices: new Set(),
+        isTop10
+      });
+    }
+    accountMeta.get(custKey).practices.add(practice);
+
+    const apKey = `${custKey}|||${practice.toLowerCase()}`;
+    const totAP = ensurePerspectiveMap(totalByAccountPractice, apKey);
+    const satAP = ensurePerspectiveMap(satisfiedByAccountPractice, apKey);
+    totAP[perspectiveNorm]++;
+    if (isSatisfied) satAP[perspectiveNorm]++;
+
+    const totA = ensurePerspectiveMap(totalByAccount, custKey);
+    const satA = ensurePerspectiveMap(satisfiedByAccount, custKey);
+    totA[perspectiveNorm]++;
+    if (isSatisfied) satA[perspectiveNorm]++;
+
+    const totTier = ensurePerspectiveMap(totalByTier, tier);
+    const satTier = ensurePerspectiveMap(satisfiedByTier, tier);
+    totTier[perspectiveNorm]++;
+    if (isSatisfied) satTier[perspectiveNorm]++;
+
+    const tpKey = `${tier}|||${practice.toLowerCase()}`;
+    const totTP = ensurePerspectiveMap(totalByTierPractice, tpKey);
+    const satTP = ensurePerspectiveMap(satisfiedByTierPractice, tpKey);
+    totTP[perspectiveNorm]++;
+    if (isSatisfied) satTP[perspectiveNorm]++;
+
+    grandTotal[perspectiveNorm] = (grandTotal[perspectiveNorm] || 0) + 1;
+    if (isSatisfied) grandSatisfied[perspectiveNorm] = (grandSatisfied[perspectiveNorm] || 0) + 1;
+  });
+
+  const buildPerspectivePercents = (satisfiedObj, totalObj) => {
+    const result = {};
+    PRACTICE_PERSPECTIVE_ORDER.forEach(p => {
+      const dataInput = totalObj[p] || 0;
+      const count = satisfiedObj[p] || 0;
+      if (dataInput > 0) {
+        const pct = Math.round((count / dataInput) * 1000) / 10;
+        result[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
+      } else {
+        result[p] = '-';
+      }
+    });
+    return result;
+  };
+
+  // Merge in practices known only from the second sheet (e.g. Draft/pending surveys with no rating
+  // yet) so every practice with a Polled count still gets its own row, not just ones with ratings.
+  practiceNamesByCustomerId.forEach((practiceSet, custKey) => {
+    if (!accountMeta.has(custKey)) {
+      accountMeta.set(custKey, {
+        accountName: nameByCustomerId.get(custKey) || custKey,
+        businessUnit: businessUnitByCustomerId.get(custKey) || 'N/A',
+        practices: new Set(),
+        isTop10: !!top10ByCustomerId.get(custKey)
+      });
+    }
+    const meta = accountMeta.get(custKey);
+    practiceSet.forEach(p => meta.practices.add(p));
+  });
+
+  const top10AccountKeys = [...accountMeta.keys()]
+    .filter(k => accountMeta.get(k).isTop10)
+    .sort((a, b) => {
+      const metaA = accountMeta.get(a);
+      const metaB = accountMeta.get(b);
+      const iA = getTop10AccountOrderIndex(metaA.accountName);
+      const iB = getTop10AccountOrderIndex(metaB.accountName);
+      if (iA !== iB) return iA - iB;
+      return (metaA.accountName || '').localeCompare(metaB.accountName || '');
+    });
+
+  const rows = [];
+  let sNo = 0;
+  top10AccountKeys.forEach(custKey => {
+    const meta = accountMeta.get(custKey);
+    const allPR = polledRespondedByAccount.get(custKey) || { polled: 0, responded: 0 };
+    sNo += 1;
+    rows.push({
+      sNo,
+      rowKey: `${meta.accountName.toLowerCase()}|||all practice`,
+      accountKey: custKey,
+      accountName: meta.accountName,
+      businessUnit: meta.businessUnit,
+      practice: 'All Practice',
+      isAllPractice: true,
+      Polled: allPR.polled,
+      Responded: allPR.responded,
+      ...buildPerspectivePercents(satisfiedByAccount.get(custKey) || {}, totalByAccount.get(custKey) || {})
+    });
+
+    const practicesSorted = [...meta.practices].sort((a, b) => {
+      const ia = getPracticeOrderIndex(a);
+      const ib = getPracticeOrderIndex(b);
+      if (ia !== ib) return ia - ib;
+      return (a || '').localeCompare(b || '');
+    });
+    practicesSorted.forEach(practice => {
+      const apKey = `${custKey}|||${practice.toLowerCase()}`;
+      const pr = polledRespondedByAccountPractice.get(apKey) || { polled: 0, responded: 0 };
+      rows.push({
+        rowKey: `${meta.accountName.toLowerCase()}|||${practice.toLowerCase()}`,
+        accountKey: custKey,
+        accountName: meta.accountName,
+        businessUnit: meta.businessUnit,
+        practice,
+        isAllPractice: false,
+        Polled: pr.polled,
+        Responded: pr.responded,
+        ...buildPerspectivePercents(satisfiedByAccountPractice.get(apKey) || {}, totalByAccountPractice.get(apKey) || {})
+      });
+    });
+  });
+
+  const sortPractices = (set) => [...set].sort((a, b) => {
+    const ia = getPracticeOrderIndex(a);
+    const ib = getPracticeOrderIndex(b);
+    if (ia !== ib) return ia - ib;
+    return (a || '').localeCompare(b || '');
+  });
+
+  const summaryRows = [];
+
+  const top10Tier = polledRespondedByTier.get('top10') || { polled: 0, responded: 0 };
+  summaryRows.push({
+    rowKey: 'top10-accounts',
+    practice: 'Top 10 Accounts',
+    rowTier: 'top10-total',
+    Polled: top10Tier.polled,
+    Responded: top10Tier.responded,
+    ...buildPerspectivePercents(satisfiedByTier.get('top10') || {}, totalByTier.get('top10') || {})
+  });
+  sortPractices(tierPractices.top10).forEach(practice => {
+    const tpKey = `top10|||${practice.toLowerCase()}`;
+    const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
+    summaryRows.push({
+      rowKey: `top10-practice|||${practice.toLowerCase()}`,
+      practice: `Top10 ${practice}`,
+      rowTier: 'top10-practice',
+      Polled: pr.polled,
+      Responded: pr.responded,
+      ...buildPerspectivePercents(satisfiedByTierPractice.get(tpKey) || {}, totalByTierPractice.get(tpKey) || {})
+    });
+  });
+
+  const otherTier = polledRespondedByTier.get('other') || { polled: 0, responded: 0 };
+  summaryRows.push({
+    rowKey: 'other-account-nr',
+    practice: 'Other Account NR',
+    rowTier: 'other-total',
+    Polled: otherTier.polled,
+    Responded: otherTier.responded,
+    ...buildPerspectivePercents(satisfiedByTier.get('other') || {}, totalByTier.get('other') || {})
+  });
+  sortPractices(tierPractices.other).forEach(practice => {
+    const tpKey = `other|||${practice.toLowerCase()}`;
+    const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
+    summaryRows.push({
+      rowKey: `other-practice|||${practice.toLowerCase()}`,
+      practice: `Other Account ${practice}`,
+      rowTier: 'other-practice',
+      Polled: pr.polled,
+      Responded: pr.responded,
+      ...buildPerspectivePercents(satisfiedByTierPractice.get(tpKey) || {}, totalByTierPractice.get(tpKey) || {})
+    });
+  });
+
+  summaryRows.push({
+    rowKey: 'overall-nr',
+    practice: 'Overall NR',
+    rowTier: 'overall',
+    Polled: grandPolled,
+    Responded: grandResponded,
+    ...buildPerspectivePercents(grandSatisfied, grandTotal)
+  });
+
+  return { rows, summaryRows, perspectives: PRACTICE_PERSPECTIVE_ORDER };
 };
 
 const getTrendFilePracticeSheets = (file) => {
@@ -640,10 +1235,52 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
   const [showScrollable, setShowScrollable] = useState(false);
   const [showTrendAnalysis, setShowTrendAnalysis] = useState(false);
   const [showPracticeWise, setShowPracticeWise] = useState(false);
+  const [showAccountPracticeWise, setShowAccountPracticeWise] = useState(false);
+  const [showAccountPracticeWiseTop10, setShowAccountPracticeWiseTop10] = useState(false);
   const [practiceFileReceivedData, setPracticeFileReceivedData] = useState(null);
   const [practiceFileSheet2Data, setPracticeFileSheet2Data] = useState(null);
+  // Last cycle (previous half-year) PCSAT data for the Account/Practice wise Top10 view — fetched
+  // dynamically from the API (no manual upload) so it always reflects the half-year immediately
+  // preceding the currently selected CSAT cycle.
+  const [lastCycleReceivedData, setLastCycleReceivedData] = useState(null);
+  const [lastCycleSheet2Data, setLastCycleSheet2Data] = useState(null);
+  const [lastCycleLoading, setLastCycleLoading] = useState(false);
+  const [lastCycleError, setLastCycleError] = useState(null);
   const itemsPerPage = 20;
-  const { csatCycleStartDateFormatted, acsatCycle } = useCSATContext();
+  const { csatCycleStartDate, csatCycleStartDateFormatted, acsatCycle } = useCSATContext();
+  // Previous half-year period (e.g. current H1 2026 -> last cycle H2 2025), derived from the
+  // currently selected CSAT cycle start date — drives the Top10 "last cycle" dashboard.
+  const lastCycleOption = useMemo(() => getPreviousHalfYearOption(csatCycleStartDate), [csatCycleStartDate]);
+  const lastCycleStartDateFormatted = lastCycleOption ? formatDateToMMDDYYYY(lastCycleOption.startDate) : '';
+
+  // Fetch last cycle PCSAT data dynamically from the API whenever the Account/Practice wise Top10
+  // view is opened and the last cycle period is known.
+  useEffect(() => {
+    if (!showAccountPracticeWiseTop10 || !lastCycleOption) return;
+    let cancelled = false;
+    setLastCycleLoading(true);
+    setLastCycleError(null);
+    fetchPCSATReportData({
+      startDate: lastCycleOption.startDate,
+      endDate: lastCycleOption.endDate,
+      customerIds: '-1'
+    })
+      .then(result => {
+        if (cancelled) return;
+        setLastCycleReceivedData(Array.isArray(result?.data) && result.data.length > 0 ? result.data : []);
+        setLastCycleSheet2Data(Array.isArray(result?.secondSheetData) && result.secondSheetData.length > 0 ? result.secondSheetData : null);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        setLastCycleReceivedData([]);
+        setLastCycleSheet2Data(null);
+        setLastCycleError(err.message || 'Failed to fetch last cycle PCSAT data from the server.');
+      })
+      .finally(() => {
+        if (!cancelled) setLastCycleLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [showAccountPracticeWiseTop10, lastCycleOption?.startDate, lastCycleOption?.endDate]);
   // Dynamic "Trend analysis (<main period> Vs <comparison period>)" header label, driven by the
   // actual selected main period (acsatCycle) and the most recently fetched/uploaded comparison period.
   const trendComparisonPeriodLabel = (trendAnalysisFiles && trendAnalysisFiles.length > 0)
@@ -1207,11 +1844,12 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       const customerStaffingCounts = {};
       const top10Customers = new Set();
 
-      // First, identify customers with TYPE OF ACCOUNT = "Top 10" or Top 10 = "Y"
+      // Top 10 membership is defined solely by the shared, curated account list — not by this
+      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
       excelData.secondSheetData.forEach(row => {
         const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-        const typeOfAccountVal = (row['TYPE OF ACCOUNT'] ?? row['Top 10'] ?? '').toString().trim();
-        if (customerId && (typeOfAccountVal === 'Top 10' || typeOfAccountVal.toUpperCase() === 'Y')) {
+        const customerNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+        if (customerId && isTop10AccountName(customerNameForTop10)) {
           top10Customers.add(customerId);
         }
       });
@@ -1239,9 +1877,9 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       // Process CSS counts for all customers (Top 10 and Others)
       excelData.secondSheetData.forEach(row => {
         const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-        const typeOfAccountVal = (row['TYPE OF ACCOUNT'] ?? row['Top 10'] ?? '').toString().trim();
-        const isTop10Row = customerId && (typeOfAccountVal === 'Top 10' || typeOfAccountVal.toUpperCase() === 'Y');
-        const isOtherRow = (typeOfAccountVal === '' || typeOfAccountVal === null || typeOfAccountVal === undefined);
+        const customerNameForTop10Row = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+        const isTop10Row = customerId && isTop10AccountName(customerNameForTop10Row);
+        const isOtherRow = customerId && !isTop10Row;
         const cssSentDate = row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
         const cssReceivedDate = row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'];
         const revenueType = row['REVENUE_TYPE'];
@@ -1412,20 +2050,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     }
 
     // Hardcoded Top 10 order (Sr. No. 1–12)
-    const top10Order = [
-      'Premier Healthcare Solutions Inc',
-      'Blue Cross Blue Shield Association BCBSA',
-      'Frontier Airlines INC',
-      'Premier - Horizon II - Covenant Health',
-      'Tufts Medicine',
-      'BronxCare Health System',
-      'AgFirst Farm Credit Bank',
-      'embecta MEDICAL II LLC',
-      'Northern Trust Company',
-      'Jewish Board of Family and Childrens Services JBFCS',
-      'Healthfirst',
-      'AgileOne'
-    ];
+    const top10Order = TOP10_ACCOUNT_ORDER;
 
 
     // Helper: convert a group object to a row with % logic. When denomByPerspective is provided (e.g. row "Number of CSATs considered==>"), use it as denominator; else use (count data input for perspective) * 100.
@@ -1459,10 +2084,10 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       .filter(obj => obj.customerId !== 'OTHER' && obj.cssSentCount > 0);
     const otherGroup = customerGroups['OTHER'];
 
-    // Sort Top 10 by hardcoded order
+    // Sort Top 10 by the shared curated order (case/whitespace-insensitive match).
     const sortedTop10 = [...top10Only].sort((a, b) => {
-      const indexA = top10Order.indexOf(a.customerName);
-      const indexB = top10Order.indexOf(b.customerName);
+      const indexA = getTop10AccountOrderIndex(a.customerName);
+      const indexB = getTop10AccountOrderIndex(b.customerName);
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
       if (indexA !== -1) return -1;
       if (indexB !== -1) return 1;
@@ -1744,17 +2369,16 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
 
       console.log('CSS columns found:', { cssSentColumn, cssReceivedColumn, customerIdColumn, revenueTypeColumn, top10Column });
 
-      // First, identify customers with TYPE OF ACCOUNT = "Top 10" or Top 10 = "Y"
-      if (top10Column) {
-        secondSheetData.forEach(row => {
-          const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'] ?? row[customerIdColumn];
-          const typeOfAccountVal = (row['TYPE OF ACCOUNT'] ?? row[top10Column] ?? '').toString().trim();
-          if (customerId && (typeOfAccountVal === 'Top 10' || typeOfAccountVal.toUpperCase() === 'Y')) {
-            top10Customers.add(customerId);
-          }
-        });
-        console.log('Top 10 customers for account-wise view:', Array.from(top10Customers));
-      }
+      // Top 10 membership is defined solely by the shared, curated account list — not by this
+      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+      secondSheetData.forEach(row => {
+        const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'] ?? row[customerIdColumn];
+        const customerNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+        if (customerId && isTop10AccountName(customerNameForTop10)) {
+          top10Customers.add(customerId);
+        }
+      });
+      console.log('Top 10 customers for account-wise view:', Array.from(top10Customers));
 
       secondSheetData.forEach(secondRow => {
         const customerId = secondRow['CUST_ID'] ?? secondRow['CUSTOMER_ID'] ?? secondRow[customerIdColumn];
@@ -1996,6 +2620,166 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       return sortConfig.direction === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as);
     });
   }, [practiceWiseTrendData.rows, sortConfig]);
+
+  // Account + Practice wise % Satisfied Customers (current cycle) — same source/grouping as the
+  // Practice-wise view, plus Account Name/Business Unit and an "All Practice" roll-up per account.
+  const accountPracticeWiseData = useMemo(() => {
+    const source = (practiceFileReceivedData && practiceFileReceivedData.length > 0)
+      ? practiceFileReceivedData
+      : (uploadedData && uploadedData.length > 0 ? uploadedData : null);
+    const secondSheet = (practiceFileSheet2Data && practiceFileSheet2Data.length > 0)
+      ? practiceFileSheet2Data
+      : (excelData?.secondSheetData && Array.isArray(excelData.secondSheetData) ? excelData.secondSheetData : null);
+    if (!source) return { rows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER, grandTotalRow: null };
+    return buildAccountPracticeWiseSatisfiedFromReceivedReport(source, csatCycleStartDateFormatted, secondSheet);
+  }, [practiceFileReceivedData, practiceFileSheet2Data, uploadedData, excelData, csatCycleStartDateFormatted]);
+
+  const accountPracticeWiseSortedRows = useMemo(() => {
+    const rows = accountPracticeWiseData.rows || [];
+    if (!sortConfig.key) return rows;
+    return [...rows].sort((a, b) => {
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
+      if (typeof aVal === 'string' && aVal.includes('%') && typeof bVal === 'string' && bVal.includes('%')) {
+        const an = parseFloat(aVal) || 0;
+        const bn = parseFloat(bVal) || 0;
+        return sortConfig.direction === 'asc' ? an - bn : bn - an;
+      }
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      const as = String(aVal ?? '');
+      const bs = String(bVal ?? '');
+      return sortConfig.direction === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as);
+    });
+  }, [accountPracticeWiseData.rows, sortConfig]);
+
+  // Account + Practice wise trend comparison (H2 Vs H1) — same uploaded comparison file as Practice-wise.
+  const accountPracticeWiseTrendData = useMemo(() => {
+    if (!showAccountPracticeWise || !showTrendAnalysis) {
+      return { rows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER, sourceName: '', error: null, grandTotalRow: null };
+    }
+    if (!csatCycleStartDateFormatted) {
+      return { rows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER, sourceName: '', error: 'CSAT cycle start date is required.', grandTotalRow: null };
+    }
+    const h12025File = findTrendAnalysisH12025File(trendAnalysisFiles);
+    if (!h12025File) {
+      return {
+        rows: [],
+        perspectives: PRACTICE_PERSPECTIVE_ORDER,
+        sourceName: '',
+        error: 'Upload "Trend-Analysis-H12025.xlsx" in "Upload data for trend analysis" to view trend data.',
+        grandTotalRow: null
+      };
+    }
+    const { sheet1, sheet2 } = getTrendFilePracticeSheets(h12025File);
+    if (!sheet1.length && !sheet2.length) {
+      return {
+        rows: [],
+        perspectives: PRACTICE_PERSPECTIVE_ORDER,
+        sourceName: h12025File.saveName || h12025File.originalName || 'Trend-Analysis-H12025.xlsx',
+        error: 'No data found in trend file sheets "CSAT received Report" or "CSAT sent and received Report".',
+        grandTotalRow: null
+      };
+    }
+    const built = buildAccountPracticeWiseSatisfiedFromReceivedReport(sheet1, csatCycleStartDateFormatted, sheet2);
+    return {
+      ...built,
+      sourceName: h12025File.saveName || h12025File.originalName || 'Trend-Analysis-H12025.xlsx',
+      error: built.rows.length === 0 ? 'No rows with date ≥ CSAT cycle start in trend file.' : null
+    };
+  }, [showAccountPracticeWise, showTrendAnalysis, trendAnalysisFiles, csatCycleStartDateFormatted]);
+
+  // Lookup keyed by account name + practice (lower-cased) so current-period rows can find their
+  // trend-period counterpart without depending on CUST_ID matching across two separately uploaded files.
+  const accountPracticeWiseTrendLookup = useMemo(() => {
+    const lookup = {};
+    (accountPracticeWiseTrendData.rows || []).forEach((r) => {
+      const key = `${(r.accountName || '').toString().trim().toLowerCase()}|||${(r.practice || '').toString().trim().toLowerCase()}`;
+      if (r.accountName) lookup[key] = r;
+    });
+    return lookup;
+  }, [accountPracticeWiseTrendData]);
+
+  // Account + Practice wise % Satisfied Customers, restricted to Top 10 accounts (current cycle).
+  const accountPracticeWiseTop10Data = useMemo(() => {
+    const source = (practiceFileReceivedData && practiceFileReceivedData.length > 0)
+      ? practiceFileReceivedData
+      : (uploadedData && uploadedData.length > 0 ? uploadedData : null);
+    const secondSheet = (practiceFileSheet2Data && practiceFileSheet2Data.length > 0)
+      ? practiceFileSheet2Data
+      : (excelData?.secondSheetData && Array.isArray(excelData.secondSheetData) ? excelData.secondSheetData : null);
+    if (!source) return { rows: [], summaryRows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER };
+    return buildAccountPracticeWiseSatisfiedTop10FromReceivedReport(source, csatCycleStartDateFormatted, secondSheet);
+  }, [practiceFileReceivedData, practiceFileSheet2Data, uploadedData, excelData, csatCycleStartDateFormatted]);
+
+  // Account + Practice wise Top 10 trend comparison (H2 Vs H1) — uploaded comparison file, used both
+  // for the inline trend columns on the current-cycle table and as an override source for "last cycle".
+  const accountPracticeWiseTop10TrendData = useMemo(() => {
+    if (!showAccountPracticeWiseTop10 || !showTrendAnalysis) {
+      return { rows: [], summaryRows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER, sourceName: '', error: null };
+    }
+    if (!csatCycleStartDateFormatted) {
+      return { rows: [], summaryRows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER, sourceName: '', error: 'CSAT cycle start date is required.' };
+    }
+    const h12025File = findTrendAnalysisH12025File(trendAnalysisFiles);
+    if (!h12025File) {
+      return {
+        rows: [],
+        summaryRows: [],
+        perspectives: PRACTICE_PERSPECTIVE_ORDER,
+        sourceName: '',
+        error: 'Upload "Trend-Analysis-H12025.xlsx" in "Upload data for trend analysis" to view trend data.'
+      };
+    }
+    const { sheet1, sheet2 } = getTrendFilePracticeSheets(h12025File);
+    if (!sheet1.length && !sheet2.length) {
+      return {
+        rows: [],
+        summaryRows: [],
+        perspectives: PRACTICE_PERSPECTIVE_ORDER,
+        sourceName: h12025File.saveName || h12025File.originalName || 'Trend-Analysis-H12025.xlsx',
+        error: 'No data found in trend file sheets "CSAT received Report" or "CSAT sent and received Report".'
+      };
+    }
+    const built = buildAccountPracticeWiseSatisfiedTop10FromReceivedReport(sheet1, csatCycleStartDateFormatted, sheet2);
+    return {
+      ...built,
+      sourceName: h12025File.saveName || h12025File.originalName || 'Trend-Analysis-H12025.xlsx',
+      error: built.rows.length === 0 ? 'No rows with date ≥ CSAT cycle start in trend file.' : null
+    };
+  }, [showAccountPracticeWiseTop10, showTrendAnalysis, trendAnalysisFiles, csatCycleStartDateFormatted]);
+
+  // Single lookup by rowKey covers both individual account rows (accountName|||practice) and the
+  // five dynamic summary tiers (top10-accounts, top10-practice|||x, other-account-nr, etc.).
+  const accountPracticeWiseTop10TrendLookup = useMemo(() => {
+    const lookup = {};
+    [...(accountPracticeWiseTop10TrendData.rows || []), ...(accountPracticeWiseTop10TrendData.summaryRows || [])].forEach((r) => {
+      if (r.rowKey) lookup[r.rowKey] = r;
+    });
+    return lookup;
+  }, [accountPracticeWiseTop10TrendData]);
+
+  // Account + Practice wise % Satisfied Customers, Top 10 accounts (last cycle / previous half-year),
+  // built with the same calculation logic as the current cycle, from dynamically fetched data.
+  const lastCycleAccountPracticeWiseTop10Data = useMemo(() => {
+    if (!lastCycleReceivedData || lastCycleReceivedData.length === 0) {
+      return { rows: [], summaryRows: [], perspectives: PRACTICE_PERSPECTIVE_ORDER };
+    }
+    return buildAccountPracticeWiseSatisfiedTop10FromReceivedReport(lastCycleReceivedData, lastCycleStartDateFormatted, lastCycleSheet2Data);
+  }, [lastCycleReceivedData, lastCycleSheet2Data, lastCycleStartDateFormatted]);
+
+  // When a trend-analysis comparison file has been uploaded/fetched (showTrendAnalysis), the "last
+  // cycle" dashboard shows that uploaded file's data instead of the API-fetched previous half-year.
+  const lastCycleUsesUploadedTrendFile = showTrendAnalysis && (trendAnalysisFiles || []).length > 0;
+  const effectiveLastCycleTop10Data = lastCycleUsesUploadedTrendFile ? accountPracticeWiseTop10TrendData : lastCycleAccountPracticeWiseTop10Data;
+  const effectiveLastCycleTop10Perspectives = lastCycleUsesUploadedTrendFile ? (accountPracticeWiseTop10TrendData.perspectives || []) : (lastCycleAccountPracticeWiseTop10Data.perspectives || []);
+  const effectiveLastCycleTop10Loading = lastCycleUsesUploadedTrendFile ? false : lastCycleLoading;
+  const effectiveLastCycleTop10Error = lastCycleUsesUploadedTrendFile ? accountPracticeWiseTop10TrendData.error : lastCycleError;
+  const effectiveLastCycleTop10Label = lastCycleUsesUploadedTrendFile
+    ? (accountPracticeWiseTop10TrendData.sourceName || trendComparisonPeriodLabel)
+    : (lastCycleOption?.label || '');
+  const effectiveLastCycleTop10DateNote = lastCycleUsesUploadedTrendFile ? csatCycleStartDateFormatted : lastCycleStartDateFormatted;
 
   const filteredData = useMemo(() => {
     let filtered = processedData.data;
@@ -3070,9 +3854,10 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     }) || 'CSAT RECEIVED DATE';
     const groups = {};
     sheetData.forEach(row => {
-      const typeOfAccount = String(row[typeOfAccountCol] ?? row['TYPE OF ACCOUNT'] ?? '').trim();
-      if (typeOfAccount !== 'Top 10') return;
       const accountName = String(row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').trim() || 'N/A';
+      // Top 10 membership is defined solely by the shared, curated account list — not by this
+      // row's TYPE OF ACCOUNT flag, which can go stale when the roster changes.
+      if (!isTop10AccountName(accountName)) return;
       const buRaw = row[buCol] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? 'N/A';
       const businessUnit = normalizeBU(String(buRaw).trim()) || 'N/A';
       const sentDateFormatted = parseExcelDateToMMDDYYYY(row[sentCol]);
@@ -3088,20 +3873,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       .filter(g => g.polled > 0 || g.responded > 0)
       .map(g => ({ accountName: g.accountName, businessUnit: g.businessUnit, polled: g.polled, responded: g.responded }));
     // Same fixed account order as the Top 10 Accounts table (Premier first)
-    const top10FixedOrder = [
-      'Premier Healthcare Solutions Inc',
-      'Blue Cross Blue Shield Association BCBSA',
-      'Frontier Airlines INC',
-      'Premier - Horizon II - Covenant Health',
-      'Tufts Medicine',
-      'BronxCare Health System',
-      'AgFirst Farm Credit Bank',
-      'embecta MEDICAL II LLC',
-      'Northern Trust Company',
-      'Jewish Board of Family and Childrens Services JBFCS',
-      'Healthfirst',
-      'AgileOne'
-    ];
+    const top10FixedOrder = TOP10_ACCOUNT_ORDER;
     const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
     rows.sort((a, b) => {
       const idxA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
@@ -3318,10 +4090,8 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     const satisfiedByKey = {};
     const dataInputByKey = {};
     sheetData.forEach(row => {
-      if (typeOfAccountCol != null) {
-        const typeOfAccount = String(row[typeOfAccountCol] ?? row['TYPE OF ACCOUNT'] ?? '').trim();
-        if (typeOfAccount !== 'Top 10') return;
-      }
+      // Membership is decided below via top10Keys (built from the shared, curated account list),
+      // not by this row's TYPE OF ACCOUNT flag, which can go stale when the roster changes.
       const accountName = String(row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').trim() || 'N/A';
       const buRaw = row[buCol] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '';
       const businessUnit = normalizeBU(String(buRaw).trim()) || 'N/A';
@@ -3426,7 +4196,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     }
     const firstRow = sheetData[0] || {};
     const perspectiveCol = Object.keys(firstRow).find(k => k === 'PERSPECTIVE' || String(k).toLowerCase().includes('perspective')) || 'PERSPECTIVE';
-    const typeOfAccountCol = Object.keys(firstRow).find(k => /type\s*of\s*account/i.test(String(k)));
+    const nameColForTop10 = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k)));
     const receivedDateKey = Object.keys(firstRow).find(k => {
       const kk = String(k).toLowerCase();
       return kk.includes('csat received date') || kk.includes('css_received_date') || kk.includes('received date');
@@ -3437,11 +4207,12 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     const otherDataInput = {};
     PERSPECTIVE_COLUMN_ORDER.forEach(p => { top10Satisfied[p] = 0; top10DataInput[p] = 0; otherSatisfied[p] = 0; otherDataInput[p] = 0; });
     sheetData.forEach(row => {
-      const typeVal = typeOfAccountCol != null ? String(row[typeOfAccountCol] ?? row['TYPE OF ACCOUNT'] ?? '').trim() : '';
-      if (typeOfAccountCol == null) return;
-      const isTop10 = typeVal === 'Top 10';
-      const isOther = typeVal === '' || typeVal.toLowerCase() === 'n/a';
-      if (!isTop10 && !isOther) return;
+      if (nameColForTop10 == null) return;
+      // Top 10 membership is defined solely by the shared, curated account list — not by this
+      // row's TYPE OF ACCOUNT flag, which can go stale when the roster changes.
+      const accountNameForTop10 = String(row[nameColForTop10] ?? row['CUSTOMER NAME'] ?? '').trim();
+      const isTop10 = isTop10AccountName(accountNameForTop10);
+      const isOther = !isTop10;
       if (receivedDateKey && (row[receivedDateKey] != null && row[receivedDateKey] !== '')) {
         const d = parseExcelDateToMMDDYYYY(row[receivedDateKey]);
         if (d && !isDateGreaterThanOrEqual(d, csatCycleStartDateFormatted)) return;
@@ -4205,6 +4976,14 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
   const handleDownload = async () => {
     if (showPracticeWise) {
       await handleDownloadPracticeWise();
+      return;
+    }
+    if (showAccountPracticeWise) {
+      await handleDownloadAccountPracticeWise();
+      return;
+    }
+    if (showAccountPracticeWiseTop10) {
+      await handleDownloadAccountPracticeWiseTop10();
       return;
     }
     if (!sortedData || sortedData.length === 0) {
@@ -5696,6 +6475,9 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     setShowBuWise(true);
     setShowTop10(false);
     setShowScrollable(false);
+    setShowPracticeWise(false);
+    setShowAccountPracticeWise(false);
+    setShowAccountPracticeWiseTop10(false);
     setCurrentPage(1);
     setCustomerNameSearch('');
     setBusinessUnitFilter('');
@@ -5706,6 +6488,9 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     setShowBuWise(false);
     setShowTop10(true);
     setShowScrollable(false);
+    setShowPracticeWise(false);
+    setShowAccountPracticeWise(false);
+    setShowAccountPracticeWiseTop10(false);
     setCurrentPage(1);
     setCustomerNameSearch('');
     setBusinessUnitFilter('');
@@ -5716,18 +6501,42 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     setShowBuWise(false);
     setShowTop10(false);
     setShowScrollable(true); // Account-wise: single view, all data (scrollable)
+    setShowPracticeWise(false);
+    setShowAccountPracticeWise(false);
+    setShowAccountPracticeWiseTop10(false);
     setCurrentPage(1);
     setSortConfig({ key: null, direction: 'asc' });
   };
 
   const handlePracticeWiseClick = () => {
+    setShowBuWise(false);
+    setShowTop10(false);
+    setShowScrollable(false);
     setShowPracticeWise(true);
+    setShowAccountPracticeWise(false);
+    setShowAccountPracticeWiseTop10(false);
     setCurrentPage(1);
     setSortConfig({ key: null, direction: 'asc' });
   };
 
-  const handleBackToAccountBuDashboard = () => {
+  const handleAccountPracticeWiseClick = () => {
+    setShowBuWise(false);
+    setShowTop10(false);
+    setShowScrollable(false);
     setShowPracticeWise(false);
+    setShowAccountPracticeWise(true);
+    setShowAccountPracticeWiseTop10(false);
+    setCurrentPage(1);
+    setSortConfig({ key: null, direction: 'asc' });
+  };
+
+  const handleAccountPracticeWiseTop10Click = () => {
+    setShowBuWise(false);
+    setShowTop10(false);
+    setShowScrollable(false);
+    setShowPracticeWise(false);
+    setShowAccountPracticeWise(false);
+    setShowAccountPracticeWiseTop10(true);
     setCurrentPage(1);
     setSortConfig({ key: null, direction: 'asc' });
   };
@@ -6008,6 +6817,416 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     }
   };
 
+  const handleDownloadAccountPracticeWise = async () => {
+    const rows = accountPracticeWiseData.rows || [];
+    if (!rows.length) {
+      alert('No account/practice-wise data available to download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Account-Practice % Satisfied');
+      const pList = PRACTICE_PERSPECTIVE_ORDER;
+      const perspectiveColStart = 7;
+      const styleHeaderRow = (rowNum) => {
+        const headerRow = worksheet.getRow(rowNum);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+        headerRow.eachCell((cell) => {
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+      };
+      if (showTrendAnalysis) {
+        const h2ColSpan = 2 + pList.length;
+        worksheet.addRow([
+          'Sr. No.', 'Business Unit', 'Account Name', 'Practice',
+          `Current cycle :${acsatCycle || 'H2 2025'}`,
+          ...Array(h2ColSpan - 1).fill(''),
+          trendHeaderLabel,
+          ...Array(pList.length - 1).fill('')
+        ]);
+        worksheet.mergeCells(1, 5, 1, 5 + h2ColSpan - 1);
+        const trendStartCol = 5 + h2ColSpan;
+        worksheet.mergeCells(1, trendStartCol, 1, trendStartCol + pList.length - 1);
+        worksheet.addRow([
+          '', '', '', '',
+          '#Polled', '#Responded',
+          ...pList.map(p => `${p} (%)`),
+          ...pList.map(p => getTrendPerspectiveHeaderLabel(p))
+        ]);
+        styleHeaderRow(1);
+        styleHeaderRow(2);
+      } else {
+        worksheet.addRow(['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', ...pList.map(p => `${p} (%)`)]);
+        styleHeaderRow(1);
+      }
+
+      const writeDataRow = (row, trendRow, isTotal) => {
+        const perspectiveValues = pList.map(p => formatPerspectiveValue(row[p] ?? '-'));
+        const trendValues = showTrendAnalysis
+          ? pList.map(p => formatPracticeTrendDiff(row[p], trendRow?.[p]).text)
+          : [];
+        const dataRow = worksheet.addRow([
+          isTotal ? '' : (row.sNo ?? ''),
+          isTotal ? '' : (row.isAllPractice ? normalizeBusinessUnitDisplay(row.businessUnit) : ''),
+          isTotal ? '' : (row.isAllPractice ? row.accountName : ''),
+          row.practice,
+          row.Polled ?? 0,
+          row.Responded ?? 0,
+          ...perspectiveValues,
+          ...trendValues
+        ]);
+        dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+        dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        dataRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        dataRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+        dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+        if (row.isAllPractice || isTotal) {
+          dataRow.eachCell((cell) => {
+            cell.font = { ...(cell.font || {}), bold: true };
+            if (isTotal) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } };
+            else cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+          });
+        }
+        pList.forEach((p, idx) => {
+          const val = perspectiveValues[idx];
+          const cell = dataRow.getCell(idx + perspectiveColStart);
+          cell.value = val;
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          const numericValue = parseFloat(String(val).replace('%', ''));
+          if (val === '-' || val === '－' || Number.isNaN(numericValue)) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } };
+            cell.font = { color: { argb: 'FF6B7280' }, bold: true };
+          } else if (numericValue < 75) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          } else if (numericValue >= 75 && numericValue < 90) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+            cell.font = { color: { argb: 'FF000000' }, bold: true };
+          } else if (numericValue >= 90) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF70AD47' } };
+            cell.font = { color: { argb: 'FF000000' }, bold: true };
+          }
+        });
+        if (showTrendAnalysis) {
+          pList.forEach((p, idx) => {
+            const { text, color } = formatPracticeTrendDiff(row[p], trendRow?.[p]);
+            const cell = dataRow.getCell(perspectiveColStart + pList.length + idx);
+            cell.value = text;
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            const argb = color === '#15803d' ? 'FF15803D' : color === '#dc2626' ? 'FFDC2626' : 'FF6B7280';
+            cell.font = { color: { argb }, bold: true };
+          });
+        }
+      };
+
+      rows.forEach((row) => {
+        const trendKey = `${(row.accountName || '').toString().trim().toLowerCase()}|||${(row.practice || '').toString().trim().toLowerCase()}`;
+        const trendRow = accountPracticeWiseTrendLookup[trendKey];
+        writeDataRow(row, trendRow, false);
+      });
+      if (accountPracticeWiseData.grandTotalRow) {
+        writeDataRow({ ...accountPracticeWiseData.grandTotalRow, practice: 'Grand Total' }, accountPracticeWiseTrendData.grandTotalRow, true);
+      }
+
+      worksheet.getColumn(1).width = 8;
+      worksheet.getColumn(2).width = 16;
+      worksheet.getColumn(3).width = 28;
+      worksheet.getColumn(4).width = 24;
+      worksheet.getColumn(5).width = 10;
+      worksheet.getColumn(6).width = 12;
+      pList.forEach((_, i) => { worksheet.getColumn(i + perspectiveColStart).width = 18; });
+      if (showTrendAnalysis) {
+        pList.forEach((_, i) => { worksheet.getColumn(i + perspectiveColStart + pList.length).width = 22; });
+      }
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_Practice_Wise_Percentage_Satisfied_Customers_Each_Perspective_${csatCycleStartDateFormatted || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Account/Practice-wise satisfied customers Excel export error:', err);
+      alert('Failed to export account/practice-wise data to Excel.');
+    }
+  };
+
+  const handleDownloadAccountPracticeWiseTrendAnalysis = async () => {
+    const rows = accountPracticeWiseTrendData.rows || [];
+    if (!rows.length) {
+      alert('No account/practice-wise trend analysis data available to download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Account-Practice % Satisfied (Trend)');
+      const pList = PRACTICE_PERSPECTIVE_ORDER;
+      const headers = ['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', ...pList.map(p => `${p} (%)`)];
+      const headerRow = worksheet.addRow(headers);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+      headerRow.eachCell((cell) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+
+      const writeDataRow = (row, isTotal) => {
+        const perspectiveValues = pList.map(p => formatPerspectiveValue(row[p] ?? '-'));
+        const dataRow = worksheet.addRow([
+          isTotal ? '' : (row.sNo ?? ''),
+          isTotal ? '' : (row.isAllPractice ? normalizeBusinessUnitDisplay(row.businessUnit) : ''),
+          isTotal ? '' : (row.isAllPractice ? row.accountName : ''),
+          row.practice,
+          row.Polled ?? 0,
+          row.Responded ?? 0,
+          ...perspectiveValues
+        ]);
+        dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+        dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        dataRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        dataRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+        dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+        if (row.isAllPractice || isTotal) {
+          dataRow.eachCell((cell) => {
+            cell.font = { ...(cell.font || {}), bold: true };
+            if (isTotal) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } };
+            else cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+          });
+        }
+        pList.forEach((p, idx) => {
+          const val = perspectiveValues[idx];
+          const cell = dataRow.getCell(idx + 7);
+          cell.value = val;
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          const numericValue = parseFloat(String(val).replace('%', ''));
+          if (val === '-' || val === '－' || Number.isNaN(numericValue)) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } };
+            cell.font = { color: { argb: 'FF6B7280' }, bold: true };
+          } else if (numericValue < 75) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          } else if (numericValue >= 75 && numericValue < 90) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+            cell.font = { color: { argb: 'FF000000' }, bold: true };
+          } else if (numericValue >= 90) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF70AD47' } };
+            cell.font = { color: { argb: 'FF000000' }, bold: true };
+          }
+        });
+      };
+
+      rows.forEach((row) => writeDataRow(row, false));
+      if (accountPracticeWiseTrendData.grandTotalRow) {
+        writeDataRow({ ...accountPracticeWiseTrendData.grandTotalRow, practice: 'Grand Total' }, true);
+      }
+
+      worksheet.getColumn(1).width = 8;
+      worksheet.getColumn(2).width = 16;
+      worksheet.getColumn(3).width = 28;
+      worksheet.getColumn(4).width = 24;
+      worksheet.getColumn(5).width = 10;
+      worksheet.getColumn(6).width = 12;
+      pList.forEach((_, i) => { worksheet.getColumn(i + 7).width = 18; });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_Practice_Wise_Percentage_Satisfied_Customers_Each_Perspective_Trend_Analysis_${csatCycleStartDateFormatted || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Account/Practice-wise trend analysis Excel export error:', err);
+      alert('Failed to export account/practice-wise trend analysis data to Excel.');
+    }
+  };
+
+  const writeTop10WorksheetRows = (worksheet, rows, summaryRows, trendLookup, pList, includeTrend) => {
+    const tierFill = (row) => row.rowTier === 'overall'
+      ? 'FFE4DFEC'
+      : (row.rowTier === 'other-total' || row.rowTier === 'other-practice')
+        ? 'FF93CCEA'
+        : (row.rowTier ? 'FFFFF2CC' : null);
+    const tierBold = (row) => row.isAllPractice || row.rowTier === 'overall' || row.rowTier === 'top10-total' || row.rowTier === 'other-total';
+
+    const writeRow = (row, trendRow) => {
+      const perspectiveValues = pList.map(p => formatPerspectiveValue(row[p] ?? '-'));
+      const trendValues = includeTrend
+        ? pList.map(p => formatPracticeTrendDiff(row[p], trendRow?.[p]).text)
+        : [];
+      const dataRow = worksheet.addRow([
+        row.sNo ?? '',
+        row.isAllPractice ? normalizeBusinessUnitDisplay(row.businessUnit) : '',
+        row.isAllPractice ? row.accountName : '',
+        row.practice,
+        row.Polled ?? 0,
+        row.Responded ?? 0,
+        ...perspectiveValues,
+        ...trendValues
+      ]);
+      dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+      dataRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+      dataRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+      dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+      const fillArgb = tierFill(row);
+      if (fillArgb || tierBold(row)) {
+        dataRow.eachCell((cell) => {
+          cell.font = { ...(cell.font || {}), bold: tierBold(row) };
+          if (fillArgb) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillArgb } };
+          else if (row.isAllPractice) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+        });
+      }
+      pList.forEach((p, idx) => {
+        const val = perspectiveValues[idx];
+        const cell = dataRow.getCell(idx + 7);
+        cell.value = val;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        const numericValue = parseFloat(String(val).replace('%', ''));
+        if (val === '-' || val === '－' || Number.isNaN(numericValue)) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillArgb || 'FFF9FAFB' } };
+          cell.font = { color: { argb: 'FF6B7280' }, bold: true };
+        } else if (numericValue < 75) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+        } else if (numericValue >= 75 && numericValue < 90) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+          cell.font = { color: { argb: 'FF000000' }, bold: true };
+        } else if (numericValue >= 90) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF70AD47' } };
+          cell.font = { color: { argb: 'FF000000' }, bold: true };
+        }
+      });
+      if (includeTrend) {
+        pList.forEach((p, idx) => {
+          const { text, color } = formatPracticeTrendDiff(row[p], trendRow?.[p]);
+          const cell = dataRow.getCell(7 + pList.length + idx);
+          cell.value = text;
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          const argb = color === '#15803d' ? 'FF15803D' : color === '#dc2626' ? 'FFDC2626' : 'FF6B7280';
+          cell.font = { color: { argb }, bold: true };
+          if (fillArgb) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillArgb } };
+        });
+      }
+    };
+
+    rows.forEach((row) => writeRow(row, trendLookup ? trendLookup[row.rowKey] : null));
+    summaryRows.forEach((row) => writeRow(row, trendLookup ? trendLookup[row.rowKey] : null));
+  };
+
+  const handleDownloadAccountPracticeWiseTop10 = async () => {
+    const rows = accountPracticeWiseTop10Data.rows || [];
+    const summaryRows = accountPracticeWiseTop10Data.summaryRows || [];
+    if (!rows.length && !summaryRows.length) {
+      alert('No Top 10 account/practice-wise data available to download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Account-Practice Top10 % Satisfied');
+      const pList = PRACTICE_PERSPECTIVE_ORDER;
+      const styleHeaderRow = (rowNum) => {
+        const headerRow = worksheet.getRow(rowNum);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+        headerRow.eachCell((cell) => {
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+      };
+      if (showTrendAnalysis) {
+        const h2ColSpan = 2 + pList.length;
+        worksheet.addRow([
+          'Sr. No.', 'Business Unit', 'Account Name', 'Practice',
+          `Current cycle :${acsatCycle || 'H2 2025'}`,
+          ...Array(h2ColSpan - 1).fill(''),
+          trendHeaderLabel,
+          ...Array(pList.length - 1).fill('')
+        ]);
+        worksheet.mergeCells(1, 5, 1, 5 + h2ColSpan - 1);
+        const trendStartCol = 5 + h2ColSpan;
+        worksheet.mergeCells(1, trendStartCol, 1, trendStartCol + pList.length - 1);
+        worksheet.addRow(['', '', '', '', '#Polled', '#Responded', ...pList.map(p => `${p} (%)`), ...pList.map(p => getTrendPerspectiveHeaderLabel(p))]);
+        styleHeaderRow(1);
+        styleHeaderRow(2);
+      } else {
+        worksheet.addRow(['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', ...pList.map(p => `${p} (%)`)]);
+        styleHeaderRow(1);
+      }
+      writeTop10WorksheetRows(worksheet, rows, summaryRows, accountPracticeWiseTop10TrendLookup, pList, showTrendAnalysis);
+
+      worksheet.getColumn(1).width = 8;
+      worksheet.getColumn(2).width = 16;
+      worksheet.getColumn(3).width = 28;
+      worksheet.getColumn(4).width = 24;
+      worksheet.getColumn(5).width = 10;
+      worksheet.getColumn(6).width = 12;
+      pList.forEach((_, i) => { worksheet.getColumn(i + 7).width = 18; });
+      if (showTrendAnalysis) {
+        pList.forEach((_, i) => { worksheet.getColumn(i + 7 + pList.length).width = 22; });
+      }
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_BU_Wise_Satisfied_Customers_Each_Perspective_Top10_Accounts_${csatCycleStartDateFormatted || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Account/Practice-wise Top10 satisfied customers Excel export error:', err);
+      alert('Failed to export Top 10 account/practice-wise data to Excel.');
+    }
+  };
+
+  const handleDownloadLastCycleAccountPracticeWiseTop10 = async () => {
+    const rows = effectiveLastCycleTop10Data.rows || [];
+    const summaryRows = effectiveLastCycleTop10Data.summaryRows || [];
+    if (!rows.length && !summaryRows.length) {
+      alert('No last cycle Top 10 account/practice-wise data available to download');
+      return;
+    }
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Last Cycle Top10 % Satisfied');
+      const pList = PRACTICE_PERSPECTIVE_ORDER;
+      const headers = ['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', ...pList.map(p => `${p} (%)`)];
+      const headerRow = worksheet.addRow(headers);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+      headerRow.eachCell((cell) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+      writeTop10WorksheetRows(worksheet, rows, summaryRows, null, pList, false);
+
+      worksheet.getColumn(1).width = 8;
+      worksheet.getColumn(2).width = 16;
+      worksheet.getColumn(3).width = 28;
+      worksheet.getColumn(4).width = 24;
+      worksheet.getColumn(5).width = 10;
+      worksheet.getColumn(6).width = 12;
+      pList.forEach((_, i) => { worksheet.getColumn(i + 7).width = 18; });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_BU_Wise_Satisfied_Customers_Each_Perspective_Top10_Accounts_Last_Cycle_${effectiveLastCycleTop10Label || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Last cycle Top10 account/practice-wise satisfied customers Excel export error:', err);
+      alert('Failed to export last cycle Top 10 account/practice-wise data to Excel.');
+    }
+  };
+
   // Color coding function for percentage columns
   const getPercentageCellStyle = (value, isPercentageColumn) => {
     if (!isPercentageColumn) return {};
@@ -6136,12 +7355,16 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
           <Title>
             {showPracticeWise
               ? 'Practice wise percentage of Satisfied Customers(Each Perspective)'
+              : showAccountPracticeWise
+              ? 'Account/Practice wise percentage of Satisfied Customers(Each Perspective)'
+              : showAccountPracticeWiseTop10
+              ? 'Account_BU_Wise_Satisfied_Customers_Each_Perspective_Top10_Accounts'
               : 'Account/BU wise percentage of Satisfied Customers(Each Perspective)'}
           </Title>
-          {!showPracticeWise && uploadedData && uploadedData.length > 0 && (
-            <div style={{ 
-              fontSize: '0.875rem', 
-              color: '#10b981', 
+          {!showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 && uploadedData && uploadedData.length > 0 && (
+            <div style={{
+              fontSize: '0.875rem',
+              color: '#10b981',
               marginTop: '0.5rem',
               fontWeight: '500'
             }}>
@@ -6149,7 +7372,6 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
             </div>
           )}
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            {!showPracticeWise && (
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', flex: 1, minWidth: 0 }}>
               <button
                 type="button"
@@ -6157,8 +7379,8 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
                 style={{
                   padding: '0.5rem 1rem',
                   border: '2px solid white',
-                  background: !showBuWise && !showTop10 && !showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
-                  color: !showBuWise && !showTop10 && !showPracticeWise ? '#1e3a8a' : 'white',
+                  background: !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+                  color: !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#1e3a8a' : 'white',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontWeight: '600',
@@ -6167,7 +7389,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
                   whiteSpace: 'nowrap'
                 }}
                 onMouseOver={(e) => { e.target.style.background = 'rgba(255, 255, 255, 0.35)'; }}
-                onMouseOut={(e) => { e.target.style.background = !showBuWise && !showTop10 && !showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'; }}
+                onMouseOut={(e) => { e.target.style.background = !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'; }}
               >
                 Display Account Wise Satisfied Customers(Each Perspective)
               </button>
@@ -6213,12 +7435,12 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
               </button>
               <button
                 type="button"
-                onClick={() => setShowTrendAnalysis(!showTrendAnalysis)}
+                onClick={handlePracticeWiseClick}
                 style={{
                   padding: '0.5rem 1rem',
                   border: '2px solid white',
-                  background: showTrendAnalysis ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
-                  color: showTrendAnalysis ? '#1e3a8a' : 'white',
+                  background: showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+                  color: showPracticeWise ? '#1e3a8a' : 'white',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontWeight: '600',
@@ -6227,16 +7449,56 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
                   whiteSpace: 'nowrap'
                 }}
                 onMouseOver={(e) => { e.target.style.background = 'rgba(255, 255, 255, 0.35)'; }}
-                onMouseOut={(e) => { e.target.style.background = showTrendAnalysis ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'; }}
-                aria-label="View trend analysis"
-                title="View trend analysis"
+                onMouseOut={(e) => { e.target.style.background = showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'; }}
+                aria-label="Practice wise percentage of Satisfied Customers(Each Perspective)"
+                title="Practice wise percentage of Satisfied Customers(Each Perspective)"
               >
-                {showTrendAnalysis ? 'Hide trend analysis' : 'View trend analysis'}
+                Practice wise percentage of Satisfied Customers(Each Perspective)
               </button>
-            </div>
-            )}
-            {showPracticeWise && (
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', flex: 1, minWidth: 0 }}>
+              <button
+                type="button"
+                onClick={handleAccountPracticeWiseClick}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: '2px solid white',
+                  background: showAccountPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+                  color: showAccountPracticeWise ? '#1e3a8a' : 'white',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => { e.target.style.background = 'rgba(255, 255, 255, 0.35)'; }}
+                onMouseOut={(e) => { e.target.style.background = showAccountPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'; }}
+                aria-label="Account/Practice wise percentage of Satisfied Customers(Each Perspective)"
+                title="Account/Practice wise percentage of Satisfied Customers(Each Perspective)"
+              >
+                Account/Practice wise percentage of Satisfied Customers(Each Perspective)
+              </button>
+              <button
+                type="button"
+                onClick={handleAccountPracticeWiseTop10Click}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: '2px solid white',
+                  background: showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+                  color: showAccountPracticeWiseTop10 ? '#1e3a8a' : 'white',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => { e.target.style.background = 'rgba(255, 255, 255, 0.35)'; }}
+                onMouseOut={(e) => { e.target.style.background = showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'; }}
+                aria-label="Account_BU_Wise_Satisfied_Customers_Each_Perspective_Top10_Accounts"
+                title="Account_BU_Wise_Satisfied_Customers_Each_Perspective_Top10_Accounts"
+              >
+                Account_BU_Wise_Satisfied_Customers_Each_Perspective_Top10_Accounts:
+              </button>
               <button
                 type="button"
                 onClick={() => setShowTrendAnalysis(!showTrendAnalysis)}
@@ -6260,66 +7522,15 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
                 {showTrendAnalysis ? 'Hide trend analysis' : 'View trend analysis'}
               </button>
             </div>
-            )}
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexShrink: 0 }}>
               <DownloadButton onClick={handleDownload}>
                 <Download size={20} />
                 Download Excel
               </DownloadButton>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'stretch' }}>
-                {showPracticeWise ? (
-                  <BackButton onClick={handleBackToAccountBuDashboard}>
-                    <ArrowLeft size={20} />
-                    Back to Account/BU Dashboard
-                  </BackButton>
-                ) : (
-                  <>
-                <BackButton onClick={onBack}>
-                  <ArrowLeft size={20} />
-                  Back
-                </BackButton>
-                <button
-                  type="button"
-                  onClick={handlePracticeWiseClick}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    border: 'none',
-                    background: '#3b82f6',
-                    color: 'white',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    fontSize: '0.7rem',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    whiteSpace: 'normal',
-                    textAlign: 'center',
-                    lineHeight: '1.3',
-                    maxWidth: '220px'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = '#2563eb';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = '#3b82f6';
-                  }}
-                  aria-label="Practice wise percentage of Satisfied Customers(Each Perspective)"
-                  title="Practice wise percentage of Satisfied Customers(Each Perspective)"
-                >
-                  Practice wise percentage of Satisfied Customers(Each Perspective)
-                </button>
-                  </>
-                )}
-                {showPracticeWise && (
-                  <BackButton onClick={onBack}>
-                    <ArrowLeft size={20} />
-                    Back
-                  </BackButton>
-                )}
-              </div>
+              <BackButton onClick={onBack}>
+                <ArrowLeft size={20} />
+                Back
+              </BackButton>
             </div>
           </div>
         </div>
@@ -6618,12 +7829,613 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
             </div>
           )}
         </>
+      ) : showAccountPracticeWise ? (
+        <>
+          <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
+            <strong>Customer Success Survey All PCSAT report</strong>:
+            each perspective % = (count of <strong>RATING</strong> 4 or 5 for that <strong>PERSPECTIVE</strong>, grouped by <strong>Account</strong> and <strong>Practice</strong>) ÷ (count of data input rows for that <strong>PERSPECTIVE</strong> in that <strong>Account</strong>/<strong>Practice</strong>) × 100.
+            <strong>Customer Success Survey Status report</strong>: <strong>#Polled</strong> = count(CSAT SENT DATE), <strong>#Responded</strong> = count(CSAT RECEIVED DATE).
+            {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+          </div>
+          <ResultsSummary>
+            <strong>Results Summary:</strong> Showing {accountPracticeWiseData.rows.filter(r => r.isAllPractice).length} account{accountPracticeWiseData.rows.filter(r => r.isAllPractice).length !== 1 ? 's' : ''}.
+            <span style={{ marginLeft: '1rem', fontWeight: '600' }}>• Grouped by Account, then Practice</span>
+          </ResultsSummary>
+          <div style={{
+            margin: '1rem 0',
+            padding: '1rem',
+            display: 'flex',
+            gap: '1.5rem',
+            flexWrap: 'wrap',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0'
+          }}>
+            <span style={{ fontWeight: '600', color: '#374151', marginRight: '0.5rem' }}>Percentage Color Legend:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '20px', height: '20px', backgroundColor: '#FF0000', border: '1px solid #FF0000', borderRadius: '4px' }} />
+              <span style={{ fontSize: '0.875rem', color: '#374151' }}>&lt;75% (Red - White Text)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '20px', height: '20px', backgroundColor: '#FFA500', border: '1px solid #FFA500', borderRadius: '4px' }} />
+              <span style={{ fontSize: '0.875rem', color: '#374151' }}>75% to 90% (Amber - Black Text)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '20px', height: '20px', backgroundColor: '#70AD47', border: '1px solid #70AD47', borderRadius: '4px' }} />
+              <span style={{ fontSize: '0.875rem', color: '#374151' }}>&gt;=90% (Green - Black Text)</span>
+            </div>
+          </div>
+          {accountPracticeWiseData.rows.length === 0 && (
+            <div style={{ margin: '1rem 0', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+              No account/practice data found in the Customer Success Survey All PCSAT / Status reports.
+            </div>
+          )}
+          {showTrendAnalysis && accountPracticeWiseTrendData.error && (
+            <div style={{ margin: '1rem 0', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+              {accountPracticeWiseTrendData.error}
+            </div>
+          )}
+          {showTrendAnalysis && !accountPracticeWiseTrendData.error && accountPracticeWiseTrendData.sourceName && (
+            <div style={{ margin: '1rem 0', padding: '0.75rem 1rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '8px', fontSize: '0.875rem', color: '#1d4ed8' }}>
+              Trend columns (after Thought Leadership (%)) compare H2 vs H1 using <strong>{accountPracticeWiseTrendData.sourceName}</strong>.
+              {csatCycleStartDateFormatted && <> Sheet2 dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+            </div>
+          )}
+          <TableContainer>
+            <Table>
+              <thead>
+                {showTrendAnalysis ? (
+                  <>
+                    <tr>
+                      <Th rowSpan={2} style={{ textAlign: 'center', verticalAlign: 'middle' }}>Sr. No.</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Business Unit</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Account Name</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Practice</Th>
+                      <Th colSpan={2 + PRACTICE_PERSPECTIVE_ORDER.length} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        Current cycle :{acsatCycle || 'H2 2025'}
+                      </Th>
+                      <Th colSpan={PRACTICE_PERSPECTIVE_ORDER.length} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        {trendHeaderLabel}
+                      </Th>
+                    </tr>
+                    <tr>
+                      <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                      <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                      {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                        <Th key={perspective} style={{ textAlign: 'center' }}>
+                          {perspective} (%)
+                        </Th>
+                      ))}
+                      {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                        <Th key={`trend-${perspective}`} style={{ textAlign: 'center' }}>
+                          {getTrendPerspectiveHeaderLabel(perspective)}
+                        </Th>
+                      ))}
+                    </tr>
+                  </>
+                ) : (
+                <tr>
+                  <Th style={{ textAlign: 'center' }}>Sr. No.</Th>
+                  <Th style={{ textAlign: 'left' }}>Business Unit</Th>
+                  <Th style={{ textAlign: 'left' }}>Account Name</Th>
+                  <Th style={{ textAlign: 'left' }}>Practice</Th>
+                  <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                  <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                  {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                    <Th key={perspective} style={{ textAlign: 'center' }}>
+                      {perspective} (%)
+                    </Th>
+                  ))}
+                </tr>
+                )}
+              </thead>
+              <tbody>
+                {accountPracticeWiseSortedRows.map((row, idx) => {
+                  const trendKey = `${(row.accountName || '').toString().trim().toLowerCase()}|||${(row.practice || '').toString().trim().toLowerCase()}`;
+                  const trendRow = accountPracticeWiseTrendLookup[trendKey];
+                  const rowStyle = row.isAllPractice ? { fontWeight: 700, backgroundColor: '#f8fafc' } : {};
+                  return (
+                  <tr key={`${row.accountKey}-${row.practice}-${idx}`}>
+                    <Td style={{ textAlign: 'center', ...rowStyle }}>{row.sNo ?? ''}</Td>
+                    <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? normalizeBusinessUnitDisplay(row.businessUnit) : ''}</Td>
+                    <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? row.accountName : ''}</Td>
+                    <Td style={{ textAlign: 'left', ...rowStyle }}>{row.practice}</Td>
+                    <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Polled ?? 0}</Td>
+                    <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Responded ?? 0}</Td>
+                    {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                      const val = formatPerspectiveValue(row[perspective] ?? '-');
+                      const isHyphen = val === '-' || val === '－';
+                      const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                      return (
+                        <Td key={perspective} style={{ textAlign: 'center', fontWeight: '600', ...rowStyle, ...cellStyle }}>
+                          {isHyphen ? '-' : val}
+                        </Td>
+                      );
+                    })}
+                    {showTrendAnalysis && PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                      const { text, color } = formatPracticeTrendDiff(row[perspective], trendRow?.[perspective]);
+                      return (
+                        <Td key={`trend-${row.accountKey}-${row.practice}-${perspective}`} style={{ textAlign: 'center', color, fontWeight: 500, ...rowStyle }}>
+                          {text}
+                        </Td>
+                      );
+                    })}
+                  </tr>
+                  );
+                })}
+                {accountPracticeWiseData.grandTotalRow && (() => {
+                  const row = accountPracticeWiseData.grandTotalRow;
+                  const trendRow = accountPracticeWiseTrendData.grandTotalRow;
+                  const orgStyle = { fontWeight: 'bold', backgroundColor: '#eff6ff' };
+                  return (
+                    <tr key="account-practice-grand-total">
+                      <Td style={{ textAlign: 'center', ...orgStyle }}></Td>
+                      <Td style={{ textAlign: 'left', ...orgStyle }}></Td>
+                      <Td style={{ textAlign: 'left', ...orgStyle }}></Td>
+                      <Td style={{ textAlign: 'left', ...orgStyle }}>Grand Total</Td>
+                      <Td style={{ textAlign: 'center', ...orgStyle }}>{row.Polled ?? 0}</Td>
+                      <Td style={{ textAlign: 'center', ...orgStyle }}>{row.Responded ?? 0}</Td>
+                      {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                        const val = formatPerspectiveValue(row[perspective] ?? '-');
+                        const isHyphen = val === '-' || val === '－';
+                        const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                        return (
+                          <Td key={`grand-${perspective}`} style={{ textAlign: 'center', fontWeight: 'bold', ...orgStyle, ...cellStyle }}>
+                            {isHyphen ? '-' : val}
+                          </Td>
+                        );
+                      })}
+                      {showTrendAnalysis && PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                        const { text, color } = formatPracticeTrendDiff(row[perspective], trendRow?.[perspective]);
+                        return (
+                          <Td key={`grand-trend-${perspective}`} style={{ textAlign: 'center', color, fontWeight: 600, ...orgStyle }}>
+                            {text}
+                          </Td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })()}
+              </tbody>
+            </Table>
+          </TableContainer>
+
+          {showTrendAnalysis && (
+            <div style={{ margin: '2rem 0 1rem', padding: '1.5rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e40af' }}>
+                  Account/Practice wise percentage of Satisfied Customers(Each Perspective) (Trend Analysis)
+                </h2>
+                {accountPracticeWiseTrendData.rows.length > 0 && (
+                  <DownloadButton onClick={handleDownloadAccountPracticeWiseTrendAnalysis}>
+                    <Download size={20} />
+                    Download Excel
+                  </DownloadButton>
+                )}
+              </div>
+              <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#1d4ed8' }}>
+                Data from <strong>Trend-Analysis-H12025.xlsx</strong> uploaded in <strong>&quot;Upload data for trend analysis&quot;</strong>
+                {accountPracticeWiseTrendData.sourceName ? <> ({accountPracticeWiseTrendData.sourceName})</> : null}.
+                <strong>Customer Success Survey All PCSAT report</strong>: % Satisfied per <strong>PERSPECTIVE</strong>, grouped by <strong>Account</strong> and <strong>Practice</strong>.
+                <strong>Customer Success Survey Status report</strong>: <strong>#Polled</strong> = count(CSAT SENT DATE), <strong>#Responded</strong> = count(CSAT RECEIVED DATE).
+                {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+              </p>
+              {accountPracticeWiseTrendData.error && (
+                <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                  {accountPracticeWiseTrendData.error}
+                </div>
+              )}
+              {accountPracticeWiseTrendData.rows.length > 0 && (
+                <>
+                  <div style={{
+                    margin: '0 0 1rem',
+                    padding: '1rem',
+                    display: 'flex',
+                    gap: '1.5rem',
+                    flexWrap: 'wrap',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <span style={{ fontWeight: '600', color: '#374151', marginRight: '0.5rem' }}>Percentage Color Legend:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: '20px', height: '20px', backgroundColor: '#FF0000', border: '1px solid #FF0000', borderRadius: '4px' }} />
+                      <span style={{ fontSize: '0.875rem', color: '#374151' }}>&lt;75% (Red - White Text)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: '20px', height: '20px', backgroundColor: '#FFA500', border: '1px solid #FFA500', borderRadius: '4px' }} />
+                      <span style={{ fontSize: '0.875rem', color: '#374151' }}>75% to 90% (Amber - Black Text)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: '20px', height: '20px', backgroundColor: '#70AD47', border: '1px solid #70AD47', borderRadius: '4px' }} />
+                      <span style={{ fontSize: '0.875rem', color: '#374151' }}>&gt;=90% (Green - Black Text)</span>
+                    </div>
+                  </div>
+                  <TableContainer>
+                    <Table>
+                      <thead>
+                        <tr>
+                          <Th style={{ textAlign: 'center' }}>Sr. No.</Th>
+                          <Th style={{ textAlign: 'left' }}>Business Unit</Th>
+                          <Th style={{ textAlign: 'left' }}>Account Name</Th>
+                          <Th style={{ textAlign: 'left' }}>Practice</Th>
+                          <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                          <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                          {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                            <Th key={`acc-trend-table-${perspective}`} style={{ textAlign: 'center' }}>
+                              {perspective} (%)
+                            </Th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {accountPracticeWiseTrendData.rows.map((row, idx) => {
+                          const rowStyle = row.isAllPractice ? { fontWeight: 700, backgroundColor: '#f8fafc' } : {};
+                          return (
+                          <tr key={`acc-trend-table-${row.accountKey}-${row.practice}-${idx}`}>
+                            <Td style={{ textAlign: 'center', ...rowStyle }}>{row.sNo ?? ''}</Td>
+                            <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? normalizeBusinessUnitDisplay(row.businessUnit) : ''}</Td>
+                            <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? row.accountName : ''}</Td>
+                            <Td style={{ textAlign: 'left', ...rowStyle }}>{row.practice}</Td>
+                            <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Polled ?? 0}</Td>
+                            <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Responded ?? 0}</Td>
+                            {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                              const val = formatPerspectiveValue(row[perspective] ?? '-');
+                              const isHyphen = val === '-' || val === '－';
+                              const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                              return (
+                                <Td key={`acc-trend-table-${row.accountKey}-${row.practice}-${perspective}`} style={{ textAlign: 'center', fontWeight: '600', ...rowStyle, ...cellStyle }}>
+                                  {isHyphen ? '-' : val}
+                                </Td>
+                              );
+                            })}
+                          </tr>
+                          );
+                        })}
+                        {accountPracticeWiseTrendData.grandTotalRow && (() => {
+                          const row = accountPracticeWiseTrendData.grandTotalRow;
+                          const orgStyle = { fontWeight: 'bold', backgroundColor: '#eff6ff' };
+                          return (
+                            <tr key="account-practice-trend-grand-total">
+                              <Td style={{ textAlign: 'center', ...orgStyle }}></Td>
+                              <Td style={{ textAlign: 'left', ...orgStyle }}></Td>
+                              <Td style={{ textAlign: 'left', ...orgStyle }}></Td>
+                              <Td style={{ textAlign: 'left', ...orgStyle }}>Grand Total</Td>
+                              <Td style={{ textAlign: 'center', ...orgStyle }}>{row.Polled ?? 0}</Td>
+                              <Td style={{ textAlign: 'center', ...orgStyle }}>{row.Responded ?? 0}</Td>
+                              {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                                const val = formatPerspectiveValue(row[perspective] ?? '-');
+                                const isHyphen = val === '-' || val === '－';
+                                const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                                return (
+                                  <Td key={`acc-trend-grand-${perspective}`} style={{ textAlign: 'center', fontWeight: 'bold', ...orgStyle, ...cellStyle }}>
+                                    {isHyphen ? '-' : val}
+                                  </Td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })()}
+                      </tbody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+            </div>
+          )}
+        </>
+      ) : showAccountPracticeWiseTop10 ? (
+        <>
+          <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
+            <strong>Customer Success Survey All PCSAT report</strong>: % Satisfied per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account), followed by dynamic Top10/Other/Overall summary rows.
+            {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+          </div>
+          <ResultsSummary>
+            <strong>Results Summary:</strong> Showing {accountPracticeWiseTop10Data.rows.filter(r => r.isAllPractice).length} Top 10 account{accountPracticeWiseTop10Data.rows.filter(r => r.isAllPractice).length !== 1 ? 's' : ''}.
+            <span style={{ marginLeft: '1rem', fontWeight: '600' }}>• Grouped by Account, then Practice</span>
+          </ResultsSummary>
+          <div style={{
+            margin: '1rem 0',
+            padding: '1rem',
+            display: 'flex',
+            gap: '1.5rem',
+            flexWrap: 'wrap',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0'
+          }}>
+            <span style={{ fontWeight: '600', color: '#374151', marginRight: '0.5rem' }}>Percentage Color Legend:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '20px', height: '20px', backgroundColor: '#FF0000', border: '1px solid #FF0000', borderRadius: '4px' }} />
+              <span style={{ fontSize: '0.875rem', color: '#374151' }}>&lt;75% (Red - White Text)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '20px', height: '20px', backgroundColor: '#FFA500', border: '1px solid #FFA500', borderRadius: '4px' }} />
+              <span style={{ fontSize: '0.875rem', color: '#374151' }}>75% to 90% (Amber - Black Text)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '20px', height: '20px', backgroundColor: '#70AD47', border: '1px solid #70AD47', borderRadius: '4px' }} />
+              <span style={{ fontSize: '0.875rem', color: '#374151' }}>&gt;=90% (Green - Black Text)</span>
+            </div>
+          </div>
+          {accountPracticeWiseTop10Data.rows.length === 0 && (
+            <div style={{ margin: '1rem 0', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+              No Top 10 account data found in the Customer Success Survey All PCSAT / Status reports.
+            </div>
+          )}
+          {showTrendAnalysis && accountPracticeWiseTop10TrendData.error && (
+            <div style={{ margin: '1rem 0', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+              {accountPracticeWiseTop10TrendData.error}
+            </div>
+          )}
+          {showTrendAnalysis && !accountPracticeWiseTop10TrendData.error && accountPracticeWiseTop10TrendData.sourceName && (
+            <div style={{ margin: '1rem 0', padding: '0.75rem 1rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '8px', fontSize: '0.875rem', color: '#1d4ed8' }}>
+              Trend columns (after Thought Leadership (%)) compare H2 vs H1 using <strong>{accountPracticeWiseTop10TrendData.sourceName}</strong>.
+              {csatCycleStartDateFormatted && <> Sheet2 dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+            </div>
+          )}
+          <TableContainer>
+            <Table>
+              <thead>
+                {showTrendAnalysis ? (
+                  <>
+                    <tr>
+                      <Th rowSpan={2} style={{ textAlign: 'center', verticalAlign: 'middle' }}>Sr. No.</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Business Unit</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Account Name</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Practice</Th>
+                      <Th colSpan={2 + PRACTICE_PERSPECTIVE_ORDER.length} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        Current cycle :{acsatCycle || 'H2 2025'}
+                      </Th>
+                      <Th colSpan={PRACTICE_PERSPECTIVE_ORDER.length} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        {trendHeaderLabel}
+                      </Th>
+                    </tr>
+                    <tr>
+                      <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                      <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                      {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                        <Th key={perspective} style={{ textAlign: 'center' }}>
+                          {perspective} (%)
+                        </Th>
+                      ))}
+                      {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                        <Th key={`trend-${perspective}`} style={{ textAlign: 'center' }}>
+                          {getTrendPerspectiveHeaderLabel(perspective)}
+                        </Th>
+                      ))}
+                    </tr>
+                  </>
+                ) : (
+                <tr>
+                  <Th style={{ textAlign: 'center' }}>Sr. No.</Th>
+                  <Th style={{ textAlign: 'left' }}>Business Unit</Th>
+                  <Th style={{ textAlign: 'left' }}>Account Name</Th>
+                  <Th style={{ textAlign: 'left' }}>Practice</Th>
+                  <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                  <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                  {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                    <Th key={perspective} style={{ textAlign: 'center' }}>
+                      {perspective} (%)
+                    </Th>
+                  ))}
+                </tr>
+                )}
+              </thead>
+              <tbody>
+                {accountPracticeWiseTop10Data.rows.map((row, idx) => {
+                  const trendRow = accountPracticeWiseTop10TrendLookup[row.rowKey] || null;
+                  const rowStyle = row.isAllPractice ? { fontWeight: 700, backgroundColor: '#f8fafc' } : {};
+                  return (
+                  <tr key={`${row.accountKey}-${row.practice}-${idx}`}>
+                    <Td style={{ textAlign: 'center', ...rowStyle }}>{row.sNo ?? ''}</Td>
+                    <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? normalizeBusinessUnitDisplay(row.businessUnit) : ''}</Td>
+                    <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? row.accountName : ''}</Td>
+                    <Td style={{ textAlign: 'left', ...rowStyle }}>{row.practice}</Td>
+                    <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Polled ?? 0}</Td>
+                    <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Responded ?? 0}</Td>
+                    {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                      const val = formatPerspectiveValue(row[perspective] ?? '-');
+                      const isHyphen = val === '-' || val === '－';
+                      const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                      return (
+                        <Td key={perspective} style={{ textAlign: 'center', fontWeight: '600', ...rowStyle, ...cellStyle }}>
+                          {isHyphen ? '-' : val}
+                        </Td>
+                      );
+                    })}
+                    {showTrendAnalysis && PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                      const { text, color } = formatPracticeTrendDiff(row[perspective], trendRow?.[perspective]);
+                      return (
+                        <Td key={`trend-${row.accountKey}-${row.practice}-${perspective}`} style={{ textAlign: 'center', color, fontWeight: 500, ...rowStyle }}>
+                          {text}
+                        </Td>
+                      );
+                    })}
+                  </tr>
+                  );
+                })}
+                {accountPracticeWiseTop10Data.summaryRows.map((row) => {
+                  const trendRow = accountPracticeWiseTop10TrendLookup[row.rowKey] || null;
+                  const tierStyle = row.rowTier === 'overall'
+                    ? { fontWeight: 'bold', backgroundColor: '#E4DFEC' }
+                    : row.rowTier === 'other-total' || row.rowTier === 'other-practice'
+                      ? { fontWeight: row.rowTier === 'other-total' ? 'bold' : 600, backgroundColor: '#93CCEA' }
+                      : { fontWeight: row.rowTier === 'top10-total' ? 'bold' : 600, backgroundColor: '#FFF2CC' };
+                  return (
+                    <tr key={row.rowKey}>
+                      <Td style={{ textAlign: 'center', ...tierStyle }}></Td>
+                      <Td style={{ textAlign: 'left', ...tierStyle }}></Td>
+                      <Td style={{ textAlign: 'left', ...tierStyle }}></Td>
+                      <Td style={{ textAlign: 'left', ...tierStyle }}>{row.practice}</Td>
+                      <Td style={{ textAlign: 'center', ...tierStyle }}>{row.Polled ?? 0}</Td>
+                      <Td style={{ textAlign: 'center', ...tierStyle }}>{row.Responded ?? 0}</Td>
+                      {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                        const val = formatPerspectiveValue(row[perspective] ?? '-');
+                        const isHyphen = val === '-' || val === '－';
+                        const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                        return (
+                          <Td
+                            key={`summary-${row.rowKey}-${perspective}`}
+                            style={{
+                              ...tierStyle,
+                              backgroundColor: isHyphen ? tierStyle.backgroundColor : cellStyle.backgroundColor,
+                              color: isHyphen ? '#374151' : cellStyle.color,
+                              textAlign: 'center'
+                            }}
+                          >
+                            {isHyphen ? '-' : val}
+                          </Td>
+                        );
+                      })}
+                      {showTrendAnalysis && PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                        const { text, color } = formatPracticeTrendDiff(row[perspective], trendRow?.[perspective]);
+                        return (
+                          <Td key={`summary-trend-${row.rowKey}-${perspective}`} style={{ textAlign: 'center', color, fontWeight: tierStyle.fontWeight, backgroundColor: tierStyle.backgroundColor }}>
+                            {text}
+                          </Td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </TableContainer>
+
+          {/* Last year PCSAT % rating dashboard, Top 10 accounts: same builder, ordering, and dynamic
+              summary tiers as the current-cycle table above, for the half-year cycle immediately
+              preceding the currently selected CSAT cycle (or the uploaded trend file when active). */}
+          <div style={{ margin: '2rem 0 1rem', paddingTop: '1.5rem', borderTop: '2px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e3a8a' }}>
+              Last year PCSAT % rating dashboard - Top 10
+            </h2>
+            {!effectiveLastCycleTop10Loading && !effectiveLastCycleTop10Error && (effectiveLastCycleTop10Data.rows.length > 0 || effectiveLastCycleTop10Data.summaryRows.length > 0) && (
+              <DownloadButton onClick={handleDownloadLastCycleAccountPracticeWiseTop10}>
+                <Download size={20} />
+                Download Excel
+              </DownloadButton>
+            )}
+          </div>
+          <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
+            <strong>Customer Success Survey All PCSAT report</strong>: % Satisfied per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account), followed by dynamic Top10/Other/Overall summary rows.
+            {effectiveLastCycleTop10DateNote && <> Dates counted only when ≥ {effectiveLastCycleTop10DateNote} (MM-DD-YYYY).</>}
+            {lastCycleUsesUploadedTrendFile && <> Source: uploaded trend-analysis file ({effectiveLastCycleTop10Label}).</>}
+          </div>
+          {effectiveLastCycleTop10Loading && (
+            <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', color: '#0c4a6e', fontSize: '0.875rem' }}>
+              Loading last cycle ({effectiveLastCycleTop10Label || 'previous period'}) PCSAT data…
+            </div>
+          )}
+          {!effectiveLastCycleTop10Loading && effectiveLastCycleTop10Error && (
+            <div style={{ margin: '1rem 0', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+              {effectiveLastCycleTop10Error}
+            </div>
+          )}
+          {!effectiveLastCycleTop10Loading && !effectiveLastCycleTop10Error && (
+            <>
+              <ResultsSummary>
+                Showing {effectiveLastCycleTop10Data.rows.filter(r => r.isAllPractice).length} Top 10 account{effectiveLastCycleTop10Data.rows.filter(r => r.isAllPractice).length !== 1 ? 's' : ''}.
+                <span style={{ marginLeft: '1rem', fontWeight: '600' }}>• Grouped by Account, then Practice</span>
+              </ResultsSummary>
+              {effectiveLastCycleTop10Data.rows.length === 0 && (
+                <div style={{ margin: '1rem 0', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
+                  No Top 10 account data found for last cycle ({effectiveLastCycleTop10Label || 'previous period'}) in the Customer Success Survey All PCSAT / Status reports.
+                </div>
+              )}
+              <TableContainer>
+                <Table>
+                  <thead>
+                    <tr>
+                      <Th rowSpan={2} style={{ textAlign: 'center', verticalAlign: 'middle' }}>Sr. No.</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Business Unit</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Account Name</Th>
+                      <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Practice</Th>
+                      <Th colSpan={2 + PRACTICE_PERSPECTIVE_ORDER.length} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        Last cycle :{effectiveLastCycleTop10Label}
+                      </Th>
+                    </tr>
+                    <tr>
+                      <Th style={{ textAlign: 'center' }}>#Polled</Th>
+                      <Th style={{ textAlign: 'center' }}>#Responded</Th>
+                      {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => (
+                        <Th key={`last-cycle-top10-${perspective}`} style={{ textAlign: 'center' }}>
+                          {perspective} (%)
+                        </Th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {effectiveLastCycleTop10Data.rows.map((row, idx) => {
+                      const rowStyle = row.isAllPractice ? { fontWeight: 700, backgroundColor: '#f8fafc' } : {};
+                      return (
+                        <tr key={`last-cycle-top10-${row.accountKey}-${row.practice}-${idx}`}>
+                          <Td style={{ textAlign: 'center', ...rowStyle }}>{row.sNo ?? ''}</Td>
+                          <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? normalizeBusinessUnitDisplay(row.businessUnit) : ''}</Td>
+                          <Td style={{ textAlign: 'left', ...rowStyle }}>{row.isAllPractice ? row.accountName : ''}</Td>
+                          <Td style={{ textAlign: 'left', ...rowStyle }}>{row.practice}</Td>
+                          <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Polled ?? 0}</Td>
+                          <Td style={{ textAlign: 'center', ...rowStyle }}>{row.Responded ?? 0}</Td>
+                          {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                            const val = formatPerspectiveValue(row[perspective] ?? '-');
+                            const isHyphen = val === '-' || val === '－';
+                            const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                            return (
+                              <Td key={perspective} style={{ textAlign: 'center', fontWeight: '600', ...rowStyle, ...cellStyle }}>
+                                {isHyphen ? '-' : val}
+                              </Td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                    {effectiveLastCycleTop10Data.summaryRows.map((row) => {
+                      const tierStyle = row.rowTier === 'overall'
+                        ? { fontWeight: 'bold', backgroundColor: '#E4DFEC' }
+                        : row.rowTier === 'other-total' || row.rowTier === 'other-practice'
+                          ? { fontWeight: row.rowTier === 'other-total' ? 'bold' : 600, backgroundColor: '#93CCEA' }
+                          : { fontWeight: row.rowTier === 'top10-total' ? 'bold' : 600, backgroundColor: '#FFF2CC' };
+                      return (
+                        <tr key={`last-cycle-top10-${row.rowKey}`}>
+                          <Td style={{ textAlign: 'center', ...tierStyle }}></Td>
+                          <Td style={{ textAlign: 'left', ...tierStyle }}></Td>
+                          <Td style={{ textAlign: 'left', ...tierStyle }}></Td>
+                          <Td style={{ textAlign: 'left', ...tierStyle }}>{row.practice}</Td>
+                          <Td style={{ textAlign: 'center', ...tierStyle }}>{row.Polled ?? 0}</Td>
+                          <Td style={{ textAlign: 'center', ...tierStyle }}>{row.Responded ?? 0}</Td>
+                          {PRACTICE_PERSPECTIVE_ORDER.map((perspective) => {
+                            const val = formatPerspectiveValue(row[perspective] ?? '-');
+                            const isHyphen = val === '-' || val === '－';
+                            const cellStyle = getPercentageCellStyle(isHyphen ? '-' : val, true);
+                            return (
+                              <Td
+                                key={`last-cycle-top10-summary-${row.rowKey}-${perspective}`}
+                                style={{
+                                  ...tierStyle,
+                                  backgroundColor: isHyphen ? tierStyle.backgroundColor : cellStyle.backgroundColor,
+                                  color: isHyphen ? '#374151' : cellStyle.color,
+                                  textAlign: 'center'
+                                }}
+                              >
+                                {isHyphen ? '-' : val}
+                              </Td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
+        </>
       ) : (
       <>
 
       <ResultsSummary>
-        <strong>Results Summary:</strong> 
-        {showBuWise 
+        <strong>Results Summary:</strong>
+        {showBuWise
           ? `Showing count of satisfied customers (ratings 4 or 5) for each perspective grouped by Business Unit. % = (count RATING 4 or 5 / count of data input for that perspective in that BU from "CSAT received Report") × 100 — do not use #Responded. Total BUs: ${processedData.data.length},`
           : showTop10
           ? `Showing Top10 Accounts - percentage of satisfied customers (ratings 4 or 5) for each perspective. Excludes rows with 0 CSS surveys sent. All percentage columns: Timeline Adherence, Quality of Delivery, Risk Management & Responsiveness, Thought Leadership, Overall Experience, Timely Resource Fulfillment, Resource Competency (% = count RATING 4 or 5 / count data input for that perspective from "CSAT received Report" * 100). CSS data filtered by CSAT cycle start date (${csatCycleStartDateFormatted}). Total customers: ${processedData.data.length},`

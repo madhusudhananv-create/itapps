@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Download, ArrowLeft, Search, X, TrendingUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
 import { parseExcelDateToMMDDYYYY } from '../utils/acsatExcelRowUtils';
+import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   max-width: 100%;
@@ -941,20 +942,7 @@ const ACSATResponseRateDashboard = ({
   const cycleStartDateFormatted = acsatCycleStartDateFormatted;
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
-  const top10AccountNames = [
-    'Premier Healthcare Solutions Inc',
-    'Blue Cross Blue Shield Association BCBSA',
-    'Frontier Airlines INC',
-    'Premier - Horizon II - Covenant Health',
-    'Tufts Medicine',
-    'BronxCare Health System',
-    'AgFirst Farm Credit Bank',
-    'embecta MEDICAL II LLC',
-    'Northern Trust Company',
-    'Jewish Board of Family and Childrens Services JBFCS',
-    'Healthfirst',
-    'AgileOne',
-  ];
+  const top10AccountNames = TOP10_ACCOUNT_ORDER;
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
