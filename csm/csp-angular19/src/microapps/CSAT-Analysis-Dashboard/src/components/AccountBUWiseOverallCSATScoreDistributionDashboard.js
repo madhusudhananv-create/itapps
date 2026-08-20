@@ -8,6 +8,46 @@ import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName } from '../utils/top10Accounts';
 import { groupPracticeName } from '../utils/practiceGroups';
 
+// Short, recognizable display names for the fixed Top 10 roster (utils/top10Accounts.js), used only
+// for the "X was not polled and hence included other accounts." footnote below the Top10 tables so the
+// note reads naturally instead of spelling out each account's full legal name.
+const TOP10_ACCOUNT_SHORT_NAMES = {
+  [normalizeTop10AccountName('Premier Healthcare Solutions Inc')]: 'Premier Healthcare',
+  [normalizeTop10AccountName('Blue Cross Blue Shield Association BCBSA')]: 'BCBSA',
+  [normalizeTop10AccountName('Frontier Airlines INC')]: 'Frontier Airlines',
+  [normalizeTop10AccountName('Premier - Horizon II - Covenant Health')]: 'Covenant',
+  [normalizeTop10AccountName('Tufts Medicine')]: 'Tufts Medicine',
+  [normalizeTop10AccountName('BronxCare Health System')]: 'BronxCare',
+  [normalizeTop10AccountName('AgFirst Farm Credit Bank')]: 'AgFirst',
+  [normalizeTop10AccountName('embecta MEDICAL II LLC')]: 'embecta',
+  [normalizeTop10AccountName('Jewish Board of Family and Childrens Services JBFCS')]: 'JBFCS',
+  [normalizeTop10AccountName('Healthfirst')]: 'Healthfirst',
+  [normalizeTop10AccountName('The Northern Trust Company')]: 'Northern Trust',
+  [normalizeTop10AccountName('Firstsource Solutions Ltd')]: 'Firstsource',
+  [normalizeTop10AccountName('Ooma Inc.')]: 'Ooma',
+  [normalizeTop10AccountName('Arista Networks India Private Limited')]: 'Arista Networks',
+  [normalizeTop10AccountName('INFOBLOX INC.')]: 'Infoblox'
+};
+
+// Builds the "<accounts> was/were not polled and hence included other accounts." footnote sentence for
+// a Top10 rollup dataset. `rollupRows` should be the "All Practices" roll-up rows (isRollup === true) for
+// the Top10 accounts found in the currently loaded data — summed per account name to get total Polled
+// (cssSentCount). Any fixed roster account with zero total Polled (including one entirely absent from the
+// data) is called out by name. Returns '' when every roster account has a non-zero Polled count.
+const buildTop10NotPolledNote = (rollupRows) => {
+  const polledByName = new Map();
+  (rollupRows || []).forEach((r) => {
+    const norm = normalizeTop10AccountName(r.accountName);
+    polledByName.set(norm, (polledByName.get(norm) || 0) + (r.cssSentCount || 0));
+  });
+  const notPolled = TOP10_ACCOUNT_ORDER
+    .filter((name) => (polledByName.get(normalizeTop10AccountName(name)) || 0) === 0)
+    .map((name) => TOP10_ACCOUNT_SHORT_NAMES[normalizeTop10AccountName(name)] || name);
+  if (notPolled.length === 0) return '';
+  if (notPolled.length === 1) return `${notPolled[0]} was not polled and hence included other accounts.`;
+  return `${notPolled.slice(0, -1).join(', ')} and ${notPolled[notPolled.length - 1]} were not polled and hence included other accounts.`;
+};
+
 // Helper function to parse various date formats from Excel and convert to MM-DD-YYYY
 const parseExcelDateToMMDDYYYY = (dateValue) => {
   if (!dateValue || dateValue === '' || dateValue === 'N/A') return '';
@@ -72,13 +112,12 @@ const parseExcelDateToMMDDYYYY = (dateValue) => {
 };
 
 const PRACTICE_DISTRIBUTION_FILE_URL = '/data/New_customer_feedback_analysis_New.xlsx';
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & AI', 'Cybersecurity'];
-const getPracticeOrderIndex = (practice) => {
-  if (!practice) return 999;
-  const s = String(practice).trim();
-  const idx = PRACTICE_DISPLAY_ORDER.findIndex(p => String(p).trim().toLowerCase() === s.toLowerCase());
-  return idx >= 0 ? idx : 999;
-};
+// Practice rows are sorted purely alphabetically (case-insensitive) via comparePracticeNames below.
+// This is intentionally NOT a fixed display-order lookup: uploaded data can contain arbitrary practice
+// names (e.g. "Cybersecurity", "Data & AI", "Embedded", "Engineering", "RunOps", "Semi"), and a fixed
+// order array silently breaks (falls back to original/undefined order) for any name not in the list.
+const comparePracticeNames = (a, b) =>
+  String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' });
 const SHEET1_RECEIVED_NAME_MATCH = (s) => {
   const t = String(s || '').toLowerCase().trim();
   return (t.includes('csat received') && !t.includes('sent and received')) || t === 'sheet1' || t === 'sheet 1';
@@ -283,12 +322,7 @@ const buildPracticeWiseDistributionData = (source, secondSheetSource, csatCycleS
       return row;
     });
 
-  result.sort((a, b) => {
-    const ia = getPracticeOrderIndex(a.practice);
-    const ib = getPracticeOrderIndex(b.practice);
-    if (ia !== ib) return ia - ib;
-    return (a.practice || '').localeCompare(b.practice || '');
-  });
+  result.sort((a, b) => comparePracticeNames(a.practice, b.practice));
   result = result.map((r, i) => ({ ...r, sNo: i + 1 }));
   return { data: result };
 };
@@ -320,7 +354,7 @@ const getBUOrderIndexForAccountPractice = (bu) => {
 // (Customer Success Survey Status report for Polled/Responded, Customer Success Survey All PCSAT report for rating %,
 // PERSPECTIVE = "Overall Experience" only), but grouped by (Business Unit, Account Name, Practice) instead of Practice
 // alone. Adds an "All Practice" bold roll-up row per account. Returns data pre-sorted: BU order -> Account Name ->
-// ("All Practice" roll-up first, then practices in PRACTICE_DISPLAY_ORDER).
+// ("All Practice" roll-up first, then practices sorted alphabetically).
 const buildAccountPracticeWiseDistributionData = (source, secondSheetSource, csatCycleStartDateFormatted) => {
   const groupPolledResponded = {};
   const groupMeta = {};
@@ -505,12 +539,7 @@ const buildAccountPracticeWiseDistributionData = (source, secondSheetSource, csa
   accountKeys.forEach((acctKey) => {
     const [accountName, businessUnit] = acctKey.split('|||');
     const practiceRows = accountGroups.get(acctKey) || [];
-    practiceRows.sort((a, b) => {
-      const ia = getPracticeOrderIndex(a.practice);
-      const ib = getPracticeOrderIndex(b.practice);
-      if (ia !== ib) return ia - ib;
-      return (a.practice || '').localeCompare(b.practice || '');
-    });
+    practiceRows.sort((a, b) => comparePracticeNames(a.practice, b.practice));
     const polled = practiceRows.reduce((sum, r) => sum + (r.cssSentCount || 0), 0);
     const responded = practiceRows.reduce((sum, r) => sum + (r.cssReceivedCount || 0), 0);
     const countByRating = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -521,7 +550,7 @@ const buildAccountPracticeWiseDistributionData = (source, secondSheetSource, csa
     const rollup = {
       accountName,
       businessUnit,
-      practice: 'All Practice',
+      practice: 'All Practices',
       isRollup: true,
       cssSentCount: polled,
       cssReceivedCount: responded,
@@ -558,8 +587,8 @@ const getTop10FixedOrderIndex = getTop10AccountOrderIndexShared;
 //  - filters to accounts flagged TYPE OF ACCOUNT = "Top 10" / "Y" in secondSheetSource (same detection used by the
 //    file's pre-existing showTop10 view), always including the 10 fixed named accounts;
 //  - orders Top10 accounts by the fixed name order first, then any extra flagged accounts by BU order + alphabetical;
-//  - appends 5 dynamically-computed summary rows: "Top 10 Accounts", "Top10 <Practice>" (one per distinct practice
-//    found among Top10 accounts), "Other Account NR", "Other Account <Practice>" (one per distinct practice found
+//  - appends 5 dynamically-computed summary rows: "Top 10 Accounts", "Top 10 <Practice>" (one per distinct practice
+//    found among Top10 accounts), "Other Accounts NR", "Other Accounts <Practice>" (one per distinct practice found
 //    among non-Top10 accounts), "Overall NR" (Top10 + Other combined — this IS the grand total row for this view).
 // Rating % values are rounded to the NEAREST WHOLE PERCENT (no decimals), per this view's own formatting spec.
 const buildAccountPracticeWiseTop10DistributionData = (source, secondSheetSource, csatCycleStartDateFormatted) => {
@@ -658,22 +687,18 @@ const buildAccountPracticeWiseTop10DistributionData = (source, secondSheetSource
   const top10RollupRows = top10Rows.filter(r => r.isRollup);
   const otherRollupRows = otherRows.filter(r => r.isRollup);
 
-  const sortPractices = (rows) => [...new Set(rows.map(r => r.practice))].sort((a, b) => {
-    const ia = getPracticeOrderIndex(a); const ib = getPracticeOrderIndex(b);
-    if (ia !== ib) return ia - ib;
-    return (a || '').localeCompare(b || '');
-  });
+  const sortPractices = (rows) => [...new Set(rows.map(r => r.practice))].sort(comparePracticeNames);
   const top10Practices = sortPractices(top10DetailRows);
   const otherPractices = sortPractices(otherDetailRows);
 
   const summaryRows = [];
   summaryRows.push(buildSummaryRow('Top 10 Accounts', top10RollupRows, { summaryTier: 'top10-total', rowColor: '#FFF2CC' }));
   top10Practices.forEach((practice) => {
-    summaryRows.push(buildSummaryRow(`Top10 ${practice}`, top10DetailRows.filter(r => r.practice === practice), { summaryTier: 'top10-practice', rowColor: '#FFF9E6' }));
+    summaryRows.push(buildSummaryRow(`Top 10 ${practice}`, top10DetailRows.filter(r => r.practice === practice), { summaryTier: 'top10-practice', rowColor: '#FFF9E6' }));
   });
-  summaryRows.push(buildSummaryRow('Other Account NR', otherRollupRows, { summaryTier: 'other-total', rowColor: '#BDD7EE' }));
+  summaryRows.push(buildSummaryRow('Other Accounts NR', otherRollupRows, { summaryTier: 'other-total', rowColor: '#BDD7EE' }));
   otherPractices.forEach((practice) => {
-    summaryRows.push(buildSummaryRow(`Other Account ${practice}`, otherDetailRows.filter(r => r.practice === practice), { summaryTier: 'other-practice', rowColor: '#DCE9F5' }));
+    summaryRows.push(buildSummaryRow(`Other Accounts ${practice}`, otherDetailRows.filter(r => r.practice === practice), { summaryTier: 'other-practice', rowColor: '#DCE9F5' }));
   });
   summaryRows.push(buildSummaryRow('Overall NR', [...top10RollupRows, ...otherRollupRows], { summaryTier: 'overall', rowColor: '#E4DFEC' }));
 
@@ -1456,6 +1481,13 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       return out;
     });
   }, [trendTop10SentReceivedData, trendTop10RatingCounts]);
+
+  // Footnote: which fixed Top10 roster accounts had zero Polled (or were absent) in the uploaded trend file,
+  // for the "Trend Analysis – CSAT received Report (Top 10)" table.
+  const trendTop10NotPolledNote = useMemo(
+    () => buildTop10NotPolledNote(trendTop10TableData.map(r => ({ accountName: r.accountName, cssSentCount: r.polled || 0 }))),
+    [trendTop10TableData]
+  );
 
   // Merge Other Accounts trend sent/received with rating %: same structure as trendTop10TableData.
   const trendOtherAccountsTableData = useMemo(() => {
@@ -3878,6 +3910,16 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     return filtered;
   }, [processedData.data, showBuWise, businessUnitFilter, customerNameSearch, showTop10]);
 
+  // Footnote: which fixed Top10 roster accounts had zero Polled (or were absent) in processedData.data,
+  // for the "Top 10 account - Overall CSAT score -Distribution" table above (uses customerName/cssSentCount
+  // instead of accountName/cssSentCount like the Account/Practice-wise-Top10 view, so map the field first).
+  const top10AccountsNotPolledNote = useMemo(() => {
+    const top10CustomerRows = (processedData.data || [])
+      .filter(r => isTop10AccountName(r.customerName))
+      .map(r => ({ accountName: r.customerName, cssSentCount: r.cssSentCount || 0 }));
+    return buildTop10NotPolledNote(top10CustomerRows);
+  }, [processedData.data]);
+
   // Org level row for BU-wise distribution: use raw counts when provided (buWiseOrgLevelCounts) for correct 1-decimal; else recompute from row percentages.
   const computeBUWiseDistributionOrgRow = (data, buWiseOrgLevelCounts) => {
     if (!data || data.length === 0) return null;
@@ -4152,9 +4194,8 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
       if (sortConfig.key === 'practice') {
-        const ia = getPracticeOrderIndex(aVal);
-        const ib = getPracticeOrderIndex(bVal);
-        if (ia !== ib) return sortConfig.direction === 'asc' ? ia - ib : ib - ia;
+        const cmp = comparePracticeNames(aVal, bVal);
+        if (cmp !== 0) return sortConfig.direction === 'asc' ? cmp : -cmp;
       }
       if (aVal === '-') return sortConfig.direction === 'asc' ? 1 : -1;
       if (bVal === '-') return sortConfig.direction === 'asc' ? -1 : 1;
@@ -4308,6 +4349,13 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     return overall || { cssSentCount: 0, cssReceivedCount: 0 };
   }, [accountPracticeWiseTop10ProcessedData.summaryData]);
 
+  // Footnote: which fixed Top10 roster accounts had zero Polled (or were absent) in the current-cycle data,
+  // and were therefore effectively replaced by other accounts in the Top10 rollup above.
+  const accountPracticeWiseTop10NotPolledNote = useMemo(
+    () => buildTop10NotPolledNote((accountPracticeWiseTop10ProcessedData.detailData || []).filter(r => r.isRollup)),
+    [accountPracticeWiseTop10ProcessedData.detailData]
+  );
+
   // "Last cycle" data source for both (a) the H2-vs-H1 trend diff columns on the current-cycle table, and
   // (b) the "Last year PCSAT % for 1,2,3,4,5 rating" second table — this file has no separate last-cycle API,
   // so (consistent with how showAccountPracticeWise's trend analysis already works) we reuse the uploaded
@@ -4342,6 +4390,13 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     const overall = (accountPracticeWiseTop10TrendData.summaryData || []).find(r => r.summaryTier === 'overall');
     return overall || { cssSentCount: 0, cssReceivedCount: 0 };
   }, [accountPracticeWiseTop10TrendData.summaryData]);
+
+  // Same footnote as accountPracticeWiseTop10NotPolledNote, computed against the last-cycle (trend file) data
+  // instead, for the "Last year PCSAT %" Top10 table below.
+  const accountPracticeWiseTop10TrendNotPolledNote = useMemo(
+    () => buildTop10NotPolledNote((accountPracticeWiseTop10TrendData.detailData || []).filter(r => r.isRollup)),
+    [accountPracticeWiseTop10TrendData.detailData]
+  );
 
   const getAccountPracticeTop10TrendKey = (row) => row.isSummaryRow
     ? `summary|||${row.accountName}`
@@ -4939,7 +4994,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     try {
       const rows = accountPracticeWiseTop10TrendSortedData || [];
       if (!rows.length) {
-        alert('No last cycle Account/Practice-wise Top10 data available to download');
+        alert('No last cycle Account/Practice-wise Top 10 data available to download');
         return;
       }
       const workbook = new ExcelJS.Workbook();
@@ -4954,7 +5009,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Last cycle Account/Practice-wise Top10 distribution Excel export error:', err);
-      alert('Failed to export last cycle Account/Practice-wise Top10 distribution data to Excel.');
+      alert('Failed to export last cycle Account/Practice-wise Top 10 distribution data to Excel.');
     }
   };
 
@@ -4962,11 +5017,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     try {
       const rows = accountPracticeWiseTop10SortedData || [];
       if (!rows.length) {
-        alert('No Account/Practice-wise Top10 data available to download');
+        alert('No Account/Practice-wise Top 10 data available to download');
         return;
       }
       const workbook = new ExcelJS.Workbook();
-      writeAccountPracticeWiseTop10Worksheet(workbook, 'Top10 Distribution (Current Cycle)', rows, accountPracticeWiseTop10GrandTotal);
+      writeAccountPracticeWiseTop10Worksheet(
+        workbook, 'Top 10 Distribution (Current Cycle)', rows, accountPracticeWiseTop10GrandTotal,
+        showTrendAnalysis, accountPracticeWiseTop10TrendByKey, getAccountPracticeTop10TrendKey, formatPracticeTrendDiffExcel
+      );
 
       const lastCycleRows = accountPracticeWiseTop10TrendSortedData || [];
       if (lastCycleRows.length > 0) {
@@ -4983,7 +5041,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Account/Practice-wise Top10 distribution Excel export error:', err);
-      alert('Failed to export Account/Practice-wise Top10 distribution data to Excel.');
+      alert('Failed to export Account/Practice-wise Top 10 distribution data to Excel.');
     }
   };
 
@@ -6999,7 +7057,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
             Same rules as <strong>Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)</strong>, restricted to the <strong>Top 10 accounts</strong> (fixed order) plus any other account flagged <strong>Top 10</strong> in the data.
             Rating % values are shown to <strong>one decimal place</strong> in this view.
-            Below the account rows: <strong>Top 10 Accounts</strong>, <strong>Top10 &lt;Practice&gt;</strong> (one per practice), <strong>Other Account NR</strong>, <strong>Other Account &lt;Practice&gt;</strong> (one per practice), and <strong>Overall NR</strong> (grand total across everyone).
+            Below the account rows: <strong>Top 10 Accounts</strong>, <strong>Top 10 &lt;Practice&gt;</strong> (one per practice), <strong>Other Accounts NR</strong>, <strong>Other Accounts &lt;Practice&gt;</strong> (one per practice), and <strong>Overall NR</strong> (grand total across everyone).
             {showTrendAnalysis && <> Trend columns compare rating % of this dashboard vs the last cycle PCSAT file — difference shown first, then <span style={{ color: '#16a34a', fontWeight: '600' }}>↑</span> (green) for increase or <span style={{ color: '#dc2626', fontWeight: '600' }}>↓</span> (red) for decrease.</>}
             {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
           </div>
@@ -7027,6 +7085,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
             <strong>Results Summary:</strong> Showing {(accountPracticeWiseTop10ProcessedData.detailData || []).filter(r => r.isRollup).length} Top 10 account(s), plus 5 summary rows.
           </ResultsSummary>
           {accountPracticeWiseTop10SortedData?.length > 0 ? (
+            <>
             <TableContainer>
               <TableWrapper>
                 <Table>
@@ -7109,9 +7168,15 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                 </Table>
               </TableWrapper>
             </TableContainer>
+            {accountPracticeWiseTop10NotPolledNote && (
+              <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+                {accountPracticeWiseTop10NotPolledNote}
+              </div>
+            )}
+            </>
           ) : (
             <div style={{ padding: '1.5rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-              No Account/Practice-wise Top10 data found in the Customer Success Survey Status report.
+              No Account/Practice-wise Top 10 data found in the Customer Success Survey Status report.
             </div>
           )}
 
@@ -7144,13 +7209,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
               </button>
             </div>
             <div style={{ margin: '0 0 1rem 0', padding: '1rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '8px', fontSize: '0.875rem', color: '#1e3a8a' }}>
-              Same Account/Practice/Top10 grouping and summary tiers, computed from the uploaded last-cycle comparison file <strong>{accountPracticeWiseTop10TrendData.sourceName || 'Trend-Analysis-H12025.xlsx'}</strong> (in <strong>&quot;Upload data for trend analysis&quot;</strong>) instead of the current cycle.
+              Same Account/Practice/Top 10 grouping and summary tiers, computed from the uploaded last-cycle comparison file <strong>{accountPracticeWiseTop10TrendData.sourceName || 'Trend-Analysis-H12025.xlsx'}</strong> (in <strong>&quot;Upload data for trend analysis&quot;</strong>) instead of the current cycle.
             </div>
             {accountPracticeWiseTop10TrendData.error ? (
               <div style={{ padding: '1.5rem', textAlign: 'center', color: '#b45309', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fcd34d' }}>
                 {accountPracticeWiseTop10TrendData.error}
               </div>
             ) : accountPracticeWiseTop10TrendSortedData?.length > 0 ? (
+              <>
               <TableContainer>
                 <TableWrapper>
                   <Table>
@@ -7204,6 +7270,12 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                   </Table>
                 </TableWrapper>
               </TableContainer>
+              {accountPracticeWiseTop10TrendNotPolledNote && (
+                <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+                  {accountPracticeWiseTop10TrendNotPolledNote}
+                </div>
+              )}
+              </>
             ) : (
               <div style={{ padding: '1.5rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                 No last cycle PCSAT data available. Upload &quot;Trend-Analysis-H12025.xlsx&quot; in &quot;Upload data for trend analysis&quot;.
@@ -7216,7 +7288,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
             <strong>Customer Success Survey Status report</strong>: <strong>Polled</strong> = count(CSAT SENT DATE), <strong>Responded</strong> = count(CSAT RECEIVED DATE), grouped by <strong>Business Unit, Account Name, Practice</strong>.
             <strong>Customer Success Survey All PCSAT report</strong>: rating % = count(RATING=n) ÷ Responded × 100 for <strong>PERSPECTIVE = &quot;Overall Experience&quot;</strong>, grouped by <strong>Business Unit, Account Name, Practice</strong>.
-            An <strong>&quot;All Practice&quot;</strong> bold roll-up row is shown for each account, summing across its practices.
+            An <strong>&quot;All Practices&quot;</strong> bold roll-up row is shown for each account, summing across its practices.
             {showTrendAnalysis && <> Trend columns compare rating % of this dashboard vs <strong>Account/Practice wise Overall CSAT score -Distribution (Trend Analysis)</strong> — difference shown first, then <span style={{ color: '#16a34a', fontWeight: '600' }}>↑</span> (green) for increase or <span style={{ color: '#dc2626', fontWeight: '600' }}>↓</span> (red) for decrease.</>}
             {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
             {accountPracticeWiseProcessedData.dataSource === 'uploaded' && <> Using uploaded PCSAT file (reference file not found in <code>public/data/</code>).</>}
@@ -7318,7 +7390,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                       );
                     })}
                     <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                       <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }} colSpan={3}>Grand Total</Td>
                       <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseGrandTotal.polled}</Td>
                       <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseGrandTotal.responded}</Td>
@@ -7449,7 +7521,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                           );
                         })}
                         <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                           <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }} colSpan={3}>Grand Total</Td>
                           <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseTrendGrandTotal.polled}</Td>
                           <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseTrendGrandTotal.responded}</Td>
@@ -7575,7 +7647,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                       );
                     })}
                     <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                       <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                       <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseGrandTotal.polled}</Td>
                       <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseGrandTotal.responded}</Td>
@@ -7711,7 +7783,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                           );
                         })}
                         <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                           <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                           <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseTrendGrandTotal.polled}</Td>
                           <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseTrendGrandTotal.responded}</Td>
@@ -8263,6 +8335,11 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           </Table>
         </TableWrapper>
       </TableContainer>
+      {showTop10 && top10AccountsNotPolledNote && (
+        <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+          {top10AccountsNotPolledNote}
+        </div>
+      )}
 
       {/* Trend Analysis (H1 2025 reference) – Account-wise sent/received report. Shown below the account-wise dashboard when "View trend analysis" is on. */}
       {!showPracticeWise && !showAccountPracticeWise && !showBuWise && !showTop10 && showTrendAnalysis && (
@@ -8423,6 +8500,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
               CSAT cycle start date is required. Set it in the main upload flow.
             </div>
           ) : trendTop10TableData.length > 0 ? (
+            <>
             <TableContainer>
               <Table>
                 <thead>
@@ -8503,6 +8581,12 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                 </tbody>
               </Table>
             </TableContainer>
+            {trendTop10NotPolledNote && (
+              <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+                {trendTop10NotPolledNote}
+              </div>
+            )}
+            </>
           ) : (
             <div style={{ padding: '1rem', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.875rem', color: '#92400e' }}>
               No trend data for Top 10 in the selected cycle. Ensure the trend file has the Customer Success Survey Status report with TYPE OF ACCOUNT = &quot;Top 10&quot; and CSAT SENT DATE / CSAT RECEIVED DATE ≥ {csatCycleStartDateFormatted}. For rating columns, the Customer Success Survey All PCSAT report must have PERSPECTIVE = &quot;Overall Experience&quot; and TYPE OF ACCOUNT = &quot;Top 10&quot;.
@@ -9108,7 +9192,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                     ); })}
                     {grandTotalFullyManagedDistribution && (
                       <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
                         <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{grandTotalFullyManagedDistribution.totalPolled}</Td>
@@ -9240,7 +9324,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                     ); })}
                     {grandTotalCoManagedDistribution && (
                       <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
                         <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{grandTotalCoManagedDistribution.totalPolled}</Td>
@@ -9372,7 +9456,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                     ); })}
                     {grandTotalStaffAugmentationDistribution && (
                       <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
                         <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{grandTotalStaffAugmentationDistribution.totalPolled}</Td>
