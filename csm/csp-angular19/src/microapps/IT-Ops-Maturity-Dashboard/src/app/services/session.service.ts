@@ -47,8 +47,10 @@ export class SessionService {
   }
 
   /**
-   * Resolves role and the exact set of domains this identity may see/act on,
-   * from the real logged-in user's email against actual assignment data:
+   * Resolves role and the exact set of domains this identity may see/act on.
+   * Preference order:
+   *   0. Real EMP_ID match against DB-backed assignment data (coeSpocEmpId/reviewerEmpId) -
+   *      exact and authoritative whenever the row came from the real API rather than the CSV mock.
    *   1. COE SPOC email match on any domain -> SPOC (restricted to those domains)
    *   2. Reviewer email match on any domain -> Function Head (restricted to those domains)
    *   3. Email is a configured GDH for this account's Business Unit -> GDH (business-level: all domains in this account)
@@ -60,13 +62,19 @@ export class SessionService {
    * a looser secondary signal, kept in sync with role so the two never
    * disagree (unlike matching independently in each component).
    */
-  resolveIdentity(domains: DomainSummary[], businessUnit: string | null, email: string | null): void {
+  resolveIdentity(domains: DomainSummary[], businessUnit: string | null, email: string | null, myEmpId: string | null = null): void {
     const emailNorm = normalizeEmail(email);
     const nameCandidates = nameMatchCandidates(this.currentUser.name);
 
-    let spocIds = domains.filter((d) => emailNorm && normalizeEmail(d.coeSpocEmail) === emailNorm).map((d) => d.id);
-    let reviewIds = domains.filter((d) => emailNorm && normalizeEmail(d.reviewerEmail) === emailNorm).map((d) => d.id);
-    const isGdh = !!emailNorm && getGdhEmailsForBusinessUnit(businessUnit).includes(emailNorm);
+    let spocIds = myEmpId ? domains.filter((d) => d.coeSpocEmpId === myEmpId).map((d) => d.id) : [];
+    let reviewIds = myEmpId ? domains.filter((d) => d.reviewerEmpId === myEmpId).map((d) => d.id) : [];
+    let isGdh = false;
+
+    if (!spocIds.length && !reviewIds.length) {
+      spocIds = domains.filter((d) => emailNorm && normalizeEmail(d.coeSpocEmail) === emailNorm).map((d) => d.id);
+      reviewIds = domains.filter((d) => emailNorm && normalizeEmail(d.reviewerEmail) === emailNorm).map((d) => d.id);
+      isGdh = !!emailNorm && getGdhEmailsForBusinessUnit(businessUnit).includes(emailNorm);
+    }
 
     if (!spocIds.length && !reviewIds.length && !isGdh) {
       spocIds = domains.filter((d) => nameCandidates.includes(normalizeName(d.coeSpoc))).map((d) => d.id);

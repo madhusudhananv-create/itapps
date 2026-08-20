@@ -27,10 +27,18 @@ export class DomainReviewComponent implements OnInit {
   returnCommentError = '';
   actionMessage = '';
   showDefinitionsModal = false;
-  selectedAssessee: Assessee | null = null;
+  selectedAssessees: Assessee[] = [];
 
   rubricLevels = RUBRIC_LEVELS;
   rubricModalParam: MaturityParameter | null = null;
+
+  retargetingParam: MaturityParameter | null = null;
+  retargetDate = '';
+  retargetReason = '';
+  retargetError = '';
+
+  decidingRetargetParam: MaturityParameter | null = null;
+  retargetDecisionComment = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -50,7 +58,7 @@ export class DomainReviewComponent implements OnInit {
         }
       });
     }
-    this.assesseeService.selectedAssessee$.subscribe((assessee) => (this.selectedAssessee = assessee));
+    this.assesseeService.selectedAssessees$.subscribe((assessees) => (this.selectedAssessees = assessees));
   }
 
   canReview(): boolean {
@@ -58,11 +66,14 @@ export class DomainReviewComponent implements OnInit {
     return this.session.currentUser.allowedDomainIds.includes(this.domain.id);
   }
 
-  /** Only the person the assessment is being conducted for (the selected Assessee) may accept/reject findings. */
+  assesseeNames(): string {
+    return this.selectedAssessees.map((a) => a.name).join(', ');
+  }
+
+  /** Only one of the people the assessment is being conducted for (the selected Assessees) may accept/reject findings. */
   isAssessee(): boolean {
-    const assessee = this.assesseeService.selectedAssessee;
     const empId = localStorage.getItem('empid');
-    return !!assessee && !!empId && assessee.id === empId;
+    return !!empId && this.selectedAssessees.some((a) => a.id === empId);
   }
 
   visibleParameters(): MaturityParameter[] {
@@ -156,5 +167,70 @@ export class DomainReviewComponent implements OnInit {
     this.maturityService.setFindingStatus(this.domain.id, param.id, next).subscribe(() => {
       param.findingStatus = next;
     });
+  }
+
+  /** The Reviewer (one level up from the Assessee) decides pending retarget requests. */
+  canDecideRetarget(param: MaturityParameter): boolean {
+    return this.canReview() && param.findingRetargetStatus === 'Requested';
+  }
+
+  /** A retarget may be requested once a finding is accepted and isn't already pending/decided. */
+  canRequestRetarget(param: MaturityParameter): boolean {
+    return (
+      this.isAssessee() &&
+      param.findingStatus === 'Accepted' &&
+      (!param.findingRetargetStatus || param.findingRetargetStatus === 'None' || param.findingRetargetStatus === 'Rejected')
+    );
+  }
+
+  openRetargetModal(param: MaturityParameter): void {
+    this.retargetingParam = param;
+    this.retargetDate = param.findingRetargetRequestedDate ?? param.findingTargetDate ?? '';
+    this.retargetReason = '';
+    this.retargetError = '';
+  }
+
+  closeRetargetModal(): void {
+    this.retargetingParam = null;
+  }
+
+  confirmRetarget(): void {
+    if (!this.retargetDate) {
+      this.retargetError = 'A revised target date is required.';
+      return;
+    }
+    if (!this.retargetReason.trim()) {
+      this.retargetError = 'A reason for the retarget request is required.';
+      return;
+    }
+    if (!this.retargetingParam) return;
+    const param = this.retargetingParam;
+    param.findingRetargetStatus = 'Requested';
+    param.findingRetargetRequestedDate = this.retargetDate;
+    param.findingRetargetReason = this.retargetReason.trim();
+    param.findingRetargetDecisionComment = undefined;
+    this.retargetingParam = null;
+    this.actionMessage = 'Retarget request sent for approval.';
+  }
+
+  openRetargetDecisionModal(param: MaturityParameter): void {
+    this.decidingRetargetParam = param;
+    this.retargetDecisionComment = '';
+  }
+
+  closeRetargetDecisionModal(): void {
+    this.decidingRetargetParam = null;
+  }
+
+  decideRetarget(approve: boolean): void {
+    if (!this.decidingRetargetParam) return;
+    const param = this.decidingRetargetParam;
+    param.findingRetargetStatus = approve ? 'Approved' : 'Rejected';
+    param.findingRetargetDecisionComment = this.retargetDecisionComment.trim() || undefined;
+    if (approve && param.findingRetargetRequestedDate) {
+      param.findingTargetDate = param.findingRetargetRequestedDate;
+    }
+    this.decidingRetargetParam = null;
+    this.actionMessage = approve ? 'Retarget approved.' : 'Retarget rejected.';
   }
 }

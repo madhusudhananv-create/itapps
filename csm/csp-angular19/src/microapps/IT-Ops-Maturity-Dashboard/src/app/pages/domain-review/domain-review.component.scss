@@ -686,7 +686,8 @@
   color: var(--text-secondary);
 }
 
-.modal textarea {
+.modal textarea,
+.modal input[type="date"] {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--border);
@@ -696,6 +697,58 @@
   background: var(--surface);
   color: var(--text-primary);
   font-family: inherit;
+  margin-bottom: 12px;
+}
+
+.retarget-block {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--gridline);
+}
+
+.retarget-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.retarget-pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.retarget-pill.requested {
+  background: color-mix(in srgb, var(--status-warning) 22%, transparent);
+  color: #8a5a00;
+}
+
+.retarget-pill.approved {
+  background: color-mix(in srgb, var(--status-good) 18%, transparent);
+  color: var(--status-good);
+}
+
+.retarget-pill.rejected {
+  background: color-mix(in srgb, var(--status-critical) 16%, transparent);
+  color: var(--status-critical);
+}
+
+.retarget-decision-comment {
+  margin: 4px 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.retarget-btn {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .field-error {

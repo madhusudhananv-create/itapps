@@ -12,7 +12,7 @@
       <div class="meta">
         <span>COE SPOC: <strong>{{ domain.coeSpoc }}</strong></span>
         <span>Reviewer: <strong>{{ domain.reviewer }}</strong></span>
-        <span *ngIf="selectedAssessee">Assessee: <strong>{{ selectedAssessee.name }}</strong></span>
+        <span *ngIf="selectedAssessees.length">{{ selectedAssessees.length === 1 ? 'Assessee' : 'Assessees' }}: <strong>{{ assesseeNames() }}</strong></span>
         <span [class]="statusClass(domain.status)">{{ domain.status }}</span>
       </div>
     </div>

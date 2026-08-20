@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { Assessee } from '../models/assessee.model';
 import { AccountService } from './account.service';
 import { resolveWebApiUri } from '../utils/api-base.util';
@@ -26,25 +26,19 @@ export class AssesseeService {
   private readonly apiurl = resolveWebApiUri();
   private assesseesByAccount = new Map<string, Observable<Assessee[]>>();
 
-  private selectedAssesseeSubject = new BehaviorSubject<Assessee | null>(null);
-  readonly selectedAssessee$ = this.selectedAssesseeSubject.asObservable();
+  /** Empty array = no assessee chosen yet for this account (mirrors the old `null` state). */
+  private selectedAssesseesSubject = new BehaviorSubject<Assessee[]>([]);
+  readonly selectedAssessees$ = this.selectedAssesseesSubject.asObservable();
 
   constructor(private http: HttpClient, private accountService: AccountService) {
-    this.accountService.selectedAccount$
-      .pipe(
-        switchMap((account) => {
-          if (!account) return of(null);
-          const custId = String(account.cusT_ID);
-          const storedId = this.loadMap()[custId];
-          if (!storedId) return of(null);
-          return this.getAssessees(custId).pipe(map((list) => list.find((a) => a.id === storedId) ?? null));
-        }),
-      )
-      .subscribe((assessee) => this.selectedAssesseeSubject.next(assessee));
+    // Every account selection (including re-selecting the same one) always
+    // lands on the assessee picker - it's never auto-skipped from a
+    // previously remembered choice. "Change assessee" reuses this same reset.
+    this.accountService.selectedAccount$.subscribe(() => this.selectedAssesseesSubject.next([]));
   }
 
-  get selectedAssessee(): Assessee | null {
-    return this.selectedAssesseeSubject.value;
+  get selectedAssessees(): Assessee[] {
+    return this.selectedAssesseesSubject.value;
   }
 
   private getHeaders(): HttpHeaders {
@@ -91,27 +85,35 @@ export class AssesseeService {
     return this.assesseesByAccount.get(custId)!;
   }
 
-  selectAssessee(assessee: Assessee): void {
+  /** Replaces the full set of selected assessees for the current account (multi-select). */
+  selectAssessees(assessees: Assessee[]): void {
     const account = this.accountService.selectedAccount;
     if (!account) return;
     const map = this.loadMap();
-    map[String(account.cusT_ID)] = assessee.id;
+    map[String(account.cusT_ID)] = assessees.map((a) => a.id);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
     } catch {
       /* ignore */
     }
-    this.selectedAssesseeSubject.next(assessee);
+    this.selectedAssesseesSubject.next(assessees);
   }
 
   changeAssessee(): void {
-    this.selectedAssesseeSubject.next(null);
+    this.selectedAssesseesSubject.next([]);
   }
 
-  private loadMap(): Record<string, string> {
+  private loadMap(): Record<string, string[]> {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      // Migrate the old single-id-per-account shape transparently.
+      const normalized: Record<string, string[]> = {};
+      for (const [custId, value] of Object.entries(parsed)) {
+        normalized[custId] = Array.isArray(value) ? (value as string[]) : [value as string];
+      }
+      return normalized;
     } catch {
       return {};
     }

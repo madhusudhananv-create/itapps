@@ -2,14 +2,27 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MaturityMockService } from '../../services/maturity-mock.service';
+import { Observable, forkJoin, of, switchMap } from 'rxjs';
 import { AssesseeService } from '../../services/assessee.service';
-import { TechnologyDomain, MaturityParameter, MaturityRubric } from '../../models/maturity.model';
+import { AccountService } from '../../services/account.service';
+import { ItOpsMaturityApiService, ItOpsAssessmentInfo, ItOpsParameterScoreRow } from '../../services/itops-maturity-api.service';
+import { TechnologyDomain, MaturityParameter, MaturityRubric, DomainStatus } from '../../models/maturity.model';
 import { Assessee } from '../../models/assessee.model';
 import { statusPillClass } from '../../utils/status.util';
 import { RUBRIC_LEVELS, rubricScoreKey } from '../../utils/rubric.util';
 
 const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
+
+/** Maps the backend's ITOPS_ASSESSMENT.STATUS values onto this app's DomainStatus labels. */
+const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
+  NotStarted: 'Not Started',
+  Draft: 'Draft',
+  PendingReview: 'Pending Review',
+  Approved: 'Approved',
+  ReturnedForRevision: 'In Progress',
+  Suspended: 'Draft',
+  Closed: 'Approved',
+};
 
 @Component({
   selector: 'app-maturity-assessment',
@@ -27,29 +40,84 @@ export class MaturityAssessmentComponent implements OnInit {
   evidenceError = '';
   showDefinitionsModal = false;
   highlightParamId: string | null = null;
-  selectedAssessee: Assessee | null = null;
+  selectedAssessees: Assessee[] = [];
 
   rubricLevels = RUBRIC_LEVELS;
   rubricModalParam: MaturityParameter | null = null;
 
+  private assessmentId?: number;
+  /** parameterId (numeric, as a string key matching MaturityParameter.id) -> ITOPS_PARAMETER.ID */
+  private parameterIdByKey = new Map<string, number>();
+
   constructor(
     private route: ActivatedRoute,
-    private maturityService: MaturityMockService,
     private assesseeService: AssesseeService,
+    private accountService: AccountService,
+    private api: ItOpsMaturityApiService,
   ) {}
 
   ngOnInit(): void {
-    const domainId = this.route.snapshot.paramMap.get('domainId');
-    if (domainId) {
-      this.maturityService.getDomain(domainId).subscribe((domain) => {
-        this.domain = domain;
-        if (domain) {
-          this.providers = Array.from(new Set(domain.parameters.map((p) => p.provider).filter((p): p is string => !!p)));
-          this.activeProvider = this.providers[0];
-        }
-      });
+    const domainCode = this.route.snapshot.paramMap.get('domainId');
+    const account = this.accountService.selectedAccount;
+
+    if (domainCode && account) {
+      this.api
+        .getOrCreateAssessment(domainCode, String(account.cusT_ID))
+        .pipe(
+          switchMap((assessment) =>
+            forkJoin({
+              assessment: of(assessment),
+              parameters: this.api.getAssessmentParameters(assessment.assessmentId),
+            }),
+          ),
+        )
+        .subscribe(({ assessment, parameters }) => {
+          this.assessmentId = assessment.assessmentId;
+          this.domain = this.toDomain(assessment, parameters);
+          this.providers = [];
+          this.activeProvider = undefined;
+        });
     }
-    this.assesseeService.selectedAssessee$.subscribe((assessee) => (this.selectedAssessee = assessee));
+
+    this.assesseeService.selectedAssessees$.subscribe((assessees) => (this.selectedAssessees = assessees));
+  }
+
+  private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
+    this.parameterIdByKey.clear();
+    const parameters: MaturityParameter[] = rows.map((r) => {
+      const key = String(r.parameterId);
+      this.parameterIdByKey.set(key, r.parameterId);
+      return {
+        id: key,
+        category: r.category,
+        name: r.parameterName,
+        definition: r.definition,
+        rubric: {
+          level1: r.level1_AdHoc,
+          level2: r.level2_Developing,
+          level3: r.level3_Defined,
+          level4: r.level4_Managed,
+          level5: r.level5_Optimized,
+        } as MaturityRubric,
+        minRequiredScore: r.minRequiredScore ?? undefined,
+        score: (r.scoreValue as MaturityParameter['score']) ?? null,
+        notes: r.notes ?? '',
+      };
+    });
+
+    return {
+      id: assessment.domainCode,
+      name: assessment.domainName,
+      coeSpoc: assessment.coeSpocEmpId ?? '',
+      reviewer: assessment.reviewerEmpId ?? '',
+      status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
+      parameters,
+      returnComment: assessment.returnComment ?? undefined,
+    };
+  }
+
+  assesseeNames(): string {
+    return this.selectedAssessees.map((a) => a.name).join(', ');
   }
 
   visibleParameters(): MaturityParameter[] {
@@ -138,10 +206,26 @@ export class MaturityAssessmentComponent implements OnInit {
     param.evidenceFileName = undefined;
   }
 
+  /** Persists every parameter that has a score and/or notes entered so far. */
+  private persistAllScores(): Observable<unknown> {
+    if (!this.assessmentId || !this.domain) return of(null);
+    const toSave = this.domain.parameters.filter((p) => p.score !== null || p.notes);
+    if (!toSave.length) return of(null);
+    const calls: Observable<unknown>[] = toSave.map((p) => {
+      const parameterId = this.parameterIdByKey.get(p.id);
+      if (!parameterId) return of(null);
+      return this.api.upsertScore(this.assessmentId!, parameterId, typeof p.score === 'number' ? p.score : null, p.notes ?? '');
+    });
+    return forkJoin(calls);
+  }
+
   saveDraft(): void {
-    if (!this.domain) return;
-    this.maturityService.saveDraft(this.domain.id).subscribe(() => {
-      this.saveMessage = 'Draft saved.';
+    if (!this.domain || !this.assessmentId) return;
+    this.persistAllScores().subscribe(() => {
+      this.api.saveDraft(this.assessmentId!).subscribe(() => {
+        this.saveMessage = 'Draft saved.';
+        if (this.domain && this.domain.status === 'Not Started') this.domain.status = 'Draft';
+      });
     });
   }
 
@@ -176,13 +260,15 @@ export class MaturityAssessmentComponent implements OnInit {
   }
 
   confirmSubmit(): void {
-    if (!this.domain) return;
-    this.maturityService.submitForReview(this.domain.id).subscribe(() => {
-      this.saveMessage = 'Submitted for review. The Function Head has been notified.';
-      if (this.domain) {
-        this.domain.status = 'Pending Review';
-      }
-      this.showSubmitModal = false;
+    if (!this.domain || !this.assessmentId) return;
+    this.persistAllScores().subscribe(() => {
+      this.api.submitAssessment(this.assessmentId!).subscribe(() => {
+        this.saveMessage = 'Submitted for review. The Function Head has been notified.';
+        if (this.domain) {
+          this.domain.status = 'Pending Review';
+        }
+        this.showSubmitModal = false;
+      });
     });
   }
 }

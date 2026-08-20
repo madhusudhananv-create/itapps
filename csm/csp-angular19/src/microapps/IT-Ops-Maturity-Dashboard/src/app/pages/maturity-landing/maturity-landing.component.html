@@ -19,52 +19,57 @@
       </svg>
       <span class="crumb-current">{{ selectedAccount.cusT_NM }}</span>
       <span class="crumb-industry" *ngIf="selectedAccount.industrY_TYPE">{{ selectedAccount.industrY_TYPE }}</span>
-      <ng-container *ngIf="selectedAssessee">
+      <ng-container *ngIf="selectedAssessees.length">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-        <span class="crumb-assessee">Assessee: <strong>{{ selectedAssessee.name }}</strong></span>
+        <span class="crumb-assessee">
+          {{ selectedAssessees.length === 1 ? 'Assessee' : 'Assessees' }}:
+          <strong>{{ assesseeNames() }}</strong>
+        </span>
       </ng-container>
     </nav>
     <div class="context-actions">
-      <button type="button" class="change-account-link" *ngIf="selectedAssessee" (click)="changeAssessee()">Change assessee</button>
+      <button type="button" class="change-account-link" *ngIf="selectedAssessees.length" (click)="changeAssessee()">Change assessee</button>
       <button type="button" class="change-account-link" (click)="changeAccount()">Change account</button>
     </div>
   </div>
 
-  <section class="account-picker" *ngIf="selectedAccount && !selectedAssessee">
-    <h2>Select the Assessee for {{ selectedAccount.cusT_NM }}</h2>
-    <p class="picker-copy">Choose the person this IT Operations Maturity assessment is being conducted for. Each technology domain within it can still be completed by its own COE SPOC.</p>
+  <section class="account-picker" *ngIf="selectedAccount && !selectedAssessees.length">
+    <h2>Select the Assessee(s) for {{ selectedAccount.cusT_NM }}</h2>
+    <p class="picker-copy">Choose one or more people this IT Operations Maturity assessment is being conducted for. Each technology domain within it can still be completed by its own COE SPOC.</p>
     <p class="picker-empty" *ngIf="assesseesLoading">Loading people allocated to this account's projects...</p>
-    <div class="account-combobox" #assesseeCombobox *ngIf="!assesseesLoading && assessees.length; else noAssessees">
-      <input
-        type="text"
-        class="combobox-input"
-        placeholder="Search assessees by name or title..."
-        [(ngModel)]="assesseeSearch"
-        (focus)="openAssesseeDropdown()"
-        (input)="openAssesseeDropdown()"
-        (keydown.escape)="closeAssesseeDropdown()"
-      />
-      <svg class="combobox-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
-        <path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-      </svg>
+    <div class="assessee-multiselect" *ngIf="!assesseesLoading && assessees.length; else noAssessees">
+      <div class="combobox-search">
+        <input
+          type="text"
+          class="combobox-input"
+          placeholder="Search assessees by name or title..."
+          [(ngModel)]="assesseeSearch"
+          (input)="filterAssesseesFromInput()"
+        />
+        <svg class="combobox-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
+          <path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </div>
 
-      <div class="combobox-panel" *ngIf="assesseeDropdownOpen">
-        <button
-          type="button"
-          class="combobox-option"
-          *ngFor="let person of filteredAssessees"
-          (click)="selectAssessee(person)"
-        >
+      <div class="assessee-checklist">
+        <label class="assessee-checkbox-row" *ngFor="let person of filteredAssessees">
+          <input
+            type="checkbox"
+            [checked]="isAssesseePending(person)"
+            (change)="toggleAssesseeSelection(person)"
+          />
           <span class="picker-name">{{ person.name }}</span>
           <span class="picker-industry" *ngIf="person.title">{{ person.title }}</span>
-        </button>
+        </label>
         <p class="combobox-empty" *ngIf="!filteredAssessees.length">No assessees match "{{ assesseeSearch }}".</p>
-        <p class="combobox-count" *ngIf="filteredAssessees.length">
-          {{ filteredAssessees.length }} of {{ assessees.length }} assessees
-        </p>
+      </div>
+
+      <div class="assessee-picker-actions">
+        <span class="picker-selection-count">{{ pendingAssesseeIds.size }} selected</span>
+        <button type="button" class="btn-primary" [disabled]="!pendingAssesseeIds.size" (click)="confirmAssesseeSelection()">Continue</button>
       </div>
     </div>
     <ng-template #noAssessees>
@@ -113,7 +118,7 @@
     </ng-template>
   </section>
 
-  <ng-container *ngIf="selectedAccount && selectedAssessee">
+  <ng-container *ngIf="selectedAccount && selectedAssessees.length">
     <section class="summary-cards" *ngIf="enterpriseSummary as summary">
       <div class="card kpi-card">
         <div class="kpi-ring" [class]="'ring-' + maturityStatus(summary.overallMaturityLevel)" [ngStyle]="maturityRingStyle(summary.overallMaturityPercent)">

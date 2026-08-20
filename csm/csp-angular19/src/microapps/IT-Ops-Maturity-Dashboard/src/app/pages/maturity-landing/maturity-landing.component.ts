@@ -2,17 +2,91 @@ import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { combineLatest, filter, switchMap, forkJoin, of } from 'rxjs';
-import { MaturityMockService, computeEnterpriseSummary } from '../../services/maturity-mock.service';
+import { filter, switchMap, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { ItOpsMaturityApiService, ItOpsDomainTrackerRow, ItOpsTopRiskRow } from '../../services/itops-maturity-api.service';
 import { SessionService } from '../../services/session.service';
 import { AccountService } from '../../services/account.service';
 import { AssesseeService } from '../../services/assessee.service';
 import { BusinessUnitService } from '../../services/business-unit.service';
 import { IdentityService } from '../../services/identity.service';
-import { DomainSummary, EnterpriseSummary, TopRisk, CurrentUser } from '../../models/maturity.model';
+import { DomainSummary, EnterpriseSummary, TopRisk, CurrentUser, DomainStatus } from '../../models/maturity.model';
 import { CustomerModel } from '../../models/account.model';
 import { Assessee } from '../../models/assessee.model';
 import { statusPillClass } from '../../utils/status.util';
+
+/** Maps the backend's ITOPS_ASSESSMENT.STATUS values onto this app's DomainStatus labels. */
+const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
+  NotStarted: 'Not Started',
+  Draft: 'Draft',
+  PendingReview: 'Pending Review',
+  Approved: 'Approved',
+  ReturnedForRevision: 'In Progress',
+  Suspended: 'Draft',
+  Closed: 'Approved',
+};
+
+function toDomainSummary(row: ItOpsDomainTrackerRow): DomainSummary {
+  return {
+    id: row.domainCode,
+    name: row.domainName,
+    coeSpoc: row.coeSpocName ?? '',
+    coeSpocEmpId: row.coeSpocEmpId,
+    reviewer: row.reviewerName ?? '',
+    reviewerEmpId: row.reviewerEmpId,
+    status: BACKEND_STATUS_MAP[row.status] ?? 'Not Started',
+    averageScore: row.averageScore,
+    maturityPercent: row.maturityPercent,
+    maturityLevel: row.maturityLevel,
+    paramCount: row.paramCount,
+    sumScores: row.sumScores,
+    maxPossible: row.maxPossible,
+  };
+}
+
+function toTopRisk(row: ItOpsTopRiskRow): TopRisk {
+  const score = row.currentScore ?? 0;
+  return {
+    domain: row.domainName,
+    category: row.category,
+    parameter: row.parameterName,
+    currentScore: score,
+    gap: row.gap,
+    recommendation:
+      row.recommendedAction ||
+      (row.gap > 0
+        ? `Advance "${row.parameterName}" from level ${score} toward level ${score + 1} practices.`
+        : `"${row.parameterName}" is already at level 5 - maintain current practices.`),
+  };
+}
+
+function computeEnterpriseSummaryFromRows(summaries: DomainSummary[]): EnterpriseSummary {
+  const scoredDomains = summaries.filter((s) => s.status !== 'Not Started' && s.status !== 'In Progress');
+  const totalParamCount = scoredDomains.reduce((sum, s) => sum + s.paramCount, 0);
+  const totalSumScores = scoredDomains.reduce((sum, s) => sum + s.sumScores, 0);
+  const totalMaxPossible = scoredDomains.reduce((sum, s) => sum + s.maxPossible, 0);
+  const overallAverageScore = totalParamCount ? Math.round((totalSumScores / totalParamCount) * 100) / 100 : 0;
+  const overallMaturityPercent = Math.round((overallAverageScore / 5) * 100);
+  const levelFromAvg = (avg: number): string => {
+    if (avg <= 1) return 'Ad Hoc';
+    if (avg <= 2) return 'Developing';
+    if (avg <= 3) return 'Defined';
+    if (avg <= 4) return 'Managed';
+    return 'Optimized';
+  };
+
+  return {
+    overallAverageScore,
+    overallMaturityPercent,
+    overallMaturityLevel: overallAverageScore > 0 ? levelFromAvg(overallAverageScore) : 'Not Started',
+    domainsCompleted: summaries.filter((s) => s.status === 'Approved').length,
+    domainsInProgress: summaries.filter((s) => s.status === 'Draft' || s.status === 'In Progress' || s.status === 'Pending Review').length,
+    domainsNotStarted: summaries.filter((s) => s.status === 'Not Started').length,
+    totalParamCount,
+    totalSumScores,
+    totalMaxPossible,
+  };
+}
 
 type StatusLevel = 'good' | 'warning' | 'serious' | 'critical';
 
@@ -57,12 +131,11 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
 
   assessees: Assessee[] = [];
   filteredAssessees: Assessee[] = [];
-  selectedAssessee: Assessee | null = null;
+  selectedAssessees: Assessee[] = [];
+  /** Working selection in the picker before "Continue" confirms it. */
+  pendingAssesseeIds = new Set<string>();
   assesseeSearch = '';
-  assesseeDropdownOpen = false;
   assesseesLoading = false;
-
-  @ViewChild('assesseeCombobox') assesseeCombobox?: ElementRef<HTMLElement>;
 
   riskDomainTabs: RiskDomainTab[] = [];
   activeRiskDomain?: string;
@@ -81,7 +154,7 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   accountBusinessUnit: string | null = null;
 
   constructor(
-    private maturityService: MaturityMockService,
+    private api: ItOpsMaturityApiService,
     private session: SessionService,
     private accountService: AccountService,
     private assesseeService: AssesseeService,
@@ -90,6 +163,12 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    // session.user$ always has a value synchronously (defaults to NoAccess) -
+    // keep currentUser in sync with it from the very first tick, so template
+    // bindings like currentUser.role never see undefined while the
+    // account-scoped role resolution below is still in flight (or fails).
+    this.session.user$.subscribe((user) => (this.currentUser = user));
+
     this.accountService.getAccounts().subscribe((accounts) => {
       this.accounts = accounts;
       this.filteredAccounts = accounts;
@@ -114,38 +193,44 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         this.assesseesLoading = false;
       });
 
-    this.assesseeService.selectedAssessee$.subscribe((assessee) => {
-      this.selectedAssessee = assessee;
+    this.assesseeService.selectedAssessees$.subscribe((assessees) => {
+      this.selectedAssessees = assessees;
+      this.pendingAssesseeIds = new Set(assessees.map((a) => a.id));
     });
 
     // Role/domain-access is only resolvable once an account is selected,
-    // since GDH eligibility depends on that account's real Business Unit.
+    // since GDH eligibility depends on that account's real Business Unit,
+    // and the Domain Tracker/Top Risks/Executive summary are all scoped to
+    // that same account's real CUST_ID against the DB-backed API.
     this.accountService.selectedAccount$
       .pipe(
         filter((account): account is CustomerModel => !!account),
         switchMap((account) => {
           const custId = String(account.cusT_ID);
           return forkJoin({
-            domains: this.maturityService.getDomainSummaries(),
+            domainRows: this.api.getDomainTracker(custId).pipe(catchError((err) => {
+              console.error('IT Ops Maturity Dashboard: failed to load domain tracker', err);
+              return of([] as ItOpsDomainTrackerRow[]);
+            })),
+            topRiskRows: this.api.getTopRisks(custId).pipe(catchError((err) => {
+              console.error('IT Ops Maturity Dashboard: failed to load top risks', err);
+              return of([] as ItOpsTopRiskRow[]);
+            })),
             businessUnit: this.businessUnitService.getBusinessUnitForAccount(custId),
             email: this.identityService.getMyEmail(),
           });
         }),
       )
-      .subscribe(({ domains, businessUnit, email }) => {
+      .subscribe(({ domainRows, topRiskRows, businessUnit, email }) => {
         this.accountBusinessUnit = businessUnit;
-        this.session.resolveIdentity(domains, businessUnit, email);
+        const summaries = domainRows.map(toDomainSummary);
+        const risks = topRiskRows.map(toTopRisk);
+        this.allDomainSummaries = summaries;
+        const myEmpId = localStorage.getItem('empid');
+        this.session.resolveIdentity(summaries, businessUnit, email, myEmpId);
+        this.currentUser = this.session.currentUser;
+        this.applyRoleScope(risks);
       });
-
-    combineLatest([
-      this.session.user$,
-      this.maturityService.getDomainSummaries(),
-      this.maturityService.getTopRisks(),
-    ]).subscribe(([user, summaries, risks]) => {
-      this.currentUser = user;
-      this.allDomainSummaries = summaries;
-      this.applyRoleScope(risks);
-    });
   }
 
   private applyRoleScope(allTopRisks: TopRisk[]): void {
@@ -172,7 +257,7 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     if (!this.activeRiskDomain || !this.riskDomainTabs.some((t) => t.name === this.activeRiskDomain)) {
       this.activeRiskDomain = this.riskDomainTabs[0]?.name;
     }
-    this.enterpriseSummary = computeEnterpriseSummary(this.domainSummaries);
+    this.enterpriseSummary = computeEnterpriseSummaryFromRows(this.domainSummaries);
     this.updateVisibleRisks();
     setTimeout(() => this.updateTabScrollState());
   }
@@ -281,19 +366,10 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     if (this.accountDropdownOpen && comboboxEl && !comboboxEl.contains(event.target as Node)) {
       this.closeAccountDropdown();
     }
-    const assesseeEl = this.assesseeCombobox?.nativeElement;
-    if (this.assesseeDropdownOpen && assesseeEl && !assesseeEl.contains(event.target as Node)) {
-      this.closeAssesseeDropdown();
-    }
   }
 
-  openAssesseeDropdown(): void {
-    this.assesseeDropdownOpen = true;
+  filterAssesseesFromInput(): void {
     this.filterAssessees();
-  }
-
-  closeAssesseeDropdown(): void {
-    this.assesseeDropdownOpen = false;
   }
 
   private filterAssessees(): void {
@@ -307,6 +383,10 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         );
   }
 
+  assesseeNames(): string {
+    return this.selectedAssessees.map((a) => a.name).join(', ');
+  }
+
   selectAccount(account: CustomerModel): void {
     this.accountService.selectAccount(account);
     this.accountSearch = '';
@@ -318,14 +398,30 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     this.accountSearch = '';
   }
 
-  selectAssessee(assessee: Assessee): void {
-    this.assesseeService.selectAssessee(assessee);
+  toggleAssesseeSelection(assessee: Assessee): void {
+    if (this.pendingAssesseeIds.has(assessee.id)) {
+      this.pendingAssesseeIds.delete(assessee.id);
+    } else {
+      this.pendingAssesseeIds.add(assessee.id);
+    }
+  }
+
+  isAssesseePending(assessee: Assessee): boolean {
+    return this.pendingAssesseeIds.has(assessee.id);
+  }
+
+  confirmAssesseeSelection(): void {
+    const chosen = this.assessees.filter((a) => this.pendingAssesseeIds.has(a.id));
+    this.assesseeService.selectAssessees(chosen);
     this.assesseeSearch = '';
-    this.closeAssesseeDropdown();
   }
 
   changeAssessee(): void {
+    const previousIds = this.selectedAssessees.map((a) => a.id);
     this.assesseeService.changeAssessee();
+    // Re-open the picker with whatever was previously chosen still checked
+    // (the selectedAssessees$ subscription above just cleared this to empty).
+    this.pendingAssesseeIds = new Set(previousIds);
     this.assesseeSearch = '';
   }
 

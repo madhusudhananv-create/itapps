@@ -12,6 +12,9 @@ export interface MaturityRubric {
 
 export type FindingStatus = 'Pending' | 'Accepted' | 'Rejected';
 
+/** Lifecycle of a request to push out a finding's target closure date. */
+export type RetargetStatus = 'None' | 'Requested' | 'Approved' | 'Rejected';
+
 export interface MaturityParameter {
   id: string;
   category: string;
@@ -24,6 +27,16 @@ export interface MaturityParameter {
   evidenceFileName?: string;
   provider?: string;
   findingStatus?: FindingStatus;
+  /** Mandatory justification captured when the Assessee rejects a finding. */
+  findingRejectionComment?: string;
+  /** Target date for closing out this finding; retargeting requests a revision to it. */
+  findingTargetDate?: string;
+  findingRetargetStatus?: RetargetStatus;
+  /** Revised date proposed by the Assessee, pending the Reviewer's decision. */
+  findingRetargetRequestedDate?: string;
+  findingRetargetReason?: string;
+  /** Reviewer's reason when approving/rejecting the retarget request. */
+  findingRetargetDecisionComment?: string;
 }
 
 export interface TechnologyDomain {
@@ -59,8 +72,11 @@ export interface DomainSummary {
   name: string;
   coeSpoc: string;
   coeSpocEmail?: string;
+  /** Real EMP_ID of the assigned COE SPOC, when the row came from the DB-backed API rather than the CSV mock. */
+  coeSpocEmpId?: string | null;
   reviewer: string;
   reviewerEmail?: string;
+  reviewerEmpId?: string | null;
   status: DomainStatus;
   averageScore: number | null;
   maturityPercent: number | null;
