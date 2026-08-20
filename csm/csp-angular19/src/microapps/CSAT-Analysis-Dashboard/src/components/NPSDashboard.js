@@ -2157,7 +2157,7 @@ const sortTop10NpsTrendRows = (rows, top10AccountNames = []) =>
 
 const addNpsTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
   if (!fileData?.hasData || !fileData.rows?.length) return;
-  const safeName = `NPS_Top10_Trend_${sheetIndex + 1}`.slice(0, 31);
+  const safeName = `NPS_Top 10_Trend_${sheetIndex + 1}`.slice(0, 31);
   const trendSheet = workbook.addWorksheet(safeName);
 
   const headerRow1 = trendSheet.addRow([
@@ -3263,8 +3263,8 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const link = document.createElement('a');
       link.href = url;
       const safeFileName = singleFileData
-        ? (singleFileData.saveName || `Top10_Trend_File_${singleFileIndex + 1}`).replace(/\.[^.]+$/, '')
-        : 'ACSAT_NPS_Top10_Account_Wise_Trend_Analysis';
+        ? (singleFileData.saveName || `Top 10_Trend_File_${singleFileIndex + 1}`).replace(/\.[^.]+$/, '')
+        : 'ACSAT_NPS_Top 10_Account_Wise_Trend_Analysis';
       link.download = `${safeFileName}_${todayStr}.xlsx`;
       link.click();
       window.URL.revokeObjectURL(url);
@@ -4824,6 +4824,63 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       return { data: [], summary: emptySummary, emptyReason: reason };
     }
   }, [secondSheetData, firstSheetData, groupByBU, acsatCycleStartDateFormatted, searchTerm, showTop10, sortConfig, accountOrder, sheetLoadDebug]);
+
+  // Short display nicknames for Top 10 accounts used in the "not polled" footnote
+  const TOP10_ACCOUNT_NICKNAMES = {
+    'BronxCare Health System': 'BronxCare',
+    'Premier - Horizon II - Covenant Health': 'Covenant',
+    'Premier Healthcare Solutions Inc': 'Premier Healthcare',
+    'Blue Cross Blue Shield Association BCBSA': 'BCBSA',
+    'Frontier Airlines INC': 'Frontier Airlines',
+    'Tufts Medicine': 'Tufts Medicine',
+    'AgFirst Farm Credit Bank': 'AgFirst',
+    'embecta MEDICAL II LLC': 'embecta',
+    'Jewish Board of Family and Childrens Services JBFCS': 'JBFCS',
+    'Healthfirst': 'Healthfirst',
+    'The Northern Trust Company': 'Northern Trust',
+    'Firstsource Solutions Ltd': 'Firstsource',
+    'Ooma Inc.': 'Ooma',
+    'Arista Networks India Private Limited': 'Arista Networks',
+    'INFOBLOX INC.': 'Infoblox',
+  };
+
+  // Caption listing Top 10 accounts that were not polled (Polled === 0 or missing from the uploaded data)
+  const notPolledTop10AccountsCaption = useMemo(() => {
+    if (!showTop10 || !processedData?.data?.length) return null;
+
+    const top10Rows = processedData.data.filter(
+      (row) =>
+        !row.isGrandTotal &&
+        !row.isOtherAccount &&
+        !row.isPercentageRow &&
+        !row.isOtherAccountPercentageRow &&
+        !row.isOverallRow &&
+        !row.isOverallPercentageRow &&
+        !row.isOrgLevelPercentageRow &&
+        !row.isGrandTotalPercentageRow
+    );
+
+    const notPolledNames = top10AccountNames.filter((accountName) => {
+      const matchingRow = top10Rows.find((row) => matchesTop10AccountName(row.customerName, accountName));
+      return !matchingRow || (matchingRow.sentCount || 0) === 0;
+    });
+
+    if (!notPolledNames.length) return null;
+
+    const displayNames = notPolledNames.map((name) => TOP10_ACCOUNT_NICKNAMES[name] || name);
+
+    let namesText;
+    if (displayNames.length === 1) {
+      namesText = displayNames[0];
+    } else if (displayNames.length === 2) {
+      namesText = `${displayNames[0]} and ${displayNames[1]}`;
+    } else {
+      namesText = `${displayNames.slice(0, -1).join(', ')} and ${displayNames[displayNames.length - 1]}`;
+    }
+
+    const verb = displayNames.length === 1 ? 'was' : 'were';
+    return `${namesText} ${verb} not polled and hence included other accounts.`;
+  }, [showTop10, processedData, top10AccountNames]);
 
   const emptyDisplayMessage = useMemo(() => {
     if (!excelData) {
@@ -10141,6 +10198,16 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   </TableRow>
                 );
               })()}
+              {notPolledTop10AccountsCaption && (
+                <TableRow>
+                  <TableCell
+                    colSpan={(groupByBU ? 2 : 3) + 12 + (showMainNpsTrendColumns ? npsMainTrendFileCount * NPS_MAIN_TREND_COLUMNS_PER_FILE : 0)}
+                    style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 1rem', borderTop: '1px solid #e2e8f0' }}
+                  >
+                    {notPolledTop10AccountsCaption}
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         )}

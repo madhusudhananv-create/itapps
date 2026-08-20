@@ -76,7 +76,7 @@ const matchesBusinessUnitFilter = (row, businessUnitFilter) => {
 };
 
 const PRACTICE_SATISFIED_FILE_URL = '/data/New_customer_feedback_analysis_New.xlsx';
-const PRACTICE_DISPLAY_ORDER = ['Engineering', 'RunOps', 'Data & AI', 'Embedded'];
+const PRACTICE_DISPLAY_ORDER = ['Data & AI', 'Embedded', 'Engineering', 'RunOps'];
 const getPracticeOrderIndex = (practice) => {
   if (!practice) return 999;
   const s = String(practice).trim();
@@ -239,12 +239,7 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
       });
       return resultRow;
     });
-  rows.sort((a, b) => {
-    const ia = getPracticeOrderIndex(a.practice);
-    const ib = getPracticeOrderIndex(b.practice);
-    if (ia !== ib) return ia - ib;
-    return (a.practice || '').localeCompare(b.practice || '');
-  });
+  rows.sort((a, b) => String(a.practice || '').trim().localeCompare(String(b.practice || '').trim(), undefined, { sensitivity: 'base' }));
   rows = rows.map((r, i) => ({ ...r, sNo: i + 1 }));
 
   const orgSatisfied = {};
@@ -521,19 +516,14 @@ const buildAccountPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleSt
       accountKey: custKey,
       accountName: meta.accountName,
       businessUnit: meta.businessUnit,
-      practice: 'All Practice',
+      practice: 'All Practices',
       isAllPractice: true,
       Polled: allPR.polled,
       Responded: allPR.responded,
       ...buildPerspectivePercents(satisfiedByAccount.get(custKey) || {}, totalByAccount.get(custKey) || {})
     });
 
-    const practicesSorted = [...meta.practices].sort((a, b) => {
-      const ia = getPracticeOrderIndex(a);
-      const ib = getPracticeOrderIndex(b);
-      if (ia !== ib) return ia - ib;
-      return (a || '').localeCompare(b || '');
-    });
+    const practicesSorted = [...meta.practices].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
     practicesSorted.forEach(practice => {
       const apKey = `${custKey}|||${practice.toLowerCase()}`;
       const pr = polledRespondedByAccountPractice.get(apKey) || { polled: 0, responded: 0 };
@@ -577,6 +567,46 @@ const getTop10AccountOrderIndex = (accountName) => {
   const s = (accountName || '').toString().trim().toLowerCase();
   const i = ACCOUNT_PRACTICE_TOP10_ORDER.findIndex(n => n.toLowerCase() === s);
   return i >= 0 ? i : 999;
+};
+
+// Short/recognizable display names for the fixed Top 10 accounts, used only in the "not polled"
+// footnote below Top 10 tables (full name is used everywhere else on the dashboard).
+const TOP10_ACCOUNT_SHORT_NAMES = {
+  'premier healthcare solutions inc': 'Premier Healthcare',
+  'blue cross blue shield association bcbsa': 'BCBSA',
+  'frontier airlines inc': 'Frontier Airlines',
+  'premier - horizon ii - covenant health': 'Covenant',
+  'tufts medicine': 'Tufts Medicine',
+  'bronxcare health system': 'BronxCare',
+  'agfirst farm credit bank': 'AgFirst',
+  'embecta medical ii llc': 'embecta',
+  'jewish board of family and childrens services jbfcs': 'JBFCS',
+  'healthfirst': 'Healthfirst',
+  'the northern trust company': 'Northern Trust',
+  'firstsource solutions ltd': 'Firstsource',
+  'ooma inc.': 'Ooma',
+  'arista networks india private limited': 'Arista Networks',
+  'infoblox inc.': 'Infoblox'
+};
+const getTop10AccountShortName = (fullName) => {
+  const key = (fullName || '').toString().trim().toLowerCase();
+  return TOP10_ACCOUNT_SHORT_NAMES[key] || fullName;
+};
+
+// Builds the "X, Y and Z were not polled and hence included other accounts." footnote for a Top 10
+// table. `polledByAccountName` maps a lowercased/trimmed Top10 account name to its Polled count in
+// the currently loaded data (missing/undefined is treated the same as zero — never loaded).
+const buildTop10NotPolledCaption = (polledByAccountName) => {
+  const unpolled = TOP10_ACCOUNT_ORDER.filter((name) => {
+    const key = name.trim().toLowerCase();
+    const polled = polledByAccountName instanceof Map ? polledByAccountName.get(key) : polledByAccountName?.[key];
+    return !polled;
+  }).map(getTop10AccountShortName);
+  if (unpolled.length === 0) return null;
+  if (unpolled.length === 1) return `${unpolled[0]} was not polled and hence included other accounts.`;
+  const last = unpolled[unpolled.length - 1];
+  const rest = unpolled.slice(0, -1);
+  return `${rest.join(', ')} and ${last} were not polled and hence included other accounts.`;
 };
 
 /**
@@ -817,19 +847,14 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
       accountKey: custKey,
       accountName: meta.accountName,
       businessUnit: meta.businessUnit,
-      practice: 'All Practice',
+      practice: 'All Practices',
       isAllPractice: true,
       Polled: allPR.polled,
       Responded: allPR.responded,
       ...buildPerspectivePercents(satisfiedByAccount.get(custKey) || {}, totalByAccount.get(custKey) || {})
     });
 
-    const practicesSorted = [...meta.practices].sort((a, b) => {
-      const ia = getPracticeOrderIndex(a);
-      const ib = getPracticeOrderIndex(b);
-      if (ia !== ib) return ia - ib;
-      return (a || '').localeCompare(b || '');
-    });
+    const practicesSorted = [...meta.practices].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
     practicesSorted.forEach(practice => {
       const apKey = `${custKey}|||${practice.toLowerCase()}`;
       const pr = polledRespondedByAccountPractice.get(apKey) || { polled: 0, responded: 0 };
@@ -847,12 +872,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
     });
   });
 
-  const sortPractices = (set) => [...set].sort((a, b) => {
-    const ia = getPracticeOrderIndex(a);
-    const ib = getPracticeOrderIndex(b);
-    if (ia !== ib) return ia - ib;
-    return (a || '').localeCompare(b || '');
-  });
+  const sortPractices = (set) => [...set].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
 
   const summaryRows = [];
 
@@ -870,7 +890,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `top10-practice|||${practice.toLowerCase()}`,
-      practice: `Top10 ${practice}`,
+      practice: `Top 10 ${practice}`,
       rowTier: 'top10-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -881,7 +901,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
   const otherTier = polledRespondedByTier.get('other') || { polled: 0, responded: 0 };
   summaryRows.push({
     rowKey: 'other-account-nr',
-    practice: 'Other Account NR',
+    practice: 'Other Accounts NR',
     rowTier: 'other-total',
     Polled: otherTier.polled,
     Responded: otherTier.responded,
@@ -892,7 +912,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `other-practice|||${practice.toLowerCase()}`,
-      practice: `Other Account ${practice}`,
+      practice: `Other Accounts ${practice}`,
       rowTier: 'other-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -2536,9 +2556,8 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
       if (sortConfig.key === 'practice') {
-        const ia = getPracticeOrderIndex(aVal);
-        const ib = getPracticeOrderIndex(bVal);
-        if (ia !== ib) return sortConfig.direction === 'asc' ? ia - ib : ib - ia;
+        const cmp = String(aVal || '').trim().localeCompare(String(bVal || '').trim(), undefined, { sensitivity: 'base' });
+        return sortConfig.direction === 'asc' ? cmp : -cmp;
       }
       if (typeof aVal === 'string' && aVal.includes('%') && typeof bVal === 'string' && bVal.includes('%')) {
         const an = parseFloat(aVal) || 0;
@@ -2603,9 +2622,8 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
       if (sortConfig.key === 'practice') {
-        const ia = getPracticeOrderIndex(aVal);
-        const ib = getPracticeOrderIndex(bVal);
-        if (ia !== ib) return sortConfig.direction === 'asc' ? ia - ib : ib - ia;
+        const cmp = String(aVal || '').trim().localeCompare(String(bVal || '').trim(), undefined, { sensitivity: 'base' });
+        return sortConfig.direction === 'asc' ? cmp : -cmp;
       }
       if (typeof aVal === 'string' && aVal.includes('%') && typeof bVal === 'string' && bVal.includes('%')) {
         const an = parseFloat(aVal) || 0;
@@ -5026,9 +5044,9 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
         'cssReceivedCount': '#Responded',
         'Polled': '#Polled',
         'Responded': '#Responded',
-        'top10': 'Top10 Accounts',
-        'Top 10': 'Top10 Accounts',
-        'TYPE OF ACCOUNT': 'Top10 Accounts',
+        'top10': 'Top 10 Accounts',
+        'Top 10': 'Top 10 Accounts',
+        'TYPE OF ACCOUNT': 'Top 10 Accounts',
         'ENGAGEMENT TYPE': 'ENGAGEMENT TYPE',
         'Project Engagement Type': 'ENGAGEMENT TYPE'
       };
@@ -5776,7 +5794,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       }
 
       // Generate and download the file with name according to current view (Account Wise, Top 10 Accounts, or BU Wise)
-      const viewSuffix = showBuWise ? 'BU_Wise' : (showTop10 ? 'Top10_Accounts' : 'Account_Wise');
+      const viewSuffix = showBuWise ? 'BU_Wise' : (showTop10 ? 'Top_10_Accounts' : 'Account_Wise');
       const downloadFileName = `Account_BU_Wise_Satisfied_Customers_Each_Perspective_${viewSuffix}.xlsx`;
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -7129,7 +7147,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     }
     try {
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Account-Practice Top10 % Satisfied');
+      const worksheet = workbook.addWorksheet('Account-Practice Top 10 % Satisfied');
       const pList = PRACTICE_PERSPECTIVE_ORDER;
       const styleHeaderRow = (rowNum) => {
         const headerRow = worksheet.getRow(rowNum);
@@ -7194,7 +7212,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     }
     try {
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Last Cycle Top10 % Satisfied');
+      const worksheet = workbook.addWorksheet('Last Cycle Top 10 % Satisfied');
       const pList = PRACTICE_PERSPECTIVE_ORDER;
       const headers = ['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', ...pList.map(p => `${p} (%)`)];
       const headerRow = worksheet.addRow(headers);
@@ -7431,7 +7449,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
                 onMouseOver={(e) => { e.target.style.background = 'rgba(255, 255, 255, 0.35)'; }}
                 onMouseOut={(e) => { e.target.style.background = showTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'; }}
               >
-                Top10 Accounts - percentage of Satisfied Customers(Each Perspective)
+                Top 10 Accounts - percentage of Satisfied Customers(Each Perspective)
               </button>
               <button
                 type="button"
@@ -8127,7 +8145,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       ) : showAccountPracticeWiseTop10 ? (
         <>
           <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT report</strong>: % Satisfied per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account), followed by dynamic Top10/Other/Overall summary rows.
+            <strong>Customer Success Survey All PCSAT report</strong>: % Satisfied per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account), followed by dynamic Top 10/Other/Overall summary rows.
             {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
           </div>
           <ResultsSummary>
@@ -8302,6 +8320,20 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
               </tbody>
             </Table>
           </TableContainer>
+          {(() => {
+            const polledByAccountName = new Map(
+              accountPracticeWiseTop10Data.rows
+                .filter(r => r.isAllPractice)
+                .map(r => [(r.accountName || '').trim().toLowerCase(), r.Polled])
+            );
+            const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+            if (!notPolledCaption) return null;
+            return (
+              <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.25rem 0.25rem 0', marginTop: '0.25rem' }}>
+                {notPolledCaption}
+              </div>
+            );
+          })()}
 
           {/* Last year PCSAT % rating dashboard, Top 10 accounts: same builder, ordering, and dynamic
               summary tiers as the current-cycle table above, for the half-year cycle immediately
@@ -8318,7 +8350,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
             )}
           </div>
           <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT report</strong>: % Satisfied per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account), followed by dynamic Top10/Other/Overall summary rows.
+            <strong>Customer Success Survey All PCSAT report</strong>: % Satisfied per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account), followed by dynamic Top 10/Other/Overall summary rows.
             {effectiveLastCycleTop10DateNote && <> Dates counted only when ≥ {effectiveLastCycleTop10DateNote} (MM-DD-YYYY).</>}
             {lastCycleUsesUploadedTrendFile && <> Source: uploaded trend-analysis file ({effectiveLastCycleTop10Label}).</>}
           </div>
@@ -8427,6 +8459,20 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
                   </tbody>
                 </Table>
               </TableContainer>
+              {(() => {
+                const polledByAccountName = new Map(
+                  effectiveLastCycleTop10Data.rows
+                    .filter(r => r.isAllPractice)
+                    .map(r => [(r.accountName || '').trim().toLowerCase(), r.Polled])
+                );
+                const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+                if (!notPolledCaption) return null;
+                return (
+                  <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.25rem 0.25rem 0', marginTop: '0.25rem' }}>
+                    {notPolledCaption}
+                  </div>
+                );
+              })()}
             </>
           )}
         </>
@@ -8438,7 +8484,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
         {showBuWise
           ? `Showing count of satisfied customers (ratings 4 or 5) for each perspective grouped by Business Unit. % = (count RATING 4 or 5 / count of data input for that perspective in that BU from "CSAT received Report") × 100 — do not use #Responded. Total BUs: ${processedData.data.length},`
           : showTop10
-          ? `Showing Top10 Accounts - percentage of satisfied customers (ratings 4 or 5) for each perspective. Excludes rows with 0 CSS surveys sent. All percentage columns: Timeline Adherence, Quality of Delivery, Risk Management & Responsiveness, Thought Leadership, Overall Experience, Timely Resource Fulfillment, Resource Competency (% = count RATING 4 or 5 / count data input for that perspective from "CSAT received Report" * 100). CSS data filtered by CSAT cycle start date (${csatCycleStartDateFormatted}). Total customers: ${processedData.data.length},`
+          ? `Showing Top 10 Accounts - percentage of satisfied customers (ratings 4 or 5) for each perspective. Excludes rows with 0 CSS surveys sent. All percentage columns: Timeline Adherence, Quality of Delivery, Risk Management & Responsiveness, Thought Leadership, Overall Experience, Timely Resource Fulfillment, Resource Competency (% = count RATING 4 or 5 / count data input for that perspective from "CSAT received Report" * 100). CSS data filtered by CSAT cycle start date (${csatCycleStartDateFormatted}). Total customers: ${processedData.data.length},`
           : `Showing count of satisfied customers (ratings 4 or 5) for each perspective for all valid accounts. Excludes rows with 0 CSS surveys sent. All percentage columns: Timeline Adherence, Quality of Delivery, Risk Management & Responsiveness, Thought Leadership, Overall Experience, Timely Resource Fulfillment, Resource Competency (% = count RATING 4 or 5 / count data input for that perspective from "CSAT received Report" * 100). CSS data filtered by CSAT cycle start date (${csatCycleStartDateFormatted}). Total customers: ${processedData.data.length},`
         }
         Total perspectives: {processedData.allUniquePerspectiveValues.length}
@@ -8820,6 +8866,21 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
           </tbody>
         </Table>
       </TableContainer>
+      {showTop10 && (() => {
+        const polledByAccountName = new Map(
+          (processedData?.data || []).map(row => [
+            (row.customerName || '').toString().trim().toLowerCase(),
+            row.cssSentCount ?? row.Polled ?? 0
+          ])
+        );
+        const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+        if (!notPolledCaption) return null;
+        return (
+          <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.25rem 0.25rem 0', marginTop: '0.25rem' }}>
+            {notPolledCaption}
+          </div>
+        );
+      })()}
 
       {totalPages > 1 && !showAllData && (
         <PaginationContainer>
@@ -9075,6 +9136,18 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
               </tbody>
             </Table>
           </TableContainer>
+          {(() => {
+            const polledByAccountName = new Map(
+              trendTop10Data.map(row => [(row.accountName || '').toString().trim().toLowerCase(), row.polled ?? 0])
+            );
+            const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+            if (!notPolledCaption) return null;
+            return (
+              <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.25rem 0.25rem 0', marginTop: '0.25rem' }}>
+                {notPolledCaption}
+              </div>
+            );
+          })()}
         </div>
       )}
       {showTop10 && showTrendAnalysis && trendAnalysisFiles?.length > 0 && trendTop10Data.length === 0 && csatCycleStartDateFormatted && (
