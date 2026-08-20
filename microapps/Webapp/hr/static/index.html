@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<!-- IT Apps Portal SSO check — must run before anything else loads.
+     Reuses the portal's own env-config.js (same storage keys the portal
+     itself uses), so this reads the exact same login state as
+     homepage/index.html and microapps.html. No per-person restriction is
+     enforced yet — any logged-in portal user gets in for now; that's
+     deliberate (see conversation), and can be tightened later by checking
+     the decoded token's email against an allow-list right here. -->
+<script src="/env-config.js"></script>
+<script>
+  (function () {
+    var storageKeys = (typeof getStorageKeys === 'function')
+      ? getStorageKeys()
+      : { tokenKey: 'token', empidKey: 'empid', navigateurlKey: 'navigateurl' };
+
+    var token = localStorage.getItem(storageKeys.tokenKey);
+    var empid = localStorage.getItem(storageKeys.empidKey);
+
+    if (!token || !empid) {
+      // Not logged into the portal — remember where we were headed, then
+      // send them to the portal's login.
+      try {
+        localStorage.setItem(storageKeys.navigateurlKey, window.location.pathname + window.location.search);
+      } catch (e) { /* localStorage unavailable — proceed anyway rather than break the page */ }
+
+      var loginUrl = (typeof getRedirectUrls === 'function') ? getRedirectUrls().login : '/login';
+      window.location.href = loginUrl;
+    }
+  })();
+</script>
+
+<title>Work Mode Policy Compliance</title>
+<link rel="icon" type="image/jpeg" href="assets/Logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="header-row">
+    <img src="assets/GAVS_Logo.png" alt="Neurealm" class="header-logo">
+    <div class="header-title">
+      <h1 class="display">Work Mode Policy Compliance</h1>
+      <p class="sub" id="dateRangeLabel">Loading latest reports…</p>
+    </div>
+    <div class="header-user-actions">
+      <span class="header-user-name" id="headerUserName">Loading...</span>
+      <button class="header-logout-btn" id="headerLogoutBtn" type="button">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="action-row">
+    <button class="recalc" id="refreshBtn">Refresh now</button>
+    <select id="weekFilter" class="week-select">
+      <option value="custom" disabled hidden>Custom range</option>
+      <option value="1" selected>Last week</option>
+      <option value="2">2 weeks ago</option>
+      <option value="3">3 weeks ago</option>
+      <option value="4">4 weeks ago</option>
+    </select>
+    <span class="date-range-sep">or custom range:</span>
+    <input type="date" id="startDateFilter" class="date-input" title="Start date">
+    <span class="date-range-sep">to</span>
+    <input type="date" id="endDateFilter" class="date-input" title="End date">
+    <button class="recalc secondary" id="applyDateRangeBtn">Apply</button>
+    <span class="status-msg" id="statusMsg">Connecting to server…</span>
+  </div>
+
+  <div id="dashboard">
+    <div class="skeleton-wrap" id="initialSkeleton">
+      <div class="skeleton-bar skeleton-shimmer" style="width:280px;height:14px;margin-bottom:20px;"></div>
+      <div class="kpis">
+        <div class="kpi skeleton-card"><div class="skeleton-bar skeleton-shimmer" style="width:60%;height:28px;margin-bottom:10px;"></div><div class="skeleton-bar skeleton-shimmer" style="width:85%;height:11px;"></div></div>
+        <div class="kpi skeleton-card"><div class="skeleton-bar skeleton-shimmer" style="width:60%;height:28px;margin-bottom:10px;"></div><div class="skeleton-bar skeleton-shimmer" style="width:85%;height:11px;"></div></div>
+        <div class="kpi skeleton-card"><div class="skeleton-bar skeleton-shimmer" style="width:60%;height:28px;margin-bottom:10px;"></div><div class="skeleton-bar skeleton-shimmer" style="width:85%;height:11px;"></div></div>
+        <div class="kpi skeleton-card"><div class="skeleton-bar skeleton-shimmer" style="width:60%;height:28px;margin-bottom:10px;"></div><div class="skeleton-bar skeleton-shimmer" style="width:85%;height:11px;"></div></div>
+        <div class="kpi skeleton-card"><div class="skeleton-bar skeleton-shimmer" style="width:60%;height:28px;margin-bottom:10px;"></div><div class="skeleton-bar skeleton-shimmer" style="width:85%;height:11px;"></div></div>
+      </div>
+      <div class="skeleton-table">
+        <div class="skeleton-bar skeleton-shimmer" style="width:100%;height:38px;margin-bottom:8px;"></div>
+        <div class="skeleton-bar skeleton-shimmer" style="width:100%;height:38px;margin-bottom:8px;"></div>
+        <div class="skeleton-bar skeleton-shimmer" style="width:100%;height:38px;margin-bottom:8px;"></div>
+        <div class="skeleton-bar skeleton-shimmer" style="width:100%;height:38px;margin-bottom:8px;"></div>
+        <div class="skeleton-bar skeleton-shimmer" style="width:100%;height:38px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authenticating...</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0d1526 0%, #1a2642 100%);
+      color: white;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .auth-callback-container {
+      text-align: center;
+      max-width: 400px;
+      padding: 40px;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 30px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #4285f4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+    
+    p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+    }
+    
+    .error {
+      background: rgba(220, 38, 38, 0.1);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      color: #fca5a5;
+    }
+    
+    .error h2 {
+      color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-callback-container">
+    <div class="spinner"></div>
+    <h2 id="statusTitle">Authenticating...</h2>
+    <p id="statusMessage">Please wait while we verify your credentials...</p>
+  </div>
+
+  <!-- Load environment configuration -->
+  <script src="/env-config.js"></script>
+  
+  <script>
+    /**
+     * IT Apps Portal - OAuth 2.0 Callback Handler
+     * Handles the redirect from Azure AD after authentication
+     */
+    
+    const STATUS_TITLE = document.getElementById('statusTitle');
+    const STATUS_MESSAGE = document.getElementById('statusMessage');
+    
+    /**
+     * Validate state parameter
+     */
+    function validateState(returnedState) {
+      const storedState = sessionStorage.getItem('oauth_state');
+      sessionStorage.removeItem('oauth_state');
+      return storedState === returnedState;
+    }
+    
+    /**
+     * Handle authentication error
+     */
+    function handleError(error, description) {
+      console.error('Authentication error:', error, description);
+      
+      const container = document.querySelector('.auth-callback-container');
+      container.innerHTML = `
+        <div class="error">
+          <h2>Authentication Failed</h2>
+          <p>${description || error}</p>
+          <p style="margin-top: 12px;">Redirecting to login page...</p>
+        </div>
+      `;
+      
+      setTimeout(() => {
+        const urls = getRedirectUrls();
+        window.location.href = urls.ssoLogin + '?error=' + encodeURIComponent(error);
+      }, 3000);
+    }
+    
+    /**
+     * Exchange authorization code for tokens
+     * This calls your backend API
+     */
+    async function exchangeCodeForToken(code) {
+      try {
+        STATUS_MESSAGE.textContent = 'Exchanging authorization code...';
+        
+        const apiEndpoints = getApiEndpoints();
+        const azureConfig = getAzureADConfig();
+        
+        const response = await fetch(apiEndpoints.tokenExchange, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            code: code,
+            redirectUri: azureConfig.redirectUri,
+            clientId: azureConfig.clientId,
+            tenantId: azureConfig.tenantId
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Token exchange failed');
+        }
+        
+        const data = await response.json();
+        
+        // Get session info from response headers
+        const empid = response.headers.get('empid');
+        const displayname = response.headers.get('displayname');
+        const token = response.headers.get('token') || data.token;
+        const logintype = response.headers.get('logintype');
+        
+        // Store authentication in localStorage
+        const storageKeys = getStorageKeys();
+        
+        if (token && empid) {
+          localStorage.setItem(storageKeys.tokenKey, token);
+          localStorage.setItem(storageKeys.empidKey, empid);
+          localStorage.setItem(storageKeys.displaynameKey, displayname || empid);
+          localStorage.setItem(storageKeys.logintypeKey, logintype || 'microsoft');
+          
+          STATUS_TITLE.textContent = 'Authentication Successful!';
+          STATUS_MESSAGE.textContent = 'Redirecting to your dashboard...';
+          
+          // Get intended destination
+          const intendedRoute = sessionStorage.getItem('intended_route') || 
+                               localStorage.getItem(storageKeys.navigateurlKey);
+          
+          // Clean up
+          sessionStorage.removeItem('intended_route');
+          sessionStorage.removeItem('oauth_nonce');
+          localStorage.removeItem(storageKeys.navigateurlKey);
+          
+          // Redirect to homepage for access check
+          const urls = getRedirectUrls();
+          const destination = intendedRoute || urls.homepage;
+          
+          setTimeout(() => {
+            window.location.href = destination;
+          }, 1000);
+        } else {
+          throw new Error('Invalid response from authentication server');
+        }
+        
+      } catch (error) {
+        handleError('token_exchange_error', error.message || 'An error occurred during authentication');
+      }
+    }
+    
+    /**
+     * Process OAuth callback
+     */
+    window.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const error = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
+      
+      // Check for error from Azure AD
+      if (error) {
+        handleError(error, errorDescription);
+        return;
+      }
+      
+      // Check for required parameters
+      if (!code || !state) {
+        handleError('invalid_callback', 'Missing authorization code or state parameter');
+        return;
+      }
+      
+      // Validate state parameter (CSRF protection)
+      if (!validateState(state)) {
+        handleError('invalid_state', 'State parameter validation failed. Possible CSRF attack.');
+        return;
+      }
+      
+      // Exchange code for tokens
+      exchangeCodeForToken(code);
+    });
+  </script>
+</body>
+</html>

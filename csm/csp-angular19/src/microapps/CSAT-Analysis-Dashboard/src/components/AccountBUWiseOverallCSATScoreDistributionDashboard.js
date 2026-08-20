@@ -4544,12 +4544,15 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
           const val = isHyphen ? '-' : (row[colName] ?? '-');
           const cell = dataRow.getCell(colIndex + 5);
-          cell.value = val;
-          cell.alignment = { horizontal: 'center', vertical: 'middle' };
           if (val !== '-' && !Number.isNaN(Number(val))) {
+            cell.numFmt = '0.0%';
+            cell.value = roundDistributionForExcel(Number(val));
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
             cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
+          } else {
+            cell.value = val;
           }
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
         });
         if (showTrendAnalysis) {
           PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
@@ -4587,6 +4590,16 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+        const cell = grandTotalRow.getCell(colIndex + 5);
+        const val = cell.value;
+        if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+          cell.numFmt = '0.0%';
+          cell.value = roundDistributionForExcel(Number(val));
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
+          cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
+        }
+      });
       worksheet.getColumn(1).width = 8;
       worksheet.getColumn(2).width = 28;
       worksheet.getColumn(3).width = 10;
@@ -4653,11 +4666,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
           const val = isHyphen ? '-' : (row[colName] ?? '-');
           const cell = dataRow.getCell(colIndex + 5);
-          cell.value = val;
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
-          if (val !== '-' && !Number.isNaN(Number(val))) {
+          if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+            cell.numFmt = '0.0%';
+            cell.value = roundDistributionForExcel(Number(val));
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
             cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
+          } else {
+            cell.value = '-';
           }
         });
       });
@@ -4665,18 +4681,28 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         '',
         'Grand Total',
         practiceWiseTrendGrandTotal.polled,
-        practiceWiseTrendGrandTotal.responded,
-        ...PRACTICE_RATING_DISPLAY_ORDER.map(r => {
-          const colName = PRACTICE_RATING_COLUMN_NAMES[r];
-          const val = practiceWiseTrendGrandTotal[colName];
-          return practiceWiseTrendGrandTotal.responded === 0 ? '-' : (val ?? '-');
-        })
+        practiceWiseTrendGrandTotal.responded
       ]);
       grandTotalRow.font = { bold: true };
       grandTotalRow.eachCell((cell) => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+        const val = practiceWiseTrendGrandTotal.responded === 0 ? '-' : (practiceWiseTrendGrandTotal[colName] ?? '-');
+        const cell = grandTotalRow.getCell(colIndex + 5);
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+          cell.numFmt = '0.0%';
+          cell.value = roundDistributionForExcel(Number(val));
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
+          cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
+        } else {
+          cell.value = '-';
+          cell.font = { bold: true };
+        }
+      });
       worksheet.getColumn(1).width = 8;
       worksheet.getColumn(2).width = 28;
       worksheet.getColumn(3).width = 10;
@@ -4741,13 +4767,15 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
       const val = isHyphen ? '-' : (row[colName] ?? '-');
       const cell = dataRow.getCell(colIndex + 7);
-      cell.value = (val === '-' || val == null) ? '-' : `${val}%`;
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      if (val !== '-' && !Number.isNaN(Number(val))) {
+      if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+        cell.numFmt = '0.0%';
+        cell.value = roundDistributionForExcel(Number(val));
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
         cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
-      } else if (isBold) {
-        cell.font = { bold: true };
+      } else {
+        cell.value = '-';
+        if (isBold) cell.font = { bold: true };
       }
     });
     if (showTrend) {
@@ -4829,12 +4857,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
         const val = accountPracticeWiseGrandTotal.responded === 0 ? '-' : (accountPracticeWiseGrandTotal[colName] ?? '-');
         const cell = grandTotalRow.getCell(colIndex + 7);
-        cell.value = val === '-' ? '-' : `${val}%`;
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (val !== '-' && !Number.isNaN(Number(val))) {
+        if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+          cell.numFmt = '0.0%';
+          cell.value = roundDistributionForExcel(Number(val));
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
           cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
         } else {
+          cell.value = '-';
           cell.font = { bold: true };
         }
       });
@@ -4907,12 +4937,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
         const val = accountPracticeWiseTrendGrandTotal.responded === 0 ? '-' : (accountPracticeWiseTrendGrandTotal[colName] ?? '-');
         const cell = grandTotalRow.getCell(colIndex + 7);
-        cell.value = val === '-' ? '-' : `${val}%`;
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (val !== '-' && !Number.isNaN(Number(val))) {
+        if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+          cell.numFmt = '0.0%';
+          cell.value = roundDistributionForExcel(Number(val));
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
           cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
         } else {
+          cell.value = '-';
           cell.font = { bold: true };
         }
       });
@@ -4942,15 +4974,52 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
   // Excel export for Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10: current cycle + "Last year PCSAT
   // % for 1,2,3,4,5 rating" as two worksheets in one workbook (mirrors this file's convention of pairing a current
   // and a trend/last-cycle table under one download for the Account/Practice-wise views).
-  const writeAccountPracticeWiseTop10Worksheet = (workbook, sheetName, rows, grandTotal) => {
+  const writeAccountPracticeWiseTop10Worksheet = (
+    workbook, sheetName, rows, grandTotal,
+    showTrend = false, trendByKey = null, getTrendKey = null, formatTrendFn = null
+  ) => {
     const worksheet = workbook.addWorksheet(sheetName);
     const excelRatingColors = { 1: 'FFDC2626', 2: 'FFFCA5A5', 3: 'FFF59E0B', 4: 'FF86EFAC', 5: 'FF16A34A' };
-    const headerRow = worksheet.addRow(buildAccountPracticeWiseExcelHeaders());
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
-    headerRow.eachCell((cell) => {
-      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-    });
+
+    if (showTrend) {
+      const row1 = ['Sr. No.', 'Business Unit', 'Account Name', 'Practice', (acsatCycle || 'H2 2025'), '', '', '', '', '', ''];
+      row1.push(trendHeaderLabel, '', '', '', '');
+      const headerRow1 = worksheet.addRow(row1);
+      headerRow1.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+      worksheet.mergeCells(1, 5, 1, 11);
+      worksheet.mergeCells(1, 12, 1, 16);
+      headerRow1.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+      headerRow1.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+      headerRow1.getCell(12).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } };
+      headerRow1.getCell(12).font = { bold: true, color: { argb: 'FF000000' } };
+      const row2Headers = [
+        'Sr. No.', 'Business Unit', 'Account Name', 'Practice', 'Polled', 'Responded',
+        ...PRACTICE_RATING_DISPLAY_ORDER.map(r => PRACTICE_RATING_COLUMN_NAMES[r]),
+        ...PRACTICE_RATING_DISPLAY_ORDER.map(r => PRACTICE_RATING_COLUMN_NAMES[r])
+      ];
+      const headerRow2 = worksheet.addRow(row2Headers);
+      headerRow2.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+      headerRow2.eachCell((cell, colNumber) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        if (colNumber >= 12) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } };
+          cell.font = { bold: true, color: { argb: 'FF000000' } };
+        }
+      });
+      worksheet.mergeCells(1, 1, 2, 1);
+      worksheet.mergeCells(1, 2, 2, 2);
+      worksheet.mergeCells(1, 3, 2, 3);
+      worksheet.mergeCells(1, 4, 2, 4);
+    } else {
+      const headerRow = worksheet.addRow(buildAccountPracticeWiseExcelHeaders());
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+      headerRow.eachCell((cell) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      });
+    }
 
     const summaryRowColors = {
       'top10-total': 'FFFFF2CC',
@@ -4961,7 +5030,8 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     };
 
     rows.forEach((row) => {
-      addAccountPracticeWiseExcelRow(worksheet, row, excelRatingColors, null, false, null);
+      const trendRow = (showTrend && trendByKey && getTrendKey) ? trendByKey[getTrendKey(row)] : null;
+      addAccountPracticeWiseExcelRow(worksheet, row, excelRatingColors, trendRow, showTrend, formatTrendFn);
       if (row.isSummaryRow) {
         const dataRow = worksheet.lastRow;
         const fillColor = summaryRowColors[row.summaryTier] || 'FFE2E8F0';
@@ -4987,6 +5057,9 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     worksheet.getColumn(5).width = 10;
     worksheet.getColumn(6).width = 12;
     PRACTICE_RATING_DISPLAY_ORDER.forEach((_, i) => { worksheet.getColumn(i + 7).width = 18; });
+    if (showTrend) {
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((_, i) => { worksheet.getColumn(i + 12).width = 18; });
+    }
     return worksheet;
   };
 
@@ -6536,7 +6609,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         ratingOrder.forEach((rt, idx) => {
           const cell = dataRow.getCell(5 + idx);
           const raw = cell.value;
-          if (raw == null || raw === '-') return;
+          if (raw == null || raw === '-') {
+            cell.value = '-';
+            return;
+          }
+          if (!Number.isNaN(Number(raw))) {
+            cell.numFmt = '0.0%';
+            cell.value = roundDistributionForExcel(Number(raw));
+          }
           const colors = getCellColor(rt, raw);
           if (!colors) return;
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.fg } };

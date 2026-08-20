@@ -1,0 +1,167 @@
+<div class="animate-flux-fade-up space-y-6 motion-reduce:animate-none">
+  <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">Enterprise Risks</h1>
+      <p class="erm-muted mt-1 max-w-none whitespace-nowrap text-sm">
+        Rows follow the header
+        <span class="font-medium text-slate-600">data scope</span>
+        when you narrow by business unit. To add or edit entries, use
+        <a
+          routerLink="/risk-log"
+          class="font-medium text-sky-700 underline decoration-sky-300/80 underline-offset-2 hover:text-sky-900"
+        >
+          Log New Risk
+        </a>.
+      </p>
+    </div>
+  </div>
+
+  <div class="erm-card overflow-hidden p-2 md:p-4">
+    <div
+      #topScroll
+      class="tracker-hscroll-top mb-2 min-h-[18px] overflow-x-auto overflow-y-hidden rounded-md border border-slate-200/80 bg-slate-50/60"
+      (scroll)="onTopScroll()"
+      aria-label="Horizontal scroll (synced with table)"
+    >
+      <div class="h-4 shrink-0" [style.width.px]="scrollContentWidth()"></div>
+    </div>
+
+    <div class="min-w-0">
+      <p-table
+        #trackerTable
+        [value]="augmentedScopedRows()"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+        [tableStyle]="{ 'min-width': tableMinWidth }"
+        [filterDelay]="300"
+      >
+        <ng-template pTemplate="caption">
+          <div class="flex flex-wrap items-center justify-between gap-2 py-2">
+            <span class="text-sm text-slate-400">{{ registerRowCount() }} risk(s) in view</span>
+            <span class="text-xs text-slate-500">
+              Every column has a filter (distinct values); scroll horizontally above or below the grid.
+            </span>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="w-[7rem] text-left align-bottom">
+              <span class="text-xs font-semibold leading-tight text-slate-700">Actions</span>
+            </th>
+            @for (cd of columnDefs; track cd.field) {
+              <th class="max-w-[14rem] text-left align-bottom">
+                <span class="text-xs font-semibold leading-tight text-slate-700">{{ cd.header }}</span>
+              </th>
+            }
+          </tr>
+          <tr>
+            <th class="tracker-filter-th w-[7rem] p-2 text-left align-top"></th>
+            @for (cd of columnDefs; track cd.field) {
+              <th class="tracker-filter-th max-w-[14rem] p-2 text-left align-top">
+                <p-columnFilter
+                  [field]="cd.field"
+                  matchMode="equals"
+                  display="row"
+                  type="text"
+                  [showMenu]="false"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="filterOptionsFor(cd.field)"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[10rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </th>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td class="align-top">
+              <p-button
+                label="Edit"
+                icon="pi pi-pencil"
+                size="small"
+                severity="info"
+                [outlined]="true"
+                styleClass="tracker-edit-btn"
+                (onClick)="editRow(row)"
+              />
+            </td>
+            @for (cd of columnDefs; track cd.field) {
+              <td
+                class="max-w-[14rem] align-top text-xs leading-snug text-slate-800"
+                [title]="displayCell(row[cd.field])"
+              >
+                <span class="line-clamp-4 whitespace-pre-wrap break-words">{{
+                  displayCell(row[cd.field])
+                }}</span>
+              </td>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="columnDefs.length + 1" class="text-center text-slate-500">
+              No risks in this scope.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <p-dialog
+    header="Edit existing risk"
+    [(visible)]="editDialogVisible"
+    [modal]="true"
+    [dismissableMask]="true"
+    [style]="{ width: 'min(980px, 94vw)' }"
+    [breakpoints]="{ '640px': '96vw' }"
+    styleClass="tracker-edit-dialog"
+  >
+    <p class="mb-4 text-sm leading-relaxed text-slate-500">
+      Update any field for this existing risk. Changes are saved locally in this browser session.
+    </p>
+    <div class="tracker-edit-grid">
+      @for (cd of columnDefs; track cd.field) {
+        <label class="tracker-edit-field">
+          <span>{{ cd.header }}</span>
+          <textarea
+            rows="3"
+            class="tracker-edit-input"
+            [name]="'edit-' + cd.field"
+            [(ngModel)]="editDraft[cd.header]"
+          ></textarea>
+        </label>
+      }
+    </div>
+    <div class="mt-5 flex flex-wrap justify-end gap-2">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="cancelEdit()"
+      />
+      <p-button
+        label="Save changes"
+        icon="pi pi-check"
+        (onClick)="saveEdit()"
+      />
+    </div>
+  </p-dialog>
+</div>

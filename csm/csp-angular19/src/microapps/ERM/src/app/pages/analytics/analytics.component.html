@@ -1,0 +1,128 @@
+<div class="analytics-page animate-flux-fade-up space-y-6 motion-reduce:animate-none">
+  <header class="analytics-hero rounded-xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/90 to-sky-50/40 px-4 py-4 shadow-sm md:px-6 md:py-5">
+    <h1 class="text-xl font-semibold tracking-tight text-slate-900 md:text-2xl">
+      Neurealm Enterprise Risk Management Dashboard
+    </h1>
+    <p class="erm-muted mt-1 max-w-3xl text-sm">
+      Analytics snapshot — calculated from the same ERM Risk Tracker data shown in Enterprise Risks,
+      honoring the current header data scope.
+    </p>
+  </header>
+
+  <div class="grid gap-4 md:grid-cols-3">
+    <p-card
+      header="% Risk ≥ threshold"
+      styleClass="erm-card analytics-kpi border-slate-200/90 shadow-none"
+    >
+      <div class="flex items-end justify-between gap-3">
+        <div class="text-3xl font-bold text-emerald-700">{{ kpis().pctRiskGteThreshold }}%</div>
+        <div class="analytics-spark h-12 w-24 shrink-0">
+          <p-chart type="bar" [data]="sparklineData()" [options]="sparklineOptions" height="48px" />
+        </div>
+      </div>
+    </p-card>
+
+    <p-card
+      header="# of Risk ≥ threshold"
+      styleClass="erm-card analytics-kpi border-slate-200/90 shadow-none"
+    >
+      <div class="analytics-kpi-count text-4xl font-bold text-red-600">{{ kpis().countRiskGteThreshold }}</div>
+      <p class="erm-muted mt-2 text-xs leading-snug">
+        Average risk threshold = {{ kpis().avgRiskThreshold }} ({{ kpis().thresholdBandLabel }}).
+        {{ kpis().totalRiskCount }} scoped tracker rows assessed.
+      </p>
+    </p-card>
+
+    <p-card
+      header="Response progress for Risk ≥ threshold"
+      styleClass="erm-card analytics-kpi border-slate-200/90 shadow-none"
+    >
+      <div class="flex items-end justify-between gap-3">
+        <div class="text-3xl font-bold text-emerald-700">{{ kpis().responseProgressPct }}%</div>
+        <div class="analytics-spark h-12 w-24 shrink-0">
+          <p-chart type="bar" [data]="sparklineData()" [options]="sparklineOptions" height="48px" />
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <div class="grid gap-4 xl:grid-cols-3">
+    <p-card
+      header="Risk rating breakdown"
+      subheader="Risks at or above threshold"
+      styleClass="erm-card analytics-chart-card h-full border-slate-200/90 shadow-none"
+    >
+      <div class="analytics-chart-shell">
+        <p-chart
+          type="pie"
+          [data]="riskRatingPieData()"
+          [options]="pieOptions"
+          [height]="chartHeight"
+        />
+      </div>
+    </p-card>
+
+    <p-card
+      header="Action plan breakdown"
+      subheader="Remediation tracking"
+      styleClass="erm-card analytics-chart-card h-full border-slate-200/90 shadow-none"
+    >
+      <div class="analytics-chart-shell">
+        <p-chart
+          type="pie"
+          [data]="actionPlanPieData()"
+          [options]="pieOptions"
+          [height]="chartHeight"
+        />
+      </div>
+    </p-card>
+
+    <p-card
+      header="Heat map"
+      subheader="Likelihood × consequences (counts)"
+      styleClass="erm-card analytics-heat-card h-full border-slate-200/90 shadow-none xl:col-span-1"
+    >
+      <div class="analytics-heat-scroll overflow-x-auto pb-1">
+        <div class="analytics-heat-grid min-w-[22rem]">
+          <div class="analytics-heat-corner" aria-hidden="true"></div>
+          @for (cl of consequenceLabels; track cl) {
+            <div class="analytics-heat-colhead">{{ cl }}</div>
+          }
+          @for (row of heatMatrix(); track $index; let ri = $index) {
+            <div class="analytics-heat-rowhead">{{ likelihoodLabels[ri] }}</div>
+            @for (cell of row; track $index) {
+              <div class="analytics-heat-cell" [class]="heatCellClass(cell)">
+                <span class="analytics-heat-value">{{ cell }}</span>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <p-card
+      header="# of Risks ≥ threshold: Top 5 risk category"
+      styleClass="erm-card analytics-chart-card h-full border-slate-200/90 shadow-none"
+    >
+      <div class="analytics-chart-shell analytics-chart-shell--wide">
+        <p-chart
+          type="bar"
+          [data]="categoryBarData()"
+          [options]="hBarOptions"
+          [height]="chartHeightTall"
+        />
+      </div>
+    </p-card>
+
+    <p-card
+      header="# Risks ≥ threshold: Top 5 business units &amp; functions"
+      styleClass="erm-card analytics-chart-card h-full border-slate-200/90 shadow-none"
+    >
+      <div class="analytics-chart-shell">
+        <p-chart type="bar" [data]="buBarData()" [options]="vBarOptions" [height]="chartHeightTall" />
+      </div>
+    </p-card>
+  </div>
+</div>

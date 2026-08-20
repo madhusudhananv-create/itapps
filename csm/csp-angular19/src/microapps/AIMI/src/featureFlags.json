@@ -1,0 +1,29 @@
+{
+  "dashboard": {
+    "enabled": false,
+    "showAIToolsAnalysis": true,
+    "showCorrelationInsights": true,
+    "showQualitativeBenefitsAnalysis": true,
+    "showStatisticsSection": true,
+    "showCorrelationAnalysis": false,
+    "showProjectStatisticsTab": false
+  },
+  "activities": {
+    "enabled": true,
+    "showAddActivityModal": true,
+    "showActivityDetailsModal": true,
+    "showProjectStatistics": true,
+    "showCSVExport": true,
+    "showQualitativeBenefitsField": true,
+    "showCorrelationAnalysis": false,
+    "showDeleteButton": false
+  },
+  "reports": {
+    "enabled": true,
+    "showGenerateButton": true,
+    "showMultiSelectDropdowns": true
+  },
+  "backup": {
+    "enabled": false
+  }
+}
