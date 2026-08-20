@@ -15,7 +15,7 @@ import {
   parseExcelDateToMMDDYYYY,
   yearQuarterMatchesCycle,
 } from '../utils/acsatExcelRowUtils';
-import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -2663,6 +2663,50 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     });
   }, [processedData?.data, sortConfig]);
 
+  // Nicknames for the "not polled" footnote under the Top 10 table
+  const TOP10_ACCOUNT_NICKNAMES = {
+    'bronxcare health system': 'BronxCare',
+    'premier - horizon ii - covenant health': 'Covenant',
+    'premier healthcare solutions inc': 'Premier Healthcare',
+    'blue cross blue shield association bcbsa': 'BCBSA',
+    'frontier airlines inc': 'Frontier Airlines',
+    'tufts medicine': 'Tufts Medicine',
+    'agfirst farm credit bank': 'AgFirst',
+    'embecta medical ii llc': 'embecta',
+    'jewish board of family and childrens services jbfcs': 'JBFCS',
+    'healthfirst': 'Healthfirst',
+    'the northern trust company': 'Northern Trust',
+    'firstsource solutions ltd': 'Firstsource',
+    'ooma inc.': 'Ooma',
+    'arista networks india private limited': 'Arista Networks',
+    'infoblox inc.': 'Infoblox',
+  };
+
+  // Derive which Top 10 accounts have zero (or missing) Polled counts, for the footnote below the table
+  const notPolledTop10Caption = useMemo(() => {
+    if (!showTop10 || !sortedData || sortedData.length === 0) return '';
+
+    const notPolledNames = TOP10_ACCOUNT_ORDER.filter((accountName) => {
+      const norm = normalizeTop10AccountName(accountName);
+      const row = sortedData.find((r) => normalizeTop10AccountName(r.customerName) === norm);
+      return !row || (row.cssSentCount || 0) === 0;
+    }).map((accountName) => TOP10_ACCOUNT_NICKNAMES[normalizeTop10AccountName(accountName)] || accountName);
+
+    if (notPolledNames.length === 0) return '';
+
+    let namesPart;
+    if (notPolledNames.length === 1) {
+      namesPart = notPolledNames[0];
+    } else if (notPolledNames.length === 2) {
+      namesPart = `${notPolledNames[0]} and ${notPolledNames[1]}`;
+    } else {
+      namesPart = `${notPolledNames.slice(0, -1).join(', ')} and ${notPolledNames[notPolledNames.length - 1]}`;
+    }
+
+    const verb = notPolledNames.length === 1 ? 'was' : 'were';
+    return `${namesPart} ${verb} not polled and hence included other accounts.`;
+  }, [showTop10, sortedData]);
+
   // Handle sorting
   const handleSort = (key) => {
     setSortConfig(prevConfig => ({
@@ -4562,6 +4606,16 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
                   </TableCell>
                 );
               })}
+              </TableRow>
+            )}
+            {showTop10 && notPolledTop10Caption && (
+              <TableRow>
+                <TableCell
+                  colSpan={8 + (showMainTrendColumns ? ACSAT_SATISFIED_TARGET_PERSPECTIVES.length : 0)}
+                  style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 1rem', borderTop: '1px solid #e2e8f0' }}
+                >
+                  {notPolledTop10Caption}
+                </TableCell>
               </TableRow>
             )}
           </TableBody>

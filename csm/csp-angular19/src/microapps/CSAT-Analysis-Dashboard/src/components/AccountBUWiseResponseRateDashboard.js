@@ -385,7 +385,47 @@ const normalizeBusinessUnitDisplay = (bu) => {
 };
 
 // Practice column display order for Practice wise Response Rate Dashboard and Trend Analysis (dashboard + Excel).
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & AI', 'Cybersecurity'];
+const PRACTICE_DISPLAY_ORDER = ['Cybersecurity', 'Data & AI', 'Digital Platform Engineering', 'RunOps'];
+
+// Short/recognizable display names for the fixed Top 10 accounts, used only in the "not polled"
+// footnote below Top 10 tables (full name is used everywhere else on the dashboard).
+const TOP10_ACCOUNT_SHORT_NAMES = {
+  'premier healthcare solutions inc': 'Premier Healthcare',
+  'blue cross blue shield association bcbsa': 'BCBSA',
+  'frontier airlines inc': 'Frontier Airlines',
+  'premier - horizon ii - covenant health': 'Covenant',
+  'tufts medicine': 'Tufts Medicine',
+  'bronxcare health system': 'BronxCare',
+  'agfirst farm credit bank': 'AgFirst',
+  'embecta medical ii llc': 'embecta',
+  'jewish board of family and childrens services jbfcs': 'JBFCS',
+  'healthfirst': 'Healthfirst',
+  'the northern trust company': 'Northern Trust',
+  'firstsource solutions ltd': 'Firstsource',
+  'ooma inc.': 'Ooma',
+  'arista networks india private limited': 'Arista Networks',
+  'infoblox inc.': 'Infoblox'
+};
+const getTop10AccountShortName = (fullName) => {
+  const key = (fullName || '').toString().trim().toLowerCase();
+  return TOP10_ACCOUNT_SHORT_NAMES[key] || fullName;
+};
+
+// Builds the "X, Y and Z were not polled and hence included other accounts." footnote for a Top 10
+// table. `polledByAccountName` maps a lowercased/trimmed Top10 account name to its Polled count in
+// the currently loaded data (missing/undefined is treated the same as zero — never loaded).
+const buildTop10NotPolledCaption = (polledByAccountName) => {
+  const unpolled = TOP10_ACCOUNT_ORDER.filter((name) => {
+    const key = name.trim().toLowerCase();
+    const polled = polledByAccountName instanceof Map ? polledByAccountName.get(key) : polledByAccountName?.[key];
+    return !polled;
+  }).map(getTop10AccountShortName);
+  if (unpolled.length === 0) return null;
+  if (unpolled.length === 1) return `${unpolled[0]} was not polled and hence included other accounts.`;
+  const last = unpolled[unpolled.length - 1];
+  const rest = unpolled.slice(0, -1);
+  return `${rest.join(', ')} and ${last} were not polled and hence included other accounts.`;
+};
 const getPracticeOrderIndex = (practice) => {
   if (practice == null || practice === '') return -1;
   const s = String(practice).trim();
@@ -587,14 +627,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         responseRatePct: p.polled > 0 ? (p.responded / p.polled) * 100 : null,
         avgActualScore: p.actualScoreCount > 0 ? p.actualScoreSum / p.actualScoreCount : null
       }));
-    rows.sort((a, b) => {
-      const ia = getPracticeOrderIndex(a.practice);
-      const ib = getPracticeOrderIndex(b.practice);
-      if (ia >= 0 && ib >= 0) return ia - ib;
-      if (ia >= 0) return -1;
-      if (ib >= 0) return 1;
-      return (a.practice || '').localeCompare(b.practice || '');
-    });
+    rows.sort((a, b) => String(a.practice || '').trim().localeCompare(String(b.practice || '').trim(), undefined, { sensitivity: 'base' }));
     return rows.map((r, i) => ({ ...r, srNo: i + 1 }));
   };
 
@@ -657,12 +690,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }));
 
     rows.sort((a, b) => {
-      const ia = getPracticeOrderIndex(a.practice);
-      const ib = getPracticeOrderIndex(b.practice);
-      if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
-      if (ia >= 0 && ib < 0) return -1;
-      if (ia < 0 && ib >= 0) return 1;
-      const cmpPractice = (a.practice || '').localeCompare(b.practice || '');
+      const cmpPractice = String(a.practice || '').trim().localeCompare(String(b.practice || '').trim(), undefined, { sensitivity: 'base' });
       if (cmpPractice !== 0) return cmpPractice;
       const bua = getBusinessUnitOrderIndex(a.businessUnit);
       const bub = getBusinessUnitOrderIndex(b.businessUnit);
@@ -741,12 +769,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const cmpBu = (a.businessUnit || '').localeCompare(b.businessUnit || '');
       if (cmpBu !== 0) return cmpBu;
 
-      const ia = getPracticeOrderIndex(a.practice);
-      const ib = getPracticeOrderIndex(b.practice);
-      if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
-      if (ia >= 0 && ib < 0) return -1;
-      if (ia < 0 && ib >= 0) return 1;
-      return (a.practice || '').localeCompare(b.practice || '');
+      return String(a.practice || '').trim().localeCompare(String(b.practice || '').trim(), undefined, { sensitivity: 'base' });
     });
 
     return rows.map((r, i) => ({ ...r, srNo: i + 1 }));
@@ -834,14 +857,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     let grandPolled = 0, grandResponded = 0, grandScoreSum = 0, grandScoreCount = 0;
     accountNames.forEach(accountName => {
       const practiceRows = byAccount[accountName].slice();
-      practiceRows.sort((a, b) => {
-        const ia = getPracticeOrderIndex(a.practice);
-        const ib = getPracticeOrderIndex(b.practice);
-        if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
-        if (ia >= 0 && ib < 0) return -1;
-        if (ia < 0 && ib >= 0) return 1;
-        return (a.practice || '').localeCompare(b.practice || '');
-      });
+      practiceRows.sort((a, b) => String(a.practice || '').trim().localeCompare(String(b.practice || '').trim(), undefined, { sensitivity: 'base' }));
       const businessUnit = accountBU[accountName];
       let acctPolled = 0, acctResponded = 0, acctScoreSum = 0, acctScoreCount = 0;
       practiceRows.forEach(r => {
@@ -863,12 +879,12 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           isAllPracticeRow: false
         });
       });
-      // Bold "All Practice" roll-up row per account
+      // Bold "All Practices" roll-up row per account
       rows.push({
         srNo: null,
         accountName,
         businessUnit,
-        practice: 'All Practice',
+        practice: 'All Practices',
         polled: acctPolled,
         responded: acctResponded,
         actualScoreCount: acctScoreCount,
@@ -990,14 +1006,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       return (a || '').localeCompare(b || '');
     });
 
-    const sortPracticeRows = (rows) => rows.slice().sort((a, b) => {
-      const ia = getPracticeOrderIndex(a.practice);
-      const ib = getPracticeOrderIndex(b.practice);
-      if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
-      if (ia >= 0 && ib < 0) return -1;
-      if (ia < 0 && ib >= 0) return 1;
-      return (a.practice || '').localeCompare(b.practice || '');
-    });
+    const sortPracticeRows = (rows) => rows.slice().sort((a, b) => String(a.practice || '').trim().localeCompare(String(b.practice || '').trim(), undefined, { sensitivity: 'base' }));
 
     const rows = [];
     let srNo = 0;
@@ -1032,7 +1041,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         srNo: null,
         accountName,
         businessUnit,
-        practice: 'All Practice',
+        practice: 'All Practices',
         polled: acctPolled,
         responded: acctResponded,
         actualScoreCount: acctScoreCount,
@@ -1074,14 +1083,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       summaryTier
     });
 
-    const distinctPracticesOf = (records) => [...new Set(records.map(r => r.practice))].sort((a, b) => {
-      const ia = getPracticeOrderIndex(a);
-      const ib = getPracticeOrderIndex(b);
-      if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
-      if (ia >= 0 && ib < 0) return -1;
-      if (ia < 0 && ib >= 0) return 1;
-      return (a || '').localeCompare(b || '');
-    });
+    const distinctPracticesOf = (records) => [...new Set(records.map(r => r.practice))].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
 
     const sumRecordsFor = (records, practice) => {
       const filtered = practice != null ? records.filter(r => r.practice === practice) : records;
@@ -1095,13 +1097,13 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     summaryRows.push(buildSummaryRow('Top 10 Accounts', top10Polled, top10Responded, top10ScoreSum, top10ScoreCount, 'top10-total'));
     distinctPracticesOf(top10DetailRecords).forEach(practice => {
       const s = sumRecordsFor(top10DetailRecords, practice);
-      summaryRows.push(buildSummaryRow(`Top10 ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'top10-practice'));
+      summaryRows.push(buildSummaryRow(`Top 10 ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'top10-practice'));
     });
     const otherTotals = sumRecordsFor(otherDetailRecords, null);
-    summaryRows.push(buildSummaryRow('Other Account NR', otherTotals.polled, otherTotals.responded, otherTotals.scoreSum, otherTotals.scoreCount, 'other-total'));
+    summaryRows.push(buildSummaryRow('Other Accounts NR', otherTotals.polled, otherTotals.responded, otherTotals.scoreSum, otherTotals.scoreCount, 'other-total'));
     distinctPracticesOf(otherDetailRecords).forEach(practice => {
       const s = sumRecordsFor(otherDetailRecords, practice);
-      summaryRows.push(buildSummaryRow(`Other Account ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'other-practice'));
+      summaryRows.push(buildSummaryRow(`Other Accounts ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'other-practice'));
     });
     summaryRows.push(buildSummaryRow('Overall NR', top10Polled + otherPolled, top10Responded + otherResponded, top10ScoreSum + otherScoreSum, top10ScoreCount + otherScoreCount, 'overall'));
 
@@ -3688,7 +3690,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     }
     try {
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Account_Practice_Wise_Top10');
+      const worksheet = workbook.addWorksheet('Account_Practice_Wise_Top_10');
       const cellBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
       const trendHeaderFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } };
@@ -3715,7 +3717,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'Account_Practice_Wise_Response_Rate_Top10.xlsx';
+      link.download = 'Account_Practice_Wise_Response_Rate_Top_10.xlsx';
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
@@ -3732,7 +3734,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     }
     try {
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Last_Year_PCSAT_Top10');
+      const worksheet = workbook.addWorksheet('Last_Year_PCSAT_Top_10');
       const cellBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       const headerRow = worksheet.addRow(['Sr. No.', 'Business Unit', 'Account Name', 'Practice', '#Polled', '#Responded', 'Response Rate %', 'Average CSAT Score']);
       headerRow.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
@@ -3746,7 +3748,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'Account_Practice_Wise_Response_Rate_Top10_Last_Year.xlsx';
+      link.download = 'Account_Practice_Wise_Response_Rate_Top_10_Last_Year.xlsx';
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
@@ -5186,7 +5188,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }
 
       // Generate and download the file with name according to current view
-      const viewSuffix = showBuWise ? 'BU_Wise' : (showTop10 ? 'Top10_Accounts' : (showAccountPracticeWise ? 'Account_Practice_Wise' : 'Account_Wise'));
+      const viewSuffix = showBuWise ? 'BU_Wise' : (showTop10 ? 'Top_10_Accounts' : (showAccountPracticeWise ? 'Account_Practice_Wise' : 'Account_Wise'));
       const downloadFileName = `Account_BU_Wise_Response_Rate_${viewSuffix}.xlsx`;
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -5482,8 +5484,8 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       };
       
       trendTop10DataProcessed.forEach((fileData, idx) => {
-        let wsName = (fileData.saveName || `Top10_Trend_${idx + 1}`).replace(/[\\/*?:\[\]]/g, '_').substring(0, 31).trim();
-        if (!wsName) wsName = `Top10_Trend_${idx + 1}`;
+        let wsName = (fileData.saveName || `Top_10_Trend_${idx + 1}`).replace(/[\\/*?:\[\]]/g, '_').substring(0, 31).trim();
+        if (!wsName) wsName = `Top_10_Trend_${idx + 1}`;
         const ws = workbook.addWorksheet(wsName);
         // Match dashboard: Account Name, then H1 2025 (5 cols: #Polled, #Responded, Business Unit, Response Rate %, Average CSAT Score)
         const row1Values = ['Account Name', 'H1 2025', '', '', '', ''];
@@ -5549,7 +5551,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'Top10_Trend_Analysis_Response_Rate.xlsx';
+      link.download = 'Top_10_Trend_Analysis_Response_Rate.xlsx';
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
@@ -5782,7 +5784,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
               e.target.style.background = showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
             }}
           >
-            Account_Practice_Wise_Response_Rate_Top10
+            Account_Practice_Wise_Response_Rate_Top_10
           </button>
         </ButtonContainer>
       </DashboardHeader>
@@ -6175,7 +6177,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                   )}
                 </div>
                 <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#15803d' }}>
-                  Data from the <strong>Customer Success Survey Status</strong> report. #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE) where date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}, MM-DD-YYYY). Response Rate % = #Responded ÷ #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE). Group by Account and Practice; &quot;All Practice&quot; is the account roll-up.
+                  Data from the <strong>Customer Success Survey Status</strong> report. #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE) where date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}, MM-DD-YYYY). Response Rate % = #Responded ÷ #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE). Group by Account and Practice; &quot;All Practices&quot; is the account roll-up.
                 </p>
                 {/* Legend: Response Rate% and Average CSAT Score scales */}
                 <LegendContainer style={{ marginBottom: '1rem' }}>
@@ -6383,7 +6385,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
               {/* Dashboard: Account_Practice_Wise_Response_Rate_Top10 */}
               <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#166534' }}>Account_Practice_Wise_Response_Rate_Top10</h2>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#166534' }}>Account_Practice_Wise_Response_Rate_Top_10</h2>
                   {accountPracticeWiseTop10TableDataWithTrend.length > 0 && (
                     <button type="button" onClick={downloadAccountPracticeWiseTop10Data} style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                       <Download size={16} />
@@ -6392,7 +6394,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                   )}
                 </div>
                 <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#15803d' }}>
-                  Data from the <strong>Customer Success Survey Status</strong> report, restricted to the 10 named Top 10 accounts (plus any other Top10-flagged account). #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE) where date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}, MM-DD-YYYY). Response Rate % = #Responded ÷ #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE). Group by Account and Practice; &quot;All Practice&quot; is the account roll-up. Summary rows below combine Top10 and non-Top10 (&quot;Other Account&quot;) totals, ending with &quot;Overall NR&quot; as the grand total.
+                  Data from the <strong>Customer Success Survey Status</strong> report, restricted to the 10 named Top 10 accounts (plus any other Top 10-flagged account). #Polled = count(CSAT SENT DATE), #Responded = count(CSAT RECEIVED DATE) where date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}, MM-DD-YYYY). Response Rate % = #Responded ÷ #Polled × 100. Average CSAT Score = Avg(ACTUAL SCORE). Group by Account and Practice; &quot;All Practices&quot; is the account roll-up. Summary rows below combine Top 10 and non-Top 10 (&quot;Other Accounts&quot;) totals, ending with &quot;Overall NR&quot; as the grand total.
                 </p>
                 {/* Legend: Response Rate% and Average CSAT Score scales */}
                 <LegendContainer style={{ marginBottom: '1rem' }}>
@@ -6421,6 +6423,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                   <div style={{ padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', color: '#64748b' }}>No rows with date ≥ CSAT cycle start.</div>
                 )}
                 {accountPracticeWiseTop10TableDataWithTrend.length > 0 && (
+                  <>
                   <TableContainer>
                     <TableWrapper>
                       <Table>
@@ -6496,6 +6499,21 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                       </Table>
                     </TableWrapper>
                   </TableContainer>
+                  {(() => {
+                    const polledByAccountName = new Map(
+                      (accountPracticeWiseTop10TableDataWithTrend || [])
+                        .filter(r => r.isAllPracticeRow)
+                        .map(r => [(r.accountName || '').toString().trim().toLowerCase(), r.polled])
+                    );
+                    const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+                    if (!notPolledCaption) return null;
+                    return (
+                      <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 0.25rem 0', marginTop: '0.25rem' }}>
+                        {notPolledCaption}
+                      </div>
+                    );
+                  })()}
+                  </>
                 )}
               </div>
 
@@ -6511,7 +6529,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                   )}
                 </div>
                 <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#1d4ed8' }}>
-                  Data from <strong>Trend-Analysis-H12025.xlsx</strong> (Sheet2: &quot;CSAT sent and received Report&quot;) in <code>public/data/</code>, restricted to the 10 named Top 10 accounts (plus any other Top10-flagged account). Same columns: Sr. No., Business Unit, Account Name, Practice, #Polled, #Responded, Response Rate %, Average CSAT Score. Date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}).
+                  Data from <strong>Trend-Analysis-H12025.xlsx</strong> (Sheet2: &quot;CSAT sent and received Report&quot;) in <code>public/data/</code>, restricted to the 10 named Top 10 accounts (plus any other Top 10-flagged account). Same columns: Sr. No., Business Unit, Account Name, Practice, #Polled, #Responded, Response Rate %, Average CSAT Score. Date ≥ CSAT cycle start ({csatCycleStartDateFormatted || 'MM-DD-YYYY'}).
                 </p>
                 {csatCycleStartDateFormatted && !practiceTrendSources.second && (
                   <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
@@ -6522,6 +6540,7 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                   <div style={{ padding: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', color: '#64748b' }}>No rows with date ≥ CSAT cycle start in trend file.</div>
                 )}
                 {accountPracticeWiseTop10TableDataSecond.length > 0 && (
+                  <>
                   <TableContainer>
                     <TableWrapper>
                       <Table>
@@ -6576,6 +6595,21 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                       </Table>
                     </TableWrapper>
                   </TableContainer>
+                  {(() => {
+                    const polledByAccountName = new Map(
+                      (accountPracticeWiseTop10TableDataSecond || [])
+                        .filter(r => r.isAllPracticeRow)
+                        .map(r => [(r.accountName || '').toString().trim().toLowerCase(), r.polled])
+                    );
+                    const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+                    if (!notPolledCaption) return null;
+                    return (
+                      <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 0.25rem 0', marginTop: '0.25rem' }}>
+                        {notPolledCaption}
+                      </div>
+                    );
+                  })()}
+                  </>
                 )}
               </div>
             </div>
@@ -6644,7 +6678,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
               )}
             </div>
           )}
-
 
            {/* Legend: separate sections for Response Rate% and Average CSAT Score */}
            <LegendContainer style={{ flexDirection: 'column', alignItems: 'stretch' }}>
@@ -7170,9 +7203,24 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
               </Table>
             </TableWrapper>
           </TableContainer>
+          {showTop10 && !showBuWise && (() => {
+            const polledByAccountName = new Map(
+              (processedData?.data || []).map(row => [
+                (row.customerName || '').toString().trim().toLowerCase(),
+                row.cssSentCount ?? row.polled ?? row.Polled ?? 0
+              ])
+            );
+            const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+            if (!notPolledCaption) return null;
+            return (
+              <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 0.25rem 0', marginTop: '0.25rem' }}>
+                {notPolledCaption}
+              </div>
+            );
+          })()}
 
-          <div style={{ 
-            marginTop: '1rem', 
+          <div style={{
+            marginTop: '1rem',
             padding: '1rem', 
             background: '#f8fafc', 
             borderRadius: '8px',
@@ -8077,6 +8125,21 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
                     </Table>
                   </TableWrapper>
                 </TableContainer>
+                {fileData.hasData && (() => {
+                  const polledByAccountName = new Map(
+                    (fileData.rows || []).map(row => [
+                      (row.accountName || '').toString().trim().toLowerCase(),
+                      row.polled
+                    ])
+                  );
+                  const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+                  if (!notPolledCaption) return null;
+                  return (
+                    <div style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 0.25rem 0', marginTop: '0.25rem' }}>
+                      {notPolledCaption}
+                    </div>
+                  );
+                })()}
               </div>
             ))
           )}

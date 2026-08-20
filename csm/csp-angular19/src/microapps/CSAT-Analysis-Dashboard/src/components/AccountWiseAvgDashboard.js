@@ -667,13 +667,6 @@ const getAccountPracticeBuOrderIndex = (bu) => {
 };
 
 const PRACTICE_AVG_FILE_URL = '/data/New_customer_feedback_analysis_New.xlsx';
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & AI', 'Cybersecurity'];
-const getPracticeOrderIndex = (practice) => {
-  if (!practice) return 999;
-  const s = String(practice).trim();
-  const idx = PRACTICE_DISPLAY_ORDER.findIndex(p => String(p).trim().toLowerCase() === s.toLowerCase());
-  return idx >= 0 ? idx : 999;
-};
 const SHEET1_RECEIVED_NAME_MATCH = (s) => {
   const t = String(s || '').toLowerCase().trim();
   return (t.includes('csat received') && !t.includes('sent and received')) || t === 'sheet1' || t === 'sheet 1';
@@ -846,12 +839,7 @@ const buildPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDateFormat
     return resultRow;
   }).filter(row => row.Polled > 0 || row.Responded > 0 || perspectivesList.some(p => row[p] !== '-'));
 
-  rows.sort((a, b) => {
-    const ia = getPracticeOrderIndex(a.practice);
-    const ib = getPracticeOrderIndex(b.practice);
-    if (ia !== ib) return ia - ib;
-    return (a.practice || '').localeCompare(b.practice || '');
-  });
+  rows.sort((a, b) => String(a.practice || '').trim().localeCompare(String(b.practice || '').trim(), undefined, { sensitivity: 'base' }));
   rows = rows.map((r, i) => ({ ...r, sNo: i + 1 }));
 
   const orgPerspectiveRatings = {};
@@ -1158,7 +1146,7 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
       accountKey: custKey,
       accountName: meta.accountName,
       businessUnit: meta.businessUnit,
-      practice: 'All Practice',
+      practice: 'All Practices',
       isAllPractice: true,
       isAccountFirstRow: true,
       Polled: allPR.polled,
@@ -1166,12 +1154,7 @@ const buildAccountPracticeWiseAvgFromReceivedReport = (source, csatCycleStartDat
       ...buildPerspectiveValues(ratingsByAccount.get(custKey) || {}, allPR.responded)
     });
 
-    const practicesSorted = [...meta.practices].sort((a, b) => {
-      const ia = getPracticeOrderIndex(a);
-      const ib = getPracticeOrderIndex(b);
-      if (ia !== ib) return ia - ib;
-      return (a || '').localeCompare(b || '');
-    });
+    const practicesSorted = [...meta.practices].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
     practicesSorted.forEach(practice => {
       const apKey = `${custKey}|||${practice.toLowerCase()}`;
       const pr = polledRespondedByAccountPractice.get(apKey) || { polled: 0, responded: 0 };
@@ -1230,6 +1213,58 @@ const getTop10AccountOrderIndex = (accountName) => {
   const s = (accountName || '').toString().trim().toLowerCase();
   const i = ACCOUNT_PRACTICE_TOP10_ORDER.findIndex(n => n.toLowerCase() === s);
   return i >= 0 ? i : 999;
+};
+
+// Short, recognizable names for the fixed Top 10 roster, used only for the "not polled" footnote
+// below the Account/Practice wise Top 10 tables. Update alongside utils/top10Accounts.js when the
+// roster changes; falls back to the full account name when a short form isn't listed here.
+const TOP10_ACCOUNT_SHORT_NAMES = {
+  'premier healthcare solutions inc': 'Premier Healthcare',
+  'blue cross blue shield association bcbsa': 'BCBSA',
+  'frontier airlines inc': 'Frontier Airlines',
+  'premier - horizon ii - covenant health': 'Covenant',
+  'tufts medicine': 'Tufts Medicine',
+  'bronxcare health system': 'BronxCare',
+  'agfirst farm credit bank': 'AgFirst',
+  'embecta medical ii llc': 'embecta',
+  'jewish board of family and childrens services jbfcs': 'JBFCS',
+  'healthfirst': 'Healthfirst',
+  'the northern trust company': 'Northern Trust',
+  'firstsource solutions ltd': 'Firstsource',
+  'ooma inc.': 'Ooma',
+  'arista networks india private limited': 'Arista Networks',
+  'infoblox inc.': 'Infoblox'
+};
+const normalizeTop10NoteKey = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+const getTop10AccountShortName = (accountName) =>
+  TOP10_ACCOUNT_SHORT_NAMES[normalizeTop10NoteKey(accountName)] || accountName;
+const joinWithAnd = (items) => {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+};
+// Builds the "X, Y and Z were not polled and hence included other accounts." footnote for a
+// Top 10 table, given its `rows` (as returned by buildAccountPracticeWiseTop10FromReceivedReport).
+// A roster account counts as "not polled" when its "All Practice(s)" row has #Polled = 0, or when
+// it's entirely absent from rows (e.g. no data uploaded for it this cycle). Returns '' when every
+// roster account was polled, so callers can render nothing in that case.
+const buildUnpolledTop10Note = (rows) => {
+  const polledByAccount = new Map();
+  (rows || []).forEach(r => {
+    if (!r || !r.isAllPractice) return;
+    const key = normalizeTop10NoteKey(r.accountName);
+    polledByAccount.set(key, (polledByAccount.get(key) || 0) + (Number(r.Polled) || 0));
+  });
+  const unpolled = TOP10_ACCOUNT_ORDER
+    .filter(name => {
+      const key = normalizeTop10NoteKey(name);
+      return !polledByAccount.has(key) || polledByAccount.get(key) === 0;
+    })
+    .map(getTop10AccountShortName);
+  if (unpolled.length === 0) return '';
+  const verb = unpolled.length === 1 ? 'was' : 'were';
+  return `${joinWithAnd(unpolled)} ${verb} not polled and hence included other accounts.`;
 };
 
 /**
@@ -1482,19 +1517,14 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
       accountKey: custKey,
       accountName: meta.accountName,
       businessUnit: meta.businessUnit,
-      practice: 'All Practice',
+      practice: 'All Practices',
       isAllPractice: true,
       Polled: allPR.polled,
       Responded: allPR.responded,
       ...buildPerspectiveValues(ratingsByAccount.get(custKey) || {}, allPR.responded)
     });
 
-    const practicesSorted = [...meta.practices].sort((a, b) => {
-      const ia = getPracticeOrderIndex(a);
-      const ib = getPracticeOrderIndex(b);
-      if (ia !== ib) return ia - ib;
-      return (a || '').localeCompare(b || '');
-    });
+    const practicesSorted = [...meta.practices].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
     practicesSorted.forEach(practice => {
       const apKey = `${custKey}|||${practice.toLowerCase()}`;
       const pr = polledRespondedByAccountPractice.get(apKey) || { polled: 0, responded: 0 };
@@ -1513,12 +1543,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
   });
 
   // Dynamic summary tiers — practices listed reflect whatever exists in the uploaded data.
-  const sortPractices = (set) => [...set].sort((a, b) => {
-    const ia = getPracticeOrderIndex(a);
-    const ib = getPracticeOrderIndex(b);
-    if (ia !== ib) return ia - ib;
-    return (a || '').localeCompare(b || '');
-  });
+  const sortPractices = (set) => [...set].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
 
   const summaryRows = [];
 
@@ -1536,7 +1561,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `top10-practice|||${practice.toLowerCase()}`,
-      practice: `Top10 ${practice}`,
+      practice: `Top 10 ${practice}`,
       rowTier: 'top10-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -1547,7 +1572,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
   const otherTier = polledRespondedByTier.get('other') || { polled: 0, responded: 0 };
   summaryRows.push({
     rowKey: 'other-account-nr',
-    practice: 'Other Account NR',
+    practice: 'Other Accounts NR',
     rowTier: 'other-total',
     Polled: otherTier.polled,
     Responded: otherTier.responded,
@@ -1558,7 +1583,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `other-practice|||${practice.toLowerCase()}`,
-      practice: `Other Account ${practice}`,
+      practice: `Other Accounts ${practice}`,
       rowTier: 'other-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -1792,19 +1817,14 @@ const buildAccountPracticeWiseDistributionFromReceivedReport = (source, csatCycl
       accountKey: custKey,
       accountName: meta.accountName,
       businessUnit: meta.businessUnit,
-      practice: 'All Practice',
+      practice: 'All Practices',
       isAllPractice: true,
       Polled: allPR.polled,
       Responded: allPR.responded,
       ...buildDistributionValues(ratingCountsByAccount.get(custKey), allPR.responded)
     });
 
-    const practicesSorted = [...meta.practices].sort((a, b) => {
-      const ia = getPracticeOrderIndex(a);
-      const ib = getPracticeOrderIndex(b);
-      if (ia !== ib) return ia - ib;
-      return (a || '').localeCompare(b || '');
-    });
+    const practicesSorted = [...meta.practices].sort((a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' }));
     practicesSorted.forEach(practice => {
       const apKey = `${custKey}|||${practice.toLowerCase()}`;
       const pr = polledRespondedByAccountPractice.get(apKey) || { polled: 0, responded: 0 };
@@ -2990,7 +3010,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         return;
       }
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Account-Practice Top10 Avg CSAT');
+      const worksheet = workbook.addWorksheet('Account-Practice Top 10 Avg CSAT');
       const trendHeaders = showTrendAnalysis ? pList.map(p => getPracticeWiseTrendPerspectiveHeaderLabel(p)) : [];
       const fixedCols = 6;
       if (showTrendAnalysis && trendHeaders.length > 0) {
@@ -3143,8 +3163,8 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Account/practice wise Top10 Excel export error:', err);
-      alert('Failed to export account/practice wise Top10 data to Excel.');
+      console.error('Account/practice wise Top 10 Excel export error:', err);
+      alert('Failed to export account/practice wise Top 10 data to Excel.');
     }
   };
 
@@ -3158,7 +3178,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         return;
       }
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Last Cycle Account-Practice Top10');
+      const worksheet = workbook.addWorksheet('Last Cycle Account-Practice Top 10');
       const headers = ['Sr. No.', 'Business Unit', 'Account Name', 'Practice', 'Polled', 'Responded', ...pList.map(p => normalizePerspectiveForDisplay(p))];
       const headerRow = worksheet.addRow(headers);
       headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -3256,8 +3276,8 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Last cycle account/practice wise Top10 Excel export error:', err);
-      alert('Failed to export last cycle account/practice wise Top10 data to Excel.');
+      console.error('Last cycle account/practice wise Top 10 Excel export error:', err);
+      alert('Failed to export last cycle account/practice wise Top 10 data to Excel.');
     }
   };
 
@@ -5204,7 +5224,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       // Process Other Account data similar to Top 10 customers
       const otherAccountGroup = {
         customerId: 'OTHER',
-        customerName: 'Other Account',
+        customerName: 'Other Accounts',
         businessUnit: '',
         cssSentCount: 0,
         cssReceivedCount: 0,
@@ -5589,7 +5609,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       });
       
       // Calculate Top 10 Accounts grand totals (exclude Other Account from calculation)
-      const top10AccountsData = filtered.filter(row => row.customerName !== 'Other Account');
+      const top10AccountsData = filtered.filter(row => row.customerName !== 'Other Accounts');
       
       if (top10AccountsData.length > 0) {
         // Calculate grand totals from original processedData for accurate perspective averages
@@ -5598,7 +5618,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         
         // Get all Top 10 account data from processedData
         const top10AccountsFromProcessed = processedData.filter(row => 
-          top10AccountIds.has(row.customerId) && row.customerName !== 'Other Account'
+          top10AccountIds.has(row.customerId) && row.customerName !== 'Other Accounts'
         );
         
         // Calculate totals
@@ -5728,7 +5748,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         top10CountRow['Total Avg CSAT Scores(Overall Experience)'] = '';
 
         // Add Top 10 Accounts row, then Top 10 Count row, then Other Account row, then Other Account Count row
-        const otherAccountRow = filtered.find(row => row.isOtherAccount || row.customerName === 'Other Account');
+        const otherAccountRow = filtered.find(row => row.isOtherAccount || row.customerName === 'Other Accounts');
         const otherAccountCountRow = filtered.find(row => row.isOtherAccountCountRow);
         if (otherAccountRow) {
           // Remove Other Account and Other Account Count from current positions
@@ -5890,6 +5910,21 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
     
     return filtered;
   }, [processedData, businessUnitFilter, customerNameSearch, accountCustomerFilter, showTop10, uploadedData, excelData, csatCycleStartDateFormatted, engagementTypeFilter]);
+
+  // "Not polled" footnote for the simple "Top 10 Account - Average CSAT Scores - Perspective Wise"
+  // view (showTop10). Row shape here differs from buildAccountPracticeWiseTop10FromReceivedReport's
+  // rows: one row per account (keyed by customerName, not accountName), plus special summary rows
+  // (isTop10Accounts / isOtherAccount / isOverall / *CountRow) that aren't real roster accounts.
+  // Adapt the real account rows to the {accountName, isAllPractice, Polled} shape buildUnpolledTop10Note
+  // expects, then reuse it so the sentence-building rules stay identical.
+  const top10SimpleUnpolledNote = useMemo(() => {
+    if (!showTop10) return '';
+    const accountRows = (filteredData || [])
+      .filter(row => row && !row.isTop10Accounts && !row.isOtherAccount && !row.isOverall
+        && !row.isTop10CountRow && !row.isOtherAccountCountRow && !row.isOverallCountRow)
+      .map(row => ({ accountName: row.customerName, isAllPractice: true, Polled: row.Polled }));
+    return buildUnpolledTop10Note(accountRows);
+  }, [showTop10, filteredData]);
 
   const uniqueBusinessUnits = useMemo(() => {
     if (!processedData || processedData.length === 0) return [];
@@ -6173,6 +6208,18 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
   const effectiveLastCycleTop10Perspectives = lastCycleUsesUploadedTrendFile ? (accountPracticeWiseTop10TrendData.perspectives || []) : lastCycleAccountPracticeWiseTop10Perspectives;
   const effectiveLastCycleTop10Loading = lastCycleUsesUploadedTrendFile ? false : lastCycleLoading;
   const effectiveLastCycleTop10Error = lastCycleUsesUploadedTrendFile ? accountPracticeWiseTop10TrendData.error : lastCycleError;
+
+  // "X, Y and Z were not polled and hence included other accounts." footnotes for the
+  // Account/Practice wise Top 10 tables (current cycle and last cycle) — computed once per
+  // dataset and reused near each table, since each has its own #Polled counts.
+  const top10UnpolledNote = useMemo(
+    () => buildUnpolledTop10Note(accountPracticeWiseTop10Data.rows),
+    [accountPracticeWiseTop10Data]
+  );
+  const lastCycleTop10UnpolledNote = useMemo(
+    () => buildUnpolledTop10Note(effectiveLastCycleTop10Data.rows),
+    [effectiveLastCycleTop10Data]
+  );
 
   // Account + Practice wise Overall CSAT score distribution (Score 1 to 5), current cycle —
   // "Account_Practice_Wise_Overall_CSAT_Score_Distribution" view.
@@ -9982,7 +10029,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         <HeaderTitle>
             <Calculator size={24} style={{ flexShrink: 0 }} />
             <span style={{ flex: 1, minWidth: 0 }}>
-              {showAccountPracticeWiseDistribution ? 'Account/BU wise Overall CSAT score -Distribution (Score 1 to 5)' : showAccountPracticeWiseTop10 ? 'Account/Practice Wise Top10 Average CSAT Scores - Perspective Wise' : showAccountPracticeWise ? 'Account/Practice Wise Average CSAT Scores - Perspective Wise' : showPracticeWise ? 'Practice wise Average CSAT Scores - Perspective Wise' : showBUWiseView ? 'BU Wise Average CSAT Scores - Perspective Wise' : showTop10 ? 'Top 10 Account - Average CSAT Scores - Perspective Wise' : 'Account/BU Wise Average CSAT Scores - Perspective Wise'}
+              {showAccountPracticeWiseDistribution ? 'Account/BU wise Overall CSAT score -Distribution (Score 1 to 5)' : showAccountPracticeWiseTop10 ? 'Account/Practice Wise Top 10 Average CSAT Scores - Perspective Wise' : showAccountPracticeWise ? 'Account/Practice Wise Average CSAT Scores - Perspective Wise' : showPracticeWise ? 'Practice wise Average CSAT Scores - Perspective Wise' : showBUWiseView ? 'BU Wise Average CSAT Scores - Perspective Wise' : showTop10 ? 'Top 10 Account - Average CSAT Scores - Perspective Wise' : 'Account/BU Wise Average CSAT Scores - Perspective Wise'}
             </span>
         </HeaderTitle>
         {csatCycleStartDateFormatted && (
@@ -10273,11 +10320,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
                   e.target.style.background = showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
                   e.target.style.transform = 'translateY(0)';
                 }}
-                aria-label="Account/Practice wise Top10 Average CSAT Scores - Perspective Wise"
-                title="Account/Practice wise Top10 Average CSAT Scores - Perspective Wise"
+                aria-label="Account/Practice wise Top 10 Average CSAT Scores - Perspective Wise"
+                title="Account/Practice wise Top 10 Average CSAT Scores - Perspective Wise"
               >
                 <Building2 size={14} />
-                Account/Practice wise Top10
+                Account/Practice wise Top 10
               </button>
               <button
                 onClick={() => {
@@ -10683,7 +10730,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       ) : showAccountPracticeWise ? (
         <>
           <div style={{ margin: '1rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account).
+            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account).
             <strong>Customer Success Survey Status</strong> report: <strong>Polled</strong> = count(CSAT SENT DATE), <strong>Responded</strong> = count(CSAT RECEIVED DATE).
             {csatCycleStartDateFormatted && <> Dates counted only when CSAT SENT DATE / CSAT RECEIVED DATE ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
           </div>
@@ -10897,7 +10944,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
             )}
           </div>
           <div style={{ margin: '1rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account).
+            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account).
             <strong>Customer Success Survey Status</strong> report: <strong>Polled</strong> = count(CSAT SENT DATE), <strong>Responded</strong> = count(CSAT RECEIVED DATE).
             {effectiveLastCycleDateNote && <> Dates counted only when CSAT SENT DATE / CSAT RECEIVED DATE ≥ {effectiveLastCycleDateNote} (MM-DD-YYYY).</>}
             {lastCycleUsesUploadedTrendFile && <> Source: uploaded trend-analysis file ({effectiveLastCycleLabel}).</>}
@@ -11021,7 +11068,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       ) : showAccountPracticeWiseTop10 ? (
         <>
           <div style={{ margin: '1rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account), followed by dynamic Top10/Other/Overall summary rows.
+            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account), followed by dynamic Top 10/Other/Overall summary rows.
             {csatCycleStartDateFormatted && <> Dates counted only when CSAT SENT DATE / CSAT RECEIVED DATE ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
           </div>
           <ResultsSummary>
@@ -11057,7 +11104,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
             </div>
           )}
           <TableContainer>
-            <Table role="table" aria-label="Account/Practice wise Top10 Average CSAT Scores - Perspective Wise">
+            <Table role="table" aria-label="Account/Practice wise Top 10 Average CSAT Scores - Perspective Wise">
               <TableHeader>
                 {showTrendAnalysis ? (
                   <>
@@ -11209,6 +11256,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
               </tbody>
             </Table>
           </TableContainer>
+          {top10UnpolledNote && (
+            <div style={{ padding: '0.5rem 0.75rem', marginTop: '0.5rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8125rem' }}>
+              {top10UnpolledNote}
+            </div>
+          )}
           {showTrendAnalysis && accountPracticeWiseTop10TrendData.error && (
             <div style={{ margin: '1rem', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.875rem' }}>
               {accountPracticeWiseTop10TrendData.error}
@@ -11236,7 +11288,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
             )}
           </div>
           <div style={{ margin: '1rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account), followed by dynamic Top10/Other/Overall summary rows.
+            <strong>Customer Success Survey All PCSAT</strong> report: average <strong>RATING</strong> per <strong>PERSPECTIVE</strong>, restricted to <strong>Top 10</strong> accounts, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account), followed by dynamic Top 10/Other/Overall summary rows.
             {effectiveLastCycleDateNote && <> Dates counted only when CSAT SENT DATE / CSAT RECEIVED DATE ≥ {effectiveLastCycleDateNote} (MM-DD-YYYY).</>}
             {lastCycleUsesUploadedTrendFile && <> Source: uploaded trend-analysis file ({effectiveLastCycleLabel}).</>}
           </div>
@@ -11356,13 +11408,18 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
                   </tbody>
                 </Table>
               </TableContainer>
+              {lastCycleTop10UnpolledNote && (
+                <div style={{ padding: '0.5rem 0.75rem', marginTop: '0.5rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8125rem' }}>
+                  {lastCycleTop10UnpolledNote}
+                </div>
+              )}
             </>
           )}
         </>
       ) : showAccountPracticeWiseDistribution ? (
         <>
           <div style={{ margin: '1rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT</strong> report: percentage distribution of <strong>RATING</strong> (1 to 5) for <strong>PERSPECTIVE = &quot;Overall Experience&quot;</strong> only, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account). % = count(RATING=X) / #Responded × 100.
+            <strong>Customer Success Survey All PCSAT</strong> report: percentage distribution of <strong>RATING</strong> (1 to 5) for <strong>PERSPECTIVE = &quot;Overall Experience&quot;</strong> only, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account). % = count(RATING=X) / #Responded × 100.
             <strong>Customer Success Survey Status</strong> report: <strong>Polled</strong> = count(CSAT SENT DATE), <strong>Responded</strong> = count(CSAT RECEIVED DATE).
             {csatCycleStartDateFormatted && <> Dates counted only when CSAT SENT DATE / CSAT RECEIVED DATE ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
           </div>
@@ -11560,7 +11617,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
             )}
           </div>
           <div style={{ margin: '1rem', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
-            <strong>Customer Success Survey All PCSAT</strong> report: percentage distribution of <strong>RATING</strong> (1 to 5) for <strong>PERSPECTIVE = &quot;Overall Experience&quot;</strong> only, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practice&quot; roll-up per account).
+            <strong>Customer Success Survey All PCSAT</strong> report: percentage distribution of <strong>RATING</strong> (1 to 5) for <strong>PERSPECTIVE = &quot;Overall Experience&quot;</strong> only, grouped by <strong>Account</strong> and <strong>Practice</strong> (with an &quot;All Practices&quot; roll-up per account).
             {effectiveLastCycleDateNote && <> Dates counted only when CSAT SENT DATE / CSAT RECEIVED DATE ≥ {effectiveLastCycleDateNote} (MM-DD-YYYY).</>}
             {lastCycleUsesUploadedTrendFile && <> Source: uploaded trend-analysis file ({effectiveLastCycleLabel}).</>}
           </div>
@@ -12307,6 +12364,11 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
           </tbody>
         </Table>
       </TableContainer>
+      {showTop10 && top10SimpleUnpolledNote && (
+        <div style={{ padding: '0.5rem 0.75rem', marginTop: '0.5rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8125rem' }}>
+          {top10SimpleUnpolledNote}
+        </div>
+      )}
 
       {/* Project Data: from main file (New_customer_feedback_analysis_New.xlsx) sheet "CSAT received Report" */}
       {showProjectData && (
@@ -13821,6 +13883,19 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
                     </tbody>
                   </Table>
                 </TableContainer>
+                {fileData.hasTop10Data && (() => {
+                  // Reuse the same "not polled" footnote logic as the simple Top 10 current-cycle
+                  // table, adapted to this Trend Analysis row shape (accountName/polled instead of
+                  // customerName/Polled; only real roster rows in top10Rows, no synthetic summary rows).
+                  const trendAccountRows = (fileData.top10Rows || [])
+                    .map(row => ({ accountName: row.accountName, isAllPractice: true, Polled: row.polled }));
+                  const trendUnpolledNote = buildUnpolledTop10Note(trendAccountRows);
+                  return trendUnpolledNote ? (
+                    <div style={{ fontStyle: 'italic', color: '#6b7280', fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>
+                      {trendUnpolledNote}
+                    </div>
+                  ) : null;
+                })()}
               </div>
             ))
           )}

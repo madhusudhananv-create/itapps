@@ -16,7 +16,12 @@ export const TOP10_ACCOUNT_ORDER = [
   'AgFirst Farm Credit Bank',
   'embecta MEDICAL II LLC',
   'Jewish Board of Family and Childrens Services JBFCS',
-  'Healthfirst'
+  'Healthfirst',
+  'Northern Trust Company',
+  'Firstsource Solutions Ltd',
+  'Ooma Inc.',
+  'Arista Networks India Private Limited',
+  'INFOBLOX INC.'
 ];
 
 export const normalizeTop10AccountName = (s) =>
