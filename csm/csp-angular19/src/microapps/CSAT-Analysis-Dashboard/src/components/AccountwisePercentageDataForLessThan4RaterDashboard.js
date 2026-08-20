@@ -576,6 +576,58 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
     return filtered;
   }, [processedData.data, accountCustomerFilter, customerNameSearch, showTop10]);
 
+  // Short/nickname forms for the fixed Top 10 roster, used in the "not polled" footnote so the
+  // caption stays readable instead of spelling out full legal account names.
+  const TOP10_ACCOUNT_SHORT_NAME = {
+    'bronxcare health system': 'BronxCare',
+    'premier - horizon ii - covenant health': 'Covenant',
+    'premier healthcare solutions inc': 'Premier Healthcare',
+    'blue cross blue shield association bcbsa': 'BCBSA',
+    'frontier airlines inc': 'Frontier Airlines',
+    'tufts medicine': 'Tufts Medicine',
+    'agfirst farm credit bank': 'AgFirst',
+    'embecta medical ii llc': 'embecta',
+    'jewish board of family and childrens services jbfcs': 'JBFCS',
+    'healthfirst': 'Healthfirst',
+    'the northern trust company': 'Northern Trust',
+    'firstsource solutions ltd': 'Firstsource',
+    'ooma inc.': 'Ooma',
+    'arista networks india private limited': 'Arista Networks',
+    'infoblox inc.': 'Infoblox'
+  };
+
+  const getTop10AccountShortName = (fullName) => {
+    const key = (fullName || '').toString().trim().toLowerCase();
+    return TOP10_ACCOUNT_SHORT_NAME[key] || fullName;
+  };
+
+  // Builds the "X and Y were not polled and hence included other accounts." footnote text.
+  const buildNotPolledCaption = (names) => {
+    if (!names || names.length === 0) return '';
+    if (names.length === 1) {
+      return `${names[0]} was not polled and hence included other accounts.`;
+    }
+    if (names.length === 2) {
+      return `${names[0]} and ${names[1]} were not polled and hence included other accounts.`;
+    }
+    const allButLast = names.slice(0, -1).join(', ');
+    const last = names[names.length - 1];
+    return `${allButLast} and ${last} were not polled and hence included other accounts.`;
+  };
+
+  // Footnote: which fixed-roster Top 10 accounts had zero "Polled" (cssSentCount) in the loaded
+  // data (i.e. were effectively backfilled by other accounts in this Top 10 view).
+  const top10NotPolledCaption = useMemo(() => {
+    if (!showTop10 || !processedData.data) return '';
+    const rows = processedData.data;
+    const notPolled = TOP10_ACCOUNT_ORDER.filter((accountName) => {
+      const norm = accountName.toLowerCase();
+      const row = rows.find((r) => (r.customerName || '').toString().trim().toLowerCase() === norm);
+      return !row || !(Number(row.cssSentCount) > 0);
+    });
+    return buildNotPolledCaption(notPolled.map(getTop10AccountShortName));
+  }, [showTop10, processedData.data]);
+
   // Download function
   const downloadData = async () => {
     if (!filteredData || filteredData.length === 0) {
@@ -959,6 +1011,16 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
                     ))}
                   </tr>
                 ))}
+                {showTop10 && top10NotPolledCaption && (
+                  <tr>
+                    <Td
+                      colSpan={6 + (!showBuWise ? 2 : 0) + processedData.perspectives.length}
+                      style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 1rem', borderTop: '1px solid #e2e8f0' }}
+                    >
+                      {top10NotPolledCaption}
+                    </Td>
+                  </tr>
+                )}
             </tbody>
           </Table>
         </TableWrapper>
