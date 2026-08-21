@@ -231,8 +231,8 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
         const dataInput = totals[p] || 0;
         const count = satisfied[p] || 0;
         if (dataInput > 0) {
-          const pct = Math.round((count / dataInput) * 100);
-          resultRow[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
+          const pct = Math.round((count / dataInput) * 1000) / 10;
+          resultRow[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
         } else {
           resultRow[p] = '-';
         }
@@ -305,8 +305,8 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
     const dataInput = orgTotals[p] || 0;
     const count = orgSatisfied[p] || 0;
     if (dataInput > 0) {
-      const pct = Math.round((count / dataInput) * 100);
-      orgLevelRow[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
+      const pct = Math.round((count / dataInput) * 1000) / 10;
+      orgLevelRow[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
     } else {
       orgLevelRow[p] = '-';
     }
@@ -473,8 +473,8 @@ const buildAccountPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleSt
       const dataInput = totalObj[p] || 0;
       const count = satisfiedObj[p] || 0;
       if (dataInput > 0) {
-        const pct = Math.round((count / dataInput) * 100);
-        result[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
+        const pct = Math.round((count / dataInput) * 1000) / 10;
+        result[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
       } else {
         result[p] = '-';
       }
@@ -864,8 +864,8 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
       const dataInput = totalObj[p] || 0;
       const count = satisfiedObj[p] || 0;
       if (dataInput > 0) {
-        const pct = Math.round((count / dataInput) * 100);
-        result[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
+        const pct = Math.round((count / dataInput) * 1000) / 10;
+        result[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
       } else {
         result[p] = '-';
       }

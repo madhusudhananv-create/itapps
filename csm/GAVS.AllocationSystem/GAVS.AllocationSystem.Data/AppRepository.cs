@@ -531,13 +531,6 @@ namespace GAVS.AllocationSystem.Data
             var TemplateDetails = context.Database.SqlQuery<UserInfo>("[dbo].[usp_get_UserInfo] @email ", param1).ToList();
             return TemplateDetails;
         }
-         public IEnumerable<EMP_INFO> GetAccountAssesseeDetails(string CustomerId)
-        {
-            var context = new CloudDbContext();
-            SqlParameter param1 = new SqlParameter("@CUSTOMER_ID", CustomerId);
-            var TemplateDetails = context.Database.SqlQuery<EMP_INFO>("[dbo].[getAccountAssesseeDetails] @CUSTOMER_ID", param1).ToList<EMP_INFO>();
-            return TemplateDetails;
-        }
         public IEnumerable<EMP_INFO> GetAuditorDetails()
         {
             var context = new CloudDbContext();

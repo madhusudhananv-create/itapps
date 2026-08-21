@@ -54,44 +54,39 @@
               <span class="header-title">Integrated Apps</span>
             </div>
           </div>
-          <!--<mat-divider></mat-divider>-->
+          <mat-divider></mat-divider>
           <div class="apps-grid" (click)="$event.stopPropagation()">
-            <button class="app-tile" *ngIf="_access.IsAllowed(827, 1, '', '')" (click)="openBCMInNewTab()"
-              matTooltip="Business Continuity" [matTooltipPosition]="'below'">
-              <div class="app-tile-icon bcm-color">
+            <button class="app-card" *ngIf="_access.IsAllowed(827, 1, '', '')" (click)="openBCMInNewTab()">
+              <div class="app-icon-wrapper bcm-color">
                 <i class="fa fa-shield-alt"></i>
               </div>
-              <span class="app-tile-name">BCM</span>
+              <div class="app-info">
+                <span class="app-name">BCM</span>
+                <span class="app-description">Business Continuity</span>
+              </div>
+              <i class="fa fa-external-link-alt app-launch-icon"></i>
             </button>
-            <button class="app-tile" *ngIf="_access.IsAllowed(831, 1, '', '')" (click)="openERMInNewTab()"
-              matTooltip="Enterprise Risk Management" [matTooltipPosition]="'below'">
-              <div class="app-tile-icon erm-color">
+            <!-- <button class="app-card" *ngIf="_access.IsAllowed(827, 1, '', '')" (click)="openERMInNewTab()">
+              <div class="app-icon-wrapper erm-color">
                 <i class="fa fa-exclamation-triangle"></i>
               </div>
-              <span class="app-tile-name">ERM</span>
-            </button>
-            <button class="app-tile" *ngIf="_access.IsAllowed(829, 1, '', '')" (click)="openCSATAnalysisInNewTab()"
-              matTooltip="Customer Satisfaction Analysis" [matTooltipPosition]="'below'">
-              <div class="app-tile-icon csat-color">
+              <div class="app-info">
+                <span class="app-name">ERM</span>
+                <span class="app-description">Enterprise Risk Management</span>
+              </div>
+              <i class="fa fa-external-link-alt app-launch-icon"></i>
+            </button> -->
+            <button class="app-card" *ngIf="_access.IsAllowed(829, 1, '', '')" (click)="openCSATAnalysisInNewTab()">
+              <div class="app-icon-wrapper csat-color">
                 <i class="fa fa-chart-pie"></i>
               </div>
-              <span class="app-tile-name">CSAT Analysis</span>
-            </button>
-            <button class="app-tile" *ngIf="_access.IsAllowed(832, 1, '', '')" (click)="openAIMIInNewTab()"
-              matTooltip="Track and measure AI adoption" [matTooltipPosition]="'below'">
-              <div class="app-tile-icon aimi-color">
-                <i class="fa fa-chart-gantt"></i>
+              <div class="app-info">
+                <span class="app-name">CSAT Analysis</span>
+                <span class="app-description">Customer Satisfaction Analysis</span>
               </div>
-              <span class="app-tile-name">AI Maturity Index</span>
+              <i class="fa fa-external-link-alt app-launch-icon"></i>
             </button>
-             <button class="app-tile" *ngIf="_access.IsAllowed(830, 1, '', '')" (click)="openITOpsMaturityDashboardInNewTab()"
-              matTooltip="IT Operations Maturity Assessment" [matTooltipPosition]="'below'">
-              <div class="app-tile-icon itops-maturity-color">
-                <i class="fa fa-layer-group"></i>
-              </div>
-              <span class="app-tile-name">IT Operations Maturity</span>
-            </button>
-            <!-- Add more app tiles here -->
+            <!-- Add more app cards here -->
           </div>
         </mat-menu>
       </div>

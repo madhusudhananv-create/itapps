@@ -4597,6 +4597,9 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
           const val = isHyphen ? '-' : (row[colName] ?? '-');
           const cell = dataRow.getCell(colIndex + 5);
+          cell.value = val;
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          if (val !== '-' && !Number.isNaN(Number(val))) {
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
           if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
             cell.numFmt = '0.0%';

@@ -13641,16 +13641,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Content(HttpStatusCode.Conflict, $"There are no resources allocated for the selected project -{projectName}. Please make sure allocations are added to choose Auditees.");
 
         }
-        [GET("GetAccountAssesseeDetails")]
-        [ActionName("GetAccountAssesseeDetails")]
-        [HttpGet]
-        public IHttpActionResult GetAccountAssesseeDetails(string customerId)
-        {
-            string empId = GetHeaderDetails_String("empId");
-            CheckUserHasAccess(empId, customerId, "");
-            var result = Cldb.AppRepo.GetAccountAssesseeDetails(customerId).ToList();
-            return Ok(result);
-        }
         [GET("GetFindingTypeForWeight")]
         [ActionName("GetFindingTypeForWeight")]
         [HttpGet]

@@ -84,11 +84,7 @@ export class NavbarNewComponent implements OnInit {
   /** Show Integrated Apps menu if user has access to at least one integrated app */
   readonly hasIntegratedAppsAccess = computed(() =>
     this._access.IsAllowed(827, 1, '', '') ||
-    this._access.IsAllowed(829, 1, '', '') ||
-    this._access.IsAllowed(832, 1, '', '')||
-    this._access.IsAllowed(829, 1, '', '') ||
-    this._access.IsAllowed(830, 1, '', '') ||
-    this._access.IsAllowed(831, 1, '', '') 
+    this._access.IsAllowed(829, 1, '', '')
     // Add more app permission checks here with ||
   );
 
@@ -330,8 +326,8 @@ constructor(
    * Open ERM (Enterprise Risk Management) in a new tab
    * Opens the ERM module in a separate browser tab
    */
-   openERMInNewTab(): void {
-     const ermUrl = window.location.origin + '/erm/index.html';
+  openERMInNewTab(): void {
+    const ermUrl = window.location.origin + '/erm';
     window.open(ermUrl, '_blank');
   }
 
@@ -343,48 +339,7 @@ constructor(
     const csatUrl = window.location.origin + '/csat-analysis-dashboard/index.html';
     window.open(csatUrl, '_blank');
   }
-  /**
-   * Open AIMI (AI-driven Insights) in a new tab
-   * Opens the AIMI module in a separate browser tab
-   */
-   openAIMIInNewTab(): void {
-    // Open the SPA root (not index.html) so AIMI's client-side router resolves
-    // the default route instead of 404'ing on the literal "/index.html" path
-    const aimiUrl = window.location.origin + '/aimi/';
-    window.open(aimiUrl, '_blank');
-  }
-  
-  /**
-   * Open IT Operations Maturity Dashboard in a new tab
-   * Opens the IT Operations Maturity Dashboard in a separate browser tab,
-   * passing the currently selected account (custid) as a query param so the
-   * micro-app can scope its assessment view to that account.
-   */
-  openITOpsMaturityDashboardInNewTab(): void {
-    let itOpsMaturityUrl = window.location.origin + '/it-ops-maturity-dashboard/index.html';
-    const custId = this.getCurrentCustId();
-    if (custId) {
-      itOpsMaturityUrl += '?custId=' + encodeURIComponent(custId);
-    }
-    window.open(itOpsMaturityUrl, '_blank');
-  }
 
-  /**
-   * Walks the active route tree to find a :custid route param, if the user
-   * is currently on an account-scoped page (e.g. /cssdashboard/:custid/...).
-   */
-  private getCurrentCustId(): string | null {
-    let route = this.router.routerState.snapshot.root;
-    while (route) {
-      const custId = route.params['custid'];
-      if (custId) {
-        return custId;
-      }
-      route = route.firstChild as any;
-    }
-    return null;
-  }
-  /**
    /**
    * Navigate back to enterprise dashboard
    * Used by the back button on account dashboard pages and logo clicks
