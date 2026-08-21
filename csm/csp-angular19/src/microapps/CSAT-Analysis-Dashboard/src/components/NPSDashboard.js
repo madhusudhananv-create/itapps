@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { TrendingUp, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -7,6 +7,7 @@ import { normalizeBusinessUnitDisplay, getBusinessUnitFromRow } from '../utils/n
 import { isDateGreaterThanOrEqual } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts';
 import html2canvas from 'html2canvas';
+import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
 
 // Custom label component that directly accesses chart data
 const CustomLabelWithData = ({ dataKey, chartData, index, ...props }) => {
@@ -54,7 +55,7 @@ const CustomLabelWithData = ({ dataKey, chartData, index, ...props }) => {
   // SPECIAL CASES: Always show Passives % and Detractors % labels (if > 0), bypass height/small filters
   if (dataKey === 'passivesPercent' || dataKey === 'detractorsPercent') {
     if (displayValue === 0) return null; // hide only exact 0
-    console.log('🔍 FORCING RENDER FOR', dataKey, { segmentPercentage, displayValue, height });
+    console.log('?? FORCING RENDER FOR', dataKey, { segmentPercentage, displayValue, height });
   } else {
     // For other segments, hide very small/zero or too-small heights
     if (displayValue === 0 || displayValue < 0.1) {
@@ -70,7 +71,7 @@ const CustomLabelWithData = ({ dataKey, chartData, index, ...props }) => {
   const labelY = y + height / 2;
   
   // Special debug for segments
-  console.log(`🔍 CustomLabelWithData Debug (${dataKey}):`, {
+  console.log(`?? CustomLabelWithData Debug (${dataKey}):`, {
     dataKey,
     value,
     chartItem,
@@ -172,7 +173,7 @@ const CustomLabel = (props) => {
   
   // Force Passives % to always render
   if (dataKey === 'passivesPercent') {
-    console.log('🔍 FORCING PASSIVES RENDER:', { segmentPercentage, displayValue, height });
+    console.log('?? FORCING PASSIVES RENDER:', { segmentPercentage, displayValue, height });
   }
   
   // For stacked bars, position the label at the center of the segment
@@ -183,7 +184,7 @@ const CustomLabel = (props) => {
   if (dataKey === 'passivesPercent') {
     // Use the original recharts positioning but ensure it's visible
     // The issue might be that the label is being rendered outside the visible area
-    console.log('🔍 PASSIVES POSITIONING DEBUG:', {
+    console.log('?? PASSIVES POSITIONING DEBUG:', {
       index,
       originalY: y,
       originalHeight: height,
@@ -196,13 +197,13 @@ const CustomLabel = (props) => {
     // Force a minimum height to ensure visibility
     if (height < 10) {
       labelY = y + 5; // Center in a minimum 10px height
-      console.log('🔍 PASSIVES MIN HEIGHT FIX:', { originalY: y, originalHeight: height, newLabelY: labelY });
+      console.log('?? PASSIVES MIN HEIGHT FIX:', { originalY: y, originalHeight: height, newLabelY: labelY });
     }
   }
   
   // Special debug for bottom segment (promoters)
   if (dataKey === 'promotersPercent') {
-    console.log('🔍 Bottom Segment Debug:', {
+    console.log('?? Bottom Segment Debug:', {
       dataKey,
       value,
       payload,
@@ -217,7 +218,7 @@ const CustomLabel = (props) => {
   
   // Special debug for Passives % segment
   if (dataKey === 'passivesPercent') {
-    console.log('🔍 PASSIVES DEBUG - All conditions:', {
+    console.log('?? PASSIVES DEBUG - All conditions:', {
       dataKey,
       segmentPercentage,
       displayValue,
@@ -252,7 +253,7 @@ const CustomLabel = (props) => {
   
   // Final debug for Passives % before rendering
   if (dataKey === 'passivesPercent') {
-    console.log('🔍 PASSIVES FINAL RENDER:', {
+    console.log('?? PASSIVES FINAL RENDER:', {
       dataKey,
       segmentPercentage,
       displayValue,
@@ -274,7 +275,7 @@ const CustomLabel = (props) => {
     finalTextColor = "#1f2937"; // Force black color
     finalStrokeColor = "rgba(255, 255, 255, 0.8)"; // Stronger white stroke
     finalFontSize = 14; // Slightly larger font
-    console.log('🔍 PASSIVES FINAL STYLING:', {
+    console.log('?? PASSIVES FINAL STYLING:', {
       finalTextColor,
       finalStrokeColor,
       finalFontSize,
@@ -331,12 +332,12 @@ const NPSLabelWithData = ({ chartData, index, ...props }) => {
   });
   
   // Determine background color and text color based on NPS value
-  // Green: ≥75%, Orange: 0% to 74.99%, Red: <0%
-  let backgroundColor = "#C6EFCE"; // Light Green 2 (default for ≥75%)
+  // Green: =75%, Orange: 0% to 74.99%, Red: <0%
+  let backgroundColor = "#C6EFCE"; // Light Green 2 (default for =75%)
   let textColor = "#000000"; // Black text (default for green/orange)
   
   if (npsValue >= 75) {
-    backgroundColor = "#C6EFCE"; // Light Green 2 for ≥75%
+    backgroundColor = "#C6EFCE"; // Light Green 2 for =75%
     textColor = "#000000"; // Black text
   } else if (npsValue >= 0 && npsValue < 75) {
     backgroundColor = "#FFA500"; // Orange for 0% to 74.99% (Excel standard)
@@ -1170,12 +1171,12 @@ const AchievedNPSValue = styled.div`
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   /* Color coding based on NPS score */
   color: ${props => {
-    if (props.npsScore >= 75) return '#000000'; // Black text for Dark Green (≥75%)
+    if (props.npsScore >= 75) return '#000000'; // Black text for Dark Green (=75%)
     if (props.npsScore >= 0 && props.npsScore < 75) return '#000000'; // Black text for Dark Amber (0% to 75%)
     return '#ffffff'; // White text for Dark Red (<0%)
   }};
   background-color: ${props => {
-    if (props.npsScore >= 75) return '#C6EFCE'; // Light Green 2 (≥75%) - Excel standard
+    if (props.npsScore >= 75) return '#C6EFCE'; // Light Green 2 (=75%) - Excel standard
     if (props.npsScore >= 0 && props.npsScore < 75) return '#FFA500'; // Orange (0% to 75%) - Excel standard
     return '#FF0000'; // Red (<0%) - Excel standard
   }};
@@ -1353,7 +1354,7 @@ const rowsFromSheetJson = (jsonData) => {
 };
 
 // Normalize Excel date values to MM-DD-YYYY, then compare >= cycle start (also MM-DD-YYYY).
-// Empty or unparseable dates return false — they must not count toward Polled/Responded.
+// Empty or unparseable dates return false � they must not count toward Polled/Responded.
 const isDateOnOrAfterCsatStart = (dateValue, cycleStartDate) => {
   if (dateValue == null || dateValue === '' || String(dateValue).trim() === '' || dateValue === 'N/A') {
     return false;
@@ -2156,7 +2157,7 @@ const sortTop10NpsTrendRows = (rows, top10AccountNames = []) =>
 
 const addNpsTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
   if (!fileData?.hasData || !fileData.rows?.length) return;
-  const safeName = `NPS_Top10_Trend_${sheetIndex + 1}`.slice(0, 31);
+  const safeName = `NPS_Top 10_Trend_${sheetIndex + 1}`.slice(0, 31);
   const trendSheet = workbook.addWorksheet(safeName);
 
   const headerRow1 = trendSheet.addRow([
@@ -2748,7 +2749,7 @@ const formatNpsResponseRateTrendDiffDisplay = (diff) => {
   if (diff > 0) {
     return {
       diffText: `+${diff.toFixed(1)}%`,
-      arrow: '↑',
+      arrow: '?',
       diffColor: '#1f2937',
       arrowColor: '#16a34a',
     };
@@ -2756,7 +2757,7 @@ const formatNpsResponseRateTrendDiffDisplay = (diff) => {
   if (diff < 0) {
     return {
       diffText: `${diff.toFixed(1)}%`,
-      arrow: '↓',
+      arrow: '?',
       diffColor: '#1f2937',
       arrowColor: '#dc2626',
     };
@@ -2771,7 +2772,7 @@ const formatNpsCountTrendDiffDisplay = (diff) => {
   if (diff > 0) {
     return {
       diffText: `+${diff}`,
-      arrow: '↑',
+      arrow: '?',
       diffColor: '#1f2937',
       arrowColor: '#16a34a',
     };
@@ -2779,7 +2780,7 @@ const formatNpsCountTrendDiffDisplay = (diff) => {
   if (diff < 0) {
     return {
       diffText: `${diff}`,
-      arrow: '↓',
+      arrow: '?',
       diffColor: '#1f2937',
       arrowColor: '#dc2626',
     };
@@ -2794,7 +2795,7 @@ const formatNpsActualNpsTrendDiffDisplay = (diff) => {
   if (diff > 0) {
     return {
       diffText: `+${diff.toFixed(2)}`,
-      arrow: '↑',
+      arrow: '?',
       diffColor: '#1f2937',
       arrowColor: '#16a34a',
     };
@@ -2802,7 +2803,7 @@ const formatNpsActualNpsTrendDiffDisplay = (diff) => {
   if (diff < 0) {
     return {
       diffText: diff.toFixed(2),
-      arrow: '↓',
+      arrow: '?',
       diffColor: '#1f2937',
       arrowColor: '#dc2626',
     };
@@ -3026,20 +3027,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   };
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
-  const top10AccountNames = [
-    'Premier Healthcare Solutions Inc',
-    'Blue Cross Blue Shield Association BCBSA',
-    'Frontier Airlines INC',
-    'Premier - Horizon II - Covenant Health',
-    'Tufts Medicine',
-    'BronxCare Health System',
-    'AgFirst Farm Credit Bank',
-    'embecta MEDICAL II LLC',
-    'Northern Trust Company',
-    'Jewish Board of Family and Childrens Services JBFCS',
-    'Healthfirst',
-    'AgileOne',
-  ];
+  const top10AccountNames = TOP10_ACCOUNT_ORDER;
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
@@ -3275,8 +3263,8 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const link = document.createElement('a');
       link.href = url;
       const safeFileName = singleFileData
-        ? (singleFileData.saveName || `Top10_Trend_File_${singleFileIndex + 1}`).replace(/\.[^.]+$/, '')
-        : 'ACSAT_NPS_Top10_Account_Wise_Trend_Analysis';
+        ? (singleFileData.saveName || `Top 10_Trend_File_${singleFileIndex + 1}`).replace(/\.[^.]+$/, '')
+        : 'ACSAT_NPS_Top 10_Account_Wise_Trend_Analysis';
       link.download = `${safeFileName}_${todayStr}.xlsx`;
       link.click();
       window.URL.revokeObjectURL(url);
@@ -3326,7 +3314,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   // Load first sheet data (CSAT received Report) for NPS ratings
   useEffect(() => {
     if (!excelData) {
-      npsWarn('excelData is missing or null — upload an ACSAT Excel file first');
+      npsWarn('excelData is missing or null � upload an ACSAT Excel file first');
       setFirstSheetData([]);
       setSheetLoadDebug(prev => ({
         ...prev,
@@ -3408,7 +3396,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         rowsBefore: processedData.length,
         rowsAfter: filteredData.length,
         filteredOut,
-        acsatCycle: acsatCycle || '(none — all rows kept)',
+        acsatCycle: acsatCycle || '(none � all rows kept)',
       });
 
       setFirstSheetData(filteredData);
@@ -3523,7 +3511,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         rowsBefore: processedData.length,
         rowsAfter: filteredData.length,
         filteredOut,
-        acsatCycle: acsatCycle || '(none — all rows kept)',
+        acsatCycle: acsatCycle || '(none � all rows kept)',
       });
 
       const normalizedSecond = filteredData.map(row => {
@@ -3594,7 +3582,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     if (!secondSheetData || secondSheetData.length === 0) {
       emptyReason = sheetLoadDebug.secondSheet.reason
         || sheetLoadDebug.firstSheet.reason
-        || 'Second sheet (CSAT sent and received Report) has no data — check sheet name and YEAR-QUARTER filter';
+        || 'Second sheet (CSAT sent and received Report) has no data � check sheet name and YEAR-QUARTER filter';
       npsWarn('No second sheet data for processing', { emptyReason, sheetLoadDebug });
       return { data: [], summary: emptySummary, emptyReason };
     }
@@ -3605,13 +3593,13 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     console.log('CSAT Cycle Start Date:', acsatCycleStartDateFormatted);
     
     if (acsatCycleStartDateFormatted) {
-      console.log('📅 Date Filtering Configuration:');
+      console.log('?? Date Filtering Configuration:');
       console.log('  - CSAT Cycle Start Date (MM-DD-YYYY):', acsatCycleStartDateFormatted);
       console.log('  - CSAT SENT DATE: Only dates >= cycle start date will be counted');
       console.log('  - CSAT RECEIVED DATE: Only dates >= cycle start date will be counted');
       console.log('  - NPS Ratings: Only from surveys sent >= cycle start date will be processed');
     } else {
-      console.log('⚠️ No CSAT cycle start date provided - processing all data without date filtering');
+      console.log('?? No CSAT cycle start date provided - processing all data without date filtering');
     }
 
     try {
@@ -3796,7 +3784,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           
           // Debug for Northern Trust Company
           if (customerName.toLowerCase().includes('northern trust')) {
-            console.log('🔍 Processing Northern Trust Company NPS Records:');
+            console.log('?? Processing Northern Trust Company NPS Records:');
             console.log('  Customer ID:', customerId);
             console.log('  Customer Name:', customerName);
             console.log('  Business Unit:', businessUnit);
@@ -3866,7 +3854,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
             if (!rowPassesBothCsatCycleDates(record.row, acsatCycleStartDateFormatted)) {
               if (customerName.toLowerCase().includes('northern trust')) {
-                console.log('  ⏰ Skipping record due to date filter');
+                console.log('  ? Skipping record due to date filter');
               }
               return;
             }
@@ -3886,26 +3874,26 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               if (ratingValue === 9 || ratingValue === 10) {
                 groupedData[key].promotersCount++;
                 if (customerName.toLowerCase().includes('northern trust')) {
-                  console.log('  ✅ Added promoter! New count:', groupedData[key].promotersCount);
+                  console.log('  ? Added promoter! New count:', groupedData[key].promotersCount);
                 }
               }
               // Count passives (rating exactly 7 or 8)
               else if (ratingValue === 7 || ratingValue === 8) {
                 groupedData[key].passivesCount++;
                 if (customerName.toLowerCase().includes('northern trust')) {
-                  console.log('  ✅ Added passive! New count:', groupedData[key].passivesCount);
+                  console.log('  ? Added passive! New count:', groupedData[key].passivesCount);
                 }
               }
               // Count detractors (rating less than 7)
               else if (ratingValue < 7) {
                 groupedData[key].detractorsCount++;
                 if (customerName.toLowerCase().includes('northern trust')) {
-                  console.log('  ✅ Added detractor! New count:', groupedData[key].detractorsCount);
+                  console.log('  ? Added detractor! New count:', groupedData[key].detractorsCount);
                 }
               }
             } else {
               if (customerName.toLowerCase().includes('northern trust')) {
-                console.log('  ❌ Invalid rating value:', rating);
+                console.log('  ? Invalid rating value:', rating);
               }
             }
           });
@@ -3930,7 +3918,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                  perspective.toString().toLowerCase().includes('nps');
         });
         
-        console.log('🔍 Northern Trust Company NPS Records in first sheet:', northernTrustNPSRecords.length);
+        console.log('?? Northern Trust Company NPS Records in first sheet:', northernTrustNPSRecords.length);
         if (northernTrustNPSRecords.length > 0) {
           console.log('Sample Northern Trust NPS record:', northernTrustNPSRecords[0]);
         }
@@ -3951,7 +3939,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       }
       
       // Summary of date filtering results
-      console.log('📊 Date Filtering Summary:');
+      console.log('?? Date Filtering Summary:');
       console.log('CSAT Cycle Start Date:', acsatCycleStartDateFormatted);
       console.log('Total groups processed:', Object.keys(groupedData).length);
       
@@ -3985,7 +3973,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
         // Targeted debug for customer id 212100001
         if ((customerId || '').toString().trim() === '212100001' || (customerId || '').toString().trim() === '202100007') {
-          console.log('🔎 [Predicted NPS Debug] Row for 212100001:', {
+          console.log('?? [Predicted NPS Debug] Row for 212100001:', {
             rowIndex: index + 1,
             customerId,
             businessUnit,
@@ -3994,7 +3982,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             receivedDateValid
           });
           if (!receivedDateValid) {
-            console.log('🧭 [Predicted NPS Debug] 212100001 available keys:', Object.keys(row));
+            console.log('?? [Predicted NPS Debug] 212100001 available keys:', Object.keys(row));
           }
         }
         
@@ -4016,7 +4004,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 group.predictedPromotersCount++;
                 if (index < 3) console.log(`  -> Added predicted promoter for ${key}`);
                 if ((customerId || '').toString().trim() === '212100001' || (customerId || '').toString().trim() === '202100007') {
-                  console.log('✅ [Predicted NPS Debug] Predicted Promoter counted', {
+                  console.log('? [Predicted NPS Debug] Predicted Promoter counted', {
                     predictedScoreValue,
                     currentPredictedPromotersCount: group.predictedPromotersCount
                   });
@@ -4027,7 +4015,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 group.predictedDetractorsCount++;
                 if (index < 3) console.log(`  -> Added predicted detractor for ${key}`);
                 if ((customerId || '').toString().trim() === '212100001' || (customerId || '').toString().trim() === '202100007') {
-                  console.log('⚠️ [Predicted NPS Debug] Predicted Detractor counted', {
+                  console.log('?? [Predicted NPS Debug] Predicted Detractor counted', {
                     predictedScoreValue,
                     currentPredictedDetractorsCount: group.predictedDetractorsCount
                   });
@@ -4039,7 +4027,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 group.predictedNeutralCount = (group.predictedNeutralCount || 0) + 1;
                 if (index < 3) console.log(`  -> Added predicted neutral for ${key}`);
                 if ((customerId || '').toString().trim() === '212100001' || (customerId || '').toString().trim() === '202100007') {
-                  console.log('ℹ️ [Predicted NPS Debug] Predicted Neutral counted', {
+                  console.log('?? [Predicted NPS Debug] Predicted Neutral counted', {
                     predictedScoreValue,
                     currentPredictedNeutralCount: group.predictedNeutralCount
                   });
@@ -4084,7 +4072,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       });
       
       // Debug: Log all business units found
-      console.log('🔍 NPS Dashboard Business Units Found:');
+      console.log('?? NPS Dashboard Business Units Found:');
       const uniqueBusinessUnits = [...new Set(result.map(item => item.businessUnit))];
       console.log('  Unique Business Units:', uniqueBusinessUnits);
       console.log('  Total records:', result.length);
@@ -4094,7 +4082,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const beforeSentFilter = result.length;
       result = result.filter(group => group.sentCount > 0);
       if (result.length === 0 && beforeSentFilter > 0) {
-        emptyReason = `No rows after Polled>0 filter (${beforeSentFilter} groups had sentCount=0 — CSAT SENT DATE may be before cycle start ${acsatCycleStartDateFormatted || 'N/A'})`;
+        emptyReason = `No rows after Polled>0 filter (${beforeSentFilter} groups had sentCount=0 � CSAT SENT DATE may be before cycle start ${acsatCycleStartDateFormatted || 'N/A'})`;
         npsWarn(emptyReason, { beforeSentFilter, acsatCycleStartDateFormatted });
       }
 
@@ -4145,7 +4133,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       if (result.length > 0) {
         // Debug: Log result array for BU-wise view
         if (groupByBU) {
-          console.log('🔍 BU-wise Grand Total Calculation - Result Array:', {
+          console.log('?? BU-wise Grand Total Calculation - Result Array:', {
             resultLength: result.length,
             resultItems: result.map(r => ({
               businessUnit: r.businessUnit,
@@ -4188,7 +4176,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         
         // Debug: Log calculated grand total for BU-wise view
         if (groupByBU) {
-          console.log('✅ BU-wise Grand Total Calculated:', grandTotal);
+          console.log('? BU-wise Grand Total Calculated:', grandTotal);
         }
 
         // Calculate grand total response rate
@@ -4270,7 +4258,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           const predictedDetractorsCount = Number(grandTotal.predictedDetractorsCount) || 0;
           
           // Debug log to help diagnose issues
-          console.log('🔍 Org Level Percentage Row Calculation (from CSAT received Report):', {
+          console.log('?? Org Level Percentage Row Calculation (from CSAT received Report):', {
             receivedCount,
             sentCount,
             promotersCount,
@@ -4309,7 +4297,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             isOrgLevelPercentageRow: true
           };
           
-          console.log('✅ Org Level Percentage Row Result:', orgLevelPercentageRow);
+          console.log('? Org Level Percentage Row Result:', orgLevelPercentageRow);
           result.push(orgLevelPercentageRow);
         }
         
@@ -4716,7 +4704,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             totalDetractorsCounted: actualDetractors,
             totalDetractorsFound: allDetractors.length,
             expectedCount: 3,
-            matches: actualDetractors === 3 ? '✅ CORRECT' : '❌ INCORRECT',
+            matches: actualDetractors === 3 ? '? CORRECT' : '? INCORRECT',
             filterApplied: 'PERSPECTIVE=NPS'
           });
           console.log('Overall Row - Actual NPS counts (PERSPECTIVE=NPS only):', {
@@ -4837,9 +4825,66 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     }
   }, [secondSheetData, firstSheetData, groupByBU, acsatCycleStartDateFormatted, searchTerm, showTop10, sortConfig, accountOrder, sheetLoadDebug]);
 
+  // Short display nicknames for Top 10 accounts used in the "not polled" footnote
+  const TOP10_ACCOUNT_NICKNAMES = {
+    'BronxCare Health System': 'BronxCare',
+    'Premier - Horizon II - Covenant Health': 'Covenant',
+    'Premier Healthcare Solutions Inc': 'Premier Healthcare',
+    'Blue Cross Blue Shield Association BCBSA': 'BCBSA',
+    'Frontier Airlines INC': 'Frontier Airlines',
+    'Tufts Medicine': 'Tufts Medicine',
+    'AgFirst Farm Credit Bank': 'AgFirst',
+    'embecta MEDICAL II LLC': 'embecta',
+    'Jewish Board of Family and Childrens Services JBFCS': 'JBFCS',
+    'Healthfirst': 'Healthfirst',
+    'The Northern Trust Company': 'Northern Trust',
+    'Firstsource Solutions Ltd': 'Firstsource',
+    'Ooma Inc.': 'Ooma',
+    'Arista Networks India Private Limited': 'Arista Networks',
+    'INFOBLOX INC.': 'Infoblox',
+  };
+
+  // Caption listing Top 10 accounts that were not polled (Polled === 0 or missing from the uploaded data)
+  const notPolledTop10AccountsCaption = useMemo(() => {
+    if (!showTop10 || !processedData?.data?.length) return null;
+
+    const top10Rows = processedData.data.filter(
+      (row) =>
+        !row.isGrandTotal &&
+        !row.isOtherAccount &&
+        !row.isPercentageRow &&
+        !row.isOtherAccountPercentageRow &&
+        !row.isOverallRow &&
+        !row.isOverallPercentageRow &&
+        !row.isOrgLevelPercentageRow &&
+        !row.isGrandTotalPercentageRow
+    );
+
+    const notPolledNames = top10AccountNames.filter((accountName) => {
+      const matchingRow = top10Rows.find((row) => matchesTop10AccountName(row.customerName, accountName));
+      return !matchingRow || (matchingRow.sentCount || 0) === 0;
+    });
+
+    if (!notPolledNames.length) return null;
+
+    const displayNames = notPolledNames.map((name) => TOP10_ACCOUNT_NICKNAMES[name] || name);
+
+    let namesText;
+    if (displayNames.length === 1) {
+      namesText = displayNames[0];
+    } else if (displayNames.length === 2) {
+      namesText = `${displayNames[0]} and ${displayNames[1]}`;
+    } else {
+      namesText = `${displayNames.slice(0, -1).join(', ')} and ${displayNames[displayNames.length - 1]}`;
+    }
+
+    const verb = displayNames.length === 1 ? 'was' : 'were';
+    return `${namesText} ${verb} not polled and hence included other accounts.`;
+  }, [showTop10, processedData, top10AccountNames]);
+
   const emptyDisplayMessage = useMemo(() => {
     if (!excelData) {
-      return 'No Excel file data — upload an ACSAT Excel file first.';
+      return 'No Excel file data � upload an ACSAT Excel file first.';
     }
     if (sheetLoadDebug.secondSheet.status === 'pending' && sheetLoadDebug.firstSheet.status === 'pending') {
       return 'Loading data...';
@@ -5092,7 +5137,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     // Calculate NPS: Grand total Promoters % - Grand total Detractors %
     const overallNPS = overallPromotersPercent - overallDetractorsPercent;
     
-    console.log('🔍 BU-wise Grand Totals from CSAT received Report:', {
+    console.log('?? BU-wise Grand Totals from CSAT received Report:', {
       totals,
       overallPromotersPercent,
       overallPassivesPercent,
@@ -5166,7 +5211,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     }
     
     // Log all chart data to debug the 100% issue
-    console.log('📊 Final chart data (including Org Level):', chartDataResult.map(item => ({
+    console.log('?? Final chart data (including Org Level):', chartDataResult.map(item => ({
       name: item.name,
       promotersPercent: item.promotersPercent.toFixed(1),
       passivesPercent: item.passivesPercent.toFixed(1),
@@ -5178,7 +5223,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     const businessUnits = chartDataResult.map(item => item.name);
     const uniqueBusinessUnits = [...new Set(businessUnits)];
     if (businessUnits.length !== uniqueBusinessUnits.length) {
-      console.warn('🚨 Duplicate business units found in chart data:', {
+      console.warn('?? Duplicate business units found in chart data:', {
         total: businessUnits.length,
         unique: uniqueBusinessUnits.length,
         duplicates: businessUnits.filter((item, index) => businessUnits.indexOf(item) !== index)
@@ -5425,7 +5470,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       return [];
     }
 
-    console.log('📊 Processing respondent-level data for Responded Level Comparison...');
+    console.log('?? Processing respondent-level data for Responded Level Comparison...');
     console.log('Total rows in first sheet:', firstSheetData.length);
     console.log('Cycle start date:', acsatCycleStartDateFormatted);
 
@@ -5477,7 +5522,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       // Only include if both dates are valid and on or after cycle start
       if (!sentDateValid || !receivedDateValid) {
         if (index < 3) {
-          console.log(`❌ Row ${index + 1} filtered out - dates not valid or before cycle start`);
+          console.log(`? Row ${index + 1} filtered out - dates not valid or before cycle start`);
         }
         return;
       }
@@ -5516,21 +5561,21 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         if (ratingValue === 9 || ratingValue === 10) {
           respondentGroups[groupKey].promotersCount++;
           if (index < 3) {
-            console.log(`✅ Promoter for ${respondentCategory}: rating = ${ratingValue}`);
+            console.log(`? Promoter for ${respondentCategory}: rating = ${ratingValue}`);
           }
         }
         // Count passives (rating exactly 7 or 8)
         else if (ratingValue === 7 || ratingValue === 8) {
           respondentGroups[groupKey].passivesCount++;
           if (index < 3) {
-            console.log(`😐 Passive for ${respondentCategory}: rating = ${ratingValue}`);
+            console.log(`?? Passive for ${respondentCategory}: rating = ${ratingValue}`);
           }
         }
         // Count detractors (rating less than 7)
         else if (ratingValue < 7) {
           respondentGroups[groupKey].detractorsCount++;
           if (index < 3) {
-            console.log(`❌ Detractor for ${respondentCategory}: rating = ${ratingValue}`);
+            console.log(`? Detractor for ${respondentCategory}: rating = ${ratingValue}`);
           }
         }
       }
@@ -5546,7 +5591,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const passives = respondent.passivesCount;
       const detractors = respondent.detractorsCount;
       
-      // Calculate NPS: (Promoters - Detractors) / Responded × 100
+      // Calculate NPS: (Promoters - Detractors) / Responded � 100
       const nps = csatReceivedDateCount > 0 ? ((promoters - detractors) / csatReceivedDateCount) * 100 : 0;
       
       if (index < 3) {
@@ -5628,7 +5673,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   const respondentChartData = useMemo(() => {
     if (!respondentLevelData || !showRespondedComparison) return [];
     
-    console.log('📊 Building chart data from respondentLevelData:', JSON.stringify(respondentLevelData, null, 2));
+    console.log('?? Building chart data from respondentLevelData:', JSON.stringify(respondentLevelData, null, 2));
     
     const nonGrandRows = respondentLevelData.filter(item => !item.isGrandTotal);
 
@@ -5681,7 +5726,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         passivesPercent = Number(passivesPercent) || 0;
         detractorsPercent = Number(detractorsPercent) || 0;
         
-        console.log(`📊 Processing chart data for ${item.respondentCategory}:`, {
+        console.log(`?? Processing chart data for ${item.respondentCategory}:`, {
           rawItem: item,
           promotersCount: item.promotersCount,
           passivesCount: item.passivesCount,
@@ -5699,7 +5744,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         
         // Special debug for CXO
         if (item.respondentCategory === 'CXO') {
-          console.log('🔍 CXO Debug - Chart Data:', {
+          console.log('?? CXO Debug - Chart Data:', {
             name: item.respondentCategory,
             promotersPercent,
             passivesPercent,
@@ -5731,12 +5776,12 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           totalResponses: item.csatReceivedDateCount || 0
         };
         
-        console.log(`✅ Final chart item for ${chartItem.name}:`, chartItem);
+        console.log(`? Final chart item for ${chartItem.name}:`, chartItem);
         
         return chartItem;
       });
     
-    console.log('📊 Final Respondent chart data for bars (complete array):');
+    console.log('?? Final Respondent chart data for bars (complete array):');
     chartData.forEach((item, idx) => {
       console.log(`Bar ${idx}: ${item.name}: Promoters=${item.promotersPercent.toFixed(1)}%, Passives=${item.passivesPercent.toFixed(1)}%, Detractors=${item.detractorsPercent.toFixed(1)}%, NPS=${item.nps.toFixed(1)}`);
     });
@@ -7139,14 +7184,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       formulaTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7FAFC' } };
       
       // Add formula
-      const formulaRow = worksheet.addRow(['NPS = (#Promoters - # Detractors) / Responded × 100']);
+      const formulaRow = worksheet.addRow(['NPS = (#Promoters - # Detractors) / Responded � 100']);
       formulaRow.getCell(1).font = { bold: true, color: { argb: 'FF4A5568' } };
       
       // Add breakdown
       worksheet.addRow(['Where:']);
-      worksheet.addRow(['• Promoters: Customers who gave ratings 9 or 10']);
-      worksheet.addRow(['• Detractors: Customers who gave ratings less than 7']);
-      worksheet.addRow(['• Responded: Count of CSAT RECEIVED DATE from CSAT received Report']);
+      worksheet.addRow(['� Promoters: Customers who gave ratings 9 or 10']);
+      worksheet.addRow(['� Detractors: Customers who gave ratings less than 7']);
+      worksheet.addRow(['� Responded: Count of CSAT RECEIVED DATE from CSAT received Report']);
       
       // Add legend
       const legendStartRow = formulaStartRow + 6;
@@ -7154,7 +7199,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const legendTitleRow = worksheet.getRow(legendStartRow);
       legendTitleRow.getCell(1).font = { bold: true, color: { argb: 'FF2D3748' } };
       
-      const legendRow1 = worksheet.addRow(['Green: ≥75%', 'Orange: 0% to 74.99%', 'Red: <0%']);
+      const legendRow1 = worksheet.addRow(['Green: =75%', 'Orange: 0% to 74.99%', 'Red: <0%']);
       legendRow1.eachCell((cell, colNumber) => {
         cell.font = { size: 9, bold: true };
         if (colNumber === 1) {
@@ -7184,7 +7229,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const summaryStartRow = worksheet.lastRow.number + 1;
       
       // NPS Dashboard Summary Title
-      const summaryTitleRow = worksheet.addRow(['📊 NPS Dashboard Summary']);
+      const summaryTitleRow = worksheet.addRow(['?? NPS Dashboard Summary']);
       const summaryTitleRowNum = summaryTitleRow.number;
       summaryTitleRow.getCell(1).font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
       summaryTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; // Navy blue
@@ -7194,7 +7239,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Add Achieved NPS Score
       worksheet.addRow([]);
-      const achievedNPSTitleRow = worksheet.addRow(['🎯 Achieved NPS Score']);
+      const achievedNPSTitleRow = worksheet.addRow(['?? Achieved NPS Score']);
       const achievedNPSTitleRowNum = achievedNPSTitleRow.number;
       achievedNPSTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF059669' } };
       achievedNPSTitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -7213,7 +7258,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       let npsValueTextColor = 'FF6B7280'; // Default gray text
       
       if (achievedNPSScore >= 75) {
-        // Light Green 2: ≥75% (Great) - Black text - Excel standard
+        // Light Green 2: =75% (Great) - Black text - Excel standard
         npsValueBgColor = 'FFC6EFCE';
         npsValueTextColor = 'FF000000';
       } else if (achievedNPSScore >= 0 && achievedNPSScore < 75) {
@@ -7249,7 +7294,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         worksheet.addRow([]);
         topAccountsStartRow = worksheet.lastRow.number + 1;
         
-        const topAccountsTitleRow = worksheet.addRow(['🏆 Top 5 Accounts (Highest NPS)']);
+        const topAccountsTitleRow = worksheet.addRow(['?? Top 5 Accounts (Highest NPS)']);
         const topAccountsTitleRowNum = topAccountsTitleRow.number;
         topAccountsTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
         topAccountsTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; // Navy blue
@@ -7397,7 +7442,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Add NPS Legend to Excel
       worksheet.addRow([]);
-      const npsLegendTitleRow = worksheet.addRow(['📊 NPS Score Legend']);
+      const npsLegendTitleRow = worksheet.addRow(['?? NPS Score Legend']);
       const npsLegendTitleRowNum = npsLegendTitleRow.number;
       npsLegendTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1D4ED8' } };
       npsLegendTitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -7406,7 +7451,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       worksheet.mergeCells(`A${npsLegendTitleRowNum}:F${npsLegendTitleRowNum}`);
       
       // Add legend items in separate rows to match dashboard layout
-      const legendItem1 = worksheet.addRow(['Green: ≥75%']);
+      const legendItem1 = worksheet.addRow(['Green: =75%']);
       const legendItem1Num = legendItem1.number;
       legendItem1.getCell(1).font = { size: 12, color: { argb: 'FF000000' }, bold: true }; // Black text for Light Green 2
       legendItem1.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -7743,9 +7788,9 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           // NPS column is column 9 (1-indexed: Sr. No.=1, Category=2, Promoters=3, Promoters%=4, Passives=5, Passives%=6, Detractors=7, Detractors%=8, NPS=9)
           if (cell.col === 9) { // NPS column
             const npsValue = cell.value;
-            // Apply color coding: Light Green 2 ≥75% (black text), Amber 0% to 75% (black text), Red <0% (white text)
+            // Apply color coding: Light Green 2 =75% (black text), Amber 0% to 75% (black text), Red <0% (white text)
             if (npsValue >= 75) {
-              // Light Green 2: ≥75% (Great) - Black text - Excel standard
+              // Light Green 2: =75% (Great) - Black text - Excel standard
               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
               cell.font = { ...cell.font, color: { argb: 'FF000000' }, bold: true };
             } else if (npsValue >= 0 && npsValue < 75) {
@@ -7763,14 +7808,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Add information rows
       worksheet.addRow([]);
-      worksheet.addRow(['NPS Calculation Formula: (#Promoters - # Detractors) ÷ Responded × 100']);
+      worksheet.addRow(['NPS Calculation Formula: (#Promoters - # Detractors) � Responded � 100']);
       worksheet.addRow(['Promoters: Ratings of 9 or 10 for perspective "NPS"']);
       worksheet.addRow(['Detractors: Ratings less than 7 for perspective "NPS"']);
-      worksheet.addRow([`Date Filter: CSAT SENT DATE and CSAT RECEIVED DATE ≥ ${acsatCycleStartDateFormatted}`]);
+      worksheet.addRow([`Date Filter: CSAT SENT DATE and CSAT RECEIVED DATE = ${acsatCycleStartDateFormatted}`]);
       worksheet.addRow([`Data Source: CSAT sent and received Report`]);
       worksheet.addRow([]);
       worksheet.addRow(['NPS Score Legend:']);
-      const legendRow1 = worksheet.addRow(['Green: ≥75%', 'Orange: 0% to 74.99%', 'Red: <0%']);
+      const legendRow1 = worksheet.addRow(['Green: =75%', 'Orange: 0% to 74.99%', 'Red: <0%']);
       legendRow1.eachCell((cell, colNumber) => {
         cell.font = { size: 9, bold: true };
         if (colNumber === 1) {
@@ -7810,10 +7855,10 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   return (
     <DashboardContainer>
       <Header>
-        <Title>📊 {showTop10 ? 'Top 10 Accounts-NPS' : 'NPS Dashboard'}</Title>
+        <Title>?? {showTop10 ? 'Top 10 Accounts-NPS' : 'NPS Dashboard'}</Title>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '0.75rem', minWidth: '220px' }}>
-            <BackButton onClick={onBack}>← Back to ACSAT</BackButton>
+            <BackButton onClick={onBack}>? Back to ACSAT</BackButton>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
@@ -7826,7 +7871,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               setShowVerticalGraph(false);
             }}
           >
-            👥 Show by Account
+            ?? Show by Account
           </ToggleButton>
           <ToggleButton 
             active={groupByBU && !showTop10 && !showRespondedComparison && !showVerticalGraph}
@@ -7837,7 +7882,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               setShowVerticalGraph(false);
             }}
           >
-            🏢 Show by BU Only
+            ?? Show by BU Only
           </ToggleButton>
           <ToggleButton 
             active={showTop10 && !showRespondedComparison && !showVerticalGraph}
@@ -7853,7 +7898,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               }
             }}
           >
-            🏆 Top 10 account -NPS
+            ?? Top 10 account -NPS
           </ToggleButton>
           <ToggleButton 
             active={showRespondedComparison}
@@ -7867,7 +7912,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               }
             }}
           >
-            📊 Responded Level Comparison
+            ?? Responded Level Comparison
           </ToggleButton>
           {groupByBU && (
           <ToggleButton 
@@ -7881,16 +7926,16 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               }
             }}
           >
-            📊 Vertical Graph
+            ?? Vertical Graph
           </ToggleButton>
           )}
           {showRespondedComparison ? (
             <DownloadButton onClick={downloadRespondedLevelComparisonExcel}>
-              📥 Download Responded Comparison
+              ?? Download Responded Comparison
             </DownloadButton>
           ) : (
           <DownloadButton onClick={downloadExcel}>
-            📥 Download Excel
+            ?? Download Excel
           </DownloadButton>
           )}
           <TrendAnalysisButton type="button" onClick={handleViewAcsatTrendAnalysis} style={{ width: 'auto', minWidth: '220px' }}>
@@ -7906,43 +7951,43 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             color: '#6b7280',
             fontWeight: '500'
           }}>
-            📅 CSAT Cycle Start Date: {acsatCycleStartDateFormatted}
+            ?? CSAT Cycle Start Date: {acsatCycleStartDateFormatted}
           </div>
         )}
         
         {processedData.data.length > 0 && (
           <SuccessMessage>
-            ✅ Data loaded successfully! Showing {processedData.data.length} {showTop10 ? 'top 10 accounts' : (groupByBU ? 'business units' : 'customers')}
+            ? Data loaded successfully! Showing {processedData.data.length} {showTop10 ? 'top 10 accounts' : (groupByBU ? 'business units' : 'customers')}
           </SuccessMessage>
         )}
 
         {!showRespondedComparison && (
         <NPSFormulaContainer>
-          <FormulaTitle>📈 NPS Calculation Formula</FormulaTitle>
+          <FormulaTitle>?? NPS Calculation Formula</FormulaTitle>
           <FormulaText>
-            <strong>NPS = (#Promoters - # Detractors) ÷ Responded × 100</strong>
+            <strong>NPS = (#Promoters - # Detractors) � Responded � 100</strong>
           </FormulaText>
           
           <FormulaBreakdown>
             <FormulaItem>
-              <FormulaItemTitle>🎯 Promoters</FormulaItemTitle>
+              <FormulaItemTitle>?? Promoters</FormulaItemTitle>
               <FormulaItemText>Customers who gave ratings of 9 or 10 for NPS perspective</FormulaItemText>
             </FormulaItem>
             
             <FormulaItem>
-              <FormulaItemTitle>😞 Detractors</FormulaItemTitle>
+              <FormulaItemTitle>?? Detractors</FormulaItemTitle>
               <FormulaItemText>Customers who gave ratings less than 7 for NPS perspective</FormulaItemText>
             </FormulaItem>
             
             <FormulaItem>
-              <FormulaItemTitle>📊 Total Surveys Sent</FormulaItemTitle>
+              <FormulaItemTitle>?? Total Surveys Sent</FormulaItemTitle>
               <FormulaItemText>Count of CSAT SENT DATE from CSAT sent and received Report</FormulaItemText>
             </FormulaItem>
             
             <FormulaItem>
-              <FormulaItemTitle>📈 Score Interpretation</FormulaItemTitle>
+              <FormulaItemTitle>?? Score Interpretation</FormulaItemTitle>
               <FormulaItemText>
-                <span style={{color: '#155724', fontWeight: '600'}}>≥50: Excellent</span> | 
+                <span style={{color: '#155724', fontWeight: '600'}}>=50: Excellent</span> | 
                 <span style={{color: '#856404', fontWeight: '600'}}> 0-49: Good</span> | 
                 <span style={{color: '#721c24', fontWeight: '600'}}> &lt;0: Poor</span>
               </FormulaItemText>
@@ -7955,7 +8000,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {/* Search box - only show for account-wise view */}
       {!showRespondedComparison && !groupByBU && processedData.data.length > 0 && (
         <SearchContainer>
-          <SearchLabel>🔍 Search Customer:</SearchLabel>
+          <SearchLabel>?? Search Customer:</SearchLabel>
           <SearchInputContainer>
             <SearchInput
               type="text"
@@ -7965,13 +8010,13 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             />
             {searchTerm && (
               <InlineClearButton onClick={() => setSearchTerm('')} title="Clear search">
-                ✕
+                ?
               </InlineClearButton>
             )}
           </SearchInputContainer>
           {searchTerm && (
             <ClearButton onClick={() => setSearchTerm('')} title="Clear search">
-              ✕ Clear
+              ? Clear
             </ClearButton>
           )}
         </SearchContainer>
@@ -7996,7 +8041,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         <LegendTitle>NPS Score Legend</LegendTitle>
         <LegendItem>
           <LegendColor color="#C6EFCE" />
-              <LegendText>Green: ≥75%</LegendText>
+              <LegendText>Green: =75%</LegendText>
         </LegendItem>
         <LegendItem>
           <LegendColor color="#FFA500" />
@@ -8013,7 +8058,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {showVerticalGraph && groupByBU && chartData.length > 0 && (
         <ChartContainer ref={chartRef}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>📊 BU-wise NPS Distribution</ChartTitle>
+            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? BU-wise NPS Distribution</ChartTitle>
             <button
               onClick={downloadChartImage}
               style={{
@@ -8033,7 +8078,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
             >
-              📥 Download Chart
+              ?? Download Chart
             </button>
           </div>
           <ResponsiveContainer width="100%" height={650}>
@@ -8148,7 +8193,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {showVerticalGraph && groupByBU && orgLevelChartData.length > 0 && (
         <ChartContainer ref={orgLevelChartRef}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>📊 Org Level - NPS Distribution</ChartTitle>
+            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? Org Level - NPS Distribution</ChartTitle>
             <button
               onClick={downloadOrgLevelChartImage}
               style={{
@@ -8168,7 +8213,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
             >
-              📥 Download Chart
+              ?? Download Chart
             </button>
           </div>
           <ResponsiveContainer width="100%" height={650}>
@@ -8278,7 +8323,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {showTop10Chart && showTop10 && combinedTop10AndOtherChartData.length > 0 && (
         <ChartContainer ref={top10ChartRef}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>📊 NPS Distribution</ChartTitle>
+            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? NPS Distribution</ChartTitle>
             <button
               onClick={downloadTop10ChartImage}
               style={{
@@ -8298,7 +8343,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
             >
-              📥 Download Chart
+              ?? Download Chart
             </button>
           </div>
           {/* Combined Bar Chart for Top 10 and Other Accounts */}
@@ -8525,7 +8570,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {/* Summary Table for BU-wise NPS */}
       {showVerticalGraph && groupByBU && chartData.length > 0 && (
         <SummaryTableContainer>
-          <SummaryTableTitle>📊 BU-wise NPS Summary</SummaryTableTitle>
+          <SummaryTableTitle>?? BU-wise NPS Summary</SummaryTableTitle>
           <SummaryTable>
             <SummaryTableHeader>
               <tr>
@@ -8578,12 +8623,12 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {/* NPS Dashboard Summary */}
       {!showRespondedComparison && processedData.data.length > 0 && processedData.summary && (
         <SummaryContainer>
-          <SummaryTitle>📊 NPS Dashboard Summary</SummaryTitle>
+          <SummaryTitle>?? NPS Dashboard Summary</SummaryTitle>
           <SummaryGrid>
             {/* Top 5 Accounts - Only show for account-wise data */}
             {!groupByBU && processedData.summary.top5Accounts.length > 0 && (
               <SummaryCard>
-                <SummaryCardTitle>🏆 Top 5 Accounts (Highest NPS)</SummaryCardTitle>
+                <SummaryCardTitle>?? Top 5 Accounts (Highest NPS)</SummaryCardTitle>
                 <TopAccountsList>
                   {processedData.summary.top5Accounts.map((account, index) => (
                     <TopAccountItem key={index}>
@@ -8599,7 +8644,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
             {/* Achieved NPS Score */}
             <SummaryCard>
-              <SummaryCardTitle>🎯 Achieved NPS Score</SummaryCardTitle>
+              <SummaryCardTitle>?? Achieved NPS Score</SummaryCardTitle>
               <AchievedNPSContainer>
                 <AchievedNPSValue npsScore={processedData.summary.achievedNPSScore}>
                   {processedData.summary.achievedNPSScore !== undefined && processedData.summary.achievedNPSScore !== null 
@@ -8624,7 +8669,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         {respondentChartData.length > 0 && (
           <ChartContainer ref={respondentChartRef} style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-              <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>📊 Respondent Category-wise NPS Distribution</ChartTitle>
+              <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? Respondent Category-wise NPS Distribution</ChartTitle>
               <button
                 onClick={downloadRespondentChartImage}
                 style={{
@@ -8644,7 +8689,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
                 onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
               >
-                📥 Download Chart
+                ?? Download Chart
               </button>
             </div>
             <ResponsiveContainer width="100%" height={650}>
@@ -8803,7 +8848,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         {respondentChartData.length > 0 && (
           <ChartContainer ref={donutChartRef} style={{ marginBottom: '2rem', padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}>📊 Donut Chart - Respondent Category Distribution</ChartTitle>
+              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}>?? Donut Chart - Respondent Category Distribution</ChartTitle>
               <button
                 onClick={downloadDonutChartImage}
                 style={{
@@ -8823,7 +8868,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
                 onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
               >
-                📥 Download Chart
+                ?? Download Chart
               </button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '2rem' }}>
@@ -8949,7 +8994,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         {respondentChartData.length > 0 && (
           <ChartContainer ref={pieChartRef} style={{ marginBottom: '2rem', padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}>📊 Pie Chart - Respondent Category Distribution</ChartTitle>
+              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}>?? Pie Chart - Respondent Category Distribution</ChartTitle>
               <button
                 onClick={downloadPieChartImage}
                 style={{
@@ -8969,7 +9014,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
                 onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
               >
-                📥 Download Chart
+                ?? Download Chart
               </button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '2rem' }}>
@@ -9094,16 +9139,16 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         <TableContainer>
           <div style={{ padding: '1.5rem', backgroundColor: '#f0f9ff', borderRadius: '8px', marginBottom: '1rem', border: '2px solid #3b82f6' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '1.4rem', fontWeight: 'bold' }}>
-              📊 Responded Level Comparison - Individual Respondent Analysis
+              ?? Responded Level Comparison - Individual Respondent Analysis
             </h3>
             <p style={{ margin: '0', color: '#6b7280', fontSize: '0.95rem', lineHeight: '1.6' }}>
-              <strong>NPS Calculation for Each Respondent:</strong> (#Promoters - # Detractors) ÷ Responded × 100
+              <strong>NPS Calculation for Each Respondent:</strong> (#Promoters - # Detractors) � Responded � 100
             </p>
             <p style={{ margin: '0.5rem 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
-              📋 <strong>Promoters:</strong> Ratings of 9 or 10 for perspective "NPS" | <strong>Passives:</strong> Ratings of 7 or 8 for perspective "NPS" | <strong>Detractors:</strong> Ratings less than 7 for perspective "NPS"
+              ?? <strong>Promoters:</strong> Ratings of 9 or 10 for perspective "NPS" | <strong>Passives:</strong> Ratings of 7 or 8 for perspective "NPS" | <strong>Detractors:</strong> Ratings less than 7 for perspective "NPS"
             </p>
             <p style={{ margin: '0.25rem 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
-              📅 Filtered by: CSAT SENT DATE and CSAT RECEIVED DATE ≥ {acsatCycleStartDateFormatted} | <strong>Data Source:</strong> CSAT sent and received Report
+              ?? Filtered by: CSAT SENT DATE and CSAT RECEIVED DATE = {acsatCycleStartDateFormatted} | <strong>Data Source:</strong> CSAT sent and received Report
             </p>
           </div>
           {respondentLevelData.length === 0 ? (
@@ -9238,7 +9283,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             <LegendTitle>NPS Score Legend</LegendTitle>
             <LegendItem>
               <LegendColor color="#C6EFCE" />
-              <LegendText>Green: ≥75%</LegendText>
+              <LegendText>Green: =75%</LegendText>
             </LegendItem>
             <LegendItem>
               <LegendColor color="#FFA500" />
@@ -9260,7 +9305,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             <div style={{ fontWeight: 'bold', marginBottom: '0.75rem' }}>No data found</div>
             <div style={{ fontSize: '1rem', color: '#742a2a', marginBottom: '0.5rem' }}>{emptyDisplayMessage}</div>
             <div style={{ fontSize: '0.85rem', color: '#9b2c2c', marginTop: '1rem' }}>
-              Open browser DevTools (F12 → Console) and filter by &quot;[NPS Dashboard]&quot; for full debug output.
+              Open browser DevTools (F12 ? Console) and filter by &quot;[NPS Dashboard]&quot; for full debug output.
             </div>
           </ErrorMessage>
         ) : (
@@ -9296,7 +9341,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Business Unit
                   {sortConfig.key === 'businessUnit' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9315,7 +9360,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                     Account Name
                     {sortConfig.key === 'customerName' && (
                       <span style={{ marginLeft: '0.5rem' }}>
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                        {sortConfig.direction === 'asc' ? '?' : '?'}
                       </span>
                     )}
                   </TableHeaderCell>
@@ -9334,7 +9379,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Polled
                   {sortConfig.key === 'sentCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9352,7 +9397,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Responded
                   {sortConfig.key === 'receivedCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9370,7 +9415,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Response %
                   {sortConfig.key === 'responseRate' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9388,7 +9433,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   #Promoters
                   {sortConfig.key === 'predictedPromotersCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9406,7 +9451,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Passives
                   {sortConfig.key === 'predictedPassivesCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9424,7 +9469,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Detractors
                   {sortConfig.key === 'predictedDetractorsCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9442,7 +9487,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   NPS
                   {sortConfig.key === 'predictedNPSScore' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9460,7 +9505,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   #Promoters
                   {sortConfig.key === 'promotersCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9478,7 +9523,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Passives
                   {sortConfig.key === 'passivesCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9496,7 +9541,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Detractors
                   {sortConfig.key === 'detractorsCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9514,7 +9559,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   NPS
                   {sortConfig.key === 'npsScore' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9532,7 +9577,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   NPS score
                   {sortConfig.key === 'npsAvgRating' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                      {sortConfig.direction === 'asc' ? '?' : '?'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -10153,6 +10198,16 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   </TableRow>
                 );
               })()}
+              {notPolledTop10AccountsCaption && (
+                <TableRow>
+                  <TableCell
+                    colSpan={(groupByBU ? 2 : 3) + 12 + (showMainNpsTrendColumns ? npsMainTrendFileCount * NPS_MAIN_TREND_COLUMNS_PER_FILE : 0)}
+                    style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 1rem', borderTop: '1px solid #e2e8f0' }}
+                  >
+                    {notPolledTop10AccountsCaption}
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         )}

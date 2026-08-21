@@ -1,10 +1,52 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import { Download, BarChart3, ChevronLeft, Building2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
+import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName } from '../utils/top10Accounts';
+import { groupPracticeName } from '../utils/practiceGroups';
+
+// Short, recognizable display names for the fixed Top 10 roster (utils/top10Accounts.js), used only
+// for the "X was not polled and hence included other accounts." footnote below the Top10 tables so the
+// note reads naturally instead of spelling out each account's full legal name.
+const TOP10_ACCOUNT_SHORT_NAMES = {
+  [normalizeTop10AccountName('Premier Healthcare Solutions Inc')]: 'Premier Healthcare',
+  [normalizeTop10AccountName('Blue Cross Blue Shield Association BCBSA')]: 'BCBSA',
+  [normalizeTop10AccountName('Frontier Airlines INC')]: 'Frontier Airlines',
+  [normalizeTop10AccountName('Premier - Horizon II - Covenant Health')]: 'Covenant',
+  [normalizeTop10AccountName('Tufts Medicine')]: 'Tufts Medicine',
+  [normalizeTop10AccountName('BronxCare Health System')]: 'BronxCare',
+  [normalizeTop10AccountName('AgFirst Farm Credit Bank')]: 'AgFirst',
+  [normalizeTop10AccountName('embecta MEDICAL II LLC')]: 'embecta',
+  [normalizeTop10AccountName('Jewish Board of Family and Childrens Services JBFCS')]: 'JBFCS',
+  [normalizeTop10AccountName('Healthfirst')]: 'Healthfirst',
+  [normalizeTop10AccountName('The Northern Trust Company')]: 'Northern Trust',
+  [normalizeTop10AccountName('Firstsource Solutions Ltd')]: 'Firstsource',
+  [normalizeTop10AccountName('Ooma Inc.')]: 'Ooma',
+  [normalizeTop10AccountName('Arista Networks India Private Limited')]: 'Arista Networks',
+  [normalizeTop10AccountName('INFOBLOX INC.')]: 'Infoblox'
+};
+
+// Builds the "<accounts> was/were not polled and hence included other accounts." footnote sentence for
+// a Top10 rollup dataset. `rollupRows` should be the "All Practices" roll-up rows (isRollup === true) for
+// the Top10 accounts found in the currently loaded data — summed per account name to get total Polled
+// (cssSentCount). Any fixed roster account with zero total Polled (including one entirely absent from the
+// data) is called out by name. Returns '' when every roster account has a non-zero Polled count.
+const buildTop10NotPolledNote = (rollupRows) => {
+  const polledByName = new Map();
+  (rollupRows || []).forEach((r) => {
+    const norm = normalizeTop10AccountName(r.accountName);
+    polledByName.set(norm, (polledByName.get(norm) || 0) + (r.cssSentCount || 0));
+  });
+  const notPolled = TOP10_ACCOUNT_ORDER
+    .filter((name) => (polledByName.get(normalizeTop10AccountName(name)) || 0) === 0)
+    .map((name) => TOP10_ACCOUNT_SHORT_NAMES[normalizeTop10AccountName(name)] || name);
+  if (notPolled.length === 0) return '';
+  if (notPolled.length === 1) return `${notPolled[0]} was not polled and hence included other accounts.`;
+  return `${notPolled.slice(0, -1).join(', ')} and ${notPolled[notPolled.length - 1]} were not polled and hence included other accounts.`;
+};
 
 // Helper function to parse various date formats from Excel and convert to MM-DD-YYYY
 const parseExcelDateToMMDDYYYY = (dateValue) => {
@@ -70,13 +112,12 @@ const parseExcelDateToMMDDYYYY = (dateValue) => {
 };
 
 const PRACTICE_DISTRIBUTION_FILE_URL = '/data/New_customer_feedback_analysis_New.xlsx';
-const PRACTICE_DISPLAY_ORDER = ['Digital Platform Engineering', 'RunOps', 'Data & Analytics', 'Cybersecurity'];
-const getPracticeOrderIndex = (practice) => {
-  if (!practice) return 999;
-  const s = String(practice).trim();
-  const idx = PRACTICE_DISPLAY_ORDER.findIndex(p => String(p).trim().toLowerCase() === s.toLowerCase());
-  return idx >= 0 ? idx : 999;
-};
+// Practice rows are sorted purely alphabetically (case-insensitive) via comparePracticeNames below.
+// This is intentionally NOT a fixed display-order lookup: uploaded data can contain arbitrary practice
+// names (e.g. "Cybersecurity", "Data & AI", "Embedded", "Engineering", "RunOps", "Semi"), and a fixed
+// order array silently breaks (falls back to original/undefined order) for any name not in the list.
+const comparePracticeNames = (a, b) =>
+  String(a || '').trim().localeCompare(String(b || '').trim(), undefined, { sensitivity: 'base' });
 const SHEET1_RECEIVED_NAME_MATCH = (s) => {
   const t = String(s || '').toLowerCase().trim();
   return (t.includes('csat received') && !t.includes('sent and received')) || t === 'sheet1' || t === 'sheet 1';
@@ -175,13 +216,13 @@ const buildPracticeWiseDistributionData = (source, secondSheetSource, csatCycleS
       const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       if (customerId) {
         const key = String(customerId).trim();
-        const practiceVal = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim();
+        const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim());
         if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
           const existing = practiceByCustomerId.get(key);
           if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(key, practiceVal);
         }
       }
-      const practice = (row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim();
+      const practice = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim());
       if (!practice || practice.toLowerCase() === 'n/a') return;
       if (!practicePolledResponded[practice]) {
         practicePolledResponded[practice] = { cssSentCount: 0, cssReceivedCount: 0 };
@@ -229,9 +270,9 @@ const buildPracticeWiseDistributionData = (source, secondSheetSource, csatCycleS
       const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
       const practiceFromSecond = customerId ? (practiceByCustomerId.get(String(customerId).trim()) || '') : '';
-      const practice = rawPractice && rawPractice.toLowerCase() !== 'n/a'
+      const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a'
         ? rawPractice
-        : (practiceFromSecond || '');
+        : (practiceFromSecond || ''));
       if (!practice || practice.toLowerCase() === 'n/a') return;
 
       const ratingResolved = parseInt(row[ratingColumn] ?? row['RATING'], 10);
@@ -281,18 +322,388 @@ const buildPracticeWiseDistributionData = (source, secondSheetSource, csatCycleS
       return row;
     });
 
-  result.sort((a, b) => {
-    const ia = getPracticeOrderIndex(a.practice);
-    const ib = getPracticeOrderIndex(b.practice);
-    if (ia !== ib) return ia - ib;
-    return (a.practice || '').localeCompare(b.practice || '');
-  });
+  result.sort((a, b) => comparePracticeNames(a.practice, b.practice));
   result = result.map((r, i) => ({ ...r, sNo: i + 1 }));
   return { data: result };
 };
 
 const buildPracticeWisePolledRespondedFromSheet2 = (secondSheetSource, csatCycleStartDateFormatted) =>
   buildPracticeWiseDistributionData(null, secondSheetSource, csatCycleStartDateFormatted);
+
+// BUSINESS UNIT display order (module-level copy, mirrors the component's getBusinessUnitOrderIndex/normalizeBU):
+// Healthcare, CIT, Tech, India & GCC, Sead/SEAD. Used only inside buildAccountPracticeWiseDistributionData so the
+// builder can return fully-sorted (BU -> Account -> "All Practice" rollup -> Practice) rows on its own.
+const ACCOUNT_PRACTICE_BU_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
+const normalizeBUForAccountPractice = (bu) => {
+  if (bu == null || bu === '') return '';
+  const s = String(bu).trim();
+  if (/^health\s*care$/i.test(s) || s.toLowerCase().replace(/\s/g, '') === 'healthcare') return 'Healthcare';
+  if (/^sead$/i.test(s)) return 'Sead';
+  return s;
+};
+const getBUOrderIndexForAccountPractice = (bu) => {
+  if (bu == null || bu === '') return -1;
+  const s = String(bu).trim();
+  if (/^health\s*care$/i.test(s) || s.toLowerCase().replace(/\s/g, '') === 'healthcare') return 0;
+  if (s === 'Sead' || s === 'SEAD') return 4;
+  const idx = ACCOUNT_PRACTICE_BU_DISPLAY_ORDER.indexOf(s);
+  return idx >= 0 ? idx : 999;
+};
+
+// Account/Practice-wise Overall CSAT score distribution: same source data + rules as buildPracticeWiseDistributionData
+// (Customer Success Survey Status report for Polled/Responded, Customer Success Survey All PCSAT report for rating %,
+// PERSPECTIVE = "Overall Experience" only), but grouped by (Business Unit, Account Name, Practice) instead of Practice
+// alone. Adds an "All Practice" bold roll-up row per account. Returns data pre-sorted: BU order -> Account Name ->
+// ("All Practice" roll-up first, then practices sorted alphabetically).
+const buildAccountPracticeWiseDistributionData = (source, secondSheetSource, csatCycleStartDateFormatted) => {
+  const groupPolledResponded = {};
+  const groupMeta = {};
+  const accountNameByCustomerId = new Map();
+  const businessUnitByCustomerId = new Map();
+  const practiceByCustomerId = new Map();
+  const hasSecondSheet = secondSheetSource && Array.isArray(secondSheetSource) && secondSheetSource.length > 0;
+
+  const makeKey = (custId, accountName, businessUnit, practice) =>
+    `${(custId || accountName || '').toString().trim().toLowerCase()}|||${businessUnit}|||${practice}`;
+
+  if (hasSecondSheet) {
+    const shFirst = secondSheetSource[0] || {};
+    const practiceCol2 = Object.keys(shFirst).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+    const accountNameCol2 = Object.keys(shFirst).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+    const buCol2 = Object.keys(shFirst).find(k => {
+      const t = String(k || '').toLowerCase().replace(/[\s_]/g, '');
+      return t === 'businessunit' || t === 'bussinessunit';
+    }) || 'BUSINESS UNIT';
+    const sentDateCol = Object.keys(shFirst).find(k => {
+      const lower = String(k || '').toLowerCase();
+      return k === 'CSAT SENT DATE' || lower.includes('csat_sent_date') || lower.includes('css_sent_date') || lower.includes('sent date');
+    }) || 'CSAT SENT DATE';
+    const receivedDateCol = Object.keys(shFirst).find(k => {
+      const lower = String(k || '').toLowerCase();
+      return k === 'CSAT RECEIVED DATE' || lower.includes('csat_received_date') || lower.includes('css_received_date') || lower.includes('received date');
+    }) || 'CSAT RECEIVED DATE';
+
+    secondSheetSource.forEach((row) => {
+      const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
+      const custKey = customerId != null ? String(customerId).trim() : '';
+      const accountNameVal = (row[accountNameCol2] ?? row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
+      const businessUnitValRaw = (row[buCol2] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
+      const businessUnitVal = normalizeBUForAccountPractice(businessUnitValRaw) || businessUnitValRaw;
+      const practiceVal = groupPracticeName((row[practiceCol2] ?? row['Practice'] ?? row['PRACTICE'] ?? row['practice'] ?? '').toString().trim());
+
+      if (custKey) {
+        if (accountNameVal && accountNameVal !== 'N/A') accountNameByCustomerId.set(custKey, accountNameVal);
+        if (businessUnitVal && businessUnitVal !== 'N/A') businessUnitByCustomerId.set(custKey, businessUnitVal);
+        if (practiceVal && practiceVal.toLowerCase() !== 'n/a') {
+          const existing = practiceByCustomerId.get(custKey);
+          if (!existing || existing.toLowerCase() === 'n/a') practiceByCustomerId.set(custKey, practiceVal);
+        }
+      }
+
+      if (!practiceVal || practiceVal.toLowerCase() === 'n/a') return;
+      if (!accountNameVal || accountNameVal === 'N/A' || !businessUnitVal || businessUnitVal === 'N/A') return;
+
+      const key = makeKey(customerId, accountNameVal, businessUnitVal, practiceVal);
+      if (!groupPolledResponded[key]) groupPolledResponded[key] = { cssSentCount: 0, cssReceivedCount: 0 };
+      if (!groupMeta[key]) groupMeta[key] = { accountName: accountNameVal, businessUnit: businessUnitVal, practice: practiceVal };
+
+      const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        if (sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqualMMDDYYYY(sentFormatted, csatCycleStartDateFormatted))) {
+          groupPolledResponded[key].cssSentCount++;
+        }
+      }
+      const receivedVal = row[receivedDateCol] ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'] ?? row['CSS RECEIVED DATE'];
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const receivedFormatted = (receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A') ? parseExcelDateToMMDDYYYY(receivedVal) : null;
+      if (isCompletedStatus && (receivedFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqualMMDDYYYY(receivedFormatted, csatCycleStartDateFormatted)))) {
+        groupPolledResponded[key].cssReceivedCount++;
+      }
+    });
+  }
+
+  const groupRatingCounts = {};
+  const ensureRatingCounts = (key) => {
+    if (!groupRatingCounts[key]) groupRatingCounts[key] = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  };
+
+  if (source && Array.isArray(source) && source.length > 0) {
+    const firstRow = source[0] || {};
+    const questionCategoryColumn = Object.keys(firstRow).find(k =>
+      k === 'QUESTION_CATEGORY' || k === 'Question Category' || String(k).toLowerCase().includes('question_category')
+    ) || 'QUESTION_CATEGORY';
+    const practiceCol = Object.keys(firstRow).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
+    const perspectiveCol = Object.keys(firstRow).find(k => k === 'PERSPECTIVE' || String(k).toLowerCase().includes('perspective')) || 'PERSPECTIVE';
+    const ratingColumn = Object.keys(firstRow).find(k => k === 'RATING' || String(k).toLowerCase() === 'rating') || 'RATING';
+    const accountNameCol = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
+    const buCol = Object.keys(firstRow).find(k => {
+      const t = String(k || '').toLowerCase().replace(/[\s_]/g, '');
+      return t === 'businessunit' || t === 'bussinessunit';
+    }) || 'BUSINESS UNIT';
+    const firstSheetSentKey = Object.keys(firstRow).find(k => /csat sent date|css_sent_date|css sent date/i.test(String(k)));
+    const firstSheetReceivedKey = Object.keys(firstRow).find(k => /csat received date|css_received_date|css received date/i.test(String(k)));
+
+    source.forEach((row) => {
+      if (row[questionCategoryColumn] === 'Qualitative Feedback') return;
+      const perspectiveVal = (row[perspectiveCol] ?? row['PERSPECTIVE'] ?? row['Perspective'] ?? '').toString().trim();
+      if (perspectiveVal !== 'Overall Experience') return;
+
+      const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
+      const custKey = customerId != null ? String(customerId).trim() : '';
+      const rawPractice = (row[practiceCol] ?? row['Practice'] ?? row['PRACTICE'] ?? '').toString().trim();
+      const practiceFromSecond = custKey ? (practiceByCustomerId.get(custKey) || '') : '';
+      const practice = groupPracticeName(rawPractice && rawPractice.toLowerCase() !== 'n/a'
+        ? rawPractice
+        : (practiceFromSecond || ''));
+      if (!practice || practice.toLowerCase() === 'n/a') return;
+
+      const rawAccountName = (row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+      const accountName = rawAccountName && rawAccountName.toLowerCase() !== 'n/a'
+        ? rawAccountName
+        : (custKey ? (accountNameByCustomerId.get(custKey) || '') : '');
+      if (!accountName) return;
+
+      const rawBusinessUnit = (row[buCol] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim();
+      const businessUnit = (rawBusinessUnit && rawBusinessUnit.toLowerCase() !== 'n/a')
+        ? (normalizeBUForAccountPractice(rawBusinessUnit) || rawBusinessUnit)
+        : (custKey ? (businessUnitByCustomerId.get(custKey) || '') : '');
+      if (!businessUnit) return;
+
+      const ratingResolved = parseInt(row[ratingColumn] ?? row['RATING'], 10);
+      if (isNaN(ratingResolved) || ratingResolved < 1 || ratingResolved > 5) return;
+
+      if (csatCycleStartDateFormatted) {
+        const sentVal = (firstSheetSentKey ? row[firstSheetSentKey] : null) ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
+        const receivedVal = (firstSheetReceivedKey ? row[firstSheetReceivedKey] : null) ?? row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'];
+        const hasSent = sentVal != null && sentVal !== '' && sentVal !== 'N/A';
+        const hasReceived = receivedVal != null && receivedVal !== '' && receivedVal !== 'N/A';
+        const hasValidSentDate = !hasSent || (parseExcelDateToMMDDYYYY(sentVal) && isDateGreaterThanOrEqualMMDDYYYY(parseExcelDateToMMDDYYYY(sentVal), csatCycleStartDateFormatted));
+        const hasValidReceivedDate = !hasReceived || (parseExcelDateToMMDDYYYY(receivedVal) && isDateGreaterThanOrEqualMMDDYYYY(parseExcelDateToMMDDYYYY(receivedVal), csatCycleStartDateFormatted));
+        if (!hasValidSentDate || !hasValidReceivedDate) return;
+      }
+
+      const key = makeKey(customerId, accountName, businessUnit, practice);
+      ensureRatingCounts(key);
+      groupRatingCounts[key][ratingResolved]++;
+      if (!groupMeta[key]) groupMeta[key] = { accountName, businessUnit, practice };
+    });
+  }
+
+  const allKeys = new Set([...Object.keys(groupPolledResponded), ...Object.keys(groupRatingCounts)]);
+  const detailRows = [...allKeys]
+    .filter(key => {
+      const pr = groupPolledResponded[key] || { cssSentCount: 0, cssReceivedCount: 0 };
+      return !hasSecondSheet || pr.cssSentCount > 0;
+    })
+    .map((key) => {
+      const meta = groupMeta[key] || { accountName: 'N/A', businessUnit: 'N/A', practice: 'N/A' };
+      const pr = groupPolledResponded[key] || { cssSentCount: 0, cssReceivedCount: 0 };
+      const counts = groupRatingCounts[key] || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      const responded = pr.cssReceivedCount || 0;
+      const row = {
+        accountName: meta.accountName,
+        businessUnit: meta.businessUnit,
+        practice: meta.practice,
+        cssSentCount: pr.cssSentCount || 0,
+        cssReceivedCount: responded,
+        ratingCounts: counts
+      };
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((rating) => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+        row[colName] = responded > 0 ? Math.round((counts[rating] / responded) * 1000) / 10 : '-';
+      });
+      return row;
+    });
+
+  // Group detail rows by account (Account Name + Business Unit) to build the "All Practice" roll-up row.
+  const accountGroups = new Map();
+  detailRows.forEach((r) => {
+    const acctKey = `${r.accountName}|||${r.businessUnit}`;
+    if (!accountGroups.has(acctKey)) accountGroups.set(acctKey, []);
+    accountGroups.get(acctKey).push(r);
+  });
+
+  let accountKeys = [...accountGroups.keys()];
+  accountKeys.sort((a, b) => {
+    const [accountNameA, businessUnitA] = a.split('|||');
+    const [accountNameB, businessUnitB] = b.split('|||');
+    const idxA = getBUOrderIndexForAccountPractice(businessUnitA);
+    const idxB = getBUOrderIndexForAccountPractice(businessUnitB);
+    if (idxA !== idxB) return idxA - idxB;
+    return (accountNameA || '').localeCompare(accountNameB || '');
+  });
+
+  const result = [];
+  accountKeys.forEach((acctKey) => {
+    const [accountName, businessUnit] = acctKey.split('|||');
+    const practiceRows = accountGroups.get(acctKey) || [];
+    practiceRows.sort((a, b) => comparePracticeNames(a.practice, b.practice));
+    const polled = practiceRows.reduce((sum, r) => sum + (r.cssSentCount || 0), 0);
+    const responded = practiceRows.reduce((sum, r) => sum + (r.cssReceivedCount || 0), 0);
+    const countByRating = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    practiceRows.forEach((r) => {
+      const c = r.ratingCounts || {};
+      [1, 2, 3, 4, 5].forEach((rt) => { countByRating[rt] += c[rt] || 0; });
+    });
+    const rollup = {
+      accountName,
+      businessUnit,
+      practice: 'All Practices',
+      isRollup: true,
+      cssSentCount: polled,
+      cssReceivedCount: responded,
+      ratingCounts: countByRating
+    };
+    PRACTICE_RATING_DISPLAY_ORDER.forEach((rating) => {
+      const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+      rollup[colName] = responded > 0 ? Math.round((countByRating[rating] / responded) * 1000) / 10 : '-';
+    });
+    result.push(rollup);
+    practiceRows.forEach((r) => result.push(r));
+  });
+
+  let sNo = 0;
+  const finalResult = result.map((r) => {
+    if (r.isRollup) sNo += 1;
+    return { ...r, sNo: r.isRollup ? sNo : '' };
+  });
+
+  return { data: finalResult };
+};
+
+// Fixed display order + membership for the 10 named Top10 accounts, used by the
+// "Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10" view (NOT alphabetical).
+// Sourced from a single shared config (utils/top10Accounts.js) so the roster only needs
+// updating in one place.
+const TOP10_FIXED_ACCOUNT_ORDER = TOP10_ACCOUNT_ORDER;
+const normalizeAccountNameForTop10Order = normalizeTop10AccountName;
+const getTop10FixedOrderIndex = getTop10AccountOrderIndexShared;
+
+// Account/Practice-wise Overall CSAT score distribution restricted to Top10 accounts only, for the
+// "Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10" view. Reuses buildAccountPracticeWiseDistributionData
+// for all Polled/Responded/PERSPECTIVE="Overall Experience" rating-count rules, then:
+//  - filters to accounts flagged TYPE OF ACCOUNT = "Top 10" / "Y" in secondSheetSource (same detection used by the
+//    file's pre-existing showTop10 view), always including the 10 fixed named accounts;
+//  - orders Top10 accounts by the fixed name order first, then any extra flagged accounts by BU order + alphabetical;
+//  - appends 5 dynamically-computed summary rows: "Top 10 Accounts", "Top 10 <Practice>" (one per distinct practice
+//    found among Top10 accounts), "Other Accounts NR", "Other Accounts <Practice>" (one per distinct practice found
+//    among non-Top10 accounts), "Overall NR" (Top10 + Other combined — this IS the grand total row for this view).
+// Rating % values are rounded to the NEAREST WHOLE PERCENT (no decimals), per this view's own formatting spec.
+const buildAccountPracticeWiseTop10DistributionData = (source, secondSheetSource, csatCycleStartDateFormatted) => {
+  const base = buildAccountPracticeWiseDistributionData(source, secondSheetSource, csatCycleStartDateFormatted);
+  const allRows = (base.data || []).map((r) => {
+    const row = { ...r };
+    // Re-round every rating % column to a whole percent (base builder rounds to 1 decimal).
+    PRACTICE_RATING_DISPLAY_ORDER.forEach((rating) => {
+      const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+      const v = row[colName];
+      row[colName] = (v == null || v === '-' || Number.isNaN(Number(v))) ? '-' : Math.round(Number(v));
+    });
+    return row;
+  });
+
+  // Top 10 membership is defined SOLELY by the fixed named-account list, not by the uploaded data's
+  // TYPE OF ACCOUNT / "Top 10" flag � that flag can be stale (e.g. still marking a previously-Top10
+  // account that has since been replaced). The fixed list below is the single source of truth.
+  const top10NameSet = new Set(TOP10_FIXED_ACCOUNT_ORDER.map(normalizeAccountNameForTop10Order));
+
+  const isTop10Row = (r) => top10NameSet.has(normalizeAccountNameForTop10Order(r.accountName));
+  const top10Rows = allRows.filter(isTop10Row);
+  const otherRows = allRows.filter(r => !isTop10Row(r));
+
+  const accountKeyOf = (r) => `${r.accountName}|||${r.businessUnit}`;
+  const top10AccountKeys = [];
+  top10Rows.forEach((r) => {
+    const k = accountKeyOf(r);
+    if (!top10AccountKeys.includes(k)) top10AccountKeys.push(k);
+  });
+  top10AccountKeys.sort((a, b) => {
+    const [nameA, buA] = a.split('|||');
+    const [nameB, buB] = b.split('|||');
+    const ia = getTop10FixedOrderIndex(nameA);
+    const ib = getTop10FixedOrderIndex(nameB);
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    const buIa = getBUOrderIndexForAccountPractice(buA);
+    const buIb = getBUOrderIndexForAccountPractice(buB);
+    if (buIa !== buIb) return buIa - buIb;
+    return (nameA || '').localeCompare(nameB || '');
+  });
+
+  const top10RowsByAccount = new Map();
+  top10Rows.forEach((r) => {
+    const k = accountKeyOf(r);
+    if (!top10RowsByAccount.has(k)) top10RowsByAccount.set(k, []);
+    top10RowsByAccount.get(k).push(r);
+  });
+
+  const orderedTop10Rows = [];
+  let sNo = 0;
+  top10AccountKeys.forEach((k) => {
+    const rowsForAccount = top10RowsByAccount.get(k) || [];
+    rowsForAccount.forEach((r) => {
+      if (r.isRollup) sNo += 1;
+      orderedTop10Rows.push({ ...r, sNo: r.isRollup ? sNo : '' });
+    });
+  });
+
+  // --- Summary tiers (dynamically computed from the data; NO decimal % values) ---
+  const poolRatingCounts = (rows) => {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    rows.forEach((r) => {
+      const c = r.ratingCounts || {};
+      [1, 2, 3, 4, 5].forEach((rt) => { counts[rt] += c[rt] || 0; });
+    });
+    return counts;
+  };
+  const buildSummaryRow = (label, rows, extra = {}) => {
+    const polled = rows.reduce((sum, r) => sum + (r.cssSentCount || 0), 0);
+    const responded = rows.reduce((sum, r) => sum + (r.cssReceivedCount || 0), 0);
+    const counts = poolRatingCounts(rows);
+    const row = {
+      accountName: label,
+      businessUnit: '',
+      practice: '',
+      isSummaryRow: true,
+      isRollup: true,
+      cssSentCount: polled,
+      cssReceivedCount: responded,
+      ratingCounts: counts,
+      sNo: '',
+      ...extra
+    };
+    PRACTICE_RATING_DISPLAY_ORDER.forEach((rating) => {
+      const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+      row[colName] = responded > 0 ? Math.round((counts[rating] / responded) * 100) : '-';
+    });
+    return row;
+  };
+
+  const top10DetailRows = top10Rows.filter(r => !r.isRollup);
+  const otherDetailRows = otherRows.filter(r => !r.isRollup);
+  const top10RollupRows = top10Rows.filter(r => r.isRollup);
+  const otherRollupRows = otherRows.filter(r => r.isRollup);
+
+  const sortPractices = (rows) => [...new Set(rows.map(r => r.practice))].sort(comparePracticeNames);
+  const top10Practices = sortPractices(top10DetailRows);
+  const otherPractices = sortPractices(otherDetailRows);
+
+  const summaryRows = [];
+  summaryRows.push(buildSummaryRow('Top 10 Accounts', top10RollupRows, { summaryTier: 'top10-total', rowColor: '#FFF2CC' }));
+  top10Practices.forEach((practice) => {
+    summaryRows.push(buildSummaryRow(`Top 10 ${practice}`, top10DetailRows.filter(r => r.practice === practice), { summaryTier: 'top10-practice', rowColor: '#FFF9E6' }));
+  });
+  summaryRows.push(buildSummaryRow('Other Accounts NR', otherRollupRows, { summaryTier: 'other-total', rowColor: '#BDD7EE' }));
+  otherPractices.forEach((practice) => {
+    summaryRows.push(buildSummaryRow(`Other Accounts ${practice}`, otherDetailRows.filter(r => r.practice === practice), { summaryTier: 'other-practice', rowColor: '#DCE9F5' }));
+  });
+  summaryRows.push(buildSummaryRow('Overall NR', [...top10RollupRows, ...otherRollupRows], { summaryTier: 'overall', rowColor: '#E4DFEC' }));
+
+  return { data: [...orderedTop10Rows, ...summaryRows], detailData: orderedTop10Rows, summaryData: summaryRows };
+};
 
 const getTrendFilePracticeSheets = (file) => {
   if (!file?.sheets) return { sheet1: [], sheet2: [] };
@@ -335,8 +746,8 @@ const DashboardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.85rem 1.25rem;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.9rem;
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border-radius: 12px;
@@ -345,18 +756,18 @@ const DashboardHeader = styled.div`
 
 const HeaderTitle = styled.h1`
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 `;
 
 const BackButton = styled.button`
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -454,6 +865,8 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
   const [showTop10, setShowTop10] = useState(false);
   const [showTrendAnalysis, setShowTrendAnalysis] = useState(false);
   const [showPracticeWise, setShowPracticeWise] = useState(false);
+  const [showAccountPracticeWise, setShowAccountPracticeWise] = useState(false);
+  const [showAccountPracticeWiseTop10, setShowAccountPracticeWiseTop10] = useState(false);
   const [practiceFileReceivedData, setPracticeFileReceivedData] = useState(null);
   const [practiceFileSheet2Data, setPracticeFileSheet2Data] = useState(null);
   const [businessUnitFilter, setBusinessUnitFilter] = useState('');
@@ -678,9 +1091,10 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     }) || 'CSAT RECEIVED DATE';
     const groups = {};
     sheetData.forEach(row => {
-      const typeVal = (row[typeOfAccountCol] ?? row['TYPE OF ACCOUNT'] ?? row['Top 10'] ?? '').toString().trim();
-      if (typeVal !== 'Top 10' && typeVal.toUpperCase() !== 'Y') return;
       const accountName = (row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
+      // Top 10 membership is defined solely by the shared, curated account list — not by this
+      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+      if (!isTop10AccountName(accountName)) return;
       const buRaw = (row[buCol] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnit = normalizeBU(buRaw) || 'N/A';
       const sentDateFormatted = parseExcelDateToMMDDYYYY(row[sentCol]);
@@ -696,20 +1110,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       .filter(g => g.polled > 0 || g.responded > 0)
       .map(g => ({ accountName: g.accountName, businessUnit: g.businessUnit, polled: g.polled, responded: g.responded }));
     // Same fixed account order as the Top 10 Accounts table (Premier first)
-    const top10FixedOrder = [
-      'Premier Healthcare Solutions Inc',
-      'Blue Cross Blue Shield Association BCBSA',
-      'Frontier Airlines INC',
-      'Premier - Horizon II - Covenant Health',
-      'Tufts Medicine',
-      'BronxCare Health System',
-      'AgFirst Farm Credit Bank',
-      'embecta MEDICAL II LLC',
-      'Northern Trust Company',
-      'Jewish Board of Family and Childrens Services JBFCS',
-      'Healthfirst',
-      'AgileOne'
-    ];
+    const top10FixedOrder = TOP10_ACCOUNT_ORDER;
     const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
     rows.sort((a, b) => {
       const idxA = top10FixedOrder.findIndex(n => normalizeForOrder(n) === normalizeForOrder(a.accountName));
@@ -1080,6 +1481,13 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       return out;
     });
   }, [trendTop10SentReceivedData, trendTop10RatingCounts]);
+
+  // Footnote: which fixed Top10 roster accounts had zero Polled (or were absent) in the uploaded trend file,
+  // for the "Trend Analysis – CSAT received Report (Top 10)" table.
+  const trendTop10NotPolledNote = useMemo(
+    () => buildTop10NotPolledNote(trendTop10TableData.map(r => ({ accountName: r.accountName, cssSentCount: r.polled || 0 }))),
+    [trendTop10TableData]
+  );
 
   // Merge Other Accounts trend sent/received with rating %: same structure as trendTop10TableData.
   const trendOtherAccountsTableData = useMemo(() => {
@@ -1499,10 +1907,12 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     if (!excelData?.secondSheetData?.length) return { top10, other };
     excelData.secondSheetData.forEach(row => {
       const custId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-      const typeVal = (row['TYPE OF ACCOUNT'] ?? row['Top 10'] ?? '').toString().trim();
       if (!custId) return;
-      if (typeVal === 'Top 10' || typeVal.toUpperCase() === 'Y') top10.add(custId.toString());
-      else if (typeVal === '' || /^n\/a$/i.test(typeVal) || typeVal === 'NA' || typeVal == null) other.add(custId.toString());
+      // Top 10 membership is defined solely by the shared, curated account list — not by this
+      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+      const accountNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+      if (isTop10AccountName(accountNameForTop10)) top10.add(custId.toString());
+      else other.add(custId.toString());
     });
     return { top10, other };
   }, [excelData?.secondSheetData]);
@@ -1758,13 +2168,15 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     if (excelData && excelData.secondSheetData && showTop10) {
       excelData.secondSheetData.forEach(row => {
         const custId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-        const typeOfAccountVal = (row['TYPE OF ACCOUNT'] ?? row['Top 10'] ?? '').toString().trim();
-        const isTop10 = typeOfAccountVal === 'Top 10' || typeOfAccountVal.toUpperCase() === 'Y';
+        // Top 10 membership is defined solely by the shared, curated account list — not by this
+        // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+        const accountNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+        const isTop10 = isTop10AccountName(accountNameForTop10);
 
         if (custId) {
           if (isTop10) {
             top10CustomerIds.add(custId.toString());
-          } else if (typeOfAccountVal === '' || typeOfAccountVal === 'NA' || typeOfAccountVal === null) {
+          } else {
             otherAccountCustomerIds.add(custId.toString());
           }
         }
@@ -3464,20 +3876,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
 
     // Top 10: order = Top 10 account rows (Sr.No. 1–12), then "Top 10 Accounts" grand total row, then "Other Accounts" (no Sr.No.), then "Overall"
     if (showTop10 && !showBuWise) {
-      const top10Order = [
-        'Premier Healthcare Solutions Inc',
-        'Blue Cross Blue Shield Association BCBSA',
-        'Frontier Airlines INC',
-        'Premier - Horizon II - Covenant Health',
-        'Tufts Medicine',
-        'BronxCare Health System',
-        'AgFirst Farm Credit Bank',
-        'embecta MEDICAL II LLC',
-        'Northern Trust Company',
-        'Jewish Board of Family and Childrens Services JBFCS',
-        'Healthfirst',
-        'AgileOne'
-      ];
+      const top10Order = TOP10_ACCOUNT_ORDER;
       const otherAccountRow = filtered.find(r => (r.customerName || '') === 'Other Accounts');
       const top10Rows = filtered.filter(r => (r.customerName || '') !== 'Other Accounts');
       const normalizeForOrder = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
@@ -3510,6 +3909,16 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
 
     return filtered;
   }, [processedData.data, showBuWise, businessUnitFilter, customerNameSearch, showTop10]);
+
+  // Footnote: which fixed Top10 roster accounts had zero Polled (or were absent) in processedData.data,
+  // for the "Top 10 account - Overall CSAT score -Distribution" table above (uses customerName/cssSentCount
+  // instead of accountName/cssSentCount like the Account/Practice-wise-Top10 view, so map the field first).
+  const top10AccountsNotPolledNote = useMemo(() => {
+    const top10CustomerRows = (processedData.data || [])
+      .filter(r => isTop10AccountName(r.customerName))
+      .map(r => ({ accountName: r.customerName, cssSentCount: r.cssSentCount || 0 }));
+    return buildTop10NotPolledNote(top10CustomerRows);
+  }, [processedData.data]);
 
   // Org level row for BU-wise distribution: use raw counts when provided (buWiseOrgLevelCounts) for correct 1-decimal; else recompute from row percentages.
   const computeBUWiseDistributionOrgRow = (data, buWiseOrgLevelCounts) => {
@@ -3785,9 +4194,8 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
       if (sortConfig.key === 'practice') {
-        const ia = getPracticeOrderIndex(aVal);
-        const ib = getPracticeOrderIndex(bVal);
-        if (ia !== ib) return sortConfig.direction === 'asc' ? ia - ib : ib - ia;
+        const cmp = comparePracticeNames(aVal, bVal);
+        if (cmp !== 0) return sortConfig.direction === 'asc' ? cmp : -cmp;
       }
       if (aVal === '-') return sortConfig.direction === 'asc' ? 1 : -1;
       if (bVal === '-') return sortConfig.direction === 'asc' ? -1 : 1;
@@ -3804,27 +4212,249 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
   const practiceWiseSortedData = getPracticeWiseSortedData(practiceWiseProcessedData.data || []);
   const practiceWiseTrendSortedData = getPracticeWiseSortedData(practiceWiseTrendData.data || []);
 
+  // Account/Practice-wise Overall CSAT score distribution: same source data as Practice-wise, grouped by
+  // Business Unit -> Account Name -> Practice, with an "All Practice" bold roll-up row per account.
+  const accountPracticeWiseProcessedData = useMemo(() => {
+    const source = (practiceFileReceivedData && practiceFileReceivedData.length > 0)
+      ? practiceFileReceivedData
+      : (uploadedData && uploadedData.length > 0 ? uploadedData : (excelData?.data && Array.isArray(excelData.data) ? excelData.data : null));
+    const secondSheet = (practiceFileSheet2Data && practiceFileSheet2Data.length > 0)
+      ? practiceFileSheet2Data
+      : (excelData?.secondSheetData && Array.isArray(excelData.secondSheetData) ? excelData.secondSheetData : null);
+    if ((!source || source.length === 0) && (!secondSheet || secondSheet.length === 0)) {
+      return { data: [], dataSource: 'none' };
+    }
+    const { source: filteredSource, secondSheetSource: filteredSecondSheet } = filterSheetsByBusinessUnit(source, secondSheet, businessUnitFilter);
+    const built = buildAccountPracticeWiseDistributionData(filteredSource, filteredSecondSheet, csatCycleStartDateFormatted);
+    const fromFile = (practiceFileReceivedData && practiceFileReceivedData.length > 0)
+      || (practiceFileSheet2Data && practiceFileSheet2Data.length > 0);
+    return {
+      ...built,
+      dataSource: fromFile ? 'file' : 'uploaded'
+    };
+  }, [practiceFileReceivedData, practiceFileSheet2Data, uploadedData, excelData, csatCycleStartDateFormatted, businessUnitFilter]);
+
+  const accountPracticeWiseGrandTotal = useMemo(() => {
+    // Grand Total must count each account only once (use the "All Practice" roll-up rows) to avoid double counting.
+    const rows = (accountPracticeWiseProcessedData.data || []).filter(r => r.isRollup);
+    const polled = rows.reduce((sum, row) => sum + (row.cssSentCount || 0), 0);
+    const responded = rows.reduce((sum, row) => sum + (row.cssReceivedCount || 0), 0);
+    const countByRating = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    rows.forEach((row) => {
+      const counts = row.ratingCounts || {};
+      [1, 2, 3, 4, 5].forEach((r) => {
+        countByRating[r] += counts[r] || 0;
+      });
+    });
+    const ratingPct = {};
+    PRACTICE_RATING_DISPLAY_ORDER.forEach((rating) => {
+      const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+      ratingPct[colName] = responded > 0
+        ? Math.round((countByRating[rating] / responded) * 1000) / 10
+        : '-';
+    });
+    return { polled, responded, ...ratingPct };
+  }, [accountPracticeWiseProcessedData.data]);
+
+  const accountPracticeWiseTrendData = useMemo(() => {
+    if (!showAccountPracticeWise || !showTrendAnalysis) {
+      return { data: [], sourceName: '', error: null };
+    }
+    if (!csatCycleStartDateFormatted) {
+      return { data: [], sourceName: '', error: 'CSAT cycle start date is required for trend analysis.' };
+    }
+    const h12025File = findH12025TrendFile(trendAnalysisFiles);
+    if (!h12025File) {
+      return {
+        data: [],
+        sourceName: '',
+        error: 'Upload "Trend-Analysis-H12025.xlsx" in "Upload data for trend analysis" to view trend data.'
+      };
+    }
+    const { sheet1, sheet2 } = getTrendFilePracticeSheets(h12025File);
+    const sourceName = h12025File.saveName || h12025File.originalName || 'Trend-Analysis-H12025.xlsx';
+    if (!sheet1.length && !sheet2.length) {
+      return {
+        data: [],
+        sourceName,
+        error: 'No data found in trend file sheets "CSAT received Report" or "CSAT sent and received Report".'
+      };
+    }
+    const built = buildAccountPracticeWiseDistributionData(sheet1, sheet2, csatCycleStartDateFormatted);
+    return {
+      data: built.data || [],
+      sourceName,
+      error: (built.data || []).length === 0 ? 'No account/practice rows with date ≥ CSAT cycle start in trend file.' : null
+    };
+  }, [showAccountPracticeWise, showTrendAnalysis, trendAnalysisFiles, csatCycleStartDateFormatted]);
+
+  const accountPracticeWiseTrendGrandTotal = useMemo(() => {
+    const rows = (accountPracticeWiseTrendData.data || []).filter(r => r.isRollup);
+    const polled = rows.reduce((sum, row) => sum + (row.cssSentCount || 0), 0);
+    const responded = rows.reduce((sum, row) => sum + (row.cssReceivedCount || 0), 0);
+    const countByRating = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    rows.forEach((row) => {
+      const counts = row.ratingCounts || {};
+      [1, 2, 3, 4, 5].forEach((r) => {
+        countByRating[r] += counts[r] || 0;
+      });
+    });
+    const ratingPct = {};
+    PRACTICE_RATING_DISPLAY_ORDER.forEach((rating) => {
+      const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+      ratingPct[colName] = responded > 0
+        ? Math.round((countByRating[rating] / responded) * 1000) / 10
+        : '-';
+    });
+    return { polled, responded, ...ratingPct };
+  }, [accountPracticeWiseTrendData.data]);
+
+  // Trend lookup keyed by Account Name + Business Unit + Practice (case-insensitive), so each dashboard row
+  // (including the "All Practice" roll-up, keyed by practice === 'All Practice') can find its trend counterpart.
+  const accountPracticeWiseTrendByKey = useMemo(() => {
+    const m = {};
+    (accountPracticeWiseTrendData.data || []).forEach((r) => {
+      const key = `${String(r.accountName || '').trim().toLowerCase()}|||${String(r.businessUnit || '').trim().toLowerCase()}|||${String(r.practice || '').trim().toLowerCase()}`;
+      m[key] = r;
+    });
+    return m;
+  }, [accountPracticeWiseTrendData.data]);
+
+  const getAccountPracticeTrendKey = (row) =>
+    `${String(row.accountName || '').trim().toLowerCase()}|||${String(row.businessUnit || '').trim().toLowerCase()}|||${String(row.practice || '').trim().toLowerCase()}`;
+
+  const accountPracticeWiseSortedData = accountPracticeWiseProcessedData.data || [];
+  const accountPracticeWiseTrendSortedData = accountPracticeWiseTrendData.data || [];
+
+  // --- Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10 view ---
+  const accountPracticeWiseTop10ProcessedData = useMemo(() => {
+    const source = (practiceFileReceivedData && practiceFileReceivedData.length > 0)
+      ? practiceFileReceivedData
+      : (uploadedData && uploadedData.length > 0 ? uploadedData : (excelData?.data && Array.isArray(excelData.data) ? excelData.data : null));
+    const secondSheet = (practiceFileSheet2Data && practiceFileSheet2Data.length > 0)
+      ? practiceFileSheet2Data
+      : (excelData?.secondSheetData && Array.isArray(excelData.secondSheetData) ? excelData.secondSheetData : null);
+    if ((!source || source.length === 0) && (!secondSheet || secondSheet.length === 0)) {
+      return { data: [], detailData: [], summaryData: [], dataSource: 'none' };
+    }
+    const built = buildAccountPracticeWiseTop10DistributionData(source, secondSheet, csatCycleStartDateFormatted);
+    const fromFile = (practiceFileReceivedData && practiceFileReceivedData.length > 0)
+      || (practiceFileSheet2Data && practiceFileSheet2Data.length > 0);
+    return { ...built, dataSource: fromFile ? 'file' : 'uploaded' };
+  }, [practiceFileReceivedData, practiceFileSheet2Data, uploadedData, excelData, csatCycleStartDateFormatted]);
+
+  // "Overall NR" row IS the grand total for this view (Top10 + Other Accounts combined).
+  const accountPracticeWiseTop10GrandTotal = useMemo(() => {
+    const overall = (accountPracticeWiseTop10ProcessedData.summaryData || []).find(r => r.summaryTier === 'overall');
+    return overall || { cssSentCount: 0, cssReceivedCount: 0 };
+  }, [accountPracticeWiseTop10ProcessedData.summaryData]);
+
+  // Footnote: which fixed Top10 roster accounts had zero Polled (or were absent) in the current-cycle data,
+  // and were therefore effectively replaced by other accounts in the Top10 rollup above.
+  const accountPracticeWiseTop10NotPolledNote = useMemo(
+    () => buildTop10NotPolledNote((accountPracticeWiseTop10ProcessedData.detailData || []).filter(r => r.isRollup)),
+    [accountPracticeWiseTop10ProcessedData.detailData]
+  );
+
+  // "Last cycle" data source for both (a) the H2-vs-H1 trend diff columns on the current-cycle table, and
+  // (b) the "Last year PCSAT % for 1,2,3,4,5 rating" second table — this file has no separate last-cycle API,
+  // so (consistent with how showAccountPracticeWise's trend analysis already works) we reuse the uploaded
+  // "Trend-Analysis-H12025.xlsx" comparison file as the last-cycle source. Not gated by showTrendAnalysis so the
+  // second table can render even when the H2-vs-H1 toggle is off.
+  const accountPracticeWiseTop10TrendData = useMemo(() => {
+    if (!showAccountPracticeWiseTop10) return { data: [], detailData: [], summaryData: [], sourceName: '', error: null };
+    if (!csatCycleStartDateFormatted) {
+      return { data: [], detailData: [], summaryData: [], sourceName: '', error: 'CSAT cycle start date is required for last cycle PCSAT data.' };
+    }
+    const h12025File = findH12025TrendFile(trendAnalysisFiles);
+    if (!h12025File) {
+      return {
+        data: [], detailData: [], summaryData: [], sourceName: '',
+        error: 'Upload "Trend-Analysis-H12025.xlsx" in "Upload data for trend analysis" to view last cycle PCSAT data.'
+      };
+    }
+    const { sheet1, sheet2 } = getTrendFilePracticeSheets(h12025File);
+    const sourceName = h12025File.saveName || h12025File.originalName || 'Trend-Analysis-H12025.xlsx';
+    if (!sheet1.length && !sheet2.length) {
+      return { data: [], detailData: [], summaryData: [], sourceName, error: 'No data found in trend file sheets "CSAT received Report" or "CSAT sent and received Report".' };
+    }
+    const built = buildAccountPracticeWiseTop10DistributionData(sheet1, sheet2, csatCycleStartDateFormatted);
+    return {
+      ...built,
+      sourceName,
+      error: (built.data || []).length === 0 ? 'No account/practice rows with date ≥ CSAT cycle start in trend file.' : null
+    };
+  }, [showAccountPracticeWiseTop10, trendAnalysisFiles, csatCycleStartDateFormatted]);
+
+  const accountPracticeWiseTop10TrendGrandTotal = useMemo(() => {
+    const overall = (accountPracticeWiseTop10TrendData.summaryData || []).find(r => r.summaryTier === 'overall');
+    return overall || { cssSentCount: 0, cssReceivedCount: 0 };
+  }, [accountPracticeWiseTop10TrendData.summaryData]);
+
+  // Same footnote as accountPracticeWiseTop10NotPolledNote, computed against the last-cycle (trend file) data
+  // instead, for the "Last year PCSAT %" Top10 table below.
+  const accountPracticeWiseTop10TrendNotPolledNote = useMemo(
+    () => buildTop10NotPolledNote((accountPracticeWiseTop10TrendData.detailData || []).filter(r => r.isRollup)),
+    [accountPracticeWiseTop10TrendData.detailData]
+  );
+
+  const getAccountPracticeTop10TrendKey = (row) => row.isSummaryRow
+    ? `summary|||${row.accountName}`
+    : `${String(row.accountName || '').trim().toLowerCase()}|||${String(row.businessUnit || '').trim().toLowerCase()}|||${String(row.practice || '').trim().toLowerCase()}`;
+
+  const accountPracticeWiseTop10TrendByKey = useMemo(() => {
+    const m = {};
+    (accountPracticeWiseTop10TrendData.data || []).forEach((r) => {
+      m[getAccountPracticeTop10TrendKey(r)] = r;
+    });
+    return m;
+  }, [accountPracticeWiseTop10TrendData.data]);
+
+  const accountPracticeWiseTop10SortedData = accountPracticeWiseTop10ProcessedData.data || [];
+  const accountPracticeWiseTop10TrendSortedData = accountPracticeWiseTop10TrendData.data || [];
+
   const handlePracticeWiseClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setShowBuWise(false);
     setShowTop10(false);
     setShowPracticeWise(true);
+    setShowAccountPracticeWise(false);
+    setShowAccountPracticeWiseTop10(false);
     setSortConfig({ key: null, direction: 'asc' });
   };
 
-  const handleBackToAccountBuDistributionDashboard = () => {
+  const handleAccountPracticeWiseClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowBuWise(false);
+    setShowTop10(false);
     setShowPracticeWise(false);
+    setShowAccountPracticeWise(true);
+    setShowAccountPracticeWiseTop10(false);
+    setSortConfig({ key: null, direction: 'asc' });
+  };
+
+  const handleAccountPracticeWiseTop10Click = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowBuWise(false);
+    setShowTop10(false);
+    setShowPracticeWise(false);
+    setShowAccountPracticeWise(false);
+    setShowAccountPracticeWiseTop10(true);
     setSortConfig({ key: null, direction: 'asc' });
   };
 
   const hasPcsatDashboardData = (uploadedData && uploadedData.length > 0)
     || (excelData?.data && Array.isArray(excelData.data) && excelData.data.length > 0);
 
-  const showHeaderNavButtons = hasPcsatDashboardData || showPracticeWise;
+  const showHeaderNavButtons = hasPcsatDashboardData || showPracticeWise || showAccountPracticeWise || showAccountPracticeWiseTop10 || showAccountPracticeWiseTop10;
   const showPracticeWiseButton = hasPcsatDashboardData
     || (practiceFileReceivedData && practiceFileReceivedData.length > 0)
     || (practiceFileSheet2Data && practiceFileSheet2Data.length > 0);
+  const showAccountPracticeWiseButton = showPracticeWiseButton;
+  const showAccountPracticeWiseTop10Button = showPracticeWiseButton;
 
   const downloadPracticeWiseDistributionData = async () => {
     try {
@@ -4063,6 +4693,355 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     } catch (err) {
       console.error('Practice-wise trend Excel export error:', err);
       alert('Failed to export practice-wise trend data to Excel.');
+    }
+  };
+
+  const buildAccountPracticeWiseExcelHeaders = () => ([
+    'Sr. No.',
+    'Business Unit',
+    'Account Name',
+    'Practice',
+    'Polled',
+    'Responded',
+    ...PRACTICE_RATING_DISPLAY_ORDER.map(r => PRACTICE_RATING_COLUMN_NAMES[r])
+  ]);
+
+  const addAccountPracticeWiseExcelRow = (worksheet, row, excelRatingColors, trendRow, showTrend, formatTrendFn) => {
+    const responded = row.cssReceivedCount ?? 0;
+    const isHyphen = responded === 0;
+    const base = [
+      row.sNo ?? '',
+      normalizeBUDisplay(row.businessUnit),
+      row.accountName,
+      row.practice,
+      row.cssSentCount ?? 0,
+      row.cssReceivedCount ?? 0,
+      ...PRACTICE_RATING_DISPLAY_ORDER.map(r => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[r];
+        return isHyphen ? '-' : (row[colName] ?? '-');
+      })
+    ];
+    if (showTrend) {
+      base.push(...PRACTICE_RATING_DISPLAY_ORDER.map((r) => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[r];
+        if (isHyphen) return '-';
+        return formatTrendFn(row[colName], trendRow ? trendRow[colName] : null);
+      }));
+    }
+    const dataRow = worksheet.addRow(base);
+    const isBold = !!row.isRollup;
+    dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+    dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+    dataRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+    dataRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+    dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+    dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+    if (isBold) dataRow.font = { bold: true };
+    PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+      const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+      const val = isHyphen ? '-' : (row[colName] ?? '-');
+      const cell = dataRow.getCell(colIndex + 7);
+      cell.value = (val === '-' || val == null) ? '-' : `${val}%`;
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      if (val !== '-' && !Number.isNaN(Number(val))) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
+        cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
+      } else if (isBold) {
+        cell.font = { bold: true };
+      }
+    });
+    if (showTrend) {
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+        const cell = dataRow.getCell(colIndex + 12);
+        const val = cell.value != null ? String(cell.value) : '';
+        if (val.includes('↑')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
+        else if (val.includes('↓')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
+        else if (isBold) cell.font = { bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      });
+    }
+  };
+
+  const downloadAccountPracticeWiseDistributionData = async () => {
+    try {
+      const rows = accountPracticeWiseSortedData || [];
+      if (!rows.length) {
+        alert('No Account/Practice-wise data available to download');
+        return;
+      }
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Account-Practice wise Distribution');
+      const excelRatingColors = { 1: 'FFDC2626', 2: 'FFFCA5A5', 3: 'FFF59E0B', 4: 'FF86EFAC', 5: 'FF16A34A' };
+
+      if (showTrendAnalysis) {
+        const row1 = ['Sr. No.', 'Business Unit', 'Account Name', 'Practice', (acsatCycle || 'H2 2025'), '', '', '', '', '', ''];
+        row1.push(trendHeaderLabel, '', '', '', '');
+        const headerRow1 = worksheet.addRow(row1);
+        headerRow1.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+        worksheet.mergeCells(1, 5, 1, 11);
+        worksheet.mergeCells(1, 12, 1, 16);
+        headerRow1.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+        headerRow1.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+        headerRow1.getCell(12).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } };
+        headerRow1.getCell(12).font = { bold: true, color: { argb: 'FF000000' } };
+        const row2Headers = [
+          'Sr. No.', 'Business Unit', 'Account Name', 'Practice', 'Polled', 'Responded',
+          ...PRACTICE_RATING_DISPLAY_ORDER.map(r => PRACTICE_RATING_COLUMN_NAMES[r]),
+          ...PRACTICE_RATING_DISPLAY_ORDER.map(r => PRACTICE_RATING_COLUMN_NAMES[r])
+        ];
+        const headerRow2 = worksheet.addRow(row2Headers);
+        headerRow2.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+        headerRow2.eachCell((cell, colNumber) => {
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          if (colNumber >= 12) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } };
+            cell.font = { bold: true, color: { argb: 'FF000000' } };
+          }
+        });
+        worksheet.mergeCells(1, 1, 2, 1);
+        worksheet.mergeCells(1, 2, 2, 2);
+        worksheet.mergeCells(1, 3, 2, 3);
+        worksheet.mergeCells(1, 4, 2, 4);
+      } else {
+        const headerRow = worksheet.addRow(buildAccountPracticeWiseExcelHeaders());
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+        headerRow.eachCell((cell) => {
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        });
+      }
+
+      rows.forEach((row) => {
+        const trendRow = accountPracticeWiseTrendByKey[getAccountPracticeTrendKey(row)];
+        addAccountPracticeWiseExcelRow(worksheet, row, excelRatingColors, trendRow, showTrendAnalysis, formatPracticeTrendDiffExcel);
+      });
+
+      const grandTotalBase = ['', 'Grand Total', '', '', accountPracticeWiseGrandTotal.polled, accountPracticeWiseGrandTotal.responded];
+      const grandTotalRow = worksheet.addRow(grandTotalBase);
+      grandTotalRow.font = { bold: true };
+      grandTotalRow.eachCell((cell) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+      grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+        const val = accountPracticeWiseGrandTotal.responded === 0 ? '-' : (accountPracticeWiseGrandTotal[colName] ?? '-');
+        const cell = grandTotalRow.getCell(colIndex + 7);
+        cell.value = val === '-' ? '-' : `${val}%`;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (val !== '-' && !Number.isNaN(Number(val))) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
+          cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
+        } else {
+          cell.font = { bold: true };
+        }
+      });
+      if (showTrendAnalysis) {
+        PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+          const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+          const cell = grandTotalRow.getCell(colIndex + 12);
+          const display = formatPracticeTrendDiffExcel(accountPracticeWiseGrandTotal[colName], accountPracticeWiseTrendGrandTotal[colName]);
+          cell.value = display;
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          if (display.includes('↑')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
+          else if (display.includes('↓')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
+          else cell.font = { bold: true };
+        });
+      }
+
+      worksheet.getColumn(1).width = 8;
+      worksheet.getColumn(2).width = 16;
+      worksheet.getColumn(3).width = 28;
+      worksheet.getColumn(4).width = 22;
+      worksheet.getColumn(5).width = 10;
+      worksheet.getColumn(6).width = 12;
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((_, i) => { worksheet.getColumn(i + 7).width = 18; });
+      if (showTrendAnalysis) {
+        PRACTICE_RATING_DISPLAY_ORDER.forEach((_, i) => { worksheet.getColumn(i + 12).width = 18; });
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_Practice_wise_Overall_CSAT_Score_Distribution_${csatCycleStartDateFormatted || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Account/Practice-wise distribution Excel export error:', err);
+      alert('Failed to export Account/Practice-wise distribution data to Excel.');
+    }
+  };
+
+  const downloadAccountPracticeWiseTrendData = async () => {
+    try {
+      const rows = accountPracticeWiseTrendSortedData || [];
+      if (!rows.length) {
+        alert('No Account/Practice-wise trend data available to download');
+        return;
+      }
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Account-Practice wise Trend');
+      const excelRatingColors = { 1: 'FFDC2626', 2: 'FFFCA5A5', 3: 'FFF59E0B', 4: 'FF86EFAC', 5: 'FF16A34A' };
+      const headerRow = worksheet.addRow(buildAccountPracticeWiseExcelHeaders());
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+      headerRow.eachCell((cell) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      });
+
+      rows.forEach((row) => {
+        addAccountPracticeWiseExcelRow(worksheet, row, excelRatingColors, null, false, null);
+      });
+
+      const grandTotalRow = worksheet.addRow(['', 'Grand Total', '', '', accountPracticeWiseTrendGrandTotal.polled, accountPracticeWiseTrendGrandTotal.responded]);
+      grandTotalRow.font = { bold: true };
+      grandTotalRow.eachCell((cell) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+      grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+        const val = accountPracticeWiseTrendGrandTotal.responded === 0 ? '-' : (accountPracticeWiseTrendGrandTotal[colName] ?? '-');
+        const cell = grandTotalRow.getCell(colIndex + 7);
+        cell.value = val === '-' ? '-' : `${val}%`;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (val !== '-' && !Number.isNaN(Number(val))) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
+          cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
+        } else {
+          cell.font = { bold: true };
+        }
+      });
+
+      worksheet.getColumn(1).width = 8;
+      worksheet.getColumn(2).width = 16;
+      worksheet.getColumn(3).width = 28;
+      worksheet.getColumn(4).width = 22;
+      worksheet.getColumn(5).width = 10;
+      worksheet.getColumn(6).width = 12;
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((_, i) => { worksheet.getColumn(i + 7).width = 18; });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_Practice_wise_Trend_Overall_CSAT_Score_Distribution_${csatCycleStartDateFormatted || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Account/Practice-wise trend Excel export error:', err);
+      alert('Failed to export Account/Practice-wise trend data to Excel.');
+    }
+  };
+
+  // Excel export for Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10: current cycle + "Last year PCSAT
+  // % for 1,2,3,4,5 rating" as two worksheets in one workbook (mirrors this file's convention of pairing a current
+  // and a trend/last-cycle table under one download for the Account/Practice-wise views).
+  const writeAccountPracticeWiseTop10Worksheet = (workbook, sheetName, rows, grandTotal) => {
+    const worksheet = workbook.addWorksheet(sheetName);
+    const excelRatingColors = { 1: 'FFDC2626', 2: 'FFFCA5A5', 3: 'FFF59E0B', 4: 'FF86EFAC', 5: 'FF16A34A' };
+    const headerRow = worksheet.addRow(buildAccountPracticeWiseExcelHeaders());
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF26428B' } };
+    headerRow.eachCell((cell) => {
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    });
+
+    const summaryRowColors = {
+      'top10-total': 'FFFFF2CC',
+      'top10-practice': 'FFFFF9E6',
+      'other-total': 'FFBDD7EE',
+      'other-practice': 'FFDCE9F5',
+      'overall': 'FFE4DFEC'
+    };
+
+    rows.forEach((row) => {
+      addAccountPracticeWiseExcelRow(worksheet, row, excelRatingColors, null, false, null);
+      if (row.isSummaryRow) {
+        const dataRow = worksheet.lastRow;
+        const fillColor = summaryRowColors[row.summaryTier] || 'FFE2E8F0';
+        dataRow.getCell(2).value = row.accountName;
+        dataRow.getCell(3).value = null;
+        dataRow.getCell(4).value = null;
+        dataRow.eachCell((cell) => {
+          if (!cell.fill || cell.fill.fgColor?.argb === undefined) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+          }
+        });
+        dataRow.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+        dataRow.getCell(2).font = { bold: true, color: { argb: 'FF1F2937' } };
+        dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+        worksheet.mergeCells(dataRow.number, 2, dataRow.number, 4);
+      }
+    });
+
+    worksheet.getColumn(1).width = 8;
+    worksheet.getColumn(2).width = 24;
+    worksheet.getColumn(3).width = 28;
+    worksheet.getColumn(4).width = 22;
+    worksheet.getColumn(5).width = 10;
+    worksheet.getColumn(6).width = 12;
+    PRACTICE_RATING_DISPLAY_ORDER.forEach((_, i) => { worksheet.getColumn(i + 7).width = 18; });
+    return worksheet;
+  };
+
+  const downloadAccountPracticeWiseTop10LastCycleData = async () => {
+    try {
+      const rows = accountPracticeWiseTop10TrendSortedData || [];
+      if (!rows.length) {
+        alert('No last cycle Account/Practice-wise Top 10 data available to download');
+        return;
+      }
+      const workbook = new ExcelJS.Workbook();
+      writeAccountPracticeWiseTop10Worksheet(workbook, 'Last Year PCSAT % (1-5 Rating)', rows, accountPracticeWiseTop10TrendGrandTotal);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10_Last_Cycle_${csatCycleStartDateFormatted || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Last cycle Account/Practice-wise Top10 distribution Excel export error:', err);
+      alert('Failed to export last cycle Account/Practice-wise Top 10 distribution data to Excel.');
+    }
+  };
+
+  const downloadAccountPracticeWiseTop10DistributionData = async () => {
+    try {
+      const rows = accountPracticeWiseTop10SortedData || [];
+      if (!rows.length) {
+        alert('No Account/Practice-wise Top 10 data available to download');
+        return;
+      }
+      const workbook = new ExcelJS.Workbook();
+      writeAccountPracticeWiseTop10Worksheet(
+        workbook, 'Top 10 Distribution (Current Cycle)', rows, accountPracticeWiseTop10GrandTotal,
+        showTrendAnalysis, accountPracticeWiseTop10TrendByKey, getAccountPracticeTop10TrendKey, formatPracticeTrendDiffExcel
+      );
+
+      const lastCycleRows = accountPracticeWiseTop10TrendSortedData || [];
+      if (lastCycleRows.length > 0) {
+        writeAccountPracticeWiseTop10Worksheet(workbook, 'Last Year PCSAT % (1-5 Rating)', lastCycleRows, accountPracticeWiseTop10TrendGrandTotal);
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10_${csatCycleStartDateFormatted || 'export'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Account/Practice-wise Top10 distribution Excel export error:', err);
+      alert('Failed to export Account/Practice-wise Top 10 distribution data to Excel.');
     }
   };
 
@@ -5618,35 +6597,39 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
 
   return (
     <DashboardContainer>
-      <DashboardHeader style={{ flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-start', overflow: 'visible' }}>
+      <DashboardHeader style={{ flexWrap: 'wrap', gap: '0.6rem', alignItems: 'flex-start', overflow: 'visible' }}>
         <div style={{ flex: '1 1 280px', minWidth: 0 }}>
           <HeaderTitle>
-            <BarChart3 size={24} /> {
+            <BarChart3 size={20} /> {
+              showAccountPracticeWiseTop10 ? 'Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10' :
+              showAccountPracticeWise ? 'Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)' :
               showPracticeWise ? 'Practice wise Overall CSAT score -Distribution(Score 1 to 5)' :
-              showBuWise ? 'BU Wise Overall CSAT score -Distribution(Score 1 to 5)' : 
+              showBuWise ? 'BU Wise Overall CSAT score -Distribution(Score 1 to 5)' :
               showTop10 ? 'Top 10 account - Overall CSAT score -Distribution(Score 1 to 5)' :
               'Account/BU wise Overall CSAT score -Distribution(Score 1 to 5)'
             }
           </HeaderTitle>
           {csatCycleStartDateFormatted && (
-            <div style={{ 
-              fontSize: '0.875rem', 
-              opacity: 0.9, 
-              marginTop: '0.5rem'
+            <div style={{
+              fontSize: '0.8rem',
+              opacity: 0.9,
+              marginTop: '0.3rem'
             }}>
               📅 Filtered by CSAT Cycle Start Date: {csatCycleStartDateFormatted}
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'flex-end', flex: '1 1 auto', minWidth: 0, position: 'relative', zIndex: 2 }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'flex-start', flex: '1 1 auto', minWidth: 0, position: 'relative', zIndex: 2 }}>
           {showHeaderNavButtons && (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: 'flex-end', minWidth: 0 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'stretch', flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: 'flex-start', minWidth: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'stretch', flexShrink: 0 }}>
                 <button
                   onClick={() => {
                     setShowBuWise(true);
                     setShowTop10(false);
                     setShowPracticeWise(false);
+                    setShowAccountPracticeWise(false);
+                    setShowAccountPracticeWiseTop10(false);
                     setBusinessUnitFilter('');
                     setCustomerNameSearch('');
                   }}
@@ -5654,15 +6637,15 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                     background: showBuWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
                     border: '2px solid white',
                     color: showBuWise ? '#1e3a8a' : 'white',
-                    padding: '0.5rem 1rem',
+                    padding: '0.4rem 0.85rem',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.5rem',
+                    gap: '0.4rem',
                     fontWeight: '600',
-                    fontSize: '0.85rem',
+                    fontSize: '0.8rem',
                     transition: 'all 0.2s ease',
                     whiteSpace: 'nowrap',
                     boxSizing: 'border-box'
@@ -5677,49 +6660,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                   <Building2 size={16} />
                   Display BU Wise CSAT Score Distribution
                 </button>
-                {showPracticeWiseButton && (
-                  <button
-                    type="button"
-                    onClick={handlePracticeWiseClick}
-                    style={{
-                      width: '100%',
-                      minHeight: '2.5rem',
-                      padding: '0.5rem 1rem',
-                      border: 'none',
-                      background: '#3b82f6',
-                      color: 'white',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: '600',
-                      fontSize: '0.7rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                      whiteSpace: 'normal',
-                      textAlign: 'center',
-                      lineHeight: '1.3',
-                      boxSizing: 'border-box',
-                      boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.25)'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = '#2563eb';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = '#3b82f6';
-                    }}
-                    aria-label="Practice wise Overall CSAT score -Distribution(Score 1 to 5)"
-                    title="Practice wise Overall CSAT score -Distribution(Score 1 to 5)"
-                  >
-                    Practice wise Overall CSAT score -Distribution(Score 1 to 5)
-                  </button>
-                )}
               </div>
               <button
                 onClick={() => {
                   setShowBuWise(false);
                   setShowTop10(true);
                   setShowPracticeWise(false);
+                  setShowAccountPracticeWise(false);
+                  setShowAccountPracticeWiseTop10(false);
                   setBusinessUnitFilter('');
                   setCustomerNameSearch('');
                 }}
@@ -5727,14 +6675,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                   background: showTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
                   border: '2px solid white',
                   color: showTop10 ? '#1e3a8a' : 'white',
-                  padding: '0.5rem 1rem',
+                  padding: '0.4rem 0.85rem',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   fontWeight: '600',
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   transition: 'all 0.2s ease',
                   alignSelf: 'flex-start',
                   whiteSpace: 'nowrap',
@@ -5756,21 +6704,23 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                   setShowBuWise(false);
                   setShowTop10(false);
                   setShowPracticeWise(false);
+                  setShowAccountPracticeWise(false);
+                  setShowAccountPracticeWiseTop10(false);
                   setBusinessUnitFilter('');
                   setCustomerNameSearch('');
                 }}
                 style={{
-                  background: !showBuWise && !showTop10 && !showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
+                  background: !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
                   border: '2px solid white',
-                  color: !showBuWise && !showTop10 && !showPracticeWise ? '#1e3a8a' : 'white',
-                  padding: '0.5rem 1rem',
+                  color: !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#1e3a8a' : 'white',
+                  padding: '0.4rem 0.85rem',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   fontWeight: '600',
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   transition: 'all 0.2s ease',
                   alignSelf: 'flex-start',
                   whiteSpace: 'nowrap',
@@ -5781,7 +6731,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                   e.currentTarget.style.background = 'rgba(255, 255, 255, 0.35)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = !showBuWise && !showTop10 && !showPracticeWise ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
+                  e.currentTarget.style.background = !showBuWise && !showTop10 && !showPracticeWise && !showAccountPracticeWise && !showAccountPracticeWiseTop10 ? '#ffffff' : 'rgba(255, 255, 255, 0.12)';
                 }}
               >
                 Show Account-wise View
@@ -5792,14 +6742,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                   background: showTrendAnalysis ? '#ffffff' : 'rgba(255, 255, 255, 0.12)',
                   border: '2px solid white',
                   color: showTrendAnalysis ? '#1e3a8a' : 'white',
-                  padding: '0.5rem 1rem',
+                  padding: '0.4rem 0.85rem',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   fontWeight: '600',
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   transition: 'all 0.2s ease',
                   alignSelf: 'flex-start',
                   whiteSpace: 'nowrap',
@@ -5815,7 +6765,197 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
               >
                 {showTrendAnalysis ? 'Hide trend analysis' : 'View trend analysis'}
               </button>
-              {showPracticeWise ? (
+              {/* Forces the Practice-wise / Account-Practice-wise / Account-Practice-wise Top10
+                  buttons onto their own row — a 100%-basis spacer inside this flex-wrap container
+                  always wraps, regardless of viewport width. */}
+              <div style={{ flexBasis: '100%', width: 0, height: 0 }} aria-hidden="true"></div>
+              {showPracticeWiseButton && (
+                <button
+                  type="button"
+                  onClick={handlePracticeWiseClick}
+                  style={{
+                    minHeight: '2.5rem',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: showPracticeWise ? '#ffffff' : '#3b82f6',
+                    color: showPracticeWise ? '#1e3a8a' : 'white',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '0.7rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    whiteSpace: 'normal',
+                    textAlign: 'center',
+                    lineHeight: '1.3',
+                    boxSizing: 'border-box',
+                    boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.25)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = showPracticeWise ? '#ffffff' : '#2563eb';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = showPracticeWise ? '#ffffff' : '#3b82f6';
+                  }}
+                  aria-label="Practice wise Overall CSAT score -Distribution(Score 1 to 5)"
+                  title="Practice wise Overall CSAT score -Distribution(Score 1 to 5)"
+                >
+                  Practice wise Overall CSAT score -Distribution(Score 1 to 5)
+                </button>
+              )}
+              {showAccountPracticeWiseButton && (
+                <button
+                  type="button"
+                  onClick={handleAccountPracticeWiseClick}
+                  style={{
+                    minHeight: '2.5rem',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: showAccountPracticeWise ? '#ffffff' : '#3b82f6',
+                    color: showAccountPracticeWise ? '#1e3a8a' : 'white',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '0.7rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    whiteSpace: 'normal',
+                    textAlign: 'center',
+                    lineHeight: '1.3',
+                    boxSizing: 'border-box',
+                    boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.25)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = showAccountPracticeWise ? '#ffffff' : '#2563eb';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = showAccountPracticeWise ? '#ffffff' : '#3b82f6';
+                  }}
+                  aria-label="Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)"
+                  title="Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)"
+                >
+                  Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)
+                </button>
+              )}
+              {showAccountPracticeWiseTop10Button && (
+                <button
+                  type="button"
+                  onClick={handleAccountPracticeWiseTop10Click}
+                  style={{
+                    minHeight: '2.5rem',
+                    padding: '0.4rem 0.75rem',
+                    border: 'none',
+                    background: showAccountPracticeWiseTop10 ? '#ffffff' : '#3b82f6',
+                    color: showAccountPracticeWiseTop10 ? '#1e3a8a' : 'white',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '0.7rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    whiteSpace: 'normal',
+                    textAlign: 'center',
+                    lineHeight: '1.3',
+                    boxSizing: 'border-box',
+                    boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.25)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = showAccountPracticeWiseTop10 ? '#ffffff' : '#2563eb';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = showAccountPracticeWiseTop10 ? '#ffffff' : '#3b82f6';
+                  }}
+                  aria-label="Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10"
+                  title="Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5) — Top 10 accounts only"
+                >
+                  Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5) - Top 10
+                </button>
+              )}
+              {showAccountPracticeWiseTop10 ? (
+                <button
+                  type="button"
+                  onClick={downloadAccountPracticeWiseTop10DistributionData}
+                  disabled={!accountPracticeWiseTop10SortedData?.length}
+                  style={{
+                    background: accountPracticeWiseTop10SortedData?.length ? '#10b981' : '#9ca3af',
+                    border: 'none',
+                    color: 'white',
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '8px',
+                    cursor: accountPracticeWiseTop10SortedData?.length ? 'pointer' : 'not-allowed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.8rem',
+                    alignSelf: 'flex-start',
+                    whiteSpace: 'nowrap',
+                    boxSizing: 'border-box',
+                    flexShrink: 0
+                  }}
+                >
+                  <Download size={16} />
+                  Download Data
+                </button>
+              ) : showAccountPracticeWise ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={downloadAccountPracticeWiseDistributionData}
+                    disabled={!accountPracticeWiseProcessedData.data?.length}
+                    style={{
+                      background: accountPracticeWiseProcessedData.data?.length ? '#10b981' : '#9ca3af',
+                      border: 'none',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      cursor: accountPracticeWiseProcessedData.data?.length ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.875rem',
+                      alignSelf: 'flex-start',
+                      whiteSpace: 'nowrap',
+                      boxSizing: 'border-box',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Download size={16} />
+                    Download Data
+                  </button>
+                  {showTrendAnalysis && (
+                    <button
+                      type="button"
+                      onClick={downloadAccountPracticeWiseTrendData}
+                      disabled={!accountPracticeWiseTrendData.data?.length}
+                      style={{
+                        background: accountPracticeWiseTrendData.data?.length ? '#0ea5e9' : '#9ca3af',
+                        border: 'none',
+                        color: 'white',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '8px',
+                        cursor: accountPracticeWiseTrendData.data?.length ? 'pointer' : 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        fontSize: '0.875rem',
+                        alignSelf: 'flex-start',
+                        whiteSpace: 'nowrap',
+                        boxSizing: 'border-box',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Download size={16} />
+                      Download Trend Data
+                    </button>
+                  )}
+                </>
+              ) : showPracticeWise ? (
                 <>
                   <button
                     type="button"
@@ -5901,33 +7041,514 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
               )}
             </div>
           )}
-          {(onBack || showPracticeWise) && (
+          {onBack && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'stretch', width: '220px', flexShrink: 0 }}>
-              {showPracticeWise ? (
-                <BackButton onClick={handleBackToAccountBuDistributionDashboard} aria-label="Back to Account/BU Dashboard" title="Back to Account/BU Dashboard" style={{ width: '100%', justifyContent: 'center' }}>
-                  <ChevronLeft size={16} />
-                  Back to Account/BU Dashboard
-                </BackButton>
-              ) : (
-                onBack && (
-                  <BackButton onClick={onBack} aria-label="Back" title="Back" style={{ width: '100%', justifyContent: 'center' }}>
-                    <ChevronLeft size={16} />
-                    Back
-                  </BackButton>
-                )
-              )}
-              {showPracticeWise && onBack && (
-                <BackButton onClick={onBack} aria-label="Back" title="Back" style={{ width: '100%', justifyContent: 'center' }}>
-                  <ChevronLeft size={16} />
-                  Back
-                </BackButton>
-              )}
+              <BackButton onClick={onBack} aria-label="Back" title="Back" style={{ width: '100%', justifyContent: 'center' }}>
+                <ChevronLeft size={16} />
+                Back
+              </BackButton>
             </div>
           )}
         </div>
       </DashboardHeader>
 
-      {showPracticeWise ? (
+      {showAccountPracticeWiseTop10 ? (
+        <>
+          <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
+            Same rules as <strong>Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)</strong>, restricted to the <strong>Top 10 accounts</strong> (fixed order) plus any other account flagged <strong>Top 10</strong> in the data.
+            Rating % values are shown to <strong>one decimal place</strong> in this view.
+            Below the account rows: <strong>Top 10 Accounts</strong>, <strong>Top 10 &lt;Practice&gt;</strong> (one per practice), <strong>Other Accounts NR</strong>, <strong>Other Accounts &lt;Practice&gt;</strong> (one per practice), and <strong>Overall NR</strong> (grand total across everyone).
+            {showTrendAnalysis && <> Trend columns compare rating % of this dashboard vs the last cycle PCSAT file — difference shown first, then <span style={{ color: '#16a34a', fontWeight: '600' }}>↑</span> (green) for increase or <span style={{ color: '#dc2626', fontWeight: '600' }}>↓</span> (red) for decrease.</>}
+            {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+          </div>
+          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', borderLeft: '4px solid #3b82f6' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>Legend:</div>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#16a34a', borderRadius: '4px', border: '1px solid #15803d' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Highly Satisfied: Dark Green</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#86efac', borderRadius: '4px', border: '1px solid #16a34a' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Satisfied: Green</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#f59e0b', borderRadius: '4px', border: '1px solid #d97706' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Neutral: Amber</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#fca5a5', borderRadius: '4px', border: '1px solid #dc2626' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Dissatisfied: Light Red</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#dc2626', borderRadius: '4px', border: '1px solid #991b1b' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Highly Dissatisfied: Dark Red</span></div>
+            </div>
+          </div>
+          {showTrendAnalysis && (
+            <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', borderLeft: '4px solid #0ea5e9' }}>
+              <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>Trend legend:</div>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', fontSize: '0.875rem', color: '#374151' }}>
+                <span><strong>+X%</strong> <span style={{ color: '#16a34a', fontWeight: '700' }}>↑</span> — rating % increased vs last cycle</span>
+                <span><strong>-X%</strong> <span style={{ color: '#dc2626', fontWeight: '700' }}>↓</span> — rating % decreased vs last cycle</span>
+                <span><strong>0%</strong> — no change</span>
+              </div>
+            </div>
+          )}
+          <ResultsSummary style={{ marginBottom: '0.75rem' }}>
+            <strong>Results Summary:</strong> Showing {(accountPracticeWiseTop10ProcessedData.detailData || []).filter(r => r.isRollup).length} Top 10 account(s), plus 5 summary rows.
+          </ResultsSummary>
+          {accountPracticeWiseTop10SortedData?.length > 0 ? (
+            <>
+            <TableContainer>
+              <TableWrapper>
+                <Table>
+                  <thead>
+                    {showTrendAnalysis ? (
+                      <>
+                        <tr>
+                          <Th rowSpan={2} style={{ textAlign: 'center', width: '70px', verticalAlign: 'middle' }}>Sr. No.</Th>
+                          <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Business Unit</Th>
+                          <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Account Name</Th>
+                          <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Practice</Th>
+                          <Th colSpan={7} style={{ textAlign: 'center' }}>{acsatCycle || 'H2 2025'}</Th>
+                          <Th colSpan={5} style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>
+                            Trend analysis (vs last cycle)
+                          </Th>
+                        </tr>
+                        <tr>
+                          <Th style={{ textAlign: 'center' }}>Polled</Th>
+                          <Th style={{ textAlign: 'center' }}>Responded</Th>
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                            <Th key={r} style={{ textAlign: 'center' }}>{PRACTICE_RATING_COLUMN_NAMES[r]}</Th>
+                          ))}
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                            <Th key={`acct-practice-top10-trend-h-${r}`} style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000', ...trendCellStyle }}>
+                              {PRACTICE_RATING_COLUMN_NAMES[r]}
+                            </Th>
+                          ))}
+                        </tr>
+                      </>
+                    ) : (
+                      <tr>
+                        <Th style={{ textAlign: 'center', width: '70px' }}>Sr. No.</Th>
+                        <Th style={{ textAlign: 'left' }}>Business Unit</Th>
+                        <Th style={{ textAlign: 'left' }}>Account Name</Th>
+                        <Th style={{ textAlign: 'left' }}>Practice</Th>
+                        <Th style={{ textAlign: 'center' }}>Polled</Th>
+                        <Th style={{ textAlign: 'center' }}>Responded</Th>
+                        {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                          <Th key={r} style={{ textAlign: 'center' }}>{PRACTICE_RATING_COLUMN_NAMES[r]}</Th>
+                        ))}
+                      </tr>
+                    )}
+                  </thead>
+                  <tbody>
+                    {accountPracticeWiseTop10SortedData.map((row, idx) => {
+                      const responded = row.cssReceivedCount ?? 0;
+                      const isHyphen = responded === 0;
+                      const trendRow = accountPracticeWiseTop10TrendByKey[getAccountPracticeTop10TrendKey(row)];
+                      const rollupBg = row.isSummaryRow ? row.rowColor : (row.isRollup ? '#eef2ff' : undefined);
+                      const colSpanLabel = row.isSummaryRow;
+                      return (
+                        <tr key={`top10-${row.accountName}-${row.businessUnit}-${row.practice}-${idx}`} style={row.isRollup ? { fontWeight: '700', backgroundColor: rollupBg } : undefined}>
+                          <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.sNo}</Td>
+                          {colSpanLabel ? (
+                            <Td colSpan={3} style={{ textAlign: 'left', fontWeight: '700', backgroundColor: rollupBg }}>{row.accountName}</Td>
+                          ) : (
+                            <>
+                              <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{normalizeBUDisplay(row.businessUnit)}</Td>
+                              <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.accountName}</Td>
+                              <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.practice}</Td>
+                            </>
+                          )}
+                          <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssSentCount ?? 0}</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssReceivedCount ?? 0}</Td>
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
+                            const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+                            const value = row[colName];
+                            const displayVal = isHyphen || value === '-' ? '-' : formatDistributionOneDecimal(value);
+                            return (
+                              <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', ...(displayVal === '-' && rollupBg ? { backgroundColor: rollupBg } : {}) }}>
+                                {displayVal === '-' ? '-' : `${displayVal}%`}
+                              </Td>
+                            );
+                          })}
+                          {showTrendAnalysis && renderPracticeTrendDiffCells(row, trendRow, isHyphen, rollupBg)}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
+              </TableWrapper>
+            </TableContainer>
+            {accountPracticeWiseTop10NotPolledNote && (
+              <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+                {accountPracticeWiseTop10NotPolledNote}
+              </div>
+            )}
+            </>
+          ) : (
+            <div style={{ padding: '1.5rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              No Account/Practice-wise Top 10 data found in the Customer Success Survey Status report.
+            </div>
+          )}
+
+          <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '2px solid #e5e7eb' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.15rem', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BarChart3 size={20} />
+                Last year PCSAT % for 1,2,3,4,5 rating
+              </h2>
+              <button
+                type="button"
+                onClick={downloadAccountPracticeWiseTop10LastCycleData}
+                disabled={!accountPracticeWiseTop10TrendSortedData?.length}
+                style={{
+                  background: accountPracticeWiseTop10TrendSortedData?.length ? '#10b981' : '#9ca3af',
+                  border: 'none',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  cursor: accountPracticeWiseTop10TrendSortedData?.length ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '600'
+                }}
+              >
+                <Download size={16} />
+                Download Data
+              </button>
+            </div>
+            <div style={{ margin: '0 0 1rem 0', padding: '1rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '8px', fontSize: '0.875rem', color: '#1e3a8a' }}>
+              Same Account/Practice/Top 10 grouping and summary tiers, computed from the uploaded last-cycle comparison file <strong>{accountPracticeWiseTop10TrendData.sourceName || 'Trend-Analysis-H12025.xlsx'}</strong> (in <strong>&quot;Upload data for trend analysis&quot;</strong>) instead of the current cycle.
+            </div>
+            {accountPracticeWiseTop10TrendData.error ? (
+              <div style={{ padding: '1.5rem', textAlign: 'center', color: '#b45309', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fcd34d' }}>
+                {accountPracticeWiseTop10TrendData.error}
+              </div>
+            ) : accountPracticeWiseTop10TrendSortedData?.length > 0 ? (
+              <>
+              <TableContainer>
+                <TableWrapper>
+                  <Table>
+                    <thead>
+                      <tr>
+                        <Th style={{ textAlign: 'center', width: '70px' }}>Sr. No.</Th>
+                        <Th style={{ textAlign: 'left' }}>Business Unit</Th>
+                        <Th style={{ textAlign: 'left' }}>Account Name</Th>
+                        <Th style={{ textAlign: 'left' }}>Practice</Th>
+                        <Th style={{ textAlign: 'center' }}>Polled</Th>
+                        <Th style={{ textAlign: 'center' }}>Responded</Th>
+                        {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                          <Th key={`top10-lastcycle-h-${r}`} style={{ textAlign: 'center' }}>{PRACTICE_RATING_COLUMN_NAMES[r]}</Th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accountPracticeWiseTop10TrendSortedData.map((row, idx) => {
+                        const responded = row.cssReceivedCount ?? 0;
+                        const isHyphen = responded === 0;
+                        const rollupBg = row.isSummaryRow ? row.rowColor : (row.isRollup ? '#eef2ff' : undefined);
+                        const colSpanLabel = row.isSummaryRow;
+                        return (
+                          <tr key={`top10-lastcycle-${row.accountName}-${row.businessUnit}-${row.practice}-${idx}`} style={row.isRollup ? { fontWeight: '700', backgroundColor: rollupBg } : undefined}>
+                            <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.sNo}</Td>
+                            {colSpanLabel ? (
+                              <Td colSpan={3} style={{ textAlign: 'left', fontWeight: '700', backgroundColor: rollupBg }}>{row.accountName}</Td>
+                            ) : (
+                              <>
+                                <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{normalizeBUDisplay(row.businessUnit)}</Td>
+                                <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.accountName}</Td>
+                                <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.practice}</Td>
+                              </>
+                            )}
+                            <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssSentCount ?? 0}</Td>
+                            <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssReceivedCount ?? 0}</Td>
+                            {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
+                              const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+                              const value = row[colName];
+                              const displayVal = isHyphen || value === '-' ? '-' : formatDistributionOneDecimal(value);
+                              return (
+                                <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', ...(displayVal === '-' && rollupBg ? { backgroundColor: rollupBg } : {}) }}>
+                                  {displayVal === '-' ? '-' : `${displayVal}%`}
+                                </Td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </TableWrapper>
+              </TableContainer>
+              {accountPracticeWiseTop10TrendNotPolledNote && (
+                <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+                  {accountPracticeWiseTop10TrendNotPolledNote}
+                </div>
+              )}
+              </>
+            ) : (
+              <div style={{ padding: '1.5rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                No last cycle PCSAT data available. Upload &quot;Trend-Analysis-H12025.xlsx&quot; in &quot;Upload data for trend analysis&quot;.
+              </div>
+            )}
+          </div>
+        </>
+      ) : showAccountPracticeWise ? (
+        <>
+          <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
+            <strong>Customer Success Survey Status report</strong>: <strong>Polled</strong> = count(CSAT SENT DATE), <strong>Responded</strong> = count(CSAT RECEIVED DATE), grouped by <strong>Business Unit, Account Name, Practice</strong>.
+            <strong>Customer Success Survey All PCSAT report</strong>: rating % = count(RATING=n) ÷ Responded × 100 for <strong>PERSPECTIVE = &quot;Overall Experience&quot;</strong>, grouped by <strong>Business Unit, Account Name, Practice</strong>.
+            An <strong>&quot;All Practices&quot;</strong> bold roll-up row is shown for each account, summing across its practices.
+            {showTrendAnalysis && <> Trend columns compare rating % of this dashboard vs <strong>Account/Practice wise Overall CSAT score -Distribution (Trend Analysis)</strong> — difference shown first, then <span style={{ color: '#16a34a', fontWeight: '600' }}>↑</span> (green) for increase or <span style={{ color: '#dc2626', fontWeight: '600' }}>↓</span> (red) for decrease.</>}
+            {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+            {accountPracticeWiseProcessedData.dataSource === 'uploaded' && <> Using uploaded PCSAT file (reference file not found in <code>public/data/</code>).</>}
+          </div>
+          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', borderLeft: '4px solid #3b82f6' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>Legend:</div>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#16a34a', borderRadius: '4px', border: '1px solid #15803d' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Highly Satisfied</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#86efac', borderRadius: '4px', border: '1px solid #16a34a' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Satisfied</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#f59e0b', borderRadius: '4px', border: '1px solid #d97706' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Neutral</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#fca5a5', borderRadius: '4px', border: '1px solid #dc2626' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Dissatisfied</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div style={{ width: '20px', height: '20px', backgroundColor: '#dc2626', borderRadius: '4px', border: '1px solid #991b1b' }}></div><span style={{ fontSize: '0.875rem', color: '#374151' }}>Highly Dissatisfied</span></div>
+            </div>
+          </div>
+          {showTrendAnalysis && (
+            <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', borderLeft: '4px solid #0ea5e9' }}>
+              <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>Trend legend:</div>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', fontSize: '0.875rem', color: '#374151' }}>
+                <span><strong>+X%</strong> <span style={{ color: '#16a34a', fontWeight: '700' }}>↑</span> — rating % increased vs Trend Analysis</span>
+                <span><strong>-X%</strong> <span style={{ color: '#dc2626', fontWeight: '700' }}>↓</span> — rating % decreased vs Trend Analysis</span>
+                <span><strong>0%</strong> — no change</span>
+              </div>
+            </div>
+          )}
+          <ResultsSummary style={{ marginBottom: '0.75rem' }}>
+            <strong>Results Summary:</strong> Showing {accountPracticeWiseGrandTotal ? (accountPracticeWiseProcessedData.data || []).filter(r => r.isRollup).length : 0} account{((accountPracticeWiseProcessedData.data || []).filter(r => r.isRollup).length) !== 1 ? 's' : ''}.
+            <span style={{ marginLeft: '1rem', fontWeight: '600' }}>• Grouped by Business Unit, Account Name, Practice</span>
+          </ResultsSummary>
+          {accountPracticeWiseProcessedData.data?.length > 0 ? (
+            <TableContainer>
+              <TableWrapper>
+                <Table>
+                  <thead>
+                    {showTrendAnalysis ? (
+                      <>
+                        <tr>
+                          <Th rowSpan={2} style={{ textAlign: 'center', width: '70px', verticalAlign: 'middle' }}>Sr. No.</Th>
+                          <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Business Unit</Th>
+                          <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Account Name</Th>
+                          <Th rowSpan={2} style={{ textAlign: 'left', verticalAlign: 'middle' }}>Practice</Th>
+                          <Th colSpan={7} style={{ textAlign: 'center' }}>{acsatCycle || 'H2 2025'}</Th>
+                          <Th colSpan={5} style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000' }}>
+                            {trendHeaderLabel}
+                          </Th>
+                        </tr>
+                        <tr>
+                          <Th style={{ textAlign: 'center' }}>Polled</Th>
+                          <Th style={{ textAlign: 'center' }}>Responded</Th>
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                            <Th key={r} style={{ textAlign: 'center' }}>{PRACTICE_RATING_COLUMN_NAMES[r]}</Th>
+                          ))}
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                            <Th key={`acct-practice-trend-h-${r}`} style={{ textAlign: 'center', backgroundColor: '#BDD7EE', color: '#000000', ...trendCellStyle }}>
+                              {PRACTICE_RATING_COLUMN_NAMES[r]}
+                            </Th>
+                          ))}
+                        </tr>
+                      </>
+                    ) : (
+                      <tr>
+                        <Th style={{ textAlign: 'center', width: '70px' }}>Sr. No.</Th>
+                        <Th style={{ textAlign: 'left' }}>Business Unit</Th>
+                        <Th style={{ textAlign: 'left' }}>Account Name</Th>
+                        <Th style={{ textAlign: 'left' }}>Practice</Th>
+                        <Th style={{ textAlign: 'center' }}>Polled</Th>
+                        <Th style={{ textAlign: 'center' }}>Responded</Th>
+                        {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                          <Th key={r} style={{ textAlign: 'center' }}>{PRACTICE_RATING_COLUMN_NAMES[r]}</Th>
+                        ))}
+                      </tr>
+                    )}
+                  </thead>
+                  <tbody>
+                    {accountPracticeWiseSortedData.map((row, idx) => {
+                      const responded = row.cssReceivedCount ?? 0;
+                      const isHyphen = responded === 0;
+                      const trendRow = accountPracticeWiseTrendByKey[getAccountPracticeTrendKey(row)];
+                      const rollupBg = row.isRollup ? '#eef2ff' : undefined;
+                      return (
+                        <tr key={`${row.accountName}-${row.businessUnit}-${row.practice}-${idx}`} style={row.isRollup ? { fontWeight: '700', backgroundColor: rollupBg } : undefined}>
+                          <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.sNo}</Td>
+                          <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{normalizeBUDisplay(row.businessUnit)}</Td>
+                          <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.accountName}</Td>
+                          <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.practice}</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssSentCount ?? 0}</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssReceivedCount ?? 0}</Td>
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
+                            const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+                            const value = row[colName];
+                            const displayVal = isHyphen || value === '-' ? '-' : formatDistributionOneDecimal(value);
+                            return (
+                              <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal' }}>
+                                {displayVal === '-' ? '-' : `${displayVal}%`}
+                              </Td>
+                            );
+                          })}
+                          {showTrendAnalysis && renderPracticeTrendDiffCells(row, trendRow, isHyphen, rollupBg)}
+                        </tr>
+                      );
+                    })}
+                    <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
+                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
+                      <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }} colSpan={3}>Grand Total</Td>
+                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseGrandTotal.polled}</Td>
+                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseGrandTotal.responded}</Td>
+                      {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
+                        const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+                        const value = accountPracticeWiseGrandTotal[colName];
+                        const displayVal = accountPracticeWiseGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
+                        return (
+                          <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
+                            {displayVal === '-' ? '-' : `${displayVal}%`}
+                          </Td>
+                        );
+                      })}
+                      {showTrendAnalysis && renderPracticeTrendDiffCells(
+                        accountPracticeWiseGrandTotal,
+                        accountPracticeWiseTrendGrandTotal,
+                        accountPracticeWiseGrandTotal.responded === 0,
+                        '#E2E8F0'
+                      )}
+                    </tr>
+                  </tbody>
+                </Table>
+              </TableWrapper>
+            </TableContainer>
+          ) : (
+            <div style={{ padding: '1.5rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              No Account/Practice-wise data found in the Customer Success Survey Status report.
+            </div>
+          )}
+
+          {showTrendAnalysis && (
+            <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '2px solid #e5e7eb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <BarChart3 size={22} />
+                  Account/Practice wise Overall CSAT score -Distribution (Trend Analysis)
+                </h2>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={downloadAccountPracticeWiseTrendData}
+                    disabled={!accountPracticeWiseTrendData.data?.length}
+                    style={{
+                      background: accountPracticeWiseTrendData.data?.length ? '#10b981' : '#9ca3af',
+                      border: 'none',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      cursor: accountPracticeWiseTrendData.data?.length ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <Download size={16} />
+                    Download Data
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowTrendAnalysis(false)}
+                    style={{
+                      background: '#64748b',
+                      border: 'none',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Hide trend analysis
+                  </button>
+                </div>
+              </div>
+              <div style={{ margin: '1rem 0', padding: '1rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '8px', fontSize: '0.875rem', color: '#1e3a8a' }}>
+                Data from uploaded trend file <strong>{accountPracticeWiseTrendData.sourceName || 'Trend-Analysis-H12025.xlsx'}</strong> in <strong>&quot;Upload data for trend analysis&quot;</strong>.
+                <strong>Customer Success Survey Status report</strong>: <strong>Polled</strong> = count(CSAT SENT DATE), <strong>Responded</strong> = count(CSAT RECEIVED DATE), grouped by <strong>Business Unit, Account Name, Practice</strong>.
+                <strong>Customer Success Survey All PCSAT report</strong>: rating % = count(RATING=n) ÷ Responded × 100 for <strong>PERSPECTIVE = &quot;Overall Experience&quot;</strong>, grouped by <strong>Business Unit, Account Name, Practice</strong>.
+                {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
+              </div>
+              {accountPracticeWiseTrendData.error ? (
+                <div style={{ padding: '1.5rem', textAlign: 'center', color: '#b45309', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fcd34d' }}>
+                  {accountPracticeWiseTrendData.error}
+                </div>
+              ) : accountPracticeWiseTrendData.data?.length > 0 ? (
+                <TableContainer>
+                  <TableWrapper>
+                    <Table>
+                      <thead>
+                        <tr>
+                          <Th style={{ textAlign: 'center', width: '70px' }}>Sr. No.</Th>
+                          <Th style={{ textAlign: 'left' }}>Business Unit</Th>
+                          <Th style={{ textAlign: 'left' }}>Account Name</Th>
+                          <Th style={{ textAlign: 'left' }}>Practice</Th>
+                          <Th style={{ textAlign: 'center' }}>Polled</Th>
+                          <Th style={{ textAlign: 'center' }}>Responded</Th>
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(r => (
+                            <Th key={`acct-trend-h-${r}`} style={{ textAlign: 'center' }}>{PRACTICE_RATING_COLUMN_NAMES[r]}</Th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {accountPracticeWiseTrendSortedData.map((row, idx) => {
+                          const responded = row.cssReceivedCount ?? 0;
+                          const isHyphen = responded === 0;
+                          const rollupBg = row.isRollup ? '#eef2ff' : undefined;
+                          return (
+                            <tr key={`acct-trend-${row.accountName}-${row.businessUnit}-${row.practice}-${idx}`} style={row.isRollup ? { fontWeight: '700', backgroundColor: rollupBg } : undefined}>
+                              <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.sNo}</Td>
+                              <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{normalizeBUDisplay(row.businessUnit)}</Td>
+                              <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.accountName}</Td>
+                              <Td style={{ textAlign: 'left', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.practice}</Td>
+                              <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssSentCount ?? 0}</Td>
+                              <Td style={{ textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal', backgroundColor: rollupBg }}>{row.cssReceivedCount ?? 0}</Td>
+                              {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
+                                const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+                                const value = row[colName];
+                                const displayVal = isHyphen || value === '-' ? '-' : formatDistributionOneDecimal(value);
+                                return (
+                                  <Td key={`acct-trend-${idx}-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: row.isRollup ? '700' : 'normal' }}>
+                                    {displayVal === '-' ? '-' : `${displayVal}%`}
+                                  </Td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                        <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
+                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
+                          <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }} colSpan={3}>Grand Total</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseTrendGrandTotal.polled}</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{accountPracticeWiseTrendGrandTotal.responded}</Td>
+                          {PRACTICE_RATING_DISPLAY_ORDER.map(rating => {
+                            const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+                            const value = accountPracticeWiseTrendGrandTotal[colName];
+                            const displayVal = accountPracticeWiseTrendGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
+                            return (
+                              <Td key={`acct-trend-gt-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
+                                {displayVal === '-' ? '-' : `${displayVal}%`}
+                              </Td>
+                            );
+                          })}
+                        </tr>
+                      </tbody>
+                    </Table>
+                  </TableWrapper>
+                </TableContainer>
+              ) : (
+                <div style={{ padding: '1.5rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                  No trend data available for the selected CSAT cycle.
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ) : showPracticeWise ? (
         <>
           <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
             <strong>Customer Success Survey Status report</strong>: <strong>Polled</strong> = count(CSAT SENT DATE), <strong>Responded</strong> = count(CSAT RECEIVED DATE), grouped by <strong>Practice</strong>.
@@ -6026,7 +7647,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                       );
                     })}
                     <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                      <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                       <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                       <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseGrandTotal.polled}</Td>
                       <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseGrandTotal.responded}</Td>
@@ -6035,7 +7656,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                         const value = practiceWiseGrandTotal[colName];
                         const displayVal = practiceWiseGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
                         return (
-                          <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', backgroundColor: displayVal === '-' ? '#E2E8F0' : undefined }}>
+                          <Td key={rating} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
                             {displayVal === '-' ? '-' : `${displayVal}%`}
                           </Td>
                         );
@@ -6162,7 +7783,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                           );
                         })}
                         <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                          <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                           <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                           <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseTrendGrandTotal.polled}</Td>
                           <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{practiceWiseTrendGrandTotal.responded}</Td>
@@ -6171,7 +7792,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                             const value = practiceWiseTrendGrandTotal[colName];
                             const displayVal = practiceWiseTrendGrandTotal.responded === 0 || value === '-' ? '-' : formatDistributionOneDecimal(value);
                             return (
-                              <Td key={`trend-gt-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', backgroundColor: displayVal === '-' ? '#E2E8F0' : undefined }}>
+                              <Td key={`trend-gt-${rating}`} style={{ ...getPracticeRatingCellColor(rating, displayVal), textAlign: 'center', fontWeight: '700', ...(displayVal === '-' ? { backgroundColor: '#E2E8F0' } : {}) }}>
                                 {displayVal === '-' ? '-' : `${displayVal}%`}
                               </Td>
                             );
@@ -6714,9 +8335,14 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           </Table>
         </TableWrapper>
       </TableContainer>
+      {showTop10 && top10AccountsNotPolledNote && (
+        <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+          {top10AccountsNotPolledNote}
+        </div>
+      )}
 
       {/* Trend Analysis (H1 2025 reference) – Account-wise sent/received report. Shown below the account-wise dashboard when "View trend analysis" is on. */}
-      {!showPracticeWise && !showBuWise && !showTop10 && showTrendAnalysis && (
+      {!showPracticeWise && !showAccountPracticeWise && !showBuWise && !showTop10 && showTrendAnalysis && (
         <div style={{ marginTop: '3rem', padding: '1.5rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b' }}>
@@ -6834,7 +8460,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       )}
 
       {/* Trend Analysis – Top 10: rating columns from sheet "CSAT received Report", PERSPECTIVE = "Overall Experience", TYPE OF ACCOUNT = "Top 10"; #Polled/#Responded from sheet "CSAT sent and received Report". Shown below "Top 10 account - Overall CSAT score -Distribution(Score 1 to 5)" when "View trend analysis" is on. */}
-      {!showPracticeWise && showTop10 && showTrendAnalysis && (
+      {!showPracticeWise && !showAccountPracticeWise && showTop10 && showTrendAnalysis && (
         <div style={{ marginTop: '3rem', padding: '1.5rem', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b' }}>
@@ -6874,6 +8500,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
               CSAT cycle start date is required. Set it in the main upload flow.
             </div>
           ) : trendTop10TableData.length > 0 ? (
+            <>
             <TableContainer>
               <Table>
                 <thead>
@@ -6954,6 +8581,12 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                 </tbody>
               </Table>
             </TableContainer>
+            {trendTop10NotPolledNote && (
+              <div style={{ padding: '0.5rem 0.75rem', fontStyle: 'italic', color: '#6b7280', fontSize: '0.8rem', background: '#f9fafb' }}>
+                {trendTop10NotPolledNote}
+              </div>
+            )}
+            </>
           ) : (
             <div style={{ padding: '1rem', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.875rem', color: '#92400e' }}>
               No trend data for Top 10 in the selected cycle. Ensure the trend file has the Customer Success Survey Status report with TYPE OF ACCOUNT = &quot;Top 10&quot; and CSAT SENT DATE / CSAT RECEIVED DATE ≥ {csatCycleStartDateFormatted}. For rating columns, the Customer Success Survey All PCSAT report must have PERSPECTIVE = &quot;Overall Experience&quot; and TYPE OF ACCOUNT = &quot;Top 10&quot;.
@@ -6963,7 +8596,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       )}
 
       {/* Trend Analysis – rating distribution from sheet "CSAT received Report", PERSPECTIVE = "Overall Experience"; #Polled/#Responded from sheet "CSAT sent and received Report". Group by BUSINESS UNIT. Shown when BU-wise view is active and "View trend analysis" is on. */}
-      {!showPracticeWise && showBuWise && showTrendAnalysis && (
+      {!showPracticeWise && !showAccountPracticeWise && showBuWise && showTrendAnalysis && (
         <div style={{ marginTop: '3rem', padding: '1.5rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b' }}>
@@ -7559,7 +9192,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                     ); })}
                     {grandTotalFullyManagedDistribution && (
                       <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
                         <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{grandTotalFullyManagedDistribution.totalPolled}</Td>
@@ -7691,7 +9324,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                     ); })}
                     {grandTotalCoManagedDistribution && (
                       <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
                         <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{grandTotalCoManagedDistribution.totalPolled}</Td>
@@ -7823,7 +9456,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
                     ); })}
                     {grandTotalStaffAugmentationDistribution && (
                       <tr style={{ fontWeight: '700', backgroundColor: '#E2E8F0' }}>
-                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
+                        <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}></Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>Grand Total</Td>
                         <Td style={{ textAlign: 'left', fontWeight: '700', backgroundColor: '#E2E8F0' }}>-</Td>
                         <Td style={{ textAlign: 'center', fontWeight: '700', backgroundColor: '#E2E8F0' }}>{grandTotalStaffAugmentationDistribution.totalPolled}</Td>

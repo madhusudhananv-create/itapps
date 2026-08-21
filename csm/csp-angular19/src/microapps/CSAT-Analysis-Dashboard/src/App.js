@@ -26,6 +26,7 @@ import AccountwisePercentageDataForLessThan4RaterDashboard from './components/Ac
 import AccountBUWiseResponseRateDashboard from './components/AccountBUWiseResponseRateDashboard';
 import SatisfiedCustomersEachPerspectiveDashboard from './components/SatisfiedCustomersEachPerspectiveDashboard';
 import AccountBUWiseOverallCSATScoreDistributionDashboard from './components/AccountBUWiseOverallCSATScoreDistributionDashboard';
+import RespondentWiseAverageCSATScoresDashboard from './components/RespondentWiseAverageCSATScoresDashboard';
 import QualitativeAnalysisDashboard from './components/QualitativeAnalysisDashboard';
 import AccountLevelRatingDashboard from './components/AccountLevelRatingDashboard';
 import ACSATSatisfiedCustomersEachPerspectiveDashboard from './components/ACSATSatisfiedCustomersEachPerspectiveDashboard';
@@ -244,6 +245,7 @@ const App = () => {
   const [showSentimentsFeedback, setShowSentimentsFeedback] = useState(false);
   const [showSatisfiedCustomersEachPerspective, setShowSatisfiedCustomersEachPerspective] = useState(false);
   const [showAccountBUWiseOverallCSATScoreDistribution, setShowAccountBUWiseOverallCSATScoreDistribution] = useState(false);
+  const [showRespondentWiseAverageCSATScores, setShowRespondentWiseAverageCSATScores] = useState(false);
   const [showQualitativeAnalysis, setShowQualitativeAnalysis] = useState(false);
   const [qualitativeAnalysisData, setQualitativeAnalysisData] = useState(null);
   const [pcsatQualitativeExcelData, setPcsatQualitativeExcelData] = useState(null);
@@ -995,6 +997,34 @@ const App = () => {
     }
   };
 
+  const switchToRespondentWiseAverageCSATScores = (data) => {
+    setShowExcelData(false);
+    setShowGoldenStar(false);
+    setShowScoreBased(false);
+    setShowAvgRating(false);
+    setShowSentiments(false);
+    setShowGolden5StarScore(false);
+    setShowGolden5StarSentiments(false);
+    setShowPerfect5Rater(false);
+    setShowLowScore(false);
+    setShowTop10Accounts(false);
+    setShowTop10FiveRaterAccounts(false);
+    setShowAccountWiseAvg(false);
+    setShowCSATSurvey(false);
+    setShowAccountWiseResponseRate(false);
+    setShowBUWiseResponseRate(false);
+    setShowAccountwisePercentageDataForLessThan4Rater(false);
+    setShowSentimentsFeedback(false);
+    setShowSatisfiedCustomersEachPerspective(false);
+    setShowAccountBUWiseResponseRate(false);
+    setShowAccountBUWiseOverallCSATScoreDistribution(false);
+    setShowRespondentWiseAverageCSATScores(true);
+    setShowHomePage(false);
+    if (data) {
+      setExcelData(data);
+    }
+  };
+
   const switchToQualitativeAnalysis = (data) => {
     console.log('=== switchToQualitativeAnalysis called ===');
     console.log('data parameter:', data);
@@ -1268,6 +1298,10 @@ const App = () => {
       case 'accountBUWiseOverallCSATScoreDistribution':
         navigateToPage('accountBUWiseOverallCSATScoreDistribution');
         switchToAccountBUWiseOverallCSATScoreDistribution(data);
+        break;
+      case 'respondentWiseAverageCSATScores':
+        navigateToPage('respondentWiseAverageCSATScores');
+        switchToRespondentWiseAverageCSATScores(data);
         break;
       case 'pcsatQualitativeAnalysis':
         setPcsatQualitativeExcelData(data || null);
@@ -2392,7 +2426,7 @@ const App = () => {
         ) : (
           <>
             
-            {!showExcelData && !showGoldenStar && !showScoreBased && !showAvgRating && !showSentiments && !showGolden5StarScore && !showGolden5StarSentiments && !showPerfect5Rater && !showLowScore && !showTop10Accounts && !showTop10FiveRaterAccounts && !showAccountWiseAvg && !showAccountWiseResponseRate && !showBUWiseResponseRate && !showAccountwisePercentageDataForLessThan4Rater && !showAccountBUWiseResponseRate && !showSentimentsFeedback && !showCSATSurvey && !showSatisfiedCustomersEachPerspective && !showAccountBUWiseOverallCSATScoreDistribution ? (
+            {!showExcelData && !showGoldenStar && !showScoreBased && !showAvgRating && !showSentiments && !showGolden5StarScore && !showGolden5StarSentiments && !showPerfect5Rater && !showLowScore && !showTop10Accounts && !showTop10FiveRaterAccounts && !showAccountWiseAvg && !showAccountWiseResponseRate && !showBUWiseResponseRate && !showAccountwisePercentageDataForLessThan4Rater && !showAccountBUWiseResponseRate && !showSentimentsFeedback && !showCSATSurvey && !showSatisfiedCustomersEachPerspective && !showAccountBUWiseOverallCSATScoreDistribution && !showRespondentWiseAverageCSATScores ? (
               <FilterPanel
                 selectedAccount={selectedAccount}
                 selectedProject={selectedProject}
@@ -2639,11 +2673,21 @@ const App = () => {
                 );
               })()
             ) : showAccountBUWiseOverallCSATScoreDistribution ? (
-              <AccountBUWiseOverallCSATScoreDistributionDashboard 
+              <AccountBUWiseOverallCSATScoreDistributionDashboard
                 excelData={excelData}
                 trendAnalysisFiles={trendAnalysisFiles}
                 onBack={() => {
                   setShowAccountBUWiseOverallCSATScoreDistribution(false);
+                  setShowExcelData(true);
+                  setShowHomePage(false);
+                }}
+              />
+            ) : showRespondentWiseAverageCSATScores ? (
+              <RespondentWiseAverageCSATScoresDashboard
+                excelData={excelData}
+                trendAnalysisFiles={trendAnalysisFiles}
+                onBack={() => {
+                  setShowRespondentWiseAverageCSATScores(false);
                   setShowExcelData(true);
                   setShowHomePage(false);
                 }}

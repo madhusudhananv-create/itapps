@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Download, ArrowLeft, Search, X, TrendingUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
 import { parseExcelDateToMMDDYYYY } from '../utils/acsatExcelRowUtils';
+import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   max-width: 100%;
@@ -284,6 +285,46 @@ const isTop10DashboardAccount = (row, top10AccountNames, typeOfAccountMap = {}) 
   }
   const mappedType = typeOfAccountMap[customerName];
   return isTop10TypeOfAccount(mappedType);
+};
+
+// Short/recognizable display names for the fixed Top 10 accounts, used only in the "not polled"
+// footnote below the Top 10 table (full name is used everywhere else on the dashboard).
+const TOP10_ACCOUNT_SHORT_NAMES = {
+  'premier healthcare solutions inc': 'Premier Healthcare',
+  'blue cross blue shield association bcbsa': 'BCBSA',
+  'frontier airlines inc': 'Frontier Airlines',
+  'premier - horizon ii - covenant health': 'Covenant',
+  'tufts medicine': 'Tufts Medicine',
+  'bronxcare health system': 'BronxCare',
+  'agfirst farm credit bank': 'AgFirst',
+  'embecta medical ii llc': 'embecta',
+  'jewish board of family and childrens services jbfcs': 'JBFCS',
+  'healthfirst': 'Healthfirst',
+  'the northern trust company': 'Northern Trust',
+  'firstsource solutions ltd': 'Firstsource',
+  'ooma inc.': 'Ooma',
+  'arista networks india private limited': 'Arista Networks',
+  'infoblox inc.': 'Infoblox'
+};
+const getTop10AccountShortName = (fullName) => {
+  const key = (fullName || '').toString().trim().toLowerCase();
+  return TOP10_ACCOUNT_SHORT_NAMES[key] || fullName;
+};
+
+// Builds the "X, Y and Z were not polled and hence included other accounts." footnote for the Top 10
+// table. `polledByAccountName` maps a lowercased/trimmed Top10 account name to its Polled count in
+// the currently loaded data (missing/undefined is treated the same as zero — never loaded).
+const buildTop10NotPolledCaption = (polledByAccountName) => {
+  const unpolled = TOP10_ACCOUNT_ORDER.filter((name) => {
+    const key = name.trim().toLowerCase();
+    const polled = polledByAccountName instanceof Map ? polledByAccountName.get(key) : polledByAccountName?.[key];
+    return !polled;
+  }).map(getTop10AccountShortName);
+  if (unpolled.length === 0) return null;
+  if (unpolled.length === 1) return `${unpolled[0]} was not polled and hence included other accounts.`;
+  const last = unpolled[unpolled.length - 1];
+  const rest = unpolled.slice(0, -1);
+  return `${rest.join(', ')} and ${last} were not polled and hence included other accounts.`;
 };
 
 const sortTop10TrendRows = (rows, top10AccountNames = []) => {
@@ -941,20 +982,7 @@ const ACSATResponseRateDashboard = ({
   const cycleStartDateFormatted = acsatCycleStartDateFormatted;
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
-  const top10AccountNames = [
-    'Premier Healthcare Solutions Inc',
-    'Blue Cross Blue Shield Association BCBSA',
-    'Frontier Airlines INC',
-    'Premier - Horizon II - Covenant Health',
-    'Tufts Medicine',
-    'BronxCare Health System',
-    'AgFirst Farm Credit Bank',
-    'embecta MEDICAL II LLC',
-    'Northern Trust Company',
-    'Jewish Board of Family and Childrens Services JBFCS',
-    'Healthfirst',
-    'AgileOne',
-  ];
+  const top10AccountNames = TOP10_ACCOUNT_ORDER;
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
@@ -4077,6 +4105,21 @@ const ACSATResponseRateDashboard = ({
                   })}
               </OtherAccountRow>
             )}
+            {showTop10 && (() => {
+              const polledByAccountName = new Map(
+                (processedData || []).map(row => [(row.customerName || '').toString().trim().toLowerCase(), row.polled])
+              );
+              const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+              if (!notPolledCaption) return null;
+              const colCount = 6 + (showMainTableTrendColumns ? acsatTrendAnalysisData.length : 0);
+              return (
+                <tr>
+                  <TableCell colSpan={colCount} style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 1rem', borderTop: '1px solid #e5e7eb' }}>
+                    {notPolledCaption}
+                  </TableCell>
+                </tr>
+              );
+            })()}
           </TableBody>
         </Table>
       </ScrollableTableContainer>

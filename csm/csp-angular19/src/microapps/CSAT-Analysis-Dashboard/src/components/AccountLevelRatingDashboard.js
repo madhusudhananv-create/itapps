@@ -4,6 +4,47 @@ import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { Download, TrendingUp } from 'lucide-react';
 import { useCSATContext } from '../context/CSATContext';
+import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
+
+// Short/nickname forms for the fixed Top 10 roster, used in the "not polled" footnote so the
+// caption stays readable instead of spelling out full legal account names.
+const TOP10_ACCOUNT_SHORT_NAME = {
+  'bronxcare health system': 'BronxCare',
+  'premier - horizon ii - covenant health': 'Covenant',
+  'premier healthcare solutions inc': 'Premier Healthcare',
+  'blue cross blue shield association bcbsa': 'BCBSA',
+  'frontier airlines inc': 'Frontier Airlines',
+  'tufts medicine': 'Tufts Medicine',
+  'agfirst farm credit bank': 'AgFirst',
+  'embecta medical ii llc': 'embecta',
+  'jewish board of family and childrens services jbfcs': 'JBFCS',
+  'healthfirst': 'Healthfirst',
+  'the northern trust company': 'Northern Trust',
+  'firstsource solutions ltd': 'Firstsource',
+  'ooma inc.': 'Ooma',
+  'arista networks india private limited': 'Arista Networks',
+  'infoblox inc.': 'Infoblox'
+};
+
+const getTop10AccountShortName = (fullName) => {
+  const key = (fullName || '').toString().trim().toLowerCase();
+  return TOP10_ACCOUNT_SHORT_NAME[key] || fullName;
+};
+
+// Builds the "X and Y were not polled and hence included other accounts." footnote text for a
+// list of not-polled Top 10 account names, following standard comma/and-joining grammar.
+const buildNotPolledCaption = (names) => {
+  if (!names || names.length === 0) return '';
+  if (names.length === 1) {
+    return `${names[0]} was not polled and hence included other accounts.`;
+  }
+  if (names.length === 2) {
+    return `${names[0]} and ${names[1]} were not polled and hence included other accounts.`;
+  }
+  const allButLast = names.slice(0, -1).join(', ');
+  const last = names[names.length - 1];
+  return `${allButLast} and ${last} were not polled and hence included other accounts.`;
+};
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -1562,7 +1603,7 @@ const appendTop10TrendSummaryRowToSheet = (trendSheet, summaryRow, perspectives,
 
 const addTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
   if (!fileData?.hasData || !fileData.rows?.length) return;
-  const safeName = `Top10_Trend_${sheetIndex + 1}`.slice(0, 31);
+  const safeName = `Top 10_Trend_${sheetIndex + 1}`.slice(0, 31);
   const trendSheet = workbook.addWorksheet(safeName);
   const headers = ['Sr. No.', 'Business Unit', 'Account Name', 'Polled', 'Responded', ...(fileData.perspectives || [])];
   trendSheet.addRow(headers);
@@ -1809,18 +1850,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
   const [secondSheetData, setSecondSheetData] = useState([]);
   
   // Top 10 account names in order
-  const top10AccountNames = [
-    'Premier Healthcare Solutions Inc',
-    'Blue Cross Blue Shield Association BCBSA',
-    'Frontier Airlines INC',
-    'Tufts Medicine',
-    'Premier - Horizon II - Covenant Health',
-    'AgFirst Farm Credit Bank',
-    'embecta MEDICAL II LLC',
-    'BronxCare Health System',
-    'Northern Trust Company',
-    'Jewish Board of Family and Childrens Services JBFCS'
-  ];
+  const top10AccountNames = TOP10_ACCOUNT_ORDER;
   
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
@@ -2997,6 +3027,22 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
       perspectives: perspectiveAverages
     };
   }, [showTop10, processedData, secondSheetData, acsatCycle, acsatCycleStartDateFormatted]);
+
+  // Footnote: which fixed-roster Top 10 accounts had zero "Polled" count in the loaded data
+  // (i.e. were effectively backfilled by other accounts in this Top 10 view).
+  const top10NotPolledCaption = useMemo(() => {
+    if (!showTop10 || !processedData?.data) return '';
+    const rows = processedData.data;
+    const notPolled = TOP10_ACCOUNT_ORDER.filter((accountName) => {
+      const norm = accountName.toLowerCase();
+      const row = rows.find((r) => {
+        const rn = (r.customerName || '').toLowerCase();
+        return rn.includes(norm) || norm.includes(rn);
+      });
+      return !row || !(Number(row.Polled) > 0);
+    });
+    return buildNotPolledCaption(notPolled.map(getTop10AccountShortName));
+  }, [showTop10, processedData]);
 
   // Handle sorting
   const handleSort = (key) => {
@@ -4798,6 +4844,21 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
                         </React.Fragment>
                       );
                     })}
+                  </Tr>
+                )}
+                {showTop10 && top10NotPolledCaption && (
+                  <Tr>
+                    <Td colSpan={
+                        (groupByBU ? 2 : 3) +
+                        (processedData.headers.cssColumns ? processedData.headers.cssColumns.length : 0) +
+                        (processedData.headers.perspectives ? processedData.headers.perspectives.length : 0) +
+                        (showBuWiseMainTrendColumns ? ACSAT_MAIN_BU_PERSPECTIVES.length : 0) +
+                        (showTop10MainTrendColumns ? ACSAT_MAIN_BU_PERSPECTIVES.length : 0) +
+                        (showAccountMainTrendColumns ? ACSAT_MAIN_BU_PERSPECTIVES.length : 0)
+                      }
+                      style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 1rem', borderTop: '1px solid #e2e8f0' }}>
+                      {top10NotPolledCaption}
+                    </Td>
                   </Tr>
                 )}
               </>
