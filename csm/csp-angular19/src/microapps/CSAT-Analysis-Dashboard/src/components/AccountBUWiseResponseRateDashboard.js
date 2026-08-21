@@ -6,7 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList, ComposedChart, Line } from 'recharts';
-import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName } from '../utils/top10Accounts';
 import { groupPracticeName } from '../utils/practiceGroups';
 
 // Parse dates from Excel (serial numbers or strings) to MM-DD-YYYY for comparison with csatCycleStartDateFormatted
@@ -415,7 +415,7 @@ const getTop10AccountShortName = (fullName) => {
 // table. `polledByAccountName` maps a lowercased/trimmed Top10 account name to its Polled count in
 // the currently loaded data (missing/undefined is treated the same as zero — never loaded).
 const buildTop10NotPolledCaption = (polledByAccountName) => {
-  const unpolled = TOP10_ACCOUNT_ORDER.filter((name) => {
+  const unpolled = TOP10_SURVEY_ACCOUNT_ORDER.filter((name) => {
     const key = name.trim().toLowerCase();
     const polled = polledByAccountName instanceof Map ? polledByAccountName.get(key) : polledByAccountName?.[key];
     return !polled;
@@ -974,11 +974,17 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       }
     });
 
-    // Top 10 membership is defined SOLELY by the fixed named-account list, not by the uploaded data's
-    // TYPE OF ACCOUNT / "Top 10" flag � that flag can be stale (e.g. still marking a previously-Top10
-    // account that has since been replaced). The fixed list is the single source of truth.
+    // Top 10 membership is the *effective* Top 10 for this dataset: the 10 named accounts, with any
+    // account that has zero Polled backfilled from TOP10_BACKFILL_FALLBACK_ORDER (per utils/top10Accounts.js),
+    // not the full 15-account roster and not the uploaded data's stale TYPE OF ACCOUNT / "Top 10" flag.
+    const polledByAccountNameAP = {};
+    Object.values(byKey).forEach(r => {
+      const keyAP = normalizeTop10AccountName(r.accountName);
+      polledByAccountNameAP[keyAP] = (polledByAccountNameAP[keyAP] || 0) + (r.polled || 0);
+    });
+    const effectiveTop10AP = computeEffectiveTop10AccountNames(polledByAccountNameAP);
     Object.keys(accountBU).forEach(name => {
-      accountTop10[name] = getTop10FixedOrderIndexAP(name) !== -1;
+      accountTop10[name] = isEffectiveTop10AccountName(name, effectiveTop10AP);
     });
 
     const byAccount = {};
@@ -1094,18 +1100,18 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     };
 
     const summaryRows = [];
-    summaryRows.push(buildSummaryRow('Top 10 Accounts', top10Polled, top10Responded, top10ScoreSum, top10ScoreCount, 'top10-total'));
+    summaryRows.push(buildSummaryRow('Top 10 Accounts - All Practices', top10Polled, top10Responded, top10ScoreSum, top10ScoreCount, 'top10-total'));
     distinctPracticesOf(top10DetailRecords).forEach(practice => {
       const s = sumRecordsFor(top10DetailRecords, practice);
-      summaryRows.push(buildSummaryRow(`Top 10 ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'top10-practice'));
+      summaryRows.push(buildSummaryRow(`Top 10 - ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'top10-practice'));
     });
     const otherTotals = sumRecordsFor(otherDetailRecords, null);
-    summaryRows.push(buildSummaryRow('Other Accounts NR', otherTotals.polled, otherTotals.responded, otherTotals.scoreSum, otherTotals.scoreCount, 'other-total'));
+    summaryRows.push(buildSummaryRow('Other Accounts - All Practices', otherTotals.polled, otherTotals.responded, otherTotals.scoreSum, otherTotals.scoreCount, 'other-total'));
     distinctPracticesOf(otherDetailRecords).forEach(practice => {
       const s = sumRecordsFor(otherDetailRecords, practice);
-      summaryRows.push(buildSummaryRow(`Other Accounts ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'other-practice'));
+      summaryRows.push(buildSummaryRow(`Other Accounts - ${practice}`, s.polled, s.responded, s.scoreSum, s.scoreCount, 'other-practice'));
     });
-    summaryRows.push(buildSummaryRow('Overall NR', top10Polled + otherPolled, top10Responded + otherResponded, top10ScoreSum + otherScoreSum, top10ScoreCount + otherScoreCount, 'overall'));
+    summaryRows.push(buildSummaryRow('Overall - Org Level', top10Polled + otherPolled, top10Responded + otherResponded, top10ScoreSum + otherScoreSum, top10ScoreCount + otherScoreCount, 'overall'));
 
     return [...rows, ...summaryRows];
   };
@@ -1441,9 +1447,22 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const practice = row['Practice'] ?? row['PRACTICE'];
       return groupPracticeName(practice != null && String(practice).trim() !== '' ? String(practice).trim() : 'N/A');
     };
-    // Top 10 membership is defined solely by the shared, curated account list — not by this
-    // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
-    const isTop10Account = (row) => isTop10AccountName(getCustomerName(row));
+    // Top 10 membership is the *effective* Top 10 for this dataset (the 10 named accounts, backfilled
+    // per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original account has zero Polled) — not the
+    // full 15-account roster and not this row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale.
+    const polledByAccountNamePD = {};
+    data.forEach(row => {
+      const sentVal = row[sentDateCol] ?? row['CSS_SENT_DATE'] ?? row['CSAT SENT DATE'];
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        if (sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted))) {
+          const key = normalizeTop10AccountName(getCustomerName(row));
+          polledByAccountNamePD[key] = (polledByAccountNamePD[key] || 0) + 1;
+        }
+      }
+    });
+    const effectiveTop10PD = computeEffectiveTop10AccountNames(polledByAccountNamePD);
+    const isTop10Account = (row) => isEffectiveTop10AccountName(getCustomerName(row), effectiveTop10PD);
 
     // Get Top 10 customers from the second sheet (TYPE OF ACCOUNT = "Top 10" or Top 10 = 'Y')
     const top10Customers = new Set();
@@ -2321,9 +2340,22 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
         const name = row[customerNameCol] ?? row['CUST_NM'];
         return name != null && String(name).trim() !== '' ? String(name).trim() : 'N/A';
       };
-      // Top 10 membership is defined solely by the shared, curated account list — not by this
-      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
-      const isTop10Account = (row) => isTop10AccountName(getCustomerName(row));
+      // Top 10 membership is the *effective* Top 10 for this trend file (the 10 named accounts, backfilled
+      // per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original account has zero Polled) — not the
+      // full 15-account roster and not this row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale.
+      const polledByAccountNameTrend = {};
+      data.forEach(row => {
+        const sentVal = row[sentDateCol] ?? row['CSS_SENT_DATE'];
+        if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+          const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+          if (sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted))) {
+            const key = normalizeTop10AccountName(getCustomerName(row));
+            polledByAccountNameTrend[key] = (polledByAccountNameTrend[key] || 0) + 1;
+          }
+        }
+      });
+      const effectiveTop10Trend = computeEffectiveTop10AccountNames(polledByAccountNameTrend);
+      const isTop10Account = (row) => isEffectiveTop10AccountName(getCustomerName(row), effectiveTop10Trend);
       const isOtherAccount = (row) => !isTop10Account(row);
 
       const accountMap = {};
@@ -2791,9 +2823,23 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     const avgScore = (sum, count) => (count > 0 ? Math.round((sum / count) * 100) / 100 : null);
 
     const customerNameColTop10Scores = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || 'CUSTOMER NAME';
-    // Top 10 membership is defined solely by the shared, curated account list — not by this
-    // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
-    const isTop10Account = (row) => isTop10AccountName(row[customerNameColTop10Scores] ?? row['CUST_NM'] ?? '');
+    // Top 10 membership is the *effective* Top 10 for this dataset (the 10 named accounts, backfilled
+    // per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original account has zero Polled) — not the
+    // full 15-account roster and not this row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale.
+    const polledByAccountNameScores = {};
+    data.forEach(row => {
+      const sentVal = row[sentDateCol] ?? row['CSS_SENT_DATE'] ?? row['CSAT SENT DATE'];
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        if (sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted))) {
+          const name = (row[customerNameColTop10Scores] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
+          const key = normalizeTop10AccountName(name);
+          polledByAccountNameScores[key] = (polledByAccountNameScores[key] || 0) + 1;
+        }
+      }
+    });
+    const effectiveTop10Scores = computeEffectiveTop10AccountNames(polledByAccountNameScores);
+    const isTop10Account = (row) => isEffectiveTop10AccountName(row[customerNameColTop10Scores] ?? row['CUST_NM'] ?? '', effectiveTop10Scores);
     const norm = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ').replace(/-/g, ' ');
     const isFullyManaged = (et) => norm(et) === 'fully managed';
     const isCoManaged = (et) => norm(et) === 'co managed';

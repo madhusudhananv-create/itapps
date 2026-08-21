@@ -558,13 +558,13 @@ const FileUpload = ({
       icon: <Target size={20} />,
       requiresData: true
     },
-    {
-      id: 'respondentWiseAverageCSATScores',
-      name: 'Respondent wise Average CSAT Scores',
-      description: 'Average CSAT rating per respondent with trend vs the last cycle',
-      icon: <Star size={20} />,
-      requiresData: true
-    },
+    // {
+    //   id: 'respondentWiseAverageCSATScores',
+    //   name: 'Respondent wise Average CSAT Scores',
+    //   description: 'Average CSAT rating per respondent with trend vs the last cycle',
+    //   icon: <Star size={20} />,
+    //   requiresData: true
+    // },
     {
       id: 'pcsatQualitativeAnalysis',
       name: 'PCSAT: Qualitative analysis',

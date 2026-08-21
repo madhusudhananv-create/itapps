@@ -5,7 +5,7 @@ import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
-import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, normalizeTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, isTop10AccountName, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName } from '../utils/top10Accounts';
 import { groupPracticeName } from '../utils/practiceGroups';
 
 // Short, recognizable display names for the fixed Top 10 roster (utils/top10Accounts.js), used only
@@ -40,7 +40,7 @@ const buildTop10NotPolledNote = (rollupRows) => {
     const norm = normalizeTop10AccountName(r.accountName);
     polledByName.set(norm, (polledByName.get(norm) || 0) + (r.cssSentCount || 0));
   });
-  const notPolled = TOP10_ACCOUNT_ORDER
+  const notPolled = TOP10_SURVEY_ACCOUNT_ORDER
     .filter((name) => (polledByName.get(normalizeTop10AccountName(name)) || 0) === 0)
     .map((name) => TOP10_ACCOUNT_SHORT_NAMES[normalizeTop10AccountName(name)] || name);
   if (notPolled.length === 0) return '';
@@ -587,8 +587,8 @@ const getTop10FixedOrderIndex = getTop10AccountOrderIndexShared;
 //  - filters to accounts flagged TYPE OF ACCOUNT = "Top 10" / "Y" in secondSheetSource (same detection used by the
 //    file's pre-existing showTop10 view), always including the 10 fixed named accounts;
 //  - orders Top10 accounts by the fixed name order first, then any extra flagged accounts by BU order + alphabetical;
-//  - appends 5 dynamically-computed summary rows: "Top 10 Accounts", "Top 10 <Practice>" (one per distinct practice
-//    found among Top10 accounts), "Other Accounts NR", "Other Accounts <Practice>" (one per distinct practice found
+//  - appends 5 dynamically-computed summary rows: "Top 10 All Practices Accounts", "Top 10 - <Practice>" (one per distinct practice
+//    found among Top10 accounts), "Other Accounts All Practices", "Other Accounts - <Practice>" (one per distinct practice found
 //    among non-Top10 accounts), "Overall NR" (Top10 + Other combined — this IS the grand total row for this view).
 // Rating % values are rounded to the NEAREST WHOLE PERCENT (no decimals), per this view's own formatting spec.
 const buildAccountPracticeWiseTop10DistributionData = (source, secondSheetSource, csatCycleStartDateFormatted) => {
@@ -604,12 +604,19 @@ const buildAccountPracticeWiseTop10DistributionData = (source, secondSheetSource
     return row;
   });
 
-  // Top 10 membership is defined SOLELY by the fixed named-account list, not by the uploaded data's
-  // TYPE OF ACCOUNT / "Top 10" flag � that flag can be stale (e.g. still marking a previously-Top10
-  // account that has since been replaced). The fixed list below is the single source of truth.
-  const top10NameSet = new Set(TOP10_FIXED_ACCOUNT_ORDER.map(normalizeAccountNameForTop10Order));
+  // Top 10 membership is defined by the EFFECTIVE Top 10 roster for this dataset: normally the
+  // original 10 survey accounts, but any with zero Polled get swapped out for the next eligible
+  // backfill account (see computeEffectiveTop10AccountNames). Not by the uploaded data's
+  // TYPE OF ACCOUNT / "Top 10" flag (that flag can be stale).
+  const polledByAccountNameForTop10 = new Map();
+  allRows.forEach((r) => {
+    if (!r.isRollup) return;
+    const key = normalizeAccountNameForTop10Order(r.accountName);
+    polledByAccountNameForTop10.set(key, (polledByAccountNameForTop10.get(key) || 0) + (r.cssSentCount || 0));
+  });
+  const effectiveTop10ForThisData = computeEffectiveTop10AccountNames(polledByAccountNameForTop10);
 
-  const isTop10Row = (r) => top10NameSet.has(normalizeAccountNameForTop10Order(r.accountName));
+  const isTop10Row = (r) => isEffectiveTop10AccountName(r.accountName, effectiveTop10ForThisData);
   const top10Rows = allRows.filter(isTop10Row);
   const otherRows = allRows.filter(r => !isTop10Row(r));
 
@@ -692,15 +699,15 @@ const buildAccountPracticeWiseTop10DistributionData = (source, secondSheetSource
   const otherPractices = sortPractices(otherDetailRows);
 
   const summaryRows = [];
-  summaryRows.push(buildSummaryRow('Top 10 Accounts', top10RollupRows, { summaryTier: 'top10-total', rowColor: '#FFF2CC' }));
+  summaryRows.push(buildSummaryRow('Top 10 Accounts - All Practices', top10RollupRows, { summaryTier: 'top10-total', rowColor: '#FFF2CC' }));
   top10Practices.forEach((practice) => {
-    summaryRows.push(buildSummaryRow(`Top 10 ${practice}`, top10DetailRows.filter(r => r.practice === practice), { summaryTier: 'top10-practice', rowColor: '#FFF9E6' }));
+    summaryRows.push(buildSummaryRow(`Top 10 - ${practice}`, top10DetailRows.filter(r => r.practice === practice), { summaryTier: 'top10-practice', rowColor: '#FFF9E6' }));
   });
-  summaryRows.push(buildSummaryRow('Other Accounts NR', otherRollupRows, { summaryTier: 'other-total', rowColor: '#BDD7EE' }));
+  summaryRows.push(buildSummaryRow('Other Accounts - All Practices', otherRollupRows, { summaryTier: 'other-total', rowColor: '#BDD7EE' }));
   otherPractices.forEach((practice) => {
-    summaryRows.push(buildSummaryRow(`Other Accounts ${practice}`, otherDetailRows.filter(r => r.practice === practice), { summaryTier: 'other-practice', rowColor: '#DCE9F5' }));
+    summaryRows.push(buildSummaryRow(`Other Accounts - ${practice}`, otherDetailRows.filter(r => r.practice === practice), { summaryTier: 'other-practice', rowColor: '#DCE9F5' }));
   });
-  summaryRows.push(buildSummaryRow('Overall NR', [...top10RollupRows, ...otherRollupRows], { summaryTier: 'overall', rowColor: '#E4DFEC' }));
+  summaryRows.push(buildSummaryRow('Overall - Org Level', [...top10RollupRows, ...otherRollupRows], { summaryTier: 'overall', rowColor: '#E4DFEC' }));
 
   return { data: [...orderedTop10Rows, ...summaryRows], detailData: orderedTop10Rows, summaryData: summaryRows };
 };
@@ -1089,12 +1096,27 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       const kNorm = (k || '').toLowerCase().replace(/[\s_]/g, '');
       return kNorm.includes('csatreceiveddate') || kNorm.includes('receiveddate') || (kNorm.includes('received') && kNorm.includes('date'));
     }) || 'CSAT RECEIVED DATE';
+    // Pre-pass: build a Polled-count-by-account map over this sheet's own data (independent of any
+    // TYPE OF ACCOUNT / "Top 10" flag), so the effective Top 10 roster can be computed for THIS
+    // dataset before bucketing rows.
+    const polledByAccountNameForTop10 = new Map();
+    sheetData.forEach(row => {
+      const accountName = (row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
+      const sentDateFormatted = parseExcelDateToMMDDYYYY(row[sentCol]);
+      if (sentDateFormatted && isDateGreaterThanOrEqual(sentDateFormatted, csatCycleStartDateFormatted)) {
+        const key = normalizeTop10AccountName(accountName);
+        polledByAccountNameForTop10.set(key, (polledByAccountNameForTop10.get(key) || 0) + 1);
+      }
+    });
+    const effectiveTop10ForThisData = computeEffectiveTop10AccountNames(polledByAccountNameForTop10);
+
     const groups = {};
     sheetData.forEach(row => {
       const accountName = (row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim() || 'N/A';
-      // Top 10 membership is defined solely by the shared, curated account list — not by this
-      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
-      if (!isTop10AccountName(accountName)) return;
+      // Top 10 membership is the EFFECTIVE Top 10 roster for this dataset (see
+      // computeEffectiveTop10AccountNames) — not this row's TYPE OF ACCOUNT / "Top 10" flag, which
+      // can go stale when the roster changes.
+      if (!isEffectiveTop10AccountName(accountName, effectiveTop10ForThisData)) return;
       const buRaw = (row[buCol] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? '').toString().trim() || 'N/A';
       const businessUnit = normalizeBU(buRaw) || 'N/A';
       const sentDateFormatted = parseExcelDateToMMDDYYYY(row[sentCol]);
@@ -1905,13 +1927,29 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     const top10 = new Set();
     const other = new Set();
     if (!excelData?.secondSheetData?.length) return { top10, other };
-    excelData.secondSheetData.forEach(row => {
+    const secondSheetData = excelData.secondSheetData;
+    // Pre-pass: Polled count per account over this sheet's own data (independent of any
+    // TYPE OF ACCOUNT / "Top 10" flag), used to compute the EFFECTIVE Top 10 roster for this
+    // dataset (see computeEffectiveTop10AccountNames).
+    const secondFirstForTop10 = secondSheetData[0] || {};
+    const sentKeyForTop10 = Object.keys(secondFirstForTop10).find(k => /csat sent date|css_sent_date|css sent date/i.test(String(k)));
+    const polledByAccountNameForTop10 = new Map();
+    secondSheetData.forEach(row => {
+      const accountNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+      const sentVal = (sentKeyForTop10 ? row[sentKeyForTop10] : null) ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
+      if (sentVal != null && String(sentVal).trim() !== '' && String(sentVal) !== 'N/A') {
+        const key = normalizeTop10AccountName(accountNameForTop10);
+        polledByAccountNameForTop10.set(key, (polledByAccountNameForTop10.get(key) || 0) + 1);
+      }
+    });
+    const effectiveTop10ForThisData = computeEffectiveTop10AccountNames(polledByAccountNameForTop10);
+    secondSheetData.forEach(row => {
       const custId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       if (!custId) return;
-      // Top 10 membership is defined solely by the shared, curated account list — not by this
-      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+      // Top 10 membership is the EFFECTIVE Top 10 roster for this dataset — not this row's
+      // TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
       const accountNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
-      if (isTop10AccountName(accountNameForTop10)) top10.add(custId.toString());
+      if (isEffectiveTop10AccountName(accountNameForTop10, effectiveTop10ForThisData)) top10.add(custId.toString());
       else other.add(custId.toString());
     });
     return { top10, other };
@@ -2166,12 +2204,27 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     const top10CustomerIds = new Set();
     const otherAccountCustomerIds = new Set();
     if (excelData && excelData.secondSheetData && showTop10) {
+      // Pre-pass: Polled count per account over this sheet's own data (independent of any
+      // TYPE OF ACCOUNT / "Top 10" flag), used to compute the EFFECTIVE Top 10 roster for this
+      // dataset (see computeEffectiveTop10AccountNames).
+      const secondFirstForTop10 = excelData.secondSheetData[0] || {};
+      const sentKeyForTop10 = Object.keys(secondFirstForTop10).find(k => /csat sent date|css_sent_date|css sent date/i.test(String(k)));
+      const polledByAccountNameForTop10 = new Map();
+      excelData.secondSheetData.forEach(row => {
+        const accountNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+        const sentVal = (sentKeyForTop10 ? row[sentKeyForTop10] : null) ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
+        if (sentVal != null && String(sentVal).trim() !== '' && String(sentVal) !== 'N/A') {
+          const key = normalizeTop10AccountName(accountNameForTop10);
+          polledByAccountNameForTop10.set(key, (polledByAccountNameForTop10.get(key) || 0) + 1);
+        }
+      });
+      const effectiveTop10ForThisData = computeEffectiveTop10AccountNames(polledByAccountNameForTop10);
       excelData.secondSheetData.forEach(row => {
         const custId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-        // Top 10 membership is defined solely by the shared, curated account list — not by this
-        // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+        // Top 10 membership is the EFFECTIVE Top 10 roster for this dataset — not this row's
+        // TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
         const accountNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
-        const isTop10 = isTop10AccountName(accountNameForTop10);
+        const isTop10 = isEffectiveTop10AccountName(accountNameForTop10, effectiveTop10ForThisData);
 
         if (custId) {
           if (isTop10) {
@@ -4544,15 +4597,15 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
           const val = isHyphen ? '-' : (row[colName] ?? '-');
           const cell = dataRow.getCell(colIndex + 5);
-          if (val !== '-' && !Number.isNaN(Number(val))) {
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
             cell.numFmt = '0.0%';
             cell.value = roundDistributionForExcel(Number(val));
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
             cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
           } else {
-            cell.value = val;
+            cell.value = '-';
           }
-          cell.alignment = { horizontal: 'center', vertical: 'middle' };
         });
         if (showTrendAnalysis) {
           PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
@@ -4569,11 +4622,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         'Grand Total',
         practiceWiseGrandTotal.polled,
         practiceWiseGrandTotal.responded,
-        ...PRACTICE_RATING_DISPLAY_ORDER.map(r => {
-          const colName = PRACTICE_RATING_COLUMN_NAMES[r];
-          const val = practiceWiseGrandTotal[colName];
-          return practiceWiseGrandTotal.responded === 0 ? '-' : (val ?? '-');
-        })
+        ...PRACTICE_RATING_DISPLAY_ORDER.map(() => '-')
       ];
       if (showTrendAnalysis) {
         grandTotalBase.push(...PRACTICE_RATING_DISPLAY_ORDER.map((r) => {
@@ -4591,9 +4640,12 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       });
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
       PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
+        const val = practiceWiseGrandTotal[colName];
         const cell = grandTotalRow.getCell(colIndex + 5);
-        const val = cell.value;
-        if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+        if (practiceWiseGrandTotal.responded === 0 || val == null || Number.isNaN(Number(val))) {
+          cell.value = '-';
+        } else {
           cell.numFmt = '0.0%';
           cell.value = roundDistributionForExcel(Number(val));
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
@@ -4667,7 +4719,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const val = isHyphen ? '-' : (row[colName] ?? '-');
           const cell = dataRow.getCell(colIndex + 5);
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
-          if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+          if (val !== '-' && !Number.isNaN(Number(val))) {
             cell.numFmt = '0.0%';
             cell.value = roundDistributionForExcel(Number(val));
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
@@ -4681,26 +4733,23 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         '',
         'Grand Total',
         practiceWiseTrendGrandTotal.polled,
-        practiceWiseTrendGrandTotal.responded
+        practiceWiseTrendGrandTotal.responded,
+        ...PRACTICE_RATING_DISPLAY_ORDER.map(() => '-')
       ]);
       grandTotalRow.font = { bold: true };
       grandTotalRow.eachCell((cell) => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
-      PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
-        const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
-        const val = practiceWiseTrendGrandTotal.responded === 0 ? '-' : (practiceWiseTrendGrandTotal[colName] ?? '-');
-        const cell = grandTotalRow.getCell(colIndex + 5);
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+      PRACTICE_RATING_DISPLAY_ORDER.forEach((r, idx) => {
+        const colName = PRACTICE_RATING_COLUMN_NAMES[r];
+        const val = practiceWiseTrendGrandTotal[colName];
+        const cell = grandTotalRow.getCell(idx + 5);
+        if (practiceWiseTrendGrandTotal.responded === 0 || val == null || Number.isNaN(Number(val))) {
+          cell.value = '-';
+        } else {
           cell.numFmt = '0.0%';
           cell.value = roundDistributionForExcel(Number(val));
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
-          cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
-        } else {
-          cell.value = '-';
-          cell.font = { bold: true };
         }
       });
       worksheet.getColumn(1).width = 8;
@@ -4938,7 +4987,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         const val = accountPracticeWiseTrendGrandTotal.responded === 0 ? '-' : (accountPracticeWiseTrendGrandTotal[colName] ?? '-');
         const cell = grandTotalRow.getCell(colIndex + 7);
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (val !== '-' && val != null && !Number.isNaN(Number(val))) {
+        if (val !== '-' && !Number.isNaN(Number(val))) {
           cell.numFmt = '0.0%';
           cell.value = roundDistributionForExcel(Number(val));
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[rating] } };
@@ -4974,10 +5023,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
   // Excel export for Account_Practice_Wise_Overall_CSAT_Score_Distribution_Top10: current cycle + "Last year PCSAT
   // % for 1,2,3,4,5 rating" as two worksheets in one workbook (mirrors this file's convention of pairing a current
   // and a trend/last-cycle table under one download for the Account/Practice-wise views).
-  const writeAccountPracticeWiseTop10Worksheet = (
-    workbook, sheetName, rows, grandTotal,
-    showTrend = false, trendByKey = null, getTrendKey = null, formatTrendFn = null
-  ) => {
+  const writeAccountPracticeWiseTop10Worksheet = (workbook, sheetName, rows, grandTotal, showTrend, trendByKey, getTrendKey, formatTrendFn) => {
     const worksheet = workbook.addWorksheet(sheetName);
     const excelRatingColors = { 1: 'FFDC2626', 2: 'FFFCA5A5', 3: 'FFF59E0B', 4: 'FF86EFAC', 5: 'FF16A34A' };
 
@@ -5030,8 +5076,8 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
     };
 
     rows.forEach((row) => {
-      const trendRow = (showTrend && trendByKey && getTrendKey) ? trendByKey[getTrendKey(row)] : null;
-      addAccountPracticeWiseExcelRow(worksheet, row, excelRatingColors, trendRow, showTrend, formatTrendFn);
+      const trendRow = showTrend && trendByKey && getTrendKey ? trendByKey[getTrendKey(row)] : null;
+      addAccountPracticeWiseExcelRow(worksheet, row, excelRatingColors, trendRow, !!showTrend, formatTrendFn);
       if (row.isSummaryRow) {
         const dataRow = worksheet.lastRow;
         const fillColor = summaryRowColors[row.summaryTier] || 'FFE2E8F0';
@@ -6605,18 +6651,13 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           });
         }
 
-        // rating cell fills
+        // rating cell fills + consistent one-decimal % formatting
         ratingOrder.forEach((rt, idx) => {
           const cell = dataRow.getCell(5 + idx);
           const raw = cell.value;
-          if (raw == null || raw === '-') {
-            cell.value = '-';
-            return;
-          }
-          if (!Number.isNaN(Number(raw))) {
-            cell.numFmt = '0.0%';
-            cell.value = roundDistributionForExcel(Number(raw));
-          }
+          if (raw == null || raw === '-') return;
+          cell.numFmt = '0.0%';
+          cell.value = roundDistributionForExcel(Number(raw));
           const colors = getCellColor(rt, raw);
           if (!colors) return;
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.fg } };
@@ -7137,7 +7178,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           <div style={{ margin: '1rem 0', padding: '1rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', fontSize: '0.875rem', color: '#166534' }}>
             Same rules as <strong>Account/Practice wise Overall CSAT score -Distribution(Score 1 to 5)</strong>, restricted to the <strong>Top 10 accounts</strong> (fixed order) plus any other account flagged <strong>Top 10</strong> in the data.
             Rating % values are shown to <strong>one decimal place</strong> in this view.
-            Below the account rows: <strong>Top 10 Accounts</strong>, <strong>Top 10 &lt;Practice&gt;</strong> (one per practice), <strong>Other Accounts NR</strong>, <strong>Other Accounts &lt;Practice&gt;</strong> (one per practice), and <strong>Overall NR</strong> (grand total across everyone).
+            Below the account rows: <strong>Top 10 All Practices Accounts</strong>, <strong>Top 10 - &lt;Practice&gt;</strong> (one per practice), <strong>Other Accounts All Practices</strong>, <strong>Other Accounts - &lt;Practice&gt;</strong> (one per practice), and <strong>Overall NR</strong> (grand total across everyone).
             {showTrendAnalysis && <> Trend columns compare rating % of this dashboard vs the last cycle PCSAT file — difference shown first, then <span style={{ color: '#16a34a', fontWeight: '600' }}>↑</span> (green) for increase or <span style={{ color: '#dc2626', fontWeight: '600' }}>↓</span> (red) for decrease.</>}
             {csatCycleStartDateFormatted && <> Dates counted only when ≥ {csatCycleStartDateFormatted} (MM-DD-YYYY).</>}
           </div>

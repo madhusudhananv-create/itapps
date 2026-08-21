@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY, isDateGreaterThanOrEqual, getPreviousHalfYearOption } from '../utils/dateUtils';
-import { TOP10_ACCOUNT_ORDER, isTop10AccountRowByName, isTop10AccountName } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, isTop10AccountRowByName, isTop10AccountName, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName, normalizeTop10AccountName } from '../utils/top10Accounts';
 import { groupPracticeName } from '../utils/practiceGroups';
 import { fetchPCSATReportData } from '../services/csatReportsService';
 
@@ -1203,7 +1203,19 @@ const normalizeCustomerIdKey = (value) => {
 // so the roster only needs updating in one place. This local name is kept for existing call sites.
 // The curated list is authoritative � the uploaded file's TYPE OF ACCOUNT / "Top 10" column is
 // intentionally NOT consulted, since it can go stale when the roster changes.
-const isTop10AccountRow = (row) => isTop10AccountRowByName(row);
+// When `effectiveTop10Set` (a Set from computeEffectiveTop10AccountNames) is supplied, membership
+// is tested against it — the "effective" Top 10 for this dataset (backfilled for any of the 10
+// survey accounts with zero Polled). When omitted, falls back to the old static full-roster check
+// (TOP10_ACCOUNT_ORDER, all 15) for any caller not yet updated to pass a dataset-specific set.
+const isTop10AccountRow = (row, effectiveTop10Set) => {
+  if (effectiveTop10Set) {
+    if (!row) return false;
+    const nameKey = Object.keys(row).find((k) => /customer\s*name|cust_nm/i.test(String(k)));
+    const accountName = row[nameKey] ?? row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '';
+    return isEffectiveTop10AccountName(accountName, effectiveTop10Set);
+  }
+  return isTop10AccountRowByName(row);
+};
 
 // Fixed display order for the 10 named Top 10 accounts on the "Account/Practice wise Top10" view.
 // Accounts flagged Top 10 in the data but not found in this list are appended after, alphabetically �
@@ -1256,7 +1268,7 @@ const buildUnpolledTop10Note = (rows) => {
     const key = normalizeTop10NoteKey(r.accountName);
     polledByAccount.set(key, (polledByAccount.get(key) || 0) + (Number(r.Polled) || 0));
   });
-  const unpolled = TOP10_ACCOUNT_ORDER
+  const unpolled = TOP10_SURVEY_ACCOUNT_ORDER
     .filter(name => {
       const key = normalizeTop10NoteKey(name);
       return !polledByAccount.has(key) || polledByAccount.get(key) === 0;
@@ -1328,6 +1340,26 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
       return k === 'CSAT RECEIVED DATE' || lower.includes('csat_received_date') || lower.includes('css_received_date') || lower.includes('received date');
     }) || 'CSAT RECEIVED DATE';
 
+    // Pre-pass: sum Polled (CSAT SENT DATE >= cycle start) per account name so the "effective" Top
+    // 10 (backfilled per computeEffectiveTop10AccountNames) can be computed for THIS dataset before
+    // the main pass below decides Top10/Other membership.
+    const polledByAccountNameForTop10 = new Map();
+    secondSheetSource.forEach(row => {
+      const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
+      if (!nameVal) return;
+      const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
+      let sentOk = false;
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        sentOk = !!(sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted)));
+      }
+      if (sentOk) {
+        const key = normalizeTop10AccountName(nameVal);
+        polledByAccountNameForTop10.set(key, (polledByAccountNameForTop10.get(key) || 0) + 1);
+      }
+    });
+    const effectiveTop10Set = computeEffectiveTop10AccountNames(polledByAccountNameForTop10);
+
     secondSheetSource.forEach(row => {
       const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       if (!customerId) return;
@@ -1348,7 +1380,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
       const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
       if (nameVal && !nameByCustomerId.has(custKey)) nameByCustomerId.set(custKey, nameVal);
 
-      if (isTop10AccountRow(row)) top10ByCustomerId.set(custKey, true);
+      if (isTop10AccountRow(row, effectiveTop10Set)) top10ByCustomerId.set(custKey, true);
       else if (!top10ByCustomerId.has(custKey)) top10ByCustomerId.set(custKey, false);
 
       const tier = top10ByCustomerId.get(custKey) ? 'top10' : 'other';
@@ -1423,7 +1455,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
 
     perspectiveSet.add(perspective);
 
-    const isTop10 = top10ByCustomerId.has(custKey) ? top10ByCustomerId.get(custKey) : isTop10AccountRow(row);
+    const isTop10 = top10ByCustomerId.has(custKey) ? top10ByCustomerId.get(custKey) : isTop10AccountRow(row, effectiveTop10Set);
     const tier = isTop10 ? 'top10' : 'other';
     tierPractices[tier].add(practice);
 
@@ -1550,7 +1582,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
   const top10Tier = polledRespondedByTier.get('top10') || { polled: 0, responded: 0 };
   summaryRows.push({
     rowKey: 'top10-accounts',
-    practice: 'Top 10 Accounts',
+    practice: 'Top 10 Accounts - All Practices',
     rowTier: 'top10-total',
     Polled: top10Tier.polled,
     Responded: top10Tier.responded,
@@ -1561,7 +1593,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `top10-practice|||${practice.toLowerCase()}`,
-      practice: `Top 10 ${practice}`,
+      practice: `Top 10 - ${practice}`,
       rowTier: 'top10-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -1572,7 +1604,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
   const otherTier = polledRespondedByTier.get('other') || { polled: 0, responded: 0 };
   summaryRows.push({
     rowKey: 'other-account-nr',
-    practice: 'Other Accounts NR',
+    practice: 'Other Accounts All Practices',
     rowTier: 'other-total',
     Polled: otherTier.polled,
     Responded: otherTier.responded,
@@ -1583,7 +1615,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `other-practice|||${practice.toLowerCase()}`,
-      practice: `Other Accounts ${practice}`,
+      practice: `Other Accounts - ${practice}`,
       rowTier: 'other-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -1593,7 +1625,7 @@ const buildAccountPracticeWiseTop10FromReceivedReport = (source, csatCycleStartD
 
   summaryRows.push({
     rowKey: 'overall-nr',
-    practice: 'Overall NR',
+    practice: 'Overall - Org Level',
     rowTier: 'overall',
     Polled: grandPolled,
     Responded: grandResponded,
@@ -4493,16 +4525,44 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       return questionCategory !== 'Qualitative Feedback';
     });
 
+    // Pre-pass: sum Polled (CSAT SENT DATE >= cycle start) per account name over secondSheetDataToUse
+    // so only the "effective" Top 10 for THIS dataset (backfilled per
+    // computeEffectiveTop10AccountNames) are treated as Top 10 anywhere below in this memo.
+    const processedDataNameCol = secondSheetDataToUse.length > 0
+      ? Object.keys(secondSheetDataToUse[0] || {}).find(k => /customer\s*name|cust_nm/i.test(String(k)))
+      : null;
+    const processedDataSentCol = secondSheetDataToUse.length > 0
+      ? Object.keys(secondSheetDataToUse[0] || {}).find(k => {
+          const lowerKey = String(k).toLowerCase();
+          return k === 'CSAT SENT DATE' || k === 'CSAT_SENT_DATE' || lowerKey.includes('csat sent date') ||
+            lowerKey.includes('csat_sent_date') || k === 'CSS_SENT_DATE' || k === 'CSS SENT DATE' ||
+            lowerKey.includes('css sent date') || lowerKey.includes('css_sent_date');
+        })
+      : null;
+    const processedDataPolledByAccountName = new Map();
+    secondSheetDataToUse.forEach(row => {
+      const nameVal = (processedDataNameCol ? row[processedDataNameCol] : null) ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '';
+      const nameStr = (nameVal || '').toString().trim();
+      if (!nameStr) return;
+      const sentVal = (processedDataSentCol ? row[processedDataSentCol] : null) ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
+      if (sentVal == null || sentVal === '' || sentVal === 'N/A') return;
+      const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+      if (!sentFormatted || (csatCycleStartDateFormatted && !isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted))) return;
+      const key = normalizeTop10AccountName(nameStr);
+      processedDataPolledByAccountName.set(key, (processedDataPolledByAccountName.get(key) || 0) + 1);
+    });
+    const processedDataEffectiveTop10Set = computeEffectiveTop10AccountNames(processedDataPolledByAccountName);
+
     // Filter by Top 10 accounts if showTop10 is true
     let top10FilteredData = filteredData;
     let otherAccountData = [];
     let top10Customers = new Set();
-    
+
     if (showTop10 && secondSheetDataToUse.length > 0) {
       // Get Top 10 customers from second sheet (TYPE OF ACCOUNT = "Top 10" or "Top 10" = "Y")
       secondSheetDataToUse.forEach(row => {
         const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-        if (customerId && isTop10AccountRow(row)) {
+        if (customerId && isTop10AccountRow(row, processedDataEffectiveTop10Set)) {
           top10Customers.add(customerId);
         }
       });
@@ -4518,7 +4578,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       // Get Other Account data (where TYPE OF ACCOUNT is not "Top 10" / "Top 10" is not "Y")
       otherAccountData = secondSheetDataToUse.filter(row => {
         const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
-        return customerId && !isTop10AccountRow(row);
+        return customerId && !isTop10AccountRow(row, processedDataEffectiveTop10Set);
       });
       
       console.log('=== OTHER ACCOUNT DEBUG ===');
@@ -5325,7 +5385,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
           totalRowsProcessed++;
           
           // Other Account: include rows where TYPE OF ACCOUNT is not "Top 10" (and not "Top 10" = "Y")
-          if (isTop10AccountRow(row)) {
+          if (isTop10AccountRow(row, processedDataEffectiveTop10Set)) {
             rowsFilteredByTop10++;
             return;
           }
@@ -5644,8 +5704,28 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
             const lowerKey = key.toLowerCase();
             return key === 'CSAT RECEIVED DATE' || lowerKey.includes('csat received date') || key === 'CSS_RECEIVED_DATE' || lowerKey.includes('css received date');
           });
+
+          // Pre-pass: sum Polled per account name over THIS scope's own secondSheetDataToUse so the
+          // "effective" Top 10 (backfilled per computeEffectiveTop10AccountNames) can be computed
+          // locally here — filteredData is a separate useMemo from processedData, so its effective
+          // Top 10 set must be computed independently, not referenced from that other closure.
+          const filteredDataNameCol = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k)));
+          const filteredDataPolledByAccountName = new Map();
           secondSheetDataToUse.forEach(row => {
-            if (!isTop10AccountRow(row)) return;
+            const nameVal = (filteredDataNameCol ? row[filteredDataNameCol] : null) ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '';
+            const nameStr = (nameVal || '').toString().trim();
+            if (!nameStr) return;
+            const sentDateValue = row['CSAT SENT DATE'] ?? (cssSentColumn ? row[cssSentColumn] : null) ?? row['CSS_SENT_DATE'];
+            if (!sentDateValue || sentDateValue === '' || sentDateValue === 'N/A') return;
+            const sentDateFormatted = parseExcelDateToMMDDYYYY(sentDateValue);
+            if (!sentDateFormatted || (csatCycleStartDateFormatted && !isDateGreaterThanOrEqual(sentDateFormatted, csatCycleStartDateFormatted))) return;
+            const key = normalizeTop10AccountName(nameStr);
+            filteredDataPolledByAccountName.set(key, (filteredDataPolledByAccountName.get(key) || 0) + 1);
+          });
+          const filteredDataEffectiveTop10Set = computeEffectiveTop10AccountNames(filteredDataPolledByAccountName);
+
+          secondSheetDataToUse.forEach(row => {
+            if (!isTop10AccountRow(row, filteredDataEffectiveTop10Set)) return;
             const sentDateValue = row['CSAT SENT DATE'] ?? (cssSentColumn ? row[cssSentColumn] : null) ?? row['CSS_SENT_DATE'];
             if (sentDateValue && sentDateValue !== '' && sentDateValue !== 'N/A') {
               const sentDateFormatted = parseExcelDateToMMDDYYYY(sentDateValue);
@@ -8720,7 +8800,13 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
       console.log('=== TOP 10 POLLED/RESPONDED (SIMPLIFIED) ===');
       console.log('Sheet2 name:', sheet2Name);
       console.log('Sheet2 data length:', sheet2Data.length);
-      
+
+      // Effective Top 10 for THIS trend file (backfilled per computeEffectiveTop10AccountNames from
+      // this file's own sheet2Data Polled counts). Declared here (outside the sheet2Data.length > 0
+      // block below) so every Top10-bucketing site further down in this per-file iteration can see
+      // it — each trend file gets its own set, never shared across files or other useMemos.
+      let trendFileEffectiveTop10Set = new Set();
+
       if (sheet2Data.length > 0) {
         const firstRow = sheet2Data[0] || {};
         const allKeys = Object.keys(firstRow);
@@ -8734,14 +8820,29 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         const typeOfAccountColName = allKeys.find(k => /type\s*of\s*account/i.test(String(k))) || 'TYPE OF ACCOUNT';
         
         console.log('Detected columns:', { sentDateCol, receivedDateCol, customerNameCol, buColName, typeOfAccountColName });
-        
+
+        // Pre-pass: sum Polled (CSAT SENT DATE has value — no date filter for Trend Analysis, same
+        // as the main Polled count below) per account name over THIS file's own sheet2Data, so the
+        // "effective" Top 10 (backfilled per computeEffectiveTop10AccountNames) is computed per
+        // trend file, not shared across files or with any other useMemo's dataset.
+        const trendFilePolledByAccountName = new Map();
+        sheet2Data.forEach(row => {
+          const nameForPolled = (row[customerNameCol] ?? row['CUST_NM'] ?? row['CUSTOMER NAME'] ?? '').toString().trim();
+          if (!nameForPolled || nameForPolled === 'N/A') return;
+          const sentValForPolled = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
+          if (sentValForPolled == null || sentValForPolled === '' || String(sentValForPolled).trim() === '' || String(sentValForPolled).toLowerCase() === 'n/a') return;
+          const key = normalizeTop10AccountName(nameForPolled);
+          trendFilePolledByAccountName.set(key, (trendFilePolledByAccountName.get(key) || 0) + 1);
+        });
+        trendFileEffectiveTop10Set = computeEffectiveTop10AccountNames(trendFilePolledByAccountName);
+
         // Process each row
         sheet2Data.forEach((row, idx) => {
           const custName = (row[customerNameCol] ?? row['CUST_NM'] ?? row['CUSTOMER NAME'] ?? '').toString().trim();
           if (!custName || custName === 'N/A') return;
           // Top 10 membership is defined solely by the shared, curated account list — not by this
           // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
-          if (!isTop10AccountName(custName)) return;
+          if (!isEffectiveTop10AccountName(custName, trendFileEffectiveTop10Set)) return;
 
           const bu = (row[buColName] ?? row['BUSINESS UNIT'] ?? row['BUSSINESS UNIT'] ?? 'N/A').toString().trim();
           
@@ -8819,7 +8920,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
             if (!customerName || customerName === 'N/A') return;
             // Top 10 membership is defined solely by the shared, curated account list — not by this
             // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
-            if (!isTop10AccountName(customerName)) return;
+            if (!isEffectiveTop10AccountName(customerName, trendFileEffectiveTop10Set)) return;
 
             const perspective = row[perspectiveCol] || row['Perspective'] || '';
             const rating = parseFloat(row[ratingCol] || row['Rating'] || row['rating']);
@@ -8955,7 +9056,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
           // Top 10 membership is defined solely by the shared, curated account list — not by this
           // row's TYPE OF ACCOUNT flag, which can go stale when the roster changes.
           const customerNameForOverall = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
-          const isTop10 = isTop10AccountName(customerNameForOverall);
+          const isTop10 = isEffectiveTop10AccountName(customerNameForOverall, trendFileEffectiveTop10Set);
           const isOther = !isTop10;
 
           // Get CSAT SENT DATE and CSAT RECEIVED DATE
@@ -9023,7 +9124,7 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
             const customerName = row[recCustomerNameCol] || row['CUSTOMER NAME'] || row['Customer Name'] || 'N/A';
             if (!customerName || customerName === 'N/A') return;
             // "Other Accounts" = not in the shared, curated Top 10 list.
-            if (isTop10AccountName(customerName)) return;
+            if (isEffectiveTop10AccountName(customerName, trendFileEffectiveTop10Set)) return;
 
             const perspective = row[perspectiveCol] || row['Perspective'] || '';
             const rating = parseFloat(row[ratingCol] || row['Rating'] || row['rating']);
@@ -9188,17 +9289,41 @@ const AccountWiseAvgDashboard = ({ onBack, excelData, engagementTypeFilter = nul
         const str = String(val).toLowerCase().trim();
         return str === 'top 10' || str === 'top10' || str === 'top-10' || str.includes('top 10') || str.includes('top10');
       };
-      
+
+      // This view only reads the "CSAT received Report" sheet, which carries no CSAT SENT DATE —
+      // so Polled (for backfill eligibility) has to come from this file's "CSAT sent and received
+      // Report" sheet instead, same source/definition as trendAnalysisData above (no date filter
+      // for Trend Analysis). Computed per file, independent of any other useMemo's dataset.
+      const sentReceivedSheetNameForTop10Trend = file.sheetNames?.find(s => {
+        const sheetLower = String(s).toLowerCase().trim();
+        return sheetLower.includes('csat sent and received') || sheetLower.includes('sent and received') ||
+          sheetLower === 'sheet2' || sheetLower === 'sheet 2';
+      }) || (file.sheetNames?.[1] || file.sheetNames?.[0]);
+      const sheet2DataForTop10Trend = sentReceivedSheetNameForTop10Trend ? (file.sheets?.[sentReceivedSheetNameForTop10Trend] || []) : [];
+      const sh2FirstRowForTop10Trend = sheet2DataForTop10Trend[0] || {};
+      const sh2NameColForTop10Trend = Object.keys(sh2FirstRowForTop10Trend).find(k => /customer\s*name|cust_nm/i.test(String(k)));
+      const sh2SentColForTop10Trend = Object.keys(sh2FirstRowForTop10Trend).find(k => /csat\s*sent\s*date|css_sent_date/i.test(String(k)));
+      const top10TrendPolledByAccountName = new Map();
+      sheet2DataForTop10Trend.forEach(row => {
+        const nameForPolled = (row[sh2NameColForTop10Trend] ?? row['CUST_NM'] ?? row['CUSTOMER NAME'] ?? '').toString().trim();
+        if (!nameForPolled || nameForPolled === 'N/A') return;
+        const sentValForPolled = row[sh2SentColForTop10Trend] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
+        if (sentValForPolled == null || sentValForPolled === '' || String(sentValForPolled).trim() === '' || String(sentValForPolled).toLowerCase() === 'n/a') return;
+        const key = normalizeTop10AccountName(nameForPolled);
+        top10TrendPolledByAccountName.set(key, (top10TrendPolledByAccountName.get(key) || 0) + 1);
+      });
+      const top10TrendEffectiveTop10Set = computeEffectiveTop10AccountNames(top10TrendPolledByAccountName);
+
       const accountPerspectives = {};
       const allPerspectives = new Set();
-      
+
       receivedData.forEach(row => {
         const bu = row[buCol] || row['BUSSINESS UNIT'] || row['Business Unit'] || 'N/A';
         const customerName = row[customerNameCol] || row['CUSTOMER NAME'] || row['Customer Name'] || 'N/A';
         if (!customerName || customerName === 'N/A') return;
         // Top 10 membership is defined solely by the shared, curated account list — not by this
         // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
-        if (!isTop10AccountName(customerName)) return;
+        if (!isEffectiveTop10AccountName(customerName, top10TrendEffectiveTop10Set)) return;
 
         const questionCategory = row['QUESTION_CATEGORY'] || row['Question Category'] || row['question_category'];
         if (questionCategory === 'Qualitative Feedback') return;
