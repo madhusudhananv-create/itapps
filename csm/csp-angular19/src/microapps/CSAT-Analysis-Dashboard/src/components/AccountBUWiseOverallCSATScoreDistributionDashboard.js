@@ -4655,6 +4655,16 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
         }
       });
+      if (showTrendAnalysis) {
+        PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+          const cell = grandTotalRow.getCell(colIndex + 10);
+          const val = cell.value != null ? String(cell.value) : '';
+          if (val.includes('↑')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
+          else if (val.includes('↓')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
+          else cell.font = { bold: true };
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        });
+      }
       worksheet.getColumn(1).width = 8;
       worksheet.getColumn(2).width = 28;
       worksheet.getColumn(3).width = 10;
