@@ -4659,6 +4659,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
           const cell = grandTotalRow.getCell(colIndex + 10);
           const val = cell.value != null ? String(cell.value) : '';
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
           if (val.includes('↑')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
           else if (val.includes('↓')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
           else cell.font = { bold: true };
@@ -4945,6 +4946,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const display = formatPracticeTrendDiffExcel(accountPracticeWiseGrandTotal[colName], accountPracticeWiseTrendGrandTotal[colName]);
           cell.value = display;
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
           if (display.includes('↑')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
           else if (display.includes('↓')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
           else cell.font = { bold: true };
