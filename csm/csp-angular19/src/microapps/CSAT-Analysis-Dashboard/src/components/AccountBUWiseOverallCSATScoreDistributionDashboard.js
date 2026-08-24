@@ -4638,6 +4638,9 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       grandTotalRow.eachCell((cell) => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
+      for (let col = 1; col <= 4; col++) {
+        grandTotalRow.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+      }
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
       PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
         const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
@@ -4652,6 +4655,17 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           cell.font = { bold: true, color: { argb: rating === 1 ? 'FFFFFFFF' : 'FF000000' } };
         }
       });
+      if (showTrendAnalysis) {
+        PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
+          const cell = grandTotalRow.getCell(colIndex + 10);
+          const val = cell.value != null ? String(cell.value) : '';
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+          if (val.includes('↑')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
+          else if (val.includes('↓')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
+          else cell.font = { bold: true };
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        });
+      }
       worksheet.getColumn(1).width = 8;
       worksheet.getColumn(2).width = 28;
       worksheet.getColumn(3).width = 10;
@@ -4740,6 +4754,9 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       grandTotalRow.eachCell((cell) => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
+      for (let col = 1; col <= 4; col++) {
+        grandTotalRow.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+      }
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
       PRACTICE_RATING_DISPLAY_ORDER.forEach((r, idx) => {
         const colName = PRACTICE_RATING_COLUMN_NAMES[r];
@@ -4750,6 +4767,8 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
         } else {
           cell.numFmt = '0.0%';
           cell.value = roundDistributionForExcel(Number(val));
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: excelRatingColors[r] } };
+          cell.font = { bold: true, color: { argb: r === 1 ? 'FFFFFFFF' : 'FF000000' } };
         }
       });
       worksheet.getColumn(1).width = 8;
@@ -4901,6 +4920,9 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       grandTotalRow.eachCell((cell) => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
+      for (let col = 1; col <= 6; col++) {
+        grandTotalRow.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+      }
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
       PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
         const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
@@ -4924,6 +4946,7 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
           const display = formatPracticeTrendDiffExcel(accountPracticeWiseGrandTotal[colName], accountPracticeWiseTrendGrandTotal[colName]);
           cell.value = display;
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
           if (display.includes('↑')) cell.font = { color: { argb: 'FF16A34A' }, bold: true };
           else if (display.includes('↓')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
           else cell.font = { bold: true };
@@ -4981,6 +5004,9 @@ const AccountBUWiseOverallCSATScoreDistributionDashboard = ({ onBack, excelData,
       grandTotalRow.eachCell((cell) => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
+      for (let col = 1; col <= 6; col++) {
+        grandTotalRow.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+      }
       grandTotalRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
       PRACTICE_RATING_DISPLAY_ORDER.forEach((rating, colIndex) => {
         const colName = PRACTICE_RATING_COLUMN_NAMES[rating];
