@@ -302,6 +302,16 @@ namespace GAVS.AllocationSystem.Data
 
         public IRepository_CSP<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get { return GetStandardRepo<DROPDOWN_OPTIONS>(); } }
 
+        public IRepository_CSP<ITOPS_DOMAIN> ITOPS_DOMAIN { get { return GetStandardRepo<ITOPS_DOMAIN>(); } }
+        public IRepository_CSP<ITOPS_CATEGORY> ITOPS_CATEGORY { get { return GetStandardRepo<ITOPS_CATEGORY>(); } }
+        public IRepository_CSP<ITOPS_PARAMETER> ITOPS_PARAMETER { get { return GetStandardRepo<ITOPS_PARAMETER>(); } }
+        public IRepository_CSP<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get { return GetStandardRepo<ITOPS_ASSESSMENT>(); } }
+        public IRepository_CSP<ITOPS_SCORE> ITOPS_SCORE { get { return GetStandardRepo<ITOPS_SCORE>(); } }
+        public IRepository_CSP<ITOPS_EVIDENCE> ITOPS_EVIDENCE { get { return GetStandardRepo<ITOPS_EVIDENCE>(); } }
+        public IRepository_CSP<ITOPS_FINDING> ITOPS_FINDING { get { return GetStandardRepo<ITOPS_FINDING>(); } }
+        public IRepository_CSP<ITOPS_FINDING_ACTIVITY> ITOPS_FINDING_ACTIVITY { get { return GetStandardRepo<ITOPS_FINDING_ACTIVITY>(); } }
+        public IRepository_CSP<ITOPS_NOTIFICATION> ITOPS_NOTIFICATION { get { return GetStandardRepo<ITOPS_NOTIFICATION>(); } }
+
 
         protected void CreateDbContext()
         {

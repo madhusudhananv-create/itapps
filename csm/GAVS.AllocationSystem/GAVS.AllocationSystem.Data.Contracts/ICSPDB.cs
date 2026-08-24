@@ -280,5 +280,15 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         IRepository_CSP<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get; }
 
+        IRepository_CSP<ITOPS_DOMAIN> ITOPS_DOMAIN { get; }
+        IRepository_CSP<ITOPS_CATEGORY> ITOPS_CATEGORY { get; }
+        IRepository_CSP<ITOPS_PARAMETER> ITOPS_PARAMETER { get; }
+        IRepository_CSP<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get; }
+        IRepository_CSP<ITOPS_SCORE> ITOPS_SCORE { get; }
+        IRepository_CSP<ITOPS_EVIDENCE> ITOPS_EVIDENCE { get; }
+        IRepository_CSP<ITOPS_FINDING> ITOPS_FINDING { get; }
+        IRepository_CSP<ITOPS_FINDING_ACTIVITY> ITOPS_FINDING_ACTIVITY { get; }
+        IRepository_CSP<ITOPS_NOTIFICATION> ITOPS_NOTIFICATION { get; }
+
     }
 }

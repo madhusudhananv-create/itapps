@@ -247,6 +247,16 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<PROJECT_SCOPE_VALUES>().ToTable("dbo.PROJECT_SCOPE_VALUES");
             modelBuilder.Entity<INTEGRATION_REQUEST_DATA>().ToTable("dbo.INTEGRATION_REQUEST_DATA");
             modelBuilder.Entity<DROPDOWN_OPTIONS>().ToTable("dbo.DROPDOWN_OPTIONS");
+
+            modelBuilder.Entity<ITOPS_DOMAIN>().ToTable("dbo.ITOPS_DOMAIN");
+            modelBuilder.Entity<ITOPS_CATEGORY>().ToTable("dbo.ITOPS_CATEGORY");
+            modelBuilder.Entity<ITOPS_PARAMETER>().ToTable("dbo.ITOPS_PARAMETER");
+            modelBuilder.Entity<ITOPS_ASSESSMENT>().ToTable("dbo.ITOPS_ASSESSMENT");
+            modelBuilder.Entity<ITOPS_SCORE>().ToTable("dbo.ITOPS_SCORE");
+            modelBuilder.Entity<ITOPS_EVIDENCE>().ToTable("dbo.ITOPS_EVIDENCE");
+            modelBuilder.Entity<ITOPS_FINDING>().ToTable("dbo.ITOPS_FINDING");
+            modelBuilder.Entity<ITOPS_FINDING_ACTIVITY>().ToTable("dbo.ITOPS_FINDING_ACTIVITY");
+            modelBuilder.Entity<ITOPS_NOTIFICATION>().ToTable("dbo.ITOPS_NOTIFICATION");
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
         }
         public virtual DbSet<APP_ACCESS_CONTROLS> APP_ACCESS_CONTROLS { get; set; }
@@ -463,6 +473,16 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get; set; }
 
         public virtual DbSet<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get; set; }
+
+        public virtual DbSet<ITOPS_DOMAIN> ITOPS_DOMAIN { get; set; }
+        public virtual DbSet<ITOPS_CATEGORY> ITOPS_CATEGORY { get; set; }
+        public virtual DbSet<ITOPS_PARAMETER> ITOPS_PARAMETER { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get; set; }
+        public virtual DbSet<ITOPS_SCORE> ITOPS_SCORE { get; set; }
+        public virtual DbSet<ITOPS_EVIDENCE> ITOPS_EVIDENCE { get; set; }
+        public virtual DbSet<ITOPS_FINDING> ITOPS_FINDING { get; set; }
+        public virtual DbSet<ITOPS_FINDING_ACTIVITY> ITOPS_FINDING_ACTIVITY { get; set; }
+        public virtual DbSet<ITOPS_NOTIFICATION> ITOPS_NOTIFICATION { get; set; }
 
     }
 }

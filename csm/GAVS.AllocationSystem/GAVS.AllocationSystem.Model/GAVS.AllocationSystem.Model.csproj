@@ -343,6 +343,7 @@
     <Compile Include="CSP\Tables\ENGAGEMENT_OVERVIEW.cs" />
     <Compile Include="CSP\Tables\SQA_REPORT_FILES.cs" />
     <Compile Include="CSP\Tables\HIGHLIGHTS.cs" />
+    <Compile Include="CSP\Tables\ITOPS_MATURITY.cs" />
     <Compile Include="CSP\Tables\KPI.cs" />
     <Compile Include="CSP\Tables\KPI_DETAILS.cs" />
     <Compile Include="CSP\Tables\KPI_GOALS.cs" />
