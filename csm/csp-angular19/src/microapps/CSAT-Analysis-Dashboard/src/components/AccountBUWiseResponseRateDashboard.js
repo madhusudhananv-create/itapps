@@ -1023,14 +1023,14 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       const practiceRows = sortPracticeRows(byAccount[accountName]);
       const businessUnit = accountBU[accountName];
       let acctPolled = 0, acctResponded = 0, acctScoreSum = 0, acctScoreCount = 0;
-      practiceRows.forEach(r => {
-        srNo++;
+      srNo++;
+      practiceRows.forEach((r, practiceIdx) => {
         acctPolled += r.polled;
         acctResponded += r.responded;
         acctScoreSum += r.actualScoreSum;
         acctScoreCount += r.actualScoreCount;
         rows.push({
-          srNo,
+          srNo: practiceIdx === 0 ? srNo : null,
           accountName,
           businessUnit,
           practice: r.practice,
@@ -3509,12 +3509,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           c.alignment = { horizontal: (c.col === 2 || c.col === 3 || c.col === 4) ? 'left' : 'center', vertical: 'middle' };
           if (rowStyle) { c.fill = rowStyle.fill; c.font = rowStyle.font; }
         });
-        if (!isGrandTotal) {
-          const rrFill = excelResponseRateFill(row.responseRatePct, row.responded === 0);
-          const csatFill = excelAvgCSATFill(row.avgActualScore, row.responded === 0);
-          if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
-          if (csatFill) { excelRow.getCell(8).fill = csatFill; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
-        }
+        const rrFill = excelResponseRateFill(row.responseRatePct, row.responded === 0);
+        const csatFill = excelAvgCSATFill(row.avgActualScore, row.responded === 0);
+        if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!(isRollup || isGrandTotal) }; }
+        if (csatFill) { excelRow.getCell(8).fill = csatFill; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: !!(isRollup || isGrandTotal) }; }
         const rrTrendColor = rrDiff != null && rrDiff > 0 ? 'FF16a34a' : rrDiff != null && rrDiff < 0 ? 'FFdc2626' : null;
         const csatTrendColor = csatDiff != null && csatDiff > 0 ? 'FF16a34a' : csatDiff != null && csatDiff < 0 ? 'FFdc2626' : null;
         if (rrTrendColor) excelRow.getCell(9).font = { color: { argb: rrTrendColor }, bold: !!(isRollup || isGrandTotal) };
@@ -3597,12 +3595,10 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
           c.alignment = { horizontal: (c.col === 2 || c.col === 3 || c.col === 4) ? 'left' : 'center', vertical: 'middle' };
           if (rowStyle) { c.fill = rowStyle.fill; c.font = rowStyle.font; }
         });
-        if (!isGrandTotal) {
-          const rrFill = excelResponseRateFill(row.responseRatePct, row.responded === 0);
-          const csatFill = excelAvgCSATFill(row.avgActualScore, row.responded === 0);
-          if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
-          if (csatFill) { excelRow.getCell(8).fill = csatFill; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
-        }
+        const rrFill = excelResponseRateFill(row.responseRatePct, row.responded === 0);
+        const csatFill = excelAvgCSATFill(row.avgActualScore, row.responded === 0);
+        if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!(isRollup || isGrandTotal) }; }
+        if (csatFill) { excelRow.getCell(8).fill = csatFill; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: !!(isRollup || isGrandTotal) }; }
       };
       accountPracticeWiseTableDataSecond.forEach(row => writeRow(row, !!row.isAllPracticeRow, false));
       if (accountPracticeWiseTableDataSecond.grandTotal) writeRow(accountPracticeWiseTableDataSecond.grandTotal, false, true);
@@ -3667,27 +3663,6 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
     const excelRow = worksheet.addRow(includeTrend ? [...baseValues, rrTrendDisplay, csatTrendDisplay] : baseValues);
     excelRow.getCell(8).numFmt = '0.00';
 
-    if (isSummary) {
-      // Bug fix #1: set the label, blank out cols 3-4, and apply the tier fill BEFORE merging.
-      const fillColor = ACCOUNT_PRACTICE_TOP10_SUMMARY_FILL_COLORS[row.summaryTier] || 'FFE2E8F0';
-      const fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
-      excelRow.getCell(2).value = row.accountName;
-      excelRow.getCell(3).value = null;
-      excelRow.getCell(4).value = null;
-      excelRow.eachCell(c => { c.fill = fill; c.font = { bold: true, color: { argb: 'FF1F2937' } }; c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
-      excelRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
-      worksheet.mergeCells(excelRow.number, 2, excelRow.number, 4);
-      return;
-    }
-
-    const rowStyle = isRollup
-      ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }, font: { bold: true } }
-      : null;
-    excelRow.eachCell(c => {
-      c.border = cellBorder;
-      c.alignment = { horizontal: (c.col === 2 || c.col === 3 || c.col === 4) ? 'left' : 'center', vertical: 'middle' };
-      if (rowStyle) { c.fill = rowStyle.fill; c.font = rowStyle.font; }
-    });
     const excelResponseRateFillTop10 = (pct, noResp) => {
       if (noResp) return null;
       if (pct >= 75) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFc6efce' } };
@@ -3702,6 +3677,38 @@ const AccountBUWiseResponseRateDashboard = ({ excelData, onBack, trendAnalysisFi
       if (n >= 4) return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
       return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
     };
+
+    if (isSummary) {
+      // Bug fix #1: set the label, blank out cols 3-4, and apply the tier fill BEFORE merging.
+      const fillColor = ACCOUNT_PRACTICE_TOP10_SUMMARY_FILL_COLORS[row.summaryTier] || 'FFE2E8F0';
+      const fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+      excelRow.getCell(2).value = row.accountName;
+      excelRow.getCell(3).value = null;
+      excelRow.getCell(4).value = null;
+      excelRow.eachCell(c => { c.fill = fill; c.font = { bold: true, color: { argb: 'FF1F2937' } }; c.border = cellBorder; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      excelRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      worksheet.mergeCells(excelRow.number, 2, excelRow.number, 4);
+      const rrFillSummary = excelResponseRateFillTop10(row.responseRatePct, row.responded === 0);
+      const csatFillSummary = excelAvgCSATFillTop10(row.avgActualScore, row.responded === 0);
+      if (rrFillSummary) { excelRow.getCell(7).fill = rrFillSummary; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: true }; }
+      if (csatFillSummary) { excelRow.getCell(8).fill = csatFillSummary; excelRow.getCell(8).font = { color: { argb: (row.avgActualScore == null || row.avgActualScore >= 4) ? 'FF000000' : 'FFFFFFFF' }, bold: true }; }
+      if (includeTrend) {
+        const rrTrendColorSummary = rrDiff != null && rrDiff > 0 ? 'FF16a34a' : rrDiff != null && rrDiff < 0 ? 'FFdc2626' : null;
+        const csatTrendColorSummary = csatDiff != null && csatDiff > 0 ? 'FF16a34a' : csatDiff != null && csatDiff < 0 ? 'FFdc2626' : null;
+        if (rrTrendColorSummary) excelRow.getCell(9).font = { color: { argb: rrTrendColorSummary }, bold: true };
+        if (csatTrendColorSummary) excelRow.getCell(10).font = { color: { argb: csatTrendColorSummary }, bold: true };
+      }
+      return;
+    }
+
+    const rowStyle = isRollup
+      ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }, font: { bold: true } }
+      : null;
+    excelRow.eachCell(c => {
+      c.border = cellBorder;
+      c.alignment = { horizontal: (c.col === 2 || c.col === 3 || c.col === 4) ? 'left' : 'center', vertical: 'middle' };
+      if (rowStyle) { c.fill = rowStyle.fill; c.font = rowStyle.font; }
+    });
     const rrFill = excelResponseRateFillTop10(row.responseRatePct, row.responded === 0);
     const csatFill = excelAvgCSATFillTop10(row.avgActualScore, row.responded === 0);
     if (rrFill) { excelRow.getCell(7).fill = rrFill; excelRow.getCell(7).font = { color: { argb: row.responseRatePct >= 50 ? 'FF000000' : 'FFFFFFFF' }, bold: !!isRollup }; }
