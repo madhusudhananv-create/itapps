@@ -17,8 +17,8 @@ export const TOP10_ACCOUNT_ORDER = [
   'embecta MEDICAL II LLC',
   'Jewish Board of Family and Childrens Services JBFCS',
   'Healthfirst',
-  'Northern Trust Company',
-  'Firstsource Solutions Ltd',
+  'The Northern Trust Company',
+  'FIRSTSOURCE SOLUTIONS LIMITED',
   'Ooma Inc.',
   'Arista Networks India Private Limited',
   'INFOBLOX INC.'
@@ -39,8 +39,8 @@ export const TOP10_SURVEY_ACCOUNT_ORDER = TOP10_ACCOUNT_ORDER.slice(0, 10);
 // this file/derived from it picks up the change automatically. Must be a subset of the extra
 // accounts in TOP10_ACCOUNT_ORDER (ranks 11+).
 export const TOP10_BACKFILL_FALLBACK_ORDER = [
-  'Northern Trust Company',
-  'Firstsource Solutions Ltd',
+  'The Northern Trust Company',
+  'FIRSTSOURCE SOLUTIONS LIMITED',
   'Ooma Inc.',
   'Arista Networks India Private Limited',
   'INFOBLOX INC.'
