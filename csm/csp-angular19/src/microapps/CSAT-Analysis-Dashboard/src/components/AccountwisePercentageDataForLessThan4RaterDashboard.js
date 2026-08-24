@@ -6,7 +6,14 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
-import { TOP10_ACCOUNT_ORDER, isTop10AccountName } from '../utils/top10Accounts';
+import {
+  TOP10_ACCOUNT_ORDER,
+  TOP10_SURVEY_ACCOUNT_ORDER,
+  isTop10AccountName,
+  normalizeTop10AccountName,
+  computeEffectiveTop10AccountNames,
+  isEffectiveTop10AccountName,
+} from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   max-width: 1400px;
@@ -216,7 +223,8 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
     const customerCSSCounts = {};
     const buCSSCounts = {}; // Track CSS counts by Business Unit
     const top10Customers = new Set(); // Track Top 10 customers
-    
+    const custIdToNormalizedTop10Name = {}; // custId -> normalized name, resolved to effective Top 10 after the loop
+
     if (excelData.secondSheetData && excelData.secondSheetData.length > 0) {
       console.log('Processing second sheet data for CSS counts...');
       console.log('CSAT cycle start date for filtering:', csatCycleStartDateFormatted);
@@ -237,7 +245,10 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
           // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
           const customerNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
           if (isTop10AccountName(customerNameForTop10)) {
-            top10Customers.add(custId);
+            const normalizedName = normalizeTop10AccountName(customerNameForTop10);
+            if (normalizedName) {
+              custIdToNormalizedTop10Name[custId] = normalizedName;
+            }
           }
 
           if (!customerCSSCounts[custId]) {
@@ -333,6 +344,21 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
         }
       });
       
+      // Compute the effective Top 10 roster for this dataset (original 10, backfilled from the
+      // fixed fallback order when an original account has zero Polled), keyed off each candidate
+      // customer's own cssSentCount (Polled), then resolve custIds against that effective set.
+      const polledByAccountName = {};
+      Object.entries(custIdToNormalizedTop10Name).forEach(([custId, normalizedName]) => {
+        const polled = customerCSSCounts[custId]?.cssSentCount || 0;
+        polledByAccountName[normalizedName] = (polledByAccountName[normalizedName] || 0) + polled;
+      });
+      const effectiveTop10Set = computeEffectiveTop10AccountNames(polledByAccountName);
+      Object.entries(custIdToNormalizedTop10Name).forEach(([custId, normalizedName]) => {
+        if (isEffectiveTop10AccountName(normalizedName, effectiveTop10Set)) {
+          top10Customers.add(custId);
+        }
+      });
+
       console.log('CSS counts calculated for customers:', Object.keys(customerCSSCounts).length);
       console.log('CSS counts calculated for business units:', Object.keys(buCSSCounts).length);
       console.log('Top 10 customers found:', top10Customers.size);
@@ -620,7 +646,7 @@ const AccountwisePercentageDataForLessThan4RaterDashboard = ({ excelData, onBack
   const top10NotPolledCaption = useMemo(() => {
     if (!showTop10 || !processedData.data) return '';
     const rows = processedData.data;
-    const notPolled = TOP10_ACCOUNT_ORDER.filter((accountName) => {
+    const notPolled = TOP10_SURVEY_ACCOUNT_ORDER.filter((accountName) => {
       const norm = accountName.toLowerCase();
       const row = rows.find((r) => (r.customerName || '').toString().trim().toLowerCase() === norm);
       return !row || !(Number(row.cssSentCount) > 0);
