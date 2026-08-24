@@ -1242,7 +1242,7 @@ const TOP10_ACCOUNT_SHORT_NAMES = {
   'jewish board of family and childrens services jbfcs': 'JBFCS',
   'healthfirst': 'Healthfirst',
   'the northern trust company': 'Northern Trust',
-  'firstsource solutions ltd': 'Firstsource',
+  'firstsource solutions limited': 'Firstsource',
   'ooma inc.': 'Ooma',
   'arista networks india private limited': 'Arista Networks',
   'infoblox inc.': 'Infoblox'
