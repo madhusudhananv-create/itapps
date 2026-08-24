@@ -23,7 +23,7 @@ const TOP10_ACCOUNT_SHORT_NAMES = {
   [normalizeTop10AccountName('Jewish Board of Family and Childrens Services JBFCS')]: 'JBFCS',
   [normalizeTop10AccountName('Healthfirst')]: 'Healthfirst',
   [normalizeTop10AccountName('The Northern Trust Company')]: 'Northern Trust',
-  [normalizeTop10AccountName('Firstsource Solutions Ltd')]: 'Firstsource',
+  [normalizeTop10AccountName('FIRSTSOURCE SOLUTIONS LIMITED')]: 'Firstsource',
   [normalizeTop10AccountName('Ooma Inc.')]: 'Ooma',
   [normalizeTop10AccountName('Arista Networks India Private Limited')]: 'Arista Networks',
   [normalizeTop10AccountName('INFOBLOX INC.')]: 'Infoblox'
