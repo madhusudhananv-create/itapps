@@ -7,7 +7,13 @@ import { normalizeBusinessUnitDisplay, getBusinessUnitFromRow } from '../utils/n
 import { isDateGreaterThanOrEqual } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts';
 import html2canvas from 'html2canvas';
-import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
+import {
+  TOP10_ACCOUNT_ORDER,
+  TOP10_SURVEY_ACCOUNT_ORDER,
+  normalizeTop10AccountName,
+  computeEffectiveTop10AccountNames,
+  isEffectiveTop10AccountName,
+} from '../utils/top10Accounts';
 
 // Custom label component that directly accesses chart data
 const CustomLabelWithData = ({ dataKey, chartData, index, ...props }) => {
@@ -3686,6 +3692,22 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         console.log(`[NPS] Second sheet date filter (>= ${acsatCycleStartDateFormatted}): Polled=${secondSheetPolledIncluded}, Responded=${secondSheetRespondedIncluded} of ${secondSheetData.length} rows`);
       }
 
+      // Compute the effective Top 10 roster for this dataset (original 10, backfilled from the
+      // fixed fallback order when an original account has zero Polled), keyed off each group's
+      // own sentCount (Polled) so bucketing reflects this specific upload rather than a static list.
+      const npsPolledByAccountName = {};
+      Object.values(groupedData).forEach((group) => {
+        if (groupByBU) return;
+        const normalizedName = normalizeTop10AccountName(group.customerName);
+        if (!normalizedName) return;
+        npsPolledByAccountName[normalizedName] =
+          (npsPolledByAccountName[normalizedName] || 0) + (group.sentCount || 0);
+      });
+      const effectiveTop10Set = computeEffectiveTop10AccountNames(npsPolledByAccountName);
+      const effectiveTop10AccountNames = TOP10_ACCOUNT_ORDER.filter((name) =>
+        isEffectiveTop10AccountName(name, effectiveTop10Set)
+      );
+
       if (!groupByBU && rowsSkippedNoCustomerKey > 0) {
         npsWarn(`Second sheet: skipped ${rowsSkippedNoCustomerKey} row(s) without CUSTOMER_ID/CUST_ID or customer name`, {
           sampleHeaders: Object.keys(secondSheetData[0] || {}).slice(0, 15),
@@ -3740,7 +3762,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 if (showTop10) {
                   const idKey = String(customerId).trim();
                   const isBlankTypeById = blankTypeCustomerIds.size > 0 ? blankTypeCustomerIds.has(idKey) : false;
-                  if (isTop10NpsAccount(customerName, customerId, top10AccountNames, top10CustomerIds)) {
+                  if (isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames, top10CustomerIds)) {
                     top10NpsScoreSum += ratingNumForAvg;
                     top10NpsScoreCount += 1;
                   } else if (isBlankTypeById) {
@@ -3752,7 +3774,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
               // Top 10 view: individual rows should include only Top 10 accounts
               if (showTop10) {
-                if (!isTop10NpsAccount(customerName, customerId, top10AccountNames, top10CustomerIds)) return;
+                if (!isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames, top10CustomerIds)) return;
               }
               customersWithNPSData.add(customerKey);
               if (!npsRecordsByCustomer[customerKey]) {
@@ -4362,15 +4384,15 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       // Filter for Top 10 accounts if showTop10 is true
       let finalResult = result;
       if (showTop10) {
-        console.log('Filtering for Top 10 accounts:', top10AccountNames);
-        
+        console.log('Filtering for Top 10 accounts:', effectiveTop10AccountNames);
+
         // Separate grand total row from regular data
         const grandTotalRow = result.find(row => row.isGrandTotal);
         const regularData = result.filter(row => !row.isGrandTotal);
-        
+
         // Filter regular data by predefined list + TYPE OF ACCOUNT = Top 10 from upload
         const filteredRegularData = regularData.filter((row) =>
-          isTop10NpsAccount(row.customerName, row.customerId, top10AccountNames, top10CustomerIds)
+          isTop10NpsAccount(row.customerName, row.customerId, effectiveTop10AccountNames, top10CustomerIds)
         );
 
         filteredRegularData.sort((a, b) => {
@@ -4860,7 +4882,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         !row.isGrandTotalPercentageRow
     );
 
-    const notPolledNames = top10AccountNames.filter((accountName) => {
+    const notPolledNames = TOP10_SURVEY_ACCOUNT_ORDER.filter((accountName) => {
       const matchingRow = top10Rows.find((row) => matchesTop10AccountName(row.customerName, accountName));
       return !matchingRow || (matchingRow.sentCount || 0) === 0;
     });

@@ -6,7 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
 import { parseExcelDateToMMDDYYYY } from '../utils/acsatExcelRowUtils';
-import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName, normalizeTop10AccountName } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   max-width: 100%;
@@ -278,13 +278,18 @@ const getTop10AccountSortIndex = (customerName, top10AccountNames) => {
   return index === -1 ? 999 : index;
 };
 
-const isTop10DashboardAccount = (row, top10AccountNames, typeOfAccountMap = {}) => {
+// `effectiveTop10AccountNames` is the *effective* Top 10 Set for the currently loaded dataset (the 10
+// named survey accounts, backfilled per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original
+// account has zero Polled) — not the full 15-account roster. `top10AccountNames` (the full roster) is
+// still used to fuzzy-match a row's customer name to its canonical Top 10 name before testing membership.
+const isTop10DashboardAccount = (row, top10AccountNames, effectiveTop10AccountNames, typeOfAccountMap = {}) => {
   const customerName = (row?.customerName ?? '').toString().trim();
-  if (top10AccountNames.some((name) => matchesTop10AccountName(customerName, name))) {
-    return true;
+  const matchedName = top10AccountNames.find((name) => matchesTop10AccountName(customerName, name));
+  if (matchedName) {
+    return isEffectiveTop10AccountName(matchedName, effectiveTop10AccountNames);
   }
   const mappedType = typeOfAccountMap[customerName];
-  return isTop10TypeOfAccount(mappedType);
+  return isTop10TypeOfAccount(mappedType) && isEffectiveTop10AccountName(customerName, effectiveTop10AccountNames);
 };
 
 // Short/recognizable display names for the fixed Top 10 accounts, used only in the "not polled"
@@ -315,7 +320,7 @@ const getTop10AccountShortName = (fullName) => {
 // table. `polledByAccountName` maps a lowercased/trimmed Top10 account name to its Polled count in
 // the currently loaded data (missing/undefined is treated the same as zero — never loaded).
 const buildTop10NotPolledCaption = (polledByAccountName) => {
-  const unpolled = TOP10_ACCOUNT_ORDER.filter((name) => {
+  const unpolled = TOP10_SURVEY_ACCOUNT_ORDER.filter((name) => {
     const key = name.trim().toLowerCase();
     const polled = polledByAccountName instanceof Map ? polledByAccountName.get(key) : polledByAccountName?.[key];
     return !polled;
@@ -983,7 +988,21 @@ const ACSATResponseRateDashboard = ({
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
   const top10AccountNames = TOP10_ACCOUNT_ORDER;
-  
+
+  // Effective Top 10 for the currently loaded dataset: the 10 named survey accounts, with any account
+  // that has zero Polled backfilled from TOP10_BACKFILL_FALLBACK_ORDER (per utils/top10Accounts.js) —
+  // not the full 15-account roster. Recomputed whenever processedData changes.
+  const effectiveTop10AccountNames = useMemo(() => {
+    const polledByAccountName = {};
+    (processedData || []).forEach(row => {
+      const name = (row?.customerName ?? '').toString().trim();
+      if (!name) return;
+      const key = normalizeTop10AccountName(name);
+      polledByAccountName[key] = (polledByAccountName[key] || 0) + (row?.polled || 0);
+    });
+    return computeEffectiveTop10AccountNames(polledByAccountName);
+  }, [processedData]);
+
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
     'Premier Healthcare Solutions Inc',
@@ -1629,7 +1648,7 @@ const ACSATResponseRateDashboard = ({
     // Apply Top 10 filtering (predefined list + TYPE OF ACCOUNT = Top 10 from upload)
     if (showTop10) {
       filtered = processedData.filter((row) =>
-        isTop10DashboardAccount(row, top10AccountNames, typeOfAccountMap)
+        isTop10DashboardAccount(row, top10AccountNames, effectiveTop10AccountNames, typeOfAccountMap)
       );
 
       filtered = filtered.sort((a, b) => {
@@ -1693,7 +1712,7 @@ const ACSATResponseRateDashboard = ({
       ...row,
       id: index + 1
     }));
-  }, [processedData, searchTerm, sortConfig, showTop10, top10AccountNames, typeOfAccountMap, groupByBU, accountOrder]);
+  }, [processedData, searchTerm, sortConfig, showTop10, top10AccountNames, effectiveTop10AccountNames, typeOfAccountMap, groupByBU, accountOrder]);
 
   // Process BU-wise data
   const buWiseData = useMemo(() => {

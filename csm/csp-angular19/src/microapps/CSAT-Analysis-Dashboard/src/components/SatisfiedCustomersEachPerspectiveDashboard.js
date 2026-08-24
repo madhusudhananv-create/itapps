@@ -6,7 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { isDateGreaterThanOrEqual, getPreviousHalfYearOption, formatDateToMMDDYYYY } from '../utils/dateUtils';
 import { fetchPCSATReportData } from '../services/csatReportsService';
-import { TOP10_ACCOUNT_ORDER, isTop10AccountRowByName, isTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, isTop10AccountRowByName, isTop10AccountName, getTop10AccountOrderIndex as getTop10AccountOrderIndexShared, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName, normalizeTop10AccountName } from '../utils/top10Accounts';
 import { groupPracticeName } from '../utils/practiceGroups';
 
 // Parse Excel/string date to MM-DD-YYYY for trend file comparison with csatCycleStartDateFormatted
@@ -231,8 +231,8 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
         const dataInput = totals[p] || 0;
         const count = satisfied[p] || 0;
         if (dataInput > 0) {
-          const pct = Math.round((count / dataInput) * 1000) / 10;
-          resultRow[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
+          const pct = Math.round((count / dataInput) * 100);
+          resultRow[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
         } else {
           resultRow[p] = '-';
         }
@@ -305,8 +305,8 @@ const buildPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleStartDate
     const dataInput = orgTotals[p] || 0;
     const count = orgSatisfied[p] || 0;
     if (dataInput > 0) {
-      const pct = Math.round((count / dataInput) * 1000) / 10;
-      orgLevelRow[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
+      const pct = Math.round((count / dataInput) * 100);
+      orgLevelRow[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
     } else {
       orgLevelRow[p] = '-';
     }
@@ -473,8 +473,8 @@ const buildAccountPracticeWiseSatisfiedFromReceivedReport = (source, csatCycleSt
       const dataInput = totalObj[p] || 0;
       const count = satisfiedObj[p] || 0;
       if (dataInput > 0) {
-        const pct = Math.round((count / dataInput) * 1000) / 10;
-        result[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
+        const pct = Math.round((count / dataInput) * 100);
+        result[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
       } else {
         result[p] = '-';
       }
@@ -597,7 +597,7 @@ const getTop10AccountShortName = (fullName) => {
 // table. `polledByAccountName` maps a lowercased/trimmed Top10 account name to its Polled count in
 // the currently loaded data (missing/undefined is treated the same as zero — never loaded).
 const buildTop10NotPolledCaption = (polledByAccountName) => {
-  const unpolled = TOP10_ACCOUNT_ORDER.filter((name) => {
+  const unpolled = TOP10_SURVEY_ACCOUNT_ORDER.filter((name) => {
     const key = name.trim().toLowerCase();
     const polled = polledByAccountName instanceof Map ? polledByAccountName.get(key) : polledByAccountName?.[key];
     return !polled;
@@ -607,6 +607,43 @@ const buildTop10NotPolledCaption = (polledByAccountName) => {
   const last = unpolled[unpolled.length - 1];
   const rest = unpolled.slice(0, -1);
   return `${rest.join(', ')} and ${last} were not polled and hence included other accounts.`;
+};
+
+// Computes the *effective* Top 10 account-name Set for a trend file's own "CSAT sent and received
+// Report" sheet (the 10 named accounts, backfilled per-account from TOP10_BACKFILL_FALLBACK_ORDER
+// when an original account has zero Polled) — shared by trendTop10Data and
+// trendTop10OtherOverallPerspectiveCounts so both trend tables agree on membership for that file.
+const computeTrendFileEffectiveTop10Set = (file, csatCycleStartDateFormatted) => {
+  if (!file) return new Set(TOP10_SURVEY_ACCOUNT_ORDER.map(normalizeTop10AccountName));
+  const sheetNamesToCheck = file.sheetNames || (file.sheets ? Object.keys(file.sheets) : []);
+  let sentReceivedSheetName = sheetNamesToCheck.find(s => {
+    const sheetLower = String(s).toLowerCase().trim();
+    return sheetLower.includes('csat sent and received') || sheetLower.includes('sent and received') || sheetLower === 'sheet2' || sheetLower === 'sheet 2';
+  });
+  if (!sentReceivedSheetName && sheetNamesToCheck.length >= 2) sentReceivedSheetName = sheetNamesToCheck[1];
+  if (!sentReceivedSheetName || !file.sheets) return new Set(TOP10_SURVEY_ACCOUNT_ORDER.map(normalizeTop10AccountName));
+  let sheetData = file.sheets[sentReceivedSheetName];
+  if (!sheetData && file.sheets) {
+    const exactKey = Object.keys(file.sheets).find(k => String(k).toLowerCase().trim() === String(sentReceivedSheetName).toLowerCase().trim());
+    if (exactKey) sheetData = file.sheets[exactKey];
+  }
+  if (!sheetData || !Array.isArray(sheetData) || sheetData.length === 0) return new Set(TOP10_SURVEY_ACCOUNT_ORDER.map(normalizeTop10AccountName));
+  const firstRow = sheetData[0] || {};
+  const accountNameCol = Object.keys(firstRow).find(k => /customer\s*name|cust_nm/i.test(String(k))) || Object.keys(firstRow).find(k => k === 'CUSTOMER NAME' || k === 'CUST_NM') || 'CUSTOMER NAME';
+  const sentCol = Object.keys(firstRow).find(k => {
+    const kNorm = (k || '').toLowerCase().replace(/[\s_]/g, '');
+    return kNorm.includes('csatsentdate') || kNorm.includes('sentdate') || (kNorm.includes('sent') && kNorm.includes('date'));
+  }) || 'CSAT SENT DATE';
+  const polledByAccountNameTrendFile = {};
+  sheetData.forEach(row => {
+    const accountName = String(row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').trim() || 'N/A';
+    const sentDateFormatted = parseExcelDateToMMDDYYYY(row[sentCol]);
+    if (sentDateFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentDateFormatted, csatCycleStartDateFormatted))) {
+      const key = normalizeTop10AccountName(accountName);
+      polledByAccountNameTrendFile[key] = (polledByAccountNameTrendFile[key] || 0) + 1;
+    }
+  });
+  return computeEffectiveTop10AccountNames(polledByAccountNameTrendFile);
 };
 
 /**
@@ -644,6 +681,16 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
   let grandPolled = 0;
   let grandResponded = 0;
 
+  // Effective Top 10 for THIS dataset (defaults to the 10 named survey accounts; backfilled below
+  // from TOP10_BACKFILL_FALLBACK_ORDER once we know per-account Polled counts from secondSheetSource).
+  let effectiveTop10Set = new Set(TOP10_SURVEY_ACCOUNT_ORDER.map(normalizeTop10AccountName));
+  const getAccountNameFromRow = (row) => {
+    if (!row) return '';
+    const nameKey = Object.keys(row).find((k) => /customer\s*name|cust_nm/i.test(String(k)));
+    return row[nameKey] ?? row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '';
+  };
+  const isTop10Row = (row) => isEffectiveTop10AccountName(getAccountNameFromRow(row), effectiveTop10Set);
+
   if (secondSheetSource && secondSheetSource.length > 0) {
     const shFirst = secondSheetSource[0] || {};
     const practiceCol2 = Object.keys(shFirst).find(k => ['practice', 'practice mapped'].includes(String(k).trim().toLowerCase())) || 'Practice';
@@ -661,6 +708,23 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
       return k === 'CSAT RECEIVED DATE' || lower.includes('csat_received_date') || lower.includes('css_received_date') || lower.includes('received date');
     }) || 'CSAT RECEIVED DATE';
 
+    // Pre-pass: sum Polled per account name from secondSheetSource so the effective Top 10 for THIS
+    // dataset can be computed (original 10, backfilled per TOP10_BACKFILL_FALLBACK_ORDER when one of
+    // them has zero Polled) before the main pass below buckets rows into top10/other.
+    const polledByAccountNameSat = {};
+    secondSheetSource.forEach(row => {
+      const sentVal = row[sentDateCol] ?? row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'] ?? row['CSS SENT DATE'];
+      if (sentVal != null && sentVal !== '' && sentVal !== 'N/A') {
+        const sentFormatted = parseExcelDateToMMDDYYYY(sentVal);
+        if (sentFormatted && (!csatCycleStartDateFormatted || isDateGreaterThanOrEqual(sentFormatted, csatCycleStartDateFormatted))) {
+          const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
+          const key = normalizeTop10AccountName(nameVal);
+          polledByAccountNameSat[key] = (polledByAccountNameSat[key] || 0) + 1;
+        }
+      }
+    });
+    effectiveTop10Set = computeEffectiveTop10AccountNames(polledByAccountNameSat);
+
     secondSheetSource.forEach(row => {
       const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
       if (!customerId) return;
@@ -677,7 +741,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
       const nameVal = (row[nameCol2] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').toString().trim();
       if (nameVal && !nameByCustomerId.has(custKey)) nameByCustomerId.set(custKey, nameVal);
 
-      if (isTop10AccountRow(row)) top10ByCustomerId.set(custKey, true);
+      if (isTop10Row(row)) top10ByCustomerId.set(custKey, true);
       else if (!top10ByCustomerId.has(custKey)) top10ByCustomerId.set(custKey, false);
 
       const tier = top10ByCustomerId.get(custKey) ? 'top10' : 'other';
@@ -754,7 +818,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
     const ratingNum = parseFloat(row[ratingCol] ?? row['RATING'] ?? row['Rating'] ?? row['rating']);
     const isSatisfied = !Number.isNaN(ratingNum) && (ratingNum === 4 || ratingNum === 5);
 
-    const isTop10 = top10ByCustomerId.has(custKey) ? top10ByCustomerId.get(custKey) : isTop10AccountRow(row);
+    const isTop10 = top10ByCustomerId.has(custKey) ? top10ByCustomerId.get(custKey) : isTop10Row(row);
     const tier = isTop10 ? 'top10' : 'other';
     tierPractices[tier].add(practice);
 
@@ -800,8 +864,8 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
       const dataInput = totalObj[p] || 0;
       const count = satisfiedObj[p] || 0;
       if (dataInput > 0) {
-        const pct = Math.round((count / dataInput) * 1000) / 10;
-        result[p] = (pct === 0 || count === 0) ? '-' : `${pct.toFixed(1)}%`;
+        const pct = Math.round((count / dataInput) * 100);
+        result[p] = (pct === 0 || count === 0) ? '-' : `${pct}%`;
       } else {
         result[p] = '-';
       }
@@ -879,7 +943,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
   const top10Tier = polledRespondedByTier.get('top10') || { polled: 0, responded: 0 };
   summaryRows.push({
     rowKey: 'top10-accounts',
-    practice: 'Top 10 Accounts',
+    practice: 'Top 10 Accounts - All Practices',
     rowTier: 'top10-total',
     Polled: top10Tier.polled,
     Responded: top10Tier.responded,
@@ -890,7 +954,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `top10-practice|||${practice.toLowerCase()}`,
-      practice: `Top 10 ${practice}`,
+      practice: `Top 10 - ${practice}`,
       rowTier: 'top10-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -901,7 +965,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
   const otherTier = polledRespondedByTier.get('other') || { polled: 0, responded: 0 };
   summaryRows.push({
     rowKey: 'other-account-nr',
-    practice: 'Other Accounts NR',
+    practice: 'Other Accounts - All Practices',
     rowTier: 'other-total',
     Polled: otherTier.polled,
     Responded: otherTier.responded,
@@ -912,7 +976,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
     const pr = polledRespondedByTierPractice.get(tpKey) || { polled: 0, responded: 0 };
     summaryRows.push({
       rowKey: `other-practice|||${practice.toLowerCase()}`,
-      practice: `Other Accounts ${practice}`,
+      practice: `Other Accounts - ${practice}`,
       rowTier: 'other-practice',
       Polled: pr.polled,
       Responded: pr.responded,
@@ -922,7 +986,7 @@ const buildAccountPracticeWiseSatisfiedTop10FromReceivedReport = (source, csatCy
 
   summaryRows.push({
     rowKey: 'overall-nr',
-    practice: 'Overall NR',
+    practice: 'Overall - Org Level',
     rowTier: 'overall',
     Polled: grandPolled,
     Responded: grandResponded,
@@ -1864,12 +1928,24 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       const customerStaffingCounts = {};
       const top10Customers = new Set();
 
-      // Top 10 membership is defined solely by the shared, curated account list — not by this
-      // row's TYPE OF ACCOUNT / "Top 10" flag, which can go stale when the roster changes.
+      // Top 10 membership is the *effective* Top 10 for this dataset (the 10 named accounts,
+      // backfilled per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original account has zero
+      // Polled) — not the full 15-account roster and not this row's TYPE OF ACCOUNT / "Top 10" flag.
+      const polledByAccountNameTop10 = {};
+      excelData.secondSheetData.forEach(row => {
+        const cssSentDate = row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
+        if (cssSentDate && isDateOnOrAfterCsatStart(cssSentDate)) {
+          const nameVal = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
+          const key = normalizeTop10AccountName(nameVal);
+          polledByAccountNameTop10[key] = (polledByAccountNameTop10[key] || 0) + 1;
+        }
+      });
+      const effectiveTop10ProcessTop10 = computeEffectiveTop10AccountNames(polledByAccountNameTop10);
+
       excelData.secondSheetData.forEach(row => {
         const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
         const customerNameForTop10 = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
-        if (customerId && isTop10AccountName(customerNameForTop10)) {
+        if (customerId && isEffectiveTop10AccountName(customerNameForTop10, effectiveTop10ProcessTop10)) {
           top10Customers.add(customerId);
         }
       });
@@ -1898,7 +1974,7 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       excelData.secondSheetData.forEach(row => {
         const customerId = row['CUST_ID'] ?? row['CUSTOMER_ID'];
         const customerNameForTop10Row = (row['CUSTOMER NAME'] ?? row['Customer Name'] ?? row['CUST_NM'] ?? '').toString().trim();
-        const isTop10Row = customerId && isTop10AccountName(customerNameForTop10Row);
+        const isTop10Row = customerId && isEffectiveTop10AccountName(customerNameForTop10Row, effectiveTop10ProcessTop10);
         const isOtherRow = customerId && !isTop10Row;
         const cssSentDate = row['CSAT SENT DATE'] ?? row['CSS_SENT_DATE'];
         const cssReceivedDate = row['CSAT RECEIVED DATE'] ?? row['CSS_RECEIVED_DATE'];
@@ -3870,12 +3946,14 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
       const kNorm = (k || '').toLowerCase().replace(/[\s_]/g, '');
       return kNorm.includes('csatreceiveddate') || kNorm.includes('receiveddate') || (kNorm.includes('received') && kNorm.includes('date'));
     }) || 'CSAT RECEIVED DATE';
+    // Top 10 membership is the *effective* Top 10 for THIS trend file (the 10 named accounts,
+    // backfilled per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original account has zero
+    // Polled) — not the full 15-account roster and not this row's TYPE OF ACCOUNT flag.
+    const effectiveTop10TrendMain = computeTrendFileEffectiveTop10Set(file, csatCycleStartDateFormatted);
     const groups = {};
     sheetData.forEach(row => {
       const accountName = String(row[accountNameCol] ?? row['CUSTOMER NAME'] ?? row['CUST_NM'] ?? '').trim() || 'N/A';
-      // Top 10 membership is defined solely by the shared, curated account list — not by this
-      // row's TYPE OF ACCOUNT flag, which can go stale when the roster changes.
-      if (!isTop10AccountName(accountName)) return;
+      if (!isEffectiveTop10AccountName(accountName, effectiveTop10TrendMain)) return;
       const buRaw = row[buCol] ?? row['BUSSINESS UNIT'] ?? row['Business Unit'] ?? 'N/A';
       const businessUnit = normalizeBU(String(buRaw).trim()) || 'N/A';
       const sentDateFormatted = parseExcelDateToMMDDYYYY(row[sentCol]);
@@ -4224,12 +4302,14 @@ const SatisfiedCustomersEachPerspectiveDashboard = ({ excelData, onBack, trendAn
     const otherSatisfied = {};
     const otherDataInput = {};
     PERSPECTIVE_COLUMN_ORDER.forEach(p => { top10Satisfied[p] = 0; top10DataInput[p] = 0; otherSatisfied[p] = 0; otherDataInput[p] = 0; });
+    // Top 10 membership is the *effective* Top 10 for THIS trend file (the 10 named accounts,
+    // backfilled per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original account has zero
+    // Polled) — not the full 15-account roster and not this row's TYPE OF ACCOUNT flag.
+    const effectiveTop10TrendOther = computeTrendFileEffectiveTop10Set(file, csatCycleStartDateFormatted);
     sheetData.forEach(row => {
       if (nameColForTop10 == null) return;
-      // Top 10 membership is defined solely by the shared, curated account list — not by this
-      // row's TYPE OF ACCOUNT flag, which can go stale when the roster changes.
       const accountNameForTop10 = String(row[nameColForTop10] ?? row['CUSTOMER NAME'] ?? '').trim();
-      const isTop10 = isTop10AccountName(accountNameForTop10);
+      const isTop10 = isEffectiveTop10AccountName(accountNameForTop10, effectiveTop10TrendOther);
       const isOther = !isTop10;
       if (receivedDateKey && (row[receivedDateKey] != null && row[receivedDateKey] !== '')) {
         const d = parseExcelDateToMMDDYYYY(row[receivedDateKey]);
