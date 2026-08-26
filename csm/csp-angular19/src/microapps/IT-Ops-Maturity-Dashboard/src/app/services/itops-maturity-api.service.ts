@@ -17,7 +17,9 @@ export interface ItOpsAssessmentInfo {
   domainName: string;
   custId: string;
   coeSpocEmpId: string | null;
+  coeSpocName: string | null;
   reviewerEmpId: string | null;
+  reviewerName: string | null;
   assesseeEmpId: string | null;
   status: string;
   returnComment: string | null;
@@ -75,6 +77,18 @@ export interface ItOpsParameterScoreRow {
   scoreId: number | null;
   scoreValue: number | null;
   notes: string | null;
+  findingId: number | null;
+  findingStatus: string | null;
+  findingRejectionComment: string | null;
+  findingActionTaken: string | null;
+}
+
+export interface ItOpsEvidenceRow {
+  id: number;
+  fileName: string;
+  contentType: string | null;
+  fileSizeBytes: number;
+  createdDate: string;
 }
 
 /**
@@ -153,5 +167,54 @@ export class ItOpsMaturityApiService {
     return this.http.post(`${this.apiurl}SubmitITOpsAssessment?assessmentId=${assessmentId}`, null, {
       headers: this.getHeaders(),
     });
+  }
+
+  /** US-005: Reviewer approves the assessment, or returns it for revision (Comment mandatory on return). */
+  reviewAssessment(assessmentId: number, approve: boolean, comment?: string): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}ReviewITOpsAssessment?assessmentId=${assessmentId}`,
+      { Approve: approve, Comment: comment ?? null },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Assessee accepts/rejects a probable-improvement-area finding; Comment is mandatory when rejecting. */
+  decideFinding(findingId: number, accept: boolean, comment?: string): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}DecideITOpsFinding?findingId=${findingId}`,
+      { Accept: accept, Comment: comment ?? null },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Assessee records/updates remediation progress on an accepted finding - can be called repeatedly. */
+  updateFindingAction(findingId: number, actionTaken: string): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}UpdateITOpsFindingAction?findingId=${findingId}`,
+      { ActionTaken: actionTaken },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  getFindingEvidence(findingId: number): Observable<ItOpsEvidenceRow[]> {
+    return this.http.get<ItOpsEvidenceRow[]>(`${this.apiurl}GetITOpsFindingEvidence?findingId=${findingId}`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  /** Multipart upload - no Content-Type header, the browser sets the multipart boundary itself. */
+  uploadFindingEvidence(findingId: number, files: File[]): Observable<ItOpsEvidenceRow[]> {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+    return this.http.post<ItOpsEvidenceRow[]>(`${this.apiurl}UploadITOpsFindingEvidence?findingId=${findingId}`, formData, {
+      headers: new HttpHeaders({
+        token: localStorage.getItem('token') || '',
+        empId: localStorage.getItem('empid') || '',
+      }),
+    });
+  }
+
+  evidenceDownloadUrl(evidenceId: number): string {
+    return `${this.apiurl}DownloadITOpsEvidence?evidenceId=${evidenceId}`;
   }
 }

@@ -550,6 +550,9 @@
 }
 
 .finding-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-secondary);
@@ -558,6 +561,11 @@
   padding: 3px 10px;
   border-radius: 999px;
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
   &:hover {
     border-color: var(--accent);
@@ -578,6 +586,12 @@
 
 .finding-badge {
   margin-top: 5px;
+}
+
+.finding-rejection-comment {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary, #667085);
 }
 
 .finding-pill {
@@ -606,12 +620,20 @@
 }
 
 .btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 7px 16px;
   border-radius: 7px;
   font-size: 13px;
   font-weight: 650;
   border: 1px solid transparent;
   cursor: pointer;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -644,6 +666,29 @@
   padding: 60px 20px;
   text-align: center;
   color: var(--text-secondary);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--gridline);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: itops-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes itops-spin {
+  to { transform: rotate(360deg); }
 }
 
 .modal-backdrop {
@@ -698,6 +743,93 @@
   color: var(--text-primary);
   font-family: inherit;
   margin-bottom: 12px;
+}
+
+.action-update-block {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--gridline);
+
+  textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    resize: vertical;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  &.readonly {
+    border-top-style: solid;
+  }
+}
+
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.evidence-list .evidence-chip {
+  margin-left: 0;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.evidence-chip.pending {
+  background: var(--accent-tint, color-mix(in srgb, var(--accent) 12%, transparent));
+  color: var(--accent);
+}
+
+.action-update-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-tint);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.remove-file {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+
+  &:hover {
+    color: var(--status-critical);
+  }
 }
 
 .retarget-block {

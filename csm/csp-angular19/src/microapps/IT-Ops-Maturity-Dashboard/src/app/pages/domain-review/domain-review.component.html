@@ -1,3 +1,8 @@
+<div class="loading-state" *ngIf="loading">
+  <div class="spinner" aria-hidden="true"></div>
+  <p>Loading assessment...</p>
+</div>
+
 <div class="review-page" *ngIf="domain">
   <a class="back-link" routerLink="/">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -108,25 +113,78 @@
             {{ param.evidenceFileName }}
           </span>
 
-          <div class="finding-actions" *ngIf="param.notes && isAssessee()">
-            <span class="finding-label">Finding:</span>
+          <div class="finding-actions" *ngIf="isProbableFinding(param) && isAssessee()">
+            <span class="finding-label">Probable area of improvement:</span>
             <button
               type="button"
               class="finding-btn accept"
               [class.active]="param.findingStatus === 'Accepted'"
+              [disabled]="decidingFindingId === param.findingId"
               (click)="setFinding(param, 'Accepted')"
-            >Accept</button>
+            ><app-spinner *ngIf="decidingFindingId === param.findingId" [size]="12" /> Accept</button>
             <button
               type="button"
               class="finding-btn reject"
               [class.active]="param.findingStatus === 'Rejected'"
+              [disabled]="decidingFindingId === param.findingId"
               (click)="setFinding(param, 'Rejected')"
             >Reject</button>
           </div>
-          <div class="finding-badge" *ngIf="param.notes && !isAssessee() && param.findingStatus && param.findingStatus !== 'Pending'">
+          <div class="finding-badge" *ngIf="isProbableFinding(param) && !isAssessee() && param.findingStatus && param.findingStatus !== 'Pending'">
             <span [class]="'finding-pill ' + (param.findingStatus === 'Accepted' ? 'accepted' : 'rejected')">
               Finding {{ param.findingStatus }}
             </span>
+            <p class="finding-rejection-comment" *ngIf="param.findingStatus === 'Rejected' && param.findingRejectionComment">
+              <strong>Rejection reason:</strong> {{ param.findingRejectionComment }}
+            </p>
+          </div>
+
+          <div class="action-update-block" *ngIf="param.findingStatus === 'Accepted' && isAssessee()">
+            <label class="modal-label">Action Taken</label>
+            <textarea
+              [(ngModel)]="param.findingActionTaken"
+              name="action-{{ param.id }}"
+              rows="3"
+              placeholder="Describe the remediation action taken so far..."
+            ></textarea>
+
+            <div class="evidence-list" *ngIf="evidenceFor(param).length">
+              <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
+                <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+              </span>
+            </div>
+            <div class="evidence-list" *ngIf="pendingEvidenceFor(param).length">
+              <span class="evidence-chip pending" *ngFor="let f of pendingEvidenceFor(param)">
+                {{ f.name }}
+                <button type="button" class="remove-file" (click)="removePendingEvidence(param, f)" aria-label="Remove file">&times;</button>
+              </span>
+            </div>
+
+            <div class="action-update-footer">
+              <label class="upload-btn">
+                <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" (change)="onActionEvidenceSelected($event, param)" hidden />
+                Attach Evidence
+              </label>
+              <button
+                type="button"
+                class="btn-primary"
+                [disabled]="submittingActionId === param.findingId"
+                (click)="submitActionUpdate(param)"
+              >
+                <app-spinner *ngIf="submittingActionId === param.findingId" [size]="13" />
+                Submit Update
+              </button>
+            </div>
+          </div>
+
+          <div class="action-update-block readonly" *ngIf="param.findingStatus === 'Accepted' && !isAssessee() && (param.findingActionTaken || evidenceFor(param).length)">
+            <label class="modal-label">Action Taken</label>
+            <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
+            <div class="evidence-list" *ngIf="evidenceFor(param).length">
+              <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
+                <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+              </span>
+            </div>
           </div>
 
           <div class="retarget-block" *ngIf="param.findingStatus === 'Accepted'">
@@ -156,8 +214,11 @@
   </div>
 
   <div class="actions" *ngIf="canReview()">
-    <button class="btn-secondary" (click)="openReturnModal()">Return for Revision</button>
-    <button class="btn-primary" (click)="approve()">Approve</button>
+    <button class="btn-secondary" [disabled]="reviewing" (click)="openReturnModal()">Return for Revision</button>
+    <button class="btn-primary" [disabled]="reviewing" (click)="approve()">
+      <app-spinner *ngIf="reviewing" [size]="13" />
+      Approve
+    </button>
     <span class="save-message" *ngIf="actionMessage">{{ actionMessage }}</span>
   </div>
   <div class="actions" *ngIf="!canReview() && actionMessage">
@@ -165,7 +226,7 @@
   </div>
 </div>
 
-<div class="not-found" *ngIf="!domain">
+<div class="not-found" *ngIf="!domain && !loading">
   <p>Domain not found.</p>
   <a routerLink="/">Back to Dashboard</a>
 </div>
@@ -201,8 +262,28 @@
     <textarea [(ngModel)]="returnComment" rows="4" placeholder="Explain what needs to change..."></textarea>
     <p class="field-error" *ngIf="returnCommentError">{{ returnCommentError }}</p>
     <div class="modal-actions">
-      <button class="btn-secondary" (click)="closeReturnModal()">Cancel</button>
-      <button class="btn-primary" (click)="confirmReturn()">Confirm Return</button>
+      <button class="btn-secondary" [disabled]="reviewing" (click)="closeReturnModal()">Cancel</button>
+      <button class="btn-primary" [disabled]="reviewing" (click)="confirmReturn()">
+        <app-spinner *ngIf="reviewing" [size]="13" />
+        Confirm Return
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="rejectingParam" (click)="closeRejectModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>Reject Finding</h3>
+    <p class="modal-copy">Explain why "{{ rejectingParam.name }}" is being rejected. A comment is required.</p>
+    <label class="modal-label">Comment <span class="required">*</span></label>
+    <textarea [(ngModel)]="rejectComment" rows="4" placeholder="Explain the rejection..."></textarea>
+    <p class="field-error" *ngIf="rejectCommentError">{{ rejectCommentError }}</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" [disabled]="!!decidingFindingId" (click)="closeRejectModal()">Cancel</button>
+      <button class="btn-primary" [disabled]="!!decidingFindingId" (click)="confirmReject()">
+        <app-spinner *ngIf="!!decidingFindingId" [size]="13" />
+        Confirm Reject
+      </button>
     </div>
   </div>
 </div>

@@ -68,12 +68,15 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string REJECTION_JUSTIFICATION { get; set; }
     }
 
-    // Evidence attachments (PDF/JPG/PNG, max 10MB, enforced in the controller)
+    // Evidence attachments (PDF/JPG/PNG, max 10MB, enforced in the controller).
+    // Belongs to exactly one of SCORE_ID (evidence for a scored parameter) or
+    // FINDING_ID (evidence for a finding's remediation action) - never both.
     public class ITOPS_EVIDENCE : EntityBase
     {
-        public int SCORE_ID { get; set; }
+        public int? SCORE_ID { get; set; }
+        public int? FINDING_ID { get; set; }
         public string FILE_NAME { get; set; }
-        public string STORAGE_PATH { get; set; } // blob/file-share path; binary not stored in SQL
+        public string STORAGE_PATH { get; set; } // GUID filename under ~/UploadFile/; binary not stored in SQL
         public long FILE_SIZE_BYTES { get; set; }
         public string CONTENT_TYPE { get; set; }
     }

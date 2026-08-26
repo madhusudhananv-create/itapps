@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of, switchMap } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { AssesseeService } from '../../services/assessee.service';
 import { AccountService } from '../../services/account.service';
 import { ItOpsMaturityApiService, ItOpsAssessmentInfo, ItOpsParameterScoreRow } from '../../services/itops-maturity-api.service';
@@ -10,6 +11,8 @@ import { TechnologyDomain, MaturityParameter, MaturityRubric, DomainStatus } fro
 import { Assessee } from '../../models/assessee.model';
 import { statusPillClass } from '../../utils/status.util';
 import { RUBRIC_LEVELS, rubricScoreKey } from '../../utils/rubric.util';
+import { ToastService } from '../../services/toast.service';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
 
 const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
 
@@ -27,16 +30,19 @@ const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
 @Component({
   selector: 'app-maturity-assessment',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SpinnerComponent],
   templateUrl: './maturity-assessment.component.html',
   styleUrl: './maturity-assessment.component.scss',
 })
 export class MaturityAssessmentComponent implements OnInit {
   domain?: TechnologyDomain;
+  /** True until the first load attempt settles, so the "not found" message never flashes while data is still in flight. */
+  loading = true;
   saveMessage = '';
   providers: string[] = [];
   activeProvider?: string;
   showSubmitModal = false;
+  submitting = false;
   evidenceError = '';
   showDefinitionsModal = false;
   highlightParamId: string | null = null;
@@ -54,6 +60,7 @@ export class MaturityAssessmentComponent implements OnInit {
     private assesseeService: AssesseeService,
     private accountService: AccountService,
     private api: ItOpsMaturityApiService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -71,12 +78,21 @@ export class MaturityAssessmentComponent implements OnInit {
             }),
           ),
         )
-        .subscribe(({ assessment, parameters }) => {
-          this.assessmentId = assessment.assessmentId;
-          this.domain = this.toDomain(assessment, parameters);
-          this.providers = [];
-          this.activeProvider = undefined;
+        .subscribe({
+          next: ({ assessment, parameters }) => {
+            this.assessmentId = assessment.assessmentId;
+            this.domain = this.toDomain(assessment, parameters);
+            this.providers = [];
+            this.activeProvider = undefined;
+            this.loading = false;
+          },
+          error: (err) => {
+            console.error('IT Ops Maturity Dashboard: failed to load assessment', err);
+            this.loading = false;
+          },
         });
+    } else {
+      this.loading = false;
     }
 
     this.assesseeService.selectedAssessees$.subscribe((assessees) => (this.selectedAssessees = assessees));
@@ -108,8 +124,8 @@ export class MaturityAssessmentComponent implements OnInit {
     return {
       id: assessment.domainCode,
       name: assessment.domainName,
-      coeSpoc: assessment.coeSpocEmpId ?? '',
-      reviewer: assessment.reviewerEmpId ?? '',
+      coeSpoc: assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
+      reviewer: assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
       status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
       parameters,
       returnComment: assessment.returnComment ?? undefined,
@@ -223,8 +239,8 @@ export class MaturityAssessmentComponent implements OnInit {
     if (!this.domain || !this.assessmentId) return;
     this.persistAllScores().subscribe(() => {
       this.api.saveDraft(this.assessmentId!).subscribe(() => {
-        this.saveMessage = 'Draft saved.';
         if (this.domain && this.domain.status === 'Not Started') this.domain.status = 'Draft';
+        this.toast.success('Draft saved', `${this.domain?.name ?? 'This assessment'} was saved. You can pick up right where you left off.`);
       });
     });
   }
@@ -234,6 +250,7 @@ export class MaturityAssessmentComponent implements OnInit {
     const firstMissing = this.domain.parameters.find((p) => this.notesRequired(p));
     if (firstMissing) {
       this.saveMessage = 'Notes are required for every scored parameter.';
+      this.toast.error('Notes required', 'Add notes for every scored parameter before submitting for review.');
       this.scrollToParam(firstMissing);
       return;
     }
@@ -260,15 +277,31 @@ export class MaturityAssessmentComponent implements OnInit {
   }
 
   confirmSubmit(): void {
-    if (!this.domain || !this.assessmentId) return;
-    this.persistAllScores().subscribe(() => {
-      this.api.submitAssessment(this.assessmentId!).subscribe(() => {
-        this.saveMessage = 'Submitted for review. The Function Head has been notified.';
-        if (this.domain) {
-          this.domain.status = 'Pending Review';
-        }
-        this.showSubmitModal = false;
-      });
+    if (!this.domain || !this.assessmentId || this.submitting) return;
+    this.submitting = true;
+    this.persistAllScores().subscribe({
+      next: () => {
+        this.api
+          .submitAssessment(this.assessmentId!)
+          .pipe(finalize(() => (this.submitting = false)))
+          .subscribe({
+            next: () => {
+              if (this.domain) {
+                this.domain.status = 'Pending Review';
+              }
+              this.showSubmitModal = false;
+              this.toast.success(
+                'Submitted for review',
+                `${this.domain?.name ?? 'This assessment'} has been sent to ${this.domain?.reviewer || 'your reviewer'} for approval.`,
+              );
+            },
+            error: () => this.toast.error('Submit failed', 'Something went wrong submitting this assessment. Please try again.'),
+          });
+      },
+      error: () => {
+        this.submitting = false;
+        this.toast.error('Submit failed', 'Something went wrong submitting this assessment. Please try again.');
+      },
     });
   }
 }

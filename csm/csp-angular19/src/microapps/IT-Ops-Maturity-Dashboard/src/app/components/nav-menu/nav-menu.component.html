@@ -10,6 +10,7 @@
     <a routerLink="/reports" routerLinkActive="active">Reports</a>
   </div>
   <div class="nav-identity" *ngIf="currentUser">
+    <app-notification-bell />
     <span class="identity-name">{{ currentUser.name }}</span>
     <button type="button" class="logout-btn" (click)="logout()">Logout</button>
   </div>

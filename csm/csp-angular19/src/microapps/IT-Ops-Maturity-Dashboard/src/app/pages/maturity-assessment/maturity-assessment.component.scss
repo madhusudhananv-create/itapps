@@ -637,12 +637,20 @@ textarea:disabled {
 }
 
 .btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 7px 16px;
   border-radius: 7px;
   font-size: 13px;
   font-weight: 650;
   border: 1px solid transparent;
   cursor: pointer;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -675,6 +683,29 @@ textarea:disabled {
   padding: 60px 20px;
   text-align: center;
   color: var(--text-secondary);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--gridline);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: itops-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes itops-spin {
+  to { transform: rotate(360deg); }
 }
 
 .modal-backdrop {

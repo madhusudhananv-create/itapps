@@ -509,6 +509,11 @@
     <Content Include="UploadFile\Mails\AddAuditTaskForCSAT.htm" />
     <Content Include="UploadFile\Mails\AddInnovation.htm" />
     <Content Include="UploadFile\Mails\AddNewActionItem.htm" />
+    <Content Include="UploadFile\Mails\ITOpsSubmittedForReview.htm" />
+    <Content Include="UploadFile\Mails\ITOpsReviewDecision.htm" />
+    <Content Include="UploadFile\Mails\ITOpsFindingsNeedAction.htm" />
+    <Content Include="UploadFile\Mails\ITOpsFindingActionUpdate.htm" />
+    <Content Include="UploadFile\Mails\ITOpsFindingDecision.htm" />
     <Content Include="UploadFile\Mails\AddNewIssue.htm" />
     <Content Include="UploadFile\Mails\AuditScoreNotSubmitted.htm" />
     <Content Include="UploadFile\Mails\AuditNotCompleted.htm" />

@@ -27,6 +27,8 @@ export interface MaturityParameter {
   evidenceFileName?: string;
   provider?: string;
   findingStatus?: FindingStatus;
+  /** ITOPS_FINDING.ID backing this parameter's finding, when loaded from the real API. */
+  findingId?: number;
   /** Mandatory justification captured when the Assessee rejects a finding. */
   findingRejectionComment?: string;
   /** Target date for closing out this finding; retargeting requests a revision to it. */
@@ -37,6 +39,8 @@ export interface MaturityParameter {
   findingRetargetReason?: string;
   /** Reviewer's reason when approving/rejecting the retarget request. */
   findingRetargetDecisionComment?: string;
+  /** Assessee's latest remediation-progress note on an accepted finding. */
+  findingActionTaken?: string;
 }
 
 export interface TechnologyDomain {
@@ -65,6 +69,10 @@ export interface CurrentUser {
   role: UserRole;
   /** Domain ids this identity is allowed to see/act on, resolved alongside role. */
   allowedDomainIds: string[];
+  /** Domain ids where this identity is COE SPOC (can submit/edit), independent of reviewDomainIds. */
+  spocDomainIds: string[];
+  /** Domain ids where this identity is Reviewer/FunctionHead (can approve/return), independent of spocDomainIds. */
+  reviewDomainIds: string[];
 }
 
 export interface DomainSummary {

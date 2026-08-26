@@ -1,3 +1,8 @@
+<div class="loading-state" *ngIf="loading">
+  <div class="spinner" aria-hidden="true"></div>
+  <p>Loading assessment...</p>
+</div>
+
 <div class="assessment-page" *ngIf="domain">
   <a class="back-link" routerLink="/">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -152,7 +157,10 @@
 
   <div class="actions" *ngIf="!isLocked()">
     <button class="btn-secondary" (click)="saveDraft()">Save Draft</button>
-    <button class="btn-primary" (click)="openSubmitModal()">Submit for Review</button>
+    <button class="btn-primary" [disabled]="submitting" (click)="openSubmitModal()">
+      <app-spinner *ngIf="submitting" [size]="13" />
+      Submit for Review
+    </button>
     <span class="save-message" *ngIf="saveMessage">{{ saveMessage }}</span>
   </div>
   <div class="actions" *ngIf="isLocked() && saveMessage">
@@ -160,7 +168,7 @@
   </div>
 </div>
 
-<div class="not-found" *ngIf="!domain">
+<div class="not-found" *ngIf="!domain && !loading">
   <p>Domain not found.</p>
   <a routerLink="/">Back to Dashboard</a>
 </div>
@@ -196,8 +204,11 @@
       You won't be able to change scores or notes until it's returned for revision.
     </p>
     <div class="modal-actions">
-      <button class="btn-secondary" (click)="closeSubmitModal()">Cancel</button>
-      <button class="btn-primary" (click)="confirmSubmit()">Submit for Review</button>
+      <button class="btn-secondary" [disabled]="submitting" (click)="closeSubmitModal()">Cancel</button>
+      <button class="btn-primary" [disabled]="submitting" (click)="confirmSubmit()">
+        <app-spinner *ngIf="submitting" [size]="13" />
+        Submit for Review
+      </button>
     </div>
   </div>
 </div>

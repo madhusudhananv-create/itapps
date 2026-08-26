@@ -61,11 +61,21 @@ function toTopRisk(row: ItOpsTopRiskRow): TopRisk {
 }
 
 function computeEnterpriseSummaryFromRows(summaries: DomainSummary[]): EnterpriseSummary {
+  // The Overall Estate row's parameter/score/max-possible columns are a
+  // straight sum across every domain shown in the tracker above it - they're
+  // structural counts, not an average, so unscored ("Not Started"/"In
+  // Progress") domains must still contribute their param/max counts (their
+  // sumScores is simply 0 until scored). Only the average-score/maturity-%
+  // figures exclude those domains, since folding in their all-zero scores
+  // would wrongly drag the enterprise average down toward 0.
+  const totalParamCount = summaries.reduce((sum, s) => sum + s.paramCount, 0);
+  const totalSumScores = summaries.reduce((sum, s) => sum + s.sumScores, 0);
+  const totalMaxPossible = summaries.reduce((sum, s) => sum + s.maxPossible, 0);
+
   const scoredDomains = summaries.filter((s) => s.status !== 'Not Started' && s.status !== 'In Progress');
-  const totalParamCount = scoredDomains.reduce((sum, s) => sum + s.paramCount, 0);
-  const totalSumScores = scoredDomains.reduce((sum, s) => sum + s.sumScores, 0);
-  const totalMaxPossible = scoredDomains.reduce((sum, s) => sum + s.maxPossible, 0);
-  const overallAverageScore = totalParamCount ? Math.round((totalSumScores / totalParamCount) * 100) / 100 : 0;
+  const scoredParamCount = scoredDomains.reduce((sum, s) => sum + s.paramCount, 0);
+  const scoredSumScores = scoredDomains.reduce((sum, s) => sum + s.sumScores, 0);
+  const overallAverageScore = scoredParamCount ? Math.round((scoredSumScores / scoredParamCount) * 100) / 100 : 0;
   const overallMaturityPercent = Math.round((overallAverageScore / 5) * 100);
   const levelFromAvg = (avg: number): string => {
     if (avg <= 1) return 'Ad Hoc';
@@ -426,7 +436,15 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   }
 
   canEditDomain(domain: DomainSummary): boolean {
-    return this.currentUser.role === 'SPOC' && this.currentUser.allowedDomainIds.includes(domain.id);
+    return this.currentUser.spocDomainIds.includes(domain.id);
+  }
+
+  isPendingMyReview(domain: DomainSummary): boolean {
+    return domain.status === 'Pending Review' && this.currentUser.reviewDomainIds.includes(domain.id);
+  }
+
+  get pendingReviewDomains(): DomainSummary[] {
+    return this.domainSummaries.filter((d) => this.isPendingMyReview(d));
   }
 
   statusClass(status: string): string {

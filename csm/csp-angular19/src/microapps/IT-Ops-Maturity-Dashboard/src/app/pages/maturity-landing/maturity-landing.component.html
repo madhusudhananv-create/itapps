@@ -157,6 +157,38 @@
       </div>
     </section>
 
+    <section class="pending-review-callout" *ngIf="pendingReviewDomains.length">
+      <h2>Pending Your Review</h2>
+      <p class="picker-copy">These domains have been submitted for your review as Reviewer.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Technology Domain</th>
+              <th>COE SPOC</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let domain of pendingReviewDomains">
+              <td>{{ domain.name }}</td>
+              <td>{{ domain.coeSpoc }}</td>
+              <td><span [class]="statusClass(domain.status)">{{ domain.status }}</span></td>
+              <td>
+                <a class="domain-link" [routerLink]="['/review', domain.id]">
+                  Review now
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="domain-tracker">
       <h2>Domain Tracker</h2>
       <p class="no-access-banner" *ngIf="!domainSummaries.length">

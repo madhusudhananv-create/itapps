@@ -2,10 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of, switchMap } from 'rxjs';
-import { MaturityMockService } from '../../services/maturity-mock.service';
-import { AccountService } from '../../services/account.service';
-import { BusinessUnitService } from '../../services/business-unit.service';
+import { switchMap } from 'rxjs';
+import { ItOpsReportApiService } from '../../services/itops-report-api.service';
 import { IdentityService } from '../../services/identity.service';
 import { SessionService } from '../../services/session.service';
 import { ReportRow, AssessmentStatus } from '../../models/maturity.model';
@@ -60,9 +58,7 @@ export class ReportsComponent implements OnInit {
   accountOptions: string[] = [];
 
   constructor(
-    private maturityService: MaturityMockService,
-    private accountService: AccountService,
-    private businessUnitService: BusinessUnitService,
+    private reportApi: ItOpsReportApiService,
     private identityService: IdentityService,
     private session: SessionService,
   ) {}
@@ -73,22 +69,13 @@ export class ReportsComponent implements OnInit {
       .pipe(
         switchMap((email) => {
           this.session.setEmail(email);
-          return this.accountService.getAccounts();
-        }),
-        switchMap((accounts) => {
-          this.accountCount = accounts.length;
-          if (!accounts.length) return of([]);
-          const perAccount = accounts.map((account) =>
-            this.businessUnitService.getBusinessUnitForAccount(String(account.cusT_ID)).pipe(
-              switchMap((bu) => this.maturityService.getReportRows(account.cusT_NM, bu)),
-            ),
-          );
-          return forkJoin(perAccount);
+          return this.reportApi.getReportRows();
         }),
       )
-      .subscribe((rowsPerAccount) => {
-        this.allRows = rowsPerAccount.flat().filter((row) => this.session.canSeeRow(row));
+      .subscribe((rows) => {
+        this.allRows = rows.filter((row) => this.session.canSeeRow(row));
         this.accountOptions = Array.from(new Set(this.allRows.map((r) => r.accountName))).sort((a, b) => a.localeCompare(b));
+        this.accountCount = this.accountOptions.length;
         this.loading = false;
         this.applyFilters();
       });

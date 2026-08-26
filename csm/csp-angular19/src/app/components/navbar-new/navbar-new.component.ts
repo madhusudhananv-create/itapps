@@ -81,6 +81,11 @@ export class NavbarNewComponent implements OnInit {
   readonly canLogout = computed(() => this.isLoggedIn() && !this.isLoggingOut());
   readonly logoutButtonText = computed(() => this.isLoggingOut() ? 'Logging out...' : 'Logout');
 
+  // Whether the current employee is assigned as COE SPOC/Reviewer/GDH/Assessee on any
+  // IT Ops Maturity assessment - grants the nav icon dynamically even when their CSM
+  // role isn't otherwise given VIEW_ACCESS to resource 830 (see GetITOpsHasAccess()).
+  readonly itOpsDynamicAccess = signal<boolean>(false);
+
   /** Show Integrated Apps menu if user has access to at least one integrated app */
   readonly hasIntegratedAppsAccess = computed(() =>
     this._access.IsAllowed(827, 1, '', '') ||
@@ -88,7 +93,8 @@ export class NavbarNewComponent implements OnInit {
     this._access.IsAllowed(832, 1, '', '')||
     this._access.IsAllowed(829, 1, '', '') ||
     this._access.IsAllowed(830, 1, '', '') ||
-    this._access.IsAllowed(831, 1, '', '') 
+    this._access.IsAllowed(831, 1, '', '') ||
+    this.itOpsDynamicAccess()
     // Add more app permission checks here with ||
   );
 
@@ -137,6 +143,15 @@ constructor(
     this.isGAVS.set(session.logintype === 'gavs' || session.logintype === 'gslab');
     this.isEditable.set(this.checkIsEditable(session));
     this.isHR.set(this.checkIsHR(session));
+
+    if (session.empid) {
+      this.appsService.getITOpsHasAccess(session.empid)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (hasAccess) => this.itOpsDynamicAccess.set(hasAccess),
+          error: () => this.itOpsDynamicAccess.set(false),
+        });
+    }
   }
 
   /**
