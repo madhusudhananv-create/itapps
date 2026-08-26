@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -72,9 +72,9 @@ async function createZipFile(sourceDir, zipFileName) {
       fs.unlinkSync(zipPath);
     }
 
-    // Use cross-platform zip command
-    const zipCommand = getZipCommand(sourcePath, zipPath);
-    execSync(zipCommand, { stdio: 'inherit' });
+    // Use cross-platform zip command (no shell involved to avoid command injection)
+    const { command, args, options: execOptions } = getZipCommand(sourcePath, zipPath);
+    execFileSync(command, args, { stdio: 'inherit', ...execOptions });
 
     const fileSize = (fs.statSync(zipPath).size / 1024 / 1024).toFixed(2);
     console.log(`✅ Successfully created ${zipFileName}`);
@@ -85,10 +85,11 @@ async function createZipFile(sourceDir, zipFileName) {
 }
 
 /**
- * Get cross-platform zip command
+ * Get cross-platform zip command, invoked directly (no shell) to avoid
+ * OS command injection via shell metacharacters.
  * @param {string} sourcePath - Source directory path
  * @param {string} zipPath - Output zip file path
- * @returns {string} Zip command for the current platform
+ * @returns {{command: string, args: string[], options?: object}} Command descriptor
  */
 function getZipCommand(sourcePath, zipPath) {
   const isWindows = process.platform === 'win32';
@@ -96,13 +97,29 @@ function getZipCommand(sourcePath, zipPath) {
   const isLinux = process.platform === 'linux';
 
   if (isWindows) {
-    // Use PowerShell Compress-Archive for Windows
-    return `powershell -Command "Compress-Archive -Path '${sourcePath}\\*' -DestinationPath '${zipPath}' -Force"`;
+    // Use PowerShell Compress-Archive for Windows, with args passed
+    // separately so no shell parses the paths.
+    return {
+      command: 'powershell',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        '& { param($src, $dst) Compress-Archive -Path $src -DestinationPath $dst -Force }',
+        path.join(sourcePath, '*'),
+        zipPath,
+      ],
+    };
   } else if (isMac || isLinux) {
-    // Use zip command for Unix-like systems
+    // Use zip command for Unix-like systems, run with cwd set to the
+    // parent directory instead of shelling out a "cd && zip" string.
     const sourceDir = path.basename(sourcePath);
     const parentDir = path.dirname(sourcePath);
-    return `cd "${parentDir}" && zip -r "${zipPath}" "${sourceDir}"`;
+    return {
+      command: 'zip',
+      args: ['-r', zipPath, sourceDir],
+      options: { cwd: parentDir },
+    };
   } else {
     throw new Error(`Unsupported platform: ${process.platform}`);
   }

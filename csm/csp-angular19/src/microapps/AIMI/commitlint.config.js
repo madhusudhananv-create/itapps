@@ -32,7 +32,7 @@ export default {
   },
   parserPreset: {
     parserOpts: {
-      headerPattern: /^([A-Z]+):\s*\(([a-z-.\s]+)\)\s*-\s*(.+)$/,
+      headerPattern: /^([A-Z]+):\s*\(([a-z.-]+(?:[ \t][a-z.-]+)*)\)\s*-\s*(.+)$/,
       headerCorrespondence: ['type', 'scope', 'subject'],
     },
   },
