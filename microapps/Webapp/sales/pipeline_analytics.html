@@ -8610,31 +8610,45 @@
                 preloadedData.actRevData = { "Sudhir Parwal": { "bu": "Healthcare", "total_may26": 2238372.43811252, "total_gm": 0, "total_ob": 0, "customers": [{ "mis_name": "Premier Healthcare Solutions, Inc.", "may26_actual": 2238372.43811252, "gm_actual": 0, "ob_actual": 0 }] } };
               }
               
-              // Parse Order Booking Targets from "Employee Summary" sheet (sheet 2, index 1)
+              // Parse Order Booking Targets from the "Employee Summary" sheet.
+              // IMPORTANT: locate this sheet BY NAME, not by fixed position — workbooks have
+              // gained/lost hidden sheets (e.g. a "Checklist" sheet) before it, which silently
+              // shifted SheetNames[1] to a different sheet (e.g. "BU Summary") and made this
+              // parser read the wrong sheet entirely (no "Seller" column → zero targets parsed).
               console.log('[OB Targets] Parsing Order Booking targets from Employee Summary sheet...');
-              if (actWb.SheetNames.length >= 2) {
-                var empSummarySheetName = actWb.SheetNames[1]; // Sheet 2 = index 1
-                console.log('[OB Targets] Using sheet index 1:', empSummarySheetName);
+              var empSummarySheetName = actWb.SheetNames.find(function(s) { return String(s || '').trim().toLowerCase() === 'employee summary'; });
+              if (!empSummarySheetName) {
+                // Fallback for older workbooks that may not literally name the sheet "Employee Summary"
+                empSummarySheetName = actWb.SheetNames.length >= 2 ? actWb.SheetNames[1] : null;
+                if (empSummarySheetName) console.warn('[OB Targets] No sheet literally named "Employee Summary" — falling back to sheet index 1:', empSummarySheetName);
+              }
+              if (empSummarySheetName) {
+                console.log('[OB Targets] Using sheet:', empSummarySheetName);
                 var empSummarySheet = actWb.Sheets[empSummarySheetName];
                 var empSummaryRaw = XLSX.utils.sheet_to_json(empSummarySheet, { header: 1, defval: null });
-                
+
                 console.log('[OB Targets] Total rows:', empSummaryRaw.length);
                 console.log('[OB Targets] First 5 rows:', empSummaryRaw.slice(0, 5));
-                
-                // Row structure:
-                // Row 0: Main section headers like "REVENUE ($)", "GROSS MARGIN ($)", "ORDER BOOKING / ACV ($)"
-                // Row 1: Subheaders like "Ann. Target", "Q1 Target", "Q1 Actual", "Q1 Achv"
-                // Row 2: Column headers like "BU", "Emp ID", "Seller / Name", "Role"
-                // Row 3+: Data rows
-                var empHeaderIdx = 2; // Row 3 in Excel = index 2
-                
+
+                // Row structure varies by workbook version — instead of assuming a fixed header
+                // row index, scan the first several rows to find the one that actually contains
+                // a "Seller"/"Seller / Name" column header (the row headers always sit on).
+                var empHeaderIdx = -1;
+                for (var _hIdx = 0; _hIdx < Math.min(6, empSummaryRaw.length); _hIdx++) {
+                  var _row = empSummaryRaw[_hIdx] || [];
+                  var _hasSeller = _row.some(function(h) { var s = String(h || '').trim().toLowerCase(); return s === 'seller' || s === 'seller / name' || s === 'seller/name' || s === 'seller name'; });
+                  if (_hasSeller) { empHeaderIdx = _hIdx; break; }
+                }
+                if (empHeaderIdx === -1) empHeaderIdx = 2; // legacy default if detection fails
+                console.log('[OB Targets] Detected header row index:', empHeaderIdx);
+
                 if (empHeaderIdx < empSummaryRaw.length && empSummaryRaw.length >= 2) {
                   var empHeaders = empSummaryRaw[empHeaderIdx];
-                  var sectionRow = empSummaryRaw[0]; // Row 1 in Excel = main section headers
-                  var subHeaderRow = empSummaryRaw[1]; // Row 2 in Excel = subheaders like "Q1 Target"
-                  
-                  console.log('[OB Targets] Section headers (Row 2):', subHeaderRow);
-                  console.log('[OB Targets] Column headers (Row 3):', empHeaders);
+                  var sectionRow = empSummaryRaw[Math.max(0, empHeaderIdx - 2)]; // main section headers row, if present
+                  var subHeaderRow = empSummaryRaw[Math.max(0, empHeaderIdx - 1)]; // sub-headers row (e.g. "Q1 Target"), if present
+
+                  console.log('[OB Targets] Section headers:', subHeaderRow);
+                  console.log('[OB Targets] Column headers:', empHeaders);
                   
                   // Find columns - BU (Column A), Seller/Name (Column C)
                   var iBU_emp = empHeaders.findIndex(function(h) { return String(h || '').trim().toUpperCase() === 'BU'; });
@@ -8644,15 +8658,34 @@
                   });
                   
                   // Find OB Target columns generically for Q1-Q4 (previously only Q1 was detected).
-                  // For each quarter, find all "Q{n} Target" columns in the header row, then pick the
-                  // one that sits under the "ORDER BOOKING / ACV" section (row 2 sub-header, looking
-                  // back up to 10 columns), falling back to the last such column if section detection fails.
+                  // Different workbook versions put the "Q{n} Target" label either IN the same row
+                  // as the column headers (old 3-row-header format) OR in the row directly BELOW it
+                  // (a 2-row combined header, e.g. "Seller"/"BOOKINGS ($)" on one row and
+                  // "Q1 Target"/"Q1 Actual" immediately below it, aligned to the same columns).
+                  // Try the header row first; if no "Q{n} Target" label is found there at all,
+                  // fall back to the row below it and shift the data start row accordingly.
+                  var labelRow = empHeaders;
+                  var dataStartIdx = empHeaderIdx + 1;
+                  var _anyQLabelInHeaderRow = empHeaders.some(function(h) { return /^q[1-4]\s*target$/.test(String(h || '').trim().toLowerCase()); });
+                  if (!_anyQLabelInHeaderRow && (empHeaderIdx + 1) < empSummaryRaw.length) {
+                    var _belowRow = empSummaryRaw[empHeaderIdx + 1] || [];
+                    var _anyQLabelBelow = _belowRow.some(function(h) { return /^q[1-4]\s*target$/.test(String(h || '').trim().toLowerCase()); });
+                    if (_anyQLabelBelow) {
+                      labelRow = _belowRow;
+                      dataStartIdx = empHeaderIdx + 2;
+                      console.log('[OB Targets] "Q{n} Target" labels found one row BELOW the header row — using that row for quarter columns, data starts at row index', dataStartIdx);
+                    }
+                  }
+                  // Combined text per column (header row + label row) used for section detection below,
+                  // so a section title like "BOOKINGS ($)" or "ORDER BOOKING / ACV ($)" is found
+                  // regardless of which row it actually sits on relative to the "Q{n} Target" label.
+                  var sectionSearchRows = [sectionRow, empHeaders, subHeaderRow, labelRow].filter(function(r) { return Array.isArray(r); });
                   var iOBTargetByQ = {}; // { 1: colIdx, 2: colIdx, 3: colIdx, 4: colIdx } (-1 if not found)
                   [1, 2, 3, 4].forEach(function(qn) {
                     var label = 'q' + qn + ' target';
                     var cols = [];
-                    for (var i = 0; i < empHeaders.length; i++) {
-                      var colHeader = String(empHeaders[i] || '').trim().toLowerCase();
+                    for (var i = 0; i < labelRow.length; i++) {
+                      var colHeader = String(labelRow[i] || '').trim().toLowerCase();
                       if (colHeader === label) cols.push(i);
                     }
                     console.log('[OB Targets] Found', cols.length, '"Q' + qn + ' Target" columns at indices:', cols);
@@ -8660,9 +8693,11 @@
                     for (var i = 0; i < cols.length; i++) {
                       var colIdx = cols[i];
                       var foundOBSection = false;
-                      for (var lookBack = colIdx; lookBack >= Math.max(0, colIdx - 10); lookBack--) {
-                        var sectionValue = String(subHeaderRow[lookBack] || '').trim().toLowerCase();
-                        if (sectionValue.includes('order booking') || sectionValue.includes('acv')) { foundOBSection = true; break; }
+                      outer: for (var lookBack = colIdx; lookBack >= Math.max(0, colIdx - 10); lookBack--) {
+                        for (var _sr = 0; _sr < sectionSearchRows.length; _sr++) {
+                          var sectionValue = String(sectionSearchRows[_sr][lookBack] || '').trim().toLowerCase();
+                          if (sectionValue.includes('order booking') || sectionValue.includes('acv') || sectionValue.includes('booking')) { foundOBSection = true; break outer; }
+                        }
                       }
                       if (foundOBSection) { chosen = colIdx; break; }
                     }
@@ -8683,7 +8718,7 @@
                     var obTargetsBySeller = {};
                     var obTargetRows = 0;
                     
-                    empSummaryRaw.slice(empHeaderIdx + 1).forEach(function(row, idx) {
+                    empSummaryRaw.slice(dataStartIdx).forEach(function(row, idx) {
                       if (!row || row.every(function(c) { return c == null || c === ''; })) return;
                       
                       var bu_emp = String(row[iBU_emp] || '').trim();
