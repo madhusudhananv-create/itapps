@@ -217,16 +217,15 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string RETURN_COMMENT { get; set; }
     }
 
-    // Multi-select assessors ("COE SPOCs") on one assessment; IS_PRIMARY marks
-    // the lead. Replaces ITOPS_ASSESSMENT.COE_SPOC_EMP_ID.
+    // Multi-select assessors ("COE SPOCs") on one assessment - every assessor is
+    // an equal owner, no primary/backup distinction (IS_PRIMARY dropped in
+    // V2_14). Replaces ITOPS_ASSESSMENT.COE_SPOC_EMP_ID.
     public class ITOPS_ASSESSMENT_ASSESSOR : EntityBase
     {
         public int ASSESSMENT_ID { get; set; }
 
         [Column(TypeName = "varchar"), MaxLength(50)]
         public string ASSESSOR_EMP_ID { get; set; }
-
-        public bool IS_PRIMARY { get; set; }
     }
 
     // Multi-select reviewers. Replaces ITOPS_ASSESSMENT.REVIEWER_EMP_ID.
@@ -236,8 +235,6 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [Column(TypeName = "varchar"), MaxLength(50)]
         public string REVIEWER_EMP_ID { get; set; }
-
-        public bool IS_PRIMARY { get; set; }
     }
 
     // Multi-select assessees (no primary flag). Replaces the CSV

@@ -241,7 +241,6 @@ export interface ItOpsTeamMember {
   assessmentId: number;
   empId: string;
   empName: string;
-  isPrimary: boolean;
 }
 
 export interface ItOpsAssessmentTeam {
@@ -675,10 +674,10 @@ export class ItOpsAdminSetupService {
     });
   }
 
-  addAssessor(assessmentId: number, empId: string, isPrimary: boolean): Observable<ItOpsTeamMember> {
+  addAssessor(assessmentId: number, empId: string): Observable<ItOpsTeamMember> {
     return this.http.post<ItOpsTeamMember>(
       `${this.apiurl}AddITOpsAssessor`,
-      { AssessmentId: assessmentId, EmpId: empId, IsPrimary: isPrimary },
+      { AssessmentId: assessmentId, EmpId: empId },
       { headers: this.getHeaders() },
     );
   }
@@ -687,10 +686,10 @@ export class ItOpsAdminSetupService {
     return this.http.post(`${this.apiurl}RemoveITOpsAssessor?id=${id}`, null, { headers: this.getHeaders() });
   }
 
-  addReviewer(assessmentId: number, empId: string, isPrimary: boolean): Observable<ItOpsTeamMember> {
+  addReviewer(assessmentId: number, empId: string): Observable<ItOpsTeamMember> {
     return this.http.post<ItOpsTeamMember>(
       `${this.apiurl}AddITOpsReviewer`,
-      { AssessmentId: assessmentId, EmpId: empId, IsPrimary: isPrimary },
+      { AssessmentId: assessmentId, EmpId: empId },
       { headers: this.getHeaders() },
     );
   }

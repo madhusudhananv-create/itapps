@@ -28,7 +28,6 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         public int ID { get; set; }
         public int AssessmentId { get; set; }
         public string EmpId { get; set; }
-        public bool IsPrimary { get; set; }
     }
 
     public class ITOpsDomainProjectMapDomainSpRow

@@ -35,11 +35,15 @@ import {
 type StepKey = 'roles' | 'cycle' | 'scope' | 'assessment' | 'team';
 
 /** One domain's assessment row plus its live assessor/reviewer join rows (Step 5 accordion). */
-/** One person's assignment, merged across every project's copy of a domain - memberIds are the underlying per-assessment row ids, needed so a remove/promote can be replayed against every one of them. */
+/**
+ * One person's assignment, merged across every project's copy of a domain -
+ * memberIds are the underlying per-assessment row ids, needed so a remove can
+ * be replayed against every one of them. No primary/backup distinction -
+ * every assessor/reviewer on a domain is an equal owner.
+ */
 interface GroupedTeamMember {
   empId: string;
   empName: string;
-  isPrimary: boolean;
   memberIds: number[];
 }
 
@@ -58,10 +62,9 @@ function mergeGroupedMembers(into: GroupedTeamMember[], from: ItOpsTeamMember[])
   for (const m of from) {
     const existing = into.find((g) => g.empId === m.empId);
     if (existing) {
-      existing.isPrimary = existing.isPrimary || m.isPrimary;
       existing.memberIds.push(m.id);
     } else {
-      into.push({ empId: m.empId, empName: m.empName, isPrimary: m.isPrimary, memberIds: [m.id] });
+      into.push({ empId: m.empId, empName: m.empName, memberIds: [m.id] });
     }
   }
 }
@@ -411,6 +414,9 @@ export class AdminSetupComponent implements OnInit {
   assessmentsError: string | null = null;
   /** Free-text filter over the "Assessments in this cycle" table - project id/name or domain name. */
   assessmentTableSearch = '';
+  assessmentTablePage = 1;
+  assessmentTablePageSize = 10;
+  readonly assessmentTablePageSizeOptions = [10, 15, 20];
   removingAssessmentId: number | null = null;
   creatingAssessments = false;
 
@@ -443,7 +449,6 @@ export class AdminSetupComponent implements OnInit {
   pickerAssessmentIds: number[] = [];
   pickerSearch = '';
   pickerCandidates: ItOpsEmployee[] = [];
-  pickerPrimaryEmpId: string | null = null;
   savingPicker = false;
   /**
    * The domain's configured DEFAULT_ASSESSOR_ID / DEFAULT_REVIEWER_ID, offered
@@ -2624,6 +2629,51 @@ export class AdminSetupComponent implements OnInit {
     );
   }
 
+  /** Search box changed - back to page 1, otherwise a filter could land on a now out-of-range page. */
+  onAssessmentTableSearchChange(): void {
+    this.assessmentTablePage = 1;
+  }
+
+  onAssessmentTablePageSizeChange(): void {
+    this.assessmentTablePage = 1;
+  }
+
+  get assessmentTableTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredAssessmentRows.length / this.assessmentTablePageSize));
+  }
+
+  /**
+   * Current page's slice. Clamps a stale page number (e.g. the filter shrank,
+   * or the last row on the last page was removed) locally rather than
+   * assigning back to assessmentTablePage - mutating state from inside a
+   * getter runs on every change-detection pass and trips
+   * ExpressionChangedAfterItHasBeenCheckedError in dev mode.
+   */
+  get pagedAssessmentRows(): ItOpsCycleAssessment[] {
+    const filtered = this.filteredAssessmentRows;
+    const clampedPage = Math.min(this.assessmentTablePage, this.assessmentTableTotalPages);
+    const start = (clampedPage - 1) * this.assessmentTablePageSize;
+    return filtered.slice(start, start + this.assessmentTablePageSize);
+  }
+
+  get assessmentTableRangeLabel(): string {
+    const total = this.filteredAssessmentRows.length;
+    if (!total) return '0 of 0';
+    const clampedPage = Math.min(this.assessmentTablePage, this.assessmentTableTotalPages);
+    const start = (clampedPage - 1) * this.assessmentTablePageSize + 1;
+    const end = Math.min(total, start + this.assessmentTablePageSize - 1);
+    return `${start}-${end} of ${total}`;
+  }
+
+  goToAssessmentTablePage(page: number): void {
+    this.assessmentTablePage = Math.min(Math.max(1, page), this.assessmentTableTotalPages);
+  }
+
+  /** Clamped for display - Angular templates can't call Math.min directly. */
+  get assessmentTableCurrentPage(): number {
+    return Math.min(this.assessmentTablePage, this.assessmentTableTotalPages);
+  }
+
   /** Only a Not Started row is removable - the backend re-checks this and rejects anything with history. */
   canRemoveAssessment(row: ItOpsCycleAssessment): boolean {
     return row.status === 'NotStarted';
@@ -2832,23 +2882,6 @@ export class AdminSetupComponent implements OnInit {
     });
   }
 
-  /** Promote an already-assigned member to primary, replayed across every project's copy of this domain (re-posting the same person with isPrimary demotes the incumbent server-side, per assessment). */
-  makePrimaryMember(group: DomainGroup, role: 'Assessor' | 'Reviewer', member: GroupedTeamMember): void {
-    const calls = group.assessmentIds.map((assessmentId) =>
-      role === 'Assessor' ? this.api.addAssessor(assessmentId, member.empId, true) : this.api.addReviewer(assessmentId, member.empId, true),
-    );
-    forkJoin(calls).subscribe({
-      next: () => {
-        this.toast.success(`${member.empName} is now the primary ${role.toLowerCase()}.`);
-        for (const entry of this.domainTeams) {
-          if (entry.domainId !== group.domainId) continue;
-          for (const m of role === 'Assessor' ? entry.assessors : entry.reviewers) m.isPrimary = m.empId === member.empId;
-        }
-      },
-      error: (err) => this.toast.error('Could not set the primary.', this.errorText(err, 'Please try again.')),
-    });
-  }
-
   // ---- People picker ----
 
   openPicker(role: 'Assessor' | 'Reviewer', group: DomainGroup): void {
@@ -2859,7 +2892,6 @@ export class AdminSetupComponent implements OnInit {
     this.pickerSearch = '';
     this.pickerCandidates = [];
     const current = role === 'Assessor' ? group.assessors : group.reviewers;
-    this.pickerPrimaryEmpId = current.find((m) => m.isPrimary)?.empId ?? null;
 
     // One-click shortcut for the domain's configured default owner - the same
     // person SeedITOpsDefaultOwners would have seeded when the assessment was
@@ -2884,15 +2916,10 @@ export class AdminSetupComponent implements OnInit {
   /**
    * Adds the domain's default assessor/reviewer straight away, down exactly the
    * same call path as picking them out of the search results - no search step.
-   * Not marked primary: an existing primary stays primary unless the admin says
-   * otherwise (posting isPrimary would silently demote them).
    */
   addPickerDefault(): void {
     if (!this.pickerDefaultEmpId) return;
-    this.addPickedMember(
-      { empId: this.pickerDefaultEmpId, name: this.pickerDefaultName ?? this.pickerDefaultEmpId, title: '' },
-      false,
-    );
+    this.addPickedMember({ empId: this.pickerDefaultEmpId, name: this.pickerDefaultName ?? this.pickerDefaultEmpId, title: '' });
   }
 
   // ---- Bulk reassignment: replace everything person X holds with person Y ----
@@ -3000,14 +3027,14 @@ export class AdminSetupComponent implements OnInit {
    * Patches local state from each call's real response (real row ids, so a
    * later remove/promote works) instead of a full reload.
    */
-  addPickedMember(candidate: ItOpsEmployee, isPrimary: boolean): void {
+  addPickedMember(candidate: ItOpsEmployee): void {
     if (!this.pickerAssessmentIds.length) return;
     this.savingPicker = true;
     const domainId = this.pickerDomainId;
     const calls = this.pickerAssessmentIds.map((assessmentId) =>
       this.pickerRole === 'Assessor'
-        ? this.api.addAssessor(assessmentId, candidate.empId, isPrimary)
-        : this.api.addReviewer(assessmentId, candidate.empId, isPrimary),
+        ? this.api.addAssessor(assessmentId, candidate.empId)
+        : this.api.addReviewer(assessmentId, candidate.empId),
     );
 
     forkJoin(calls)
@@ -3020,7 +3047,6 @@ export class AdminSetupComponent implements OnInit {
             const member = created.find((c) => c.assessmentId === entry.assessmentId);
             if (!member) continue;
             const list = this.pickerRole === 'Assessor' ? entry.assessors : entry.reviewers;
-            if (isPrimary) for (const m of list) m.isPrimary = false;
             const existingIdx = list.findIndex((m) => m.empId === member.empId);
             if (existingIdx !== -1) list[existingIdx] = member;
             else list.push(member);

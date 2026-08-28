@@ -315,7 +315,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     {
         public int AssessmentId { get; set; }
         public string EmpId { get; set; }
-        public bool IsPrimary { get; set; }
     }
 
     public class ITOPS_TeamMemberRow
@@ -324,7 +323,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public int AssessmentId { get; set; }
         public string EmpId { get; set; }
         public string EmpName { get; set; }
-        public bool IsPrimary { get; set; }
     }
 
     // ------------------------------------------------------------------
@@ -501,8 +499,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         /// <summary>
         /// Rows where the target is ALREADY on the same assessment in the same
         /// role: X's row is deactivated instead of re-pointed (the unique index
-        /// on (ASSESSMENT_ID, EMP_ID) WHERE ISACTIVE = 1 forbids two live rows),
-        /// and Y inherits IS_PRIMARY if X held it.
+        /// on (ASSESSMENT_ID, EMP_ID) WHERE ISACTIVE = 1 forbids two live rows).
         /// </summary>
         public int MergedRows { get; set; }
         public int TotalRows { get; set; }
@@ -1921,8 +1918,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         // Bulk sibling of GetOrCreateITOpsAssessment: one ITOPS_ASSESSMENT row
         // per (cycle, project, domain), each seeded with the domain's default
-        // assessor/reviewer as IS_PRIMARY join rows, plus the assessee set
-        // applied identically across every one of them. Domains and assessees
+        // assessor/reviewer, plus the assessee set applied identically across
+        // every one of them. Domains and assessees
         // are no longer supplied by the caller - each project reads its OWN
         // standing config (ITOPS_DOMAIN_PROJECT_MAP / ITOPS_PROJECT_ASSESSEE,
         // both set up in Configure Scope), so a project with nothing mapped
@@ -2175,9 +2172,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return assessments.Select(a =>
             {
                 var assessorIds = assessorRows.Where(x => x.ASSESSMENT_ID == a.ID)
-                    .OrderByDescending(x => x.IS_PRIMARY).Select(x => x.ASSESSOR_EMP_ID).ToList();
+                    .OrderBy(x => x.ID).Select(x => x.ASSESSOR_EMP_ID).ToList();
                 var reviewerIds = reviewerRows.Where(x => x.ASSESSMENT_ID == a.ID)
-                    .OrderByDescending(x => x.IS_PRIMARY).Select(x => x.REVIEWER_EMP_ID).ToList();
+                    .OrderBy(x => x.ID).Select(x => x.REVIEWER_EMP_ID).ToList();
 
                 return new ITOPS_CycleAssessmentRow
                 {
@@ -2257,14 +2254,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             Func<string, List<ITOPS_TeamMemberRow>> toRows = roleType => flatRows
                 .Where(r => r.RoleType == roleType)
-                .OrderByDescending(r => r.IsPrimary)
+                .OrderBy(r => r.ID)
                 .Select(r => new ITOPS_TeamMemberRow
                 {
                     Id = r.ID,
                     AssessmentId = r.AssessmentId,
                     EmpId = r.EmpId,
-                    EmpName = nameOf(r.EmpId),
-                    IsPrimary = r.IsPrimary
+                    EmpName = nameOf(r.EmpId)
                 })
                 .ToList();
 
@@ -2298,21 +2294,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Where(a => a.ASSESSMENT_ID == request.AssessmentId)
                 .ToList();
 
-            // IS_PRIMARY is exclusive per assessment - promoting someone demotes the incumbent.
-            if (request.IsPrimary)
-            {
-                foreach (var row in rows.Where(r => r.ISACTIVE && r.IS_PRIMARY && r.ASSESSOR_EMP_ID != targetEmpId))
-                {
-                    row.IS_PRIMARY = false;
-                    UpdateAuditFields(row, empId);
-                    CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(row);
-                }
-            }
-
+            // Every assessor on a domain is an equal owner now - no primary/backup
+            // distinction, so this is just add-or-reactivate.
             var existing = rows.FirstOrDefault(a => a.ASSESSOR_EMP_ID == targetEmpId);
             if (existing != null)
             {
-                existing.IS_PRIMARY = request.IsPrimary;
                 // UpdateAuditFields sets ISACTIVE = true, which re-adds a previously removed assessor.
                 UpdateAuditFields(existing, empId);
                 CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(existing);
@@ -2322,8 +2308,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 existing = new ITOPS_ASSESSMENT_ASSESSOR
                 {
                     ASSESSMENT_ID = request.AssessmentId,
-                    ASSESSOR_EMP_ID = targetEmpId,
-                    IS_PRIMARY = request.IsPrimary
+                    ASSESSOR_EMP_ID = targetEmpId
                 };
                 UpdateAuditFields(existing, empId);
                 CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Add(existing);
@@ -2335,8 +2320,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 Id = existing.ID,
                 AssessmentId = existing.ASSESSMENT_ID,
                 EmpId = existing.ASSESSOR_EMP_ID,
-                EmpName = GetEmpName(existing.ASSESSOR_EMP_ID),
-                IsPrimary = existing.IS_PRIMARY
+                EmpName = GetEmpName(existing.ASSESSOR_EMP_ID)
             });
         }
 
@@ -2381,20 +2365,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Where(r => r.ASSESSMENT_ID == request.AssessmentId)
                 .ToList();
 
-            if (request.IsPrimary)
-            {
-                foreach (var row in rows.Where(r => r.ISACTIVE && r.IS_PRIMARY && r.REVIEWER_EMP_ID != targetEmpId))
-                {
-                    row.IS_PRIMARY = false;
-                    UpdateAuditFields(row, empId);
-                    CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(row);
-                }
-            }
-
+            // Every reviewer on a domain is an equal owner now - no primary/backup
+            // distinction, so this is just add-or-reactivate.
             var existing = rows.FirstOrDefault(r => r.REVIEWER_EMP_ID == targetEmpId);
             if (existing != null)
             {
-                existing.IS_PRIMARY = request.IsPrimary;
                 UpdateAuditFields(existing, empId);
                 CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(existing);
             }
@@ -2403,8 +2378,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 existing = new ITOPS_ASSESSMENT_REVIEWER
                 {
                     ASSESSMENT_ID = request.AssessmentId,
-                    REVIEWER_EMP_ID = targetEmpId,
-                    IS_PRIMARY = request.IsPrimary
+                    REVIEWER_EMP_ID = targetEmpId
                 };
                 UpdateAuditFields(existing, empId);
                 CSPdb.ITOPS_ASSESSMENT_REVIEWER.Add(existing);
@@ -2416,8 +2390,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 Id = existing.ID,
                 AssessmentId = existing.ASSESSMENT_ID,
                 EmpId = existing.REVIEWER_EMP_ID,
-                EmpName = GetEmpName(existing.REVIEWER_EMP_ID),
-                IsPrimary = existing.IS_PRIMARY
+                EmpName = GetEmpName(existing.REVIEWER_EMP_ID)
             });
         }
 
@@ -3174,15 +3147,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         /// <summary>
         /// Replaces EVERY active assessor/reviewer assignment held by FromEmpId
-        /// with ToEmpId, across every assessment, preserving IS_PRIMARY per row.
+        /// with ToEmpId, across every assessment.
         /// Send Preview = true to get the same counts without writing anything -
         /// that is what the confirmation screen calls first.
         ///
         /// Collision handling: UQ_ITOPS_ASSESSMENT_ASSESSOR / _REVIEWER are
         /// unique on (ASSESSMENT_ID, EMP_ID) WHERE ISACTIVE = 1, so where the
         /// target is ALREADY on the same assessment in the same role the source
-        /// row is deactivated (a merge) rather than re-pointed, and the target
-        /// inherits IS_PRIMARY if the source held it.
+        /// row is deactivated (a merge) rather than re-pointed.
         /// </summary>
         [POST("BulkReassignITOpsTeamMember")]
         [ActionName("BulkReassignITOpsTeamMember")]
@@ -3257,15 +3229,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var incumbent = targetAssessorRows.FirstOrDefault(a => a.ASSESSMENT_ID == row.ASSESSMENT_ID);
                 if (incumbent != null && incumbent.ISACTIVE)
                 {
-                    // Target already holds this seat: retire the source row and let
-                    // the target inherit primary if the source was the primary.
-                    if (row.IS_PRIMARY && !incumbent.IS_PRIMARY)
-                    {
-                        incumbent.IS_PRIMARY = true;
-                        UpdateAuditFields(incumbent, empId);
-                        CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(incumbent);
-                    }
-                    // Audit first, clear ISACTIVE after - UpdateAuditFieldsExt sets it back to true.
+                    // Target already holds this seat - retire the source row, nothing else to merge.
                     UpdateAuditFields(row, empId);
                     row.ISACTIVE = false;
                     CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(row);
@@ -3276,7 +3240,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     // An INACTIVE row for the target on this assessment would still
                     // collide once re-pointed, so reuse it instead of re-pointing.
-                    incumbent.IS_PRIMARY = row.IS_PRIMARY;
                     UpdateAuditFields(incumbent, empId); // sets ISACTIVE = true
                     CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(incumbent);
 
@@ -3296,12 +3259,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var incumbent = targetReviewerRows.FirstOrDefault(r => r.ASSESSMENT_ID == row.ASSESSMENT_ID);
                 if (incumbent != null && incumbent.ISACTIVE)
                 {
-                    if (row.IS_PRIMARY && !incumbent.IS_PRIMARY)
-                    {
-                        incumbent.IS_PRIMARY = true;
-                        UpdateAuditFields(incumbent, empId);
-                        CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(incumbent);
-                    }
                     UpdateAuditFields(row, empId);
                     row.ISACTIVE = false;
                     CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(row);
@@ -3310,7 +3267,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 if (incumbent != null)
                 {
-                    incumbent.IS_PRIMARY = row.IS_PRIMARY;
                     UpdateAuditFields(incumbent, empId);
                     CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(incumbent);
 

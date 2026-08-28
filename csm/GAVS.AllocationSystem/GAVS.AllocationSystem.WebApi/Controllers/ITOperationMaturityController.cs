@@ -32,7 +32,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public int DomainId { get; set; }
         public string DomainCode { get; set; }
         public string DomainName { get; set; }
-        // Singular fields = the IS_PRIMARY row of the corresponding join table (legacy shape).
+        // Singular fields = the first-added row of the corresponding join table
+        // (legacy shape) - there's no primary/backup distinction any more.
         public string CoeSpocEmpId { get; set; }
         public string CoeSpocName { get; set; }
         public string ReviewerEmpId { get; set; }
@@ -255,9 +256,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         private List<string> GetITOpsAssessorIds(int assessmentId)
         {
+            // No primary/backup distinction - every assessor on a domain is an
+            // equal owner, ordered by insertion (ID) only.
             return CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
                 .Where(a => a.ISACTIVE && a.ASSESSMENT_ID == assessmentId)
-                .OrderByDescending(a => a.IS_PRIMARY)
+                .OrderBy(a => a.ID)
                 .Select(a => a.ASSESSOR_EMP_ID)
                 .ToList();
         }
@@ -266,7 +269,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             return CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
                 .Where(r => r.ISACTIVE && r.ASSESSMENT_ID == assessmentId)
-                .OrderByDescending(r => r.IS_PRIMARY)
+                .OrderBy(r => r.ID)
                 .Select(r => r.REVIEWER_EMP_ID)
                 .ToList();
         }
@@ -279,8 +282,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
         }
 
-        // The primary member is the IS_PRIMARY row; falls back to the first active row
-        // so a mis-seeded assessment still resolves someone for the legacy singular DTO fields.
+        // The legacy singular DTO fields (CoeSpocEmpId/ReviewerEmpId) still need
+        // exactly one id - there's no primary any more, so this is just the
+        // first one added (lowest ID), not a deliberately chosen owner.
         private string GetITOpsPrimaryAssessorId(int assessmentId)
         {
             return GetITOpsAssessorIds(assessmentId).FirstOrDefault();
@@ -435,8 +439,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
         }
 
-        // Inserts the domain's DEFAULT_ASSESSOR_ID / DEFAULT_REVIEWER_ID as the single
-        // IS_PRIMARY row in each join table (V1 set flat columns on the assessment).
+        // Inserts the domain's DEFAULT_ASSESSOR_ID / DEFAULT_REVIEWER_ID as the
+        // assessment's first assessor/reviewer join rows (V1 set flat columns on
+        // the assessment). No primary/backup distinction any more - every
+        // assessor/reviewer on a domain is an equal owner.
         private void SeedITOpsDefaultOwners(ITOPS_ASSESSMENT assessment, ITOPS_DOMAIN domain, string empId)
         {
             if (assessment == null || domain == null || assessment.ID == 0) return;
@@ -446,8 +452,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var assessor = new ITOPS_ASSESSMENT_ASSESSOR
                 {
                     ASSESSMENT_ID = assessment.ID,
-                    ASSESSOR_EMP_ID = domain.DEFAULT_ASSESSOR_ID,
-                    IS_PRIMARY = true
+                    ASSESSOR_EMP_ID = domain.DEFAULT_ASSESSOR_ID
                 };
                 UpdateAuditFields(assessor, empId);
                 CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Add(assessor);
@@ -458,8 +463,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var reviewer = new ITOPS_ASSESSMENT_REVIEWER
                 {
                     ASSESSMENT_ID = assessment.ID,
-                    REVIEWER_EMP_ID = domain.DEFAULT_REVIEWER_ID,
-                    IS_PRIMARY = true
+                    REVIEWER_EMP_ID = domain.DEFAULT_REVIEWER_ID
                 };
                 UpdateAuditFields(reviewer, empId);
                 CSPdb.ITOPS_ASSESSMENT_REVIEWER.Add(reviewer);
@@ -1236,9 +1240,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var paramCount = paramCountByDomain.ContainsKey(a.DOMAIN_ID) ? paramCountByDomain[a.DOMAIN_ID] : 0;
 
                 var assessorIds = assessorRows.Where(x => x.ASSESSMENT_ID == a.ID)
-                    .OrderByDescending(x => x.IS_PRIMARY).Select(x => x.ASSESSOR_EMP_ID).ToList();
+                    .OrderBy(x => x.ID).Select(x => x.ASSESSOR_EMP_ID).ToList();
                 var reviewerIds = reviewerRows.Where(x => x.ASSESSMENT_ID == a.ID)
-                    .OrderByDescending(x => x.IS_PRIMARY).Select(x => x.REVIEWER_EMP_ID).ToList();
+                    .OrderBy(x => x.ID).Select(x => x.REVIEWER_EMP_ID).ToList();
 
                 return new ITOPS_DomainTrackerRow
                 {

@@ -1202,18 +1202,18 @@
     </div>
 
     <div class="section-gap">
-      <div class="section-head"><h2>Assessments in this cycle</h2><span class="count">{{ assessmentRows.length }} created</span></div>
+      <div class="section-head"><h2>Assessments in this cycle</h2><span class="count">{{ filteredAssessmentRows.length }} of {{ assessmentRows.length }} created</span></div>
       <div class="page-sub" *ngIf="loadingAssessments"><app-spinner [size]="14"></app-spinner> Loading assessments…</div>
       <div class="page-sub" *ngIf="assessmentsError">{{ assessmentsError }}</div>
       <div class="search-box" *ngIf="assessmentRows.length">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" placeholder="Search by project or domain" [(ngModel)]="assessmentTableSearch">
+        <input type="text" placeholder="Search by project or domain" [(ngModel)]="assessmentTableSearch" (ngModelChange)="onAssessmentTableSearchChange()">
       </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Project</th><th>Domain</th><th>Team</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            <tr *ngFor="let row of filteredAssessmentRows">
+            <tr *ngFor="let row of pagedAssessmentRows">
               <td><strong>{{ row.projectId }} · {{ row.projectName }}</strong></td>
               <td>{{ row.domainName }}</td>
               <td><span class="pill" [ngClass]="'pill-' + teamTone(row)">{{ teamLabel(row) }}</span></td>
@@ -1237,6 +1237,24 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="pagination" *ngIf="filteredAssessmentRows.length">
+        <div class="pagination-size">
+          <label for="assessmentPageSize">Rows per page</label>
+          <select id="assessmentPageSize" [(ngModel)]="assessmentTablePageSize" (ngModelChange)="onAssessmentTablePageSizeChange()">
+            <option *ngFor="let size of assessmentTablePageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </div>
+        <div class="pagination-range">{{ assessmentTableRangeLabel }}</div>
+        <div class="pagination-nav">
+          <button type="button" class="btn-icon" [disabled]="assessmentTablePage <= 1" (click)="goToAssessmentTablePage(assessmentTablePage - 1)" aria-label="Previous page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 6-6 6 6 6"/></svg>
+          </button>
+          <span class="pagination-page">Page {{ assessmentTableCurrentPage }} of {{ assessmentTableTotalPages }}</span>
+          <button type="button" class="btn-icon" [disabled]="assessmentTablePage >= assessmentTableTotalPages" (click)="goToAssessmentTablePage(assessmentTablePage + 1)" aria-label="Next page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1347,22 +1365,18 @@
             <div class="role-row">
               <div class="role-label"><strong>Assessors</strong><span>{{ group.assessors.length }} assigned</span></div>
               <div class="role-chips chip-stack">
-                <span class="chip" [class.primary]="m.isPrimary" *ngFor="let m of group.assessors; trackBy: trackByTeamMemberEmpId">
+                <span class="chip" *ngFor="let m of group.assessors; trackBy: trackByTeamMemberEmpId">
                   <span class="avatar">{{ initials(m.empName) }}</span>{{ m.empName }}
-                  <span class="primary-tag" *ngIf="m.isPrimary">Primary</span>
-                  <button type="button" class="primary-toggle" *ngIf="!m.isPrimary" (click)="makePrimaryMember(group, 'Assessor', m)">Make primary</button>
                   <button type="button" class="chip-remove" (click)="removeTeamMember(group, 'Assessor', m)" [attr.aria-label]="'Remove ' + m.empName">&times;</button>
                 </span>
                 <button type="button" class="btn-ghost" (click)="openPicker('Assessor', group)">+ Add</button>
               </div>
             </div>
             <div class="role-row">
-              <div class="role-label"><strong>Reviewers</strong><span>{{ group.reviewers.length > 1 ? 'Backup enabled' : (group.reviewers.length + ' assigned') }}</span></div>
+              <div class="role-label"><strong>Reviewers</strong><span>{{ group.reviewers.length }} assigned</span></div>
               <div class="role-chips chip-stack">
-                <span class="chip" [class.primary]="m.isPrimary" *ngFor="let m of group.reviewers; trackBy: trackByTeamMemberEmpId">
+                <span class="chip" *ngFor="let m of group.reviewers; trackBy: trackByTeamMemberEmpId">
                   <span class="avatar">{{ initials(m.empName) }}</span>{{ m.empName }}
-                  <span class="primary-tag" *ngIf="m.isPrimary">Primary</span>
-                  <button type="button" class="primary-toggle" *ngIf="!m.isPrimary" (click)="makePrimaryMember(group, 'Reviewer', m)">Make primary</button>
                   <button type="button" class="chip-remove" (click)="removeTeamMember(group, 'Reviewer', m)" [attr.aria-label]="'Remove ' + m.empName">&times;</button>
                 </span>
                 <button type="button" class="btn-ghost" (click)="openPicker('Reviewer', group)">+ Add</button>
@@ -1382,7 +1396,7 @@
   <div class="modal-backdrop" *ngIf="pickerModalOpen" (click)="closePicker()">
     <div class="modal" (click)="$event.stopPropagation()">
       <h3>Add {{ pickerRole === 'Assessor' ? 'assessors' : 'reviewers' }} — {{ pickerDomain }}</h3>
-      <p class="modal-copy">Select one or more {{ pickerRole === 'Assessor' ? 'assessors' : 'reviewers' }} for this domain. Mark one as primary — the rest act as backup.</p>
+      <p class="modal-copy">Select one or more {{ pickerRole === 'Assessor' ? 'assessors' : 'reviewers' }} for this domain.</p>
       <!-- The domain already carries a default owner for this role (the same one
            the assessment was seeded from) - offering it as one click beats making
            the admin type a name they already know. Hidden when there is no
@@ -1404,8 +1418,7 @@
         <div class="multi-picker-list">
           <label class="picker-row" *ngFor="let c of pickerCandidates">
             <span class="picker-name">{{ c.name }} <span class="picker-role">{{ c.empId }}</span></span>
-            <button type="button" class="btn-ghost" (click)="addPickedMember(c, false)" [disabled]="savingPicker">Add</button>
-            <button type="button" class="primary-toggle" (click)="addPickedMember(c, true)" [disabled]="savingPicker">Add as primary</button>
+            <button type="button" class="btn-ghost" (click)="addPickedMember(c)" [disabled]="savingPicker">Add</button>
           </label>
           <p class="modal-hint" *ngIf="!pickerCandidates.length">Type at least two characters to search the employee roster.</p>
         </div>
@@ -1420,7 +1433,7 @@
     <div class="modal" (click)="$event.stopPropagation()">
       <h3>Reassign every assignment</h3>
       <p class="modal-copy">
-        Replaces <strong>every</strong> assessor and reviewer assignment the first person currently holds with the second — across every assessment in every cycle, not just this project. Primary status is kept per assessment: wherever they were the primary reviewer, the replacement becomes the primary reviewer.
+        Replaces <strong>every</strong> assessor and reviewer assignment the first person currently holds with the second — across every assessment in every cycle, not just this project.
       </p>
 
       <label class="modal-label">Replace<span class="required">*</span></label>
