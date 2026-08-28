@@ -1,0 +1,303 @@
+:host {
+  --page-plane: #f9f9f7;
+  --surface: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --gridline: #e1e0d9;
+  --border: rgba(11, 11, 11, 0.1);
+  --accent: #2a78d6;
+  --accent-track: #eaf2fc;
+  --accent-glow: rgba(42, 120, 214, 0.16);
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+  --status-muted: #c3c2b7;
+
+  color-scheme: light;
+  display: block;
+  min-height: 100%;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text-primary);
+  background: var(--page-plane);
+  font-size: 13.5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) :host {
+    color-scheme: dark;
+    --page-plane: #0d0d0d;
+    --surface: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #b9b7b0;
+    --text-muted: #837f78;
+    --gridline: #2c2b28;
+    --border: rgba(255, 255, 255, 0.12);
+    --accent: #3987e5;
+    --accent-track: #17293f;
+    --accent-glow: rgba(57, 135, 229, 0.22);
+  }
+}
+
+:root[data-theme="dark"] :host {
+  color-scheme: dark;
+  --page-plane: #0d0d0d;
+  --surface: #1a1a19;
+  --text-primary: #ffffff;
+  --text-secondary: #b9b7b0;
+  --text-muted: #837f78;
+  --gridline: #2c2b28;
+  --border: rgba(255, 255, 255, 0.12);
+  --accent: #3987e5;
+  --accent-track: #17293f;
+  --accent-glow: rgba(57, 135, 229, 0.22);
+}
+
+* { box-sizing: border-box; }
+h1, h2, h3 { margin: 0; }
+
+/* ---- 5-step setup flow nav ---- */
+.flow-nav { display: flex; align-items: stretch; background: var(--surface); border-bottom: 1px solid var(--gridline); overflow-x: auto; }
+.flow-step {
+  display: flex; align-items: center; gap: 10px; padding: 14px 22px; border: none; background: none;
+  font: inherit; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; flex: none;
+}
+.flow-step .flow-num {
+  width: 22px; height: 22px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; border: 1.5px solid var(--border); color: var(--text-muted);
+}
+.flow-step .flow-label { font-weight: 650; color: var(--text-muted); font-size: 13px; }
+.flow-step.active { border-bottom-color: var(--accent); }
+.flow-step.active .flow-num { background: var(--accent); border-color: var(--accent); color: #fff; }
+.flow-step.active .flow-label { color: var(--text-primary); }
+.flow-step:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.flow-arrow { display: flex; align-items: center; color: var(--gridline); flex: none; }
+
+.maturity-page { max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; }
+.page-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 6px; }
+.icon-badge { width: 34px; height: 34px; border-radius: 8px; flex: none; border: 1px solid var(--border); background: var(--accent-track); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+.page-head h1 { font-size: 19px; font-weight: 650; }
+.page-sub { color: var(--text-muted); font-size: 13px; margin-top: 3px; max-width: 640px; }
+.page-actions { margin-left: auto; }
+
+.search-box { display: flex; align-items: center; gap: 8px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text-muted); margin-bottom: 8px; }
+.search-box input { border: none; background: none; outline: none; color: var(--text-primary); font: inherit; width: 100%; }
+
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04), 0 6px 18px rgba(11, 11, 11, .05); overflow-x: auto; margin-top: 18px; }
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+thead th { text-align: left; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; color: var(--text-muted); font-weight: 650; padding: 12px 16px; border-bottom: 1px solid var(--gridline); }
+tbody td { padding: 13px 16px; border-bottom: 1px solid var(--gridline); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.col-num { text-align: right; font-variant-numeric: tabular-nums; }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* ---- Step 1: one table row per employee, one sub-line per grant ---- */
+.emp-cell { vertical-align: top; width: 230px; }
+.emp-cell .page-sub { margin-top: 2px; }
+.grant-list { display: flex; flex-direction: column; }
+.grant-line {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 7px 0; border-bottom: 1px dashed var(--gridline);
+}
+.grant-line:first-child { padding-top: 0; }
+.grant-line:last-child { border-bottom: none; padding-bottom: 0; }
+.grant-line .grant-code { flex: 1 1 130px; min-width: 0; margin-top: 0; }
+.grant-line .grant-date { margin-top: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.grant-line .grant-actions { display: flex; gap: 6px; margin-left: auto; flex: none; }
+/* Same role on several projects: one chip per scope instead of a repeated line. */
+.grant-line .scope-chips { display: inline-flex; flex: 1 1 220px; min-width: 0; }
+.grant-line .scope-chips .chip { padding-left: 9px; }
+.grant-line .scope-chips + .grant-date { margin-left: auto; }
+/* One "Edit roles" entry point per employee - editing is a whole-person action. */
+.emp-cell .emp-edit { margin-top: 6px; padding-left: 0; }
+/* Per-employee read-only actions (access preview / this person's history). */
+.emp-cell .emp-cell-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.emp-cell .emp-cell-actions .btn-ghost { padding-left: 0; padding-right: 8px; }
+
+/* ---- Audit trail modal ---- */
+/* The trail is a three-column table, so it needs more room than the
+   form-shaped modals this screen otherwise uses. */
+.modal.modal-wide { max-width: 760px; }
+.modal-wide .table-wrap { margin-top: 8px; }
+.modal-wide td { vertical-align: top; }
+.grant-line.audit-line { padding: 5px 0 3px; border-bottom: none; gap: 6px; }
+
+/* ---- Effective access preview ---- */
+.access-preview {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--page-plane);
+  padding: 10px; display: flex; flex-direction: column; gap: 4px;
+}
+.access-step + .access-step { border-top: 1px dashed var(--gridline); padding-top: 8px; }
+.access-step { padding-bottom: 4px; }
+.access-step-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.access-step-name { font-weight: 650; font-size: 12.5px; }
+.access-mark {
+  flex: none; width: 19px; height: 19px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--status-critical) 14%, transparent); color: var(--status-critical);
+}
+.access-mark.yes { background: color-mix(in srgb, var(--status-good) 16%, transparent); color: var(--status-good); }
+.access-step-scope { margin: 5px 0 0 27px; }
+.access-step-scope.page-sub { margin-top: 3px; }
+
+/* ---- Per-role scope picker inside the "Edit roles" modal ---- */
+.role-scope-list {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--page-plane);
+  padding: 10px; display: flex; flex-direction: column; gap: 4px;
+}
+.role-scope-block + .role-scope-block { border-top: 1px dashed var(--gridline); padding-top: 4px; }
+.role-scope-body {
+  display: flex; flex-direction: column; gap: 8px;
+  margin: 4px 0 8px 24px; padding-left: 10px; border-left: 2px solid var(--accent-track);
+}
+.role-scope-body .modal-hint { margin: 0; }
+.role-scope-body select { margin: 0; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 650; }
+.pill-good { background: color-mix(in srgb, var(--status-good) 14%, transparent); color: var(--status-good); }
+.pill-muted { background: color-mix(in srgb, var(--status-muted) 20%, transparent); color: var(--text-secondary); }
+.pill-accent { background: var(--accent-track); color: var(--accent); }
+.pill-warning { background: color-mix(in srgb, var(--status-warning) 20%, transparent); color: #8a5a06; }
+.pill-critical { background: color-mix(in srgb, var(--status-critical) 14%, transparent); color: var(--status-critical); }
+h1 .pill { vertical-align: middle; margin-left: 6px; }
+
+.chip-remove { appearance: none; border: none; background: none; color: inherit; opacity: .6; cursor: pointer; font-size: 13px; line-height: 1; padding: 0 0 0 5px; font-weight: 700; }
+.chip-remove:hover { opacity: 1; }
+
+.chip-stack { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.chip-stack.assessee-chips { margin-bottom: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px 3px 3px; font-size: 12px; }
+.chip .avatar { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.chip.primary { border-color: var(--accent); background: var(--accent-track); }
+.chip .primary-tag { color: var(--accent); font-weight: 700; font-size: 10px; text-transform: uppercase; }
+
+.btn-primary, .btn-secondary, .btn-ghost { font: inherit; font-size: 13px; font-weight: 650; padding: 7px 16px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-secondary { background: var(--surface); color: var(--text-secondary); border-color: var(--border); }
+.btn-secondary:hover { border-color: var(--status-critical); color: var(--status-critical); }
+.btn-ghost { background: none; color: var(--text-secondary); border-color: var(--border); padding: 5px 10px; font-size: 12px; }
+.btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.step-actions { display: flex; margin-top: 32px; gap: 10px; }
+.step-actions.end { justify-content: flex-end; }
+.step-actions.between { justify-content: space-between; }
+.step-actions.start { justify-content: flex-start; }
+.step-actions.tight { margin-top: 18px; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(11, 11, 11, .45); display: flex; align-items: center; justify-content: center; z-index: 40; padding: 20px; }
+/* Every modal on this screen is internally scrollable with its action row pinned
+   to the bottom: the assign-role modal (roles checklist + scope + customer +
+   projects checklist) grew taller than the viewport and pushed Cancel / "Grant
+   role(s)" off-screen with no way to scroll to them. Capping the height here and
+   making .modal-actions sticky fixes that for the assign-role, edit-grant,
+   rename-domain, map-domains and people-picker modals at once - no per-modal
+   markup wrapper needed. Bottom padding lives on the sticky footer so it stays
+   flush against the modal's lower edge while content scrolls under it. */
+.modal { background: var(--surface); border-radius: 12px; padding: 24px 24px 0; width: 100%; max-width: 460px; box-shadow: 0 12px 40px rgba(0, 0, 0, .25); max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-size: 16px; margin-bottom: 4px; }
+.modal-copy { color: var(--text-muted); font-size: 12.5px; margin: 4px 0 18px; }
+.modal-label { display: block; font-weight: 650; font-size: 12.5px; margin: 14px 0 6px; }
+.modal-label:first-of-type { margin-top: 0; }
+.modal-label .required { color: var(--status-critical); margin-left: 2px; }
+.modal select, .modal input[type="text"], .modal input[type="date"] { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit; background: var(--page-plane); color: var(--text-primary); }
+.modal select:focus, .modal input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.modal-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+.modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;
+  position: sticky; bottom: 0; background: var(--surface); padding: 14px 0 24px; border-top: 1px solid var(--gridline);
+  /* app-searchable-select's open dropdown (.ss-list) is z-index: 60 - without
+     an explicit z-index here this sticky footer has an implicit z-index of
+     auto/0, so the dropdown painted OVER it whenever a combobox inside the
+     modal was open, covering Cancel/Save entirely even though they were still
+     in the DOM and clickable underneath. Keep this above 60. */
+  z-index: 65;
+}
+
+/* Step 4's project checklist can't reuse app-searchable-select directly (it's
+   multi-select), so it gets its own collapsed "combobox" control that looks
+   like one - closed by default, expanding the search box + checklist below it
+   only once clicked, exactly like the Customer picker above it. */
+.assessment-projects-picker .picker-control {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit;
+  background: var(--page-plane); color: var(--text-muted); cursor: pointer;
+}
+.assessment-projects-picker.open .picker-control { color: var(--text-primary); border-color: var(--accent); }
+.assessment-projects-picker .picker-control svg { flex: none; transition: transform .15s ease; color: var(--text-muted); }
+.assessment-projects-picker.open .picker-control svg { transform: rotate(180deg); }
+.assessment-projects-picker .search-box { margin-top: 8px; }
+.assessment-projects-picker .multi-picker { margin-top: 8px; }
+
+.multi-picker { border: 1px solid var(--border); border-radius: 8px; background: var(--page-plane); padding: 10px; }
+.multi-picker-list { display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow-y: auto; }
+label.picker-row {
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: 9px; padding: 7px 8px; margin: 0; border-radius: 6px; font-size: 13px; cursor: pointer; text-align: left;
+}
+.picker-row:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.picker-row input[type="checkbox"] { flex: none; width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+.picker-row .picker-name { flex: 1 1 auto; text-align: left; }
+.picker-row .picker-role { font-size: 11px; color: var(--text-muted); margin-left: 6px; }
+.primary-toggle { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; }
+.primary-toggle.is-primary { background: var(--accent-track); color: var(--accent); border-color: var(--accent); }
+
+.field-note { display: flex; gap: 8px; align-items: flex-start; background: var(--accent-track); border-radius: 8px; padding: 10px 12px; margin-top: 16px; font-size: 12px; color: var(--text-secondary); }
+.field-note svg { flex: none; margin-top: 1px; color: var(--accent); }
+
+.section-gap { margin-top: 40px; }
+.section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.section-head h2 { font-size: 14.5px; }
+.section-head .count { color: var(--text-muted); font-size: 12px; }
+.section-head .btn-primary, .section-head .btn-ghost { margin-left: auto; }
+
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04); padding: 22px 24px; max-width: 620px; margin-top: 22px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+.form-card select, .form-card input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit; background: var(--page-plane); color: var(--text-primary); }
+.form-card select:focus, .form-card input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.cycle-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
+.cycle-toggle button { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-secondary); font: inherit; font-weight: 650; cursor: pointer; }
+.cycle-toggle button.active { background: var(--accent-track); border-color: var(--accent); color: var(--accent); }
+
+/* Step 2 cycle completion dashboard */
+.cycle-progress-list { display: flex; flex-direction: column; gap: 10px; max-width: 620px; }
+.cycle-progress-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; cursor: pointer; }
+.cycle-progress-card:hover { border-color: var(--accent); }
+.cycle-progress-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.cycle-progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cycle-progress-head > div { display: flex; align-items: center; gap: 8px; }
+.cycle-progress-meter { height: 6px; border-radius: 999px; background: var(--status-muted); opacity: .95; margin: 10px 0 9px; overflow: hidden; }
+.cycle-progress-meter > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width .2s ease; }
+.cycle-progress-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+
+/* Step 4 project multi-picker toolbar + live pre-create summary */
+.picker-toolbar { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.create-summary { display: flex; gap: 8px; align-items: flex-start; background: var(--accent-track); border-radius: 8px; padding: 10px 12px; margin-top: 16px; font-size: 12.5px; color: var(--text-secondary); }
+.create-summary svg { flex: none; margin-top: 2px; color: var(--accent); }
+.create-summary strong { color: var(--text-primary); }
+
+.subtabs { display: flex; gap: 4px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 9px; padding: 4px; width: fit-content; margin: 18px 0; }
+.subtab-btn { border: none; background: none; font: inherit; font-weight: 650; font-size: 12.5px; padding: 7px 14px; border-radius: 6px; color: var(--text-muted); cursor: pointer; }
+.subtab-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(11, 11, 11, .08); }
+
+/* ---- per-domain team accordion ---- */
+.domain-accordion { display: flex; flex-direction: column; gap: 10px; }
+.domain-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04); overflow: hidden; }
+.domain-summary { display: flex; align-items: center; gap: 14px; padding: 15px 18px; cursor: pointer; list-style: none; user-select: none; }
+.domain-summary::-webkit-details-marker { display: none; }
+.domain-summary .chevron { transition: transform .18s ease; color: var(--text-muted); flex: none; }
+details[open] .domain-summary .chevron { transform: rotate(90deg); }
+.domain-summary .domain-name { font-weight: 650; font-size: 14px; }
+.domain-summary .domain-meta { color: var(--text-muted); font-size: 12px; }
+.domain-summary .status-tag { flex: none; margin-left: auto; }
+.domain-body { padding: 4px 18px 20px; border-top: 1px solid var(--gridline); }
+.role-row { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px dashed var(--gridline); }
+.role-row:last-child { border-bottom: none; }
+.role-row .role-label { width: 110px; flex: none; padding-top: 5px; }
+.role-row .role-label strong { display: block; font-size: 13px; }
+.role-row .role-label span { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.role-row .role-chips { flex: 1; }

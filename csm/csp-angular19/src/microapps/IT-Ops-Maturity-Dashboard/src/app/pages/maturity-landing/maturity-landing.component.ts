@@ -1,10 +1,12 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { filter, switchMap, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ItOpsMaturityApiService, ItOpsDomainTrackerRow, ItOpsTopRiskRow } from '../../services/itops-maturity-api.service';
+import { ItOpsMaturityApiService, ItOpsDomainTrackerRow, ItOpsTopRiskRow, ItOpsMyAssignmentRow } from '../../services/itops-maturity-api.service';
+import { ToastService } from '../../services/toast.service';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { SessionService } from '../../services/session.service';
 import { AccountService } from '../../services/account.service';
 import { AssesseeService } from '../../services/assessee.service';
@@ -121,7 +123,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-maturity-landing',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SpinnerComponent],
   templateUrl: './maturity-landing.component.html',
   styleUrl: './maturity-landing.component.scss',
 })
@@ -163,6 +165,18 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
 
   accountBusinessUnit: string | null = null;
 
+  // ---- "My Assignments" (default view for anyone actually assigned) ----
+  /** True until GetITOpsMyAssignments settles, so neither view flashes first. */
+  myAssignmentsLoading = true;
+  myAssignments: ItOpsMyAssignmentRow[] = [];
+  /**
+   * 'assignments' is the default whenever this employee has at least one real
+   * assessor/reviewer/assessee row; 'accounts' is the pre-existing
+   * "Select an account to begin" flow, unchanged, and is the ONLY view for
+   * anyone with zero assignments (admins/superusers browsing all accounts).
+   */
+  viewMode: 'assignments' | 'accounts' = 'accounts';
+
   constructor(
     private api: ItOpsMaturityApiService,
     private session: SessionService,
@@ -170,9 +184,12 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     private assesseeService: AssesseeService,
     private businessUnitService: BusinessUnitService,
     private identityService: IdentityService,
+    private router: Router,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
+    this.loadMyAssignments();
     // session.user$ always has a value synchronously (defaults to NoAccess) -
     // keep currentUser in sync with it from the very first tick, so template
     // bindings like currentUser.role never see undefined while the
@@ -241,6 +258,78 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         this.currentUser = this.session.currentUser;
         this.applyRoleScope(risks);
       });
+  }
+
+  /**
+   * Anyone actually assigned to work (assessor / reviewer / assessee on a
+   * domain x project assessment) should land straight on that work, not on the
+   * generic account search. Zero assignments (e.g. a real admin/superuser who
+   * only configures cycles) falls through to the untouched account picker.
+   */
+  private loadMyAssignments(): void {
+    const empId = localStorage.getItem('empid');
+    if (!empId) {
+      this.myAssignmentsLoading = false;
+      return;
+    }
+    this.api
+      .getMyAssignments(empId)
+      .pipe(
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to load my assignments', err);
+          this.toast.error('Could not load your assignments', 'Falling back to account selection. Please try again later.');
+          return of([] as ItOpsMyAssignmentRow[]);
+        }),
+      )
+      .subscribe((rows) => {
+        this.myAssignments = rows ?? [];
+        this.myAssignmentsLoading = false;
+        if (this.myAssignments.length) this.viewMode = 'assignments';
+      });
+  }
+
+  browseAllAccounts(): void {
+    this.viewMode = 'accounts';
+  }
+
+  backToMyAssignments(): void {
+    this.viewMode = 'assignments';
+  }
+
+  /** An assessor edits the assessment; reviewers and assessees both work on the review screen. */
+  isAssessorOn(row: ItOpsMyAssignmentRow): boolean {
+    return (row.roles ?? []).includes('Assessor');
+  }
+
+  assignmentStatusLabel(status: string): string {
+    return BACKEND_STATUS_MAP[status] ?? status ?? 'Not Started';
+  }
+
+  rolePillClass(role: string): string {
+    return 'role-pill role-' + role.toLowerCase();
+  }
+
+  /**
+   * The assessment/review pages scope themselves off
+   * AccountService.selectedAccount (-> GetOrCreateITOpsAssessment(domainCode, custId))
+   * plus the :domainId route param, which carries the domain CODE. Opening a
+   * My-Assignments row therefore has to set exactly that same context rather
+   * than invent a new one: select the row's account, then route on domainCode.
+   */
+  openAssignment(row: ItOpsMyAssignmentRow): void {
+    if (!row.custId || !row.domainCode) {
+      this.toast.error('Cannot open this assessment', 'This assignment is missing its account or domain reference. Contact your administrator.');
+      return;
+    }
+    const known = this.accounts.find((a) => String(a.cusT_ID) === String(row.custId));
+    const account: CustomerModel = known ?? {
+      cusT_ID: row.custId,
+      cusT_NM: row.accountName ?? row.custId,
+      industrY_TYPE: '',
+      url: '',
+    };
+    this.accountService.selectAccount(account);
+    this.router.navigate([this.isAssessorOn(row) ? '/assessment' : '/review', row.domainCode]);
   }
 
   private applyRoleScope(allTopRisks: TopRisk[]): void {

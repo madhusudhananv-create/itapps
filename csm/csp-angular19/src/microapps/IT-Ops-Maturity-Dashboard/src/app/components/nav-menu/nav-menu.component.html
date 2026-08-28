@@ -8,6 +8,7 @@
   <div class="nav-links">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
     <a routerLink="/reports" routerLinkActive="active">Reports</a>
+    <a *ngIf="canSeeAdminSetup" routerLink="/admin" routerLinkActive="active">Admin Setup</a>
   </div>
   <div class="nav-identity" *ngIf="currentUser">
     <app-notification-bell />

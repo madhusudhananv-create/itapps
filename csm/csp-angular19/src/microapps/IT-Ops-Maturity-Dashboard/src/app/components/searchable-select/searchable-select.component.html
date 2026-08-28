@@ -1,0 +1,38 @@
+<div class="ss" [class.open]="open">
+  <div class="ss-control">
+    <input
+      type="text"
+      class="ss-input"
+      role="combobox"
+      autocomplete="off"
+      [attr.aria-expanded]="open"
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      [value]="displayValue"
+      (focus)="openList()"
+      (click)="openList()"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+    >
+    <svg class="ss-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+  </div>
+
+  <div
+    class="ss-list"
+    *ngIf="open"
+    [style.top.px]="dropdownTop"
+    [style.left.px]="dropdownLeft"
+    [style.width.px]="dropdownWidth"
+  >
+    <button type="button" class="ss-option" *ngIf="emptyLabel !== null" (click)="select(null)">{{ emptyLabel }}</button>
+    <button
+      type="button"
+      class="ss-option"
+      *ngFor="let o of filtered; let i = index"
+      [class.selected]="isSelected(o)"
+      [class.highlighted]="i === highlighted"
+      (click)="select(o)"
+    >{{ o.label }}</button>
+    <p class="ss-empty" *ngIf="!filtered.length">No matches.</p>
+  </div>
+</div>

@@ -305,7 +305,15 @@ namespace GAVS.AllocationSystem.Data
         public IRepository_CSP<ITOPS_DOMAIN> ITOPS_DOMAIN { get { return GetStandardRepo<ITOPS_DOMAIN>(); } }
         public IRepository_CSP<ITOPS_CATEGORY> ITOPS_CATEGORY { get { return GetStandardRepo<ITOPS_CATEGORY>(); } }
         public IRepository_CSP<ITOPS_PARAMETER> ITOPS_PARAMETER { get { return GetStandardRepo<ITOPS_PARAMETER>(); } }
+        public IRepository_CSP<ITOPS_PARAMETER_LEVEL> ITOPS_PARAMETER_LEVEL { get { return GetStandardRepo<ITOPS_PARAMETER_LEVEL>(); } }
+        public IRepository_CSP<ITOPS_ROLE> ITOPS_ROLE { get { return GetStandardRepo<ITOPS_ROLE>(); } }
+        public IRepository_CSP<ITOPS_ROLE_ASSIGNMENT> ITOPS_ROLE_ASSIGNMENT { get { return GetStandardRepo<ITOPS_ROLE_ASSIGNMENT>(); } }
+        public IRepository_CSP<ITOPS_DOMAIN_PROJECT_MAP> ITOPS_DOMAIN_PROJECT_MAP { get { return GetStandardRepo<ITOPS_DOMAIN_PROJECT_MAP>(); } }
+        public IRepository_CSP<ITOPS_ASSESSMENT_MASTER> ITOPS_ASSESSMENT_MASTER { get { return GetStandardRepo<ITOPS_ASSESSMENT_MASTER>(); } }
         public IRepository_CSP<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get { return GetStandardRepo<ITOPS_ASSESSMENT>(); } }
+        public IRepository_CSP<ITOPS_ASSESSMENT_ASSESSOR> ITOPS_ASSESSMENT_ASSESSOR { get { return GetStandardRepo<ITOPS_ASSESSMENT_ASSESSOR>(); } }
+        public IRepository_CSP<ITOPS_ASSESSMENT_REVIEWER> ITOPS_ASSESSMENT_REVIEWER { get { return GetStandardRepo<ITOPS_ASSESSMENT_REVIEWER>(); } }
+        public IRepository_CSP<ITOPS_ASSESSMENT_ASSESSEE> ITOPS_ASSESSMENT_ASSESSEE { get { return GetStandardRepo<ITOPS_ASSESSMENT_ASSESSEE>(); } }
         public IRepository_CSP<ITOPS_SCORE> ITOPS_SCORE { get { return GetStandardRepo<ITOPS_SCORE>(); } }
         public IRepository_CSP<ITOPS_EVIDENCE> ITOPS_EVIDENCE { get { return GetStandardRepo<ITOPS_EVIDENCE>(); } }
         public IRepository_CSP<ITOPS_FINDING> ITOPS_FINDING { get { return GetStandardRepo<ITOPS_FINDING>(); } }

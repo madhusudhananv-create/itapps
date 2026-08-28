@@ -251,7 +251,15 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<ITOPS_DOMAIN>().ToTable("dbo.ITOPS_DOMAIN");
             modelBuilder.Entity<ITOPS_CATEGORY>().ToTable("dbo.ITOPS_CATEGORY");
             modelBuilder.Entity<ITOPS_PARAMETER>().ToTable("dbo.ITOPS_PARAMETER");
+            modelBuilder.Entity<ITOPS_PARAMETER_LEVEL>().ToTable("dbo.ITOPS_PARAMETER_LEVEL");
+            modelBuilder.Entity<ITOPS_ROLE>().ToTable("dbo.ITOPS_ROLE");
+            modelBuilder.Entity<ITOPS_ROLE_ASSIGNMENT>().ToTable("dbo.ITOPS_ROLE_ASSIGNMENT");
+            modelBuilder.Entity<ITOPS_DOMAIN_PROJECT_MAP>().ToTable("dbo.ITOPS_DOMAIN_PROJECT_MAP");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_MASTER>().ToTable("dbo.ITOPS_ASSESSMENT_MASTER");
             modelBuilder.Entity<ITOPS_ASSESSMENT>().ToTable("dbo.ITOPS_ASSESSMENT");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_ASSESSOR>().ToTable("dbo.ITOPS_ASSESSMENT_ASSESSOR");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_REVIEWER>().ToTable("dbo.ITOPS_ASSESSMENT_REVIEWER");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_ASSESSEE>().ToTable("dbo.ITOPS_ASSESSMENT_ASSESSEE");
             modelBuilder.Entity<ITOPS_SCORE>().ToTable("dbo.ITOPS_SCORE");
             modelBuilder.Entity<ITOPS_EVIDENCE>().ToTable("dbo.ITOPS_EVIDENCE");
             modelBuilder.Entity<ITOPS_FINDING>().ToTable("dbo.ITOPS_FINDING");
@@ -479,7 +487,15 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<ITOPS_DOMAIN> ITOPS_DOMAIN { get; set; }
         public virtual DbSet<ITOPS_CATEGORY> ITOPS_CATEGORY { get; set; }
         public virtual DbSet<ITOPS_PARAMETER> ITOPS_PARAMETER { get; set; }
+        public virtual DbSet<ITOPS_PARAMETER_LEVEL> ITOPS_PARAMETER_LEVEL { get; set; }
+        public virtual DbSet<ITOPS_ROLE> ITOPS_ROLE { get; set; }
+        public virtual DbSet<ITOPS_ROLE_ASSIGNMENT> ITOPS_ROLE_ASSIGNMENT { get; set; }
+        public virtual DbSet<ITOPS_DOMAIN_PROJECT_MAP> ITOPS_DOMAIN_PROJECT_MAP { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_MASTER> ITOPS_ASSESSMENT_MASTER { get; set; }
         public virtual DbSet<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_ASSESSOR> ITOPS_ASSESSMENT_ASSESSOR { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_REVIEWER> ITOPS_ASSESSMENT_REVIEWER { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_ASSESSEE> ITOPS_ASSESSMENT_ASSESSEE { get; set; }
         public virtual DbSet<ITOPS_SCORE> ITOPS_SCORE { get; set; }
         public virtual DbSet<ITOPS_EVIDENCE> ITOPS_EVIDENCE { get; set; }
         public virtual DbSet<ITOPS_FINDING> ITOPS_FINDING { get; set; }

@@ -1001,3 +1001,77 @@ tbody tr:hover {
   white-space: normal;
   word-break: break-word;
 }
+
+/* ---- "My Assignments" default landing view (assessor/reviewer/assessee) ---- */
+.assignments-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+}
+
+.my-assignments {
+  margin-bottom: 24px;
+  animation: rise-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 60ms;
+
+  h2 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: 16.5px;
+  }
+
+  .picker-copy {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    margin: 0 0 18px;
+  }
+}
+
+.assignments-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.assignment-row {
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+  }
+}
+
+.role-pill {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
+}
+
+.role-pill.role-assessor {
+  color: var(--accent);
+  background: var(--accent-track);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.role-pill.role-reviewer {
+  color: var(--status-serious);
+  background: color-mix(in srgb, var(--status-serious) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--status-serious) 30%, transparent);
+}
+
+.role-pill.role-assessee {
+  color: var(--status-good);
+  background: color-mix(in srgb, var(--status-good) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--status-good) 30%, transparent);
+}

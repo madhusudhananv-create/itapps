@@ -10,6 +10,23 @@ export interface ItOpsDomainListRow {
   minRequiredScore: number | null;
 }
 
+/** One row per assessment the logged-in employee is personally assigned to (GetITOpsMyAssignments). */
+export interface ItOpsMyAssignmentRow {
+  assessmentId: number;
+  assessmentMasterId: number;
+  cycleLabel: string | null;
+  domainId: number;
+  domainCode: string | null;
+  domainName: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  custId: string | null;
+  accountName: string | null;
+  status: string;
+  /** Subset of 'Assessor' | 'Reviewer' | 'Assessee' - the roles THIS employee holds on THIS assessment. */
+  roles: string[];
+}
+
 export interface ItOpsAssessmentInfo {
   assessmentId: number;
   domainId: number;
@@ -112,6 +129,17 @@ export class ItOpsMaturityApiService {
 
   getDomainList(): Observable<ItOpsDomainListRow[]> {
     return this.http.get<ItOpsDomainListRow[]>(`${this.apiurl}GetITOpsDomainList`, { headers: this.getHeaders() });
+  }
+
+  /**
+   * The landing page's "My Assignments" list - every assessment this employee
+   * is personally on as Assessor / Reviewer / Assessee, one row per assessment.
+   */
+  getMyAssignments(empId: string): Observable<ItOpsMyAssignmentRow[]> {
+    return this.http.get<ItOpsMyAssignmentRow[]>(
+      `${this.apiurl}GetITOpsMyAssignments?empId=${encodeURIComponent(empId)}`,
+      { headers: this.getHeaders() },
+    );
   }
 
   getDomainTracker(custId: string): Observable<ItOpsDomainTrackerRow[]> {

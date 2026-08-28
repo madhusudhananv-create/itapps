@@ -595,6 +595,7 @@
     <Compile Include="Controllers\AllSysController.cs" />
     <Compile Include="Controllers\ApiControllerBase.cs" />
     <Compile Include="Controllers\AppreciationController.cs" />
+    <Compile Include="Controllers\ITOperationMaturityAdminController.cs" />
     <Compile Include="Controllers\ITOperationMaturityController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\AssessmentFindingsController.cs" />

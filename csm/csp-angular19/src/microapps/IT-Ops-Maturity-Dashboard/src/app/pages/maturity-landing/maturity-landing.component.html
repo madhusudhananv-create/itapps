@@ -11,6 +11,69 @@
     </div>
   </header>
 
+  <section class="account-picker" *ngIf="myAssignmentsLoading">
+    <div class="assignments-loading">
+      <app-spinner [size]="18"></app-spinner>
+      <span>Loading your assignments...</span>
+    </div>
+  </section>
+
+  <section class="my-assignments" *ngIf="!myAssignmentsLoading && viewMode === 'assignments'">
+    <div class="assignments-head">
+      <div>
+        <h2>My Assignments</h2>
+        <p class="picker-copy">
+          The domain assessments you are personally assigned to. Select one to open it.
+        </p>
+      </div>
+      <button type="button" class="change-account-link" (click)="browseAllAccounts()">Browse all accounts</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Project</th>
+            <th>Technology Domain</th>
+            <th>My Role</th>
+            <th>Cycle</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of myAssignments" class="assignment-row" (click)="openAssignment(row)">
+            <td>{{ row.accountName || '-' }}</td>
+            <td>{{ row.projectName || row.projectId || '-' }}</td>
+            <td>{{ row.domainName || row.domainCode || '-' }}</td>
+            <td>
+              <span *ngFor="let role of row.roles" [class]="rolePillClass(role)">{{ role }}</span>
+            </td>
+            <td>{{ row.cycleLabel || '-' }}</td>
+            <td>
+              <span [class]="statusClass(assignmentStatusLabel(row.status))">{{ assignmentStatusLabel(row.status) }}</span>
+            </td>
+            <td>
+              <span class="domain-link">
+                {{ isAssessorOn(row) ? 'Open assessment' : 'Open review' }}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <ng-container *ngIf="!myAssignmentsLoading && viewMode === 'accounts'">
+  <div class="assignments-head" *ngIf="myAssignments.length && !selectedAccount">
+    <div></div>
+    <button type="button" class="change-account-link" (click)="backToMyAssignments()">Back to My Assignments</button>
+  </div>
+
   <div class="context-bar" *ngIf="selectedAccount">
     <nav class="breadcrumb">
       <span class="crumb-muted">Accounts</span>
@@ -353,5 +416,6 @@
         <span class="legend-item"><span class="legend-dot dot-critical"></span>Gap of 3+</span>
       </div>
     </section>
+  </ng-container>
   </ng-container>
 </div>
