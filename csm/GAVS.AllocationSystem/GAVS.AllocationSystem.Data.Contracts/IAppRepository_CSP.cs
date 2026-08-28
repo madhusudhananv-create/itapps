@@ -288,5 +288,11 @@ namespace GAVS.AllocationSystem.Data.Contracts
 
         List<AllProcessList> GetProcessModelListByProcessAreaIds(string processAreaIds);
 
+        // ---- ITOps Admin Setup read stored procedures (V2_13) ----
+        List<ITOpsAssessmentCycleSpRow> ITOpsGetAssessmentCycles();
+        List<ITOpsAssessmentTeamSpRow> ITOpsGetAssessmentTeam(int assessmentId);
+        List<ITOpsDomainProjectMapDomainSpRow> ITOpsGetDomainProjectMapDomains(string projectId);
+        List<ITOpsDomainProjectMapAssesseeSpRow> ITOpsGetDomainProjectMapAssessees(string projectId);
+        List<ITOpsCategoryForDomainSpRow> ITOpsGetCategoriesForDomain(int? domainId, int? categoryId, bool includeExpired);
     }
 }

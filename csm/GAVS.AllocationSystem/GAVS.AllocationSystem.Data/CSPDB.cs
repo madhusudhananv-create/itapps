@@ -309,6 +309,8 @@ namespace GAVS.AllocationSystem.Data
         public IRepository_CSP<ITOPS_ROLE> ITOPS_ROLE { get { return GetStandardRepo<ITOPS_ROLE>(); } }
         public IRepository_CSP<ITOPS_ROLE_ASSIGNMENT> ITOPS_ROLE_ASSIGNMENT { get { return GetStandardRepo<ITOPS_ROLE_ASSIGNMENT>(); } }
         public IRepository_CSP<ITOPS_DOMAIN_PROJECT_MAP> ITOPS_DOMAIN_PROJECT_MAP { get { return GetStandardRepo<ITOPS_DOMAIN_PROJECT_MAP>(); } }
+        public IRepository_CSP<ITOPS_DOMAIN_PROJECT_MAP_AUDIT> ITOPS_DOMAIN_PROJECT_MAP_AUDIT { get { return GetStandardRepo<ITOPS_DOMAIN_PROJECT_MAP_AUDIT>(); } }
+        public IRepository_CSP<ITOPS_PROJECT_ASSESSEE> ITOPS_PROJECT_ASSESSEE { get { return GetStandardRepo<ITOPS_PROJECT_ASSESSEE>(); } }
         public IRepository_CSP<ITOPS_ASSESSMENT_MASTER> ITOPS_ASSESSMENT_MASTER { get { return GetStandardRepo<ITOPS_ASSESSMENT_MASTER>(); } }
         public IRepository_CSP<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get { return GetStandardRepo<ITOPS_ASSESSMENT>(); } }
         public IRepository_CSP<ITOPS_ASSESSMENT_ASSESSOR> ITOPS_ASSESSMENT_ASSESSOR { get { return GetStandardRepo<ITOPS_ASSESSMENT_ASSESSOR>(); } }

@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import {
   SearchableSelectComponent,
   SearchableSelectOption,
 } from '../../components/searchable-select/searchable-select.component';
 import { ToastService } from '../../services/toast.service';
+import { DialogService } from '../../services/dialog.service';
 import {
   ItOpsAdminSetupService,
   ItOpsAssessmentCycle,
@@ -21,6 +22,7 @@ import {
   ItOpsCycleStatusCount,
   ItOpsDomainAdminRow,
   ItOpsDomainProjectMapping,
+  ItOpsMappingAuditRow,
   ItOpsEmployee,
   ItOpsMyAccess,
   ItOpsProject,
@@ -33,6 +35,37 @@ import {
 type StepKey = 'roles' | 'cycle' | 'scope' | 'assessment' | 'team';
 
 /** One domain's assessment row plus its live assessor/reviewer join rows (Step 5 accordion). */
+/** One person's assignment, merged across every project's copy of a domain - memberIds are the underlying per-assessment row ids, needed so a remove/promote can be replayed against every one of them. */
+interface GroupedTeamMember {
+  empId: string;
+  empName: string;
+  isPrimary: boolean;
+  memberIds: number[];
+}
+
+/** A domain as shown in Step 5: one card per domain for the whole cycle, not one per (project x domain) - a domain specialist is assigned once, not once per project that happens to include the same domain. */
+interface DomainGroup {
+  domainId: number;
+  name: string;
+  assessmentIds: number[];
+  status: 'Ready' | 'Needs setup';
+  assessors: GroupedTeamMember[];
+  reviewers: GroupedTeamMember[];
+}
+
+/** Folds one assessment's members into a domain group's deduped-by-empId list, in place. */
+function mergeGroupedMembers(into: GroupedTeamMember[], from: ItOpsTeamMember[]): void {
+  for (const m of from) {
+    const existing = into.find((g) => g.empId === m.empId);
+    if (existing) {
+      existing.isPrimary = existing.isPrimary || m.isPrimary;
+      existing.memberIds.push(m.id);
+    } else {
+      into.push({ empId: m.empId, empName: m.empName, isPrimary: m.isPrimary, memberIds: [m.id] });
+    }
+  }
+}
+
 interface DomainTeam {
   assessmentId: number;
   domainId: number;
@@ -40,6 +73,10 @@ interface DomainTeam {
   status: 'Ready' | 'Needs setup';
   assessors: ItOpsTeamMember[];
   reviewers: ItOpsTeamMember[];
+  /** Every domain shown here spans the whole cycle (every project), so each card needs its project for disambiguation. */
+  projectId: string;
+  projectName: string | null;
+  accountName: string | null;
 }
 
 /**
@@ -169,6 +206,11 @@ export class AdminSetupComponent implements OnInit {
   roleModalOpen = false;
   savingRole = false;
   revokingRoleId: number | null = null;
+  /** Checklist of one employee's current grants, so one or more (not necessarily all) can be revoked at once. */
+  revokeModalOpen = false;
+  revokeModalEmp: EmployeeGrants | null = null;
+  revokeModalSelectedIds: number[] = [];
+  savingRevoke = false;
 
   // "Assign a role" modal form state
   /**
@@ -244,11 +286,25 @@ export class AdminSetupComponent implements OnInit {
   domainFormName = '';
   domainEditId: number | null = null;
   mappingModalOpen = false;
+  /** Who's staffed on the project being mapped, for the Assessees picker in the same modal. */
+  mappingModalAssesseeCandidates: ItOpsEmployee[] = [];
+  loadingMappingModalAssessees = false;
+  mappingModalAssesseeIds: string[] = [];
+  mappingModalAssesseeSearch = '';
   savingMapping = false;
   /** Customer/account filter sitting above the project picker in the mapping modal. */
   mappingModalAccountName = '';
   mappingModalProjectId = '';
   mappingModalDomainIds: number[] = [];
+  /** Optional free-text reason, logged to the mapping change history for every domain this save touches. */
+  mappingModalReason = '';
+  /** Free-text filter over the mapping table itself - project name/id, account, or any mapped domain name. */
+  mappingSearch = '';
+  mappingHistoryModalOpen = false;
+  loadingMappingHistory = false;
+  mappingHistoryRows: ItOpsMappingAuditRow[] = [];
+  /** Scopes the history modal to one project when opened from a row; blank shows every project's history. */
+  mappingHistoryProjectId = '';
 
   // ---- Step 3: bulk mapping (many domains x many projects, ADDITIVE) ----
   // Separate entry point from the single-project modal above on purpose: that
@@ -263,6 +319,8 @@ export class AdminSetupComponent implements OnInit {
   bulkMapProjectSearch = '';
   bulkMapProjectIds: string[] = [];
   bulkMapDomainIds: number[] = [];
+  /** Optional free-text reason, logged to the mapping change history for every combination this bulk-add touches. */
+  bulkMapReason = '';
 
   // ---- Step 3: copy mapping from another project ----
   // REPLACE per target: "copy" means the target ends up matching the source
@@ -332,8 +390,6 @@ export class AdminSetupComponent implements OnInit {
   parameterVersions: ItOpsParameterRow[] = [];
 
   // ---- Step 4: Configure Assessment ----
-  /** Customer/account filter sitting above the Step 4 project picker. */
-  assessmentAccountName = '';
   /** Free-text filter over the Step 4 project checklist. */
   assessmentProjectSearch = '';
   /** Whether the Step 4 project checklist is expanded - collapsed by default, like the Customer picker. */
@@ -350,28 +406,41 @@ export class AdminSetupComponent implements OnInit {
    * mapping modal and the Step 1 project scope picker.
    */
   assessmentProjectIds: string[] = [];
-  assessmentDomainPicks: number[] = [];
-  assessees: ItOpsEmployee[] = [];
-  assesseeSearch = '';
-  assesseeResults: ItOpsEmployee[] = [];
-  /** People actually staffed on the selected project(s) - what the assessee search filters over. */
-  assesseeCandidates: ItOpsEmployee[] = [];
-  loadingAssesseeCandidates = false;
   assessmentRows: ItOpsCycleAssessment[] = [];
   loadingAssessments = false;
   assessmentsError: string | null = null;
+  /** Free-text filter over the "Assessments in this cycle" table - project id/name or domain name. */
+  assessmentTableSearch = '';
+  removingAssessmentId: number | null = null;
   creatingAssessments = false;
+
+  // ---- Step 4: quick "Update assessees" action on an existing assessment row ----
+  // Writes through to the same ITOPS_PROJECT_ASSESSEE Configure Scope reads,
+  // then re-syncs the current cycle's existing assessments - never a separate,
+  // assessment-only assessee list that could drift from Configure Scope.
+  updateAssesseesModalOpen = false;
+  updateAssesseesProjectId = '';
+  updateAssesseesProjectLabel = '';
+  updateAssesseesCandidates: ItOpsEmployee[] = [];
+  updateAssesseesSelectedIds: string[] = [];
+  updateAssesseesSearch = '';
+  loadingUpdateAssessees = false;
+  savingUpdateAssessees = false;
 
   // ---- Step 5: Assign Assessor / Reviewer ----
   domainTeams: DomainTeam[] = [];
   loadingTeams = false;
   teamsError: string | null = null;
+  /** Free-text filter over the domain cards below. */
+  teamDomainSearch = '';
 
   // ---- Shared people-picker modal (assessor/reviewer add) ----
   pickerModalOpen = false;
   pickerRole: 'Assessor' | 'Reviewer' = 'Assessor';
   pickerDomain = '';
-  pickerAssessmentId: number | null = null;
+  pickerDomainId: number | null = null;
+  /** Every assessment (one per project) the domain being edited spans - an add fans out to all of them. */
+  pickerAssessmentIds: number[] = [];
   pickerSearch = '';
   pickerCandidates: ItOpsEmployee[] = [];
   pickerPrimaryEmpId: string | null = null;
@@ -407,6 +476,7 @@ export class AdminSetupComponent implements OnInit {
     private toast: ToastService,
     private router: Router,
     private host: ElementRef<HTMLElement>,
+    private dialog: DialogService,
   ) {}
 
   /** Closes the Step 4 project checklist when the user clicks anywhere outside it, same as the searchable-select combobox above it. */
@@ -556,7 +626,7 @@ export class AdminSetupComponent implements OnInit {
    * pickers then let them switch.
    */
   private ensureTeamContext(): void {
-    if (this.selectedCycleId && this.assessmentProjectId) {
+    if (this.selectedCycleId) {
       this.loadDomainTeams();
       return;
     }
@@ -575,21 +645,14 @@ export class AdminSetupComponent implements OnInit {
       if (this.selectedCycleId === null && cycles.length) {
         this.selectedCycleId = (cycles.find((c) => c.status !== 'Closed') ?? cycles[0]).id;
       }
-      if (!this.assessmentProjectId && projects.length) this.assessmentProjectId = projects[0].projectId;
-      this.assessmentAccountName = this.accountNameOf(this.assessmentProjectId);
       this.loadingTeams = false;
       this.loadDomainTeams();
     });
   }
 
-  /** Step 5's own project picker (a team-only user has no Step 4 to set it from). */
-  onTeamProjectChange(): void {
+  /** Cycle change reloads every domain in the new cycle. */
+  onTeamCycleChange(): void {
     this.loadDomainTeams();
-  }
-
-  onTeamCustomerChange(): void {
-    this.assessmentProjectId = '';
-    this.domainTeams = [];
   }
 
   /** 1-based position in the full five-step flow, so hidden steps don't renumber the visible ones. */
@@ -1024,6 +1087,61 @@ export class AdminSetupComponent implements OnInit {
       });
   }
 
+  // ---- Revoke modal: pick one or more of this employee's current grants to remove ----
+
+  openRevokeModal(emp: EmployeeGrants): void {
+    this.revokeModalEmp = emp;
+    this.revokeModalSelectedIds = [];
+    this.revokeModalOpen = true;
+  }
+
+  closeRevokeModal(): void {
+    this.revokeModalOpen = false;
+    this.revokeModalEmp = null;
+  }
+
+  isRevokeSelected(grantId: number): boolean {
+    return this.revokeModalSelectedIds.includes(grantId);
+  }
+
+  toggleRevokeSelection(grantId: number): void {
+    this.revokeModalSelectedIds = this.isRevokeSelected(grantId)
+      ? this.revokeModalSelectedIds.filter((id) => id !== grantId)
+      : [...this.revokeModalSelectedIds, grantId];
+  }
+
+  async confirmRevokeSelected(): Promise<void> {
+    if (!this.revokeModalEmp || !this.revokeModalSelectedIds.length) {
+      this.toast.error('Pick at least one role to revoke.');
+      return;
+    }
+    const emp = this.revokeModalEmp;
+    const count = this.revokeModalSelectedIds.length;
+    const ok = await this.dialog.confirm({
+      title: 'Revoke selected roles?',
+      message: `Revoke ${count} role grant(s) from ${emp.empName}? This cannot be undone.`,
+      confirmText: 'Revoke',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
+    this.savingRevoke = true;
+    forkJoin(this.revokeModalSelectedIds.map((id) => this.api.revokeRole(id)))
+      .pipe(finalize(() => (this.savingRevoke = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Role(s) revoked.', `${count} grant(s) removed from ${emp.empName}.`);
+          this.closeRevokeModal();
+          this.loadRoles();
+        },
+        error: (err) => {
+          this.toast.error('Could not revoke every selected role.', this.errorText(err, 'Some may have been revoked - reloading.'));
+          this.closeRevokeModal();
+          this.loadRoles();
+        },
+      });
+  }
+
   // ---- Audit trail (grant / revoke history) ----
 
   /**
@@ -1157,6 +1275,10 @@ export class AdminSetupComponent implements OnInit {
             // Default to the newest still-open cycle - that's the one assessments seed into.
             const open = rows.find((c) => c.status !== 'Closed') ?? rows[0];
             this.selectedCycleId = open.id;
+            // Configure Assessment's own loadAssessments() call can run before this
+            // resolves (selectedCycleId was still null then) and silently no-op -
+            // re-trigger it now that a cycle is actually selected.
+            if (this.activeStep === 'assessment') this.loadAssessments();
           }
           // Nothing to select yet -> the "existing" tab is useless, land on "new".
           if (!rows.length) this.cycleMode = 'new';
@@ -1282,21 +1404,10 @@ export class AdminSetupComponent implements OnInit {
         // this screen is an explicit admin action; a silent default (of any
         // kind) was confusing precisely because it looked like a real
         // selection when it wasn't one.
-        // Keep each customer picker in step with whatever project is already selected,
-        // otherwise the project would sit outside its own (empty) filtered list.
+        // Keep the mapping modal's customer picker in step with whatever project
+        // is already selected, otherwise the project would sit outside its own
+        // (empty) filtered list.
         this.mappingModalAccountName = this.accountNameOf(this.mappingModalProjectId);
-        this.assessmentAccountName = this.accountNameOf(this.assessmentProjectId);
-        // Mapping may have changed since assessmentDomainPicks was last set (e.g.
-        // a domain was unmapped on a prior visit to this same tab) - drop any pick
-        // that's no longer actually mapped to the selected project, so the picker
-        // can never show a checked domain the backend would reject.
-        const stillMappable = new Set(this.mappableDomains.map((d) => d.domainId));
-        this.assessmentDomainPicks = this.assessmentDomainPicks.filter((id) => stillMappable.has(id));
-        // Same bypass as above applies to the assessee candidate pool - only
-        // fetch if it hasn't been loaded for this project set yet.
-        if (this.assessmentProjectIds.length && !this.assesseeCandidates.length && !this.loadingAssesseeCandidates) {
-          this.loadAssesseeCandidates();
-        }
       });
   }
 
@@ -1422,25 +1533,66 @@ export class AdminSetupComponent implements OnInit {
   openMappingModal(projectId?: string): void {
     this.mappingModalProjectId = projectId ?? '';
     this.mappingModalAccountName = this.accountNameOf(this.mappingModalProjectId);
+    this.mappingModalReason = '';
     // Pre-tick whatever is already mapped - the save is replace-semantics, so the
     // modal must open showing the CURRENT set, not an empty one.
     this.syncMappingModalSelection();
+    this.syncMappingModalAssessees();
     this.mappingModalOpen = true;
   }
 
   onMappingModalProjectChange(): void {
     this.syncMappingModalSelection();
+    this.syncMappingModalAssessees();
   }
 
   /** Changing the customer narrows the project list, so the old project no longer applies. */
   onMappingModalCustomerChange(): void {
     this.mappingModalProjectId = '';
     this.syncMappingModalSelection();
+    this.syncMappingModalAssessees();
   }
 
   private syncMappingModalSelection(): void {
     const existing = this.mappings.find((m) => m.projectId === this.mappingModalProjectId);
     this.mappingModalDomainIds = existing ? existing.domains.map((d) => d.domainId) : [];
+  }
+
+  /** Assessees now live alongside the domain mapping, set once per project instead of being re-picked every cycle in Configure Assessment. */
+  private syncMappingModalAssessees(): void {
+    this.mappingModalAssesseeCandidates = [];
+    this.mappingModalAssesseeIds = [];
+    this.mappingModalAssesseeSearch = '';
+    if (!this.mappingModalProjectId) return;
+
+    this.loadingMappingModalAssessees = true;
+    forkJoin({
+      candidates: this.api.getAssesseeCandidates([this.mappingModalProjectId]),
+      current: this.api.getProjectAssessees(this.mappingModalProjectId),
+    })
+      .pipe(finalize(() => (this.loadingMappingModalAssessees = false)))
+      .subscribe(({ candidates, current }) => {
+        this.mappingModalAssesseeCandidates = candidates;
+        this.mappingModalAssesseeIds = current.map((c) => c.empId);
+      });
+  }
+
+  isMappingAssesseeSelected(empId: string): boolean {
+    return this.mappingModalAssesseeIds.includes(empId);
+  }
+
+  toggleMappingAssessee(empId: string): void {
+    this.mappingModalAssesseeIds = this.isMappingAssesseeSelected(empId)
+      ? this.mappingModalAssesseeIds.filter((id) => id !== empId)
+      : [...this.mappingModalAssesseeIds, empId];
+  }
+
+  get filteredMappingModalAssesseeCandidates(): ItOpsEmployee[] {
+    const needle = this.mappingModalAssesseeSearch.trim().toLowerCase();
+    if (!needle) return this.mappingModalAssesseeCandidates;
+    return this.mappingModalAssesseeCandidates.filter(
+      (e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle),
+    );
   }
 
   isMappingDomainSelected(domainId: number): boolean {
@@ -1463,8 +1615,10 @@ export class AdminSetupComponent implements OnInit {
       return;
     }
     this.savingMapping = true;
-    this.api
-      .saveDomainProjectMapping(this.mappingModalProjectId, this.mappingModalDomainIds)
+    forkJoin([
+      this.api.saveDomainProjectMapping(this.mappingModalProjectId, this.mappingModalDomainIds, this.mappingModalReason),
+      this.api.saveProjectAssessees(this.mappingModalProjectId, this.mappingModalAssesseeIds),
+    ])
       .pipe(finalize(() => (this.savingMapping = false)))
       .subscribe({
         next: () => {
@@ -1476,14 +1630,81 @@ export class AdminSetupComponent implements OnInit {
       });
   }
 
-  removeMappedDomain(row: ItOpsDomainProjectMapping, domain: { domainId: number; domainName: string }): void {
-    this.api.removeDomainProjectMapping(row.projectId, domain.domainId).subscribe({
+  async removeMappedDomain(row: ItOpsDomainProjectMapping, domain: { domainId: number; domainName: string }): Promise<void> {
+    // A quick one-click unmap from the table row, rather than opening the full
+    // modal - the reason prompt is the only extra step, and it's optional
+    // (Cancel on the dialog aborts the removal entirely).
+    const reason = await this.dialog.prompt({
+      title: 'Remove domain mapping',
+      message: `Reason for removing ${domain.domainName} from ${row.projectName ?? row.projectId}?`,
+      placeholder: 'Reason (optional)',
+      confirmText: 'Remove',
+    });
+    if (reason === null) return;
+    this.api.removeDomainProjectMapping(row.projectId, domain.domainId, reason).subscribe({
       next: () => {
         this.toast.success('Domain unmapped.', `${domain.domainName} removed from ${row.projectName ?? row.projectId}.`);
         this.loadScope();
       },
       error: (err) => this.toast.error('Could not remove the mapping.', this.errorText(err, 'Please try again.')),
     });
+  }
+
+  /** Client-side filter over the mapping table - project id/name, account, or any mapped domain name. */
+  get filteredMappings(): ItOpsDomainProjectMapping[] {
+    const needle = this.mappingSearch.trim().toLowerCase();
+    if (!needle) return this.mappings;
+    return this.mappings.filter(
+      (m) =>
+        (m.projectId ?? '').toLowerCase().includes(needle) ||
+        (m.projectName ?? '').toLowerCase().includes(needle) ||
+        (m.accountName ?? '').toLowerCase().includes(needle) ||
+        (m.domains ?? []).some((d) => (d.domainName ?? '').toLowerCase().includes(needle)) ||
+        (m.assessees ?? []).some((a) => a.name.toLowerCase().includes(needle) || a.empId.toLowerCase().includes(needle)),
+    );
+  }
+
+  /** How many mapped projects are missing domains and/or assessees - both are required before Configure Assessment can create anything for that project. */
+  get incompleteMappingCount(): number {
+    return this.mappings.filter((m) => !m.domains?.length || !m.assessees?.length).length;
+  }
+
+  /** Warns before leaving Configure Scope if any mapped project is still missing domains and/or assessees - Configure Assessment can't do anything for those until they're filled in. */
+  async continueToAssessment(): Promise<void> {
+    const incomplete = this.mappings.filter((m) => !m.domains?.length || !m.assessees?.length);
+    if (incomplete.length) {
+      const names = incomplete
+        .slice(0, 5)
+        .map((m) => `${m.projectId} · ${m.projectName ?? ''}`)
+        .join('\n');
+      const more = incomplete.length > 5 ? `\n…and ${incomplete.length - 5} more` : '';
+      const ok = await this.dialog.confirm({
+        title: 'Some projects aren’t ready yet',
+        message: `${incomplete.length} mapped project(s) are still missing domains and/or assessees, so Configure Assessment can't create anything for them yet:\n\n${names}${more}\n\nYou can continue and fix these later, or go back and complete them now.`,
+        confirmText: 'Continue anyway',
+        cancelText: 'Go back',
+      });
+      if (!ok) return;
+    }
+    this.goToStep('assessment');
+  }
+
+  /** Opens the mapping change-history modal, optionally scoped to one project's row. */
+  openMappingHistoryModal(projectId?: string): void {
+    this.mappingHistoryProjectId = projectId ?? '';
+    this.mappingHistoryModalOpen = true;
+    this.loadingMappingHistory = true;
+    this.api
+      .getDomainProjectMappingHistory(this.mappingHistoryProjectId || undefined)
+      .pipe(finalize(() => (this.loadingMappingHistory = false)))
+      .subscribe({
+        next: (rows) => (this.mappingHistoryRows = rows),
+        error: (err) => this.toast.error('Could not load mapping history.', this.errorText(err, 'Please try again.')),
+      });
+  }
+
+  closeMappingHistoryModal(): void {
+    this.mappingHistoryModalOpen = false;
   }
 
   // ---- Bulk mapping: many domains x many projects, ADDITIVE ----
@@ -1501,6 +1722,7 @@ export class AdminSetupComponent implements OnInit {
     this.bulkMapAccountName = '';
     this.bulkMapProjectIds = [];
     this.bulkMapDomainIds = [];
+    this.bulkMapReason = '';
     if (!this.projects.length) this.loadProjects();
     this.bulkMapModalOpen = true;
   }
@@ -1581,7 +1803,7 @@ export class AdminSetupComponent implements OnInit {
     const projectCount = this.bulkMapProjectIds.length;
     this.savingBulkMap = true;
     this.api
-      .bulkAddDomainProjectMappings(this.bulkMapProjectIds, this.bulkMapDomainIds)
+      .bulkAddDomainProjectMappings(this.bulkMapProjectIds, this.bulkMapDomainIds, this.bulkMapReason)
       .pipe(finalize(() => (this.savingBulkMap = false)))
       .subscribe({
         next: () => {
@@ -2089,23 +2311,63 @@ export class AdminSetupComponent implements OnInit {
    * that project on its own, which is exactly the old single-project flow.
    * (The backend still validates per project as a defensive check.)
    */
-  get mappableDomains(): ItOpsDomainAdminRow[] {
-    if (!this.assessmentProjectIds.length) return [];
-    const perProject = this.assessmentProjectIds.map(
-      (projectId) => new Set((this.mappings.find((m) => m.projectId === projectId)?.domains ?? []).map((d) => d.domainId)),
-    );
-    return this.domains.filter((d) => perProject.every((ids) => ids.has(d.domainId)));
+  /**
+   * True once every one of a project's currently-mapped domains already has an
+   * assessment in this cycle, AND each of those assessments' assessee count
+   * matches the project's current assessee count - i.e. Create would do
+   * nothing new for it. Assessee identity isn't fully diffed (only the count),
+   * since that's all GetITOpsAssessmentsForCycle's row already carries without
+   * an extra per-assessment call - a straight swap of one assessee for another
+   * of the same headcount won't flag as changed, but an add/remove will.
+   */
+  private isProjectUpToDateForAssessment(m: ItOpsDomainProjectMapping): boolean {
+    const domainIds = (m.domains ?? []).map((d) => d.domainId);
+    if (!domainIds.length) return true;
+    const rowsForProject = this.assessmentRows.filter((r) => r.projectId === m.projectId);
+    const rowDomainIds = new Set(rowsForProject.map((r) => r.domainId));
+    if (domainIds.some((id) => !rowDomainIds.has(id))) return false;
+    const assesseeCount = (m.assessees ?? []).length;
+    return rowsForProject.every((r) => r.assesseeCount === assesseeCount);
+  }
+
+  /**
+   * Only projects that (a) already have at least one domain mapped in
+   * Configure Scope, and (b) still have something for Create to actually do -
+   * a brand-new project, a newly-added domain, or a changed assessee set - are
+   * offered here. A project whose current config is already fully reflected in
+   * this cycle's assessments has nothing left to create, so it drops off the
+   * list instead of sitting there as dead weight every time this step opens.
+   */
+  get mappedProjectsForAssessment(): ItOpsDomainProjectMapping[] {
+    const needle = this.assessmentProjectSearch.trim().toLowerCase();
+    return this.mappings
+      .filter((m) => !this.isProjectUpToDateForAssessment(m))
+      .filter(
+        (m) =>
+          !needle ||
+          m.projectId.toLowerCase().includes(needle) ||
+          (m.projectName ?? '').toLowerCase().includes(needle) ||
+          (m.accountName ?? '').toLowerCase().includes(needle),
+      );
+  }
+
+  /** Labels for the live selection summary panel - project id + name for every currently ticked project. */
+  get pickedAssessmentProjectLabels(): string[] {
+    return this.assessmentProjectIds.map((id) => {
+      const project = this.projects.find((p) => p.projectId === id);
+      return project ? this.projectLabel(project) : id;
+    });
+  }
+
+  /** Distinct domain names the current project selection will assess, read straight from Configure Scope's mapping - nothing to pick here any more. */
+  get plannedDomainNames(): string[] {
+    return Array.from(new Set(this.plannedPairs.map((p) => this.domains.find((d) => d.domainId === p.domainId)?.name).filter((n): n is string => !!n))).sort();
   }
 
   isAssessmentProjectPicked(projectId: string): boolean {
     return this.assessmentProjectIds.includes(projectId);
   }
 
-  /**
-   * Ticking/unticking a project changes the domain INTERSECTION under it, so the
-   * domain picks are re-derived every time rather than left pointing at a domain
-   * that is no longer common to the whole selection.
-   */
   toggleAssessmentProject(projectId: string): void {
     this.assessmentProjectIds = this.isAssessmentProjectPicked(projectId)
       ? this.assessmentProjectIds.filter((id) => id !== projectId)
@@ -2113,9 +2375,9 @@ export class AdminSetupComponent implements OnInit {
     this.onAssessmentProjectsChange();
   }
 
-  /** Bulk tick/untick for the currently filtered (by customer) project list. */
+  /** Bulk tick/untick for the currently filtered (by search) project list. */
   toggleAllAssessmentProjects(): void {
-    const visible = this.projectsForCustomer(this.assessmentAccountName, this.assessmentProjectSearch).map((p) => p.projectId);
+    const visible = this.mappedProjectsForAssessment.map((m) => m.projectId);
     const allPicked = visible.length > 0 && visible.every((id) => this.assessmentProjectIds.includes(id));
     this.assessmentProjectIds = allPicked
       ? this.assessmentProjectIds.filter((id) => !visible.includes(id))
@@ -2124,96 +2386,33 @@ export class AdminSetupComponent implements OnInit {
   }
 
   get allVisibleAssessmentProjectsPicked(): boolean {
-    const visible = this.projectsForCustomer(this.assessmentAccountName, this.assessmentProjectSearch).map((p) => p.projectId);
+    const visible = this.mappedProjectsForAssessment.map((m) => m.projectId);
     return visible.length > 0 && visible.every((id) => this.assessmentProjectIds.includes(id));
   }
 
-  isDomainPicked(domainId: number): boolean {
-    return this.assessmentDomainPicks.includes(domainId);
-  }
-
-  toggleDomainPick(domainId: number): void {
-    this.assessmentDomainPicks = this.isDomainPicked(domainId)
-      ? this.assessmentDomainPicks.filter((id) => id !== domainId)
-      : [...this.assessmentDomainPicks, domainId];
-  }
-
-  /**
-   * The project SET changed. Domain picks are scoped to that set (they're the
-   * intersection of every selected project's mapped domains), so they're
-   * re-derived rather than carried over, and the table below re-reads.
-   */
   onAssessmentProjectsChange(): void {
     this.assessmentProjectId = this.assessmentProjectIds[0] ?? '';
-    // Default to every domain common to the whole selection (still individually
-    // togglable) rather than starting empty - that's almost always what the
-    // admin wants to assess.
-    this.assessmentDomainPicks = this.mappableDomains.map((d) => d.domainId);
     this.loadAssessments();
-    this.loadAssesseeCandidates();
-  }
-
-  /**
-   * The assessee picker should only offer people actually staffed on the
-   * project(s) being assessed, not the whole org roster - re-fetched every
-   * time the project selection changes. A previously-added assessee who isn't
-   * in the new candidate list (e.g. the project set narrowed) is left alone;
-   * this only affects who can be newly added going forward.
-   */
-  private loadAssesseeCandidates(): void {
-    this.assesseeSearch = '';
-    this.assesseeResults = [];
-    if (!this.assessmentProjectIds.length) {
-      this.assesseeCandidates = [];
-      return;
-    }
-    this.loadingAssesseeCandidates = true;
-    this.api
-      .getAssesseeCandidates(this.assessmentProjectIds)
-      .pipe(finalize(() => (this.loadingAssesseeCandidates = false)))
-      .subscribe((rows) => (this.assesseeCandidates = rows));
-  }
-
-  /**
-   * Changing the customer narrows the PROJECT PICKER (and clears the domain/
-   * assessee selections that depended on the old project choice), but the
-   * "Assessments in this cycle" table below is cycle-wide, not tied to this
-   * filter - it stays exactly as it was rather than blanking out.
-   */
-  onAssessmentCustomerChange(): void {
-    this.assessmentProjectId = '';
-    this.assessmentProjectIds = [];
-    this.assessmentDomainPicks = [];
-    this.assessees = [];
   }
 
   /**
    * "Assessments in this cycle" shows the WHOLE cycle, not just the currently
    * selected project(s) - it's a browse/manage list (every "Assign team" row
    * needs to be reachable regardless of what's ticked above), not a preview of
-   * the current selection. The pre-create summary getters below key off
-   * (projectId, domainId) pairs, so extra rows from other projects never
-   * pollute those counts - only the assessee sync needs an explicit
-   * project-scoped subset, since "first row with assessees" would otherwise
-   * happily pick one from an unrelated project.
+   * the current selection.
    */
   loadAssessments(): void {
     if (!this.selectedCycleId) {
       this.assessmentRows = [];
-      this.assessees = [];
       return;
     }
-    const picked = [...this.assessmentProjectIds];
     this.loadingAssessments = true;
     this.assessmentsError = null;
     this.api
       .getAssessmentsForCycle(this.selectedCycleId, undefined)
       .pipe(finalize(() => (this.loadingAssessments = false)))
       .subscribe({
-        next: (rows) => {
-          this.assessmentRows = rows;
-          this.syncAssesseesFromAssessments(rows.filter((r) => picked.includes(r.projectId)));
-        },
+        next: (rows) => (this.assessmentRows = rows),
         error: () => {
           this.assessmentsError = 'Could not load the assessments for this cycle.';
           this.assessmentRows = [];
@@ -2222,30 +2421,36 @@ export class AdminSetupComponent implements OnInit {
   }
 
   // ---- Pre-create summary ----
-  // Computed live from what GetITOpsAssessmentsForCycle already returned for the
-  // selected cycle + projects, so the admin sees exactly what a Create will do
-  // BEFORE clicking - no extra call, no extra confirmation click.
+  // Computed live from what GetITOpsAssessmentsForCycle and Configure Scope's
+  // mappings already returned, so the admin sees exactly what a Create will do
+  // BEFORE clicking - no extra call, no extra confirmation click. Each
+  // project's own mapped domain set is used (no more forced intersection),
+  // matching what the backend now actually does per project.
 
   /** (project x domain) pairs that already have an assessment in this cycle. */
   private get existingPairKeys(): Set<string> {
     return new Set(this.assessmentRows.map((r) => `${r.projectId}|${r.domainId}`));
   }
 
+  /** Every (projectId, domainId) pair the current project selection would create/ensure. */
+  private get plannedPairs(): { projectId: string; domainId: number }[] {
+    const pairs: { projectId: string; domainId: number }[] = [];
+    for (const projectId of this.assessmentProjectIds) {
+      const mapped = this.mappings.find((m) => m.projectId === projectId);
+      for (const d of mapped?.domains ?? []) pairs.push({ projectId, domainId: d.domainId });
+    }
+    return pairs;
+  }
+
   /** Total (project x domain) combinations the current selection covers. */
   get plannedAssessmentCount(): number {
-    return this.assessmentProjectIds.length * this.assessmentDomainPicks.length;
+    return this.plannedPairs.length;
   }
 
   /** How many of those already exist and will be left untouched (their team stays as-is). */
   get existingAssessmentCount(): number {
     const existing = this.existingPairKeys;
-    let count = 0;
-    for (const projectId of this.assessmentProjectIds) {
-      for (const domainId of this.assessmentDomainPicks) {
-        if (existing.has(`${projectId}|${domainId}`)) count++;
-      }
-    }
-    return count;
+    return this.plannedPairs.filter((p) => existing.has(`${p.projectId}|${p.domainId}`)).length;
   }
 
   /** How many brand-new ITOPS_ASSESSMENT rows the Create would actually add. */
@@ -2254,62 +2459,47 @@ export class AdminSetupComponent implements OnInit {
   }
 
   /**
-   * Assessments already in this cycle for a SELECTED project whose domain is NOT
-   * in the current pick. The backend retires those (only while still NotStarted),
-   * so it is worth warning about before the click rather than after.
+   * Selected projects whose domains are already fully created in this cycle
+   * but whose assessee set has drifted from Configure Scope - Create for
+   * these adds 0 new rows, but still needs to run so the updated assessee
+   * list gets pushed onto the existing assessments. Used purely to adjust the
+   * button/summary wording so "0 new" doesn't read as "nothing will happen."
+   */
+  get assesseeSyncOnlyCount(): number {
+    return this.assessmentProjectIds.filter((id) => {
+      const m = this.mappings.find((x) => x.projectId === id);
+      if (!m) return false;
+      const domainIds = (m.domains ?? []).map((d) => d.domainId);
+      if (!domainIds.length) return false;
+      const rows = this.assessmentRows.filter((r) => r.projectId === id);
+      const rowDomainIds = new Set(rows.map((r) => r.domainId));
+      if (domainIds.some((did) => !rowDomainIds.has(did))) return false; // still has a genuinely new domain to create
+      const assesseeCount = (m.assessees ?? []).length;
+      return rows.some((r) => r.assesseeCount !== assesseeCount);
+    }).length;
+  }
+
+  /**
+   * Assessments already in this cycle for a SELECTED project whose domain is no
+   * longer mapped to it in Configure Scope. The backend retires those (only
+   * while still NotStarted), so it is worth warning about before the click.
    */
   get retiredAssessmentCount(): number {
-    const picked = new Set(this.assessmentDomainPicks);
+    const plannedKeys = new Set(this.plannedPairs.map((p) => `${p.projectId}|${p.domainId}`));
     return this.assessmentRows.filter(
-      (r) => this.assessmentProjectIds.includes(r.projectId) && !picked.has(r.domainId) && r.status === 'NotStarted',
+      (r) => this.assessmentProjectIds.includes(r.projectId) && !plannedKeys.has(`${r.projectId}|${r.domainId}`) && r.status === 'NotStarted',
     ).length;
   }
 
   /**
-   * Assessees are project-wide, so any one of the project's assessments carries
-   * the authoritative set - read it back off the first row's team so re-opening
-   * the screen shows what was actually persisted rather than an empty picker.
+   * Blocks Create outright when any SELECTED project is still missing domains
+   * and/or assessees - Configure Scope's "Continue anyway" warning lets an
+   * admin move past an incomplete project, but this step must never actually
+   * create nothing while claiming success, or silently skip a project without
+   * saying so. Re-checked here rather than trusted from Step 3's warning,
+   * since a project's mapping could also change directly on this same visit.
    */
-  private syncAssesseesFromAssessments(rows: ItOpsCycleAssessment[]): void {
-    const first = rows.find((r) => r.assesseeCount > 0);
-    if (!first) {
-      this.assessees = [];
-      return;
-    }
-    this.api
-      .getAssessmentTeam(first.assessmentId)
-      .pipe(catchError(() => of(null)))
-      .subscribe((team) => {
-        this.assessees = (team?.assessees ?? []).map((a) => ({ empId: a.empId, name: a.empName, title: '' }));
-      });
-  }
-
-  /**
-   * Filters over assesseeCandidates (people staffed on the selected
-   * project(s)), not the org-wide roster - clicking/typing with no projects
-   * selected yet shows nothing rather than everyone.
-   */
-  searchAssessee(): void {
-    const needle = this.assesseeSearch.trim().toLowerCase();
-    const pool = needle.length
-      ? this.assesseeCandidates.filter(
-          (e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle),
-        )
-      : this.assesseeCandidates;
-    this.assesseeResults = pool.slice(0, 25);
-  }
-
-  addAssessee(emp: ItOpsEmployee): void {
-    if (!this.assessees.some((a) => a.empId === emp.empId)) this.assessees = [...this.assessees, emp];
-    this.assesseeSearch = '';
-    this.assesseeResults = [];
-  }
-
-  removeAssessee(emp: ItOpsEmployee): void {
-    this.assessees = this.assessees.filter((a) => a.empId !== emp.empId);
-  }
-
-  createAssessments(): void {
+  async createAssessments(): Promise<void> {
     if (!this.selectedCycleId) {
       this.toast.error('Pick a cycle in Configure Cycle first.');
       return;
@@ -2318,8 +2508,19 @@ export class AdminSetupComponent implements OnInit {
       this.toast.error('Pick at least one project first.');
       return;
     }
-    if (!this.assessmentDomainPicks.length) {
-      this.toast.error('Select at least one domain to assess.');
+
+    const incomplete = this.assessmentProjectIds
+      .map((id) => this.mappings.find((m) => m.projectId === id))
+      .filter((m): m is ItOpsDomainProjectMapping => !!m && (!m.domains?.length || !m.assessees?.length));
+    if (incomplete.length) {
+      const names = incomplete.map((m) => `${m.projectId} · ${m.projectName ?? ''}`).join('\n');
+      const goToScope = await this.dialog.confirm({
+        title: 'Cannot create assessments yet',
+        message: `${incomplete.length} of the selected project(s) are missing domains and/or assessees, so no assessment can be created for them:\n\n${names}\n\nAdd the missing domains/assessees in Configure Scope, then come back here.`,
+        confirmText: 'Go to Configure Scope',
+        cancelText: 'Cancel',
+      });
+      if (goToScope) this.goToStep('scope');
       return;
     }
 
@@ -2328,16 +2529,16 @@ export class AdminSetupComponent implements OnInit {
     const projectCount = this.assessmentProjectIds.length;
     this.creatingAssessments = true;
     this.api
-      .createAssessmentsForProjects(
-        this.selectedCycleId,
-        this.assessmentProjectIds,
-        this.assessmentDomainPicks,
-        this.assessees.map((a) => a.empId),
-      )
+      .createAssessmentsForProjects(this.selectedCycleId, this.assessmentProjectIds)
       .pipe(finalize(() => (this.creatingAssessments = false)))
       .subscribe({
-        next: (rows) => {
-          this.assessmentRows = rows;
+        next: () => {
+          // The response only carries rows for the project(s) just submitted -
+          // "Assessments in this cycle" shows the WHOLE cycle, so it re-reads
+          // everything rather than replacing the table with that subset (which
+          // was wiping out every other project's rows until the next full
+          // reload).
+          this.loadAssessments();
           this.toast.success(
             'Assessments created.',
             `${created} new across ${projectCount} project(s); ${unchanged} already existed and were left unchanged.`,
@@ -2411,12 +2612,158 @@ export class AdminSetupComponent implements OnInit {
     this.goToStep('team');
   }
 
+  /** Client-side filter over the "Assessments in this cycle" table - project id/name or domain name. */
+  get filteredAssessmentRows(): ItOpsCycleAssessment[] {
+    const needle = this.assessmentTableSearch.trim().toLowerCase();
+    if (!needle) return this.assessmentRows;
+    return this.assessmentRows.filter(
+      (r) =>
+        (r.projectId ?? '').toLowerCase().includes(needle) ||
+        (r.projectName ?? '').toLowerCase().includes(needle) ||
+        (r.domainName ?? '').toLowerCase().includes(needle),
+    );
+  }
+
+  /** Only a Not Started row is removable - the backend re-checks this and rejects anything with history. */
+  canRemoveAssessment(row: ItOpsCycleAssessment): boolean {
+    return row.status === 'NotStarted';
+  }
+
+  async removeAssessment(row: ItOpsCycleAssessment): Promise<void> {
+    const ok = await this.dialog.confirm({
+      title: 'Remove assessment?',
+      message: `Remove the ${row.domainName} assessment for ${row.projectName ?? row.projectId}? This cannot be undone.`,
+      confirmText: 'Remove',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    this.removingAssessmentId = row.assessmentId;
+    this.api
+      .removeAssessment(row.assessmentId)
+      .pipe(finalize(() => (this.removingAssessmentId = null)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Assessment removed.');
+          this.assessmentRows = this.assessmentRows.filter((r) => r.assessmentId !== row.assessmentId);
+        },
+        error: (err) => this.toast.error('Could not remove the assessment.', this.errorText(err, 'Please try again.')),
+      });
+  }
+
+  // ---- Update assessees for an already-created assessment's project ----
+
+  openUpdateAssesseesModal(row: ItOpsCycleAssessment): void {
+    this.updateAssesseesProjectId = row.projectId;
+    this.updateAssesseesProjectLabel = `${row.projectId} · ${row.projectName ?? ''}`;
+    this.updateAssesseesSearch = '';
+    this.updateAssesseesModalOpen = true;
+    this.loadingUpdateAssessees = true;
+    forkJoin({
+      candidates: this.api.getAssesseeCandidates([row.projectId]),
+      current: this.api.getProjectAssessees(row.projectId),
+    })
+      .pipe(finalize(() => (this.loadingUpdateAssessees = false)))
+      .subscribe(({ candidates, current }) => {
+        this.updateAssesseesCandidates = candidates;
+        this.updateAssesseesSelectedIds = current.map((c) => c.empId);
+      });
+  }
+
+  closeUpdateAssesseesModal(): void {
+    this.updateAssesseesModalOpen = false;
+  }
+
+  get filteredUpdateAssesseesCandidates(): ItOpsEmployee[] {
+    const needle = this.updateAssesseesSearch.trim().toLowerCase();
+    if (!needle) return this.updateAssesseesCandidates;
+    return this.updateAssesseesCandidates.filter(
+      (e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle),
+    );
+  }
+
+  isUpdateAssesseeSelected(empId: string): boolean {
+    return this.updateAssesseesSelectedIds.includes(empId);
+  }
+
+  toggleUpdateAssessee(empId: string): void {
+    this.updateAssesseesSelectedIds = this.isUpdateAssesseeSelected(empId)
+      ? this.updateAssesseesSelectedIds.filter((id) => id !== empId)
+      : [...this.updateAssesseesSelectedIds, empId];
+  }
+
+  /**
+   * Writes through to the SAME standing config Configure Scope reads
+   * (ITOPS_PROJECT_ASSESSEE) - never a parallel, assessment-only edit path -
+   * then re-runs Create for just this project so the change lands on every
+   * existing assessment in this cycle immediately (0 new rows, since domains
+   * are unchanged; only the assessee set is synced). Configure Scope and this
+   * cycle's assessments can never drift apart as a result.
+   */
+  saveUpdateAssessees(): void {
+    if (!this.selectedCycleId) return;
+    const cycleId = this.selectedCycleId;
+    const projectId = this.updateAssesseesProjectId;
+    const projectLabel = this.updateAssesseesProjectLabel;
+    const count = this.updateAssesseesSelectedIds.length;
+    this.savingUpdateAssessees = true;
+    this.api
+      .saveProjectAssessees(projectId, this.updateAssesseesSelectedIds)
+      .pipe(
+        switchMap(() => this.api.createAssessmentsForProjects(cycleId, [projectId])),
+        finalize(() => (this.savingUpdateAssessees = false)),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.success(
+            'Assessees updated.',
+            `${projectLabel} now has ${count} assessee(s), synced to every assessment for it in this cycle.`,
+          );
+          this.closeUpdateAssesseesModal();
+          this.loadScope();
+          this.loadAssessments();
+        },
+        error: (err) => this.toast.error('Could not update the assessees.', this.errorText(err, 'Please try again.')),
+      });
+  }
+
   // ==================================================================
   // Step 5: Assign Assessor / Reviewer
   // ==================================================================
 
+  /**
+   * One card per domain for the whole cycle, merged across every project that
+   * happens to include it - a domain specialist is assigned once per domain,
+   * not once per project. assessors/reviewers are deduped by empId; a person's
+   * memberIds carries every underlying per-assessment row id they hold, so
+   * remove/promote can be replayed against all of them.
+   */
+  get groupedDomainTeams(): DomainGroup[] {
+    const groups = new Map<number, DomainGroup>();
+    for (const entry of this.domainTeams) {
+      let group = groups.get(entry.domainId);
+      if (!group) {
+        group = { domainId: entry.domainId, name: entry.name, assessmentIds: [], status: 'Needs setup', assessors: [], reviewers: [] };
+        groups.set(entry.domainId, group);
+      }
+      group.assessmentIds.push(entry.assessmentId);
+      mergeGroupedMembers(group.assessors, entry.assessors);
+      mergeGroupedMembers(group.reviewers, entry.reviewers);
+    }
+    const list = Array.from(groups.values());
+    for (const g of list) g.status = g.assessors.length || g.reviewers.length ? 'Ready' : 'Needs setup';
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /** Client-side filter over the domain grid - name only, there's no project to search by any more. */
+  get filteredDomainGroups(): DomainGroup[] {
+    const needle = this.teamDomainSearch.trim().toLowerCase();
+    if (!needle) return this.groupedDomainTeams;
+    return this.groupedDomainTeams.filter((g) => g.name.toLowerCase().includes(needle));
+  }
+
+  /** Every (project x domain) assessment in the selected cycle. */
   loadDomainTeams(): void {
-    if (!this.selectedCycleId || !this.assessmentProjectId) {
+    if (!this.selectedCycleId) {
       this.domainTeams = [];
       return;
     }
@@ -2424,16 +2771,15 @@ export class AdminSetupComponent implements OnInit {
     this.teamsError = null;
 
     this.api
-      .getAssessmentsForCycle(this.selectedCycleId, this.assessmentProjectId)
+      .getAssessmentsForCycle(this.selectedCycleId)
       .pipe(catchError(() => of(null)))
       .subscribe((rows) => {
         if (rows === null) {
-          this.teamsError = 'Could not load the assessments for this project.';
+          this.teamsError = 'Could not load the assessments for this cycle.';
           this.domainTeams = [];
           this.loadingTeams = false;
           return;
         }
-        this.assessmentRows = rows;
         if (!rows.length) {
           this.domainTeams = [];
           this.loadingTeams = false;
@@ -2454,38 +2800,50 @@ export class AdminSetupComponent implements OnInit {
                 status: assessors.length || reviewers.length ? 'Ready' : 'Needs setup',
                 assessors,
                 reviewers,
+                projectId: row.projectId,
+                projectName: row.projectName,
+                accountName: row.accountName,
               };
             });
-            // Assessees are project-wide: any assessment's list is the whole set.
-            const withAssessees = teams.find((t) => t && t.assessees.length);
-            if (withAssessees) {
-              this.assessees = withAssessees.assessees.map((a) => ({ empId: a.empId, name: a.empName, title: '' }));
-            }
           });
       });
   }
 
-  removeTeamMember(dom: DomainTeam, role: 'Assessor' | 'Reviewer', member: ItOpsTeamMember): void {
-    const call = role === 'Assessor' ? this.api.removeAssessor(member.id) : this.api.removeReviewer(member.id);
-    call.subscribe({
+  /**
+   * Replays the removal against every underlying per-assessment row the person
+   * holds for this domain (one per project). Patches local state directly
+   * rather than re-fetching everything from the server - "Refresh assessment
+   * team" is the explicit, deliberate way to resync, not an automatic side
+   * effect of every single click.
+   */
+  removeTeamMember(group: DomainGroup, role: 'Assessor' | 'Reviewer', member: GroupedTeamMember): void {
+    const calls = member.memberIds.map((id) => (role === 'Assessor' ? this.api.removeAssessor(id) : this.api.removeReviewer(id)));
+    forkJoin(calls).subscribe({
       next: () => {
-        this.toast.success(`${role} removed.`, `${member.empName} removed from ${dom.name}.`);
-        this.loadDomainTeams();
+        this.toast.success(`${role} removed.`, `${member.empName} removed from ${group.name}.`);
+        for (const entry of this.domainTeams) {
+          if (entry.domainId !== group.domainId) continue;
+          const list = role === 'Assessor' ? entry.assessors : entry.reviewers;
+          const idx = list.findIndex((m) => m.empId === member.empId);
+          if (idx !== -1) list.splice(idx, 1);
+        }
       },
       error: (err) => this.toast.error(`Could not remove the ${role.toLowerCase()}.`, this.errorText(err, 'Please try again.')),
     });
   }
 
-  /** Promote an already-assigned member to primary (re-posting the same person with isPrimary demotes the incumbent server-side). */
-  makePrimaryMember(dom: DomainTeam, role: 'Assessor' | 'Reviewer', member: ItOpsTeamMember): void {
-    const call =
-      role === 'Assessor'
-        ? this.api.addAssessor(dom.assessmentId, member.empId, true)
-        : this.api.addReviewer(dom.assessmentId, member.empId, true);
-    call.subscribe({
+  /** Promote an already-assigned member to primary, replayed across every project's copy of this domain (re-posting the same person with isPrimary demotes the incumbent server-side, per assessment). */
+  makePrimaryMember(group: DomainGroup, role: 'Assessor' | 'Reviewer', member: GroupedTeamMember): void {
+    const calls = group.assessmentIds.map((assessmentId) =>
+      role === 'Assessor' ? this.api.addAssessor(assessmentId, member.empId, true) : this.api.addReviewer(assessmentId, member.empId, true),
+    );
+    forkJoin(calls).subscribe({
       next: () => {
         this.toast.success(`${member.empName} is now the primary ${role.toLowerCase()}.`);
-        this.loadDomainTeams();
+        for (const entry of this.domainTeams) {
+          if (entry.domainId !== group.domainId) continue;
+          for (const m of role === 'Assessor' ? entry.assessors : entry.reviewers) m.isPrimary = m.empId === member.empId;
+        }
       },
       error: (err) => this.toast.error('Could not set the primary.', this.errorText(err, 'Please try again.')),
     });
@@ -2493,20 +2851,21 @@ export class AdminSetupComponent implements OnInit {
 
   // ---- People picker ----
 
-  openPicker(role: 'Assessor' | 'Reviewer', dom: DomainTeam): void {
+  openPicker(role: 'Assessor' | 'Reviewer', group: DomainGroup): void {
     this.pickerRole = role;
-    this.pickerDomain = dom.name;
-    this.pickerAssessmentId = dom.assessmentId;
+    this.pickerDomain = group.name;
+    this.pickerDomainId = group.domainId;
+    this.pickerAssessmentIds = group.assessmentIds;
     this.pickerSearch = '';
     this.pickerCandidates = [];
-    const current = role === 'Assessor' ? dom.assessors : dom.reviewers;
+    const current = role === 'Assessor' ? group.assessors : group.reviewers;
     this.pickerPrimaryEmpId = current.find((m) => m.isPrimary)?.empId ?? null;
 
     // One-click shortcut for the domain's configured default owner - the same
     // person SeedITOpsDefaultOwners would have seeded when the assessment was
     // first created. Suppressed when the domain has no default for this role or
     // that person is already on the team, where the chip would only be noise.
-    const domain = this.domains.find((d) => d.domainId === dom.domainId);
+    const domain = this.domains.find((d) => d.domainId === group.domainId);
     const defaultId = role === 'Assessor' ? domain?.defaultAssessorId : domain?.defaultReviewerId;
     const defaultName = role === 'Assessor' ? domain?.defaultAssessorName : domain?.defaultReviewerName;
     const alreadyOnTeam = !!defaultId && current.some((m) => m.empId === defaultId);
@@ -2635,23 +2994,65 @@ export class AdminSetupComponent implements OnInit {
     this.api.searchEmployees(this.pickerSearch).subscribe((rows) => (this.pickerCandidates = rows));
   }
 
-  /** Adds the picked person to the assessment straight away, then refreshes the accordion. */
+  /**
+   * Adds the picked person to every project's copy of this domain at once -
+   * that's the whole point of assigning by domain rather than by project.
+   * Patches local state from each call's real response (real row ids, so a
+   * later remove/promote works) instead of a full reload.
+   */
   addPickedMember(candidate: ItOpsEmployee, isPrimary: boolean): void {
-    if (!this.pickerAssessmentId) return;
+    if (!this.pickerAssessmentIds.length) return;
     this.savingPicker = true;
-    const call =
+    const domainId = this.pickerDomainId;
+    const calls = this.pickerAssessmentIds.map((assessmentId) =>
       this.pickerRole === 'Assessor'
-        ? this.api.addAssessor(this.pickerAssessmentId, candidate.empId, isPrimary)
-        : this.api.addReviewer(this.pickerAssessmentId, candidate.empId, isPrimary);
+        ? this.api.addAssessor(assessmentId, candidate.empId, isPrimary)
+        : this.api.addReviewer(assessmentId, candidate.empId, isPrimary),
+    );
 
-    call.pipe(finalize(() => (this.savingPicker = false))).subscribe({
-      next: () => {
-        this.toast.success(`${this.pickerRole} added.`, `${candidate.name} on ${this.pickerDomain}.`);
-        this.closePicker();
-        this.loadDomainTeams();
-      },
+    forkJoin(calls)
+      .pipe(finalize(() => (this.savingPicker = false)))
+      .subscribe({
+        next: (created) => {
+          this.toast.success(`${this.pickerRole} added.`, `${candidate.name} on ${this.pickerDomain}.`);
+          for (const entry of this.domainTeams) {
+            if (entry.domainId !== domainId) continue;
+            const member = created.find((c) => c.assessmentId === entry.assessmentId);
+            if (!member) continue;
+            const list = this.pickerRole === 'Assessor' ? entry.assessors : entry.reviewers;
+            if (isPrimary) for (const m of list) m.isPrimary = false;
+            const existingIdx = list.findIndex((m) => m.empId === member.empId);
+            if (existingIdx !== -1) list[existingIdx] = member;
+            else list.push(member);
+          }
+          this.closePicker();
+        },
       error: (err) => this.toast.error(`Could not add the ${this.pickerRole.toLowerCase()}.`, this.errorText(err, 'Please try again.')),
     });
+  }
+
+  /**
+   * groupedDomainTeams/filteredDomainGroups rebuild fresh DomainGroup objects
+   * on every change-detection run, so *ngFor's default object-identity check
+   * would treat every group as brand new on every click - destroying and
+   * recreating each <details> element, which resets native open/closed state
+   * back to just the first one. trackBy keyed on the stable domainId keeps the
+   * same DOM node (and its toggle state) across re-renders.
+   */
+  trackByDomainId(_index: number, group: DomainGroup): number {
+    return group.domainId;
+  }
+
+  /**
+   * Same reasoning as trackByDomainId, one level deeper: group.assessors/
+   * reviewers are rebuilt as fresh objects on every groupedDomainTeams
+   * evaluation, so without trackBy Angular destroys and recreates every chip
+   * (including its Remove/Make primary buttons) on every change-detection
+   * cycle - including the one triggered by mousedown itself, which can
+   * detach the button before the browser ever dispatches its click event.
+   */
+  trackByTeamMemberEmpId(_index: number, member: GroupedTeamMember): string {
+    return member.empId;
   }
 
   initials(name: string): string {

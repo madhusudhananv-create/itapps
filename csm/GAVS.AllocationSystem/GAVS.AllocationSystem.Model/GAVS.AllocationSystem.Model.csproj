@@ -123,6 +123,7 @@
     <Compile Include="CSP\SP\IdeasDetailsForViewDetails.cs" />
     <Compile Include="CSP\SP\IdeaStatusCount.cs" />
     <Compile Include="CSP\SP\INNOVATIONS_MATRIX.cs" />
+    <Compile Include="CSP\SP\ITOpsAdminSetupReads.cs" />
     <Compile Include="CSP\SP\INSIGHTS_FILTER.cs" />
     <Compile Include="CSP\SP\IssuesForCustomer.cs" />
     <Compile Include="CSP\SP\CI_TRACKER.cs" />

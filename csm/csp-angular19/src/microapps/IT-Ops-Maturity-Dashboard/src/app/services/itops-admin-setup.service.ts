@@ -194,6 +194,7 @@ export interface ItOpsDomainProjectMapping {
   custId: string | null;
   accountName: string | null;
   domains: ItOpsMappedDomain[];
+  assessees: { empId: string; name: string }[];
 }
 
 /** What BulkAddITOpsDomainProjectMappings reports back about one bulk-add. */
@@ -201,6 +202,20 @@ export interface ItOpsBulkMappingResult {
   added: number;
   reactivated: number;
   unchanged: number;
+}
+
+/** One row of the append-only Domain-Project Mapping change log. */
+export interface ItOpsMappingAuditRow {
+  projectId: string;
+  projectName: string | null;
+  accountName: string | null;
+  domainId: number;
+  domainName: string | null;
+  action: string;
+  reason: string | null;
+  changedBy: string;
+  changedByName: string | null;
+  changedDate: string | null;
 }
 
 export interface ItOpsCycleAssessment {
@@ -579,10 +594,10 @@ export class ItOpsAdminSetupService {
   }
 
   /** Replace semantics: domainIds is the complete desired set for the project; the backend diffs add/remove. */
-  saveDomainProjectMapping(projectId: string, domainIds: number[]): Observable<unknown> {
+  saveDomainProjectMapping(projectId: string, domainIds: number[], reason?: string): Observable<unknown> {
     return this.http.post(
       `${this.apiurl}SaveITOpsDomainProjectMapping`,
-      { ProjectId: projectId, DomainIds: domainIds },
+      { ProjectId: projectId, DomainIds: domainIds, Reason: reason || null },
       { headers: this.getHeaders() },
     );
   }
@@ -596,43 +611,44 @@ export class ItOpsAdminSetupService {
    * that already exist are reactivated rather than duplicated, so it is
    * idempotent. Returns { added, reactivated, unchanged } counts.
    */
-  bulkAddDomainProjectMappings(projectIds: string[], domainIds: number[]): Observable<ItOpsBulkMappingResult> {
+  bulkAddDomainProjectMappings(projectIds: string[], domainIds: number[], reason?: string): Observable<ItOpsBulkMappingResult> {
     return this.http.post<ItOpsBulkMappingResult>(
       `${this.apiurl}BulkAddITOpsDomainProjectMappings`,
-      { ProjectIds: projectIds, DomainIds: domainIds },
+      { ProjectIds: projectIds, DomainIds: domainIds, Reason: reason || null },
       { headers: this.getHeaders() },
     );
   }
 
-  removeDomainProjectMapping(projectId: string, domainId: number): Observable<unknown> {
+  removeDomainProjectMapping(projectId: string, domainId: number, reason?: string): Observable<unknown> {
     return this.http.post(
       `${this.apiurl}RemoveITOpsDomainProjectMapping`,
-      { ProjectId: projectId, DomainId: domainId },
+      { ProjectId: projectId, DomainId: domainId, Reason: reason || null },
       { headers: this.getHeaders() },
     );
+  }
+
+  /** Full Domain-Project Mapping change history, newest first; optionally scoped to one project. */
+  getDomainProjectMappingHistory(projectId?: string): Observable<ItOpsMappingAuditRow[]> {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return this.http.get<ItOpsMappingAuditRow[]>(`${this.apiurl}GetITOpsDomainProjectMappingHistory${qs}`, {
+      headers: this.getHeaders(),
+    });
   }
 
   // ---- Step 4: Configure Assessment ----
 
   /**
-   * Creates/ensures one assessment per (project x domain) for this cycle across
-   * EVERY selected project, and applies the SAME assessee set to every one of
-   * them - assessees are project-wide, not per-domain, and one bulk action now
-   * spans several projects. Returns the refreshed table rows for all of them.
-   *
-   * The backend still validates the domain-project mapping per project, so only
-   * domains mapped to every selected project may be sent (the picker offers the
-   * intersection for exactly this reason).
+   * Creates/ensures one assessment per (project x domain) for this cycle,
+   * across every selected project. Domains and assessees are no longer picked
+   * here - each project reads its own standing config from Configure Scope
+   * (domain mapping + project assessees), so a project with nothing mapped
+   * yet simply produces nothing rather than being asked about it twice.
+   * Returns the refreshed table rows for all selected projects.
    */
-  createAssessmentsForProjects(
-    cycleId: number,
-    projectIds: string[],
-    domainIds: number[],
-    assesseeEmpIds: string[],
-  ): Observable<ItOpsCycleAssessment[]> {
+  createAssessmentsForProjects(cycleId: number, projectIds: string[]): Observable<ItOpsCycleAssessment[]> {
     return this.http.post<ItOpsCycleAssessment[]>(
       `${this.apiurl}CreateITOpsAssessmentsForProject`,
-      { AssessmentMasterId: cycleId, ProjectIds: projectIds, DomainIds: domainIds, AssesseeEmpIds: assesseeEmpIds },
+      { AssessmentMasterId: cycleId, ProjectIds: projectIds },
       { headers: this.getHeaders() },
     );
   }
@@ -640,6 +656,13 @@ export class ItOpsAdminSetupService {
   getAssessmentsForCycle(cycleId: number, projectId?: string): Observable<ItOpsCycleAssessment[]> {
     const qs = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
     return this.http.get<ItOpsCycleAssessment[]>(`${this.apiurl}GetITOpsAssessmentsForCycle?cycleId=${cycleId}${qs}`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  /** Only a Not Started assessment can be removed - the backend rejects anything with review/scoring history. */
+  removeAssessment(assessmentId: number): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RemoveITOpsAssessment?assessmentId=${assessmentId}`, null, {
       headers: this.getHeaders(),
     });
   }
@@ -744,6 +767,32 @@ export class ItOpsAdminSetupService {
         ),
         catchError(() => of([])),
       );
+  }
+
+  /** Standing assessee list for one project, set in Configure Scope's "New mapping" modal rather than re-picked every cycle. */
+  getProjectAssessees(projectId: string): Observable<ItOpsEmployee[]> {
+    if (!projectId) return of([]);
+    return this.http
+      .get<any[]>(`${this.apiurl}GetITOpsProjectAssessees?projectId=${encodeURIComponent(projectId)}`, {
+        headers: this.getHeaders(),
+      })
+      .pipe(
+        map((rows) =>
+          (rows ?? [])
+            .map((row) => ({ empId: readEmpId(row) ?? '', name: readFirstName(row) ?? '', title: readRole(row) ?? '' }))
+            .filter((e) => e.empId && e.name),
+        ),
+        catchError(() => of([])),
+      );
+  }
+
+  /** Replace semantics: empIds is the complete desired assessee set for the project. */
+  saveProjectAssessees(projectId: string, empIds: string[]): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}SaveITOpsProjectAssessees`,
+      { ProjectId: projectId, EmpIds: empIds },
+      { headers: this.getHeaders() },
+    );
   }
 
   /**

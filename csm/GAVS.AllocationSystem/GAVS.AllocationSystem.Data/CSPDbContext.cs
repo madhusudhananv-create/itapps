@@ -255,6 +255,8 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<ITOPS_ROLE>().ToTable("dbo.ITOPS_ROLE");
             modelBuilder.Entity<ITOPS_ROLE_ASSIGNMENT>().ToTable("dbo.ITOPS_ROLE_ASSIGNMENT");
             modelBuilder.Entity<ITOPS_DOMAIN_PROJECT_MAP>().ToTable("dbo.ITOPS_DOMAIN_PROJECT_MAP");
+            modelBuilder.Entity<ITOPS_DOMAIN_PROJECT_MAP_AUDIT>().ToTable("dbo.ITOPS_DOMAIN_PROJECT_MAP_AUDIT");
+            modelBuilder.Entity<ITOPS_PROJECT_ASSESSEE>().ToTable("dbo.ITOPS_PROJECT_ASSESSEE");
             modelBuilder.Entity<ITOPS_ASSESSMENT_MASTER>().ToTable("dbo.ITOPS_ASSESSMENT_MASTER");
             modelBuilder.Entity<ITOPS_ASSESSMENT>().ToTable("dbo.ITOPS_ASSESSMENT");
             modelBuilder.Entity<ITOPS_ASSESSMENT_ASSESSOR>().ToTable("dbo.ITOPS_ASSESSMENT_ASSESSOR");
@@ -491,6 +493,8 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<ITOPS_ROLE> ITOPS_ROLE { get; set; }
         public virtual DbSet<ITOPS_ROLE_ASSIGNMENT> ITOPS_ROLE_ASSIGNMENT { get; set; }
         public virtual DbSet<ITOPS_DOMAIN_PROJECT_MAP> ITOPS_DOMAIN_PROJECT_MAP { get; set; }
+        public virtual DbSet<ITOPS_DOMAIN_PROJECT_MAP_AUDIT> ITOPS_DOMAIN_PROJECT_MAP_AUDIT { get; set; }
+        public virtual DbSet<ITOPS_PROJECT_ASSESSEE> ITOPS_PROJECT_ASSESSEE { get; set; }
         public virtual DbSet<ITOPS_ASSESSMENT_MASTER> ITOPS_ASSESSMENT_MASTER { get; set; }
         public virtual DbSet<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get; set; }
         public virtual DbSet<ITOPS_ASSESSMENT_ASSESSOR> ITOPS_ASSESSMENT_ASSESSOR { get; set; }

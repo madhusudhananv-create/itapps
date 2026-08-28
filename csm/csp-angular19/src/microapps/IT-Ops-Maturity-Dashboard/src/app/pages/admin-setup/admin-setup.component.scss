@@ -1,25 +1,29 @@
 :host {
-  --page-plane: #f9f9f7;
-  --surface: #fcfcfb;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --border: rgba(11, 11, 11, 0.1);
-  --accent: #2a78d6;
-  --accent-track: #eaf2fc;
-  --accent-glow: rgba(42, 120, 214, 0.16);
+  /* ---- Material 3 – Accessible Theme tokens, mapped onto this component's existing variable names ---- */
+  --page-plane: rgb(246,251,254);      /* md-sys-color-surface-container-low */
+  --surface: rgb(255,255,255);         /* md-sys-color-surface */
+  --text-primary: rgb(1,31,45);        /* md-sys-color-on-surface */
+  --text-secondary: rgb(50,47,53);     /* md-sys-color-on-surface-variant */
+  --text-muted: rgb(121,118,125);      /* md-sys-color-outline */
+  --gridline: rgb(196,202,208);        /* md-sys-color-outline-variant */
+  --border: rgb(196,202,208);          /* md-sys-color-outline-variant */
+  --accent: rgb(0,114,178);            /* md-sys-color-primary (accessible blue) */
+  --accent-track: rgb(204,226,244);    /* md-sys-color-primary-container */
+  --accent-glow: rgba(0,114,178,0.16);
 
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #d03b3b;
-  --status-muted: #c3c2b7;
+  /* Colorblind-safe semantic substitutes (no green/red in this theme) */
+  --status-good: rgb(17,102,92);       /* md-sys-color-secondary (teal) – success/positive */
+  --status-warning: rgb(103,62,85);    /* md-sys-color-tertiary (mauve) – caution/retired */
+  --status-serious: rgb(213,94,0);     /* md-sys-color-error (orange) */
+  --status-critical: rgb(213,94,0);    /* md-sys-color-error (orange) */
+  --status-muted: rgb(196,202,208);    /* md-sys-color-outline-variant */
+
+  --font-brand: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   color-scheme: light;
   display: block;
   min-height: 100%;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-brand);
   color: var(--text-primary);
   background: var(--page-plane);
   font-size: 13.5px;
@@ -28,31 +32,46 @@
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) :host {
     color-scheme: dark;
-    --page-plane: #0d0d0d;
-    --surface: #1a1a19;
-    --text-primary: #ffffff;
-    --text-secondary: #b9b7b0;
-    --text-muted: #837f78;
-    --gridline: #2c2b28;
-    --border: rgba(255, 255, 255, 0.12);
-    --accent: #3987e5;
-    --accent-track: #17293f;
-    --accent-glow: rgba(57, 135, 229, 0.22);
+    /* Derived dark surfaces – the Accessible Theme spec ships light tokens only; these
+       extrapolate from its inverse-surface / inverse-primary roles. */
+    --page-plane: rgb(9,23,32);
+    --surface: rgb(15,33,44);
+    --text-primary: rgb(240,247,250);
+    --text-secondary: rgb(196,206,212);
+    --text-muted: rgb(150,162,170);
+    --gridline: rgba(255,255,255,0.14);
+    --border: rgba(255,255,255,0.14);
+    --accent: rgb(153,187,222);
+    --accent-track: rgba(153,187,222,0.18);
+    --accent-glow: rgba(153,187,222,0.25);
+    --status-good: rgb(94,196,182);
+    --status-warning: rgb(196,150,178);
+    --status-serious: rgb(255,158,102);
+    --status-critical: rgb(255,158,102);
+    --status-muted: rgba(255,255,255,0.24);
+
   }
 }
 
 :root[data-theme="dark"] :host {
   color-scheme: dark;
-  --page-plane: #0d0d0d;
-  --surface: #1a1a19;
-  --text-primary: #ffffff;
-  --text-secondary: #b9b7b0;
-  --text-muted: #837f78;
-  --gridline: #2c2b28;
-  --border: rgba(255, 255, 255, 0.12);
-  --accent: #3987e5;
-  --accent-track: #17293f;
-  --accent-glow: rgba(57, 135, 229, 0.22);
+    /* Derived dark surfaces – the Accessible Theme spec ships light tokens only; these
+       extrapolate from its inverse-surface / inverse-primary roles. */
+    --page-plane: rgb(9,23,32);
+    --surface: rgb(15,33,44);
+    --text-primary: rgb(240,247,250);
+    --text-secondary: rgb(196,206,212);
+    --text-muted: rgb(150,162,170);
+    --gridline: rgba(255,255,255,0.14);
+    --border: rgba(255,255,255,0.14);
+    --accent: rgb(153,187,222);
+    --accent-track: rgba(153,187,222,0.18);
+    --accent-glow: rgba(153,187,222,0.25);
+    --status-good: rgb(94,196,182);
+    --status-warning: rgb(196,150,178);
+    --status-serious: rgb(255,158,102);
+    --status-critical: rgb(255,158,102);
+    --status-muted: rgba(255,255,255,0.24);
 }
 
 * { box-sizing: border-box; }
@@ -77,7 +96,7 @@ h1, h2, h3 { margin: 0; }
 
 .maturity-page { max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; }
 .page-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 6px; }
-.icon-badge { width: 34px; height: 34px; border-radius: 8px; flex: none; border: 1px solid var(--border); background: var(--accent-track); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+.icon-badge { width: 34px; height: 34px; border-radius: 12px; flex: none; border: 1px solid var(--border); background: var(--accent-track); display: flex; align-items: center; justify-content: center; color: var(--accent); }
 .page-head h1 { font-size: 19px; font-weight: 650; }
 .page-sub { color: var(--text-muted); font-size: 13px; margin-top: 3px; max-width: 640px; }
 .page-actions { margin-left: auto; }
@@ -85,14 +104,26 @@ h1, h2, h3 { margin: 0; }
 .search-box { display: flex; align-items: center; gap: 8px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text-muted); margin-bottom: 8px; }
 .search-box input { border: none; background: none; outline: none; color: var(--text-primary); font: inherit; width: 100%; }
 
-.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04), 0 6px 18px rgba(11, 11, 11, .05); overflow-x: auto; margin-top: 18px; }
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04), 0 6px 18px rgba(11, 11, 11, .05); overflow-x: auto; margin-top: 18px; }
 table { width: 100%; border-collapse: collapse; min-width: 640px; }
 thead th { text-align: left; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; color: var(--text-muted); font-weight: 650; padding: 12px 16px; border-bottom: 1px solid var(--gridline); }
-tbody td { padding: 13px 16px; border-bottom: 1px solid var(--gridline); vertical-align: middle; }
+/* top, not middle: a cell that wraps to a second line (a long chip-stack of
+   mapped domains, e.g.) otherwise vertically centers against its taller
+   neighbour, so the row's action buttons visibly drift down mid-row instead
+   of lining up with the row's first line of content. */
+tbody td { padding: 13px 16px; border-bottom: 1px solid var(--gridline); vertical-align: top; }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
 .col-num { text-align: right; font-variant-numeric: tabular-nums; }
-.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+/* A flex `display` set directly on a <td> drops its table-cell box in some
+   layout paths, which breaks the row's height/border synchronization with
+   its sibling cells - visible as a divider line that doesn't sit level with
+   the rest of the row once any cell in that row wraps to a second line. The
+   flex layout lives on this inner wrapper instead; the <td> itself stays a
+   plain table-cell so row height stays in sync. */
+.row-actions { text-align: right; }
+.row-actions-group { display: flex; gap: 6px; justify-content: flex-end; align-items: flex-start; flex-wrap: wrap; }
+.row-actions-group.row-actions-icons { flex-wrap: nowrap; white-space: nowrap; }
 
 /* ---- Step 1: one table row per employee, one sub-line per grant ---- */
 .emp-cell { vertical-align: top; width: 230px; }
@@ -122,7 +153,6 @@ tbody tr:hover td { background: color-mix(in srgb, var(--accent) 7%, transparent
    form-shaped modals this screen otherwise uses. */
 .modal.modal-wide { max-width: 760px; }
 .modal-wide .table-wrap { margin-top: 8px; }
-.modal-wide td { vertical-align: top; }
 .grant-line.audit-line { padding: 5px 0 3px; border-bottom: none; gap: 6px; }
 
 /* ---- Effective access preview ---- */
@@ -156,11 +186,16 @@ tbody tr:hover td { background: color-mix(in srgb, var(--accent) 7%, transparent
 .role-scope-body .modal-hint { margin: 0; }
 .role-scope-body select { margin: 0; }
 
-.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 650; }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 9999px; font-size: 11.5px; font-weight: 500; letter-spacing: 0.2px; }
 .pill-good { background: color-mix(in srgb, var(--status-good) 14%, transparent); color: var(--status-good); }
 .pill-muted { background: color-mix(in srgb, var(--status-muted) 20%, transparent); color: var(--text-secondary); }
 .pill-accent { background: var(--accent-track); color: var(--accent); }
 .pill-warning { background: color-mix(in srgb, var(--status-warning) 20%, transparent); color: #8a5a06; }
+
+/* Per-cell warning when a mapped project is missing domains or assessees -
+   both are required before Configure Assessment can create anything for it. */
+.mapping-warning { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; font-size: 11.5px; color: var(--status-warning); max-width: 260px; }
+.mapping-warning svg { flex: none; margin-top: 1px; }
 .pill-critical { background: color-mix(in srgb, var(--status-critical) 14%, transparent); color: var(--status-critical); }
 h1 .pill { vertical-align: middle; margin-left: 6px; }
 
@@ -169,18 +204,32 @@ h1 .pill { vertical-align: middle; margin-left: 6px; }
 
 .chip-stack { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .chip-stack.assessee-chips { margin-bottom: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px 3px 3px; font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 9999px; padding: 3px 9px 3px 3px; font-size: 12px; }
 .chip .avatar { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .chip.primary { border-color: var(--accent); background: var(--accent-track); }
 .chip .primary-tag { color: var(--accent); font-weight: 700; font-size: 10px; text-transform: uppercase; }
 
-.btn-primary, .btn-secondary, .btn-ghost { font: inherit; font-size: 13px; font-weight: 650; padding: 7px 16px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary, .btn-secondary, .btn-ghost { font: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0.1px; padding: 9px 20px; border-radius: 9999px; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; transition: background-color 150ms cubic-bezier(0.2,0,0,1); }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { filter: brightness(1.08); }
 .btn-secondary { background: var(--surface); color: var(--text-secondary); border-color: var(--border); }
 .btn-secondary:hover { border-color: var(--status-critical); color: var(--status-critical); }
-.btn-ghost { background: none; color: var(--text-secondary); border-color: var(--border); padding: 5px 10px; font-size: 12px; }
+.btn-ghost { background: none; color: var(--text-secondary); border-color: var(--border); padding: 6px 14px; font-size: 12.5px; border-radius: 9999px; }
 .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Icon-only sibling of .btn-ghost, for a row-actions cell with several actions
+   that would otherwise wrap onto a second line as labelled buttons (History /
+   Copy to… / Edit all fitting on one row instead). Tooltip via title, real
+   label via aria-label - the icon alone isn't enough for a screen reader. */
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 30px; height: 30px; padding: 0; border-radius: 50%; cursor: pointer;
+  background: none; color: var(--text-secondary); border: 1px solid var(--border);
+}
+.btn-icon svg { pointer-events: none; }
+.btn-icon:hover { color: var(--accent); border-color: var(--accent); }
+.btn-icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .step-actions { display: flex; margin-top: 32px; gap: 10px; }
@@ -198,7 +247,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
    rename-domain, map-domains and people-picker modals at once - no per-modal
    markup wrapper needed. Bottom padding lives on the sticky footer so it stays
    flush against the modal's lower edge while content scrolls under it. */
-.modal { background: var(--surface); border-radius: 12px; padding: 24px 24px 0; width: 100%; max-width: 460px; box-shadow: 0 12px 40px rgba(0, 0, 0, .25); max-height: 90vh; overflow-y: auto; }
+.modal { background: var(--surface); border-radius: 28px; padding: 24px 24px 0; width: 100%; max-width: 460px; box-shadow: 0 12px 40px rgba(0, 0, 0, .25); max-height: 90vh; overflow-y: auto; }
 .modal h3 { font-size: 16px; margin-bottom: 4px; }
 .modal-copy { color: var(--text-muted); font-size: 12.5px; margin: 4px 0 18px; }
 .modal-label { display: block; font-weight: 650; font-size: 12.5px; margin: 14px 0 6px; }
@@ -210,11 +259,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .modal-actions {
   display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;
   position: sticky; bottom: 0; background: var(--surface); padding: 14px 0 24px; border-top: 1px solid var(--gridline);
-  /* app-searchable-select's open dropdown (.ss-list) is z-index: 60 - without
-     an explicit z-index here this sticky footer has an implicit z-index of
-     auto/0, so the dropdown painted OVER it whenever a combobox inside the
-     modal was open, covering Cancel/Save entirely even though they were still
-     in the DOM and clickable underneath. Keep this above 60. */
+  /* app-searchable-select's open dropdown (.ss-list) is z-index: 200 - well
+     above this sticky footer, since an open dropdown is the active control on
+     screen and must never render underneath or interleaved with anything else
+     while it's open. */
   z-index: 65;
 }
 
@@ -255,17 +303,36 @@ label.picker-row {
 .section-head .count { color: var(--text-muted); font-size: 12px; }
 .section-head .btn-primary, .section-head .btn-ghost { margin-left: auto; }
 
-.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04); padding: 22px 24px; max-width: 620px; margin-top: 22px; }
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04); padding: 22px 24px; max-width: 620px; margin-top: 22px; }
+
+/* Step 4: puts the wide empty space beside the 620px form-card to use as a
+   sticky live-selection recap, instead of the form just floating alone on
+   the left of a near-1200px page. */
+.step4-grid { display: grid; grid-template-columns: minmax(0, 620px) minmax(260px, 380px); gap: 20px; align-items: start; }
+@media (max-width: 980px) { .step4-grid { grid-template-columns: 1fr; } }
+.assessment-summary { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04); padding: 20px 22px; margin-top: 22px; position: sticky; top: 20px; }
+.assessment-summary h3 { font-size: 13px; font-weight: 650; margin-bottom: 14px; }
+.assessment-summary .create-summary { margin-top: 18px; }
+.summary-row + .summary-row { margin-top: 16px; }
+.summary-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); font-weight: 650; margin-bottom: 6px; }
+.summary-value { font-size: 13px; color: var(--text-primary); }
+.summary-value.muted { color: var(--text-muted); font-style: italic; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
-.form-card select, .form-card input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit; background: var(--page-plane); color: var(--text-primary); }
+.form-card select, .form-card input, .field-row select, .field-row input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit; background: var(--page-plane); color: var(--text-primary); }
+.form-card select:focus, .field-row select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+/* Bare field pair with no card wrapper - used where a single-field form-card
+   would just be padded empty space around one or two selects. */
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 620px; margin-top: 18px; }
+.field-row select:disabled { opacity: .6; cursor: not-allowed; }
 .form-card select:focus, .form-card input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .cycle-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
-.cycle-toggle button { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-secondary); font: inherit; font-weight: 650; cursor: pointer; }
+.cycle-toggle button { flex: 1; padding: 9px; border-radius: 9999px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-secondary); font: inherit; font-weight: 650; cursor: pointer; }
 .cycle-toggle button.active { background: var(--accent-track); border-color: var(--accent); color: var(--accent); }
 
 /* Step 2 cycle completion dashboard */
 .cycle-progress-list { display: flex; flex-direction: column; gap: 10px; max-width: 620px; }
-.cycle-progress-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; cursor: pointer; }
+.cycle-progress-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; cursor: pointer; }
 .cycle-progress-card:hover { border-color: var(--accent); }
 .cycle-progress-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .cycle-progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -280,13 +347,13 @@ label.picker-row {
 .create-summary svg { flex: none; margin-top: 2px; color: var(--accent); }
 .create-summary strong { color: var(--text-primary); }
 
-.subtabs { display: flex; gap: 4px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 9px; padding: 4px; width: fit-content; margin: 18px 0; }
-.subtab-btn { border: none; background: none; font: inherit; font-weight: 650; font-size: 12.5px; padding: 7px 14px; border-radius: 6px; color: var(--text-muted); cursor: pointer; }
+.subtabs { display: flex; gap: 4px; background: var(--page-plane); border: 1px solid var(--border); border-radius: 9999px; padding: 4px; width: fit-content; margin: 18px 0; }
+.subtab-btn { border: none; background: none; font: inherit; font-weight: 500; font-size: 12.5px; padding: 7px 16px; border-radius: 9999px; color: var(--text-muted); cursor: pointer; }
 .subtab-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(11, 11, 11, .08); }
 
 /* ---- per-domain team accordion ---- */
 .domain-accordion { display: flex; flex-direction: column; gap: 10px; }
-.domain-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04); overflow: hidden; }
+.domain-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(11, 11, 11, .04); overflow: hidden; }
 .domain-summary { display: flex; align-items: center; gap: 14px; padding: 15px 18px; cursor: pointer; list-style: none; user-select: none; }
 .domain-summary::-webkit-details-marker { display: none; }
 .domain-summary .chevron { transition: transform .18s ease; color: var(--text-muted); flex: none; }

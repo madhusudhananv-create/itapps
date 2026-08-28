@@ -1,5 +1,6 @@
 using AttributeRouting.Web.Mvc;
 using GAVS.AllocationSystem.Model.CSP;
+using GAVS.AllocationSystem.Model.CSP.SP;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -205,6 +206,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public string DomainName { get; set; }
     }
 
+    public class ITOPS_ProjectAssesseeRow
+    {
+        public string EmpId { get; set; }
+        public string Name { get; set; }
+    }
+
     public class ITOPS_DomainProjectMappingRow
     {
         public string ProjectId { get; set; }
@@ -212,6 +219,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public string CustId { get; set; }
         public string AccountName { get; set; }
         public List<ITOPS_MappedDomainRow> Domains { get; set; }
+        public List<ITOPS_ProjectAssesseeRow> Assessees { get; set; }
     }
 
     public class ITOPS_SaveDomainProjectMappingRequest
@@ -220,6 +228,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // The FULL desired set of active domains for this project - anything
         // active but absent here is deactivated (replace semantics, not append).
         public List<int> DomainIds { get; set; }
+        // Optional free-text reason, logged to ITOPS_DOMAIN_PROJECT_MAP_AUDIT
+        // against every domain actually added/reactivated/removed by this call.
+        public string Reason { get; set; }
     }
 
     // Additive bulk sibling of ITOPS_SaveDomainProjectMappingRequest: every
@@ -230,12 +241,36 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     {
         public List<string> ProjectIds { get; set; }
         public List<int> DomainIds { get; set; }
+        public string Reason { get; set; }
     }
 
     public class ITOPS_RemoveDomainProjectMappingRequest
     {
         public string ProjectId { get; set; }
         public int DomainId { get; set; }
+        public string Reason { get; set; }
+    }
+
+    public class ITOPS_SaveProjectAssesseesRequest
+    {
+        public string ProjectId { get; set; }
+        // The FULL desired assessee set for this project - same replace
+        // semantics as ITOPS_SaveDomainProjectMappingRequest.DomainIds.
+        public List<string> EmpIds { get; set; }
+    }
+
+    public class ITOPS_DomainProjectMapAuditRow
+    {
+        public string ProjectId { get; set; }
+        public string ProjectName { get; set; }
+        public string AccountName { get; set; }
+        public int DomainId { get; set; }
+        public string DomainName { get; set; }
+        public string Action { get; set; }
+        public string Reason { get; set; }
+        public string ChangedBy { get; set; }
+        public string ChangedByName { get; set; }
+        public DateTime? ChangedDate { get; set; }
     }
 
     public class ITOPS_CreateAssessmentsRequest
@@ -248,16 +283,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // Angular admin screen now sends ProjectIds; when both are absent the
         // request is rejected.
         public string ProjectId { get; set; }
-        // One bulk-create action may cover SEVERAL projects. Every selected
-        // domain is applied to every selected project (the picker only offers
-        // domains mapped to ALL of them), and the same assessee team spans them.
+        // One bulk-create action may cover several projects at once. Domains and
+        // assessees are no longer picked here - they are read straight from each
+        // project's own standing configuration (ITOPS_DOMAIN_PROJECT_MAP and
+        // ITOPS_PROJECT_ASSESSEE, both set up in Configure Scope), so a project
+        // with no domains mapped and no assessees picked yet simply creates
+        // nothing rather than being asked about it twice.
         public List<string> ProjectIds { get; set; }
-        public List<int> DomainIds { get; set; }
-        // Assessees are PROJECT-wide, not per-domain (deliberate design decision
-        // from the mockup review): the same set is applied identically to every
-        // domain's assessment row created/ensured by this call - and, with
-        // multi-project selection, to every selected project's rows too.
-        public List<string> AssesseeEmpIds { get; set; }
     }
 
     public class ITOPS_CycleAssessmentRow
@@ -734,8 +766,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
             if (!ids.Any()) return Ok(new List<ITOPS_EmployeeRosterRow>());
 
+            // Same "currently allocated" filter the rest of this Allocation System
+            // uses everywhere else (AllSysController.cs, ~10 call sites) - BILL_FLG
+            // matters here: without it this pulled in every historical resource row
+            // that merely hasn't reached its END_DATE yet, not just people actually
+            // billed/staffed on the project right now.
             var staffedEmpIds = Cldb.PROJECT_RESOURCE.GetAll()
-                .Where(pr => ids.Contains(pr.PROJ_ID) && pr.END_DATE >= DateTime.Now)
+                .Where(pr => ids.Contains(pr.PROJ_ID) && pr.BILL_FLG == true && pr.END_DATE >= DateTime.Now)
                 .Select(pr => pr.EMP_ID)
                 .Distinct()
                 .ToList();
@@ -748,6 +785,86 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
 
             return Ok(rows);
+        }
+
+        // Standing assessee list for one project, set in Configure Scope's "New
+        // mapping" modal alongside its domains rather than re-picked every cycle
+        // in Configure Assessment.
+        [GET("GetITOpsProjectAssessees")]
+        [ActionName("GetITOpsProjectAssessees")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsProjectAssessees(string projectId)
+        {
+            var denied = DenyIfNotITOpsAdmin();
+            if (denied != null) return denied;
+
+            if (string.IsNullOrWhiteSpace(projectId)) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var empIds = CSPdb.ITOPS_PROJECT_ASSESSEE.GetAll()
+                .Where(a => a.ISACTIVE && a.PROJECT_ID == projectId.Trim())
+                .Select(a => a.EMP_ID)
+                .ToList();
+            if (!empIds.Any()) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var rows = Cldb.EMP_INFO.GetAll()
+                .Where(e => empIds.Contains(e.EMP_ID) && e.DOR == null)
+                .OrderBy(e => e.FRST_NM)
+                .Select(e => new ITOPS_EmployeeRosterRow { EmpId = e.EMP_ID, Name = e.FRST_NM, Title = e.EMP_CSP_ROLE })
+                .ToList();
+
+            return Ok(rows);
+        }
+
+        // Replace semantics, same convention as SaveITOpsDomainProjectMapping:
+        // EmpIds is the complete desired assessee set for the project.
+        [POST("SaveITOpsProjectAssessees")]
+        [ActionName("SaveITOpsProjectAssessees")]
+        [HttpPost]
+        public IHttpActionResult SaveITOpsProjectAssessees([FromBody] ITOPS_SaveProjectAssesseesRequest request)
+        {
+            var denied = DenyIfNotITOpsRole("DOMAIN_PROJECT_MAPPER", "change project assessees");
+            if (denied != null) return denied;
+
+            if (request == null || string.IsNullOrWhiteSpace(request.ProjectId))
+                return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var projectId = request.ProjectId.Trim();
+            var wanted = (request.EmpIds ?? new List<string>())
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => id.Trim())
+                .Distinct()
+                .ToList();
+            var empId = GetHeaderDetails_String("empId");
+
+            var existingRows = CSPdb.ITOPS_PROJECT_ASSESSEE.GetAll()
+                .Where(a => a.PROJECT_ID == projectId)
+                .ToList();
+
+            foreach (var row in existingRows.Where(r => r.ISACTIVE && !wanted.Contains(r.EMP_ID)))
+            {
+                UpdateAuditFields(row, empId);
+                row.ISACTIVE = false;
+                CSPdb.ITOPS_PROJECT_ASSESSEE.Update(row);
+            }
+
+            foreach (var assesseeEmpId in wanted)
+            {
+                var existing = existingRows.FirstOrDefault(r => r.EMP_ID == assesseeEmpId);
+                if (existing != null)
+                {
+                    UpdateAuditFields(existing, empId);
+                    CSPdb.ITOPS_PROJECT_ASSESSEE.Update(existing);
+                }
+                else
+                {
+                    var row = new ITOPS_PROJECT_ASSESSEE { PROJECT_ID = projectId, EMP_ID = assesseeEmpId };
+                    UpdateAuditFields(row, empId);
+                    CSPdb.ITOPS_PROJECT_ASSESSEE.Add(row);
+                }
+            }
+            CSPdb.Commit(CanCommit);
+
+            return Ok();
         }
 
         // ==================================================================
@@ -1133,55 +1250,44 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var denied = DenyIfNotITOpsAdmin();
             if (denied != null) return denied;
 
-            var cycles = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll()
-                .Where(m => m.ISACTIVE)
-                .OrderByDescending(m => m.START_DATE)
-                .ThenByDescending(m => m.ID)
-                .ToList();
-            if (!cycles.Any()) return Ok(new List<ITOPS_AssessmentCycleRow>());
+            // usp_ITOpsGetAssessmentCycles does the cycle x per-status-count join
+            // and aggregation in one round trip (see ITOperationMaturity_V2_13);
+            // this is a flat (cycle, status) row per group, folded back into the
+            // nested shape the client expects.
+            var flatRows = CSPdb.AppRepo.ITOpsGetAssessmentCycles();
+            if (!flatRows.Any()) return Ok(new List<ITOPS_AssessmentCycleRow>());
 
-            var cycleIds = cycles.Select(c => c.ID).ToList();
-            // One pass over the cycle's assessments feeds BOTH the total and the
-            // per-status breakdown, so the Step 2 list can show completion inline
-            // instead of sending the admin to Reports for it.
-            var assessmentsInCycles = CSPdb.ITOPS_ASSESSMENT.GetAll()
-                .Where(a => a.ISACTIVE && cycleIds.Contains(a.ASSESSMENT_MASTER_ID))
-                .Select(a => new { a.ASSESSMENT_MASTER_ID, a.STATUS })
-                .ToList();
-
-            var byCycle = assessmentsInCycles
-                .GroupBy(a => a.ASSESSMENT_MASTER_ID)
-                .ToDictionary(g => g.Key, g => g.ToList());
-
-            var rows = cycles.Select(c =>
-            {
-                var mine = byCycle.ContainsKey(c.ID) ? byCycle[c.ID] : null;
-                var total = mine == null ? 0 : mine.Count;
-                var statusCounts = mine == null
-                    ? new List<ITOPS_CycleStatusCountRow>()
-                    : mine.GroupBy(a => string.IsNullOrWhiteSpace(a.STATUS) ? "NotStarted" : a.STATUS)
-                          .Select(g => new ITOPS_CycleStatusCountRow { Status = g.Key, Count = g.Count() })
-                          .OrderByDescending(g => g.Count)
-                          .ThenBy(g => g.Status)
-                          .ToList();
-                var completed = statusCounts
-                    .Where(s => s.Status == "Approved" || s.Status == "Closed")
-                    .Sum(s => s.Count);
-
-                return new ITOPS_AssessmentCycleRow
+            var rows = flatRows
+                .GroupBy(r => r.CycleId)
+                .Select(g =>
                 {
-                    Id = c.ID,
-                    CycleLabel = c.CYCLE_LABEL,
-                    StartDate = c.START_DATE,
-                    EndDate = c.END_DATE,
-                    Status = c.STATUS,
-                    Description = c.DESCRIPTION,
-                    AssessmentCount = total,
-                    StatusCounts = statusCounts,
-                    CompletedCount = completed,
-                    CompletionPercent = total > 0 ? (int)Math.Round(completed * 100.0 / total) : 0
-                };
-            }).ToList();
+                    var first = g.First();
+                    var statusCounts = g
+                        .Where(r => r.AssessmentStatus != null)
+                        .Select(r => new ITOPS_CycleStatusCountRow { Status = r.AssessmentStatus, Count = r.StatusCount ?? 0 })
+                        .ToList();
+                    var total = statusCounts.Sum(s => s.Count);
+                    var completed = statusCounts
+                        .Where(s => s.Status == "Approved" || s.Status == "Closed")
+                        .Sum(s => s.Count);
+
+                    return new ITOPS_AssessmentCycleRow
+                    {
+                        Id = first.CycleId,
+                        CycleLabel = first.CycleLabel,
+                        StartDate = first.StartDate,
+                        EndDate = first.EndDate,
+                        Status = first.CycleStatus,
+                        Description = first.Description,
+                        AssessmentCount = total,
+                        StatusCounts = statusCounts,
+                        CompletedCount = completed,
+                        CompletionPercent = total > 0 ? (int)Math.Round(completed * 100.0 / total) : 0
+                    };
+                })
+                .OrderByDescending(r => r.StartDate)
+                .ThenByDescending(r => r.Id)
+                .ToList();
 
             return Ok(rows);
         }
@@ -1472,21 +1578,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var denied = DenyIfNotITOpsAdmin();
             if (denied != null) return denied;
 
-            var mappingQuery = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll().Where(m => m.ISACTIVE);
-            if (!string.IsNullOrWhiteSpace(projectId))
-                mappingQuery = mappingQuery.Where(m => m.PROJECT_ID == projectId);
+            // usp_ITOpsGetDomainProjectMapDomains/Assessees do the CSPdb-side joins
+            // (map x domain, project-scoped assessees) in one round trip each (see
+            // ITOperationMaturity_V2_13). PROJECT/CUSTOMER/employee-name lookups
+            // stay against Cldb here - it's a different physical SQL Server, so a
+            // single SP can't join across both (see that script's header note).
+            var normalizedProjectId = string.IsNullOrWhiteSpace(projectId) ? null : projectId;
+            var domainRows = CSPdb.AppRepo.ITOpsGetDomainProjectMapDomains(normalizedProjectId);
+            if (!domainRows.Any()) return Ok(new List<ITOPS_DomainProjectMappingRow>());
 
-            var mappings = mappingQuery.ToList();
-            if (!mappings.Any()) return Ok(new List<ITOPS_DomainProjectMappingRow>());
-
-            var domainIds = mappings.Select(m => m.DOMAIN_ID).Distinct().ToList();
-            var domains = CSPdb.ITOPS_DOMAIN.GetAll()
-                .Where(d => domainIds.Contains(d.ID))
-                .ToList()
-                .GroupBy(d => d.ID)
-                .ToDictionary(g => g.Key, g => g.First());
-
-            var projectIds = mappings.Select(m => m.PROJECT_ID).Distinct().ToList();
+            var projectIds = domainRows.Select(m => m.ProjectId).Distinct().ToList();
             var projects = Cldb.PROJECT.GetAll()
                 .Where(p => projectIds.Contains(p.PROJ_ID))
                 .Select(p => new { p.PROJ_ID, p.PROJ_NM, p.CUST_ID })
@@ -1502,8 +1603,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .GroupBy(c => c.CUST_ID)
                 .ToDictionary(g => g.Key, g => g.First().CUST_NM);
 
-            var rows = mappings
-                .GroupBy(m => m.PROJECT_ID)
+            // Assessees, so the Domain-Project Mapping grid can show and search on
+            // who's been set up for a project without a separate round trip.
+            var assesseeRows = CSPdb.AppRepo.ITOpsGetDomainProjectMapAssessees(normalizedProjectId);
+            var assesseeEmpNames = GetITOpsEmpNameMap(assesseeRows.Select(a => a.EmpId).ToList());
+
+            var rows = domainRows
+                .GroupBy(m => m.ProjectId)
                 .Select(g =>
                 {
                     var project = projects.ContainsKey(g.Key) ? projects[g.Key] : null;
@@ -1516,15 +1622,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CustId = custId,
                         AccountName = custId != null && accountNames.ContainsKey(custId) ? accountNames[custId] : null,
                         Domains = g
-                            .Where(m => domains.ContainsKey(m.DOMAIN_ID))
                             .Select(m => new ITOPS_MappedDomainRow
                             {
-                                MappingId = m.ID,
-                                DomainId = m.DOMAIN_ID,
-                                DomainCode = domains[m.DOMAIN_ID].CODE,
-                                DomainName = domains[m.DOMAIN_ID].NAME
+                                MappingId = m.MappingId,
+                                DomainId = m.DomainId,
+                                DomainCode = m.DomainCode,
+                                DomainName = m.DomainName
                             })
                             .OrderBy(d => d.DomainName)
+                            .ToList(),
+                        Assessees = assesseeRows
+                            .Where(a => a.ProjectId == g.Key)
+                            .Select(a => new ITOPS_ProjectAssesseeRow
+                            {
+                                EmpId = a.EmpId,
+                                Name = assesseeEmpNames.ContainsKey(a.EmpId) ? assesseeEmpNames[a.EmpId] : a.EmpId
+                            })
+                            .OrderBy(a => a.Name)
                             .ToList()
                     };
                 })
@@ -1565,6 +1679,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateAuditFields(row, empId);
                 row.ISACTIVE = false;
                 CSPdb.ITOPS_DOMAIN_PROJECT_MAP.Update(row);
+                LogDomainProjectMappingChange(projectId, row.DOMAIN_ID, "Removed", request.Reason, empId);
             }
 
             foreach (var domainId in wanted)
@@ -1572,9 +1687,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var existing = existingRows.FirstOrDefault(r => r.DOMAIN_ID == domainId);
                 if (existing != null)
                 {
+                    var wasActive = existing.ISACTIVE;
                     // Reactivates a previously removed mapping (UpdateAuditFields sets ISACTIVE = true).
                     UpdateAuditFields(existing, empId);
                     CSPdb.ITOPS_DOMAIN_PROJECT_MAP.Update(existing);
+                    if (!wasActive) LogDomainProjectMappingChange(projectId, domainId, "Reactivated", request.Reason, empId);
                 }
                 else
                 {
@@ -1585,11 +1702,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     };
                     UpdateAuditFields(row, empId);
                     CSPdb.ITOPS_DOMAIN_PROJECT_MAP.Add(row);
+                    LogDomainProjectMappingChange(projectId, domainId, "Added", request.Reason, empId);
                 }
             }
             CSPdb.Commit(CanCommit);
 
             return Ok();
+        }
+
+        // Writes one append-only ITOPS_DOMAIN_PROJECT_MAP_AUDIT row per actual
+        // state change. Not committed here - the caller's own CSPdb.Commit(...)
+        // persists this alongside the mapping row change in the same transaction.
+        private void LogDomainProjectMappingChange(string projectId, int domainId, string action, string reason, string empId)
+        {
+            var entry = new ITOPS_DOMAIN_PROJECT_MAP_AUDIT
+            {
+                PROJECT_ID = projectId,
+                DOMAIN_ID = domainId,
+                ACTION = action,
+                REASON = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()
+            };
+            UpdateAuditFields(entry, empId);
+            CSPdb.ITOPS_DOMAIN_PROJECT_MAP_AUDIT.Add(entry);
         }
 
         // ADDITIVE bulk mapping: one ITOPS_DOMAIN_PROJECT_MAP row per
@@ -1649,7 +1783,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var existing = existingRows.FirstOrDefault(m => m.PROJECT_ID == projectId && m.DOMAIN_ID == domainId);
                     if (existing != null)
                     {
-                        if (existing.ISACTIVE) unchanged++; else reactivated++;
+                        if (existing.ISACTIVE)
+                        {
+                            unchanged++;
+                        }
+                        else
+                        {
+                            reactivated++;
+                            LogDomainProjectMappingChange(projectId, domainId, "Reactivated", request.Reason, empId);
+                        }
                         // UpdateAuditFields sets ISACTIVE = true, so this also
                         // reactivates a previously unmapped combination.
                         UpdateAuditFields(existing, empId);
@@ -1666,6 +1808,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         CSPdb.ITOPS_DOMAIN_PROJECT_MAP.Add(row);
                         existingRows.Add(row);
                         added++;
+                        LogDomainProjectMappingChange(projectId, domainId, "Added", request.Reason, empId);
                     }
                 }
             }
@@ -1698,10 +1841,78 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 UpdateAuditFields(row, empId);
                 row.ISACTIVE = false;
                 CSPdb.ITOPS_DOMAIN_PROJECT_MAP.Update(row);
+                LogDomainProjectMappingChange(projectId, row.DOMAIN_ID, "Removed", request.Reason, empId);
             }
             CSPdb.Commit(CanCommit);
 
             return Ok();
+        }
+
+        // Full change history for Domain-Project Mapping, newest first. Reads
+        // from the append-only audit log, not the mapping table itself, so a
+        // domain that was removed and never re-added still shows here even
+        // though it no longer appears in GetITOpsDomainProjectMappings.
+        [GET("GetITOpsDomainProjectMappingHistory")]
+        [ActionName("GetITOpsDomainProjectMappingHistory")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsDomainProjectMappingHistory(string projectId = null)
+        {
+            var denied = DenyIfNotITOpsAdmin();
+            if (denied != null) return denied;
+
+            var filterProjectId = string.IsNullOrWhiteSpace(projectId) ? null : projectId.Trim();
+
+            var entries = CSPdb.ITOPS_DOMAIN_PROJECT_MAP_AUDIT.GetAll()
+                .Where(a => filterProjectId == null || a.PROJECT_ID == filterProjectId)
+                .OrderByDescending(a => a.CREATED_DATE)
+                .ToList();
+            if (!entries.Any()) return Ok(new List<ITOPS_DomainProjectMapAuditRow>());
+
+            var domainIds = entries.Select(a => a.DOMAIN_ID).Distinct().ToList();
+            var domains = CSPdb.ITOPS_DOMAIN.GetAll()
+                .Where(d => domainIds.Contains(d.ID))
+                .ToList()
+                .GroupBy(d => d.ID)
+                .ToDictionary(g => g.Key, g => g.First().NAME);
+
+            var projectIds = entries.Select(a => a.PROJECT_ID).Distinct().ToList();
+            var projects = Cldb.PROJECT.GetAll()
+                .Where(p => projectIds.Contains(p.PROJ_ID))
+                .Select(p => new { p.PROJ_ID, p.PROJ_NM, p.CUST_ID })
+                .ToList()
+                .GroupBy(p => p.PROJ_ID)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var custIds = projects.Values.Select(p => p.CUST_ID).Where(c => c != null).Distinct().ToList();
+            var accountNames = Cldb.CUSTOMER.GetAll()
+                .Where(c => custIds.Contains(c.CUST_ID))
+                .Select(c => new { c.CUST_ID, c.CUST_NM })
+                .ToList()
+                .GroupBy(c => c.CUST_ID)
+                .ToDictionary(g => g.Key, g => g.First().CUST_NM);
+
+            var empNames = GetITOpsEmpNameMap(entries.Select(a => a.CREATED_BY).ToList());
+
+            var rows = entries.Select(a =>
+            {
+                projects.TryGetValue(a.PROJECT_ID, out var project);
+                var custId = project != null ? project.CUST_ID : null;
+                return new ITOPS_DomainProjectMapAuditRow
+                {
+                    ProjectId = a.PROJECT_ID,
+                    ProjectName = project != null ? project.PROJ_NM : null,
+                    AccountName = custId != null && accountNames.ContainsKey(custId) ? accountNames[custId] : null,
+                    DomainId = a.DOMAIN_ID,
+                    DomainName = domains.ContainsKey(a.DOMAIN_ID) ? domains[a.DOMAIN_ID] : null,
+                    Action = a.ACTION,
+                    Reason = a.REASON,
+                    ChangedBy = a.CREATED_BY,
+                    ChangedByName = !string.IsNullOrWhiteSpace(a.CREATED_BY) && empNames.ContainsKey(a.CREATED_BY) ? empNames[a.CREATED_BY] : a.CREATED_BY,
+                    ChangedDate = a.CREATED_DATE
+                };
+            }).ToList();
+
+            return Ok(rows);
         }
 
         // ==================================================================
@@ -1710,9 +1921,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         // Bulk sibling of GetOrCreateITOpsAssessment: one ITOPS_ASSESSMENT row
         // per (cycle, project, domain), each seeded with the domain's default
-        // assessor/reviewer as IS_PRIMARY join rows, plus the SAME assessee set
-        // applied identically across every one of them - assessees are
-        // project-wide, not per-domain (design decision from the mockup review).
+        // assessor/reviewer as IS_PRIMARY join rows, plus the assessee set
+        // applied identically across every one of them. Domains and assessees
+        // are no longer supplied by the caller - each project reads its OWN
+        // standing config (ITOPS_DOMAIN_PROJECT_MAP / ITOPS_PROJECT_ASSESSEE,
+        // both set up in Configure Scope), so a project with nothing mapped
+        // yet simply produces nothing here rather than being asked twice.
         [POST("CreateITOpsAssessmentsForProject")]
         [ActionName("CreateITOpsAssessmentsForProject")]
         [HttpPost]
@@ -1741,30 +1955,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (master == null)
                 return Content(HttpStatusCode.Conflict, "No open IT Ops Maturity assessment cycle exists. Create one in Configure Cycle first.");
 
-            var domainIds = (request.DomainIds ?? new List<int>()).Distinct().ToList();
-            if (!domainIds.Any())
-                return Content(HttpStatusCode.Conflict, "Select at least one domain to assess.");
-
             var allProjects = Cldb.PROJECT.GetAll()
                 .Where(p => requestedProjectIds.Contains(p.PROJ_ID))
                 .ToList();
             var missingProject = requestedProjectIds.FirstOrDefault(id => !allProjects.Any(p => p.PROJ_ID == id));
             if (missingProject != null) return NotFound();
 
-            // Only domains actually mapped to a project in Configure Scope may be
-            // assessed for it. The Angular picker only offers the INTERSECTION of
-            // domains mapped to every selected project, so this is a defensive
-            // check rather than a routine one - but it still runs per project.
             var mapsForProjects = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
                 .Where(m => m.ISACTIVE && requestedProjectIds.Contains(m.PROJECT_ID))
                 .ToList();
-            foreach (var pid in requestedProjectIds)
-            {
-                var mappedForThis = mapsForProjects.Where(m => m.PROJECT_ID == pid).Select(m => m.DOMAIN_ID).ToList();
-                if (domainIds.Any(id => !mappedForThis.Contains(id)))
-                    return Content(HttpStatusCode.Conflict,
-                        "One or more selected domains are not mapped to project " + pid + ". Map them in Configure Scope first.");
-            }
+            if (!mapsForProjects.Any())
+                return Content(HttpStatusCode.Conflict,
+                    "None of the selected project(s) have any domains mapped yet. Map them in Configure Scope first.");
+
+            var allDomainIds = mapsForProjects.Select(m => m.DOMAIN_ID).Distinct().ToList();
+            var allDomains = CSPdb.ITOPS_DOMAIN.GetAll()
+                .Where(d => d.ISACTIVE && allDomainIds.Contains(d.ID))
+                .ToList()
+                .GroupBy(d => d.ID)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var assesseesForProjects = CSPdb.ITOPS_PROJECT_ASSESSEE.GetAll()
+                .Where(a => a.ISACTIVE && requestedProjectIds.Contains(a.PROJECT_ID))
+                .ToList();
 
             var empId = GetHeaderDetails_String("empId");
             var custIds = allProjects.Select(p => p.CUST_ID).Distinct().ToList();
@@ -1774,27 +1987,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .GroupBy(c => c.CUST_ID)
                 .ToDictionary(g => g.Key, g => g.First().CUST_NM);
 
-            var domains = CSPdb.ITOPS_DOMAIN.GetAll()
-                .Where(d => d.ISACTIVE && domainIds.Contains(d.ID))
-                .ToList();
-
-            var wantedAssessees = (request.AssesseeEmpIds ?? new List<string>())
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Select(id => id.Trim())
-                .Distinct()
-                .ToList();
-
-            // Every selected project gets the SAME domain set and the SAME assessee
-            // team - the whole point of the bulk action. Each project is still
-            // processed exactly as the old single-project path did, one at a time,
-            // under its own account gate.
+            // Each project gets its OWN domain set (whatever is mapped to it in
+            // Configure Scope) and its OWN assessee set - no longer forced to be
+            // identical across a multi-project selection the way the old
+            // caller-supplied lists were.
             foreach (var project in allProjects)
             {
             var projectId = project.PROJ_ID;
             var accountName = project.CUST_ID != null && accountNames.ContainsKey(project.CUST_ID)
                 ? accountNames[project.CUST_ID]
                 : null;
+            var domainIds = mapsForProjects.Where(m => m.PROJECT_ID == projectId).Select(m => m.DOMAIN_ID).Distinct().ToList();
+            var domains = domainIds.Where(allDomains.ContainsKey).Select(id => allDomains[id]).ToList();
+            var wantedAssessees = assesseesForProjects.Where(a => a.PROJECT_ID == projectId).Select(a => a.EMP_ID).Distinct().ToList();
             var assessmentIds = new List<int>();
+
+            if (!domains.Any()) continue; // nothing mapped to this project - skip it rather than error the whole batch
 
             // Serialised on the same per-account gate EnsureAssessmentsForAccount uses,
             // so a concurrent landing-page load can't race this into duplicate
@@ -1995,6 +2203,34 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             .ToList();
         }
 
+        // Deliberately restricted to Not Started assessments: once any scoring,
+        // review, or findings work has begun, removing the row would silently
+        // destroy that work with no trace - the admin should retarget/reassign
+        // instead. A domain removed from Configure Scope after assessments exist
+        // does NOT auto-remove them, for the same reason.
+        [POST("RemoveITOpsAssessment")]
+        [ActionName("RemoveITOpsAssessment")]
+        [HttpPost]
+        public IHttpActionResult RemoveITOpsAssessment(int assessmentId)
+        {
+            var denied = DenyIfNotITOpsRole("RUNOPS_INITIATOR", "remove assessments");
+            if (denied != null) return denied;
+
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
+            if (assessment == null) return Ok();
+
+            if (!string.Equals(assessment.STATUS, "NotStarted", StringComparison.OrdinalIgnoreCase))
+                return Content(HttpStatusCode.Conflict, "Only a Not Started assessment can be removed - it already has scoring, review, or findings history.");
+
+            var empId = GetHeaderDetails_String("empId");
+            UpdateAuditFields(assessment, empId);
+            assessment.ISACTIVE = false;
+            CSPdb.ITOPS_ASSESSMENT.Update(assessment);
+            CSPdb.Commit(CanCommit);
+
+            return Ok();
+        }
+
         // ==================================================================
         // STEP 5 - Assign Assessor / Reviewer
         // ==================================================================
@@ -2012,50 +2248,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var denied = DenyIfNotITOpsAdmin();
             if (denied != null) return denied;
 
-            var assessors = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
-                .Where(a => a.ISACTIVE && a.ASSESSMENT_ID == assessmentId)
-                .ToList();
-            var reviewers = CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
-                .Where(r => r.ISACTIVE && r.ASSESSMENT_ID == assessmentId)
-                .ToList();
-            var assessees = CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
-                .Where(a => a.ISACTIVE && a.ASSESSMENT_ID == assessmentId)
-                .ToList();
+            // usp_ITOpsGetAssessmentTeam unions assessor/reviewer/assessee in one
+            // round trip, tagged by RoleType (see ITOperationMaturity_V2_13).
+            var flatRows = CSPdb.AppRepo.ITOpsGetAssessmentTeam(assessmentId);
 
-            var empNames = GetITOpsEmpNameMap(
-                assessors.Select(a => a.ASSESSOR_EMP_ID)
-                    .Concat(reviewers.Select(r => r.REVIEWER_EMP_ID))
-                    .Concat(assessees.Select(a => a.ASSESSEE_EMP_ID))
-                    .ToList());
+            var empNames = GetITOpsEmpNameMap(flatRows.Select(r => r.EmpId).ToList());
             Func<string, string> nameOf = id => id != null && empNames.ContainsKey(id) ? empNames[id] : id;
+
+            Func<string, List<ITOPS_TeamMemberRow>> toRows = roleType => flatRows
+                .Where(r => r.RoleType == roleType)
+                .OrderByDescending(r => r.IsPrimary)
+                .Select(r => new ITOPS_TeamMemberRow
+                {
+                    Id = r.ID,
+                    AssessmentId = r.AssessmentId,
+                    EmpId = r.EmpId,
+                    EmpName = nameOf(r.EmpId),
+                    IsPrimary = r.IsPrimary
+                })
+                .ToList();
 
             return Ok(new
             {
                 AssessmentId = assessmentId,
-                Assessors = assessors.OrderByDescending(a => a.IS_PRIMARY).Select(a => new ITOPS_TeamMemberRow
-                {
-                    Id = a.ID,
-                    AssessmentId = a.ASSESSMENT_ID,
-                    EmpId = a.ASSESSOR_EMP_ID,
-                    EmpName = nameOf(a.ASSESSOR_EMP_ID),
-                    IsPrimary = a.IS_PRIMARY
-                }).ToList(),
-                Reviewers = reviewers.OrderByDescending(r => r.IS_PRIMARY).Select(r => new ITOPS_TeamMemberRow
-                {
-                    Id = r.ID,
-                    AssessmentId = r.ASSESSMENT_ID,
-                    EmpId = r.REVIEWER_EMP_ID,
-                    EmpName = nameOf(r.REVIEWER_EMP_ID),
-                    IsPrimary = r.IS_PRIMARY
-                }).ToList(),
-                Assessees = assessees.Select(a => new ITOPS_TeamMemberRow
-                {
-                    Id = a.ID,
-                    AssessmentId = a.ASSESSMENT_ID,
-                    EmpId = a.ASSESSEE_EMP_ID,
-                    EmpName = nameOf(a.ASSESSEE_EMP_ID),
-                    IsPrimary = false
-                }).ToList()
+                Assessors = toRows("Assessor"),
+                Reviewers = toRows("Reviewer"),
+                Assessees = toRows("Assessee")
             });
         }
 
@@ -2371,6 +2589,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             .ToList();
         }
 
+        /// <summary>Maps one usp_ITOpsGetCategoriesForDomain row straight across - the proc already computed IsCurrent/ParameterCount/VersionCount.</summary>
+        private static ITOPS_CategoryRow ToITOpsCategoryRow(ITOpsCategoryForDomainSpRow r)
+        {
+            return new ITOPS_CategoryRow
+            {
+                CategoryId = r.CategoryId,
+                DomainId = r.DomainId,
+                Name = r.Name,
+                DisplayOrder = r.DisplayOrder,
+                StartDate = r.StartDate,
+                EndDate = r.EndDate,
+                IsCurrent = r.IsCurrent,
+                ParameterCount = r.ParameterCount,
+                VersionCount = r.VersionCount
+            };
+        }
+
         private List<ITOPS_CategoryRow> BuildITOpsCategoryRows(List<ITOPS_CATEGORY> categories)
         {
             if (categories == null || !categories.Any()) return new List<ITOPS_CategoryRow>();
@@ -2426,14 +2661,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var denied = DenyIfNotITOpsAdmin();
             if (denied != null) return denied;
 
-            var today = DateTime.Today;
-            var categories = CSPdb.ITOPS_CATEGORY.GetAll()
-                .Where(c => c.DOMAIN_ID == domainId)
-                .ToList()
-                .Where(c => includeExpired || IsITOpsCurrent(c.ISACTIVE, c.END_DATE, today))
-                .ToList();
-
-            return Ok(BuildITOpsCategoryRows(categories));
+            // usp_ITOpsGetCategoriesForDomain does the filter, IsCurrent flag, and
+            // both count aggregates (ParameterCount, VersionCount) set-based in one
+            // round trip, replacing the per-row dictionary lookups
+            // BuildITOpsCategoryRows built in C# (see ITOperationMaturity_V2_13).
+            var spRows = CSPdb.AppRepo.ITOpsGetCategoriesForDomain(domainId, null, includeExpired);
+            return Ok(spRows.Select(ToITOpsCategoryRow).ToList());
         }
 
         [GET("GetITOpsParametersForCategory")]
@@ -2483,10 +2716,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var denied = DenyIfNotITOpsAdmin();
             if (denied != null) return denied;
 
-            var category = CSPdb.ITOPS_CATEGORY.GetAll().FirstOrDefault(c => c.ID == categoryId);
-            if (category == null) return NotFound();
+            // usp_ITOpsGetCategoriesForDomain(@CategoryId set) resolves the lineage
+            // key (DOMAIN_ID + NAME) and returns every row in it server-side - see
+            // ITOperationMaturity_V2_13. NotFound still needs one row to confirm
+            // the id itself exists (an unknown id resolves an empty lineage).
+            var spRows = CSPdb.AppRepo.ITOpsGetCategoriesForDomain(null, categoryId, true);
+            if (!spRows.Any() && CSPdb.ITOPS_CATEGORY.GetAll().All(c => c.ID != categoryId)) return NotFound();
 
-            var rows = BuildITOpsCategoryRows(GetITOpsCategoryLineage(category))
+            var rows = spRows
+                .Select(ToITOpsCategoryRow)
                 .OrderBy(r => r.StartDate)
                 .ThenBy(r => r.CategoryId)
                 .ToList();

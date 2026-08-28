@@ -139,6 +139,37 @@ namespace GAVS.AllocationSystem.Model.CSP
         public string PROJECT_ID { get; set; }
     }
 
+    // Master data: which employees are the assessees for a project, standing
+    // config set alongside the project's domain mapping in Configure Scope -
+    // Configure Assessment reads this rather than asking for assessees again
+    // per cycle. Same replace-semantics convention as ITOPS_DOMAIN_PROJECT_MAP.
+    public class ITOPS_PROJECT_ASSESSEE : EntityBase
+    {
+        [Column(TypeName = "varchar"), MaxLength(20)]
+        public string PROJECT_ID { get; set; }
+
+        [Column(TypeName = "varchar"), MaxLength(50)]
+        public string EMP_ID { get; set; }
+    }
+
+    // Append-only change log for ITOPS_DOMAIN_PROJECT_MAP: one row per actual
+    // state change (Added/Reactivated/Removed), never updated in place - unlike
+    // the mapping row itself, which is overwritten on every touch and so can't
+    // answer "who removed domain X and when" once it's later re-added.
+    public class ITOPS_DOMAIN_PROJECT_MAP_AUDIT : EntityBase
+    {
+        [Column(TypeName = "varchar"), MaxLength(20)]
+        public string PROJECT_ID { get; set; }
+
+        public int DOMAIN_ID { get; set; }
+
+        [Column(TypeName = "varchar"), MaxLength(20)]
+        public string ACTION { get; set; }
+
+        [Column(TypeName = "varchar"), MaxLength(500)]
+        public string REASON { get; set; }
+    }
+
     // An assessment cycle (e.g. "H1 2026"). Every ITOPS_ASSESSMENT belongs to one.
     public class ITOPS_ASSESSMENT_MASTER : EntityBase
     {
