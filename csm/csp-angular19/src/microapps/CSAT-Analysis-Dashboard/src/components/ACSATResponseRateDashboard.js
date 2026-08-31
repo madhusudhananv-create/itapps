@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Download, ArrowLeft, Search, X, TrendingUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
 import { parseExcelDateToMMDDYYYY } from '../utils/acsatExcelRowUtils';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName, normalizeTop10AccountName } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   max-width: 100%;
@@ -277,13 +278,58 @@ const getTop10AccountSortIndex = (customerName, top10AccountNames) => {
   return index === -1 ? 999 : index;
 };
 
-const isTop10DashboardAccount = (row, top10AccountNames, typeOfAccountMap = {}) => {
+// `effectiveTop10AccountNames` is the *effective* Top 10 Set for the currently loaded dataset (the 10
+// named survey accounts, backfilled per-account from TOP10_BACKFILL_FALLBACK_ORDER when an original
+// account has zero Polled) — not the full 15-account roster. `top10AccountNames` (the full roster) is
+// still used to fuzzy-match a row's customer name to its canonical Top 10 name before testing membership.
+const isTop10DashboardAccount = (row, top10AccountNames, effectiveTop10AccountNames, typeOfAccountMap = {}) => {
   const customerName = (row?.customerName ?? '').toString().trim();
-  if (top10AccountNames.some((name) => matchesTop10AccountName(customerName, name))) {
-    return true;
+  const matchedName = top10AccountNames.find((name) => matchesTop10AccountName(customerName, name));
+  if (matchedName) {
+    return isEffectiveTop10AccountName(matchedName, effectiveTop10AccountNames);
   }
   const mappedType = typeOfAccountMap[customerName];
-  return isTop10TypeOfAccount(mappedType);
+  return isTop10TypeOfAccount(mappedType) && isEffectiveTop10AccountName(customerName, effectiveTop10AccountNames);
+};
+
+// Short/recognizable display names for the fixed Top 10 accounts, used only in the "not polled"
+// footnote below the Top 10 table (full name is used everywhere else on the dashboard).
+const TOP10_ACCOUNT_SHORT_NAMES = {
+  'premier healthcare solutions inc': 'Premier Healthcare',
+  'blue cross blue shield association bcbsa': 'BCBSA',
+  'frontier airlines inc': 'Frontier Airlines',
+  'premier - horizon ii - covenant health': 'Covenant',
+  'tufts medicine': 'Tufts Medicine',
+  'bronxcare health system': 'BronxCare',
+  'agfirst farm credit bank': 'AgFirst',
+  'embecta medical ii llc': 'embecta',
+  'jewish board of family and childrens services jbfcs': 'JBFCS',
+  'healthfirst': 'Healthfirst',
+  'the northern trust company': 'Northern Trust',
+  'firstsource solutions limited': 'Firstsource',
+  'ooma inc.': 'Ooma',
+  'arista networks india private limited': 'Arista Networks',
+  'infoblox inc.': 'Infoblox'
+};
+const getTop10AccountShortName = (fullName) => {
+  const key = (fullName || '').toString().trim().toLowerCase();
+  return TOP10_ACCOUNT_SHORT_NAMES[key] || fullName;
+};
+
+// Builds the "X, Y and Z were not polled and hence included other accounts." footnote for the Top 10
+// table. `polledByAccountName` maps a lowercased/trimmed Top10 account name to its Polled count in
+// the currently loaded data (missing/undefined is treated the same as zero — never loaded).
+const buildTop10NotPolledCaption = (polledByAccountName) => {
+  const unpolled = TOP10_SURVEY_ACCOUNT_ORDER.filter((name) => {
+    const key = name.trim().toLowerCase();
+    const polled = polledByAccountName instanceof Map ? polledByAccountName.get(key) : polledByAccountName?.[key];
+    return !polled;
+  }).map(getTop10AccountShortName);
+  if (unpolled.length === 0) return null;
+  if (unpolled.length === 1) return `${unpolled[0]} was not polled and hence included other accounts.`;
+  const last = unpolled[unpolled.length - 1];
+  const rest = unpolled.slice(0, -1);
+  return `${rest.join(', ')} and ${last} were not polled and hence included other accounts.`;
 };
 
 const sortTop10TrendRows = (rows, top10AccountNames = []) => {
@@ -941,21 +987,22 @@ const ACSATResponseRateDashboard = ({
   const cycleStartDateFormatted = acsatCycleStartDateFormatted;
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
-  const top10AccountNames = [
-    'Premier Healthcare Solutions Inc',
-    'Blue Cross Blue Shield Association BCBSA',
-    'Frontier Airlines INC',
-    'Premier - Horizon II - Covenant Health',
-    'Tufts Medicine',
-    'BronxCare Health System',
-    'AgFirst Farm Credit Bank',
-    'embecta MEDICAL II LLC',
-    'Northern Trust Company',
-    'Jewish Board of Family and Childrens Services JBFCS',
-    'Healthfirst',
-    'AgileOne',
-  ];
-  
+  const top10AccountNames = TOP10_ACCOUNT_ORDER;
+
+  // Effective Top 10 for the currently loaded dataset: the 10 named survey accounts, with any account
+  // that has zero Polled backfilled from TOP10_BACKFILL_FALLBACK_ORDER (per utils/top10Accounts.js) —
+  // not the full 15-account roster. Recomputed whenever processedData changes.
+  const effectiveTop10AccountNames = useMemo(() => {
+    const polledByAccountName = {};
+    (processedData || []).forEach(row => {
+      const name = (row?.customerName ?? '').toString().trim();
+      if (!name) return;
+      const key = normalizeTop10AccountName(name);
+      polledByAccountName[key] = (polledByAccountName[key] || 0) + (row?.polled || 0);
+    });
+    return computeEffectiveTop10AccountNames(polledByAccountName);
+  }, [processedData]);
+
   // Account order for account-wise dashboard (only for account-wise view, not Top 10)
   const accountOrder = [
     'Premier Healthcare Solutions Inc',
@@ -967,12 +1014,12 @@ const ACSATResponseRateDashboard = ({
     'AgFirst Farm Credit Bank',
     'embecta MEDICAL II LLC',
     'Avaya LLC',
-    'Northern Trust Company',
+    'The Northern Trust Company',
     'Jewish Board of Family and Childrens Services JBFCS',
     'Apollo Hospitals',
     'Aditya Birla Capital Digital Limited',
     'Healthfirst',
-    'Firstsource Solutions Ltd',
+    'FIRSTSOURCE SOLUTIONS LIMITED',
     'Ooma Inc.',
     'Palo Alto Networks',
     'Hachette Book Group',
@@ -1601,7 +1648,7 @@ const ACSATResponseRateDashboard = ({
     // Apply Top 10 filtering (predefined list + TYPE OF ACCOUNT = Top 10 from upload)
     if (showTop10) {
       filtered = processedData.filter((row) =>
-        isTop10DashboardAccount(row, top10AccountNames, typeOfAccountMap)
+        isTop10DashboardAccount(row, top10AccountNames, effectiveTop10AccountNames, typeOfAccountMap)
       );
 
       filtered = filtered.sort((a, b) => {
@@ -1665,7 +1712,7 @@ const ACSATResponseRateDashboard = ({
       ...row,
       id: index + 1
     }));
-  }, [processedData, searchTerm, sortConfig, showTop10, top10AccountNames, typeOfAccountMap, groupByBU, accountOrder]);
+  }, [processedData, searchTerm, sortConfig, showTop10, top10AccountNames, effectiveTop10AccountNames, typeOfAccountMap, groupByBU, accountOrder]);
 
   // Process BU-wise data
   const buWiseData = useMemo(() => {
@@ -4077,6 +4124,21 @@ const ACSATResponseRateDashboard = ({
                   })}
               </OtherAccountRow>
             )}
+            {showTop10 && (() => {
+              const polledByAccountName = new Map(
+                (processedData || []).map(row => [(row.customerName || '').toString().trim().toLowerCase(), row.polled])
+              );
+              const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
+              if (!notPolledCaption) return null;
+              const colCount = 6 + (showMainTableTrendColumns ? acsatTrendAnalysisData.length : 0);
+              return (
+                <tr>
+                  <TableCell colSpan={colCount} style={{ fontStyle: 'italic', fontSize: '0.75rem', color: '#6b7280', textAlign: 'left', padding: '0.5rem 1rem', borderTop: '1px solid #e5e7eb' }}>
+                    {notPolledCaption}
+                  </TableCell>
+                </tr>
+              );
+            })()}
           </TableBody>
         </Table>
       </ScrollableTableContainer>
