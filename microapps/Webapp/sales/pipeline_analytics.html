@@ -3696,9 +3696,12 @@
                   var customerName = c.mis_name;
                   var canonicalName = getCanonicalCustomerName(customerName);
                   
-                  // USE COMBINED KEY: canonical name + BU (to differentiate same customer across BUs)
-                  var combinedKey = canonicalName + '|' + ownerBU;
-                  
+                  // USE COMBINED KEY: canonical name + BU + owner (owner included so that when an
+                  // account is reassigned between quarters — Q1 Mapping owner differs from Q2
+                  // Mapping owner — each owner's slice of actuals stays scoped to that owner and
+                  // doesn't leak into the other owner's matching lookups below).
+                  var combinedKey = canonicalName + '|' + ownerBU + '|' + ownerInActuals.toLowerCase().trim();
+
                   // Initialize if not exists
                   if (!globalCustActMap[combinedKey]) {
                     globalCustActMap[combinedKey] = { may26: 0, gm: 0, ob: 0, bu: ownerBU,
@@ -3829,12 +3832,17 @@
           
           // Use actRevData for Q1'27 revenue and GM actuals (fuzzy-match owner name against
           // the "Sales person" column values from FY27_Target_Actuals.xlsx, in case of spelling/spacing differences)
-          const actEntry = (function() {
+          const actEntryOwnerKey = (function() {
             if (!actRevData) return null;
-            if (actRevData[o.owner]) return actRevData[o.owner];
+            if (actRevData[o.owner]) return o.owner;
             const _am = fuzzyMatch(o.owner, Object.keys(actRevData));
-            return _am ? actRevData[_am.key] : null;
+            return _am ? _am.key : null;
           })();
+          const actEntry = actEntryOwnerKey ? actRevData[actEntryOwnerKey] : null;
+          // Owner-scoped key suffix used to look up actuals for THIS owner only (see globalCustActMap
+          // below) — prevents an account's actuals from leaking to a different owner when the same
+          // account has different owners in different quarters (Q1 Mapping vs Q2 Mapping reassignment).
+          const ownerKeyForActMap = (actEntryOwnerKey || o.owner || '').toLowerCase().trim();
           const q1RevActual = actEntry ? actEntry.total_may26 : 0;
           const q1GMActual = actEntry ? (actEntry.total_gm || 0) : 0;
           const q2RevActual = actEntry ? (actEntry.total_rev_q2 || 0) : 0; const q2GMActual = actEntry ? (actEntry.total_gm_q2 || 0) : 0;
@@ -3875,7 +3883,7 @@
             (td.customers || []).forEach(function(targetCust) {
               var canonicalTarget = getCanonicalCustomerName(targetCust.c);
               var targetBU = td.bu || 'Unknown';
-              var combinedKey = canonicalTarget + '|' + targetBU;
+              var combinedKey = canonicalTarget + '|' + targetBU + '|' + ownerKeyForActMap;
               if (custActMap[combinedKey]) {
                 console.log('[Global Map Match] ✓', o.owner, '- found actuals for:', targetCust.c, '(BU: ' + targetBU + ') →', custActOriginalNames[combinedKey]);
               } else {
@@ -3951,7 +3959,7 @@
             // Match to actRevData for all three metric actuals using canonical names + BU
             var targetCanonical = getCanonicalCustomerName(ct.c);
             var ownerBU = td.bu || 'Unknown'; // Get BU from owner's target data
-            var targetCombinedKey = targetCanonical + '|' + ownerBU; // Use combined key with BU
+            var targetCombinedKey = targetCanonical + '|' + ownerBU + '|' + ownerKeyForActMap; // Use combined key with BU + owner
             
             // Debug for New Hire owner
             if (o.owner === 'New Hire (Sanjiv to do in interim)' || o.owner.includes('New Hire')) {
@@ -4009,13 +4017,17 @@
               console.log('[Output Services OB Assignment - Direct]', 'Owner:', o.owner, '| ct.c:', ct.c, '| targetCanonical:', targetCanonical, '| ownerBU:', ownerBU, '| targetCombinedKey:', targetCombinedKey, '| matched:', matched, '| ob_actual:', ob_actual);
             }
             
-            // If no direct canonical match, try fuzzy match as fallback
+            // If no direct canonical match, try fuzzy match as fallback — restricted to this
+            // owner's own keys in custActMap, so a fuzzy name match never pulls in another
+            // owner's actuals for the same account (see ownerKeyForActMap above).
             var matchedCombinedKey = targetCombinedKey; // Track which combined key was matched
             if (!matched) {
-              var m = fuzzyMatch(ct.c, Object.keys(custActMap).map(k => custActOriginalNames[k] || k));
+              var _ownerKeySuffix = '|' + ownerKeyForActMap;
+              var _ownerScopedKeys = Object.keys(custActMap).filter(function(k) { return k.slice(-_ownerKeySuffix.length) === _ownerKeySuffix; });
+              var m = fuzzyMatch(ct.c, _ownerScopedKeys.map(k => custActOriginalNames[k] || k));
               if (m) {
                 var fuzzyCanonical = getCanonicalCustomerName(m.key);
-                var fuzzyCombinedKey = fuzzyCanonical + '|' + ownerBU;
+                var fuzzyCombinedKey = fuzzyCanonical + '|' + ownerBU + '|' + ownerKeyForActMap;
                 if (custActMap[fuzzyCombinedKey]) {
                   matchedCombinedKey = fuzzyCombinedKey;
                   may26 = custActMap[fuzzyCombinedKey].may26 || 0;
@@ -4138,6 +4150,12 @@
               existing.rv += ct.rv || 0;
               existing.gm += ct.gm || 0;
               existing.ob += ct.ob || 0;
+              existing.rv2 = (existing.rv2 || 0) + (ct.rv2 || 0);
+              existing.gm2 = (existing.gm2 || 0) + (ct.gm2 || 0);
+              existing.rv3 = (existing.rv3 || 0) + (ct.rv3 || 0);
+              existing.gm3 = (existing.gm3 || 0) + (ct.gm3 || 0);
+              existing.rv4 = (existing.rv4 || 0) + (ct.rv4 || 0);
+              existing.gm4 = (existing.gm4 || 0) + (ct.gm4 || 0);
               
               // For actuals from duplicate rows: take first non-zero value
               if (existing.apr26 === 0 && (ct.apr26 || 0) !== 0) existing.apr26 = ct.apr26 || 0;
@@ -4222,7 +4240,7 @@
             actEntry.customers.forEach(function(c) {
               var canonicalName = getCanonicalCustomerName(c.mis_name); // Use canonical mapping
               var ownerBU = td.bu || 'Unknown'; // Get BU from owner's target data
-              var mappedKey = canonicalName + '|' + ownerBU; // In global map, use combined key with BU
+              var mappedKey = canonicalName + '|' + ownerBU + '|' + ownerKeyForActMap; // In global map, use combined key with BU + owner
               
               // Debug for Priyanka Bansode
               if (o.owner === 'Priyanka Bansode' && canonicalName === 'abc') {
@@ -4999,7 +5017,7 @@
           const buildLossData = () => { if (!historicalData?.rawRows?.length || !historicalData?.colMap) return { rows: [], qtrOptions: [] }; const { rawRows, colMap, headers } = historicalData; const iStatus = colMap.status, iActClose = colMap.actClose, iValue = colMap.value; const iReason = headers ? headers.indexOf("Status Reason") : -1; const iVertH = headers ? headers.indexOf("Business Vertical (Account Name) (Account)") : -1; const lrMap = {}, lrDeals = {}, qtrSet = new Set(); for (const r of rawRows) { if (normaliseStatus(r[iStatus]) !== "Lost") continue; if (ceoLossVertFilter !== "All" && iVertH >= 0 && String(r[iVertH] || "").trim() !== ceoLossVertFilter) continue; const actClose = parseExcelDate(r[iActClose]); if (actClose) { const q = getQuarter(actClose); if (q) qtrSet.add(q); if (ceoLossQtr !== "All" && q !== ceoLossQtr) continue; } else if (ceoLossQtr !== "All") continue; const reason = iReason >= 0 ? String(r[iReason] || "").trim() : "Unknown"; const val = typeof r[iValue] === "number" ? r[iValue] : parseFloat(String(r[iValue] || "").replace(/[,$]/g, "")) || 0; lrMap[reason] = (lrMap[reason] || 0) + val; if (!lrDeals[reason]) lrDeals[reason] = []; lrDeals[reason].push(r); } const total = Object.values(lrMap).reduce((s, v) => s + v, 0); const rows = Object.entries(lrMap).filter(([, v]) => v > 0).map(([reason, tcv]) => ({ reason, tcv, mix: total > 0 ? parseFloat((tcv / total * 100).toFixed(1)) : 0, deals: (lrDeals[reason] || []).slice() })).sort((a, b) => b.tcv - a.tcv); const qtrOptions = ["All", ...Array.from(qtrSet).sort(sortQuarters).filter(q => { const p = q.split(" FY"); return p.length >= 2 && parseInt(p[1]) >= 2025; })]; return { rows, qtrOptions }; }; const { rows: lossRows, qtrOptions } = buildLossData(); return/*#__PURE__*/React.createElement("div", { style: { background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 22 } },/*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 } },/*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } },/*#__PURE__*/React.createElement("div", { style: { width: 4, height: 20, background: C.red, borderRadius: 2 } }),/*#__PURE__*/React.createElement("h3", { style: { margin: 0, fontSize: 13, fontWeight: 700, color: C.text, fontFamily: "'Space Mono',monospace" } }, "Loss Analysis")),/*#__PURE__*/React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } },/*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } },/*#__PURE__*/React.createElement("span", { style: { fontSize: 10, color: C.muted } }, "VERTICAL:"),/*#__PURE__*/React.createElement("select", { value: ceoLossVertFilter, onChange: e => setCeoLossVertFilter(e.target.value), style: { background: C.card, border: `1px solid ${ceoLossVertFilter !== "All" ? C.red : C.border}`, color: ceoLossVertFilter !== "All" ? C.red : C.text, borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", fontWeight: ceoLossVertFilter !== "All" ? 700 : 400 } },/*#__PURE__*/React.createElement("option", { value: "All" }, "All Verticals"), sortedVerts.map(v =>/*#__PURE__*/React.createElement("option", { key: v, value: v }, v)))),/*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } },/*#__PURE__*/React.createElement("span", { style: { fontSize: 10, color: C.muted } }, "QUARTER:"),/*#__PURE__*/React.createElement("select", { value: ceoLossQtr, onChange: e => setCeoLossQtr(e.target.value), style: { background: C.card, border: `1px solid ${ceoLossQtr !== "All" ? C.red : C.border}`, color: ceoLossQtr !== "All" ? C.red : C.text, borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", fontWeight: ceoLossQtr !== "All" ? 700 : 400 } }, qtrOptions.map(q =>/*#__PURE__*/React.createElement("option", { key: q, value: q }, q === "All" ? "All Quarters" : q)))))), lossRows.length > 0 ?/*#__PURE__*/React.createElement("div", { style: { overflowX: "auto" } },/*#__PURE__*/React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 11 } },/*#__PURE__*/React.createElement("thead", null,/*#__PURE__*/React.createElement("tr", { style: { borderBottom: `2px solid ${C.border}` } },/*#__PURE__*/React.createElement("th", { style: { padding: "9px 12px", textAlign: "left", color: C.muted, fontSize: 10, fontWeight: 600 } }, "Reason"),/*#__PURE__*/React.createElement("th", { style: { padding: "9px 12px", textAlign: "right", color: C.muted, fontSize: 10, fontWeight: 600 } }, "Lost TCV"),/*#__PURE__*/React.createElement("th", { style: { padding: "9px 12px", textAlign: "right", color: C.muted, fontSize: 10, fontWeight: 600 } }, "Mix %"),/*#__PURE__*/React.createElement("th", { style: { padding: "9px 12px", textAlign: "left", color: C.muted, fontSize: 10, fontWeight: 600, minWidth: 120 } }, "Share"))),/*#__PURE__*/React.createElement("tbody", null, lossRows.map((row, i) =>/*#__PURE__*/React.createElement("tr", { key: i, style: { borderBottom: `1px solid ${C.border}44`, position: "relative" }, onMouseEnter: e => e.currentTarget.style.background = "rgba(255,255,255,0.025)", onMouseLeave: e => e.currentTarget.style.background = "transparent" },/*#__PURE__*/React.createElement("td", { style: { padding: "9px 12px", color: C.text, fontWeight: 600 } },/*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },/*#__PURE__*/React.createElement("div", { style: { width: 8, height: 8, borderRadius: 2, background: C.red, flexShrink: 0 } }), row.reason,/*#__PURE__*/React.createElement("span", { style: { color: C.muted, fontSize: 10, fontWeight: 400 } }, "\u25B8 ", row.deals.length, " deals"))),/*#__PURE__*/React.createElement("td", { style: { padding: "9px 12px", textAlign: "right" } },/*#__PURE__*/React.createElement("span", { onMouseEnter: e => { const sorted = [...row.deals].sort((a, b) => { const iv = historicalData?.colMap?.value ?? -1; return (typeof b[iv] === "number" ? b[iv] : parseFloat(String(b[iv] || "").replace(/[,$]/g, "")) || 0) - (typeof a[iv] === "number" ? a[iv] : parseFloat(String(a[iv] || "").replace(/[,$]/g, "")) || 0); }); const iAcc = historicalData?.headers?.indexOf("Account Name") ?? -1; const rect = e.currentTarget.getBoundingClientRect(); setOthersTooltip({ x: rect.left + rect.width / 2, y: rect.bottom + 6, stage: `Loss: ${row.reason}`, stageIdx: i % C.stages.length, accounts: sorted.slice(0, 10).map(d => [iAcc >= 0 ? String(d[iAcc] || "—") : "—", typeof d[historicalData.colMap.value] === "number" ? d[historicalData.colMap.value] : parseFloat(String(d[historicalData.colMap.value] || "").replace(/[,$]/g, "")) || 0]) }); }, onMouseLeave: () => setOthersTooltip(null), style: { cursor: "default", color: C.red, fontFamily: "'Space Mono',monospace", fontWeight: 700 } }, fmt(row.tcv))),/*#__PURE__*/React.createElement("td", { style: { padding: "9px 12px", textAlign: "right", color: C.muted } }, row.mix, "%"),/*#__PURE__*/React.createElement("td", { style: { padding: "9px 12px" } },/*#__PURE__*/React.createElement("div", { style: { background: `${C.red}22`, borderRadius: 3, height: 6, width: "100%" } },/*#__PURE__*/React.createElement("div", { style: { background: C.red, borderRadius: 3, height: 6, width: `${row.mix}%` } })))))),/*#__PURE__*/React.createElement("tfoot", null,/*#__PURE__*/React.createElement("tr", { style: { borderTop: `2px solid ${C.border}` } },/*#__PURE__*/React.createElement("td", { style: { padding: "9px 12px", color: C.muted, fontWeight: 700, fontSize: 11 } }, "TOTAL"),/*#__PURE__*/React.createElement("td", { style: { padding: "9px 12px", textAlign: "right", color: C.red, fontFamily: "'Space Mono',monospace", fontWeight: 700 } }, fmt(lossRows.reduce((s, r) => s + r.tcv, 0))),/*#__PURE__*/React.createElement("td", { style: { padding: "9px 12px", textAlign: "right", color: C.text, fontWeight: 700 } }, "100%"),/*#__PURE__*/React.createElement("td", null))))) :/*#__PURE__*/React.createElement("div", { style: { color: C.muted, fontSize: 12, padding: "20px 0" } }, "No loss data available"));
         })())), activeTab === "bookings" &&/*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, (() => {
           const BV_ORDER = ["Healthcare", "CIT", "Tech", "India & GCC", "SEAD"]; const BU_TO_VERT = { "Healthcare": "Healthcare", "CIT": "CIT", "Tech": "Tech", "India & GCC": "India & UK", "SEAD": "SEAD" }; const activeBVs = hasEffectiveVerticalFilter ? BV_ORDER.filter(bv => effectiveVerticalFilter.some(vf => vf === bv || vf === BU_TO_VERT[bv] || BU_TO_VERT[bv] === vf)) : BV_ORDER; const BV_DISPLAY = { "Tech": "Technology", "India & GCC": "India & UK" }; const BU_MAP = { "Healthcare": "Healthcare", "CIT": "CIT", "Tech": "Tech", "Technology": "Tech", "India & UK": "India & GCC", "India & GCC": "India & GCC", "India": "India & GCC", "SEAD": "SEAD" };// Pro-rata date from Q1'27 bookings filename, fallback to pipeline date
-          const _bkDate = ((function(fn) { if (!fn) return null; var MO={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}; var s=String(fn).replace(/[_\-]/g,' '); var m=s.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2,4})/); if(m){var d=parseInt(m[1]),mo=MO[m[2].toLowerCase()],yr=parseInt(m[3]);if(yr<100)yr+=2000;if(mo!==undefined)return new Date(Date.UTC(yr,mo,d));} m=s.match(/(20\d{2})\s+(\d{1,2})\s+(\d{1,2})/); if(m)return new Date(Date.UTC(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]))); return null; })(bookingsFilename) || (function(fn) { if (!fn) return null; var MO={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}; var s=String(fn).replace(/[_\-]/g,' '); var m=s.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2,4})/); if(m){var d=parseInt(m[1]),mo=MO[m[2].toLowerCase()],yr=parseInt(m[3]);if(yr<100)yr+=2000;if(mo!==undefined)return new Date(Date.UTC(yr,mo,d));} m=s.match(/(20\d{2})\s+(\d{1,2})\s+(\d{1,2})/); if(m)return new Date(Date.UTC(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]))); return null; })((typeof window!=='undefined'&&window.__PRELOADED_DATA__?.bookingsFilename)||null) || new Date()); const _qStarts = { 1: Date.UTC(2026, 3, 1), 2: Date.UTC(2026, 6, 1), 3: Date.UTC(2026, 9, 1), 4: Date.UTC(2027, 0, 1), 5: Date.UTC(2027, 3, 1) }; const _qvBK = bookingsQuarterView || 1; const _qStart = _qStarts[_qvBK] || _qStarts[1]; const _qEnd = _qStarts[_qvBK + 1] || Date.UTC(2027, 3, 1); const DAYS_IN_Q = Math.round((_qEnd - _qStart) / 86400000); const DAYS_ELAPSED = Math.max(1, Math.min(DAYS_IN_Q, Math.round((_bkDate - _qStart) / 86400000))); const TARGETS_RAW = { "Healthcare": { EE: 460000, EN: 19500000, NN: 50000 }, "CIT": { EE: 720000, EN: 2020000, NN: 2260000 }, "Technology": { EE: 2200000, EN: 3300000, NN: 400000 }, "India & UK": { EE: 0, EN: 7000000, NN: 1100000 }, "SEAD": { EE: 2400000, EN: 3400000, NN: 700000 } }; const TARGET_DISPLAY = { "Healthcare": { EE: "$0.46M", EN: "$19.5M", NN: "$0.05M", Total: "$20M" }, "CIT": { EE: "$0.72M", EN: "$2.02M", NN: "$2.26M", Total: "$5M" }, "Technology": { EE: "$2.2M", EN: "$3.3M", NN: "$0.4M", Total: "$5.9M" }, "India & UK": { EE: "—", EN: "$3M—$11M", NN: "$1.1M", Total: "$4M—$12M" }, "SEAD": { EE: "$2.4M", EN: "$3.4M", NN: "$0.7M", Total: "$6.5M" } }; const Q_LABELS = ["Q1", "Q2", "Q3", "Q4"]; const fmtM = v => v === 0 ? "—" : "$" + (v / 1000000).toFixed(2) + "M"; const filterBiz = (rows, biz) => biz === "All" ? rows : rows.filter(r => String(r["Business type"] || r["Business Type"] || "").trim().toUpperCase() === biz); const fy26Data = {}; BV_ORDER.forEach(bv => { fy26Data[bv] = {}; Q_LABELS.forEach(q => { fy26Data[bv][q] = 0; }); fy26Data[bv]["FY26"] = 0; }); fy26Data["Total"] = {}; Q_LABELS.forEach(q => { fy26Data["Total"][q] = 0; }); fy26Data["Total"]["FY26"] = 0; const q127Act = {}; BV_ORDER.forEach(bv => { q127Act[bv] = 0; }); q127Act["Total"] = 0;// FY26 actuals from dedicated FY26 bookings file
+          const _bkDate = ((function(fn) { if (!fn) return null; var MO={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}; var s=String(fn).replace(/[_\-]/g,' '); var m=s.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2,4})/); if(m){var d=parseInt(m[1]),mo=MO[m[2].toLowerCase()],yr=parseInt(m[3]);if(yr<100)yr+=2000;if(mo!==undefined)return new Date(Date.UTC(yr,mo,d));} m=s.match(/(20\d{2})\s+(\d{1,2})\s+(\d{1,2})/); if(m)return new Date(Date.UTC(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]))); return null; })(bookingsFilename) || (function(fn) { if (!fn) return null; var MO={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}; var s=String(fn).replace(/[_\-]/g,' '); var m=s.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2,4})/); if(m){var d=parseInt(m[1]),mo=MO[m[2].toLowerCase()],yr=parseInt(m[3]);if(yr<100)yr+=2000;if(mo!==undefined)return new Date(Date.UTC(yr,mo,d));} m=s.match(/(20\d{2})\s+(\d{1,2})\s+(\d{1,2})/); if(m)return new Date(Date.UTC(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]))); return null; })((typeof window!=='undefined'&&window.__PRELOADED_DATA__?.bookingsFilename)||null) || new Date()); const _qStarts = { 1: Date.UTC(2026, 3, 1), 2: Date.UTC(2026, 6, 1), 3: Date.UTC(2026, 9, 1), 4: Date.UTC(2027, 0, 1), 5: Date.UTC(2027, 3, 1) }; const _qvBK = bookingsQuarterView || 1; const _qStart = _qStarts[_qvBK] || _qStarts[1]; const _qEnd = _qStarts[_qvBK + 1] || Date.UTC(2027, 3, 1); const DAYS_IN_Q = Math.round((_qEnd - _qStart) / 86400000); const DAYS_ELAPSED = Math.max(1, Math.min(DAYS_IN_Q, Math.round((_bkDate - _qStart) / 86400000))); const TARGETS_RAW = { "Healthcare": { EE: 460000, EN: 19500000, NN: 50000 }, "CIT": { EE: 720000, EN: 2020000, NN: 2260000 }, "Technology": { EE: 2200000, EN: 3300000, NN: 400000 }, "India & UK": { EE: 0, EN: 7000000, NN: 1100000 }, "SEAD": { EE: 2400000, EN: 3400000, NN: 700000 } }; const TARGET_DISPLAY = { "Healthcare": { EE: "$0.46M", EN: "$19.5M", NN: "$0.05M", Total: "$20M" }, "CIT": { EE: "$0.72M", EN: "$2.02M", NN: "$2.26M", Total: "$5M" }, "Technology": { EE: "$2.2M", EN: "$3.3M", NN: "$0.4M", Total: "$5.9M" }, "India & UK": { EE: "—", EN: "$3M—$11M", NN: "$1.1M", Total: "$4M—$12M" }, "SEAD": { EE: "$2.4M", EN: "$3.4M", NN: "$0.7M", Total: "$6.5M" } }; const Q_LABELS = ["Q1", "Q2", "Q3", "Q4"]; const fmtM = v => v === 0 ? "—" : "$" + (v / 1000000).toFixed(2) + "M"; const filterBiz = (rows, biz) => biz === "All" ? rows : rows.filter(r => { const raw = String(r["Business type"] || r["Business Type"] || "").trim().toUpperCase(); const code = (raw.match(/^(EE|EN|NN)\b/) || [])[1] || raw; return code === biz; }); const fy26Data = {}; BV_ORDER.forEach(bv => { fy26Data[bv] = {}; Q_LABELS.forEach(q => { fy26Data[bv][q] = 0; }); fy26Data[bv]["FY26"] = 0; }); fy26Data["Total"] = {}; Q_LABELS.forEach(q => { fy26Data["Total"][q] = 0; }); fy26Data["Total"]["FY26"] = 0; const q127Act = {}; BV_ORDER.forEach(bv => { q127Act[bv] = 0; }); q127Act["Total"] = 0;// FY26 actuals from dedicated FY26 bookings file
           // FY26 actuals: only Q1/Q2/Q3/Q4 (exclude Q127/Apr26)
           const fy26Source = fy26BookingsData?.length ? fy26BookingsData : []; if (fy26Source.length) {
             const bizRows26 = filterBiz(fy26Source, bookingsBizFilter); bizRows26.forEach(row => {
@@ -8011,11 +8029,26 @@
                   console.log('[actRevData] Column F (index 5):', '"' + String(baseHeaders[5] || '').trim() + '"');
                 }
                 
-                // Find Sales person column (was CP/Hunter) - more flexible matching
-                var iNameCol = baseHeaders.findIndex(function(h) { 
-                  var s = String(h || '').trim().toLowerCase();
-                  return s === 'sales person' || s === 'salesperson' || s.includes('sales') || s === 'cp/hunter' || s === 'owner';
-                });
+                // Find Sales person column (was CP/Hunter) - more flexible matching.
+                // Workbooks can have UP TO FOUR "Sales person" columns — one per "Q<n> Mapping"
+                // section (accounts can be reassigned to a different owner each quarter). Collect
+                // ALL matches left-to-right and assign them to Q1..Q4 in order; if fewer than 4
+                // are found (e.g. only Q1/Q2 Mapping exist today), each missing quarter's owner
+                // column falls back to the nearest earlier quarter's column — so adding a new
+                // "Q3 Mapping"/"Q4 Mapping" Sales person column to the file in future is picked up
+                // automatically with no code change.
+                var iNameColAll = [];
+                for (var _nc = 0; _nc < baseHeaders.length; _nc++) {
+                  var _ncS = String(baseHeaders[_nc] || '').trim().toLowerCase();
+                  if (_ncS === 'sales person' || _ncS === 'salesperson' || _ncS.includes('sales') || _ncS === 'cp/hunter' || _ncS === 'owner') iNameColAll.push(_nc);
+                }
+                var iNameColByQ = {};
+                for (var _qn = 1; _qn <= 4; _qn++) {
+                  iNameColByQ[_qn] = iNameColAll.length >= _qn ? iNameColAll[_qn - 1] : (iNameColByQ[_qn - 1] !== undefined ? iNameColByQ[_qn - 1] : (iNameColAll.length > 0 ? iNameColAll[iNameColAll.length - 1] : -1));
+                }
+                var iNameCol = iNameColByQ[1];
+                var iNameColQ2 = iNameColByQ[2];
+                console.log('[actRevData] Sales person columns found:', iNameColAll.length, '→ per-quarter mapping:', JSON.stringify(iNameColByQ));
                 console.log('[actRevData] Sales person column index:', iNameCol, iNameCol >= 0 ? '(header: "' + baseHeaders[iNameCol] + '")' : '(NOT FOUND)');
                 
                 // Find MIS Name column - more flexible matching
@@ -8257,165 +8290,180 @@
                     }
                   }
                   
-                  // Initialize owner if not exists
-                  if (!ownerActuals[ownerName]) {
-                    ownerActuals[ownerName] = {
-                      bu: buValue || '',
-                      role: normalizedRole, // Store normalized role: 'Hunter', 'Farmer', 'DP', 'CBO', 'n/a', etc.
-                      total_may26: 0, total_jun26: 0, total_may26_monthly: 0, total_gm: 0, total_ob: 0,
-                      total_rev_q2: 0, total_gm_q2: 0, total_rev_q3: 0, total_gm_q3: 0, total_rev_q4: 0, total_gm_q4: 0,
-                      customers: [],
-                      customersByBU: {} // Track customers by BU for Unassigned grouping
-                    };
-                  } else {
-                    // Update BU if we didn't have it before
-                    if (buValue && !ownerActuals[ownerName].bu) {
-                      ownerActuals[ownerName].bu = buValue;
-                    }
-                    // Update role - prefer more specific values (Hunter/Farmer over n/a)
-                    if (normalizedRole && normalizedRole !== 'n/a') {
-                      if (!ownerActuals[ownerName].role || ownerActuals[ownerName].role === 'n/a') {
-                        ownerActuals[ownerName].role = normalizedRole;
-                      }
-                    }
+                  // Compute the per-quarter owner for this row (accounts can be reassigned to a
+                  // different seller each quarter — the file has separate "Q<n> Mapping" Sales
+                  // person columns for exactly this reason). Each quarter falls back to the
+                  // nearest earlier quarter's owner when its own mapping column is missing or blank.
+                  var ownerByQ = { 1: ownerName };
+                  for (var _oq = 2; _oq <= 4; _oq++) {
+                    var _oqCol = iNameColByQ[_oq];
+                    var _oqRaw = _oqCol >= 0 ? String(r[_oqCol] || '').trim() : '';
+                    var _oqName = _oqRaw ? _oqRaw.replace(/\s*\([^)]*\)\s*/g, '').trim().replace(/\s+/g, ' ') : '';
+                    ownerByQ[_oq] = _oqName || ownerByQ[_oq - 1];
                   }
-                  
-                  // For Unassigned, track customers by BU to enable BU filtering
-                  if (ownerName === 'Unassigned' && buValue) {
-                    if (!ownerActuals[ownerName].customersByBU[buValue]) {
-                      ownerActuals[ownerName].customersByBU[buValue] = {
-                        total_may26: 0,
-                        total_gm: 0,
-                        total_ob: 0,
-                        customers: []
+                  var ownerNameQ2 = ownerByQ[2]; // kept for readability below
+                  if (ownerByQ[2] !== ownerByQ[1] || ownerByQ[3] !== ownerByQ[2] || ownerByQ[4] !== ownerByQ[3]) {
+                    console.log('[actRevData Reassignment]', customerName || '(row ' + i + ')', '- owners by quarter:', JSON.stringify(ownerByQ));
+                  }
+
+                  // Customer alias mapping (defined once per row, used by the helper below)
+                  var getCanonicalCustName = function(name) {
+                    var normalized = String(name || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+                    if (normalized.includes('aditya birla')) return 'abc';
+                    if (normalized.includes('texas instruments')) return 'ti';
+                    if (normalized.includes('analog devices')) return 'adi';
+                    if (normalized.startsWith('aws') || normalized.includes('amazon web services')) return 'aws';
+                    if (normalized.startsWith('google')) return 'google';
+                    if (normalized.includes('on semiconductor') || normalized.includes('onsemi')) return 'onsemi';
+                    if (normalized.includes('essen')) return 'essen';
+                    if (normalized.includes('lsi india') || normalized.includes('broadcom')) return 'broadcom';
+                    if (normalized.includes('marvel')) return 'marvell';
+                    return normalized;
+                  };
+
+                  // Get preferred display name for canonical mappings
+                  var getPreferredDisplayNameForActuals = function(canonicalName, actualName) {
+                    var displayMap = { 'abc': 'ABC', 'ti': 'TI', 'adi': 'ADI', 'aws': 'AWS', 'google': 'Google', 'onsemi': 'OnSemi', 'essen': 'ESSEN CARE MANAGEMENT LLC', 'broadcom': 'Broadcom', 'marvell': 'Marvell' };
+                    return displayMap[canonicalName] || actualName;
+                  };
+
+                  // Applies one quarter-scoped set of actuals to one owner. Returns true if the
+                  // row contributed anything (mirrors the original counting rule: always count
+                  // when a customer name is present, otherwise only when a value is non-zero).
+                  var applyRowToOwner = function(targetOwner, f) {
+                    // Initialize owner if not exists
+                    if (!ownerActuals[targetOwner]) {
+                      ownerActuals[targetOwner] = {
+                        bu: buValue || '',
+                        role: normalizedRole, // Store normalized role: 'Hunter', 'Farmer', 'DP', 'CBO', 'n/a', etc.
+                        total_may26: 0, total_jun26: 0, total_may26_monthly: 0, total_gm: 0, total_ob: 0,
+                        total_rev_q2: 0, total_gm_q2: 0, total_rev_q3: 0, total_gm_q3: 0, total_rev_q4: 0, total_gm_q4: 0,
+                        customers: [],
+                        customersByBU: {} // Track customers by BU for Unassigned grouping
                       };
-                    }
-                  }
-                  
-                  // Add customer actuals - include ALL customers from the file, even if actuals are 0
-                  // This ensures customers with targets but no actuals are still shown
-                  if (customerName) {
-                    // Customer alias mapping
-                    var getCanonicalCustName = function(name) {
-                      var normalized = String(name || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
-                      if (normalized.includes('aditya birla')) return 'abc';
-                      if (normalized.includes('texas instruments')) return 'ti';
-                      if (normalized.includes('analog devices')) return 'adi';
-                      if (normalized.startsWith('aws') || normalized.includes('amazon web services')) return 'aws';
-                      if (normalized.startsWith('google')) return 'google';
-                      if (normalized.includes('on semiconductor') || normalized.includes('onsemi')) return 'onsemi';
-                      if (normalized.includes('essen')) return 'essen';
-                      if (normalized.includes('lsi india') || normalized.includes('broadcom')) return 'broadcom';
-                      if (normalized.includes('marvel')) return 'marvell';
-                      return normalized;
-                    };
-                    
-                    // Get preferred display name for canonical mappings
-                    var getPreferredDisplayNameForActuals = function(canonicalName, actualName) {
-                      var displayMap = { 'abc': 'ABC', 'ti': 'TI', 'adi': 'ADI', 'aws': 'AWS', 'google': 'Google', 'onsemi': 'OnSemi', 'essen': 'ESSEN CARE MANAGEMENT LLC', 'broadcom': 'Broadcom', 'marvell': 'Marvell' };
-                      return displayMap[canonicalName] || actualName;
-                    };
-                    
-                    var canonicalCustName = getCanonicalCustName(customerName);
-                    
-                    // Check if this customer already exists for this owner (using canonical name)
-                    var existingCust = ownerActuals[ownerName].customers.find(function(c) {
-                      return getCanonicalCustName(c.mis_name) === canonicalCustName;
-                    });
-                    
-                    if (existingCust) {
-                      // Merge values into existing customer
-                      existingCust.may26_actual += revActual;
-                      existingCust.gm_actual += gmActual;
-                      existingCust.ob_actual += obActual;
-                      existingCust.rev_actual_q2 = (existingCust.rev_actual_q2 || 0) + revActQ2;
-                      existingCust.rev_actual_q3 = (existingCust.rev_actual_q3 || 0) + revActQ3;
-                      existingCust.rev_actual_q4 = (existingCust.rev_actual_q4 || 0) + revActQ4;
-                      existingCust.gm_actual_q2 = (existingCust.gm_actual_q2 || 0) + gmActQ2;
-                      existingCust.gm_actual_q3 = (existingCust.gm_actual_q3 || 0) + gmActQ3;
-                      existingCust.gm_actual_q4 = (existingCust.gm_actual_q4 || 0) + gmActQ4;
-                      console.log('[actRevData Dedup]', ownerName, '- merged:', customerName, '→', existingCust.mis_name, '(canonical:', canonicalCustName, ')');
-                      
-                      // Debug for AWS merges
-                      if (canonicalCustName === 'aws') {
-                        console.log('[actRevData AWS Dedup]', ownerName, '- merged AWS variant:', customerName, '→', existingCust.mis_name);
-                      }
-                      
-                      // Debug for Google merges
-                      if (canonicalCustName === 'google') {
-                        console.log('[actRevData Google Dedup]', ownerName, '- merged Google variant:', customerName, '→', existingCust.mis_name);
-                      }
-                      
-                      // Debug for OnSemi merges
-                      if (canonicalCustName === 'onsemi') {
-                        console.log('[actRevData OnSemi Dedup]', ownerName, '- merged OnSemi variant:', customerName, '→', existingCust.mis_name);
-                      }
-                      
-                      // Debug for Essen merges
-                      if (canonicalCustName === 'essen') {
-                        console.log('[actRevData Essen Dedup]', ownerName, '- merged Essen variant:', customerName, '→', existingCust.mis_name);
-                      }
-                      
-                      // Debug for Broadcom merges
-                      if (canonicalCustName === 'broadcom') {
-                        console.log('[actRevData Broadcom Dedup]', ownerName, '- merged Broadcom variant:', customerName, '→', existingCust.mis_name);
-                      }
                     } else {
-                      // Add new customer record with preferred display name
-                      var customerRecord = {
-                        mis_name: getPreferredDisplayNameForActuals(canonicalCustName, customerName),
-                        may26_actual: revActual,
-                        gm_actual: gmActual,
-                        ob_actual: obActual,
-                        rev_actual_q2: revActQ2, rev_actual_q3: revActQ3, rev_actual_q4: revActQ4,
-                        gm_actual_q2: gmActQ2, gm_actual_q3: gmActQ3, gm_actual_q4: gmActQ4
-                      };
-                      ownerActuals[ownerName].customers.push(customerRecord);
+                      // Update BU if we didn't have it before
+                      if (buValue && !ownerActuals[targetOwner].bu) {
+                        ownerActuals[targetOwner].bu = buValue;
+                      }
+                      // Update role - prefer more specific values (Hunter/Farmer over n/a)
+                      if (normalizedRole && normalizedRole !== 'n/a') {
+                        if (!ownerActuals[targetOwner].role || ownerActuals[targetOwner].role === 'n/a') {
+                          ownerActuals[targetOwner].role = normalizedRole;
+                        }
+                      }
                     }
-                    
-                    // Debug: Log customers with 0 actuals to verify they're included
-                    if (revActual === 0 && gmActual === 0 && obActual === 0 && customerName) {
-                      console.log('[actRevData $0 Customer]', ownerName, '-', customerName, '(all actuals are $0)');
+
+                    // For Unassigned, track customers by BU to enable BU filtering
+                    if (targetOwner === 'Unassigned' && buValue) {
+                      if (!ownerActuals[targetOwner].customersByBU[buValue]) {
+                        ownerActuals[targetOwner].customersByBU[buValue] = {
+                          total_may26: 0,
+                          total_gm: 0,
+                          total_ob: 0,
+                          customers: []
+                        };
+                      }
                     }
-                    
-                    // Also add to BU-specific tracking for Unassigned
-                    if (ownerName === 'Unassigned' && buValue && ownerActuals[ownerName].customersByBU[buValue]) {
-                      var existingBUCust = ownerActuals[ownerName].customersByBU[buValue].customers.find(function(c) {
+
+                    // Add customer actuals - include ALL customers from the file, even if actuals are 0
+                    // This ensures customers with targets but no actuals are still shown
+                    if (customerName) {
+                      var canonicalCustName = getCanonicalCustName(customerName);
+
+                      // Check if this customer already exists for this owner (using canonical name)
+                      var existingCust = ownerActuals[targetOwner].customers.find(function(c) {
                         return getCanonicalCustName(c.mis_name) === canonicalCustName;
                       });
-                      
-                      if (existingBUCust) {
-                        existingBUCust.may26_actual += revActual;
-                        existingBUCust.gm_actual += gmActual;
-                        existingBUCust.ob_actual += obActual;
+
+                      if (existingCust) {
+                        // Merge values into existing customer
+                        existingCust.may26_actual += f.revActual;
+                        existingCust.gm_actual += f.gmActual;
+                        existingCust.ob_actual += f.obActual;
+                        existingCust.rev_actual_q2 = (existingCust.rev_actual_q2 || 0) + f.revActQ2;
+                        existingCust.rev_actual_q3 = (existingCust.rev_actual_q3 || 0) + f.revActQ3;
+                        existingCust.rev_actual_q4 = (existingCust.rev_actual_q4 || 0) + f.revActQ4;
+                        existingCust.gm_actual_q2 = (existingCust.gm_actual_q2 || 0) + f.gmActQ2;
+                        existingCust.gm_actual_q3 = (existingCust.gm_actual_q3 || 0) + f.gmActQ3;
+                        existingCust.gm_actual_q4 = (existingCust.gm_actual_q4 || 0) + f.gmActQ4;
+                        console.log('[actRevData Dedup]', targetOwner, '- merged:', customerName, '→', existingCust.mis_name, '(canonical:', canonicalCustName, ')');
                       } else {
-                        var customerRecordBU = {
+                        // Add new customer record with preferred display name
+                        ownerActuals[targetOwner].customers.push({
                           mis_name: getPreferredDisplayNameForActuals(canonicalCustName, customerName),
-                          may26_actual: revActual,
-                          gm_actual: gmActual,
-                          ob_actual: obActual
-                        };
-                        ownerActuals[ownerName].customersByBU[buValue].customers.push(customerRecordBU);
+                          may26_actual: f.revActual,
+                          gm_actual: f.gmActual,
+                          ob_actual: f.obActual,
+                          rev_actual_q2: f.revActQ2, rev_actual_q3: f.revActQ3, rev_actual_q4: f.revActQ4,
+                          gm_actual_q2: f.gmActQ2, gm_actual_q3: f.gmActQ3, gm_actual_q4: f.gmActQ4
+                        });
                       }
-                      
-                      ownerActuals[ownerName].customersByBU[buValue].total_may26 += revActual;
-                      ownerActuals[ownerName].customersByBU[buValue].total_gm += gmActual;
-                      ownerActuals[ownerName].customersByBU[buValue].total_ob += obActual;
+
+                      // Also add to BU-specific tracking for Unassigned
+                      if (targetOwner === 'Unassigned' && buValue && ownerActuals[targetOwner].customersByBU[buValue]) {
+                        var existingBUCust = ownerActuals[targetOwner].customersByBU[buValue].customers.find(function(c) {
+                          return getCanonicalCustName(c.mis_name) === canonicalCustName;
+                        });
+
+                        if (existingBUCust) {
+                          existingBUCust.may26_actual += f.revActual;
+                          existingBUCust.gm_actual += f.gmActual;
+                          existingBUCust.ob_actual += f.obActual;
+                        } else {
+                          ownerActuals[targetOwner].customersByBU[buValue].customers.push({
+                            mis_name: getPreferredDisplayNameForActuals(canonicalCustName, customerName),
+                            may26_actual: f.revActual,
+                            gm_actual: f.gmActual,
+                            ob_actual: f.obActual
+                          });
+                        }
+
+                        ownerActuals[targetOwner].customersByBU[buValue].total_may26 += f.revActual;
+                        ownerActuals[targetOwner].customersByBU[buValue].total_gm += f.gmActual;
+                        ownerActuals[targetOwner].customersByBU[buValue].total_ob += f.obActual;
+                      }
+
+                      ownerActuals[targetOwner].total_may26 += f.revActual; ownerActuals[targetOwner].total_jun26 = (ownerActuals[targetOwner].total_jun26||0) + f.revActJun26; ownerActuals[targetOwner].total_may26_monthly = (ownerActuals[targetOwner].total_may26_monthly||0) + f.revActMay26monthly; ownerActuals[targetOwner].total_gm += f.gmActual; ownerActuals[targetOwner].total_ob += f.obActual;
+                      ownerActuals[targetOwner].total_rev_q2 += f.revActQ2; ownerActuals[targetOwner].total_gm_q2 += f.gmActQ2;
+                      ownerActuals[targetOwner].total_rev_q3 += f.revActQ3; ownerActuals[targetOwner].total_gm_q3 += f.gmActQ3;
+                      ownerActuals[targetOwner].total_rev_q4 += f.revActQ4; ownerActuals[targetOwner].total_gm_q4 += f.gmActQ4;
+                      return true;
+                    } else if (f.revActual !== 0 || f.gmActual !== 0 || f.obActual !== 0) {
+                      // No customer name but has actuals - add to owner totals
+                      ownerActuals[targetOwner].total_may26 += f.revActual; ownerActuals[targetOwner].total_jun26 = (ownerActuals[targetOwner].total_jun26||0) + f.revActJun26; ownerActuals[targetOwner].total_may26_monthly = (ownerActuals[targetOwner].total_may26_monthly||0) + f.revActMay26monthly; ownerActuals[targetOwner].total_gm += f.gmActual; ownerActuals[targetOwner].total_ob += f.obActual;
+                      ownerActuals[targetOwner].total_rev_q2 += f.revActQ2; ownerActuals[targetOwner].total_gm_q2 += f.gmActQ2;
+                      ownerActuals[targetOwner].total_rev_q3 += f.revActQ3; ownerActuals[targetOwner].total_gm_q3 += f.gmActQ3;
+                      ownerActuals[targetOwner].total_rev_q4 += f.revActQ4; ownerActuals[targetOwner].total_gm_q4 += f.gmActQ4;
+                      return true;
                     }
-                    
-                    ownerActuals[ownerName].total_may26 += revActual; ownerActuals[ownerName].total_jun26 = (ownerActuals[ownerName].total_jun26||0) + revActJun26; ownerActuals[ownerName].total_may26_monthly = (ownerActuals[ownerName].total_may26_monthly||0) + revActMay26monthly; ownerActuals[ownerName].total_gm += gmActual; ownerActuals[ownerName].total_ob += obActual;
-                    ownerActuals[ownerName].total_rev_q2 += revActQ2; ownerActuals[ownerName].total_gm_q2 += gmActQ2;
-                    ownerActuals[ownerName].total_rev_q3 += revActQ3; ownerActuals[ownerName].total_gm_q3 += gmActQ3;
-                    ownerActuals[ownerName].total_rev_q4 += revActQ4; ownerActuals[ownerName].total_gm_q4 += gmActQ4;
-                    processedRows++;
-                  } else if (revActual !== 0 || gmActual !== 0 || obActual !== 0) {
-                    // No customer name but has actuals - add to owner totals
-                    ownerActuals[ownerName].total_may26 += revActual; ownerActuals[ownerName].total_jun26 = (ownerActuals[ownerName].total_jun26||0) + revActJun26; ownerActuals[ownerName].total_may26_monthly = (ownerActuals[ownerName].total_may26_monthly||0) + revActMay26monthly; ownerActuals[ownerName].total_gm += gmActual; ownerActuals[ownerName].total_ob += obActual;
-                    ownerActuals[ownerName].total_rev_q2 += revActQ2; ownerActuals[ownerName].total_gm_q2 += gmActQ2;
-                    ownerActuals[ownerName].total_rev_q3 += revActQ3; ownerActuals[ownerName].total_gm_q3 += gmActQ3;
-                    ownerActuals[ownerName].total_rev_q4 += revActQ4; ownerActuals[ownerName].total_gm_q4 += gmActQ4;
-                    processedRows++;
-                  }
+                    return false;
+                  };
+
+                  // Group this row's per-quarter values by owner (usually all 4 quarters share one
+                  // owner → a single applyRowToOwner call, identical to the original behavior; when
+                  // the account was reassigned, each distinct owner gets exactly one call carrying
+                  // only the quarters actually attributed to them). Fully generic across however many
+                  // "Q<n> Mapping" columns the file has (1 to 4) — no code change needed if Q3/Q4
+                  // Mapping columns are added later.
+                  var byOwnerFields = {};
+                  var byOwnerName = {};
+                  [1, 2, 3, 4].forEach(function(qn) {
+                    var qo = ownerByQ[qn];
+                    if (!byOwnerFields[qo]) {
+                      byOwnerFields[qo] = { revActual: 0, gmActual: 0, revActQ2: 0, gmActQ2: 0, revActQ3: 0, gmActQ3: 0, revActQ4: 0, gmActQ4: 0, revActJun26: 0, revActMay26monthly: 0, obActual: 0 };
+                      byOwnerName[qo] = qo;
+                    }
+                    if (qn === 1) { byOwnerFields[qo].revActual = revActual; byOwnerFields[qo].gmActual = gmActual; byOwnerFields[qo].revActJun26 = revActJun26; byOwnerFields[qo].revActMay26monthly = revActMay26monthly; byOwnerFields[qo].obActual = obActual; }
+                    else if (qn === 2) { byOwnerFields[qo].revActQ2 = revActQ2; byOwnerFields[qo].gmActQ2 = gmActQ2; }
+                    else if (qn === 3) { byOwnerFields[qo].revActQ3 = revActQ3; byOwnerFields[qo].gmActQ3 = gmActQ3; }
+                    else if (qn === 4) { byOwnerFields[qo].revActQ4 = revActQ4; byOwnerFields[qo].gmActQ4 = gmActQ4; }
+                  });
+                  var rowCounted = false;
+                  Object.keys(byOwnerName).forEach(function(qo) {
+                    if (applyRowToOwner(byOwnerName[qo], byOwnerFields[qo])) rowCounted = true;
+                  });
+                  if (rowCounted) processedRows++;
                 }
                 
                 console.log('[actRevData] All names found in file (first 20):', allNamesFound.slice(0, 20).join(', '));
@@ -8484,9 +8532,9 @@
                     var tHF = iHFCol >= 0 ? String(tr[iHFCol] || '').trim() : '';
                     var tCustomer = iCustomerCol >= 0 ? String(tr[iCustomerCol] || '').trim() : '';
                     var tBU = iBUCol >= 0 ? String(tr[iBUCol] || '').trim() : '';
-                    
+
                     if (!tOwner || !tCustomer || tOwner.toLowerCase() === 'total' || tOwner === '-') continue;
-                    
+
                     // Fuzzy normalize owner name (same as actuals): Remove text in parentheses
                     var originalTOwner = tOwner;
                     if (tOwner) {
@@ -8496,6 +8544,19 @@
                         console.log('[FY27 Targets Name Normalize] "' + originalTOwner + '" → "' + tOwner + '"');
                       }
                     }
+
+                    // Per-quarter owner (accounts can be reassigned between quarters — see the
+                    // matching logic in the actuals parser above). Each quarter falls back to the
+                    // nearest earlier quarter's owner when its own mapping column is missing/blank.
+                    // Generic across however many "Q<n> Mapping" columns exist (1 to 4).
+                    var tOwnerByQ = { 1: tOwner };
+                    for (var _toq = 2; _toq <= 4; _toq++) {
+                      var _toqCol = iNameColByQ[_toq];
+                      var _toqRaw = _toqCol >= 0 ? String(tr[_toqCol] || '').trim() : '';
+                      var _toqName = _toqRaw ? _toqRaw.replace(/\s*\([^)]*\)\s*/g, '').trim().replace(/\s+/g, ' ') : '';
+                      tOwnerByQ[_toq] = _toqName || tOwnerByQ[_toq - 1];
+                    }
+                    var tOwnerQ2 = tOwnerByQ[2]; // kept for readability below
                     
                     // Normalize Original Plan value (same logic as actuals):
                     // - "Hunter" → "Hunter"
@@ -8538,16 +8599,36 @@
                     
                     // Include ALL customers from the file, even if targets are 0
                     // This ensures customers with actuals but no targets are still shown
-                    
-                    var key = tOwner.toLowerCase();
-                    if (!personMap[key]) {
-                      personMap[key] = { bu: tBU, name: tOwner, role: normalizedTgtRole, customers: [] };
+
+                    // Group this row's per-quarter targets by owner — usually all 4 quarters share
+                    // one owner (a single combined customer record, identical to prior behavior);
+                    // when reassigned, each distinct owner gets exactly one record carrying only the
+                    // quarters attributed to them. Generic across 1-4 "Q<n> Mapping" columns.
+                    if (tOwnerByQ[2] !== tOwnerByQ[1] || tOwnerByQ[3] !== tOwnerByQ[2] || tOwnerByQ[4] !== tOwnerByQ[3]) {
+                      console.log('[FY27 Targets Reassignment]', tCustomer, '- owners by quarter:', JSON.stringify(tOwnerByQ));
                     }
-                    
-                    // Add customer with targets (even if $0)
-                    personMap[key].customers.push({ c: tCustomer, rv: revTgt, gm: gmTgt, ob: obTgt, rv2: revTgtQ2, gm2: gmTgtQ2, rv3: revTgtQ3, gm3: gmTgtQ3, rv4: revTgtQ4, gm4: gmTgtQ4 });
+                    var tByOwnerFields = {};
+                    var tByOwnerName = {};
+                    [1, 2, 3, 4].forEach(function(qn) {
+                      var qo = tOwnerByQ[qn];
+                      if (!tByOwnerFields[qo]) {
+                        tByOwnerFields[qo] = { rv: 0, gm: 0, ob: 0, rv2: 0, gm2: 0, rv3: 0, gm3: 0, rv4: 0, gm4: 0 };
+                        tByOwnerName[qo] = qo;
+                      }
+                      if (qn === 1) { tByOwnerFields[qo].rv = revTgt; tByOwnerFields[qo].gm = gmTgt; tByOwnerFields[qo].ob = obTgt; }
+                      else if (qn === 2) { tByOwnerFields[qo].rv2 = revTgtQ2; tByOwnerFields[qo].gm2 = gmTgtQ2; }
+                      else if (qn === 3) { tByOwnerFields[qo].rv3 = revTgtQ3; tByOwnerFields[qo].gm3 = gmTgtQ3; }
+                      else if (qn === 4) { tByOwnerFields[qo].rv4 = revTgtQ4; tByOwnerFields[qo].gm4 = gmTgtQ4; }
+                    });
+                    Object.keys(tByOwnerName).forEach(function(qo) {
+                      var key = tByOwnerName[qo].toLowerCase();
+                      if (!personMap[key]) {
+                        personMap[key] = { bu: tBU, name: tByOwnerName[qo], role: normalizedTgtRole, customers: [] };
+                      }
+                      personMap[key].customers.push(Object.assign({ c: tCustomer }, tByOwnerFields[qo]));
+                    });
                     targetRows++;
-                    
+
                     // Debug: Log customers with 0 targets to verify they're included
                     if (revTgt === 0 && gmTgt === 0 && tCustomer) {
                       console.log('[FY27 Targets $0]', tOwner, '-', tCustomer, '(all targets are $0)');
