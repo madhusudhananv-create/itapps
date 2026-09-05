@@ -7,16 +7,53 @@
     </div>
     <div class="header-text">
       <h1>IT Operations Maturity Dashboard</h1>
-      <p class="subtitle">Account-level view of technology domain maturity, assessment progress, and top improvement opportunities.</p>
+      <p class="subtitle">Project-level view of technology domain maturity, assessment progress, and top improvement opportunities.</p>
+    </div>
+
+    <div class="selectors" *ngIf="viewMode === 'accounts' && !dashboardAccessLoading && dashboardAccessGranted">
+      <div class="selector" [class.filled]="selectedCycle">
+        <label for="dashboardCycleSelect">Cycle</label>
+        <app-searchable-select
+          id="dashboardCycleSelect"
+          placeholder="All cycles"
+          emptyLabel="All cycles"
+          [options]="dashboardCycleOptions"
+          [ngModel]="selectedCycleValue"
+          (ngModelChange)="onDashboardCycleChange($event)"
+        ></app-searchable-select>
+      </div>
+      <div class="selector" [class.filled]="selectedAccount">
+        <label for="dashboardAccountSelect">Account</label>
+        <app-searchable-select
+          id="dashboardAccountSelect"
+          placeholder="Select an account…"
+          [options]="dashboardAccountOptions"
+          [ngModel]="selectedAccount?.cusT_ID ?? ''"
+          (ngModelChange)="onDashboardAccountChange($event)"
+        ></app-searchable-select>
+      </div>
+      <div class="selector" [class.filled]="selectedProject">
+        <label for="dashboardProjectSelect">Project</label>
+        <app-searchable-select
+          id="dashboardProjectSelect"
+          [placeholder]="!selectedAccount ? 'Select an account first' : (projectsLoading ? 'Loading…' : 'Select a project…')"
+          [options]="dashboardProjectOptions"
+          [disabled]="!selectedAccount || projectsLoading"
+          [ngModel]="selectedProject?.projectId ?? ''"
+          (ngModelChange)="onDashboardProjectChange($event)"
+        ></app-searchable-select>
+      </div>
     </div>
   </header>
 
-  <section class="account-picker" *ngIf="myAssignmentsLoading">
-    <div class="assignments-loading">
-      <app-spinner [size]="18"></app-spinner>
-      <span>Loading your assignments...</span>
-    </div>
-  </section>
+  <p class="picker-hint" *ngIf="viewMode === 'accounts' && !dashboardAccessLoading && dashboardAccessGranted && (!accountsWithAssessments.length || (selectedAccount && !projectsLoading && !projectsForAccount.length))">
+    <ng-container *ngIf="!accountsWithAssessments.length">No accounts have an IT Operations Maturity assessment yet.</ng-container>
+    <ng-container *ngIf="accountsWithAssessments.length && selectedAccount && !projectsLoading && !projectsForAccount.length">No projects on this account have an assessment yet.</ng-container>
+  </p>
+
+  <div class="loading-overlay" *ngIf="myAssignmentsLoading && viewMode === 'assignments'">
+    <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading…</div>
+  </div>
 
   <section class="my-assignments" *ngIf="!myAssignmentsLoading && viewMode === 'assignments'">
     <div class="assignments-head">
@@ -26,7 +63,24 @@
           The domain assessments you are personally assigned to. Select one to open it.
         </p>
       </div>
-      <button type="button" class="change-account-link" (click)="browseAllAccounts()">Browse all accounts</button>
+      <button type="button" class="change-account-link" (click)="browseAllAccounts()">Dashboard &amp; all accounts</button>
+    </div>
+
+    <div class="assignments-role-tabs">
+      <button type="button" [class.active]="assignmentsTab === 'assessments'" (click)="selectAssignmentsTab('assessments')">
+        My Assessments <span class="tab-count">{{ myOpenAssessments.length }}</span>
+      </button>
+      <button type="button" [class.active]="assignmentsTab === 'reviews'" (click)="selectAssignmentsTab('reviews')">
+        Needs Review <span class="tab-count">{{ myPendingReviews.length }}</span>
+      </button>
+    </div>
+
+    <div class="cycle-filter" *ngIf="cycleOptions.length > 1">
+      <label for="assignmentsCycleFilter">Cycle</label>
+      <select id="assignmentsCycleFilter" [(ngModel)]="cycleFilter">
+        <option value="all">All cycles</option>
+        <option *ngFor="let cycle of cycleOptions" [value]="cycle">{{ cycle }}</option>
+      </select>
     </div>
 
     <div class="table-wrap">
@@ -43,7 +97,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of myAssignments" class="assignment-row" (click)="openAssignment(row)">
+          <tr *ngFor="let row of (assignmentsTab === 'assessments' ? myOpenAssessments : myPendingReviews)" class="assignment-row" (click)="openAssignment(row)">
             <td>{{ row.accountName || '-' }}</td>
             <td>{{ row.projectName || row.projectId || '-' }}</td>
             <td>{{ row.domainName || row.domainCode || '-' }}</td>
@@ -63,145 +117,78 @@
               </span>
             </td>
           </tr>
+          <tr *ngIf="assignmentsTab === 'assessments' && !myOpenAssessments.length">
+            <td colspan="7" class="picker-empty">No open assessments assigned to you right now.</td>
+          </tr>
+          <tr *ngIf="assignmentsTab === 'reviews' && !myPendingReviews.length">
+            <td colspan="7" class="picker-empty">Nothing is waiting on your review right now.</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <ng-container *ngIf="!myAssignmentsLoading && viewMode === 'accounts'">
-  <div class="assignments-head" *ngIf="myAssignments.length && !selectedAccount">
-    <div></div>
-    <button type="button" class="change-account-link" (click)="backToMyAssignments()">Back to My Assignments</button>
+  <ng-container *ngIf="viewMode === 'accounts'">
+  <div class="loading-overlay" *ngIf="dashboardAccessLoading">
+    <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading…</div>
   </div>
 
-  <div class="context-bar" *ngIf="selectedAccount">
-    <nav class="breadcrumb">
-      <span class="crumb-muted">Accounts</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <span class="crumb-current">{{ selectedAccount.cusT_NM }}</span>
-      <span class="crumb-industry" *ngIf="selectedAccount.industrY_TYPE">{{ selectedAccount.industrY_TYPE }}</span>
-      <ng-container *ngIf="selectedAssessees.length">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span class="crumb-assessee">
-          {{ selectedAssessees.length === 1 ? 'Assessee' : 'Assessees' }}:
-          <strong>{{ assesseeNames() }}</strong>
-        </span>
-      </ng-container>
-    </nav>
-    <div class="context-actions">
-      <button type="button" class="change-account-link" *ngIf="selectedAssessees.length" (click)="changeAssessee()">Change assessee</button>
-      <button type="button" class="change-account-link" (click)="changeAccount()">Change account</button>
-    </div>
-  </div>
-
-  <section class="account-picker" *ngIf="selectedAccount && !selectedAssessees.length">
-    <h2>Select the Assessee(s) for {{ selectedAccount.cusT_NM }}</h2>
-    <p class="picker-copy">Choose one or more people this IT Operations Maturity assessment is being conducted for. Each technology domain within it can still be completed by its own COE SPOC.</p>
-    <p class="picker-empty" *ngIf="assesseesLoading">Loading people allocated to this account's projects...</p>
-    <div class="assessee-multiselect" *ngIf="!assesseesLoading && assessees.length; else noAssessees">
-      <div class="combobox-search">
-        <input
-          type="text"
-          class="combobox-input"
-          placeholder="Search assessees by name or title..."
-          [(ngModel)]="assesseeSearch"
-          (input)="filterAssesseesFromInput()"
-        />
-        <svg class="combobox-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
-          <path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-        </svg>
-      </div>
-
-      <div class="assessee-checklist">
-        <label class="assessee-checkbox-row" *ngFor="let person of filteredAssessees">
-          <input
-            type="checkbox"
-            [checked]="isAssesseePending(person)"
-            (change)="toggleAssesseeSelection(person)"
-          />
-          <span class="picker-name">{{ person.name }}</span>
-          <span class="picker-industry" *ngIf="person.title">{{ person.title }}</span>
-        </label>
-        <p class="combobox-empty" *ngIf="!filteredAssessees.length">No assessees match "{{ assesseeSearch }}".</p>
-      </div>
-
-      <div class="assessee-picker-actions">
-        <span class="picker-selection-count">{{ pendingAssesseeIds.size }} selected</span>
-        <button type="button" class="btn-primary" [disabled]="!pendingAssesseeIds.size" (click)="confirmAssesseeSelection()">Continue</button>
-      </div>
-    </div>
-    <ng-template #noAssessees>
-      <p class="picker-empty" *ngIf="!assesseesLoading">
-        No assessees were found allocated to this account's projects. Contact your administrator if this is unexpected.
-      </p>
-    </ng-template>
+  <section class="account-picker" *ngIf="!dashboardAccessLoading && !dashboardAccessGranted">
+    <h2>Dashboard Access Required</h2>
+    <p class="picker-copy">
+      This account/project-wide Dashboard is limited to people granted the "Dashboard Viewer" role.
+      Ask your administrator to grant it from Admin Setup &rsaquo; Configure Roles, or use
+      <button type="button" class="change-account-link" style="display:inline" (click)="backToMyAssignments()">My Assignments</button>
+      to see your own assessments and reviews.
+    </p>
   </section>
 
-  <section class="account-picker" *ngIf="!selectedAccount && accountsLoaded">
-    <h2>Select an Account to Begin</h2>
-    <p class="picker-copy">Choose the account you want to assess or review. Domain data, scores, and risks are scoped to the selected account.</p>
-    <div class="account-combobox" #accountCombobox *ngIf="accounts.length; else noAccounts">
-      <input
-        type="text"
-        class="combobox-input"
-        placeholder="Search accounts by name or industry..."
-        [(ngModel)]="accountSearch"
-        (focus)="openAccountDropdown()"
-        (input)="openAccountDropdown()"
-        (keydown.escape)="closeAccountDropdown()"
-      />
-      <svg class="combobox-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
-        <path d="m21 21-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-      </svg>
+  <ng-container *ngIf="!dashboardAccessLoading && dashboardAccessGranted">
+    <section class="account-picker" *ngIf="!selectedProject">
+      <h2>Pick a cycle, account and project</h2>
+      <p class="picker-copy">Use the selectors above to see every technology domain and its parameter scores for that assessment.</p>
+    </section>
 
-      <div class="combobox-panel" *ngIf="accountDropdownOpen">
-        <button
-          type="button"
-          class="combobox-option"
-          *ngFor="let acc of filteredAccounts"
-          (click)="selectAccount(acc)"
-        >
-          <span class="picker-name">{{ acc.cusT_NM }}</span>
-          <span class="picker-industry" *ngIf="acc.industrY_TYPE">{{ acc.industrY_TYPE }}</span>
-        </button>
-        <p class="combobox-empty" *ngIf="!filteredAccounts.length">No accounts match "{{ accountSearch }}".</p>
-        <p class="combobox-count" *ngIf="filteredAccounts.length">
-          {{ filteredAccounts.length }} of {{ accounts.length }} accounts
-        </p>
-      </div>
+    <div class="loading-overlay" *ngIf="selectedProject && dashboardDataLoading">
+      <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading…</div>
     </div>
-    <ng-template #noAccounts>
-      <p class="picker-empty">No accounts are available for your login. Contact your administrator if this is unexpected.</p>
-    </ng-template>
-  </section>
 
-  <ng-container *ngIf="selectedAccount && selectedAssessees.length">
+  <ng-container *ngIf="selectedProject && !dashboardDataLoading">
     <section class="summary-cards" *ngIf="enterpriseSummary as summary">
       <div class="card kpi-card">
-        <div class="kpi-ring" [class]="'ring-' + maturityStatus(summary.overallMaturityLevel)" [ngStyle]="maturityRingStyle(summary.overallMaturityPercent)">
-          <div class="kpi-ring-inner">
-            <span class="kpi-ring-value">{{ summary.overallMaturityPercent }}%</span>
+        <div class="card-h"><span class="k">Overall Enterprise Maturity</span></div>
+        <div class="maturity-row">
+          <div class="ring-wrap">
+            <div class="kpi-ring" [class]="'ring-' + maturityStatus(summary.overallMaturityLevel)" [ngStyle]="maturityRingStyle(summary.overallMaturityPercent)">
+              <div class="kpi-ring-inner">
+                <div class="ring-num"><span class="n">{{ summary.overallMaturityPercent }}<span>%</span></span></div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="kpi-body">
-          <div class="card-label">Overall Enterprise Maturity</div>
-          <div class="card-value">{{ summary.overallAverageScore }} <span class="card-value-unit">/ 5</span></div>
-          <div class="card-sub" [class]="'status-text status-' + maturityStatus(summary.overallMaturityLevel)">
-            <span class="status-dot" [class]="'dot-' + maturityStatus(summary.overallMaturityLevel)"></span>
-            {{ summary.overallMaturityLevel }}
+          <div class="maturity-detail">
+            <div class="maturity-score-row">
+              <span class="maturity-score">{{ summary.overallAverageScore }}<span class="unit"> / 5</span></span>
+              <span class="level-chip" [class]="'chip-' + maturityStatus(summary.overallMaturityLevel)">{{ summary.overallMaturityLevel }}</span>
+            </div>
+            <div class="maturity-scale">
+              <div
+                *ngFor="let on of maturityScaleSegments(summary.overallAverageScore)"
+                class="seg"
+                [class.on]="on"
+                [class]="on ? 'seg on fill-' + maturityStatus(summary.overallMaturityLevel) : 'seg'"
+              ></div>
+            </div>
+            <div class="maturity-scale-labels"><span *ngFor="let l of maturityScaleLabels">{{ l }}</span></div>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-label">Assessment Progress</div>
-        <div class="card-value">{{ summary.domainsCompleted }} <span class="card-value-unit">of {{ summary.domainsCompleted + summary.domainsInProgress + summary.domainsNotStarted }} Completed</span></div>
+        <div class="card-h"><span class="k">Assessment Progress</span></div>
+        <div class="progress-top">
+          <span class="big">{{ summary.domainsCompleted }}</span>
+          <span class="of">of {{ summary.domainsCompleted + summary.domainsInProgress + summary.domainsNotStarted }} domains completed</span>
+        </div>
 
         <div class="segmented-bar">
           <div
@@ -255,13 +242,8 @@
     <section class="domain-tracker">
       <h2>Domain Tracker</h2>
       <p class="no-access-banner" *ngIf="!domainSummaries.length">
-        <ng-container *ngIf="currentUser.role === 'NoAccess'">
-          No domain assignments were found for your login ({{ currentUser.email || currentUser.name }}) on this account.
-          Contact your administrator if you believe this is unexpected.
-        </ng-container>
-        <ng-container *ngIf="currentUser.role !== 'NoAccess'">
-          No domains are currently assigned to you on this account.
-        </ng-container>
+        No domain assignments were found for your login ({{ currentUser.email || currentUser.name }}).
+        Contact your administrator if you believe this is unexpected.
       </p>
       <div class="table-wrap" *ngIf="domainSummaries.length">
         <table>
@@ -271,48 +253,25 @@
               <th>COE SPOC</th>
               <th>Reviewer</th>
               <th>Status</th>
-              <th class="col-num">No. of Parameters</th>
-              <th class="col-num">Sum of Scores</th>
-              <th class="col-num">Max Possible</th>
-              <th class="col-num">Avg Score</th>
-              <th class="col-num">Maturity %</th>
-              <th>Maturity Level</th>
+              <th class="col-num">Parameters</th>
+              <th class="col-num">Score</th>
+              <th class="col-num">Max</th>
+              <th class="col-num">Avg</th>
+              <th class="col-num">Maturity</th>
+              <th>Level</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let domain of domainSummaries">
-              <td>
-                <a class="domain-link" [routerLink]="[canEditDomain(domain) ? '/assessment' : '/review', domain.id]">
-                  {{ domain.name }}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </a>
-              </td>
-              <td>{{ domain.coeSpoc }}</td>
-              <td>{{ domain.reviewer }}</td>
+              <td class="domain-name">{{ domain.name }}</td>
+              <td>{{ domain.coeSpoc || 'Unassigned' }}</td>
+              <td>{{ domain.reviewer || 'Unassigned' }}</td>
               <td><span [class]="statusClass(domain.status)">{{ domain.status }}</span></td>
               <td class="col-num">{{ domain.paramCount }}</td>
               <td class="col-num">{{ domain.sumScores }}</td>
               <td class="col-num">{{ domain.maxPossible }}</td>
-              <td class="col-num">
-                <div class="score-cell" *ngIf="domain.averageScore !== null; else dash">
-                  <span class="meter-value">{{ domain.averageScore }}</span>
-                  <div class="meter-track">
-                    <div class="meter-fill" [class]="'fill-' + pctSeverity(scorePct(domain.averageScore))" [style.width.%]="scorePct(domain.averageScore)"></div>
-                  </div>
-                </div>
-                <ng-template #dash>-</ng-template>
-              </td>
-              <td class="col-num">
-                <div class="score-cell" *ngIf="domain.maturityPercent !== null; else dash2">
-                  <span class="meter-value">{{ domain.maturityPercent }}%</span>
-                  <div class="meter-track">
-                    <div class="meter-fill" [class]="'fill-' + pctSeverity(domain.maturityPercent)" [style.width.%]="domain.maturityPercent"></div>
-                  </div>
-                </div>
-                <ng-template #dash2>-</ng-template>
-              </td>
+              <td class="col-num">{{ domain.averageScore !== null ? domain.averageScore : '-' }}</td>
+              <td class="col-num">{{ domain.maturityPercent !== null ? domain.maturityPercent + '%' : '-' }}</td>
               <td>
                 <span [class]="maturityLevelPillClass(domain.maturityLevel)" *ngIf="domain.maturityLevel; else dash3">{{ domain.maturityLevel }}</span>
                 <ng-template #dash3>-</ng-template>
@@ -385,18 +344,21 @@
             <tr>
               <th class="sortable" (click)="sortByColumn('category')">Category <span class="sort-arrow">{{ sortIndicator('category') }}</span></th>
               <th>Parameter</th>
-              <th class="col-num sortable" (click)="sortByColumn('currentScore')">Current Score <span class="sort-arrow">{{ sortIndicator('currentScore') }}</span></th>
-              <th class="col-num">% Score</th>
+              <th class="col-num sortable" (click)="sortByColumn('currentScore')">Score <span class="sort-arrow">{{ sortIndicator('currentScore') }}</span></th>
               <th class="col-num sortable" (click)="sortByColumn('gap')">Gap <span class="sort-arrow">{{ sortIndicator('gap') }}</span></th>
               <th>Recommendation</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let risk of visibleTopRisks">
-              <td>{{ risk.category }}</td>
-              <td>{{ risk.parameter }}</td>
-              <td class="col-num">{{ risk.currentScore }}</td>
-              <td class="col-num">{{ scorePct(risk.currentScore) }}%</td>
+              <td class="cat-tag">{{ risk.category }}</td>
+              <td class="param-name">{{ risk.parameter }}</td>
+              <td class="col-num">
+                <div class="score-bar-wrap">
+                  <div class="score-bar"><i [class]="'fill-' + pctSeverity(scorePct(risk.currentScore))" [style.width.%]="scorePct(risk.currentScore)"></i></div>
+                  <span class="score-txt">{{ risk.currentScore }} / 5</span>
+                </div>
+              </td>
               <td class="col-num">
                 <span class="gap-badge" [class]="'badge-' + gapSeverity(risk.gap)">{{ risk.gap }}</span>
               </td>
@@ -416,6 +378,7 @@
         <span class="legend-item"><span class="legend-dot dot-critical"></span>Gap of 3+</span>
       </div>
     </section>
+  </ng-container>
   </ng-container>
   </ng-container>
 </div>

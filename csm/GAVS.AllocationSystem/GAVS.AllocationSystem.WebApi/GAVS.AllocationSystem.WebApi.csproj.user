@@ -9,7 +9,7 @@
     <WebStackScaffolding_LayoutPageFile />
     <WebStackScaffolding_IsAsyncSelected>False</WebStackScaffolding_IsAsyncSelected>
     <ProjectView>ShowAllFiles</ProjectView>
-    <NameOfLastUsedPublishProfile>D:\CSM\Release\GAVS.AllocationSystem\GAVS.AllocationSystem.WebApi\Properties\PublishProfiles\Prod Deployment.pubxml</NameOfLastUsedPublishProfile>
+    <NameOfLastUsedPublishProfile>D:\CSM\GitHub\itapps\itapps\csm\GAVS.AllocationSystem\GAVS.AllocationSystem.WebApi\Properties\PublishProfiles\FolderProfile.pubxml</NameOfLastUsedPublishProfile>
     <LastActiveSolutionConfig>Release|Any CPU</LastActiveSolutionConfig>
     <Use64BitIISExpress />
     <IISExpressSSLPort />

@@ -140,16 +140,17 @@
 
           <div class="evidence">
             <label>Evidence Upload <span class="hint">(PDF, JPG, PNG &middot; max 10MB)</span></label>
-            <label class="upload-btn" [class.disabled]="isLocked()">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" [disabled]="isLocked()" (change)="onEvidenceSelected($event, param)" hidden />
-              Choose File
+            <label class="upload-btn" [class.disabled]="isLocked() || evidenceUploading.has(param.id)">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" [disabled]="isLocked() || evidenceUploading.has(param.id)" (change)="onEvidenceSelected($event, param)" hidden />
+              <app-spinner *ngIf="evidenceUploading.has(param.id)" [size]="13"></app-spinner>
+              {{ evidenceUploading.has(param.id) ? 'Uploading…' : 'Choose File' }}
             </label>
-            <span *ngIf="param.evidenceFileName" class="file-chip">
-              {{ param.evidenceFileName }}
-              <button type="button" class="remove-file" *ngIf="!isLocked()" (click)="removeEvidence(param)" aria-label="Remove file">&times;</button>
+            <span *ngFor="let evidence of param.evidenceFiles" class="file-chip">
+              <button type="button" class="file-name-link" (click)="downloadEvidence(evidence)" title="Download">{{ evidence.fileName }}</button>
+              <button type="button" class="remove-file" *ngIf="!isLocked()" (click)="removeEvidence(param, evidence)" aria-label="Remove file">&times;</button>
             </span>
           </div>
-          <p class="field-error" *ngIf="evidenceError">{{ evidenceError }}</p>
+          <p class="field-error" *ngIf="evidenceErrors.get(param.id)">{{ evidenceErrors.get(param.id) }}</p>
         </div>
       </div>
     </div>

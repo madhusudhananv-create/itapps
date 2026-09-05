@@ -160,7 +160,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public int Id { get; set; }
         public string FileName { get; set; }
         public string ContentType { get; set; }
-        public long FileSizeBytes { get; set; }
         public DateTime CreatedDate { get; set; }
     }
 
@@ -214,6 +213,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // Seeded ITOPS_ROLE.ROLE_CODE values (ITOperationMaturity_V2_04_SeedRoles.sql)
         private const string ITOPS_ROLE_RUNOPS_INITIATOR = "RUNOPS_INITIATOR";
         private const string ITOPS_ROLE_DOMAIN_PROJECT_MAPPER = "DOMAIN_PROJECT_MAPPER";
+        private const string ITOPS_ROLE_DASHBOARD_VIEWER = "DASHBOARD_VIEWER";
 
         private static string GetMaturityLevel(decimal? maturityPercent)
         {
@@ -431,7 +431,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     };
                     UpdateAuditFields(assessment, empId);
                     CSPdb.ITOPS_ASSESSMENT.Add(assessment);
-                    CSPdb.Commit(CanCommit); // need the identity before the join rows can reference it
+                    try
+                    {
+                        CSPdb.Commit(CanCommit); // need the identity before the join rows can reference it
+                    }
+                    catch (Exception ex)
+                    {
+                        if (!IsUniqueViolation(ex)) throw;
+                        // The in-process lock above only serializes callers on THIS
+                        // worker process - a second IIS worker process (or a second
+                        // server behind the load balancer) can still race this same
+                        // (cycle, domain, project) insert and win first. That's not a
+                        // real failure: the assessment already exists, just created by
+                        // the other request instead of this one. Detach the failed
+                        // entity so EF's change tracker drops it - otherwise the next
+                        // Commit() in this loop (or the one below) keeps retrying to
+                        // insert the same still-tracked row and fails every time.
+                        // EF6 special-cases Added -> Deleted as an immediate Detach (no
+                        // DB round trip, since the row was never actually inserted) -
+                        // exactly "forget this entity" without needing DbContext exposed
+                        // through the ICSPDB interface.
+                        CSPdb.ITOPS_ASSESSMENT.Delete(assessment);
+                        continue;
+                    }
 
                     SeedITOpsDefaultOwners(assessment, domain, empId);
                 }
@@ -533,6 +555,48 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             catch (Exception ex)
             {
                 LogRequest(ex, "ITOpsMaturity:SendNotificationEmail");
+            }
+        }
+
+        /// <summary>
+        /// Same as SendITOpsNotificationEmailToMany, but with an explicit CC list
+        /// (e.g. the project's assessors/reviewers/Quality SPOC) - EmailProvider
+        /// already accepts a separate cc field, this is just the first caller that
+        /// needs it. Anyone already on the To line is dropped from Cc rather than
+        /// appearing on both.
+        /// </summary>
+        private void SendITOpsNotificationEmailWithCc(List<string> toEmpIds, List<string> ccEmpIds, string subject, string templateFileName, Dictionary<string, string> values)
+        {
+            try
+            {
+                var toEmails = (toEmpIds ?? new List<string>())
+                    .Select(GetEmpEmail)
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .Distinct()
+                    .ToList();
+                if (!toEmails.Any()) return;
+
+                var ccEmails = (ccEmpIds ?? new List<string>())
+                    .Select(GetEmpEmail)
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .Distinct()
+                    .Except(toEmails)
+                    .ToList();
+
+                var fromEmail = ConfigurationManager.AppSettings["emailid"];
+                var fromPassword = ConfigurationManager.AppSettings["emailpassword"];
+                var content = helper.GetEmailContent(templateFileName, values);
+
+                var ep = new EmailProvider(Cldb, CSPdb);
+                ep.SendEmail(
+                    new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = fromEmail, smtpHost = "smtp.office365.com", smtpPassword = fromPassword, smtpPortValue = "587" },
+                    new EmailContent { from = fromEmail, to = string.Join(",", toEmails), cc = string.Join(",", ccEmails), content = content, subject = subject, hasAttachments = false, attachmentFilePath = "" },
+                    Request
+                );
+            }
+            catch (Exception ex)
+            {
+                LogRequest(ex, "ITOpsMaturity:SendNotificationEmailWithCc");
             }
         }
 
@@ -819,29 +883,44 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             if (string.IsNullOrWhiteSpace(empId)) return Ok(false);
 
-            // V2: membership lives in the three join tables, not in single columns on
-            // ITOPS_ASSESSMENT (that shape is what made this endpoint throw
-            // "Invalid column name 'COE_SPOC_EMP_ID'").
-            var assignedAsAssessorOrReviewer = IsITOpsAssessorOrReviewer(empId);
-            if (assignedAsAssessorOrReviewer) return Ok(true);
-
-            var assignedAsAssessee = CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
-                .Any(a => a.ISACTIVE && a.ASSESSEE_EMP_ID == empId);
-            if (assignedAsAssessee) return Ok(true);
-
-            // New in V2: an IT-Ops functional role grant is access in its own right,
-            // even before the holder is on any specific assessment.
-            if (HasITOpsRole(empId, ITOPS_ROLE_RUNOPS_INITIATOR) || HasITOpsRole(empId, ITOPS_ROLE_DOMAIN_PROJECT_MAPPER))
-                return Ok(true);
-
-            var email = GetEmpEmail(empId);
-            if (!string.IsNullOrWhiteSpace(email))
+            // Called unconditionally on every login, in every environment, to
+            // decide whether the shell shows the nav icon - NOT gated behind
+            // "does this environment even have IT Ops deployed yet". An
+            // environment where the ITOPS_* V2 tables/scripts haven't been run
+            // (e.g. a DB restored/pointed at prod before that rollout) must
+            // still let login succeed; it should just mean "no access", not a
+            // 500 that takes down the login flow for every single user.
+            try
             {
-                var isGdh = GdhEmailsByBusinessUnit.Values.Any(list => list.Contains(email.Trim(), StringComparer.OrdinalIgnoreCase));
-                if (isGdh) return Ok(true);
-            }
+                // V2: membership lives in the three join tables, not in single columns on
+                // ITOPS_ASSESSMENT (that shape is what made this endpoint throw
+                // "Invalid column name 'COE_SPOC_EMP_ID'").
+                var assignedAsAssessorOrReviewer = IsITOpsAssessorOrReviewer(empId);
+                if (assignedAsAssessorOrReviewer) return Ok(true);
 
-            return Ok(false);
+                var assignedAsAssessee = CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
+                    .Any(a => a.ISACTIVE && a.ASSESSEE_EMP_ID == empId);
+                if (assignedAsAssessee) return Ok(true);
+
+                // New in V2: an IT-Ops functional role grant is access in its own right,
+                // even before the holder is on any specific assessment.
+                if (HasITOpsRole(empId, ITOPS_ROLE_RUNOPS_INITIATOR) || HasITOpsRole(empId, ITOPS_ROLE_DOMAIN_PROJECT_MAPPER))
+                    return Ok(true);
+
+                var email = GetEmpEmail(empId);
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    var isGdh = GdhEmailsByBusinessUnit.Values.Any(list => list.Contains(email.Trim(), StringComparer.OrdinalIgnoreCase));
+                    if (isGdh) return Ok(true);
+                }
+
+                return Ok(false);
+            }
+            catch (Exception ex)
+            {
+                LogRequest(ex, "ITOpsMaturity:GetITOpsHasAccess");
+                return Ok(false);
+            }
         }
 
         // Reports page (real backend data) - registered the same way every other
@@ -914,6 +993,114 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
 
             return Ok(result);
+        }
+
+        // The account-wide Dashboard's own account picker: unlike GetITOpsAllAccounts
+        // (every CSM customer, used by the account/assessee assignment flow), this is
+        // narrowed to only accounts that actually HAVE at least one IT Ops assessment
+        // created - i.e. a cycle has been run against one of that account's projects -
+        // so the dropdown isn't cluttered with every customer in CSM, most of which
+        // have never had an assessment.
+        [GET("GetITOpsAccountsWithAssessments")]
+        [ActionName("GetITOpsAccountsWithAssessments")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsAccountsWithAssessments(int? assessmentMasterId = null)
+        {
+            var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => a.ISACTIVE);
+            if (assessmentMasterId.HasValue)
+                assessments = assessments.Where(a => a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value);
+
+            var custIds = assessments
+                .Select(a => a.PROJECT_ID)
+                .Distinct()
+                .ToList()
+                .Join(Cldb.PROJECT.GetAll(), projId => projId, p => p.PROJ_ID, (projId, p) => p.CUST_ID)
+                .Where(custId => custId != null)
+                .Distinct()
+                .ToList();
+
+            var result = Cldb.CUSTOMER.GetAll()
+                .Where(c => custIds.Contains(c.CUST_ID))
+                .OrderBy(c => c.CUST_NM)
+                .ToList();
+
+            return Ok(result);
+        }
+
+        // Companion to GetITOpsAccountsWithAssessments: once an account is picked,
+        // narrow the project dropdown to only that account's projects that actually
+        // have an assessment (not every project it has ever staffed), optionally
+        // narrowed further to one cycle.
+        [GET("GetITOpsProjectsWithAssessments")]
+        [ActionName("GetITOpsProjectsWithAssessments")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsProjectsWithAssessments(string custId, int? assessmentMasterId = null)
+        {
+            if (string.IsNullOrWhiteSpace(custId)) return Ok(new List<object>());
+
+            var projectIdsForAccount = GetITOpsProjectIdsForCustomer(custId);
+            var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll()
+                .Where(a => a.ISACTIVE && projectIdsForAccount.Contains(a.PROJECT_ID));
+            if (assessmentMasterId.HasValue)
+                assessments = assessments.Where(a => a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value);
+
+            var assessedProjectIds = assessments
+                .Select(a => a.PROJECT_ID)
+                .Distinct()
+                .ToList();
+
+            var result = Cldb.PROJECT.GetAll()
+                .Where(p => assessedProjectIds.Contains(p.PROJ_ID))
+                .Select(p => new { ProjectId = p.PROJ_ID, ProjectName = p.PROJ_NM })
+                .ToList()
+                .OrderBy(p => p.ProjectName)
+                .ToList();
+
+            return Ok(result);
+        }
+
+        // Dashboard's Cycle dropdown - every assessment cycle ever created, newest
+        // first. Deliberately NOT admin-gated (unlike GetITOpsAssessmentCycles,
+        // which is Configure Cycle's own richer per-status-count version for
+        // admins) since any Dashboard Viewer should be able to browse cycles.
+        [GET("GetITOpsCycleList")]
+        [ActionName("GetITOpsCycleList")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsCycleList()
+        {
+            var rows = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll()
+                .Where(m => m.ISACTIVE)
+                .OrderByDescending(m => m.START_DATE)
+                .ThenByDescending(m => m.ID)
+                .Select(m => new { Id = m.ID, CycleLabel = m.CYCLE_LABEL, Status = m.STATUS })
+                .ToList();
+
+            return Ok(rows);
+        }
+
+        // Dashboard access gate: separate from GetITOpsHasAccess (which decides
+        // whether the module's nav icon shows at all, based on personal
+        // assessor/reviewer/assessee assignments) - this account/project-wide
+        // Dashboard shows every account's data regardless of the viewer's own
+        // assignments, so it's deliberately locked down to a role grant an admin
+        // hands out explicitly (Configure Roles -> "Dashboard Viewer"), same
+        // mechanism as every other ITOPS_ROLE. Superusers always pass.
+        [GET("GetITOpsHasDashboardAccess")]
+        [ActionName("GetITOpsHasDashboardAccess")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsHasDashboardAccess(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return Ok(false);
+            try
+            {
+                if (IsITOpsSuperuser(empId)) return Ok(true);
+                return Ok(HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER));
+            }
+            catch (Exception ex)
+            {
+                LogRequest(ex, "ITOpsMaturity:GetITOpsHasDashboardAccess");
+                return Ok(false);
+            }
         }
 
         // The shared GetAccountAssesseeDetails endpoint gates on CheckUserHasAccess,
@@ -1048,10 +1235,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // V2: an assessment belongs to a PROJECT, not an account. The route still takes
         // custId (the frontend is unchanged), so the project is resolved as the account's
         // first project that ITOPS_DOMAIN_PROJECT_MAP maps this domain to.
+        // assessmentId is optional and only ever passed by "My Assignments" - that
+        // table already knows the EXACT assessment each row represents (a given
+        // domain can have several: one per project it's mapped to, one per
+        // cycle), so a click there must open THAT one specifically rather than
+        // falling through to "whatever this domain+account resolves to in the
+        // CURRENT open cycle" below, which - with several cycles/projects live
+        // at once - could silently open a different assessment than the one
+        // clicked (e.g. a Pending Review one from an older cycle instead of the
+        // Not Started one just clicked). Every other caller (e.g. deep links
+        // typed by hand, or the domain tracker) has no assessment id to hand and
+        // keeps the original "resolve/create for the current cycle" behavior.
         [GET("GetOrCreateITOpsAssessment")]
         [ActionName("GetOrCreateITOpsAssessment")]
         [HttpGet]
-        public IHttpActionResult GetOrCreateITOpsAssessment(string domainCode, string custId)
+        public IHttpActionResult GetOrCreateITOpsAssessment(string domainCode, string custId, int? assessmentId = null)
         {
             if (string.IsNullOrWhiteSpace(domainCode) || string.IsNullOrWhiteSpace(custId))
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
@@ -1059,6 +1257,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var domain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.CODE == domainCode && d.ISACTIVE);
             if (domain == null)
                 return NotFound();
+
+            if (assessmentId.HasValue)
+            {
+                var projectIdsForAccount = GetITOpsProjectIdsForCustomer(custId);
+                var specific = CSPdb.ITOPS_ASSESSMENT.GetAll()
+                    .FirstOrDefault(a => a.ID == assessmentId.Value
+                                      && a.ISACTIVE
+                                      && a.DOMAIN_ID == domain.ID
+                                      && projectIdsForAccount.Contains(a.PROJECT_ID));
+                if (specific == null) return NotFound();
+
+                var specificMaster = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == specific.ASSESSMENT_MASTER_ID);
+                return Ok(BuildITOpsAssessmentInfo(specific, domain, custId, specificMaster));
+            }
 
             var master = GetCurrentITOpsAssessmentMaster();
             if (master == null)
@@ -1151,7 +1363,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetITOpsDomainTracker")]
         [ActionName("GetITOpsDomainTracker")]
         [HttpGet]
-        public IHttpActionResult GetITOpsDomainTracker(string custId, string coeSpocEmpId = null)
+        public IHttpActionResult GetITOpsDomainTracker(string custId, string coeSpocEmpId = null, string projectId = null, int? assessmentMasterId = null)
         {
             if (string.IsNullOrWhiteSpace(custId))
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
@@ -1164,6 +1376,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var assessmentList = CSPdb.ITOPS_ASSESSMENT.GetAll()
                 .Where(a => a.ISACTIVE && projectIds.Contains(a.PROJECT_ID))
                 .ToList();
+
+            // Dashboard's Account -> Project drill-down: when a specific project is
+            // picked, scope the tracker down to just that project's assessments
+            // instead of aggregating across every project mapped to the account.
+            if (!string.IsNullOrWhiteSpace(projectId))
+                assessmentList = assessmentList.Where(a => a.PROJECT_ID == projectId).ToList();
+
+            // Dashboard's Cycle dropdown: scope to one assessment cycle.
+            if (assessmentMasterId.HasValue)
+                assessmentList = assessmentList.Where(a => a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value).ToList();
+
+            // A domain unmapped from a project AFTER an assessment was already created
+            // for it (Configure Scope changed later) leaves a stale ITOPS_ASSESSMENT row
+            // behind - EnsureAssessmentsForAccount only ever ADDS missing rows, it never
+            // removes one whose mapping was since dropped. The tracker should reflect the
+            // domain set the project is mapped to RIGHT NOW, not everything a domain ever
+            // had an assessment for historically.
+            var hasProjectFilter = !string.IsNullOrWhiteSpace(projectId);
+            var currentlyMappedDomainIds = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
+                .Where(m => m.ISACTIVE && (hasProjectFilter ? m.PROJECT_ID == projectId : projectIds.Contains(m.PROJECT_ID)))
+                .Select(m => m.DOMAIN_ID)
+                .Distinct()
+                .ToList();
+            assessmentList = assessmentList.Where(a => currentlyMappedDomainIds.Contains(a.DOMAIN_ID)).ToList();
 
             // The coeSpocEmpId filter now means "assessments this person is an assessor on".
             if (!string.IsNullOrWhiteSpace(coeSpocEmpId))
@@ -1232,24 +1468,58 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             Func<string, string> nameOf = id => id != null && empNames.ContainsKey(id) ? empNames[id] : id;
 
-            var rows = assessmentList.Select(a =>
+            // One domain can be mapped to several projects on the same account, each with its own
+            // ITOPS_ASSESSMENT row - the tracker shows one scorecard row per DOMAIN (matching the
+            // account-level "Domain Maturity Scorecard" format), so aggregate across every project's
+            // assessment for that domain instead of emitting one row per assessment.
+            var statusPriority = new Dictionary<string, int>
             {
-                var scored = allScores.Where(s => s.ASSESSMENT_ID == a.ID && s.SCORE_VALUE != null).ToList();
-                decimal? avg = scored.Count == 0 ? (decimal?)null : (decimal)scored.Sum(s => s.SCORE_VALUE.Value) / scored.Count;
-                decimal? maturityPct = avg.HasValue ? avg.Value / 5 * 100 : (decimal?)null;
-                var paramCount = paramCountByDomain.ContainsKey(a.DOMAIN_ID) ? paramCountByDomain[a.DOMAIN_ID] : 0;
+                ["NotStarted"] = 0,
+                ["InProgress"] = 1,
+                ["ReturnedForRevision"] = 1,
+                ["InReview"] = 2,
+                ["Completed"] = 3,
+            };
 
-                var assessorIds = assessorRows.Where(x => x.ASSESSMENT_ID == a.ID)
-                    .OrderBy(x => x.ID).Select(x => x.ASSESSOR_EMP_ID).ToList();
-                var reviewerIds = reviewerRows.Where(x => x.ASSESSMENT_ID == a.ID)
-                    .OrderBy(x => x.ID).Select(x => x.REVIEWER_EMP_ID).ToList();
+            var rows = assessmentList.GroupBy(a => a.DOMAIN_ID).Select(g =>
+            {
+                var domainId = g.Key;
+                var domainAssessments = g.ToList();
+                var domainAssessmentIds = domainAssessments.Select(a => a.ID).ToList();
+                var scored = allScores.Where(s => domainAssessmentIds.Contains(s.ASSESSMENT_ID) && s.SCORE_VALUE != null).ToList();
+                var paramCount = paramCountByDomain.ContainsKey(domainId) ? paramCountByDomain[domainId] : 0;
+                var sumScores = scored.Sum(s => s.SCORE_VALUE.Value);
+                var maxPossible = paramCount * domainAssessments.Count;
+                decimal? avg = scored.Count == 0 ? (decimal?)null : Math.Round((decimal)sumScores / scored.Count, 2);
+                decimal? maturityPct = avg.HasValue ? Math.Round(avg.Value / 5 * 100, 2) : (decimal?)null;
+
+                var assessorIds = assessorRows.Where(x => domainAssessmentIds.Contains(x.ASSESSMENT_ID))
+                    .OrderBy(x => x.ID).Select(x => x.ASSESSOR_EMP_ID).Distinct().ToList();
+                var reviewerIds = reviewerRows.Where(x => domainAssessmentIds.Contains(x.ASSESSMENT_ID))
+                    .OrderBy(x => x.ID).Select(x => x.REVIEWER_EMP_ID).Distinct().ToList();
+
+                var projectNamesForDomain = domainAssessments
+                    .Where(a => a.PROJECT_ID != null && projectNames.ContainsKey(a.PROJECT_ID))
+                    .Select(a => projectNames[a.PROJECT_ID])
+                    .Distinct()
+                    .ToList();
+
+                // Aggregate status = the least-advanced status among this domain's projects, so the
+                // tracker still flags "not everything is done yet" rather than hiding it behind a
+                // single project's Completed state.
+                var status = domainAssessments
+                    .OrderBy(a => statusPriority.ContainsKey(a.STATUS) ? statusPriority[a.STATUS] : 0)
+                    .Select(a => a.STATUS)
+                    .FirstOrDefault();
+
+                var representative = domainAssessments.First();
 
                 return new ITOPS_DomainTrackerRow
                 {
-                    AssessmentId = a.ID,
-                    DomainId = a.DOMAIN_ID,
-                    DomainCode = domains.ContainsKey(a.DOMAIN_ID) ? domains[a.DOMAIN_ID].CODE : null,
-                    DomainName = domains.ContainsKey(a.DOMAIN_ID) ? domains[a.DOMAIN_ID].NAME : null,
+                    AssessmentId = representative.ID,
+                    DomainId = domainId,
+                    DomainCode = domains.ContainsKey(domainId) ? domains[domainId].CODE : null,
+                    DomainName = domains.ContainsKey(domainId) ? domains[domainId].NAME : null,
                     CoeSpocEmpId = assessorIds.FirstOrDefault(),
                     CoeSpocName = nameOf(assessorIds.FirstOrDefault()),
                     ReviewerEmpId = reviewerIds.FirstOrDefault(),
@@ -1258,14 +1528,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     CoeSpocNames = assessorIds.Select(nameOf).ToList(),
                     ReviewerEmpIds = reviewerIds,
                     ReviewerNames = reviewerIds.Select(nameOf).ToList(),
-                    ProjectId = a.PROJECT_ID,
-                    ProjectName = a.PROJECT_ID != null && projectNames.ContainsKey(a.PROJECT_ID) ? projectNames[a.PROJECT_ID] : null,
-                    AssessmentMasterId = a.ASSESSMENT_MASTER_ID,
-                    CycleLabel = masters.ContainsKey(a.ASSESSMENT_MASTER_ID) ? masters[a.ASSESSMENT_MASTER_ID] : null,
-                    Status = a.STATUS,
+                    ProjectId = null,
+                    ProjectName = string.Join(", ", projectNamesForDomain),
+                    AssessmentMasterId = representative.ASSESSMENT_MASTER_ID,
+                    CycleLabel = masters.ContainsKey(representative.ASSESSMENT_MASTER_ID) ? masters[representative.ASSESSMENT_MASTER_ID] : null,
+                    Status = status,
                     ParamCount = paramCount,
-                    SumScores = scored.Sum(s => s.SCORE_VALUE.Value),
-                    MaxPossible = paramCount * 5,
+                    SumScores = sumScores,
+                    MaxPossible = maxPossible,
                     AverageScore = avg,
                     MaturityPercent = maturityPct,
                     MaturityLevel = GetMaturityLevel(maturityPct)
@@ -1485,19 +1755,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (!skipReview)
             {
                 var domain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID);
+                var project = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID);
+                var projectName = project?.PROJ_NM ?? assessment.PROJECT_ID;
                 var assessorNames = string.Join(", ", GetEmpNames(assessorIds));
                 NotifyITOpsMany(
                     reviewerIds,
-                    $"IT Ops Maturity: {domain?.NAME} assessment submitted for review",
+                    $"IT Ops Maturity: {domain?.NAME} assessment submitted for review - {projectName}",
                     "ITOpsSubmittedForReview.htm",
                     new Dictionary<string, string>
                     {
                         { "ReviewerName", string.Join(", ", GetEmpNames(reviewerIds)) },
                         { "CoeSpocName", assessorNames },
-                        { "DomainName", domain?.NAME }
+                        { "DomainName", domain?.NAME },
+                        { "ProjectName", projectName }
                     },
                     "SubmittedForReview", assessment.ID, null,
-                    $"{domain?.NAME} assessment submitted for your review by {assessorNames}.");
+                    $"{domain?.NAME} assessment for {projectName} submitted for your review by {assessorNames}.");
             }
 
             return Ok(assessment);
@@ -1534,21 +1807,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ResolveITOpsNotifications(assessment.ID, "SubmittedForReview", reviewerId);
 
             var reviewedDomain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID);
+            var reviewedProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID);
+            var reviewedProjectName = reviewedProject?.PROJ_NM ?? assessment.PROJECT_ID;
             var reviewerNames = string.Join(", ", GetEmpNames(reviewerIds));
             NotifyITOpsMany(
                 assessorIds,
-                $"IT Ops Maturity: {reviewedDomain?.NAME} assessment {(request.Approve ? "approved" : "returned for revision")}",
+                $"IT Ops Maturity: {reviewedDomain?.NAME} assessment {(request.Approve ? "approved" : "returned for revision")} - {reviewedProjectName}",
                 "ITOpsReviewDecision.htm",
                 new Dictionary<string, string>
                 {
                     { "CoeSpocName", string.Join(", ", GetEmpNames(assessorIds)) },
                     { "ReviewerName", reviewerNames },
                     { "DomainName", reviewedDomain?.NAME },
+                    { "ProjectName", reviewedProjectName },
                     { "Decision", request.Approve ? "Approved" : "Returned for Revision" },
                     { "Comment", request.Approve ? "-" : request.Comment }
                 },
                 request.Approve ? "AssessmentApproved" : "AssessmentReturned", assessment.ID, null,
-                $"{reviewedDomain?.NAME} assessment {(request.Approve ? "approved" : "returned for revision")} by {reviewerNames}.");
+                $"{reviewedDomain?.NAME} assessment for {reviewedProjectName} {(request.Approve ? "approved" : "returned for revision")} by {reviewerNames}.");
 
             // Once approved, every assessee on this assessment needs to act on any probable
             // areas of improvement (findings) already raised while scoring - notify each
@@ -1572,12 +1848,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     // the bell dropdown still logs a separate entry per assessee below.
                     NotifyITOpsMany(
                         assesseeIds,
-                        $"IT Ops Maturity: {openFindingCount} {findingWord} need your action - {reviewedDomain?.NAME}",
+                        $"IT Ops Maturity: {openFindingCount} {findingWord} need your action - {reviewedDomain?.NAME} - {reviewedProjectName}",
                         "ITOpsFindingsNeedAction.htm",
                         new Dictionary<string, string>
                         {
                             { "AssesseeName", assesseeNames },
                             { "DomainName", reviewedDomain?.NAME },
+                            { "ProjectName", reviewedProjectName },
                             { "FindingCount", openFindingCount.ToString() }
                         },
                         "FindingsNeedAction", assessment.ID, null,
@@ -1782,26 +2059,55 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Select(f => (int?)f.SCORE_ID)
                 .FirstOrDefault();
             if (!scoreId.HasValue) return Ok(new List<ITOPS_EvidenceRow>());
-
-            var rows = CSPdb.ITOPS_EVIDENCE.GetAll()
-                .Where(e => e.ISACTIVE && e.SCORE_ID == scoreId.Value)
-                .OrderByDescending(e => e.CREATED_DATE)
-                .Select(e => new ITOPS_EvidenceRow
-                {
-                    Id = e.ID,
-                    FileName = e.FILE_NAME,
-                    ContentType = e.CONTENT_TYPE,
-                    FileSizeBytes = e.FILE_SIZE_BYTES,
-                    CreatedDate = e.CREATED_DATE
-                })
-                .ToList();
-            return Ok(rows);
+            return Ok(GetITOpsEvidenceForScore(scoreId.Value));
         }
 
-        // Multipart upload (classic Request.Files, same pattern as FileManagerController.UploadFile)
-        // saved to the shared ~/UploadFile/ folder under a random GUID name - kept as an
-        // isolated ITOPS_EVIDENCE row rather than reusing the shared FILE_DATA table, same
-        // "don't share tables across modules" approach used for the ITOPS report tables.
+        /// <summary>
+        /// Same idea as GetITOpsFindingEvidence, but for a parameter's score
+        /// directly - used by the assessment scoring screen, where evidence is
+        /// attached per-parameter before (or without) a finding ever existing
+        /// (a score of 5 has no finding at all).
+        /// </summary>
+        [GET("GetITOpsScoreEvidence")]
+        [ActionName("GetITOpsScoreEvidence")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsScoreEvidence(int scoreId)
+        {
+            return Ok(GetITOpsEvidenceForScore(scoreId));
+        }
+
+        private List<ITOPS_EvidenceRow> GetITOpsEvidenceForScore(int scoreId)
+        {
+            var rows = CSPdb.ITOPS_EVIDENCE.GetAll()
+                .Where(e => e.ISACTIVE && e.SCORE_ID == scoreId)
+                .OrderByDescending(e => e.CREATED_DATE)
+                .ToList();
+            if (!rows.Any()) return new List<ITOPS_EvidenceRow>();
+
+            var fileDataIds = rows.Select(e => e.FILE_DATA_ID).Distinct().ToList();
+            var fileDataById = Cldb.FILE_DATA.GetAll()
+                .Where(f => fileDataIds.Contains(f.ID))
+                .ToList()
+                .ToDictionary(f => f.ID);
+
+            return rows.Select(e =>
+            {
+                fileDataById.TryGetValue(e.FILE_DATA_ID, out var fd);
+                return new ITOPS_EvidenceRow
+                {
+                    Id = e.ID,
+                    FileName = fd?.FILE_NAME,
+                    ContentType = fd?.FILE_TYPE,
+                    CreatedDate = e.CREATED_DATE
+                };
+            }).ToList();
+        }
+
+        // Multipart upload (classic Request.Files, same pattern as
+        // FileManagerController.UploadFile / the CAPA audit evidence upload):
+        // the file is saved to the shared ~/UploadFile/ folder under a random
+        // GUID name and recorded in the shared FILE_DATA table (Cldb) - ITOPS_EVIDENCE
+        // just links a score to that FILE_DATA row via FILE_DATA_ID.
         // V2: stored against the finding's SCORE_ID (see GetITOpsFindingEvidence above).
         [POST("UploadITOpsFindingEvidence")]
         [ActionName("UploadITOpsFindingEvidence")]
@@ -1810,7 +2116,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null) return NotFound();
+            return UploadITOpsEvidenceForScore(finding.SCORE_ID);
+        }
 
+        /// <summary>Same idea as UploadITOpsFindingEvidence, but for a parameter's score directly - see GetITOpsScoreEvidence.</summary>
+        [POST("UploadITOpsScoreEvidence")]
+        [ActionName("UploadITOpsScoreEvidence")]
+        [HttpPost]
+        public IHttpActionResult UploadITOpsScoreEvidence(int scoreId)
+        {
+            var score = CSPdb.ITOPS_SCORE.GetAll().FirstOrDefault(s => s.ID == scoreId);
+            if (score == null) return NotFound();
+            return UploadITOpsEvidenceForScore(scoreId);
+        }
+
+        private IHttpActionResult UploadITOpsEvidenceForScore(int scoreId)
+        {
             var empId = GetHeaderDetails_String("empId");
             var httpRequest = HttpContext.Current.Request;
             if (httpRequest.Files.Count == 0)
@@ -1829,13 +2150,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var filePath = HttpContext.Current.Server.MapPath("~/UploadFile/" + serverFileName);
                 postedFile.SaveAs(filePath);
 
+                var fileData = new FILE_DATA
+                {
+                    FOLDER_ID = 0,
+                    FILE_NAME = postedFile.FileName,
+                    FILE_GUID = serverFileName,
+                    FILE_EXTENSION = Path.GetExtension(postedFile.FileName),
+                    FILE_TYPE = postedFile.ContentType,
+                    UPLOADED_BY = empId,
+                    UPLOAD_DATE = DateTime.Now
+                };
+                UpdateAuditFields(fileData, empId);
+                Cldb.FILE_DATA.Add(fileData);
+                Cldb.Commit(CanCommit);
+
                 var evidence = new ITOPS_EVIDENCE
                 {
-                    SCORE_ID = finding.SCORE_ID,
-                    FILE_NAME = postedFile.FileName,
-                    STORAGE_PATH = serverFileName,
-                    FILE_SIZE_BYTES = postedFile.ContentLength,
-                    CONTENT_TYPE = postedFile.ContentType
+                    SCORE_ID = scoreId,
+                    FILE_DATA_ID = fileData.ID
                 };
                 UpdateAuditFields(evidence, empId);
                 CSPdb.ITOPS_EVIDENCE.Add(evidence);
@@ -1843,13 +2175,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             CSPdb.Commit(CanCommit);
 
-            var result = saved.Select(e => new ITOPS_EvidenceRow
+            var savedFileDataIds = saved.Select(e => e.FILE_DATA_ID).ToList();
+            var fileDataById = Cldb.FILE_DATA.GetAll()
+                .Where(f => savedFileDataIds.Contains(f.ID))
+                .ToList()
+                .ToDictionary(f => f.ID);
+
+            var result = saved.Select(e =>
             {
-                Id = e.ID,
-                FileName = e.FILE_NAME,
-                ContentType = e.CONTENT_TYPE,
-                FileSizeBytes = e.FILE_SIZE_BYTES,
-                CreatedDate = e.CREATED_DATE
+                fileDataById.TryGetValue(e.FILE_DATA_ID, out var fd);
+                return new ITOPS_EvidenceRow
+                {
+                    Id = e.ID,
+                    FileName = fd?.FILE_NAME,
+                    ContentType = fd?.FILE_TYPE,
+                    CreatedDate = e.CREATED_DATE
+                };
             }).ToList();
 
             return Ok(result);
@@ -1863,14 +2204,34 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var evidence = CSPdb.ITOPS_EVIDENCE.GetAll().FirstOrDefault(e => e.ID == evidenceId && e.ISACTIVE);
             if (evidence == null) return new HttpResponseMessage(HttpStatusCode.NotFound);
 
-            var filePath = HttpContext.Current.Server.MapPath("~/UploadFile/" + evidence.STORAGE_PATH);
+            var fileData = Cldb.FILE_DATA.GetAll().FirstOrDefault(f => f.ID == evidence.FILE_DATA_ID && f.ISACTIVE);
+            if (fileData == null) return new HttpResponseMessage(HttpStatusCode.NotFound);
+
+            var filePath = HttpContext.Current.Server.MapPath("~/UploadFile/" + fileData.FILE_GUID);
             if (!File.Exists(filePath)) return new HttpResponseMessage(HttpStatusCode.NotFound);
 
             var bytes = File.ReadAllBytes(filePath);
             var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) };
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue(string.IsNullOrWhiteSpace(evidence.CONTENT_TYPE) ? "application/octet-stream" : evidence.CONTENT_TYPE);
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment") { FileName = evidence.FILE_NAME };
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue(string.IsNullOrWhiteSpace(fileData.FILE_TYPE) ? "application/octet-stream" : fileData.FILE_TYPE);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment") { FileName = fileData.FILE_NAME };
             return response;
+        }
+
+        /// <summary>Soft-deletes one evidence attachment (the underlying FILE_DATA row and physical file are left alone, same as every other soft-delete in this app).</summary>
+        [POST("DeleteITOpsEvidence")]
+        [ActionName("DeleteITOpsEvidence")]
+        [HttpPost]
+        public IHttpActionResult DeleteITOpsEvidence(int evidenceId)
+        {
+            var evidence = CSPdb.ITOPS_EVIDENCE.GetAll().FirstOrDefault(e => e.ID == evidenceId && e.ISACTIVE);
+            if (evidence == null) return NotFound();
+
+            var empId = GetHeaderDetails_String("empId");
+            UpdateAuditFields(evidence, empId);
+            evidence.ISACTIVE = false;
+            CSPdb.ITOPS_EVIDENCE.Update(evidence);
+            CSPdb.Commit(CanCommit);
+            return Ok();
         }
 
         // Notification bell - assessor/reviewer/assessee all read from the same
@@ -2037,8 +2398,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var sum = scores.Sum();
             var max = scores.Count * 5;
-            decimal? avg = scores.Count == 0 ? (decimal?)null : (decimal)sum / scores.Count;
-            decimal? maturityPct = max == 0 ? (decimal?)null : (decimal)sum / max * 100;
+            decimal? avg = scores.Count == 0 ? (decimal?)null : Math.Round((decimal)sum / scores.Count, 2);
+            decimal? maturityPct = max == 0 ? (decimal?)null : Math.Round((decimal)sum / max * 100, 2);
 
             var completed = allAssessments.Count(a => a.STATUS == "Approved" || a.STATUS == "Closed");
             var inProgress = allAssessments.Count(a => a.STATUS == "Draft" || a.STATUS == "PendingReview" || a.STATUS == "ReturnedForRevision");
@@ -2061,7 +2422,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetITOpsTopRisks")]
         [ActionName("GetITOpsTopRisks")]
         [HttpGet]
-        public IHttpActionResult GetITOpsTopRisks(string custId = null, int take = 20)
+        public IHttpActionResult GetITOpsTopRisks(string custId = null, int take = 20, string projectId = null, int? assessmentMasterId = null)
         {
             var scores = CSPdb.ITOPS_SCORE.GetAll().ToList().GroupBy(s => s.ID).ToDictionary(g => g.Key, g => g.First());
             var parameters = CSPdb.ITOPS_PARAMETER.GetAll().ToList().GroupBy(p => p.ID).ToDictionary(g => g.Key, g => g.First());
@@ -2089,6 +2450,32 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         var a = assessmentOf(f);
                         return a != null && projectIds.Contains(a.PROJECT_ID);
+                    })
+                    .ToList();
+            }
+
+            // Dashboard's Account -> Project -> Cycle drill-down: without these, two
+            // different cycles for the SAME project (or two different projects on the
+            // same account mapped to a same-named domain) show identical "Top Risks"
+            // rows, since findings were only ever scoped down to the account, never to
+            // the specific project/cycle the viewer actually has open.
+            if (!string.IsNullOrWhiteSpace(projectId))
+            {
+                findings = findings
+                    .Where(f =>
+                    {
+                        var a = assessmentOf(f);
+                        return a != null && a.PROJECT_ID == projectId;
+                    })
+                    .ToList();
+            }
+            if (assessmentMasterId.HasValue)
+            {
+                findings = findings
+                    .Where(f =>
+                    {
+                        var a = assessmentOf(f);
+                        return a != null && a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value;
                     })
                     .ToList();
             }

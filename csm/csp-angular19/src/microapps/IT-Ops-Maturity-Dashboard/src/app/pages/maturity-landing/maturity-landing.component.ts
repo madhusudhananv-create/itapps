@@ -1,20 +1,19 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { filter, switchMap, forkJoin, of } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ItOpsMaturityApiService, ItOpsDomainTrackerRow, ItOpsTopRiskRow, ItOpsMyAssignmentRow } from '../../services/itops-maturity-api.service';
 import { ToastService } from '../../services/toast.service';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../components/searchable-select/searchable-select.component';
 import { SessionService } from '../../services/session.service';
 import { AccountService } from '../../services/account.service';
-import { AssesseeService } from '../../services/assessee.service';
 import { BusinessUnitService } from '../../services/business-unit.service';
 import { IdentityService } from '../../services/identity.service';
 import { DomainSummary, EnterpriseSummary, TopRisk, CurrentUser, DomainStatus } from '../../models/maturity.model';
 import { CustomerModel } from '../../models/account.model';
-import { Assessee } from '../../models/assessee.model';
 import { statusPillClass } from '../../utils/status.util';
 
 /** Maps the backend's ITOPS_ASSESSMENT.STATUS values onto this app's DomainStatus labels. */
@@ -123,7 +122,7 @@ type SortDirection = 'asc' | 'desc';
 @Component({
   selector: 'app-maturity-landing',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SpinnerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SpinnerComponent, SearchableSelectComponent],
   templateUrl: './maturity-landing.component.html',
   styleUrl: './maturity-landing.component.scss',
 })
@@ -133,21 +132,24 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   currentUser!: CurrentUser;
 
   accounts: CustomerModel[] = [];
-  filteredAccounts: CustomerModel[] = [];
   selectedAccount: CustomerModel | null = null;
   accountsLoaded = false;
-  accountSearch = '';
-  accountDropdownOpen = false;
 
-  @ViewChild('accountCombobox') accountCombobox?: ElementRef<HTMLElement>;
-
-  assessees: Assessee[] = [];
-  filteredAssessees: Assessee[] = [];
-  selectedAssessees: Assessee[] = [];
-  /** Working selection in the picker before "Continue" confirms it. */
-  pendingAssesseeIds = new Set<string>();
-  assesseeSearch = '';
-  assesseesLoading = false;
+  // ---- Dashboard (Account -> Project drill-down, gated by role) ----
+  /** True while GetITOpsHasDashboardAccess is in flight, so the gate/picker/access-denied states don't flash. */
+  dashboardAccessLoading = true;
+  /** Whether this employee holds the Dashboard Viewer role (or is an ITOps Superuser) - the account/project-wide Dashboard is locked behind this. */
+  dashboardAccessGranted = false;
+  /** Every assessment cycle, newest first - picking one narrows the account/project dropdowns below it. */
+  dashboardCycles: { id: number; cycleLabel: string; status: string }[] = [];
+  selectedCycle: { id: number; cycleLabel: string; status: string } | null = null;
+  /** Only accounts that actually have an IT Ops assessment created (in the selected cycle, if one is picked) - not every CSM customer. */
+  accountsWithAssessments: { cusT_ID: string; cusT_NM: string }[] = [];
+  /** Only the selected account's projects that have an IT Ops assessment created. */
+  projectsForAccount: { projectId: string; projectName: string }[] = [];
+  selectedProject: { projectId: string; projectName: string } | null = null;
+  projectsLoading = false;
+  dashboardDataLoading = false;
 
   riskDomainTabs: RiskDomainTab[] = [];
   activeRiskDomain?: string;
@@ -170,25 +172,36 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   myAssignmentsLoading = true;
   myAssignments: ItOpsMyAssignmentRow[] = [];
   /**
-   * 'assignments' is the default whenever this employee has at least one real
-   * assessor/reviewer/assessee row; 'accounts' is the pre-existing
-   * "Select an account to begin" flow, unchanged, and is the ONLY view for
-   * anyone with zero assignments (admins/superusers browsing all accounts).
+   * 'assignments' is the flat "My Assessments"/"Needs Review" list, scoped to
+   * this employee's own assignments. 'accounts' is the account/project-wide
+   * Dashboard, gated behind the Dashboard Viewer role (dashboardAccessGranted)
+   * and NOT scoped to the viewer's own assignments - it shows whatever
+   * account+project is picked, regardless of who's on it.
    */
   viewMode: 'assignments' | 'accounts' = 'accounts';
+  /** 'all' or one of the cycle labels present in myAssignments - lets the table be narrowed to one cycle instead of always listing every cycle's rows together. */
+  cycleFilter = 'all';
+  /** Which of the two "My Assignments" role tables is showing - someone who is only ever a Reviewer has no reason to land on an empty Assessments tab, so this defaults based on what they actually have. */
+  assignmentsTab: 'assessments' | 'reviews' = 'assessments';
 
   constructor(
     private api: ItOpsMaturityApiService,
     private session: SessionService,
     private accountService: AccountService,
-    private assesseeService: AssesseeService,
     private businessUnitService: BusinessUnitService,
     private identityService: IdentityService,
     private router: Router,
+    private route: ActivatedRoute,
     private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
+    // Dashboard ('/') and My Assignments ('/my-assignments') are now two
+    // separate nav menu items routing to this same component - which view
+    // opens is purely the route's doing, not an auto-redirect based on
+    // whether this employee happens to have any assignments.
+    const initialMode = this.route.snapshot.data['initialMode'];
+    if (initialMode === 'assignments' || initialMode === 'accounts') this.viewMode = initialMode;
     this.loadMyAssignments();
     // session.user$ always has a value synchronously (defaults to NoAccess) -
     // keep currentUser in sync with it from the very first tick, so template
@@ -196,68 +209,184 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     // account-scoped role resolution below is still in flight (or fails).
     this.session.user$.subscribe((user) => (this.currentUser = user));
 
+    // "My Assignments" still needs the full account list to resolve a row's
+    // account (openAssignment) - the Dashboard's own account picker below
+    // uses accountsWithAssessments instead, deliberately narrower.
     this.accountService.getAccounts().subscribe((accounts) => {
       this.accounts = accounts;
-      this.filteredAccounts = accounts;
       this.accountsLoaded = true;
     });
 
-    this.accountService.selectedAccount$.subscribe((account) => {
-      this.selectedAccount = account;
-    });
+    if (this.viewMode === 'accounts') {
+      this.checkDashboardAccess();
+    }
+  }
 
-    this.accountService.selectedAccount$
+  /**
+   * The account/project-wide Dashboard is locked behind the Dashboard Viewer
+   * role (or ITOps Superuser) - unlike "My Assignments", it shows any
+   * account/project's data regardless of the viewer's own assessor/reviewer
+   * assignments, so it needs its own explicit access grant rather than
+   * inheriting visibility from being personally assigned to something.
+   */
+  private checkDashboardAccess(): void {
+    const empId = localStorage.getItem('empid');
+    if (!empId) {
+      this.dashboardAccessLoading = false;
+      return;
+    }
+    this.api
+      .getHasDashboardAccess(empId)
       .pipe(
-        switchMap((account) => {
-          if (!account) return of(null);
-          this.assesseesLoading = true;
-          return this.assesseeService.getAssessees(String(account.cusT_ID));
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to check dashboard access', err);
+          return of(false);
         }),
       )
-      .subscribe((assessees) => {
-        this.assessees = assessees ?? [];
-        this.filteredAssessees = this.assessees;
-        this.assesseesLoading = false;
+      .subscribe((granted) => {
+        this.dashboardAccessGranted = granted;
+        this.dashboardAccessLoading = false;
+        if (granted) {
+          this.api
+            .getCycleList()
+            .pipe(
+              catchError((err) => {
+                console.error('IT Ops Maturity Dashboard: failed to load cycle list', err);
+                return of([]);
+              }),
+            )
+            .subscribe((cycles) => {
+              this.dashboardCycles = cycles;
+            });
+          this.loadAccountsWithAssessments();
+        }
       });
+  }
 
-    this.assesseeService.selectedAssessees$.subscribe((assessees) => {
-      this.selectedAssessees = assessees;
-      this.pendingAssesseeIds = new Set(assessees.map((a) => a.id));
-    });
-
-    // Role/domain-access is only resolvable once an account is selected,
-    // since GDH eligibility depends on that account's real Business Unit,
-    // and the Domain Tracker/Top Risks/Executive summary are all scoped to
-    // that same account's real CUST_ID against the DB-backed API.
-    this.accountService.selectedAccount$
+  private loadAccountsWithAssessments(): void {
+    this.api
+      .getAccountsWithAssessments(this.selectedCycle?.id)
       .pipe(
-        filter((account): account is CustomerModel => !!account),
-        switchMap((account) => {
-          const custId = String(account.cusT_ID);
-          return forkJoin({
-            domainRows: this.api.getDomainTracker(custId).pipe(catchError((err) => {
-              console.error('IT Ops Maturity Dashboard: failed to load domain tracker', err);
-              return of([] as ItOpsDomainTrackerRow[]);
-            })),
-            topRiskRows: this.api.getTopRisks(custId).pipe(catchError((err) => {
-              console.error('IT Ops Maturity Dashboard: failed to load top risks', err);
-              return of([] as ItOpsTopRiskRow[]);
-            })),
-            businessUnit: this.businessUnitService.getBusinessUnitForAccount(custId),
-            email: this.identityService.getMyEmail(),
-          });
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to load accounts with assessments', err);
+          return of([]);
         }),
       )
-      .subscribe(({ domainRows, topRiskRows, businessUnit, email }) => {
-        this.accountBusinessUnit = businessUnit;
-        const summaries = domainRows.map(toDomainSummary);
-        const risks = topRiskRows.map(toTopRisk);
-        this.allDomainSummaries = summaries;
-        const myEmpId = localStorage.getItem('empid');
-        this.session.resolveIdentity(summaries, businessUnit, email, myEmpId);
-        this.currentUser = this.session.currentUser;
-        this.applyRoleScope(risks);
+      .subscribe((accounts) => {
+        this.accountsWithAssessments = accounts;
       });
+  }
+
+  get selectedCycleValue(): string {
+    return this.selectedCycle ? String(this.selectedCycle.id) : '';
+  }
+
+  get dashboardCycleOptions(): SearchableSelectOption[] {
+    return this.dashboardCycles.map((c) => ({ value: String(c.id), label: c.cycleLabel }));
+  }
+
+  get dashboardAccountOptions(): SearchableSelectOption[] {
+    return this.accountsWithAssessments.map((a) => ({ value: a.cusT_ID, label: a.cusT_NM }));
+  }
+
+  get dashboardProjectOptions(): SearchableSelectOption[] {
+    return this.projectsForAccount.map((p) => ({ value: p.projectId, label: p.projectName }));
+  }
+
+  /** Cycle dropdown changed - re-narrows the account dropdown to this cycle and clears any downstream selection. */
+  onDashboardCycleChange(cycleId: string): void {
+    this.selectedCycle = this.dashboardCycles.find((c) => String(c.id) === cycleId) ?? null;
+    this.selectedAccount = null;
+    this.selectedProject = null;
+    this.projectsForAccount = [];
+    this.domainSummaries = [];
+    this.enterpriseSummary = undefined;
+    this.loadAccountsWithAssessments();
+  }
+
+  /** Account dropdown changed - loads that account's assessed projects and clears any previously selected project/data. */
+  onDashboardAccountChange(custId: string): void {
+    const account = this.accountsWithAssessments.find((a) => a.cusT_ID === custId) ?? null;
+    this.selectedAccount = account ? { cusT_ID: account.cusT_ID, cusT_NM: account.cusT_NM, industrY_TYPE: '', url: '' } : null;
+    this.selectedProject = null;
+    this.projectsForAccount = [];
+    this.domainSummaries = [];
+    this.enterpriseSummary = undefined;
+    if (!account) return;
+
+    // Keeps AccountService.selectedAccount$ in sync so a domain-tracker row
+    // click resolves GetOrCreateITOpsAssessment(domainCode, custId) against
+    // the same account this picker has selected.
+    this.accountService.selectAccount(this.selectedAccount!);
+
+    this.projectsLoading = true;
+    this.api
+      .getProjectsWithAssessments(custId, this.selectedCycle?.id)
+      .pipe(
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to load projects for account', err);
+          return of([]);
+        }),
+      )
+      .subscribe((projects) => {
+        this.projectsForAccount = projects;
+        this.projectsLoading = false;
+      });
+  }
+
+  /** Project dropdown changed - loads that project's domains/parameters. */
+  onDashboardProjectChange(projectId: string): void {
+    const project = this.projectsForAccount.find((p) => p.projectId === projectId) ?? null;
+    this.selectedProject = project;
+    if (!project) {
+      this.domainSummaries = [];
+      this.enterpriseSummary = undefined;
+      return;
+    }
+    this.loadDashboardDomainData();
+  }
+
+  /**
+   * Loads the domain tracker (scoped to the selected account+project+cycle)
+   * and top risks for the currently selected account/project, then resolves
+   * the viewer's role for display purposes only - Dashboard Viewer/Superuser
+   * access already bypasses the per-domain spoc/reviewer allow-list that
+   * would otherwise hide domains this viewer isn't personally on (see
+   * applyRoleScope).
+   */
+  private loadDashboardDomainData(): void {
+    if (!this.selectedAccount || !this.selectedProject) return;
+    const custId = String(this.selectedAccount.cusT_ID);
+    const projectId = this.selectedProject.projectId;
+
+    this.dashboardDataLoading = true;
+    forkJoin({
+      domainRows: this.api.getDomainTracker(custId, projectId, this.selectedCycle?.id).pipe(
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to load domain tracker', err);
+          return of([] as ItOpsDomainTrackerRow[]);
+        }),
+      ),
+      topRiskRows: this.api.getTopRisks(custId, 100, projectId, this.selectedCycle?.id).pipe(
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to load top risks', err);
+          return of([] as ItOpsTopRiskRow[]);
+        }),
+      ),
+      businessUnit: this.businessUnitService.getBusinessUnitForAccount(custId),
+      email: this.identityService.getMyEmail(),
+    }).subscribe(({ domainRows, topRiskRows, businessUnit, email }) => {
+      this.accountBusinessUnit = businessUnit;
+      const summaries = domainRows.map(toDomainSummary);
+      this.allDomainSummaries = summaries;
+      const myDomainNames = new Set(summaries.map((s) => s.name));
+      const risks = topRiskRows.filter((r) => myDomainNames.has(r.domainName)).map(toTopRisk);
+      const myEmpId = localStorage.getItem('empid');
+      this.session.resolveIdentity(summaries, businessUnit, email, myEmpId);
+      this.currentUser = this.session.currentUser;
+      this.applyRoleScope(risks);
+      this.dashboardDataLoading = false;
+    });
   }
 
   /**
@@ -284,21 +413,60 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       .subscribe((rows) => {
         this.myAssignments = rows ?? [];
         this.myAssignmentsLoading = false;
-        if (this.myAssignments.length) this.viewMode = 'assignments';
+        // Default to whichever role tab actually has something in it - a
+        // pure Reviewer (no Assessor rows at all) should land on "Needs
+        // Review", not an empty "My Assessments" tab.
+        if (!this.myOpenAssessments.length && this.myPendingReviews.length) {
+          this.assignmentsTab = 'reviews';
+        }
       });
   }
 
+  /** Dashboard and My Assignments are separate nav menu items/routes now - this navigates there rather than just flipping local state. */
   browseAllAccounts(): void {
-    this.viewMode = 'accounts';
+    this.router.navigate(['/']);
   }
 
   backToMyAssignments(): void {
-    this.viewMode = 'assignments';
+    this.router.navigate(['/my-assignments']);
   }
 
   /** An assessor edits the assessment; reviewers and assessees both work on the review screen. */
   isAssessorOn(row: ItOpsMyAssignmentRow): boolean {
     return (row.roles ?? []).includes('Assessor');
+  }
+
+  /** Distinct cycle labels present in myAssignments, newest-first (as returned by the API) - what the Cycle dropdown offers besides "All cycles". */
+  get cycleOptions(): string[] {
+    const seen = new Set<string>();
+    const options: string[] = [];
+    for (const row of this.myAssignments) {
+      const label = row.cycleLabel;
+      if (label && !seen.has(label)) {
+        seen.add(label);
+        options.push(label);
+      }
+    }
+    return options;
+  }
+
+  get filteredAssignments(): ItOpsMyAssignmentRow[] {
+    if (this.cycleFilter === 'all') return this.myAssignments;
+    return this.myAssignments.filter((row) => row.cycleLabel === this.cycleFilter);
+  }
+
+  /** "My Assessments" tab: every OPEN (not yet Approved) assessment this employee is the Assessor on. */
+  get myOpenAssessments(): ItOpsMyAssignmentRow[] {
+    return this.filteredAssignments.filter((row) => this.isAssessorOn(row) && row.status !== 'Approved');
+  }
+
+  /** "Needs Review" tab: every assessment sitting in Pending Review that this employee is a Reviewer on. */
+  get myPendingReviews(): ItOpsMyAssignmentRow[] {
+    return this.filteredAssignments.filter((row) => (row.roles ?? []).includes('Reviewer') && row.status === 'PendingReview');
+  }
+
+  selectAssignmentsTab(tab: 'assessments' | 'reviews'): void {
+    this.assignmentsTab = tab;
   }
 
   assignmentStatusLabel(status: string): string {
@@ -315,6 +483,19 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
    * plus the :domainId route param, which carries the domain CODE. Opening a
    * My-Assignments row therefore has to set exactly that same context rather
    * than invent a new one: select the row's account, then route on domainCode.
+   *
+   * assessmentId travels as a query param for two reasons: (1) the same
+   * domain can have several assessments live at once - one per project it's
+   * mapped to, one per cycle - and only the row's own AssessmentId identifies
+   * which one was actually clicked (GetOrCreateITOpsAssessment falls back to
+   * "whatever this domain+account resolves to in the current open cycle"
+   * without it, which can silently open a DIFFERENT assessment than the row
+   * clicked); (2) two rows for the same domain differ only in this query
+   * param, so the URL actually changes between them and the assessment page's
+   * queryParamMap subscription re-fires - without it, clicking a second row
+   * for the same domain is a no-op navigation (identical URL) and the first
+   * row's already-loaded data (however locked/submitted it was) just sits
+   * there.
    */
   openAssignment(row: ItOpsMyAssignmentRow): void {
     if (!row.custId || !row.domainCode) {
@@ -329,13 +510,18 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       url: '',
     };
     this.accountService.selectAccount(account);
-    this.router.navigate([this.isAssessorOn(row) ? '/assessment' : '/review', row.domainCode]);
+    this.router.navigate([this.isAssessorOn(row) ? '/assessment' : '/review', row.domainCode], {
+      queryParams: { assessmentId: row.assessmentId },
+    });
   }
 
   private applyRoleScope(allTopRisks: TopRisk[]): void {
-    if (this.currentUser.role === 'GDH') {
-      // Business-level view: all domains within this account, since GDH
-      // eligibility is already scoped to the account's own Business Unit.
+    if (this.currentUser.role === 'GDH' || this.dashboardAccessGranted) {
+      // Business-level view: all domains within this account/project. GDH
+      // eligibility is already scoped to the account's own Business Unit;
+      // Dashboard Viewer/Superuser access is a deliberately broad grant that
+      // should show every domain in the selected project regardless of
+      // whether this particular viewer happens to be its SPOC or Reviewer.
       this.domainSummaries = this.allDomainSummaries;
       this.scopedTopRisks = allTopRisks;
     } else {
@@ -439,97 +625,9 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return this.riskSortDirection === 'asc' ? '▲' : '▼';
   }
 
-  openAccountDropdown(): void {
-    this.accountDropdownOpen = true;
-    this.filterAccounts();
-  }
-
-  closeAccountDropdown(): void {
-    this.accountDropdownOpen = false;
-  }
-
-  private filterAccounts(): void {
-    const term = this.accountSearch.trim().toLowerCase();
-    this.filteredAccounts = !term
-      ? this.accounts
-      : this.accounts.filter(
-          (a) =>
-            a.cusT_NM?.toLowerCase().includes(term) ||
-            a.industrY_TYPE?.toLowerCase().includes(term),
-        );
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const comboboxEl = this.accountCombobox?.nativeElement;
-    if (this.accountDropdownOpen && comboboxEl && !comboboxEl.contains(event.target as Node)) {
-      this.closeAccountDropdown();
-    }
-  }
-
-  filterAssesseesFromInput(): void {
-    this.filterAssessees();
-  }
-
-  private filterAssessees(): void {
-    const term = this.assesseeSearch.trim().toLowerCase();
-    this.filteredAssessees = !term
-      ? this.assessees
-      : this.assessees.filter(
-          (a) =>
-            a.name.toLowerCase().includes(term) ||
-            a.title.toLowerCase().includes(term),
-        );
-  }
-
-  assesseeNames(): string {
-    return this.selectedAssessees.map((a) => a.name).join(', ');
-  }
-
-  selectAccount(account: CustomerModel): void {
-    this.accountService.selectAccount(account);
-    this.accountSearch = '';
-    this.closeAccountDropdown();
-  }
-
-  changeAccount(): void {
-    this.accountService.clearSelectedAccount();
-    this.accountSearch = '';
-  }
-
-  toggleAssesseeSelection(assessee: Assessee): void {
-    if (this.pendingAssesseeIds.has(assessee.id)) {
-      this.pendingAssesseeIds.delete(assessee.id);
-    } else {
-      this.pendingAssesseeIds.add(assessee.id);
-    }
-  }
-
-  isAssesseePending(assessee: Assessee): boolean {
-    return this.pendingAssesseeIds.has(assessee.id);
-  }
-
-  confirmAssesseeSelection(): void {
-    const chosen = this.assessees.filter((a) => this.pendingAssesseeIds.has(a.id));
-    this.assesseeService.selectAssessees(chosen);
-    this.assesseeSearch = '';
-  }
-
-  changeAssessee(): void {
-    const previousIds = this.selectedAssessees.map((a) => a.id);
-    this.assesseeService.changeAssessee();
-    // Re-open the picker with whatever was previously chosen still checked
-    // (the selectedAssessees$ subscription above just cleared this to empty).
-    this.pendingAssesseeIds = new Set(previousIds);
-    this.assesseeSearch = '';
-  }
-
-  canEditDomain(domain: DomainSummary): boolean {
-    return this.currentUser.spocDomainIds.includes(domain.id);
-  }
-
   isPendingMyReview(domain: DomainSummary): boolean {
-    return domain.status === 'Pending Review' && this.currentUser.reviewDomainIds.includes(domain.id);
+    const isReviewer = domain.reviewable ?? this.currentUser.reviewDomainIds.includes(domain.id);
+    return domain.status === 'Pending Review' && isReviewer;
   }
 
   get pendingReviewDomains(): DomainSummary[] {
@@ -581,5 +679,13 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return {
       background: `conic-gradient(var(--ring-fill) ${pct}%, var(--ring-track) 0)`,
     };
+  }
+
+  readonly maturityScaleLabels = ['Ad Hoc', 'Developing', 'Defined', 'Managed', 'Optimized'];
+
+  /** Which of the 5 maturity-scale segments are "on", given the enterprise average score (0-5). */
+  maturityScaleSegments(avgScore: number): boolean[] {
+    const level = Math.min(5, Math.max(0, Math.round(avgScore)));
+    return Array.from({ length: 5 }, (_, i) => i < level);
   }
 }

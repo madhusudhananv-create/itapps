@@ -296,6 +296,32 @@ namespace GAVS.AllocationSystem.Data
         }
 
 
+        /// <summary>
+        /// VW_EMP_INFO_Active.SuperAdmin - the same flag usp_get_project_new /
+        /// usp_get_projectIds check internally to bypass their own allocation
+        /// filter. Exposed directly here so callers (e.g. IT Ops Maturity's
+        /// Superuser-eligibility check) can ask "is this specific employee a
+        /// CSM SuperAdmin?" without going through a project-list SP.
+        /// </summary>
+        public bool IsSuperAdmin(string empId)
+        {
+            var context = new CloudDbContext();
+            var param1 = new SqlParameter("@EmpId", empId);
+            var result = context.Database
+                .SqlQuery<bool?>("SELECT TOP 1 SuperAdmin FROM VW_EMP_INFO_Active WHERE EMP_ID = @EmpId", param1)
+                .FirstOrDefault();
+            return result == true;
+        }
+
+        /// <summary>Every EMP_ID currently flagged SuperAdmin in CSM - used to build the "pick a replacement" candidate list when the last IT Ops Superuser is being revoked.</summary>
+        public List<string> GetSuperAdminEmpIds()
+        {
+            var context = new CloudDbContext();
+            return context.Database
+                .SqlQuery<string>("SELECT DISTINCT EMP_ID FROM VW_EMP_INFO_Active WHERE SuperAdmin = 1")
+                .ToList();
+        }
+
         public IEnumerable<CustomerProjectIds> CustomerProjectIds(string EmpId)
         {
             var context = new CloudDbContext();

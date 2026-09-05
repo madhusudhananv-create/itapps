@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { gsap } from 'gsap';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import {
   SearchableSelectComponent,
@@ -207,6 +208,51 @@ export class AdminSetupComponent implements OnInit {
   loadingRoles = false;
   rolesError: string | null = null;
   roleModalOpen = false;
+
+  /**
+   * The summary metric cards above the role table count up via GSAP rather
+   * than the getters below being bound directly in the template - a plain
+   * `{{ roleMetricEmployees }}` getter would jump straight to its final value
+   * every change-detection cycle before GSAP's tween had a chance to render
+   * an intermediate frame. These *Display fields are what the template binds
+   * to; animateRoleMetrics() tweens them from 0 to the getters' real values.
+   */
+  roleMetricSuperusersDisplay = 0;
+  roleMetricEmployeesDisplay = 0;
+  roleMetricGrantsDisplay = 0;
+
+  get roleMetricSuperusers(): number {
+    return new Set(this.roleGrants.filter((g) => g.roleCode === 'SUPERUSER').map((g) => g.empId)).size;
+  }
+  get roleMetricEmployees(): number {
+    return new Set(this.roleGrants.map((g) => g.empId)).size;
+  }
+  get roleMetricGrants(): number {
+    return this.roleGrants.length;
+  }
+  get roleMetricLastChange(): string {
+    if (!this.roleGrants.length) return '—';
+    const latest = this.roleGrants.reduce((a, b) => (new Date(a.grantedOn) > new Date(b.grantedOn) ? a : b));
+    return new Date(latest.grantedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  }
+
+  private animateRoleMetrics(): void {
+    const targets: { value: number; apply: (n: number) => void }[] = [
+      { value: this.roleMetricSuperusers, apply: (n) => (this.roleMetricSuperusersDisplay = n) },
+      { value: this.roleMetricEmployees, apply: (n) => (this.roleMetricEmployeesDisplay = n) },
+      { value: this.roleMetricGrants, apply: (n) => (this.roleMetricGrantsDisplay = n) },
+    ];
+    targets.forEach(({ value, apply }) => {
+      const counter = { n: 0 };
+      apply(0);
+      gsap.to(counter, {
+        n: value,
+        duration: 1,
+        ease: 'power2.out',
+        onUpdate: () => apply(Math.round(counter.n)),
+      });
+    });
+  }
   savingRole = false;
   revokingRoleId: number | null = null;
   /** Checklist of one employee's current grants, so one or more (not necessarily all) can be revoked at once. */
@@ -214,6 +260,20 @@ export class AdminSetupComponent implements OnInit {
   revokeModalEmp: EmployeeGrants | null = null;
   revokeModalSelectedIds: number[] = [];
   savingRevoke = false;
+
+  /**
+   * Guard for revoking the last active Superuser: instead of the normal
+   * danger-confirm popup, name a replacement first - the replacement is
+   * GRANTED before the original revoke runs, so there's never a moment with
+   * zero Superusers. Shared by both places a Superuser grant can be revoked
+   * (the Revoke checklist and unticking it in Edit roles).
+   */
+  lastSuperuserModalOpen = false;
+  lastSuperuserSearch = '';
+  lastSuperuserResults: ItOpsEmployee[] = [];
+  lastSuperuserPick: ItOpsEmployee | null = null;
+  savingLastSuperuserReplacement = false;
+  private lastSuperuserResume: (() => void) | null = null;
 
   // "Assign a role" modal form state
   /**
@@ -283,6 +343,15 @@ export class AdminSetupComponent implements OnInit {
   projects: ItOpsProject[] = [];
   loadingScope = false;
   scopeError: string | null = null;
+
+  /**
+   * Every project touched by a mapping edit this session (save/remove/bulk
+   * add) - kept separately from `mappings` because a project whose LAST
+   * domain gets removed drops out of `mappings` entirely (GetITOpsDomainProjectMappings
+   * only returns projects with an active mapping row), which would otherwise
+   * silently hide that removal from the "Submit and Continue" email.
+   */
+  private mappingTouchedProjectIds = new Set<string>();
   /** Rename-domain modal. Creation was removed from this screen - only editing remains. */
   domainEditModalOpen = false;
   savingDomain = false;
@@ -298,11 +367,17 @@ export class AdminSetupComponent implements OnInit {
   /** Customer/account filter sitting above the project picker in the mapping modal. */
   mappingModalAccountName = '';
   mappingModalProjectId = '';
+  /** True when opened against an existing project (row's "Edit"/"+ Add domain") - the customer/project are already fixed and must not be changed mid-edit, only the domain/assessee set. */
+  mappingModalIsEdit = false;
   mappingModalDomainIds: number[] = [];
   /** Optional free-text reason, logged to the mapping change history for every domain this save touches. */
   mappingModalReason = '';
   /** Free-text filter over the mapping table itself - project name/id, account, or any mapped domain name. */
   mappingSearch = '';
+  /** Same pagination pattern as the Configure Assessment table (assessmentTablePage/-Size). */
+  mappingTablePage = 1;
+  mappingTablePageSize = 10;
+  readonly mappingTablePageSizeOptions = [10, 15, 20];
   mappingHistoryModalOpen = false;
   loadingMappingHistory = false;
   mappingHistoryRows: ItOpsMappingAuditRow[] = [];
@@ -365,6 +440,12 @@ export class AdminSetupComponent implements OnInit {
   /** null = creating, otherwise the category row being renamed. */
   categoryEditId: number | null = null;
   categoryFormName = '';
+
+  /** "New version" as an actual edit form, not a blind clone - the only thing worth changing on a new category version is its display order (name is the immutable lineage key; rename is its own in-place action). */
+  categoryVersionModalOpen = false;
+  categoryVersionEditId: number | null = null;
+  categoryVersionEditing: ItOpsCategoryRow | null = null;
+  categoryVersionFormOrder: number | null = null;
 
   // Parameter modals. The create form and the "new version" form share the same
   // fields, so they share the same state; parameterEditId decides which.
@@ -492,6 +573,26 @@ export class AdminSetupComponent implements OnInit {
     if (picker && !picker.contains(event.target as Node)) this.assessmentProjectsPickerOpen = false;
   }
 
+  /**
+   * Click-position ripple for every .btn-primary/.btn-secondary/.btn-ghost -
+   * sets --rx/--ry to the pointer's position within the button (the ::after
+   * radial-gradient + .rippling keyframe in the SCSS do the actual paint),
+   * scoped to this component's own host so it can't affect buttons elsewhere
+   * in the shell app.
+   */
+  @HostListener('click', ['$event'])
+  onHostClickForRipple(event: MouseEvent): void {
+    const btn = (event.target as HTMLElement)?.closest('.btn-primary, .btn-secondary, .btn-ghost') as HTMLElement | null;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    btn.style.setProperty('--rx', `${((event.clientX - rect.left) / rect.width) * 100}%`);
+    btn.style.setProperty('--ry', `${((event.clientY - rect.top) / rect.height) * 100}%`);
+    btn.classList.remove('rippling');
+    void btn.offsetWidth; // restart the CSS animation
+    btn.classList.add('rippling');
+    setTimeout(() => btn.classList.remove('rippling'), 600);
+  }
+
   toggleAssessmentProjectsPicker(): void {
     this.assessmentProjectsPickerOpen = !this.assessmentProjectsPickerOpen;
   }
@@ -530,23 +631,41 @@ export class AdminSetupComponent implements OnInit {
 
   // ---- Role checks ----
 
-  /** True if the user owns this step (superuser owns all five). */
+  /**
+   * True if the user owns this step (superuser owns all five) - but ONLY
+   * while the role behind it is still active system-wide. Deactivating an
+   * ITOPS_ROLE turns that step off for EVERYONE, including Superuser -
+   * Superuser's blanket access only ever meant "skip checking whether THIS
+   * PERSON was individually granted it," not "ignore whether the role still
+   * exists at all." Step 1 (Configure Roles) is exempt: it's the recovery
+   * step a Superuser needs to fix a misconfigured/deactivated role from, so
+   * deactivating SUPERUSER itself can never lock every superuser out of it.
+   */
   canUseStep(step: StepKey): boolean {
     if (!this.access) return false;
-    if (this.access.isSuperuser) return true;
-    if (step === 'scope') {
-      return Object.values(this.scopeSubTabRoles).some((role) => this.access!.roleCodes.includes(role));
-    }
     const def = this.steps.find((s) => s.key === step);
-    if (!def || def.role === 'SUPERUSER') return false;
+
+    if (step === 'scope') {
+      const activeScopeRoles = Object.values(this.scopeSubTabRoles).filter((role) => this.access!.activeRoleCodes.includes(role));
+      if (!activeScopeRoles.length) return false;
+      if (this.access.isSuperuser) return true;
+      return activeScopeRoles.some((role) => this.access!.roleCodes.includes(role));
+    }
+
+    if (!def) return false;
+    if (def.role === 'SUPERUSER') return this.access.isSuperuser;
+    if (!this.access.activeRoleCodes.includes(def.role)) return false;
+    if (this.access.isSuperuser) return true;
     return this.access.roleCodes.includes(def.role);
   }
 
-  /** True if the user owns this specific Configure Scope sub-tab (superuser owns all three). */
+  /** True if the user owns this specific Configure Scope sub-tab (superuser owns all three, unless that sub-tab's role has been deactivated system-wide). */
   canUseScopeSubTab(tab: 'domains' | 'mapping' | 'catalog'): boolean {
     if (!this.access) return false;
+    const role = this.scopeSubTabRoles[tab];
+    if (!this.access.activeRoleCodes.includes(role)) return false;
     if (this.access.isSuperuser) return true;
-    return this.access.roleCodes.includes(this.scopeSubTabRoles[tab]);
+    return this.access.roleCodes.includes(role);
   }
 
   /** The Configure Scope sub-tabs this user may see, in their fixed display order. */
@@ -562,6 +681,11 @@ export class AdminSetupComponent implements OnInit {
    */
   get visibleSteps(): { key: StepKey; label: string; role: string }[] {
     return this.steps.filter((s) => this.canUseStep(s.key));
+  }
+
+  /** This step's position among the steps the current user can actually see - drives the flow-nav's numbering and "done" (passed) styling. */
+  visibleStepIndex(key: StepKey): number {
+    return this.visibleSteps.findIndex((s) => s.key === key);
   }
 
   get isSuperuser(): boolean {
@@ -701,6 +825,7 @@ export class AdminSetupComponent implements OnInit {
           this.roleGrants = grants;
         }
         this.roleOptions = roles;
+        this.animateRoleMetrics();
       });
   }
 
@@ -728,11 +853,35 @@ export class AdminSetupComponent implements OnInit {
         }
         entry.grants.push(grant);
       }
-      const groups = Array.from(byEmp.values());
+      const groups = Array.from(byEmp.values()).sort((a, b) => a.empName.localeCompare(b.empName));
       for (const emp of groups) emp.roleGroups = this.groupGrantsByRole(emp.grants);
       this.groupedGrantsCache = { source: this.roleGrants, groups };
     }
     return this.groupedGrantsCache.groups;
+  }
+
+  /** Same Contains/Exact pattern as CSM's Customer Satisfaction Survey "Customer Details" screen. */
+  roleTableSearch = '';
+  roleTableFilterMode: 'contains' | 'exact' = 'contains';
+
+  /** Same pagination pattern as the Configure Assessment table (assessmentTablePage/-Size). */
+  roleTablePage = 1;
+  roleTablePageSize = 10;
+  readonly roleTablePageSizeOptions = [10, 15, 20];
+
+  get filteredRoleGrants(): EmployeeGrants[] {
+    // Collapse whitespace before comparing: the browser visually collapses
+    // runs of spaces (and hides leading/trailing ones) when rendering
+    // emp.empName, so a name that LOOKS like "B Srividhya" could actually be
+    // "B  Srividhya " underneath - Exact would silently never match what the
+    // user sees and typed, even though it's a byte-for-byte correct filter.
+    const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+    const term = normalize(this.roleTableSearch);
+    if (!term) return this.groupedRoleGrants;
+    return this.groupedRoleGrants.filter((emp) => {
+      const name = normalize(emp.empName ?? '');
+      return this.roleTableFilterMode === 'exact' ? name === term : name.includes(term);
+    });
   }
 
   /**
@@ -766,6 +915,45 @@ export class AdminSetupComponent implements OnInit {
       }
     }
     return Array.from(byRole.values());
+  }
+
+  /** Search/filter-mode changed - back to page 1, otherwise a shrunk filter could land on a now out-of-range page. */
+  onRoleTableSearchChange(): void {
+    this.roleTablePage = 1;
+  }
+
+  onRoleTablePageSizeChange(): void {
+    this.roleTablePage = 1;
+  }
+
+  get roleTableTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredRoleGrants.length / this.roleTablePageSize));
+  }
+
+  /** Current page's slice - clamps a stale page number locally rather than assigning back to roleTablePage from inside a getter. */
+  get pagedRoleGrants(): EmployeeGrants[] {
+    const filtered = this.filteredRoleGrants;
+    const clampedPage = Math.min(this.roleTablePage, this.roleTableTotalPages);
+    const start = (clampedPage - 1) * this.roleTablePageSize;
+    return filtered.slice(start, start + this.roleTablePageSize);
+  }
+
+  get roleTableRangeLabel(): string {
+    const total = this.filteredRoleGrants.length;
+    if (!total) return '0 of 0';
+    const clampedPage = Math.min(this.roleTablePage, this.roleTableTotalPages);
+    const start = (clampedPage - 1) * this.roleTablePageSize + 1;
+    const end = Math.min(total, start + this.roleTablePageSize - 1);
+    return `${start}-${end} of ${total}`;
+  }
+
+  goToRoleTablePage(page: number): void {
+    this.roleTablePage = Math.min(Math.max(1, page), this.roleTableTotalPages);
+  }
+
+  /** Clamped for display - Angular templates can't call Math.min directly. */
+  get roleTableCurrentPage(): number {
+    return Math.min(this.roleTablePage, this.roleTableTotalPages);
   }
 
   trackByEmpId(_i: number, row: EmployeeGrants): string {
@@ -808,6 +996,18 @@ export class AdminSetupComponent implements OnInit {
       : [...this.roleFormRoleIds, roleId];
   }
 
+  toggleAllRoleFormRoles(): void {
+    const visible = this.roleOptions.map((r) => r.roleId);
+    this.roleFormRoleIds = this.allRoleFormRolesPicked
+      ? this.roleFormRoleIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.roleFormRoleIds, ...visible]));
+  }
+
+  get allRoleFormRolesPicked(): boolean {
+    const visible = this.roleOptions.map((r) => r.roleId);
+    return visible.length > 0 && visible.every((id) => this.roleFormRoleIds.includes(id));
+  }
+
   isRoleFormProjectPicked(projectId: string): boolean {
     return this.roleFormProjectIds.includes(projectId);
   }
@@ -816,6 +1016,18 @@ export class AdminSetupComponent implements OnInit {
     this.roleFormProjectIds = this.isRoleFormProjectPicked(projectId)
       ? this.roleFormProjectIds.filter((id) => id !== projectId)
       : [...this.roleFormProjectIds, projectId];
+  }
+
+  toggleAllRoleFormProjects(): void {
+    const visible = this.projectsForCustomer(this.roleFormAccountName, this.roleFormProjectSearch).map((p) => p.projectId);
+    this.roleFormProjectIds = this.allVisibleRoleFormProjectsPicked
+      ? this.roleFormProjectIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.roleFormProjectIds, ...visible]));
+  }
+
+  get allVisibleRoleFormProjectsPicked(): boolean {
+    const visible = this.projectsForCustomer(this.roleFormAccountName, this.roleFormProjectSearch).map((p) => p.projectId);
+    return visible.length > 0 && visible.every((id) => this.roleFormProjectIds.includes(id));
   }
 
   /**
@@ -908,10 +1120,11 @@ export class AdminSetupComponent implements OnInit {
       .filter((g) => g.roleId != null)
       .map((g) => {
         const projectIds = g.grants.map((x) => x.projectId).filter((p): p is string => !!p);
+        const scope: 'org' | 'project' = projectIds.length ? 'project' : 'org';
         return {
           roleId: g.roleId,
           roleName: g.roleName ?? g.roleCode ?? String(g.roleId),
-          scope: projectIds.length ? ('project' as const) : ('org' as const),
+          scope,
           projectIds,
           accountName: '',
           projectSearch: '',
@@ -967,6 +1180,20 @@ export class AdminSetupComponent implements OnInit {
     ];
   }
 
+  toggleAllRoleEditRoles(): void {
+    if (this.allRoleEditRolesPicked) {
+      this.roleEditEntries = [];
+      return;
+    }
+    this.roleEditEntries = this.roleOptions.map(
+      (opt) => this.roleEditEntry(opt.roleId) ?? { roleId: opt.roleId, roleName: opt.roleName ?? String(opt.roleId), scope: 'org', projectIds: [], accountName: '', projectSearch: '' },
+    );
+  }
+
+  get allRoleEditRolesPicked(): boolean {
+    return this.roleOptions.length > 0 && this.roleOptions.every((opt) => this.isRoleEditRolePicked(opt.roleId));
+  }
+
   isRoleEditProjectPicked(roleId: number, projectId: string): boolean {
     return !!this.roleEditEntry(roleId)?.projectIds.includes(projectId);
   }
@@ -977,6 +1204,22 @@ export class AdminSetupComponent implements OnInit {
     entry.projectIds = entry.projectIds.includes(projectId)
       ? entry.projectIds.filter((id) => id !== projectId)
       : [...entry.projectIds, projectId];
+  }
+
+  toggleAllRoleEditProjects(roleId: number): void {
+    const entry = this.roleEditEntry(roleId);
+    if (!entry) return;
+    const visible = this.projectsForCustomer(entry.accountName, entry.projectSearch).map((p) => p.projectId);
+    entry.projectIds = this.allVisibleRoleEditProjectsPicked(roleId)
+      ? entry.projectIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...entry.projectIds, ...visible]));
+  }
+
+  allVisibleRoleEditProjectsPicked(roleId: number): boolean {
+    const entry = this.roleEditEntry(roleId);
+    if (!entry) return false;
+    const visible = this.projectsForCustomer(entry.accountName, entry.projectSearch).map((p) => p.projectId);
+    return visible.length > 0 && visible.every((id) => entry.projectIds.includes(id));
   }
 
   trackByRoleEditEntry(_i: number, entry: RoleScopeEdit): number {
@@ -1033,22 +1276,25 @@ export class AdminSetupComponent implements OnInit {
 
     const toRevoke = current.filter((g) => !desired.has(this.grantKey(g.roleId, g.projectId ?? null)));
 
-    // Group the missing grants back up by role: one grantRoles call per role,
-    // carrying only that role's own scope.
+    // Group the missing grants back up by role, each keeping its own scope,
+    // and send them as ONE grantRolesMulti call - so adding several roles at
+    // once results in a single consolidated email instead of one per role.
     const calls: Observable<unknown>[] = toRevoke.map((g) => this.api.revokeRole(g.id));
     let grantedRows = 0;
+    const grantEntries: { roleId: number; projectIds: string[] }[] = [];
     for (const entry of this.roleEditEntries) {
       if (entry.scope === 'org') {
         if (currentKeys.has(this.grantKey(entry.roleId, null))) continue; // no-op role
-        calls.push(this.api.grantRoles([empId], [entry.roleId], []));
+        grantEntries.push({ roleId: entry.roleId, projectIds: [] });
         grantedRows += 1;
       } else {
         const missing = entry.projectIds.filter((p) => !currentKeys.has(this.grantKey(entry.roleId, p)));
         if (!missing.length) continue; // no-op role (or only shrunk, handled by toRevoke)
-        calls.push(this.api.grantRoles([empId], [entry.roleId], missing));
+        grantEntries.push({ roleId: entry.roleId, projectIds: missing });
         grantedRows += missing.length;
       }
     }
+    if (grantEntries.length) calls.push(this.api.grantRolesMulti(empId, grantEntries));
 
     // Identical desired vs. current across the whole employee - write nothing.
     if (!calls.length) {
@@ -1057,6 +1303,19 @@ export class AdminSetupComponent implements OnInit {
     }
 
     const revokedRows = toRevoke.length;
+    const runSave = () => this.runRoleEditSave(calls, grantedRows, revokedRows);
+
+    // Unticking Superuser for the one person who still holds it skips the
+    // save entirely until a replacement is named - see wouldRemoveLastSuperuser.
+    if (this.wouldRemoveLastSuperuser(toRevoke)) {
+      this.openLastSuperuserModal(runSave);
+      return;
+    }
+
+    runSave();
+  }
+
+  private runRoleEditSave(calls: Observable<unknown>[], grantedRows: number, revokedRows: number): void {
     this.savingRoleEdit = true;
     forkJoin(calls)
       .pipe(finalize(() => (this.savingRoleEdit = false)))
@@ -1115,13 +1374,34 @@ export class AdminSetupComponent implements OnInit {
       : [...this.revokeModalSelectedIds, grantId];
   }
 
+  toggleAllRevokeSelection(): void {
+    const all = (this.revokeModalEmp?.grants ?? []).map((g) => g.id);
+    this.revokeModalSelectedIds = this.allRevokeSelected ? [] : all;
+  }
+
+  get allRevokeSelected(): boolean {
+    const all = this.revokeModalEmp?.grants ?? [];
+    return all.length > 0 && all.every((g) => this.isRevokeSelected(g.id));
+  }
+
   async confirmRevokeSelected(): Promise<void> {
     if (!this.revokeModalEmp || !this.revokeModalSelectedIds.length) {
       this.toast.error('Pick at least one role to revoke.');
       return;
     }
     const emp = this.revokeModalEmp;
-    const count = this.revokeModalSelectedIds.length;
+    const ids = [...this.revokeModalSelectedIds];
+    const grantsBeingRevoked = emp.grants.filter((g) => ids.includes(g.id));
+
+    // Revoking the last Superuser skips the normal warning popup entirely -
+    // naming a replacement IS the meaningful safeguard here, a generic "this
+    // cannot be undone" dialog on top of it would just be noise.
+    if (this.wouldRemoveLastSuperuser(grantsBeingRevoked)) {
+      this.openLastSuperuserModal(() => this.revokeGrantIds(ids, emp.empName, () => this.closeRevokeModal()));
+      return;
+    }
+
+    const count = ids.length;
     const ok = await this.dialog.confirm({
       title: 'Revoke selected roles?',
       message: `Revoke ${count} role grant(s) from ${emp.empName}? This cannot be undone.`,
@@ -1130,20 +1410,88 @@ export class AdminSetupComponent implements OnInit {
     });
     if (!ok) return;
 
+    this.revokeGrantIds(ids, emp.empName, () => this.closeRevokeModal());
+  }
+
+  /** One call for every selected grant - the backend groups them by employee and sends ONE consolidated email per person, not one per grant. */
+  private revokeGrantIds(ids: number[], empName: string, onSettled: () => void): void {
     this.savingRevoke = true;
-    forkJoin(this.revokeModalSelectedIds.map((id) => this.api.revokeRole(id)))
+    this.api
+      .revokeRoles(ids)
       .pipe(finalize(() => (this.savingRevoke = false)))
       .subscribe({
         next: () => {
-          this.toast.success('Role(s) revoked.', `${count} grant(s) removed from ${emp.empName}.`);
-          this.closeRevokeModal();
+          this.toast.success('Role(s) revoked.', `${ids.length} grant(s) removed from ${empName}.`);
+          onSettled();
           this.loadRoles();
         },
         error: (err) => {
-          this.toast.error('Could not revoke every selected role.', this.errorText(err, 'Some may have been revoked - reloading.'));
-          this.closeRevokeModal();
+          this.toast.error('Could not revoke the selected roles.', this.errorText(err, 'Please try again.'));
+          onSettled();
           this.loadRoles();
         },
+      });
+  }
+
+  // ---- Last-Superuser guard ----
+
+  /** True when every grant in the set being revoked that IS Superuser has no other active Superuser left standing. */
+  private wouldRemoveLastSuperuser(grantsBeingRevoked: ItOpsRoleAssignment[]): boolean {
+    if (!grantsBeingRevoked.some((g) => g.roleCode === 'SUPERUSER')) return false;
+    const revokedIds = new Set(grantsBeingRevoked.map((g) => g.id));
+    return !this.roleGrants.some((g) => g.roleCode === 'SUPERUSER' && !revokedIds.has(g.id));
+  }
+
+  private openLastSuperuserModal(resume: () => void): void {
+    this.lastSuperuserResume = resume;
+    this.lastSuperuserSearch = '';
+    this.lastSuperuserResults = [];
+    this.lastSuperuserPick = null;
+    this.lastSuperuserModalOpen = true;
+  }
+
+  closeLastSuperuserModal(): void {
+    this.lastSuperuserModalOpen = false;
+    this.lastSuperuserResume = null;
+  }
+
+  searchLastSuperuserReplacement(): void {
+    // Superuser is restricted to CSM SuperAdmins - the candidate pool here is
+    // that narrower roster, not the whole employee list.
+    this.api.searchSuperAdmins(this.lastSuperuserSearch).subscribe((rows) => (this.lastSuperuserResults = rows));
+  }
+
+  pickLastSuperuserReplacement(emp: ItOpsEmployee): void {
+    this.lastSuperuserPick = emp;
+    this.lastSuperuserSearch = '';
+    this.lastSuperuserResults = [];
+  }
+
+  /** Grants Superuser to the picked replacement, then resumes whichever revoke was blocked on it - never revoking first. */
+  confirmLastSuperuserReplacement(): void {
+    if (!this.lastSuperuserPick) {
+      this.toast.error('Pick a replacement Superuser first.');
+      return;
+    }
+    const superuserRole = this.roleOptions.find((r) => r.roleCode === 'SUPERUSER');
+    if (!superuserRole) {
+      this.toast.error('Could not find the Superuser role definition.');
+      return;
+    }
+    const replacement = this.lastSuperuserPick;
+    const resume = this.lastSuperuserResume;
+    this.savingLastSuperuserReplacement = true;
+    this.api
+      .grantRoles([replacement.empId], [superuserRole.roleId], [])
+      .pipe(finalize(() => (this.savingLastSuperuserReplacement = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Replacement Superuser granted.', `${replacement.name} is now a Superuser.`);
+          this.lastSuperuserModalOpen = false;
+          this.lastSuperuserResume = null;
+          resume?.();
+        },
+        error: (err) => this.toast.error('Could not grant the replacement Superuser.', this.errorText(err, 'Please try again.')),
       });
   }
 
@@ -1303,6 +1651,37 @@ export class AdminSetupComponent implements OnInit {
     const start = cycle.startDate ? new Date(cycle.startDate).toLocaleDateString() : '';
     const end = cycle.endDate ? new Date(cycle.endDate).toLocaleDateString() : '';
     return `${cycle.cycleLabel} — ${start} to ${end} (${cycle.status ?? 'Open'})`;
+  }
+
+  /** Options for the cycle autocomplete - app-searchable-select works in string values, selectedCycleId is a number everywhere else, so this is the one conversion point. */
+  /**
+   * Cached on the identity of existingCycles (same trick as
+   * customerSelectOptions/projectSelectOptions): without it this getter
+   * returns a brand-new array of brand-new objects on every
+   * change-detection pass, and app-searchable-select's own *ngFor has no
+   * trackBy - the option list gets destroyed and recreated between
+   * mousedown and click, so clicking anything but the already-highlighted
+   * option can silently miss.
+   */
+  private cycleOptionCache: { source: ItOpsAssessmentCycle[]; options: SearchableSelectOption[] } | null = null;
+
+  get cycleSelectOptions(): SearchableSelectOption[] {
+    if (this.cycleOptionCache?.source !== this.existingCycles) {
+      this.cycleOptionCache = {
+        source: this.existingCycles,
+        options: this.existingCycles.map((c) => ({ value: String(c.id), label: this.cycleLabelFor(c) })),
+      };
+    }
+    return this.cycleOptionCache.options;
+  }
+
+  /** String proxy for [(ngModel)] on the cycle autocomplete - selectedCycleId itself stays a number for every existing comparison (selectedCycle, API calls, etc). */
+  get selectedCycleIdStr(): string {
+    return this.selectedCycleId !== null ? String(this.selectedCycleId) : '';
+  }
+
+  set selectedCycleIdStr(value: string) {
+    this.selectedCycleId = value ? Number(value) : null;
   }
 
   // ---- Cycle completion dashboard (Step 2 list) ----
@@ -1485,7 +1864,7 @@ export class AdminSetupComponent implements OnInit {
   }
 
   projectLabel(project: ItOpsProject): string {
-    return `${project.projectId} — ${project.projectName}${project.accountName ? ' (' + project.accountName + ')' : ''}`;
+    return `${project.projectName}${project.accountName ? ' (' + project.accountName + ')' : ''}`;
   }
 
   // ---- Domains sub-tab ----
@@ -1537,12 +1916,19 @@ export class AdminSetupComponent implements OnInit {
    */
   openMappingModal(projectId?: string): void {
     this.mappingModalProjectId = projectId ?? '';
+    this.mappingModalIsEdit = !!projectId;
     this.mappingModalAccountName = this.accountNameOf(this.mappingModalProjectId);
     this.mappingModalReason = '';
     // Pre-tick whatever is already mapped - the save is replace-semantics, so the
     // modal must open showing the CURRENT set, not an empty one.
     this.syncMappingModalSelection();
     this.syncMappingModalAssessees();
+    // Unlike openBulkMapModal/openCopyMapModal, this one had no fallback if
+    // `projects` hadn't finished loading yet (e.g. this modal opened before
+    // loadScope()'s request landed) - the Customer/Project pickers would then
+    // stay permanently empty, since nothing else re-triggers a load once the
+    // modal is already open.
+    if (!this.projects.length) this.loadProjects();
     this.mappingModalOpen = true;
   }
 
@@ -1592,6 +1978,18 @@ export class AdminSetupComponent implements OnInit {
       : [...this.mappingModalAssesseeIds, empId];
   }
 
+  toggleAllMappingAssessees(): void {
+    const visible = this.filteredMappingModalAssesseeCandidates.map((e) => e.empId);
+    this.mappingModalAssesseeIds = this.allVisibleMappingAssesseesPicked
+      ? this.mappingModalAssesseeIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.mappingModalAssesseeIds, ...visible]));
+  }
+
+  get allVisibleMappingAssesseesPicked(): boolean {
+    const visible = this.filteredMappingModalAssesseeCandidates.map((e) => e.empId);
+    return visible.length > 0 && visible.every((id) => this.mappingModalAssesseeIds.includes(id));
+  }
+
   get filteredMappingModalAssesseeCandidates(): ItOpsEmployee[] {
     const needle = this.mappingModalAssesseeSearch.trim().toLowerCase();
     if (!needle) return this.mappingModalAssesseeCandidates;
@@ -1608,6 +2006,18 @@ export class AdminSetupComponent implements OnInit {
     this.mappingModalDomainIds = this.isMappingDomainSelected(domainId)
       ? this.mappingModalDomainIds.filter((id) => id !== domainId)
       : [...this.mappingModalDomainIds, domainId];
+  }
+
+  toggleAllMappingDomains(): void {
+    const visible = this.domains.map((d) => d.domainId);
+    this.mappingModalDomainIds = this.allMappingDomainsPicked
+      ? this.mappingModalDomainIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.mappingModalDomainIds, ...visible]));
+  }
+
+  get allMappingDomainsPicked(): boolean {
+    const visible = this.domains.map((d) => d.domainId);
+    return visible.length > 0 && visible.every((id) => this.mappingModalDomainIds.includes(id));
   }
 
   closeMappingModal(): void {
@@ -1627,6 +2037,7 @@ export class AdminSetupComponent implements OnInit {
       .pipe(finalize(() => (this.savingMapping = false)))
       .subscribe({
         next: () => {
+          this.mappingTouchedProjectIds.add(this.mappingModalProjectId!);
           this.toast.success('Mapping saved.');
           this.closeMappingModal();
           this.loadScope();
@@ -1648,6 +2059,7 @@ export class AdminSetupComponent implements OnInit {
     if (reason === null) return;
     this.api.removeDomainProjectMapping(row.projectId, domain.domainId, reason).subscribe({
       next: () => {
+        this.mappingTouchedProjectIds.add(row.projectId);
         this.toast.success('Domain unmapped.', `${domain.domainName} removed from ${row.projectName ?? row.projectId}.`);
         this.loadScope();
       },
@@ -1669,6 +2081,45 @@ export class AdminSetupComponent implements OnInit {
     );
   }
 
+  /** Search changed - back to page 1, otherwise a shrunk filter could land on a now out-of-range page. */
+  onMappingSearchChange(): void {
+    this.mappingTablePage = 1;
+  }
+
+  onMappingTablePageSizeChange(): void {
+    this.mappingTablePage = 1;
+  }
+
+  get mappingTableTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredMappings.length / this.mappingTablePageSize));
+  }
+
+  /** Current page's slice - clamps a stale page number locally rather than assigning back to mappingTablePage from inside a getter. */
+  get pagedMappings(): ItOpsDomainProjectMapping[] {
+    const filtered = this.filteredMappings;
+    const clampedPage = Math.min(this.mappingTablePage, this.mappingTableTotalPages);
+    const start = (clampedPage - 1) * this.mappingTablePageSize;
+    return filtered.slice(start, start + this.mappingTablePageSize);
+  }
+
+  get mappingTableRangeLabel(): string {
+    const total = this.filteredMappings.length;
+    if (!total) return '0 of 0';
+    const clampedPage = Math.min(this.mappingTablePage, this.mappingTableTotalPages);
+    const start = (clampedPage - 1) * this.mappingTablePageSize + 1;
+    const end = Math.min(total, start + this.mappingTablePageSize - 1);
+    return `${start}-${end} of ${total}`;
+  }
+
+  goToMappingTablePage(page: number): void {
+    this.mappingTablePage = Math.min(Math.max(1, page), this.mappingTableTotalPages);
+  }
+
+  /** Clamped for display - Angular templates can't call Math.min directly. */
+  get mappingTableCurrentPage(): number {
+    return Math.min(this.mappingTablePage, this.mappingTableTotalPages);
+  }
+
   /** How many mapped projects are missing domains and/or assessees - both are required before Configure Assessment can create anything for that project. */
   get incompleteMappingCount(): number {
     return this.mappings.filter((m) => !m.domains?.length || !m.assessees?.length).length;
@@ -1680,7 +2131,7 @@ export class AdminSetupComponent implements OnInit {
     if (incomplete.length) {
       const names = incomplete
         .slice(0, 5)
-        .map((m) => `${m.projectId} · ${m.projectName ?? ''}`)
+        .map((m) => m.projectName ?? m.projectId)
         .join('\n');
       const more = incomplete.length > 5 ? `\n…and ${incomplete.length - 5} more` : '';
       const ok = await this.dialog.confirm({
@@ -1691,6 +2142,23 @@ export class AdminSetupComponent implements OnInit {
       });
       if (!ok) return;
     }
+
+    // One consolidated email covering every project with a pending change,
+    // sent on submit rather than per individual mapping edit - a failure here
+    // shouldn't block the admin from moving on, so it's reported but never
+    // awaited-as-blocking. Union of currently-mapped projects AND everything
+    // touched this session: a project whose LAST domain was removed drops out
+    // of `mappings` entirely, so relying on `mappings` alone would silently
+    // never report that removal - the backend itself decides what's actually
+    // new to report (see NotifyITOpsMappingSubmitted's NOTIFIED-flag diff).
+    const notifyProjectIds = new Set(this.mappingTouchedProjectIds);
+    this.mappings.forEach((m) => notifyProjectIds.add(m.projectId));
+    if (notifyProjectIds.size) {
+      this.api.submitDomainProjectMappings(Array.from(notifyProjectIds)).subscribe({
+        error: (err) => this.toast.error('Mapping saved, but the notification email could not be sent.', this.errorText(err, 'Please try again later.')),
+      });
+    }
+
     this.goToStep('assessment');
   }
 
@@ -1773,6 +2241,18 @@ export class AdminSetupComponent implements OnInit {
       : [...this.bulkMapDomainIds, domainId];
   }
 
+  toggleAllBulkMapDomains(): void {
+    const visible = this.domains.map((d) => d.domainId);
+    this.bulkMapDomainIds = this.allBulkMapDomainsPicked
+      ? this.bulkMapDomainIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.bulkMapDomainIds, ...visible]));
+  }
+
+  get allBulkMapDomainsPicked(): boolean {
+    const visible = this.domains.map((d) => d.domainId);
+    return visible.length > 0 && visible.every((id) => this.bulkMapDomainIds.includes(id));
+  }
+
   /** Every (project x domain) combination the current selection covers. */
   get bulkMapPlannedCount(): number {
     return this.bulkMapProjectIds.length * this.bulkMapDomainIds.length;
@@ -1812,6 +2292,7 @@ export class AdminSetupComponent implements OnInit {
       .pipe(finalize(() => (this.savingBulkMap = false)))
       .subscribe({
         next: () => {
+          this.bulkMapProjectIds.forEach((id) => this.mappingTouchedProjectIds.add(id));
           this.toast.success(
             'Mappings added.',
             `${added} new mapping(s) across ${projectCount} project(s); ${unchanged} already existed. Nothing else was removed.`,
@@ -1869,6 +2350,23 @@ export class AdminSetupComponent implements OnInit {
     this.copyMapTargetProjectIds = this.isCopyMapTargetPicked(projectId)
       ? this.copyMapTargetProjectIds.filter((id) => id !== projectId)
       : [...this.copyMapTargetProjectIds, projectId];
+  }
+
+  /** "Select all" only ever picks eligible rows - the source project is excluded, same as a manual click would be blocked. */
+  toggleAllCopyMapTargets(): void {
+    const visible = this.projectsForCustomer(this.copyMapTargetAccountName, this.copyMapTargetProjectSearch)
+      .map((p) => p.projectId)
+      .filter((id) => id !== this.copyMapSourceProjectId);
+    this.copyMapTargetProjectIds = this.allVisibleCopyMapTargetsPicked
+      ? this.copyMapTargetProjectIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.copyMapTargetProjectIds, ...visible]));
+  }
+
+  get allVisibleCopyMapTargetsPicked(): boolean {
+    const visible = this.projectsForCustomer(this.copyMapTargetAccountName, this.copyMapTargetProjectSearch)
+      .map((p) => p.projectId)
+      .filter((id) => id !== this.copyMapSourceProjectId);
+    return visible.length > 0 && visible.every((id) => this.copyMapTargetProjectIds.includes(id));
   }
 
   /** The source project's CURRENT active domain mappings - what would be copied. */
@@ -2094,18 +2592,35 @@ export class AdminSetupComponent implements OnInit {
    * forward as its own new version. Used when a rubric refresh should draw a
    * clean line under everything scored so far.
    */
-  versionCategory(row: ItOpsCategoryRow): void {
+  openCategoryVersionModal(row: ItOpsCategoryRow): void {
+    this.categoryVersionEditId = row.categoryId;
+    this.categoryVersionEditing = row;
+    this.categoryVersionFormOrder = row.displayOrder;
+    this.categoryVersionModalOpen = true;
+  }
+
+  closeCategoryVersionModal(): void {
+    this.categoryVersionModalOpen = false;
+    this.categoryVersionEditId = null;
+    this.categoryVersionEditing = null;
+  }
+
+  saveCategoryVersion(): void {
+    if (this.categoryVersionEditId === null) return;
+    const row = this.categoryVersionEditing;
+    const displayOrder = this.categoryVersionFormOrder ?? undefined;
     this.savingCategory = true;
     this.api
-      .versionCategory(row.categoryId)
+      .versionCategory(this.categoryVersionEditId, displayOrder)
       .pipe(finalize(() => (this.savingCategory = false)))
       .subscribe({
         next: (res) => {
           this.toast.success(
             'New version created.',
-            `${row.name} now runs on a new version effective today; ${res?.parametersCarriedForward ?? 0} parameter(s) were carried forward. Every earlier version stays exactly as it was.`,
+            `${row?.name ?? 'Category'} now runs on a new version effective today; ${res?.parametersCarriedForward ?? 0} parameter(s) were carried forward. Every earlier version stays exactly as it was.`,
           );
           this.catalogCategoryId = res?.category?.categoryId ?? null;
+          this.closeCategoryVersionModal();
           this.loadCatalog();
         },
         error: (err) => this.toast.error('Could not version the category.', this.errorText(err, 'Please try again.')),
@@ -2231,7 +2746,7 @@ export class AdminSetupComponent implements OnInit {
             res?.versioned ? 'New version saved.' : 'Parameter updated.',
             res?.versioned
               ? 'A new version is effective from today. The previous version and its rubric text are untouched, so anything already scored against it still reads exactly as it did.'
-              : 'This version only became effective today, so it was corrected in place - nothing had been scored against it yet.',
+              : 'Nothing has been scored against this version yet, so it was corrected in place instead of creating a new version.',
           );
           this.closeParameterModal();
           this.loadCatalog();
@@ -2518,7 +3033,7 @@ export class AdminSetupComponent implements OnInit {
       .map((id) => this.mappings.find((m) => m.projectId === id))
       .filter((m): m is ItOpsDomainProjectMapping => !!m && (!m.domains?.length || !m.assessees?.length));
     if (incomplete.length) {
-      const names = incomplete.map((m) => `${m.projectId} · ${m.projectName ?? ''}`).join('\n');
+      const names = incomplete.map((m) => m.projectName ?? m.projectId).join('\n');
       const goToScope = await this.dialog.confirm({
         title: 'Cannot create assessments yet',
         message: `${incomplete.length} of the selected project(s) are missing domains and/or assessees, so no assessment can be created for them:\n\n${names}\n\nAdd the missing domains/assessees in Configure Scope, then come back here.`,
@@ -2704,7 +3219,7 @@ export class AdminSetupComponent implements OnInit {
 
   openUpdateAssesseesModal(row: ItOpsCycleAssessment): void {
     this.updateAssesseesProjectId = row.projectId;
-    this.updateAssesseesProjectLabel = `${row.projectId} · ${row.projectName ?? ''}`;
+    this.updateAssesseesProjectLabel = row.projectName ?? row.projectId;
     this.updateAssesseesSearch = '';
     this.updateAssesseesModalOpen = true;
     this.loadingUpdateAssessees = true;
@@ -2739,6 +3254,18 @@ export class AdminSetupComponent implements OnInit {
     this.updateAssesseesSelectedIds = this.isUpdateAssesseeSelected(empId)
       ? this.updateAssesseesSelectedIds.filter((id) => id !== empId)
       : [...this.updateAssesseesSelectedIds, empId];
+  }
+
+  toggleAllUpdateAssessees(): void {
+    const visible = this.filteredUpdateAssesseesCandidates.map((e) => e.empId);
+    this.updateAssesseesSelectedIds = this.allVisibleUpdateAssesseesPicked
+      ? this.updateAssesseesSelectedIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.updateAssesseesSelectedIds, ...visible]));
+  }
+
+  get allVisibleUpdateAssesseesPicked(): boolean {
+    const visible = this.filteredUpdateAssesseesCandidates.map((e) => e.empId);
+    return visible.length > 0 && visible.every((id) => this.updateAssesseesSelectedIds.includes(id));
   }
 
   /**
@@ -2812,7 +3339,7 @@ export class AdminSetupComponent implements OnInit {
   }
 
   /** Every (project x domain) assessment in the selected cycle. */
-  loadDomainTeams(): void {
+  loadDomainTeams(onLoaded?: () => void): void {
     if (!this.selectedCycleId) {
       this.domainTeams = [];
       return;
@@ -2833,6 +3360,7 @@ export class AdminSetupComponent implements OnInit {
         if (!rows.length) {
           this.domainTeams = [];
           this.loadingTeams = false;
+          onLoaded?.();
           return;
         }
 
@@ -2855,20 +3383,32 @@ export class AdminSetupComponent implements OnInit {
                 accountName: row.accountName,
               };
             });
+            onLoaded?.();
           });
       });
   }
 
   /**
+   * Every add/remove/reassign on this step already saves immediately - this
+   * button re-syncs the on-screen team lists with the server and confirms it
+   * with a toast, for admins who want an explicit "I'm done" moment rather
+   * than trusting the per-action toasts they've already seen.
+   */
+  submitDomainTeams(): void {
+    this.loadDomainTeams(() => this.toast.success('Reviewer/Assessor changes has been updated.'));
+  }
+
+  /**
    * Replays the removal against every underlying per-assessment row the person
-   * holds for this domain (one per project). Patches local state directly
-   * rather than re-fetching everything from the server - "Refresh assessment
-   * team" is the explicit, deliberate way to resync, not an automatic side
-   * effect of every single click.
+   * holds for this domain (one per project) in one bulk call, so the server
+   * sends a single consolidated "removed" email instead of one per project -
+   * the vice-versa of addPickedMember's add flow. Patches local state
+   * directly rather than re-fetching everything from the server.
    */
   removeTeamMember(group: DomainGroup, role: 'Assessor' | 'Reviewer', member: GroupedTeamMember): void {
-    const calls = member.memberIds.map((id) => (role === 'Assessor' ? this.api.removeAssessor(id) : this.api.removeReviewer(id)));
-    forkJoin(calls).subscribe({
+    const call =
+      role === 'Assessor' ? this.api.removeAssessorsBulk(member.memberIds) : this.api.removeReviewersBulk(member.memberIds);
+    call.subscribe({
       next: () => {
         this.toast.success(`${role} removed.`, `${member.empName} removed from ${group.name}.`);
         for (const entry of this.domainTeams) {
@@ -2941,7 +3481,9 @@ export class AdminSetupComponent implements OnInit {
   }
 
   searchReassignFrom(): void {
-    this.api.searchEmployees(this.reassignFromSearch).subscribe((rows) => (this.reassignFromResults = rows));
+    // "Replace" only makes sense starting from someone who actually holds an
+    // assignment - scoped to current assessors/reviewers, not the full roster.
+    this.api.searchAssignedTeamMembers(this.reassignFromSearch).subscribe((rows) => (this.reassignFromResults = rows));
   }
 
   searchReassignTo(): void {
@@ -3024,20 +3566,21 @@ export class AdminSetupComponent implements OnInit {
   /**
    * Adds the picked person to every project's copy of this domain at once -
    * that's the whole point of assigning by domain rather than by project.
-   * Patches local state from each call's real response (real row ids, so a
+   * One bulk call so the server sends a single consolidated "you're now
+   * assessor/reviewer for this domain across N projects" email instead of one
+   * per project. Patches local state from the response (real row ids, so a
    * later remove/promote works) instead of a full reload.
    */
   addPickedMember(candidate: ItOpsEmployee): void {
     if (!this.pickerAssessmentIds.length) return;
     this.savingPicker = true;
     const domainId = this.pickerDomainId;
-    const calls = this.pickerAssessmentIds.map((assessmentId) =>
+    const call =
       this.pickerRole === 'Assessor'
-        ? this.api.addAssessor(assessmentId, candidate.empId)
-        : this.api.addReviewer(assessmentId, candidate.empId),
-    );
+        ? this.api.addAssessorsBulk(this.pickerAssessmentIds, candidate.empId)
+        : this.api.addReviewersBulk(this.pickerAssessmentIds, candidate.empId);
 
-    forkJoin(calls)
+    call
       .pipe(finalize(() => (this.savingPicker = false)))
       .subscribe({
         next: (created) => {
@@ -3089,6 +3632,22 @@ export class AdminSetupComponent implements OnInit {
       .join('')
       .slice(0, 2)
       .toUpperCase();
+  }
+
+  /**
+   * Deterministic per-person avatar background, derived from the name itself
+   * (same hash-to-hue trick as GitHub/Slack) - every avatar rendering the
+   * same gradient made a chip-stack of several assessees/assessors read as
+   * one undifferentiated blue smear instead of a list of distinct people.
+   * Saturation/lightness are fixed so every generated color stays legible
+   * with white initials on top, in both light and dark theme.
+   */
+  avatarColor(name: string): string {
+    const str = name ?? '';
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = (hash << 5) - hash + str.charCodeAt(i);
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 58%, 42%)`;
   }
 
   get assessmentProjectLabel(): string {

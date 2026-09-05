@@ -117,7 +117,8 @@ namespace GAVS.AllocationSystem.Model.CSP
     }
 
     // Grants a role to an employee, optionally scoped to a single project
-    // (PROJECT_ID null = the role applies org-wide).
+    // (PROJECT_ID null = the role applies org-wide OR to the employee's own
+    // CSM project access - SCOPE_TYPE tells the two apart).
     public class ITOPS_ROLE_ASSIGNMENT : EntityBase
     {
         public int ROLE_ID { get; set; }
@@ -127,6 +128,12 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [Column(TypeName = "varchar"), MaxLength(20)]
         public string PROJECT_ID { get; set; }
+
+        // 'ORG' (PROJECT_ID null, sees/edits everything), 'OWN' (PROJECT_ID
+        // null, scope resolved dynamically to the employee's own CSM project
+        // access), or 'PROJECT' (PROJECT_ID set, one row per project).
+        [Column(TypeName = "varchar"), MaxLength(10)]
+        public string SCOPE_TYPE { get; set; }
     }
 
     // Master data: which technology domains are eligible for which projects.
@@ -168,6 +175,12 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [Column(TypeName = "varchar"), MaxLength(500)]
         public string REASON { get; set; }
+
+        // True once this row has been included in a "mapping submitted" email
+        // (see SubmitITOpsDomainProjectMappings) - lets a submit with no new
+        // audit rows since the last one skip sending an email entirely, and
+        // lets the email itself show only what actually changed.
+        public bool NOTIFIED { get; set; }
     }
 
     // An assessment cycle (e.g. "H1 2026"). Every ITOPS_ASSESSMENT belongs to one.
@@ -269,20 +282,15 @@ namespace GAVS.AllocationSystem.Model.CSP
     // Evidence attachments (PDF/JPG/PNG, max 10MB, enforced in the controller).
     // V2: SCORE_ID-only. The V1 FINDING_ID column is gone (deliberate, approved
     // regression) - finding evidence is now stored against the finding's score.
+    // The file itself lives in the shared FILE_DATA table (same mechanism CAPA
+    // audit evidence uploads use) - FILE_DATA_ID is a soft reference across
+    // databases (Cldb.FILE_DATA), same pattern as every other Cldb reference
+    // from an ITOPS table (PROJECT_ID, EMP_ID, ...) - no real FK.
     public class ITOPS_EVIDENCE : EntityBase
     {
         public int SCORE_ID { get; set; }
 
-        [Column(TypeName = "varchar"), MaxLength(260)]
-        public string FILE_NAME { get; set; }
-
-        [Column(TypeName = "varchar"), MaxLength(500)]
-        public string STORAGE_PATH { get; set; } // GUID filename under ~/UploadFile/; binary not stored in SQL
-
-        public long FILE_SIZE_BYTES { get; set; }
-
-        [Column(TypeName = "varchar"), MaxLength(100)]
-        public string CONTENT_TYPE { get; set; }
+        public int FILE_DATA_ID { get; set; }
     }
 
     // Findings - the trackable action item derived from a below-target score.

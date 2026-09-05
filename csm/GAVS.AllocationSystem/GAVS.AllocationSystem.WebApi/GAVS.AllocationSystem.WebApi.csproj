@@ -514,6 +514,12 @@
     <Content Include="UploadFile\Mails\ITOpsFindingsNeedAction.htm" />
     <Content Include="UploadFile\Mails\ITOpsFindingActionUpdate.htm" />
     <Content Include="UploadFile\Mails\ITOpsFindingDecision.htm" />
+    <Content Include="UploadFile\Mails\ITOpsRoleGranted.htm" />
+    <Content Include="UploadFile\Mails\ITOpsRoleRevoked.htm" />
+    <Content Include="UploadFile\Mails\ITOpsMappingSubmitted.htm" />
+    <Content Include="UploadFile\Mails\ITOpsAssessmentsCreated.htm" />
+    <Content Include="UploadFile\Mails\ITOpsTeamAssigned.htm" />
+    <Content Include="UploadFile\Mails\ITOpsDomainRenamed.htm" />
     <Content Include="UploadFile\Mails\AddNewIssue.htm" />
     <Content Include="UploadFile\Mails\AuditScoreNotSubmitted.htm" />
     <Content Include="UploadFile\Mails\AuditNotCompleted.htm" />

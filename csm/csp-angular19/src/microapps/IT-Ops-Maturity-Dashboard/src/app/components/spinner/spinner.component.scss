@@ -1,21 +1,41 @@
 :host {
   display: inline-flex;
   vertical-align: middle;
+  color: var(--border, #c7d2da);
 }
 
 .app-spinner {
   display: block;
-  animation: app-spinner-rotate 0.8s linear infinite;
+}
+
+.app-spinner-arc {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.app-spinner-arc-outer {
+  animation: app-spinner-rotate 0.9s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+}
+
+.app-spinner-arc-inner {
+  animation: app-spinner-rotate-reverse 1.3s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-spinner {
-    animation-duration: 1.6s;
+  .app-spinner-arc-outer,
+  .app-spinner-arc-inner {
+    animation-duration: 2.4s;
   }
 }
 
 @keyframes app-spinner-rotate {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes app-spinner-rotate-reverse {
+  to {
+    transform: rotate(-360deg);
   }
 }

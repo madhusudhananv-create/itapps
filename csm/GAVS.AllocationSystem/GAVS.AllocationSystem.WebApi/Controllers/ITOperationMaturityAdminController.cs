@@ -52,10 +52,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public int RoleId { get; set; }
         public string RoleCode { get; set; }
         public string RoleName { get; set; }
-        // null PROJECT_ID = org-wide grant; otherwise the grant only applies to this project.
+        // null PROJECT_ID = org-wide or own-access grant (see ScopeType); otherwise the grant only applies to this project.
         public string ProjectId { get; set; }
         public string ProjectName { get; set; }
         public string Scope { get; set; }
+        // Raw "ORG" | "OWN" | "PROJECT", alongside the display-friendly Scope label above.
+        public string ScopeType { get; set; }
         public DateTime GrantedOn { get; set; }
     }
 
@@ -76,6 +78,38 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     {
         public List<string> EmpIds { get; set; }
         public List<int> RoleIds { get; set; }
+        public List<string> ProjectIds { get; set; }
+    }
+
+    public class ITOPS_RevokeRolesRequest
+    {
+        public List<int> Ids { get; set; }
+    }
+
+    // One (role, scope) entry inside a mixed-scope batch grant for a single
+    // employee - e.g. role A org-wide and role B scoped to two projects, in
+    // the same call. ITOPS_GrantRolesRequest can't express this because it is
+    // one RoleIds x ProjectIds cartesian product shared by every role.
+    public class ITOPS_GrantRoleEntry
+    {
+        public int RoleId { get; set; }
+        public List<string> ProjectIds { get; set; } // null/empty = org-wide
+    }
+
+    // Grants several roles, each with its own scope, to one employee in a
+    // single call - used by the Configure Roles "edit" diff so adding
+    // multiple roles at once results in ONE consolidated notification email,
+    // not one per role.
+    public class ITOPS_GrantRolesMultiRequest
+    {
+        public string EmpId { get; set; }
+        public List<ITOPS_GrantRoleEntry> Entries { get; set; }
+    }
+
+    // Projects to email about when the admin clicks "Submit and Continue to
+    // Configure Assessment" on the domain-project mapping screen.
+    public class ITOPS_SubmitMappingsRequest
+    {
         public List<string> ProjectIds { get; set; }
     }
 
@@ -317,6 +351,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public string EmpId { get; set; }
     }
 
+    public class ITOPS_AddTeamMemberBulkRequest
+    {
+        public List<int> AssessmentIds { get; set; }
+        public string EmpId { get; set; }
+    }
+
+    public class ITOPS_RemoveTeamMemberBulkRequest
+    {
+        public List<int> Ids { get; set; }
+    }
+
     public class ITOPS_TeamMemberRow
     {
         public int Id { get; set; }
@@ -517,6 +562,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // SUPERUSER, which is reported through IsSuperuser instead.
         public List<string> RoleCodes { get; set; }
         public bool IsAdmin { get; set; }
+        // EVERY ROLE_CODE currently active in ITOPS_ROLE, regardless of who
+        // holds it - the frontend needs this to hide a step whose role has
+        // been deactivated system-wide even for a Superuser, whose blanket
+        // access otherwise bypasses individual-grant checks entirely.
+        public List<string> ActiveRoleCodes { get; set; }
     }
 
     public partial class AllSysController
@@ -561,6 +611,377 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return !string.IsNullOrWhiteSpace(email) && ITOpsSuperuserEmailsFallback.Contains(email.Trim());
         }
 
+        /// <summary>
+        /// The IT Ops Superuser role is restricted to people who are already a
+        /// CSM SuperAdmin (VW_EMP_INFO_Active.SuperAdmin) - Superuser bypasses
+        /// every project/account scoping filter in this app, so it should only
+        /// ever land on someone who already has that same unrestricted reach
+        /// on the CSM side.
+        /// </summary>
+        private bool IsCsmSuperAdmin(string empId)
+        {
+            return !string.IsNullOrWhiteSpace(empId) && Cldb.AppRepo.IsSuperAdmin(empId);
+        }
+
+        /// <summary>
+        /// Rejects a grant that would hand the SUPERUSER role to someone who
+        /// isn't a CSM SuperAdmin. Returns the conflict message to return to
+        /// the caller, or null when the grant may proceed.
+        /// </summary>
+        private string ValidateSuperuserGrantTargets(IEnumerable<int> roleIds, IEnumerable<string> targetEmpIds)
+        {
+            var superuserRoleId = CSPdb.ITOPS_ROLE.GetAll().FirstOrDefault(r => r.ROLE_CODE == "SUPERUSER")?.ID;
+            if (superuserRoleId == null || !roleIds.Contains(superuserRoleId.Value)) return null;
+
+            var nonSuperAdmins = targetEmpIds.Where(id => !IsCsmSuperAdmin(id)).Distinct().ToList();
+            if (!nonSuperAdmins.Any()) return null;
+
+            var names = string.Join(", ", nonSuperAdmins.Select(id => GetEmpName(id) ?? id));
+            var verb = nonSuperAdmins.Count == 1 ? "is" : "are";
+            return $"{names} {verb} not a Superuser in CSM, so they could not be assigned as an IT Ops Superuser.";
+        }
+
+        // ------------------------------------------------------------------
+        // Admin Setup email notifications
+        //
+        // Reuses the SAME EmailProvider/GetEmailContent pipeline (and the
+        // SendITOpsNotificationEmail/ToMany helpers) that ITOperationMaturityController.cs
+        // already sends real workflow emails through - not a new mechanism. The
+        // in-app bell (CreateITOpsNotification/NotifyITOps) is skipped here on
+        // purpose: ITOPS_NOTIFICATION has a CHECK constraint requiring exactly
+        // one of ASSESSMENT_ID/FINDING_ID, and role grants/revokes and domain-
+        // mapping changes have no assessment to hang a bell row on. Step 4
+        // (assessments created) and Step 5 (assessor/reviewer assigned) DO have
+        // a real assessment id, so those go through the full NotifyITOps(Many)
+        // (email + bell) instead of the email-only helpers below.
+        // ------------------------------------------------------------------
+
+        private string ITOpsScopeLabel(string projectId)
+        {
+            if (string.IsNullOrWhiteSpace(projectId)) return "Org-wide";
+            return Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == projectId)?.PROJ_NM ?? projectId;
+        }
+
+        /// <summary>
+        /// One email per employee covering every role touched in this call - a
+        /// bulk grant/revoke across several roles was sending one email per
+        /// (employee x role) pair before, which reads as spam when someone is
+        /// granted/revoked several roles at once.
+        /// </summary>
+        private void NotifyITOpsRoleChange(string empId, List<KeyValuePair<string, string>> roleScopePairs, string byEmpId, bool granted)
+        {
+            if (roleScopePairs == null || !roleScopePairs.Any()) return;
+
+            var rolesListHtml = string.Join("", roleScopePairs.Select(rs => $"<li><b>{rs.Key}</b></li>"));
+            var subject = granted
+                ? (roleScopePairs.Count == 1
+                    ? $"IT Ops Maturity: you've been granted the {roleScopePairs[0].Key} role"
+                    : $"IT Ops Maturity: you've been granted {roleScopePairs.Count} role(s)")
+                : (roleScopePairs.Count == 1
+                    ? $"IT Ops Maturity: your {roleScopePairs[0].Key} role has been revoked"
+                    : $"IT Ops Maturity: {roleScopePairs.Count} of your roles have been revoked");
+
+            SendITOpsNotificationEmail(
+                empId,
+                subject,
+                granted ? "ITOpsRoleGranted.htm" : "ITOpsRoleRevoked.htm",
+                new Dictionary<string, string>
+                {
+                    { "EmpName", GetEmpName(empId) },
+                    { "ByName", GetEmpName(byEmpId) },
+                    { "RolesList", rolesListHtml }
+                });
+        }
+
+        /// <summary>
+        /// One consolidated email covering only what actually changed, sent
+        /// when the admin clicks "Submit and Continue to Configure Assessment"
+        /// - NOT fired per individual add/remove during editing (that read as
+        /// spam), and NOT fired at all on a submit with nothing new to report
+        /// (clicking Submit again with no edits sent a duplicate email before
+        /// this fix). "Changed" is driven off ITOPS_DOMAIN_PROJECT_MAP_AUDIT's
+        /// NOTIFIED flag: only rows not yet included in a previous email are
+        /// considered, and they're stamped NOTIFIED = true once this send
+        /// succeeds, so the next submit only ever reports what's new since.
+        /// </summary>
+        private bool NotifyITOpsMappingSubmitted(List<string> projectIds)
+        {
+            if (projectIds == null || !projectIds.Any()) return false;
+
+            var allAudit = CSPdb.ITOPS_DOMAIN_PROJECT_MAP_AUDIT.GetAll()
+                .Where(a => projectIds.Contains(a.PROJECT_ID))
+                .ToList();
+            var pendingAudit = allAudit.Where(a => !a.NOTIFIED).ToList();
+            if (!pendingAudit.Any()) return false;
+
+            var allDomains = CSPdb.ITOPS_DOMAIN.GetAll().ToDictionary(d => d.ID, d => d.NAME);
+            var assesseeRows = CSPdb.ITOPS_PROJECT_ASSESSEE.GetAll()
+                .Where(a => a.ISACTIVE && projectIds.Contains(a.PROJECT_ID))
+                .ToList();
+            // Current active domain count per project - tells "every domain was
+            // just removed" (the project is now fully unmapped) apart from "some
+            // domains were removed but others remain" (still just an update).
+            var activeDomainCountByProject = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
+                .Where(m => m.ISACTIVE && projectIds.Contains(m.PROJECT_ID))
+                .GroupBy(m => m.PROJECT_ID)
+                .ToDictionary(g => g.Key, g => g.Count());
+            var projects = Cldb.PROJECT.GetAll()
+                .Where(p => projectIds.Contains(p.PROJ_ID))
+                .ToDictionary(p => p.PROJ_ID);
+            var accountNames = Cldb.CUSTOMER.GetAll()
+                .Where(c => c.CUST_ID != null)
+                .GroupBy(c => c.CUST_ID)
+                .ToDictionary(g => g.Key, g => g.First().CUST_NM);
+
+            var rows = new List<string>();
+            var allAssesseeIds = new List<string>();
+            var notifiedAudit = new List<ITOPS_DOMAIN_PROJECT_MAP_AUDIT>();
+
+            foreach (var group in pendingAudit.GroupBy(a => a.PROJECT_ID))
+            {
+                var projectId = group.Key;
+                if (!projects.ContainsKey(projectId)) continue;
+
+                // Reactivated (a previously-removed mapping re-added) reads as
+                // "Added" to the recipient - the ISACTIVE history behind it
+                // isn't meaningful to them.
+                var added = group.Where(a => a.ACTION == "Added" || a.ACTION == "Reactivated")
+                    .Select(a => allDomains.ContainsKey(a.DOMAIN_ID) ? allDomains[a.DOMAIN_ID] : null)
+                    .Where(n => n != null).Distinct().ToList();
+                var removed = group.Where(a => a.ACTION == "Removed")
+                    .Select(a => allDomains.ContainsKey(a.DOMAIN_ID) ? allDomains[a.DOMAIN_ID] : null)
+                    .Where(n => n != null).Distinct().ToList();
+                if (!added.Any() && !removed.Any()) continue;
+
+                var assesseeIds = assesseeRows.Where(a => a.PROJECT_ID == projectId).Select(a => a.EMP_ID).Distinct().ToList();
+                if (!assesseeIds.Any()) continue; // no one to tell yet - leave these rows pending for a later submit
+
+                var project = projects[projectId];
+                var accountName = project.CUST_ID != null && accountNames.ContainsKey(project.CUST_ID)
+                    ? accountNames[project.CUST_ID]
+                    : "-";
+                // "Never notified before" doesn't mean "newly mapped" - a project can
+                // have been mapped/notified long ago, fully unmapped later, and is
+                // only now being mapped again, which should still read as "Added"
+                // rather than "Updated". So instead of previouslyNotifiedProjectIds,
+                // derive it from the actual before/after domain counts: back out
+                // this batch's additions from the current active count to see
+                // whether the project had zero mapped domains right before this
+                // change (i.e. it just transitioned from unmapped to mapped).
+                var currentActiveCount = activeDomainCountByProject.ContainsKey(projectId) ? activeDomainCountByProject[projectId] : 0;
+                var activeCountBeforeThisBatch = currentActiveCount - added.Count;
+                var stillHasDomains = currentActiveCount > 0;
+                var isNewProject = stillHasDomains && activeCountBeforeThisBatch <= 0;
+                // Added: had zero domains mapped before this change, now has some.
+                // Removed: now has zero active domains left (fully unmapped).
+                // Updated: everything else (some domains added/removed but the
+                // project was already mapped and still is).
+                // Spelled out rather than a single word ("Added"/"Removed"/"Updated")
+                // so a reader scanning the table doesn't have to infer from the
+                // domain bullets below whether the whole project dropped out of
+                // mapping (e.g. its one remaining domain got unmapped) versus
+                // just having some domains change while it's still mapped.
+                var statusLabel = isNewProject
+                    ? "Project added to mapping"
+                    : (!stillHasDomains ? "Project removed from mapping" : "Domains updated");
+                var statusColor = !stillHasDomains && !isNewProject ? "#c62828" : "#1F497D";
+                var changeLines = new List<string>
+                {
+                    $"<div style='color:{statusColor};font-weight:700;margin-bottom:4px;'>{statusLabel}</div>"
+                };
+                if (added.Any())
+                    changeLines.Add($"<div style='color:#1e7d34;font-weight:600;'>+ Added: {string.Join(", ", added)}</div>");
+                if (removed.Any())
+                    changeLines.Add($"<div style='color:#c62828;font-weight:600;'>&minus; Removed: {string.Join(", ", removed)}</div>");
+
+                const string cellStyle = "padding:10px 12px;border-bottom:1px solid #eeeeee;";
+                rows.Add("<tr>" +
+                    $"<td valign=top style='{cellStyle}'>{accountName}</td>" +
+                    $"<td valign=top style='{cellStyle}'>{project.PROJ_NM ?? projectId}</td>" +
+                    $"<td valign=top style='{cellStyle}'>{string.Join("", changeLines)}</td>" +
+                    $"<td valign=top style='{cellStyle}'>{string.Join(", ", GetEmpNames(assesseeIds))}</td>" +
+                    "</tr>");
+                allAssesseeIds.AddRange(assesseeIds);
+                notifiedAudit.AddRange(group);
+            }
+
+            allAssesseeIds = allAssesseeIds.Distinct().ToList();
+            if (!rows.Any() || !allAssesseeIds.Any()) return false;
+
+            SendITOpsNotificationEmailToMany(
+                allAssesseeIds,
+                "IT Ops Maturity: domain-project mapping updated",
+                "ITOpsMappingSubmitted.htm",
+                new Dictionary<string, string> { { "RowsHtml", string.Join("", rows) } });
+
+            foreach (var audit in notifiedAudit)
+            {
+                audit.NOTIFIED = true;
+                CSPdb.ITOPS_DOMAIN_PROJECT_MAP_AUDIT.Update(audit);
+            }
+            CSPdb.Commit(CanCommit);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Renaming a domain touches every project it's mapped to - one email
+        /// to the union of their assessees rather than one per project, same
+        /// reasoning as the assessments-created consolidation.
+        /// </summary>
+        private void NotifyITOpsDomainRenamed(int domainId, string oldName, string newName)
+        {
+            var projectIds = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
+                .Where(m => m.ISACTIVE && m.DOMAIN_ID == domainId)
+                .Select(m => m.PROJECT_ID)
+                .Distinct()
+                .ToList();
+            if (!projectIds.Any()) return;
+
+            var assesseeIds = CSPdb.ITOPS_PROJECT_ASSESSEE.GetAll()
+                .Where(a => a.ISACTIVE && projectIds.Contains(a.PROJECT_ID))
+                .Select(a => a.EMP_ID)
+                .Distinct()
+                .ToList();
+            if (!assesseeIds.Any()) return;
+
+            var projectNames = GetITOpsProjectNameMap(projectIds);
+            var projectNamesJoined = string.Join(", ", projectIds.Select(id => projectNames.ContainsKey(id) ? projectNames[id] : id));
+
+            SendITOpsNotificationEmailToMany(
+                assesseeIds,
+                $"IT Ops Maturity: {oldName} domain renamed to {newName}",
+                "ITOpsDomainRenamed.htm",
+                new Dictionary<string, string>
+                {
+                    { "OldName", oldName },
+                    { "NewName", newName },
+                    { "ProjectNames", projectNamesJoined }
+                });
+        }
+
+        /// <summary>Step 5: notifies the person just assigned as assessor/reviewer on one domain assessment (email + bell - a real assessment id exists here).</summary>
+        private void NotifyITOpsTeamAssignment(ITOPS_ASSESSMENT assessment, string roleLabel, string empId)
+        {
+            var domainName = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID)?.NAME ?? "domain";
+            var projectName = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID)?.PROJ_NM ?? assessment.PROJECT_ID;
+            var cycleLabel = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == assessment.ASSESSMENT_MASTER_ID)?.CYCLE_LABEL;
+
+            NotifyITOps(
+                empId,
+                $"IT Ops Maturity: you're the {roleLabel.ToLowerInvariant()} for {domainName} — {projectName}",
+                "ITOpsTeamAssigned.htm",
+                new Dictionary<string, string>
+                {
+                    { "EmpName", GetEmpName(empId) },
+                    { "RoleLabel", roleLabel },
+                    { "DomainName", domainName },
+                    { "ProjectName", projectName },
+                    { "CycleLabel", cycleLabel }
+                },
+                "TeamAssigned", assessment.ID, null,
+                $"You've been assigned as {roleLabel} for {domainName} — {projectName}, cycle {cycleLabel}.");
+        }
+
+        /// <summary>
+        /// Same idea as NotifyITOpsTeamAssignment, but for several assignments at
+        /// once (e.g. picking someone as assessor for a domain that's mapped to
+        /// many projects, a bulk reassignment, or a bulk removal) - ONE email
+        /// listing every domain/project/role touched, instead of one email per
+        /// assessment. `action` is "Added" or "Removed" and drives both the
+        /// subject and the intro line - when every row shares the same role
+        /// (the common case: assigning/removing someone for one domain) the
+        /// intro names that role directly rather than the generic "assessor/
+        /// reviewer" phrasing, which only applies to the mixed-role case (e.g.
+        /// a bulk reassignment that moved both assessor and reviewer seats).
+        /// `fromEmpId` is set only for a bulk reassignment - it names the
+        /// outgoing person in the table/intro and Ccs them, so they know their
+        /// seat was handed to someone else. The bell still logs one row per
+        /// assessment for "Added" (removals don't get a bell - there's nothing
+        /// left to click through to).
+        /// </summary>
+        private void NotifyITOpsTeamAssignmentBulk(List<Tuple<ITOPS_ASSESSMENT, string>> items, string empId, string action = "Added", string fromEmpId = null)
+        {
+            if (items == null || !items.Any()) return;
+            var isRemoved = string.Equals(action, "Removed", StringComparison.OrdinalIgnoreCase);
+            var fromEmpName = !string.IsNullOrWhiteSpace(fromEmpId) ? GetEmpName(fromEmpId) : null;
+
+            var domainIds = items.Select(i => i.Item1.DOMAIN_ID).Distinct().ToList();
+            var domainNames = CSPdb.ITOPS_DOMAIN.GetAll().Where(d => domainIds.Contains(d.ID)).ToDictionary(d => d.ID, d => d.NAME);
+            var projectNames = GetITOpsProjectNameMap(items.Select(i => i.Item1.PROJECT_ID).ToList());
+            var masterIds = items.Select(i => i.Item1.ASSESSMENT_MASTER_ID).Distinct().ToList();
+            var cycleLabels = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().Where(m => masterIds.Contains(m.ID)).ToDictionary(m => m.ID, m => m.CYCLE_LABEL);
+            var distinctRoles = items.Select(i => i.Item2).Distinct().ToList();
+
+            const string cellStyle = "padding:10px 12px;border-bottom:1px solid #eeeeee;";
+            var rowsHtml = string.Join("", items
+                .Select(i => new
+                {
+                    Domain = domainNames.ContainsKey(i.Item1.DOMAIN_ID) ? domainNames[i.Item1.DOMAIN_ID] : "domain",
+                    Project = projectNames.ContainsKey(i.Item1.PROJECT_ID) ? projectNames[i.Item1.PROJECT_ID] : i.Item1.PROJECT_ID,
+                    Cycle = cycleLabels.ContainsKey(i.Item1.ASSESSMENT_MASTER_ID) ? cycleLabels[i.Item1.ASSESSMENT_MASTER_ID] : "-",
+                    Role = i.Item2
+                })
+                .OrderBy(r => r.Domain).ThenBy(r => r.Project)
+                .Select(r => "<tr>" +
+                    $"<td valign=top style='{cellStyle}'>{r.Domain}</td>" +
+                    $"<td valign=top style='{cellStyle}'>{r.Project}</td>" +
+                    $"<td valign=top style='{cellStyle}'>{r.Role}</td>" +
+                    $"<td valign=top style='{cellStyle}'>{r.Cycle}</td>" +
+                    (fromEmpName != null ? $"<td valign=top style='{cellStyle}'>{fromEmpName}</td>" : "") +
+                    "</tr>"));
+
+            var previouslyHeaderCell = fromEmpName != null
+                ? "<th align=left style='padding:10px 12px;color:#ffffff;font-weight:600;border-bottom:1px solid #eeeeee;'>Previously held by</th>"
+                : "";
+
+            string introText;
+            if (distinctRoles.Count == 1)
+            {
+                var roleLower = distinctRoles[0].ToLowerInvariant();
+                var article = roleLower == "assessor" ? "an" : "a";
+                var replacingClause = fromEmpName != null ? $", replacing {fromEmpName}" : "";
+                introText = isRemoved
+                    ? $"You have been removed as {article} {roleLower} for the below domain(s) - see the respective project(s) and cycle in the table below."
+                    : $"You have been assigned as {article} {roleLower} for the below domain(s){replacingClause} - see the respective project(s) and cycle in the table below.";
+            }
+            else
+            {
+                var replacingClause = fromEmpName != null ? $" (replacing {fromEmpName})" : "";
+                introText = isRemoved
+                    ? "Your assessor/reviewer assignments have been removed in the IT Operations Maturity Dashboard:"
+                    : $"Your assessor/reviewer assignments have been updated in the IT Operations Maturity Dashboard{replacingClause}:";
+            }
+
+            var subject = distinctRoles.Count == 1 && domainIds.Count == 1
+                ? $"IT Ops Maturity: you've been {(isRemoved ? "removed as" : "assigned as")} {distinctRoles[0].ToLowerInvariant()} for {domainNames.Values.FirstOrDefault()} across {items.Count} project(s)"
+                : $"IT Ops Maturity: you're {(isRemoved ? "off" : "now on")} {items.Count} assessment(s) as {(distinctRoles.Count == 1 ? distinctRoles[0].ToLowerInvariant() : "assessor/reviewer")}";
+
+            var values = new Dictionary<string, string>
+            {
+                { "EmpName", GetEmpName(empId) },
+                { "IntroText", introText },
+                { "PreviouslyHeaderCell", previouslyHeaderCell },
+                { "RowsHtml", rowsHtml }
+            };
+
+            if (fromEmpId != null)
+                SendITOpsNotificationEmailWithCc(new List<string> { empId }, new List<string> { fromEmpId }, subject, "ITOpsTeamAssignedBulk.htm", values);
+            else
+                SendITOpsNotificationEmail(empId, subject, "ITOpsTeamAssignedBulk.htm", values);
+
+            if (isRemoved) return; // nothing left to click through to - no bell for a removal
+
+            foreach (var item in items)
+            {
+                var domainName = domainNames.ContainsKey(item.Item1.DOMAIN_ID) ? domainNames[item.Item1.DOMAIN_ID] : "domain";
+                var projectName = projectNames.ContainsKey(item.Item1.PROJECT_ID) ? projectNames[item.Item1.PROJECT_ID] : item.Item1.PROJECT_ID;
+                CreateITOpsNotification(
+                    empId, "TeamAssigned", item.Item1.ID, null,
+                    $"You've been assigned as {item.Item2} for {domainName} — {projectName}.");
+            }
+        }
+
         // ------------------------------------------------------------------
         // Access control for the Admin Setup surface
         // ------------------------------------------------------------------
@@ -602,9 +1023,31 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private bool HasITOpsRole(string empId, string roleCode)
         {
             if (string.IsNullOrWhiteSpace(empId)) return false;
+
+            // A DEACTIVATED role definition turns that step off system-wide - even
+            // Superuser's blanket "every step is open regardless of individual
+            // grants" bypass only ever meant to skip checking whether THIS PERSON
+            // was granted it, not whether the role still exists at all. Without
+            // this check, deactivating ITOPS_ROLE.ISACTIVE for a role had no
+            // observable effect for any Superuser, which reads as the setting
+            // being ignored entirely.
+            if (!CSPdb.ITOPS_ROLE.GetAll().Any(r => r.ISACTIVE && r.ROLE_CODE == roleCode)) return false;
+
             if (IsITOpsSuperuser(empId)) return true;
             return GetITOpsRoleCodes(empId).Contains(roleCode);
         }
+
+        // Per-role project-scope enforcement (ORG/OWN/PROJECT grant scoping on
+        // reads/writes across the mapping and assessment screens) was tried and
+        // reverted - it introduced a regression (an empty project list for at
+        // least one superuser) that wasn't worth chasing further right now.
+        // Reads are gated only by DenyIfNotITOpsAdmin/DenyIfNotITOpsRole again,
+        // same as before that work started. SCOPE_TYPE stays on
+        // ITOPS_ROLE_ASSIGNMENT (harmless, unused for OWN) since dropping a
+        // column is a separate, riskier step than reverting the code that read
+        // it - grants are only ever written as ORG or PROJECT now.
+        private const string ITOPS_SCOPE_ORG = "ORG";
+        private const string ITOPS_SCOPE_PROJECT = "PROJECT";
 
         private const string ITOPS_ADMIN_FORBIDDEN =
             "You do not have an IT Ops Maturity administrator role. Ask a superuser to grant one in Admin Setup > Configure Roles.";
@@ -643,13 +1086,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var isSuperuser = IsITOpsSuperuser(callerEmpId);
             var roleCodes = GetITOpsRoleCodes(callerEmpId);
+            var activeRoleCodes = CSPdb.ITOPS_ROLE.GetAll().Where(r => r.ISACTIVE).Select(r => r.ROLE_CODE).ToList();
 
             return Ok(new ITOPS_MyAccessRow
             {
                 EmpId = callerEmpId,
                 IsSuperuser = isSuperuser,
                 RoleCodes = roleCodes,
-                IsAdmin = isSuperuser || roleCodes.Any()
+                IsAdmin = isSuperuser || roleCodes.Any(),
+                ActiveRoleCodes = activeRoleCodes
             });
         }
 
@@ -721,6 +1166,71 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var rows = Cldb.EMP_INFO.GetAll()
                 .Where(e => e.DOR == null)
+                .OrderBy(e => e.FRST_NM)
+                .Select(e => new ITOPS_EmployeeRosterRow
+                {
+                    EmpId = e.EMP_ID,
+                    Name = e.FRST_NM,
+                    Title = e.EMP_CSP_ROLE
+                })
+                .ToList();
+
+            return Ok(rows);
+        }
+
+        /// <summary>
+        /// Distinct people who currently hold at least one active assessor or
+        /// reviewer assignment - what the "Reassign" modal's "Replace" (from)
+        /// search should offer, since reassigning only makes sense starting from
+        /// someone who actually holds an assignment (the "With" / to field stays
+        /// on the full roster via GetITOpsEmployeeRoster).
+        /// </summary>
+        [GET("GetITOpsAssignedTeamMembers")]
+        [ActionName("GetITOpsAssignedTeamMembers")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsAssignedTeamMembers()
+        {
+            var denied = DenyIfNotITOpsAdmin();
+            if (denied != null) return denied;
+
+            // string.IsNullOrWhiteSpace doesn't translate to SQL under LINQ to
+            // Entities - materialize with ToList() first, then apply that filter
+            // in-memory.
+            var empIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll().Where(a => a.ISACTIVE).Select(a => a.ASSESSOR_EMP_ID)
+                .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll().Where(r => r.ISACTIVE).Select(r => r.REVIEWER_EMP_ID))
+                .ToList()
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .ToList();
+            if (!empIds.Any()) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var rows = Cldb.EMP_INFO.GetAll()
+                .Where(e => empIds.Contains(e.EMP_ID) && e.DOR == null)
+                .OrderBy(e => e.FRST_NM)
+                .Select(e => new ITOPS_EmployeeRosterRow { EmpId = e.EMP_ID, Name = e.FRST_NM, Title = e.EMP_CSP_ROLE })
+                .ToList();
+
+            return Ok(rows);
+        }
+
+        // The IT Ops Superuser role is restricted to CSM SuperAdmins (see
+        // IsCsmSuperAdmin/ValidateSuperuserGrantTargets) - this narrows the
+        // roster down to just that set, for the last-Superuser replacement
+        // picker (revoking the only remaining Superuser can only hand it to
+        // someone eligible in the first place).
+        [GET("GetITOpsCsmSuperAdmins")]
+        [ActionName("GetITOpsCsmSuperAdmins")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsCsmSuperAdmins()
+        {
+            var denied = DenyIfNotITOpsAdmin();
+            if (denied != null) return denied;
+
+            var superAdminIds = Cldb.AppRepo.GetSuperAdminEmpIds();
+            if (!superAdminIds.Any()) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var rows = Cldb.EMP_INFO.GetAll()
+                .Where(e => e.DOR == null && superAdminIds.Contains(e.EMP_ID))
                 .OrderBy(e => e.FRST_NM)
                 .Select(e => new ITOPS_EmployeeRosterRow
                 {
@@ -935,9 +1445,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     RoleName = role != null ? role.ROLE_NAME : null,
                     ProjectId = a.PROJECT_ID,
                     ProjectName = projectName,
-                    Scope = string.IsNullOrWhiteSpace(a.PROJECT_ID)
-                        ? "Org-wide"
-                        : (projectName ?? a.PROJECT_ID) + " only",
+                    Scope = string.IsNullOrWhiteSpace(a.PROJECT_ID) ? "Org-wide" : (projectName ?? a.PROJECT_ID) + " only",
+                    ScopeType = a.SCOPE_TYPE,
                     GrantedOn = a.CREATED_DATE
                 };
             }).ToList();
@@ -1041,6 +1550,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (role == null) return NotFound();
 
             var targetEmpId = request.EmpId.Trim();
+
+            var superuserError = ValidateSuperuserGrantTargets(new[] { request.RoleId }, new[] { targetEmpId });
+            if (superuserError != null) return Content(HttpStatusCode.Conflict, superuserError);
+
             var projectId = string.IsNullOrWhiteSpace(request.ProjectId) ? null : request.ProjectId.Trim();
 
             // Re-granting an identical (emp, role, scope) grant reactivates the existing
@@ -1048,8 +1561,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var existing = CSPdb.ITOPS_ROLE_ASSIGNMENT.GetAll()
                 .FirstOrDefault(a => a.EMP_ID == targetEmpId && a.ROLE_ID == request.RoleId && a.PROJECT_ID == projectId);
 
+            var scopeType = projectId == null ? ITOPS_SCOPE_ORG : ITOPS_SCOPE_PROJECT;
             if (existing != null)
             {
+                existing.SCOPE_TYPE = scopeType;
                 UpdateAuditFields(existing, callerEmpId);
                 CSPdb.ITOPS_ROLE_ASSIGNMENT.Update(existing);
             }
@@ -1059,12 +1574,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     ROLE_ID = request.RoleId,
                     EMP_ID = targetEmpId,
-                    PROJECT_ID = projectId
+                    PROJECT_ID = projectId,
+                    SCOPE_TYPE = scopeType
                 };
                 UpdateAuditFields(existing, callerEmpId);
                 CSPdb.ITOPS_ROLE_ASSIGNMENT.Add(existing);
             }
             CSPdb.Commit(CanCommit);
+
+            NotifyITOpsRoleChange(
+                targetEmpId,
+                new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>(role.ROLE_NAME, ITOpsScopeLabel(projectId)) },
+                callerEmpId, granted: true);
 
             return Ok(existing);
         }
@@ -1107,12 +1628,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Distinct()
                 .ToList();
 
+            var superuserError = ValidateSuperuserGrantTargets(activeRoleIds, targetEmpIds);
+            if (superuserError != null) return Content(HttpStatusCode.Conflict, superuserError);
+
             // No projects picked = a single org-wide grant (PROJECT_ID = NULL) per role.
             var projectIds = (request.ProjectIds ?? new List<string>())
                 .Where(p => !string.IsNullOrWhiteSpace(p))
                 .Select(p => p.Trim())
                 .Distinct()
                 .ToList();
+            var scopeType = projectIds.Any() ? ITOPS_SCOPE_PROJECT : ITOPS_SCOPE_ORG;
             var scopes = projectIds.Any() ? projectIds : new List<string> { null };
 
             var existingRows = CSPdb.ITOPS_ROLE_ASSIGNMENT.GetAll()
@@ -1133,6 +1658,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         {
                             // UpdateAuditFields sets ISACTIVE = true, so this also
                             // reactivates a previously revoked identical grant.
+                            existing.SCOPE_TYPE = scopeType;
                             UpdateAuditFields(existing, callerEmpId);
                             CSPdb.ITOPS_ROLE_ASSIGNMENT.Update(existing);
                         }
@@ -1142,7 +1668,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             {
                                 ROLE_ID = roleId,
                                 EMP_ID = targetEmpId,
-                                PROJECT_ID = projectId
+                                PROJECT_ID = projectId,
+                                SCOPE_TYPE = scopeType
                             };
                             UpdateAuditFields(row, callerEmpId);
                             CSPdb.ITOPS_ROLE_ASSIGNMENT.Add(row);
@@ -1155,7 +1682,106 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             CSPdb.Commit(CanCommit);
 
+            // One email per EMPLOYEE listing every role just granted - the scope
+            // label summarizes every project touched for that role, so a bulk
+            // grant across several roles/projects is still exactly one email.
+            var grantScopeLabel = !projectIds.Any() ? "Org-wide" : string.Join(", ", projectIds.Select(ITOpsScopeLabel));
+            foreach (var targetEmpId in targetEmpIds)
+            {
+                var roleScopePairs = requestedRoles
+                    .Select(role => new KeyValuePair<string, string>(role.ROLE_NAME, grantScopeLabel))
+                    .ToList();
+                NotifyITOpsRoleChange(targetEmpId, roleScopePairs, callerEmpId, granted: true);
+            }
+
             return Ok(new { EmpIds = targetEmpIds, Granted = granted });
+        }
+
+        // Mixed-scope variant of GrantITOpsRoles for a single employee: each
+        // entry carries its own role and its own scope (org-wide or a project
+        // list), so e.g. "role A org-wide + role B on two projects" lands as
+        // one call and one consolidated email, instead of the caller having to
+        // issue one GrantITOpsRoles call per distinct scope.
+        [POST("GrantITOpsRolesMulti")]
+        [ActionName("GrantITOpsRolesMulti")]
+        [HttpPost]
+        public IHttpActionResult GrantITOpsRolesMulti([FromBody] ITOPS_GrantRolesMultiRequest request)
+        {
+            var targetEmpId = request?.EmpId?.Trim();
+            var entries = (request?.Entries ?? new List<ITOPS_GrantRoleEntry>())
+                .Where(e => e.RoleId > 0)
+                .ToList();
+            if (string.IsNullOrWhiteSpace(targetEmpId) || !entries.Any())
+                return Content(HttpStatusCode.Conflict, "Pick an employee and at least one role.");
+
+            var callerEmpId = GetHeaderDetails_String("empId");
+            if (!IsITOpsSuperuser(callerEmpId))
+                return Content(HttpStatusCode.Forbidden, "Only a superuser can grant IT Ops roles.");
+
+            var roleIds = entries.Select(e => e.RoleId).Distinct().ToList();
+            var requestedRoles = CSPdb.ITOPS_ROLE.GetAll()
+                .Where(r => r.ISACTIVE && roleIds.Contains(r.ID))
+                .ToList();
+            var missing = roleIds.Where(id => !requestedRoles.Any(r => r.ID == id)).ToList();
+            if (missing.Any())
+                return Content(HttpStatusCode.Conflict, "One or more of the selected roles no longer exists.");
+
+            var superuserError = ValidateSuperuserGrantTargets(roleIds, new List<string> { targetEmpId });
+            if (superuserError != null) return Content(HttpStatusCode.Conflict, superuserError);
+
+            var existingRows = CSPdb.ITOPS_ROLE_ASSIGNMENT.GetAll()
+                .Where(a => a.EMP_ID == targetEmpId)
+                .ToList();
+
+            var granted = 0;
+            var roleScopePairs = new List<KeyValuePair<string, string>>();
+            foreach (var entry in entries)
+            {
+                var role = requestedRoles.First(r => r.ID == entry.RoleId);
+                var projectIds = (entry.ProjectIds ?? new List<string>())
+                    .Where(p => !string.IsNullOrWhiteSpace(p))
+                    .Select(p => p.Trim())
+                    .Distinct()
+                    .ToList();
+                var entryScopeType = projectIds.Any() ? ITOPS_SCOPE_PROJECT : ITOPS_SCOPE_ORG;
+                var scopes = projectIds.Any() ? projectIds : new List<string> { null };
+
+                foreach (var projectId in scopes)
+                {
+                    var existing = existingRows
+                        .FirstOrDefault(a => a.ROLE_ID == entry.RoleId && a.EMP_ID == targetEmpId && a.PROJECT_ID == projectId);
+
+                    if (existing != null)
+                    {
+                        existing.SCOPE_TYPE = entryScopeType;
+                        UpdateAuditFields(existing, callerEmpId);
+                        CSPdb.ITOPS_ROLE_ASSIGNMENT.Update(existing);
+                    }
+                    else
+                    {
+                        var row = new ITOPS_ROLE_ASSIGNMENT
+                        {
+                            ROLE_ID = entry.RoleId,
+                            EMP_ID = targetEmpId,
+                            PROJECT_ID = projectId,
+                            SCOPE_TYPE = entryScopeType
+                        };
+                        UpdateAuditFields(row, callerEmpId);
+                        CSPdb.ITOPS_ROLE_ASSIGNMENT.Add(row);
+                        existingRows.Add(row);
+                    }
+                    granted++;
+                }
+
+                var scopeLabel = !projectIds.Any() ? "Org-wide" : string.Join(", ", projectIds.Select(ITOpsScopeLabel));
+                roleScopePairs.Add(new KeyValuePair<string, string>(role.ROLE_NAME, scopeLabel));
+            }
+
+            CSPdb.Commit(CanCommit);
+
+            NotifyITOpsRoleChange(targetEmpId, roleScopePairs, callerEmpId, granted: true);
+
+            return Ok(new { EmpId = targetEmpId, Granted = granted });
         }
 
         // Edit one existing grant in place: change its role and/or its scope.
@@ -1225,6 +1851,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var assignment = CSPdb.ITOPS_ROLE_ASSIGNMENT.GetAll().FirstOrDefault(a => a.ID == id);
             if (assignment == null) return NotFound();
 
+            var roleName = CSPdb.ITOPS_ROLE.GetAll().FirstOrDefault(r => r.ID == assignment.ROLE_ID)?.ROLE_NAME ?? "role";
+            var scopeLabel = ITOpsScopeLabel(assignment.PROJECT_ID);
+
             // UpdateAuditFieldsExt unconditionally sets ISACTIVE = true, so it must
             // run BEFORE the revocation or it silently stomps it back to active.
             UpdateAuditFields(assignment, callerEmpId);
@@ -1232,7 +1861,59 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.ITOPS_ROLE_ASSIGNMENT.Update(assignment);
             CSPdb.Commit(CanCommit);
 
+            NotifyITOpsRoleChange(
+                assignment.EMP_ID,
+                new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>(roleName, scopeLabel) },
+                callerEmpId, granted: false);
+
             return Ok();
+        }
+
+        // Bulk sibling of RevokeITOpsRole above, for the Revoke checklist modal:
+        // one or more grants (possibly spanning several roles) removed in one
+        // call, with ONE consolidated email per affected employee rather than
+        // one email per grant.
+        [POST("RevokeITOpsRoles")]
+        [ActionName("RevokeITOpsRoles")]
+        [HttpPost]
+        public IHttpActionResult RevokeITOpsRoles([FromBody] ITOPS_RevokeRolesRequest request)
+        {
+            var ids = (request?.Ids ?? new List<int>()).Distinct().ToList();
+            if (!ids.Any()) return Content(HttpStatusCode.Conflict, "Pick at least one role to revoke.");
+
+            var callerEmpId = GetHeaderDetails_String("empId");
+            if (!IsITOpsSuperuser(callerEmpId))
+                return Content(HttpStatusCode.Forbidden, "Only a superuser can revoke IT Ops roles.");
+
+            var assignments = CSPdb.ITOPS_ROLE_ASSIGNMENT.GetAll().Where(a => ids.Contains(a.ID)).ToList();
+            if (!assignments.Any()) return NotFound();
+
+            var roleNames = CSPdb.ITOPS_ROLE.GetAll()
+                .ToList()
+                .GroupBy(r => r.ID)
+                .ToDictionary(g => g.Key, g => g.First().ROLE_NAME);
+
+            foreach (var assignment in assignments)
+            {
+                // UpdateAuditFieldsExt unconditionally sets ISACTIVE = true, so it must
+                // run BEFORE the revocation or it silently stomps it back to active.
+                UpdateAuditFields(assignment, callerEmpId);
+                assignment.ISACTIVE = false;
+                CSPdb.ITOPS_ROLE_ASSIGNMENT.Update(assignment);
+            }
+            CSPdb.Commit(CanCommit);
+
+            foreach (var empGroup in assignments.GroupBy(a => a.EMP_ID))
+            {
+                var roleScopePairs = empGroup
+                    .Select(a => new KeyValuePair<string, string>(
+                        roleNames.ContainsKey(a.ROLE_ID) ? roleNames[a.ROLE_ID] : "role",
+                        ITOpsScopeLabel(a.PROJECT_ID)))
+                    .ToList();
+                NotifyITOpsRoleChange(empGroup.Key, roleScopePairs, callerEmpId, granted: false);
+            }
+
+            return Ok(new { Revoked = assignments.Count });
         }
 
         // ==================================================================
@@ -1491,10 +2172,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "Another domain already uses this name.");
 
             var empId = GetHeaderDetails_String("empId");
+            var oldName = domain.NAME;
             domain.NAME = name;
             UpdateAuditFields(domain, empId);
             CSPdb.ITOPS_DOMAIN.Update(domain);
             CSPdb.Commit(CanCommit);
+
+            if (!string.Equals(oldName, name, StringComparison.Ordinal))
+                NotifyITOpsDomainRenamed(domain.ID, oldName, name);
 
             var today = DateTime.Today;
             var categoryCount = CSPdb.ITOPS_CATEGORY.GetAll()
@@ -1533,17 +2218,65 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var denied = DenyIfNotITOpsAdmin();
             if (denied != null) return denied;
 
+            var empId = GetHeaderDetails_String("empId");
+
+            // Scoped to the caller's own allocated projects, same as the main
+            // CSM app's account/project dropdowns (GetCustomerIds /
+            // GetAllProjectsForCustomer in AllSysController.cs, both backed by
+            // usp_get_project_new / usp_get_projectIds): an admin only sees
+            // customers/projects they're actually staffed on (PROJECT_RESOURCE)
+            // or hold a management role on (AM/BUHead/DM/PM), not every
+            // project org-wide. That SP already bypasses this for a
+            // SuperAdmin/manager-tier CSM_TITLE_ID; ITOps Superusers get the
+            // same full-visibility bypass here regardless of their CSM title,
+            // since Superuser is this app's own equivalent top-level role.
+            HashSet<string> allowedProjectIds = null;
+            if (!IsITOpsSuperuser(empId))
+            {
+                allowedProjectIds = new HashSet<string>(
+                    Cldb.AppRepo.GetProjectIdsForUser(empId, custId ?? "", "")
+                        .Select(p => p.PROJ_ID)
+                        .Where(id => id != null));
+            }
+
             var projects = Cldb.PROJECT.GetAll().AsQueryable();
             if (!string.IsNullOrWhiteSpace(custId))
                 projects = projects.Where(p => p.CUST_ID == custId);
+            if (allowedProjectIds != null)
+                projects = projects.Where(p => allowedProjectIds.Contains(p.PROJ_ID));
 
             var list = projects
-                .Select(p => new { p.PROJ_ID, p.PROJ_NM, p.CUST_ID, p.BUSINESS_UNIT, p.PROJ_STATUS })
+                .Select(p => new { p.PROJ_ID, p.PROJ_NM, p.CUST_ID, p.PARENT_PROJ_ID, p.BUSINESS_UNIT, p.PROJ_STATUS })
                 .ToList()
                 .Where(p => p.PROJ_STATUS == null || p.PROJ_STATUS.ToLower() != "closed")
                 .ToList();
 
-            var custIds = list.Select(p => p.CUST_ID).Where(c => c != null).Distinct().ToList();
+            // A "child"/billing-line project under a hierarchy often has its own
+            // CUST_ID left null, with only the root project (PARENT_PROJ_ID ==
+            // PROJ_ID) carrying it - same pattern GetProjectList and several
+            // other AllSysController lookups already rely on. Without this
+            // fallback those child projects showed up with a null account name
+            // (and dropped out of the Customer picker's grouping entirely).
+            var parentIdsToResolve = list
+                .Where(p => p.CUST_ID == null && !string.IsNullOrWhiteSpace(p.PARENT_PROJ_ID) && p.PARENT_PROJ_ID != p.PROJ_ID)
+                .Select(p => p.PARENT_PROJ_ID)
+                .Distinct()
+                .ToList();
+            var parentCustIds = parentIdsToResolve.Any()
+                ? Cldb.PROJECT.GetAll()
+                    .Where(p => parentIdsToResolve.Contains(p.PROJ_ID))
+                    .Select(p => new { p.PROJ_ID, p.CUST_ID })
+                    .ToList()
+                    .Where(p => p.CUST_ID != null)
+                    .GroupBy(p => p.PROJ_ID)
+                    .ToDictionary(g => g.Key, g => g.First().CUST_ID)
+                : new Dictionary<string, string>();
+
+            var effectiveCustId = list.ToDictionary(
+                p => p.PROJ_ID,
+                p => p.CUST_ID ?? (p.PARENT_PROJ_ID != null && parentCustIds.ContainsKey(p.PARENT_PROJ_ID) ? parentCustIds[p.PARENT_PROJ_ID] : null));
+
+            var custIds = effectiveCustId.Values.Where(c => c != null).Distinct().ToList();
             var accountNames = Cldb.CUSTOMER.GetAll()
                 .Where(c => custIds.Contains(c.CUST_ID))
                 .Select(c => new { c.CUST_ID, c.CUST_NM })
@@ -1551,13 +2284,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .GroupBy(c => c.CUST_ID)
                 .ToDictionary(g => g.Key, g => g.First().CUST_NM);
 
-            var rows = list.Select(p => new ITOPS_ProjectRow
+            var rows = list.Select(p =>
             {
-                ProjectId = p.PROJ_ID,
-                ProjectName = p.PROJ_NM,
-                CustId = p.CUST_ID,
-                AccountName = p.CUST_ID != null && accountNames.ContainsKey(p.CUST_ID) ? accountNames[p.CUST_ID] : null,
-                BusinessUnit = p.BUSINESS_UNIT
+                var resolvedCustId = effectiveCustId[p.PROJ_ID];
+                return new ITOPS_ProjectRow
+                {
+                    ProjectId = p.PROJ_ID,
+                    ProjectName = p.PROJ_NM,
+                    CustId = resolvedCustId,
+                    AccountName = resolvedCustId != null && accountNames.ContainsKey(resolvedCustId) ? accountNames[resolvedCustId] : null,
+                    BusinessUnit = p.BUSINESS_UNIT
+                };
             })
             .OrderBy(p => p.AccountName)
             .ThenBy(p => p.ProjectName)
@@ -1587,12 +2324,33 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var projectIds = domainRows.Select(m => m.ProjectId).Distinct().ToList();
             var projects = Cldb.PROJECT.GetAll()
                 .Where(p => projectIds.Contains(p.PROJ_ID))
-                .Select(p => new { p.PROJ_ID, p.PROJ_NM, p.CUST_ID })
+                .Select(p => new { p.PROJ_ID, p.PROJ_NM, p.CUST_ID, p.PARENT_PROJ_ID })
                 .ToList()
                 .GroupBy(p => p.PROJ_ID)
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var custIds = projects.Values.Select(p => p.CUST_ID).Where(c => c != null).Distinct().ToList();
+            // Same hierarchy-child fallback as GetITOpsProjects: a project whose
+            // own CUST_ID is null inherits it from its root project
+            // (PARENT_PROJ_ID == PROJ_ID there) instead of showing a blank account.
+            var parentIdsToResolve = projects.Values
+                .Where(p => p.CUST_ID == null && !string.IsNullOrWhiteSpace(p.PARENT_PROJ_ID) && p.PARENT_PROJ_ID != p.PROJ_ID)
+                .Select(p => p.PARENT_PROJ_ID)
+                .Distinct()
+                .ToList();
+            var parentCustIds = parentIdsToResolve.Any()
+                ? Cldb.PROJECT.GetAll()
+                    .Where(p => parentIdsToResolve.Contains(p.PROJ_ID))
+                    .Select(p => new { p.PROJ_ID, p.CUST_ID })
+                    .ToList()
+                    .Where(p => p.CUST_ID != null)
+                    .GroupBy(p => p.PROJ_ID)
+                    .ToDictionary(g => g.Key, g => g.First().CUST_ID)
+                : new Dictionary<string, string>();
+            var effectiveCustId = projects.ToDictionary(
+                kv => kv.Key,
+                kv => kv.Value.CUST_ID ?? (kv.Value.PARENT_PROJ_ID != null && parentCustIds.ContainsKey(kv.Value.PARENT_PROJ_ID) ? parentCustIds[kv.Value.PARENT_PROJ_ID] : null));
+
+            var custIds = effectiveCustId.Values.Where(c => c != null).Distinct().ToList();
             var accountNames = Cldb.CUSTOMER.GetAll()
                 .Where(c => custIds.Contains(c.CUST_ID))
                 .Select(c => new { c.CUST_ID, c.CUST_NM })
@@ -1610,7 +2368,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Select(g =>
                 {
                     var project = projects.ContainsKey(g.Key) ? projects[g.Key] : null;
-                    var custId = project != null ? project.CUST_ID : null;
+                    var custId = effectiveCustId.ContainsKey(g.Key) ? effectiveCustId[g.Key] : null;
 
                     return new ITOPS_DomainProjectMappingRow
                     {
@@ -1662,8 +2420,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
 
             var projectId = request.ProjectId.Trim();
-            var wanted = (request.DomainIds ?? new List<int>()).Distinct().ToList();
             var empId = GetHeaderDetails_String("empId");
+
+            var wanted = (request.DomainIds ?? new List<int>()).Distinct().ToList();
 
             var existingRows = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
                 .Where(m => m.PROJECT_ID == projectId)
@@ -1707,6 +2466,27 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok();
         }
 
+        // Fired once when the admin clicks "Submit and Continue to Configure
+        // Assessment" on the mapping screen - sends ONE consolidated email
+        // (see NotifyITOpsMappingSubmitted) instead of one per mapping edit.
+        [POST("SubmitITOpsDomainProjectMappings")]
+        [ActionName("SubmitITOpsDomainProjectMappings")]
+        [HttpPost]
+        public IHttpActionResult SubmitITOpsDomainProjectMappings([FromBody] ITOPS_SubmitMappingsRequest request)
+        {
+            var denied = DenyIfNotITOpsRole("DOMAIN_PROJECT_MAPPER", "submit domain-project mappings");
+            if (denied != null) return denied;
+
+            var projectIds = (request?.ProjectIds ?? new List<string>())
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(p => p.Trim())
+                .Distinct()
+                .ToList();
+
+            var sent = NotifyITOpsMappingSubmitted(projectIds);
+            return Ok(new { Sent = sent });
+        }
+
         // Writes one append-only ITOPS_DOMAIN_PROJECT_MAP_AUDIT row per actual
         // state change. Not committed here - the caller's own CSPdb.Commit(...)
         // persists this alongside the mapping row change in the same transaction.
@@ -1721,6 +2501,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             };
             UpdateAuditFields(entry, empId);
             CSPdb.ITOPS_DOMAIN_PROJECT_MAP_AUDIT.Add(entry);
+
+            // No per-change email here anymore - firing one for every single
+            // add/remove read as spam while an admin was still iterating on a
+            // project's domain set. NotifyITOpsMappingSubmitted sends ONE
+            // consolidated email covering everything, triggered when the admin
+            // clicks "Submit and Continue to Configure Assessment" instead.
         }
 
         // ADDITIVE bulk mapping: one ITOPS_DOMAIN_PROJECT_MAP row per
@@ -1945,6 +2731,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (!requestedProjectIds.Any())
                 return Content(HttpStatusCode.Conflict, "Select at least one project to create assessments for.");
 
+            var callerEmpId = GetHeaderDetails_String("empId");
+
             var masterId = request.AssessmentMasterId ?? request.CycleId ?? 0;
             var master = masterId > 0
                 ? CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == masterId && m.ISACTIVE)
@@ -1998,6 +2786,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var domains = domainIds.Where(allDomains.ContainsKey).Select(id => allDomains[id]).ToList();
             var wantedAssessees = assesseesForProjects.Where(a => a.PROJECT_ID == projectId).Select(a => a.EMP_ID).Distinct().ToList();
             var assessmentIds = new List<int>();
+            var newAssessments = new List<ITOPS_ASSESSMENT>();
 
             if (!domains.Any()) continue; // nothing mapped to this project - skip it rather than error the whole batch
 
@@ -2028,10 +2817,35 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         };
                         UpdateAuditFields(assessment, empId);
                         CSPdb.ITOPS_ASSESSMENT.Add(assessment);
-                        CSPdb.Commit(CanCommit); // need the identity before the join rows can reference it
+                        try
+                        {
+                            CSPdb.Commit(CanCommit); // need the identity before the join rows can reference it
+                        }
+                        catch (Exception ex)
+                        {
+                            if (!IsUniqueViolation(ex)) throw;
+                            // Same race as EnsureAssessmentsForAccount: the in-process
+                            // lock only covers this worker process, so another process/
+                            // server can still win the insert first. Detach so the change
+                            // tracker drops the failed row, then re-fetch the one that
+                            // actually landed instead of leaving this project's assessment
+                            // list short an entry.
+                            // EF6 special-cases Added -> Deleted as an immediate Detach (no
+                            // DB round trip, since the row was never actually inserted).
+                            CSPdb.ITOPS_ASSESSMENT.Delete(assessment);
+                            assessment = CSPdb.ITOPS_ASSESSMENT.GetAll()
+                                .FirstOrDefault(a => a.ISACTIVE
+                                                  && a.ASSESSMENT_MASTER_ID == master.ID
+                                                  && a.DOMAIN_ID == domain.ID
+                                                  && a.PROJECT_ID == projectId);
+                            if (assessment == null) continue; // shouldn't happen, but don't reference a null row below
+                            assessmentIds.Add(assessment.ID);
+                            continue;
+                        }
 
                         SeedITOpsDefaultOwners(assessment, domain, empId);
                         CSPdb.Commit(CanCommit);
+                        newAssessments.Add(assessment);
                     }
 
                     assessmentIds.Add(assessment.ID);
@@ -2040,11 +2854,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 // Apply the identical assessee set to every one of this project's
                 // assessments in this cycle - including ones created by an earlier
                 // call - so "assessees are project-wide" holds even across re-runs.
+                var priorActiveAssesseeIds = new List<string>();
                 if (assessmentIds.Any())
                 {
                     var existingAssessees = CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
                         .Where(a => assessmentIds.Contains(a.ASSESSMENT_ID))
                         .ToList();
+                    // Snapshot before the mutation loop below flips ISACTIVE, so the
+                    // "assessee list updated" email (below) can report what actually
+                    // changed rather than just the final set.
+                    priorActiveAssesseeIds = existingAssessees.Where(r => r.ISACTIVE).Select(r => r.ASSESSEE_EMP_ID).Distinct().ToList();
 
                     foreach (var assessmentId in assessmentIds)
                     {
@@ -2079,6 +2898,104 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         }
                     }
                     CSPdb.Commit(CanCommit);
+                }
+
+                // ONE consolidated email per project covering every domain newly
+                // created in this call (table: Account / Project / Domains /
+                // Assessee) - To is the project's assessees, Cc is every assessor
+                // and reviewer already seeded on these new assessments plus the
+                // project's Quality SPOC (PROJECT.QUALITY_SPOC). The bell still
+                // logs one row per new assessment (so the in-app count matches
+                // reality), it just doesn't send its own separate email.
+                if (newAssessments.Any() && wantedAssessees.Any())
+                {
+                    var newAssessmentIds = newAssessments.Select(a => a.ID).ToList();
+                    var domainNames = newAssessments
+                        .Select(a => allDomains.ContainsKey(a.DOMAIN_ID) ? allDomains[a.DOMAIN_ID].NAME : null)
+                        .Where(n => n != null)
+                        .Distinct()
+                        .ToList();
+
+                    var ccEmpIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
+                        .Where(a => a.ISACTIVE && newAssessmentIds.Contains(a.ASSESSMENT_ID))
+                        .Select(a => a.ASSESSOR_EMP_ID)
+                        .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
+                            .Where(r => r.ISACTIVE && newAssessmentIds.Contains(r.ASSESSMENT_ID))
+                            .Select(r => r.REVIEWER_EMP_ID))
+                        .ToList();
+                    // "Dex partner" for now - the project's Quality SPOC. Revisit this
+                    // list if the definition of who else should be Cc'd changes.
+                    if (!string.IsNullOrWhiteSpace(project.QUALITY_SPOC)) ccEmpIds.Add(project.QUALITY_SPOC);
+                    ccEmpIds = ccEmpIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+
+                    SendITOpsNotificationEmailWithCc(
+                        wantedAssessees,
+                        ccEmpIds,
+                        $"IT Ops Maturity: assessment(s) created for {project.PROJ_NM ?? projectId}",
+                        "ITOpsAssessmentsCreated.htm",
+                        new Dictionary<string, string>
+                        {
+                            { "AccountName", accountName ?? "-" },
+                            { "ProjectName", project.PROJ_NM ?? projectId },
+                            { "CycleLabel", master.CYCLE_LABEL },
+                            { "DomainNames", string.Join(", ", domainNames) },
+                            { "AssesseeNames", string.Join(", ", GetEmpNames(wantedAssessees)) }
+                        });
+
+                    foreach (var assesseeEmpId in wantedAssessees)
+                    {
+                        foreach (var newAssessment in newAssessments)
+                        {
+                            CreateITOpsNotification(
+                                assesseeEmpId, "AssessmentsCreated", newAssessment.ID, null,
+                                $"{(allDomains.ContainsKey(newAssessment.DOMAIN_ID) ? allDomains[newAssessment.DOMAIN_ID].NAME : "domain")} assessment created for {project.PROJ_NM ?? projectId}, cycle {master.CYCLE_LABEL}.");
+                        }
+                    }
+                }
+                else if (assessmentIds.Any())
+                {
+                    // No brand-new assessment was created this call (e.g. the "Update
+                    // assessees" / Save & sync action on a project that's already been
+                    // assessed) - the assessee roster on its existing assessments can
+                    // still have changed, and that has no other email covering it, so
+                    // report it here instead of staying silent.
+                    var addedAssessees = wantedAssessees.Except(priorActiveAssesseeIds).ToList();
+                    var removedAssessees = priorActiveAssesseeIds.Except(wantedAssessees).ToList();
+                    if (addedAssessees.Any() || removedAssessees.Any())
+                    {
+                        var changeLines = new List<string>();
+                        if (addedAssessees.Any())
+                            changeLines.Add($"<div style='color:#1e7d34;font-weight:600;'>+ Added: {string.Join(", ", GetEmpNames(addedAssessees))}</div>");
+                        if (removedAssessees.Any())
+                            changeLines.Add($"<div style='color:#c62828;font-weight:600;'>&minus; Removed: {string.Join(", ", GetEmpNames(removedAssessees))}</div>");
+
+                        var ccEmpIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
+                            .Where(a => a.ISACTIVE && assessmentIds.Contains(a.ASSESSMENT_ID))
+                            .Select(a => a.ASSESSOR_EMP_ID)
+                            .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
+                                .Where(r => r.ISACTIVE && assessmentIds.Contains(r.ASSESSMENT_ID))
+                                .Select(r => r.REVIEWER_EMP_ID))
+                            .ToList();
+                        if (!string.IsNullOrWhiteSpace(project.QUALITY_SPOC)) ccEmpIds.Add(project.QUALITY_SPOC);
+                        ccEmpIds = ccEmpIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+
+                        // To both the current and the just-removed assessees, so someone
+                        // taken off the project still finds out rather than only the
+                        // people who remain on it.
+                        var toEmpIds = wantedAssessees.Concat(removedAssessees).Distinct().ToList();
+
+                        SendITOpsNotificationEmailWithCc(
+                            toEmpIds,
+                            ccEmpIds,
+                            $"IT Ops Maturity: assessee list updated for {project.PROJ_NM ?? projectId}",
+                            "ITOpsAssesseesUpdated.htm",
+                            new Dictionary<string, string>
+                            {
+                                { "AccountName", accountName ?? "-" },
+                                { "ProjectName", project.PROJ_NM ?? projectId },
+                                { "ChangeLines", string.Join("", changeLines) }
+                            });
+                    }
                 }
 
                 // Retire assessments for domains that were previously assessed for this
@@ -2125,7 +3042,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var denied = DenyIfNotITOpsAdmin();
             if (denied != null) return denied;
 
-            return Ok(BuildITOpsCycleAssessmentRows(cycleId, projectId));
+            var rows = BuildITOpsCycleAssessmentRows(cycleId, projectId);
+
+            // Same project-allocation scoping as GetITOpsProjects: a non-Superuser
+            // only sees rows for projects they're actually staffed on or hold a
+            // management role on, not every project's assessments in the cycle.
+            // Feeds both Step 4's "Assessments in this cycle" table and Step 5's
+            // domain-team accordion (both call this same endpoint).
+            var empId = GetHeaderDetails_String("empId");
+            if (!IsITOpsSuperuser(empId))
+            {
+                var allowedProjectIds = new HashSet<string>(
+                    Cldb.AppRepo.GetProjectIdsForUser(empId, "", "")
+                        .Select(p => p.PROJ_ID)
+                        .Where(id => id != null));
+                rows = rows.Where(r => r.ProjectId != null && allowedProjectIds.Contains(r.ProjectId)).ToList();
+            }
+
+            return Ok(rows);
         }
 
         private List<ITOPS_CycleAssessmentRow> BuildITOpsCycleAssessmentRows(int cycleId, string projectId)
@@ -2225,7 +3159,56 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
             CSPdb.Commit(CanCommit);
 
+            NotifyITOpsAssessmentRemoved(assessment);
+
             return Ok();
+        }
+
+        /// <summary>
+        /// One email for a single removed (Not Started) assessment - to whoever
+        /// was already on it (its assessees, assessor, reviewer) plus the
+        /// project's Quality SPOC, same Cc convention as
+        /// NotifyITOpsAssessmentsCreated/NotifyITOpsAssesseesUpdated.
+        /// </summary>
+        private void NotifyITOpsAssessmentRemoved(ITOPS_ASSESSMENT assessment)
+        {
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID);
+            var domainName = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID)?.NAME ?? "domain";
+            var projectName = project?.PROJ_NM ?? assessment.PROJECT_ID;
+            var cycleLabel = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == assessment.ASSESSMENT_MASTER_ID)?.CYCLE_LABEL;
+            var accountName = project?.CUST_ID != null
+                ? Cldb.CUSTOMER.GetAll().FirstOrDefault(c => c.CUST_ID == project.CUST_ID)?.CUST_NM
+                : null;
+
+            var toEmpIds = CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
+                .Where(a => a.ISACTIVE && a.ASSESSMENT_ID == assessment.ID)
+                .Select(a => a.ASSESSEE_EMP_ID)
+                .Distinct()
+                .ToList();
+            if (!toEmpIds.Any()) return; // no one to tell
+
+            var ccEmpIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
+                .Where(a => a.ISACTIVE && a.ASSESSMENT_ID == assessment.ID)
+                .Select(a => a.ASSESSOR_EMP_ID)
+                .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
+                    .Where(r => r.ISACTIVE && r.ASSESSMENT_ID == assessment.ID)
+                    .Select(r => r.REVIEWER_EMP_ID))
+                .ToList();
+            if (project != null && !string.IsNullOrWhiteSpace(project.QUALITY_SPOC)) ccEmpIds.Add(project.QUALITY_SPOC);
+            ccEmpIds = ccEmpIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().Except(toEmpIds).ToList();
+
+            SendITOpsNotificationEmailWithCc(
+                toEmpIds,
+                ccEmpIds,
+                $"IT Ops Maturity: {domainName} assessment removed for {projectName}",
+                "ITOpsAssessmentRemoved.htm",
+                new Dictionary<string, string>
+                {
+                    { "AccountName", accountName ?? "-" },
+                    { "ProjectName", projectName },
+                    { "DomainName", domainName },
+                    { "CycleLabel", cycleLabel }
+                });
         }
 
         // ==================================================================
@@ -2315,6 +3298,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             CSPdb.Commit(CanCommit);
 
+            NotifyITOpsTeamAssignment(assessment, "Assessor", targetEmpId);
+
             return Ok(new ITOPS_TeamMemberRow
             {
                 Id = existing.ID,
@@ -2322,6 +3307,66 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmpId = existing.ASSESSOR_EMP_ID,
                 EmpName = GetEmpName(existing.ASSESSOR_EMP_ID)
             });
+        }
+
+        /// <summary>
+        /// Adds one person to every listed assessment as assessor, in one call -
+        /// this is what the domain-level "Add" picker uses so assigning someone
+        /// to a domain that's mapped to N projects sends ONE consolidated email
+        /// (NotifyITOpsTeamAssignmentBulk) instead of N separate ones.
+        /// </summary>
+        [POST("AddITOpsAssessorsBulk")]
+        [ActionName("AddITOpsAssessorsBulk")]
+        [HttpPost]
+        public IHttpActionResult AddITOpsAssessorsBulk([FromBody] ITOPS_AddTeamMemberBulkRequest request)
+        {
+            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "assign assessors");
+            if (denied != null) return denied;
+
+            var assessmentIds = (request?.AssessmentIds ?? new List<int>()).Distinct().ToList();
+            if (!assessmentIds.Any() || string.IsNullOrWhiteSpace(request?.EmpId))
+                return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var targetEmpId = request.EmpId.Trim();
+            var empId = GetHeaderDetails_String("empId");
+
+            var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => assessmentIds.Contains(a.ID) && a.ISACTIVE).ToList();
+            if (!assessments.Any()) return NotFound();
+
+            var existingRows = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
+                .Where(a => assessmentIds.Contains(a.ASSESSMENT_ID))
+                .ToList();
+
+            var entities = new List<ITOPS_ASSESSMENT_ASSESSOR>();
+            foreach (var assessment in assessments)
+            {
+                var existing = existingRows.FirstOrDefault(a => a.ASSESSMENT_ID == assessment.ID && a.ASSESSOR_EMP_ID == targetEmpId);
+                if (existing != null)
+                {
+                    UpdateAuditFields(existing, empId);
+                    CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(existing);
+                }
+                else
+                {
+                    existing = new ITOPS_ASSESSMENT_ASSESSOR { ASSESSMENT_ID = assessment.ID, ASSESSOR_EMP_ID = targetEmpId };
+                    UpdateAuditFields(existing, empId);
+                    CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Add(existing);
+                }
+                entities.Add(existing);
+            }
+            CSPdb.Commit(CanCommit);
+
+            var created = entities.Select(e => new ITOPS_TeamMemberRow
+            {
+                Id = e.ID,
+                AssessmentId = e.ASSESSMENT_ID,
+                EmpId = e.ASSESSOR_EMP_ID,
+                EmpName = GetEmpName(e.ASSESSOR_EMP_ID)
+            }).ToList();
+
+            NotifyITOpsTeamAssignmentBulk(assessments.Select(a => Tuple.Create(a, "Assessor")).ToList(), targetEmpId);
+
+            return Ok(created);
         }
 
         [POST("RemoveITOpsAssessor")]
@@ -2340,6 +3385,47 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             row.ISACTIVE = false;
             CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(row);
             CSPdb.Commit(CanCommit);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Removes one person from every listed assessor row in one call and
+        /// sends ONE consolidated "removed" email (NotifyITOpsTeamAssignmentBulk)
+        /// - the "Remove" action on a domain's team member removes them from
+        /// every project under that domain at once, so this is the vice-versa of
+        /// AddITOpsAssessorsBulk.
+        /// </summary>
+        [POST("RemoveITOpsAssessorsBulk")]
+        [ActionName("RemoveITOpsAssessorsBulk")]
+        [HttpPost]
+        public IHttpActionResult RemoveITOpsAssessorsBulk([FromBody] ITOPS_RemoveTeamMemberBulkRequest request)
+        {
+            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "remove assessors");
+            if (denied != null) return denied;
+
+            var ids = (request?.Ids ?? new List<int>()).Distinct().ToList();
+            if (!ids.Any()) return Ok();
+
+            var rows = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll().Where(a => ids.Contains(a.ID) && a.ISACTIVE).ToList();
+            if (!rows.Any()) return Ok();
+
+            var empId = GetHeaderDetails_String("empId");
+            var targetEmpId = rows.First().ASSESSOR_EMP_ID;
+            var assessmentIds = rows.Select(r => r.ASSESSMENT_ID).Distinct().ToList();
+            var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => assessmentIds.Contains(a.ID)).ToList().ToDictionary(a => a.ID);
+
+            var notifyItems = new List<Tuple<ITOPS_ASSESSMENT, string>>();
+            foreach (var row in rows)
+            {
+                UpdateAuditFields(row, empId);
+                row.ISACTIVE = false;
+                CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(row);
+                if (assessments.ContainsKey(row.ASSESSMENT_ID)) notifyItems.Add(Tuple.Create(assessments[row.ASSESSMENT_ID], "Assessor"));
+            }
+            CSPdb.Commit(CanCommit);
+
+            NotifyITOpsTeamAssignmentBulk(notifyItems, targetEmpId, "Removed");
 
             return Ok();
         }
@@ -2385,6 +3471,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             }
             CSPdb.Commit(CanCommit);
 
+            NotifyITOpsTeamAssignment(assessment, "Reviewer", targetEmpId);
+
             return Ok(new ITOPS_TeamMemberRow
             {
                 Id = existing.ID,
@@ -2392,6 +3480,61 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmpId = existing.REVIEWER_EMP_ID,
                 EmpName = GetEmpName(existing.REVIEWER_EMP_ID)
             });
+        }
+
+        /// <summary>Same as AddITOpsAssessorsBulk, but for reviewers.</summary>
+        [POST("AddITOpsReviewersBulk")]
+        [ActionName("AddITOpsReviewersBulk")]
+        [HttpPost]
+        public IHttpActionResult AddITOpsReviewersBulk([FromBody] ITOPS_AddTeamMemberBulkRequest request)
+        {
+            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "assign reviewers");
+            if (denied != null) return denied;
+
+            var assessmentIds = (request?.AssessmentIds ?? new List<int>()).Distinct().ToList();
+            if (!assessmentIds.Any() || string.IsNullOrWhiteSpace(request?.EmpId))
+                return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var targetEmpId = request.EmpId.Trim();
+            var empId = GetHeaderDetails_String("empId");
+
+            var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => assessmentIds.Contains(a.ID) && a.ISACTIVE).ToList();
+            if (!assessments.Any()) return NotFound();
+
+            var existingRows = CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
+                .Where(r => assessmentIds.Contains(r.ASSESSMENT_ID))
+                .ToList();
+
+            var entities = new List<ITOPS_ASSESSMENT_REVIEWER>();
+            foreach (var assessment in assessments)
+            {
+                var existing = existingRows.FirstOrDefault(r => r.ASSESSMENT_ID == assessment.ID && r.REVIEWER_EMP_ID == targetEmpId);
+                if (existing != null)
+                {
+                    UpdateAuditFields(existing, empId);
+                    CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(existing);
+                }
+                else
+                {
+                    existing = new ITOPS_ASSESSMENT_REVIEWER { ASSESSMENT_ID = assessment.ID, REVIEWER_EMP_ID = targetEmpId };
+                    UpdateAuditFields(existing, empId);
+                    CSPdb.ITOPS_ASSESSMENT_REVIEWER.Add(existing);
+                }
+                entities.Add(existing);
+            }
+            CSPdb.Commit(CanCommit);
+
+            var created = entities.Select(e => new ITOPS_TeamMemberRow
+            {
+                Id = e.ID,
+                AssessmentId = e.ASSESSMENT_ID,
+                EmpId = e.REVIEWER_EMP_ID,
+                EmpName = GetEmpName(e.REVIEWER_EMP_ID)
+            }).ToList();
+
+            NotifyITOpsTeamAssignmentBulk(assessments.Select(a => Tuple.Create(a, "Reviewer")).ToList(), targetEmpId);
+
+            return Ok(created);
         }
 
         [POST("RemoveITOpsReviewer")]
@@ -2409,6 +3552,41 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             row.ISACTIVE = false;
             CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(row);
             CSPdb.Commit(CanCommit);
+
+            return Ok();
+        }
+
+        /// <summary>Same as RemoveITOpsAssessorsBulk, but for reviewers.</summary>
+        [POST("RemoveITOpsReviewersBulk")]
+        [ActionName("RemoveITOpsReviewersBulk")]
+        [HttpPost]
+        public IHttpActionResult RemoveITOpsReviewersBulk([FromBody] ITOPS_RemoveTeamMemberBulkRequest request)
+        {
+            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "remove reviewers");
+            if (denied != null) return denied;
+
+            var ids = (request?.Ids ?? new List<int>()).Distinct().ToList();
+            if (!ids.Any()) return Ok();
+
+            var rows = CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll().Where(r => ids.Contains(r.ID) && r.ISACTIVE).ToList();
+            if (!rows.Any()) return Ok();
+
+            var empId = GetHeaderDetails_String("empId");
+            var targetEmpId = rows.First().REVIEWER_EMP_ID;
+            var assessmentIds = rows.Select(r => r.ASSESSMENT_ID).Distinct().ToList();
+            var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => assessmentIds.Contains(a.ID)).ToList().ToDictionary(a => a.ID);
+
+            var notifyItems = new List<Tuple<ITOPS_ASSESSMENT, string>>();
+            foreach (var row in rows)
+            {
+                UpdateAuditFields(row, empId);
+                row.ISACTIVE = false;
+                CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(row);
+                if (assessments.ContainsKey(row.ASSESSMENT_ID)) notifyItems.Add(Tuple.Create(assessments[row.ASSESSMENT_ID], "Reviewer"));
+            }
+            CSPdb.Commit(CanCommit);
+
+            NotifyITOpsTeamAssignmentBulk(notifyItems, targetEmpId, "Removed");
 
             return Ok();
         }
@@ -3012,11 +4190,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var empId = GetHeaderDetails_String("empId");
             var levels = request.Levels ?? new List<ITOPS_ParameterLevelInput>();
 
-            // A row that only became effective TODAY cannot be end-dated today
-            // (CK_ITOPS_PARAMETER_DATES requires END_DATE > START_DATE), and no
-            // assessment can have scored it on an earlier day, so there is no
-            // history to protect: correct it in place and say so in the response.
-            if (parameter.START_DATE.Date >= today)
+            // In-place correction, no new version, whenever there is no scoring
+            // history to protect - either because the row only became effective
+            // TODAY (can't be end-dated today anyway: CK_ITOPS_PARAMETER_DATES
+            // requires END_DATE > START_DATE), or because nobody has scored
+            // against it yet regardless of how old it is. The moment even one
+            // ITOPS_SCORE references it, editing must go through the version
+            // path below instead.
+            var hasBeenScored = CSPdb.ITOPS_SCORE.GetAll().Any(s => s.ISACTIVE && s.PARAMETER_ID == parameter.ID);
+            if (parameter.START_DATE.Date >= today || !hasBeenScored)
             {
                 parameter.DEFINITION = request.Definition;
                 parameter.MIN_REQUIRED_SCORE = request.MinRequiredScore;
@@ -3224,6 +4406,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (request.Preview || result.TotalRows == 0) return Ok(result);
 
+            // Tracks which assessments the target ends up newly holding (as opposed
+            // to ones they were already on before this reassignment - the merge
+            // case below - which shouldn't generate a "you're now on this" email
+            // since nothing changed for them there).
+            var newlyAssessorAssessmentIds = new List<int>();
+            var newlyReviewerAssessmentIds = new List<int>();
+
             foreach (var row in assessorRows)
             {
                 var incumbent = targetAssessorRows.FirstOrDefault(a => a.ASSESSMENT_ID == row.ASSESSMENT_ID);
@@ -3246,12 +4435,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     UpdateAuditFields(row, empId);
                     row.ISACTIVE = false;
                     CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(row);
+                    newlyAssessorAssessmentIds.Add(row.ASSESSMENT_ID);
                     continue;
                 }
 
                 row.ASSESSOR_EMP_ID = toEmpId;
                 UpdateAuditFields(row, empId);
                 CSPdb.ITOPS_ASSESSMENT_ASSESSOR.Update(row);
+                newlyAssessorAssessmentIds.Add(row.ASSESSMENT_ID);
             }
 
             foreach (var row in reviewerRows)
@@ -3273,12 +4464,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     UpdateAuditFields(row, empId);
                     row.ISACTIVE = false;
                     CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(row);
+                    newlyReviewerAssessmentIds.Add(row.ASSESSMENT_ID);
                     continue;
                 }
 
                 row.REVIEWER_EMP_ID = toEmpId;
                 UpdateAuditFields(row, empId);
                 CSPdb.ITOPS_ASSESSMENT_REVIEWER.Update(row);
+                newlyReviewerAssessmentIds.Add(row.ASSESSMENT_ID);
             }
 
             try
@@ -3292,6 +4485,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         "That reassignment collided with an existing assignment. Refresh and try again.");
                 LogRequest(ex, "ITOpsMaturity:BulkReassignTeamMember");
                 throw;
+            }
+
+            if (newlyAssessorAssessmentIds.Any() || newlyReviewerAssessmentIds.Any())
+            {
+                var notifyIds = newlyAssessorAssessmentIds.Concat(newlyReviewerAssessmentIds).Distinct().ToList();
+                var notifyAssessments = CSPdb.ITOPS_ASSESSMENT.GetAll()
+                    .Where(a => notifyIds.Contains(a.ID))
+                    .ToList()
+                    .ToDictionary(a => a.ID);
+
+                var items = new List<Tuple<ITOPS_ASSESSMENT, string>>();
+                items.AddRange(newlyAssessorAssessmentIds.Where(notifyAssessments.ContainsKey)
+                    .Select(id => Tuple.Create(notifyAssessments[id], "Assessor")));
+                items.AddRange(newlyReviewerAssessmentIds.Where(notifyAssessments.ContainsKey)
+                    .Select(id => Tuple.Create(notifyAssessments[id], "Reviewer")));
+
+                NotifyITOpsTeamAssignmentBulk(items, toEmpId, "Added", fromEmpId);
             }
 
             return Ok(result);

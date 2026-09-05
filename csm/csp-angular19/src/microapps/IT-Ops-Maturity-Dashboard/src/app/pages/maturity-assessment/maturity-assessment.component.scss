@@ -609,6 +609,19 @@ textarea:disabled {
   color: var(--text-secondary);
 }
 
+.file-name-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.file-name-link:hover { color: var(--accent); }
+.file-name-link:disabled { cursor: default; text-decoration: none; }
+
 .remove-file {
   border: none;
   background: none;

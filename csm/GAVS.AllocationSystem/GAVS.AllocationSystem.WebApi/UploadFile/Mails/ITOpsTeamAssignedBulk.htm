@@ -15,12 +15,24 @@
 					</tr>
 					<tr>
 						<td style='padding:28px;'>
-							<p style='margin:0 0 4px 0;font-size:11pt;color:#24292e;'>Hi {{ReviewerName}},</p>
+							<p style='margin:0 0 4px 0;font-size:11pt;color:#24292e;'>Hi {{EmpName}},</p>
 							<p style='margin:0 0 20px 0;font-size:10.5pt;color:#444444;line-height:1.5;'>
-								The IT Operations Maturity Assessment for the <b>{{DomainName}}</b> domain, project <b>{{ProjectName}}</b>, has been submitted for your review by <b>{{CoeSpocName}}</b>.
+								{{IntroText}}
 							</p>
-							<p style='margin:0;font-size:10.5pt;color:#444444;'>
-								Please log in to the IT Operations Maturity Dashboard to review the scores and evidence, and Approve or Return for Revision.
+
+							<table border=0 cellpadding=0 cellspacing=0 width="100%" style='border-collapse:collapse;font-size:9.5pt;border:1px solid #eeeeee;'>
+								<tr style='background:#1F497D;'>
+									<th align=left style='padding:10px 12px;color:#ffffff;font-weight:600;border-bottom:1px solid #eeeeee;'>Domain</th>
+									<th align=left style='padding:10px 12px;color:#ffffff;font-weight:600;border-bottom:1px solid #eeeeee;'>Project</th>
+									<th align=left style='padding:10px 12px;color:#ffffff;font-weight:600;border-bottom:1px solid #eeeeee;'>Role</th>
+									<th align=left style='padding:10px 12px;color:#ffffff;font-weight:600;border-bottom:1px solid #eeeeee;'>Cycle</th>
+									{{PreviouslyHeaderCell}}
+								</tr>
+								{{RowsHtml}}
+							</table>
+
+							<p style='margin:24px 0 0 0;font-size:10.5pt;color:#444444;'>
+								Please log in to the IT Operations Maturity Dashboard for details.
 							</p>
 						</td>
 					</tr>

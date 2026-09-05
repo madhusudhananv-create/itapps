@@ -106,12 +106,12 @@
           <label>Notes and Evidence</label>
           <p class="notes-readout" *ngIf="param.notes; else noNotes">{{ param.notes }}</p>
           <ng-template #noNotes><p class="notes-readout muted">No notes provided.</p></ng-template>
-          <span class="evidence-chip" *ngIf="param.evidenceFileName">
+          <button type="button" class="evidence-chip" *ngFor="let evidence of param.evidenceFiles" (click)="downloadEvidenceFile(evidence)" title="Download">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            {{ param.evidenceFileName }}
-          </span>
+            {{ evidence.fileName }}
+          </button>
 
           <div class="finding-actions" *ngIf="isProbableFinding(param) && isAssessee()">
             <span class="finding-label">Probable area of improvement:</span>

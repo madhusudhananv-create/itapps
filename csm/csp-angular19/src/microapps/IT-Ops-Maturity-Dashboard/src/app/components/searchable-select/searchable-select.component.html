@@ -28,7 +28,7 @@
     <button
       type="button"
       class="ss-option"
-      *ngFor="let o of filtered; let i = index"
+      *ngFor="let o of filtered; let i = index; trackBy: trackByValue"
       [class.selected]="isSelected(o)"
       [class.highlighted]="i === highlighted"
       (click)="select(o)"

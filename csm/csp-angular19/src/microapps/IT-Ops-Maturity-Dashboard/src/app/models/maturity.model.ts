@@ -24,7 +24,10 @@ export interface MaturityParameter {
   minRequiredScore?: number;
   score: MaturityScore | null;
   notes: string;
-  evidenceFileName?: string;
+  /** ITOPS_SCORE.ID backing this parameter's score - created on first save; evidence attaches to this, not the parameter. */
+  scoreId?: number;
+  /** Every evidence file attached to this parameter's score - any number of them, not just one. */
+  evidenceFiles: { id: number; fileName: string }[];
   provider?: string;
   findingStatus?: FindingStatus;
   /** ITOPS_FINDING.ID backing this parameter's finding, when loaded from the real API. */
@@ -92,6 +95,13 @@ export interface DomainSummary {
   paramCount: number;
   sumScores: number;
   maxPossible: number;
+  /** Which account this row belongs to - the Dashboard now shows every account the viewer is assigned to at once, so each row needs to say which one it's from. */
+  accountId?: string;
+  accountName?: string;
+  /** Whether the viewer is personally the Assessor on this domain for this account, per their own assignment rows. */
+  editable?: boolean;
+  /** Whether the viewer is personally the Reviewer on this domain for this account, per their own assignment rows. */
+  reviewable?: boolean;
 }
 
 export interface TopRisk {

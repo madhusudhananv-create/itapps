@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin, of, switchMap, timer } from 'rxjs';
+import { combineLatest, forkJoin, of, switchMap, timer } from 'rxjs';
 import { delayWhen, finalize } from 'rxjs/operators';
 import { SessionService } from '../../services/session.service';
 import { AssesseeService } from '../../services/assessee.service';
@@ -90,12 +90,29 @@ export class DomainReviewComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const domainCode = this.route.snapshot.paramMap.get('domainId');
-    const account = this.accountService.selectedAccount;
+    // Subscribed, not a one-off snapshot read - see the identical note on
+    // MaturityAssessmentComponent.ngOnInit: the same route is reused by
+    // Angular's default reuse strategy when navigating between two "My
+    // Assignments" rows for the SAME domain (different project/cycle), and
+    // only the assessmentId query param actually differs between them.
+    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
+      const domainCode = params.get('domainId');
+      const assessmentIdParam = queryParams.get('assessmentId');
+      const account = this.accountService.selectedAccount;
 
-    if (domainCode && account) {
+      if (!domainCode || !account) {
+        this.loading = false;
+        return;
+      }
+
+      this.loading = true;
+      this.domain = undefined;
+      this.assessmentId = undefined;
+      this.evidenceByFindingId = {};
+      this.pendingEvidenceFiles = {};
+
       this.api
-        .getOrCreateAssessment(domainCode, String(account.cusT_ID))
+        .getOrCreateAssessment(domainCode, String(account.cusT_ID), assessmentIdParam ? Number(assessmentIdParam) : undefined)
         .pipe(
           switchMap((assessment) =>
             forkJoin({
@@ -112,15 +129,14 @@ export class DomainReviewComponent implements OnInit {
             this.activeProvider = undefined;
             this.loading = false;
             this.loadEvidenceForAcceptedFindings();
+            this.loadParameterEvidence();
           },
           error: (err) => {
             console.error('IT Ops Maturity Dashboard: failed to load assessment for review', err);
             this.loading = false;
           },
         });
-    } else {
-      this.loading = false;
-    }
+    });
     this.assesseeService.selectedAssessees$.subscribe((assessees) => (this.selectedAssessees = assessees));
   }
 
@@ -140,6 +156,8 @@ export class DomainReviewComponent implements OnInit {
       minRequiredScore: r.minRequiredScore ?? undefined,
       score: (r.scoreValue as MaturityParameter['score']) ?? null,
       notes: r.notes ?? '',
+      scoreId: r.scoreId ?? undefined,
+      evidenceFiles: [],
       findingId: r.findingId ?? undefined,
       findingStatus: r.findingStatus ? BACKEND_FINDING_STATUS_MAP[r.findingStatus] ?? 'Pending' : undefined,
       findingRejectionComment: r.findingRejectionComment ?? undefined,
@@ -331,6 +349,17 @@ export class DomainReviewComponent implements OnInit {
       });
   }
 
+  /** The Notes and Evidence readout shows every file the assessee attached to each parameter's score, same evidence set the scoring screen manages. */
+  private loadParameterEvidence(): void {
+    const withScore = (this.domain?.parameters ?? []).filter((p) => p.scoreId);
+    if (!withScore.length) return;
+    forkJoin(withScore.map((p) => this.api.getScoreEvidence(p.scoreId!))).subscribe((results) => {
+      results.forEach((rows, i) => {
+        withScore[i].evidenceFiles = rows.map((r) => ({ id: r.id, fileName: r.fileName }));
+      });
+    });
+  }
+
   private loadEvidenceForAcceptedFindings(): void {
     const acceptedFindingIds = (this.domain?.parameters ?? [])
       .filter((p) => p.findingStatus === 'Accepted' && p.findingId)
@@ -348,6 +377,11 @@ export class DomainReviewComponent implements OnInit {
 
   evidenceDownloadUrl(evidenceId: number): string {
     return this.api.evidenceDownloadUrl(evidenceId);
+  }
+
+  /** For a parameter's own evidence (as opposed to a finding's action-update evidence, downloaded via evidenceDownloadUrl above). */
+  downloadEvidenceFile(evidence: { id: number; fileName: string }): void {
+    this.api.downloadEvidence(evidence.id, evidence.fileName);
   }
 
   onActionEvidenceSelected(event: Event, param: MaturityParameter): void {

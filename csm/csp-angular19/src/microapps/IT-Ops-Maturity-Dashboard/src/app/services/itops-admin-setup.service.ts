@@ -261,6 +261,8 @@ export interface ItOpsMyAccess {
   isSuperuser: boolean;
   roleCodes: string[];
   isAdmin: boolean;
+  /** Every role code currently active system-wide, regardless of who holds it - a deactivated role hides its step even for a Superuser. */
+  activeRoleCodes: string[];
 }
 
 /**
@@ -277,7 +279,7 @@ export type ItOpsAdminRoleCode =
   | 'RUNOPS_INITIATOR'
   | 'TEAM_ASSIGNMENT_COORDINATOR';
 
-const NO_ACCESS: ItOpsMyAccess = { empId: null, isSuperuser: false, roleCodes: [], isAdmin: false };
+const NO_ACCESS: ItOpsMyAccess = { empId: null, isSuperuser: false, roleCodes: [], isAdmin: false, activeRoleCodes: [] };
 
 /** Minimal employee shape for the people-picker / search inputs. */
 export interface ItOpsEmployee {
@@ -310,6 +312,8 @@ export class ItOpsAdminSetupService {
 
   /** The full active-employee roster is a large, rarely-changing payload - fetch it once. */
   private employees$?: Observable<ItOpsEmployee[]>;
+  private superAdmins$?: Observable<ItOpsEmployee[]>;
+  private assignedTeamMembers$?: Observable<ItOpsEmployee[]>;
 
   /** Cached per-session answer to "what may I do on Admin Setup?" - see getMyAccess(). */
   private myAccess$?: Observable<ItOpsMyAccess>;
@@ -347,6 +351,7 @@ export class ItOpsAdminSetupService {
             isSuperuser: !!row?.isSuperuser,
             roleCodes: row?.roleCodes ?? [],
             isAdmin: !!row?.isAdmin,
+            activeRoleCodes: row?.activeRoleCodes ?? [],
           })),
           catchError(() => of(NO_ACCESS)),
           shareReplay({ bufferSize: 1, refCount: false }),
@@ -414,6 +419,35 @@ export class ItOpsAdminSetupService {
 
   revokeRole(id: number): Observable<unknown> {
     return this.http.post(`${this.apiurl}RevokeITOpsRole?id=${id}`, null, { headers: this.getHeaders() });
+  }
+
+  /** Bulk sibling of revokeRole - one call for several grants, so the backend can send ONE consolidated email per affected employee instead of one per grant. */
+  revokeRoles(ids: number[]): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RevokeITOpsRoles`, { Ids: ids }, { headers: this.getHeaders() });
+  }
+
+  /**
+   * Mixed-scope sibling of grantRoles for a single employee - each entry
+   * carries its own role and its own scope, so several roles with different
+   * scopes (or a mix of org-wide and project-scoped) land in one call and
+   * one consolidated email, instead of one grantRoles call (and email) per
+   * distinct scope.
+   */
+  grantRolesMulti(empId: string, entries: { roleId: number; projectIds: string[] }[]): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}GrantITOpsRolesMulti`,
+      { EmpId: empId, Entries: entries.map((e) => ({ RoleId: e.roleId, ProjectIds: e.projectIds })) },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Sends ONE consolidated mapping-submitted email covering every project passed in - call once, when the admin clicks "Submit and Continue to Configure Assessment". */
+  submitDomainProjectMappings(projectIds: string[]): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}SubmitITOpsDomainProjectMappings`,
+      { ProjectIds: projectIds },
+      { headers: this.getHeaders() },
+    );
   }
 
   // ---- Step 2: Configure Cycle ----
@@ -580,6 +614,7 @@ export class ItOpsAdminSetupService {
     );
   }
 
+  /** roleCode ties the returned list to a specific role's grant scope (e.g. "DOMAIN_PROJECT_MAPPER", "RUNOPS_INITIATOR") - omit to keep the legacy "always the caller's own CSM project access" behavior. */
   getProjects(custId?: string): Observable<ItOpsProject[]> {
     const qs = custId ? `?custId=${encodeURIComponent(custId)}` : '';
     return this.http.get<ItOpsProject[]>(`${this.apiurl}GetITOpsProjects${qs}`, { headers: this.getHeaders() });
@@ -682,8 +717,26 @@ export class ItOpsAdminSetupService {
     );
   }
 
+  /**
+   * Adds one person as assessor to every listed assessment in one call, so
+   * assigning someone to a domain mapped to several projects sends ONE
+   * consolidated email server-side instead of one per project.
+   */
+  addAssessorsBulk(assessmentIds: number[], empId: string): Observable<ItOpsTeamMember[]> {
+    return this.http.post<ItOpsTeamMember[]>(
+      `${this.apiurl}AddITOpsAssessorsBulk`,
+      { AssessmentIds: assessmentIds, EmpId: empId },
+      { headers: this.getHeaders() },
+    );
+  }
+
   removeAssessor(id: number): Observable<unknown> {
     return this.http.post(`${this.apiurl}RemoveITOpsAssessor?id=${id}`, null, { headers: this.getHeaders() });
+  }
+
+  /** Removes one person from every listed assessor row in one call, sending ONE consolidated "removed" email server-side. */
+  removeAssessorsBulk(ids: number[]): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RemoveITOpsAssessorsBulk`, { Ids: ids }, { headers: this.getHeaders() });
   }
 
   addReviewer(assessmentId: number, empId: string): Observable<ItOpsTeamMember> {
@@ -694,8 +747,22 @@ export class ItOpsAdminSetupService {
     );
   }
 
+  /** Same as addAssessorsBulk, but for reviewers. */
+  addReviewersBulk(assessmentIds: number[], empId: string): Observable<ItOpsTeamMember[]> {
+    return this.http.post<ItOpsTeamMember[]>(
+      `${this.apiurl}AddITOpsReviewersBulk`,
+      { AssessmentIds: assessmentIds, EmpId: empId },
+      { headers: this.getHeaders() },
+    );
+  }
+
   removeReviewer(id: number): Observable<unknown> {
     return this.http.post(`${this.apiurl}RemoveITOpsReviewer?id=${id}`, null, { headers: this.getHeaders() });
+  }
+
+  /** Same as removeAssessorsBulk, but for reviewers. */
+  removeReviewersBulk(ids: number[]): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RemoveITOpsReviewersBulk`, { Ids: ids }, { headers: this.getHeaders() });
   }
 
   /**
@@ -742,6 +809,44 @@ export class ItOpsAdminSetupService {
       );
     }
     return this.employees$;
+  }
+
+  /**
+   * The roster narrowed to CSM SuperAdmins only (GetITOpsCsmSuperAdmins) -
+   * the IT Ops Superuser role is restricted to this set (see
+   * ValidateSuperuserGrantTargets server-side), so this is the candidate
+   * pool for both granting a NEW Superuser and the last-Superuser
+   * replacement picker. Cached the same way as getEmployees() above.
+   */
+  getSuperAdmins(): Observable<ItOpsEmployee[]> {
+    if (!this.superAdmins$) {
+      this.superAdmins$ = this.http.get<any[]>(`${this.apiurl}GetITOpsCsmSuperAdmins`, { headers: this.getHeaders() }).pipe(
+        map((rows) => {
+          const byId = new Map<string, ItOpsEmployee>();
+          for (const row of rows ?? []) {
+            const empId = readEmpId(row);
+            const name = readFirstName(row);
+            if (!empId || !name || byId.has(empId)) continue;
+            byId.set(empId, { empId, name, title: readRole(row) ?? '' });
+          }
+          return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    }
+    return this.superAdmins$;
+  }
+
+  searchSuperAdmins(term: string, limit = 25): Observable<ItOpsEmployee[]> {
+    const needle = (term ?? '').trim().toLowerCase();
+    return this.getSuperAdmins().pipe(
+      map((list) =>
+        (needle.length < 2
+          ? list
+          : list.filter((e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle))
+        ).slice(0, limit),
+      ),
+    );
   }
 
   /**
@@ -800,11 +905,52 @@ export class ItOpsAdminSetupService {
    * search box shows a browsable list immediately rather than an empty dropdown
    * until the admin types 2+ characters.
    */
-  searchEmployees(term: string, limit = 25): Observable<ItOpsEmployee[]> {
+  searchEmployees(term: string, limit = 300): Observable<ItOpsEmployee[]> {
     const needle = (term ?? '').trim().toLowerCase();
     return this.getEmployees().pipe(
       map((list) =>
-        (needle.length < 2
+        (needle.length < 1
+          ? list
+          : list.filter((e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle))
+        ).slice(0, limit),
+      ),
+    );
+  }
+
+  /**
+   * GetITOpsAssignedTeamMembers - people who currently hold at least one
+   * active assessor/reviewer assignment. Used for the "Reassign" modal's
+   * "Replace" (from) search, so it only ever offers someone reassigning
+   * actually applies to (see searchAssignedTeamMembers below). Cached the
+   * same way as getEmployees().
+   */
+  getAssignedTeamMembers(): Observable<ItOpsEmployee[]> {
+    if (!this.assignedTeamMembers$) {
+      this.assignedTeamMembers$ = this.http
+        .get<any[]>(`${this.apiurl}GetITOpsAssignedTeamMembers`, { headers: this.getHeaders() })
+        .pipe(
+          map((rows) => {
+            const byId = new Map<string, ItOpsEmployee>();
+            for (const row of rows ?? []) {
+              const empId = readEmpId(row);
+              const name = readFirstName(row);
+              if (!empId || !name || byId.has(empId)) continue;
+              byId.set(empId, { empId, name, title: readRole(row) ?? '' });
+            }
+            return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+          }),
+          shareReplay({ bufferSize: 1, refCount: false }),
+        );
+    }
+    return this.assignedTeamMembers$;
+  }
+
+  /** Same search shape as searchEmployees(), but scoped to getAssignedTeamMembers(). */
+  searchAssignedTeamMembers(term: string, limit = 300): Observable<ItOpsEmployee[]> {
+    const needle = (term ?? '').trim().toLowerCase();
+    return this.getAssignedTeamMembers().pipe(
+      map((list) =>
+        (needle.length < 1
           ? list
           : list.filter((e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle))
         ).slice(0, limit),

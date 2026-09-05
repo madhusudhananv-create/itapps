@@ -65,6 +65,14 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   private onTouched: () => void = () => {};
   private scrollParent: HTMLElement | null = null;
   private readonly onReposition = () => this.updatePosition();
+  /**
+   * The open list is reparented to document.body (see openList()) so its
+   * `position: fixed` coordinates are always relative to the real viewport.
+   * Kept here because once it's moved, it's no longer inside `host`, so
+   * onDocumentMouseDown can't rely on `host.nativeElement.contains(...)`
+   * alone to know a click landed on an option.
+   */
+  private portaledListEl: HTMLElement | null = null;
 
   constructor(private host: ElementRef<HTMLElement>) {}
 
@@ -117,6 +125,31 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     this.scrollParent = this.findScrollParent(this.host.nativeElement);
     this.scrollParent?.addEventListener('scroll', this.onReposition, true);
     window.addEventListener('resize', this.onReposition);
+    // Wait one tick for *ngIf to create the .ss-list element, then move it to
+    // document.body. Any ancestor (the glass modals here use
+    // backdrop-filter: blur(...) on .modal) creates a new containing block
+    // for position: fixed descendants, so a fixed-positioned list left inside
+    // one renders at the wrong offset - anchored to that ancestor instead of
+    // the viewport - which makes an otherwise-populated list appear empty or
+    // land off-screen. Reparenting to <body> guarantees the viewport is
+    // always the containing block.
+    setTimeout(() => this.portalList());
+  }
+
+  private portalList(): void {
+    const list = this.host.nativeElement.querySelector('.ss-list') as HTMLElement | null;
+    if (!list || list.parentElement === document.body) return;
+    // Once outside the admin-setup :host subtree, the list no longer inherits
+    // the --surface/--border/--text-* tokens defined there, so var(--surface)
+    // etc. resolve to nothing and the panel renders transparent (the modal
+    // behind shows through). Snapshot the resolved custom properties onto the
+    // element itself so it renders correctly regardless of where it lands.
+    const computed = getComputedStyle(this.host.nativeElement);
+    for (const prop of Array.from(computed)) {
+      if (prop.startsWith('--')) list.style.setProperty(prop, computed.getPropertyValue(prop));
+    }
+    document.body.appendChild(list);
+    this.portaledListEl = list;
   }
 
   private updatePosition(): void {
@@ -155,6 +188,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     this.open = false;
     this.query = '';
     this.teardownListeners();
+    this.portaledListEl = null;
     this.onChange(value);
     this.onTouched();
     this.valueChange.emit(value);
@@ -165,6 +199,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     this.open = false;
     this.query = '';
     this.teardownListeners();
+    this.portaledListEl = null;
     this.onTouched();
   }
 
@@ -195,9 +230,28 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     return option.value === this.innerValue;
   }
 
+  /**
+   * A caller whose [options] getter rebuilds fresh objects every
+   * change-detection cycle (easy to do by accident - see admin-setup's
+   * cycleSelectOptions) would otherwise cause *ngFor to destroy/recreate
+   * every option's DOM node continuously, including on the mousedown that
+   * starts a click - the browser only fires click if the same element is
+   * still there on mouseup, so options other than one that happens to
+   * survive can silently stop responding to clicks. Keying by value alone
+   * keeps each option's node stable regardless of object identity churn
+   * upstream.
+   */
+  trackByValue(_index: number, option: SearchableSelectOption): string {
+    return option.value;
+  }
+
   /** Any click outside the control closes the list without changing the value. */
   @HostListener('document:mousedown', ['$event'])
   onDocumentMouseDown(event: MouseEvent): void {
-    if (this.open && !this.host.nativeElement.contains(event.target as Node)) this.close();
+    if (!this.open) return;
+    const target = event.target as Node;
+    if (this.host.nativeElement.contains(target)) return;
+    if (this.portaledListEl?.contains(target)) return;
+    this.close();
   }
 }

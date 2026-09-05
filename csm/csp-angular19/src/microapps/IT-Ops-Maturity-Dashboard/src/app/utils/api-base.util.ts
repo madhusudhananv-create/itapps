@@ -18,5 +18,8 @@ export function resolveWebApiUri(): string {
   if (/^https?:\/\/localhost(:\d+)?$/.test(origin) || origin.includes('127.0.0.1')) {
     return 'http://localhost:53505/api/AllSys/';
   }
+  if (origin.includes('csmuat.neurealm.com')) {
+    return 'https://csmuatapi.neurealm.com/api/AllSys/';
+  }
   return 'https://csmapi.neurealm.com/api/AllSys/';
 }
