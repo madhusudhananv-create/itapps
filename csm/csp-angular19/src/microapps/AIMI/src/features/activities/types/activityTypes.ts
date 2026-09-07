@@ -1,3 +1,11 @@
+export type AIToolDetails = Record<
+  string,
+  {
+    accessType: string;
+    licenseCount: number;
+  }
+>;
+
 export interface ActivityFormData {
   sdlcPhase: string;
   activity: string;
@@ -12,7 +20,9 @@ export interface ActivityFormData {
   benefitTo: string;
   qualitativeBenefits: string[];
   comments: string;
+  aiToolDetails?: AIToolDetails;
 }
+
 
 // Draft entries are auto-saved so data isn't lost if the connection drops; submitted entries are final
 export type ActivityStatus = 'draft' | 'submitted';
@@ -412,3 +422,4 @@ export const COMMON_ACCELERATORS = [
   'Bitwig Studio',
   'Reason',
 ];
+

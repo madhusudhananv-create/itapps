@@ -4,7 +4,7 @@
       "practice": "Digital Product Engineering",
       "sdlcPhases": [
         {
-          "phase": "Requirements & Design Phase:",
+          "phase": "Requirements & Design Phase",
           "activities": [
             {
               "activity": "AI Used for Requirements Elicitation Analysis (eg., summarizing user stories, identifying gaps)"

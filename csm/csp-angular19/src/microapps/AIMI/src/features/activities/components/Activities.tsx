@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, Tabs, Tab } from '@mui/material';
+import { Box, Paper, Typography, Tabs, Tab, Button } from '@mui/material';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
 import { ProjectInfoSelection } from './ProjectInfoSelection';
 import {
@@ -15,11 +15,19 @@ import { useActivityState } from '../hooks/useActivityState';
 import { CommonSnackbar } from '@shared/components/CommonSnackbar';
 import { useFeatureFlags } from '@shared/hooks/useFeatureFlags';
 import { Loading } from '@shared/components/Loading';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {
   COMPONENT_NAMES,
   preloadComponents,
   type ComponentName,
 } from '@shared/utils/preloadComponents';
+import { ImportActivitiesDialog } from './ImportActivites';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 
 const ManageActivities = lazy(() =>
   import('./ManageActivities').then((module) => ({
@@ -161,7 +169,13 @@ export function Activities() {
   const [activeTab, setActiveTab] = useState(0);
   const featureFlags = useFeatureFlags('dashboard');
 
-  // Form state
+  //import excel state
+  const [importDialogOpen, setImportDialogOpen] = useState(false);  // Form state
+  const [importValidationOpen, setImportValidationOpen] =
+  useState(false);
+
+  const [importValidationMessage, setImportValidationMessage] =
+  useState('');
   const [projectInfoFormData, setProjectInfoFormData] =
     useState<ProjectInfoFormData>({
       businessUnit: '',
@@ -413,10 +427,26 @@ export function Activities() {
     <Box>
       {/* Activities Header */}
       <Box sx={styles.headerContainer}>
-        <Box sx={styles.headerTitleContainer}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+          }}
+        >
           <Typography variant="body1" sx={styles.headerTitle}>
             Manage Activities
           </Typography>
+
+          <Button
+            variant="outlined"
+            startIcon={<UploadFileIcon />}
+            disabled={!projectInfoFormData.project}
+            onClick={() => setImportDialogOpen(true)}
+          >
+            Import Excel
+          </Button>
         </Box>
         <Typography variant="body1" sx={styles.headerDescription}>
           Track and manage AI maturity activities for your projects
@@ -473,9 +503,107 @@ export function Activities() {
         </Box>
       )}
 
-      {/* Success Message Snackbar */}
-      <CommonSnackbar {...snackbarProps} />
-      <CommonSnackbar {...draftSnackbarProps} />
+      {/* Import Activities Dialog */}
+<ImportActivitiesDialog
+  open={importDialogOpen}
+  onClose={() => setImportDialogOpen(false)}
+  onImport={(rows) => {
+    const invalidRows = rows
+  .map((row, index) => ({
+    row,
+    rowNumber: index + 2, // Excel row number after header
+  }))
+  .filter(
+    ({ row }) =>
+      !row['SDLC Phase'] ||
+      !row['Activity']
+  );
+
+if (invalidRows.length > 0) {
+  setImportValidationMessage(
+    `Invalid data found in row(s): ${invalidRows
+      .map((r) => r.rowNumber)
+      .join(', ')}. SDLC Phase and Activity are mandatory.`
+  );
+
+  setImportValidationOpen(true);
+  return;
+}
+    rows.forEach((row) => {
+      addActivity({
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        status: 'draft',
+
+        sdlcPhase: row['SDLC Phase'] || '',
+        activity: row['Activity'] || '',
+        applicability: row['Applicability'] || '',
+        aiAdoptionScore: row['AI Adoption Score'] || '',
+
+        aiToolUsed: row['AI Tools Used']
+          ? String(row['AI Tools Used'])
+              .split(',')
+              .map((x) => x.trim())
+          : [],
+
+        clientApproved: row['Client Approved'] || '',
+
+        acceleratorsUsed: row['Accelerators Used']
+          ? String(row['Accelerators Used'])
+              .split(',')
+              .map((x) => x.trim())
+          : [],
+
+        workDoneByAI: Number(row['% Work Done by AI']) || 0,
+
+        hoursSaved: Number(row['Hours Saved']) || 0,
+
+        revenueGenerated: row['Revenue Generated'] || '',
+
+        benefitTo: row['Benefit To'] || '',
+
+        qualitativeBenefits: row['Qualitative Benefits']
+          ? String(row['Qualitative Benefits'])
+              .split(',')
+              .map((x) => x.trim())
+          : [],
+
+        comments: row['Comments'] || '',
+
+        aiToolDetails: {},
+      });
+    });
+  }}
+/>
+<Dialog
+  open={importValidationOpen}
+  onClose={() => setImportValidationOpen(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle sx={{ color: 'warning.main' }}>
+    Import Validation Failed
+  </DialogTitle>
+
+  <DialogContent>
+    <Typography>
+      {importValidationMessage}
+    </Typography>
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      variant="contained"
+      onClick={() => setImportValidationOpen(false)}
+    >
+      OK
+    </Button>
+  </DialogActions>
+</Dialog>
+{/* Success Message Snackbar */}
+<CommonSnackbar {...snackbarProps} />
+<CommonSnackbar {...draftSnackbarProps} />
     </Box>
+    
   );
 }

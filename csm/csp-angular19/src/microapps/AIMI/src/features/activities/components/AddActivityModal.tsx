@@ -8,6 +8,7 @@ import {
   Box,
   Typography,
   FormHelperText,
+  Tooltip,
 } from '@mui/material';
 import type { ActivityFormData, ActivityData } from '../types/activityTypes';
 import {
@@ -39,6 +40,7 @@ import {
 } from './FormFieldComponents';
 import { QualitativeBenefitsField } from './QualitativeBenefitsField';
 import { modalStyles } from '../styles/formStyles';
+import { AIToolDetailsDialog } from './AIToolDetailsDialog';
 
 interface AddActivityModalProps {
   open: boolean;
@@ -60,6 +62,8 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   existingActivities = [],
 }) => {
   const [guidelinesModalOpen, setGuidelinesModalOpen] = useState(false);
+  const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false);
+
   const [
     applicabilityGuidelinesModalOpen,
     setApplicabilityGuidelinesModalOpen,
@@ -86,11 +90,15 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   // Check if at least one of AI Tools or Accelerators is required
   const needsAIToolsOrAccelerators = applicable && !noAIAdoption;
   const hasAIToolsOrAccelerators = validateAIToolsOrAccelerators(formData);
+  //validation pop-up
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [validationMessage, setValidationMessage] = useState('');
 
   const handleSave = () => {
     const isFullAdoption = formData.aiAdoptionScore === '4'; // Full Adoption value
+  
 
-  if (
+  /* if (
     isFullAdoption &&
     Number(formData.workDoneByAI) <= 0
   ) {
@@ -98,7 +106,17 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
       '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
     );
     return;
-  }
+  } */
+ if (
+  isFullAdoption &&
+  Number(formData.workDoneByAI) <= 0
+) {
+  setValidationMessage(
+    '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
+  );
+  setValidationDialogOpen(true);
+  return;
+}
     if (isPhaseNA || isFormValid(formData)) {
       // Ensure applicability is NA when phase is NA
       const updatedData = isPhaseNA
@@ -114,14 +132,15 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
     const isFullAdoption = formData.aiAdoptionScore === '4'; // Full Adoption value
 
   if (
-    isFullAdoption &&
-    Number(formData.workDoneByAI) <= 0
-  ) {
-    alert(
-      '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
-    );
-    return;
-  }
+  isFullAdoption &&
+  Number(formData.workDoneByAI) <= 0
+) {
+  setValidationMessage(
+    '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
+  );
+  setValidationDialogOpen(true);
+  return;
+}
     if (isPhaseNA || isFormValid(formData)) {
       const updatedData = isPhaseNA
         ? { ...formData, applicability: 'NA' }
@@ -287,7 +306,49 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                       : 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom tools'
                   }
                 />
+                <Tooltip
+                title={
+                  Array.isArray(formData.aiToolUsed) &&
+                  formData.aiToolUsed.length > 0
+                    ? 'Configure access type and license details for selected AI tools'
+                    : 'Select one or more AI tools to configure details'
+                }
+                arrow
+              >
+                <span>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color:
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                          ? 'primary.main'
+                          : 'text.disabled',
+                      cursor:
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                          ? 'pointer'
+                          : 'not-allowed',
+                      textDecoration: 'underline',
+                      fontWeight: 500,
+                    }}
+                    onClick={() => {
+                      if (
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                      ) {
+                        setToolDetailsModalOpen(true);
+                      }
+                    }}
+                  >
+                    Configure AI Tool Details
+                  </Typography>
+                </span>
+              </Tooltip>
               </Box>
+              
+              
+             
 
               {/* Client Approved */}
               <Box>
@@ -390,6 +451,44 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         open={applicabilityGuidelinesModalOpen}
         onClose={() => setApplicabilityGuidelinesModalOpen(false)}
       />
+      <AIToolDetailsDialog
+        open={toolDetailsOpen}
+        onClose={() => setToolDetailsModalOpen(false)}
+        aiTools={
+          Array.isArray(formData.aiToolUsed)
+            ? formData.aiToolUsed
+            : []
+        }
+        aiToolDetails={formData.aiToolDetails || {}}
+        onChange={(value) =>
+          handleFormChange('aiToolDetails', value)
+        }
+      />
+      <Dialog
+      open={validationDialogOpen}
+      onClose={() => setValidationDialogOpen(false)}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle sx={{ color: 'warning.main' }}>
+        Warning
+      </DialogTitle>
+
+      <DialogContent>
+        <Typography>
+          {validationMessage}
+        </Typography>
+      </DialogContent>
+
+      <DialogActions>
+        <Button
+          variant="contained"
+          onClick={() => setValidationDialogOpen(false)}
+        >
+          OK
+        </Button>
+      </DialogActions>
+    </Dialog>
     </>
   );
 };

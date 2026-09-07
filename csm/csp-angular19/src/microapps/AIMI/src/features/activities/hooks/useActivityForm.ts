@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { ActivityFormData, ActivityData } from '../types/activityTypes';
+import type { ActivityFormData, ActivityData, AIToolDetails } from '../types/activityTypes';
 import {
   getSDLCPhasesForPractice,
   getActivitiesForSDLCPhase,
 } from '../../../shared/utils/questionnaireUtils';
+
 
 const initialFormData: ActivityFormData = {
   sdlcPhase: '',
@@ -20,6 +21,7 @@ const initialFormData: ActivityFormData = {
   qualitativeBenefits: [],
   comments: '',
 };
+
 
 export const useActivityForm = (
   selectedPractice: string,
@@ -120,7 +122,7 @@ export const useActivityForm = (
   }, [formData.sdlcPhase]);
 
   const handleFormChange = useCallback(
-    (field: keyof ActivityFormData, value: string | string[] | number) => {
+    (field: keyof ActivityFormData, value: string | string[] | number | AIToolDetails) => {
       setFormData((prev) => {
         const newFormData = { ...prev, [field]: value };
 
