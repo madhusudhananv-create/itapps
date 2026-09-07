@@ -3,6 +3,7 @@ import type { ProjectData } from '@shared/projects/types/projectDataSchema';
 import { getApiUrl } from '@shared/config/apiConfig';
 import { mapApiResponseToProjectData } from '@shared/projects/utils/projectDataUtils';
 import { useAuth } from '@auth/hooks/useAuth';
+import { LoginRequiredDialog } from '@shared/components/LoginRequiredDialog';
 import {
   ProjectDataContext,
   type ProjectDataContextValue,
@@ -19,6 +20,7 @@ export const ProjectDataProvider: React.FC<ProjectDataProviderProps> = ({
   const [data, setData] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showLoginRequiredPopup, setShowLoginRequiredPopup] = useState(false);
 
   const fetchProjectData = async () => {
     try {
@@ -26,6 +28,15 @@ export const ProjectDataProvider: React.FC<ProjectDataProviderProps> = ({
       setError(null);
 
       const response = await fetch(getApiUrl());
+
+      if (response.status === 401 || response.status === 403) {
+        // No valid session for the real backend (this fetch carries no auth token/header
+        // at all). Show a popup explaining why before navigating away, so the redirect to
+        // login doesn't look like an unexplained bounce; the redirect happens on OK.
+        setLoading(false);
+        setShowLoginRequiredPopup(true);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -85,6 +96,7 @@ export const ProjectDataProvider: React.FC<ProjectDataProviderProps> = ({
   return (
     <ProjectDataContext.Provider value={value}>
       {children}
+      <LoginRequiredDialog open={showLoginRequiredPopup} />
     </ProjectDataContext.Provider>
   );
 };

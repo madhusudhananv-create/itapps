@@ -25,6 +25,21 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         if (authState?.isAuthenticated && storedUser) {
           setIsAuthenticated(true);
           setUser(storedUser);
+          return;
+        }
+
+        // Users normally arrive here via the CSM navbar's "Integrated Apps" menu, already
+        // logged into the main CSM app — they never go through AIMI's own mock Google
+        // Sign-In flow, so the AIMI-specific auth flag above is never set for them. Fall
+        // back to recognizing the real CSM session (same localStorage keys the Angular app
+        // and the CSAT microapp use) so a genuinely logged-in CSM user isn't shown the
+        // "Login Required" popup just because they haven't used AIMI's own mock login.
+        const csmEmpId = localStorage.getItem('empid') || '';
+        const csmToken = localStorage.getItem('token') || '';
+        if (csmEmpId && csmToken) {
+          const displayName = localStorage.getItem('displayname') || csmEmpId;
+          setIsAuthenticated(true);
+          setUser({ name: displayName, email: csmEmpId });
         }
       } catch (error) {
         console.error('Failed to initialize auth state:', error);
