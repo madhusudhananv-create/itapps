@@ -95,25 +95,23 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     setDetailsModalOpen(false);
   };
 
+  // Only one status is shown at a time: unsaved local changes take priority over persisted status
+  const statusLabel = isUnsaved ? 'Unsaved' : activity.status === 'draft' ? 'Draft' : 'Saved';
+  const statusColor: 'warning' | 'info' | 'success' = isUnsaved
+    ? 'warning'
+    : activity.status === 'draft'
+    ? 'info'
+    : 'success';
+
   return (
     <>
       <Card sx={activityCardStyles.card}>
-        {activity.status === 'draft' && (
-          <Chip
-            label="Draft"
-            color="info"
-            size="small"
-            sx={activityCardStyles.draftChip}
-          />
-        )}
-        {isUnsaved && (
-          <Chip
-            label="Unsaved"
-            color="warning"
-            size="small"
-            sx={activityCardStyles.unsavedChip}
-          />
-        )}
+        <Chip
+          label={statusLabel}
+          color={statusColor}
+          size="small"
+          sx={activityCardStyles.unsavedChip}
+        />
         <CardContent sx={activityCardStyles.cardContent}>
           {/* Header */}
           <Box sx={activityCardStyles.header}>

@@ -91,6 +91,14 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
     applicabilityColor = 'warning';
   }
 
+  // Only one status is shown at a time: unsaved local changes take priority over persisted status
+  const statusLabel = isUnsaved ? 'Unsaved' : activity.status === 'draft' ? 'Draft' : 'Saved';
+  const statusColor: 'warning' | 'info' | 'success' = isUnsaved
+    ? 'warning'
+    : activity.status === 'draft'
+    ? 'info'
+    : 'success';
+
   return (
     <Drawer
       anchor="right"
@@ -103,14 +111,12 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
           <Typography variant="h6" component="div" sx={typographyStyles.title}>
             Activity Details
           </Typography>
-          {isUnsaved && (
-            <Chip
-              label="Unsaved"
-              color="warning"
-              size="small"
-              sx={chipStyles.unsaved}
-            />
-          )}
+          <Chip
+            label={statusLabel}
+            color={statusColor}
+            size="small"
+            sx={chipStyles.unsaved}
+          />
         </Box>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />

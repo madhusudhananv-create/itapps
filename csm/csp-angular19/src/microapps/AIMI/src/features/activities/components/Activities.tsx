@@ -28,6 +28,10 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import {
+  getSDLCPhasesForPractice,
+  getActivitiesForSDLCPhase,
+} from '../../../shared/utils/questionnaireUtils';
 
 const ManageActivities = lazy(() =>
   import('./ManageActivities').then((module) => ({
@@ -442,7 +446,7 @@ export function Activities() {
           <Button
             variant="outlined"
             startIcon={<UploadFileIcon />}
-            disabled={!projectInfoFormData.project}
+            disabled={!projectInfoFormData.practice}
             onClick={() => setImportDialogOpen(true)}
           >
             Import Excel
@@ -508,37 +512,80 @@ export function Activities() {
   open={importDialogOpen}
   onClose={() => setImportDialogOpen(false)}
   onImport={(rows) => {
-    const invalidRows = rows
-  .map((row, index) => ({
-    row,
-    rowNumber: index + 2, // Excel row number after header
-  }))
-  .filter(
-    ({ row }) =>
-      !row['SDLC Phase'] ||
-      !row['Activity']
-  );
+    const practice = projectInfoFormData.practice;
+    const validPhases = getSDLCPhasesForPractice(practice);
+
+    // The Select fields only bind when the value exactly matches an option from
+    // questionnaire.json, so imported text must be resolved to the canonical phase/activity.
+    const findMatch = (value: unknown, options: string[]) => {
+      const trimmed = String(value ?? '').trim();
+      return options.find(
+        (option) => option.toLowerCase() === trimmed.toLowerCase()
+      );
+    };
+
+    const invalidRows: { rowNumber: number; reason: string }[] = [];
+    const normalizedRows: Array<{
+      row: Record<string, unknown>;
+      sdlcPhase: string;
+      activity: string;
+    }> = [];
+
+    rows.forEach((row, index) => {
+      const rowNumber = index + 2; // Excel row number after header
+      const phaseInput = row['SDLC Phase'];
+      const activityInput = row['Activity'];
+
+      if (!phaseInput || !activityInput) {
+        invalidRows.push({
+          rowNumber,
+          reason: 'SDLC Phase and Activity are mandatory',
+        });
+        return;
+      }
+
+      const matchedPhase = findMatch(phaseInput, validPhases);
+      if (!matchedPhase) {
+        invalidRows.push({
+          rowNumber,
+          reason: `"${phaseInput}" is not a valid SDLC Phase for the selected practice`,
+        });
+        return;
+      }
+
+      const validActivities = getActivitiesForSDLCPhase(practice, matchedPhase);
+      const matchedActivity = findMatch(activityInput, validActivities);
+      if (!matchedActivity) {
+        invalidRows.push({
+          rowNumber,
+          reason: `"${activityInput}" is not a valid Activity for phase "${matchedPhase}"`,
+        });
+        return;
+      }
+
+      normalizedRows.push({ row, sdlcPhase: matchedPhase, activity: matchedActivity });
+    });
 
 if (invalidRows.length > 0) {
   setImportValidationMessage(
     `Invalid data found in row(s): ${invalidRows
-      .map((r) => r.rowNumber)
-      .join(', ')}. SDLC Phase and Activity are mandatory.`
+      .map((r) => `${r.rowNumber} (${r.reason})`)
+      .join('; ')}.`
   );
 
   setImportValidationOpen(true);
   return;
 }
-    rows.forEach((row) => {
+    normalizedRows.forEach(({ row, sdlcPhase, activity }) => {
       addActivity({
         id: crypto.randomUUID(),
         createdAt: new Date(),
         status: 'draft',
 
-        sdlcPhase: row['SDLC Phase'] || '',
-        activity: row['Activity'] || '',
-        applicability: row['Applicability'] || '',
-        aiAdoptionScore: row['AI Adoption Score'] || '',
+        sdlcPhase,
+        activity,
+        applicability: String(row['Applicability'] || ''),
+        aiAdoptionScore: String(row['AI Adoption Score'] || ''),
 
         aiToolUsed: row['AI Tools Used']
           ? String(row['AI Tools Used'])
@@ -546,7 +593,7 @@ if (invalidRows.length > 0) {
               .map((x) => x.trim())
           : [],
 
-        clientApproved: row['Client Approved'] || '',
+        clientApproved: String(row['Client Approved'] || ''),
 
         acceleratorsUsed: row['Accelerators Used']
           ? String(row['Accelerators Used'])
@@ -558,9 +605,9 @@ if (invalidRows.length > 0) {
 
         hoursSaved: Number(row['Hours Saved']) || 0,
 
-        revenueGenerated: row['Revenue Generated'] || '',
+        revenueGenerated: String(row['Revenue Generated'] || ''),
 
-        benefitTo: row['Benefit To'] || '',
+        benefitTo: String(row['Benefit To'] || ''),
 
         qualitativeBenefits: row['Qualitative Benefits']
           ? String(row['Qualitative Benefits'])
@@ -568,7 +615,7 @@ if (invalidRows.length > 0) {
               .map((x) => x.trim())
           : [],
 
-        comments: row['Comments'] || '',
+        comments: String(row['Comments'] || ''),
 
         aiToolDetails: {},
       });

@@ -60,10 +60,21 @@ export const ImportActivitiesDialog: React.FC<
     };
 
     reader.readAsArrayBuffer(file);
+
+    // Reset the input so re-selecting the same file (even after editing it) fires onChange again
+    event.target.value = '';
   };
 
   const handleImport = () => {
     onImport(activities);
+    setFileName('');
+    setActivities([]);
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setFileName('');
+    setActivities([]);
     onClose();
   };
 
@@ -76,7 +87,7 @@ export const ImportActivitiesDialog: React.FC<
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleCancel}
       maxWidth="lg"
       fullWidth
     >
@@ -166,7 +177,7 @@ export const ImportActivitiesDialog: React.FC<
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>
+        <Button onClick={handleCancel}>
           Cancel
         </Button>
 
