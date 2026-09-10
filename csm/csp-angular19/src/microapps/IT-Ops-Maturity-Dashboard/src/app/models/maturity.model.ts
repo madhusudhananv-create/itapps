@@ -135,7 +135,10 @@ export const MATURITY_LEVEL_LABELS: Record<number, string> = {
 
 export interface ReportRow {
   accountName: string;
+  projectName: string;
   businessUnit: string;
+  /** Cycle label - lets rows from different cycles be told apart when "All cycles" is selected. */
+  period: string;
   domainId: string;
   domainName: string;
   coeSpoc: string;
@@ -156,6 +159,26 @@ export interface ReportRow {
   findingsPending: number;
   averageScore: number | null;
   maturityPercent: number | null;
+}
+
+/** One row per (assessment, parameter) - the Reports page's parameter-level detail report. */
+export interface ParameterDetailReportRow {
+  accountName: string;
+  projectName: string;
+  businessUnit: string;
+  /** Cycle label - lets rows from different cycles be told apart when "All cycles" is selected. */
+  period: string;
+  domainName: string;
+  category: string;
+  parameter: string;
+  question: string;
+  score: number | null;
+  /** Comma-joined - an assessment can have more than one assessor/reviewer. */
+  assessor: string;
+  reviewer: string;
+  /** Only set once this parameter raised a finding (score < 5). */
+  assessee: string | null;
+  findingStatus: string | null;
 }
 
 export function maturityLevelFromScore(avgScore: number): string {

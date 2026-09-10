@@ -194,7 +194,7 @@ h1, h2, h3 { margin: 0; }
    pulse, no pill-shaped background track. */
 .flow-nav {
   display: flex; align-items: center; overflow-x: auto; gap: 0;
-  padding: 16px 28px 0;
+  padding: 16px 40px 0;
   max-width: 1520px;
   margin: 0 auto var(--space-2);
 }
@@ -229,7 +229,7 @@ h1, h2, h3 { margin: 0; }
 .flow-arrow { display: flex; align-items: center; color: var(--border); flex: none; font-size: 15px; padding: 0 2px; }
 .flow-arrow.done { color: var(--border); }
 
-.maturity-page { max-width: 1520px; margin: 0 auto; padding: var(--space-4) 28px 40px; }
+.maturity-page { max-width: 1520px; margin: 0 auto; padding: var(--space-4) 40px 40px; }
 .page-head { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-3); }
 .icon-badge {
   width: 34px; height: 34px; border-radius: var(--radius-sm); flex: none; border: none;
@@ -476,7 +476,11 @@ a:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-vis
 
 .step-actions { display: flex; margin-top: 32px; gap: 10px; }
 .step-actions.end { justify-content: flex-end; }
-.step-actions.between { justify-content: space-between; }
+/* Was space-between, which put Back and Save at opposite ends of the FULL page
+   width (now 1520px) - fine at the old, narrower page width, but at this width
+   it read as two unrelated controls stranded in opposite corners instead of one
+   action pair. Grouped together (flex-start) like every other button row. */
+.step-actions.between { justify-content: flex-start; }
 .step-actions.start { justify-content: flex-start; }
 .step-actions.tight { margin-top: 18px; }
 

@@ -169,13 +169,22 @@ export class ItOpsMaturityApiService {
     );
   }
 
-  /** Dashboard's account picker: only accounts that actually have an IT Ops assessment (a cycle has run against one of their projects), not every CSM customer. Narrowed to one cycle when given. */
-  getAccountsWithAssessments(assessmentMasterId?: number): Observable<{ cusT_ID: string; cusT_NM: string }[]> {
-    const cycleParam = assessmentMasterId ? `?assessmentMasterId=${assessmentMasterId}` : '';
+  /** Dashboard's account picker: only accounts that actually have an IT Ops assessment (a cycle has run against one of their projects), not every CSM customer. Narrowed to one cycle and/or one business unit when given. */
+  getAccountsWithAssessments(assessmentMasterId?: number, businessUnit?: string): Observable<{ cusT_ID: string; cusT_NM: string }[]> {
+    const params: string[] = [];
+    if (assessmentMasterId) params.push(`assessmentMasterId=${assessmentMasterId}`);
+    if (businessUnit) params.push(`businessUnit=${encodeURIComponent(businessUnit)}`);
+    const query = params.length ? `?${params.join('&')}` : '';
     return this.http.get<{ cusT_ID: string; cusT_NM: string }[]>(
-      `${this.apiurl}GetITOpsAccountsWithAssessments${cycleParam}`,
+      `${this.apiurl}GetITOpsAccountsWithAssessments${query}`,
       { headers: this.getHeaders() },
     );
+  }
+
+  /** Reports page's Business Unit filter - every distinct BUSINESS_UNIT value present on an active assessment, narrowed to one cycle when given. Selecting one narrows the Account picker above via businessUnit. */
+  getBusinessUnits(assessmentMasterId?: number): Observable<string[]> {
+    const cycleParam = assessmentMasterId ? `?assessmentMasterId=${assessmentMasterId}` : '';
+    return this.http.get<string[]>(`${this.apiurl}GetITOpsBusinessUnits${cycleParam}`, { headers: this.getHeaders() });
   }
 
   /** Dashboard's project picker, once an account is chosen: only that account's projects that have an assessment, narrowed to one cycle when given. */

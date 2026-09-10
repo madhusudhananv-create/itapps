@@ -1086,11 +1086,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetITOpsAccountsWithAssessments")]
         [ActionName("GetITOpsAccountsWithAssessments")]
         [HttpGet]
-        public IHttpActionResult GetITOpsAccountsWithAssessments(int? assessmentMasterId = null)
+        public IHttpActionResult GetITOpsAccountsWithAssessments(int? assessmentMasterId = null, string businessUnit = null)
         {
             var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => a.ISACTIVE);
             if (assessmentMasterId.HasValue)
                 assessments = assessments.Where(a => a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value);
+            if (!string.IsNullOrWhiteSpace(businessUnit))
+                assessments = assessments.Where(a => a.BUSINESS_UNIT == businessUnit);
 
             var custIds = assessments
                 .Select(a => a.PROJECT_ID)
@@ -1104,6 +1106,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var result = Cldb.CUSTOMER.GetAll()
                 .Where(c => custIds.Contains(c.CUST_ID))
                 .OrderBy(c => c.CUST_NM)
+                .ToList();
+
+            return Ok(result);
+        }
+
+        // Reports page's Business Unit filter - every distinct BUSINESS_UNIT value actually
+        // present on an active assessment (it's a denormalized free-text field on
+        // ITOPS_ASSESSMENT itself, not a separate master table), optionally narrowed to one
+        // cycle. Selecting one then narrows GetITOpsAccountsWithAssessments's own
+        // businessUnit param, cascading Cycle -> Business Unit -> Account -> Project -> Domain.
+        [GET("GetITOpsBusinessUnits")]
+        [ActionName("GetITOpsBusinessUnits")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsBusinessUnits(int? assessmentMasterId = null)
+        {
+            var assessments = CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => a.ISACTIVE && a.BUSINESS_UNIT != null && a.BUSINESS_UNIT != "");
+            if (assessmentMasterId.HasValue)
+                assessments = assessments.Where(a => a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value);
+
+            var result = assessments
+                .Select(a => a.BUSINESS_UNIT)
+                .Distinct()
+                .ToList()
+                .OrderBy(bu => bu)
                 .ToList();
 
             return Ok(result);

@@ -10,11 +10,17 @@
     <div>
       <h1>Reports</h1>
       <p class="subtitle">
-        <span *ngIf="!loading">Across <strong>{{ accountCount }}</strong> account{{ accountCount === 1 ? '' : 's' }}</span>
-        <span *ngIf="loading">Loading accounts...</span>
+        <span *ngIf="!loading && !isParameterReport">Across <strong>{{ accountCount }}</strong> account{{ accountCount === 1 ? '' : 's' }}</span>
+        <span *ngIf="!loading && isParameterReport">{{ paramRows.length }} parameter row{{ paramRows.length === 1 ? '' : 's' }}</span>
+        <span *ngIf="loading">Loading...</span>
       </p>
     </div>
-    <button type="button" class="btn-primary export-btn" (click)="exportToExcel()" [disabled]="!filteredRows.length">
+    <button
+      type="button"
+      class="btn-primary export-btn"
+      (click)="exportToExcel()"
+      [disabled]="isParameterReport ? !paramRows.length : !filteredRows.length"
+    >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
@@ -22,40 +28,73 @@
     </button>
   </header>
 
-  <section class="summary-strip" *ngIf="!loading && filteredRows.length">
-    <div class="summary-tile">
-      <span class="summary-num">{{ summary.total }}</span>
-      <span class="summary-lbl">Total assessments</span>
-    </div>
-    <div class="summary-tile tile-critical">
-      <span class="summary-num">{{ summary.pastDue }}</span>
-      <span class="summary-lbl">Past due</span>
-    </div>
-    <div class="summary-tile tile-warning">
-      <span class="summary-num">{{ summary.noMgmtUpdate }}</span>
-      <span class="summary-lbl">No management update</span>
-    </div>
-    <div class="summary-tile tile-info">
-      <span class="summary-num">{{ summary.findingsPending }}</span>
-      <span class="summary-lbl">With pending findings</span>
-    </div>
-  </section>
-
-  <section class="filters">
+  <section class="filters" *ngIf="!loading">
     <div class="filter-row">
       <label class="filter-select-label">
-        Account
-        <select [(ngModel)]="accountFilter" (ngModelChange)="onFilterSelectChange()">
-          <option value="">All accounts</option>
-          <option *ngFor="let name of accountOptions" [value]="name">{{ name }}</option>
-        </select>
+        Report
+        <app-searchable-select
+          [options]="reportSelectOptions"
+          [ngModel]="selectedReport"
+          (ngModelChange)="selectedReport = $event; onReportChange()"
+        ></app-searchable-select>
       </label>
-      <button type="button" class="clear-filters" *ngIf="activeFilters.size || accountFilter" (click)="clearFilters()">
-        Clear all filters
+      <label class="filter-select-label">
+        Cycle
+        <app-searchable-select
+          placeholder="All cycles"
+          emptyLabel="All cycles"
+          [options]="cycleOptions"
+          [ngModel]="cycleFilter"
+          (ngModelChange)="cycleFilter = $event; onCycleFilterChange()"
+        ></app-searchable-select>
+      </label>
+      <label class="filter-select-label">
+        Business Unit
+        <app-searchable-select
+          placeholder="All business units"
+          emptyLabel="All business units"
+          [options]="businessUnitOptions"
+          [ngModel]="businessUnitFilter"
+          (ngModelChange)="businessUnitFilter = $event; onBusinessUnitFilterChange()"
+        ></app-searchable-select>
+      </label>
+      <label class="filter-select-label">
+        Account
+        <app-searchable-select
+          placeholder="All accounts"
+          emptyLabel="All accounts"
+          [options]="accountOptions2"
+          [ngModel]="accountFilter"
+          (ngModelChange)="accountFilter = $event; onAccountFilterChange()"
+        ></app-searchable-select>
+      </label>
+      <label class="filter-select-label">
+        Project
+        <app-searchable-select
+          [placeholder]="projectsLoading ? 'Loading…' : 'All projects'"
+          emptyLabel="All projects"
+          [options]="projectOptions"
+          [disabled]="projectsLoading"
+          [ngModel]="projectFilter"
+          (ngModelChange)="projectFilter = $event; onProjectFilterChange()"
+        ></app-searchable-select>
+      </label>
+      <label class="filter-select-label">
+        Domain
+        <app-searchable-select
+          placeholder="All domains"
+          emptyLabel="All domains"
+          [options]="domainOptions"
+          [ngModel]="domainFilter"
+          (ngModelChange)="domainFilter = $event; onDomainFilterChange()"
+        ></app-searchable-select>
+      </label>
+      <button type="button" class="clear-filters" *ngIf="!isParameterReport && activeFilters.size" (click)="clearFilters()">
+        Clear status filters
       </button>
     </div>
 
-    <div class="filter-chips">
+    <div class="filter-chips" *ngIf="!isParameterReport">
       <button
         type="button"
         *ngFor="let key of filterKeys"
@@ -65,74 +104,159 @@
       >{{ key }}</button>
     </div>
 
-    <p class="filter-count">Showing {{ filteredRows.length }} of {{ allRows.length }} domain assessments</p>
+    <p class="filter-count" *ngIf="!isParameterReport">Showing {{ filteredRows.length }} of {{ allRows.length }} domain assessments</p>
   </section>
 
-  <p class="empty-state" *ngIf="loading">Loading report data across all accounts...</p>
+  <p class="empty-state" *ngIf="loading">Loading reports...</p>
+  <p class="empty-state" *ngIf="!loading && rowsLoading">Loading report data...</p>
 
-  <div class="table-wrap" *ngIf="!loading && filteredRows.length; else noRows">
-    <table>
-      <thead>
-        <tr>
-          <th class="sortable" (click)="sortBy('accountName')">Account <span class="sort-arrow">{{ sortIndicator('accountName') }}</span></th>
-          <th>Business Unit</th>
-          <th class="sortable" (click)="sortBy('domainName')">Domain <span class="sort-arrow">{{ sortIndicator('domainName') }}</span></th>
-          <th>COE SPOC</th>
-          <th>Reviewer</th>
-          <th class="sortable" (click)="sortBy('assessmentStatus')">Status <span class="sort-arrow">{{ sortIndicator('assessmentStatus') }}</span></th>
-          <th class="sortable" (click)="sortBy('dueStatus')">Due <span class="sort-arrow">{{ sortIndicator('dueStatus') }}</span></th>
-          <th>Target Date</th>
-          <th class="sortable" (click)="sortBy('lastUpdated')">Last Updated <span class="sort-arrow">{{ sortIndicator('lastUpdated') }}</span></th>
-          <th>Findings (A / R / P)</th>
-          <th class="col-num sortable" (click)="sortBy('averageScore')">Avg Score <span class="sort-arrow">{{ sortIndicator('averageScore') }}</span></th>
-          <th class="col-num sortable" (click)="sortBy('maturityPercent')">Maturity % <span class="sort-arrow">{{ sortIndicator('maturityPercent') }}</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of pagedRows">
-          <td>{{ row.accountName }}</td>
-          <td>{{ row.businessUnit }}</td>
-          <td>{{ row.domainName }}</td>
-          <td>{{ row.coeSpoc }}</td>
-          <td>{{ row.reviewer }}</td>
-          <td><span class="pill" [class]="statusPill(row.assessmentStatus)">{{ row.assessmentStatus }}</span></td>
-          <td>
-            <span class="pill" [class]="duePill(row.dueStatus)" *ngIf="row.dueStatus">{{ row.dueStatus }}</span>
-            <span *ngIf="!row.dueStatus">-</span>
-          </td>
-          <td>{{ formatDate(row.targetDate) }}</td>
-          <td>
-            {{ formatDate(row.lastUpdated) }}
-            <span class="stale-tag" *ngIf="row.longDated" title="No update in over 60 days">Long dated</span>
-            <span class="stale-tag" *ngIf="!row.longDated && row.noManagementUpdate" title="No update in over 30 days">No mgmt update</span>
-          </td>
-          <td>
-            <span class="finding-count accepted" *ngIf="row.findingsAccepted">{{ row.findingsAccepted }}</span>
-            <span class="finding-count-dash" *ngIf="!row.findingsAccepted">0</span>
-            /
-            <span class="finding-count rejected" *ngIf="row.findingsRejected">{{ row.findingsRejected }}</span>
-            <span class="finding-count-dash" *ngIf="!row.findingsRejected">0</span>
-            /
-            <span class="finding-count pending" *ngIf="row.findingsPending">{{ row.findingsPending }}</span>
-            <span class="finding-count-dash" *ngIf="!row.findingsPending">0</span>
-          </td>
-          <td class="col-num">{{ row.averageScore ?? '-' }}</td>
-          <td class="col-num">{{ row.maturityPercent !== null ? row.maturityPercent + '%' : '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- ============ Domain Assessment report ============ -->
+  <ng-container *ngIf="!loading && !rowsLoading && !isParameterReport">
+    <section class="summary-strip" *ngIf="filteredRows.length">
+      <div class="summary-tile">
+        <span class="summary-num">{{ summary.total }}</span>
+        <span class="summary-lbl">Total assessments</span>
+      </div>
+      <div class="summary-tile tile-critical">
+        <span class="summary-num">{{ summary.pastDue }}</span>
+        <span class="summary-lbl">Past due</span>
+      </div>
+      <div class="summary-tile tile-warning">
+        <span class="summary-num">{{ summary.noMgmtUpdate }}</span>
+        <span class="summary-lbl">No management update</span>
+      </div>
+      <div class="summary-tile tile-info">
+        <span class="summary-num">{{ summary.findingsPending }}</span>
+        <span class="summary-lbl">With pending findings</span>
+      </div>
+    </section>
 
-  <div class="pagination" *ngIf="!loading && filteredRows.length">
-    <span class="range-label">{{ rangeLabel }}</span>
-    <div class="pagination-nav">
-      <button type="button" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Prev</button>
-      <span class="page-num">Page {{ currentPage }} of {{ totalPages }}</span>
-      <button type="button" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+    <div class="table-wrap" *ngIf="filteredRows.length; else noRows">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" (click)="sortBy('accountName')">Account <span class="sort-arrow">{{ sortIndicator('accountName') }}</span></th>
+            <th class="sortable" (click)="sortBy('businessUnit')">Business Unit <span class="sort-arrow">{{ sortIndicator('businessUnit') }}</span></th>
+            <th class="sortable" (click)="sortBy('projectName')">Project <span class="sort-arrow">{{ sortIndicator('projectName') }}</span></th>
+            <th class="sortable" (click)="sortBy('period')">Period <span class="sort-arrow">{{ sortIndicator('period') }}</span></th>
+            <th class="sortable" (click)="sortBy('domainName')">Domain <span class="sort-arrow">{{ sortIndicator('domainName') }}</span></th>
+            <th>COE SPOC</th>
+            <th>Reviewer</th>
+            <th class="sortable" (click)="sortBy('assessmentStatus')">Status <span class="sort-arrow">{{ sortIndicator('assessmentStatus') }}</span></th>
+            <th class="sortable" (click)="sortBy('dueStatus')">Due <span class="sort-arrow">{{ sortIndicator('dueStatus') }}</span></th>
+            <th>Target Date</th>
+            <th class="sortable" (click)="sortBy('lastUpdated')">Last Updated <span class="sort-arrow">{{ sortIndicator('lastUpdated') }}</span></th>
+            <th>Findings (A / R / P)</th>
+            <th class="col-num sortable" (click)="sortBy('averageScore')">Avg Score <span class="sort-arrow">{{ sortIndicator('averageScore') }}</span></th>
+            <th class="col-num sortable" (click)="sortBy('maturityPercent')">Maturity % <span class="sort-arrow">{{ sortIndicator('maturityPercent') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of pagedRows">
+            <td>{{ row.accountName }}</td>
+            <td>{{ row.businessUnit }}</td>
+            <td>{{ row.projectName }}</td>
+            <td>{{ row.period || '-' }}</td>
+            <td>{{ row.domainName }}</td>
+            <td>{{ row.coeSpoc }}</td>
+            <td>{{ row.reviewer }}</td>
+            <td><span class="pill" [class]="statusPill(row.assessmentStatus)">{{ row.assessmentStatus }}</span></td>
+            <td>
+              <span class="pill" [class]="duePill(row.dueStatus)" *ngIf="row.dueStatus">{{ row.dueStatus }}</span>
+              <span *ngIf="!row.dueStatus">-</span>
+            </td>
+            <td>{{ formatDate(row.targetDate) }}</td>
+            <td>
+              {{ formatDate(row.lastUpdated) }}
+              <span class="stale-tag" *ngIf="row.longDated" title="No update in over 60 days">Long dated</span>
+              <span class="stale-tag" *ngIf="!row.longDated && row.noManagementUpdate" title="No update in over 30 days">No mgmt update</span>
+            </td>
+            <td>
+              <span class="finding-count accepted" *ngIf="row.findingsAccepted">{{ row.findingsAccepted }}</span>
+              <span class="finding-count-dash" *ngIf="!row.findingsAccepted">0</span>
+              /
+              <span class="finding-count rejected" *ngIf="row.findingsRejected">{{ row.findingsRejected }}</span>
+              <span class="finding-count-dash" *ngIf="!row.findingsRejected">0</span>
+              /
+              <span class="finding-count pending" *ngIf="row.findingsPending">{{ row.findingsPending }}</span>
+              <span class="finding-count-dash" *ngIf="!row.findingsPending">0</span>
+            </td>
+            <td class="col-num">{{ row.averageScore ?? '-' }}</td>
+            <td class="col-num">{{ row.maturityPercent !== null ? row.maturityPercent + '%' : '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
 
-  <ng-template #noRows>
-    <p class="empty-state" *ngIf="!loading">No domain assessments match the selected filters.</p>
-  </ng-template>
+    <div class="pagination" *ngIf="filteredRows.length">
+      <span class="range-label">{{ rangeLabel }}</span>
+      <div class="pagination-nav">
+        <button type="button" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Prev</button>
+        <span class="page-num">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button type="button" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+      </div>
+    </div>
+
+    <ng-template #noRows>
+      <p class="empty-state">No domain assessments match the selected filters.</p>
+    </ng-template>
+  </ng-container>
+
+  <!-- ============ Parameter Detail report ============ -->
+  <ng-container *ngIf="!loading && !rowsLoading && isParameterReport">
+    <div class="table-wrap" *ngIf="paramRows.length; else noParamRows">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" (click)="paramSortBy('accountName')">Account <span class="sort-arrow">{{ paramSortIndicator('accountName') }}</span></th>
+            <th class="sortable" (click)="paramSortBy('businessUnit')">Business Unit <span class="sort-arrow">{{ paramSortIndicator('businessUnit') }}</span></th>
+            <th class="sortable" (click)="paramSortBy('projectName')">Project <span class="sort-arrow">{{ paramSortIndicator('projectName') }}</span></th>
+            <th class="sortable" (click)="paramSortBy('period')">Period <span class="sort-arrow">{{ paramSortIndicator('period') }}</span></th>
+            <th class="sortable" (click)="paramSortBy('domainName')">Domain <span class="sort-arrow">{{ paramSortIndicator('domainName') }}</span></th>
+            <th class="sortable" (click)="paramSortBy('category')">Category <span class="sort-arrow">{{ paramSortIndicator('category') }}</span></th>
+            <th class="sortable" (click)="paramSortBy('parameter')">Parameter <span class="sort-arrow">{{ paramSortIndicator('parameter') }}</span></th>
+            <th>Question</th>
+            <th class="col-num sortable" (click)="paramSortBy('score')">Score <span class="sort-arrow">{{ paramSortIndicator('score') }}</span></th>
+            <th>Assessor</th>
+            <th>Reviewer</th>
+            <th>Assessee</th>
+            <th class="sortable" (click)="paramSortBy('findingStatus')">Finding Status <span class="sort-arrow">{{ paramSortIndicator('findingStatus') }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of pagedParamRows">
+            <td>{{ row.accountName }}</td>
+            <td>{{ row.businessUnit }}</td>
+            <td>{{ row.projectName }}</td>
+            <td>{{ row.period || '-' }}</td>
+            <td>{{ row.domainName }}</td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.parameter }}</td>
+            <td class="question-cell">{{ row.question }}</td>
+            <td class="col-num">{{ row.score ?? 'N/A' }}</td>
+            <td>{{ row.assessor || '-' }}</td>
+            <td>{{ row.reviewer || '-' }}</td>
+            <td>{{ row.assessee || '-' }}</td>
+            <td>
+              <span class="pill" [class]="findingPill(row.findingStatus)" *ngIf="row.findingStatus">{{ row.findingStatus }}</span>
+              <span *ngIf="!row.findingStatus">-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" *ngIf="paramRows.length">
+      <span class="range-label">{{ paramRangeLabel }}</span>
+      <div class="pagination-nav">
+        <button type="button" [disabled]="paramCurrentPage === 1" (click)="goToParamPage(paramCurrentPage - 1)">Prev</button>
+        <span class="page-num">Page {{ paramCurrentPage }} of {{ paramTotalPages }}</span>
+        <button type="button" [disabled]="paramCurrentPage === paramTotalPages" (click)="goToParamPage(paramCurrentPage + 1)">Next</button>
+      </div>
+    </div>
+
+    <ng-template #noParamRows>
+      <p class="empty-state">No parameters match the selected filters.</p>
+    </ng-template>
+  </ng-container>
 </div>

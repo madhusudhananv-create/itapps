@@ -3,18 +3,24 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { resolveWebApiUri } from '../utils/api-base.util';
-import { ReportRow, AssessmentStatus, DueStatus } from '../models/maturity.model';
+import { ReportRow, AssessmentStatus, DueStatus, ParameterDetailReportRow } from '../models/maturity.model';
 
-const SP_DISPLAY_NAME = 'IT Ops Maturity - Domain Assessment Report';
+const DOMAIN_REPORT_NAME = 'IT Ops Maturity - Domain Assessment Report';
+const PARAMETER_REPORT_NAME = 'IT Ops Maturity - Parameter Detail Report';
 const LOG_PREFIX = 'IT Ops Maturity Dashboard [Report]:';
 
+export interface ReportOption {
+  displayName: string;
+  spId: number;
+}
+
 interface ReportSpDetail {
-  id: number;
+  id?: number;
+  ID?: number;
   sP_NAME?: string;
   SP_NAME?: string;
   sP_DISPLAY_NAME?: string;
   SP_DISPLAY_NAME?: string;
-  ID?: number;
 }
 
 interface ReportSpParam {
@@ -40,6 +46,10 @@ function readSpDisplayName(d: ReportSpDetail): string {
 
 function readSpId(d: ReportSpDetail): number {
   return d.id ?? d.ID ?? 0;
+}
+
+function readParamName(p: ReportSpParam): string {
+  return p.paraM_NAME ?? p.PARAM_NAME ?? '';
 }
 
 function setParamValue(p: ReportSpParam, value: string): ReportSpParam {
@@ -90,10 +100,12 @@ function toIsoOrNull(value: any): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-function mapRow(row: any): ReportRow {
+function mapDomainRow(row: any): ReportRow {
   return {
     accountName: read(row, 'account', 'Account') ?? '',
+    projectName: read(row, 'project', 'Project') ?? '',
     businessUnit: read(row, 'businessUnit', 'BusinessUnit') ?? 'Unknown',
+    period: read(row, 'period', 'Period') ?? '',
     domainId: String(read(row, 'domainId', 'DomainId') ?? read(row, 'domainCode', 'DomainCode') ?? ''),
     domainName: read(row, 'domainName', 'DomainName') ?? '',
     coeSpoc: read(row, 'coeSpoc', 'CoeSpoc') ?? '',
@@ -117,14 +129,32 @@ function mapRow(row: any): ReportRow {
   };
 }
 
+function mapParameterRow(row: any): ParameterDetailReportRow {
+  return {
+    accountName: read(row, 'account', 'Account') ?? '',
+    projectName: read(row, 'project', 'Project') ?? '',
+    businessUnit: read(row, 'businessUnit', 'BusinessUnit') ?? 'Unknown',
+    period: read(row, 'period', 'Period') ?? '',
+    domainName: read(row, 'domainName', 'DomainName') ?? '',
+    category: read(row, 'category', 'Category') ?? '',
+    parameter: read(row, 'parameter', 'Parameter') ?? '',
+    question: read(row, 'question', 'Question') ?? '',
+    score: toNullableNumber(read(row, 'score', 'Score')),
+    assessor: read(row, 'assessor', 'Assessor') ?? '',
+    reviewer: read(row, 'reviewer', 'Reviewer') ?? '',
+    assessee: read(row, 'assessee', 'Assessee') ?? null,
+    findingStatus: read(row, 'findingStatus', 'FindingStatus') ?? null,
+  };
+}
+
 /**
  * Real backend data for the Reports page - follows the same resolve-params-
  * then-execute pattern every other CSM report uses (AllSysController's
- * GetAllSps/GetSpParams/GetSpData), but against this module's own dedicated
- * GetITOpsReportSps/GetITOpsReportParams/GetITOpsReportData endpoints and its
- * own ITOPS_REPORT_SP_DETAILS/ITOPS_REPORT_PARAMS tables (see
- * ITOperationMaturity_Report_Tables.sql/_Report_SP.sql), kept isolated from
- * the shared/global reporting tables instead of the CSV-backed MaturityMockService.
+ * GetAllSps/GetSpParams/GetSpData), against this module's own
+ * GetITOpsReportSps/GetITOpsReportParams/GetITOpsReportData endpoints, which now
+ * read/write the shared REPORTS_SP_DETAILS/REPORTS_PARAMS tables (see
+ * ITOperationMaturity_Report_SP.sql) filtered to registrations whose SP_NAME
+ * contains "ITOps".
  */
 @Injectable({ providedIn: 'root' })
 export class ItOpsReportApiService {
@@ -141,30 +171,55 @@ export class ItOpsReportApiService {
     });
   }
 
-  getReportRows(): Observable<ReportRow[]> {
+  /** Every report registered for this module - drives the Reports page's report picker. */
+  getAvailableReports(): Observable<ReportOption[]> {
+    return this.http.get<ReportSpDetail[]>(`${this.apiurl}GetITOpsReportSps`, { headers: this.getHeaders() }).pipe(
+      map((sps) => (sps ?? []).map((d) => ({ displayName: readSpDisplayName(d), spId: readSpId(d) }))),
+      catchError((err) => {
+        console.error(`${LOG_PREFIX} Failed to load available reports`, err);
+        return of([]);
+      }),
+    );
+  }
+
+  /** Runs whichever report is registered under `displayName`, with the given filter values
+   * (keyed by PARAM_NAME - e.g. CustomerId/ProjectId/DomainId/AssessmentMasterId) applied.
+   * Any param the SP declares that isn't in `filterValues` is left at its registered
+   * default ('-1' - "don't filter on this"). */
+  private runReport(displayName: string, filterValues: Record<string, string>): Observable<any[]> {
     return this.http.get<ReportSpDetail[]>(`${this.apiurl}GetITOpsReportSps`, { headers: this.getHeaders() }).pipe(
       switchMap((sps) => {
-        const detail = (sps ?? []).find((d) => readSpDisplayName(d) === SP_DISPLAY_NAME);
+        const detail = (sps ?? []).find((d) => readSpDisplayName(d) === displayName);
         if (!detail) {
-          console.error(`${LOG_PREFIX} "${SP_DISPLAY_NAME}" is not registered in ITOPS_REPORT_SP_DETAILS - run ITOperationMaturity_Report_Tables.sql then _Report_SP.sql.`);
+          console.error(`${LOG_PREFIX} "${displayName}" is not registered - run ITOperationMaturity_Report_SP.sql.`);
           return of([]);
         }
         return this.http
           .get<ReportSpParam[]>(`${this.apiurl}GetITOpsReportParams?spId=${readSpId(detail)}`, { headers: this.getHeaders() })
           .pipe(
             switchMap((params) => {
-              const filledParams = (params ?? []).map((p) => setParamValue(p, '-1'));
+              const filledParams = (params ?? []).map((p) => setParamValue(p, filterValues[readParamName(p)] ?? '-1'));
               return this.http.post<any[]>(`${this.apiurl}GetITOpsReportData`, filledParams, {
                 headers: this.getHeaders({ spname: readSpName(detail) }),
               });
             }),
           );
       }),
-      map((rows) => (rows ?? []).map(mapRow)),
       catchError((err) => {
-        console.error(`${LOG_PREFIX} Failed to load report data`, err);
+        console.error(`${LOG_PREFIX} Failed to load report data for "${displayName}"`, err);
         return of([]);
       }),
     );
   }
+
+  getDomainReportRows(filterValues: Record<string, string>): Observable<ReportRow[]> {
+    return this.runReport(DOMAIN_REPORT_NAME, filterValues).pipe(map((rows) => (rows ?? []).map(mapDomainRow)));
+  }
+
+  getParameterDetailReportRows(filterValues: Record<string, string>): Observable<ParameterDetailReportRow[]> {
+    return this.runReport(PARAMETER_REPORT_NAME, filterValues).pipe(map((rows) => (rows ?? []).map(mapParameterRow)));
+  }
+
+  static readonly DOMAIN_REPORT_NAME = DOMAIN_REPORT_NAME;
+  static readonly PARAMETER_REPORT_NAME = PARAMETER_REPORT_NAME;
 }

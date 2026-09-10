@@ -535,22 +535,25 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return options;
   }
 
-  /** Distinct raw statuses present in myAssignments, in the fixed workflow order below - what the Status filter offers besides "All statuses". */
+  /** Distinct DISPLAY statuses present in myAssignments (i.e. after the Approved->Completed
+   * override), in a fixed workflow order - what the Status filter offers besides "All
+   * statuses". Filtering by the raw backend status alone (the previous approach) had no way
+   * to single out "Completed" rows, since those are still raw-Approved underneath. */
   get statusFilterOptions(): string[] {
-    const order = ['NotStarted', 'Draft', 'ReturnedForRevision', 'PendingReview', 'Approved', 'Suspended', 'Closed'];
-    const present = new Set(this.myAssignments.map((row) => row.status));
+    const order = ['Not Started', 'Draft', 'In Progress', 'Pending Review', 'Returned for Revision', 'Approved', 'Completed'];
+    const present = new Set(this.myAssignments.map((row) => this.displayAssignmentStatus(row)));
     return order.filter((s) => present.has(s));
   }
 
-  /** Options for the "My Assignments" Status combobox - "All statuses" plus every distinct raw status actually present, labeled the same way the Status column itself displays them. */
+  /** Options for the "My Assignments" Status combobox - "All statuses" plus every distinct display status actually present. */
   get assignmentsStatusOptions(): SearchableSelectOption[] {
-    return [{ value: 'all', label: 'All statuses' }, ...this.statusFilterOptions.map((s) => ({ value: s, label: this.assignmentStatusLabel(s) }))];
+    return [{ value: 'all', label: 'All statuses' }, ...this.statusFilterOptions.map((s) => ({ value: s, label: s }))];
   }
 
   get filteredAssignments(): ItOpsMyAssignmentRow[] {
     let rows = this.myAssignments;
     if (this.cycleFilter !== 'all') rows = rows.filter((row) => row.cycleLabel === this.cycleFilter);
-    if (this.statusFilter !== 'all') rows = rows.filter((row) => row.status === this.statusFilter);
+    if (this.statusFilter !== 'all') rows = rows.filter((row) => this.displayAssignmentStatus(row) === this.statusFilter);
     return rows;
   }
 
