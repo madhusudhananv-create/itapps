@@ -22,6 +22,25 @@
     </button>
   </header>
 
+  <section class="summary-strip" *ngIf="!loading && filteredRows.length">
+    <div class="summary-tile">
+      <span class="summary-num">{{ summary.total }}</span>
+      <span class="summary-lbl">Total assessments</span>
+    </div>
+    <div class="summary-tile tile-critical">
+      <span class="summary-num">{{ summary.pastDue }}</span>
+      <span class="summary-lbl">Past due</span>
+    </div>
+    <div class="summary-tile tile-warning">
+      <span class="summary-num">{{ summary.noMgmtUpdate }}</span>
+      <span class="summary-lbl">No management update</span>
+    </div>
+    <div class="summary-tile tile-info">
+      <span class="summary-num">{{ summary.findingsPending }}</span>
+      <span class="summary-lbl">With pending findings</span>
+    </div>
+  </section>
+
   <section class="filters">
     <div class="filter-row">
       <label class="filter-select-label">
@@ -55,22 +74,22 @@
     <table>
       <thead>
         <tr>
-          <th>Account</th>
+          <th class="sortable" (click)="sortBy('accountName')">Account <span class="sort-arrow">{{ sortIndicator('accountName') }}</span></th>
           <th>Business Unit</th>
-          <th>Domain</th>
+          <th class="sortable" (click)="sortBy('domainName')">Domain <span class="sort-arrow">{{ sortIndicator('domainName') }}</span></th>
           <th>COE SPOC</th>
           <th>Reviewer</th>
-          <th>Status</th>
-          <th>Due</th>
+          <th class="sortable" (click)="sortBy('assessmentStatus')">Status <span class="sort-arrow">{{ sortIndicator('assessmentStatus') }}</span></th>
+          <th class="sortable" (click)="sortBy('dueStatus')">Due <span class="sort-arrow">{{ sortIndicator('dueStatus') }}</span></th>
           <th>Target Date</th>
-          <th>Last Updated</th>
+          <th class="sortable" (click)="sortBy('lastUpdated')">Last Updated <span class="sort-arrow">{{ sortIndicator('lastUpdated') }}</span></th>
           <th>Findings (A / R / P)</th>
-          <th class="col-num">Avg Score</th>
-          <th class="col-num">Maturity %</th>
+          <th class="col-num sortable" (click)="sortBy('averageScore')">Avg Score <span class="sort-arrow">{{ sortIndicator('averageScore') }}</span></th>
+          <th class="col-num sortable" (click)="sortBy('maturityPercent')">Maturity % <span class="sort-arrow">{{ sortIndicator('maturityPercent') }}</span></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let row of filteredRows">
+        <tr *ngFor="let row of pagedRows">
           <td>{{ row.accountName }}</td>
           <td>{{ row.businessUnit }}</td>
           <td>{{ row.domainName }}</td>
@@ -103,6 +122,16 @@
       </tbody>
     </table>
   </div>
+
+  <div class="pagination" *ngIf="!loading && filteredRows.length">
+    <span class="range-label">{{ rangeLabel }}</span>
+    <div class="pagination-nav">
+      <button type="button" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Prev</button>
+      <span class="page-num">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button type="button" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next</button>
+    </div>
+  </div>
+
   <ng-template #noRows>
     <p class="empty-state" *ngIf="!loading">No domain assessments match the selected filters.</p>
   </ng-template>

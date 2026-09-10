@@ -642,6 +642,121 @@ textarea:disabled {
   margin: 6px 0 0;
 }
 
+.finding-badge {
+  margin-top: 5px;
+}
+
+.finding-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finding-pill.accepted {
+  background: color-mix(in srgb, var(--status-good) 18%, transparent);
+  color: var(--status-good);
+}
+
+.finding-pill.rejected {
+  background: color-mix(in srgb, var(--status-critical) 16%, transparent);
+  color: var(--status-critical);
+}
+
+.finding-rejection-comment {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.finding-assessee {
+  margin-left: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.rejection-decision {
+  margin-top: 8px;
+}
+
+.rejection-decision-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--surface-tint);
+
+  textarea {
+    width: 100%;
+    resize: vertical;
+    font: inherit;
+  }
+}
+
+.rejection-decision-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12.5px;
+}
+
+.action-update-block {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--gridline);
+}
+
+.notes-readout {
+  margin: 0;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--surface-tint);
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  display: inline-block;
+}
+
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.evidence-list .evidence-chip {
+  margin-left: 0;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.evidence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font: inherit;
+}
+
 .actions {
   display: flex;
   align-items: center;

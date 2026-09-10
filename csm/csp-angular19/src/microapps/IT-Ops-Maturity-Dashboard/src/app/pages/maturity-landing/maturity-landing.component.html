@@ -1,5 +1,5 @@
 <div class="maturity-page">
-  <header class="page-header">
+  <header class="page-header" *ngIf="viewMode === 'accounts'">
     <div class="header-icon" aria-hidden="true">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
         <path d="M3 13h4v8H3v-8Zm7-6h4v14h-4V7Zm7 3h4v11h-4V10Z" fill="currentColor" />
@@ -10,13 +10,12 @@
       <p class="subtitle">Project-level view of technology domain maturity, assessment progress, and top improvement opportunities.</p>
     </div>
 
-    <div class="selectors" *ngIf="viewMode === 'accounts' && !dashboardAccessLoading && dashboardAccessGranted">
+    <div class="selectors" *ngIf="!dashboardAccessLoading && dashboardAccessGranted">
       <div class="selector" [class.filled]="selectedCycle">
         <label for="dashboardCycleSelect">Cycle</label>
         <app-searchable-select
           id="dashboardCycleSelect"
-          placeholder="All cycles"
-          emptyLabel="All cycles"
+          placeholder="Select a cycle…"
           [options]="dashboardCycleOptions"
           [ngModel]="selectedCycleValue"
           (ngModelChange)="onDashboardCycleChange($event)"
@@ -26,7 +25,8 @@
         <label for="dashboardAccountSelect">Account</label>
         <app-searchable-select
           id="dashboardAccountSelect"
-          placeholder="Select an account…"
+          placeholder="All accounts"
+          emptyLabel="All accounts"
           [options]="dashboardAccountOptions"
           [ngModel]="selectedAccount?.cusT_ID ?? ''"
           (ngModelChange)="onDashboardAccountChange($event)"
@@ -36,9 +36,10 @@
         <label for="dashboardProjectSelect">Project</label>
         <app-searchable-select
           id="dashboardProjectSelect"
-          [placeholder]="!selectedAccount ? 'Select an account first' : (projectsLoading ? 'Loading…' : 'Select a project…')"
+          [placeholder]="projectsLoading ? 'Loading…' : 'All projects'"
+          emptyLabel="All projects"
           [options]="dashboardProjectOptions"
-          [disabled]="!selectedAccount || projectsLoading"
+          [disabled]="projectsLoading"
           [ngModel]="selectedProject?.projectId ?? ''"
           (ngModelChange)="onDashboardProjectChange($event)"
         ></app-searchable-select>
@@ -56,14 +57,63 @@
   </div>
 
   <section class="my-assignments" *ngIf="!myAssignmentsLoading && viewMode === 'assignments'">
-    <div class="assignments-head">
-      <div>
-        <h2>My Assignments</h2>
-        <p class="picker-copy">
-          The domain assessments you are personally assigned to. Select one to open it.
-        </p>
+    <div class="assignments-summary" *ngIf="assignmentsSummary as summary">
+      <div class="summary-chip chip-accent">
+        <span class="chip-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="chip-body">
+          <span class="n">{{ summary.openCount }}</span>
+          <span class="l">Open</span>
+        </span>
       </div>
-      <button type="button" class="change-account-link" (click)="browseAllAccounts()">Dashboard &amp; all accounts</button>
+      <div class="summary-chip chip-serious" [class.urgent]="summary.returnedCount">
+        <span class="chip-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="chip-body">
+          <span class="n">{{ summary.returnedCount }}</span>
+          <span class="l">Returned for Revision</span>
+        </span>
+      </div>
+      <div class="summary-chip chip-warning">
+        <span class="chip-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+        </span>
+        <span class="chip-body">
+          <span class="n">{{ summary.reviewCount }}</span>
+          <span class="l">Pending Your Review</span>
+        </span>
+      </div>
+      <div class="summary-chip chip-good">
+        <span class="chip-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="chip-body">
+          <span class="n">{{ summary.completedCount }}</span>
+          <span class="l">Completed</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="assignments-filters">
+      <div class="cycle-filter" *ngIf="cycleOptions.length > 1">
+        <label for="assignmentsCycleFilter">Cycle</label>
+        <app-searchable-select
+          id="assignmentsCycleFilter"
+          [options]="assignmentsCycleOptions"
+          [(ngModel)]="cycleFilter"
+        ></app-searchable-select>
+      </div>
+      <div class="cycle-filter" *ngIf="statusFilterOptions.length > 1">
+        <label for="assignmentsStatusFilter">Status</label>
+        <app-searchable-select
+          id="assignmentsStatusFilter"
+          [options]="assignmentsStatusOptions"
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="onStatusFilterChange()"
+        ></app-searchable-select>
+      </div>
     </div>
 
     <div class="assignments-role-tabs">
@@ -75,29 +125,26 @@
       </button>
     </div>
 
-    <div class="cycle-filter" *ngIf="cycleOptions.length > 1">
-      <label for="assignmentsCycleFilter">Cycle</label>
-      <select id="assignmentsCycleFilter" [(ngModel)]="cycleFilter">
-        <option value="all">All cycles</option>
-        <option *ngFor="let cycle of cycleOptions" [value]="cycle">{{ cycle }}</option>
-      </select>
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="Search by account, project or domain" [(ngModel)]="assignmentSearch" (ngModelChange)="onAssignmentSearchChange()">
     </div>
 
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Account</th>
-            <th>Project</th>
-            <th>Technology Domain</th>
-            <th>My Role</th>
-            <th>Cycle</th>
-            <th>Status</th>
+            <th class="sortable" (click)="sortAssignmentsBy('account')">Account <span class="sort-arrow">{{ assignmentSortIndicator('account') }}</span></th>
+            <th class="sortable" (click)="sortAssignmentsBy('project')">Project <span class="sort-arrow">{{ assignmentSortIndicator('project') }}</span></th>
+            <th class="sortable" (click)="sortAssignmentsBy('domain')">Technology Domain <span class="sort-arrow">{{ assignmentSortIndicator('domain') }}</span></th>
+            <th class="sortable" (click)="sortAssignmentsBy('role')">My Role <span class="sort-arrow">{{ assignmentSortIndicator('role') }}</span></th>
+            <th class="sortable" (click)="sortAssignmentsBy('cycle')">Cycle <span class="sort-arrow">{{ assignmentSortIndicator('cycle') }}</span></th>
+            <th class="sortable" (click)="sortAssignmentsBy('status')">Status <span class="sort-arrow">{{ assignmentSortIndicator('status') }}</span></th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of (assignmentsTab === 'assessments' ? myOpenAssessments : myPendingReviews)" class="assignment-row" (click)="openAssignment(row)">
+          <tr *ngFor="let row of pagedAssignments" class="assignment-row" [class.urgent-row]="needsAction(row)" (click)="openAssignment(row)">
             <td>{{ row.accountName || '-' }}</td>
             <td>{{ row.projectName || row.projectId || '-' }}</td>
             <td>{{ row.domainName || row.domainCode || '-' }}</td>
@@ -106,25 +153,38 @@
             </td>
             <td>{{ row.cycleLabel || '-' }}</td>
             <td>
-              <span [class]="statusClass(assignmentStatusLabel(row.status))">{{ assignmentStatusLabel(row.status) }}</span>
+              <span [class]="statusClass(displayAssignmentStatus(row))">{{ displayAssignmentStatus(row) }}</span>
+              <span class="urgent-tag" *ngIf="needsAction(row)">Action needed</span>
             </td>
             <td>
               <span class="domain-link">
-                {{ isAssessorOn(row) ? 'Open assessment' : 'Open review' }}
+                {{ row.status === 'Approved' ? (isAssessorOn(row) ? 'View assessment' : 'View review') : (isAssessorOn(row) ? 'Open assessment' : 'Open review') }}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </span>
             </td>
           </tr>
-          <tr *ngIf="assignmentsTab === 'assessments' && !myOpenAssessments.length">
-            <td colspan="7" class="picker-empty">No open assessments assigned to you right now.</td>
+          <tr *ngIf="!currentTabAssignments.length && (assignmentSearch || statusFilter !== 'all')">
+            <td colspan="7" class="picker-empty">No rows match the current search/status filter.</td>
           </tr>
-          <tr *ngIf="assignmentsTab === 'reviews' && !myPendingReviews.length">
-            <td colspan="7" class="picker-empty">Nothing is waiting on your review right now.</td>
+          <tr *ngIf="!currentTabAssignments.length && !assignmentSearch && statusFilter === 'all' && assignmentsTab === 'assessments'">
+            <td colspan="7" class="picker-empty">No assessments assigned to you right now.</td>
+          </tr>
+          <tr *ngIf="!currentTabAssignments.length && !assignmentSearch && statusFilter === 'all' && assignmentsTab === 'reviews'">
+            <td colspan="7" class="picker-empty">Nothing assigned to you for review right now.</td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination" *ngIf="currentTabAssignments.length">
+      <span class="pagination-range">{{ assignmentsRangeLabel }}</span>
+      <div class="pagination-nav">
+        <button type="button" [disabled]="assignmentsCurrentPage <= 1" (click)="goToAssignmentsPage(assignmentsCurrentPage - 1)">Prev</button>
+        <span class="pagination-page">Page {{ assignmentsCurrentPage }} of {{ assignmentsTotalPages }}</span>
+        <button type="button" [disabled]="assignmentsCurrentPage >= assignmentsTotalPages" (click)="goToAssignmentsPage(assignmentsCurrentPage + 1)">Next</button>
+      </div>
     </div>
   </section>
 
@@ -144,65 +204,56 @@
   </section>
 
   <ng-container *ngIf="!dashboardAccessLoading && dashboardAccessGranted">
-    <section class="account-picker" *ngIf="!selectedProject">
-      <h2>Pick a cycle, account and project</h2>
-      <p class="picker-copy">Use the selectors above to see every technology domain and its parameter scores for that assessment.</p>
-    </section>
-
-    <div class="loading-overlay" *ngIf="selectedProject && dashboardDataLoading">
+    <div class="loading-overlay" *ngIf="dashboardDataLoading && !dashboardHasLoadedOnce">
       <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading…</div>
     </div>
 
-  <ng-container *ngIf="selectedProject && !dashboardDataLoading">
-    <section class="summary-cards" *ngIf="enterpriseSummary as summary">
-      <div class="card kpi-card">
-        <div class="card-h"><span class="k">Overall Enterprise Maturity</span></div>
-        <div class="maturity-row">
-          <div class="ring-wrap">
-            <div class="kpi-ring" [class]="'ring-' + maturityStatus(summary.overallMaturityLevel)" [ngStyle]="maturityRingStyle(summary.overallMaturityPercent)">
-              <div class="kpi-ring-inner">
-                <div class="ring-num"><span class="n">{{ summary.overallMaturityPercent }}<span>%</span></span></div>
-              </div>
-            </div>
-          </div>
-          <div class="maturity-detail">
-            <div class="maturity-score-row">
-              <span class="maturity-score">{{ summary.overallAverageScore }}<span class="unit"> / 5</span></span>
-              <span class="level-chip" [class]="'chip-' + maturityStatus(summary.overallMaturityLevel)">{{ summary.overallMaturityLevel }}</span>
-            </div>
-            <div class="maturity-scale">
-              <div
-                *ngFor="let on of maturityScaleSegments(summary.overallAverageScore)"
-                class="seg"
-                [class.on]="on"
-                [class]="on ? 'seg on fill-' + maturityStatus(summary.overallMaturityLevel) : 'seg'"
-              ></div>
-            </div>
-            <div class="maturity-scale-labels"><span *ngFor="let l of maturityScaleLabels">{{ l }}</span></div>
-          </div>
+    <!-- A scope change (account/project/cycle) refreshes the data already on screen in
+         place - an indeterminate top progress bar instead of hiding everything behind a
+         full-page spinner again, which read as much slower than the refresh actually is. -->
+    <div class="top-progress-bar" *ngIf="dashboardDataLoading && dashboardHasLoadedOnce" role="progressbar" aria-label="Refreshing dashboard data">
+      <span class="top-progress-bar__fill"></span>
+    </div>
+
+  <ng-container *ngIf="dashboardHasLoadedOnce">
+    <section class="kpi-row" *ngIf="enterpriseSummary as summary">
+      <div class="kpi c-accent">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+        </div>
+        <div>
+          <div class="num">{{ summary.overallMaturityPercent }}%</div>
+          <div class="lbl">Overall maturity</div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-h"><span class="k">Assessment Progress</span></div>
-        <div class="progress-top">
-          <span class="big">{{ summary.domainsCompleted }}</span>
-          <span class="of">of {{ summary.domainsCompleted + summary.domainsInProgress + summary.domainsNotStarted }} domains completed</span>
+      <div class="kpi" [class]="'c-' + maturityStatus(summary.overallMaturityLevel)">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 19h16M4 15l4-6 4 3 5-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </div>
+        <div>
+          <div class="num">{{ summary.overallMaturityLevel }}</div>
+          <div class="lbl">Maturity level &middot; {{ summary.overallAverageScore }} / 5</div>
+        </div>
+      </div>
 
-        <div class="segmented-bar">
-          <div
-            *ngFor="let seg of progressSegments(summary)"
-            class="segment"
-            [class]="'segment-' + seg.key"
-            [style.width.%]="seg.pct"
-          ></div>
+      <div class="kpi c-good">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </div>
-        <div class="segment-legend">
-          <span class="legend-item" *ngFor="let seg of progressSegments(summary)">
-            <span class="legend-dot" [class]="'dot-' + seg.key"></span>
-            {{ seg.label }} ({{ seg.count }})
-          </span>
+        <div>
+          <div class="num">{{ summary.domainsCompleted }}</div>
+          <div class="lbl">Domains completed</div>
+        </div>
+      </div>
+
+      <div class="kpi c-warning">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" /><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+        </div>
+        <div>
+          <div class="num">{{ summary.domainsInProgress }}</div>
+          <div class="lbl">Domains in progress</div>
         </div>
       </div>
     </section>
@@ -224,7 +275,7 @@
             <tr *ngFor="let domain of pendingReviewDomains">
               <td>{{ domain.name }}</td>
               <td>{{ domain.coeSpoc }}</td>
-              <td><span [class]="statusClass(domain.status)">{{ domain.status }}</span></td>
+              <td><span [class]="statusClass(displayDomainStatus(domain))">{{ displayDomainStatus(domain) }}</span></td>
               <td>
                 <a class="domain-link" [routerLink]="['/review', domain.id]">
                   Review now
@@ -249,24 +300,26 @@
         <table>
           <thead>
             <tr>
-              <th>Technology Domain</th>
+              <th *ngIf="!selectedAccount">Account</th>
+              <th class="sortable" (click)="sortDomainTrackerBy('name')">Technology Domain <span class="sort-arrow">{{ domainTrackerSortIndicator('name') }}</span></th>
               <th>COE SPOC</th>
               <th>Reviewer</th>
-              <th>Status</th>
+              <th class="sortable" (click)="sortDomainTrackerBy('status')">Status <span class="sort-arrow">{{ domainTrackerSortIndicator('status') }}</span></th>
               <th class="col-num">Parameters</th>
               <th class="col-num">Score</th>
               <th class="col-num">Max</th>
-              <th class="col-num">Avg</th>
-              <th class="col-num">Maturity</th>
+              <th class="col-num sortable" (click)="sortDomainTrackerBy('averageScore')">Avg <span class="sort-arrow">{{ domainTrackerSortIndicator('averageScore') }}</span></th>
+              <th class="col-num sortable" (click)="sortDomainTrackerBy('maturityPercent')">Maturity <span class="sort-arrow">{{ domainTrackerSortIndicator('maturityPercent') }}</span></th>
               <th>Level</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let domain of domainSummaries">
+            <tr *ngFor="let domain of sortedDomainSummaries">
+              <td *ngIf="!selectedAccount">{{ domain.accountName || '-' }}</td>
               <td class="domain-name">{{ domain.name }}</td>
               <td>{{ domain.coeSpoc || 'Unassigned' }}</td>
               <td>{{ domain.reviewer || 'Unassigned' }}</td>
-              <td><span [class]="statusClass(domain.status)">{{ domain.status }}</span></td>
+              <td><span [class]="statusClass(displayDomainStatus(domain))">{{ displayDomainStatus(domain) }}</span></td>
               <td class="col-num">{{ domain.paramCount }}</td>
               <td class="col-num">{{ domain.sumScores }}</td>
               <td class="col-num">{{ domain.maxPossible }}</td>
@@ -280,7 +333,7 @@
           </tbody>
           <tfoot *ngIf="enterpriseSummary">
             <tr class="estate-row">
-              <td colspan="4">Overall Estate</td>
+              <td [attr.colspan]="!selectedAccount ? 5 : 4">Overall Estate</td>
               <td class="col-num">{{ enterpriseSummary.totalParamCount }}</td>
               <td class="col-num">{{ enterpriseSummary.totalSumScores }}</td>
               <td class="col-num">{{ enterpriseSummary.totalMaxPossible }}</td>
@@ -316,9 +369,9 @@
             type="button"
             *ngFor="let tab of riskDomainTabs"
             class="domain-tab"
-            [class.active]="tab.name === activeRiskDomain"
-            (click)="selectRiskDomain(tab.name)"
-          >{{ tab.name }} <span class="tab-count">{{ tab.count }}</span></button>
+            [class.active]="tab.key === activeRiskDomain"
+            (click)="selectRiskDomain(tab.key)"
+          >{{ tab.label }} <span class="tab-count">{{ tab.count }}</span></button>
         </div>
 
         <button
@@ -335,7 +388,7 @@
       </div>
 
       <p class="section-subtitle" *ngIf="activeDomainRiskTotal > visibleTopRisks.length">
-        showing {{ visibleTopRisks.length }} of {{ activeDomainRiskTotal }} parameters with a gap in {{ activeRiskDomain }}
+        showing {{ visibleTopRisks.length }} of {{ activeDomainRiskTotal }} parameters with a gap in {{ activeRiskDomainLabel }}
       </p>
 
       <div class="table-wrap" *ngIf="visibleTopRisks.length; else noRisks">

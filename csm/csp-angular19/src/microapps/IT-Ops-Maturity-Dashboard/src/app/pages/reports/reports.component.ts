@@ -22,6 +22,8 @@ type FilterKey =
   | 'Findings Rejected'
   | 'Findings Pending';
 
+type SortColumn = 'accountName' | 'domainName' | 'assessmentStatus' | 'dueStatus' | 'lastUpdated' | 'averageScore' | 'maturityPercent';
+
 const FILTER_KEYS: FilterKey[] = [
   'Open',
   'Closed',
@@ -56,6 +58,12 @@ export class ReportsComponent implements OnInit {
 
   accountFilter = '';
   accountOptions: string[] = [];
+
+  sortColumn: SortColumn | null = null;
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  page = 1;
+  readonly pageSize = 25;
 
   constructor(
     private reportApi: ItOpsReportApiService,
@@ -142,6 +150,83 @@ export class ReportsComponent implements OnInit {
       rows = rows.filter((r) => Array.from(this.activeFilters).every((key) => this.matchesFilter(r, key)));
     }
     this.filteredRows = rows;
+    this.page = 1;
+  }
+
+  /** "At a glance" counts across every currently-filtered row, unaffected by pagination. */
+  get summary(): { total: number; pastDue: number; noMgmtUpdate: number; findingsPending: number } {
+    return {
+      total: this.filteredRows.length,
+      pastDue: this.filteredRows.filter((r) => r.dueStatus === 'Past Due').length,
+      noMgmtUpdate: this.filteredRows.filter((r) => r.noManagementUpdate).length,
+      findingsPending: this.filteredRows.filter((r) => r.findingsPending > 0).length,
+    };
+  }
+
+  sortBy(column: SortColumn): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.page = 1;
+  }
+
+  sortIndicator(column: SortColumn): string {
+    if (this.sortColumn !== column) return '';
+    return this.sortDirection === 'asc' ? '▲' : '▼';
+  }
+
+  get sortedRows(): ReportRow[] {
+    if (!this.sortColumn) return this.filteredRows;
+    const column = this.sortColumn;
+    const factor = this.sortDirection === 'asc' ? 1 : -1;
+    const valueOf = (r: ReportRow): string | number => {
+      switch (column) {
+        case 'accountName': return r.accountName ?? '';
+        case 'domainName': return r.domainName ?? '';
+        case 'assessmentStatus': return r.assessmentStatus ?? '';
+        case 'dueStatus': return r.dueStatus ?? '';
+        case 'lastUpdated': return r.lastUpdated ?? '';
+        case 'averageScore': return r.averageScore ?? -1;
+        case 'maturityPercent': return r.maturityPercent ?? -1;
+      }
+    };
+    return [...this.filteredRows].sort((a, b) => {
+      const av = valueOf(a);
+      const bv = valueOf(b);
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * factor;
+      return String(av).localeCompare(String(bv)) * factor;
+    });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.sortedRows.length / this.pageSize));
+  }
+
+  get pagedRows(): ReportRow[] {
+    const rows = this.sortedRows;
+    const clampedPage = Math.min(this.page, this.totalPages);
+    const start = (clampedPage - 1) * this.pageSize;
+    return rows.slice(start, start + this.pageSize);
+  }
+
+  get currentPage(): number {
+    return Math.min(this.page, this.totalPages);
+  }
+
+  get rangeLabel(): string {
+    const total = this.sortedRows.length;
+    if (!total) return '0 of 0';
+    const clampedPage = Math.min(this.page, this.totalPages);
+    const start = (clampedPage - 1) * this.pageSize + 1;
+    const end = Math.min(total, start + this.pageSize - 1);
+    return `${start}-${end} of ${total}`;
+  }
+
+  goToPage(page: number): void {
+    this.page = Math.min(Math.max(1, page), this.totalPages);
   }
 
   statusPill(status: AssessmentStatus): string {

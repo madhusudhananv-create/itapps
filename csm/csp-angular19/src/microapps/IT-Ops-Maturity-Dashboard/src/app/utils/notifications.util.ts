@@ -91,14 +91,6 @@ export function computeNotifications(domains: TechnologyDomain[], allowedDomainI
           severity: 'critical',
         });
       }
-      if (param.findingRetargetStatus === 'Requested') {
-        items.push({
-          domainId: domain.id,
-          domainName: domain.name,
-          message: `Retarget request pending your approval for "${param.name}".`,
-          severity: 'warning',
-        });
-      }
     }
   }
 

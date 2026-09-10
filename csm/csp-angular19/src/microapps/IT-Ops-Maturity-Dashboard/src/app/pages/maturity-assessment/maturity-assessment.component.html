@@ -4,11 +4,11 @@
 </div>
 
 <div class="assessment-page" *ngIf="domain">
-  <a class="back-link" routerLink="/">
+  <a class="back-link" [routerLink]="backLink">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
-    Back to Dashboard
+    {{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}
   </a>
 
   <header class="assessment-header">
@@ -17,7 +17,7 @@
       <div class="meta">
         <span>COE SPOC: <strong>{{ domain.coeSpoc }}</strong></span>
         <span>Reviewer: <strong>{{ domain.reviewer }}</strong></span>
-        <span *ngIf="selectedAssessees.length">{{ selectedAssessees.length === 1 ? 'Assessee' : 'Assessees' }}: <strong>{{ assesseeNames() }}</strong></span>
+        <span *ngIf="assesseeNamesList.length">{{ assesseeNamesList.length === 1 ? 'Assessee' : 'Assessees' }}: <strong>{{ assesseeNames() }}</strong></span>
         <span [class]="statusClass(domain.status)">{{ domain.status }}</span>
       </div>
     </div>
@@ -151,6 +151,44 @@
             </span>
           </div>
           <p class="field-error" *ngIf="evidenceErrors.get(param.id)">{{ evidenceErrors.get(param.id) }}</p>
+
+          <div class="finding-badge" *ngIf="isProbableFinding(param) && ((param.findingStatus && param.findingStatus !== 'Pending') || param.findingRejectionComment || param.findingDisputeComment)">
+            <span [class]="'finding-pill ' + (param.findingStatus === 'Rejected' ? 'rejected' : 'accepted')" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
+              Finding {{ param.findingStatus }}
+            </span>
+            <span class="finding-assessee" *ngIf="param.findingAssesseeName">Assessee: <strong>{{ param.findingAssesseeName }}</strong></span>
+            <p class="finding-rejection-comment" *ngIf="param.findingRejectionComment">
+              <strong>Rejection reason:</strong> {{ param.findingRejectionComment }}
+            </p>
+            <p class="finding-rejection-comment" *ngIf="param.findingDisputeComment">
+              <strong>Assessor's dispute:</strong> {{ param.findingDisputeComment }}
+            </p>
+            <div class="rejection-decision" *ngIf="param.findingStatus === 'Rejected'">
+              <ng-container *ngIf="decidingRejectionParamId !== param.id">
+                <button type="button" class="btn-secondary btn-sm" (click)="openRejectionDecision(param)">Accept / Dispute Rejection</button>
+              </ng-container>
+              <div class="rejection-decision-form" *ngIf="decidingRejectionParamId === param.id">
+                <label class="modal-label">Dispute comment <span class="hint">(required only if disputing)</span></label>
+                <textarea rows="2" [(ngModel)]="rejectionDecisionComment" name="rejection-comment-{{ param.id }}"></textarea>
+                <p class="field-error" *ngIf="rejectionDecisionError">{{ rejectionDecisionError }}</p>
+                <div class="rejection-decision-actions">
+                  <button type="button" class="btn-secondary btn-sm" [disabled]="decidingRejection" (click)="closeRejectionDecision()">Cancel</button>
+                  <button type="button" class="btn-secondary btn-sm" [disabled]="decidingRejection" (click)="confirmRejectionDecision(param, false)">Dispute Rejection</button>
+                  <button type="button" class="btn-primary btn-sm" [disabled]="decidingRejection" (click)="confirmRejectionDecision(param, true)">Accept Rejection</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-update-block readonly" *ngIf="(param.findingStatus === 'Accepted' || param.findingStatus === 'Closed') && (param.findingActionTaken || evidenceFor(param).length)">
+            <label class="modal-label">Action Taken{{ param.findingAssesseeName ? ' (by ' + param.findingAssesseeName + ')' : '' }}</label>
+            <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
+            <div class="evidence-list" *ngIf="evidenceFor(param).length">
+              <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
+                <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -171,7 +209,7 @@
 
 <div class="not-found" *ngIf="!domain && !loading">
   <p>Domain not found.</p>
-  <a routerLink="/">Back to Dashboard</a>
+  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}</a>
 </div>
 
 <div class="modal-backdrop" *ngIf="rubricModalParam" (click)="closeRubricModal()">

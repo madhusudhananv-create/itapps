@@ -4,11 +4,11 @@
 </div>
 
 <div class="review-page" *ngIf="domain">
-  <a class="back-link" routerLink="/">
+  <a class="back-link" [routerLink]="backLink">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
-    Back to Dashboard
+    {{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}
   </a>
 
   <header class="review-header">
@@ -17,7 +17,7 @@
       <div class="meta">
         <span>COE SPOC: <strong>{{ domain.coeSpoc }}</strong></span>
         <span>Reviewer: <strong>{{ domain.reviewer }}</strong></span>
-        <span *ngIf="selectedAssessees.length">{{ selectedAssessees.length === 1 ? 'Assessee' : 'Assessees' }}: <strong>{{ assesseeNames() }}</strong></span>
+        <span *ngIf="assesseeNamesList.length">{{ assesseeNamesList.length === 1 ? 'Assessee' : 'Assessees' }}: <strong>{{ assesseeNames() }}</strong></span>
         <span [class]="statusClass(domain.status)">{{ domain.status }}</span>
         <span class="suspended-pill" *ngIf="domain.suspended">Suspended</span>
       </div>
@@ -113,29 +113,47 @@
             {{ evidence.fileName }}
           </button>
 
-          <div class="finding-actions" *ngIf="isProbableFinding(param) && isAssessee()">
+          <!-- Accept/Reject is a one-time decision - only offered while the finding is still
+               undecided ('Pending' = freshly Open, or reopened after a disputed rejection).
+               Once decided (Accepted/Rejected/Closed) it must not be re-toggled. -->
+          <div class="finding-actions" *ngIf="isProbableFinding(param) && isAssessee() && param.findingStatus === 'Pending'">
             <span class="finding-label">Probable area of improvement:</span>
             <button
               type="button"
               class="finding-btn accept"
-              [class.active]="param.findingStatus === 'Accepted'"
               [disabled]="decidingFindingId === param.findingId"
               (click)="setFinding(param, 'Accepted')"
             ><app-spinner *ngIf="decidingFindingId === param.findingId" [size]="12" /> Accept</button>
             <button
               type="button"
               class="finding-btn reject"
-              [class.active]="param.findingStatus === 'Rejected'"
               [disabled]="decidingFindingId === param.findingId"
               (click)="setFinding(param, 'Rejected')"
             >Reject</button>
           </div>
+          <div class="finding-badge" *ngIf="isProbableFinding(param) && isAssessee() && param.findingStatus === 'Rejected'">
+            <span class="finding-pill rejected">Finding Rejected - awaiting assessor's decision</span>
+          </div>
+          <div class="finding-badge" *ngIf="isProbableFinding(param) && isAssessee() && param.findingStatus === 'Closed'">
+            <span class="finding-pill accepted">Finding Closed</span>
+          </div>
+          <div class="finding-history" *ngIf="isAssessee() && (param.findingRejectionComment || param.findingDisputeComment)">
+            <p class="finding-rejection-comment" *ngIf="param.findingRejectionComment">
+              <strong>Your rejection reason:</strong> {{ param.findingRejectionComment }}
+            </p>
+            <p class="finding-rejection-comment" *ngIf="param.findingDisputeComment">
+              <strong>Assessor's response:</strong> {{ param.findingDisputeComment }}
+            </p>
+          </div>
           <div class="finding-badge" *ngIf="isProbableFinding(param) && !isAssessee() && param.findingStatus && param.findingStatus !== 'Pending'">
-            <span [class]="'finding-pill ' + (param.findingStatus === 'Accepted' ? 'accepted' : 'rejected')">
+            <span [class]="'finding-pill ' + (param.findingStatus === 'Rejected' ? 'rejected' : 'accepted')">
               Finding {{ param.findingStatus }}
             </span>
             <p class="finding-rejection-comment" *ngIf="param.findingStatus === 'Rejected' && param.findingRejectionComment">
               <strong>Rejection reason:</strong> {{ param.findingRejectionComment }}
+            </p>
+            <p class="finding-rejection-comment" *ngIf="param.findingDisputeComment">
+              <strong>Assessor's dispute:</strong> {{ param.findingDisputeComment }}
             </p>
           </div>
 
@@ -168,7 +186,7 @@
               <button
                 type="button"
                 class="btn-primary"
-                [disabled]="submittingActionId === param.findingId"
+                [disabled]="!canSubmitActionUpdate(param)"
                 (click)="submitActionUpdate(param)"
               >
                 <app-spinner *ngIf="submittingActionId === param.findingId" [size]="13" />
@@ -177,7 +195,10 @@
             </div>
           </div>
 
-          <div class="action-update-block readonly" *ngIf="param.findingStatus === 'Accepted' && !isAssessee() && (param.findingActionTaken || evidenceFor(param).length)">
+          <div
+            class="action-update-block readonly"
+            *ngIf="(param.findingStatus === 'Accepted' || param.findingStatus === 'Closed') && (!isAssessee() || param.findingStatus === 'Closed') && (param.findingActionTaken || evidenceFor(param).length)"
+          >
             <label class="modal-label">Action Taken</label>
             <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
             <div class="evidence-list" *ngIf="evidenceFor(param).length">
@@ -186,34 +207,12 @@
               </span>
             </div>
           </div>
-
-          <div class="retarget-block" *ngIf="param.findingStatus === 'Accepted'">
-            <div class="retarget-summary" *ngIf="param.findingTargetDate || param.findingRetargetStatus === 'Requested'">
-              <span *ngIf="param.findingTargetDate">Target date: <strong>{{ param.findingTargetDate | date:'dd-MMM-yyyy' }}</strong></span>
-              <span class="retarget-pill requested" *ngIf="param.findingRetargetStatus === 'Requested'">
-                Retarget requested &rarr; {{ param.findingRetargetRequestedDate | date:'dd-MMM-yyyy' }}
-              </span>
-              <span class="retarget-pill approved" *ngIf="param.findingRetargetStatus === 'Approved'">Retarget approved</span>
-              <span class="retarget-pill rejected" *ngIf="param.findingRetargetStatus === 'Rejected'">Retarget rejected</span>
-            </div>
-            <p class="retarget-decision-comment" *ngIf="param.findingRetargetDecisionComment">
-              <strong>Reviewer comment:</strong> {{ param.findingRetargetDecisionComment }}
-            </p>
-
-            <button type="button" class="btn-secondary retarget-btn" *ngIf="canRequestRetarget(param)" (click)="openRetargetModal(param)">
-              Request Retarget
-            </button>
-            <div class="finding-actions" *ngIf="canDecideRetarget(param)">
-              <span class="finding-label">Retarget request pending approval:</span>
-              <button type="button" class="finding-btn accept" (click)="openRetargetDecisionModal(param)">Review Request</button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="actions" *ngIf="canReview()">
+  <div class="actions" *ngIf="canTakeReviewAction()">
     <button class="btn-secondary" [disabled]="reviewing" (click)="openReturnModal()">Return for Revision</button>
     <button class="btn-primary" [disabled]="reviewing" (click)="approve()">
       <app-spinner *ngIf="reviewing" [size]="13" />
@@ -221,14 +220,14 @@
     </button>
     <span class="save-message" *ngIf="actionMessage">{{ actionMessage }}</span>
   </div>
-  <div class="actions" *ngIf="!canReview() && actionMessage">
+  <div class="actions" *ngIf="!canTakeReviewAction() && actionMessage">
     <span class="save-message">{{ actionMessage }}</span>
   </div>
 </div>
 
 <div class="not-found" *ngIf="!domain && !loading">
   <p>Domain not found.</p>
-  <a routerLink="/">Back to Dashboard</a>
+  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}</a>
 </div>
 
 <div class="modal-backdrop" *ngIf="rubricModalParam" (click)="closeRubricModal()">
@@ -284,38 +283,6 @@
         <app-spinner *ngIf="!!decidingFindingId" [size]="13" />
         Confirm Reject
       </button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" *ngIf="retargetingParam" (click)="closeRetargetModal()">
-  <div class="modal" (click)="$event.stopPropagation()">
-    <h3>Request Retarget</h3>
-    <p class="modal-copy">Propose a revised target date for "{{ retargetingParam.name }}". This will be sent to the Reviewer for approval.</p>
-    <label class="modal-label">Revised Target Date <span class="required">*</span></label>
-    <input type="date" [(ngModel)]="retargetDate" />
-    <label class="modal-label">Reason <span class="required">*</span></label>
-    <textarea [(ngModel)]="retargetReason" rows="3" placeholder="Explain why the target date needs to move..."></textarea>
-    <p class="field-error" *ngIf="retargetError">{{ retargetError }}</p>
-    <div class="modal-actions">
-      <button class="btn-secondary" (click)="closeRetargetModal()">Cancel</button>
-      <button class="btn-primary" (click)="confirmRetarget()">Send for Approval</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" *ngIf="decidingRetargetParam" (click)="closeRetargetDecisionModal()">
-  <div class="modal" (click)="$event.stopPropagation()">
-    <h3>Review Retarget Request</h3>
-    <p class="modal-copy">
-      Requested revised date: <strong>{{ decidingRetargetParam.findingRetargetRequestedDate | date:'dd-MMM-yyyy' }}</strong><br />
-      Reason: {{ decidingRetargetParam.findingRetargetReason }}
-    </p>
-    <label class="modal-label">Comment (optional)</label>
-    <textarea [(ngModel)]="retargetDecisionComment" rows="3" placeholder="Add a comment for the Assessee..."></textarea>
-    <div class="modal-actions">
-      <button class="btn-secondary" (click)="decideRetarget(false)">Reject</button>
-      <button class="btn-primary" (click)="decideRetarget(true)">Approve</button>
     </div>
   </div>
 </div>

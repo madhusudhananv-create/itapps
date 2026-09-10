@@ -10,10 +10,7 @@ export interface MaturityRubric {
   level5: string;
 }
 
-export type FindingStatus = 'Pending' | 'Accepted' | 'Rejected';
-
-/** Lifecycle of a request to push out a finding's target closure date. */
-export type RetargetStatus = 'None' | 'Requested' | 'Approved' | 'Rejected';
+export type FindingStatus = 'Pending' | 'Accepted' | 'Rejected' | 'Closed';
 
 export interface MaturityParameter {
   id: string;
@@ -34,16 +31,14 @@ export interface MaturityParameter {
   findingId?: number;
   /** Mandatory justification captured when the Assessee rejects a finding. */
   findingRejectionComment?: string;
-  /** Target date for closing out this finding; retargeting requests a revision to it. */
+  /** Target date for closing out this finding. */
   findingTargetDate?: string;
-  findingRetargetStatus?: RetargetStatus;
-  /** Revised date proposed by the Assessee, pending the Reviewer's decision. */
-  findingRetargetRequestedDate?: string;
-  findingRetargetReason?: string;
-  /** Reviewer's reason when approving/rejecting the retarget request. */
-  findingRetargetDecisionComment?: string;
   /** Assessee's latest remediation-progress note on an accepted finding. */
   findingActionTaken?: string;
+  /** Real name of the employee this finding was assigned to as Assessee. */
+  findingAssesseeName?: string;
+  /** Assessor's latest dispute reason when they disputed the assessee's rejection, reopening the finding. */
+  findingDisputeComment?: string;
 }
 
 export interface TechnologyDomain {
@@ -102,6 +97,8 @@ export interface DomainSummary {
   editable?: boolean;
   /** Whether the viewer is personally the Reviewer on this domain for this account, per their own assignment rows. */
   reviewable?: boolean;
+  /** True once every finding raised on this domain's assessment(s) is Closed - drives showing "Completed" instead of "Approved". */
+  allFindingsResolved?: boolean;
 }
 
 export interface TopRisk {
@@ -110,6 +107,9 @@ export interface TopRisk {
   parameter: string;
   currentScore: number;
   gap: number;
+  /** Populated when the Dashboard aggregates across every account ("All accounts"), so the same domain name on two different accounts can be told apart. */
+  accountId?: string;
+  accountName?: string;
   recommendation: string;
 }
 

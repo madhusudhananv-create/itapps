@@ -25,6 +25,12 @@ export interface ItOpsMyAssignmentRow {
   status: string;
   /** Subset of 'Assessor' | 'Reviewer' | 'Assessee' - the roles THIS employee holds on THIS assessment. */
   roles: string[];
+  /** How many of THIS employee's own findings (as Assessee) on this assessment are still Open - 0 when they aren't an Assessee here, or have resolved everything. */
+  openFindingsForMe?: number;
+  /** Whole-assessment fact: true once every finding raised on this assessment is Closed - not scoped to this employee. */
+  allFindingsResolved?: boolean;
+  /** When this assessment was last submitted for review, if ever - drives the Needs Review tab's default oldest-first order. */
+  submittedDate?: string | null;
 }
 
 export interface ItOpsAssessmentInfo {
@@ -36,8 +42,11 @@ export interface ItOpsAssessmentInfo {
   coeSpocEmpId: string | null;
   coeSpocName: string | null;
   reviewerEmpId: string | null;
+  reviewerEmpIds?: string[];
   reviewerName: string | null;
   assesseeEmpId: string | null;
+  assesseeEmpIds?: string[];
+  assesseeNames?: string[];
   status: string;
   returnComment: string | null;
 }
@@ -58,6 +67,11 @@ export interface ItOpsDomainTrackerRow {
   averageScore: number | null;
   maturityPercent: number | null;
   maturityLevel: string | null;
+  /** Populated when the tracker aggregates across every account ("All accounts"). */
+  accountId?: string | null;
+  accountName?: string | null;
+  /** True once every finding raised on this domain's assessment(s) is Closed. */
+  allFindingsResolved?: boolean;
 }
 
 export interface ItOpsExecutiveDashboard {
@@ -78,6 +92,8 @@ export interface ItOpsTopRiskRow {
   currentScore: number | null;
   gap: number;
   recommendedAction: string | null;
+  accountId?: string | null;
+  accountName?: string | null;
 }
 
 export interface ItOpsParameterScoreRow {
@@ -98,6 +114,9 @@ export interface ItOpsParameterScoreRow {
   findingStatus: string | null;
   findingRejectionComment: string | null;
   findingActionTaken: string | null;
+  assesseeEmpId?: string | null;
+  assesseeName?: string | null;
+  disputeComment?: string | null;
 }
 
 export interface ItOpsEvidenceRow {
@@ -295,6 +314,15 @@ export class ItOpsMaturityApiService {
     return this.http.post(
       `${this.apiurl}DecideITOpsFinding?findingId=${findingId}`,
       { Accept: accept, Comment: comment ?? null },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Assessor confirms (closes) or disputes (reopens) an assessee's rejection of a finding. */
+  decideFindingRejection(findingId: number, assessorAccepts: boolean, comment?: string): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}DecideITOpsFindingRejection?findingId=${findingId}`,
+      { AssessorAccepts: assessorAccepts, Comment: comment ?? null },
       { headers: this.getHeaders() },
     );
   }

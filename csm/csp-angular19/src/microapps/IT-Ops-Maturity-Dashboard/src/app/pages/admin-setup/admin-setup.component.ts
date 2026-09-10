@@ -3046,7 +3046,27 @@ export class AdminSetupComponent implements OnInit {
 
     const created = this.newAssessmentCount;
     const unchanged = this.existingAssessmentCount;
+    const retired = this.retiredAssessmentCount;
     const projectCount = this.assessmentProjectIds.length;
+
+    // Preview exactly what this click will do before it does it - "Create assessments"
+    // otherwise ran immediately with no confirmation, so a wrong cycle/project selection
+    // was only discovered after assessments already existed.
+    const previewLines = [
+      `${created} new assessment${created === 1 ? '' : 's'} will be created across ${projectCount} project${projectCount === 1 ? '' : 's'}.`,
+    ];
+    if (unchanged) previewLines.push(`${unchanged} project(s) already have every assessment they need and won't change.`);
+    if (retired) previewLines.push(`${retired} assessment(s) whose domain is no longer mapped will be retired (only if still Not Started).`);
+    if (!created && !retired) previewLines.push(`Nothing to do - every selected project already has all its assessments.`);
+
+    const proceed = await this.dialog.confirm({
+      title: 'Create assessments?',
+      message: previewLines.join('\n\n'),
+      confirmText: 'Create assessments',
+      cancelText: 'Cancel',
+    });
+    if (!proceed) return;
+
     this.creatingAssessments = true;
     this.api
       .createAssessmentsForProjects(this.selectedCycleId, this.assessmentProjectIds)

@@ -5,11 +5,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { combineLatest, forkJoin, of, switchMap, timer } from 'rxjs';
 import { delayWhen, finalize } from 'rxjs/operators';
 import { SessionService } from '../../services/session.service';
-import { AssesseeService } from '../../services/assessee.service';
 import { AccountService } from '../../services/account.service';
 import { ItOpsMaturityApiService, ItOpsAssessmentInfo, ItOpsParameterScoreRow, ItOpsEvidenceRow } from '../../services/itops-maturity-api.service';
 import { TechnologyDomain, MaturityParameter, MaturityRubric, FindingStatus, DomainStatus } from '../../models/maturity.model';
-import { Assessee } from '../../models/assessee.model';
 import { statusPillClass } from '../../utils/status.util';
 import { RUBRIC_LEVELS, rubricScoreKey } from '../../utils/rubric.util';
 import { ToastService } from '../../services/toast.service';
@@ -30,6 +28,7 @@ const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
 const BACKEND_FINDING_STATUS_MAP: Record<string, FindingStatus> = {
   Accepted: 'Accepted',
   Rejected: 'Rejected',
+  Closed: 'Closed',
 };
 
 @Component({
@@ -54,13 +53,20 @@ export class DomainReviewComponent implements OnInit {
   evidenceByFindingId: Record<number, ItOpsEvidenceRow[]> = {};
   pendingEvidenceFiles: Record<number, File[]> = {};
   submittingActionId: number | null = null;
+  /** findingId -> the action-taken text last successfully saved, so Submit Update can stay disabled once there's nothing new to send (not just while the request is in flight). */
+  private lastSavedActionTaken = new Map<number, string>();
 
   showReturnModal = false;
   returnComment = '';
   returnCommentError = '';
   actionMessage = '';
   showDefinitionsModal = false;
-  selectedAssessees: Assessee[] = [];
+  /** This assessment's own assignees (not the account-wide selection - a project's assessment shows only who's actually assigned to it). */
+  assesseeNamesList: string[] = [];
+  private assesseeEmpIds: string[] = [];
+  private reviewerEmpIds: string[] = [];
+  /** Where "Back" goes - the Dashboard by default, or My Assignments when opened from there (?from=assignments). */
+  backLink = '/';
 
   rubricLevels = RUBRIC_LEVELS;
   rubricModalParam: MaturityParameter | null = null;
@@ -69,20 +75,11 @@ export class DomainReviewComponent implements OnInit {
   rejectComment = '';
   rejectCommentError = '';
 
-  retargetingParam: MaturityParameter | null = null;
-  retargetDate = '';
-  retargetReason = '';
-  retargetError = '';
-
-  decidingRetargetParam: MaturityParameter | null = null;
-  retargetDecisionComment = '';
-
   private assessmentId?: number;
 
   constructor(
     private route: ActivatedRoute,
     private session: SessionService,
-    private assesseeService: AssesseeService,
     private accountService: AccountService,
     private api: ItOpsMaturityApiService,
     private toast: ToastService,
@@ -99,6 +96,7 @@ export class DomainReviewComponent implements OnInit {
       const domainCode = params.get('domainId');
       const assessmentIdParam = queryParams.get('assessmentId');
       const account = this.accountService.selectedAccount;
+      this.backLink = queryParams.get('from') === 'assignments' ? '/my-assignments' : '/';
 
       if (!domainCode || !account) {
         this.loading = false;
@@ -108,8 +106,12 @@ export class DomainReviewComponent implements OnInit {
       this.loading = true;
       this.domain = undefined;
       this.assessmentId = undefined;
+      this.assesseeNamesList = [];
+      this.assesseeEmpIds = [];
+      this.reviewerEmpIds = [];
       this.evidenceByFindingId = {};
       this.pendingEvidenceFiles = {};
+      this.lastSavedActionTaken.clear();
 
       this.api
         .getOrCreateAssessment(domainCode, String(account.cusT_ID), assessmentIdParam ? Number(assessmentIdParam) : undefined)
@@ -125,6 +127,15 @@ export class DomainReviewComponent implements OnInit {
           next: ({ assessment, parameters }) => {
             this.assessmentId = assessment.assessmentId;
             this.domain = this.toDomain(assessment, parameters);
+            // Seed with whatever was already saved, so a finding loaded with its
+            // action-taken note already filled in starts with Submit Update
+            // correctly disabled - not re-submittable until the text actually changes.
+            for (const param of this.domain.parameters) {
+              if (param.findingId) this.lastSavedActionTaken.set(param.findingId, param.findingActionTaken ?? '');
+            }
+            this.assesseeNamesList = assessment.assesseeNames ?? [];
+            this.assesseeEmpIds = assessment.assesseeEmpIds ?? [];
+            this.reviewerEmpIds = assessment.reviewerEmpIds ?? (assessment.reviewerEmpId ? [assessment.reviewerEmpId] : []);
             this.providers = [];
             this.activeProvider = undefined;
             this.loading = false;
@@ -137,7 +148,6 @@ export class DomainReviewComponent implements OnInit {
           },
         });
     });
-    this.assesseeService.selectedAssessees$.subscribe((assessees) => (this.selectedAssessees = assessees));
   }
 
   private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
@@ -162,6 +172,8 @@ export class DomainReviewComponent implements OnInit {
       findingStatus: r.findingStatus ? BACKEND_FINDING_STATUS_MAP[r.findingStatus] ?? 'Pending' : undefined,
       findingRejectionComment: r.findingRejectionComment ?? undefined,
       findingActionTaken: r.findingActionTaken ?? undefined,
+      findingAssesseeName: r.assesseeName ?? undefined,
+      findingDisputeComment: r.disputeComment ?? undefined,
     }));
 
     return {
@@ -175,19 +187,37 @@ export class DomainReviewComponent implements OnInit {
     };
   }
 
+  /**
+   * Whether this employee may Approve/Return this specific assessment.
+   * Checked against the assessment's OWN reviewer assignment first - the
+   * session-wide identity resolution (session.currentUser.reviewDomainIds)
+   * only ever runs from the Dashboard's account-scoped data load, so it's
+   * still unresolved ('NoAccess') for anyone who reached this page via My
+   * Assignments -> Needs Review, which is the normal path now. Falls back to
+   * the session check too, so a GDH-level reviewer (whole-business-unit
+   * authority, not personally listed as this assessment's Reviewer) still
+   * works whenever that session state happens to already be resolved.
+   */
   canReview(): boolean {
     if (!this.domain) return false;
+    const empId = localStorage.getItem('empid');
+    if (empId && this.reviewerEmpIds.includes(empId)) return true;
     return this.session.currentUser.reviewDomainIds.includes(this.domain.id);
   }
 
-  assesseeNames(): string {
-    return this.selectedAssessees.map((a) => a.name).join(', ');
+  /** Approve/Return only make sense while the assessment is actually awaiting this reviewer's decision - once acted on (Approved/Returned), the buttons must disappear rather than stay clickable on an already-decided assessment. */
+  canTakeReviewAction(): boolean {
+    return this.canReview() && this.domain?.status === 'Pending Review';
   }
 
-  /** Only one of the people the assessment is being conducted for (the selected Assessees) may accept/reject findings. */
+  assesseeNames(): string {
+    return this.assesseeNamesList.join(', ');
+  }
+
+  /** Only one of the people this assessment is being conducted for (its own assignees) may accept/reject findings. */
   isAssessee(): boolean {
     const empId = localStorage.getItem('empid');
-    return !!empId && this.selectedAssessees.some((a) => a.id === empId);
+    return !!empId && this.assesseeEmpIds.includes(empId);
   }
 
   /** A score below 5 is automatically raised as a probable area of improvement (US-003). */
@@ -297,7 +327,9 @@ export class DomainReviewComponent implements OnInit {
 
   /** US-006: Assessee accepts a finding, or opens the mandatory-justification modal to reject it. */
   setFinding(param: MaturityParameter, status: FindingStatus): void {
-    if (!param.findingId || this.decidingFindingId) return;
+    // Accept/Reject is a one-time decision - once already decided (or closed/reopened by
+    // the assessor), it can only be re-offered by the backend resetting it back to Pending.
+    if (!param.findingId || this.decidingFindingId || param.findingStatus !== 'Pending') return;
     if (status === 'Rejected') {
       this.openRejectModal(param);
       return;
@@ -342,6 +374,9 @@ export class DomainReviewComponent implements OnInit {
         next: () => {
           param.findingStatus = 'Rejected';
           param.findingRejectionComment = comment;
+          // A fresh rejection supersedes any earlier dispute reply - that response was about
+          // the previous rejection, not this one.
+          param.findingDisputeComment = undefined;
           this.toast.info('Finding rejected', `"${param.name}" has been rejected with your justification.`);
           this.rejectingParam = null;
         },
@@ -362,7 +397,7 @@ export class DomainReviewComponent implements OnInit {
 
   private loadEvidenceForAcceptedFindings(): void {
     const acceptedFindingIds = (this.domain?.parameters ?? [])
-      .filter((p) => p.findingStatus === 'Accepted' && p.findingId)
+      .filter((p) => (p.findingStatus === 'Accepted' || p.findingStatus === 'Closed') && p.findingId)
       .map((p) => p.findingId as number);
     acceptedFindingIds.forEach((id) => this.loadEvidence(id));
   }
@@ -409,6 +444,15 @@ export class DomainReviewComponent implements OnInit {
     this.pendingEvidenceFiles[param.findingId] = this.pendingEvidenceFor(param).filter((f) => f !== file);
   }
 
+  /** Submit Update should only be clickable while there's actually something new to send - not while a submit is already in flight, and not again for text that's already been saved with no new evidence attached. */
+  canSubmitActionUpdate(param: MaturityParameter): boolean {
+    if (!param.findingId || this.submittingActionId === param.findingId) return false;
+    const current = (param.findingActionTaken ?? '').trim();
+    if (!current) return false;
+    if (this.pendingEvidenceFor(param).length) return true;
+    return current !== (this.lastSavedActionTaken.get(param.findingId) ?? '');
+  }
+
   /** Assessee submits their remediation progress note plus any newly attached evidence in one action. */
   submitActionUpdate(param: MaturityParameter): void {
     if (!param.findingId || this.submittingActionId) return;
@@ -440,76 +484,16 @@ export class DomainReviewComponent implements OnInit {
       .subscribe({
         next: () => {
           param.findingActionTaken = actionTaken;
+          // An accepted finding is fully resolved as soon as its action-taken description is
+          // submitted - no separate assessor sign-off needed, unlike a rejection.
+          param.findingStatus = 'Closed';
+          this.lastSavedActionTaken.set(findingId, actionTaken);
           this.pendingEvidenceFiles[findingId] = [];
           this.loadEvidence(findingId);
-          this.toast.success('Action update submitted', `Your progress on "${param.name}" has been shared with the COE SPOC and Reviewer.`);
+          this.toast.success('Finding closed', `Your action on "${param.name}" has been recorded and shared with the COE SPOC and Reviewer.`);
         },
         error: () => this.toast.error('Submit failed', 'Something went wrong submitting this action update. Please try again.'),
       });
   }
 
-  /** The Reviewer (one level up from the Assessee) decides pending retarget requests. */
-  canDecideRetarget(param: MaturityParameter): boolean {
-    return this.canReview() && param.findingRetargetStatus === 'Requested';
-  }
-
-  /** A retarget may be requested once a finding is accepted and isn't already pending/decided. */
-  canRequestRetarget(param: MaturityParameter): boolean {
-    return (
-      this.isAssessee() &&
-      param.findingStatus === 'Accepted' &&
-      (!param.findingRetargetStatus || param.findingRetargetStatus === 'None' || param.findingRetargetStatus === 'Rejected')
-    );
-  }
-
-  openRetargetModal(param: MaturityParameter): void {
-    this.retargetingParam = param;
-    this.retargetDate = param.findingRetargetRequestedDate ?? param.findingTargetDate ?? '';
-    this.retargetReason = '';
-    this.retargetError = '';
-  }
-
-  closeRetargetModal(): void {
-    this.retargetingParam = null;
-  }
-
-  confirmRetarget(): void {
-    if (!this.retargetDate) {
-      this.retargetError = 'A revised target date is required.';
-      return;
-    }
-    if (!this.retargetReason.trim()) {
-      this.retargetError = 'A reason for the retarget request is required.';
-      return;
-    }
-    if (!this.retargetingParam) return;
-    const param = this.retargetingParam;
-    param.findingRetargetStatus = 'Requested';
-    param.findingRetargetRequestedDate = this.retargetDate;
-    param.findingRetargetReason = this.retargetReason.trim();
-    param.findingRetargetDecisionComment = undefined;
-    this.retargetingParam = null;
-    this.actionMessage = 'Retarget request sent for approval.';
-  }
-
-  openRetargetDecisionModal(param: MaturityParameter): void {
-    this.decidingRetargetParam = param;
-    this.retargetDecisionComment = '';
-  }
-
-  closeRetargetDecisionModal(): void {
-    this.decidingRetargetParam = null;
-  }
-
-  decideRetarget(approve: boolean): void {
-    if (!this.decidingRetargetParam) return;
-    const param = this.decidingRetargetParam;
-    param.findingRetargetStatus = approve ? 'Approved' : 'Rejected';
-    param.findingRetargetDecisionComment = this.retargetDecisionComment.trim() || undefined;
-    if (approve && param.findingRetargetRequestedDate) {
-      param.findingTargetDate = param.findingRetargetRequestedDate;
-    }
-    this.decidingRetargetParam = null;
-    this.actionMessage = approve ? 'Retarget approved.' : 'Retarget rejected.';
-  }
 }

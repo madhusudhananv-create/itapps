@@ -29,16 +29,12 @@ export class NotificationBellComponent implements OnInit {
   ngOnInit(): void {
     this.empId = localStorage.getItem('empid') || '';
     if (!this.empId) return;
-    this.refresh(true);
+    this.refresh();
   }
 
-  /** `popupOnLoad` auto-opens the dropdown once, right when the page loads, if
-   * there's anything pending - so a pending item is surfaced immediately on
-   * login instead of waiting for the user to notice/click the bell icon. */
-  private refresh(popupOnLoad = false): void {
+  private refresh(): void {
     this.api.getMyNotifications(this.empId).subscribe((rows) => {
       this.notifications = rows;
-      if (popupOnLoad && rows.length) this.open = true;
     });
   }
 

@@ -4,11 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, combineLatest, forkJoin, of, switchMap } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
-import { AssesseeService } from '../../services/assessee.service';
 import { AccountService } from '../../services/account.service';
-import { ItOpsMaturityApiService, ItOpsAssessmentInfo, ItOpsParameterScoreRow } from '../../services/itops-maturity-api.service';
-import { TechnologyDomain, MaturityParameter, MaturityRubric, DomainStatus } from '../../models/maturity.model';
-import { Assessee } from '../../models/assessee.model';
+import { ItOpsMaturityApiService, ItOpsAssessmentInfo, ItOpsParameterScoreRow, ItOpsEvidenceRow } from '../../services/itops-maturity-api.service';
+import { TechnologyDomain, MaturityParameter, MaturityRubric, DomainStatus, FindingStatus } from '../../models/maturity.model';
 import { statusPillClass } from '../../utils/status.util';
 import { RUBRIC_LEVELS, rubricScoreKey } from '../../utils/rubric.util';
 import { ToastService } from '../../services/toast.service';
@@ -25,6 +23,13 @@ const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
   ReturnedForRevision: 'In Progress',
   Suspended: 'Draft',
   Closed: 'Approved',
+};
+
+/** Maps the backend's ITOPS_FINDING.STATUS values onto this app's simpler FindingStatus. */
+const BACKEND_FINDING_STATUS_MAP: Record<string, FindingStatus> = {
+  Accepted: 'Accepted',
+  Rejected: 'Rejected',
+  Closed: 'Closed',
 };
 
 @Component({
@@ -47,7 +52,17 @@ export class MaturityAssessmentComponent implements OnInit {
   evidenceErrors = new Map<string, string>();
   showDefinitionsModal = false;
   highlightParamId: string | null = null;
-  selectedAssessees: Assessee[] = [];
+  /** This assessment's own assignees (not the account-wide selection - a project's assessment shows only who's actually assigned to IT). */
+  assesseeNamesList: string[] = [];
+  /** Evidence attached to each finding's remediation action (by the Assessee), keyed by findingId, loaded on demand - read-only here, the COE SPOC never edits it. */
+  evidenceByFindingId: Record<number, ItOpsEvidenceRow[]> = {};
+  /** Where "Back" goes - the Dashboard by default, or My Assignments when opened from there (?from=assignments). */
+  backLink = '/';
+  /** Parameter id currently showing the "confirm/dispute this rejection" prompt, if any. */
+  decidingRejectionParamId: string | null = null;
+  rejectionDecisionComment = '';
+  rejectionDecisionError = '';
+  decidingRejection = false;
 
   rubricLevels = RUBRIC_LEVELS;
   rubricModalParam: MaturityParameter | null = null;
@@ -58,7 +73,6 @@ export class MaturityAssessmentComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private assesseeService: AssesseeService,
     private accountService: AccountService,
     private api: ItOpsMaturityApiService,
     private toast: ToastService,
@@ -75,6 +89,7 @@ export class MaturityAssessmentComponent implements OnInit {
       const domainCode = params.get('domainId');
       const assessmentIdParam = queryParams.get('assessmentId');
       const account = this.accountService.selectedAccount;
+      this.backLink = queryParams.get('from') === 'assignments' ? '/my-assignments' : '/';
 
       if (!domainCode || !account) {
         this.loading = false;
@@ -86,6 +101,8 @@ export class MaturityAssessmentComponent implements OnInit {
       // loaded in this component instance (see the reuse-strategy note above).
       this.domain = undefined;
       this.assessmentId = undefined;
+      this.assesseeNamesList = [];
+      this.evidenceByFindingId = {};
       this.saveMessage = '';
       this.evidenceErrors.clear();
       this.showSubmitModal = false;
@@ -106,10 +123,12 @@ export class MaturityAssessmentComponent implements OnInit {
           next: ({ assessment, parameters }) => {
             this.assessmentId = assessment.assessmentId;
             this.domain = this.toDomain(assessment, parameters);
+            this.assesseeNamesList = assessment.assesseeNames ?? [];
             this.providers = [];
             this.activeProvider = undefined;
             this.loading = false;
             this.loadExistingEvidence();
+            this.loadEvidenceForAcceptedFindings();
           },
           error: (err) => {
             console.error('IT Ops Maturity Dashboard: failed to load assessment', err);
@@ -117,8 +136,33 @@ export class MaturityAssessmentComponent implements OnInit {
           },
         });
     });
+  }
 
-    this.assesseeService.selectedAssessees$.subscribe((assessees) => (this.selectedAssessees = assessees));
+  /** Re-fetches just the parameter rows (findings included) for the current assessment, so a
+   * decision made on this page (e.g. confirming/disputing a rejection) reflects the real,
+   * server-computed finding status/history immediately instead of being locally guessed. */
+  private reloadParameters(): void {
+    if (!this.assessmentId || !this.domain) return;
+    this.api.getAssessmentParameters(this.assessmentId).subscribe((rows) => {
+      const byKey = new Map(rows.map((r) => [String(r.parameterId), r]));
+      this.domain!.parameters = this.domain!.parameters.map((p) => {
+        const r = byKey.get(p.id);
+        if (!r) return p;
+        return {
+          ...p,
+          score: (r.scoreValue as MaturityParameter['score']) ?? null,
+          notes: r.notes ?? '',
+          scoreId: r.scoreId ?? undefined,
+          findingId: r.findingId ?? undefined,
+          findingStatus: r.findingStatus ? BACKEND_FINDING_STATUS_MAP[r.findingStatus] ?? 'Pending' : undefined,
+          findingRejectionComment: r.findingRejectionComment ?? undefined,
+          findingActionTaken: r.findingActionTaken ?? undefined,
+          findingAssesseeName: r.assesseeName ?? undefined,
+          findingDisputeComment: r.disputeComment ?? undefined,
+        };
+      });
+      this.loadEvidenceForAcceptedFindings();
+    });
   }
 
   private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
@@ -143,6 +187,12 @@ export class MaturityAssessmentComponent implements OnInit {
         notes: r.notes ?? '',
         scoreId: r.scoreId ?? undefined,
         evidenceFiles: [],
+        findingId: r.findingId ?? undefined,
+        findingStatus: r.findingStatus ? BACKEND_FINDING_STATUS_MAP[r.findingStatus] ?? 'Pending' : undefined,
+        findingRejectionComment: r.findingRejectionComment ?? undefined,
+        findingActionTaken: r.findingActionTaken ?? undefined,
+        findingAssesseeName: r.assesseeName ?? undefined,
+        findingDisputeComment: r.disputeComment ?? undefined,
       };
     });
 
@@ -158,7 +208,7 @@ export class MaturityAssessmentComponent implements OnInit {
   }
 
   assesseeNames(): string {
-    return this.selectedAssessees.map((a) => a.name).join(', ');
+    return this.assesseeNamesList.join(', ');
   }
 
   visibleParameters(): MaturityParameter[] {
@@ -181,6 +231,64 @@ export class MaturityAssessmentComponent implements OnInit {
 
   isLocked(): boolean {
     return this.domain?.status === 'Pending Review' || this.domain?.status === 'Approved';
+  }
+
+  isProbableFinding(param: MaturityParameter): boolean {
+    return typeof param.score === 'number' && param.score < 5;
+  }
+
+  /** Bulk-loads the Assessee's remediation evidence for every Accepted finding, so the COE SPOC can see what's already been submitted without a per-click round trip. */
+  private loadEvidenceForAcceptedFindings(): void {
+    const acceptedFindingIds = (this.domain?.parameters ?? [])
+      .filter((p) => (p.findingStatus === 'Accepted' || p.findingStatus === 'Closed') && p.findingId)
+      .map((p) => p.findingId as number);
+    acceptedFindingIds.forEach((id) => this.loadEvidence(id));
+  }
+
+  private loadEvidence(findingId: number): void {
+    this.api.getFindingEvidence(findingId).subscribe((rows) => (this.evidenceByFindingId[findingId] = rows));
+  }
+
+  evidenceFor(param: MaturityParameter): ItOpsEvidenceRow[] {
+    return param.findingId ? this.evidenceByFindingId[param.findingId] ?? [] : [];
+  }
+
+  evidenceDownloadUrl(evidenceId: number): string {
+    return this.api.evidenceDownloadUrl(evidenceId);
+  }
+
+  openRejectionDecision(param: MaturityParameter): void {
+    this.decidingRejectionParamId = param.id;
+    this.rejectionDecisionComment = '';
+    this.rejectionDecisionError = '';
+  }
+
+  closeRejectionDecision(): void {
+    this.decidingRejectionParamId = null;
+    this.rejectionDecisionComment = '';
+    this.rejectionDecisionError = '';
+  }
+
+  confirmRejectionDecision(param: MaturityParameter, assessorAccepts: boolean): void {
+    if (!param.findingId) return;
+    if (!assessorAccepts && !this.rejectionDecisionComment.trim()) {
+      this.rejectionDecisionError = 'A comment is required when disputing the rejection.';
+      return;
+    }
+    this.decidingRejection = true;
+    this.api
+      .decideFindingRejection(param.findingId, assessorAccepts, this.rejectionDecisionComment.trim() || undefined)
+      .pipe(finalize(() => (this.decidingRejection = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success(assessorAccepts ? 'Rejection confirmed - finding closed.' : 'Rejection disputed - finding reopened for the assessee.');
+          this.closeRejectionDecision();
+          this.reloadParameters();
+        },
+        error: (err) => {
+          this.rejectionDecisionError = err?.error ?? 'Could not record this decision. Please try again.';
+        },
+      });
   }
 
   isBelowMinimum(param: MaturityParameter): boolean {

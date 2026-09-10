@@ -6,14 +6,14 @@
     IT Ops Maturity
   </div>
   <div class="nav-links">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+    <a *ngIf="canSeeDashboard" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
     <a routerLink="/my-assignments" routerLinkActive="active">My Assignments</a>
     <a routerLink="/reports" routerLinkActive="active">Reports</a>
     <a *ngIf="canSeeAdminSetup" routerLink="/admin" routerLinkActive="active">Admin Setup</a>
   </div>
   <div class="nav-identity" *ngIf="currentUser">
     <app-notification-bell />
-    <span class="identity-name">{{ currentUser.name }}</span>
+    <span class="identity-name" [attr.data-initials]="identityInitials">{{ currentUser.name }}</span>
     <button type="button" class="logout-btn" (click)="logout()">Logout</button>
   </div>
 </nav>

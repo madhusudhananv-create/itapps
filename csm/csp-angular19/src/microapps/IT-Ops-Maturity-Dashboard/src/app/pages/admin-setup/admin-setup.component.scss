@@ -2,18 +2,21 @@
   /* ---- Material 3 – Accessible Theme tokens, mapped onto this component's existing variable names.
      Neutrals carry a very slight cool-blue tint (rather than flat gray) so they read as chosen and
      tie together with --accent, in both themes. ---- */
-  --page-plane: rgb(245,249,252);      /* md-sys-color-surface-container-low, cool-tinted */
-  --surface: rgb(255,255,255);         /* md-sys-color-surface */
-  --text-primary: rgb(1,31,45);        /* md-sys-color-on-surface */
-  --text-secondary: rgb(46,54,61);     /* md-sys-color-on-surface-variant, cool-tinted */
-  --text-muted: rgb(107,120,130);      /* md-sys-color-outline, cool-tinted */
-  --gridline: rgb(211,220,227);        /* md-sys-color-outline-variant, cool-tinted */
-  --border: rgb(211,220,227);          /* md-sys-color-outline-variant, cool-tinted */
-  --accent: rgb(0,114,178);            /* md-sys-color-primary (accessible blue) - the professional theme color */
-  --accent2: rgb(38,140,196);          /* second gradient stop for buttons/badges */
-  --accent-track: rgb(204,226,244);    /* md-sys-color-primary-container */
-  --accent-glow: rgba(0,114,178,0.16);
-  --focus-ring: rgb(0,114,178);
+  /* CSM shell alignment: same Apple-system tokens as the Dashboard/My
+     Assignments view (#F2F2F7 ground, white cards, #007AFF accent) so Admin
+     Setup reads as the same product instead of a differently-themed screen. */
+  --page-plane: #F2F2F7;
+  --surface: #ffffff;
+  --text-primary: #1c1c1e;
+  --text-secondary: #6E6E73;
+  --text-muted: #8E8E93;
+  --gridline: #E5E5EA;
+  --border: #E5E5EA;
+  --accent: #007AFF;
+  --accent2: #0051D5;
+  --accent-track: rgba(0,122,255,0.1);
+  --accent-glow: rgba(0,122,255,0.16);
+  --focus-ring: #007AFF;
   /* Purple is reserved for the primary CTA buttons specifically (.btn-primary)
      so the main "do this next" action stands out from --accent, which still
      drives everything else - active step badge, links, focus rings, info
@@ -67,13 +70,14 @@
   --text-xl: 22px;
   --text-2xl: 28px;
 
-  /* Spacing scale - 4/8px rhythm. */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
+  /* Spacing scale - compact rhythm (tightened from the original 4/8px scale
+     per feedback that the flow felt too airy step-to-step). */
+  --space-1: 2px;
+  --space-2: 5px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
 
   /* One radius and one shadow scale, used everywhere instead of one-off values. */
   --radius-sm: 8px;
@@ -185,81 +189,58 @@ h1, h2, h3 { margin: 0; }
 /* ---- 5-step setup flow nav - the active step gets a filled accent pill
    background instead of just an underline; a completed step's label stays
    accent-colored so progress reads at a glance. ---- */
+/* Matches the mockup's flat step-nav: plain numbered circles (muted / accent /
+   good) with a label, joined by a simple chevron - no glass blur, no active
+   pulse, no pill-shaped background track. */
 .flow-nav {
-  display: flex; align-items: center; overflow-x: auto; padding: var(--space-2) var(--space-4); gap: var(--space-1);
-  background: var(--glass); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid var(--glass-border); position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; overflow-x: auto; gap: 0;
+  padding: 16px 28px 0;
+  max-width: 1520px;
+  margin: 0 auto var(--space-2);
 }
 .flow-step {
-  display: flex; align-items: center; gap: var(--space-2); padding: 6px var(--space-3) 6px 6px; border: none; background: none; border-radius: 9999px;
+  display: flex; align-items: center; gap: 6px; padding: 6px var(--space-2);
+  border: none; background: none; border-radius: var(--radius-sm);
   font: inherit; cursor: pointer; white-space: nowrap; flex: none; position: relative;
-  transition: background-color 200ms cubic-bezier(0.2,0,0,1), opacity 200ms cubic-bezier(0.2,0,0,1), transform 200ms cubic-bezier(0.175,0.885,0.32,1.275);
+  color: var(--text-secondary); font-weight: 600; font-size: var(--text-sm);
+  min-height: 32px;
+  transition: color 150ms ease, background 150ms ease;
 }
-.flow-step:disabled { opacity: .4; cursor: not-allowed; }
-.flow-step:not(:disabled):not(.active):hover { background: var(--accent-glow); transform: translateY(-1px); }
-.flow-step:not(:disabled):not(.active):hover .flow-label { color: var(--text-secondary); }
-.flow-step:not(:disabled):not(.active):hover .flow-num { box-shadow: var(--neu-btn); }
-.flow-step:not(:disabled):active { transform: scale(.96); }
-.flow-step .flow-label { font-weight: 500; color: var(--text-muted); font-size: var(--text-sm); transition: color 150ms cubic-bezier(0.2,0,0,1); }
+.flow-step:disabled { opacity: .45; cursor: not-allowed; }
+.flow-step:not(:disabled):not(.active):hover { color: var(--text-primary); background: var(--surface-tint, var(--neutral-bg)); }
+.flow-step:not(:disabled):active { transform: translateY(1px); }
+.flow-step .flow-label { transition: color 150ms ease; }
 
-/* Numbered badge, neumorphic "pressed into the surface" by default - the
-   active step pops OUT (raised, gradient-filled) instead, and a done step
-   swaps its number for a checkmark that pops in with a tiny overshoot so
-   completing a step reads as a distinct, felt moment rather than a silent
-   text-color swap. */
 .flow-num {
   display: flex; align-items: center; justify-content: center; flex: none;
   width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 700;
-  background: var(--page-plane); color: var(--text-muted); box-shadow: var(--neu-in);
-  transition: background 250ms cubic-bezier(0.2,0,0,1), color 250ms cubic-bezier(0.2,0,0,1), box-shadow 250ms cubic-bezier(0.2,0,0,1), transform 250ms cubic-bezier(0.175,0.885,0.32,1.275);
+  background: var(--status-muted); color: var(--text-secondary);
+  transition: background 150ms ease, color 150ms ease;
 }
-.flow-num-check {
-  animation: flow-check-pop 360ms cubic-bezier(0.34,1.56,0.64,1) both;
-}
-@keyframes flow-check-pop {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.25); opacity: 1; }
-  100% { transform: scale(1); }
-}
+.flow-num-check { display: flex; }
 
-/* "Done" stays neutral (text-secondary), not accent blue - blue is reserved
-   for the one truly active step. With every completed step also rendered in
-   accent color, three-plus blue elements sat side by side in the nav and the
-   actually-active step stopped reading as distinct from the merely-passed
-   ones. A filled green badge is the "done" signal instead of label color. */
-.flow-step.done .flow-label { color: var(--text-secondary); font-weight: 600; }
-.flow-step.done .flow-num { background: var(--status-good); color: #fff; box-shadow: var(--neu-btn); }
-.flow-step.active { background: var(--accent-track); box-shadow: 0 2px 12px var(--accent-glow); }
-.flow-step.active .flow-label { color: var(--accent); font-weight: 700; }
-.flow-step.active .flow-num {
-  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: var(--neu-btn);
-  transform: scale(1.08);
-  animation: flow-active-pulse 2.2s ease-in-out infinite;
-}
-@keyframes flow-active-pulse {
-  0%, 100% { box-shadow: var(--neu-btn), 0 0 0 0 var(--accent-glow); }
-  50% { box-shadow: var(--neu-btn), 0 0 0 5px var(--accent-glow); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .flow-num-check { animation: none; }
-  .flow-step.active .flow-num { animation: none; }
-}
-.flow-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.flow-arrow { display: flex; align-items: center; color: var(--border); flex: none; font-size: 15px; transition: color 250ms cubic-bezier(0.2,0,0,1); }
-.flow-arrow.done { color: var(--status-good); }
+.flow-step.done .flow-label { color: var(--text-secondary); }
+.flow-step.done .flow-num { background: var(--status-good); color: #fff; }
 
-.maturity-page { max-width: 1200px; margin: 0 auto; padding: var(--space-6) var(--space-4) 80px; }
-.page-head { display: flex; align-items: flex-start; gap: var(--space-4); margin-bottom: var(--space-2); }
+.flow-step.active .flow-label { color: var(--accent); }
+.flow-step.active .flow-num { background: var(--accent); color: #fff; }
+
+.flow-step:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-glow); }
+.flow-arrow { display: flex; align-items: center; color: var(--border); flex: none; font-size: 15px; padding: 0 2px; }
+.flow-arrow.done { color: var(--border); }
+
+.maturity-page { max-width: 1520px; margin: 0 auto; padding: var(--space-4) 28px 40px; }
+.page-head { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-3); }
 .icon-badge {
-  width: 44px; height: 44px; border-radius: var(--radius-sm); flex: none; border: none;
-  background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 6px 20px var(--accent-glow);
+  width: 34px; height: 34px; border-radius: var(--radius-sm); flex: none; border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 4px 12px var(--accent-glow);
   display: flex; align-items: center; justify-content: center; color: #fff;
   transition: transform 300ms cubic-bezier(0.175,0.885,0.32,1.275);
 }
 .page-head:hover .icon-badge { transform: rotate(-5deg) scale(1.05); }
-.icon-badge svg { width: 21px; height: 21px; }
-.page-head h1 { font-size: var(--text-xl); font-weight: 800; letter-spacing: -0.01em; }
-.page-sub { color: var(--text-muted); font-size: var(--text-sm); margin-top: 4px; max-width: 640px; line-height: 1.55; }
+.icon-badge svg { width: 17px; height: 17px; }
+.page-head h1 { font-size: var(--text-lg); font-weight: 800; letter-spacing: -0.01em; }
+.page-sub { color: var(--text-muted); font-size: var(--text-sm); margin-top: 2px; max-width: 640px; line-height: 1.4; }
 .page-actions { margin-left: auto; }
 
 .search-box {
@@ -604,31 +585,31 @@ label.picker-row {
 .section-head .count { color: var(--text-muted); font-size: var(--text-sm); }
 .section-head .btn-primary, .section-head .btn-ghost { margin-left: auto; }
 
-.form-card { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); backdrop-filter: blur(16px); box-shadow: var(--neu-out); padding: var(--space-5) var(--space-5); max-width: 620px; margin-top: var(--space-5); }
+.form-card { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); backdrop-filter: blur(16px); box-shadow: var(--neu-out); padding: var(--space-4); max-width: 620px; margin-top: var(--space-3); }
 
 /* Step 4: puts the wide empty space beside the 620px form-card to use as a
    sticky live-selection recap, instead of the form just floating alone on
    the left of a near-1200px page. */
-.step4-grid { display: grid; grid-template-columns: minmax(0, 620px) minmax(260px, 380px); gap: 20px; align-items: start; }
+.step4-grid { display: grid; grid-template-columns: minmax(0, 620px) minmax(260px, 380px); gap: var(--space-4); align-items: start; }
 @media (max-width: 980px) { .step4-grid { grid-template-columns: 1fr; } }
-.assessment-summary { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); backdrop-filter: blur(16px); box-shadow: var(--neu-out); padding: 20px 22px; margin-top: var(--space-5); position: sticky; top: 20px; }
-.assessment-summary h3 { font-size: var(--text-sm); font-weight: 700; margin-bottom: 14px; }
-.assessment-summary .create-summary { margin-top: 18px; }
-.summary-row + .summary-row { margin-top: 16px; }
-.summary-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; }
+.assessment-summary { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); backdrop-filter: blur(16px); box-shadow: var(--neu-out); padding: var(--space-4); margin-top: var(--space-3); position: sticky; top: 12px; }
+.assessment-summary h3 { font-size: var(--text-sm); font-weight: 700; margin-bottom: var(--space-3); }
+.assessment-summary .create-summary { margin-top: var(--space-3); }
+.summary-row + .summary-row { margin-top: var(--space-3); }
+.summary-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); font-weight: 700; margin-bottom: 3px; }
 .summary-value { font-size: var(--text-sm); color: var(--text-primary); }
 .summary-value.muted { color: var(--text-muted); font-style: italic; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
-.form-card select, .form-card input, .field-row select, .field-row input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 11px; font: inherit; background: var(--page-plane); color: var(--text-primary); }
+.form-card select, .form-card input, .field-row select, .field-row input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 10px; font: inherit; background: var(--page-plane); color: var(--text-primary); }
 .form-card select:focus, .field-row select:focus { outline: none; border-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--accent-glow); }
 
 /* Bare field pair with no card wrapper - used where a single-field form-card
    would just be padded empty space around one or two selects. */
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 620px; margin-top: 18px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); max-width: 620px; margin-top: var(--space-3); }
 .field-row select:disabled, .form-card select:disabled, .form-card input:disabled { opacity: .6; cursor: not-allowed; }
 .form-card select:focus, .form-card input:focus { outline: none; border-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--accent-glow); }
-.cycle-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
-.cycle-toggle button { flex: 1; padding: 9px; border-radius: 9999px; border: none; background: var(--glass); box-shadow: var(--neu-btn); backdrop-filter: blur(8px); color: var(--text-secondary); font: inherit; font-weight: 700; cursor: pointer; transition: all 250ms cubic-bezier(0.175,0.885,0.32,1.275); }
+.cycle-toggle { display: flex; gap: 6px; margin-bottom: var(--space-3); }
+.cycle-toggle button { flex: 1; padding: 7px; border-radius: 9999px; border: none; background: var(--glass); box-shadow: var(--neu-btn); backdrop-filter: blur(8px); color: var(--text-secondary); font: inherit; font-weight: 700; cursor: pointer; transition: all 250ms cubic-bezier(0.175,0.885,0.32,1.275); }
 .cycle-toggle button.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
 .cycle-toggle button:active { box-shadow: var(--neu-btn-press); }
 .cycle-toggle button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
