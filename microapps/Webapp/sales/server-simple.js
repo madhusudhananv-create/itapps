@@ -28,7 +28,8 @@ const CONFIG = {
         partnershipTab:   'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\partnership-section',
         q127Forecast:     'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\forecast-data',
         fy27TargetActuals:'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\revenue-targets-actuals',
-        obForecast:       'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\orderbooking-forecast'
+        obForecast:       'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\orderbooking-forecast',
+        obTargetsACV:     'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\orderbooking-targets-acv'
     }
 };
 
@@ -46,7 +47,8 @@ const FOLDER_URL_MAP = {
     '/pipeline-healthcare/partnership-section/':     'partnershipTab',
     '/pipeline-healthcare/forecast-data/':           'q127Forecast',
     '/pipeline-healthcare/revenue-targets-actuals/': 'fy27TargetActuals',
-    '/pipeline-healthcare/orderbooking-forecast/':   'obForecast'
+    '/pipeline-healthcare/orderbooking-forecast/':   'obForecast',
+    '/pipeline-healthcare/orderbooking-targets-acv/': 'obTargetsACV'
 };
 
 /**
