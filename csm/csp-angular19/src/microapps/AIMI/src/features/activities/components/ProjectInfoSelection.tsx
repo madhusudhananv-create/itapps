@@ -15,6 +15,9 @@ import {
   DialogContentText,
   Button,
   CircularProgress,
+  RadioGroup,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   BusinessRounded,
@@ -50,11 +53,13 @@ interface FormData {
   isProjectNA?: boolean;
   naComments?: string;
   runOpsAutoResolved?: string;
-runOpsMTTRReduction?: string;
-runOpsAIAgents?: string;
-runOpsAutomatedWorkflows?: string;
-runOpsMTTD?: string;
-runOpsMTTR?: string;
+  runOpsMTTRReduction?: string;
+  runOpsAIAgents?: string;
+  runOpsAutomatedWorkflows?: string;
+  runOpsMTTD?: string;
+  runOpsMTTR?: string;
+  licenseCount?: number;
+  licenseProvider?: string;
 }
 
 interface ProjectInfoSelectionProps {
@@ -250,7 +255,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
     isLoading: isInfoLoading,
     error: infoError,
     saveProjectInfo,
-    savePracticeInfo,
+    //savePracticeInfo,
   } = useProjectPracticeInfo({
     projectId: formData.projectId ?? '',
     practice: formData.practice,
@@ -290,10 +295,10 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       formData.peopleUsingAI !== undefined &&
       projectInfo?.peopleUsingAI !== formData.peopleUsingAI;
 
-    const currentPhaseChanged =
+    /* const currentPhaseChanged =
       formData.currentPhase &&
       practiceInfo?.currentPhase !== formData.currentPhase;
-
+ */
     const projectNAChanged =
       !!formData.isProjectNA !== !!projectInfo?.isProjectNA;
 
@@ -303,7 +308,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
 
     return (
       peopleUsingAIChanged ||
-      currentPhaseChanged ||
+      //currentPhaseChanged ||
       projectNAChanged ||
       naCommentsChanged
     );
@@ -348,7 +353,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       onFormChange('currentPhase', practiceInfo?.currentPhase ?? '');
       lastPracticeInfo.current = practiceInfo;
     }
-  }, [practiceInfo, onFormChange]);
+  }, [practiceInfo, onFormChange]); 
 
   // Handle beforeunload event to warn user about unsaved changes
   useEffect(() => {
@@ -459,12 +464,12 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       }
 
       // Only save practice info if it has changed
-      if (
+      /* if (
         practiceInfo?.currentPhase !== formData.currentPhase &&
         formData.currentPhase
       ) {
         promises.push(savePracticeInfo(formData.currentPhase));
-      }
+      } */
 
       // Only proceed if there are actual API calls to make
       if (promises.length > 0) {
@@ -912,6 +917,89 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
                     : { ...styles.textField, ...styles.emptyField }
                 }
               />
+            </Tooltip>
+          </Box>
+          {/* License count input field */}
+          <Box>
+          <Tooltip
+            title={!formData.project ? 'Please select project first.' : ''}
+            placement="top"
+          >
+            <TextField
+              fullWidth
+              label="No. of Licenses"
+              type="number"
+              value={formData.licenseCount ?? ''}
+              onChange={(e) =>
+                handleFieldChange('licenseCount', e.target.value)
+              }
+              variant="outlined"
+              disabled={!formData.project || isInfoLoading}
+              InputProps={{
+                startAdornment: (
+                  <PersonRounded
+                    sx={
+                      formData.licenseCount
+                        ? styles.icon
+                        : styles.emptyIcon
+                    }
+                  />
+                ),
+                inputProps: {
+                  min: 0,
+                },
+              }}
+              placeholder="Enter number of licenses"
+              sx={
+                formData.licenseCount
+                  ? styles.textField
+                  : { ...styles.textField, ...styles.emptyField }
+              }
+            />
+          </Tooltip>
+        </Box>
+        <Box>
+            <Tooltip
+              title={!formData.project ? 'Please select project first.' : ''}
+              placement="top"
+            >
+              <FormControl
+                fullWidth
+                disabled={!formData.project || isInfoLoading}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    ...styles.inputLabel,
+                    mb: 1,
+                  }}
+                >
+                  License Provider
+                </Typography>
+
+                <RadioGroup
+                  row
+                  value={formData.licenseProvider ?? ''}
+                  onChange={(e) =>
+                    handleFieldChange(
+                      'licenseProvider',
+                      e.target.value
+                    )
+                  }
+                >
+                  <FormControlLabel
+                    value="Client"
+                    control={<Checkbox />}
+                    label="Client"
+                  />
+
+                  <FormControlLabel
+                    value="Neurealm"
+                    control={<Checkbox />}
+                    label="Neurealm"
+                  />
+                </RadioGroup>
+              </FormControl>
             </Tooltip>
           </Box>
 

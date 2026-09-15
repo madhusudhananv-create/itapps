@@ -68,6 +68,8 @@ interface ProjectInfoFormData {
   runOpsAutomatedWorkflows?: string;
   runOpsMTTD?: string;
   runOpsMTTR?: string;
+  licenseCount?: number;
+  licenseProvider?: string;
 }
 
 // Global styling object
@@ -213,6 +215,8 @@ export function Activities() {
     runOpsAutomatedWorkflows: '',
     runOpsMTTD: '',
     runOpsMTTR: '',
+    licenseProvider: '',  
+    licenseCount: undefined,
   });
 
   // Memoize computed values to prevent unnecessary re-renders

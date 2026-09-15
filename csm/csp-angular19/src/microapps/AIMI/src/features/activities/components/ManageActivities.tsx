@@ -16,6 +16,8 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
+  FormControlLabel,
+  TextField
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -43,6 +45,7 @@ import {
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
 import { useAuth } from '@auth/hooks/useAuth';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
+import CommentIcon from '@mui/icons-material/Comment';
 
 interface ManageActivitiesProps {
   selectedPractice: string;
@@ -112,6 +115,10 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [acceptedScore, setAcceptedScore] = useState('');
+const [scoreReviewed, setScoreReviewed] = useState(false);
+const [acceptedScoreComment, setAcceptedScoreComment] = useState('');
+const [commentDialogOpen, setCommentDialogOpen] = useState(false);
 
   // Ids of activities auto-saved as drafts (on add/edit/copy) that haven't been
   // explicitly confirmed via the "Save as Draft" button yet - these still show as Unsaved
@@ -813,16 +820,63 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
                   <Typography variant="body2" sx={styles.overallScoreLabel}>
                     Overall Score:
                   </Typography>
+
                   <Typography variant="h6" sx={styles.overallScoreValue}>
                     {areAllActivitiesNotApplicable(activities)
                       ? 'N/A'
                       : calculateAverageAIAdoptionScore(activities).toFixed(2)}
                   </Typography>
                 </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={scoreReviewed}
+                        onChange={(e) =>
+                          setScoreReviewed(e.target.checked)
+                        }
+                        disabled={!isAdmin}
+                      />
+                    }
+                    label="Score Reviewed"
+                  />
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mt: 1,
+                    }}
+                  >
+                    <TextField
+                      label="Accepted Score"
+                      size="small"
+                      type="number"
+                      value={acceptedScore}
+                      onChange={(e) =>
+                        setAcceptedScore(e.target.value)
+                      }
+                      disabled={!isAdmin}
+                      sx={{ width: 150 }}
+                    />
+
+                    <Tooltip title="Comments">
+                      <IconButton
+                        color="primary"
+                        onClick={() => setCommentDialogOpen(true)}
+                        disabled={!isAdmin}
+                      >
+                        <CommentIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+                </Box>
               </Box>
-            </Box>
-          )}
-        </Box>
+            )}
+          </Box>
 
         {!selectedPractice && (
           <Typography
@@ -1114,7 +1168,47 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+      <Dialog
+        open={commentDialogOpen}
+        onClose={() => setCommentDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Accepted Score Comments
+        </DialogTitle>
 
+        <DialogContent>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Comments"
+            value={acceptedScoreComment}
+            onChange={(e) =>
+              setAcceptedScoreComment(e.target.value)
+            }
+            placeholder="Enter comments for accepted score"
+            margin="normal"
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => setCommentDialogOpen(false)}
+            color="inherit"
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={() => setCommentDialogOpen(false)}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Snackbar for notifications */}
       <CommonSnackbar
         open={snackbar.open}

@@ -6,6 +6,7 @@ import {
   MenuItem,
   IconButton,
   Divider,
+  Chip,
 } from '@mui/material';
 import { Person, AccountCircle, LogoutRounded } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
@@ -112,7 +113,7 @@ export function UserProfile({
   isLoading = false,
   compact = false,
 }: UserProfileProps) {
-  const { user, logout, isLoading: authLoading } = useAuth();
+  const { user, logout, isAdmin, isLoading: authLoading } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   if (!user) {
@@ -231,6 +232,9 @@ export function UserProfile({
               <Typography variant="caption" sx={styles.userEmail}>
                 {user.email}
               </Typography>
+              {isAdmin && (
+                <Chip label="Admin" size="small" color="primary" sx={{ mt: 0.5 }} />
+              )}
             </Box>
           </Box>
         </MenuItem>

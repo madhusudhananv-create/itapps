@@ -9,6 +9,7 @@ import { AuthContext } from './AuthContext';
 import type { User } from './authTypes';
 import { authStorage } from '@auth/utils';
 import { mockAuthService } from '@auth/services';
+import { isAdminUser } from '@shared/utils/accessControl';
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -40,6 +41,20 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
           const displayName = localStorage.getItem('displayname') || csmEmpId;
           setIsAuthenticated(true);
           setUser({ name: displayName, email: csmEmpId });
+
+          // DEV-ONLY: dump every value the CSM login bridge has available so admin
+          // rules can be based on the field that actually holds the O365 email/UPN.
+          if (import.meta.env.DEV) {
+            console.info('[AIMI auth] bridged CSM session values:', {
+              empid: csmEmpId,
+              displayname: displayName,
+              token: csmToken ? '<present>' : '',
+              logintype: localStorage.getItem('logintype') || '',
+              role: localStorage.getItem('role') || '',
+              customerid: localStorage.getItem('customerid') || '',
+              access: localStorage.getItem('access') || '',
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to initialize auth state:', error);
@@ -103,15 +118,18 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     }
   }, []);
 
+  const isAdmin = useMemo(() => isAdminUser(), [user]);
+
   const value = useMemo(
     () => ({
       isAuthenticated,
       user,
+      isAdmin,
       login,
       logout,
       isLoading,
     }),
-    [isAuthenticated, user, login, logout, isLoading]
+    [isAuthenticated, user, isAdmin, login, logout, isLoading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

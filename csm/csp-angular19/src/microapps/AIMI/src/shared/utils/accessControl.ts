@@ -129,7 +129,7 @@ export const isAllowed = (
 };
 
 // Resource ID provisioned in APP_ACCESS_CONTROLS for the AIMI admin role
-// (Mangesh, Ambrish, DevX team - granted view access to control ID 832).
+// (Mangesh, Ambrish, DevX team - granted view access to control ID 833).
 const AIMI_ADMIN_RESOURCE_ID = 833;
 
 export const isAdminUser = (): boolean =>
