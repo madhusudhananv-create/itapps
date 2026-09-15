@@ -1,6 +1,7 @@
 using AttributeRouting.Web.Mvc;
 using GAVS.AllocationSystem.Model.CSP;
 using GAVS.AllocationSystem.Model.CSP.SP;
+using GAVS.AllocationSystem.Model.CSP.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,547 +28,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     // Responses are serialized camelCase (GlobalConfig installs
     // CamelCasePropertyNamesContractResolver), same as every other DTO here.
     // ---------------------------------------------------------------------
-
-    /// <summary>One employee's current (DOR IS NULL) row, for every people-picker on this admin surface.</summary>
-    public class ITOPS_EmployeeRosterRow
-    {
-        public string EmpId { get; set; }
-        public string Name { get; set; }
-        public string Title { get; set; }
-    }
-
-    public class ITOPS_RoleRow
-    {
-        public int RoleId { get; set; }
-        public string RoleCode { get; set; }
-        public string RoleName { get; set; }
-        public string Description { get; set; }
-    }
-
-    public class ITOPS_RoleAssignmentRow
-    {
-        public int Id { get; set; }
-        public string EmpId { get; set; }
-        public string EmpName { get; set; }
-        public int RoleId { get; set; }
-        public string RoleCode { get; set; }
-        public string RoleName { get; set; }
-        // null PROJECT_ID = org-wide or own-access grant (see ScopeType); otherwise the grant only applies to this project.
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string Scope { get; set; }
-        // Raw "ORG" | "OWN" | "PROJECT", alongside the display-friendly Scope label above.
-        public string ScopeType { get; set; }
-        public DateTime GrantedOn { get; set; }
-    }
-
-    public class ITOPS_GrantRoleRequest
-    {
-        public string EmpId { get; set; }
-        public int RoleId { get; set; }
-        public string ProjectId { get; set; } // null/empty = org-wide
-    }
-
-    // Bulk variant of ITOPS_GrantRoleRequest: one call grants every
-    // (employee x role x project) combination. Empty/null ProjectIds means a
-    // single org-wide grant per (employee, role) pair (PROJECT_ID = NULL).
-    // EmpIds (plural) replaced the old single EmpId - the Angular Configure
-    // Roles screen is the only consumer, and its "Assign a role" modal now picks
-    // several employees at once.
-    public class ITOPS_GrantRolesRequest
-    {
-        public List<string> EmpIds { get; set; }
-        public List<int> RoleIds { get; set; }
-        public List<string> ProjectIds { get; set; }
-    }
-
-    public class ITOPS_RevokeRolesRequest
-    {
-        public List<int> Ids { get; set; }
-    }
-
-    // One (role, scope) entry inside a mixed-scope batch grant for a single
-    // employee - e.g. role A org-wide and role B scoped to two projects, in
-    // the same call. ITOPS_GrantRolesRequest can't express this because it is
-    // one RoleIds x ProjectIds cartesian product shared by every role.
-    public class ITOPS_GrantRoleEntry
-    {
-        public int RoleId { get; set; }
-        public List<string> ProjectIds { get; set; } // null/empty = org-wide
-    }
-
-    // Grants several roles, each with its own scope, to one employee in a
-    // single call - used by the Configure Roles "edit" diff so adding
-    // multiple roles at once results in ONE consolidated notification email,
-    // not one per role.
-    public class ITOPS_GrantRolesMultiRequest
-    {
-        public string EmpId { get; set; }
-        public List<ITOPS_GrantRoleEntry> Entries { get; set; }
-    }
-
-    // Projects to email about when the admin clicks "Submit and Continue to
-    // Configure Assessment" on the domain-project mapping screen.
-    public class ITOPS_SubmitMappingsRequest
-    {
-        public List<string> ProjectIds { get; set; }
-    }
-
-    // One ITOPS_ROLE_ASSIGNMENT row, ACTIVE OR NOT, projected as an audit-trail
-    // entry. Revokes are soft-deletes (ISACTIVE = false) that leave the row and
-    // its audit columns intact, so a single row carries both events: it was
-    // GRANTED by CreatedBy on CreatedDate, and - when IsActive is false - last
-    // touched (i.e. revoked) by UpdatedBy on UpdatedDate. There is no separate
-    // history table; this is the history.
-    public class ITOPS_RoleAssignmentHistoryRow
-    {
-        public int Id { get; set; }
-        public string EmpId { get; set; }
-        public string EmpName { get; set; }
-        public int RoleId { get; set; }
-        public string RoleCode { get; set; }
-        public string RoleName { get; set; }
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string Scope { get; set; }
-        public bool IsActive { get; set; }
-        public string CreatedBy { get; set; }
-        public string CreatedByName { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public string UpdatedBy { get; set; }
-        public string UpdatedByName { get; set; }
-        public DateTime UpdatedDate { get; set; }
-        // The stamp the list is sorted on: UPDATED_DATE when it is later than
-        // CREATED_DATE, else CREATED_DATE.
-        public DateTime LastActivityDate { get; set; }
-    }
-
-    // Edits ONE existing ITOPS_ROLE_ASSIGNMENT row in place - the row keeps its
-    // ID (and therefore its CREATED_DATE / "Granted" date); only ROLE_ID and
-    // PROJECT_ID change. Deliberately single-role/single-scope: a row IS one
-    // role at one scope, so "edit into three roles" has no meaning here.
-    public class ITOPS_UpdateRoleAssignmentRequest
-    {
-        public int Id { get; set; }
-        public int RoleId { get; set; }
-        public string ProjectId { get; set; } // null/empty = org-wide
-    }
-
-    public class ITOPS_AssessmentCycleRow
-    {
-        public int Id { get; set; }
-        public string CycleLabel { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public string Status { get; set; }
-        public string Description { get; set; }
-        public int AssessmentCount { get; set; }
-        // Cycle-level completion dashboard (Step 2 list). One entry per DISTINCT
-        // ITOPS_ASSESSMENT.STATUS actually present in the cycle, across every
-        // project in it - never a fixed enum, so a status added later still shows.
-        public List<ITOPS_CycleStatusCountRow> StatusCounts { get; set; }
-        // "Done" = Approved or Closed - the two terminal states the review flow
-        // (SubmitITOpsAssessmentForReview / ReviewITOpsAssessment) can leave a row in.
-        public int CompletedCount { get; set; }
-        // CompletedCount / AssessmentCount as a whole percent; 0 when the cycle is empty.
-        public int CompletionPercent { get; set; }
-    }
-
-    public class ITOPS_CycleStatusCountRow
-    {
-        public string Status { get; set; }
-        public int Count { get; set; }
-    }
-
-    public class ITOPS_CreateCycleRequest
-    {
-        public string CycleLabel { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
-        public string Description { get; set; }
-    }
-
-    // Step 3 (domains sub-tab). Richer than ITOPS_DomainListRow (which the
-    // landing page uses) - the setup screen also shows the default owners and
-    // how many categories hang off the domain.
-    public class ITOPS_DomainAdminRow
-    {
-        public int DomainId { get; set; }
-        public string Code { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public int? MinRequiredScore { get; set; }
-        public int DisplayOrder { get; set; }
-        public string DefaultAssessorId { get; set; }
-        public string DefaultAssessorName { get; set; }
-        public string DefaultReviewerId { get; set; }
-        public string DefaultReviewerName { get; set; }
-        public int CategoryCount { get; set; }
-    }
-
-    public class ITOPS_CreateDomainRequest
-    {
-        public string Name { get; set; }
-        public string Code { get; set; }
-        public string Description { get; set; }
-        public int? MinRequiredScore { get; set; }
-        public string DefaultAssessorId { get; set; }
-        public string DefaultReviewerId { get; set; }
-    }
-
-    // Rename-only: CODE stays frozen because the Angular route
-    // (/assessment/:domainCode) and every stored mapping key off it.
-    public class ITOPS_UpdateDomainRequest
-    {
-        public int DomainId { get; set; }
-        public string Name { get; set; }
-    }
-
-    public class ITOPS_ProjectRow
-    {
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string CustId { get; set; }
-        public string AccountName { get; set; }
-        public string BusinessUnit { get; set; }
-    }
-
-    public class ITOPS_MappedDomainRow
-    {
-        public int MappingId { get; set; }
-        public int DomainId { get; set; }
-        public string DomainCode { get; set; }
-        public string DomainName { get; set; }
-    }
-
-    public class ITOPS_ProjectAssesseeRow
-    {
-        public string EmpId { get; set; }
-        public string Name { get; set; }
-    }
-
-    public class ITOPS_DomainProjectMappingRow
-    {
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string CustId { get; set; }
-        public string AccountName { get; set; }
-        public List<ITOPS_MappedDomainRow> Domains { get; set; }
-        public List<ITOPS_ProjectAssesseeRow> Assessees { get; set; }
-    }
-
-    public class ITOPS_SaveDomainProjectMappingRequest
-    {
-        public string ProjectId { get; set; }
-        // The FULL desired set of active domains for this project - anything
-        // active but absent here is deactivated (replace semantics, not append).
-        public List<int> DomainIds { get; set; }
-        // Optional free-text reason, logged to ITOPS_DOMAIN_PROJECT_MAP_AUDIT
-        // against every domain actually added/reactivated/removed by this call.
-        public string Reason { get; set; }
-    }
-
-    // Additive bulk sibling of ITOPS_SaveDomainProjectMappingRequest: every
-    // (project x domain) combination is added/reactivated and NOTHING already
-    // mapped to those projects is removed. Use the single-project Save request
-    // above when the project's domain set must end up EXACTLY as sent.
-    public class ITOPS_BulkAddDomainProjectMappingRequest
-    {
-        public List<string> ProjectIds { get; set; }
-        public List<int> DomainIds { get; set; }
-        public string Reason { get; set; }
-    }
-
-    public class ITOPS_RemoveDomainProjectMappingRequest
-    {
-        public string ProjectId { get; set; }
-        public int DomainId { get; set; }
-        public string Reason { get; set; }
-    }
-
-    public class ITOPS_SaveProjectAssesseesRequest
-    {
-        public string ProjectId { get; set; }
-        // The FULL desired assessee set for this project - same replace
-        // semantics as ITOPS_SaveDomainProjectMappingRequest.DomainIds.
-        public List<string> EmpIds { get; set; }
-    }
-
-    public class ITOPS_DomainProjectMapAuditRow
-    {
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string AccountName { get; set; }
-        public int DomainId { get; set; }
-        public string DomainName { get; set; }
-        public string Action { get; set; }
-        public string Reason { get; set; }
-        public string ChangedBy { get; set; }
-        public string ChangedByName { get; set; }
-        public DateTime? ChangedDate { get; set; }
-    }
-
-    public class ITOPS_CreateAssessmentsRequest
-    {
-        // Either name works - the Angular admin screen speaks in "cycle",
-        // the schema calls it ASSESSMENT_MASTER_ID.
-        public int? AssessmentMasterId { get; set; }
-        public int? CycleId { get; set; }
-        // Legacy single-project field, kept so an older caller still works. The
-        // Angular admin screen now sends ProjectIds; when both are absent the
-        // request is rejected.
-        public string ProjectId { get; set; }
-        // One bulk-create action may cover several projects at once. Domains and
-        // assessees are no longer picked here - they are read straight from each
-        // project's own standing configuration (ITOPS_DOMAIN_PROJECT_MAP and
-        // ITOPS_PROJECT_ASSESSEE, both set up in Configure Scope), so a project
-        // with no domains mapped and no assessees picked yet simply creates
-        // nothing rather than being asked about it twice.
-        public List<string> ProjectIds { get; set; }
-    }
-
-    public class ITOPS_CycleAssessmentRow
-    {
-        public int AssessmentId { get; set; }
-        public int AssessmentMasterId { get; set; }
-        public string CycleLabel { get; set; }
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public string AccountName { get; set; }
-        public int DomainId { get; set; }
-        public string DomainCode { get; set; }
-        public string DomainName { get; set; }
-        public int AssessorCount { get; set; }
-        public int ReviewerCount { get; set; }
-        public int AssesseeCount { get; set; }
-        public List<string> AssessorNames { get; set; }
-        public List<string> ReviewerNames { get; set; }
-        public string Status { get; set; }
-    }
-
-    public class ITOPS_AddTeamMemberRequest
-    {
-        public int AssessmentId { get; set; }
-        public string EmpId { get; set; }
-    }
-
-    public class ITOPS_AddTeamMemberBulkRequest
-    {
-        public List<int> AssessmentIds { get; set; }
-        public string EmpId { get; set; }
-    }
-
-    public class ITOPS_RemoveTeamMemberBulkRequest
-    {
-        public List<int> Ids { get; set; }
-    }
-
-    public class ITOPS_TeamMemberRow
-    {
-        public int Id { get; set; }
-        public int AssessmentId { get; set; }
-        public string EmpId { get; set; }
-        public string EmpName { get; set; }
-    }
-
-    // ------------------------------------------------------------------
-    // Step 3c - Categories & Parameters (ITOPS_CATEGORY / ITOPS_PARAMETER /
-    // ITOPS_PARAMETER_LEVEL).
     //
-    // VERSIONING MODEL - read this before touching anything below.
-    //
-    // ITOPS_CATEGORY and ITOPS_PARAMETER are EFFECTIVE-DATED, not freely
-    // mutable. ITOPS_SCORE.PARAMETER_ID points at ONE specific parameter row,
-    // and the reporting projection (GetITOpsAssessmentSummary and friends in
-    // ITOperationMaturityController) resolves a historical score's wording by
-    // reading that exact row - it does NOT date-filter. So rewriting a
-    // parameter's DEFINITION or rubric text in place would retroactively change
-    // what an already-approved assessment says it was scored against.
-    //
-    // Therefore "Save changes" on substantive content is RETIRE-AND-REPLACE:
-    //   old row: END_DATE = today          (drops out of the assessment form,
-    //                                       which filters END_DATE > today)
-    //   new row: START_DATE = today, END_DATE = NULL, edited content
-    // The old row (and its ITOPS_PARAMETER_LEVEL rows) is never touched
-    // otherwise, so every score that referenced it still resolves to the exact
-    // wording it was scored against.
-    //
-    // Versioned (retire + replace): DEFINITION, MIN_REQUIRED_SCORE, and all five
-    //   ITOPS_PARAMETER_LEVEL rubric texts. MIN_REQUIRED_SCORE is versioned
-    //   deliberately even though it is a number: it is the bar a Finding's GAP
-    //   was raised against, so changing it in place would silently restate
-    //   whether a past score met the requirement.
-    // In-place (safe to mutate): NAME and DISPLAY_ORDER. DISPLAY_ORDER is pure
-    //   presentation - nothing historical is derived from it. NAME is in-place
-    //   because it doubles as the LINEAGE KEY (below) and because reports label
-    //   a score by reading the live row's name; a rename is a label correction,
-    //   not a change to what was being asked.
-    //
-    // LINEAGE. The schema has no PREVIOUS_VERSION_ID and adding one would mean a
-    // column EF selects on EVERY category/parameter read - including the live
-    // assessment form - which would hard-fail in any environment where the
-    // migration had not been run. So lineage is a HEURISTIC instead:
-    //   category lineage  = (DOMAIN_ID, NAME)
-    //   parameter lineage = (DOMAIN_ID, category NAME, parameter NAME)
-    // For that to be exact rather than approximate, NAME is IMMUTABLE ACROSS
-    // VERSIONS: the Version* endpoints reject a name change, and the rename
-    // endpoints apply the new name to EVERY row in the lineage at once so all
-    // versions keep sharing one key.
-    // ------------------------------------------------------------------
-
-    public class ITOPS_CategoryRow
-    {
-        public int CategoryId { get; set; }
-        public int DomainId { get; set; }
-        public string Name { get; set; }
-        public int DisplayOrder { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
-        /// <summary>ISACTIVE and still in effect today - i.e. what the assessment form would show.</summary>
-        public bool IsCurrent { get; set; }
-        /// <summary>Parameters currently in effect under this category row.</summary>
-        public int ParameterCount { get; set; }
-        /// <summary>How many rows exist in this category's lineage (see the versioning note).</summary>
-        public int VersionCount { get; set; }
-    }
-
-    public class ITOPS_ParameterLevelRow
-    {
-        public int LevelNo { get; set; }
-        public string Description { get; set; }
-    }
-
-    public class ITOPS_ParameterRow
-    {
-        public int ParameterId { get; set; }
-        public int CategoryId { get; set; }
-        public string CategoryName { get; set; }
-        public int DomainId { get; set; }
-        public string Name { get; set; }
-        public string Definition { get; set; }
-        public int? MinRequiredScore { get; set; }
-        public int DisplayOrder { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
-        public bool IsCurrent { get; set; }
-        /// <summary>Always five entries (LEVEL_NO 1-5), blank where no rubric row exists.</summary>
-        public List<ITOPS_ParameterLevelRow> Levels { get; set; }
-        /// <summary>Active ITOPS_SCORE rows pointing at THIS exact parameter row - what versioning protects.</summary>
-        public int ScoreCount { get; set; }
-        public int VersionCount { get; set; }
-    }
-
-    public class ITOPS_CreateCategoryRequest
-    {
-        public int DomainId { get; set; }
-        public string Name { get; set; }
-        public int? DisplayOrder { get; set; }
-        /// <summary>Defaults to today. A future date creates a not-yet-effective row.</summary>
-        public DateTime? StartDate { get; set; }
-    }
-
-    /// <summary>In-place metadata edit - NO new version. Name is applied to the whole lineage.</summary>
-    public class ITOPS_UpdateCategoryMetaRequest
-    {
-        public int CategoryId { get; set; }
-        public string Name { get; set; }
-        public int? DisplayOrder { get; set; }
-    }
-
-    /// <summary>
-    /// Retire this category row and replace it with a fresh one effective today,
-    /// re-versioning every parameter currently under it so the assessment form
-    /// stays intact. Name cannot change here - it is the lineage key.
-    /// </summary>
-    public class ITOPS_VersionCategoryRequest
-    {
-        public int CategoryId { get; set; }
-        public int? DisplayOrder { get; set; }
-    }
-
-    public class ITOPS_ParameterLevelInput
-    {
-        public int LevelNo { get; set; }
-        public string Description { get; set; }
-    }
-
-    public class ITOPS_CreateParameterRequest
-    {
-        public int CategoryId { get; set; }
-        public string Name { get; set; }
-        public string Definition { get; set; }
-        public int? MinRequiredScore { get; set; }
-        public int? DisplayOrder { get; set; }
-        public DateTime? StartDate { get; set; }
-        public List<ITOPS_ParameterLevelInput> Levels { get; set; }
-    }
-
-    /// <summary>Retire + replace. Definition / min score / rubric text only - see the versioning note.</summary>
-    public class ITOPS_VersionParameterRequest
-    {
-        public int ParameterId { get; set; }
-        public string Definition { get; set; }
-        public int? MinRequiredScore { get; set; }
-        public List<ITOPS_ParameterLevelInput> Levels { get; set; }
-    }
-
-    /// <summary>In-place metadata edit - NO new version. Name is applied to the whole lineage.</summary>
-    public class ITOPS_UpdateParameterMetaRequest
-    {
-        public int ParameterId { get; set; }
-        public string Name { get; set; }
-        public int? DisplayOrder { get; set; }
-    }
-
-    /// <summary>
-    /// "Replace every assignment X holds with Y." Set Preview to only count what
-    /// WOULD change without writing anything.
-    /// </summary>
-    public class ITOPS_BulkReassignRequest
-    {
-        public string FromEmpId { get; set; }
-        public string ToEmpId { get; set; }
-        public bool Preview { get; set; }
-    }
-
-    public class ITOPS_BulkReassignResult
-    {
-        public string FromEmpId { get; set; }
-        public string FromEmpName { get; set; }
-        public string ToEmpId { get; set; }
-        public string ToEmpName { get; set; }
-        public bool Preview { get; set; }
-        public int AssessorRows { get; set; }
-        public int ReviewerRows { get; set; }
-        /// <summary>Distinct assessments touched across both roles.</summary>
-        public int AssessmentCount { get; set; }
-        /// <summary>
-        /// Rows where the target is ALREADY on the same assessment in the same
-        /// role: X's row is deactivated instead of re-pointed (the unique index
-        /// on (ASSESSMENT_ID, EMP_ID) WHERE ISACTIVE = 1 forbids two live rows).
-        /// </summary>
-        public int MergedRows { get; set; }
-        public int TotalRows { get; set; }
-    }
-
-    // What the current caller is allowed to do on the Admin Setup screen.
-    // The Angular app hides the nav link / step tabs off this; the server-side
-    // checks below are the real enforcement.
-    public class ITOPS_MyAccessRow
-    {
-        public string EmpId { get; set; }
-        public bool IsSuperuser { get; set; }
-        // Active ITOPS_ROLE.ROLE_CODEs this emp currently holds via
-        // ITOPS_ROLE_ASSIGNMENT (e.g. ["CYCLE_ADMINISTRATOR"]). Excludes
-        // SUPERUSER, which is reported through IsSuperuser instead.
-        public List<string> RoleCodes { get; set; }
-        public bool IsAdmin { get; set; }
-        // EVERY ROLE_CODE currently active in ITOPS_ROLE, regardless of who
-        // holds it - the frontend needs this to hide a step whose role has
-        // been deactivated system-wide even for a Superuser, whose blanket
-        // access otherwise bypasses individual-grant checks entirely.
-        public List<string> ActiveRoleCodes { get; set; }
-    }
+    // View models used by these endpoints live in
+    // GAVS.AllocationSystem.Model/CSP/ViewModels/ITOperationMaturityAdminModels.cs
+    // (namespace GAVS.AllocationSystem.Model.CSP.ViewModels, same place every
+    // other CSM view model lives - see the `using` above), not in this project.
 
     public partial class AllSysController
     {
@@ -588,7 +53,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // environment doesn't lock everyone out.
         private static readonly HashSet<string> ITOpsSuperuserEmailsFallback = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "srividhya.b@neurealm.com",
+            // Cleared: a real SUPERUSER assignment now exists in ITOPS_ROLE_ASSIGNMENT,
+            // so this fallback is already a no-op (see anySuperuserRoleAssigned below).
+            // Leave empty rather than deleting the mechanism, so the bootstrap safety
+            // net is still there for a genuinely fresh/pre-migration environment.
         };
 
         private bool IsITOpsSuperuser(string empId)
@@ -641,6 +109,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return $"{names} {verb} not a Superuser in CSM, so they could not be assigned as an IT Ops Superuser.";
         }
 
+        /// <summary>
+        /// Reflects an object's public properties (an anonymous type, typically) into a
+        /// {{PropertyName}} -> value dictionary for GetEmailContent - so a row builder
+        /// computes its values ONCE, as one object, instead of also hand-maintaining a
+        /// second "{{Key}}", value list that mirrors it and can drift out of sync. Every
+        /// property becomes an available placeholder automatically; a row/email .htm
+        /// template can then reference, drop, or reorder any of them with NO C# change.
+        /// Null becomes "". Not just for row templates - any GetEmailContent caller can use it.
+        /// </summary>
+        private static Dictionary<string, string> ToEmailValues(object row)
+        {
+            var dict = new Dictionary<string, string>();
+            if (row == null) return dict;
+            foreach (var prop in row.GetType().GetProperties())
+            {
+                dict[prop.Name] = prop.GetValue(row)?.ToString() ?? "";
+            }
+            return dict;
+        }
+
         // ------------------------------------------------------------------
         // Admin Setup email notifications
         //
@@ -656,10 +144,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // (email + bell) instead of the email-only helpers below.
         // ------------------------------------------------------------------
 
-        private string ITOpsScopeLabel(string projectId)
+        // The scope label is keyed off the GRANT HOLDER's own Superuser status, not
+        // the grant's stored PROJECT_ID - a non-Superuser is always bounded by their
+        // real CSM project allocation regardless of what this grant's scope says
+        // (see GetITOpsDomainProjectMappings/GetITOpsProjects), so naming a specific
+        // project here would be misleading. Only a Superuser is genuinely org-wide.
+        private string ITOpsScopeLabel(string empId)
         {
-            if (string.IsNullOrWhiteSpace(projectId)) return "Org-wide";
-            return Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == projectId)?.PROJ_NM ?? projectId;
+            return IsITOpsSuperuser(empId) ? "Org-wide" : "All allocated projects";
         }
 
         /// <summary>
@@ -672,7 +164,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             if (roleScopePairs == null || !roleScopePairs.Any()) return;
 
-            var rolesListHtml = string.Join("", roleScopePairs.Select(rs => $"<li><b>{rs.Key}</b></li>"));
+            var rolesListHtml = string.Join("", roleScopePairs.Select(rs =>
+                helper.GetEmailContent("ITOpsRoleListItem.htm", ToEmailValues(new { RoleName = rs.Key, Scope = rs.Value }))));
             var subject = granted
                 ? (roleScopePairs.Count == 1
                     ? $"IT Ops Maturity: you've been granted the {roleScopePairs[0].Key} role"
@@ -685,24 +178,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 empId,
                 subject,
                 granted ? "ITOpsRoleGranted.htm" : "ITOpsRoleRevoked.htm",
-                new Dictionary<string, string>
+                ToEmailValues(new
                 {
-                    { "EmpName", GetEmpName(empId) },
-                    { "ByName", GetEmpName(byEmpId) },
-                    { "RolesList", rolesListHtml }
-                });
+                    EmpName = GetEmpName(empId),
+                    ByName = GetEmpName(byEmpId),
+                    RolesList = rolesListHtml
+                }));
         }
 
         /// <summary>
-        /// One consolidated email covering only what actually changed, sent
-        /// when the admin clicks "Submit and Continue to Configure Assessment"
-        /// - NOT fired per individual add/remove during editing (that read as
-        /// spam), and NOT fired at all on a submit with nothing new to report
-        /// (clicking Submit again with no edits sent a duplicate email before
-        /// this fix). "Changed" is driven off ITOPS_DOMAIN_PROJECT_MAP_AUDIT's
-        /// NOTIFIED flag: only rows not yet included in a previous email are
-        /// considered, and they're stamped NOTIFIED = true once this send
-        /// succeeds, so the next submit only ever reports what's new since.
+        /// One email PER PROJECT (not one consolidated email across every project
+        /// touched) covering only what actually changed for that project, sent when
+        /// the admin clicks "Submit and Continue to Configure Assessment" - NOT fired
+        /// per individual add/remove during editing (that read as spam), and NOT
+        /// fired at all for a project with nothing new to report (clicking Submit
+        /// again with no edits sent a duplicate email before this fix). "Changed" is
+        /// driven off ITOPS_DOMAIN_PROJECT_MAP_AUDIT's NOTIFIED flag: only rows not
+        /// yet included in a previous email are considered, and they're stamped
+        /// NOTIFIED = true once that project's send succeeds, so the next submit
+        /// only ever reports what's new since - per project, independently.
         /// </summary>
         private bool NotifyITOpsMappingSubmitted(List<string> projectIds)
         {
@@ -733,9 +227,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .GroupBy(c => c.CUST_ID)
                 .ToDictionary(g => g.Key, g => g.First().CUST_NM);
 
-            var rows = new List<string>();
-            var allAssesseeIds = new List<string>();
-            var notifiedAudit = new List<ITOPS_DOMAIN_PROJECT_MAP_AUDIT>();
+            var anySent = false;
 
             foreach (var group in pendingAudit.GroupBy(a => a.PROJECT_ID))
             {
@@ -787,41 +279,55 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var statusColor = !stillHasDomains && !isNewProject ? "#c62828" : "#1F497D";
                 var changeLines = new List<string>
                 {
-                    $"<div style='color:{statusColor};font-weight:700;margin-bottom:4px;'>{statusLabel}</div>"
+                    helper.GetEmailContent("ITOpsMappingStatusLine.htm", ToEmailValues(new { StatusColor = statusColor, StatusLabel = statusLabel }))
                 };
                 if (added.Any())
-                    changeLines.Add($"<div style='color:#1e7d34;font-weight:600;'>+ Added: {string.Join(", ", added)}</div>");
+                    changeLines.Add(helper.GetEmailContent("ITOpsMappingAddedLine.htm", ToEmailValues(new { Names = string.Join(", ", added) })));
                 if (removed.Any())
-                    changeLines.Add($"<div style='color:#c62828;font-weight:600;'>&minus; Removed: {string.Join(", ", removed)}</div>");
+                    changeLines.Add(helper.GetEmailContent("ITOpsMappingRemovedLine.htm", ToEmailValues(new { Names = string.Join(", ", removed) })));
 
-                const string cellStyle = "padding:10px 12px;border-bottom:1px solid #eeeeee;";
-                rows.Add("<tr>" +
-                    $"<td valign=top style='{cellStyle}'>{accountName}</td>" +
-                    $"<td valign=top style='{cellStyle}'>{project.PROJ_NM ?? projectId}</td>" +
-                    $"<td valign=top style='{cellStyle}'>{string.Join("", changeLines)}</td>" +
-                    $"<td valign=top style='{cellStyle}'>{string.Join(", ", GetEmpNames(assesseeIds))}</td>" +
-                    "</tr>");
-                allAssesseeIds.AddRange(assesseeIds);
-                notifiedAudit.AddRange(group);
+                // Every value this row could plausibly show is passed through, not just the
+                // ones ITOpsMappingSubmittedRow.htm currently uses - so adding, removing, or
+                // reordering a column is purely an edit to that .htm file (add/drop a <td>
+                // referencing one of these keys) and never needs a C# change. A key the
+                // template doesn't reference is simply never substituted - see GetEmailContent.
+                var row = helper.GetEmailContent("ITOpsMappingSubmittedRow.htm", ToEmailValues(new
+                {
+                    AccountName = accountName,
+                    ProjectId = projectId,
+                    ProjectName = project.PROJ_NM ?? projectId,
+                    StatusLabel = statusLabel,
+                    StatusColor = statusColor,
+                    AddedNames = string.Join(", ", added),
+                    RemovedNames = string.Join(", ", removed),
+                    ChangeLines = string.Join("", changeLines),
+                    AssesseeIds = string.Join(", ", assesseeIds),
+                    Assessees = string.Join(", ", GetEmpNames(assesseeIds))
+                }));
+
+                // "Dex Partners" - the project's Quality SPOC - gets the same mapping
+                // notification as the assessees, so they see scope changes on projects
+                // they own without needing to be an assessee themselves.
+                var recipientIds = assesseeIds.ToList();
+                if (!string.IsNullOrWhiteSpace(project.QUALITY_SPOC)) recipientIds.Add(project.QUALITY_SPOC);
+                recipientIds = recipientIds.Distinct().ToList();
+
+                SendITOpsNotificationEmailToMany(
+                    recipientIds,
+                    $"IT Ops Maturity: domain-project mapping updated - {project.PROJ_NM ?? projectId}",
+                    "ITOpsMappingSubmitted.htm",
+                    ToEmailValues(new { RowsHtml = row }));
+
+                foreach (var audit in group)
+                {
+                    audit.NOTIFIED = true;
+                    CSPdb.ITOPS_DOMAIN_PROJECT_MAP_AUDIT.Update(audit);
+                }
+                anySent = true;
             }
 
-            allAssesseeIds = allAssesseeIds.Distinct().ToList();
-            if (!rows.Any() || !allAssesseeIds.Any()) return false;
-
-            SendITOpsNotificationEmailToMany(
-                allAssesseeIds,
-                "IT Ops Maturity: domain-project mapping updated",
-                "ITOpsMappingSubmitted.htm",
-                new Dictionary<string, string> { { "RowsHtml", string.Join("", rows) } });
-
-            foreach (var audit in notifiedAudit)
-            {
-                audit.NOTIFIED = true;
-                CSPdb.ITOPS_DOMAIN_PROJECT_MAP_AUDIT.Update(audit);
-            }
-            CSPdb.Commit(CanCommit);
-
-            return true;
+            if (anySent) CSPdb.Commit(CanCommit);
+            return anySent;
         }
 
         /// <summary>
@@ -852,12 +358,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 assesseeIds,
                 $"IT Ops Maturity: {oldName} domain renamed to {newName}",
                 "ITOpsDomainRenamed.htm",
-                new Dictionary<string, string>
-                {
-                    { "OldName", oldName },
-                    { "NewName", newName },
-                    { "ProjectNames", projectNamesJoined }
-                });
+                ToEmailValues(new { OldName = oldName, NewName = newName, ProjectNames = projectNamesJoined }));
         }
 
         /// <summary>Step 5: notifies the person just assigned as assessor/reviewer on one domain assessment (email + bell - a real assessment id exists here).</summary>
@@ -871,14 +372,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 empId,
                 $"IT Ops Maturity: you're the {roleLabel.ToLowerInvariant()} for {domainName} — {projectName}",
                 "ITOpsTeamAssigned.htm",
-                new Dictionary<string, string>
+                ToEmailValues(new
                 {
-                    { "EmpName", GetEmpName(empId) },
-                    { "RoleLabel", roleLabel },
-                    { "DomainName", domainName },
-                    { "ProjectName", projectName },
-                    { "CycleLabel", cycleLabel }
-                },
+                    EmpName = GetEmpName(empId),
+                    RoleLabel = roleLabel,
+                    DomainName = domainName,
+                    ProjectName = projectName,
+                    CycleLabel = cycleLabel
+                }),
                 "TeamAssigned", assessment.ID, null,
                 $"You've been assigned as {roleLabel} for {domainName} — {projectName}, cycle {cycleLabel}.");
         }
@@ -913,26 +414,31 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var cycleLabels = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().Where(m => masterIds.Contains(m.ID)).ToDictionary(m => m.ID, m => m.CYCLE_LABEL);
             var distinctRoles = items.Select(i => i.Item2).Distinct().ToList();
 
-            const string cellStyle = "padding:10px 12px;border-bottom:1px solid #eeeeee;";
+            var previouslyCell = fromEmpName != null
+                ? helper.GetEmailContent("ITOpsTeamAssignedBulkPreviouslyCell.htm", ToEmailValues(new { FromEmpName = fromEmpName }))
+                : "";
+            // Superset object, reflected via ToEmailValues: every value a row could show is
+            // passed through so the .htm row template is free to add/drop/reorder <td>
+            // columns on its own - no C# change needed unless a genuinely new value (not
+            // already computed here) is required.
             var rowsHtml = string.Join("", items
                 .Select(i => new
                 {
+                    DomainId = i.Item1.DOMAIN_ID,
                     Domain = domainNames.ContainsKey(i.Item1.DOMAIN_ID) ? domainNames[i.Item1.DOMAIN_ID] : "domain",
+                    ProjectId = i.Item1.PROJECT_ID,
                     Project = projectNames.ContainsKey(i.Item1.PROJECT_ID) ? projectNames[i.Item1.PROJECT_ID] : i.Item1.PROJECT_ID,
+                    AssessmentMasterId = i.Item1.ASSESSMENT_MASTER_ID,
                     Cycle = cycleLabels.ContainsKey(i.Item1.ASSESSMENT_MASTER_ID) ? cycleLabels[i.Item1.ASSESSMENT_MASTER_ID] : "-",
-                    Role = i.Item2
+                    Role = i.Item2,
+                    FromEmpName = fromEmpName ?? "",
+                    PreviouslyCell = previouslyCell
                 })
                 .OrderBy(r => r.Domain).ThenBy(r => r.Project)
-                .Select(r => "<tr>" +
-                    $"<td valign=top style='{cellStyle}'>{r.Domain}</td>" +
-                    $"<td valign=top style='{cellStyle}'>{r.Project}</td>" +
-                    $"<td valign=top style='{cellStyle}'>{r.Role}</td>" +
-                    $"<td valign=top style='{cellStyle}'>{r.Cycle}</td>" +
-                    (fromEmpName != null ? $"<td valign=top style='{cellStyle}'>{fromEmpName}</td>" : "") +
-                    "</tr>"));
+                .Select(r => helper.GetEmailContent("ITOpsTeamAssignedBulkRow.htm", ToEmailValues(r))));
 
             var previouslyHeaderCell = fromEmpName != null
-                ? "<th align=left style='padding:10px 12px;color:#ffffff;font-weight:600;border-bottom:1px solid #eeeeee;'>Previously held by</th>"
+                ? helper.GetEmailContent("ITOpsTeamAssignedBulkPreviouslyHeader.htm", new Dictionary<string, string>())
                 : "";
 
             string introText;
@@ -957,13 +463,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ? $"IT Ops Maturity: you've been {(isRemoved ? "removed as" : "assigned as")} {distinctRoles[0].ToLowerInvariant()} for {domainNames.Values.FirstOrDefault()} across {items.Count} project(s)"
                 : $"IT Ops Maturity: you're {(isRemoved ? "off" : "now on")} {items.Count} assessment(s) as {(distinctRoles.Count == 1 ? distinctRoles[0].ToLowerInvariant() : "assessor/reviewer")}";
 
-            var values = new Dictionary<string, string>
+            var values = ToEmailValues(new
             {
-                { "EmpName", GetEmpName(empId) },
-                { "IntroText", introText },
-                { "PreviouslyHeaderCell", previouslyHeaderCell },
-                { "RowsHtml", rowsHtml }
-            };
+                EmpName = GetEmpName(empId),
+                IntroText = introText,
+                PreviouslyHeaderCell = previouslyHeaderCell,
+                RowsHtml = rowsHtml
+            });
 
             if (fromEmpId != null)
                 SendITOpsNotificationEmailWithCc(new List<string> { empId }, new List<string> { fromEmpId }, subject, "ITOpsTeamAssignedBulk.htm", values);
@@ -1068,6 +574,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var callerEmpId = GetHeaderDetails_String("empId");
             if (HasITOpsRole(callerEmpId, roleCode)) return null;
+            return Content(HttpStatusCode.Forbidden, "You do not have permission to " + what + ".");
+        }
+
+        /// <summary>Same as DenyIfNotITOpsRole, but passes if the caller holds ANY of several roles - e.g. assigning Assessor/Reviewer is now done both from Configure Assessment (RUNOPS_INITIATOR) and, if ever re-enabled, from Step 5 (TEAM_ASSIGNMENT_COORDINATOR).</summary>
+        private IHttpActionResult DenyIfNotAnyITOpsRole(string[] roleCodes, string what)
+        {
+            var callerEmpId = GetHeaderDetails_String("empId");
+            if (roleCodes.Any(rc => HasITOpsRole(callerEmpId, rc))) return null;
             return Content(HttpStatusCode.Forbidden, "You do not have permission to " + what + ".");
         }
 
@@ -1426,6 +940,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var empNames = GetITOpsEmpNameMap(assignments.Select(a => a.EMP_ID).ToList());
             var projectNames = GetITOpsProjectNameMap(assignments.Select(a => a.PROJECT_ID).ToList());
+            // Memoized per employee - IsITOpsSuperuser is a DB check, and the same
+            // employee can appear on several assignment rows in this list.
+            var superuserCache = new Dictionary<string, bool>();
+            Func<string, bool> isSuperuser = id =>
+            {
+                if (string.IsNullOrWhiteSpace(id)) return false;
+                bool cached;
+                if (superuserCache.TryGetValue(id, out cached)) return cached;
+                cached = IsITOpsSuperuser(id);
+                superuserCache[id] = cached;
+                return cached;
+            };
 
             var rows = assignments.Select(a =>
             {
@@ -1445,7 +971,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     RoleName = role != null ? role.ROLE_NAME : null,
                     ProjectId = a.PROJECT_ID,
                     ProjectName = projectName,
-                    Scope = string.IsNullOrWhiteSpace(a.PROJECT_ID) ? "Org-wide" : (projectName ?? a.PROJECT_ID) + " only",
+                    Scope = isSuperuser(a.EMP_ID) ? "Org-wide" : "All allocated projects",
                     ScopeType = a.SCOPE_TYPE,
                     GrantedOn = a.CREATED_DATE
                 };
@@ -1495,6 +1021,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             Func<string, string> nameOf = id =>
                 !string.IsNullOrWhiteSpace(id) && empNames.ContainsKey(id) ? empNames[id] : id;
+            var superuserCache = new Dictionary<string, bool>();
+            Func<string, bool> isSuperuser = id =>
+            {
+                if (string.IsNullOrWhiteSpace(id)) return false;
+                bool cached;
+                if (superuserCache.TryGetValue(id, out cached)) return cached;
+                cached = IsITOpsSuperuser(id);
+                superuserCache[id] = cached;
+                return cached;
+            };
 
             var rows = assignments.Select(a =>
             {
@@ -1514,9 +1050,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     RoleName = role != null ? role.ROLE_NAME : null,
                     ProjectId = a.PROJECT_ID,
                     ProjectName = projectName,
-                    Scope = string.IsNullOrWhiteSpace(a.PROJECT_ID)
-                        ? "Org-wide"
-                        : (projectName ?? a.PROJECT_ID) + " only",
+                    Scope = isSuperuser(a.EMP_ID) ? "Org-wide" : "All allocated projects",
                     IsActive = a.ISACTIVE,
                     CreatedBy = a.CREATED_BY,
                     CreatedByName = nameOf(a.CREATED_BY),
@@ -1584,7 +1118,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             NotifyITOpsRoleChange(
                 targetEmpId,
-                new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>(role.ROLE_NAME, ITOpsScopeLabel(projectId)) },
+                new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>(role.ROLE_NAME, ITOpsScopeLabel(targetEmpId)) },
                 callerEmpId, granted: true);
 
             return Ok(existing);
@@ -1683,11 +1217,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit(CanCommit);
 
             // One email per EMPLOYEE listing every role just granted - the scope
-            // label summarizes every project touched for that role, so a bulk
-            // grant across several roles/projects is still exactly one email.
-            var grantScopeLabel = !projectIds.Any() ? "Org-wide" : string.Join(", ", projectIds.Select(ITOpsScopeLabel));
+            // label is keyed off THAT employee's own Superuser status, so it's
+            // computed per recipient rather than once for the whole batch.
             foreach (var targetEmpId in targetEmpIds)
             {
+                var grantScopeLabel = ITOpsScopeLabel(targetEmpId);
                 var roleScopePairs = requestedRoles
                     .Select(role => new KeyValuePair<string, string>(role.ROLE_NAME, grantScopeLabel))
                     .ToList();
@@ -1773,8 +1307,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     granted++;
                 }
 
-                var scopeLabel = !projectIds.Any() ? "Org-wide" : string.Join(", ", projectIds.Select(ITOpsScopeLabel));
-                roleScopePairs.Add(new KeyValuePair<string, string>(role.ROLE_NAME, scopeLabel));
+                roleScopePairs.Add(new KeyValuePair<string, string>(role.ROLE_NAME, ITOpsScopeLabel(targetEmpId)));
             }
 
             CSPdb.Commit(CanCommit);
@@ -1852,7 +1385,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assignment == null) return NotFound();
 
             var roleName = CSPdb.ITOPS_ROLE.GetAll().FirstOrDefault(r => r.ID == assignment.ROLE_ID)?.ROLE_NAME ?? "role";
-            var scopeLabel = ITOpsScopeLabel(assignment.PROJECT_ID);
+            var scopeLabel = ITOpsScopeLabel(assignment.EMP_ID);
 
             // UpdateAuditFieldsExt unconditionally sets ISACTIVE = true, so it must
             // run BEFORE the revocation or it silently stomps it back to active.
@@ -1908,7 +1441,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var roleScopePairs = empGroup
                     .Select(a => new KeyValuePair<string, string>(
                         roleNames.ContainsKey(a.ROLE_ID) ? roleNames[a.ROLE_ID] : "role",
-                        ITOpsScopeLabel(a.PROJECT_ID)))
+                        ITOpsScopeLabel(a.EMP_ID)))
                     .ToList();
                 NotifyITOpsRoleChange(empGroup.Key, roleScopePairs, callerEmpId, granted: false);
             }
@@ -2319,6 +1852,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // single SP can't join across both (see that script's header note).
             var normalizedProjectId = string.IsNullOrWhiteSpace(projectId) ? null : projectId;
             var domainRows = CSPdb.AppRepo.ITOpsGetDomainProjectMapDomains(normalizedProjectId);
+
+            // Same project-allocation scoping as GetITOpsProjects: a non-Superuser
+            // (e.g. a Scope Administrator/Domain-Project Mapper who isn't also a
+            // Superuser) only ever sees mappings for projects they're actually
+            // staffed on or hold a management role on, not every project org-wide.
+            // Without this, this screen showed the whole org's mappings to anyone
+            // holding the role, regardless of their own project allocation.
+            var callerEmpId = GetHeaderDetails_String("empId");
+            if (!IsITOpsSuperuser(callerEmpId))
+            {
+                var allowedProjectIds = new HashSet<string>(
+                    Cldb.AppRepo.GetProjectIdsForUser(callerEmpId, "", "")
+                        .Select(p => p.PROJ_ID)
+                        .Where(id => id != null));
+                domainRows = domainRows.Where(m => allowedProjectIds.Contains(m.ProjectId)).ToList();
+            }
+
             if (!domainRows.Any()) return Ok(new List<ITOPS_DomainProjectMappingRow>());
 
             var projectIds = domainRows.Select(m => m.ProjectId).Distinct().ToList();
@@ -2772,17 +2322,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .GroupBy(c => c.CUST_ID)
                 .ToDictionary(g => g.Key, g => g.First().CUST_NM);
 
+            // When Pairs is given, each project only creates the specific domain(s)
+            // requested for it, not everything mapped to it - e.g. a project with 2
+            // mapped domains can have just one ticked in the Add staging screen,
+            // leaving the other one staged/untouched instead of both being created.
+            var requestedDomainIdsByProject = (request.Pairs ?? new List<ITOPS_CreateAssessmentPair>())
+                .Where(p => !string.IsNullOrWhiteSpace(p.ProjectId))
+                .GroupBy(p => p.ProjectId.Trim())
+                .ToDictionary(g => g.Key, g => new HashSet<int>(g.Select(p => p.DomainId)));
+
             // Each project gets its OWN domain set (whatever is mapped to it in
-            // Configure Scope) and its OWN assessee set - no longer forced to be
-            // identical across a multi-project selection the way the old
-            // caller-supplied lists were.
+            // Configure Scope, narrowed further by Pairs when given) and its OWN
+            // assessee set - no longer forced to be identical across a
+            // multi-project selection the way the old caller-supplied lists were.
             foreach (var project in allProjects)
             {
             var projectId = project.PROJ_ID;
             var accountName = project.CUST_ID != null && accountNames.ContainsKey(project.CUST_ID)
                 ? accountNames[project.CUST_ID]
                 : null;
-            var domainIds = mapsForProjects.Where(m => m.PROJECT_ID == projectId).Select(m => m.DOMAIN_ID).Distinct().ToList();
+            HashSet<int> requestedDomainIds;
+            var domainIds = mapsForProjects.Where(m => m.PROJECT_ID == projectId).Select(m => m.DOMAIN_ID).Distinct()
+                .Where(id => !requestedDomainIdsByProject.TryGetValue(projectId, out requestedDomainIds) || requestedDomainIds.Contains(id))
+                .ToList();
             var domains = domainIds.Where(allDomains.ContainsKey).Select(id => allDomains[id]).ToList();
             var wantedAssessees = assesseesForProjects.Where(a => a.PROJECT_ID == projectId).Select(a => a.EMP_ID).Distinct().ToList();
             var assessmentIds = new List<int>();
@@ -2843,7 +2405,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             continue;
                         }
 
-                        SeedITOpsDefaultOwners(assessment, domain, empId);
+                        // Deliberately NOT seeding the domain's default assessor/reviewer here:
+                        // this endpoint is the Configure Assessment staging flow, where the
+                        // caller explicitly picks Assessor/Reviewer per row and adds them via
+                        // AddITOpsAssessor/AddITOpsReviewer right after this call returns. Seeding
+                        // defaults too used to leave BOTH the domain default and the staged pick
+                        // as reviewers/assessors on the same assessment (e.g. a default reviewer
+                        // plus whoever was staged). SeedITOpsDefaultOwners still fires from the
+                        // scope-change auto-sync path, which has no staging UI to override it.
                         CSPdb.Commit(CanCommit);
                         newAssessments.Add(assessment);
                     }
@@ -2904,8 +2473,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 // created in this call (table: Account / Project / Domains /
                 // Assessee) - To is the project's assessees, Cc is every assessor
                 // and reviewer already seeded on these new assessments plus the
-                // project's Quality SPOC (PROJECT.QUALITY_SPOC). The bell still
-                // logs one row per new assessment (so the in-app count matches
+                // project's Quality SPOC / DP / PM / CSM (PROJECT.QUALITY_SPOC /
+                // PROJ_DM_EMP_ID / PROJ_PM_EMP_ID / DP_ID). The bell still logs
+                // one row per new assessment (so the in-app count matches
                 // reality), it just doesn't send its own separate email.
                 if (newAssessments.Any() && wantedAssessees.Any())
                 {
@@ -2923,9 +2493,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             .Where(r => r.ISACTIVE && newAssessmentIds.Contains(r.ASSESSMENT_ID))
                             .Select(r => r.REVIEWER_EMP_ID))
                         .ToList();
-                    // "Dex partner" for now - the project's Quality SPOC. Revisit this
-                    // list if the definition of who else should be Cc'd changes.
+                    // "Dex Partner" (PROJECT.QUALITY_SPOC), "DP" (PROJECT.PROJ_DM_EMP_ID),
+                    // "PM" (PROJECT.PROJ_PM_EMP_ID), and "CSM" (PROJECT.DP_ID) - the
+                    // project's own ownership fields, same four added to
+                    // NotifyITOpsAssesseesUpdated below.
                     if (!string.IsNullOrWhiteSpace(project.QUALITY_SPOC)) ccEmpIds.Add(project.QUALITY_SPOC);
+                    if (!string.IsNullOrWhiteSpace(project.PROJ_DM_EMP_ID)) ccEmpIds.Add(project.PROJ_DM_EMP_ID);
+                    if (!string.IsNullOrWhiteSpace(project.PROJ_PM_EMP_ID)) ccEmpIds.Add(project.PROJ_PM_EMP_ID);
+                    if (!string.IsNullOrWhiteSpace(project.DP_ID)) ccEmpIds.Add(project.DP_ID);
                     ccEmpIds = ccEmpIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
 
                     SendITOpsNotificationEmailWithCc(
@@ -2933,14 +2508,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         ccEmpIds,
                         $"IT Ops Maturity: assessment(s) created for {project.PROJ_NM ?? projectId}",
                         "ITOpsAssessmentsCreated.htm",
-                        new Dictionary<string, string>
+                        ToEmailValues(new
                         {
-                            { "AccountName", accountName ?? "-" },
-                            { "ProjectName", project.PROJ_NM ?? projectId },
-                            { "CycleLabel", master.CYCLE_LABEL },
-                            { "DomainNames", string.Join(", ", domainNames) },
-                            { "AssesseeNames", string.Join(", ", GetEmpNames(wantedAssessees)) }
-                        });
+                            AccountName = accountName ?? "-",
+                            ProjectName = project.PROJ_NM ?? projectId,
+                            CycleLabel = master.CYCLE_LABEL,
+                            DomainNames = string.Join(", ", domainNames),
+                            AssesseeNames = string.Join(", ", GetEmpNames(wantedAssessees))
+                        }));
 
                     foreach (var assesseeEmpId in wantedAssessees)
                     {
@@ -2965,9 +2540,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         var changeLines = new List<string>();
                         if (addedAssessees.Any())
-                            changeLines.Add($"<div style='color:#1e7d34;font-weight:600;'>+ Added: {string.Join(", ", GetEmpNames(addedAssessees))}</div>");
+                            changeLines.Add(helper.GetEmailContent("ITOpsMappingAddedLine.htm", ToEmailValues(new { Names = string.Join(", ", GetEmpNames(addedAssessees)) })));
                         if (removedAssessees.Any())
-                            changeLines.Add($"<div style='color:#c62828;font-weight:600;'>&minus; Removed: {string.Join(", ", GetEmpNames(removedAssessees))}</div>");
+                            changeLines.Add(helper.GetEmailContent("ITOpsMappingRemovedLine.htm", ToEmailValues(new { Names = string.Join(", ", GetEmpNames(removedAssessees)) })));
 
                         var ccEmpIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
                             .Where(a => a.ISACTIVE && assessmentIds.Contains(a.ASSESSMENT_ID))
@@ -2976,7 +2551,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                 .Where(r => r.ISACTIVE && assessmentIds.Contains(r.ASSESSMENT_ID))
                                 .Select(r => r.REVIEWER_EMP_ID))
                             .ToList();
+                        // "Dex Partner" / "DP" / "PM" / "CSM" - same four fields as the
+                        // "assessments created" branch above.
                         if (!string.IsNullOrWhiteSpace(project.QUALITY_SPOC)) ccEmpIds.Add(project.QUALITY_SPOC);
+                        if (!string.IsNullOrWhiteSpace(project.PROJ_DM_EMP_ID)) ccEmpIds.Add(project.PROJ_DM_EMP_ID);
+                        if (!string.IsNullOrWhiteSpace(project.PROJ_PM_EMP_ID)) ccEmpIds.Add(project.PROJ_PM_EMP_ID);
+                        if (!string.IsNullOrWhiteSpace(project.DP_ID)) ccEmpIds.Add(project.DP_ID);
                         ccEmpIds = ccEmpIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
 
                         // To both the current and the just-removed assessees, so someone
@@ -2989,12 +2569,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             ccEmpIds,
                             $"IT Ops Maturity: assessee list updated for {project.PROJ_NM ?? projectId}",
                             "ITOpsAssesseesUpdated.htm",
-                            new Dictionary<string, string>
+                            ToEmailValues(new
                             {
-                                { "AccountName", accountName ?? "-" },
-                                { "ProjectName", project.PROJ_NM ?? projectId },
-                                { "ChangeLines", string.Join("", changeLines) }
-                            });
+                                AccountName = accountName ?? "-",
+                                ProjectName = project.PROJ_NM ?? projectId,
+                                ChangeLines = string.Join("", changeLines)
+                            }));
                     }
                 }
 
@@ -3100,6 +2680,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var empNames = GetITOpsEmpNameMap(
                 assessorRows.Select(a => a.ASSESSOR_EMP_ID)
                     .Concat(reviewerRows.Select(r => r.REVIEWER_EMP_ID))
+                    .Concat(assesseeRows.Select(x => x.ASSESSEE_EMP_ID))
                     .ToList());
             Func<string, string> nameOf = id => id != null && empNames.ContainsKey(id) ? empNames[id] : id;
 
@@ -3109,6 +2690,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .OrderBy(x => x.ID).Select(x => x.ASSESSOR_EMP_ID).ToList();
                 var reviewerIds = reviewerRows.Where(x => x.ASSESSMENT_ID == a.ID)
                     .OrderBy(x => x.ID).Select(x => x.REVIEWER_EMP_ID).ToList();
+                var assesseeIds = assesseeRows.Where(x => x.ASSESSMENT_ID == a.ID)
+                    .OrderBy(x => x.ID).Select(x => x.ASSESSEE_EMP_ID).ToList();
 
                 return new ITOPS_CycleAssessmentRow
                 {
@@ -3123,9 +2706,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     DomainName = domains.ContainsKey(a.DOMAIN_ID) ? domains[a.DOMAIN_ID].NAME : null,
                     AssessorCount = assessorIds.Count,
                     ReviewerCount = reviewerIds.Count,
-                    AssesseeCount = assesseeRows.Count(x => x.ASSESSMENT_ID == a.ID),
+                    AssesseeCount = assesseeIds.Count,
                     AssessorNames = assessorIds.Select(nameOf).ToList(),
                     ReviewerNames = reviewerIds.Select(nameOf).ToList(),
+                    AssesseeNames = assesseeIds.Select(nameOf).ToList(),
                     Status = a.STATUS
                 };
             })
@@ -3202,13 +2786,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 ccEmpIds,
                 $"IT Ops Maturity: {domainName} assessment removed for {projectName}",
                 "ITOpsAssessmentRemoved.htm",
-                new Dictionary<string, string>
+                ToEmailValues(new
                 {
-                    { "AccountName", accountName ?? "-" },
-                    { "ProjectName", projectName },
-                    { "DomainName", domainName },
-                    { "CycleLabel", cycleLabel }
-                });
+                    AccountName = accountName ?? "-",
+                    ProjectName = projectName,
+                    DomainName = domainName,
+                    CycleLabel = cycleLabel
+                }));
         }
 
         // ==================================================================
@@ -3261,7 +2845,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult AddITOpsAssessor([FromBody] ITOPS_AddTeamMemberRequest request)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "assign assessors");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "assign assessors");
             if (denied != null) return denied;
 
             if (request == null || request.AssessmentId <= 0 || string.IsNullOrWhiteSpace(request.EmpId))
@@ -3320,7 +2904,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult AddITOpsAssessorsBulk([FromBody] ITOPS_AddTeamMemberBulkRequest request)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "assign assessors");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "assign assessors");
             if (denied != null) return denied;
 
             var assessmentIds = (request?.AssessmentIds ?? new List<int>()).Distinct().ToList();
@@ -3374,7 +2958,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult RemoveITOpsAssessor(int id)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "remove assessors");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "remove assessors");
             if (denied != null) return denied;
 
             var row = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll().FirstOrDefault(a => a.ID == id);
@@ -3401,7 +2985,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult RemoveITOpsAssessorsBulk([FromBody] ITOPS_RemoveTeamMemberBulkRequest request)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "remove assessors");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "remove assessors");
             if (denied != null) return denied;
 
             var ids = (request?.Ids ?? new List<int>()).Distinct().ToList();
@@ -3435,7 +3019,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult AddITOpsReviewer([FromBody] ITOPS_AddTeamMemberRequest request)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "assign reviewers");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "assign reviewers");
             if (denied != null) return denied;
 
             if (request == null || request.AssessmentId <= 0 || string.IsNullOrWhiteSpace(request.EmpId))
@@ -3488,7 +3072,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult AddITOpsReviewersBulk([FromBody] ITOPS_AddTeamMemberBulkRequest request)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "assign reviewers");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "assign reviewers");
             if (denied != null) return denied;
 
             var assessmentIds = (request?.AssessmentIds ?? new List<int>()).Distinct().ToList();
@@ -3542,7 +3126,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult RemoveITOpsReviewer(int id)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "remove reviewers");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "remove reviewers");
             if (denied != null) return denied;
 
             var row = CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll().FirstOrDefault(r => r.ID == id);
@@ -3562,7 +3146,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpPost]
         public IHttpActionResult RemoveITOpsReviewersBulk([FromBody] ITOPS_RemoveTeamMemberBulkRequest request)
         {
-            var denied = DenyIfNotITOpsRole("TEAM_ASSIGNMENT_COORDINATOR", "remove reviewers");
+            var denied = DenyIfNotAnyITOpsRole(new[] { "RUNOPS_INITIATOR", "TEAM_ASSIGNMENT_COORDINATOR" }, "remove reviewers");
             if (denied != null) return denied;
 
             var ids = (request?.Ids ?? new List<int>()).Distinct().ToList();

@@ -243,6 +243,15 @@ th.sortable:hover {
     text-transform: none;
     letter-spacing: normal;
   }
+
+  // "All cycles"/"All business units"/etc is a real, meaningful selection (the
+  // aggregate view) - it should read the same as an actual chosen value (like
+  // the Report picker's own value), not greyed out like an unset placeholder.
+  // ::ng-deep reaches past the child searchable-select's view encapsulation.
+  ::ng-deep .ss-input,
+  ::ng-deep .ss-input::placeholder {
+    color: var(--text-primary) !important;
+  }
 }
 
 .question-cell {

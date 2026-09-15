@@ -17,13 +17,12 @@
   --accent-track: rgba(0,122,255,0.1);
   --accent-glow: rgba(0,122,255,0.16);
   --focus-ring: #007AFF;
-  /* Purple is reserved for the primary CTA buttons specifically (.btn-primary)
-     so the main "do this next" action stands out from --accent, which still
-     drives everything else - active step badge, links, focus rings, info
-     buttons - keeping the overall theme blue. */
-  --btn-primary-1: rgb(124,58,196);
-  --btn-primary-2: rgb(168,85,222);
-  --btn-primary-glow: rgba(124,58,196,0.28);
+  /* Primary CTA buttons (.btn-primary) share the same blue as --accent (active
+     step badge, links, focus rings) rather than a separate purple, so the
+     whole screen reads as one consistent blue theme. */
+  --btn-primary-1: #1E88F5;
+  --btn-primary-2: #0051D5;
+  --btn-primary-glow: rgba(0,122,255,0.28);
   /* A third button color, distinct from both blue and purple, for read-only/
      history-style actions so the screen isn't just "blue + purple" either. */
   --btn-info-1: rgb(6,148,162);
@@ -114,9 +113,9 @@
     --accent-track: rgba(153,187,222,0.18);
     --accent-glow: rgba(153,187,222,0.25);
     --focus-ring: rgb(153,187,222);
-    --btn-primary-1: rgb(178,146,224);
-    --btn-primary-2: rgb(200,172,235);
-    --btn-primary-glow: rgba(178,146,224,0.35);
+    --btn-primary-1: rgb(153,187,222);
+    --btn-primary-2: rgb(123,167,206);
+    --btn-primary-glow: rgba(153,187,222,0.32);
     --btn-info-1: rgb(74,196,208);
     --btn-info-2: rgb(102,214,224);
     --status-good: rgb(94,196,182);
@@ -157,9 +156,9 @@
     --accent-track: rgba(153,187,222,0.18);
     --accent-glow: rgba(153,187,222,0.25);
     --focus-ring: rgb(153,187,222);
-    --btn-primary-1: rgb(178,146,224);
-    --btn-primary-2: rgb(200,172,235);
-    --btn-primary-glow: rgba(178,146,224,0.35);
+    --btn-primary-1: rgb(153,187,222);
+    --btn-primary-2: rgb(123,167,206);
+    --btn-primary-glow: rgba(153,187,222,0.32);
     --btn-info-1: rgb(74,196,208);
     --btn-info-2: rgb(102,214,224);
     --status-good: rgb(94,196,182);
@@ -391,6 +390,27 @@ h1 .pill { vertical-align: middle; margin-left: 6px; }
 .chip-remove:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; opacity: 1; }
 
 .chip-stack { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* Chips plus an inline edit icon, pinned to the same line even when the chip
+   list itself wraps to a second line - nowrap on the OUTER row keeps the
+   pencil from being pushed onto its own row underneath a long name list;
+   min-width: 0 lets the inner chip-stack actually shrink/wrap instead of
+   forcing the row wider than the column. */
+.chip-stack-edit { display: flex; align-items: flex-start; gap: 6px; flex-wrap: nowrap; }
+.chip-stack-edit .chip-stack { flex: 1 1 auto; min-width: 0; }
+.chip-stack-edit .btn-icon { flex: none; margin-top: 1px; }
+/* Caps how wide a people column can grow before names wrap, so three such
+   columns side by side (Assessee/Assessor/Reviewer) don't force the whole
+   table wider than the page for a row with several names. */
+.people-cell { max-width: 220px; }
+/* A row's Assessor/Reviewer cell still missing its required pick, after a
+   blocked "Create assessments" click - the "+ Set..." button itself switches
+   to a red outline (same treatment a required form field gets on submit),
+   with a small caption underneath naming what's missing. No cell border/box -
+   the button's own state carries the signal. */
+.btn-ghost.btn-add.invalid { background: color-mix(in srgb, var(--status-critical) 10%, var(--neutral-bg)); color: var(--status-critical); border-color: color-mix(in srgb, var(--status-critical) 40%, var(--neutral-border)); }
+.btn-ghost.btn-add.invalid:hover:not(:disabled) { background: color-mix(in srgb, var(--status-critical) 18%, var(--neutral-bg)); color: var(--status-critical); }
+.field-error { display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: var(--text-xs); font-weight: 600; color: var(--status-critical); }
+.field-error svg { flex: none; }
 .chip-stack.assessee-chips { margin-bottom: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--neutral-bg); border: 1px solid var(--neutral-border); border-radius: 9999px; padding: 3px 9px 3px 3px; font-size: var(--text-sm); transition: transform 200ms; }
 .chip:hover { transform: translateY(-1px); }
@@ -467,6 +487,10 @@ h1 .pill { vertical-align: middle; margin-left: 6px; }
   transition: color 150ms cubic-bezier(0.2,0,0,1), border-color 150ms cubic-bezier(0.2,0,0,1), transform 100ms cubic-bezier(0.2,0,0,1);
 }
 .btn-icon svg { pointer-events: none; }
+/* Destructive row action (Remove) - a red icon rather than a text button, matching the danger treatment used elsewhere (.btn-ghost.btn-danger). */
+.btn-icon.btn-danger { color: var(--status-critical); border-color: color-mix(in srgb, var(--status-critical) 28%, var(--neutral-border)); }
+.btn-icon.btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--status-critical) 12%, transparent); border-color: var(--status-critical); }
+.btn-icon.btn-danger:disabled { opacity: .4; cursor: not-allowed; }
 .btn-icon:hover { color: var(--accent); border-color: var(--accent); }
 .btn-icon:active:not(:disabled) { transform: translateY(1px); }
 .btn-icon:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
@@ -582,6 +606,8 @@ label.picker-row {
 
 .field-note { display: flex; gap: 8px; align-items: flex-start; background: var(--accent-track); border-radius: 8px; padding: 10px 12px; margin-top: 16px; font-size: 12px; color: var(--text-secondary); }
 .field-note svg { flex: none; margin-top: 1px; color: var(--accent); }
+/* Bulk-selection bar above a table (e.g. "N selected" + Delete selected) - centered and spread out, not the informational-note look the plain .field-note otherwise has. */
+.field-note.selection-bar { align-items: center; justify-content: space-between; background: var(--neutral-bg); }
 
 .section-gap { margin-top: 40px; }
 .section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }

@@ -47,7 +47,9 @@ export class NavMenuComponent implements OnInit {
 
     const empId = localStorage.getItem('empid');
     if (empId) {
-      this.maturityApi.getHasDashboardAccess(empId).subscribe((granted) => (this.canSeeDashboard = granted));
+      // Reachable now for anyone with an assignment too (scoped to their own
+      // projects), not just the full Dashboard Viewer/Superuser grant.
+      this.maturityApi.getHasDashboardAccess(empId).subscribe((access) => (this.canSeeDashboard = access.hasAnyAssignment));
     }
   }
 

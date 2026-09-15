@@ -1,0 +1,26 @@
+<!--
+  One <tr> per assessment touched, repeated by NotifyITOpsTeamAssignmentBulk
+  and joined into ITOpsTeamAssignedBulk.htm's {{RowsHtml}} placeholder.
+
+  Add, remove, or reorder columns here - and match the header cells in
+  ITOpsTeamAssignedBulk.htm (the optional "Previously held by" header comes
+  from ITOpsTeamAssignedBulkPreviouslyHeader.htm) - with NO C# change needed.
+  Available placeholders:
+    {{DomainId}}            - raw domain id
+    {{Domain}}              - domain display name
+    {{ProjectId}}           - raw project id
+    {{Project}}             - project display name (falls back to ProjectId)
+    {{AssessmentMasterId}}  - raw cycle/assessment-master id
+    {{Cycle}}               - cycle label, or "-" if unknown
+    {{Role}}                - "Assessor" or "Reviewer"
+    {{FromEmpName}}         - outgoing person's name on a bulk reassignment, else blank
+    {{PreviouslyCell}}      - pre-rendered "Previously held by" <td> (see
+                              ITOpsTeamAssignedBulkPreviouslyCell.htm), blank when not a reassignment
+-->
+<tr>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Domain}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Project}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Role}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Cycle}}</td>
+{{PreviouslyCell}}
+</tr>

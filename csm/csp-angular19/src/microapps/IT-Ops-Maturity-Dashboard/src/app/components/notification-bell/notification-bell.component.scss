@@ -96,6 +96,8 @@
 }
 
 .bell-clear {
+  flex-shrink: 0;
+  white-space: nowrap;
   border: none;
   background: none;
   color: var(--bell-accent);

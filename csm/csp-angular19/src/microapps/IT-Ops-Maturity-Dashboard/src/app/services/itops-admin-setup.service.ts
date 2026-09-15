@@ -233,6 +233,7 @@ export interface ItOpsCycleAssessment {
   assesseeCount: number;
   assessorNames: string[];
   reviewerNames: string[];
+  assesseeNames: string[];
   status: string;
 }
 
@@ -679,10 +680,19 @@ export class ItOpsAdminSetupService {
    * yet simply produces nothing rather than being asked about it twice.
    * Returns the refreshed table rows for all selected projects.
    */
-  createAssessmentsForProjects(cycleId: number, projectIds: string[]): Observable<ItOpsCycleAssessment[]> {
+  /** `pairs`, when given, restricts each project to exactly those (project, domain) combinations instead of every domain mapped to it - lets the Add staging screen create just the ticked rows of a project, leaving its other domain(s) staged for later. */
+  createAssessmentsForProjects(
+    cycleId: number,
+    projectIds: string[],
+    pairs?: { projectId: string; domainId: number }[],
+  ): Observable<ItOpsCycleAssessment[]> {
     return this.http.post<ItOpsCycleAssessment[]>(
       `${this.apiurl}CreateITOpsAssessmentsForProject`,
-      { AssessmentMasterId: cycleId, ProjectIds: projectIds },
+      {
+        AssessmentMasterId: cycleId,
+        ProjectIds: projectIds,
+        Pairs: pairs?.length ? pairs.map((p) => ({ ProjectId: p.projectId, DomainId: p.domainId })) : undefined,
+      },
       { headers: this.getHeaders() },
     );
   }
@@ -898,6 +908,7 @@ export class ItOpsAdminSetupService {
       { headers: this.getHeaders() },
     );
   }
+
 
   /**
    * Client-side filter over the cached roster. An empty/short term returns the

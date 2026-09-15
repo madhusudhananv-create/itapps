@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ItOpsReportApiService, ReportOption } from '../../services/itops-report-api.service';
 import { IdentityService } from '../../services/identity.service';
 import { SessionService } from '../../services/session.service';
-import { ItOpsMaturityApiService } from '../../services/itops-maturity-api.service';
+import { ItOpsMaturityApiService, ItOpsMyAssignmentRow } from '../../services/itops-maturity-api.service';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../components/searchable-select/searchable-select.component';
 import { ReportRow, AssessmentStatus, ParameterDetailReportRow } from '../../models/maturity.model';
 
@@ -65,11 +65,15 @@ export class ReportsComponent implements OnInit {
   rowsLoading = false;
   accountCount = 0;
 
-  /** Dashboard Viewer role / ITOps Superuser - same broad grant the Dashboard itself uses
-   * to show every account regardless of the viewer's own SPOC/Reviewer/GDH assignments.
-   * The Parameter Detail report (no per-row SPOC/Reviewer email columns to check against)
-   * is only offered to viewers who already have this broad grant. */
+  /** Report Viewer role / ITOps Superuser (Dashboard Viewer no longer implies this - the
+   * two grants are independent) - a broad grant that shows every account regardless of the viewer's own
+   * SPOC/Reviewer/GDH assignments. The Parameter Detail report (no per-row SPOC/Reviewer
+   * email columns to check against) is only offered to viewers who already have this
+   * broad grant; everyone else still sees the Domain Assessment Report, row-filtered to
+   * just their own involvement (see SessionService.canSeeRow). */
   hasFullAccess = false;
+  /** Assessor/reviewer/assessee on at least one assessment anywhere - unlocks Reports (both, now that they're scoped via the filter dropdowns) even without the broad grant above. */
+  hasAnyAssignment = false;
 
   // ---- Report picker ----
   reportOptions: ReportOption[] = [];
@@ -96,6 +100,29 @@ export class ReportsComponent implements OnInit {
   accountFilter = '';
   projectFilter = '';
   domainFilter = '';
+
+  /** Own-scope (no full Report Viewer/Superuser grant) - every filter dropdown above is restricted to just this employee's own assessor/reviewer/assessee assignments instead of the org-wide lists. */
+  private myAssignments: ItOpsMyAssignmentRow[] = [];
+
+  /** Distinct (custId, projectId) pairs this employee is personally assigned to - same derivation the Dashboard's own-scope mode uses. */
+  private get myAssignedProjectPairs(): { custId: string; custName: string; projectId: string; projectName: string }[] {
+    const seen = new Map<string, { custId: string; custName: string; projectId: string; projectName: string }>();
+    for (const row of this.myAssignments) {
+      if (!row.custId || !row.projectId) continue;
+      if (this.cycleFilter && String(row.assessmentMasterId) !== this.cycleFilter) continue;
+      if (this.businessUnitFilter && row.businessUnit !== this.businessUnitFilter) continue;
+      const key = `${row.custId}|${row.projectId}`;
+      if (!seen.has(key)) {
+        seen.set(key, {
+          custId: row.custId,
+          custName: row.accountName ?? row.custId,
+          projectId: row.projectId,
+          projectName: row.projectName ?? row.projectId,
+        });
+      }
+    }
+    return Array.from(seen.values());
+  }
 
   get cycleOptions(): SearchableSelectOption[] {
     return this.dashboardCycles.map((c) => ({ value: String(c.id), label: c.cycleLabel }));
@@ -150,30 +177,46 @@ export class ReportsComponent implements OnInit {
           this.session.setEmail(email);
           return forkJoin({
             reports: this.reportApi.getAvailableReports(),
-            hasFullAccess: empId ? this.maturityApi.getHasDashboardAccess(empId) : of(false),
+            access: empId
+              ? this.maturityApi.getHasReportAccess(empId)
+              : of({ fullAccess: false, hasAnyAssignment: false }),
             cycles: this.maturityApi.getCycleList().pipe(catchError(() => of([]))),
             domains: this.maturityApi.getDomainList().pipe(catchError(() => of([]))),
             businessUnits: this.maturityApi.getBusinessUnits().pipe(catchError(() => of([]))),
             accounts: this.maturityApi.getAccountsWithAssessments().pipe(catchError(() => of([]))),
+            myAssignments: empId ? this.maturityApi.getMyAssignments(empId).pipe(catchError(() => of([] as ItOpsMyAssignmentRow[]))) : of([] as ItOpsMyAssignmentRow[]),
           });
         }),
       )
-      .subscribe(({ reports, hasFullAccess, cycles, domains, businessUnits, accounts }) => {
+      .subscribe(({ reports, access, cycles, domains, businessUnits, accounts, myAssignments }) => {
+        const hasFullAccess = access.fullAccess;
         this.hasFullAccess = hasFullAccess;
-        // The Parameter Detail report has no per-row SPOC/Reviewer email columns to check
-        // against, so it's only offered to viewers who already hold the broad Dashboard
-        // Viewer/Superuser grant - everyone else only sees the Domain Assessment report.
-        this.reportOptions = hasFullAccess
-          ? reports
-          : reports.filter((r) => r.displayName !== ItOpsReportApiService.PARAMETER_REPORT_NAME);
+        this.hasAnyAssignment = access.hasAnyAssignment;
+        this.myAssignments = myAssignments;
+        // Both reports are now scoped the same way for an own-scope viewer (their
+        // own assigned accounts/projects, via the restricted filter dropdowns and
+        // the multi-call aggregate in loadReportData) - Parameter Detail no longer
+        // needs the broad Report Viewer/Superuser grant to be
+        // offered, just SOME assignment (assessor, reviewer, or assessee).
+        // Someone with neither sees no reports at all.
+        this.reportOptions = hasFullAccess || this.hasAnyAssignment ? reports : [];
         this.selectedReport =
           this.reportOptions.find((r) => r.displayName === ItOpsReportApiService.DOMAIN_REPORT_NAME)?.displayName ??
           this.reportOptions[0]?.displayName ??
           '';
         this.dashboardCycles = cycles;
-        this.domainList = domains.map((d) => ({ domainId: d.domainId, name: d.name }));
-        this.businessUnits = businessUnits;
-        this.accountsWithAssessments = accounts;
+        if (hasFullAccess) {
+          // Unrestricted - every account/project/domain org-wide, as before.
+          this.domainList = domains.map((d) => ({ domainId: d.domainId, name: d.name }));
+          this.businessUnits = businessUnits;
+          this.accountsWithAssessments = accounts;
+        } else {
+          // Own-scope: every filter dropdown is restricted to this employee's own
+          // assessor/reviewer/assessee assignments instead of the org-wide lists -
+          // this is now what actually restricts the data too (see loadReportData's
+          // own-scope aggregate), not a row-level post-filter.
+          this.refreshOwnScopeFilterOptions();
+        }
         this.loading = false;
         this.loadReportData();
       });
@@ -185,15 +228,58 @@ export class ReportsComponent implements OnInit {
     this.loadReportData();
   }
 
+  /**
+   * Own-scope: rebuilds Business Unit/Account/Project/Domain purely from this
+   * employee's own assignments, respecting whichever Cycle/Business Unit/Account
+   * is currently selected - the own-scope counterpart of the org-wide
+   * getBusinessUnits/getAccountsWithAssessments/getProjectsWithAssessments calls
+   * below, which would otherwise leak every other account's name into these
+   * dropdowns even though the results themselves are already row-filtered.
+   */
+  private refreshOwnScopeFilterOptions(): void {
+    const buSeen = new Set<string>();
+    for (const row of this.myAssignments) {
+      if (!row.businessUnit) continue;
+      if (this.cycleFilter && String(row.assessmentMasterId) !== this.cycleFilter) continue;
+      buSeen.add(row.businessUnit);
+    }
+    this.businessUnits = Array.from(buSeen).sort();
+
+    const acctSeen = new Map<string, string>();
+    for (const p of this.myAssignedProjectPairs) acctSeen.set(p.custId, p.custName);
+    this.accountsWithAssessments = Array.from(acctSeen, ([cusT_ID, cusT_NM]) => ({ cusT_ID, cusT_NM }));
+
+    const projSeen = new Map<string, string>();
+    for (const p of this.myAssignedProjectPairs) {
+      if (this.accountFilter && p.custId !== this.accountFilter) continue;
+      projSeen.set(p.projectId, p.projectName);
+    }
+    this.projectsForAccount = Array.from(projSeen, ([projectId, projectName]) => ({ projectId, projectName }));
+
+    const domSeen = new Map<number, string>();
+    for (const row of this.myAssignments) {
+      if (this.cycleFilter && String(row.assessmentMasterId) !== this.cycleFilter) continue;
+      if (this.businessUnitFilter && row.businessUnit !== this.businessUnitFilter) continue;
+      if (this.accountFilter && row.custId !== this.accountFilter) continue;
+      if (this.projectFilter && row.projectId !== this.projectFilter) continue;
+      if (row.domainId != null && row.domainName) domSeen.set(row.domainId, row.domainName);
+    }
+    this.domainList = Array.from(domSeen, ([domainId, name]) => ({ domainId, name }));
+  }
+
   /** Business Unit changed - narrows the Account dropdown to only that BU's accounts (cascading Cycle -> Business Unit -> Account -> Project -> Domain), and resets Account/Project since the previous selection may no longer be valid for this BU. */
   onBusinessUnitFilterChange(): void {
     this.accountFilter = '';
     this.projectFilter = '';
     this.projectsForAccount = [];
-    this.maturityApi
-      .getAccountsWithAssessments(this.cycleFilter ? Number(this.cycleFilter) : undefined, this.businessUnitFilter || undefined)
-      .pipe(catchError(() => of([])))
-      .subscribe((accounts) => (this.accountsWithAssessments = accounts));
+    if (!this.hasFullAccess) {
+      this.refreshOwnScopeFilterOptions();
+    } else {
+      this.maturityApi
+        .getAccountsWithAssessments(this.cycleFilter ? Number(this.cycleFilter) : undefined, this.businessUnitFilter || undefined)
+        .pipe(catchError(() => of([])))
+        .subscribe((accounts) => (this.accountsWithAssessments = accounts));
+    }
     this.loadReportData();
   }
 
@@ -203,6 +289,11 @@ export class ReportsComponent implements OnInit {
     this.accountFilter = '';
     this.projectFilter = '';
     this.projectsForAccount = [];
+    if (!this.hasFullAccess) {
+      this.refreshOwnScopeFilterOptions();
+      this.loadReportData();
+      return;
+    }
     const cycleId = this.cycleFilter ? Number(this.cycleFilter) : undefined;
     this.maturityApi
       .getBusinessUnits(cycleId)
@@ -223,6 +314,11 @@ export class ReportsComponent implements OnInit {
   onAccountFilterChange(): void {
     this.projectFilter = '';
     this.projectsForAccount = [];
+    if (!this.hasFullAccess) {
+      this.refreshOwnScopeFilterOptions();
+      this.loadReportData();
+      return;
+    }
     if (this.accountFilter) {
       this.projectsLoading = true;
       this.maturityApi
@@ -242,16 +338,55 @@ export class ReportsComponent implements OnInit {
 
   private loadReportData(): void {
     if (!this.selectedReport) return;
+    // Own-scope: MyEmpId narrows every row to assessments this employee is personally
+    // an assessor/reviewer/assessee on - without it, CustomerId/ProjectId alone let a
+    // project they have ONE assignment on leak every OTHER domain on that same project
+    // into their report (same class of bug the Dashboard's myEmpId param fixes).
+    const myEmpId = this.hasFullAccess ? '-1' : localStorage.getItem('empid') || '-1';
     const filterValues: Record<string, string> = {
       CustomerId: this.accountFilter || '-1',
       ProjectId: this.projectFilter || '-1',
       DomainId: this.domainFilter || '-1',
       AssessmentMasterId: this.cycleFilter || '-1',
       BusinessUnit: this.businessUnitFilter || '-1',
+      MyEmpId: myEmpId,
     };
+
+    // Own-scope, no specific project chosen: neither report SP accepts a list
+    // of projects, so - same fix as the Dashboard's own-scope aggregation -
+    // fan out one call per project this employee is actually assigned to
+    // (assessor, reviewer, OR assessee; narrowed to the chosen account, if
+    // any) and merge the rows client-side. This is what actually restricts the
+    // data now - a "just filter the rows afterward" check would have to know
+    // every possible ownership shape (it previously missed Assessee entirely,
+    // which is why an assessee-only viewer saw nothing even for their own
+    // assessment). Once a specific project IS chosen, it's inherently theirs
+    // (the dropdown only ever offers their own), so a single plain call is enough.
+    const useOwnScopeAggregate = !this.hasFullAccess && !this.projectFilter;
+    const ownScopePairs = useOwnScopeAggregate
+      ? this.myAssignedProjectPairs.filter((p) => !this.accountFilter || p.custId === this.accountFilter)
+      : [];
 
     this.rowsLoading = true;
     if (this.isParameterReport) {
+      if (useOwnScopeAggregate) {
+        if (!ownScopePairs.length) {
+          this.paramRows = [];
+          this.rowsLoading = false;
+          this.paramPage = 1;
+          return;
+        }
+        forkJoin(
+          ownScopePairs.map((p) =>
+            this.reportApi.getParameterDetailReportRows({ ...filterValues, CustomerId: p.custId, ProjectId: p.projectId }),
+          ),
+        ).subscribe((lists) => {
+          this.paramRows = lists.flat();
+          this.rowsLoading = false;
+          this.paramPage = 1;
+        });
+        return;
+      }
       this.reportApi.getParameterDetailReportRows(filterValues).subscribe((rows) => {
         this.paramRows = rows;
         this.rowsLoading = false;
@@ -260,8 +395,16 @@ export class ReportsComponent implements OnInit {
       return;
     }
 
-    this.reportApi.getDomainReportRows(filterValues).subscribe((rows) => {
-      this.allRows = this.hasFullAccess ? rows : rows.filter((row) => this.session.canSeeRow(row));
+    const domainRows$ = useOwnScopeAggregate
+      ? ownScopePairs.length
+        ? forkJoin(
+            ownScopePairs.map((p) => this.reportApi.getDomainReportRows({ ...filterValues, CustomerId: p.custId, ProjectId: p.projectId })),
+          ).pipe(map((lists) => lists.flat()))
+        : of([] as ReportRow[])
+      : this.reportApi.getDomainReportRows(filterValues);
+
+    domainRows$.subscribe((rows) => {
+      this.allRows = rows;
       this.accountCount = new Set(this.allRows.map((r) => r.accountName)).size;
       this.rowsLoading = false;
       this.applyFilters();

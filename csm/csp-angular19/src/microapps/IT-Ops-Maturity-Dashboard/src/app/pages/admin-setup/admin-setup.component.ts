@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { gsap } from 'gsap';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import {
@@ -34,6 +34,21 @@ import {
 } from '../../services/itops-admin-setup.service';
 
 type StepKey = 'roles' | 'cycle' | 'scope' | 'assessment' | 'team';
+
+/** One row of Step 4's "Add" staging table - a planned (project x domain) pair, with whatever Assessor/Reviewer has been staged for it locally (not saved until "Create assessments"). */
+interface StagedAssessmentRow {
+  key: string;
+  projectId: string;
+  projectName: string;
+  domainId: number;
+  domainName: string;
+  /** False for a pair that already has an assessment this cycle - shown read-only, nothing to stage. */
+  isNew: boolean;
+  /** Read-only here - still project-level, set once in Configure Scope (unchanged logic), not per (project, domain) pair. */
+  assesseeNames: string[];
+  assessorNames: string[];
+  reviewerNames: string[];
+}
 
 /** One domain's assessment row plus its live assessor/reviewer join rows (Step 5 accordion). */
 /**
@@ -500,6 +515,31 @@ export class AdminSetupComponent implements OnInit {
   readonly assessmentTablePageSizeOptions = [10, 15, 20];
   removingAssessmentId: number | null = null;
   creatingAssessments = false;
+  /** "Assessments in this cycle" bulk-delete selection - only ever holds ids of removable (Not Started) rows. */
+  selectedAssessmentIdsForRemoval = new Set<number>();
+  removingSelectedAssessments = false;
+
+  // ---- Step 4: "Add" staging - configure Assessor/Reviewer per (project x domain)
+  // BEFORE the assessment exists, instead of only being reachable afterward. Clicking
+  // "Add" (was "Create assessments") lists every planned pair below; "Create
+  // assessments" at the bottom of that list actually creates them, then applies
+  // whatever Assessor/Reviewer was staged for each newly-created row. ----
+  showAssessmentStaging = false;
+  loadingStagedCandidates = false;
+  /** Keyed by "projectId|domainId" - survives Back/Add so re-opening staging doesn't lose picks already made. */
+  private stagedTeamByKey = new Map<string, { assessorIds: string[]; reviewerIds: string[] }>();
+  /** Rows unticked in the staging table's Include column, by pair key - excluded from THIS "Create assessments" click (and from its Assessor/Reviewer requirement) so a multi-row batch isn't all-or-nothing: create what's ready now, leave the rest staged for later. */
+  private stagedDeselectedKeys = new Set<string>();
+  /** Assessor/Reviewer candidates are every active employee org-wide (unlike Assessee, which stays scoped to who's staffed on the project) - fetched once and cached. */
+  private orgEmployeeCandidates: ItOpsEmployee[] = [];
+  /** True once a "Create assessments" click has been blocked for a missing Assessor/Reviewer - turns the offending cells red instead of (or alongside) the toast, and clears the moment the row is fixed or the click succeeds. */
+  stagingValidationFailed = false;
+
+  stagedAssignOpen = false;
+  stagedAssignKey = '';
+  stagedAssignRole: 'Assessor' | 'Reviewer' = 'Assessor';
+  stagedAssignSelectedIds: string[] = [];
+  stagedAssignSearch = '';
 
   // ---- Step 4: quick "Update assessees" action on an existing assessment row ----
   // Writes through to the same ITOPS_PROJECT_ASSESSEE Configure Scope reads,
@@ -513,6 +553,30 @@ export class AdminSetupComponent implements OnInit {
   updateAssesseesSearch = '';
   loadingUpdateAssessees = false;
   savingUpdateAssessees = false;
+
+  // ---- Step 4: quick "Update assessor"/"Update reviewer" actions on one already-created
+  // assessment row - writes straight to ITOPS_ASSESSMENT_ASSESSOR/_REVIEWER for that one
+  // assessmentId (via the same Add/Remove endpoints Step 5 uses), nothing project-wide.
+  updateAssessorModalOpen = false;
+  updateAssessorAssessmentId: number | null = null;
+  updateAssessorProjectLabel = '';
+  updateAssessorCandidates: ItOpsEmployee[] = [];
+  /** empId -> ItOpsTeamMember.id for whoever is currently on this assessment, so a removal knows which join-row to delete. */
+  updateAssessorCurrentByEmpId: Map<string, number> = new Map();
+  updateAssessorSelectedIds: string[] = [];
+  updateAssessorSearch = '';
+  loadingUpdateAssessor = false;
+  savingUpdateAssessor = false;
+
+  updateReviewerModalOpen = false;
+  updateReviewerAssessmentId: number | null = null;
+  updateReviewerProjectLabel = '';
+  updateReviewerCandidates: ItOpsEmployee[] = [];
+  updateReviewerCurrentByEmpId: Map<string, number> = new Map();
+  updateReviewerSelectedIds: string[] = [];
+  updateReviewerSearch = '';
+  loadingUpdateReviewer = false;
+  savingUpdateReviewer = false;
 
   // ---- Step 5: Assign Assessor / Reviewer ----
   domainTeams: DomainTeam[] = [];
@@ -566,8 +630,17 @@ export class AdminSetupComponent implements OnInit {
   ) {}
 
   /** Closes the Step 4 project checklist when the user clicks anywhere outside it, same as the searchable-select combobox above it. */
-  @HostListener('document:mousedown', ['$event'])
-  onDocumentMouseDownForAssessmentProjectsPicker(event: MouseEvent): void {
+  /**
+   * `click`, not `mousedown` - closing the picker on mousedown collapses its
+   * (taller) expanded layout an instant before mouseup, shifting whatever sits
+   * below it (the "Add" button) out from under the pointer, so the browser
+   * never fires a click on it (mousedown and mouseup landing on different
+   * elements don't count as a click) - the button's own click only worked on
+   * a second, now-settled click. Listening on `click` instead runs this after
+   * the target element's own (click) handler has already fired.
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClickForAssessmentProjectsPicker(event: MouseEvent): void {
     if (!this.assessmentProjectsPickerOpen) return;
     const picker = this.host.nativeElement.querySelector('.assessment-projects-picker');
     if (picker && !picker.contains(event.target as Node)) this.assessmentProjectsPickerOpen = false;
@@ -1779,6 +1852,13 @@ export class AdminSetupComponent implements OnInit {
         this.domains = domains ?? [];
         this.mappings = mappings ?? [];
         this.projects = projects;
+        // A project ticked in Configure Assessment can have every one of its
+        // domains unmapped afterward, back here in Configure Scope - without
+        // this, it stayed selected there forever (still counted in "N
+        // project(s) selected" and the summary panel) even though it no
+        // longer has anything to create, simply because loading THIS screen
+        // never touched Step 4's own selection state.
+        this.pruneAssessmentProjectSelection();
         // Categories & Parameters is a sub-tab of this same step, so seed its
         // domain picker from the same load rather than making it fetch again.
         if (this.catalogDomainId === null && this.domains.length) this.catalogDomainId = this.domains[0].domainId;
@@ -2851,6 +2931,21 @@ export class AdminSetupComponent implements OnInit {
   }
 
   /**
+   * Drops any Configure Assessment selection whose project no longer has a
+   * single domain mapped (removed back in Configure Scope, on this same
+   * visit or otherwise) - called whenever `mappings` is (re)loaded, since
+   * that's the only signal this screen gets that scope changed.
+   */
+  private pruneAssessmentProjectSelection(): void {
+    const stillMapped = new Set(this.mappings.filter((m) => (m.domains ?? []).length).map((m) => m.projectId));
+    const pruned = this.assessmentProjectIds.filter((id) => stillMapped.has(id));
+    if (pruned.length !== this.assessmentProjectIds.length) {
+      this.assessmentProjectIds = pruned;
+      this.onAssessmentProjectsChange();
+    }
+  }
+
+  /**
    * Only projects that (a) already have at least one domain mapped in
    * Configure Scope, and (b) still have something for Create to actually do -
    * a brand-new project, a newly-added domain, or a changed assessee set - are
@@ -3019,16 +3114,16 @@ export class AdminSetupComponent implements OnInit {
    * saying so. Re-checked here rather than trusted from Step 3's warning,
    * since a project's mapping could also change directly on this same visit.
    */
-  async createAssessments(): Promise<void> {
+  /** Shared by both "Add" (stage) and "Create assessments" (commit) - both need this same guard. Returns true if it's safe to proceed. */
+  private async checkMappingComplete(): Promise<boolean> {
     if (!this.selectedCycleId) {
       this.toast.error('Pick a cycle in Configure Cycle first.');
-      return;
+      return false;
     }
     if (!this.assessmentProjectIds.length) {
       this.toast.error('Pick at least one project first.');
-      return;
+      return false;
     }
-
     const incomplete = this.assessmentProjectIds
       .map((id) => this.mappings.find((m) => m.projectId === id))
       .filter((m): m is ItOpsDomainProjectMapping => !!m && (!m.domains?.length || !m.assessees?.length));
@@ -3041,23 +3136,228 @@ export class AdminSetupComponent implements OnInit {
         cancelText: 'Cancel',
       });
       if (goToScope) this.goToStep('scope');
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * "Add" - the first click. Validates the selection, then lists every planned
+   * (project x domain) pair below (stagedRows) so Assessor/Reviewer can be set
+   * per pair BEFORE anything is created - "Create assessments" only appears
+   * once staged, at the bottom of that list.
+   */
+  async stageAssessments(): Promise<void> {
+    if (!(await this.checkMappingComplete())) return;
+
+    if (!this.orgEmployeeCandidates.length) {
+      this.loadingStagedCandidates = true;
+      this.api
+        .getEmployees()
+        .pipe(finalize(() => (this.loadingStagedCandidates = false)))
+        .subscribe((employees) => {
+          this.orgEmployeeCandidates = employees;
+          this.showAssessmentStaging = true;
+        });
+    } else {
+      this.showAssessmentStaging = true;
+    }
+  }
+
+  /**
+   * Every (project x domain) pair the current selection covers that DOESN'T
+   * already have an assessment this cycle - once a row is actually created it
+   * drops out of this list entirely (it now lives only in "Assessments in
+   * this cycle" below), rather than lingering here with an "Already created"
+   * status. Assessee is read-only here - it's still project-level, set in
+   * Configure Scope, not per pair.
+   */
+  get stagedRows(): StagedAssessmentRow[] {
+    const existing = this.existingPairKeys;
+    return this.plannedPairs
+      .filter((p) => !existing.has(`${p.projectId}|${p.domainId}`))
+      .map((p) => {
+        const key = `${p.projectId}|${p.domainId}`;
+        const mapping = this.mappings.find((m) => m.projectId === p.projectId);
+        const domain = this.domains.find((d) => d.domainId === p.domainId);
+        const team = this.stagedTeamByKey.get(key) ?? { assessorIds: [], reviewerIds: [] };
+        const nameOf = (empId: string) => this.orgEmployeeCandidates.find((c) => c.empId === empId)?.name ?? empId;
+        return {
+          key,
+          projectId: p.projectId,
+          projectName: mapping?.projectName ?? p.projectId,
+          domainId: p.domainId,
+          domainName: domain?.name ?? '',
+          isNew: true,
+          assesseeNames: (mapping?.assessees ?? []).map((a) => a.name),
+          assessorNames: team.assessorIds.map(nameOf),
+          reviewerNames: team.reviewerIds.map(nameOf),
+        };
+      });
+  }
+
+  backFromStaging(): void {
+    this.showAssessmentStaging = false;
+    this.stagingValidationFailed = false;
+  }
+
+  /** Whether this one (project, domain) row is included in the NEXT "Create assessments" click - ticked by default. */
+  isRowIncluded(key: string): boolean {
+    return !this.stagedDeselectedKeys.has(key);
+  }
+
+  toggleRowIncluded(key: string): void {
+    if (this.stagedDeselectedKeys.has(key)) this.stagedDeselectedKeys.delete(key);
+    else this.stagedDeselectedKeys.add(key);
+    this.stagingValidationFailed = false;
+  }
+
+  get allStagedRowsIncluded(): boolean {
+    return this.stagedRows.every((r) => this.isRowIncluded(r.key));
+  }
+
+  /** Header checkbox: select-all when not all are picked, clear-all when they already are - same convention as every other "Select all listed" toggle on this screen. */
+  toggleAllStagedRowsIncluded(): void {
+    if (this.allStagedRowsIncluded) {
+      for (const r of this.stagedRows) this.stagedDeselectedKeys.add(r.key);
+    } else {
+      this.stagedDeselectedKeys.clear();
+    }
+    this.stagingValidationFailed = false;
+  }
+
+  /**
+   * stagedRows is a getter re-evaluated on every change-detection pass, so it
+   * hands *ngFor a fresh array of new objects each time - without trackBy,
+   * Angular reads that as "every row changed" and destroys/recreates the row's
+   * DOM nodes continuously, which can delete a button between mousedown and
+   * mouseup and eat the click (same class of bug documented on
+   * SearchableSelectComponent.trackByValue). Keying by the stable pair key
+   * keeps the actual DOM nodes in place across re-evaluations.
+   */
+  trackByStagedRowKey(_index: number, row: StagedAssessmentRow): string {
+    return row.key;
+  }
+
+  openStagedAssign(row: StagedAssessmentRow, role: 'Assessor' | 'Reviewer'): void {
+    this.stagedAssignKey = row.key;
+    this.stagedAssignRole = role;
+    this.stagedAssignSearch = '';
+    const team = this.stagedTeamByKey.get(row.key) ?? { assessorIds: [], reviewerIds: [] };
+    this.stagedAssignSelectedIds = [...(role === 'Assessor' ? team.assessorIds : team.reviewerIds)];
+    this.stagedAssignOpen = true;
+  }
+
+  closeStagedAssign(): void {
+    this.stagedAssignOpen = false;
+  }
+
+  /** Assessor/Reviewer can be anyone in the org - unlike Assessee, they don't need to be staffed on this particular project. */
+  get stagedAssignCandidates(): ItOpsEmployee[] {
+    return this.orgEmployeeCandidates;
+  }
+
+  get filteredStagedAssignCandidates(): ItOpsEmployee[] {
+    const needle = this.stagedAssignSearch.trim().toLowerCase();
+    const list = !needle
+      ? this.stagedAssignCandidates
+      : this.stagedAssignCandidates.filter((e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle));
+    return this.sortSelectedFirst(list, this.stagedAssignSelectedIds);
+  }
+
+  /** Whoever is already picked/assigned surfaces at the top of the list, so opening the picker immediately shows who's currently on it before scrolling for more. */
+  private sortSelectedFirst(list: ItOpsEmployee[], selectedIds: string[]): ItOpsEmployee[] {
+    const selected = new Set(selectedIds);
+    return [...list].sort((a, b) => {
+      const aSel = selected.has(a.empId) ? 0 : 1;
+      const bSel = selected.has(b.empId) ? 0 : 1;
+      if (aSel !== bSel) return aSel - bSel;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  isStagedAssignSelected(empId: string): boolean {
+    return this.stagedAssignSelectedIds.includes(empId);
+  }
+
+  toggleStagedAssign(empId: string): void {
+    this.stagedAssignSelectedIds = this.isStagedAssignSelected(empId)
+      ? this.stagedAssignSelectedIds.filter((id) => id !== empId)
+      : [...this.stagedAssignSelectedIds, empId];
+  }
+
+  toggleAllStagedAssign(): void {
+    const visible = this.filteredStagedAssignCandidates.map((e) => e.empId);
+    this.stagedAssignSelectedIds = this.allVisibleStagedAssignPicked
+      ? this.stagedAssignSelectedIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.stagedAssignSelectedIds, ...visible]));
+  }
+
+  get allVisibleStagedAssignPicked(): boolean {
+    const visible = this.filteredStagedAssignCandidates.map((e) => e.empId);
+    return visible.length > 0 && visible.every((id) => this.stagedAssignSelectedIds.includes(id));
+  }
+
+  saveStagedAssign(): void {
+    const team = this.stagedTeamByKey.get(this.stagedAssignKey) ?? { assessorIds: [], reviewerIds: [] };
+    if (this.stagedAssignRole === 'Assessor') team.assessorIds = [...this.stagedAssignSelectedIds];
+    else team.reviewerIds = [...this.stagedAssignSelectedIds];
+    this.stagedTeamByKey.set(this.stagedAssignKey, team);
+    this.stagingValidationFailed = false;
+    this.closeStagedAssign();
+  }
+
+  async createAssessments(): Promise<void> {
+    if (!(await this.checkMappingComplete())) return;
+
+    // A multi-row batch isn't all-or-nothing - only ticked (included) rows are
+    // actually submitted, and only THEY need an Assessor/Reviewer; an unticked
+    // row (or one belonging to a project no row of which is ticked) stays
+    // staged for later instead of blocking everything else.
+    const includedRows = this.stagedRows.filter((r) => this.isRowIncluded(r.key));
+    if (!includedRows.length) {
+      this.toast.error('Select at least one assessment to create.');
       return;
     }
+    const includedProjectIds = Array.from(new Set(includedRows.map((r) => r.projectId)));
 
-    const created = this.newAssessmentCount;
-    const unchanged = this.existingAssessmentCount;
-    const retired = this.retiredAssessmentCount;
-    const projectCount = this.assessmentProjectIds.length;
+    const newRowsIncluded = includedRows.filter((r) => r.isNew);
+    const missingAssessor = newRowsIncluded.filter((r) => !r.assessorNames.length);
+    const missingReviewer = newRowsIncluded.filter((r) => !r.reviewerNames.length);
+    if (missingAssessor.length || missingReviewer.length) {
+      // Highlighted red in the table itself (via stagingValidationFailed) rather
+      // than named in the toast - a 10-project batch missing one or two cells
+      // reads far better as "look, right there" than as a wall of project names.
+      this.stagingValidationFailed = true;
+      const missing = [missingAssessor.length && 'Assessor', missingReviewer.length && 'Reviewer'].filter(Boolean).join(' and ');
+      this.toast.error(`${missing} required.`, 'Fix the rows highlighted in red below, then try again.');
+      return;
+    }
+    this.stagingValidationFailed = false;
+
+    const created = newRowsIncluded.length;
+    const unchanged = includedRows.filter((r) => !r.isNew).length;
+    const includedKeys = new Set(includedRows.map((r) => r.key));
+    // Retirement is a per-PROJECT side effect of CreateITOpsAssessmentsForProject
+    // (it re-evaluates the project's whole mapped-domain set), so it's scoped to
+    // included projects, not included rows specifically.
+    const retired = this.assessmentRows.filter(
+      (r) => includedProjectIds.includes(r.projectId) && r.status === 'NotStarted' && !includedKeys.has(`${r.projectId}|${r.domainId}`),
+    ).length;
+    const projectCount = includedProjectIds.length;
 
     // Preview exactly what this click will do before it does it - "Create assessments"
     // otherwise ran immediately with no confirmation, so a wrong cycle/project selection
     // was only discovered after assessments already existed.
     const previewLines = [
-      `${created} new assessment${created === 1 ? '' : 's'} will be created across ${projectCount} project${projectCount === 1 ? '' : 's'}.`,
+      `${created} new assessment${created === 1 ? '' : 's'} will be created across ${projectCount} project${projectCount === 1 ? '' : 's'}, each with the Assessor/Reviewer staged for it.`,
     ];
-    if (unchanged) previewLines.push(`${unchanged} project(s) already have every assessment they need and won't change.`);
+    if (unchanged) previewLines.push(`${unchanged} assessment(s) already exist and won't change.`);
     if (retired) previewLines.push(`${retired} assessment(s) whose domain is no longer mapped will be retired (only if still Not Started).`);
-    if (!created && !retired) previewLines.push(`Nothing to do - every selected project already has all its assessments.`);
+    if (!created && !retired) previewLines.push(`Nothing to do - every selected row already exists.`);
+    if (includedRows.length < this.stagedRows.length) {
+      previewLines.push(`${this.stagedRows.length - includedRows.length} unselected row(s) below will stay staged and untouched.`);
+    }
 
     const proceed = await this.dialog.confirm({
       title: 'Create assessments?',
@@ -3067,10 +3367,35 @@ export class AdminSetupComponent implements OnInit {
     });
     if (!proceed) return;
 
+    // Only NEW, included rows carry a staged team to apply - an existing row
+    // was left untouched by CreateITOpsAssessmentsForProject, so staging is
+    // meaningless for it.
+    const newKeysWithTeam = Array.from(this.stagedTeamByKey.entries()).filter(
+      ([key, team]) => includedKeys.has(key) && (team.assessorIds.length || team.reviewerIds.length),
+    );
+
+    // Pairs restricts each project to exactly the ticked domain(s) - a project
+    // with one row ticked and a sibling row unticked creates only the ticked
+    // one; the sibling stays untouched, still shown (and stageable) next time.
+    const pairs = includedRows.map((r) => ({ projectId: r.projectId, domainId: r.domainId }));
+
     this.creatingAssessments = true;
     this.api
-      .createAssessmentsForProjects(this.selectedCycleId, this.assessmentProjectIds)
-      .pipe(finalize(() => (this.creatingAssessments = false)))
+      .createAssessmentsForProjects(this.selectedCycleId!, includedProjectIds, pairs)
+      .pipe(
+        switchMap((rows) => {
+          if (!newKeysWithTeam.length) return of(rows);
+          const calls: Observable<unknown>[] = [];
+          for (const [key, team] of newKeysWithTeam) {
+            const row = rows.find((r) => `${r.projectId}|${r.domainId}` === key);
+            if (!row) continue; // not part of this submission (e.g. already existed, or a stale staged pick)
+            for (const empId of team.assessorIds) calls.push(this.api.addAssessor(row.assessmentId, empId));
+            for (const empId of team.reviewerIds) calls.push(this.api.addReviewer(row.assessmentId, empId));
+          }
+          return calls.length ? forkJoin(calls).pipe(map(() => rows)) : of(rows);
+        }),
+        finalize(() => (this.creatingAssessments = false)),
+      )
       .subscribe({
         next: () => {
           // The response only carries rows for the project(s) just submitted -
@@ -3083,18 +3408,19 @@ export class AdminSetupComponent implements OnInit {
             'Assessments created.',
             `${created} new across ${projectCount} project(s); ${unchanged} already existed and were left unchanged.`,
           );
+          for (const [key] of newKeysWithTeam) this.stagedTeamByKey.delete(key);
+          for (const r of includedRows) this.stagedDeselectedKeys.delete(r.key);
+          // Only close staging once every planned row actually got submitted -
+          // if some were left unticked (still being set up), leave the table
+          // open so the admin can keep going instead of having to click Add again.
+          if (includedRows.length === this.stagedRows.length) {
+            this.showAssessmentStaging = false;
+            this.stagedTeamByKey.clear();
+            this.stagedDeselectedKeys.clear();
+          }
         },
         error: (err) => this.toast.error('Could not create the assessments.', this.errorText(err, 'Please try again.')),
       });
-  }
-
-  teamLabel(row: ItOpsCycleAssessment): string {
-    const total = row.assessorCount + row.reviewerCount;
-    return total ? `${total} assigned` : 'Unassigned';
-  }
-
-  teamTone(row: ItOpsCycleAssessment): 'critical' | 'good' {
-    return row.assessorCount + row.reviewerCount ? 'good' : 'critical';
   }
 
   statusTone(row: ItOpsCycleAssessment): 'muted' | 'accent' {
@@ -3230,8 +3556,68 @@ export class AdminSetupComponent implements OnInit {
         next: () => {
           this.toast.success('Assessment removed.');
           this.assessmentRows = this.assessmentRows.filter((r) => r.assessmentId !== row.assessmentId);
+          this.selectedAssessmentIdsForRemoval.delete(row.assessmentId);
         },
         error: (err) => this.toast.error('Could not remove the assessment.', this.errorText(err, 'Please try again.')),
+      });
+  }
+
+  // ---- Bulk-select/remove for "Assessments in this cycle" ----
+  // Selection only ever holds removable (Not Started) rows - a row with any
+  // history can't be removed individually either, so there's nothing for a
+  // bulk action to do with it.
+
+  isAssessmentSelectedForRemoval(row: ItOpsCycleAssessment): boolean {
+    return this.selectedAssessmentIdsForRemoval.has(row.assessmentId);
+  }
+
+  toggleAssessmentSelectedForRemoval(row: ItOpsCycleAssessment): void {
+    if (this.isAssessmentSelectedForRemoval(row)) this.selectedAssessmentIdsForRemoval.delete(row.assessmentId);
+    else this.selectedAssessmentIdsForRemoval.add(row.assessmentId);
+  }
+
+  /** Removable rows on the CURRENT page - "select all" only ever acts on what's visible, same as every other paginated table here. */
+  private get removableRowsOnPage(): ItOpsCycleAssessment[] {
+    return this.pagedAssessmentRows.filter((r) => this.canRemoveAssessment(r));
+  }
+
+  get allRemovableRowsOnPageSelected(): boolean {
+    const rows = this.removableRowsOnPage;
+    return rows.length > 0 && rows.every((r) => this.isAssessmentSelectedForRemoval(r));
+  }
+
+  toggleAllAssessmentsSelectedForRemovalOnPage(): void {
+    const rows = this.removableRowsOnPage;
+    if (this.allRemovableRowsOnPageSelected) {
+      for (const r of rows) this.selectedAssessmentIdsForRemoval.delete(r.assessmentId);
+    } else {
+      for (const r of rows) this.selectedAssessmentIdsForRemoval.add(r.assessmentId);
+    }
+  }
+
+  async removeSelectedAssessments(): Promise<void> {
+    const ids = Array.from(this.selectedAssessmentIdsForRemoval);
+    if (!ids.length) return;
+    const rows = this.assessmentRows.filter((r) => ids.includes(r.assessmentId));
+
+    const ok = await this.dialog.confirm({
+      title: 'Remove selected assessments?',
+      message: `Remove ${ids.length} assessment${ids.length === 1 ? '' : 's'}? This cannot be undone.`,
+      confirmText: 'Remove',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
+    this.removingSelectedAssessments = true;
+    forkJoin(ids.map((id) => this.api.removeAssessment(id)))
+      .pipe(finalize(() => (this.removingSelectedAssessments = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success(`${ids.length} assessment${ids.length === 1 ? '' : 's'} removed.`);
+          this.assessmentRows = this.assessmentRows.filter((r) => !ids.includes(r.assessmentId));
+          for (const id of ids) this.selectedAssessmentIdsForRemoval.delete(id);
+        },
+        error: (err) => this.toast.error('Could not remove the selected assessments.', this.errorText(err, 'Please try again.')),
       });
   }
 
@@ -3320,6 +3706,175 @@ export class AdminSetupComponent implements OnInit {
           this.loadAssessments();
         },
         error: (err) => this.toast.error('Could not update the assessees.', this.errorText(err, 'Please try again.')),
+      });
+  }
+
+  // ---- Update assessor on one specific already-created assessment ----
+
+  openUpdateAssessorModal(row: ItOpsCycleAssessment): void {
+    this.updateAssessorAssessmentId = row.assessmentId;
+    this.updateAssessorProjectLabel = `${row.projectName ?? row.projectId} — ${row.domainName}`;
+    this.updateAssessorSearch = '';
+    this.updateAssessorModalOpen = true;
+    this.loadingUpdateAssessor = true;
+    forkJoin({
+      candidates: this.api.getEmployees(),
+      current: this.api.getAssessmentTeam(row.assessmentId),
+    })
+      .pipe(finalize(() => (this.loadingUpdateAssessor = false)))
+      .subscribe(({ candidates, current }) => {
+        this.updateAssessorCandidates = candidates;
+        this.updateAssessorCurrentByEmpId = new Map(current.assessors.map((m) => [m.empId, m.id]));
+        this.updateAssessorSelectedIds = current.assessors.map((m) => m.empId);
+      });
+  }
+
+  closeUpdateAssessorModal(): void {
+    this.updateAssessorModalOpen = false;
+  }
+
+  get filteredUpdateAssessorCandidates(): ItOpsEmployee[] {
+    const needle = this.updateAssessorSearch.trim().toLowerCase();
+    const list = !needle
+      ? this.updateAssessorCandidates
+      : this.updateAssessorCandidates.filter((e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle));
+    return this.sortSelectedFirst(list, this.updateAssessorSelectedIds);
+  }
+
+  isUpdateAssessorSelected(empId: string): boolean {
+    return this.updateAssessorSelectedIds.includes(empId);
+  }
+
+  toggleUpdateAssessor(empId: string): void {
+    this.updateAssessorSelectedIds = this.isUpdateAssessorSelected(empId)
+      ? this.updateAssessorSelectedIds.filter((id) => id !== empId)
+      : [...this.updateAssessorSelectedIds, empId];
+  }
+
+  toggleAllUpdateAssessor(): void {
+    const visible = this.filteredUpdateAssessorCandidates.map((e) => e.empId);
+    this.updateAssessorSelectedIds = this.allVisibleUpdateAssessorPicked
+      ? this.updateAssessorSelectedIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.updateAssessorSelectedIds, ...visible]));
+  }
+
+  get allVisibleUpdateAssessorPicked(): boolean {
+    const visible = this.filteredUpdateAssessorCandidates.map((e) => e.empId);
+    return visible.length > 0 && visible.every((id) => this.updateAssessorSelectedIds.includes(id));
+  }
+
+  /** Diffs against what was loaded when the modal opened - only ever adds/removes exactly the people who actually changed, on this one assessment. */
+  saveUpdateAssessor(): void {
+    const assessmentId = this.updateAssessorAssessmentId;
+    if (!assessmentId) return;
+    const projectLabel = this.updateAssessorProjectLabel;
+    const toAdd = this.updateAssessorSelectedIds.filter((id) => !this.updateAssessorCurrentByEmpId.has(id));
+    const toRemove = Array.from(this.updateAssessorCurrentByEmpId.entries())
+      .filter(([empId]) => !this.updateAssessorSelectedIds.includes(empId))
+      .map(([, memberId]) => memberId);
+
+    if (!toAdd.length && !toRemove.length) {
+      this.closeUpdateAssessorModal();
+      return;
+    }
+
+    this.savingUpdateAssessor = true;
+    forkJoin([
+      ...toAdd.map((empId) => this.api.addAssessor(assessmentId, empId)),
+      ...toRemove.map((id) => this.api.removeAssessor(id)),
+    ])
+      .pipe(finalize(() => (this.savingUpdateAssessor = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Assessor updated.', `${projectLabel} now has ${this.updateAssessorSelectedIds.length} assessor(s).`);
+          this.closeUpdateAssessorModal();
+          this.loadAssessments();
+        },
+        error: (err) => this.toast.error('Could not update the assessor.', this.errorText(err, 'Please try again.')),
+      });
+  }
+
+  // ---- Update reviewer on one specific already-created assessment ----
+
+  openUpdateReviewerModal(row: ItOpsCycleAssessment): void {
+    this.updateReviewerAssessmentId = row.assessmentId;
+    this.updateReviewerProjectLabel = `${row.projectName ?? row.projectId} — ${row.domainName}`;
+    this.updateReviewerSearch = '';
+    this.updateReviewerModalOpen = true;
+    this.loadingUpdateReviewer = true;
+    forkJoin({
+      candidates: this.api.getEmployees(),
+      current: this.api.getAssessmentTeam(row.assessmentId),
+    })
+      .pipe(finalize(() => (this.loadingUpdateReviewer = false)))
+      .subscribe(({ candidates, current }) => {
+        this.updateReviewerCandidates = candidates;
+        this.updateReviewerCurrentByEmpId = new Map(current.reviewers.map((m) => [m.empId, m.id]));
+        this.updateReviewerSelectedIds = current.reviewers.map((m) => m.empId);
+      });
+  }
+
+  closeUpdateReviewerModal(): void {
+    this.updateReviewerModalOpen = false;
+  }
+
+  get filteredUpdateReviewerCandidates(): ItOpsEmployee[] {
+    const needle = this.updateReviewerSearch.trim().toLowerCase();
+    const list = !needle
+      ? this.updateReviewerCandidates
+      : this.updateReviewerCandidates.filter((e) => e.name.toLowerCase().includes(needle) || e.empId.toLowerCase().includes(needle));
+    return this.sortSelectedFirst(list, this.updateReviewerSelectedIds);
+  }
+
+  isUpdateReviewerSelected(empId: string): boolean {
+    return this.updateReviewerSelectedIds.includes(empId);
+  }
+
+  toggleUpdateReviewer(empId: string): void {
+    this.updateReviewerSelectedIds = this.isUpdateReviewerSelected(empId)
+      ? this.updateReviewerSelectedIds.filter((id) => id !== empId)
+      : [...this.updateReviewerSelectedIds, empId];
+  }
+
+  toggleAllUpdateReviewer(): void {
+    const visible = this.filteredUpdateReviewerCandidates.map((e) => e.empId);
+    this.updateReviewerSelectedIds = this.allVisibleUpdateReviewerPicked
+      ? this.updateReviewerSelectedIds.filter((id) => !visible.includes(id))
+      : Array.from(new Set([...this.updateReviewerSelectedIds, ...visible]));
+  }
+
+  get allVisibleUpdateReviewerPicked(): boolean {
+    const visible = this.filteredUpdateReviewerCandidates.map((e) => e.empId);
+    return visible.length > 0 && visible.every((id) => this.updateReviewerSelectedIds.includes(id));
+  }
+
+  saveUpdateReviewer(): void {
+    const assessmentId = this.updateReviewerAssessmentId;
+    if (!assessmentId) return;
+    const projectLabel = this.updateReviewerProjectLabel;
+    const toAdd = this.updateReviewerSelectedIds.filter((id) => !this.updateReviewerCurrentByEmpId.has(id));
+    const toRemove = Array.from(this.updateReviewerCurrentByEmpId.entries())
+      .filter(([empId]) => !this.updateReviewerSelectedIds.includes(empId))
+      .map(([, memberId]) => memberId);
+
+    if (!toAdd.length && !toRemove.length) {
+      this.closeUpdateReviewerModal();
+      return;
+    }
+
+    this.savingUpdateReviewer = true;
+    forkJoin([
+      ...toAdd.map((empId) => this.api.addReviewer(assessmentId, empId)),
+      ...toRemove.map((id) => this.api.removeReviewer(id)),
+    ])
+      .pipe(finalize(() => (this.savingUpdateReviewer = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Reviewer updated.', `${projectLabel} now has ${this.updateReviewerSelectedIds.length} reviewer(s).`);
+          this.closeUpdateReviewerModal();
+          this.loadAssessments();
+        },
+        error: (err) => this.toast.error('Could not update the reviewer.', this.errorText(err, 'Please try again.')),
       });
   }
 

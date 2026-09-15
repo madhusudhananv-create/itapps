@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { resolveWebApiUri } from '../utils/api-base.util';
 
 export interface ItOpsDomainListRow {
@@ -22,6 +23,8 @@ export interface ItOpsMyAssignmentRow {
   projectName: string | null;
   custId: string | null;
   accountName: string | null;
+  /** Denormalized off ITOPS_ASSESSMENT, same field the Dashboard/Reports Business Unit filter reads - lets an own-scope Dashboard viewer's Business Unit list be derived client-side from their own assignments. */
+  businessUnit?: string | null;
   status: string;
   /** Subset of 'Assessor' | 'Reviewer' | 'Assessee' - the roles THIS employee holds on THIS assessment. */
   roles: string[];
@@ -160,11 +163,19 @@ export class ItOpsMaturityApiService {
     );
   }
 
-  getDomainTracker(custId: string, projectId?: string, assessmentMasterId?: number): Observable<ItOpsDomainTrackerRow[]> {
+  /**
+   * myEmpId narrows this down to only the assessments that employee is personally an
+   * assessor/reviewer/assessee on - pass the signed-in user's own empId for an own-scope
+   * (no Dashboard/Report Viewer grant) viewer, so a project they have ONE assignment on
+   * doesn't leak every OTHER domain on that same project into their view.
+   */
+  getDomainTracker(custId: string, projectId?: string, assessmentMasterId?: number, businessUnit?: string, myEmpId?: string): Observable<ItOpsDomainTrackerRow[]> {
     const projectParam = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
     const cycleParam = assessmentMasterId ? `&assessmentMasterId=${assessmentMasterId}` : '';
+    const buParam = businessUnit ? `&businessUnit=${encodeURIComponent(businessUnit)}` : '';
+    const myEmpIdParam = myEmpId ? `&myEmpId=${encodeURIComponent(myEmpId)}` : '';
     return this.http.get<ItOpsDomainTrackerRow[]>(
-      `${this.apiurl}GetITOpsDomainTracker?custId=${encodeURIComponent(custId)}${projectParam}${cycleParam}`,
+      `${this.apiurl}GetITOpsDomainTracker?custId=${encodeURIComponent(custId)}${projectParam}${cycleParam}${buParam}${myEmpIdParam}`,
       { headers: this.getHeaders() },
     );
   }
@@ -204,12 +215,41 @@ export class ItOpsMaturityApiService {
     );
   }
 
-  /** Whether this employee has been granted the Dashboard Viewer role (Configure Roles) - the account/project-wide Dashboard is locked behind this, separate from ordinary module access. */
-  getHasDashboardAccess(empId: string): Observable<boolean> {
-    return this.http.get<boolean>(
-      `${this.apiurl}GetITOpsHasDashboardAccess?empId=${encodeURIComponent(empId)}`,
-      { headers: this.getHeaders() },
-    );
+  /**
+   * `fullAccess` - Superuser or the explicit Dashboard Viewer role grant (Configure
+   * Roles): sees every account/project/domain, unrestricted.
+   * `hasAnyAssignment` - true whenever `fullAccess` is, or this employee is personally
+   * assessor/reviewer/assessee on at least one assessment anywhere: the Dashboard is
+   * still reachable, just scoped down to their own assigned projects.
+   */
+  getHasDashboardAccess(empId: string): Observable<{ fullAccess: boolean; hasAnyAssignment: boolean }> {
+    return this.http
+      .get<any>(`${this.apiurl}GetITOpsHasDashboardAccess?empId=${encodeURIComponent(empId)}`, { headers: this.getHeaders() })
+      .pipe(
+        map((res) => ({
+          fullAccess: !!(res?.fullAccess ?? res?.FullAccess),
+          hasAnyAssignment: !!(res?.hasAnyAssignment ?? res?.HasAnyAssignment),
+        })),
+      );
+  }
+
+  /**
+   * Same shape as getHasDashboardAccess, for the Reports page: `fullAccess` -
+   * Superuser, the dedicated "Report Viewer" role, or (kept for backward
+   * compatibility) "Dashboard Viewer" - sees every account/project,
+   * unrestricted. `hasAnyAssignment` - assessor/reviewer/assessee on at least
+   * one assessment anywhere; the Domain Assessment Report already row-filters
+   * itself to just their own involvement even without this (SessionService.canSeeRow).
+   */
+  getHasReportAccess(empId: string): Observable<{ fullAccess: boolean; hasAnyAssignment: boolean }> {
+    return this.http
+      .get<any>(`${this.apiurl}GetITOpsHasReportAccess?empId=${encodeURIComponent(empId)}`, { headers: this.getHeaders() })
+      .pipe(
+        map((res) => ({
+          fullAccess: !!(res?.fullAccess ?? res?.FullAccess),
+          hasAnyAssignment: !!(res?.hasAnyAssignment ?? res?.HasAnyAssignment),
+        })),
+      );
   }
 
   getExecutiveSummary(custId: string): Observable<ItOpsExecutiveDashboard> {
@@ -219,11 +259,14 @@ export class ItOpsMaturityApiService {
     );
   }
 
-  getTopRisks(custId: string, take = 100, projectId?: string, assessmentMasterId?: number): Observable<ItOpsTopRiskRow[]> {
+  /** myEmpId: same own-scope narrowing as getDomainTracker's myEmpId - see its comment. */
+  getTopRisks(custId: string, take = 100, projectId?: string, assessmentMasterId?: number, businessUnit?: string, myEmpId?: string): Observable<ItOpsTopRiskRow[]> {
     const projectParam = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
     const cycleParam = assessmentMasterId ? `&assessmentMasterId=${assessmentMasterId}` : '';
+    const buParam = businessUnit ? `&businessUnit=${encodeURIComponent(businessUnit)}` : '';
+    const myEmpIdParam = myEmpId ? `&myEmpId=${encodeURIComponent(myEmpId)}` : '';
     return this.http.get<ItOpsTopRiskRow[]>(
-      `${this.apiurl}GetITOpsTopRisks?custId=${encodeURIComponent(custId)}&take=${take}${projectParam}${cycleParam}`,
+      `${this.apiurl}GetITOpsTopRisks?custId=${encodeURIComponent(custId)}&take=${take}${projectParam}${cycleParam}${buParam}${myEmpIdParam}`,
       { headers: this.getHeaders() },
     );
   }

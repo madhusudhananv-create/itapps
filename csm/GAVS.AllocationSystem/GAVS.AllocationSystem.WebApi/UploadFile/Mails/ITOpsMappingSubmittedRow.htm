@@ -1,0 +1,23 @@
+<!--
+  One <tr> per changed project, repeated by NotifyITOpsMappingSubmitted and
+  joined into ITOpsMappingSubmitted.htm's {{RowsHtml}} placeholder.
+
+  Add, remove, or reorder columns here - and match the header <th> cells in
+  ITOpsMappingSubmitted.htm - with NO C# change needed. Available placeholders:
+    {{AccountName}}   - customer/account name, or "-" if unknown
+    {{ProjectId}}      - raw project id
+    {{ProjectName}}    - project display name (falls back to ProjectId)
+    {{StatusLabel}}    - "Project added to mapping" / "Project removed from mapping" / "Domains updated"
+    {{StatusColor}}    - hex color matching StatusLabel's severity
+    {{AddedNames}}     - comma-separated domain names added/reactivated (blank if none)
+    {{RemovedNames}}   - comma-separated domain names removed (blank if none)
+    {{ChangeLines}}    - pre-rendered status/added/removed block (see ITOpsMapping*Line.htm)
+    {{AssesseeIds}}    - comma-separated assessee employee ids
+    {{Assessees}}      - comma-separated assessee display names
+-->
+<tr>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{AccountName}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{ProjectName}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{ChangeLines}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Assessees}}</td>
+</tr>

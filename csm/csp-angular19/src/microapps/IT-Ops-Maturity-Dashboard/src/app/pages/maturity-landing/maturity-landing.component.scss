@@ -150,13 +150,17 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-bottom: 22px;
   animation: rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 
+  @media (max-width: 1100px) {
+    flex-wrap: wrap;
+  }
+
   .header-text {
-    flex: 1;
-    min-width: 240px;
+    flex: 1 1 300px;
+    min-width: 300px;
   }
 
   h1 {
@@ -165,6 +169,7 @@
     font-size: 19px;
     font-weight: 650;
     letter-spacing: -0.01em;
+    white-space: normal;
   }
 
   .subtitle {
@@ -172,6 +177,7 @@
     color: var(--text-secondary);
     font-size: 12.5px;
     max-width: 640px;
+    white-space: normal;
   }
 }
 
@@ -1612,12 +1618,13 @@ tbody tr:hover td:first-child {
 
 .selectors {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 6px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
 
   @media (max-width: 760px) {
     flex-wrap: wrap;
@@ -1627,9 +1634,10 @@ tbody tr:hover td:first-child {
 .selector {
   display: flex;
   flex-direction: column;
-  padding: 6px 14px;
+  padding: 6px 10px;
   border-radius: 8px;
-  min-width: 150px;
+  min-width: 108px;
+  flex-shrink: 1;
   position: relative;
   transition: background 140ms ease;
 
@@ -1657,6 +1665,16 @@ tbody tr:hover td:first-child {
 
   &.filled label {
     color: var(--accent);
+  }
+
+  // "All accounts"/"All projects"/"All business units" is a real, meaningful
+  // selection here (the aggregate view), not an unset placeholder - it should
+  // read the same as an actual chosen value (Cycle always has one), not greyed
+  // out like an empty required field. ::ng-deep reaches past the child
+  // searchable-select's view encapsulation to its placeholder pseudo-element.
+  &.filled ::ng-deep .ss-input,
+  &.filled ::ng-deep .ss-input::placeholder {
+    color: var(--text-primary) !important;
   }
 
   // The searchable-select is skinned to look like plain text with a chevron
@@ -1732,4 +1750,40 @@ tbody tr:hover td:first-child {
   color: var(--status-good);
   background: color-mix(in srgb, var(--status-good) 12%, var(--surface));
   border-color: color-mix(in srgb, var(--status-good) 30%, transparent);
+}
+
+.domain-tracker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

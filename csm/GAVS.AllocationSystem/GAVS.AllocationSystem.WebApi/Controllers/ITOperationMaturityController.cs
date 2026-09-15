@@ -1,6 +1,7 @@
 using AttributeRouting.Web.Mvc;
 using GAVS.AllocationSystem.Model.AllSys;
 using GAVS.AllocationSystem.Model.CSP;
+using GAVS.AllocationSystem.Model.CSP.ViewModels;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,239 +16,10 @@ using System.Web.Http;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
 {
-    // View models for the IT Operations Maturity Assessment screens (BRD: IT Ops Maturity Assessment)
-    //
-    // V2 SCHEMA MIGRATION NOTE (backend): assessments are now project-scoped and
-    // cycle-versioned, and assessor/reviewer/assessee are multi-select join
-    // tables rather than single columns. Every route/verb/parameter below is
-    // preserved exactly, but the DTOs marked "BREAKING RESPONSE-SHAPE CHANGE"
-    // gained list-valued properties. The pre-existing singular properties are
-    // still populated (with the PRIMARY assessor/reviewer, or a CSV for
-    // assessees) so the current Angular frontend keeps working unchanged - but
-    // the frontend should move to the list properties, since only those can
-    // represent more than one person.
-    public class ITOPS_DomainTrackerRow
-    {
-        public int AssessmentId { get; set; }
-        public int DomainId { get; set; }
-        public string DomainCode { get; set; }
-        public string DomainName { get; set; }
-        // Singular fields = the first-added row of the corresponding join table
-        // (legacy shape) - there's no primary/backup distinction any more.
-        public string CoeSpocEmpId { get; set; }
-        public string CoeSpocName { get; set; }
-        public string ReviewerEmpId { get; set; }
-        public string ReviewerName { get; set; }
-        // BREAKING RESPONSE-SHAPE CHANGE (additive): full multi-select lists.
-        public List<string> CoeSpocEmpIds { get; set; }
-        public List<string> CoeSpocNames { get; set; }
-        public List<string> ReviewerEmpIds { get; set; }
-        public List<string> ReviewerNames { get; set; }
-        // New in V2: which project this assessment row belongs to, and its cycle.
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public int AssessmentMasterId { get; set; }
-        public string CycleLabel { get; set; }
-        public string Status { get; set; }
-        public int ParamCount { get; set; }
-        public int SumScores { get; set; }
-        public int MaxPossible { get; set; }
-        // Populated when the tracker aggregates across every account ("All accounts" on
-        // the Dashboard) so cross-account domain rows can be told apart in the UI instead
-        // of silently merging two different accounts' same-named domain into one row.
-        public string AccountId { get; set; }
-        public string AccountName { get; set; }
-        public decimal? AverageScore { get; set; }
-        public decimal? MaturityPercent { get; set; }
-        public string MaturityLevel { get; set; }
-        // True once every finding raised on this domain's assessment(s) is Closed - drives
-        // showing "Completed" instead of "Approved" once genuinely nothing is left to act on.
-        public bool AllFindingsResolved { get; set; }
-    }
-
-    public class ITOPS_ParameterScoreRow
-    {
-        public int ParameterId { get; set; }
-        public string Category { get; set; }
-        public string ParameterName { get; set; }
-        public string Definition { get; set; }
-        // Still five flat fields on the wire (frontend unchanged), but now sourced
-        // from ITOPS_PARAMETER_LEVEL rows (LEVEL_NO 1-5) instead of five columns.
-        public string Level1_AdHoc { get; set; }
-        public string Level2_Developing { get; set; }
-        public string Level3_Defined { get; set; }
-        public string Level4_Managed { get; set; }
-        public string Level5_Optimized { get; set; }
-        public int? MinRequiredScore { get; set; }
-        public int? ScoreId { get; set; }
-        public int? ScoreValue { get; set; }
-        public string Notes { get; set; }
-        public int? FindingId { get; set; }
-        public string FindingStatus { get; set; }
-        public string FindingRejectionComment { get; set; }
-        public string FindingActionTaken { get; set; }
-        public string AssesseeEmpId { get; set; }
-        public string AssesseeName { get; set; }
-        // Assessor's most recent dispute comment when they disputed the assessee's rejection
-        // (reopening the finding) - the assessee's own REJECTION_COMMENT is preserved as-is
-        // through a dispute so the original reason is never lost, this is the assessor's reply.
-        public string DisputeComment { get; set; }
-    }
-
-    public class ITOPS_UpsertScoreRequest
-    {
-        public int AssessmentId { get; set; }
-        public int ParameterId { get; set; }
-        public int? ScoreValue { get; set; }
-        public string Notes { get; set; }
-    }
-
-    public class ITOPS_ReviewDecisionRequest
-    {
-        public bool Approve { get; set; }
-        public string Comment { get; set; }
-    }
-
-    public class ITOPS_FindingDecisionRequest
-    {
-        public bool Accept { get; set; }
-        public string Comment { get; set; }
-        public string ActionTaken { get; set; }
-    }
-
-    // Assessor's decision on an assessee's rejection of a finding: either confirm the
-    // rejection (closes the finding, no further action needed) or dispute it (reopens the
-    // finding so the assessee has to reconsider).
-    public class ITOPS_RejectionDecisionRequest
-    {
-        public bool AssessorAccepts { get; set; }
-        public string Comment { get; set; }
-    }
-
-    public class ITOPS_ExecutiveDashboard
-    {
-        public int SumOfScores { get; set; }
-        public int MaxPossibleScore { get; set; }
-        public decimal? AverageScore { get; set; }
-        public decimal? MaturityPercent { get; set; }
-        public string MaturityLevel { get; set; }
-        public int DomainsCompleted { get; set; }
-        public int DomainsInProgress { get; set; }
-        public int DomainsNotStarted { get; set; }
-    }
-
-    public class ITOPS_TopRiskRow
-    {
-        public string DomainName { get; set; }
-        public string Category { get; set; }
-        public string ParameterName { get; set; }
-        public int? CurrentScore { get; set; }
-        public int Gap { get; set; }
-        public string RecommendedAction { get; set; }
-        // Populated when the Dashboard aggregates across every account ("All accounts")
-        // so the same domain name on two different accounts can be told apart instead
-        // of their risks silently merging under one shared domain-name tab.
-        public string AccountId { get; set; }
-        public string AccountName { get; set; }
-    }
-
-    public class ITOPS_DomainListRow
-    {
-        public int DomainId { get; set; }
-        public string Code { get; set; }
-        public string Name { get; set; }
-        public int? MinRequiredScore { get; set; }
-    }
-
-    // One row per assessment the logged-in employee is personally assigned to,
-    // in any of the three V2 join-table roles. Roles is the set of roles THIS
-    // employee holds on THIS assessment ("Assessor"/"Reviewer"/"Assessee") -
-    // one row per assessment rather than one per role, so the "My Assignments"
-    // landing table never shows the same domain x project twice.
-    public class ITOPS_MyAssignmentRow
-    {
-        public int AssessmentId { get; set; }
-        public int AssessmentMasterId { get; set; }
-        public string CycleLabel { get; set; }
-        public int DomainId { get; set; }
-        public string DomainCode { get; set; }
-        public string DomainName { get; set; }
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        // CustId is what the Angular assessment/review pages scope on
-        // (AccountService.selectedAccount -> GetOrCreateITOpsAssessment(domainCode, custId)),
-        // so it must travel with every row for click-through to work.
-        public string CustId { get; set; }
-        public string AccountName { get; set; }
-        public string Status { get; set; }
-        public List<string> Roles { get; set; }
-        // How many of THIS assessee's own findings on this assessment are still Open -
-        // an assessee's work isn't actually done just because the assessment itself was
-        // Approved by the reviewer; it's done once every finding raised against them
-        // has been accepted/rejected. 0 for a row where this employee isn't an Assessee.
-        public int OpenFindingsForMe { get; set; }
-        // Whole-assessment fact (not scoped to this empId): true once every finding raised
-        // on this assessment is Closed - nothing left for anyone (assessee or assessor) to
-        // act on. Drives showing "Completed" instead of "Approved" once genuinely done.
-        public bool AllFindingsResolved { get; set; }
-        // Lets "Needs Review" default-sort oldest-submitted-first, so a reviewer's queue
-        // reads in the order things actually became their responsibility, not an
-        // arbitrary account/domain alphabetical order.
-        public DateTime? SubmittedDate { get; set; }
-    }
-
-    public class ITOPS_EvidenceRow
-    {
-        public int Id { get; set; }
-        public string FileName { get; set; }
-        public string ContentType { get; set; }
-        public DateTime CreatedDate { get; set; }
-    }
-
-    public class ITOPS_NotificationRow
-    {
-        public int Id { get; set; }
-        public string NotificationType { get; set; }
-        public string Message { get; set; }
-        public int? AssessmentId { get; set; }
-        public int? FindingId { get; set; }
-        public int? DomainId { get; set; }
-        public string DomainCode { get; set; }
-        public string DomainName { get; set; }
-        public string CustId { get; set; }   // still resolved, now via ITOPS_ASSESSMENT.PROJECT_ID -> PROJECT.CUST_ID
-        public string ProjectId { get; set; } // new in V2
-        public string AccountName { get; set; }
-        public DateTime CreatedDate { get; set; }
-    }
-
-    // BREAKING RESPONSE-SHAPE CHANGE (additive): CoeSpocEmpIds / ReviewerEmpIds /
-    // AssesseeEmpIds are the authoritative multi-select lists. CoeSpocEmpId /
-    // ReviewerEmpId hold the IS_PRIMARY member, AssesseeEmpId is the legacy CSV.
-    public class ITOPS_AssessmentInfo
-    {
-        public int AssessmentId { get; set; }
-        public int DomainId { get; set; }
-        public string DomainCode { get; set; }
-        public string DomainName { get; set; }
-        public string CustId { get; set; }
-        public string ProjectId { get; set; }
-        public int AssessmentMasterId { get; set; }
-        public string CycleLabel { get; set; }
-        public string CoeSpocEmpId { get; set; }
-        public string CoeSpocName { get; set; }
-        public string ReviewerEmpId { get; set; }
-        public string ReviewerName { get; set; }
-        public string AssesseeEmpId { get; set; }
-        public List<string> CoeSpocEmpIds { get; set; }
-        public List<string> CoeSpocNames { get; set; }
-        public List<string> ReviewerEmpIds { get; set; }
-        public List<string> ReviewerNames { get; set; }
-        public List<string> AssesseeEmpIds { get; set; }
-        public List<string> AssesseeNames { get; set; }
-        public string Status { get; set; }
-        public string ReturnComment { get; set; }
-    }
-
+    // View models for the IT Operations Maturity Assessment screens live in
+    // GAVS.AllocationSystem.Model/CSP/ViewModels/ITOperationMaturityModels.cs
+    // (namespace GAVS.AllocationSystem.Model.CSP.ViewModels, same place every
+    // other CSM view model lives - see the `using` above), not in this project.
     public partial class AllSysController
     {
         private static readonly string[] ITOPS_COMPLETED_STATUSES = { "Approved", "PendingReview", "Closed" };
@@ -256,6 +28,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private const string ITOPS_ROLE_RUNOPS_INITIATOR = "RUNOPS_INITIATOR";
         private const string ITOPS_ROLE_DOMAIN_PROJECT_MAPPER = "DOMAIN_PROJECT_MAPPER";
         private const string ITOPS_ROLE_DASHBOARD_VIEWER = "DASHBOARD_VIEWER";
+        private const string ITOPS_ROLE_REPORT_VIEWER = "REPORT_VIEWER";
 
         private static string GetMaturityLevel(decimal? maturityPercent)
         {
@@ -545,6 +318,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return (empIds ?? new List<string>()).Select(GetEmpName).ToList();
         }
 
+        // The CSM Platform team's shared mailbox that should be Cc'd on every IT Ops
+        // Maturity admin notification email (role granted/revoked, mapping submitted,
+        // domain renamed, assessments created/removed, assessor/reviewer assigned).
+        // Read from CONFIGURATION_EXT (same helper.GetDBConfig mechanism every other
+        // CSM notification's configurable recipient list already uses - see
+        // GetCcQPMailsByBusinessUnit in ControllerHelper.cs) rather than hardcoded,
+        // since this address can change - see ITOperationMaturity_V2_23_PlatformCcConfig.sql.
+        // Falls back to the current real address if the config row is ever missing,
+        // so a fresh/pre-migration environment still Cc's someone instead of nobody.
+        private const string ITOPS_PLATFORM_CC_CONFIG_KEY = "ITOPS_PLATFORM_CC";
+        private const string ITOPS_PLATFORM_CC_FALLBACK = "csmplatformsupport@neurealm.com";
+
+        private List<string> GetITOpsPlatformCcEmails()
+        {
+            var configured = helper.GetDBConfig(ITOPS_PLATFORM_CC_CONFIG_KEY, "-1");
+            var raw = string.IsNullOrWhiteSpace(configured) ? ITOPS_PLATFORM_CC_FALLBACK : configured;
+            return raw.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(e => e.Trim())
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         /// <summary>
         /// Sends one IT Ops Maturity notification email using the same EmailProvider/GetEmailContent
         /// pipeline every other CSM notification already goes through. Resolves toEmpId to an email
@@ -573,6 +369,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .ToList();
                 if (!toEmails.Any()) return;
 
+                // Every ITOps admin notification Cc's the CSM Platform mailbox, not just
+                // the ones that already had an explicit Cc list - see GetITOpsPlatformCcEmails.
+                var ccEmails = GetITOpsPlatformCcEmails().Except(toEmails, StringComparer.OrdinalIgnoreCase).ToList();
+
                 var fromEmail = ConfigurationManager.AppSettings["emailid"];
                 var fromPassword = ConfigurationManager.AppSettings["emailpassword"];
                 var content = helper.GetEmailContent(templateFileName, values);
@@ -580,7 +380,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var ep = new EmailProvider(Cldb, CSPdb);
                 ep.SendEmail(
                     new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = fromEmail, smtpHost = "smtp.office365.com", smtpPassword = fromPassword, smtpPortValue = "587" },
-                    new EmailContent { from = fromEmail, to = string.Join(",", toEmails), cc = "", content = content, subject = subject, hasAttachments = false, attachmentFilePath = "" },
+                    new EmailContent { from = fromEmail, to = string.Join(",", toEmails), cc = string.Join(",", ccEmails), content = content, subject = subject, hasAttachments = false, attachmentFilePath = "" },
                     Request
                 );
             }
@@ -608,11 +408,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .ToList();
                 if (!toEmails.Any()) return;
 
+                // Explicit ccEmpIds (e.g. the outgoing person on a reassignment) PLUS the
+                // CSM Platform mailbox on every notification - see GetITOpsPlatformCcEmails.
                 var ccEmails = (ccEmpIds ?? new List<string>())
                     .Select(GetEmpEmail)
                     .Where(e => !string.IsNullOrWhiteSpace(e))
-                    .Distinct()
-                    .Except(toEmails)
+                    .Concat(GetITOpsPlatformCcEmails())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Except(toEmails, StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
                 var fromEmail = ConfigurationManager.AppSettings["emailid"];
@@ -928,6 +731,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     AccountName = !string.IsNullOrWhiteSpace(custId) && custNames.ContainsKey(custId)
                         ? custNames[custId]
                         : a.ACCOUNT_NAME,
+                    BusinessUnit = a.BUSINESS_UNIT,
                     Status = a.STATUS,
                     Roles = rolesByAssessmentId[a.ID],
                     OpenFindingsForMe = openFindingCountByAssessment.ContainsKey(a.ID) ? openFindingCountByAssessment[a.ID] : 0,
@@ -1192,27 +996,71 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
         // Dashboard access gate: separate from GetITOpsHasAccess (which decides
         // whether the module's nav icon shows at all, based on personal
-        // assessor/reviewer/assessee assignments) - this account/project-wide
-        // Dashboard shows every account's data regardless of the viewer's own
-        // assignments, so it's deliberately locked down to a role grant an admin
-        // hands out explicitly (Configure Roles -> "Dashboard Viewer"), same
-        // mechanism as every other ITOPS_ROLE. Superusers always pass.
+        // assessor/reviewer/assessee assignments). Two tiers now:
+        // - FullAccess (Superuser or the explicit "Dashboard Viewer" role grant)
+        //   sees every account/project/domain, unrestricted, same as before.
+        // - HasAnyAssignment (assessor/reviewer/assessee on at least one
+        //   assessment, anywhere) unlocks the SAME Dashboard screen but the
+        //   Angular app then scopes every list/tracker/risk call down to just
+        //   this employee's own assigned projects - requested so an assessor/
+        //   reviewer/assessee isn't limited to the flatter "My Assignments" list
+        //   for their own work.
         [GET("GetITOpsHasDashboardAccess")]
         [ActionName("GetITOpsHasDashboardAccess")]
         [HttpGet]
         public IHttpActionResult GetITOpsHasDashboardAccess(string empId)
         {
-            if (string.IsNullOrWhiteSpace(empId)) return Ok(false);
+            if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false });
             try
             {
-                if (IsITOpsSuperuser(empId)) return Ok(true);
-                return Ok(HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER));
+                var fullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER);
+                var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId);
+                return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment });
             }
             catch (Exception ex)
             {
                 LogRequest(ex, "ITOpsMaturity:GetITOpsHasDashboardAccess");
-                return Ok(false);
+                return Ok(new { FullAccess = false, HasAnyAssignment = false });
             }
+        }
+
+        // Same two-tier model as GetITOpsHasDashboardAccess, for the Reports page:
+        // - FullAccess (Superuser or the "Report Viewer" role) sees every
+        //   account/project - both reports, every filter option unrestricted.
+        //   Dashboard Viewer is deliberately NOT included here any more - the two
+        //   grants are independent, each only covering its own screen; someone
+        //   who needs both now needs both roles granted.
+        // - HasAnyAssignment - the Domain Assessment Report already row-filters
+        //   itself for non-full-access viewers (SessionService.canSeeRow, matching
+        //   Assessor/Reviewer/GDH), so this flag exists mainly so the Angular app
+        //   can decide whether to show the Reports screen at all rather than an
+        //   empty "no access" state.
+        [GET("GetITOpsHasReportAccess")]
+        [ActionName("GetITOpsHasReportAccess")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsHasReportAccess(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false });
+            try
+            {
+                var fullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_REPORT_VIEWER);
+                var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId);
+                return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment });
+            }
+            catch (Exception ex)
+            {
+                LogRequest(ex, "ITOpsMaturity:GetITOpsHasReportAccess");
+                return Ok(new { FullAccess = false, HasAnyAssignment = false });
+            }
+        }
+
+        /// <summary>Cheap existence check across the three per-assessment join tables - true the moment this employee is assessor, reviewer, or assessee on any active assessment, anywhere.</summary>
+        private bool HasAnyITOpsAssignment(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return false;
+            return CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll().Any(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == empId)
+                || CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll().Any(r => r.ISACTIVE && r.REVIEWER_EMP_ID == empId)
+                || CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll().Any(a => a.ISACTIVE && a.ASSESSEE_EMP_ID == empId);
         }
 
         // Finds this account's assessment instance for a domain in the current cycle,
@@ -1351,7 +1199,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetITOpsDomainTracker")]
         [ActionName("GetITOpsDomainTracker")]
         [HttpGet]
-        public IHttpActionResult GetITOpsDomainTracker(string custId, string coeSpocEmpId = null, string projectId = null, int? assessmentMasterId = null)
+        public IHttpActionResult GetITOpsDomainTracker(string custId, string myEmpId = null, string projectId = null, int? assessmentMasterId = null, string businessUnit = null)
         {
             // Blank custId means "All accounts" - the Dashboard's default view now loads
             // an aggregate across every account instead of requiring one to be picked first.
@@ -1382,6 +1230,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessmentMasterId.HasValue)
                 assessmentList = assessmentList.Where(a => a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value).ToList();
 
+            // Dashboard's Business Unit filter - only meaningful when custId is blank
+            // ("All accounts"); once a single account is picked, custId already narrows
+            // the data and this stays a no-op filter over that one account's rows.
+            if (!string.IsNullOrWhiteSpace(businessUnit))
+                assessmentList = assessmentList.Where(a => a.BUSINESS_UNIT == businessUnit).ToList();
+
             // A domain unmapped from a project AFTER an assessment was already created
             // for it (Configure Scope changed later) leaves a stale ITOPS_ASSESSMENT row
             // behind - EnsureAssessmentsForAccount only ever ADDS missing rows, it never
@@ -1396,12 +1250,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
             assessmentList = assessmentList.Where(a => currentlyMappedDomainIds.Contains(a.DOMAIN_ID)).ToList();
 
-            // The coeSpocEmpId filter now means "assessments this person is an assessor on".
-            if (!string.IsNullOrWhiteSpace(coeSpocEmpId))
+            // myEmpId narrows this down to only the assessments this person is personally
+            // on, in ANY of the three roles - used by the Dashboard's own-scope view (an
+            // assessor/reviewer/assessee with no Dashboard/Report Viewer grant), where
+            // custId/projectId alone would otherwise return every domain mapped to a
+            // project they merely have ONE assignment on, including domains that are
+            // someone else's entirely.
+            if (!string.IsNullOrWhiteSpace(myEmpId))
             {
                 var myAssessmentIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
-                    .Where(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == coeSpocEmpId)
+                    .Where(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == myEmpId)
                     .Select(a => a.ASSESSMENT_ID)
+                    .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
+                        .Where(r => r.ISACTIVE && r.REVIEWER_EMP_ID == myEmpId)
+                        .Select(r => r.ASSESSMENT_ID))
+                    .Concat(CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
+                        .Where(x => x.ISACTIVE && x.ASSESSEE_EMP_ID == myEmpId)
+                        .Select(x => x.ASSESSMENT_ID))
+                    .Distinct()
                     .ToList();
                 assessmentList = assessmentList.Where(a => myAssessmentIds.Contains(a.ID)).ToList();
             }
@@ -1826,13 +1692,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     reviewerIds,
                     $"IT Ops Maturity: {domain?.NAME} assessment submitted for review - {projectName}",
                     "ITOpsSubmittedForReview.htm",
-                    new Dictionary<string, string>
+                    ToEmailValues(new
                     {
-                        { "ReviewerName", string.Join(", ", GetEmpNames(reviewerIds)) },
-                        { "CoeSpocName", assessorNames },
-                        { "DomainName", domain?.NAME },
-                        { "ProjectName", projectName }
-                    },
+                        ReviewerName = string.Join(", ", GetEmpNames(reviewerIds)),
+                        CoeSpocName = assessorNames,
+                        DomainName = domain?.NAME,
+                        ProjectName = projectName
+                    }),
                     "SubmittedForReview", assessment.ID, null,
                     $"{domain?.NAME} assessment for {projectName} submitted for your review by {assessorNames}.");
             }
@@ -1871,13 +1737,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     assesseeIds,
                     $"IT Ops Maturity: {openFindingCount} {findingWord} need your action - {domain?.NAME} - {projectName}",
                     "ITOpsFindingsNeedAction.htm",
-                    new Dictionary<string, string>
+                    ToEmailValues(new
                     {
-                        { "AssesseeName", assesseeNames },
-                        { "DomainName", domain?.NAME },
-                        { "ProjectName", projectName },
-                        { "FindingCount", openFindingCount.ToString() }
-                    },
+                        AssesseeName = assesseeNames,
+                        DomainName = domain?.NAME,
+                        ProjectName = projectName,
+                        FindingCount = openFindingCount.ToString()
+                    }),
                     "FindingsNeedAction", assessment.ID, null,
                     $"{openFindingCount} probable area{(openFindingCount == 1 ? "" : "s")} of improvement raised in {domain?.NAME} need your review.");
             }
@@ -1921,15 +1787,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 assessorIds,
                 $"IT Ops Maturity: {reviewedDomain?.NAME} assessment {(request.Approve ? "approved" : "returned for revision")} - {reviewedProjectName}",
                 "ITOpsReviewDecision.htm",
-                new Dictionary<string, string>
+                ToEmailValues(new
                 {
-                    { "CoeSpocName", string.Join(", ", GetEmpNames(assessorIds)) },
-                    { "ReviewerName", reviewerNames },
-                    { "DomainName", reviewedDomain?.NAME },
-                    { "ProjectName", reviewedProjectName },
-                    { "Decision", request.Approve ? "Approved" : "Returned for Revision" },
-                    { "Comment", request.Approve ? "-" : request.Comment }
-                },
+                    CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
+                    ReviewerName = reviewerNames,
+                    DomainName = reviewedDomain?.NAME,
+                    ProjectName = reviewedProjectName,
+                    Decision = request.Approve ? "Approved" : "Returned for Revision",
+                    Comment = request.Approve ? "-" : request.Comment
+                }),
                 request.Approve ? "AssessmentApproved" : "AssessmentReturned", assessment.ID, null,
                 $"{reviewedDomain?.NAME} assessment for {reviewedProjectName} {(request.Approve ? "approved" : "returned for revision")} by {reviewerNames}.");
 
@@ -2033,14 +1899,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         assessorIds,
                         $"IT Ops Maturity: finding rejected - {findingDomain?.NAME}",
                         "ITOpsFindingDecision.htm",
-                        new Dictionary<string, string>
+                        ToEmailValues(new
                         {
-                            { "CoeSpocName", string.Join(", ", GetEmpNames(assessorIds)) },
-                            { "ParameterName", findingParameter?.NAME },
-                            { "DomainName", findingDomain?.NAME },
-                            { "Decision", "Rejected" },
-                            { "Comment", request.Comment }
-                        },
+                            CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
+                            ParameterName = findingParameter?.NAME,
+                            DomainName = findingDomain?.NAME,
+                            Decision = "Rejected",
+                            Comment = request.Comment
+                        }),
                         "FindingRejected", null, finding.ID,
                         $"Finding \"{findingParameter?.NAME}\" in {findingDomain?.NAME} was rejected by the assessee.");
                 }
@@ -2107,14 +1973,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     new List<string> { finding.ASSESSEE_EMP_ID },
                     $"IT Ops Maturity: your rejection was {(request.AssessorAccepts ? "accepted" : "disputed")} - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
-                    new Dictionary<string, string>
+                    ToEmailValues(new
                     {
-                        { "CoeSpocName", string.Join(", ", GetEmpNames(assessorIds)) },
-                        { "ParameterName", findingParameter?.NAME },
-                        { "DomainName", findingDomain?.NAME },
-                        { "Decision", request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened" },
-                        { "Comment", request.AssessorAccepts ? "-" : request.Comment }
-                    },
+                        CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
+                        ParameterName = findingParameter?.NAME,
+                        DomainName = findingDomain?.NAME,
+                        Decision = request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened",
+                        Comment = request.AssessorAccepts ? "-" : request.Comment
+                    }),
                     request.AssessorAccepts ? "FindingRejectionAccepted" : "FindingRejectionDisputed", assessmentId, finding.ID,
                     $"Your rejection of \"{findingParameter?.NAME}\" in {findingDomain?.NAME} was {(request.AssessorAccepts ? "accepted - the finding is now closed." : "disputed - please reconsider and act on it.")}");
             }
@@ -2139,11 +2005,6 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             CSPdb.Commit(CanCommit);
 
             return Ok(finding);
-        }
-
-        public class ITOPS_UpdateFindingActionRequest
-        {
-            public string ActionTaken { get; set; }
         }
 
         // Lets the assessee record remediation progress on an accepted finding - an accepted
@@ -2206,14 +2067,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     recipients,
                     $"IT Ops Maturity: finding accepted - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
-                    new Dictionary<string, string>
+                    ToEmailValues(new
                     {
-                        { "CoeSpocName", string.Join(", ", GetEmpNames(recipients)) },
-                        { "ParameterName", findingParameter?.NAME },
-                        { "DomainName", findingDomain?.NAME },
-                        { "Decision", "Accepted" },
-                        { "Comment", finding.ACTION_TAKEN }
-                    },
+                        CoeSpocName = string.Join(", ", GetEmpNames(recipients)),
+                        ParameterName = findingParameter?.NAME,
+                        DomainName = findingDomain?.NAME,
+                        Decision = "Accepted",
+                        Comment = finding.ACTION_TAKEN
+                    }),
                     "FindingActionUpdate", null, finding.ID,
                     $"Action update submitted on \"{findingParameter?.NAME}\" in {findingDomain?.NAME}.");
             }
@@ -2598,7 +2459,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetITOpsTopRisks")]
         [ActionName("GetITOpsTopRisks")]
         [HttpGet]
-        public IHttpActionResult GetITOpsTopRisks(string custId = null, int take = 20, string projectId = null, int? assessmentMasterId = null)
+        public IHttpActionResult GetITOpsTopRisks(string custId = null, int take = 20, string projectId = null, int? assessmentMasterId = null, string businessUnit = null, string myEmpId = null)
         {
             var parameters = CSPdb.ITOPS_PARAMETER.GetAll().ToList().GroupBy(p => p.ID).ToDictionary(g => g.Key, g => g.First());
             var categories = CSPdb.ITOPS_CATEGORY.GetAll().ToList().GroupBy(c => c.ID).ToDictionary(g => g.Key, g => g.First());
@@ -2668,6 +2529,37 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         return a != null && a.ASSESSMENT_MASTER_ID == assessmentMasterId.Value;
                     })
                     .ToList();
+            }
+            // Dashboard's Business Unit filter - only meaningful when custId is blank
+            // ("All accounts"); once a single account is picked, custId already narrows scope.
+            if (!string.IsNullOrWhiteSpace(businessUnit))
+            {
+                scoreRows = scoreRows
+                    .Where(s =>
+                    {
+                        var a = assessmentOf(s);
+                        return a != null && a.BUSINESS_UNIT == businessUnit;
+                    })
+                    .ToList();
+            }
+
+            // Same own-scope narrowing as GetITOpsDomainTracker's myEmpId: without this,
+            // an assessor/reviewer/assessee with no Dashboard/Report Viewer grant would see
+            // every domain's risks for a project they merely have ONE assignment on.
+            if (!string.IsNullOrWhiteSpace(myEmpId))
+            {
+                var myAssessmentIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
+                    .Where(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == myEmpId)
+                    .Select(a => a.ASSESSMENT_ID)
+                    .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
+                        .Where(r => r.ISACTIVE && r.REVIEWER_EMP_ID == myEmpId)
+                        .Select(r => r.ASSESSMENT_ID))
+                    .Concat(CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
+                        .Where(x => x.ISACTIVE && x.ASSESSEE_EMP_ID == myEmpId)
+                        .Select(x => x.ASSESSMENT_ID))
+                    .Distinct()
+                    .ToList();
+                scoreRows = scoreRows.Where(s => myAssessmentIds.Contains(s.ASSESSMENT_ID)).ToList();
             }
 
             // Recommended-action text still comes from the finding (the assessor's own

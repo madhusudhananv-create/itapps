@@ -379,6 +379,8 @@
     <Compile Include="CSP\Tables\TASK_RECURRENCE.cs" />
     <Compile Include="CSP\Tables\TASK_TYPE.cs" />
     <Compile Include="CSP\ViewModels\AllIdeaDetails.cs" />
+    <Compile Include="CSP\ViewModels\ITOperationMaturityAdminModels.cs" />
+    <Compile Include="CSP\ViewModels\ITOperationMaturityModels.cs" />
     <Compile Include="CSP\ViewModels\CSATInsightsInputHolder.cs" />
     <Compile Include="CSP\ViewModels\FailureModeFilters.cs" />
     <Compile Include="CSP\ViewModels\FINDING_STAGE_DATA.cs" />

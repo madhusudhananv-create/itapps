@@ -2,8 +2,8 @@ import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, of, Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ItOpsMaturityApiService, ItOpsDomainTrackerRow, ItOpsTopRiskRow, ItOpsMyAssignmentRow } from '../../services/itops-maturity-api.service';
 import { ToastService } from '../../services/toast.service';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
@@ -165,11 +165,20 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   // ---- Dashboard (Account -> Project drill-down, gated by role) ----
   /** True while GetITOpsHasDashboardAccess is in flight, so the gate/picker/access-denied states don't flash. */
   dashboardAccessLoading = true;
-  /** Whether this employee holds the Dashboard Viewer role (or is an ITOps Superuser) - the account/project-wide Dashboard is locked behind this. */
+  /** Whether this employee holds the Dashboard Viewer role (or is an ITOps Superuser) - unrestricted, every account/project/domain. */
   dashboardAccessGranted = false;
+  /** True when this employee has no full Dashboard grant, but IS assessor/reviewer/assessee on at least one assessment - the Dashboard is still reachable, just scoped down to their own assigned projects (see loadAccountsWithAssessments/loadProjectsForAccount/loadDashboardDomainData). */
+  dashboardOwnScopeOnly = false;
+  /** Whichever of the two above is true - what the template actually gates rendering the Dashboard content on. */
+  get dashboardVisible(): boolean {
+    return this.dashboardAccessGranted || this.dashboardOwnScopeOnly;
+  }
   /** Every assessment cycle, newest first - picking one narrows the account/project dropdowns below it. */
   dashboardCycles: { id: number; cycleLabel: string; status: string }[] = [];
   selectedCycle: { id: number; cycleLabel: string; status: string } | null = null;
+  /** Every distinct Business Unit present on an active assessment in the selected cycle - '' means "All business units". Selecting one narrows accountsWithAssessments below it. */
+  businessUnits: string[] = [];
+  businessUnitFilter = '';
   /** Only accounts that actually have an IT Ops assessment created (in the selected cycle, if one is picked) - not every CSM customer. */
   accountsWithAssessments: { cusT_ID: string; cusT_NM: string }[] = [];
   /** Only the selected account's projects that have an IT Ops assessment created. */
@@ -290,52 +299,139 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       .pipe(
         catchError((err) => {
           console.error('IT Ops Maturity Dashboard: failed to check dashboard access', err);
-          return of(false);
+          return of({ fullAccess: false, hasAnyAssignment: false });
         }),
       )
-      .subscribe((granted) => {
-        this.dashboardAccessGranted = granted;
+      .subscribe((access) => {
+        this.dashboardAccessGranted = access.fullAccess;
+        this.dashboardOwnScopeOnly = !access.fullAccess && access.hasAnyAssignment;
         this.dashboardAccessLoading = false;
-        if (!granted) {
-          // The nav bar already hides the Dashboard tab for anyone without this
-          // role, but the route itself is still directly reachable (default
-          // landing route after login, a bookmark, typing the URL) - land them
-          // on My Assignments instead of the blocked "Access Required" card,
-          // which nobody without the role should ever actually see.
+        if (!this.dashboardVisible) {
+          // The nav bar already hides the Dashboard tab for anyone without full
+          // access or an assignment, but the route itself is still directly
+          // reachable (default landing route after login, a bookmark, typing
+          // the URL) - land them on My Assignments instead of the blocked
+          // "Access Required" card, which nobody in this state should ever see.
           this.router.navigate(['/my-assignments']);
           return;
         }
-        this.api
-          .getCycleList()
-          .pipe(
-            catchError((err) => {
-              console.error('IT Ops Maturity Dashboard: failed to load cycle list', err);
-              return of([]);
-            }),
-          )
-          .subscribe((cycles) => {
-            this.dashboardCycles = cycles;
-            // Default to the current cycle, not "All cycles" - a domain with
-            // assessments in more than one cycle would otherwise have its scores
-            // from every cycle merged into one misleading row (same class of bug
-            // "All accounts" had before accounts got their own grouping key; cycles
-            // aren't keyed that way, so leaving this on "All" stays broken). Prefer
-            // the most recent still-Open cycle; fall back to the newest cycle
-            // overall (list is already newest-first) if none are Open.
-            this.selectedCycle = cycles.find((c) => c.status === 'Open') ?? cycles[0] ?? null;
-            // Default view otherwise: All accounts / All projects within that one
-            // cycle, loading the aggregate straight away instead of making the
-            // viewer pick a scope first - narrowing down further is optional.
-            this.loadAccountsWithAssessments();
-            this.loadProjectsForAccount('');
-            this.loadDashboardDomainData();
-          });
+
+        const loadCyclesThenDashboard = () => {
+          this.api
+            .getCycleList()
+            .pipe(
+              catchError((err) => {
+                console.error('IT Ops Maturity Dashboard: failed to load cycle list', err);
+                return of([]);
+              }),
+            )
+            .subscribe((cycles) => {
+              this.dashboardCycles = cycles;
+              // Default to the current cycle, not "All cycles" - a domain with
+              // assessments in more than one cycle would otherwise have its scores
+              // from every cycle merged into one misleading row (same class of bug
+              // "All accounts" had before accounts got their own grouping key; cycles
+              // aren't keyed that way, so leaving this on "All" stays broken). Prefer
+              // the most recent still-Open cycle; fall back to the newest cycle
+              // overall (list is already newest-first) if none are Open.
+              this.selectedCycle = cycles.find((c) => c.status === 'Open') ?? cycles[0] ?? null;
+              // The Dashboard always opens on one concrete Business Unit / Account /
+              // Project - there is no "All ..." option any more (see the picker
+              // template), so each level auto-selects its first available value and
+              // hands off to the next one, same as the cycle picker just above.
+              this.loadBusinessUnits(() =>
+                this.loadAccountsWithAssessments(() =>
+                  this.loadProjectsForAccount(this.selectedAccount?.cusT_ID ?? '', () => this.loadDashboardDomainData()),
+                ),
+              );
+            });
+        };
+
+        if (this.dashboardOwnScopeOnly) {
+          // Own-scope account/project options are derived from myAssignments
+          // (below), so it needs to be loaded here first, rather than trusting
+          // ngOnInit's separately-triggered loadMyAssignments() to have landed
+          // by the time this runs.
+          this.api
+            .getMyAssignments(empId)
+            .pipe(catchError(() => of([] as ItOpsMyAssignmentRow[])))
+            .subscribe((rows) => {
+              this.myAssignments = rows;
+              loadCyclesThenDashboard();
+            });
+        } else {
+          loadCyclesThenDashboard();
+        }
       });
   }
 
-  private loadAccountsWithAssessments(): void {
+  /** Distinct (custId, projectId) pairs this employee is personally assessor/reviewer/assessee on - the universe of "their own projects" for own-scope Dashboard access. */
+  private get myAssignedProjectPairs(): { custId: string; custName: string; projectId: string; projectName: string }[] {
+    const seen = new Map<string, { custId: string; custName: string; projectId: string; projectName: string }>();
+    for (const row of this.myAssignments) {
+      if (!row.custId || !row.projectId) continue;
+      if (this.selectedCycle && row.cycleLabel !== this.selectedCycle.cycleLabel) continue;
+      if (this.businessUnitFilter && row.businessUnit !== this.businessUnitFilter) continue;
+      const key = `${row.custId}|${row.projectId}`;
+      if (!seen.has(key)) {
+        seen.set(key, {
+          custId: row.custId,
+          custName: row.accountName ?? row.custId,
+          projectId: row.projectId,
+          projectName: row.projectName ?? row.projectId,
+        });
+      }
+    }
+    return Array.from(seen.values());
+  }
+
+  /** Loads the Business Unit list for the selected cycle, then auto-selects the first one - there is no "All business units" option any more, so this level is never left blank while at least one BU exists. */
+  private loadBusinessUnits(onDone?: () => void): void {
+    // Own-scope: derived client-side from this employee's own assignments
+    // (narrowed to the selected cycle, if any) rather than the org-wide
+    // endpoint, which isn't scoped to any one employee.
+    if (this.dashboardOwnScopeOnly) {
+      const seen = new Set<string>();
+      for (const row of this.myAssignments) {
+        if (!row.businessUnit) continue;
+        if (this.selectedCycle && row.cycleLabel !== this.selectedCycle.cycleLabel) continue;
+        seen.add(row.businessUnit);
+      }
+      this.businessUnits = Array.from(seen).sort();
+      this.businessUnitFilter = this.businessUnits[0] ?? '';
+      onDone?.();
+      return;
+    }
     this.api
-      .getAccountsWithAssessments(this.selectedCycle?.id)
+      .getBusinessUnits(this.selectedCycle?.id)
+      .pipe(
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to load business units', err);
+          return of([]);
+        }),
+      )
+      .subscribe((businessUnits) => {
+        this.businessUnits = businessUnits;
+        this.businessUnitFilter = businessUnits[0] ?? '';
+        onDone?.();
+      });
+  }
+
+  private loadAccountsWithAssessments(onDone?: () => void): void {
+    // Own-scope: the account picker only ever offers accounts this employee
+    // actually has an assignment on - derived client-side from myAssignments,
+    // not the org-wide endpoint (which would leak every other account's name
+    // into the dropdown even though selecting one would show nothing).
+    if (this.dashboardOwnScopeOnly) {
+      const seen = new Map<string, string>();
+      for (const p of this.myAssignedProjectPairs) seen.set(p.custId, p.custName);
+      this.accountsWithAssessments = Array.from(seen, ([cusT_ID, cusT_NM]) => ({ cusT_ID, cusT_NM }));
+      this.autoSelectAccount();
+      onDone?.();
+      return;
+    }
+    this.api
+      .getAccountsWithAssessments(this.selectedCycle?.id, this.businessUnitFilter || undefined)
       .pipe(
         catchError((err) => {
           console.error('IT Ops Maturity Dashboard: failed to load accounts with assessments', err);
@@ -344,7 +440,28 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       )
       .subscribe((accounts) => {
         this.accountsWithAssessments = accounts;
+        this.autoSelectAccount();
+        onDone?.();
       });
+  }
+
+  /** Sets selectedAccount (and AccountService's selection) to the first available account - there is no "All accounts" option any more. */
+  private autoSelectAccount(): void {
+    const first = this.accountsWithAssessments[0] ?? null;
+    this.selectedAccount = first ? { cusT_ID: first.cusT_ID, cusT_NM: first.cusT_NM, industrY_TYPE: '', url: '' } : null;
+    if (this.selectedAccount) this.accountService.selectAccount(this.selectedAccount);
+  }
+
+  get dashboardBusinessUnitOptions(): SearchableSelectOption[] {
+    return this.businessUnits.map((bu) => ({ value: bu, label: bu }));
+  }
+
+  /** Business Unit dropdown changed. Re-narrows the account dropdown to this BU (within the selected cycle), then auto-selects an account/project within it, and reloads. */
+  onDashboardBusinessUnitChange(businessUnit: string): void {
+    this.businessUnitFilter = businessUnit;
+    this.loadAccountsWithAssessments(() =>
+      this.loadProjectsForAccount(this.selectedAccount?.cusT_ID ?? '', () => this.loadDashboardDomainData()),
+    );
   }
 
   get selectedCycleValue(): string {
@@ -355,9 +472,6 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return this.dashboardCycles.map((c) => ({ value: String(c.id), label: c.cycleLabel }));
   }
 
-  // The "All accounts"/"All projects" entry itself comes from emptyLabel on the
-  // <app-searchable-select> below, not from this options list - adding it here
-  // too just duplicates that same entry.
   get dashboardAccountOptions(): SearchableSelectOption[] {
     return this.accountsWithAssessments.map((a) => ({ value: a.cusT_ID, label: a.cusT_NM }));
   }
@@ -366,35 +480,45 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return this.projectsForAccount.map((p) => ({ value: p.projectId, label: p.projectName }));
   }
 
-  /** Cycle dropdown changed - re-narrows the account dropdown to this cycle, resets account/project back to "All", and reloads the aggregate for the new cycle. */
+  /** Cycle dropdown changed - re-narrows Business Unit/Account/Project to this cycle, auto-selecting the first at each level, and reloads the aggregate for the new cycle. */
   onDashboardCycleChange(cycleId: string): void {
     this.selectedCycle = this.dashboardCycles.find((c) => String(c.id) === cycleId) ?? null;
-    this.selectedAccount = null;
-    this.selectedProject = null;
-    this.loadAccountsWithAssessments();
-    this.loadProjectsForAccount('');
-    this.loadDashboardDomainData();
+    this.loadBusinessUnits(() =>
+      this.loadAccountsWithAssessments(() =>
+        this.loadProjectsForAccount(this.selectedAccount?.cusT_ID ?? '', () => this.loadDashboardDomainData()),
+      ),
+    );
   }
 
-  /** Account dropdown changed - '' means "All accounts". Loads that scope's assessed projects (every account's when '', just the one account's otherwise), resets the project back to "All projects" for the new scope, and reloads. */
+  /** Account dropdown changed. Loads that account's assessed projects, auto-selects the first, and reloads. */
   onDashboardAccountChange(custId: string): void {
-    const account = custId ? this.accountsWithAssessments.find((a) => a.cusT_ID === custId) ?? null : null;
+    const account = this.accountsWithAssessments.find((a) => a.cusT_ID === custId) ?? null;
     this.selectedAccount = account ? { cusT_ID: account.cusT_ID, cusT_NM: account.cusT_NM, industrY_TYPE: '', url: '' } : null;
-    this.selectedProject = null;
 
-    if (account) {
+    if (this.selectedAccount) {
       // Keeps AccountService.selectedAccount$ in sync so a domain-tracker row
       // click resolves GetOrCreateITOpsAssessment(domainCode, custId) against
       // the same account this picker has selected.
-      this.accountService.selectAccount(this.selectedAccount!);
+      this.accountService.selectAccount(this.selectedAccount);
     }
 
-    this.loadProjectsForAccount(custId);
-    this.loadDashboardDomainData();
+    this.loadProjectsForAccount(custId, () => this.loadDashboardDomainData());
   }
 
-  /** '' fetches every assessed project across every account ("All accounts"); a real custId scopes it to that one account's projects. */
-  private loadProjectsForAccount(custId: string): void {
+  /** Loads the given account's assessed projects and auto-selects the first one - there is no "All projects" option any more. */
+  private loadProjectsForAccount(custId: string, onDone?: () => void): void {
+    if (this.dashboardOwnScopeOnly) {
+      this.projectsLoading = false;
+      const seen = new Map<string, string>();
+      for (const p of this.myAssignedProjectPairs) {
+        if (custId && p.custId !== custId) continue;
+        seen.set(p.projectId, p.projectName);
+      }
+      this.projectsForAccount = Array.from(seen, ([projectId, projectName]) => ({ projectId, projectName }));
+      this.selectedProject = this.projectsForAccount[0] ?? null;
+      onDone?.();
+      return;
+    }
     this.projectsLoading = true;
     this.api
       .getProjectsWithAssessments(custId, this.selectedCycle?.id)
@@ -406,13 +530,15 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       )
       .subscribe((projects) => {
         this.projectsForAccount = projects;
+        this.selectedProject = projects[0] ?? null;
         this.projectsLoading = false;
+        onDone?.();
       });
   }
 
-  /** Project dropdown changed - '' means "All projects" (for whichever account scope is currently selected). */
+  /** Project dropdown changed - there is no "All projects" option any more, so projectId is always one of projectsForAccount. */
   onDashboardProjectChange(projectId: string): void {
-    this.selectedProject = projectId ? this.projectsForAccount.find((p) => p.projectId === projectId) ?? null : null;
+    this.selectedProject = this.projectsForAccount.find((p) => p.projectId === projectId) ?? null;
     this.loadDashboardDomainData();
   }
 
@@ -431,20 +557,65 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     const custId = this.selectedAccount ? String(this.selectedAccount.cusT_ID) : '';
     const projectId = this.selectedProject?.projectId ?? '';
 
+    // Business Unit only matters here when custId is blank ("All accounts") -
+    // once a specific account is picked, custId already narrows scope.
+    const businessUnit = custId ? undefined : this.businessUnitFilter || undefined;
+
+    // Own-scope: neither endpoint accepts "just these project ids", so once no
+    // single project is picked, fan out one call per project this employee is
+    // actually assigned to (optionally narrowed to one of their own accounts)
+    // and merge the results client-side - the only way to aggregate "my
+    // projects" without a backend change. Picking one specific project of
+    // theirs still goes through the plain single-call path below, since a
+    // project offered in their own picker is inherently already theirs.
+    const useOwnScopeAggregate = this.dashboardOwnScopeOnly && !this.selectedProject;
+    const ownScopePairs = useOwnScopeAggregate
+      ? this.myAssignedProjectPairs.filter((p) => !custId || p.custId === custId)
+      : [];
+    // Own-scope always narrows to just THIS employee's own assessor/reviewer/assessee
+    // assignments, not every domain mapped to a project they merely have one assignment
+    // on - needed even on the single-call path below (a project picked from their own
+    // picker can still have sibling domains that belong to someone else entirely).
+    const myEmpId = this.dashboardOwnScopeOnly ? localStorage.getItem('empid') || undefined : undefined;
+
+    const domainRows$: Observable<ItOpsDomainTrackerRow[]> = useOwnScopeAggregate
+      ? ownScopePairs.length
+        ? forkJoin(
+            ownScopePairs.map((p) =>
+              this.api
+                .getDomainTracker(p.custId, p.projectId, this.selectedCycle?.id, undefined, myEmpId)
+                .pipe(catchError(() => of([] as ItOpsDomainTrackerRow[]))),
+            ),
+          ).pipe(map((lists) => lists.flat()))
+        : of([] as ItOpsDomainTrackerRow[])
+      : this.api.getDomainTracker(custId, projectId, this.selectedCycle?.id, businessUnit, myEmpId).pipe(
+          catchError((err) => {
+            console.error('IT Ops Maturity Dashboard: failed to load domain tracker', err);
+            return of([] as ItOpsDomainTrackerRow[]);
+          }),
+        );
+
+    const topRiskRows$: Observable<ItOpsTopRiskRow[]> = useOwnScopeAggregate
+      ? ownScopePairs.length
+        ? forkJoin(
+            ownScopePairs.map((p) =>
+              this.api
+                .getTopRisks(p.custId, 100, p.projectId, this.selectedCycle?.id, undefined, myEmpId)
+                .pipe(catchError(() => of([] as ItOpsTopRiskRow[]))),
+            ),
+          ).pipe(map((lists) => lists.flat()))
+        : of([] as ItOpsTopRiskRow[])
+      : this.api.getTopRisks(custId, 100, projectId, this.selectedCycle?.id, businessUnit, myEmpId).pipe(
+          catchError((err) => {
+            console.error('IT Ops Maturity Dashboard: failed to load top risks', err);
+            return of([] as ItOpsTopRiskRow[]);
+          }),
+        );
+
     this.dashboardDataLoading = true;
     forkJoin({
-      domainRows: this.api.getDomainTracker(custId, projectId, this.selectedCycle?.id).pipe(
-        catchError((err) => {
-          console.error('IT Ops Maturity Dashboard: failed to load domain tracker', err);
-          return of([] as ItOpsDomainTrackerRow[]);
-        }),
-      ),
-      topRiskRows: this.api.getTopRisks(custId, 100, projectId, this.selectedCycle?.id).pipe(
-        catchError((err) => {
-          console.error('IT Ops Maturity Dashboard: failed to load top risks', err);
-          return of([] as ItOpsTopRiskRow[]);
-        }),
-      ),
+      domainRows: domainRows$,
+      topRiskRows: topRiskRows$,
       businessUnit: custId ? this.businessUnitService.getBusinessUnitForAccount(custId) : of(null),
       // The signed-in user's own email never changes between one scope-picker change and
       // the next - fetching it fresh on every single account/project/cycle switch was one
@@ -597,6 +768,17 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       });
   }
 
+  /**
+   * How many of myPendingReviews are actually still awaiting THIS reviewer's
+   * decision - myPendingReviews itself deliberately keeps Approved/Returned
+   * rows visible too (a reviewer can still open something they already
+   * decided on), but the "Needs Review" tab's count badge should reflect only
+   * what genuinely still needs action, not the whole list.
+   */
+  get pendingReviewActionCount(): number {
+    return this.myPendingReviews.filter((row) => row.status === 'PendingReview').length;
+  }
+
   /** Rows for whichever of the two tabs is currently showing, before search/sort. */
   private get currentTabAssignmentsRaw(): ItOpsMyAssignmentRow[] {
     return this.assignmentsTab === 'reviews' ? this.myPendingReviews : this.myOpenAssessments;
@@ -701,9 +883,13 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     };
   }
 
-  /** Whether this row deserves the "Action needed" urgent highlight - either it's the assessor's own work sent back for revision, or it's an assessee row with findings of theirs still Open. */
+  /** Whether this row deserves the "Action needed" urgent highlight - the assessor's own work sent back for revision, an assessee row with findings of theirs still Open, or a reviewer row still genuinely awaiting this reviewer's decision (not one already Approved/Returned). */
   needsAction(row: ItOpsMyAssignmentRow): boolean {
-    return this.isReturnedForRevision(row) || (this.isAssesseeOn(row) && this.hasActionableFindings(row));
+    return (
+      this.isReturnedForRevision(row) ||
+      (this.isAssesseeOn(row) && this.hasActionableFindings(row)) ||
+      (this.isReviewerOn(row) && row.status === 'PendingReview')
+    );
   }
 
   /** A returned assessment is the most urgent row on "My Assessments" - it's the assessor's own work sent back with a required fix, not just an untouched Not Started item. */
@@ -784,12 +970,17 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   }
 
   private applyRoleScope(allTopRisks: TopRisk[]): void {
-    if (this.currentUser.role === 'GDH' || this.dashboardAccessGranted) {
+    if (this.currentUser.role === 'GDH' || this.dashboardAccessGranted || this.dashboardOwnScopeOnly) {
       // Business-level view: all domains within this account/project. GDH
       // eligibility is already scoped to the account's own Business Unit;
       // Dashboard Viewer/Superuser access is a deliberately broad grant that
       // should show every domain in the selected project regardless of
       // whether this particular viewer happens to be its SPOC or Reviewer.
+      // Own-scope access is different again but lands in the same branch: the
+      // upstream domainRows/topRiskRows were ALREADY restricted to just this
+      // employee's own assigned projects (loadDashboardDomainData), so every
+      // domain that came back is rightfully theirs to see in full - no further
+      // per-domain SPOC/Reviewer allow-listing on top of that is needed.
       this.domainSummaries = this.allDomainSummaries;
       this.scopedTopRisks = allTopRisks;
     } else {
@@ -1012,5 +1203,84 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   maturityScaleSegments(avgScore: number): boolean[] {
     const level = Math.min(5, Math.max(0, Math.round(avgScore)));
     return Array.from({ length: 5 }, (_, i) => i < level);
+  }
+
+  /** Excel sheet names can't exceed 31 chars or contain \ / ? * [ ] : - and can't be blank. */
+  private sheetSafeName(name: string, fallback: string): string {
+    const cleaned = (name || fallback).replace(/[\\/?*[\]:]/g, ' ').trim();
+    return (cleaned || fallback).slice(0, 31);
+  }
+
+  /** One row of the Domain Tracker table, shaped for an Excel sheet (mirrors the visible columns). */
+  private domainTrackerExportRow(domain: DomainSummary): Record<string, unknown> {
+    return {
+      Account: domain.accountName || '-',
+      'Technology Domain': domain.name,
+      'COE SPOC': domain.coeSpoc || 'Unassigned',
+      Reviewer: domain.reviewer || 'Unassigned',
+      Status: this.displayDomainStatus(domain),
+      Parameters: domain.paramCount,
+      Score: domain.sumScores,
+      Max: domain.maxPossible,
+      Avg: domain.averageScore !== null ? domain.averageScore : '-',
+      Maturity: domain.maturityPercent !== null ? `${domain.maturityPercent}%` : '-',
+      Level: domain.maturityLevel || '-',
+    };
+  }
+
+  /**
+   * Exports the Domain Tracker as a multi-sheet workbook: a "Domain Tracker" overview
+   * sheet with every row currently shown, then one sheet per distinct technology domain
+   * (e.g. every account's "NOC" row together) so a reader can jump straight to one
+   * domain's data across every account/project. Every sheet leads with the filters
+   * (Cycle/Business Unit/Account/Project) that were in effect, so the export is
+   * self-describing even once it's been saved and reopened later.
+   */
+  async exportDomainTracker(): Promise<void> {
+    const XLSX = await import('xlsx');
+
+    const filterInfo: [string, string][] = [
+      ['Cycle', this.selectedCycle?.cycleLabel || 'All cycles'],
+      ['Business Unit', this.businessUnitFilter || 'All business units'],
+      ['Account', this.selectedAccount?.cusT_NM || 'All accounts'],
+      ['Project', this.selectedProject?.projectName || 'All projects'],
+    ];
+
+    const buildSheet = (rows: DomainSummary[], includeFilterInfo: boolean) => {
+      const aoa: unknown[][] = includeFilterInfo ? filterInfo.map(([label, value]) => [`${label}:`, value]) : [];
+      if (includeFilterInfo) aoa.push([]);
+      const dataRows = rows.map((d) => this.domainTrackerExportRow(d));
+      const headers = Object.keys(dataRows[0] ?? this.domainTrackerExportRow(rows[0]));
+      aoa.push(headers);
+      dataRows.forEach((row) => aoa.push(headers.map((h) => row[h])));
+      const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+      worksheet['!cols'] = headers.map((h) => ({ wch: Math.max(14, h.length + 2) }));
+      return worksheet;
+    };
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, buildSheet(this.sortedDomainSummaries, true), 'Domain Tracker');
+
+    // Group by domain name so the SAME domain across different accounts ("All
+    // accounts" view) lands on one sheet together, instead of one sheet per row.
+    const byDomain = new Map<string, DomainSummary[]>();
+    for (const d of this.sortedDomainSummaries) {
+      const rows = byDomain.get(d.name) ?? [];
+      rows.push(d);
+      byDomain.set(d.name, rows);
+    }
+    const usedSheetNames = new Set<string>(['Domain Tracker']);
+    let unnamedCount = 0;
+    for (const [domainName, rows] of byDomain) {
+      let sheetName = this.sheetSafeName(domainName, `Domain ${++unnamedCount}`);
+      let suffix = 2;
+      while (usedSheetNames.has(sheetName)) {
+        sheetName = `${this.sheetSafeName(domainName, `Domain ${unnamedCount}`).slice(0, 28)} (${suffix++})`;
+      }
+      usedSheetNames.add(sheetName);
+      XLSX.utils.book_append_sheet(workbook, buildSheet(rows, false), sheetName);
+    }
+
+    XLSX.writeFile(workbook, `IT-Ops-Domain-Tracker_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 }

@@ -10,8 +10,8 @@
       <p class="subtitle">Project-level view of technology domain maturity, assessment progress, and top improvement opportunities.</p>
     </div>
 
-    <div class="selectors" *ngIf="!dashboardAccessLoading && dashboardAccessGranted">
-      <div class="selector" [class.filled]="selectedCycle">
+    <div class="selectors" *ngIf="!dashboardAccessLoading && dashboardVisible">
+      <div class="selector filled">
         <label for="dashboardCycleSelect">Cycle</label>
         <app-searchable-select
           id="dashboardCycleSelect"
@@ -21,23 +21,31 @@
           (ngModelChange)="onDashboardCycleChange($event)"
         ></app-searchable-select>
       </div>
-      <div class="selector" [class.filled]="selectedAccount">
+      <div class="selector filled">
+        <label for="dashboardBusinessUnitSelect">Business Unit</label>
+        <app-searchable-select
+          id="dashboardBusinessUnitSelect"
+          placeholder="Select a business unit…"
+          [options]="dashboardBusinessUnitOptions"
+          [ngModel]="businessUnitFilter"
+          (ngModelChange)="onDashboardBusinessUnitChange($event)"
+        ></app-searchable-select>
+      </div>
+      <div class="selector filled">
         <label for="dashboardAccountSelect">Account</label>
         <app-searchable-select
           id="dashboardAccountSelect"
-          placeholder="All accounts"
-          emptyLabel="All accounts"
+          placeholder="Select an account…"
           [options]="dashboardAccountOptions"
           [ngModel]="selectedAccount?.cusT_ID ?? ''"
           (ngModelChange)="onDashboardAccountChange($event)"
         ></app-searchable-select>
       </div>
-      <div class="selector" [class.filled]="selectedProject">
+      <div class="selector filled">
         <label for="dashboardProjectSelect">Project</label>
         <app-searchable-select
           id="dashboardProjectSelect"
-          [placeholder]="projectsLoading ? 'Loading…' : 'All projects'"
-          emptyLabel="All projects"
+          [placeholder]="projectsLoading ? 'Loading…' : 'Select a project…'"
           [options]="dashboardProjectOptions"
           [disabled]="projectsLoading"
           [ngModel]="selectedProject?.projectId ?? ''"
@@ -47,7 +55,7 @@
     </div>
   </header>
 
-  <p class="picker-hint" *ngIf="viewMode === 'accounts' && !dashboardAccessLoading && dashboardAccessGranted && (!accountsWithAssessments.length || (selectedAccount && !projectsLoading && !projectsForAccount.length))">
+  <p class="picker-hint" *ngIf="viewMode === 'accounts' && !dashboardAccessLoading && dashboardVisible && (!accountsWithAssessments.length || (selectedAccount && !projectsLoading && !projectsForAccount.length))">
     <ng-container *ngIf="!accountsWithAssessments.length">No accounts have an IT Operations Maturity assessment yet.</ng-container>
     <ng-container *ngIf="accountsWithAssessments.length && selectedAccount && !projectsLoading && !projectsForAccount.length">No projects on this account have an assessment yet.</ng-container>
   </p>
@@ -121,7 +129,7 @@
         My Assessments <span class="tab-count">{{ myOpenAssessments.length }}</span>
       </button>
       <button type="button" [class.active]="assignmentsTab === 'reviews'" (click)="selectAssignmentsTab('reviews')">
-        Needs Review <span class="tab-count">{{ myPendingReviews.length }}</span>
+        Needs Review <span class="tab-count">{{ pendingReviewActionCount }}</span>
       </button>
     </div>
 
@@ -193,7 +201,7 @@
     <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading…</div>
   </div>
 
-  <section class="account-picker" *ngIf="!dashboardAccessLoading && !dashboardAccessGranted">
+  <section class="account-picker" *ngIf="!dashboardAccessLoading && !dashboardVisible">
     <h2>Dashboard Access Required</h2>
     <p class="picker-copy">
       This account/project-wide Dashboard is limited to people granted the "Dashboard Viewer" role.
@@ -203,7 +211,7 @@
     </p>
   </section>
 
-  <ng-container *ngIf="!dashboardAccessLoading && dashboardAccessGranted">
+  <ng-container *ngIf="!dashboardAccessLoading && dashboardVisible">
     <div class="loading-overlay" *ngIf="dashboardDataLoading && !dashboardHasLoadedOnce">
       <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading…</div>
     </div>
@@ -291,7 +299,22 @@
     </section>
 
     <section class="domain-tracker">
-      <h2>Domain Tracker</h2>
+      <div class="domain-tracker-head">
+        <h2>Domain Tracker</h2>
+        <button
+          type="button"
+          class="btn-secondary export-btn"
+          *ngIf="domainSummaries.length"
+          title="Export to Excel"
+          aria-label="Export to Excel"
+          (click)="exportDomainTracker()"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3v12m0 0-4-4m4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
       <p class="no-access-banner" *ngIf="!domainSummaries.length">
         No domain assignments were found for your login ({{ currentUser.email || currentUser.name }}).
         Contact your administrator if you believe this is unexpected.
