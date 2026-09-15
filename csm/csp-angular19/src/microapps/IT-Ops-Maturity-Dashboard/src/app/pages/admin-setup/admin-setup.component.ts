@@ -1352,7 +1352,10 @@ export class AdminSetupComponent implements OnInit {
     // Group the missing grants back up by role, each keeping its own scope,
     // and send them as ONE grantRolesMulti call - so adding several roles at
     // once results in a single consolidated email instead of one per role.
-    const calls: Observable<unknown>[] = toRevoke.map((g) => this.api.revokeRole(g.id));
+    // Revokes use the bulk revokeRoles(ids) endpoint for the same reason - one
+    // call for every role unticked here, not revokeRole(id) once per role,
+    // which used to send one revocation email per role instead of one total.
+    const calls: Observable<unknown>[] = toRevoke.length ? [this.api.revokeRoles(toRevoke.map((g) => g.id))] : [];
     let grantedRows = 0;
     const grantEntries: { roleId: number; projectIds: string[] }[] = [];
     for (const entry of this.roleEditEntries) {
@@ -3377,25 +3380,20 @@ export class AdminSetupComponent implements OnInit {
     // Pairs restricts each project to exactly the ticked domain(s) - a project
     // with one row ticked and a sibling row unticked creates only the ticked
     // one; the sibling stays untouched, still shown (and stageable) next time.
-    const pairs = includedRows.map((r) => ({ projectId: r.projectId, domainId: r.domainId }));
+    // The staged Assessor/Reviewer travel WITH each pair now, so the backend
+    // seeds them onto the new assessment in this same call and can name them
+    // in the one "assessment(s) created" email - no separate addAssessor/
+    // addReviewer round trip after, which used to send its own "you've been
+    // assigned" email per person on top of that consolidated one.
+    const pairs = includedRows.map((r) => {
+      const team = this.stagedTeamByKey.get(r.key);
+      return { projectId: r.projectId, domainId: r.domainId, assessorIds: team?.assessorIds, reviewerIds: team?.reviewerIds };
+    });
 
     this.creatingAssessments = true;
     this.api
       .createAssessmentsForProjects(this.selectedCycleId!, includedProjectIds, pairs)
-      .pipe(
-        switchMap((rows) => {
-          if (!newKeysWithTeam.length) return of(rows);
-          const calls: Observable<unknown>[] = [];
-          for (const [key, team] of newKeysWithTeam) {
-            const row = rows.find((r) => `${r.projectId}|${r.domainId}` === key);
-            if (!row) continue; // not part of this submission (e.g. already existed, or a stale staged pick)
-            for (const empId of team.assessorIds) calls.push(this.api.addAssessor(row.assessmentId, empId));
-            for (const empId of team.reviewerIds) calls.push(this.api.addReviewer(row.assessmentId, empId));
-          }
-          return calls.length ? forkJoin(calls).pipe(map(() => rows)) : of(rows);
-        }),
-        finalize(() => (this.creatingAssessments = false)),
-      )
+      .pipe(finalize(() => (this.creatingAssessments = false)))
       .subscribe({
         next: () => {
           // The response only carries rows for the project(s) just submitted -

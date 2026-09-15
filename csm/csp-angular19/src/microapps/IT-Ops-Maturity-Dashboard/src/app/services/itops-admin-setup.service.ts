@@ -684,14 +684,21 @@ export class ItOpsAdminSetupService {
   createAssessmentsForProjects(
     cycleId: number,
     projectIds: string[],
-    pairs?: { projectId: string; domainId: number }[],
+    pairs?: { projectId: string; domainId: number; assessorIds?: string[]; reviewerIds?: string[] }[],
   ): Observable<ItOpsCycleAssessment[]> {
     return this.http.post<ItOpsCycleAssessment[]>(
       `${this.apiurl}CreateITOpsAssessmentsForProject`,
       {
         AssessmentMasterId: cycleId,
         ProjectIds: projectIds,
-        Pairs: pairs?.length ? pairs.map((p) => ({ ProjectId: p.projectId, DomainId: p.domainId })) : undefined,
+        Pairs: pairs?.length
+          ? pairs.map((p) => ({
+              ProjectId: p.projectId,
+              DomainId: p.domainId,
+              AssessorIds: p.assessorIds?.length ? p.assessorIds : undefined,
+              ReviewerIds: p.reviewerIds?.length ? p.reviewerIds : undefined,
+            }))
+          : undefined,
       },
       { headers: this.getHeaders() },
     );

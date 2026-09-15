@@ -321,6 +321,14 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
     {
         public string ProjectId { get; set; }
         public int DomainId { get; set; }
+        // Optional: assessor(s)/reviewer(s) staged for this pair in Configure Assessment's
+        // Add/Stage/Create screen - when given, CreateITOpsAssessmentsForProject seeds them
+        // onto the assessment in the SAME call that creates it, so the "assessment(s) created"
+        // notification can name them (and include them as recipients) without a separate
+        // AddITOpsAssessor/AddITOpsReviewer round trip (and its own "you've been assigned"
+        // email) right after. Null/empty means "no one staged yet" - unchanged legacy behavior.
+        public List<string> AssessorIds { get; set; }
+        public List<string> ReviewerIds { get; set; }
     }
 
     public class ITOPS_CycleAssessmentRow

@@ -6,6 +6,7 @@
   ITOpsTeamAssignedBulk.htm (the optional "Previously held by" header comes
   from ITOpsTeamAssignedBulkPreviouslyHeader.htm) - with NO C# change needed.
   Available placeholders:
+    {{SNo}}                 - row number (1-based, in the order rows are rendered)
     {{DomainId}}            - raw domain id
     {{Domain}}              - domain display name
     {{ProjectId}}           - raw project id
@@ -18,6 +19,7 @@
                               ITOpsTeamAssignedBulkPreviouslyCell.htm), blank when not a reassignment
 -->
 <tr>
+<td valign=top width=36 style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{SNo}}</td>
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Domain}}</td>
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Project}}</td>
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Role}}</td>
