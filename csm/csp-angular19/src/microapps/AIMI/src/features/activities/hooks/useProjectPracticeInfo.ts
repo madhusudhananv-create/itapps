@@ -9,12 +9,18 @@ interface UseProjectPracticeInfoProps {
   practice?: string;
 }
 
+interface SaveProjectInfoParams {
+  peopleUsingAI: number;
+  isProjectNA?: boolean;
+  naComments?: string;
+}
+
 interface UseProjectPracticeInfoReturn {
   projectInfo: ProjectInfo | null;
   practiceInfo: PracticeInfo | null;
   isLoading: boolean;
   error: string | null;
-  saveProjectInfo: (peopleUsingAI: number) => Promise<void>;
+  saveProjectInfo: (params: SaveProjectInfoParams) => Promise<void>;
   savePracticeInfo: (currentPhase: string) => Promise<void>;
 }
 
@@ -121,7 +127,7 @@ export const useProjectPracticeInfo = ({
 
   // Combined save function for project info
   const saveProjectInfo = useCallback(
-    async (peopleUsingAI: number) => {
+    async ({ peopleUsingAI, isProjectNA, naComments }: SaveProjectInfoParams) => {
       if (!projectId) {
         throw new Error('Project ID is required');
       }
@@ -136,6 +142,8 @@ export const useProjectPracticeInfo = ({
         const savedInfo = await projectInfoService.saveOrUpdateProjectInfo({
           projectId,
           peopleUsingAI,
+          isProjectNA,
+          naComments,
         });
         setProjectInfo(savedInfo);
       } catch (err) {

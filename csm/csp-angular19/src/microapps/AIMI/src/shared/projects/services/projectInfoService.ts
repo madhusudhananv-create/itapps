@@ -17,6 +17,8 @@ const PROJECT_INFO_COLLECTION = 'projectInfo';
 export interface ProjectInfo {
   projectId: string;
   peopleUsingAI: number;
+  isProjectNA?: boolean;
+  naComments?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -38,6 +40,8 @@ const convertFirestoreToProjectInfo = (
   return {
     projectId: data.projectId,
     peopleUsingAI: data.peopleUsingAI,
+    isProjectNA: data.isProjectNA ?? false,
+    naComments: data.naComments ?? '',
     createdAt:
       data.createdAt &&
       typeof data.createdAt === 'object' &&
@@ -62,6 +66,8 @@ const convertProjectInfoToFirestore = (
   return {
     projectId: projectInfo.projectId,
     peopleUsingAI: projectInfo.peopleUsingAI,
+    isProjectNA: projectInfo.isProjectNA ?? false,
+    naComments: projectInfo.naComments ?? '',
   };
 };
 
@@ -99,6 +105,8 @@ const saveOrUpdateProjectInfo = async (
       const docRef = querySnapshot.docs[0].ref;
       await updateDoc(docRef, {
         peopleUsingAI: projectInfo.peopleUsingAI,
+        isProjectNA: projectInfo.isProjectNA ?? false,
+        naComments: projectInfo.naComments ?? '',
         updatedAt: serverTimestamp(),
       });
 
@@ -132,6 +140,8 @@ const getProjectInfo = async (projectId: string): Promise<ProjectInfo> => {
       return {
         projectId,
         peopleUsingAI: 0,
+        isProjectNA: false,
+        naComments: '',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -147,6 +157,8 @@ const getProjectInfo = async (projectId: string): Promise<ProjectInfo> => {
       return {
         projectId,
         peopleUsingAI: 0,
+        isProjectNA: projectInfo.isProjectNA ?? false,
+        naComments: projectInfo.naComments ?? '',
         createdAt: projectInfo.createdAt || new Date(),
         updatedAt: projectInfo.updatedAt || new Date(),
       };

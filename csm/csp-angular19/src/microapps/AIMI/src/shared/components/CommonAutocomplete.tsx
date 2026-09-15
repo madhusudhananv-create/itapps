@@ -10,7 +10,7 @@ interface CommonAutocompleteProps {
   placeholder?: string;
   multiple?: boolean;
   options: string[];
-  helperText?: string;
+  helperText: React.ReactNode;
 }
 
 // Global styling object

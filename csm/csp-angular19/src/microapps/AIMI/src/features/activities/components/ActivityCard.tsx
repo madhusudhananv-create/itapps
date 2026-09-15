@@ -5,14 +5,16 @@ import {
   Typography,
   Box,
   Chip,
+  Checkbox,
   Divider,
-  Button,
+  IconButton,
   Tooltip,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
+  ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
 import {
   AI_ADOPTION_SCORES,
@@ -32,7 +34,13 @@ interface ActivityCardProps {
   activity: ActivityData;
   onEdit?: (activity: ActivityData) => void;
   onDelete?: (activity: ActivityData) => void;
+  onCopy?: (activity: ActivityData) => void;
+  actionsDisabled?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (activityId: string, selected: boolean) => void;
   isUnsaved?: boolean;
+  isPendingDraftConfirmation?: boolean;
 }
 
 const getLabelFromValue = (
@@ -47,7 +55,13 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   activity,
   onEdit,
   onDelete,
+  onCopy,
+  actionsDisabled = false,
+  selectable = false,
+  selected = false,
+  onSelectChange,
   isUnsaved = false,
+  isPendingDraftConfirmation = false,
 }) => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const featureFlags = useFeatureFlags('activities');
@@ -95,9 +109,15 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     setDetailsModalOpen(false);
   };
 
-  // Only one status is shown at a time: unsaved local changes take priority over persisted status
-  const statusLabel = isUnsaved ? 'Unsaved' : activity.status === 'draft' ? 'Draft' : 'Saved';
-  const statusColor: 'warning' | 'info' | 'success' = isUnsaved
+  // Only one status is shown at a time: local edits or an auto-saved-but-unconfirmed
+  // draft both read as "Unsaved" until the user explicitly clicks Save as Draft
+  const showAsUnsaved = isUnsaved || isPendingDraftConfirmation;
+  const statusLabel = showAsUnsaved
+    ? 'Unsaved'
+    : activity.status === 'draft'
+    ? 'Draft'
+    : 'Saved';
+  const statusColor: 'warning' | 'info' | 'success' = showAsUnsaved
     ? 'warning'
     : activity.status === 'draft'
     ? 'info'
@@ -115,16 +135,31 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         <CardContent sx={activityCardStyles.cardContent}>
           {/* Header */}
           <Box sx={activityCardStyles.header}>
-            <Typography
-              variant="body1"
-              component="div"
-              sx={typographyStyles.title}
-            >
-              {activity.activity}
-            </Typography>
-            <Typography variant="caption" sx={typographyStyles.caption}>
-              Added on {formatDate(activity.createdAt)}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+              {selectable && (
+                <Checkbox
+                  size="small"
+                  checked={selected}
+                  onChange={(e) =>
+                    onSelectChange?.(activity.id, e.target.checked)
+                  }
+                  sx={{ p: 0, mt: 0.25 }}
+                  aria-label="Select activity"
+                />
+              )}
+              <Box>
+                <Typography
+                  variant="body1"
+                  component="div"
+                  sx={typographyStyles.title}
+                >
+                  {activity.activity}
+                </Typography>
+                <Typography variant="caption" sx={typographyStyles.caption}>
+                  Added on {formatDate(activity.createdAt)}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
 
           <Divider sx={layoutStyles.divider} />
@@ -194,37 +229,52 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           {/* Action Buttons */}
           <Box sx={activityCardStyles.actionButtonsContainer}>
             <Tooltip title="View Details">
-              <Button
+              <IconButton
                 size="small"
-                startIcon={<VisibilityIcon />}
                 onClick={handleViewDetails}
-                sx={activityCardStyles.viewButton}
+                sx={activityCardStyles.viewIconButton}
+                aria-label="View Details"
               >
-                View Details
-              </Button>
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
             </Tooltip>
             {onEdit && (
               <Tooltip title="Edit Activity">
-                <Button
+                <IconButton
                   size="small"
-                  startIcon={<EditIcon />}
                   onClick={() => onEdit(activity)}
-                  sx={activityCardStyles.editButton}
+                  disabled={actionsDisabled}
+                  sx={activityCardStyles.editIconButton}
+                  aria-label="Edit Activity"
                 >
-                  Edit
-                </Button>
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {onCopy && (
+              <Tooltip title="Copy Activity">
+                <IconButton
+                  size="small"
+                  onClick={() => onCopy(activity)}
+                  disabled={actionsDisabled}
+                  sx={activityCardStyles.copyIconButton}
+                  aria-label="Copy Activity"
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
             {onDelete && featureFlags.showDeleteButton && (
               <Tooltip title="Delete Activity">
-                <Button
+                <IconButton
                   size="small"
-                  startIcon={<DeleteIcon />}
                   onClick={() => onDelete(activity)}
-                  sx={activityCardStyles.deleteButton}
+                  disabled={actionsDisabled}
+                  sx={activityCardStyles.deleteIconButton}
+                  aria-label="Delete Activity"
                 >
-                  Delete
-                </Button>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
           </Box>
@@ -250,7 +300,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         activity={activity}
         onEdit={onEdit}
         onDelete={featureFlags.showDeleteButton ? onDelete : undefined}
+        actionsDisabled={actionsDisabled}
         isUnsaved={isUnsaved}
+        isPendingDraftConfirmation={isPendingDraftConfirmation}
       />
     </>
   );

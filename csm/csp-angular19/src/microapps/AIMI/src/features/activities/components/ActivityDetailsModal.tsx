@@ -36,7 +36,9 @@ interface ActivityDetailsModalProps {
   activity: ActivityData | null;
   onEdit?: (activity: ActivityData) => void;
   onDelete?: (activity: ActivityData) => void;
+  actionsDisabled?: boolean;
   isUnsaved?: boolean;
+  isPendingDraftConfirmation?: boolean;
 }
 
 const getLabelFromValue = (
@@ -53,7 +55,9 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
   activity,
   onEdit,
   onDelete,
+  actionsDisabled = false,
   isUnsaved = false,
+  isPendingDraftConfirmation = false,
 }) => {
   if (!activity) return null;
 
@@ -91,9 +95,15 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
     applicabilityColor = 'warning';
   }
 
-  // Only one status is shown at a time: unsaved local changes take priority over persisted status
-  const statusLabel = isUnsaved ? 'Unsaved' : activity.status === 'draft' ? 'Draft' : 'Saved';
-  const statusColor: 'warning' | 'info' | 'success' = isUnsaved
+  // Only one status is shown at a time: local edits or an auto-saved-but-unconfirmed
+  // draft both read as "Unsaved" until the user explicitly clicks Save as Draft
+  const showAsUnsaved = isUnsaved || isPendingDraftConfirmation;
+  const statusLabel = showAsUnsaved
+    ? 'Unsaved'
+    : activity.status === 'draft'
+    ? 'Draft'
+    : 'Saved';
+  const statusColor: 'warning' | 'info' | 'success' = showAsUnsaved
     ? 'warning'
     : activity.status === 'draft'
     ? 'info'
@@ -389,6 +399,7 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
                 variant="contained"
                 startIcon={<EditIcon />}
                 onClick={() => onEdit(activity)}
+                disabled={actionsDisabled}
                 sx={activityDetailsModalStyles.editButton}
               >
                 Edit
@@ -399,6 +410,7 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
                 variant="contained"
                 startIcon={<DeleteIcon />}
                 onClick={() => onDelete(activity)}
+                disabled={actionsDisabled}
                 sx={activityDetailsModalStyles.deleteButton}
               >
                 Delete

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -8,6 +8,9 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
+  Checkbox,
+  IconButton,
+  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -20,10 +23,12 @@ import {
   Send as SendIcon,
   Download as DownloadIcon,
   Warning as WarningIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
 import { AddActivityModal } from './AddActivityModal';
 import { ActivityCard } from './ActivityCard';
+import { CopyActivityDialog } from './CopyActivityDialog';
 import type {
   ActivityFormData,
   ActivityData,
@@ -36,6 +41,8 @@ import {
   areAllActivitiesNotApplicable,
 } from '../utils/activityStorageUtils';
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
+import { useAuth } from '@auth/hooks/useAuth';
+import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
 
 interface ManageActivitiesProps {
   selectedPractice: string;
@@ -58,6 +65,8 @@ interface ManageActivitiesProps {
     practice: string;
     manager: string;
     currentPhase: string;
+    isProjectNA?: boolean;
+    naComments?: string;
   };
 }
 
@@ -88,6 +97,9 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   const [editingActivity, setEditingActivity] = useState<ActivityData | null>(
     null
   );
+  const [copySourceActivity, setCopySourceActivity] =
+    useState<ActivityData | null>(null);
+  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     open: boolean;
     activityId: string | null;
@@ -101,12 +113,51 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
 
+  // Ids of activities auto-saved as drafts (on add/edit/copy) that haven't been
+  // explicitly confirmed via the "Save as Draft" button yet - these still show as Unsaved
+  const [pendingAutoSaveIds, setPendingAutoSaveIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  const { isAdmin } = useAuth();
+  const featureFlags = useFeatureFlags('activities');
+  const canBulkDelete = isAdmin && featureFlags.showDeleteButton;
+
+  // Ids of activities checked via the admin bulk-select checkboxes
+  const [selectedActivityIds, setSelectedActivityIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [bulkDeleteConfirmation, setBulkDeleteConfirmation] = useState<{
+    open: boolean;
+    phase: string;
+    activityIds: string[];
+  }>({ open: false, phase: '', activityIds: [] });
+
+  // Drop selections for activities that no longer exist (deleted/project switch)
+  useEffect(() => {
+    setSelectedActivityIds((prev) => {
+      if (prev.size === 0) return prev;
+      const validIds = new Set(activities.map((activity) => activity.id));
+      const next = new Set<string>();
+      let changed = false;
+      prev.forEach((id) => {
+        if (validIds.has(id)) {
+          next.add(id);
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [activities]);
+
   // Activities already persisted as drafts can still be submitted even with no local edits
   const hasDraftActivities = useMemo(
     () => activities.some((activity) => activity.status !== 'submitted'),
     [activities]
   );
   const canSubmitOrSaveDraft = hasUnsavedChanges || hasDraftActivities;
+  const isProjectNA = !!projectInfo?.isProjectNA;
 
   // Group activities by SDLC Phase
   const groupedActivities = useMemo(() => {
@@ -370,6 +421,37 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
     setIsModalOpen(true);
   };
 
+  const handleCopyClick = (activity: ActivityData) => {
+    setCopySourceActivity(activity);
+    setIsCopyDialogOpen(true);
+  };
+
+  const handleCloseCopyDialog = () => {
+    setIsCopyDialogOpen(false);
+    setCopySourceActivity(null);
+  };
+
+  const handleConfirmCopy = (
+    targetSdlcPhase: string,
+    targetActivity: string
+  ) => {
+    if (!copySourceActivity) return;
+
+    // Copy every field from the source but assign a fresh id/createdAt so the original is untouched
+    const newActivity: ActivityData = {
+      ...copySourceActivity,
+      id: Date.now().toString(),
+      sdlcPhase: targetSdlcPhase,
+      activity: targetActivity,
+      createdAt: new Date(),
+      updatedAt: undefined,
+      status: 'draft',
+    };
+
+    handleCloseCopyDialog();
+    void persistAndCommitActivity(newActivity, 'Activity copied successfully!');
+  };
+
   const handleDeleteClick = (activity: ActivityData) => {
     setDeleteConfirmation({
       open: true,
@@ -381,6 +463,11 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   const handleConfirmDelete = () => {
     if (deleteConfirmation.activityId) {
       onDeleteActivity(deleteConfirmation.activityId);
+      setPendingAutoSaveIds((prev) => {
+        const next = new Set(prev);
+        next.delete(deleteConfirmation.activityId!);
+        return next;
+      });
       showSnackbar('Activity deleted successfully!', 'success');
     }
     setDeleteConfirmation({ open: false, activityId: null, activityName: '' });
@@ -388,6 +475,67 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
 
   const handleCancelDelete = () => {
     setDeleteConfirmation({ open: false, activityId: null, activityName: '' });
+  };
+
+  const handleToggleActivitySelection = (
+    activityId: string,
+    checked: boolean
+  ) => {
+    setSelectedActivityIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(activityId);
+      } else {
+        next.delete(activityId);
+      }
+      return next;
+    });
+  };
+
+  const handleTogglePhaseSelection = (
+    phaseActivityIds: string[],
+    checked: boolean
+  ) => {
+    setSelectedActivityIds((prev) => {
+      const next = new Set(prev);
+      phaseActivityIds.forEach((id) => {
+        if (checked) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+      });
+      return next;
+    });
+  };
+
+  const handleBulkDeleteClick = (phase: string, activityIds: string[]) => {
+    if (activityIds.length === 0) return;
+    setBulkDeleteConfirmation({ open: true, phase, activityIds });
+  };
+
+  const handleConfirmBulkDelete = () => {
+    const { activityIds } = bulkDeleteConfirmation;
+    activityIds.forEach((id) => onDeleteActivity(id));
+    setSelectedActivityIds((prev) => {
+      const next = new Set(prev);
+      activityIds.forEach((id) => next.delete(id));
+      return next;
+    });
+    setPendingAutoSaveIds((prev) => {
+      const next = new Set(prev);
+      activityIds.forEach((id) => next.delete(id));
+      return next;
+    });
+    showSnackbar(
+      `${activityIds.length} ${activityIds.length === 1 ? 'activity' : 'activities'} deleted successfully!`,
+      'success'
+    );
+    setBulkDeleteConfirmation({ open: false, phase: '', activityIds: [] });
+  };
+
+  const handleCancelBulkDelete = () => {
+    setBulkDeleteConfirmation({ open: false, phase: '', activityIds: [] });
   };
 
   // Persists a single activity to Firestore as a draft so it isn't lost if the connection drops
@@ -438,6 +586,13 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
       } else {
         onAddActivity(savedActivity);
       }
+      // Auto-saved, but not yet explicitly confirmed via Save as Draft
+      setPendingAutoSaveIds((prev) => {
+        const next = new Set(prev);
+        next.delete(oldId);
+        next.add(savedActivity.id);
+        return next;
+      });
       showSnackbar(successMessage, 'success');
     } catch (error) {
       console.error('Error saving activity:', error);
@@ -565,6 +720,11 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
       if (onSubmit) {
         await onSubmit(activities);
       }
+      setPendingAutoSaveIds((prev) => {
+        const next = new Set(prev);
+        activities.forEach((activity) => next.delete(activity.id));
+        return next;
+      });
     } catch (error) {
       console.error('Error submitting activities:', error);
       showSnackbar('Error submitting activities. Please try again.', 'error');
@@ -599,6 +759,12 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
       if (onSaveDraft) {
         await onSaveDraft(activities);
       }
+      // Explicitly confirmed as drafts - clear the pending auto-save flag so the Draft label shows
+      setPendingAutoSaveIds((prev) => {
+        const next = new Set(prev);
+        activities.forEach((activity) => next.delete(activity.id));
+        return next;
+      });
     } catch (error) {
       console.error('Error saving draft activities:', error);
       showSnackbar('Error saving draft. Please try again.', 'error');
@@ -618,7 +784,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleAddActivity}
-              disabled={!selectedPractice}
+              disabled={!selectedPractice || isProjectNA}
               sx={styles.addButton}
             >
               Add Activity
@@ -718,6 +884,18 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
                   isActivityUnsaved(activity.id)
                 );
 
+                const phaseActivityIds = phaseActivities.map(
+                  (activity) => activity.id
+                );
+                const selectedInPhaseCount = phaseActivityIds.filter((id) =>
+                  selectedActivityIds.has(id)
+                ).length;
+                const isPhaseFullySelected =
+                  phaseActivityIds.length > 0 &&
+                  selectedInPhaseCount === phaseActivityIds.length;
+                const isPhasePartiallySelected =
+                  selectedInPhaseCount > 0 && !isPhaseFullySelected;
+
                 return (
                   <Accordion
                     key={sdlcPhase}
@@ -730,6 +908,22 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
                     >
                       <Box sx={styles.accordionSummaryContent}>
                         <Box sx={styles.phaseTitleContainer}>
+                          {canBulkDelete && (
+                            <Checkbox
+                              size="small"
+                              checked={isPhaseFullySelected}
+                              indeterminate={isPhasePartiallySelected}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) =>
+                                handleTogglePhaseSelection(
+                                  phaseActivityIds,
+                                  e.target.checked
+                                )
+                              }
+                              aria-label={`Select all activities in ${sdlcPhase}`}
+                              sx={{ p: 0, mr: 0.5 }}
+                            />
+                          )}
                           <Typography variant="body1" sx={styles.phaseTitle}>
                             {sdlcPhase}
                           </Typography>
@@ -747,6 +941,35 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
                           {hasUnsavedActivities && (
                             <WarningIcon sx={styles.warningIcon} />
                           )}
+                          {canBulkDelete && (
+                            <Tooltip
+                              title={
+                                selectedInPhaseCount === 0
+                                  ? 'Select activities to delete'
+                                  : `Delete ${selectedInPhaseCount} selected`
+                              }
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  disabled={selectedInPhaseCount === 0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBulkDeleteClick(
+                                      sdlcPhase,
+                                      phaseActivityIds.filter((id) =>
+                                        selectedActivityIds.has(id)
+                                      )
+                                    );
+                                  }}
+                                  aria-label={`Delete selected activities in ${sdlcPhase}`}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          )}
                         </Box>
                       </Box>
                     </AccordionSummary>
@@ -757,7 +980,15 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
                           activity={activity}
                           onEdit={handleEditActivity}
                           onDelete={handleDeleteClick}
+                          onCopy={handleCopyClick}
+                          actionsDisabled={isProjectNA}
+                          selectable={canBulkDelete}
+                          selected={selectedActivityIds.has(activity.id)}
+                          onSelectChange={handleToggleActivitySelection}
                           isUnsaved={isActivityUnsaved(activity.id)}
+                          isPendingDraftConfirmation={pendingAutoSaveIds.has(
+                            activity.id
+                          )}
                         />
                       ))}
                     </AccordionDetails>
@@ -803,6 +1034,16 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
         existingActivities={activities}
       />
 
+      {/* Copy Activity Dialog */}
+      <CopyActivityDialog
+        open={isCopyDialogOpen}
+        onClose={handleCloseCopyDialog}
+        onConfirm={handleConfirmCopy}
+        selectedPractice={selectedPractice}
+        sourceActivity={copySourceActivity}
+        existingActivities={activities}
+      />
+
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteConfirmation.open}
@@ -827,6 +1068,44 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
           </Button>
           <Button
             onClick={handleConfirmDelete}
+            variant="contained"
+            color="error"
+            sx={styles.deleteButton}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        open={bulkDeleteConfirmation.open}
+        onClose={handleCancelBulkDelete}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" component="div">
+            Confirm Bulk Delete
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete{' '}
+            {bulkDeleteConfirmation.activityIds.length}{' '}
+            {bulkDeleteConfirmation.activityIds.length === 1
+              ? 'activity'
+              : 'activities'}{' '}
+            from "{bulkDeleteConfirmation.phase}"? This action cannot be
+            undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={handleCancelBulkDelete} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmBulkDelete}
             variant="contained"
             color="error"
             sx={styles.deleteButton}

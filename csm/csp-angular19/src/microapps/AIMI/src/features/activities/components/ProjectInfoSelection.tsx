@@ -22,11 +22,12 @@ import {
   AccountBalanceRounded,
   FolderRounded,
   PersonRounded,
-  TimelineRounded,
+  //TimelineRounded,
+  BlockRounded,
 } from '@mui/icons-material';
 import {
   getPracticesFromQuestionnaire,
-  getSDLCPhasesForPractice,
+  //getSDLCPhasesForPractice,
 } from '@shared/utils/questionnaireUtils';
 import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
 import type { PracticeInfo } from '@shared/practices/services/practiceInfoService';
@@ -46,11 +47,19 @@ interface FormData {
   currentPhase: string;
   headcount?: number;
   peopleUsingAI?: number;
+  isProjectNA?: boolean;
+  naComments?: string;
+  runOpsAutoResolved?: string;
+runOpsMTTRReduction?: string;
+runOpsAIAgents?: string;
+runOpsAutomatedWorkflows?: string;
+runOpsMTTD?: string;
+runOpsMTTR?: string;
 }
 
 interface ProjectInfoSelectionProps {
   formData: FormData;
-  onFormChange: (field: keyof FormData, value: string | number) => void;
+  onFormChange: (field: keyof FormData, value: string | number | boolean) => void;
   businessUnits: string[];
   accounts: string[];
   projects: string[];
@@ -229,7 +238,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
 
   // Get practices and SDLC phases from questionnaire data
   const questionnairePractices = getPracticesFromQuestionnaire();
-  const [availablePhases, setAvailablePhases] = useState<string[]>([]);
+  //const [availablePhases, setAvailablePhases] = useState<string[]>([]);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const lastProjectInfo = useRef<ProjectInfo | null>(null);
   const lastPracticeInfo = useRef<PracticeInfo | null>(null);
@@ -285,14 +294,30 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       formData.currentPhase &&
       practiceInfo?.currentPhase !== formData.currentPhase;
 
-    return peopleUsingAIChanged || currentPhaseChanged;
+    const projectNAChanged =
+      !!formData.isProjectNA !== !!projectInfo?.isProjectNA;
+
+    const naCommentsChanged =
+      !!formData.isProjectNA &&
+      (formData.naComments ?? '') !== (projectInfo?.naComments ?? '');
+
+    return (
+      peopleUsingAIChanged ||
+      currentPhaseChanged ||
+      projectNAChanged ||
+      naCommentsChanged
+    );
   };
+
+  // Comments are mandatory once the project is marked as Not Applicable
+  const isNACommentsValid = () =>
+    !formData.isProjectNA || !!formData.naComments?.trim();
 
   // Memoized check for any unsaved changes
   const hasAnyUnsavedChanges = hasUnsavedChanges || hasUnsavedAIMetrics();
 
   // Update available phases when practice changes
-  useEffect(() => {
+  /* useEffect(() => {
     if (formData.practice) {
       const phases = getSDLCPhasesForPractice(formData.practice);
       setAvailablePhases(phases);
@@ -304,13 +329,15 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       setAvailablePhases([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.practice, onFormChange]);
+  }, [formData.practice, onFormChange]); */
 
   // Auto-populate fields when project info or practice info is loaded
   useEffect(() => {
     // Only auto-populate if the database value has actually changed
     if (projectInfo !== lastProjectInfo.current) {
       onFormChange('peopleUsingAI', projectInfo?.peopleUsingAI ?? '');
+      onFormChange('isProjectNA', projectInfo?.isProjectNA ?? false);
+      onFormChange('naComments', projectInfo?.naComments ?? '');
       lastProjectInfo.current = projectInfo;
     }
   }, [projectInfo, onFormChange]);
@@ -339,7 +366,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
     };
   }, [hasAnyUnsavedChanges]); // Dependencies for the unsaved changes check
 
-  const handleFieldChange = (field: keyof FormData, value: string | number) => {
+  const handleFieldChange = (field: keyof FormData, value: string | number | boolean) => {
     // Convert number fields properly
     const finalValue =
       field === 'peopleUsingAI' || field === 'headcount'
@@ -382,6 +409,16 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
     handleFieldChange('practice', newPractice);
   };
 
+  // Marking a project NA doesn't cascade/reset other fields, so it can bypass
+  // the "unsaved activity changes" confirmation dialog used for cascading fields
+  const handleProjectApplicableChange = (value: string) => {
+    onFormChange('isProjectNA', value === 'No');
+  };
+
+  const handleNACommentsChange = (value: string) => {
+    onFormChange('naComments', value);
+  };
+
   const handleConfirmPracticeChange = () => {
     // Call the parent's onFormChange which handles dependent field resets
     onFormChange(practiceChangeDialog.field, practiceChangeDialog.value);
@@ -395,19 +432,30 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
   const handleSaveAIMetrics = async () => {
     try {
       // Only save if there are actual changes
-      if (!hasUnsavedAIMetrics()) {
+      if (!hasUnsavedAIMetrics() || !isNACommentsValid()) {
         return;
       }
 
       // Save both project info and practice info
       const promises = [];
 
-      // Only save project info if it has changed
-      if (
+      // Only save project info if peopleUsingAI or the NA flag/comments changed
+      const peopleUsingAIChanged =
         projectInfo?.peopleUsingAI !== formData.peopleUsingAI &&
-        formData.peopleUsingAI !== undefined
-      ) {
-        promises.push(saveProjectInfo(formData.peopleUsingAI));
+        formData.peopleUsingAI !== undefined;
+      const projectNAChanged =
+        !!formData.isProjectNA !== !!projectInfo?.isProjectNA ||
+        ((formData.isProjectNA ?? false) &&
+          (formData.naComments ?? '') !== (projectInfo?.naComments ?? ''));
+
+      if (peopleUsingAIChanged || projectNAChanged) {
+        promises.push(
+          saveProjectInfo({
+            peopleUsingAI: formData.peopleUsingAI ?? projectInfo?.peopleUsingAI ?? 0,
+            isProjectNA: formData.isProjectNA ?? false,
+            naComments: formData.naComments ?? '',
+          })
+        );
       }
 
       // Only save practice info if it has changed
@@ -742,6 +790,63 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
           </FormControl>
           </Tooltip>
         </Box>
+
+        <Box>
+          <Tooltip
+            title={!formData.project ? 'Please select project first.' : ''}
+            placement="top"
+          >
+            <FormControl fullWidth variant="outlined">
+              <InputLabel sx={styles.inputLabel}>Project Applicable</InputLabel>
+              <Select
+                value={formData.isProjectNA ? 'No' : 'Yes'}
+                onChange={(e) =>
+                  handleProjectApplicableChange(e.target.value)
+                }
+                label="Project Applicable"
+                disabled={!formData.project}
+                startAdornment={
+                  <BlockRounded
+                    sx={formData.isProjectNA ? styles.icon : styles.emptyIcon}
+                  />
+                }
+                sx={
+                  formData.project
+                    ? styles.select
+                    : { ...styles.select, ...styles.emptyField }
+                }
+              >
+                <MenuItem value="Yes">Yes</MenuItem>
+                <MenuItem value="No">No (Project NA)</MenuItem>
+              </Select>
+            </FormControl>
+          </Tooltip>
+        </Box>
+      </Box>
+
+      {/* Comments - mandatory when the project is marked Not Applicable */}
+      <Box sx={{ mt: 3 }}>
+        <TextField
+          fullWidth
+          multiline
+          minRows={2}
+          label="Comments"
+          value={formData.naComments ?? ''}
+          onChange={(e) => handleNACommentsChange(e.target.value)}
+          variant="outlined"
+          error={!isNACommentsValid()}
+          helperText={
+            formData.isProjectNA && !isNACommentsValid()
+              ? 'Comments are mandatory when the project is marked as Not Applicable'
+              : ''
+          }
+          placeholder="Provide a reason when marking the project as Not Applicable"
+          sx={
+            formData.isProjectNA
+              ? styles.textField
+              : { ...styles.textField, ...styles.emptyField }
+          }
+        />
       </Box>
 
       {/* AI Adoption Metrics Section */}
@@ -810,7 +915,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
             </Tooltip>
           </Box>
 
-          <Box>
+          {/* <Box>
             <Tooltip
               title={!formData.practice ? 'Please select practice first.' : ''}
               placement="top"
@@ -825,7 +930,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
                     handleFieldChange('currentPhase', e.target.value)
                   }
                   label="Current Phase / Services"
-                  disabled={!formData.practice || isInfoLoading}
+                  disabled={!formData.practice || isInfoLoading || !!formData.isProjectNA}
                   startAdornment={
                     isInfoLoading ? (
                       <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -851,8 +956,109 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
                 </Select>
               </FormControl>
             </Tooltip>
-          </Box>
+          </Box> */}
         </Box>
+        {/* RunOps Adoption Metrics */}
+<Box sx={{ mt: 4 }}>
+  <Typography
+    variant="body1"
+    sx={{
+      fontWeight: 600,
+      color: '#333',
+      fontSize: '1rem',
+      mb: 2,
+    }}
+  >
+    RunOps Adoption Metrics
+  </Typography>
+
+  <Box sx={styles.formGrid}>
+    <TextField
+      fullWidth
+      label="% Tickets Auto-Resolved by AI"
+      value={formData.runOpsAutoResolved ?? ''}
+      onChange={(e) =>
+        onFormChange(
+          'runOpsAutoResolved' as keyof FormData,
+          e.target.value
+        )
+      }
+      placeholder="Enter percentage or NA"
+      sx={styles.textField}
+    />
+
+    <TextField
+      fullWidth
+      label="MTTR Reduction vs Traditional Model"
+      value={formData.runOpsMTTRReduction ?? ''}
+      onChange={(e) =>
+        onFormChange(
+          'runOpsMTTRReduction' as keyof FormData,
+          e.target.value
+        )
+      }
+      placeholder="Enter duration or NA"
+      sx={styles.textField}
+    />
+
+    <TextField
+      fullWidth
+      label="# AI Agents in Production (Not Pilots)"
+      value={formData.runOpsAIAgents ?? ''}
+      onChange={(e) =>
+        onFormChange(
+          'runOpsAIAgents' as keyof FormData,
+          e.target.value
+        )
+      }
+      placeholder="Enter count or NA"
+      sx={styles.textField}
+    />
+
+    <TextField
+      fullWidth
+      label="# End-to-End Workflows Re-imagined and Automated"
+      value={formData.runOpsAutomatedWorkflows ?? ''}
+      onChange={(e) =>
+        onFormChange(
+          'runOpsAutomatedWorkflows' as keyof FormData,
+          e.target.value
+        )
+      }
+      placeholder="Enter count or NA"
+      sx={styles.textField}
+    />
+
+    <TextField
+      fullWidth
+      label="# MTTD (Mean Time to Detect)"
+      value={formData.runOpsMTTD ?? ''}
+      onChange={(e) =>
+        onFormChange(
+          'runOpsMTTD' as keyof FormData,
+          e.target.value
+        )
+      }
+      placeholder="Enter value or NA"
+      sx={styles.textField}
+    />
+
+    <TextField
+      fullWidth
+      label="# MTTR (Mean Time to Respond or Repair)"
+      value={formData.runOpsMTTR ?? ''}
+      onChange={(e) =>
+        onFormChange(
+          'runOpsMTTR' as keyof FormData,
+          e.target.value
+        )
+      }
+      placeholder="Enter value or NA"
+      sx={styles.textField}
+    />
+  </Box>
+</Box>
+
 
         {/* Save Button */}
         <Box sx={styles.saveButtonContainer}>
@@ -862,6 +1068,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
               !formData.project ||
               isInfoLoading ||
               !isPeopleUsingAIValid() ||
+              !isNACommentsValid() ||
               !hasUnsavedAIMetrics()
             }
             sx={styles.saveButton}

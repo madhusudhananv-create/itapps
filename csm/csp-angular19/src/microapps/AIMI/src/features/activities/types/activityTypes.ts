@@ -3,6 +3,7 @@ export type AIToolDetails = Record<
   {
     accessType: string;
     licenseCount: number;
+    networkType: string;
   }
 >;
 

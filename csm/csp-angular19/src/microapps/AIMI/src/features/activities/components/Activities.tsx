@@ -58,6 +58,16 @@ interface ProjectInfoFormData {
   currentPhase: string;
   headcount?: number;
   peopleUsingAI?: number;
+
+  isProjectNA?: boolean;
+  naComments?: string;
+
+  runOpsAutoResolved?: string;
+  runOpsMTTRReduction?: string;
+  runOpsAIAgents?: string;
+  runOpsAutomatedWorkflows?: string;
+  runOpsMTTD?: string;
+  runOpsMTTR?: string;
 }
 
 // Global styling object
@@ -181,19 +191,29 @@ export function Activities() {
   const [importValidationMessage, setImportValidationMessage] =
   useState('');
   const [projectInfoFormData, setProjectInfoFormData] =
-    useState<ProjectInfoFormData>({
-      businessUnit: '',
-      businessHead: '',
-      account: '',
-      accountManager: '',
-      project: '',
-      projectId: '',
-      practice: '',
-      manager: '',
-      currentPhase: '',
-      headcount: undefined,
-      peopleUsingAI: undefined,
-    });
+  useState<ProjectInfoFormData>({
+    businessUnit: '',
+    businessHead: '',
+    account: '',
+    accountManager: '',
+    project: '',
+    projectId: '',
+    practice: '',
+    manager: '',
+    currentPhase: '',
+    headcount: undefined,
+    peopleUsingAI: undefined,
+
+    isProjectNA: false,
+    naComments: '',
+
+    runOpsAutoResolved: '',
+    runOpsMTTRReduction: '',
+    runOpsAIAgents: '',
+    runOpsAutomatedWorkflows: '',
+    runOpsMTTD: '',
+    runOpsMTTR: '',
+  });
 
   // Memoize computed values to prevent unnecessary re-renders
   const businessUnits = useMemo(() => getBusinessUnits(), [getBusinessUnits]);
@@ -258,7 +278,7 @@ export function Activities() {
   );
 
   const handleProjectInfoFormChange = useCallback(
-    (field: keyof ProjectInfoFormData, value: string | number) => {
+    (field: keyof ProjectInfoFormData, value: string | number | boolean) => {
       setProjectInfoFormData((prev) => {
         const newData = { ...prev, [field]: value };
 
@@ -317,6 +337,8 @@ export function Activities() {
           // Reset practice and peopleUsingAI when project changes
           newData.practice = '';
           newData.peopleUsingAI = undefined;
+          newData.isProjectNA = false;
+          newData.naComments = '';
         }
 
         return newData;
@@ -446,7 +468,7 @@ export function Activities() {
           <Button
             variant="outlined"
             startIcon={<UploadFileIcon />}
-            disabled={!projectInfoFormData.practice}
+            disabled={!projectInfoFormData.practice || !!projectInfoFormData.isProjectNA}
             onClick={() => setImportDialogOpen(true)}
           >
             Import Excel

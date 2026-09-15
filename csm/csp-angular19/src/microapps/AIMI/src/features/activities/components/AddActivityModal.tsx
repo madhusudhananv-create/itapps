@@ -30,6 +30,8 @@ import {
   isApplicable,
   isNoAIAdoption,
   validateAIToolsOrAccelerators,
+  validateAITools,
+  validateAIToolDetails,
 } from '../utils/formValidationUtils';
 import {
   SelectField,
@@ -90,6 +92,13 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   // Check if at least one of AI Tools or Accelerators is required
   const needsAIToolsOrAccelerators = applicable && !noAIAdoption;
   const hasAIToolsOrAccelerators = validateAIToolsOrAccelerators(formData);
+
+  // When AI Tools Used is selected, its details and Client Approved become mandatory
+  const hasAITools = validateAITools(formData.aiToolUsed);
+  const aiToolDetailsComplete = validateAIToolDetails(
+    formData.aiToolUsed,
+    formData.aiToolDetails
+  );
   //validation pop-up
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -301,9 +310,12 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   multiple={true}
                   options={COMMON_AI_TOOLS}
                   helperText={
-                    needsAIToolsOrAccelerators && !hasAIToolsOrAccelerators
-                      ? 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom tools'
-                      : 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom tools'
+                    <Typography
+                      component="span"
+                      sx={{ fontWeight: 600 }}
+                    >
+                      If AI tool is not present in the list, add the tool and press Enter.
+                    </Typography>
                   }
                 />
                 <Tooltip
@@ -322,7 +334,9 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                       color:
                         Array.isArray(formData.aiToolUsed) &&
                         formData.aiToolUsed.length > 0
-                          ? 'primary.main'
+                          ? hasAITools && !aiToolDetailsComplete
+                            ? 'error.main'
+                            : 'primary.main'
                           : 'text.disabled',
                       cursor:
                         Array.isArray(formData.aiToolUsed) &&
@@ -341,10 +355,15 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                       }
                     }}
                   >
-                    Configure AI Tool Details
+                    Configure AI Tool Details{hasAITools ? ' *' : ''}
                   </Typography>
                 </span>
               </Tooltip>
+              {hasAITools && !aiToolDetailsComplete && (
+                <FormHelperText error>
+                  Please configure AI tool details if AI tools are selected
+                </FormHelperText>
+              )}
               </Box>
               
               
@@ -360,7 +379,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   }
                   options={CLIENT_APPROVED_OPTIONS}
                   disabled={!applicable || noAIAdoption}
-                  required={needsAIToolsOrAccelerators}
+                  required={needsAIToolsOrAccelerators || hasAITools}
                 />
               </Box>
 
@@ -380,9 +399,12 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   multiple={true}
                   options={COMMON_ACCELERATORS}
                   helperText={
-                    needsAIToolsOrAccelerators && !hasAIToolsOrAccelerators
-                      ? 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom accelerators'
-                      : 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom accelerators'
+                    <Typography
+                      component="span"
+                      sx={{ fontWeight: 600 }}
+                    >
+                      If accelerator is not present in the list, add the accelerator and press Enter.
+                    </Typography>
                   }
                 />
               </Box>

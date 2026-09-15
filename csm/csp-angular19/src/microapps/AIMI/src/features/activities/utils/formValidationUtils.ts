@@ -1,4 +1,4 @@
-import type { ActivityFormData } from '../types/activityTypes';
+import type { ActivityFormData, AIToolDetails } from '../types/activityTypes';
 
 export const isApplicable = (applicability: string): boolean => {
   return applicability === 'Yes';
@@ -55,6 +55,29 @@ export const validateAIToolsOrAccelerators = (
   return hasAITools || hasAccelerators;
 };
 
+// Each selected AI tool must have an access type, and a license count when "Licensed"
+export const validateAIToolDetails = (
+  aiToolUsed: string | string[],
+  aiToolDetails?: AIToolDetails
+): boolean => {
+  const tools = Array.isArray(aiToolUsed)
+    ? aiToolUsed
+    : aiToolUsed
+    ? [aiToolUsed]
+    : [];
+
+  if (tools.length === 0) return true;
+
+  return tools.every((tool) => {
+    const details = aiToolDetails?.[tool];
+    if (!details?.accessType) return false;
+    if (details.accessType === 'Licensed' && !(details.licenseCount > 0)) {
+      return false;
+    }
+    return true;
+  });
+};
+
 export const validateOptionalFields = (formData: ActivityFormData): boolean => {
   return !!(
     validateAIToolsOrAccelerators(formData) &&
@@ -82,7 +105,19 @@ export const isFormValid = (formData: ActivityFormData): boolean => {
   }
 
   // If applicable (Yes) and AI Adoption score > 0, required fields + AI tools/accelerators are needed
-  return requiredFieldsValid && validateAIToolsOrAccelerators(formData);
+  if (!requiredFieldsValid || !validateAIToolsOrAccelerators(formData)) {
+    return false;
+  }
+
+  // When AI Tools Used is selected, its details and Client Approved become mandatory
+  if (validateAITools(formData.aiToolUsed)) {
+    return (
+      !!formData.clientApproved &&
+      validateAIToolDetails(formData.aiToolUsed, formData.aiToolDetails)
+    );
+  }
+
+  return true;
 };
 
 export const hasFormChanges = (

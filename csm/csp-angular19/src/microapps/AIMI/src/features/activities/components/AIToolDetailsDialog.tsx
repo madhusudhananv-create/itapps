@@ -29,13 +29,20 @@ const ACCESS_TYPE_OPTIONS = [
     label: 'Licensed',
   },
   {
-    value: 'Customer Network',
-    label: 'Customer Network',
+    value: 'Not-Licensed',
+    label: 'Not-Licensed',
+  }
+];
+
+const NETWORK_TYPE_OPTIONS = [
+  {
+    value: 'Customer',
+    label: 'Customer',
   },
   {
-    value: 'Neurealm Network',
-    label: 'Neurealm Network',
-  },
+    value: 'Neurealm',
+    label: 'Neurealm',
+  }
 ];
 
 export const AIToolDetailsDialog: React.FC<
@@ -49,7 +56,7 @@ export const AIToolDetailsDialog: React.FC<
 }) => {
   const updateToolDetails = (
     tool: string,
-    field: 'accessType' | 'licenseCount',
+    field: 'accessType' | 'licenseCount' | 'networkType',
     value: string | number
   ) => {
     onChange({
@@ -65,6 +72,11 @@ accessType:
           field === 'licenseCount'
             ? Number(value)
             : aiToolDetails?.[tool]?.licenseCount || 0,
+
+        networkType:
+          field === 'networkType'
+            ? String(value)
+            : aiToolDetails?.[tool]?.networkType || '',
       },
     });
   };
@@ -138,6 +150,22 @@ accessType:
                       aiToolDetails?.[tool]?.accessType !==
                       'Licensed'
                     }
+                  />
+                </TableCell>
+                <TableCell width="300px">
+                  <SelectField
+                    label=""
+                    value={
+                      aiToolDetails?.[tool]?.networkType || ''
+                    }
+                    onChange={(value) =>
+                      updateToolDetails(
+                        tool,
+                        'networkType',
+                        value
+                      )
+                    }
+                    options={NETWORK_TYPE_OPTIONS}
                   />
                 </TableCell>
               </TableRow>

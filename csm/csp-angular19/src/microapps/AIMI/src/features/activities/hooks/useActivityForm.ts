@@ -52,6 +52,7 @@ export const useActivityForm = (
         benefitTo: editingActivity.benefitTo,
         qualitativeBenefits: editingActivity.qualitativeBenefits,
         comments: editingActivity.comments,
+        aiToolDetails: editingActivity.aiToolDetails || {},
       };
       setFormData(editingFormData);
       setOriginalFormData(editingFormData);
