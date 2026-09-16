@@ -1,0 +1,39 @@
+.flux-login-mesh {
+  background: linear-gradient(
+    125deg,
+    #f8fafc 0%,
+    #eef2ff 35%,
+    #f0f9ff 55%,
+    #fdf4ff 72%,
+    #f8fafc 100%
+  );
+  background-size: 200% 200%;
+  animation: flux-login-mesh 20s ease-in-out infinite;
+  opacity: 0.95;
+}
+
+@keyframes flux-login-mesh {
+  0%,
+  100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 60%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flux-login-mesh {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
+
+:host ::ng-deep .p-password {
+  width: 100%;
+}
+
+:host ::ng-deep .p-password-input,
+:host ::ng-deep .p-inputtext {
+  width: 100%;
+}
