@@ -221,33 +221,58 @@ export class ItOpsMaturityApiService {
    * `hasAnyAssignment` - true whenever `fullAccess` is, or this employee is personally
    * assessor/reviewer/assessee on at least one assessment anywhere: the Dashboard is
    * still reachable, just scoped down to their own assigned projects.
+   * `isGdh`/`gdhBusinessUnits` - true (with the BU list, usually one entry) when this
+   * employee has no explicit Dashboard Viewer/Superuser grant but IS a configured GDH
+   * for one or more Business Units - `fullAccess` is still true for them (full Dashboard
+   * screen, not the narrower "own assignments" scope) but the app must restrict the BU
+   * filter to just `gdhBusinessUnits` and hide the My Assignments tab for them.
    */
-  getHasDashboardAccess(empId: string): Observable<{ fullAccess: boolean; hasAnyAssignment: boolean }> {
+  getHasDashboardAccess(
+    empId: string,
+  ): Observable<{ fullAccess: boolean; hasAnyAssignment: boolean; isGdh: boolean; gdhBusinessUnits: string[] }> {
     return this.http
       .get<any>(`${this.apiurl}GetITOpsHasDashboardAccess?empId=${encodeURIComponent(empId)}`, { headers: this.getHeaders() })
       .pipe(
         map((res) => ({
           fullAccess: !!(res?.fullAccess ?? res?.FullAccess),
           hasAnyAssignment: !!(res?.hasAnyAssignment ?? res?.HasAnyAssignment),
+          isGdh: !!(res?.isGdh ?? res?.IsGdh),
+          gdhBusinessUnits: (res?.gdhBusinessUnits ?? res?.GdhBusinessUnits ?? []) as string[],
         })),
       );
   }
 
   /**
-   * Same shape as getHasDashboardAccess, for the Reports page: `fullAccess` -
-   * Superuser, the dedicated "Report Viewer" role, or (kept for backward
-   * compatibility) "Dashboard Viewer" - sees every account/project,
-   * unrestricted. `hasAnyAssignment` - assessor/reviewer/assessee on at least
-   * one assessment anywhere; the Domain Assessment Report already row-filters
-   * itself to just their own involvement even without this (SessionService.canSeeRow).
+   * DB-backed (CONFIGURATION_EXT) Business Unit -> GDH email list, replacing the
+   * previously hardcoded bu-head-map.util.ts. Fetched once per session and cached
+   * client-side via setGdhEmailsByBusinessUnit - see maturity-landing.component.ts.
    */
-  getHasReportAccess(empId: string): Observable<{ fullAccess: boolean; hasAnyAssignment: boolean }> {
+  getGdhEmailsByBusinessUnit(): Observable<Record<string, string[]>> {
+    return this.http
+      .get<any>(`${this.apiurl}GetITOpsGdhEmailsByBusinessUnit`, { headers: this.getHeaders() })
+      .pipe(map((res) => res ?? {}));
+  }
+
+  /**
+   * Same shape as getHasDashboardAccess, for the Reports page: `fullAccess` -
+   * Superuser or the dedicated "Report Viewer" role (Dashboard Viewer no
+   * longer implies Reports access - the two grants are independent) - sees
+   * every account/project, unrestricted. `hasAnyAssignment` - assessor/
+   * reviewer/assessee on at least one assessment anywhere. `isGdh`/
+   * `gdhBusinessUnits` - same GDH carve-out as getHasDashboardAccess: reaches
+   * Reports without an explicit grant, restricted to their own BU(s).
+   */
+  getHasReportAccess(
+    empId: string,
+  ): Observable<{ fullAccess: boolean; hasAnyAssignment: boolean; isGdh: boolean; gdhBusinessUnits: string[] }> {
     return this.http
       .get<any>(`${this.apiurl}GetITOpsHasReportAccess?empId=${encodeURIComponent(empId)}`, { headers: this.getHeaders() })
       .pipe(
         map((res) => ({
           fullAccess: !!(res?.fullAccess ?? res?.FullAccess),
           hasAnyAssignment: !!(res?.hasAnyAssignment ?? res?.HasAnyAssignment),
+          isGdh: !!(res?.isGdh ?? res?.IsGdh),
+          gdhBusinessUnits: (res?.gdhBusinessUnits ?? res?.GdhBusinessUnits ?? []) as string[],
         })),
       );
   }

@@ -54,7 +54,10 @@
     <div class="parameter-card" *ngFor="let param of visibleParameters(); let i = index">
       <div class="param-header">
         <div class="param-heading">
-          <span class="category"><span class="sno">Q{{ i + 1 }}</span> {{ param.category }}</span>
+          <div class="param-meta">
+            <span class="sno">Q{{ i + 1 }}</span>
+            <span class="category-pill">{{ param.category }}</span>
+          </div>
           <h3>{{ param.name }}</h3>
         </div>
         <div class="score-readout" *ngIf="param.score !== null; else naScore">{{ param.score }} <span>/ 5</span></div>

@@ -74,6 +74,14 @@ export class ReportsComponent implements OnInit {
   hasFullAccess = false;
   /** Assessor/reviewer/assessee on at least one assessment anywhere - unlocks Reports (both, now that they're scoped via the filter dropdowns) even without the broad grant above. */
   hasAnyAssignment = false;
+  /** Non-empty when this employee is a GDH (not an explicit Report Viewer/Superuser) - restricts the Business Unit filter (and everything it cascades to) to just these BU(s), see applyGdhBuRestriction(). */
+  gdhBusinessUnits: string[] = [];
+
+  /** GDH restriction, applied everywhere a full-access org-wide Business Unit list is loaded. */
+  private applyGdhBuRestriction(businessUnits: string[]): string[] {
+    if (!this.gdhBusinessUnits.length) return businessUnits;
+    return businessUnits.filter((bu) => this.gdhBusinessUnits.some((gdhBu) => gdhBu.toLowerCase() === bu.toLowerCase()));
+  }
 
   // ---- Report picker ----
   reportOptions: ReportOption[] = [];
@@ -179,7 +187,7 @@ export class ReportsComponent implements OnInit {
             reports: this.reportApi.getAvailableReports(),
             access: empId
               ? this.maturityApi.getHasReportAccess(empId)
-              : of({ fullAccess: false, hasAnyAssignment: false }),
+              : of({ fullAccess: false, hasAnyAssignment: false, isGdh: false, gdhBusinessUnits: [] as string[] }),
             cycles: this.maturityApi.getCycleList().pipe(catchError(() => of([]))),
             domains: this.maturityApi.getDomainList().pipe(catchError(() => of([]))),
             businessUnits: this.maturityApi.getBusinessUnits().pipe(catchError(() => of([]))),
@@ -192,6 +200,7 @@ export class ReportsComponent implements OnInit {
         const hasFullAccess = access.fullAccess;
         this.hasFullAccess = hasFullAccess;
         this.hasAnyAssignment = access.hasAnyAssignment;
+        this.gdhBusinessUnits = access.gdhBusinessUnits ?? [];
         this.myAssignments = myAssignments;
         // Both reports are now scoped the same way for an own-scope viewer (their
         // own assigned accounts/projects, via the restricted filter dropdowns and
@@ -206,10 +215,20 @@ export class ReportsComponent implements OnInit {
           '';
         this.dashboardCycles = cycles;
         if (hasFullAccess) {
-          // Unrestricted - every account/project/domain org-wide, as before.
+          // Unrestricted - every account/project/domain org-wide, as before -
+          // except a GDH (no explicit Report Viewer/Superuser grant) is still
+          // narrowed to their own configured Business Unit(s).
           this.domainList = domains.map((d) => ({ domainId: d.domainId, name: d.name }));
-          this.businessUnits = businessUnits;
-          this.accountsWithAssessments = accounts;
+          this.businessUnits = this.applyGdhBuRestriction(businessUnits);
+          if (this.gdhBusinessUnits.length) {
+            this.businessUnitFilter = this.businessUnits[0] ?? '';
+            this.maturityApi
+              .getAccountsWithAssessments(undefined, this.businessUnitFilter || undefined)
+              .pipe(catchError(() => of([])))
+              .subscribe((scopedAccounts) => (this.accountsWithAssessments = scopedAccounts));
+          } else {
+            this.accountsWithAssessments = accounts;
+          }
         } else {
           // Own-scope: every filter dropdown is restricted to this employee's own
           // assessor/reviewer/assessee assignments instead of the org-wide lists -
@@ -298,11 +317,22 @@ export class ReportsComponent implements OnInit {
     this.maturityApi
       .getBusinessUnits(cycleId)
       .pipe(catchError(() => of([])))
-      .subscribe((businessUnits) => (this.businessUnits = businessUnits));
-    this.maturityApi
-      .getAccountsWithAssessments(cycleId)
-      .pipe(catchError(() => of([])))
-      .subscribe((accounts) => (this.accountsWithAssessments = accounts));
+      .subscribe((businessUnits) => {
+        this.businessUnits = this.applyGdhBuRestriction(businessUnits);
+        if (this.gdhBusinessUnits.length) {
+          this.businessUnitFilter = this.businessUnits[0] ?? '';
+          this.maturityApi
+            .getAccountsWithAssessments(cycleId, this.businessUnitFilter || undefined)
+            .pipe(catchError(() => of([])))
+            .subscribe((accounts) => (this.accountsWithAssessments = accounts));
+        }
+      });
+    if (!this.gdhBusinessUnits.length) {
+      this.maturityApi
+        .getAccountsWithAssessments(cycleId)
+        .pipe(catchError(() => of([])))
+        .subscribe((accounts) => (this.accountsWithAssessments = accounts));
+    }
     this.loadReportData();
   }
 

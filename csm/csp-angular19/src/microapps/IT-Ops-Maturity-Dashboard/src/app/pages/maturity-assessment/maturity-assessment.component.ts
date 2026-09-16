@@ -299,8 +299,17 @@ export class MaturityAssessmentComponent implements OnInit {
     );
   }
 
+  /**
+   * Notes are mandatory for every parameter, always - NA isn't a genuinely
+   * empty/unscored state in this UI, it's the rubric's own default selected
+   * value (the NA pill renders as "active" the moment a parameter loads,
+   * before anyone has clicked anything - see isSelected()). So a parameter
+   * left untouched is functionally "scored NA", not "unscored", and needs
+   * the same justification comment a 1-5 score does before it can be
+   * submitted for review.
+   */
   notesRequired(param: MaturityParameter): boolean {
-    return param.score !== null && param.score !== undefined && !param.notes;
+    return !param.notes;
   }
 
   statusClass(status: string): string {

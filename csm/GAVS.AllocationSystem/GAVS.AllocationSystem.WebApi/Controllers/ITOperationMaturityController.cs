@@ -753,14 +753,57 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // reviewer, GDH, assessee, or holding an ITOPS_ROLE should see the icon too.
         // The shell calls this alongside the normal access-control check and shows the
         // icon if either says yes.
-        private static readonly Dictionary<string, string[]> GdhEmailsByBusinessUnit = new Dictionary<string, string[]>
+        //
+        // GDH email lists are per-Business-Unit CONFIGURATION_EXT rows (one row per BU,
+        // key ITOPS_GDH_EMAILS_<BU>, CUST_ID '-1', VALUE a semicolon-separated email
+        // list) rather than hardcoded here, so HR/Ops can update a BU's GDH(s) via SQL
+        // without a code deploy - see ITOperationMaturity_V2_24_GdhEmailsConfig.sql for
+        // the seeded starting values and the exact key naming.
+        private static readonly string[] ITOPS_GDH_BUSINESS_UNITS = { "health care", "tech", "india & gcc", "cit", "sead" };
+
+        private static string GdhConfigKeyForBusinessUnit(string businessUnit)
         {
-            { "health care", new[] { "balakrishnan.s@neurealm.com" } },
-            { "tech", new[] { "prashant.muley@neurealm.com" } },
-            { "india & gcc", new[] { "sriram.radhakrishnan@neurealm.com" } },
-            { "cit", new[] { "nandagopal.kumar@neurealm.com" } },
-            { "sead", new[] { "pradeep.sukumaran@ignitarium.com", "sujith@ignitarium.com", "ramesh@ignitarium.com", "sanjayjk@ignitarium.com", "sujeeth.joseph@ignitarium.com" } },
-        };
+            var slug = new string((businessUnit ?? "").ToUpperInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
+            while (slug.Contains("__")) slug = slug.Replace("__", "_");
+            return "ITOPS_GDH_EMAILS_" + slug.Trim('_');
+        }
+
+        /// <summary>All configured GDH emails for one Business Unit, lower-cased and trimmed. Empty list if none configured.</summary>
+        private List<string> GetITOpsGdhEmailsForBusinessUnit(string businessUnit)
+        {
+            var raw = helper.GetDBConfig(GdhConfigKeyForBusinessUnit(businessUnit), "-1");
+            return raw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(e => e.Trim().ToLowerInvariant())
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Distinct()
+                .ToList();
+        }
+
+        /// <summary>Every configured Business Unit -> its GDH email list, for the frontend's own per-BU GDH check (see GetITOpsGdhEmailsByBusinessUnit below).</summary>
+        private Dictionary<string, List<string>> GetITOpsGdhEmailsByBusinessUnitMap()
+        {
+            return ITOPS_GDH_BUSINESS_UNITS.ToDictionary(bu => bu, GetITOpsGdhEmailsForBusinessUnit);
+        }
+
+        /// <summary>Every configured Business Unit this employee is a GDH for (usually zero or one). Used to scope the Dashboard/Reports screens to just their own BU(s) rather than granting unrestricted access.</summary>
+        private List<string> GetITOpsGdhBusinessUnitsForEmpId(string empId)
+        {
+            var email = GetEmpEmail(empId);
+            if (string.IsNullOrWhiteSpace(email)) return new List<string>();
+            var emailNorm = email.Trim().ToLowerInvariant();
+            return ITOPS_GDH_BUSINESS_UNITS.Where(bu => GetITOpsGdhEmailsForBusinessUnit(bu).Contains(emailNorm)).ToList();
+        }
+
+        // Exposes the CONFIGURATION_EXT-backed BU -> GDH email map to the Angular app, which
+        // used to hardcode the identical list in bu-head-map.util.ts - fetched once (e.g.
+        // alongside GetITOpsHasDashboardAccess) and cached client-side instead of per-row.
+        [GET("GetITOpsGdhEmailsByBusinessUnit")]
+        [ActionName("GetITOpsGdhEmailsByBusinessUnit")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsGdhEmailsByBusinessUnit()
+        {
+            return Ok(GetITOpsGdhEmailsByBusinessUnitMap());
+        }
 
         [GET("GetITOpsHasAccess")]
         [ActionName("GetITOpsHasAccess")]
@@ -796,7 +839,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var email = GetEmpEmail(empId);
                 if (!string.IsNullOrWhiteSpace(email))
                 {
-                    var isGdh = GdhEmailsByBusinessUnit.Values.Any(list => list.Contains(email.Trim(), StringComparer.OrdinalIgnoreCase));
+                    var isGdh = ITOPS_GDH_BUSINESS_UNITS.Any(bu => GetITOpsGdhEmailsForBusinessUnit(bu).Contains(email.Trim().ToLowerInvariant()));
                     if (isGdh) return Ok(true);
                 }
 
@@ -1010,17 +1053,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsHasDashboardAccess(string empId)
         {
-            if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false });
+            if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false, IsGdh = false, GdhBusinessUnits = new List<string>() });
             try
             {
-                var fullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER);
+                var explicitFullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER);
+                // A GDH with no explicit Dashboard Viewer/Superuser grant still gets the full
+                // Dashboard screen (not the narrower per-assignment "own scope" path) - the
+                // Angular app instead restricts which Business Unit(s) they can pick using
+                // GdhBusinessUnits, so a GDH sees everything within their own BU(s) only.
+                var gdhBusinessUnits = explicitFullAccess ? new List<string>() : GetITOpsGdhBusinessUnitsForEmpId(empId);
+                var isGdh = gdhBusinessUnits.Any();
+                var fullAccess = explicitFullAccess || isGdh;
                 var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId);
-                return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment });
+                return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment, IsGdh = isGdh, GdhBusinessUnits = gdhBusinessUnits });
             }
             catch (Exception ex)
             {
                 LogRequest(ex, "ITOpsMaturity:GetITOpsHasDashboardAccess");
-                return Ok(new { FullAccess = false, HasAnyAssignment = false });
+                return Ok(new { FullAccess = false, HasAnyAssignment = false, IsGdh = false, GdhBusinessUnits = new List<string>() });
             }
         }
 
@@ -1040,17 +1090,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsHasReportAccess(string empId)
         {
-            if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false });
+            if (string.IsNullOrWhiteSpace(empId)) return Ok(new { FullAccess = false, HasAnyAssignment = false, IsGdh = false, GdhBusinessUnits = new List<string>() });
             try
             {
-                var fullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_REPORT_VIEWER);
+                var explicitFullAccess = IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_REPORT_VIEWER);
+                // Same GDH carve-out as GetITOpsHasDashboardAccess: a GDH with no explicit
+                // Report Viewer/Superuser grant still reaches the Reports screen, restricted
+                // by the Angular app to just their own Business Unit(s) via GdhBusinessUnits.
+                var gdhBusinessUnits = explicitFullAccess ? new List<string>() : GetITOpsGdhBusinessUnitsForEmpId(empId);
+                var isGdh = gdhBusinessUnits.Any();
+                var fullAccess = explicitFullAccess || isGdh;
                 var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId);
-                return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment });
+                return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment, IsGdh = isGdh, GdhBusinessUnits = gdhBusinessUnits });
             }
             catch (Exception ex)
             {
                 LogRequest(ex, "ITOpsMaturity:GetITOpsHasReportAccess");
-                return Ok(new { FullAccess = false, HasAnyAssignment = false });
+                return Ok(new { FullAccess = false, HasAnyAssignment = false, IsGdh = false, GdhBusinessUnits = new List<string>() });
             }
         }
 
@@ -1717,7 +1773,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // Shared by SubmitITOpsAssessment's skip-review path and ReviewITOpsAssessment's
         // Approve path - either way, once an assessment is Approved, every assessee on it
         // needs to act on any probable areas of improvement (findings) already raised
-        // while scoring.
+        // while scoring. The assessor(s) are included too - they raised the findings and
+        // need visibility into the fact their assessee(s) have now been asked to act on
+        // them, same as they're already included on the assessments-created/mapping
+        // notifications elsewhere in this module.
         private void NotifyITOpsAssesseesOfOpenFindings(ITOPS_ASSESSMENT assessment, ITOPS_DOMAIN domain, string projectName)
         {
             var scoreIds = GetITOpsScoreIdsForAssessment(assessment.ID);
@@ -1729,12 +1788,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (openFindingCount > 0 && assesseeIds.Any())
             {
+                var assessorIds = GetITOpsAssessorIds(assessment.ID);
+                var recipientIds = assesseeIds
+                    .Concat(assessorIds)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct()
+                    .ToList();
+
                 var findingWord = openFindingCount == 1 ? "finding" : "findings";
                 var assesseeNames = string.Join(", ", GetEmpNames(assesseeIds));
-                // One shared email to every assessee on the assessment (not one per person) -
-                // the bell dropdown still logs a separate entry per assessee below.
+                // One shared email to every assessee AND assessor on the assessment (not one
+                // per person) - NotifyITOpsMany also logs a bell entry for each recipient,
+                // assessor(s) included, since the assessment itself is just as reachable for them.
                 NotifyITOpsMany(
-                    assesseeIds,
+                    recipientIds,
                     $"IT Ops Maturity: {openFindingCount} {findingWord} need your action - {domain?.NAME} - {projectName}",
                     "ITOpsFindingsNeedAction.htm",
                     ToEmailValues(new

@@ -15,6 +15,7 @@ import { IdentityService } from '../../services/identity.service';
 import { DomainSummary, EnterpriseSummary, TopRisk, CurrentUser, DomainStatus } from '../../models/maturity.model';
 import { CustomerModel } from '../../models/account.model';
 import { statusPillClass } from '../../utils/status.util';
+import { setGdhEmailsByBusinessUnit } from '../../utils/bu-head-map.util';
 
 /** Maps the backend's ITOPS_ASSESSMENT.STATUS values onto this app's DomainStatus labels. */
 const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
@@ -169,6 +170,8 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   dashboardAccessGranted = false;
   /** True when this employee has no full Dashboard grant, but IS assessor/reviewer/assessee on at least one assessment - the Dashboard is still reachable, just scoped down to their own assigned projects (see loadAccountsWithAssessments/loadProjectsForAccount/loadDashboardDomainData). */
   dashboardOwnScopeOnly = false;
+  /** Non-empty when this employee is a GDH (not an explicit Dashboard Viewer/Superuser) - restricts the Business Unit picker to just these BU(s), see loadBusinessUnits(). */
+  dashboardGdhBusinessUnits: string[] = [];
   /** Whichever of the two above is true - what the template actually gates rendering the Dashboard content on. */
   get dashboardVisible(): boolean {
     return this.dashboardAccessGranted || this.dashboardOwnScopeOnly;
@@ -262,6 +265,13 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     const initialMode = this.route.snapshot.data['initialMode'];
     if (initialMode === 'assignments' || initialMode === 'accounts') this.viewMode = initialMode;
     this.loadMyAssignments();
+    // DB-backed BU -> GDH email map (CONFIGURATION_EXT), fetched once and cached
+    // in-memory for session.service.ts's resolveIdentity() to consult synchronously -
+    // see setGdhEmailsByBusinessUnit/getGdhEmailsForBusinessUnit in bu-head-map.util.ts.
+    this.api.getGdhEmailsByBusinessUnit().subscribe({
+      next: (map) => setGdhEmailsByBusinessUnit(map),
+      error: (err) => console.error('IT Ops Maturity Dashboard: failed to load GDH email map', err),
+    });
     // session.user$ always has a value synchronously (defaults to NoAccess) -
     // keep currentUser in sync with it from the very first tick, so template
     // bindings like currentUser.role never see undefined while the
@@ -299,12 +309,13 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       .pipe(
         catchError((err) => {
           console.error('IT Ops Maturity Dashboard: failed to check dashboard access', err);
-          return of({ fullAccess: false, hasAnyAssignment: false });
+          return of({ fullAccess: false, hasAnyAssignment: false, isGdh: false, gdhBusinessUnits: [] as string[] });
         }),
       )
       .subscribe((access) => {
         this.dashboardAccessGranted = access.fullAccess;
         this.dashboardOwnScopeOnly = !access.fullAccess && access.hasAnyAssignment;
+        this.dashboardGdhBusinessUnits = access.gdhBusinessUnits ?? [];
         this.dashboardAccessLoading = false;
         if (!this.dashboardVisible) {
           // The nav bar already hides the Dashboard tab for anyone without full
@@ -411,8 +422,14 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         }),
       )
       .subscribe((businessUnits) => {
-        this.businessUnits = businessUnits;
-        this.businessUnitFilter = businessUnits[0] ?? '';
+        // A GDH (no explicit Dashboard Viewer/Superuser grant) only ever sees
+        // their own configured Business Unit(s) - narrow the org-wide list
+        // down to those before picking the first one, so they can never
+        // switch into another BU's data via this dropdown.
+        this.businessUnits = this.dashboardGdhBusinessUnits.length
+          ? businessUnits.filter((bu) => this.dashboardGdhBusinessUnits.some((gdhBu) => gdhBu.toLowerCase() === bu.toLowerCase()))
+          : businessUnits;
+        this.businessUnitFilter = this.businessUnits[0] ?? '';
         onDone?.();
       });
   }
@@ -663,8 +680,14 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         this.myAssignmentsLoading = false;
         // Default to whichever role tab actually has something in it - a
         // pure Reviewer (no Assessor rows at all) should land on "Needs
-        // Review", not an empty "My Assessments" tab.
-        if (!this.myOpenAssessments.length && this.myPendingReviews.length) {
+        // Review", not an empty "My Assessments" tab. Also force off of
+        // 'assessments' when this employee has no Assessor/Assessee role at
+        // all (that tab is hidden entirely for them - see hasAssessorAssignments).
+        if (this.assignmentsTab === 'assessments' && !this.hasAssessorAssignments && this.hasReviewerAssignments) {
+          this.assignmentsTab = 'reviews';
+        } else if (this.assignmentsTab === 'reviews' && !this.hasReviewerAssignments && this.hasAssessorAssignments) {
+          this.assignmentsTab = 'assessments';
+        } else if (!this.myOpenAssessments.length && this.myPendingReviews.length) {
           this.assignmentsTab = 'reviews';
         }
       });
@@ -738,6 +761,22 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
    * (needsAction) rather than gating visibility, so an assessee can still see
    * - and re-check - an Approved assessment even after clearing everything.
    */
+  /**
+   * Whether this employee is Assessor (or Approved-assessee) on at least one
+   * assignment ANYWHERE, independent of the current cycle/status filter -
+   * gates whether the "My Assessments" tab even shows at all, so a pure
+   * Reviewer (no Assessor role on anything) doesn't see an empty tab that
+   * isn't theirs to use.
+   */
+  get hasAssessorAssignments(): boolean {
+    return this.myAssignments.some((row) => this.isAssessorOn(row) || this.isAssesseeOn(row));
+  }
+
+  /** Same idea as hasAssessorAssignments, for the "Needs Review" tab - only shown once this employee is actually a Reviewer on something. */
+  get hasReviewerAssignments(): boolean {
+    return this.myAssignments.some((row) => this.isReviewerOn(row));
+  }
+
   get myOpenAssessments(): ItOpsMyAssignmentRow[] {
     return this.filteredAssignments.filter(
       (row) => this.isAssessorOn(row) || (this.isAssesseeOn(row) && row.status === 'Approved'),

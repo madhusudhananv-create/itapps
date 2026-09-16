@@ -70,7 +70,10 @@
       [class.invalid-highlight]="param.id === highlightParamId"
     >
       <div class="param-header">
-        <span class="category"><span class="sno">Q{{ i + 1 }}</span> {{ param.category }}</span>
+        <div class="param-meta">
+          <span class="sno">Q{{ i + 1 }}</span>
+          <span class="category-pill">{{ param.category }}</span>
+        </div>
         <h3>{{ param.name }}</h3>
       </div>
       <p class="definition">{{ param.definition }}</p>

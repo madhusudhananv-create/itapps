@@ -125,10 +125,10 @@
     </div>
 
     <div class="assignments-role-tabs">
-      <button type="button" [class.active]="assignmentsTab === 'assessments'" (click)="selectAssignmentsTab('assessments')">
+      <button *ngIf="hasAssessorAssignments" type="button" [class.active]="assignmentsTab === 'assessments'" (click)="selectAssignmentsTab('assessments')">
         My Assessments <span class="tab-count">{{ myOpenAssessments.length }}</span>
       </button>
-      <button type="button" [class.active]="assignmentsTab === 'reviews'" (click)="selectAssignmentsTab('reviews')">
+      <button *ngIf="hasReviewerAssignments" type="button" [class.active]="assignmentsTab === 'reviews'" (click)="selectAssignmentsTab('reviews')">
         Needs Review <span class="tab-count">{{ pendingReviewActionCount }}</span>
       </button>
     </div>

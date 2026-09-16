@@ -3,8 +3,8 @@
   --surface: #fcfcfb;
   --surface-tint: #f3f4f6;
   --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
+  --text-secondary: #3a3935;
+  --text-muted: #6b6a63;
   --gridline: #e1e0d9;
   --border: rgba(11, 11, 11, 0.1);
   --accent: #2a78d6;
@@ -234,21 +234,37 @@
   min-width: 0;
 }
 
-.param-header .category {
-  font-size: 11.5px;
+/* Q-number + Category read as one metadata row (a chip pair, not prose) -
+   deliberately not "Category: X" text, since a pill already reads as
+   metadata without needing a label to say so. */
+.param-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-size: 11px;
   font-weight: 650;
   text-transform: uppercase;
-  color: var(--accent);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
 }
 
 .sno {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  padding: 2px 6px;
-  margin-right: 4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
   border-radius: 999px;
   background: var(--accent);
   color: #fff;
@@ -259,18 +275,22 @@
 }
 
 .param-header h3 {
-  margin: 3px 0 4px;
-  font-size: 16px;
+  margin: 0 0 4px;
+  font-size: 16.5px;
   font-weight: 650;
   letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
+/* The question's own supporting description - kept unlabelled: its smaller
+   size, muted color, and position directly under the heading already read
+   as "detail about the heading above" without a literal "Definition:" tag. */
 .definition {
   color: var(--text-secondary);
   margin: 0 0 8px;
   font-size: 13.5px;
-  font-style: italic;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .card-body {
@@ -311,7 +331,7 @@
 
   em {
     font-style: normal;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 9.5px;
     color: var(--text-secondary);
     text-align: center;
@@ -368,7 +388,7 @@
 }
 
 .rubric-active-desc.muted {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-style: italic;
 }
 

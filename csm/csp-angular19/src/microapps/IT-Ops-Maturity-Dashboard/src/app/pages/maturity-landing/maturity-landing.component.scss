@@ -1126,11 +1126,15 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   white-space: nowrap;
-  background: var(--surface-tint);
+  /* --surface-tint is only ~1% darker than --surface in this theme, which
+     read as no header at all against the white body rows - a deliberate
+     accent-tinted wash plus a real border makes the header band actually
+     visible instead of relying on a barely-there gray. */
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  border-bottom: 1.5px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 1;
-  box-shadow: 0 1px 0 var(--gridline);
 }
 
 th.sortable {

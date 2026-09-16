@@ -35,6 +35,24 @@ export class NavMenuComponent implements OnInit {
    */
   canSeeDashboard = false;
 
+  /**
+   * True when this employee is a configured GDH (Business-Unit-level access,
+   * see GetITOpsHasDashboardAccess) - they see the Dashboard/Reports for their
+   * own BU(s) but have no personal assessor/reviewer/assessee assignments to
+   * track, so the "My Assignments" tab is hidden for them.
+   */
+  isGdh = false;
+
+  /**
+   * Whether to show the "My Assignments" link at all - true only once this
+   * employee is personally Assessor, Reviewer, or Assessee on at least one
+   * assessment (i.e. GetITOpsMyAssignments actually returns something for
+   * them). A GDH, a Dashboard/Report Viewer with no personal assignments, or
+   * anyone else with no ITOps involvement has nothing to see there, so the
+   * nav item is removed entirely rather than landing them on an empty page.
+   */
+  canSeeMyAssignments = false;
+
   constructor(
     private session: SessionService,
     private adminApi: ItOpsAdminSetupService,
@@ -49,7 +67,14 @@ export class NavMenuComponent implements OnInit {
     if (empId) {
       // Reachable now for anyone with an assignment too (scoped to their own
       // projects), not just the full Dashboard Viewer/Superuser grant.
-      this.maturityApi.getHasDashboardAccess(empId).subscribe((access) => (this.canSeeDashboard = access.hasAnyAssignment));
+      this.maturityApi.getHasDashboardAccess(empId).subscribe((access) => {
+        this.canSeeDashboard = access.hasAnyAssignment;
+        this.isGdh = access.isGdh;
+      });
+      this.maturityApi.getMyAssignments(empId).subscribe({
+        next: (rows) => (this.canSeeMyAssignments = (rows ?? []).length > 0),
+        error: () => (this.canSeeMyAssignments = false),
+      });
     }
   }
 
