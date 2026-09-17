@@ -46,7 +46,7 @@ import {
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
 import { useAuth } from '@auth/hooks/useAuth';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
-import ScoreIcon from '@mui/icons-material/Score';
+//import ScoreIcon from '@mui/icons-material/Score';
 
 interface ManageActivitiesProps {
   selectedPractice: string;
