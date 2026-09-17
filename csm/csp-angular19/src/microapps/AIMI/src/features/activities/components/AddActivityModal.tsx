@@ -8,7 +8,7 @@ import {
   Box,
   Typography,
   FormHelperText,
-  Tooltip,
+  //Tooltip,
 } from '@mui/material';
 import type { ActivityFormData, ActivityData } from '../types/activityTypes';
 import {
@@ -16,7 +16,7 @@ import {
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
-  CLIENT_APPROVED_OPTIONS,
+  //CLIENT_APPROVED_OPTIONS,
   COMMON_AI_TOOLS,
   COMMON_ACCELERATORS,
 } from '../types/activityTypes';
@@ -30,8 +30,8 @@ import {
   isApplicable,
   isNoAIAdoption,
   validateAIToolsOrAccelerators,
-  validateAITools,
-  validateAIToolDetails,
+  //validateAITools,
+  //validateAIToolDetails,
 } from '../utils/formValidationUtils';
 import {
   SelectField,
@@ -42,7 +42,7 @@ import {
 } from './FormFieldComponents';
 import { QualitativeBenefitsField } from './QualitativeBenefitsField';
 import { modalStyles } from '../styles/formStyles';
-import { AIToolDetailsDialog } from './AIToolDetailsDialog';
+//import { AIToolDetailsDialog } from './AIToolDetailsDialog';
 
 interface AddActivityModalProps {
   open: boolean;
@@ -64,7 +64,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   existingActivities = [],
 }) => {
   const [guidelinesModalOpen, setGuidelinesModalOpen] = useState(false);
-  const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false);
+  //const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false);
 
   const [
     applicabilityGuidelinesModalOpen,
@@ -94,11 +94,11 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const hasAIToolsOrAccelerators = validateAIToolsOrAccelerators(formData);
 
   // When AI Tools Used is selected, its details and Client Approved become mandatory
-  const hasAITools = validateAITools(formData.aiToolUsed);
+  /* const hasAITools = validateAITools(formData.aiToolUsed);
   const aiToolDetailsComplete = validateAIToolDetails(
     formData.aiToolUsed,
     formData.aiToolDetails
-  );
+  ); */
   //validation pop-up
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -318,7 +318,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                     </Typography>
                   }
                 />
-                <Tooltip
+                {/* <Tooltip
                 title={
                   Array.isArray(formData.aiToolUsed) &&
                   formData.aiToolUsed.length > 0
@@ -363,14 +363,14 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                 <FormHelperText error>
                   Please configure AI tool details if AI tools are selected
                 </FormHelperText>
-              )}
+              )} */}
               </Box>
               
               
              
 
               {/* Client Approved */}
-              <Box>
+              {/* <Box>
                 <SelectField
                   label="Client Approved"
                   value={formData.clientApproved}
@@ -381,7 +381,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   disabled={!applicable || noAIAdoption}
                   required={needsAIToolsOrAccelerators || hasAITools}
                 />
-              </Box>
+              </Box> */}
 
               {/* Accelerators Used */}
               <Box>
@@ -473,7 +473,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         open={applicabilityGuidelinesModalOpen}
         onClose={() => setApplicabilityGuidelinesModalOpen(false)}
       />
-      <AIToolDetailsDialog
+      {/* <AIToolDetailsDialog
         open={toolDetailsOpen}
         onClose={() => setToolDetailsModalOpen(false)}
         aiTools={
@@ -485,7 +485,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         onChange={(value) =>
           handleFormChange('aiToolDetails', value)
         }
-      />
+      /> */}
       <Dialog
       open={validationDialogOpen}
       onClose={() => setValidationDialogOpen(false)}

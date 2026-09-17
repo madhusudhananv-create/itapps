@@ -13,7 +13,7 @@ export interface ActivityFormData {
   applicability: string;
   aiAdoptionScore: string;
   aiToolUsed: string | string[];
-  clientApproved: string;
+  //clientApproved: string;
   acceleratorsUsed: string | string[];
   workDoneByAI: number;
   hoursSaved: number;
@@ -21,7 +21,7 @@ export interface ActivityFormData {
   benefitTo: string;
   qualitativeBenefits: string[];
   comments: string;
-  aiToolDetails?: AIToolDetails;
+  //aiToolDetails?: AIToolDetails;
 }
 
 

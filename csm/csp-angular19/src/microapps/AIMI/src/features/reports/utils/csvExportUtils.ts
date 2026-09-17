@@ -144,7 +144,7 @@ const createCSVRow = (
   escapeCSVValue(activity.applicability),
   escapeCSVValue(activity.aiAdoptionScore),
   escapeCSVValue(activity.aiToolUsed),
-  escapeCSVValue(activity.clientApproved),
+  //escapeCSVValue(activity.clientApproved),
   escapeCSVValue(activity.acceleratorsUsed),
   escapeCSVValue(activity.workDoneByAI),
   escapeCSVValue(activity.hoursSaved),

@@ -7,18 +7,20 @@ import {
   Chip,
   Divider,
   Button,
+  Tooltip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   AI_ADOPTION_SCORES,
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
-  CLIENT_APPROVED_OPTIONS,
+  //CLIENT_APPROVED_OPTIONS,
   COMMON_AI_TOOLS,
   COMMON_ACCELERATORS,
 } from '../types/activityTypes';
@@ -59,6 +61,8 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
   isUnsaved = false,
   isPendingDraftConfirmation = false,
 }) => {
+  const { isAdmin } = useAuth();
+
   if (!activity) return null;
 
   const formatDate = (date: Date): string => {
@@ -247,7 +251,7 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
                 </Box>
 
                 {/* Client Approved */}
-                <Box sx={activityDetailsModalStyles.field}>
+                {/* <Box sx={activityDetailsModalStyles.field}>
                   <Typography sx={activityDetailsModalStyles.fieldLabel}>
                     Client Approved
                   </Typography>
@@ -257,7 +261,7 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
                       CLIENT_APPROVED_OPTIONS
                     )}
                   </Typography>
-                </Box>
+                </Box> */}
 
                 {/* Accelerators Used */}
                 <Box sx={activityDetailsModalStyles.field}>
@@ -406,15 +410,23 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
               </Button>
             )}
             {onDelete && (
-              <Button
-                variant="contained"
-                startIcon={<DeleteIcon />}
-                onClick={() => onDelete(activity)}
-                disabled={actionsDisabled}
-                sx={activityDetailsModalStyles.deleteButton}
+              <Tooltip
+                title={
+                  !isAdmin ? 'Only admin can delete the activity' : ''
+                }
               >
-                Delete
-              </Button>
+                <span>
+                  <Button
+                    variant="contained"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => onDelete(activity)}
+                    disabled={actionsDisabled || !isAdmin}
+                    sx={activityDetailsModalStyles.deleteButton}
+                  >
+                    Delete
+                  </Button>
+                </span>
+              </Tooltip>
             )}
           </Box>
         )}

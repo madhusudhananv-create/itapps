@@ -70,8 +70,17 @@ interface ManageActivitiesProps {
     currentPhase: string;
     isProjectNA?: boolean;
     naComments?: string;
+    acceptedScore?: number;
+    scoreReviewed?: boolean;
+    acceptedScoreComment?: string;
   };
+  onSaveReviewInfo?: (reviewInfo: {
+  acceptedScore?: number;
+  scoreReviewed?: boolean;
+  acceptedScoreComment?: string;
+}) => Promise<void>;
 }
+
 
 export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   selectedPractice,
@@ -85,6 +94,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   onSubmit,
   onSaveDraft,
   projectInfo,
+  onSaveReviewInfo,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
@@ -120,6 +130,26 @@ const [scoreReviewed, setScoreReviewed] = useState(false);
 const [acceptedScoreComment, setAcceptedScoreComment] = useState('');
 const [commentDialogOpen, setCommentDialogOpen] = useState(false);
 
+useEffect(() => {
+  if (projectInfo) {
+    setAcceptedScore(
+      String(projectInfo.acceptedScore ?? '')
+    );
+
+    setScoreReviewed(
+      projectInfo.scoreReviewed ?? false
+    );
+
+    setAcceptedScoreComment(
+      projectInfo.acceptedScoreComment ?? ''
+    );
+  }
+}, [projectInfo]);
+const hasAcceptedScoreChanges =
+  acceptedScore !== '' ||
+  scoreReviewed ||
+  acceptedScoreComment.trim() !== '';
+
   // Ids of activities auto-saved as drafts (on add/edit/copy) that haven't been
   // explicitly confirmed via the "Save as Draft" button yet - these still show as Unsaved
   const [pendingAutoSaveIds, setPendingAutoSaveIds] = useState<Set<string>>(
@@ -140,6 +170,7 @@ const [commentDialogOpen, setCommentDialogOpen] = useState(false);
     activityIds: string[];
   }>({ open: false, phase: '', activityIds: [] });
 
+  
   // Drop selections for activities that no longer exist (deleted/project switch)
   useEffect(() => {
     setSelectedActivityIds((prev) => {
@@ -163,7 +194,10 @@ const [commentDialogOpen, setCommentDialogOpen] = useState(false);
     () => activities.some((activity) => activity.status !== 'submitted'),
     [activities]
   );
-  const canSubmitOrSaveDraft = hasUnsavedChanges || hasDraftActivities;
+  const canSubmitOrSaveDraft =
+  hasUnsavedChanges ||
+  hasDraftActivities ||
+  hasAcceptedScoreChanges;
   const isProjectNA = !!projectInfo?.isProjectNA;
 
   // Group activities by SDLC Phase
@@ -724,6 +758,7 @@ const [commentDialogOpen, setCommentDialogOpen] = useState(false);
     setIsSubmitting(true);
 
     try {
+       
       if (onSubmit) {
         await onSubmit(activities);
       }
@@ -817,62 +852,28 @@ const [commentDialogOpen, setCommentDialogOpen] = useState(false);
                   </Typography>
                 )}
                 <Box sx={styles.scoreContainer}>
-                  <Typography variant="body2" sx={styles.overallScoreLabel}>
-                    Overall Score:
-                  </Typography>
+                <Typography variant="body2" sx={styles.overallScoreLabel}>
+                  Overall Score:
+                </Typography>
 
-                  <Typography variant="h6" sx={styles.overallScoreValue}>
-                    {areAllActivitiesNotApplicable(activities)
-                      ? 'N/A'
-                      : calculateAverageAIAdoptionScore(activities).toFixed(2)}
-                  </Typography>
-                </Box>
+                <Typography variant="h6" sx={styles.overallScoreValue}>
+                  {areAllActivitiesNotApplicable(activities)
+                    ? 'N/A'
+                    : calculateAverageAIAdoptionScore(activities).toFixed(2)}
+                </Typography>
 
-                <Box sx={{ mt: 2 }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={scoreReviewed}
-                        onChange={(e) =>
-                          setScoreReviewed(e.target.checked)
-                        }
-                        disabled={!isAdmin}
-                      />
-                    }
-                    label="Score Reviewed"
-                  />
-
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      mt: 1,
-                    }}
-                  >
-                    <TextField
-                      label="Accepted Score"
-                      size="small"
-                      type="number"
-                      value={acceptedScore}
-                      onChange={(e) =>
-                        setAcceptedScore(e.target.value)
-                      }
-                      disabled={!isAdmin}
-                      sx={{ width: 150 }}
-                    />
-
-                    <Tooltip title="Comments">
-                      <IconButton
-                        color="primary"
-                        onClick={() => setCommentDialogOpen(true)}
-                        disabled={!isAdmin}
-                      >
-                        <CommentIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
+                {isAdmin && (
+                  <Tooltip title="Review Score">
+                    <IconButton
+                      color="primary"
+                      onClick={() => setCommentDialogOpen(true)}
+                      disabled={projectInfo?.isProjectNA}
+                    >
+                      <CommentIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
                 </Box>
               </Box>
             )}
@@ -1007,7 +1008,7 @@ const [commentDialogOpen, setCommentDialogOpen] = useState(false);
                                 <IconButton
                                   size="small"
                                   color="error"
-                                  disabled={selectedInPhaseCount === 0}
+                                  disabled={selectedInPhaseCount === 0 || projectInfo?.isProjectNA}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleBulkDeleteClick(
@@ -1168,47 +1169,120 @@ const [commentDialogOpen, setCommentDialogOpen] = useState(false);
           </Button>
         </DialogActions>
       </Dialog>
+     
       <Dialog
-        open={commentDialogOpen}
-        onClose={() => setCommentDialogOpen(false)}
-        maxWidth="sm"
+  open={commentDialogOpen}
+  onClose={() => setCommentDialogOpen(false)}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>
+    Review Score
+  </DialogTitle>
+
+  <DialogContent>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        mt: 1,
+      }}
+    >
+      <TextField
+        label="Accepted Score"
+        value={acceptedScore}
+        onChange={(e) => {
+          const value = e.target.value;
+
+          if (
+            value === '' ||
+            /^\d*\.?\d*$/.test(value)
+          ) {
+            setAcceptedScore(value);
+          }
+        }}
+        inputProps={{
+          inputMode: 'decimal',
+        }}
+        disabled={!isAdmin}
         fullWidth
-      >
-        <DialogTitle>
-          Accepted Score Comments
-        </DialogTitle>
+      />
 
-        <DialogContent>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label="Comments"
-            value={acceptedScoreComment}
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={scoreReviewed}
             onChange={(e) =>
-              setAcceptedScoreComment(e.target.value)
+              setScoreReviewed(e.target.checked)
             }
-            placeholder="Enter comments for accepted score"
-            margin="normal"
+            disabled={!isAdmin}
           />
-        </DialogContent>
+        }
+        label="Score Reviewed"
+      />
 
-        <DialogActions>
-          <Button
-            onClick={() => setCommentDialogOpen(false)}
-            color="inherit"
-          >
-            Cancel
-          </Button>
+      <TextField
+        fullWidth
+        multiline
+        rows={4}
+        label="Comments"
+        value={acceptedScoreComment}
+        onChange={(e) =>
+          setAcceptedScoreComment(
+            e.target.value
+          )
+        }
+        placeholder="Enter review comments"
+        disabled={!isAdmin}
+      />
+    </Box>
+  </DialogContent>
 
-          <Button
-            variant="contained"
-            onClick={() => setCommentDialogOpen(false)}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+  <DialogActions>
+    <Button
+      onClick={() => setCommentDialogOpen(false)}
+      color="inherit"
+    >
+      Cancel
+    </Button>
+
+    <Button
+  variant="contained"
+  onClick={async () => {
+    try {
+      if (onSaveReviewInfo) {
+        await onSaveReviewInfo({
+          acceptedScore:
+            acceptedScore === ''
+              ? undefined
+              : Number(acceptedScore),
+
+          scoreReviewed,
+          acceptedScoreComment,
+        });
+      }
+
+      setCommentDialogOpen(false);
+
+      showSnackbar(
+        'Review score saved successfully!',
+        'success'
+      );
+    } catch (error) {
+      console.error(error);
+
+      showSnackbar(
+        'Error saving review score.',
+        'error'
+      );
+    }
+  }}
+>
+  Save
+</Button>
+  </DialogActions>
+</Dialog>
       {/* Snackbar for notifications */}
       <CommonSnackbar
         open={snackbar.open}

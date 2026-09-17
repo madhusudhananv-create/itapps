@@ -12,10 +12,11 @@ import {
 import type { ActivityData } from '../types/activityTypes';
 import { useActivitySubmission } from '../hooks/useActivitySubmission';
 import { useActivityState } from '../hooks/useActivityState';
+import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
 import { CommonSnackbar } from '@shared/components/CommonSnackbar';
 import { useFeatureFlags } from '@shared/hooks/useFeatureFlags';
 import { Loading } from '@shared/components/Loading';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
+//import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {
   COMPONENT_NAMES,
   preloadComponents,
@@ -70,8 +71,22 @@ interface ProjectInfoFormData {
   runOpsMTTR?: string;
   licenseCount?: number;
   licenseProvider?: string;
+  presentationDone?: boolean;
+  commonAdoptionEffortsSaved?: string;
+  commonDeploymentEngineer?: string;
+  commonAdoptionWorkforceCertification?: string;
+  commonGrossMarginUplift?: string;
+  commonRevenuePerFTE?: string;
+  commonMarginDifferential?: string;
+  engineerAIAgents?: string;
+  engineerDeliveryCycleTime?: string;
+  engineerContractTestCasePassRate?: string;
+  engineerPerformanceDefectsPreRelease?: string;
+  projectFY?: string;
+  acceptedScore?: number;
+  scoreReviewed?: boolean;
+  acceptedScoreComment?: string;
 }
-
 // Global styling object
 const styles = {
   paper: {
@@ -249,6 +264,31 @@ export function Activities() {
     selectedPractice: projectInfoFormData.practice,
   });
 
+  // Fetch project info directly here (in addition to ProjectInfoSelection's own
+  // fetch) so the review-score dialog can save without threading a callback
+  // through the form-data sync effect.
+  const { projectInfo: reviewProjectInfo, saveProjectInfo: saveReviewProjectInfo } =
+    useProjectPracticeInfo({
+      projectId: projectInfoFormData.projectId,
+      practice: projectInfoFormData.practice,
+    });
+
+  const handleSaveReviewInfo = useCallback(
+    async (reviewInfo: {
+      acceptedScore?: number;
+      scoreReviewed?: boolean;
+      acceptedScoreComment?: string;
+    }) => {
+      await saveReviewProjectInfo({
+        peopleUsingAI: reviewProjectInfo?.peopleUsingAI ?? 0,
+        isProjectNA: reviewProjectInfo?.isProjectNA,
+        naComments: reviewProjectInfo?.naComments,
+        ...reviewInfo,
+      });
+    },
+    [saveReviewProjectInfo, reviewProjectInfo]
+  );
+
   const handleActivitiesSubmit = useCallback(
     async (activities: ActivityData[]) => {
       try {
@@ -292,10 +332,37 @@ export function Activities() {
           newData.account = '';
           newData.accountManager = '';
           newData.project = '';
+          newData.projectId = '';
           newData.manager = '';
           newData.practice = '';
           newData.headcount = undefined;
           newData.peopleUsingAI = undefined;
+          newData.isProjectNA = false;
+          newData.naComments = '';
+          newData.licenseCount = undefined;
+          newData.licenseProvider = '';
+          newData.commonAdoptionEffortsSaved = '';
+          newData.runOpsAutoResolved = '';
+          newData.runOpsMTTRReduction = '';
+          newData.runOpsAIAgents = '';
+          newData.runOpsAutomatedWorkflows = '';
+          newData.runOpsMTTD = '';
+          newData.runOpsMTTR = '';
+          newData.presentationDone = false;
+          newData.commonDeploymentEngineer = '';
+          newData.commonAdoptionWorkforceCertification = '';
+          newData.commonGrossMarginUplift = '';
+          newData.commonRevenuePerFTE = '';
+          newData.commonMarginDifferential = '';
+          newData.engineerAIAgents = '';
+          newData.engineerDeliveryCycleTime = '';
+          newData.engineerContractTestCasePassRate = '';
+          newData.engineerPerformanceDefectsPreRelease = '';
+          newData.projectFY = '';
+          newData.acceptedScore = undefined;
+          newData.scoreReviewed = false;
+          newData.acceptedScoreComment = '';
+
           // Auto-populate business head when business unit is selected
           if (value) {
             const buHead = getBUHeadForBusinessUnit(value as string);
@@ -304,10 +371,36 @@ export function Activities() {
         } else if (field === 'account') {
           newData.accountManager = '';
           newData.project = '';
+          newData.projectId = '';
           newData.manager = '';
           newData.practice = '';
           newData.headcount = undefined;
           newData.peopleUsingAI = undefined;
+          newData.isProjectNA = false;
+          newData.naComments = '';
+          newData.licenseCount = undefined;
+          newData.licenseProvider = '';
+          newData.commonAdoptionEffortsSaved = '';
+          newData.runOpsAutoResolved = '';
+          newData.runOpsMTTRReduction = '';
+          newData.runOpsAIAgents = '';
+          newData.runOpsAutomatedWorkflows = '';
+          newData.runOpsMTTD = '';
+          newData.runOpsMTTR = '';
+          newData.presentationDone = false;
+          newData.commonDeploymentEngineer = '';
+          newData.commonAdoptionWorkforceCertification = '';
+          newData.commonGrossMarginUplift = '';
+          newData.commonRevenuePerFTE = '';
+          newData.commonMarginDifferential = '';
+          newData.engineerAIAgents = '';
+          newData.engineerDeliveryCycleTime = '';
+          newData.engineerContractTestCasePassRate = '';
+          newData.engineerPerformanceDefectsPreRelease = '';
+          newData.projectFY = '';
+          newData.acceptedScore = undefined;
+          newData.scoreReviewed = false;
+          newData.acceptedScoreComment = '';
           // Auto-populate account manager when account is selected
           if (value) {
             const csm = getCSMForAccount(newData.businessUnit, value as string);
@@ -318,7 +411,7 @@ export function Activities() {
           const manager = getManagerForProject(
             newData.businessUnit,
             newData.account,
-            newData.project
+            newData.project,
           );
           newData.manager = manager?.name ?? '';
 
@@ -343,6 +436,31 @@ export function Activities() {
           newData.peopleUsingAI = undefined;
           newData.isProjectNA = false;
           newData.naComments = '';
+          newData.isProjectNA = false;
+          newData.naComments = '';
+          newData.licenseCount = undefined; 
+          newData.licenseProvider = '';
+          newData.commonAdoptionEffortsSaved = '';
+          newData.runOpsAutoResolved = '';
+          newData.runOpsMTTRReduction = '';
+          newData.runOpsAIAgents = '';
+          newData.runOpsAutomatedWorkflows = '';
+          newData.runOpsMTTD = '';
+          newData.runOpsMTTR = '';
+          newData.presentationDone = false;
+          newData.commonDeploymentEngineer = '';
+          newData.commonAdoptionWorkforceCertification = '';
+          newData.commonGrossMarginUplift = '';
+          newData.commonRevenuePerFTE = '';
+          newData.commonMarginDifferential = '';
+          newData.engineerAIAgents = '';
+          newData.engineerDeliveryCycleTime = '';
+          newData.engineerContractTestCasePassRate = '';
+          newData.engineerPerformanceDefectsPreRelease = '';
+          newData.projectFY = '';
+          newData.acceptedScore = undefined;
+          newData.scoreReviewed = false;
+          newData.acceptedScoreComment = '';
         }
 
         return newData;
@@ -399,6 +517,7 @@ export function Activities() {
       onSubmit: handleActivitiesSubmit,
       onSaveDraft: handleActivitiesSaveDraft,
       projectInfo: projectInfoFormData,
+      onSaveReviewInfo: handleSaveReviewInfo,
     }),
     [
       activities,
@@ -411,6 +530,7 @@ export function Activities() {
       handleActivitiesSubmit,
       handleActivitiesSaveDraft,
       projectInfoFormData,
+      handleSaveReviewInfo,
     ]
   );
 
@@ -469,14 +589,14 @@ export function Activities() {
             Manage Activities
           </Typography>
 
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<UploadFileIcon />}
             disabled={!projectInfoFormData.practice || !!projectInfoFormData.isProjectNA}
             onClick={() => setImportDialogOpen(true)}
           >
             Import Excel
-          </Button>
+          </Button> */}
         </Box>
         <Typography variant="body1" sx={styles.headerDescription}>
           Track and manage AI maturity activities for your projects
@@ -517,7 +637,8 @@ export function Activities() {
           {activeTab === 0 && (
             <Box sx={styles.tabPanel}>
               <Suspense fallback={<Loading text="Loading activities..." />}>
-                <ManageActivities {...manageActivitiesProps} />
+                <ManageActivities {...manageActivitiesProps} 
+                />
               </Suspense>
             </Box>
           )}
@@ -619,7 +740,7 @@ if (invalidRows.length > 0) {
               .map((x) => x.trim())
           : [],
 
-        clientApproved: String(row['Client Approved'] || ''),
+        //clientApproved: String(row['Client Approved'] || ''),
 
         acceleratorsUsed: row['Accelerators Used']
           ? String(row['Accelerators Used'])
@@ -643,7 +764,7 @@ if (invalidRows.length > 0) {
 
         comments: String(row['Comments'] || ''),
 
-        aiToolDetails: {},
+        //aiToolDetails: {},
       });
     });
   }}

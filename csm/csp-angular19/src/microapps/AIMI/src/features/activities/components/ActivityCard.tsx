@@ -14,7 +14,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
-  ContentCopy as ContentCopyIcon,
+  //ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
 import {
   AI_ADOPTION_SCORES,
@@ -29,6 +29,7 @@ import {
   chipStyles,
 } from '../styles/activityCardStyles';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface ActivityCardProps {
   activity: ActivityData;
@@ -55,7 +56,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   activity,
   onEdit,
   onDelete,
-  onCopy,
+  //onCopy,
   actionsDisabled = false,
   selectable = false,
   selected = false,
@@ -65,6 +66,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 }) => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const featureFlags = useFeatureFlags('activities');
+    const { isAdmin } = useAuth();
+  
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {
@@ -251,7 +254,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 </IconButton>
               </Tooltip>
             )}
-            {onCopy && (
+            {/* {onCopy && (
               <Tooltip title="Copy Activity">
                 <IconButton
                   size="small"
@@ -263,18 +266,24 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                   <ContentCopyIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-            )}
+            )} */}
             {onDelete && featureFlags.showDeleteButton && (
-              <Tooltip title="Delete Activity">
-                <IconButton
-                  size="small"
-                  onClick={() => onDelete(activity)}
-                  disabled={actionsDisabled}
-                  sx={activityCardStyles.deleteIconButton}
-                  aria-label="Delete Activity"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+              <Tooltip title={
+                  !isAdmin
+                    ? 'Only admin can delete the activity'
+                    : 'Delete Activity'
+                }>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onDelete(activity)}
+                    disabled={actionsDisabled || !isAdmin}
+                    sx={activityCardStyles.deleteIconButton}
+                    aria-label="Delete Activity"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </span>
               </Tooltip>
             )}
           </Box>

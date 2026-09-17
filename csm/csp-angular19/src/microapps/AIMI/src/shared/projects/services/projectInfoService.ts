@@ -17,17 +17,50 @@ const PROJECT_INFO_COLLECTION = 'projectInfo';
 export interface ProjectInfo {
   projectId: string;
   peopleUsingAI: number;
+
   isProjectNA?: boolean;
   naComments?: string;
+
+  licenseCount?: number;
+  licenseProvider?: string;
+
+  runOpsAutoResolved?: string;
+  runOpsMTTRReduction?: string;
+  runOpsAIAgents?: string;
+  runOpsAutomatedWorkflows?: string;
+  runOpsMTTD?: string;
+  runOpsMTTR?: string;
+
+  engineerAIAgents?: string;
+  engineerDeliveryCycleTime?: string;
+  engineerContractTestCasePassRate?: string;
+  engineerPerformanceDefectsPreRelease?: string;
+
+  commonAdoptionWorkforceCertification?: string;
+  commonAdoptionEffortsSaved?: string;
+  commonDeploymentEngineer?: string;
+  commonGrossMarginUplift?: string;
+  commonRevenuePerFTE?: string;
+  commonMarginDifferential?: string;
+
+  presentationDone?: boolean;
+  projectFY?: string;
+  acceptedScore?: number;
+scoreReviewed?: boolean;
+acceptedScoreComment?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
+
 
 // Interface for Firestore documents
 interface FirestoreProjectInfo
   extends Omit<ProjectInfo, 'createdAt' | 'updatedAt'> {
   createdAt: unknown; // Firestore timestamp
   updatedAt: unknown; // Firestore timestamp
+  acceptedScore?: number;
+  scoreReviewed?: boolean;
+  acceptedScoreComment?: string;
 }
 
 /**
@@ -38,38 +71,143 @@ const convertFirestoreToProjectInfo = (
 ): ProjectInfo => {
   const data = doc.data() as FirestoreProjectInfo;
   return {
-    projectId: data.projectId,
-    peopleUsingAI: data.peopleUsingAI,
-    isProjectNA: data.isProjectNA ?? false,
-    naComments: data.naComments ?? '',
-    createdAt:
-      data.createdAt &&
-      typeof data.createdAt === 'object' &&
-      'toDate' in data.createdAt
-        ? (data.createdAt as { toDate(): Date }).toDate()
-        : new Date(),
-    updatedAt:
-      data.updatedAt &&
-      typeof data.updatedAt === 'object' &&
-      'toDate' in data.updatedAt
-        ? (data.updatedAt as { toDate(): Date }).toDate()
-        : new Date(),
-  };
+ 
+  projectId: data.projectId,
+  peopleUsingAI: data.peopleUsingAI,
+
+  isProjectNA: data.isProjectNA ?? false,
+  naComments: data.naComments ?? '',
+
+  licenseCount: data.licenseCount,
+  licenseProvider: data.licenseProvider,
+
+  runOpsAutoResolved: data.runOpsAutoResolved,
+  runOpsMTTRReduction: data.runOpsMTTRReduction,
+  runOpsAIAgents: data.runOpsAIAgents,
+  runOpsAutomatedWorkflows: data.runOpsAutomatedWorkflows,
+  runOpsMTTD: data.runOpsMTTD,
+  runOpsMTTR: data.runOpsMTTR,
+
+  engineerAIAgents: data.engineerAIAgents,
+  engineerDeliveryCycleTime:
+    data.engineerDeliveryCycleTime,
+  engineerContractTestCasePassRate:
+    data.engineerContractTestCasePassRate,
+  engineerPerformanceDefectsPreRelease:
+    data.engineerPerformanceDefectsPreRelease,
+
+  commonAdoptionWorkforceCertification:
+    data.commonAdoptionWorkforceCertification,
+  commonAdoptionEffortsSaved:
+    data.commonAdoptionEffortsSaved,
+
+  commonDeploymentEngineer:
+    data.commonDeploymentEngineer,
+
+  commonGrossMarginUplift:
+    data.commonGrossMarginUplift,
+
+  commonRevenuePerFTE:
+    data.commonRevenuePerFTE,
+
+  commonMarginDifferential:
+    data.commonMarginDifferential,
+
+  presentationDone:
+    data.presentationDone ?? false,
+
+  projectFY:
+    data.projectFY ?? '',
+    acceptedScore: data.acceptedScore,
+    scoreReviewed: data.scoreReviewed ?? false,
+    acceptedScoreComment: data.acceptedScoreComment ?? '',
+
+  createdAt:
+    data.createdAt &&
+    typeof data.createdAt === 'object' &&
+    'toDate' in data.createdAt
+      ? (data.createdAt as { toDate(): Date }).toDate()
+      : new Date(),
+
+  updatedAt:
+    data.updatedAt &&
+    typeof data.updatedAt === 'object' &&
+    'toDate' in data.updatedAt
+      ? (data.updatedAt as { toDate(): Date }).toDate()
+      : new Date(),
+};
+    
 };
 
 /**
  * Convert ProjectInfo to Firestore document
  */
+/**
+ * Convert ProjectInfo to Firestore document
+ */
 const convertProjectInfoToFirestore = (
   projectInfo: Omit<ProjectInfo, 'createdAt' | 'updatedAt'>
-): Omit<FirestoreProjectInfo, 'createdAt' | 'updatedAt'> => {
-  return {
+): Record<string, unknown> => {
+  const data: Record<string, unknown> = {
     projectId: projectInfo.projectId,
     peopleUsingAI: projectInfo.peopleUsingAI,
+
     isProjectNA: projectInfo.isProjectNA ?? false,
     naComments: projectInfo.naComments ?? '',
+
+    licenseCount: projectInfo.licenseCount,
+    licenseProvider: projectInfo.licenseProvider,
+
+    runOpsAutoResolved: projectInfo.runOpsAutoResolved,
+    runOpsMTTRReduction: projectInfo.runOpsMTTRReduction,
+    runOpsAIAgents: projectInfo.runOpsAIAgents,
+    runOpsAutomatedWorkflows:
+      projectInfo.runOpsAutomatedWorkflows,
+    runOpsMTTD: projectInfo.runOpsMTTD,
+    runOpsMTTR: projectInfo.runOpsMTTR,
+
+    engineerAIAgents: projectInfo.engineerAIAgents,
+    engineerDeliveryCycleTime:
+      projectInfo.engineerDeliveryCycleTime,
+    engineerContractTestCasePassRate:
+      projectInfo.engineerContractTestCasePassRate,
+    engineerPerformanceDefectsPreRelease:
+      projectInfo.engineerPerformanceDefectsPreRelease,
+
+    commonAdoptionWorkforceCertification:
+      projectInfo.commonAdoptionWorkforceCertification,
+    commonAdoptionEffortsSaved:
+      projectInfo.commonAdoptionEffortsSaved,
+    commonDeploymentEngineer:
+      projectInfo.commonDeploymentEngineer,
+    commonGrossMarginUplift:
+      projectInfo.commonGrossMarginUplift,
+    commonRevenuePerFTE:
+      projectInfo.commonRevenuePerFTE,
+    commonMarginDifferential:
+      projectInfo.commonMarginDifferential,
+
+    presentationDone:
+      projectInfo.presentationDone,
+
+    projectFY:
+      projectInfo.projectFY,
+      acceptedScore: projectInfo.acceptedScore,
+      scoreReviewed: projectInfo.scoreReviewed,
+      acceptedScoreComment: projectInfo.acceptedScoreComment,
   };
+
+  // Remove undefined values because Firestore doesn't support them
+  Object.keys(data).forEach((key) => {
+    if (data[key] === undefined) {
+      delete data[key];
+    }
+  });
+
+  return data;
 };
+
+
 
 /**
  * Save or update project info (upsert operation)
@@ -89,11 +227,12 @@ const saveOrUpdateProjectInfo = async (
     if (querySnapshot.empty) {
       // Create new document
       const infoData = convertProjectInfoToFirestore(projectInfo);
-      await addDoc(collection(db, PROJECT_INFO_COLLECTION), {
-        ...infoData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      
+await addDoc(collection(db, PROJECT_INFO_COLLECTION), {
+  ...infoData,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
 
       return {
         ...projectInfo,
@@ -103,12 +242,16 @@ const saveOrUpdateProjectInfo = async (
     } else {
       // Update existing document
       const docRef = querySnapshot.docs[0].ref;
-      await updateDoc(docRef, {
-        peopleUsingAI: projectInfo.peopleUsingAI,
-        isProjectNA: projectInfo.isProjectNA ?? false,
-        naComments: projectInfo.naComments ?? '',
-        updatedAt: serverTimestamp(),
-      });
+      const projectData =
+  convertProjectInfoToFirestore(projectInfo);
+console.log(
+  'Saving Payload',
+  convertProjectInfoToFirestore(projectInfo)
+);
+await updateDoc(docRef, {
+  ...projectData,
+  updatedAt: serverTimestamp(),
+});
 
       return {
         ...projectInfo,
@@ -140,8 +283,16 @@ const getProjectInfo = async (projectId: string): Promise<ProjectInfo> => {
       return {
         projectId,
         peopleUsingAI: 0,
+
         isProjectNA: false,
         naComments: '',
+
+        licenseCount: 0,
+        licenseProvider: '',
+
+        presentationDone: false,
+        projectFY: '',
+
         createdAt: new Date(),
         updatedAt: new Date(),
       };

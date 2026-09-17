@@ -85,7 +85,7 @@ export const validateOptionalFields = (formData: ActivityFormData): boolean => {
     formData.hoursSaved > 0 &&
     formData.revenueGenerated &&
     formData.benefitTo &&
-    formData.clientApproved &&
+    //formData.clientApproved &&
     formData.qualitativeBenefits.length > 0 &&
     formData.comments.trim()
   );
@@ -110,12 +110,12 @@ export const isFormValid = (formData: ActivityFormData): boolean => {
   }
 
   // When AI Tools Used is selected, its details and Client Approved become mandatory
-  if (validateAITools(formData.aiToolUsed)) {
+  /* if (validateAITools(formData.aiToolUsed)) {
     return (
-      !!formData.clientApproved &&
-      validateAIToolDetails(formData.aiToolUsed, formData.aiToolDetails)
+      //!!formData.clientApproved &&
+      validateAIToolDetails(formData.aiToolUsed)
     );
-  }
+  } */
 
   return true;
 };
@@ -134,7 +134,7 @@ export const hasFormChanges = (
     formData.applicability !== originalFormData.applicability ||
     formData.aiAdoptionScore !== originalFormData.aiAdoptionScore ||
     formData.aiToolUsed !== originalFormData.aiToolUsed ||
-    formData.clientApproved !== originalFormData.clientApproved ||
+    //formData.clientApproved !== originalFormData.clientApproved ||
     formData.acceleratorsUsed !== originalFormData.acceleratorsUsed ||
     formData.workDoneByAI !== originalFormData.workDoneByAI ||
     formData.hoursSaved !== originalFormData.hoursSaved ||
