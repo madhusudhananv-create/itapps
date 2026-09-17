@@ -26,6 +26,7 @@ import {
   Download as DownloadIcon,
   Warning as WarningIcon,
   Delete as DeleteIcon,
+  Reviews,
 } from '@mui/icons-material';
 import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
 import { AddActivityModal } from './AddActivityModal';
@@ -45,7 +46,7 @@ import {
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
 import { useAuth } from '@auth/hooks/useAuth';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
-import CommentIcon from '@mui/icons-material/Comment';
+import ScoreIcon from '@mui/icons-material/Score';
 
 interface ManageActivitiesProps {
   selectedPractice: string;
@@ -146,9 +147,9 @@ useEffect(() => {
   }
 }, [projectInfo]);
 const hasAcceptedScoreChanges =
-  acceptedScore !== '' ||
-  scoreReviewed ||
-  acceptedScoreComment.trim() !== '';
+  acceptedScore !== String(projectInfo?.acceptedScore ?? '') ||
+  scoreReviewed !== (projectInfo?.scoreReviewed ?? false) ||
+  acceptedScoreComment !== (projectInfo?.acceptedScoreComment ?? '');
 
   // Ids of activities auto-saved as drafts (on add/edit/copy) that haven't been
   // explicitly confirmed via the "Save as Draft" button yet - these still show as Unsaved
@@ -156,7 +157,7 @@ const hasAcceptedScoreChanges =
     new Set()
   );
 
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const featureFlags = useFeatureFlags('activities');
   const canBulkDelete = isAdmin && featureFlags.showDeleteButton;
 
@@ -851,33 +852,39 @@ const hasAcceptedScoreChanges =
                     {projectInfo.project}
                   </Typography>
                 )}
-                <Box sx={styles.scoreContainer}>
-                <Typography variant="body2" sx={styles.overallScoreLabel}>
-                  Overall Score:
-                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  <Box sx={styles.scoreContainer}>
+                    <Typography variant="body2" sx={styles.overallScoreLabel}>
+                      Overall Score:
+                    </Typography>
 
-                <Typography variant="h6" sx={styles.overallScoreValue}>
-                  {areAllActivitiesNotApplicable(activities)
-                    ? 'N/A'
-                    : calculateAverageAIAdoptionScore(activities).toFixed(2)}
-                </Typography>
-
-                {isAdmin && (
-                  <Tooltip title="Review Score">
-                    <IconButton
-                      color="primary"
-                      onClick={() => setCommentDialogOpen(true)}
-                      disabled={projectInfo?.isProjectNA}
-                    >
-                      <CommentIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Box>
+                    <Typography variant="h6" sx={styles.overallScoreValue}>
+                      {areAllActivitiesNotApplicable(activities)
+                        ? 'N/A'
+                        : calculateAverageAIAdoptionScore(activities).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  {isAuthenticated && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="caption" sx={styles.overallScoreLabel}>
+                        Click this icon to review the accepted score
+                      </Typography>
+                      <Tooltip title={isAdmin ? 'Review Score' : 'View Score'}>
+                        <IconButton
+                          color="primary"
+                          onClick={() => setCommentDialogOpen(true)}
+                          disabled={projectInfo?.isProjectNA}
+                        >
+                          <Reviews />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  )}
                 </Box>
               </Box>
-            )}
-          </Box>
+            </Box>
+          )}
+        </Box>
 
         {!selectedPractice && (
           <Typography
@@ -1244,43 +1251,45 @@ const hasAcceptedScoreChanges =
       onClick={() => setCommentDialogOpen(false)}
       color="inherit"
     >
-      Cancel
+      {isAdmin ? 'Cancel' : 'Close'}
     </Button>
 
-    <Button
-  variant="contained"
-  onClick={async () => {
-    try {
-      if (onSaveReviewInfo) {
-        await onSaveReviewInfo({
-          acceptedScore:
-            acceptedScore === ''
-              ? undefined
-              : Number(acceptedScore),
+    {isAdmin && (
+      <Button
+        variant="contained"
+        onClick={async () => {
+          try {
+            if (onSaveReviewInfo) {
+              await onSaveReviewInfo({
+                acceptedScore:
+                  acceptedScore === ''
+                    ? undefined
+                    : Number(acceptedScore),
 
-          scoreReviewed,
-          acceptedScoreComment,
-        });
-      }
+                scoreReviewed,
+                acceptedScoreComment,
+              });
+            }
 
-      setCommentDialogOpen(false);
+            setCommentDialogOpen(false);
 
-      showSnackbar(
-        'Review score saved successfully!',
-        'success'
-      );
-    } catch (error) {
-      console.error(error);
+            showSnackbar(
+              'Review score saved successfully!',
+              'success'
+            );
+          } catch (error) {
+            console.error(error);
 
-      showSnackbar(
-        'Error saving review score.',
-        'error'
-      );
-    }
-  }}
->
-  Save
-</Button>
+            showSnackbar(
+              'Error saving review score.',
+              'error'
+            );
+          }
+        }}
+      >
+        Save
+      </Button>
+    )}
   </DialogActions>
 </Dialog>
       {/* Snackbar for notifications */}
