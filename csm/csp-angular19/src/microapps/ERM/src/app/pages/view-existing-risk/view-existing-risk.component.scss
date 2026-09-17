@@ -1,0 +1,67 @@
+.tracker-filter-th {
+  vertical-align: top;
+
+  ::ng-deep .p-datatable-inline-filter {
+    width: 100%;
+  }
+}
+
+.tracker-hscroll-top {
+  scrollbar-gutter: stable;
+}
+
+:host ::ng-deep .tracker-edit-btn.p-button {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.tracker-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.9rem;
+  max-height: min(62vh, 38rem);
+  overflow: auto;
+  padding-right: 0.35rem;
+}
+
+.tracker-edit-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tracker-edit-field span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(71 85 105);
+}
+
+.tracker-edit-input {
+  width: 100%;
+  min-height: 4.75rem;
+  resize: vertical;
+  border: 1px solid rgb(203 213 225 / 0.9);
+  border-radius: 0.65rem;
+  background: rgb(255 255 255 / 0.96);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgb(15 23 42);
+  outline: none;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.tracker-edit-input:focus {
+  border-color: rgb(14 165 233 / 0.9);
+  box-shadow:
+    0 0 0 3px rgb(186 230 253 / 0.48),
+    0 1px 0 rgb(255 255 255 / 0.9) inset;
+}

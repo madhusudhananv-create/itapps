@@ -1,0 +1,145 @@
+<div
+  class="flux-login-root relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-sky-50/80 px-4 py-12"
+>
+  <div class="flux-login-mesh pointer-events-none absolute inset-0" aria-hidden="true"></div>
+  <div
+    class="pointer-events-none absolute inset-0 opacity-[0.55]"
+    aria-hidden="true"
+    style="
+      background-image: radial-gradient(
+          circle at 20% 20%,
+          rgba(56, 189, 248, 0.26),
+          transparent 45%
+        ),
+        radial-gradient(
+          circle at 80% 10%,
+          rgba(139, 92, 246, 0.16),
+          transparent 40%
+        ),
+        radial-gradient(
+          circle at 50% 80%,
+          rgba(14, 165, 233, 0.12),
+          transparent 50%
+        );
+    "
+  ></div>
+  <div class="flux-dot-grid absolute inset-0 opacity-40" aria-hidden="true"></div>
+
+  <div
+    class="erm-card relative z-10 w-full max-w-md border-slate-200/80 bg-white/75 p-8 backdrop-blur-2xl"
+  >
+    <div class="mb-8 text-center">
+      <img
+        src="assets/branding/neurealm-logo.png"
+        alt="neurealm"
+        width="240"
+        height="56"
+        class="mx-auto mb-5 h-12 w-auto max-w-[min(100%,16rem)] object-contain md:h-14 md:max-w-[18rem]"
+      />
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-900">
+        Welcome
+      </h1>
+      <p class="erm-muted mt-2 text-sm">
+        Sign in to access Neurealm's ERP workspace.
+      </p>
+    </div>
+
+    <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="flex flex-col gap-2">
+        <label for="userId" class="text-sm font-medium text-slate-700"
+          >User ID <span class="text-red-500">*</span></label
+        >
+        <input
+          id="userId"
+          type="text"
+          pInputText
+          formControlName="userId"
+          class="w-full"
+          autocomplete="username"
+          placeholder="Corporate user ID"
+        />
+        @if (form.controls.userId.invalid && form.controls.userId.touched) {
+          <small class="text-red-500">User ID is required.</small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="password" class="text-sm font-medium text-slate-700"
+          >Password <span class="text-red-500">*</span></label
+        >
+        <p-password
+          id="password"
+          formControlName="password"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          placeholder="Enter password"
+        />
+        @if (form.controls.password.invalid && form.controls.password.touched) {
+          <small class="text-red-500">Password is required.</small>
+        }
+      </div>
+
+      @if (loginError) {
+        <p class="text-sm text-red-600">Unable to sign in. Check your credentials.</p>
+      }
+
+      <p-button
+        type="submit"
+        label="Login"
+        icon="pi pi-sign-in"
+        styleClass="w-full"
+      />
+
+      <div class="flex flex-wrap justify-center gap-4 text-sm">
+        <button
+          type="button"
+          class="text-sky-600 underline-offset-4 hover:text-sky-800 hover:underline"
+          (click)="showForgot = true"
+        >
+          Forgot Password
+        </button>
+        <button
+          type="button"
+          class="text-sky-600 underline-offset-4 hover:text-sky-800 hover:underline"
+          (click)="showReset = true"
+        >
+          Reset Password
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<p-dialog
+  header="Forgot password"
+  [(visible)]="showForgot"
+  [modal]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false"
+>
+  <p class="text-sm text-slate-600">
+    Contact your identity administrator or use your corporate self-service portal.
+    For demo environments, any non-empty User ID and Password will authenticate.
+  </p>
+  <div class="mt-4 flex justify-end">
+    <p-button label="Close" (onClick)="showForgot = false" />
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Reset password"
+  [(visible)]="showReset"
+  [modal]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false"
+>
+  <p class="text-sm text-slate-600">
+    Password resets are routed through your organization’s SSO policy. Use the
+    “Forgot Password” flow on your IdP landing page, then return here to sign in.
+  </p>
+  <div class="mt-4 flex justify-end">
+    <p-button label="Close" (onClick)="showReset = false" />
+  </div>
+</p-dialog>
