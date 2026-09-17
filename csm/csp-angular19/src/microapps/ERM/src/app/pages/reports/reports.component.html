@@ -1,0 +1,657 @@
+<div class="space-y-6">
+  <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">Download reports</h1>
+      <p class="erm-muted mt-1 max-w-2xl text-sm">
+        Review the full risk register, narrow by identification date range, and export to
+        Excel or PDF.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <p-button
+        label="Export Excel"
+        icon="pi pi-file-excel"
+        severity="success"
+        (onClick)="exportExcel()"
+      />
+      <p-button
+        label="Export PDF"
+        icon="pi pi-file-pdf"
+        severity="danger"
+        [outlined]="true"
+        (onClick)="exportPdf()"
+      />
+    </div>
+  </div>
+
+  <div
+    class="erm-card flex flex-col gap-3 p-4 md:flex-row md:flex-wrap md:items-end md:gap-x-4 md:gap-y-3"
+  >
+    <div class="flex min-w-0 flex-1 flex-col gap-2 md:min-w-[14rem]">
+      <label class="text-xs font-medium text-slate-400">Identification date range</label>
+      <p-datepicker
+        [ngModel]="range()"
+        (ngModelChange)="range.set($event)"
+        selectionMode="range"
+        [showIcon]="true"
+        dateFormat="yy-mm-dd"
+        [appendTo]="'body'"
+        placeholder="Start — End"
+        styleClass="w-full max-w-md"
+      />
+    </div>
+    <div class="flex w-full min-w-0 flex-col gap-2 sm:w-auto md:w-56">
+      <label class="text-xs font-medium text-slate-600">Data scope</label>
+      <p-select
+        [options]="headerModeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="headerMode()"
+        (ngModelChange)="onHeaderModeChange($event)"
+        styleClass="w-full"
+        [appendTo]="'body'"
+      />
+    </div>
+    @if (headerMode() === 'business-unit') {
+      <div class="flex w-full min-w-0 flex-col gap-2 sm:w-auto md:w-56">
+        <label class="text-xs font-medium text-slate-600">Business unit</label>
+        <p-select
+          [options]="buOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="headerBu()"
+          (ngModelChange)="onHeaderBuChange($event)"
+          styleClass="w-full"
+          [appendTo]="'body'"
+        />
+      </div>
+    }
+    <div class="flex items-end pb-0.5">
+      <p-button label="Clear range" severity="secondary" [text]="true" (onClick)="clearRange()" />
+    </div>
+  </div>
+
+  <div class="erm-card overflow-hidden p-2 md:p-4">
+    <div
+      #topScroll
+      class="tracker-hscroll-top mb-2 min-h-[18px] overflow-x-auto overflow-y-hidden rounded-md border border-slate-200/80 bg-slate-50/60"
+      (scroll)="onTopScroll()"
+      aria-label="Horizontal scroll (synced with table)"
+    >
+      <div class="h-4 shrink-0" [style.width.px]="scrollContentWidth()"></div>
+    </div>
+
+    <div class="min-w-0">
+      <p-table
+      #registerTable
+      [value]="reportTableRows()"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      styleClass="p-datatable-sm"
+      [tableStyle]="{ 'min-width': '96rem' }"
+      [filterDelay]="300"
+    >
+      <ng-template pTemplate="caption">
+        <div class="flex flex-wrap items-center justify-between gap-2 py-2">
+          <span class="text-sm text-slate-400">{{ registerRowCount() }} risk(s) in view</span>
+          <span class="text-xs text-slate-500">
+            Each column filter lists the distinct values in the current view; pick one to narrow results. Scroll
+            horizontally above or below the grid.
+          </span>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>ID</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="id" />
+                <p-columnFilter
+                  field="id"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().id"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="title" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Title</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="title" />
+                <p-columnFilter
+                  field="title"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().title"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="category" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Category</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="category" />
+                <p-columnFilter
+                  field="category"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().category"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="businessUnit" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>BU</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="businessUnit" />
+                <p-columnFilter
+                  field="businessUnit"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().businessUnit"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="account" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Account</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="account" />
+                <p-columnFilter
+                  field="account"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().account"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="status" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Register</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="status" />
+                <p-columnFilter
+                  field="status"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().status"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="riskLifecycleStatus" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Risk status</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="riskLifecycleStatus" />
+                <p-columnFilter
+                  field="riskLifecycleStatus"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().riskLifecycleStatus"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="riskStrategy" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Strategy</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="riskStrategy" />
+                <p-columnFilter
+                  field="riskStrategy"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().riskStrategy"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="targetClosureDate" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Target closure</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="targetClosureDate" />
+                <p-columnFilter
+                  field="targetClosureDate"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().targetClosureDate"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="inherentRating" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Inherent</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="inherentRating" />
+                <p-columnFilter
+                  field="inherentRating"
+                  matchMode="equals"
+                  display="menu"
+                  type="numeric"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().inherentRating"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="inherentRiskExposureUsd" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Exp $ (inh.)</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="inherentRiskExposureUsd" />
+                <p-columnFilter
+                  field="inherentUsdFilter"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().inherentUsdFilter"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="residualRating" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Residual</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="residualRating" />
+                <p-columnFilter
+                  field="residualRating"
+                  matchMode="equals"
+                  display="menu"
+                  type="numeric"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().residualRating"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="residualRiskExposureUsd" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Exp $ (res.)</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="residualRiskExposureUsd" />
+                <p-columnFilter
+                  field="residualUsdFilter"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().residualUsdFilter"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="identificationDate" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Identified</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="identificationDate" />
+                <p-columnFilter
+                  field="identificationDate"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().identificationDate"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="riskIdentifiedBy" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Risk identified by</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="riskIdentifiedBy" />
+                <p-columnFilter
+                  field="riskIdentifiedBy"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().riskIdentifiedBy"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+          <th pSortableColumn="riskApprover" class="reports-th-filter">
+            <div class="reports-th-inner">
+              <span>Risk approver</span>
+              <span class="reports-th-actions">
+                <p-sortIcon field="riskApprover" />
+                <p-columnFilter
+                  field="riskApprover"
+                  matchMode="equals"
+                  display="menu"
+                  type="text"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showMatchModes]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="reportFilterSelectOptions().riskApprover"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Any"
+                      [showClear]="true"
+                      [appendTo]="'body'"
+                      styleClass="w-full min-w-[12rem]"
+                      [ngModel]="value"
+                      (ngModelChange)="filter($event)"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </span>
+            </div>
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td class="font-mono text-xs">{{ row.id }}</td>
+          <td>{{ row.title }}</td>
+          <td>{{ row.category }}</td>
+          <td>{{ row.businessUnit }}</td>
+          <td class="font-mono text-xs">{{ row.account }}</td>
+          <td>
+            <p-tag
+              [value]="row.status"
+              [severity]="row.status === 'open' ? 'warn' : 'success'"
+            />
+          </td>
+          <td>{{ row.riskLifecycleStatus }}</td>
+          <td class="max-w-[10rem] truncate" [title]="row.riskStrategy">{{ row.riskStrategy }}</td>
+          <td class="font-mono text-xs">{{ row.targetClosureDate }}</td>
+          <td>{{ row.inherentRating }}</td>
+          <td class="font-mono text-xs">
+            {{ row.inherentRiskExposureUsd != null ? ('$' + row.inherentRiskExposureUsd) : '—' }}
+          </td>
+          <td>{{ row.residualRating }}</td>
+          <td class="font-mono text-xs">
+            {{ row.residualRiskExposureUsd != null ? ('$' + row.residualRiskExposureUsd) : '—' }}
+          </td>
+          <td>{{ row.identificationDate }}</td>
+          <td>{{ row.riskIdentifiedBy }}</td>
+          <td>{{ row.riskApprover }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="16" class="text-center text-slate-500">No risks in this range.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+  </div>
+</div>

@@ -3,7 +3,7 @@
 # Compiled output
 /dist
 /dist-test
-/dist-prod
+/dist-PROD
 /LEGACY-SOURCE
 /tmp
 /out-tsc
