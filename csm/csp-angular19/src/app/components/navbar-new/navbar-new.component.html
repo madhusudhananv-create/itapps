@@ -84,6 +84,13 @@
               </div>
               <span class="app-tile-name">AI Maturity Index</span>
             </button>
+             <button class="app-tile" *ngIf="_access.IsAllowed(830, 1, '', '')" (click)="openITOpsMaturityDashboardInNewTab()"
+              matTooltip="IT Operations Maturity Assessment" [matTooltipPosition]="'below'">
+              <div class="app-tile-icon itops-maturity-color">
+                <i class="fa fa-layer-group"></i>
+              </div>
+              <span class="app-tile-name">IT Operations Maturity</span>
+            </button>
             <!-- Add more app tiles here -->
           </div>
         </mat-menu>

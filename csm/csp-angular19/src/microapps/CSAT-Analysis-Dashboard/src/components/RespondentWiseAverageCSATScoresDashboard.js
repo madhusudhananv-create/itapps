@@ -655,8 +655,8 @@ const RespondentWiseAverageCSATScoresDashboard = ({ excelData, trendAnalysisFile
           trendCell.value = '-';
         } else {
           const diff = Math.round((row.currentAvg - row.trendAvg) * 100) / 100;
-          if (diff > 0) { trendCell.value = `(+${diff.toFixed(2)}) UP`; trendCell.font = { color: { argb: 'FF16A34A' }, bold: true }; }
-          else if (diff < 0) { trendCell.value = `(${diff.toFixed(2)}) DOWN`; trendCell.font = { color: { argb: 'FFDC2626' }, bold: true }; }
+          if (diff > 0) { trendCell.value = `(+${diff.toFixed(2)}) ↑`; trendCell.font = { color: { argb: 'FF16A34A' }, bold: true }; }
+          else if (diff < 0) { trendCell.value = `(${diff.toFixed(2)}) ↓`; trendCell.font = { color: { argb: 'FFDC2626' }, bold: true }; }
           else { trendCell.value = '(0.00)'; }
         }
         excelRow.eachCell(cell => { cell.border = thinBorder; });
@@ -671,8 +671,8 @@ const RespondentWiseAverageCSATScoresDashboard = ({ excelData, trendAnalysisFile
       grandTrendCell.alignment = { horizontal: 'center', vertical: 'middle' };
       if (grandTotal.currentAvg !== null && grandTotal.trendAvg !== null) {
         const diff = Math.round((grandTotal.currentAvg - grandTotal.trendAvg) * 100) / 100;
-        if (diff > 0) { grandTrendCell.value = `(+${diff.toFixed(2)}) UP`; grandTrendCell.font = { color: { argb: 'FF16A34A' }, bold: true }; }
-        else if (diff < 0) { grandTrendCell.value = `(${diff.toFixed(2)}) DOWN`; grandTrendCell.font = { color: { argb: 'FFDC2626' }, bold: true }; }
+        if (diff > 0) { grandTrendCell.value = `(+${diff.toFixed(2)}) ↑`; grandTrendCell.font = { color: { argb: 'FF16A34A' }, bold: true }; }
+        else if (diff < 0) { grandTrendCell.value = `(${diff.toFixed(2)}) ↓`; grandTrendCell.font = { color: { argb: 'FFDC2626' }, bold: true }; }
         else { grandTrendCell.value = '(0.00)'; }
       } else {
         grandTrendCell.value = '-';

@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { Download, TrendingUp } from 'lucide-react';
 import { useCSATContext } from '../context/CSATContext';
-import { TOP10_ACCOUNT_ORDER } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER } from '../utils/top10Accounts';
 
 // Short/nickname forms for the fixed Top 10 roster, used in the "not polled" footnote so the
 // caption stays readable instead of spelling out full legal account names.
@@ -20,7 +20,7 @@ const TOP10_ACCOUNT_SHORT_NAME = {
   'jewish board of family and childrens services jbfcs': 'JBFCS',
   'healthfirst': 'Healthfirst',
   'the northern trust company': 'Northern Trust',
-  'firstsource solutions ltd': 'Firstsource',
+  'firstsource solutions limited': 'Firstsource',
   'ooma inc.': 'Ooma',
   'arista networks india private limited': 'Arista Networks',
   'infoblox inc.': 'Infoblox'
@@ -1863,12 +1863,12 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     'AgFirst Farm Credit Bank',
     'embecta MEDICAL II LLC',
     'Avaya LLC',
-    'Northern Trust Company',
+    'The Northern Trust Company',
     'Jewish Board of Family and Childrens Services JBFCS',
     'Apollo Hospitals',
     'Aditya Birla Capital Digital Limited',
     'Healthfirst',
-    'Firstsource Solutions Ltd',
+    'FIRSTSOURCE SOLUTIONS LIMITED',
     'Ooma Inc.',
     'Palo Alto Networks',
     'Hachette Book Group',
@@ -3033,7 +3033,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
   const top10NotPolledCaption = useMemo(() => {
     if (!showTop10 || !processedData?.data) return '';
     const rows = processedData.data;
-    const notPolled = TOP10_ACCOUNT_ORDER.filter((accountName) => {
+    const notPolled = TOP10_SURVEY_ACCOUNT_ORDER.filter((accountName) => {
       const norm = accountName.toLowerCase();
       const row = rows.find((r) => {
         const rn = (r.customerName || '').toLowerCase();
