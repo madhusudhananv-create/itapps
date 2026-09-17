@@ -1,9 +1,19 @@
+export type AIToolDetails = Record<
+  string,
+  {
+    accessType: string;
+    licenseCount: number;
+    networkType: string;
+  }
+>;
+
 export interface ActivityFormData {
   sdlcPhase: string;
   activity: string;
   applicability: string;
   aiAdoptionScore: string;
   aiToolUsed: string | string[];
+  //clientApproved: string;
   acceleratorsUsed: string | string[];
   workDoneByAI: number;
   hoursSaved: number;
@@ -11,12 +21,18 @@ export interface ActivityFormData {
   benefitTo: string;
   qualitativeBenefits: string[];
   comments: string;
+  //aiToolDetails?: AIToolDetails;
 }
+
+
+// Draft entries are auto-saved so data isn't lost if the connection drops; submitted entries are final
+export type ActivityStatus = 'draft' | 'submitted';
 
 export interface ActivityData extends ActivityFormData {
   id: string;
   createdAt: Date;
   updatedAt?: Date;
+  status?: ActivityStatus;
 }
 
 export interface ProjectInfo {
@@ -241,7 +257,7 @@ export const COMMON_AI_TOOLS = [
   'Studio One',
   'Bitwig Studio',
   'Reason',
-];
+].sort((a, b) => a.localeCompare(b));
 
 export const REVENUE_GENERATED_OPTIONS = [
   { value: 'No', label: 'No' },
@@ -260,6 +276,12 @@ export const APPLICABILITY_OPTIONS = [
   { value: 'Activity NA', label: 'Activity NA' },
   { value: 'Customer NA', label: 'Customer NA' },
 ];
+
+export const CLIENT_APPROVED_OPTIONS = [
+  { value: 'Yes', label: 'Yes' },
+  { value: 'No', label: 'No' },
+];
+
 
 // Common accelerators for suggestions
 export const COMMON_ACCELERATORS = [
@@ -401,3 +423,4 @@ export const COMMON_ACCELERATORS = [
   'Bitwig Studio',
   'Reason',
 ];
+

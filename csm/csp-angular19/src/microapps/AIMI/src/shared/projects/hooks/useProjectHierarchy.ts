@@ -29,6 +29,24 @@ interface BusinessUnitInfo {
   accounts: Record<string, AccountInfo>;
 }
 
+// Canonical business unit labels used for display and dropdown filtering
+const ALLOWED_BUSINESS_UNITS = [
+  'CIT',
+  'Tech',
+  'Health care',
+  'India & GCC',
+  'AI&ML',
+  'Sead',
+];
+
+// DB values may differ in casing (e.g. 'SEAD'); map them to the canonical label
+const normalizeBusinessUnit = (raw: string): string => {
+  const match = ALLOWED_BUSINESS_UNITS.find(
+    (bu) => bu.toLowerCase() === raw.trim().toLowerCase()
+  );
+  return match ?? raw;
+};
+
 export const useProjectHierarchy = () => {
   const { data: projectData, loading, error } = useProjectData();
 
@@ -45,7 +63,7 @@ export const useProjectHierarchy = () => {
     const projectMapping = new Map<string, ProjectMapping>();
 
     projectData.forEach((project: ProjectData) => {
-      const businessUnit = project.businessUnit || 'Other';
+      const businessUnit = normalizeBusinessUnit(project.businessUnit || 'Other');
       const account = project.customerName || 'Unknown Account';
       const projectName = project.projectName || 'Unknown Project';
       const manager = project.pm || 'Unassigned';
@@ -103,11 +121,7 @@ export const useProjectHierarchy = () => {
     console.log(hierarchicalData.businessUnits);
     console.log('---------------------------------------------------');
     return Object.keys(hierarchicalData.businessUnits).filter(
-      (bu) =>
-        bu &&
-        ['CIT', 'Tech', 'Health care', 'India & GCC', 'AI&ML', 'Sead'].includes(
-          bu
-        )
+      (bu) => bu && ALLOWED_BUSINESS_UNITS.includes(bu)
     );
   }, [hierarchicalData.businessUnits, loading]);
 
@@ -223,10 +237,10 @@ export const useProjectHierarchy = () => {
     ): ProjectData | null => {
       if (!businessUnit || !account || !project || loading) return null;
 
-      // Find the original project data from the API response
+      // Find the original project data from the API response (BU casing may differ from the DB)
       const originalProjectData = projectData.find(
         (p: ProjectData) =>
-          p.businessUnit === businessUnit &&
+          normalizeBusinessUnit(p.businessUnit || '') === businessUnit &&
           p.customerName === account &&
           p.projectName === project
       );

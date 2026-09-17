@@ -22,6 +22,8 @@ interface ProjectStatisticsProps {
     currentPhase: string;
     headcount?: number;
     peopleUsingAI?: number;
+    isProjectNA?: boolean;
+    naComments?: string;
   };
   activities?: ActivityData[];
 }
@@ -116,7 +118,44 @@ export const ProjectStatistics: React.FC<ProjectStatisticsProps> = ({
     );
   }
 
-  if (!projectInfo || projectActivities.length === 0) {
+  if (!projectInfo) {
+    return (
+      <Box sx={styles.container}>
+        <Box sx={styles.header}>
+          <Typography variant="body1" sx={styles.headerDescription}>
+            Comprehensive analytics and insights for your project
+          </Typography>
+        </Box>
+        <Box sx={styles.emptyState}>
+          <Alert severity="info" sx={styles.infoAlert}>
+            No project activities found. Add activities to this project to see
+            detailed statistics.
+          </Alert>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (projectInfo.isProjectNA) {
+    return (
+      <Box sx={styles.container}>
+        <Box sx={styles.header}>
+          <Typography variant="body1" sx={styles.headerDescription}>
+            Comprehensive analytics and insights for{' '}
+            {projectInfo?.project ?? 'your project'}
+          </Typography>
+        </Box>
+        <Box sx={styles.emptyState}>
+          <Alert severity="info" sx={styles.infoAlert}>
+            This project is marked as Not Applicable. Project statistics are
+            not calculated.
+          </Alert>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (projectActivities.length === 0) {
     return (
       <Box sx={styles.container}>
         <Box sx={styles.header}>

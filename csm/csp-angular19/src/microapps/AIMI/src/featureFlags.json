@@ -16,7 +16,7 @@
     "showCSVExport": true,
     "showQualitativeBenefitsField": true,
     "showCorrelationAnalysis": false,
-    "showDeleteButton": false
+    "showDeleteButton": true
   },
   "reports": {
     "enabled": true,

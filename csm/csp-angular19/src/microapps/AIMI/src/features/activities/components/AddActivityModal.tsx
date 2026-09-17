@@ -8,6 +8,7 @@ import {
   Box,
   Typography,
   FormHelperText,
+  //Tooltip,
 } from '@mui/material';
 import type { ActivityFormData, ActivityData } from '../types/activityTypes';
 import {
@@ -15,6 +16,7 @@ import {
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
+  //CLIENT_APPROVED_OPTIONS,
   COMMON_AI_TOOLS,
   COMMON_ACCELERATORS,
 } from '../types/activityTypes';
@@ -28,6 +30,8 @@ import {
   isApplicable,
   isNoAIAdoption,
   validateAIToolsOrAccelerators,
+  //validateAITools,
+  //validateAIToolDetails,
 } from '../utils/formValidationUtils';
 import {
   SelectField,
@@ -38,6 +42,7 @@ import {
 } from './FormFieldComponents';
 import { QualitativeBenefitsField } from './QualitativeBenefitsField';
 import { modalStyles } from '../styles/formStyles';
+//import { AIToolDetailsDialog } from './AIToolDetailsDialog';
 
 interface AddActivityModalProps {
   open: boolean;
@@ -59,6 +64,8 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   existingActivities = [],
 }) => {
   const [guidelinesModalOpen, setGuidelinesModalOpen] = useState(false);
+  //const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false);
+
   const [
     applicabilityGuidelinesModalOpen,
     setApplicabilityGuidelinesModalOpen,
@@ -86,7 +93,39 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const needsAIToolsOrAccelerators = applicable && !noAIAdoption;
   const hasAIToolsOrAccelerators = validateAIToolsOrAccelerators(formData);
 
+  // When AI Tools Used is selected, its details and Client Approved become mandatory
+  /* const hasAITools = validateAITools(formData.aiToolUsed);
+  const aiToolDetailsComplete = validateAIToolDetails(
+    formData.aiToolUsed,
+    formData.aiToolDetails
+  ); */
+  //validation pop-up
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [validationMessage, setValidationMessage] = useState('');
+
   const handleSave = () => {
+    const isFullAdoption = formData.aiAdoptionScore === '4'; // Full Adoption value
+  
+
+  /* if (
+    isFullAdoption &&
+    Number(formData.workDoneByAI) <= 0
+  ) {
+    alert(
+      '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
+    );
+    return;
+  } */
+ if (
+  isFullAdoption &&
+  Number(formData.workDoneByAI) <= 0
+) {
+  setValidationMessage(
+    '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
+  );
+  setValidationDialogOpen(true);
+  return;
+}
     if (isPhaseNA || isFormValid(formData)) {
       // Ensure applicability is NA when phase is NA
       const updatedData = isPhaseNA
@@ -99,6 +138,18 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   };
 
   const handleSaveAndAddNew = () => {
+    const isFullAdoption = formData.aiAdoptionScore === '4'; // Full Adoption value
+
+  if (
+  isFullAdoption &&
+  Number(formData.workDoneByAI) <= 0
+) {
+  setValidationMessage(
+    '% Work Done by AI must be greater than 0 when AI Adoption Score is Full Adoption.'
+  );
+  setValidationDialogOpen(true);
+  return;
+}
     if (isPhaseNA || isFormValid(formData)) {
       const updatedData = isPhaseNA
         ? { ...formData, applicability: 'NA' }
@@ -242,17 +293,9 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   disabled={!applicable || noAIAdoption}
                 />
               </Box>
-            </Box>
 
-            {/* AI Tools and Accelerators - Full Width */}
-            <Box sx={{ mt: 3, mx: 2 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-                  gap: 3,
-                }}
-              >
+              {/* AI Tools Used */}
+              <Box>
                 <CommonAutocomplete
                   value={formData.aiToolUsed}
                   onChange={(value: string | string[]) =>
@@ -267,11 +310,81 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   multiple={true}
                   options={COMMON_AI_TOOLS}
                   helperText={
-                    needsAIToolsOrAccelerators && !hasAIToolsOrAccelerators
-                      ? 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom tools'
-                      : 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom tools'
+                    <Typography
+                      component="span"
+                      sx={{ fontWeight: 600 }}
+                    >
+                      If AI tool is not present in the list, add the tool and press Enter.
+                    </Typography>
                   }
                 />
+                {/* <Tooltip
+                title={
+                  Array.isArray(formData.aiToolUsed) &&
+                  formData.aiToolUsed.length > 0
+                    ? 'Configure access type and license details for selected AI tools'
+                    : 'Select one or more AI tools to configure details'
+                }
+                arrow
+              >
+                <span>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color:
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                          ? hasAITools && !aiToolDetailsComplete
+                            ? 'error.main'
+                            : 'primary.main'
+                          : 'text.disabled',
+                      cursor:
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                          ? 'pointer'
+                          : 'not-allowed',
+                      textDecoration: 'underline',
+                      fontWeight: 500,
+                    }}
+                    onClick={() => {
+                      if (
+                        Array.isArray(formData.aiToolUsed) &&
+                        formData.aiToolUsed.length > 0
+                      ) {
+                        setToolDetailsModalOpen(true);
+                      }
+                    }}
+                  >
+                    Configure AI Tool Details{hasAITools ? ' *' : ''}
+                  </Typography>
+                </span>
+              </Tooltip>
+              {hasAITools && !aiToolDetailsComplete && (
+                <FormHelperText error>
+                  Please configure AI tool details if AI tools are selected
+                </FormHelperText>
+              )} */}
+              </Box>
+              
+              
+             
+
+              {/* Client Approved */}
+              {/* <Box>
+                <SelectField
+                  label="Client Approved"
+                  value={formData.clientApproved}
+                  onChange={(value) =>
+                    handleFormChange('clientApproved', value)
+                  }
+                  options={CLIENT_APPROVED_OPTIONS}
+                  disabled={!applicable || noAIAdoption}
+                  required={needsAIToolsOrAccelerators || hasAITools}
+                />
+              </Box> */}
+
+              {/* Accelerators Used */}
+              <Box>
                 <CommonAutocomplete
                   value={formData.acceleratorsUsed}
                   onChange={(value: string | string[]) =>
@@ -286,24 +399,27 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   multiple={true}
                   options={COMMON_ACCELERATORS}
                   helperText={
-                    needsAIToolsOrAccelerators && !hasAIToolsOrAccelerators
-                      ? 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom accelerators'
-                      : 'At least one of AI Tools or Accelerators is required. Type to search or press Enter to add custom accelerators'
+                    <Typography
+                      component="span"
+                      sx={{ fontWeight: 600 }}
+                    >
+                      If accelerator is not present in the list, add the accelerator and press Enter.
+                    </Typography>
                   }
+                />
+              </Box>
+
+              {/* Qualitative Benefits */}
+              <Box>
+                <QualitativeBenefitsField
+                  value={formData.qualitativeBenefits}
+                  onChange={handleQualitativeBenefitsChange}
+                  disabled={!applicable || noAIAdoption}
                 />
               </Box>
             </Box>
 
-            {/* Qualitative Benefits */}
-            <Box sx={modalStyles.fullWidthSection}>
-              <QualitativeBenefitsField
-                value={formData.qualitativeBenefits}
-                onChange={handleQualitativeBenefitsChange}
-                disabled={!applicable || noAIAdoption}
-              />
-            </Box>
-
-            {/* Comments */}
+            {/* Comments - Full Width */}
             <Box sx={modalStyles.fullWidthSection}>
               <TextAreaField
                 label="Comments"
@@ -357,6 +473,44 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         open={applicabilityGuidelinesModalOpen}
         onClose={() => setApplicabilityGuidelinesModalOpen(false)}
       />
+      {/* <AIToolDetailsDialog
+        open={toolDetailsOpen}
+        onClose={() => setToolDetailsModalOpen(false)}
+        aiTools={
+          Array.isArray(formData.aiToolUsed)
+            ? formData.aiToolUsed
+            : []
+        }
+        aiToolDetails={formData.aiToolDetails || {}}
+        onChange={(value) =>
+          handleFormChange('aiToolDetails', value)
+        }
+      /> */}
+      <Dialog
+      open={validationDialogOpen}
+      onClose={() => setValidationDialogOpen(false)}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle sx={{ color: 'warning.main' }}>
+        Warning
+      </DialogTitle>
+
+      <DialogContent>
+        <Typography>
+          {validationMessage}
+        </Typography>
+      </DialogContent>
+
+      <DialogActions>
+        <Button
+          variant="contained"
+          onClick={() => setValidationDialogOpen(false)}
+        >
+          OK
+        </Button>
+      </DialogActions>
+    </Dialog>
     </>
   );
 };

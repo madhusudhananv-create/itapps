@@ -32,6 +32,8 @@ interface ProjectInfo {
   currentPhase: string;
   headcount?: number;
   peopleUsingAI?: number;
+  isProjectNA?: boolean;
+  naComments?: string;
 }
 
 export const useProjectStatistics = (
@@ -68,7 +70,7 @@ export const useProjectStatistics = (
 
   // Calculate project-specific statistics
   useEffect(() => {
-    if (!projectInfo || !projectActivities.length) {
+    if (!projectInfo || !projectActivities.length || projectInfo.isProjectNA) {
       setProjectStats({
         totalActivities: 0,
         totalHoursSaved: 0,

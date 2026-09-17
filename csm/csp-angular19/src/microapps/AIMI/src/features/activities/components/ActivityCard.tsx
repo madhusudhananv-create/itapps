@@ -5,14 +5,16 @@ import {
   Typography,
   Box,
   Chip,
+  Checkbox,
   Divider,
-  Button,
+  IconButton,
   Tooltip,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
+  //ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
 import {
   AI_ADOPTION_SCORES,
@@ -27,12 +29,19 @@ import {
   chipStyles,
 } from '../styles/activityCardStyles';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface ActivityCardProps {
   activity: ActivityData;
   onEdit?: (activity: ActivityData) => void;
   onDelete?: (activity: ActivityData) => void;
+  onCopy?: (activity: ActivityData) => void;
+  actionsDisabled?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (activityId: string, selected: boolean) => void;
   isUnsaved?: boolean;
+  isPendingDraftConfirmation?: boolean;
 }
 
 const getLabelFromValue = (
@@ -47,10 +56,18 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   activity,
   onEdit,
   onDelete,
+  //onCopy,
+  actionsDisabled = false,
+  selectable = false,
+  selected = false,
+  onSelectChange,
   isUnsaved = false,
+  isPendingDraftConfirmation = false,
 }) => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const featureFlags = useFeatureFlags('activities');
+    const { isAdmin } = useAuth();
+  
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {
@@ -95,30 +112,57 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     setDetailsModalOpen(false);
   };
 
+  // Only one status is shown at a time: local edits or an auto-saved-but-unconfirmed
+  // draft both read as "Unsaved" until the user explicitly clicks Save as Draft
+  const showAsUnsaved = isUnsaved || isPendingDraftConfirmation;
+  const statusLabel = showAsUnsaved
+    ? 'Unsaved'
+    : activity.status === 'draft'
+    ? 'Draft'
+    : 'Saved';
+  const statusColor: 'warning' | 'info' | 'success' = showAsUnsaved
+    ? 'warning'
+    : activity.status === 'draft'
+    ? 'info'
+    : 'success';
+
   return (
     <>
       <Card sx={activityCardStyles.card}>
-        {isUnsaved && (
-          <Chip
-            label="Unsaved"
-            color="warning"
-            size="small"
-            sx={activityCardStyles.unsavedChip}
-          />
-        )}
+        <Chip
+          label={statusLabel}
+          color={statusColor}
+          size="small"
+          sx={activityCardStyles.unsavedChip}
+        />
         <CardContent sx={activityCardStyles.cardContent}>
           {/* Header */}
           <Box sx={activityCardStyles.header}>
-            <Typography
-              variant="body1"
-              component="div"
-              sx={typographyStyles.title}
-            >
-              {activity.activity}
-            </Typography>
-            <Typography variant="caption" sx={typographyStyles.caption}>
-              Added on {formatDate(activity.createdAt)}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+              {selectable && (
+                <Checkbox
+                  size="small"
+                  checked={selected}
+                  onChange={(e) =>
+                    onSelectChange?.(activity.id, e.target.checked)
+                  }
+                  sx={{ p: 0, mt: 0.25 }}
+                  aria-label="Select activity"
+                />
+              )}
+              <Box>
+                <Typography
+                  variant="body1"
+                  component="div"
+                  sx={typographyStyles.title}
+                >
+                  {activity.activity}
+                </Typography>
+                <Typography variant="caption" sx={typographyStyles.caption}>
+                  Added on {formatDate(activity.createdAt)}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
 
           <Divider sx={layoutStyles.divider} />
@@ -188,37 +232,58 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           {/* Action Buttons */}
           <Box sx={activityCardStyles.actionButtonsContainer}>
             <Tooltip title="View Details">
-              <Button
+              <IconButton
                 size="small"
-                startIcon={<VisibilityIcon />}
                 onClick={handleViewDetails}
-                sx={activityCardStyles.viewButton}
+                sx={activityCardStyles.viewIconButton}
+                aria-label="View Details"
               >
-                View Details
-              </Button>
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
             </Tooltip>
             {onEdit && (
               <Tooltip title="Edit Activity">
-                <Button
+                <IconButton
                   size="small"
-                  startIcon={<EditIcon />}
                   onClick={() => onEdit(activity)}
-                  sx={activityCardStyles.editButton}
+                  disabled={actionsDisabled}
+                  sx={activityCardStyles.editIconButton}
+                  aria-label="Edit Activity"
                 >
-                  Edit
-                </Button>
+                  <EditIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
-            {onDelete && featureFlags.showDeleteButton && (
-              <Tooltip title="Delete Activity">
-                <Button
+            {/* {onCopy && (
+              <Tooltip title="Copy Activity">
+                <IconButton
                   size="small"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => onDelete(activity)}
-                  sx={activityCardStyles.deleteButton}
+                  onClick={() => onCopy(activity)}
+                  disabled={actionsDisabled}
+                  sx={activityCardStyles.copyIconButton}
+                  aria-label="Copy Activity"
                 >
-                  Delete
-                </Button>
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )} */}
+            {onDelete && featureFlags.showDeleteButton && (
+              <Tooltip title={
+                  !isAdmin
+                    ? 'Only admin can delete the activity'
+                    : 'Delete Activity'
+                }>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onDelete(activity)}
+                    disabled={actionsDisabled || !isAdmin}
+                    sx={activityCardStyles.deleteIconButton}
+                    aria-label="Delete Activity"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </span>
               </Tooltip>
             )}
           </Box>
@@ -244,7 +309,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         activity={activity}
         onEdit={onEdit}
         onDelete={featureFlags.showDeleteButton ? onDelete : undefined}
+        actionsDisabled={actionsDisabled}
         isUnsaved={isUnsaved}
+        isPendingDraftConfirmation={isPendingDraftConfirmation}
       />
     </>
   );
