@@ -567,6 +567,19 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
     onFormChange(field, finalValue);
   };
 
+  // Adoption metric fields accept only a numeric value or "NA"
+  const isValidMetricValue = (value: string): boolean =>
+    value === '' || /^\d*\.?\d*$/.test(value) || /^n(a)?$/i.test(value);
+
+  const handleMetricFieldChange = (
+    field: keyof FormData,
+    value: string
+  ) => {
+    if (isValidMetricValue(value)) {
+      onFormChange(field, value);
+    }
+  };
+
   const handlePracticeChange = (newPractice: string) => {
     handleFieldChange('practice', newPractice);
   };
@@ -764,11 +777,11 @@ const fyChanged =
               sx={{ minWidth: 140 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <InputLabel>Financial Year</InputLabel>
+              <InputLabel>Project Added During</InputLabel>
 
               <Select
                 value={formData.projectFY ?? ''}
-                label="FY"
+                label="Project Added During"
                 onChange={(e) =>
                   onFormChange('projectFY', e.target.value)
                 }
@@ -1387,7 +1400,7 @@ const fyChanged =
               label="% Tickets Auto-Resolved by AI"
               value={formData.runOpsAutoResolved ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'runOpsAutoResolved' as keyof FormData,
                   e.target.value
                 )
@@ -1401,7 +1414,7 @@ const fyChanged =
               label="MTTR Reduction vs Traditional Model"
               value={formData.runOpsMTTRReduction ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'runOpsMTTRReduction' as keyof FormData,
                   e.target.value
                 )
@@ -1415,7 +1428,7 @@ const fyChanged =
               label="# AI Agents in Production (Not Pilots)"
               value={formData.runOpsAIAgents ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'runOpsAIAgents' as keyof FormData,
                   e.target.value
                 )
@@ -1429,7 +1442,7 @@ const fyChanged =
               label="# End-to-End Workflows Re-imagined and Automated"
               value={formData.runOpsAutomatedWorkflows ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'runOpsAutomatedWorkflows' as keyof FormData,
                   e.target.value
                 )
@@ -1443,7 +1456,7 @@ const fyChanged =
               label="# MTTD (Mean Time to Detect)"
               value={formData.runOpsMTTD ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'runOpsMTTD' as keyof FormData,
                   e.target.value
                 )
@@ -1457,7 +1470,7 @@ const fyChanged =
               label="# MTTR (Mean Time to Respond or Repair)"
               value={formData.runOpsMTTR ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'runOpsMTTR' as keyof FormData,
                   e.target.value
                 )
@@ -1489,7 +1502,7 @@ const fyChanged =
               label="Delivery cycle-time reduction attributable to AI "
               value={formData.engineerDeliveryCycleTime ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'engineerDeliveryCycleTime' as keyof FormData,
                   e.target.value
                 )
@@ -1504,7 +1517,7 @@ const fyChanged =
               label="# AI agents in production — not pilots / POC"
               value={formData.engineerAIAgents ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'engineerAIAgents' as keyof FormData,
                   e.target.value
                 )
@@ -1520,7 +1533,7 @@ const fyChanged =
                       (Passed Tests / Total Executed Tests) × 100"
               value={formData.engineerContractTestCasePassRate ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'engineerContractTestCasePassRate' as keyof FormData,
                   e.target.value
                 )
@@ -1535,7 +1548,7 @@ const fyChanged =
               label="Performance Defects Detected Pre-release (%)"
               value={formData.engineerPerformanceDefectsPreRelease ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'engineerPerformanceDefectsPreRelease' as keyof FormData,
                   e.target.value
                 )
@@ -1567,7 +1580,7 @@ const fyChanged =
               label="% workforce with externally validated AI / GenAI / Agentic AI certification"
               value={formData.commonAdoptionWorkforceCertification ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'commonAdoptionWorkforceCertification' as keyof FormData,
                   e.target.value
                 )
@@ -1582,7 +1595,7 @@ const fyChanged =
               label="Efforts saved in hours"
               value={formData.commonAdoptionEffortsSaved ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'commonAdoptionEffortsSaved' as keyof FormData,
                   e.target.value
                 )
@@ -1598,7 +1611,7 @@ const fyChanged =
                         penetration as % of client-facing headcount"
               value={formData.commonDeploymentEngineer ?? ''}
               onChange={(e) =>
-                onFormChange(
+                handleMetricFieldChange(
                   'commonDeploymentEngineer' as keyof FormData,
                   e.target.value
                 )
