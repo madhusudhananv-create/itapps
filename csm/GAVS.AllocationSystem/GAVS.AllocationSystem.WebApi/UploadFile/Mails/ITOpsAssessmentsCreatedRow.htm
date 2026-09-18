@@ -1,0 +1,17 @@
+<!-- One <tr> per NEW assessment (one per domain, even when several domains were
+     created for the same project in this call) - each domain keeps its OWN
+     Assessee/Assessor/Reviewer cells rather than merging every domain's people
+     into one shared row, since a project's domains can have different teams.
+     Add, remove, or reorder columns here - no C# change needed as long as the
+     column uses a placeholder already listed below. Available placeholders:
+       {{SNo}}, {{AccountName}}, {{ProjectName}}, {{DomainName}},
+       {{AssesseeNames}}, {{AssessorNames}}, {{ReviewerNames}} -->
+<tr>
+<td valign=top width=36 style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{SNo}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{AccountName}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{ProjectName}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{DomainName}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{AssesseeNames}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{AssessorNames}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{ReviewerNames}}</td>
+</tr>
