@@ -1,0 +1,203 @@
+<div class="assessment-page" *ngIf="domain">
+  <a class="back-link" routerLink="/">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    Back to Dashboard
+  </a>
+
+  <header class="assessment-header">
+    <div>
+      <h1>{{ domain.name }} Assessment</h1>
+      <div class="meta">
+        <span>COE SPOC: <strong>{{ domain.coeSpoc }}</strong></span>
+        <span>Reviewer: <strong>{{ domain.reviewer }}</strong></span>
+        <span *ngIf="selectedAssessee">Assessee: <strong>{{ selectedAssessee.name }}</strong></span>
+        <span [class]="statusClass(domain.status)">{{ domain.status }}</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary definitions-btn" (click)="openDefinitionsModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+          <path d="M12 11v5.5M12 7.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        Maturity Level Definitions
+      </button>
+      <div class="progress-chip" *ngIf="progressCount() as p">
+        <div class="progress-ring" [style.background]="'conic-gradient(var(--accent) ' + (p.total ? (p.answered / p.total) * 100 : 0) + '%, var(--gridline) 0)'">
+          <div class="progress-ring-inner">{{ p.answered }}/{{ p.total }}</div>
+        </div>
+        <span>Parameters scored</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="locked-banner" *ngIf="isLocked()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="2" />
+    </svg>
+    <span *ngIf="domain.status === 'Pending Review'">This assessment is locked while pending Function Head review.</span>
+    <span *ngIf="domain.status === 'Approved'">This assessment is locked because it has been approved.</span>
+  </div>
+
+  <div class="return-banner" *ngIf="domain.returnComment">
+    <strong>Returned for revision:</strong> {{ domain.returnComment }}
+  </div>
+
+  <div class="provider-tabs" *ngIf="providers.length > 1">
+    <button
+      type="button"
+      *ngFor="let provider of providers"
+      class="provider-tab"
+      [class.active]="provider === activeProvider"
+      (click)="selectProvider(provider)"
+    >{{ provider }}</button>
+  </div>
+
+  <div class="parameter-grid">
+    <div
+      class="parameter-card"
+      [id]="'param-' + param.id"
+      *ngFor="let param of visibleParameters(); let i = index"
+      [class.locked]="isLocked()"
+      [class.invalid-highlight]="param.id === highlightParamId"
+    >
+      <div class="param-header">
+        <span class="category"><span class="sno">Q{{ i + 1 }}</span> {{ param.category }}</span>
+        <h3>{{ param.name }}</h3>
+      </div>
+      <p class="definition">{{ param.definition }}</p>
+
+      <div class="card-body">
+        <div class="rubric-compact">
+          <label>Your Score <span class="hint">(click a level to score it)</span></label>
+          <div class="rubric-steps">
+            <button
+              type="button"
+              class="rubric-step na-step"
+              [class.active]="isSelected(param, 'NA')"
+              [disabled]="isLocked()"
+              (click)="selectScore(param, 'NA')"
+            >NA<em>Not Applicable</em></button>
+            <button
+              type="button"
+              [class]="'rubric-step level-' + lvl.value"
+              *ngFor="let lvl of rubricLevels"
+              [class.active]="param.score === lvl.value"
+              [disabled]="isLocked()"
+              [title]="lvl.label + ': ' + param.rubric[lvl.key]"
+              (click)="selectScore(param, lvl.value)"
+            >{{ lvl.value }}<em>{{ lvl.label }}</em></button>
+          </div>
+          <p class="rubric-active-desc" *ngIf="param.score">
+            {{ param.rubric[scoreKey(param.score)] }}
+            <button type="button" class="info-icon-btn" (click)="openRubricModal(param)" aria-label="View full scoring guide" title="View full scoring guide">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 11v5.5M12 7.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </button>
+          </p>
+          <p class="rubric-active-desc muted" *ngIf="!param.score">
+            Not scored yet. Click a level above to score it.
+            <button type="button" class="info-icon-btn" (click)="openRubricModal(param)" aria-label="View full scoring guide" title="View full scoring guide">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 11v5.5M12 7.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </button>
+          </p>
+
+          <div class="min-required" *ngIf="param.minRequiredScore">
+            <span>Min Required Score: <strong>{{ param.minRequiredScore }}</strong></span>
+            <span class="warning-chip" *ngIf="isBelowMinimum(param)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3 1 21h22L12 3Zm0 6v6m0 3.5h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Below required minimum
+            </span>
+          </div>
+        </div>
+
+        <div class="scoring-panel">
+          <div class="notes">
+            <label>Notes and Evidence <span *ngIf="notesRequired(param)" class="required">(required for any score)</span></label>
+            <textarea
+              [(ngModel)]="param.notes"
+              name="notes-{{ param.id }}"
+              rows="2"
+              [class.invalid]="notesRequired(param)"
+              [disabled]="isLocked()"
+            ></textarea>
+          </div>
+
+          <div class="evidence">
+            <label>Evidence Upload <span class="hint">(PDF, JPG, PNG &middot; max 10MB)</span></label>
+            <label class="upload-btn" [class.disabled]="isLocked()">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" [disabled]="isLocked()" (change)="onEvidenceSelected($event, param)" hidden />
+              Choose File
+            </label>
+            <span *ngIf="param.evidenceFileName" class="file-chip">
+              {{ param.evidenceFileName }}
+              <button type="button" class="remove-file" *ngIf="!isLocked()" (click)="removeEvidence(param)" aria-label="Remove file">&times;</button>
+            </span>
+          </div>
+          <p class="field-error" *ngIf="evidenceError">{{ evidenceError }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions" *ngIf="!isLocked()">
+    <button class="btn-secondary" (click)="saveDraft()">Save Draft</button>
+    <button class="btn-primary" (click)="openSubmitModal()">Submit for Review</button>
+    <span class="save-message" *ngIf="saveMessage">{{ saveMessage }}</span>
+  </div>
+  <div class="actions" *ngIf="isLocked() && saveMessage">
+    <span class="save-message">{{ saveMessage }}</span>
+  </div>
+</div>
+
+<div class="not-found" *ngIf="!domain">
+  <p>Domain not found.</p>
+  <a routerLink="/">Back to Dashboard</a>
+</div>
+
+<div class="modal-backdrop" *ngIf="rubricModalParam" (click)="closeRubricModal()">
+  <div class="modal rubric-modal" (click)="$event.stopPropagation()">
+    <h3>{{ rubricModalParam.name }} &middot; Scoring Guide</h3>
+    <div class="rubric-full">
+      <div class="rubric-level" *ngFor="let lvl of rubricLevels" [class.rubric-active]="rubricModalParam.score === lvl.value">
+        <strong>{{ lvl.value }} &middot; {{ lvl.label }}</strong>{{ rubricModalParam.rubric[lvl.key] }}
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" (click)="closeRubricModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showDefinitionsModal" (click)="closeDefinitionsModal()">
+  <div class="modal definitions-modal" (click)="$event.stopPropagation()">
+    <img src="assets/images/Maturity_level_Definition.png" alt="Maturity Level Definitions" />
+    <div class="modal-actions">
+      <button class="btn-primary" (click)="closeDefinitionsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showSubmitModal" (click)="closeSubmitModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>Submit for Review?</h3>
+    <p class="modal-copy">
+      This will lock the assessment from further edits and notify <strong>{{ domain?.reviewer }}</strong> to review it.
+      You won't be able to change scores or notes until it's returned for revision.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeSubmitModal()">Cancel</button>
+      <button class="btn-primary" (click)="confirmSubmit()">Submit for Review</button>
+    </div>
+  </div>
+</div>
