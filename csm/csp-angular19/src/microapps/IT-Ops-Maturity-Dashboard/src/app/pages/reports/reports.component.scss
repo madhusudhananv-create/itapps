@@ -125,6 +125,88 @@
   }
 }
 
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 800px) {
+  .summary-strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+.summary-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.summary-tile.tile-critical { border-left-color: var(--status-critical); }
+.summary-tile.tile-warning { border-left-color: var(--status-warning); }
+.summary-tile.tile-info { border-left-color: var(--status-serious); }
+
+.summary-num {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-lbl {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-nav button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pagination-nav button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  color: var(--accent);
+}
+
+.sort-arrow {
+  font-size: 9px;
+  color: var(--accent);
+}
+
 .filters {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -136,28 +218,48 @@
 .filter-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 14px;
   margin-bottom: 12px;
+}
+
+.filter-row .clear-filters {
+  margin-left: auto;
 }
 
 .filter-select-label {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 11.5px;
   font-weight: 650;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 
-  select {
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--page-plane);
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 600;
+  app-searchable-select {
+    width: 200px;
+    text-transform: none;
+    letter-spacing: normal;
   }
+
+  // "All cycles"/"All business units"/etc is a real, meaningful selection (the
+  // aggregate view) - it should read the same as an actual chosen value (like
+  // the Report picker's own value), not greyed out like an unset placeholder.
+  // ::ng-deep reaches past the child searchable-select's view encapsulation.
+  ::ng-deep .ss-input,
+  ::ng-deep .ss-input::placeholder {
+    color: var(--text-primary) !important;
+  }
+}
+
+.question-cell {
+  min-width: 260px;
+  max-width: 360px;
+  white-space: normal;
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 .clear-filters {
@@ -267,6 +369,9 @@ tbody tr:hover {
 .pill-critical { background: color-mix(in srgb, var(--status-critical) 16%, transparent); color: var(--status-critical); }
 .pill-muted { background: color-mix(in srgb, var(--status-muted) 25%, transparent); color: var(--text-secondary); }
 .pill-info { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.pill-warning { background: color-mix(in srgb, var(--status-warning) 22%, transparent); color: color-mix(in srgb, var(--status-warning) 70%, black); }
+.pill-serious { background: color-mix(in srgb, var(--status-serious) 18%, transparent); color: var(--status-serious); }
+.pill-optimal { background: color-mix(in srgb, var(--status-optimal, #0d8f6b) 20%, transparent); color: var(--status-optimal, #0d8f6b); }
 
 .stale-tag {
   display: inline-block;

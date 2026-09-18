@@ -2,54 +2,213 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MaturityMockService } from '../../services/maturity-mock.service';
-import { AssesseeService } from '../../services/assessee.service';
-import { TechnologyDomain, MaturityParameter, MaturityRubric } from '../../models/maturity.model';
-import { Assessee } from '../../models/assessee.model';
+import { Observable, combineLatest, forkJoin, of, switchMap } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
+import { AccountService } from '../../services/account.service';
+import { ItOpsMaturityApiService, ItOpsAssessmentInfo, ItOpsParameterScoreRow, ItOpsEvidenceRow } from '../../services/itops-maturity-api.service';
+import { TechnologyDomain, MaturityParameter, MaturityRubric, DomainStatus, FindingStatus } from '../../models/maturity.model';
 import { statusPillClass } from '../../utils/status.util';
 import { RUBRIC_LEVELS, rubricScoreKey } from '../../utils/rubric.util';
+import { ToastService } from '../../services/toast.service';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
 
 const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
+
+/** Maps the backend's ITOPS_ASSESSMENT.STATUS values onto this app's DomainStatus labels. */
+const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
+  NotStarted: 'Not Started',
+  Draft: 'Draft',
+  PendingReview: 'Pending Review',
+  Approved: 'Approved',
+  ReturnedForRevision: 'In Progress',
+  Suspended: 'Draft',
+  Closed: 'Approved',
+};
+
+/** Maps the backend's ITOPS_FINDING.STATUS values onto this app's simpler FindingStatus. */
+const BACKEND_FINDING_STATUS_MAP: Record<string, FindingStatus> = {
+  Accepted: 'Accepted',
+  Rejected: 'Rejected',
+  Closed: 'Closed',
+};
 
 @Component({
   selector: 'app-maturity-assessment',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SpinnerComponent],
   templateUrl: './maturity-assessment.component.html',
   styleUrl: './maturity-assessment.component.scss',
 })
 export class MaturityAssessmentComponent implements OnInit {
   domain?: TechnologyDomain;
+  /** True until the first load attempt settles, so the "not found" message never flashes while data is still in flight. */
+  loading = true;
   saveMessage = '';
   providers: string[] = [];
   activeProvider?: string;
   showSubmitModal = false;
-  evidenceError = '';
+  submitting = false;
+  /** Keyed by parameter id, not a single shared string - an upload error on one question must not show under every other question's evidence box too. */
+  evidenceErrors = new Map<string, string>();
   showDefinitionsModal = false;
   highlightParamId: string | null = null;
-  selectedAssessee: Assessee | null = null;
+  /** This assessment's own assignees (not the account-wide selection - a project's assessment shows only who's actually assigned to IT). */
+  assesseeNamesList: string[] = [];
+  /** Evidence attached to each finding's remediation action (by the Assessee), keyed by findingId, loaded on demand - read-only here, the COE SPOC never edits it. */
+  evidenceByFindingId: Record<number, ItOpsEvidenceRow[]> = {};
+  /** Where "Back" goes - the Dashboard by default, or My Assignments when opened from there (?from=assignments). */
+  backLink = '/';
+  /** Parameter id currently showing the "confirm/dispute this rejection" prompt, if any. */
+  decidingRejectionParamId: string | null = null;
+  rejectionDecisionComment = '';
+  rejectionDecisionError = '';
+  decidingRejection = false;
 
   rubricLevels = RUBRIC_LEVELS;
   rubricModalParam: MaturityParameter | null = null;
 
+  private assessmentId?: number;
+  /** parameterId (numeric, as a string key matching MaturityParameter.id) -> ITOPS_PARAMETER.ID */
+  private parameterIdByKey = new Map<string, number>();
+
   constructor(
     private route: ActivatedRoute,
-    private maturityService: MaturityMockService,
-    private assesseeService: AssesseeService,
+    private accountService: AccountService,
+    private api: ItOpsMaturityApiService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
-    const domainId = this.route.snapshot.paramMap.get('domainId');
-    if (domainId) {
-      this.maturityService.getDomain(domainId).subscribe((domain) => {
-        this.domain = domain;
-        if (domain) {
-          this.providers = Array.from(new Set(domain.parameters.map((p) => p.provider).filter((p): p is string => !!p)));
-          this.activeProvider = this.providers[0];
-        }
+    // Subscribed, not a one-off snapshot read: the same route (assessment/:domainId)
+    // is reused by Angular's default reuse strategy when navigating between two
+    // "My Assignments" rows for the SAME domain (different project/cycle) - only
+    // the assessmentId query param actually differs between them, so without this
+    // subscription ngOnInit never runs again and the previously-loaded assessment
+    // (however locked/submitted) just stays on screen.
+    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
+      const domainCode = params.get('domainId');
+      const assessmentIdParam = queryParams.get('assessmentId');
+      const account = this.accountService.selectedAccount;
+      this.backLink = queryParams.get('from') === 'assignments' ? '/my-assignments' : '/';
+
+      if (!domainCode || !account) {
+        this.loading = false;
+        return;
+      }
+
+      this.loading = true;
+      // Reset per-assessment state left over from whatever was previously
+      // loaded in this component instance (see the reuse-strategy note above).
+      this.domain = undefined;
+      this.assessmentId = undefined;
+      this.assesseeNamesList = [];
+      this.evidenceByFindingId = {};
+      this.saveMessage = '';
+      this.evidenceErrors.clear();
+      this.showSubmitModal = false;
+      this.highlightParamId = null;
+      this.evidenceUploading.clear();
+
+      this.api
+        .getOrCreateAssessment(domainCode, String(account.cusT_ID), assessmentIdParam ? Number(assessmentIdParam) : undefined)
+        .pipe(
+          switchMap((assessment) =>
+            forkJoin({
+              assessment: of(assessment),
+              parameters: this.api.getAssessmentParameters(assessment.assessmentId),
+            }),
+          ),
+        )
+        .subscribe({
+          next: ({ assessment, parameters }) => {
+            this.assessmentId = assessment.assessmentId;
+            this.domain = this.toDomain(assessment, parameters);
+            this.assesseeNamesList = assessment.assesseeNames ?? [];
+            this.providers = [];
+            this.activeProvider = undefined;
+            this.loading = false;
+            this.loadExistingEvidence();
+            this.loadEvidenceForAcceptedFindings();
+          },
+          error: (err) => {
+            console.error('IT Ops Maturity Dashboard: failed to load assessment', err);
+            this.loading = false;
+          },
+        });
+    });
+  }
+
+  /** Re-fetches just the parameter rows (findings included) for the current assessment, so a
+   * decision made on this page (e.g. confirming/disputing a rejection) reflects the real,
+   * server-computed finding status/history immediately instead of being locally guessed. */
+  private reloadParameters(): void {
+    if (!this.assessmentId || !this.domain) return;
+    this.api.getAssessmentParameters(this.assessmentId).subscribe((rows) => {
+      const byKey = new Map(rows.map((r) => [String(r.parameterId), r]));
+      this.domain!.parameters = this.domain!.parameters.map((p) => {
+        const r = byKey.get(p.id);
+        if (!r) return p;
+        return {
+          ...p,
+          score: (r.scoreValue as MaturityParameter['score']) ?? null,
+          notes: r.notes ?? '',
+          scoreId: r.scoreId ?? undefined,
+          findingId: r.findingId ?? undefined,
+          findingStatus: r.findingStatus ? BACKEND_FINDING_STATUS_MAP[r.findingStatus] ?? 'Pending' : undefined,
+          findingRejectionComment: r.findingRejectionComment ?? undefined,
+          findingActionTaken: r.findingActionTaken ?? undefined,
+          findingAssesseeName: r.assesseeName ?? undefined,
+          findingDisputeComment: r.disputeComment ?? undefined,
+        };
       });
-    }
-    this.assesseeService.selectedAssessee$.subscribe((assessee) => (this.selectedAssessee = assessee));
+      this.loadEvidenceForAcceptedFindings();
+    });
+  }
+
+  private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
+    this.parameterIdByKey.clear();
+    const parameters: MaturityParameter[] = rows.map((r) => {
+      const key = String(r.parameterId);
+      this.parameterIdByKey.set(key, r.parameterId);
+      return {
+        id: key,
+        category: r.category,
+        name: r.parameterName,
+        definition: r.definition,
+        rubric: {
+          level1: r.level1_AdHoc,
+          level2: r.level2_Developing,
+          level3: r.level3_Defined,
+          level4: r.level4_Managed,
+          level5: r.level5_Optimized,
+        } as MaturityRubric,
+        minRequiredScore: r.minRequiredScore ?? undefined,
+        score: (r.scoreValue as MaturityParameter['score']) ?? null,
+        notes: r.notes ?? '',
+        scoreId: r.scoreId ?? undefined,
+        evidenceFiles: [],
+        findingId: r.findingId ?? undefined,
+        findingStatus: r.findingStatus ? BACKEND_FINDING_STATUS_MAP[r.findingStatus] ?? 'Pending' : undefined,
+        findingRejectionComment: r.findingRejectionComment ?? undefined,
+        findingActionTaken: r.findingActionTaken ?? undefined,
+        findingAssesseeName: r.assesseeName ?? undefined,
+        findingDisputeComment: r.disputeComment ?? undefined,
+      };
+    });
+
+    return {
+      id: assessment.domainCode,
+      name: assessment.domainName,
+      coeSpoc: assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
+      reviewer: assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
+      status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
+      parameters,
+      returnComment: assessment.returnComment ?? undefined,
+    };
+  }
+
+  assesseeNames(): string {
+    return this.assesseeNamesList.join(', ');
   }
 
   visibleParameters(): MaturityParameter[] {
@@ -74,6 +233,64 @@ export class MaturityAssessmentComponent implements OnInit {
     return this.domain?.status === 'Pending Review' || this.domain?.status === 'Approved';
   }
 
+  isProbableFinding(param: MaturityParameter): boolean {
+    return typeof param.score === 'number' && param.score < 5;
+  }
+
+  /** Bulk-loads the Assessee's remediation evidence for every Accepted finding, so the COE SPOC can see what's already been submitted without a per-click round trip. */
+  private loadEvidenceForAcceptedFindings(): void {
+    const acceptedFindingIds = (this.domain?.parameters ?? [])
+      .filter((p) => (p.findingStatus === 'Accepted' || p.findingStatus === 'Closed') && p.findingId)
+      .map((p) => p.findingId as number);
+    acceptedFindingIds.forEach((id) => this.loadEvidence(id));
+  }
+
+  private loadEvidence(findingId: number): void {
+    this.api.getFindingEvidence(findingId).subscribe((rows) => (this.evidenceByFindingId[findingId] = rows));
+  }
+
+  evidenceFor(param: MaturityParameter): ItOpsEvidenceRow[] {
+    return param.findingId ? this.evidenceByFindingId[param.findingId] ?? [] : [];
+  }
+
+  evidenceDownloadUrl(evidenceId: number): string {
+    return this.api.evidenceDownloadUrl(evidenceId);
+  }
+
+  openRejectionDecision(param: MaturityParameter): void {
+    this.decidingRejectionParamId = param.id;
+    this.rejectionDecisionComment = '';
+    this.rejectionDecisionError = '';
+  }
+
+  closeRejectionDecision(): void {
+    this.decidingRejectionParamId = null;
+    this.rejectionDecisionComment = '';
+    this.rejectionDecisionError = '';
+  }
+
+  confirmRejectionDecision(param: MaturityParameter, assessorAccepts: boolean): void {
+    if (!param.findingId) return;
+    if (!assessorAccepts && !this.rejectionDecisionComment.trim()) {
+      this.rejectionDecisionError = 'A comment is required when disputing the rejection.';
+      return;
+    }
+    this.decidingRejection = true;
+    this.api
+      .decideFindingRejection(param.findingId, assessorAccepts, this.rejectionDecisionComment.trim() || undefined)
+      .pipe(finalize(() => (this.decidingRejection = false)))
+      .subscribe({
+        next: () => {
+          this.toast.success(assessorAccepts ? 'Rejection confirmed - finding closed.' : 'Rejection disputed - finding reopened for the assessee.');
+          this.closeRejectionDecision();
+          this.reloadParameters();
+        },
+        error: (err) => {
+          this.rejectionDecisionError = err?.error ?? 'Could not record this decision. Please try again.';
+        },
+      });
+  }
+
   isBelowMinimum(param: MaturityParameter): boolean {
     return (
       typeof param.score === 'number' &&
@@ -82,8 +299,25 @@ export class MaturityAssessmentComponent implements OnInit {
     );
   }
 
+  /**
+   * Notes are only mandatory for an actual 1-5 score - NA (including a
+   * parameter left untouched, which renders as NA by default - see
+   * isSelected()) never requires a justification comment before submission.
+   */
   notesRequired(param: MaturityParameter): boolean {
-    return param.score !== null && param.score !== undefined && !param.notes;
+    return typeof param.score === 'number' && !param.notes;
+  }
+
+  /** Same rule the My Assignments grid uses for this same row (see displayAssignmentStatus in maturity-landing.component.ts) - Approved only reads as "Completed" once every finding this domain raised (score < 5) is Closed, not just decided/Accepted. */
+  displayDomainStatus(): string {
+    if (!this.domain) return '';
+    if (this.domain.status === 'Approved' && this.allFindingsClosed()) return 'Completed';
+    return this.domain.status;
+  }
+
+  private allFindingsClosed(): boolean {
+    if (!this.domain) return true;
+    return this.domain.parameters.every((p) => !this.isProbableFinding(p) || p.findingStatus === 'Closed');
   }
 
   statusClass(status: string): string {
@@ -120,28 +354,115 @@ export class MaturityAssessmentComponent implements OnInit {
     };
   }
 
-  onEvidenceSelected(event: Event, param: MaturityParameter): void {
-    this.evidenceError = '';
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      if (file.size > MAX_EVIDENCE_BYTES) {
-        this.evidenceError = `"${file.name}" exceeds the 10MB upload limit. Choose a smaller file.`;
-        input.value = '';
-        return;
-      }
-      param.evidenceFileName = file.name;
-    }
+  /**
+   * Loads whatever evidence is already attached to each scored parameter, so
+   * a returning visit shows every real uploaded file instead of an empty slot -
+   * every parameter that already has a score row gets checked in one batch.
+   */
+  private loadExistingEvidence(): void {
+    if (!this.domain) return;
+    const withScore = this.domain.parameters.filter((p) => p.scoreId);
+    if (!withScore.length) return;
+    forkJoin(withScore.map((p) => this.api.getScoreEvidence(p.scoreId!))).subscribe((results) => {
+      results.forEach((rows, i) => {
+        withScore[i].evidenceFiles = rows.map((r) => ({ id: r.id, fileName: r.fileName }));
+      });
+    });
   }
 
-  removeEvidence(param: MaturityParameter): void {
-    param.evidenceFileName = undefined;
+  evidenceUploading = new Set<string>();
+
+  /** Adds the picked file to the parameter's evidence list - does NOT replace whatever's already there, so several files can be attached to the same parameter. */
+  onEvidenceSelected(event: Event, param: MaturityParameter): void {
+    this.evidenceErrors.delete(param.id);
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files.length) return;
+    const file = input.files[0];
+    if (file.size > MAX_EVIDENCE_BYTES) {
+      this.evidenceErrors.set(param.id, `"${file.name}" exceeds the 10MB upload limit. Choose a smaller file.`);
+      input.value = '';
+      return;
+    }
+    if (!this.assessmentId) return;
+
+    this.evidenceUploading.add(param.id);
+    // Evidence attaches to the parameter's SCORE_ID, which only exists once the
+    // score has been saved at least once - if this is the first thing the
+    // assessee does for this parameter, save it now (whatever score/notes are
+    // currently entered, even none) to get a real id, then upload against that.
+    const parameterId = this.parameterIdByKey.get(param.id);
+    const ensureScoreId: Observable<number> = param.scoreId
+      ? of(param.scoreId)
+      : parameterId
+        ? this.api
+            .upsertScore(this.assessmentId, parameterId, typeof param.score === 'number' ? param.score : null, param.notes ?? '')
+            .pipe(map((score) => score.id))
+        : of(undefined as unknown as number);
+
+    ensureScoreId
+      .pipe(
+        switchMap((scoreId) => {
+          param.scoreId = scoreId;
+          return this.api.uploadScoreEvidence(scoreId, file);
+        }),
+        finalize(() => {
+          this.evidenceUploading.delete(param.id);
+          input.value = ''; // clears the file input so picking the SAME filename again still fires a change event
+        }),
+      )
+      .subscribe({
+        next: (rows) => {
+          const created = rows[0];
+          param.evidenceFiles = [...param.evidenceFiles, { id: created?.id, fileName: created?.fileName ?? file.name }];
+        },
+        error: () => {
+          this.evidenceErrors.set(param.id, `Could not upload "${file.name}". Please try again.`);
+        },
+      });
+  }
+
+  removeEvidence(param: MaturityParameter, evidence: { id: number; fileName: string }): void {
+    this.api.deleteEvidence(evidence.id).subscribe({
+      next: () => {
+        param.evidenceFiles = param.evidenceFiles.filter((e) => e.id !== evidence.id);
+      },
+      error: () => this.toast.error('Could not remove the evidence file.', 'Please try again.'),
+    });
+  }
+
+  downloadEvidence(evidence: { id: number; fileName: string }): void {
+    this.api.downloadEvidence(evidence.id, evidence.fileName);
+  }
+
+  /**
+   * Persists every parameter, including ones left at their default (score ===
+   * null, no notes) - a parameter that's never explicitly touched is
+   * functionally "scored NA" once this assessment is saved/submitted (see
+   * notesRequired() above), so it needs its own ITOPS_SCORE row written with
+   * SCORE_VALUE null just like an explicit NA click does. Skipping untouched
+   * parameters here used to mean they never got a DB row at all, so nothing -
+   * not Top Risks, not the domain tracker's applicable-parameter count - could
+   * ever see them as NA; upserting all of them keeps that in sync going forward.
+   */
+  private persistAllScores(): Observable<unknown> {
+    if (!this.assessmentId || !this.domain) return of(null);
+    const toSave = this.domain.parameters;
+    if (!toSave.length) return of(null);
+    const calls: Observable<unknown>[] = toSave.map((p) => {
+      const parameterId = this.parameterIdByKey.get(p.id);
+      if (!parameterId) return of(null);
+      return this.api.upsertScore(this.assessmentId!, parameterId, typeof p.score === 'number' ? p.score : null, p.notes ?? '');
+    });
+    return forkJoin(calls);
   }
 
   saveDraft(): void {
-    if (!this.domain) return;
-    this.maturityService.saveDraft(this.domain.id).subscribe(() => {
-      this.saveMessage = 'Draft saved.';
+    if (!this.domain || !this.assessmentId) return;
+    this.persistAllScores().subscribe(() => {
+      this.api.saveDraft(this.assessmentId!).subscribe(() => {
+        if (this.domain && this.domain.status === 'Not Started') this.domain.status = 'Draft';
+        this.toast.success('Draft saved', `${this.domain?.name ?? 'This assessment'} was saved. You can pick up right where you left off.`);
+      });
     });
   }
 
@@ -150,6 +471,7 @@ export class MaturityAssessmentComponent implements OnInit {
     const firstMissing = this.domain.parameters.find((p) => this.notesRequired(p));
     if (firstMissing) {
       this.saveMessage = 'Notes are required for every scored parameter.';
+      this.toast.error('Notes required', 'Add notes for every scored parameter before submitting for review.');
       this.scrollToParam(firstMissing);
       return;
     }
@@ -176,13 +498,31 @@ export class MaturityAssessmentComponent implements OnInit {
   }
 
   confirmSubmit(): void {
-    if (!this.domain) return;
-    this.maturityService.submitForReview(this.domain.id).subscribe(() => {
-      this.saveMessage = 'Submitted for review. The Function Head has been notified.';
-      if (this.domain) {
-        this.domain.status = 'Pending Review';
-      }
-      this.showSubmitModal = false;
+    if (!this.domain || !this.assessmentId || this.submitting) return;
+    this.submitting = true;
+    this.persistAllScores().subscribe({
+      next: () => {
+        this.api
+          .submitAssessment(this.assessmentId!)
+          .pipe(finalize(() => (this.submitting = false)))
+          .subscribe({
+            next: () => {
+              if (this.domain) {
+                this.domain.status = 'Pending Review';
+              }
+              this.showSubmitModal = false;
+              this.toast.success(
+                'Submitted for review',
+                `${this.domain?.name ?? 'This assessment'} has been sent to ${this.domain?.reviewer || 'your reviewer'} for approval.`,
+              );
+            },
+            error: () => this.toast.error('Submit failed', 'Something went wrong submitting this assessment. Please try again.'),
+          });
+      },
+      error: () => {
+        this.submitting = false;
+        this.toast.error('Submit failed', 'Something went wrong submitting this assessment. Please try again.');
+      },
     });
   }
 }

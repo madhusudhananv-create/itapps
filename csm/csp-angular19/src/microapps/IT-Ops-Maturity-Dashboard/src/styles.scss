@@ -1,1 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* The browser's default 8px body margin was leaving a white strip above the
+   nav bar (and around every edge of the page) - this microapp has no other
+   global reset, so nothing was ever clearing it. */
+html, body {
+  margin: 0;
+  padding: 0;
+}

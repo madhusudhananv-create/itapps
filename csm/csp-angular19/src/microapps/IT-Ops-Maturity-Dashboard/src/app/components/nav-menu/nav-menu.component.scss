@@ -1,74 +1,53 @@
 :host {
-  --page-plane: #f9f9f7;
-  --surface: #fcfcfb;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --border: rgba(11, 11, 11, 0.1);
-  --accent: #2a78d6;
-  --accent-tint: #eaf2fc;
+  /* Flat indigo toolbar (the midtone of the app's original navy gradient,
+     flattened to one solid color) - white text/pill for contrast, same
+     brand accent (orange) carried through the avatar and notification badge. */
+  --nav-bg: #5d6795;
+  --nav-border: rgba(255, 255, 255, 0.16);
+  --nav-text: rgba(255, 255, 255, 0.75);
+  --nav-text-active: #ffffff;
+  --nav-active-fg: #414a72;
+  --nav-accent: #ff6b35;
+  --focus-ring: 0 0 0 2px var(--nav-bg), 0 0 0 4px #ffffff;
+  --font-brand: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   color-scheme: light;
   display: block;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) :host {
-    --page-plane: #0d0d0d;
-    --surface: #1a1a19;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --border: rgba(255, 255, 255, 0.1);
-    --accent: #3987e5;
-    --accent-tint: #16223a;
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme="dark"] :host {
-  --page-plane: #0d0d0d;
-  --surface: #1a1a19;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --border: rgba(255, 255, 255, 0.1);
-  --accent: #3987e5;
-  --accent-tint: #16223a;
-  color-scheme: dark;
-}
-
 .app-nav {
   display: flex;
   align-items: center;
-  gap: 32px;
-  padding: 12px 36px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--gridline);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  gap: 22px;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--nav-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14), 0 4px 16px rgba(0, 0, 0, 0.06);
+  font-family: var(--font-brand);
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--text-primary);
+  gap: 12px;
+  font-weight: 650;
+  font-size: 14.5px;
+  color: #ffffff;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  padding-right: 20px;
+  margin-right: 2px;
+  border-right: 1px solid var(--nav-border);
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
-  height: 32px;
-  padding: 4px 8px;
-  background: #ffffff;
-  border: 1px solid var(--border);
+  height: 27px;
+  padding: 3px 7px;
+  background: #fff;
   border-radius: 8px;
-  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 
   img {
     height: 100%;
@@ -79,53 +58,120 @@
 
 .nav-links {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  align-self: stretch;
 }
 
+/* A solid white pill for the active tab - the only thing that reads
+   unambiguously as "you're here" against a flat colored bar; hover gets a
+   soft translucent tint short of a full fill. */
 .nav-links a {
-  padding: 6px 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: calc(100% - 14px);
+  margin: 7px 0;
+  padding: 0 16px;
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--nav-text);
   text-decoration: none;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  transition: color 150ms ease, background 150ms ease;
+}
 
-  &:hover {
-    background: var(--page-plane);
-    color: var(--text-primary);
-  }
+.nav-links a:hover {
+  color: var(--nav-text-active);
+  background: rgba(255, 255, 255, 0.1);
+}
 
-  &.active {
-    background: var(--accent-tint);
-    color: var(--accent);
-  }
+.nav-links a.active {
+  color: var(--nav-active-fg);
+  font-weight: 700;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.nav-links a.active:hover {
+  background: #fff;
+  color: var(--nav-active-fg);
+}
+
+.nav-links a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .nav-identity {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: 10px;
+  font-size: 12px;
 }
 
 .identity-name {
-  font-weight: 650;
-  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 14px 4px 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--nav-border);
+  color: #fff;
+  font-weight: 550;
+  font-size: 12.5px;
+  white-space: nowrap;
+
+  &::before {
+    content: attr(data-initials);
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--nav-accent), #ffb648);
+    color: #fff;
+    font-weight: 700;
+    font-size: 10.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+  }
 }
 
 .logout-btn {
-  padding: 5px 12px;
-  border-radius: 7px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 650;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
 
   &:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+::ng-deep app-notification-bell {
+  color: #fff;
+
+  button, .bell-btn {
+    color: #fff !important;
   }
 }

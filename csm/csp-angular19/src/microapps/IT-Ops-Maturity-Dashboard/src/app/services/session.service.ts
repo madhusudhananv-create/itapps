@@ -7,7 +7,7 @@ function loadInitialUser(): CurrentUser {
   const name = localStorage.getItem('displayname') || localStorage.getItem('empid') || 'Guest';
   // Role/email/allowed domains are resolved once account + domain data load
   // (see resolveIdentity()); NoAccess is the safe default until then.
-  return { name, email: null, role: 'NoAccess', allowedDomainIds: [] };
+  return { name, email: null, role: 'NoAccess', allowedDomainIds: [], spocDomainIds: [], reviewDomainIds: [] };
 }
 
 export function normalizeName(name: string): string {
@@ -47,8 +47,10 @@ export class SessionService {
   }
 
   /**
-   * Resolves role and the exact set of domains this identity may see/act on,
-   * from the real logged-in user's email against actual assignment data:
+   * Resolves role and the exact set of domains this identity may see/act on.
+   * Preference order:
+   *   0. Real EMP_ID match against DB-backed assignment data (coeSpocEmpId/reviewerEmpId) -
+   *      exact and authoritative whenever the row came from the real API rather than the CSV mock.
    *   1. COE SPOC email match on any domain -> SPOC (restricted to those domains)
    *   2. Reviewer email match on any domain -> Function Head (restricted to those domains)
    *   3. Email is a configured GDH for this account's Business Unit -> GDH (business-level: all domains in this account)
@@ -60,24 +62,44 @@ export class SessionService {
    * a looser secondary signal, kept in sync with role so the two never
    * disagree (unlike matching independently in each component).
    */
-  resolveIdentity(domains: DomainSummary[], businessUnit: string | null, email: string | null): void {
+  resolveIdentity(domains: DomainSummary[], businessUnit: string | null, email: string | null, myEmpId: string | null = null): void {
     const emailNorm = normalizeEmail(email);
     const nameCandidates = nameMatchCandidates(this.currentUser.name);
 
-    let spocIds = domains.filter((d) => emailNorm && normalizeEmail(d.coeSpocEmail) === emailNorm).map((d) => d.id);
-    let reviewIds = domains.filter((d) => emailNorm && normalizeEmail(d.reviewerEmail) === emailNorm).map((d) => d.id);
-    const isGdh = !!emailNorm && getGdhEmailsForBusinessUnit(businessUnit).includes(emailNorm);
+    let spocIds = myEmpId ? domains.filter((d) => d.coeSpocEmpId === myEmpId).map((d) => d.id) : [];
+    let reviewIds = myEmpId ? domains.filter((d) => d.reviewerEmpId === myEmpId).map((d) => d.id) : [];
+    let isGdh = false;
+
+    if (!spocIds.length && !reviewIds.length) {
+      spocIds = domains.filter((d) => emailNorm && normalizeEmail(d.coeSpocEmail) === emailNorm).map((d) => d.id);
+      reviewIds = domains.filter((d) => emailNorm && normalizeEmail(d.reviewerEmail) === emailNorm).map((d) => d.id);
+      isGdh = !!emailNorm && getGdhEmailsForBusinessUnit(businessUnit).includes(emailNorm);
+    }
 
     if (!spocIds.length && !reviewIds.length && !isGdh) {
       spocIds = domains.filter((d) => nameCandidates.includes(normalizeName(d.coeSpoc))).map((d) => d.id);
       reviewIds = domains.filter((d) => nameCandidates.includes(normalizeName(d.reviewer))).map((d) => d.id);
     }
 
+    // role is a display-only "primary" label (SPOC takes precedence for the
+    // page header etc.); it must never be used alone to gate visibility or
+    // actions, since a person can simultaneously be SPOC on some domains and
+    // Reviewer on others (e.g. SPOC+Reviewer for Windows/VMware, Reviewer-only
+    // for Hyperconverged) - spocDomainIds/reviewDomainIds below are always
+    // kept independent so neither role loses visibility of the other's domains.
     const role = spocIds.length ? 'SPOC' : reviewIds.length ? 'FunctionHead' : isGdh ? 'GDH' : 'NoAccess';
-    const allowedDomainIds =
-      role === 'SPOC' ? spocIds : role === 'FunctionHead' ? reviewIds : role === 'GDH' ? domains.map((d) => d.id) : [];
+    const allowedDomainIds = isGdh
+      ? domains.map((d) => d.id)
+      : Array.from(new Set([...spocIds, ...reviewIds]));
 
-    this.userSubject.next({ ...this.currentUser, email, role, allowedDomainIds });
+    this.userSubject.next({
+      ...this.currentUser,
+      email,
+      role,
+      allowedDomainIds,
+      spocDomainIds: spocIds,
+      reviewDomainIds: reviewIds,
+    });
   }
 
   /** Records the resolved email without touching role/allowedDomainIds (used by pages that scope per-row instead of per-account, e.g. Reports). */

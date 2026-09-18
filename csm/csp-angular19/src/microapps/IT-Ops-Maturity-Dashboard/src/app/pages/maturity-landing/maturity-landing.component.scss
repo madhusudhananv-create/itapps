@@ -1,71 +1,149 @@
 :host {
-  --page-plane: #f9f9f7;
-  --surface: #fcfcfb;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --border: rgba(11, 11, 11, 0.1);
-  --accent: #2a78d6;
-  --accent-track: #cde2fb;
+  /* CSM shell alignment: Apple-system card tokens from the shell's own SQA/ITOps
+     dashboard (#F2F2F7 ground, white cards, #007AFF accent), Roboto for UI text
+     (already loaded shell-wide) and Inter for figures - matching the shell's
+     gradient-toolbar navy (#4e5882) as the one place the brand hue still shows. */
+  --page-plane: #F2F2F7;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-tint: #FAFAFC;
+  --text-primary: #1c1c1e;
+  --text-secondary: #6E6E73;
+  --text-muted: #8E8E93;
+  --gridline: #E5E5EA;
+  --border: #E5E5EA;
+  --border-strong: #D6D6DD;
+  --accent: #007AFF;
+  --accent-hover: #0051D5;
+  --accent-track: rgba(0, 122, 255, 0.1);
+  --accent-glow: rgba(0, 122, 255, 0.16);
+  --focus-ring: 0 0 0 3px rgba(0, 122, 255, 0.35);
 
-  --status-good: #0ca30c;
+  --status-good: #34C759;
   --status-warning: #fab219;
   --status-serious: #ec835a;
-  --status-critical: #d03b3b;
-  --status-muted: #c3c2b7;
+  --status-critical: #FF3B30;
+  --status-optimal: #0d8f6b;
+  --status-muted: #8E8E93;
+
+  --status-good-tint: rgba(52, 199, 89, 0.15);
+  --status-warning-tint: rgba(250, 178, 25, 0.18);
+  --status-serious-tint: rgba(236, 131, 90, 0.18);
+  --status-critical-tint: rgba(255, 59, 48, 0.15);
+  --status-muted-tint: rgba(142, 142, 147, 0.15);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 
   --ring-fill: var(--accent);
   --ring-track: var(--accent-track);
 
+  --radius-s: 10px;
+  --radius-m: 16px;
+
+  --font-display: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-num: 'Inter', var(--font-body);
+
   color-scheme: light;
   display: block;
-  background: var(--page-plane);
   min-height: 100%;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   color: var(--text-primary);
+  background: var(--page-plane);
+}
+
+/* Uniform, visible focus ring on every interactive control in the Dashboard view. */
+:host ::ng-deep .maturity-page a:focus-visible,
+:host ::ng-deep .maturity-page button:focus-visible,
+:host ::ng-deep .maturity-page select:focus-visible,
+:host ::ng-deep .maturity-page input:focus-visible,
+:host ::ng-deep .maturity-page [tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) :host {
-    --page-plane: #0d0d0d;
-    --surface: #1a1a19;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --border: rgba(255, 255, 255, 0.1);
-    --accent: #3987e5;
-    --accent-track: #184f95;
-    --status-good: #0ca30c;
-    --status-warning: #fab219;
-    --status-serious: #ec835a;
-    --status-critical: #e66767;
-    --status-muted: #52514e;
     color-scheme: dark;
+    --page-plane: #1c1c1e;
+    --surface: #26262a;
+    --surface-raised: #26262a;
+    --surface-tint: #2c2c30;
+    --text-primary: #f2f2f5;
+    --text-secondary: #a9a9ae;
+    --text-muted: #87878c;
+    --gridline: #3a3a3e;
+    --border: #3a3a3e;
+    --border-strong: #48484c;
+    --accent: #3b9bff;
+    --accent-hover: #5cabff;
+    --accent-track: rgba(59, 155, 255, 0.18);
+    --accent-glow: rgba(59, 155, 255, 0.22);
+    --focus-ring: 0 0 0 3px rgba(59, 155, 255, 0.4);
+    --status-good: #34C759;
+    --status-warning: #ffcc4d;
+    --status-serious: #ff9166;
+    --status-critical: #FF453A;
+    --status-optimal: #22c99b;
+    --status-muted: #48484c;
+    --status-good-tint: rgba(52, 199, 89, 0.22);
+    --status-warning-tint: rgba(255, 204, 77, 0.22);
+    --status-serious-tint: rgba(255, 145, 102, 0.22);
+    --status-critical-tint: rgba(255, 69, 58, 0.22);
+    --status-muted-tint: rgba(142, 142, 147, 0.22);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
   }
 }
 
 :root[data-theme="dark"] :host {
-  --page-plane: #0d0d0d;
-  --surface: #1a1a19;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --border: rgba(255, 255, 255, 0.1);
-  --accent: #3987e5;
-  --accent-track: #184f95;
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #e66767;
-  --status-muted: #52514e;
   color-scheme: dark;
+  --page-plane: #1c1c1e;
+  --surface: #26262a;
+  --surface-raised: #26262a;
+  --surface-tint: #2c2c30;
+  --text-primary: #f2f2f5;
+  --text-secondary: #a9a9ae;
+  --text-muted: #87878c;
+  --gridline: #3a3a3e;
+  --border: #3a3a3e;
+  --border-strong: #48484c;
+  --accent: #3b9bff;
+  --accent-hover: #5cabff;
+  --accent-track: rgba(59, 155, 255, 0.18);
+  --accent-glow: rgba(59, 155, 255, 0.22);
+  --focus-ring: 0 0 0 3px rgba(59, 155, 255, 0.4);
+  --status-good: #34C759;
+  --status-warning: #ffcc4d;
+  --status-serious: #ff9166;
+  --status-critical: #FF453A;
+  --status-optimal: #22c99b;
+  --status-muted: #48484c;
+  --status-good-tint: rgba(52, 199, 89, 0.22);
+  --status-warning-tint: rgba(255, 204, 77, 0.22);
+  --status-serious-tint: rgba(255, 145, 102, 0.22);
+  --status-critical-tint: rgba(255, 69, 58, 0.22);
+  --status-muted-tint: rgba(142, 142, 147, 0.22);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host * { animation: none !important; transition: none !important; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .maturity-page {
-  padding: 16px 24px 28px;
+  padding: 20px 24px 32px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -73,18 +151,28 @@
 .page-header {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: nowrap;
+  margin-bottom: 22px;
+  animation: rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @media (max-width: 1100px) {
+    flex-wrap: wrap;
+  }
 
   .header-text {
-    flex: 1;
+    flex: 1 1 300px;
+    min-width: 300px;
   }
 
   h1 {
     margin: 0 0 3px;
+    font-family: var(--font-display);
     font-size: 19px;
     font-weight: 650;
     letter-spacing: -0.01em;
+    white-space: normal;
   }
 
   .subtitle {
@@ -92,6 +180,7 @@
     color: var(--text-secondary);
     font-size: 12.5px;
     max-width: 640px;
+    white-space: normal;
   }
 }
 
@@ -124,10 +213,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 0 10px;
-  margin-bottom: 14px;
+  padding: 0 0 12px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--gridline);
   font-size: 12.5px;
+  animation: rise-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 40ms;
 }
 
 .context-actions {
@@ -152,6 +243,8 @@
   gap: 6px;
   color: var(--text-muted);
   min-width: 0;
+  font-family: var(--font-display);
+  font-size: 11.5px;
 
   svg {
     flex-shrink: 0;
@@ -171,7 +264,7 @@
 
   .crumb-industry {
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 11px;
 
     &::before {
       content: '· ';
@@ -195,15 +288,31 @@
 }
 
 .account-picker {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 28px 32px;
   margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 26, 28, 0.04), 0 10px 28px rgba(15, 26, 28, 0.06);
+  animation: rise-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 60ms;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 40%, var(--status-good)));
+  }
 
   h2 {
     margin: 0 0 6px;
-    font-size: 18px;
+    font-family: var(--font-display);
+    font-size: 16.5px;
   }
 
   .picker-copy {
@@ -234,10 +343,11 @@
     border-radius: 10px;
     padding: 12px 14px;
     cursor: pointer;
-    transition: border-color 0.12s ease;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
 
     &:hover {
       border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-glow);
     }
   }
 
@@ -270,6 +380,7 @@
     &:focus {
       outline: none;
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
   }
 
@@ -286,10 +397,10 @@
     top: calc(100% + 6px);
     left: 0;
     right: 0;
-    background: var(--surface);
+    background: var(--surface-raised);
     border: 1px solid var(--border);
     border-radius: 10px;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 12px 32px rgba(15, 26, 28, 0.12);
     max-height: 320px;
     overflow-y: auto;
     z-index: 10;
@@ -307,9 +418,11 @@
     background: none;
     padding: 10px 14px;
     cursor: pointer;
+    color: inherit;
+    font: inherit;
 
     &:hover {
-      background: var(--page-plane);
+      background: color-mix(in srgb, var(--accent) 7%, transparent);
     }
 
     &:last-of-type {
@@ -334,6 +447,146 @@
     padding: 10px 14px;
     font-size: 12.5px;
     color: var(--text-muted);
+  }
+}
+
+.assessee-multiselect {
+  max-width: 480px;
+  overflow-x: hidden;
+  box-sizing: border-box;
+
+  .combobox-search {
+    position: relative;
+    margin-bottom: 10px;
+
+    .combobox-input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--page-plane);
+      color: var(--text-primary);
+      font-size: 13.5px;
+      box-sizing: border-box;
+
+      &:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+    }
+
+    .combobox-icon {
+      position: absolute;
+      left: 12px;
+      top: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+  }
+
+  .assessee-checklist {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--surface);
+    box-sizing: border-box;
+  }
+
+  .assessee-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gridline);
+    cursor: pointer;
+    min-width: 0;
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent) 6%, transparent);
+    }
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+
+    input[type="checkbox"] {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .picker-name {
+      flex-shrink: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 650;
+      font-size: 13.5px;
+      color: var(--text-primary);
+    }
+
+    .picker-industry {
+      flex-shrink: 0;
+      margin-left: auto;
+      padding-left: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  }
+
+  .combobox-empty {
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  .assessee-picker-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .picker-selection-count {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-family: var(--font-display);
+  }
+
+  .btn-primary {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 650;
+    border: none;
+    background: var(--accent);
+    color: #05221f;
+    cursor: pointer;
+    transition: filter 0.12s ease, box-shadow 0.12s ease;
+
+    &:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 }
 
@@ -362,29 +615,31 @@
 
 .domain-tab {
   flex-shrink: 0;
-  padding: 7px 14px;
-  border: none;
-  background: none;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 650;
   color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 7px;
-  transition: background 0.12s ease, color 0.12s ease;
+  gap: 8px;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
   white-space: nowrap;
   margin-bottom: 6px;
 
   &:hover {
-    color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--text-primary);
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
   }
 
   &.active {
     color: #fff;
     background: var(--accent);
+    border-color: var(--accent);
 
     .tab-count {
       background: rgba(255, 255, 255, 0.25);
@@ -396,10 +651,11 @@
 .tab-count {
   font-size: 11px;
   font-weight: 700;
-  background: var(--surface-tint, var(--page-plane));
-  color: var(--text-muted);
+  background: var(--gridline);
+  color: var(--text-secondary);
   border-radius: 999px;
   padding: 1px 7px;
+  font-family: var(--font-body);
 }
 
 .tab-nav {
@@ -415,7 +671,7 @@
   color: var(--text-secondary);
   cursor: pointer;
   z-index: 2;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 26, 28, 0.08);
   margin-bottom: 8px;
 
   &:hover {
@@ -426,29 +682,38 @@
 
 .header-icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
-  color: #fff;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--accent);
   margin-top: 2px;
 }
 
 section {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 
   h2 {
-    font-size: 13.5px;
+    font-family: var(--font-display);
+    font-size: 12.5px;
     font-weight: 650;
-    color: var(--text-primary);
-    margin: 0 0 8px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin: 0 0 9px;
     display: flex;
     align-items: baseline;
     gap: 10px;
   }
+}
+
+.pending-review-callout {
+  border-left: 3px solid var(--status-warning);
+  padding-left: 12px;
 }
 
 .section-subtitle {
@@ -460,37 +725,171 @@ section {
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 18px;
 }
+
+.top-progress-bar {
+  position: relative;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent-track);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.top-progress-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -35%;
+  width: 35%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent) 45%, var(--accent) 55%, transparent);
+  animation: progress-sweep 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes progress-sweep {
+  0% { left: -35%; }
+  60% { left: 100%; }
+  100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-progress-bar__fill {
+    animation: none;
+    left: 0;
+    width: 100%;
+    opacity: 0.55;
+  }
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--kpi-c, var(--accent));
+  border-radius: var(--radius-s);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+  animation: rise-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--kpi-tint, var(--accent-track));
+    color: var(--kpi-c, var(--accent));
+
+    svg {
+      width: 17px;
+      height: 17px;
+    }
+  }
+
+  .num {
+    font-family: var(--font-num);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lbl {
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+}
+
+.kpi-row .kpi:nth-child(1) { animation-delay: 40ms; }
+.kpi-row .kpi:nth-child(2) { animation-delay: 90ms; }
+.kpi-row .kpi:nth-child(3) { animation-delay: 140ms; }
+.kpi-row .kpi:nth-child(4) { animation-delay: 190ms; }
+
+.kpi.c-accent { --kpi-c: var(--accent); --kpi-tint: var(--accent-track); }
+.kpi.c-good { --kpi-c: var(--status-good); --kpi-tint: var(--status-good-tint); }
+.kpi.c-warning { --kpi-c: var(--status-warning); --kpi-tint: var(--status-warning-tint); }
+.kpi.c-serious { --kpi-c: var(--status-serious); --kpi-tint: var(--status-serious-tint); }
+.kpi.c-critical { --kpi-c: var(--status-critical); --kpi-tint: var(--status-critical-tint); }
+.kpi.c-muted { --kpi-c: var(--text-secondary); --kpi-tint: var(--status-muted-tint); }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 20px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-m);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  animation: rise-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease, border-color 180ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+    box-shadow: var(--shadow-md);
+  }
 }
 
-.kpi-card {
+.summary-cards .card:nth-child(1) { animation-delay: 80ms; }
+.summary-cards .card:nth-child(2) { animation-delay: 140ms; }
+
+.card-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+
+  .k {
+    font-size: 12.5px;
+    font-weight: 650;
+    color: var(--text-secondary);
+  }
+}
+
+.maturity-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
 }
 
-.kpi-body {
-  min-width: 0;
+.ring-wrap {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  flex-shrink: 0;
 }
 
 .kpi-ring {
-  flex-shrink: 0;
-  width: 58px;
-  height: 58px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 10px;
   box-sizing: border-box;
 }
 
@@ -498,10 +897,11 @@ section {
 .kpi-ring.ring-warning { --ring-fill: var(--status-warning); }
 .kpi-ring.ring-serious { --ring-fill: var(--status-serious); }
 .kpi-ring.ring-critical { --ring-fill: var(--status-critical); }
+.kpi-ring.ring-muted { --ring-fill: var(--status-muted); }
 
 .kpi-ring-inner {
-  width: 44px;
-  height: 44px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   background: var(--surface);
   display: flex;
@@ -509,41 +909,122 @@ section {
   justify-content: center;
 }
 
-.kpi-ring-value {
-  font-size: 13px;
-  font-weight: 650;
+.ring-num .n {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+
+  span {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
 }
 
-.card-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 3px;
+.maturity-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
-.card-value {
-  font-size: 21px;
-  font-weight: 650;
-  line-height: 1.1;
+.maturity-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
-.card-value-unit {
+.maturity-score {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  .unit {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+}
+
+.level-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 20px;
   font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 650;
+  width: fit-content;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
 }
 
-.card-sub {
-  margin-top: 5px;
-  font-size: 12px;
+.level-chip.chip-good { background: var(--status-good-tint); color: var(--status-good); }
+.level-chip.chip-warning { background: var(--status-warning-tint); color: var(--status-warning); }
+.level-chip.chip-serious { background: var(--status-serious-tint); color: var(--status-serious); }
+.level-chip.chip-critical { background: var(--status-critical-tint); color: var(--status-critical); }
+.level-chip.chip-muted { background: var(--status-muted-tint); color: var(--text-secondary); }
+
+.maturity-scale {
+  display: flex;
+  gap: 3px;
+}
+
+.maturity-scale .seg {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--gridline);
+}
+
+.maturity-scale .seg.fill-good { background: var(--status-good); }
+.maturity-scale .seg.fill-warning { background: var(--status-warning); }
+.maturity-scale .seg.fill-serious { background: var(--status-serious); }
+.maturity-scale .seg.fill-critical { background: var(--status-critical); }
+
+.maturity-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.progress-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+
+  .big {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+  }
+
+  .of {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
 }
 
 .segmented-bar {
   display: flex;
   gap: 2px;
-  height: 8px;
-  border-radius: 5px;
+  height: 10px;
+  border-radius: 6px;
   overflow: hidden;
-  margin-top: 8px;
+  margin-bottom: 14px;
   background: var(--gridline);
 }
 
@@ -581,6 +1062,7 @@ section {
 .dot-warning, .fill-warning { background: var(--status-warning); }
 .dot-serious, .fill-serious { background: var(--status-serious); }
 .dot-critical, .fill-critical { background: var(--status-critical); }
+.dot-muted { background: var(--text-muted); }
 .dot-muted { background: var(--status-muted); }
 
 .status-text {
@@ -591,7 +1073,7 @@ section {
 }
 
 .status-good { color: var(--status-good); }
-.status-warning { color: #8a5a00; }
+.status-warning { color: var(--status-warning); }
 .status-serious { color: var(--status-serious); }
 .status-critical { color: var(--status-critical); }
 .status-muted { color: var(--text-muted); }
@@ -599,16 +1081,32 @@ section {
 .table-wrap {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   overflow: auto;
   max-height: 520px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 20px rgba(0, 0, 0, 0.05);
+  animation: rise-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 100ms;
+}
+
+/* My Assignments already paginates (10 rows/page) - an inner scrollbar on
+   top of that just adds a second, cramped scroll region. Let the page
+   itself scroll instead. */
+.assignments-table-wrap {
+  max-height: none;
+  overflow: visible;
+
+  /* Sticky only makes sense pinned to this container's own scrollbar - with
+     that gone, position: sticky would instead pin to the page/viewport,
+     floating over content while scrolling the whole page. */
+  th {
+    position: static;
+  }
 }
 
 .no-access-banner {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 20px 24px;
   color: var(--text-secondary);
   font-size: 13.5px;
@@ -621,34 +1119,41 @@ table {
 
 th, td {
   text-align: left;
-  padding: 7px 14px;
+  padding: 11px 12px;
   border-bottom: 1px solid var(--gridline);
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--text-primary);
 }
 
 .estate-row {
   font-weight: 700;
-  background: var(--page-plane);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
 
   td {
     border-bottom: none;
     border-top: 2px solid var(--gridline);
     color: var(--text-primary);
+    font-family: var(--font-display);
   }
 }
 
 th {
+  font-family: var(--font-body);
   color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 11px;
+  font-weight: 700;
+  font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  background: var(--surface);
+  white-space: nowrap;
+  /* --surface-tint is only ~1% darker than --surface in this theme, which
+     read as no header at all against the white body rows - a deliberate
+     accent-tinted wash plus a real border makes the header band actually
+     visible instead of relying on a barely-there gray. */
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  border-bottom: 1.5px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 1;
-  box-shadow: 0 1px 0 var(--gridline);
 }
 
 th.sortable {
@@ -669,18 +1174,39 @@ th.sortable {
 .col-num {
   text-align: right;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.domain-name {
+  font-weight: 650;
+}
+
+.empty-dash {
+  color: var(--text-muted);
 }
 
 tbody tr {
   transition: background 0.12s ease;
+  animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+tbody tr:nth-child(1) { animation-delay: 60ms; }
+tbody tr:nth-child(2) { animation-delay: 100ms; }
+tbody tr:nth-child(3) { animation-delay: 140ms; }
+tbody tr:nth-child(4) { animation-delay: 180ms; }
+tbody tr:nth-child(5) { animation-delay: 220ms; }
+tbody tr:nth-child(n+6) { animation-delay: 250ms; }
 
 tbody tr:last-child td {
   border-bottom: none;
 }
 
 tbody tr:hover {
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 0 var(--accent);
 }
 
 .domain-link {
@@ -696,85 +1222,157 @@ tbody tr:hover {
   text-decoration: underline;
 }
 
-.status-pill {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-not-started { background: color-mix(in srgb, var(--status-muted) 25%, transparent); color: var(--text-secondary); }
-.status-draft { background: color-mix(in srgb, var(--status-warning) 22%, transparent); color: #8a5a00; }
-.status-in-progress { background: color-mix(in srgb, var(--status-serious) 20%, transparent); color: #a34a1f; }
-.status-pending-review { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
-.status-approved { background: color-mix(in srgb, var(--status-good) 18%, transparent); color: var(--status-good); }
-
-.score-cell {
-  display: flex;
+/* The "Open/View assessment" action - a real <button> (not a plain span
+   relying on the row's own click to bubble) so it's independently
+   clickable/keyboard-reachable, and styled as a pill so it reads as an
+   action rather than plain inline text. */
+.row-action {
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.meter-track {
-  width: 56px;
-  height: 6px;
-  border-radius: 4px;
-  background: var(--gridline);
-  overflow: hidden;
-}
-
-.meter-fill {
-  height: 100%;
-  border-radius: 4px;
-  background: var(--accent);
-}
-
-.meter-fill.fill-good { background: var(--status-good); }
-.meter-fill.fill-warning { background: var(--status-warning); }
-.meter-fill.fill-critical { background: var(--status-critical); }
-
-.meter-value {
-  font-variant-numeric: tabular-nums;
+  gap: 5px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font: inherit;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  min-width: 30px;
-  text-align: right;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  svg {
+    transition: transform 0.12s ease;
+  }
+
+  &:hover {
+    background: var(--accent);
+    color: #fff;
+
+    svg {
+      transform: translateX(2px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+}
+
+/* Used together with statusClass() wherever the pill also carries its own
+   check/dot <svg> in the markup (see assignmentStatusIcon()) - suppresses
+   the shared .status-pill::before dot so the two indicators don't stack. */
+.status-pill.status-pill-iconed::before {
+  content: none;
+}
+
+.status-not-started { background: var(--status-muted-tint); color: var(--text-secondary); }
+.status-draft { background: var(--status-warning-tint); color: var(--status-warning); }
+.status-in-progress { background: var(--status-serious-tint); color: var(--status-serious); }
+.status-pending-review { background: var(--accent-track); color: var(--accent); }
+.status-approved { background: var(--status-good-tint); color: var(--status-good); }
+/* Same tinted "glass" pill as Approved, but a deeper green text - distinct
+   enough to tell the two stages apart without going to a solid dark fill. */
+.status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }
 
 .gap-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 12px;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.badge-good { background: color-mix(in srgb, var(--status-good) 22%, transparent); color: var(--status-good); }
-.badge-warning { background: color-mix(in srgb, var(--status-warning) 28%, transparent); color: #8a5a00; }
-.badge-serious { background: color-mix(in srgb, var(--status-serious) 30%, transparent); color: #a1401f; }
+.badge-good { background: color-mix(in srgb, var(--status-good) 20%, transparent); color: var(--status-good); }
+.badge-warning { background: var(--status-warning-tint); color: var(--status-warning); }
+.badge-serious { background: var(--status-serious-tint); color: var(--status-serious); }
 .badge-critical { background: var(--status-critical); color: #fff; }
+.badge-muted { background: color-mix(in srgb, var(--text-muted) 16%, transparent); color: var(--text-muted); }
+
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.score-bar {
+  flex: 1;
+  max-width: 90px;
+  height: 8px;
+  border-radius: 5px;
+  background: var(--gridline);
+  overflow: hidden;
+  position: relative;
+}
+
+.score-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+}
+
+.score-bar i.fill-good { background: var(--status-good); }
+.score-bar i.fill-warning { background: var(--status-warning); }
+.score-bar i.fill-critical { background: var(--status-critical); }
+
+.score-txt {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-secondary);
+  width: 46px;
+  text-align: right;
+  flex-shrink: 0;
+}
 
 .level-pill {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-family: var(--font-display);
+  font-size: 11.5px;
   font-weight: 600;
 }
 
 .level-good { background: color-mix(in srgb, var(--status-good) 18%, transparent); color: var(--status-good); }
-.level-warning { background: color-mix(in srgb, var(--status-warning) 22%, transparent); color: #8a5a00; }
+.level-warning { background: color-mix(in srgb, var(--status-warning) 20%, transparent); color: var(--status-warning); }
 .level-serious { background: color-mix(in srgb, var(--status-serious) 20%, transparent); color: var(--status-serious); }
 .level-critical { background: color-mix(in srgb, var(--status-critical) 18%, transparent); color: var(--status-critical); }
-.level-muted { background: color-mix(in srgb, var(--status-muted) 25%, transparent); color: var(--text-secondary); }
+/* Deeper teal-green than .level-good - "Optimized" (5) needs to read as a
+   step above "Managed" (4), not identical to it. */
+.level-optimal { background: color-mix(in srgb, var(--status-optimal) 20%, transparent); color: var(--status-optimal); }
+.level-muted { background: var(--status-muted-tint); color: var(--text-secondary); }
 
 .truncate-cell {
   max-width: 260px;
@@ -788,4 +1386,740 @@ tbody tr:hover {
   min-width: 260px;
   white-space: normal;
   word-break: break-word;
+}
+
+/* ---- "My Assignments" default landing view (assessor/reviewer/assessee) ---- */
+.assignments-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--page-plane) 80%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.loading-overlay-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 26, 28, 0.12);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.my-assignments {
+  margin-bottom: 24px;
+  animation: rise-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 60ms;
+
+  h2 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: 16.5px;
+  }
+
+  .picker-copy {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    margin: 0 0 18px;
+  }
+}
+
+.assignments-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.assignments-role-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 14px 0 4px;
+  border-bottom: 1px solid var(--border);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+  }
+
+  .tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--surface-tint);
+    color: inherit;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  button.active .tab-count {
+    background: var(--accent-tint, color-mix(in srgb, var(--accent) 14%, transparent));
+    color: var(--accent);
+  }
+}
+
+.assignments-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+/* Rounded pill matching the page's search box, with a leading icon and its
+   own inline "x" once set away from "all" - reads as an active filter chip
+   rather than a plain unstyled <select>. The select's own input border/bg
+   are stripped via ::ng-deep so the pill itself supplies the one visible
+   boundary, instead of a border nested inside a border. */
+.filter-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  /* Set state stays subtle: only the icon and the label pick up the accent,
+     everything else (border, background, the value text) stays neutral - a
+     fully accent-filled pill read as one solid blue block with no contrast
+     between "field" and "value". */
+  &.is-set .filter-pill-icon {
+    color: var(--accent);
+  }
+
+  &.is-set .filter-pill-label {
+    color: var(--accent);
+  }
+
+  .filter-pill-icon {
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+
+  .filter-pill-label {
+    font-weight: 650;
+    white-space: nowrap;
+    color: var(--text-secondary);
+  }
+
+  app-searchable-select {
+    width: 168px;
+  }
+
+  ::ng-deep .ss-input {
+    border: none;
+    background: transparent;
+    padding: 0 18px 0 0;
+    color: inherit;
+    font-weight: 600;
+  }
+
+  ::ng-deep .ss-input:focus {
+    box-shadow: none;
+  }
+
+  ::ng-deep .ss-chevron {
+    right: 0;
+  }
+}
+
+.filter-pill-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 26%, transparent);
+  }
+}
+
+.filter-reset-all {
+  border: none;
+  background: none;
+  padding: 4px 6px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: var(--accent);
+  }
+}
+
+.assignments-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.summary-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 26, 28, 0.04), 0 6px 18px rgba(15, 26, 28, 0.05);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease, border-color 180ms ease;
+  animation: rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--chip-accent, var(--accent));
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--chip-accent, var(--accent)) 30%, var(--border));
+    box-shadow: 0 2px 4px rgba(15, 26, 28, 0.05), 0 12px 28px rgba(15, 26, 28, 0.09);
+  }
+
+  .chip-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--chip-accent, var(--accent)) 14%, transparent);
+    color: var(--chip-accent, var(--accent));
+  }
+
+  .chip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .n {
+    font-family: var(--font-display);
+    font-size: 27px;
+    font-weight: 750;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .l {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* Indigo, not the interactive --accent blue - "Open" is a neutral count,
+     not a link/filter/action, so it shouldn't share a color with those. */
+  &.chip-accent { --chip-accent: #5d6795; }
+  &.chip-serious { --chip-accent: var(--status-serious); }
+  &.chip-warning { --chip-accent: var(--status-warning); }
+  &.chip-good { --chip-accent: var(--status-good); }
+
+  &.urgent {
+    border-color: color-mix(in srgb, var(--status-serious) 35%, var(--border));
+
+    .n { color: var(--status-serious); }
+  }
+}
+
+.assignments-summary .summary-chip:nth-child(1) { animation-delay: 40ms; }
+.assignments-summary .summary-chip:nth-child(2) { animation-delay: 80ms; }
+.assignments-summary .summary-chip:nth-child(3) { animation-delay: 120ms; }
+.assignments-summary .summary-chip:nth-child(4) { animation-delay: 160ms; }
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 4px 0 14px;
+  flex-shrink: 0;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: var(--surface);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+
+    &.active {
+      background: var(--accent-tint);
+      color: var(--accent);
+    }
+
+    & + button {
+      border-left: 1px solid var(--border);
+    }
+  }
+}
+
+/* One row per assessment (domain), with the account/project promoted to a
+   collapsible group header - avoids the account/project name repeating on
+   every one of that project's rows, which is what made the flat table read
+   as noisy once a project had 6+ domains on it. */
+.assignment-group + .assignment-group {
+  border-top: 1px solid var(--gridline);
+}
+
+.group-head-row {
+  cursor: pointer;
+  background: var(--surface-tint);
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface-tint));
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gridline);
+  }
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chev {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+
+  &.open {
+    transform: rotate(90deg);
+  }
+}
+
+.g-account {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.g-project {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.g-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.g-progress {
+  display: inline-block;
+  width: 64px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+
+  i {
+    display: block;
+    height: 100%;
+    background: var(--status-good);
+    border-radius: 999px;
+  }
+}
+
+.g-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--surface);
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.grouped-row td:first-child {
+  padding-left: 34px;
+}
+
+/* Column labels repeated per group (right under that group's own account/
+   project header) rather than once at the top of the whole table - with
+   several groups stacked, a single header at the very top scrolls out of
+   view long before you reach a later group's rows. */
+.col-header-row td:first-child {
+  /* Matches the row's own indent: 34px td padding + the domain-dot's 7px
+     width + its 8px right margin, so "Technology Domain" lines up with the
+     domain name text below it, not with the dot in front of it. */
+  padding-left: 49px;
+}
+
+.col-header-row td {
+  padding: 6px 12px 6px 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border-bottom: 1px solid var(--gridline);
+}
+
+/* A bare colored circle, not a reused .status-pill - that class is sized/
+   padded for pill+text and stretches into an oval when given no text. */
+.domain-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.search-box {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 240px;
+  max-width: 560px;
+  margin: 4px 0 14px;
+
+  svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px 9px 34px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 13px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+  }
+}
+
+.urgent-row {
+  box-shadow: inset 3px 0 0 0 var(--status-serious);
+}
+
+.urgent-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--status-serious);
+  background: color-mix(in srgb, var(--status-serious) 16%, transparent);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  button {
+    padding: 5px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.selectors {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  flex-shrink: 1;
+  min-width: 0;
+
+  @media (max-width: 760px) {
+    flex-wrap: wrap;
+  }
+}
+
+.selector {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  border-radius: 8px;
+  min-width: 108px;
+  flex-shrink: 1;
+  position: relative;
+  transition: background 140ms ease;
+
+  &:hover {
+    background: var(--page-plane);
+  }
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--gridline);
+  }
+
+  label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  &.filled label {
+    color: var(--accent);
+  }
+
+  // "All accounts"/"All projects"/"All business units" is a real, meaningful
+  // selection here (the aggregate view), not an unset placeholder - it should
+  // read the same as an actual chosen value (Cycle always has one), not greyed
+  // out like an empty required field. ::ng-deep reaches past the child
+  // searchable-select's view encapsulation to its placeholder pseudo-element.
+  &.filled ::ng-deep .ss-input,
+  &.filled ::ng-deep .ss-input::placeholder {
+    color: var(--text-primary) !important;
+  }
+
+  // The searchable-select is skinned to look like plain text with a chevron
+  // (the reference's static ".val" row) rather than a bordered input box -
+  // custom properties cascade past the child's view-encapsulation boundary,
+  // so overriding --border/--page-plane here (and nowhere else) is enough to
+  // drop its input border/fill without touching the shared component itself.
+  --border: transparent;
+  --page-plane: transparent;
+
+  app-searchable-select {
+    margin-top: 2px;
+
+    ::ng-deep .ss-input {
+      padding: 0 20px 0 0;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    ::ng-deep .ss-input::placeholder {
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    ::ng-deep .ss-chevron {
+      right: 0;
+    }
+  }
+}
+
+.picker-hint {
+  margin: -10px 0 18px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.assignment-row {
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+  }
+}
+
+.role-pill {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
+}
+
+/* Deliberately NOT --accent - blue was already doing triple duty as the
+   active-tab/filter/link color, so "Assessor" blended into every other blue
+   thing on the page instead of reading as its own role category. */
+.role-pill.role-assessor {
+  color: #8447d1;
+  background: color-mix(in srgb, #8447d1 12%, var(--surface));
+  border-color: color-mix(in srgb, #8447d1 30%, transparent);
+}
+
+.role-pill.role-reviewer {
+  color: var(--status-serious);
+  background: color-mix(in srgb, var(--status-serious) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--status-serious) 30%, transparent);
+}
+
+/* Not --status-good - that's also the Approved/Completed status pill's
+   color, so an Assessee row read as two identical green pills with no way
+   to tell "your role" apart from "this row's status" at a glance. Teal
+   matches the same role's color elsewhere in the app (--meta-assessee). */
+/* Not teal - that reads too close to the green "Completed"/"Approved" status
+   pills sitting right next to it in the same row, and blue is already taken
+   by links/filters/the active tab. A rose/magenta keeps the role pill
+   distinct from every other color already in play on this page. */
+.role-pill.role-assessee {
+  color: #b8447a;
+  background: color-mix(in srgb, #b8447a 12%, var(--surface));
+  border-color: color-mix(in srgb, #b8447a 30%, transparent);
+}
+
+.domain-tracker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

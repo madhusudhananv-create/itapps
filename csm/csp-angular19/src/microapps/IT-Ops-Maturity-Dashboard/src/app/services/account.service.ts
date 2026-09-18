@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, shareReplay, tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { CustomerModel } from '../models/account.model';
 import { resolveWebApiUri } from '../utils/api-base.util';
 
@@ -38,47 +38,24 @@ export class AccountService {
     }
   }
 
+  /**
+   * IT Ops Maturity assigns COE SPOC/Reviewer per domain per account,
+   * independently of a person's project staffing/allocation - so the account
+   * picker here always lists every account in the system (GetITOpsAllAccounts),
+   * regardless of who is logged in, rather than scoping to what that person
+   * happens to be staffed or IT-Ops-assigned on.
+   */
   getAccounts(): Observable<CustomerModel[]> {
     if (!this.accounts$) {
-      // The shell app caches the logged-in user's account list in localStorage
-      // right after login (shared across tabs on the same origin) - reuse it
-      // the same way the shell's own "All Customers" dropdown does, instead of
-      // re-querying the API (which the shell itself only does as a fallback).
-      const cached = this.readCachedAccounts();
-      if (cached) {
-        this.accounts$ = of(cached).pipe(tap((accounts) => this.preselectFromUrl(accounts)));
-      } else {
-        const empId = localStorage.getItem('empid');
-        if (!empId) {
-          this.accounts$ = of([]);
-        } else {
-          this.accounts$ = this.http
-            .get<CustomerModel[]>(`${this.apiurl}GetCustomerIds?EmpId=${empId}&istoFindSLA=false`, {
-              headers: this.getHeaders(),
-            })
-            .pipe(
-              catchError((err) => {
-                console.error('IT Ops Maturity Dashboard: failed to load accounts from GetCustomerIds', err);
-                return of([]);
-              }),
-              tap((accounts) => this.preselectFromUrl(accounts)),
-              shareReplay({ bufferSize: 1, refCount: false }),
-            );
-        }
-      }
+      this.accounts$ = this.http.get<CustomerModel[]>(`${this.apiurl}GetITOpsAllAccounts`, { headers: this.getHeaders() }).pipe(
+        catchError((err) => {
+          console.error('IT Ops Maturity Dashboard: failed to load accounts from GetITOpsAllAccounts', err);
+          return of([]);
+        }),
+        tap((accounts) => this.preselectFromUrl(accounts)),
+      );
     }
     return this.accounts$;
-  }
-
-  private readCachedAccounts(): CustomerModel[] | null {
-    try {
-      const raw = localStorage.getItem('CustomerIds');
-      if (!raw || !raw.trim()) return null;
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length ? parsed : null;
-    } catch {
-      return null;
-    }
   }
 
   private preselectFromUrl(accounts: CustomerModel[]): void {

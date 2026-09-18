@@ -85,8 +85,9 @@ function computeSummary(domain: TechnologyDomain): DomainSummary {
   const maturityPercent = averageScore !== null ? Math.round((averageScore / 5) * 100) : null;
   const maturityLevel = averageScore !== null ? maturityLevelFromScore(averageScore) : null;
   const paramCount = domain.parameters.length;
+  const applicableParamCount = scored.length;
   const sumScores = scored.reduce((sum, p) => sum + p.score, 0);
-  const maxPossible = paramCount * 5;
+  const maxPossible = applicableParamCount * 5;
 
   return {
     id: domain.id,
@@ -100,6 +101,7 @@ function computeSummary(domain: TechnologyDomain): DomainSummary {
     maturityPercent,
     maturityLevel,
     paramCount,
+    applicableParamCount,
     sumScores,
     maxPossible,
   };
@@ -122,6 +124,16 @@ function computeTopRisks(domains: TechnologyDomain[]): TopRisk[] {
               ? `Advance "${param.name}" from level ${param.score} toward level ${param.score + 1} practices.`
               : `"${param.name}" is already at level 5 - maintain current practices.`,
         });
+      } else if (param.score === 'NA') {
+        risks.push({
+          domain: domain.name,
+          category: param.category,
+          parameter: param.name,
+          currentScore: 0,
+          gap: 5,
+          isNotScored: true,
+          recommendation: 'Not Scored',
+        });
       }
     }
   }
@@ -130,10 +142,11 @@ function computeTopRisks(domains: TechnologyDomain[]): TopRisk[] {
 
 export function computeEnterpriseSummary(summaries: DomainSummary[]): EnterpriseSummary {
   const totalParamCount = summaries.reduce((sum, s) => sum + s.paramCount, 0);
+  const totalApplicableParamCount = summaries.reduce((sum, s) => sum + s.applicableParamCount, 0);
   const totalSumScores = summaries.reduce((sum, s) => sum + s.sumScores, 0);
   const totalMaxPossible = summaries.reduce((sum, s) => sum + s.maxPossible, 0);
-  const overallAverageScore = totalParamCount ? Math.round((totalSumScores / totalParamCount) * 100) / 100 : 0;
-  const overallMaturityPercent = Math.round((overallAverageScore / 5) * 100);
+  const overallAverageScore = totalApplicableParamCount ? Math.round((totalSumScores / totalApplicableParamCount) * 100) / 100 : 0;
+  const overallMaturityPercent = totalMaxPossible ? Math.round((totalSumScores / totalMaxPossible) * 100) : 0;
 
   return {
     overallAverageScore,
@@ -143,6 +156,7 @@ export function computeEnterpriseSummary(summaries: DomainSummary[]): Enterprise
     domainsInProgress: summaries.filter((s) => s.status === 'Draft' || s.status === 'In Progress' || s.status === 'Pending Review').length,
     domainsNotStarted: summaries.filter((s) => s.status === 'Not Started').length,
     totalParamCount,
+    totalApplicableParamCount,
     totalSumScores,
     totalMaxPossible,
   };
