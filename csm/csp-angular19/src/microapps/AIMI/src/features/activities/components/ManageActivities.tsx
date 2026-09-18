@@ -46,6 +46,7 @@ import {
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
 import { useAuth } from '@auth/hooks/useAuth';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
+import { getActivitiesForSDLCPhase } from '../../../shared/utils/questionnaireUtils';
 //import ScoreIcon from '@mui/icons-material/Score';
 
 interface ManageActivitiesProps {
@@ -710,6 +711,122 @@ const hasAcceptedScoreChanges =
     setIsModalOpen(false);
   };
 
+  // Bulk-marks every activity in a phase as "Activity NA", overwriting any existing
+  // data for those activities in this phase
+  const handleMarkPhaseAsNA = async (phase: string) => {
+    const activityNames = getActivitiesForSDLCPhase(selectedPractice, phase);
+    if (activityNames.length === 0) return;
+
+    const now = new Date();
+    const naActivities: ActivityData[] = activityNames.map((activityName) => {
+      const existing = activities.find(
+        (activity) =>
+          activity.sdlcPhase === phase && activity.activity === activityName
+      );
+
+      return {
+        sdlcPhase: phase,
+        activity: activityName,
+        applicability: 'Activity NA',
+        aiAdoptionScore: '',
+        aiToolUsed: '',
+        acceleratorsUsed: '',
+        workDoneByAI: 0,
+        hoursSaved: 0,
+        revenueGenerated: '',
+        benefitTo: '',
+        qualitativeBenefits: [],
+        comments: '',
+        id: existing?.id ?? `${Date.now()}-${activityName}`,
+        createdAt: existing?.createdAt ?? now,
+        status: existing?.status ?? 'draft',
+      };
+    });
+
+    setEditingActivity(null);
+    setIsModalOpen(false);
+
+    if (!projectInfo?.projectId) {
+      naActivities.forEach((activity) => {
+        if (activities.some((existing) => existing.id === activity.id)) {
+          onUpdateActivity(activity);
+        } else {
+          onAddActivity(activity);
+        }
+      });
+      showSnackbar(
+        `All activities under "${phase.replace(/:/g, '')}" marked as Activity NA.`,
+        'success'
+      );
+      return;
+    }
+
+    const activitiesToSave: ActivityWithProjectInfo[] = naActivities.map(
+      (activity) => ({
+        ...activity,
+        status: 'draft',
+        projectId: projectInfo.projectId,
+        project: projectInfo.project,
+        practice: projectInfo.practice,
+        account: projectInfo.account,
+        businessUnit: projectInfo.businessUnit,
+      })
+    );
+
+    try {
+      const savedActivities =
+        await activityStorageUtils.upsertActivitiesForProject(
+          activitiesToSave
+        );
+
+      savedActivities.forEach((saved, index) => {
+        const original = naActivities[index];
+        const existedBefore = activities.some(
+          (activity) => activity.id === original.id
+        );
+        const committed: ActivityData = {
+          ...original,
+          id: saved.id,
+          status: saved.status,
+          createdAt: new Date(saved.createdAt),
+          updatedAt: saved.updatedAt ? new Date(saved.updatedAt) : undefined,
+        };
+
+        if (onCommitActivity && original.id !== saved.id) {
+          onCommitActivity(original.id, committed);
+        } else if (existedBefore) {
+          onUpdateActivity(committed);
+        } else {
+          onAddActivity(committed);
+        }
+      });
+
+      setPendingAutoSaveIds((prev) => {
+        const next = new Set(prev);
+        savedActivities.forEach((saved) => next.add(saved.id));
+        return next;
+      });
+
+      showSnackbar(
+        `All activities under "${phase.replace(/:/g, '')}" marked as Activity NA.`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error marking phase as NA:', error);
+      naActivities.forEach((activity) => {
+        if (activities.some((existing) => existing.id === activity.id)) {
+          onUpdateActivity(activity);
+        } else {
+          onAddActivity(activity);
+        }
+      });
+      showSnackbar(
+        'Saved locally. We will retry saving automatically.',
+        'error'
+      );
+    }
+  };
+
   const handleGenerateReport = () => {
     try {
       generateAndDownloadReport(activities, projectInfo);
@@ -1091,6 +1208,7 @@ const hasAcceptedScoreChanges =
         onClose={handleCloseModal}
         onSave={handleSaveActivity}
         onSaveAndAddNew={handleSaveAndAddNew}
+        onMarkPhaseAsNA={handleMarkPhaseAsNA}
         selectedPractice={selectedPractice}
         editingActivity={editingActivity}
         existingActivities={activities}

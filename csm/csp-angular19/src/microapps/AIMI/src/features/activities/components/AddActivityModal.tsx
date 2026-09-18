@@ -8,6 +8,8 @@ import {
   Box,
   Typography,
   FormHelperText,
+  Checkbox,
+  FormControlLabel,
   //Tooltip,
 } from '@mui/material';
 import type { ActivityFormData, ActivityData } from '../types/activityTypes';
@@ -49,6 +51,7 @@ interface AddActivityModalProps {
   onClose: () => void;
   onSave: (activityData: ActivityFormData) => void;
   onSaveAndAddNew: (activityData: ActivityFormData) => void;
+  onMarkPhaseAsNA?: (sdlcPhase: string) => void;
   selectedPractice: string;
   editingActivity?: ActivityData | null;
   existingActivities?: ActivityData[];
@@ -59,6 +62,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   onClose,
   onSave,
   onSaveAndAddNew,
+  onMarkPhaseAsNA,
   selectedPractice,
   editingActivity,
   existingActivities = [],
@@ -70,6 +74,9 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
     applicabilityGuidelinesModalOpen,
     setApplicabilityGuidelinesModalOpen,
   ] = useState(false);
+
+  const [markPhaseAsNAChecked, setMarkPhaseAsNAChecked] = useState(false);
+  const [phaseNAConfirmOpen, setPhaseNAConfirmOpen] = useState(false);
 
   const {
     formData,
@@ -162,6 +169,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
 
   const handleClose = () => {
     resetForm();
+    setMarkPhaseAsNAChecked(false);
     onClose();
   };
 
@@ -171,6 +179,25 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
       return;
     }
     handleClose();
+  };
+
+  const handleMarkPhaseAsNAChange = (checked: boolean) => {
+    if (checked) {
+      setPhaseNAConfirmOpen(true);
+    } else {
+      setMarkPhaseAsNAChecked(false);
+    }
+  };
+
+  const handleCancelPhaseNA = () => {
+    setPhaseNAConfirmOpen(false);
+  };
+
+  const handleConfirmPhaseNA = () => {
+    setPhaseNAConfirmOpen(false);
+    setMarkPhaseAsNAChecked(false);
+    onMarkPhaseAsNA?.(formData.sdlcPhase);
+    resetForm();
   };
 
   return (
@@ -197,6 +224,21 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   }))}
                   required={true}
                 />
+                {!editingActivity &&
+                  formData.sdlcPhase &&
+                  formData.sdlcPhase !== 'NA' && (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={markPhaseAsNAChecked}
+                          onChange={(e) =>
+                            handleMarkPhaseAsNAChange(e.target.checked)
+                          }
+                        />
+                      }
+                      label="Mark all activity as NA"
+                    />
+                  )}
               </Box>
 
               {/* Activity */}
@@ -508,6 +550,38 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
           onClick={() => setValidationDialogOpen(false)}
         >
           OK
+        </Button>
+      </DialogActions>
+    </Dialog>
+
+    <Dialog
+      open={phaseNAConfirmOpen}
+      onClose={handleCancelPhaseNA}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle>Mark Entire Phase as Not Applicable?</DialogTitle>
+
+      <DialogContent>
+        <Typography sx={{ mb: 2 }}>
+          All activities under: <strong>{formData.sdlcPhase.replace(/:/g, '')}</strong>{' '}
+          will automatically be marked as: Applicability = Activity NA
+        </Typography>
+        <Typography color="error">
+          Any existing activity data under this phase will be overwritten.
+        </Typography>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={handleCancelPhaseNA} color="inherit">
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={handleConfirmPhaseNA}
+        >
+          Confirm
         </Button>
       </DialogActions>
     </Dialog>
