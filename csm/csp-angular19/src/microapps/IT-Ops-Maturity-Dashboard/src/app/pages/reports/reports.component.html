@@ -149,6 +149,7 @@
             <th>Findings (A / R / P)</th>
             <th class="col-num sortable" (click)="sortBy('averageScore')">Avg Score <span class="sort-arrow">{{ sortIndicator('averageScore') }}</span></th>
             <th class="col-num sortable" (click)="sortBy('maturityPercent')">Maturity % <span class="sort-arrow">{{ sortIndicator('maturityPercent') }}</span></th>
+            <th>Maturity Level</th>
           </tr>
         </thead>
         <tbody>
@@ -183,6 +184,7 @@
             </td>
             <td class="col-num">{{ row.averageScore ?? '-' }}</td>
             <td class="col-num">{{ row.maturityPercent !== null ? row.maturityPercent + '%' : '-' }}</td>
+            <td><span class="pill" [class]="levelPill(row.averageScore)">{{ levelLabel(row.averageScore) }}</span></td>
           </tr>
         </tbody>
       </table>

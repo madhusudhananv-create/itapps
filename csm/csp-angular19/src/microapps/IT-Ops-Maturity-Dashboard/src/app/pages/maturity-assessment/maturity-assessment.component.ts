@@ -300,16 +300,24 @@ export class MaturityAssessmentComponent implements OnInit {
   }
 
   /**
-   * Notes are mandatory for every parameter, always - NA isn't a genuinely
-   * empty/unscored state in this UI, it's the rubric's own default selected
-   * value (the NA pill renders as "active" the moment a parameter loads,
-   * before anyone has clicked anything - see isSelected()). So a parameter
-   * left untouched is functionally "scored NA", not "unscored", and needs
-   * the same justification comment a 1-5 score does before it can be
-   * submitted for review.
+   * Notes are only mandatory for an actual 1-5 score - NA (including a
+   * parameter left untouched, which renders as NA by default - see
+   * isSelected()) never requires a justification comment before submission.
    */
   notesRequired(param: MaturityParameter): boolean {
-    return !param.notes;
+    return typeof param.score === 'number' && !param.notes;
+  }
+
+  /** Same rule the My Assignments grid uses for this same row (see displayAssignmentStatus in maturity-landing.component.ts) - Approved only reads as "Completed" once every finding this domain raised (score < 5) is Closed, not just decided/Accepted. */
+  displayDomainStatus(): string {
+    if (!this.domain) return '';
+    if (this.domain.status === 'Approved' && this.allFindingsClosed()) return 'Completed';
+    return this.domain.status;
+  }
+
+  private allFindingsClosed(): boolean {
+    if (!this.domain) return true;
+    return this.domain.parameters.every((p) => !this.isProbableFinding(p) || p.findingStatus === 'Closed');
   }
 
   statusClass(status: string): string {
@@ -426,10 +434,19 @@ export class MaturityAssessmentComponent implements OnInit {
     this.api.downloadEvidence(evidence.id, evidence.fileName);
   }
 
-  /** Persists every parameter that has a score and/or notes entered so far. */
+  /**
+   * Persists every parameter, including ones left at their default (score ===
+   * null, no notes) - a parameter that's never explicitly touched is
+   * functionally "scored NA" once this assessment is saved/submitted (see
+   * notesRequired() above), so it needs its own ITOPS_SCORE row written with
+   * SCORE_VALUE null just like an explicit NA click does. Skipping untouched
+   * parameters here used to mean they never got a DB row at all, so nothing -
+   * not Top Risks, not the domain tracker's applicable-parameter count - could
+   * ever see them as NA; upserting all of them keeps that in sync going forward.
+   */
   private persistAllScores(): Observable<unknown> {
     if (!this.assessmentId || !this.domain) return of(null);
-    const toSave = this.domain.parameters.filter((p) => p.score !== null || p.notes);
+    const toSave = this.domain.parameters;
     if (!toSave.length) return of(null);
     const calls: Observable<unknown>[] = toSave.map((p) => {
       const parameterId = this.parameterIdByKey.get(p.id);

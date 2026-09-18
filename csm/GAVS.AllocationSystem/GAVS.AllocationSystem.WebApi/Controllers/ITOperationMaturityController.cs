@@ -203,8 +203,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .Select(d => d.ID)
                     .ToList();
 
+                // Deliberately NOT filtered to ISACTIVE: RemoveITOpsAssessment soft-
+                // deletes a Not Started assessment (ISACTIVE = false) rather than
+                // hard-deleting it, precisely so it stays remembered as "this pair
+                // was deliberately removed" - if this check only looked at active
+                // rows, a removed assessment would look identical to one that was
+                // simply never created, and the very next Dashboard/Reports load for
+                // this account would silently recreate it out from under the admin.
                 var existing = CSPdb.ITOPS_ASSESSMENT.GetAll()
-                    .Where(a => a.ISACTIVE && a.ASSESSMENT_MASTER_ID == master.ID && projectIds.Contains(a.PROJECT_ID))
+                    .Where(a => a.ASSESSMENT_MASTER_ID == master.ID && projectIds.Contains(a.PROJECT_ID))
                     .Select(a => new { a.DOMAIN_ID, a.PROJECT_ID })
                     .ToList();
 
@@ -625,6 +632,26 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         .Select(a => a.ASSESSMENT_ID).ToList())
                 addRole(id, "Assessee");
 
+            // Also surface assessments on projects this employee is allocated to or
+            // "owns" (PROJ_BUHEAD_EMP_ID/PROJ_DM_EMP_ID/PROJ_PM_EMP_ID/PROJ_AM_EMP_ID/
+            // QUALITY_SPOC/DP_ID), even with no personal Assessor/Reviewer/Assessee role -
+            // the same project-level access CSM's own Reports feature already grants.
+            // These rows get an empty Roles list, so isAssessorOn/isReviewerOn/isAssesseeOn
+            // all stay false for them client-side - they never show up on the "My
+            // Assessments"/"Needs Review" tabs (both role-gated), they only exist so the
+            // Dashboard/Reports own-scope BU/Account/Project pickers (which read this same
+            // array) include these projects too.
+            var allocatedProjectIds = GetITOpsAllocatedProjectIds(empId);
+            if (allocatedProjectIds.Any())
+            {
+                foreach (var id in CSPdb.ITOPS_ASSESSMENT.GetAll()
+                            .Where(a => a.ISACTIVE && allocatedProjectIds.Contains(a.PROJECT_ID))
+                            .Select(a => a.ID).ToList())
+                {
+                    if (!rolesByAssessmentId.ContainsKey(id)) rolesByAssessmentId[id] = new List<string>();
+                }
+            }
+
             if (!rolesByAssessmentId.Any()) return Ok(new List<ITOPS_MyAssignmentRow>());
 
             var assessmentIds = rolesByAssessmentId.Keys.ToList();
@@ -785,6 +812,67 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return ITOPS_GDH_BUSINESS_UNITS.ToDictionary(bu => bu, GetITOpsGdhEmailsForBusinessUnit);
         }
 
+        /// <summary>
+        /// Every PROJ_ID this employee is allocated to (an active PROJECT_RESOURCE row,
+        /// CURR_INDC = 'Y') or "owns" on the PROJECT row itself (BU Head/Delivery
+        /// Manager/PM/AM/Quality SPOC/Delivery Partner) - the same allocation+ownership
+        /// relationship CSM's own Reports/dropdowns already grant project visibility
+        /// from (see usp_get_projectIds.sql), extended here to all 6 ownership columns
+        /// rather than just the 3 that SP's single-project branch checks. Anyone in this
+        /// list should see IT Ops Maturity Dashboard/Reports data for that project even
+        /// with no ITOps role (Assessor/Reviewer/Assessee) at all.
+        /// </summary>
+        private List<string> GetITOpsAllocatedProjectIds(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return new List<string>();
+            var allocated = Cldb.PROJECT_RESOURCE.GetAll()
+                .Where(r => r.CURR_INDC == "Y" && r.EMP_ID == empId)
+                .Select(r => r.PROJ_ID)
+                .ToList();
+            var owned = Cldb.PROJECT.GetAll()
+                .Where(p => p.PROJ_BUHEAD_EMP_ID == empId || p.PROJ_DM_EMP_ID == empId || p.PROJ_PM_EMP_ID == empId
+                    || p.PROJ_AM_EMP_ID == empId || p.QUALITY_SPOC == empId || p.DP_ID == empId)
+                .Select(p => p.PROJ_ID)
+                .ToList();
+            return allocated.Concat(owned).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+        }
+
+        /// <summary>True once this employee's allocated/owned projects (see GetITOpsAllocatedProjectIds) include at least one with an active IT Ops assessment.</summary>
+        private bool HasITOpsAllocatedAssessment(string empId)
+        {
+            var projectIds = GetITOpsAllocatedProjectIds(empId);
+            if (!projectIds.Any()) return false;
+            return CSPdb.ITOPS_ASSESSMENT.GetAll().Any(a => a.ISACTIVE && projectIds.Contains(a.PROJECT_ID));
+        }
+
+        /// <summary>
+        /// The full set of (candidate) assessment IDs @myEmpId is entitled to see under
+        /// "own scope" - personal Assessor/Reviewer/Assessee assignments, PLUS
+        /// allocated/owned projects, PLUS (if @myEmpId is a GDH) every assessment in
+        /// their own configured Business Unit(s). Enforced here server-side, using
+        /// @myEmpId's OWN entitlements, rather than trusting whatever businessUnit
+        /// filter value a request happens to send - closes the gap where a GDH's
+        /// Business-Unit restriction used to be UI-only (the Angular BU dropdown just
+        /// never offered another BU, but nothing stopped a direct API call with a
+        /// different one).
+        /// </summary>
+        private HashSet<int> GetITOpsOwnScopeAssessmentIds(string myEmpId, IEnumerable<ITOPS_ASSESSMENT> candidateAssessments)
+        {
+            var myAssessmentIds = new HashSet<int>(
+                CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll().Where(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == myEmpId).Select(a => a.ASSESSMENT_ID)
+                .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll().Where(r => r.ISACTIVE && r.REVIEWER_EMP_ID == myEmpId).Select(r => r.ASSESSMENT_ID))
+                .Concat(CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll().Where(x => x.ISACTIVE && x.ASSESSEE_EMP_ID == myEmpId).Select(x => x.ASSESSMENT_ID)));
+
+            var allocatedProjectIds = new HashSet<string>(GetITOpsAllocatedProjectIds(myEmpId));
+            var gdhBusinessUnits = new HashSet<string>(GetITOpsGdhBusinessUnitsForEmpId(myEmpId), StringComparer.OrdinalIgnoreCase);
+
+            return new HashSet<int>(candidateAssessments
+                .Where(a => myAssessmentIds.Contains(a.ID)
+                    || (!string.IsNullOrWhiteSpace(a.PROJECT_ID) && allocatedProjectIds.Contains(a.PROJECT_ID))
+                    || (gdhBusinessUnits.Count > 0 && !string.IsNullOrWhiteSpace(a.BUSINESS_UNIT) && gdhBusinessUnits.Contains(a.BUSINESS_UNIT)))
+                .Select(a => a.ID));
+        }
+
         /// <summary>Every configured Business Unit this employee is a GDH for (usually zero or one). Used to scope the Dashboard/Reports screens to just their own BU(s) rather than granting unrestricted access.</summary>
         private List<string> GetITOpsGdhBusinessUnitsForEmpId(string empId)
         {
@@ -821,6 +909,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // 500 that takes down the login flow for every single user.
             try
             {
+                // Superuser, or an explicit Dashboard/Report Viewer role grant, is access
+                // in its own right - without this, someone granted one of those (with no
+                // assessor/reviewer/assessee/GDH/other-role assignment at all) would never
+                // see the nav icon and could never reach a screen they're actually entitled
+                // to see the data on.
+                if (IsITOpsSuperuser(empId) || HasITOpsRole(empId, ITOPS_ROLE_DASHBOARD_VIEWER) || HasITOpsRole(empId, ITOPS_ROLE_REPORT_VIEWER))
+                    return Ok(true);
+
                 // V2: membership lives in the three join tables, not in single columns on
                 // ITOPS_ASSESSMENT (that shape is what made this endpoint throw
                 // "Invalid column name 'COE_SPOC_EMP_ID'").
@@ -842,6 +938,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var isGdh = ITOPS_GDH_BUSINESS_UNITS.Any(bu => GetITOpsGdhEmailsForBusinessUnit(bu).Contains(email.Trim().ToLowerInvariant()));
                     if (isGdh) return Ok(true);
                 }
+
+                // Allocated to, or "owns" (BU Head/DM/PM/AM/Quality SPOC/Delivery Partner),
+                // a project that has an active IT Ops assessment - same relationship
+                // GetITOpsHasDashboardAccess/GetITOpsHasReportAccess now grant own-scope
+                // access from (see GetITOpsAllocatedProjectIds).
+                if (HasITOpsAllocatedAssessment(empId)) return Ok(true);
 
                 return Ok(false);
             }
@@ -1064,7 +1166,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var gdhBusinessUnits = explicitFullAccess ? new List<string>() : GetITOpsGdhBusinessUnitsForEmpId(empId);
                 var isGdh = gdhBusinessUnits.Any();
                 var fullAccess = explicitFullAccess || isGdh;
-                var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId);
+                // A project allocation (PROJECT_RESOURCE) or ownership listing (BU Head/DM/
+                // PM/AM/Quality SPOC/Delivery Partner on the PROJECT row) grants the same
+                // own-scope Dashboard access an Assessor/Reviewer/Assessee assignment does -
+                // same relationship CSM's own Reports feature already uses.
+                var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId) || HasITOpsAllocatedAssessment(empId);
                 return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment, IsGdh = isGdh, GdhBusinessUnits = gdhBusinessUnits });
             }
             catch (Exception ex)
@@ -1100,7 +1206,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var gdhBusinessUnits = explicitFullAccess ? new List<string>() : GetITOpsGdhBusinessUnitsForEmpId(empId);
                 var isGdh = gdhBusinessUnits.Any();
                 var fullAccess = explicitFullAccess || isGdh;
-                var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId);
+                // Same allocation/ownership carve-out as GetITOpsHasDashboardAccess.
+                var hasAnyAssignment = fullAccess || HasAnyITOpsAssignment(empId) || HasITOpsAllocatedAssessment(empId);
                 return Ok(new { FullAccess = fullAccess, HasAnyAssignment = hasAnyAssignment, IsGdh = isGdh, GdhBusinessUnits = gdhBusinessUnits });
             }
             catch (Exception ex)
@@ -1306,26 +1413,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
             assessmentList = assessmentList.Where(a => currentlyMappedDomainIds.Contains(a.DOMAIN_ID)).ToList();
 
-            // myEmpId narrows this down to only the assessments this person is personally
-            // on, in ANY of the three roles - used by the Dashboard's own-scope view (an
-            // assessor/reviewer/assessee with no Dashboard/Report Viewer grant), where
-            // custId/projectId alone would otherwise return every domain mapped to a
-            // project they merely have ONE assignment on, including domains that are
-            // someone else's entirely.
+            // myEmpId narrows this down to only the assessments this person is entitled to
+            // under own-scope - personal Assessor/Reviewer/Assessee assignment, an
+            // allocated/owned project, or (for a GDH) their own configured Business
+            // Unit(s), enforced server-side (see GetITOpsOwnScopeAssessmentIds) - used by
+            // the Dashboard's own-scope view (anyone without a Dashboard Viewer/Superuser
+            // grant), where custId/projectId/businessUnit alone would otherwise trust
+            // whatever the request happened to send.
             if (!string.IsNullOrWhiteSpace(myEmpId))
             {
-                var myAssessmentIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
-                    .Where(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == myEmpId)
-                    .Select(a => a.ASSESSMENT_ID)
-                    .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
-                        .Where(r => r.ISACTIVE && r.REVIEWER_EMP_ID == myEmpId)
-                        .Select(r => r.ASSESSMENT_ID))
-                    .Concat(CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
-                        .Where(x => x.ISACTIVE && x.ASSESSEE_EMP_ID == myEmpId)
-                        .Select(x => x.ASSESSMENT_ID))
-                    .Distinct()
-                    .ToList();
-                assessmentList = assessmentList.Where(a => myAssessmentIds.Contains(a.ID)).ToList();
+                var allowedAssessmentIds = GetITOpsOwnScopeAssessmentIds(myEmpId, assessmentList);
+                assessmentList = assessmentList.Where(a => allowedAssessmentIds.Contains(a.ID)).ToList();
             }
 
             if (!assessmentList.Any()) return Ok(new List<ITOPS_DomainTrackerRow>());
@@ -1439,15 +1537,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var domainScoreIds = allScores.Where(s => domainAssessmentIds.Contains(s.ASSESSMENT_ID)).Select(s => s.ID).ToList();
                 var allFindingsResolved = !domainScoreIds.Any(id => unresolvedScoreIds.Contains(id));
                 var paramCount = paramCountByDomain.ContainsKey(domainId) ? paramCountByDomain[domainId] : 0;
+                var applicableParamCount = scored.Count;
                 var sumScores = scored.Sum(s => s.SCORE_VALUE.Value);
-                // Max possible is the rubric ceiling - every parameter maxes out at 5 -
-                // not paramCount times however many project-assessments happen to feed
-                // this domain row; that previously inflated Max whenever a domain rolled
-                // up more than one project (e.g. 17 params x 3 assessments = 51 instead
-                // of the correct 17 x 5 = 85).
-                var maxPossible = paramCount * 5;
+                // Max possible is the rubric ceiling for whichever parameters actually
+                // apply - a parameter marked NA has no ceiling of its own to hit, so it's
+                // applicableParamCount x 5, not the full ParamCount x 5 (a domain where
+                // most parameters were marked NA would otherwise show a permanently
+                // unreachable Max and a Maturity % dragged down by parameters that were
+                // never in scope). Also not paramCount times however many project-
+                // assessments happen to feed this domain row; that previously inflated Max
+                // whenever a domain rolled up more than one project (e.g. 17 params x 3
+                // assessments = 51 instead of the correct 17 x 5 = 85).
+                var maxPossible = applicableParamCount * 5;
                 decimal? avg = scored.Count == 0 ? (decimal?)null : Math.Round((decimal)sumScores / scored.Count, 2);
-                decimal? maturityPct = avg.HasValue ? Math.Round(avg.Value / 5 * 100, 2) : (decimal?)null;
+                // Maturity % = Sum of Scores / Max Score x 100 - computed straight off the
+                // raw sums rather than off the already-rounded Avg, so it isn't compounding
+                // Avg's own 2-decimal rounding into a second rounding step.
+                decimal? maturityPct = maxPossible == 0 ? (decimal?)null : Math.Round((decimal)sumScores / maxPossible * 100, 2);
 
                 var assessorIds = assessorRows.Where(x => domainAssessmentIds.Contains(x.ASSESSMENT_ID))
                     .OrderBy(x => x.ID).Select(x => x.ASSESSOR_EMP_ID).Distinct().ToList();
@@ -1490,6 +1596,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     CycleLabel = masters.ContainsKey(representative.ASSESSMENT_MASTER_ID) ? masters[representative.ASSESSMENT_MASTER_ID] : null,
                     Status = status,
                     ParamCount = paramCount,
+                    ApplicableParamCount = applicableParamCount,
                     SumScores = sumScores,
                     MaxPossible = maxPossible,
                     AverageScore = avg,
@@ -2543,9 +2650,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // structural gaps here rather than disappearing once nothing is "actionable".
             // Only shown once an assessment has actually been submitted at least once -
             // a still-Draft/NotStarted/InProgress domain has nothing worth surfacing yet.
+            //
+            // A parameter marked Not Applicable is the one exception to that submitted-
+            // status gate: SCORE_VALUE null only ever gets written the moment an assessor
+            // actually marks that parameter NA (an untouched parameter has no ITOPS_SCORE
+            // row at all), so the row itself is proof of a deliberate NA call - it doesn't
+            // need the assessment to have been submitted for that call to be real, and it
+            // should keep surfacing here for as long as it stays NA, past assessment or
+            // future one alike, exactly like a normal scored gap does once submitted.
             var submittedStatuses = new HashSet<string> { "PendingReview", "ReturnedForRevision", "Approved" };
             var scoreRows = CSPdb.ITOPS_SCORE.GetAll()
-                .Where(s => s.ISACTIVE && s.SCORE_VALUE.HasValue && s.SCORE_VALUE.Value < 5)
+                .Where(s => s.ISACTIVE && (!s.SCORE_VALUE.HasValue || s.SCORE_VALUE.Value < 5))
                 .ToList();
 
             Func<ITOPS_SCORE, ITOPS_ASSESSMENT> assessmentOf = s =>
@@ -2557,7 +2672,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             scoreRows = scoreRows.Where(s =>
             {
                 var a = assessmentOf(s);
-                return a != null && submittedStatuses.Contains(a.STATUS);
+                if (a == null) return false;
+                return !s.SCORE_VALUE.HasValue || submittedStatuses.Contains(a.STATUS);
             }).ToList();
 
             if (!string.IsNullOrWhiteSpace(custId))
@@ -2610,23 +2726,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .ToList();
             }
 
-            // Same own-scope narrowing as GetITOpsDomainTracker's myEmpId: without this,
-            // an assessor/reviewer/assessee with no Dashboard/Report Viewer grant would see
-            // every domain's risks for a project they merely have ONE assignment on.
+            // Same own-scope narrowing as GetITOpsDomainTracker's myEmpId (see
+            // GetITOpsOwnScopeAssessmentIds) - without this, anyone without a Dashboard
+            // Viewer/Superuser grant would see every domain's risks for a project/BU
+            // they aren't actually entitled to.
             if (!string.IsNullOrWhiteSpace(myEmpId))
             {
-                var myAssessmentIds = CSPdb.ITOPS_ASSESSMENT_ASSESSOR.GetAll()
-                    .Where(a => a.ISACTIVE && a.ASSESSOR_EMP_ID == myEmpId)
-                    .Select(a => a.ASSESSMENT_ID)
-                    .Concat(CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
-                        .Where(r => r.ISACTIVE && r.REVIEWER_EMP_ID == myEmpId)
-                        .Select(r => r.ASSESSMENT_ID))
-                    .Concat(CSPdb.ITOPS_ASSESSMENT_ASSESSEE.GetAll()
-                        .Where(x => x.ISACTIVE && x.ASSESSEE_EMP_ID == myEmpId)
-                        .Select(x => x.ASSESSMENT_ID))
-                    .Distinct()
-                    .ToList();
-                scoreRows = scoreRows.Where(s => myAssessmentIds.Contains(s.ASSESSMENT_ID)).ToList();
+                var candidateAssessments = scoreRows.Select(assessmentOf).Where(a => a != null).Distinct().ToList();
+                var allowedAssessmentIds = GetITOpsOwnScopeAssessmentIds(myEmpId, candidateAssessments);
+                scoreRows = scoreRows.Where(s => allowedAssessmentIds.Contains(s.ASSESSMENT_ID)).ToList();
             }
 
             // Recommended-action text still comes from the finding (the assessor's own
@@ -2656,7 +2764,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToDictionary(g => g.Key, g => g.First().CUST_NM);
 
             var rows = scoreRows
-                .OrderByDescending(s => 5 - s.SCORE_VALUE.Value)
+                // A Not Applicable row (SCORE_VALUE null) is the largest possible gap -
+                // sorts as if Gap were 5, ahead of any actually-scored parameter.
+                .OrderByDescending(s => s.SCORE_VALUE.HasValue ? 5 - s.SCORE_VALUE.Value : 5)
                 .Take(take)
                 .Select(s =>
                 {
@@ -2667,23 +2777,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     ITOPS_FINDING finding;
                     findingByScoreId.TryGetValue(s.ID, out finding);
                     var custIdForRow = assessment != null && projectCustId.ContainsKey(assessment.PROJECT_ID) ? projectCustId[assessment.PROJECT_ID] : null;
+                    var isNotScored = !s.SCORE_VALUE.HasValue;
 
                     // RECOMMENDED_ACTION is never actually populated anywhere in the app (no
                     // UI ever writes it) - it was always null, silently forcing every single
                     // row onto the generic "Advance X from level Y toward Z" filler text below.
                     // The assessor's own words already exist, in ITOPS_SCORE.NOTES (mandatory
                     // for any score) - surface that as the real recommendation instead.
-                    var recommendation = !string.IsNullOrWhiteSpace(finding?.RECOMMENDED_ACTION)
-                        ? finding.RECOMMENDED_ACTION
-                        : s.NOTES;
+                    var recommendation = isNotScored
+                        ? "Not Scored"
+                        : (!string.IsNullOrWhiteSpace(finding?.RECOMMENDED_ACTION) ? finding.RECOMMENDED_ACTION : s.NOTES);
 
                     return new ITOPS_TopRiskRow
                     {
                         DomainName = domain?.NAME,
                         Category = category?.NAME,
                         ParameterName = parameter?.NAME,
-                        CurrentScore = s.SCORE_VALUE,
-                        Gap = 5 - s.SCORE_VALUE.Value,
+                        CurrentScore = isNotScored ? 0 : s.SCORE_VALUE,
+                        Gap = isNotScored ? 5 : 5 - s.SCORE_VALUE.Value,
+                        IsNotScored = isNotScored,
                         RecommendedAction = recommendation,
                         AccountId = custIdForRow,
                         AccountName = custIdForRow != null && custNames.ContainsKey(custIdForRow) ? custNames[custIdForRow] : custIdForRow

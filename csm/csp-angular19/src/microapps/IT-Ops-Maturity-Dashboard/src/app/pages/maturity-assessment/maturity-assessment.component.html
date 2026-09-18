@@ -15,10 +15,19 @@
     <div>
       <h1>{{ domain.name }} Assessment</h1>
       <div class="meta">
-        <span>COE SPOC: <strong>{{ domain.coeSpoc }}</strong></span>
-        <span>Reviewer: <strong>{{ domain.reviewer }}</strong></span>
-        <span *ngIf="assesseeNamesList.length">{{ assesseeNamesList.length === 1 ? 'Assessee' : 'Assessees' }}: <strong>{{ assesseeNames() }}</strong></span>
-        <span [class]="statusClass(domain.status)">{{ domain.status }}</span>
+        <span class="meta-item spoc">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <em>COE SPOC</em><strong>{{ domain.coeSpoc }}</strong>
+        </span>
+        <span class="meta-item reviewer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="2"/></svg>
+          <em>Reviewer</em><strong>{{ domain.reviewer }}</strong>
+        </span>
+        <span class="meta-item assessees" *ngIf="assesseeNamesList.length">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="8.5" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="16.5" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M2.5 20a6 6 0 0 1 12 0M14 20a5 5 0 0 1 9-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <em>{{ assesseeNamesList.length === 1 ? 'Assessee' : 'Assessees' }}</em><strong>{{ assesseeNames() }}</strong>
+        </span>
+        <span [class]="statusClass(displayDomainStatus())">{{ displayDomainStatus() }}</span>
       </div>
     </div>
     <div class="header-actions">
@@ -155,8 +164,29 @@
           </div>
           <p class="field-error" *ngIf="evidenceErrors.get(param.id)">{{ evidenceErrors.get(param.id) }}</p>
 
-          <div class="finding-badge" *ngIf="isProbableFinding(param) && ((param.findingStatus && param.findingStatus !== 'Pending') || param.findingRejectionComment || param.findingDisputeComment)">
-            <span [class]="'finding-pill ' + (param.findingStatus === 'Rejected' ? 'rejected' : 'accepted')" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
+          <!-- A freshly-raised finding (score < 5) that the assessee hasn't acted
+               on yet - the assessor should see at a glance that this is still
+               waiting on someone else, not assume it's been silently dropped. -->
+          <div class="finding-badge pending-note" *ngIf="isProbableFinding(param) && param.findingStatus === 'Pending'">
+            <span class="finding-pill pending">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Area of improvement - yet to be accepted/rejected by Assessee
+            </span>
+            <span class="finding-assessee" *ngIf="param.findingAssesseeName">Assessee: <strong>{{ param.findingAssesseeName }}</strong></span>
+          </div>
+
+          <!-- One connected card for "what happened to this finding" - the status
+               pill anchors it, rejection/dispute history and the eventual Action
+               Taken readout nest underneath a shared colored left rail, instead
+               of two separate same-weight boxes with no visual link between them. -->
+          <div
+            class="finding-outcome"
+            [class.is-rejected]="param.findingStatus === 'Rejected'"
+            *ngIf="isProbableFinding(param) && ((param.findingStatus && param.findingStatus !== 'Pending') || param.findingRejectionComment || param.findingDisputeComment)"
+          >
+            <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
+              <svg *ngIf="param.findingStatus !== 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <svg *ngIf="param.findingStatus === 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
               Finding {{ param.findingStatus }}
             </span>
             <span class="finding-assessee" *ngIf="param.findingAssesseeName">Assessee: <strong>{{ param.findingAssesseeName }}</strong></span>
@@ -168,7 +198,7 @@
             </p>
             <div class="rejection-decision" *ngIf="param.findingStatus === 'Rejected'">
               <ng-container *ngIf="decidingRejectionParamId !== param.id">
-                <button type="button" class="btn-secondary btn-sm" (click)="openRejectionDecision(param)">Accept / Dispute Rejection</button>
+                <button type="button" class="btn-decide-rejection" (click)="openRejectionDecision(param)">Accept / Dispute Rejection</button>
               </ng-container>
               <div class="rejection-decision-form" *ngIf="decidingRejectionParamId === param.id">
                 <label class="modal-label">Dispute comment <span class="hint">(required only if disputing)</span></label>
@@ -181,15 +211,15 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="action-update-block readonly" *ngIf="(param.findingStatus === 'Accepted' || param.findingStatus === 'Closed') && (param.findingActionTaken || evidenceFor(param).length)">
-            <label class="modal-label">Action Taken{{ param.findingAssesseeName ? ' (by ' + param.findingAssesseeName + ')' : '' }}</label>
-            <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
-            <div class="evidence-list" *ngIf="evidenceFor(param).length">
-              <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
-                <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
-              </span>
+            <div class="action-taken-nested" *ngIf="(param.findingStatus === 'Accepted' || param.findingStatus === 'Closed') && (param.findingActionTaken || evidenceFor(param).length)">
+              <span class="action-taken-label">Action taken{{ param.findingAssesseeName ? ' (by ' + param.findingAssesseeName + ')' : '' }}</span>
+              <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
+              <div class="evidence-list" *ngIf="evidenceFor(param).length">
+                <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
+                  <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -198,7 +228,7 @@
   </div>
 
   <div class="actions" *ngIf="!isLocked()">
-    <button class="btn-secondary" (click)="saveDraft()">Save Draft</button>
+    <button class="btn-secondary btn-outline-accent" (click)="saveDraft()">Save Draft</button>
     <button class="btn-primary" [disabled]="submitting" (click)="openSubmitModal()">
       <app-spinner *ngIf="submitting" [size]="13" />
       Submit for Review

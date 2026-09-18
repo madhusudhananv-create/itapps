@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { SessionService } from '../../services/session.service';
 import { CurrentUser } from '../../models/maturity.model';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
@@ -53,14 +54,28 @@ export class NavMenuComponent implements OnInit {
    */
   canSeeMyAssignments = false;
 
+  /**
+   * Whether the current URL should light up the "Assessments" nav link.
+   * routerLinkActive alone can't do this - opening an assessment/review
+   * navigates to a sibling top-level route (/assessment/:id, /review/:id),
+   * not a child of /my-assignments, so the plain routerLinkActive prefix
+   * match never fires there even though that page IS the Assessments flow.
+   */
+  assessmentsActive = false;
+
   constructor(
     private session: SessionService,
     private adminApi: ItOpsAdminSetupService,
     private maturityApi: ItOpsMaturityApiService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.session.user$.subscribe((user) => (this.currentUser = user));
+    this.updateAssessmentsActive(this.router.url);
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e) => {
+      this.updateAssessmentsActive((e as NavigationEnd).urlAfterRedirects);
+    });
     this.adminApi.getMyAccess().subscribe((access) => (this.canSeeAdminSetup = access.isAdmin));
 
     const empId = localStorage.getItem('empid');
@@ -76,6 +91,10 @@ export class NavMenuComponent implements OnInit {
         error: () => (this.canSeeMyAssignments = false),
       });
     }
+  }
+
+  private updateAssessmentsActive(url: string): void {
+    this.assessmentsActive = url.startsWith('/my-assignments') || url.startsWith('/assessment/') || url.startsWith('/review/');
   }
 
   logout(): void {

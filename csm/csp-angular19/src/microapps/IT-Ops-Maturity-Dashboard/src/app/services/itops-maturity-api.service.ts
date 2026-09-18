@@ -65,6 +65,8 @@ export interface ItOpsDomainTrackerRow {
   reviewerName: string | null;
   status: string;
   paramCount: number;
+  /** How many of paramCount were actually scored (not left NA) - the "No of Applicable Parameters" scorecard column; maxPossible is this count x 5, not paramCount x 5. */
+  applicableParamCount: number;
   sumScores: number;
   maxPossible: number;
   averageScore: number | null;
@@ -95,6 +97,8 @@ export interface ItOpsTopRiskRow {
   currentScore: number | null;
   gap: number;
   recommendedAction: string | null;
+  /** True when the parameter was marked Not Applicable rather than scored - shown as "Not scored" instead of a numeric gap. */
+  isNotScored: boolean;
   accountId?: string | null;
   accountName?: string | null;
 }

@@ -105,23 +105,34 @@
     </div>
 
     <div class="assignments-filters">
-      <div class="cycle-filter" *ngIf="cycleOptions.length > 1">
-        <label for="assignmentsCycleFilter">Cycle</label>
+      <div class="filter-pill" *ngIf="cycleOptions.length > 1" [class.is-set]="cycleFilter !== 'all'">
+        <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9.5h18M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <label for="assignmentsCycleFilter" class="filter-pill-label">Cycle</label>
         <app-searchable-select
           id="assignmentsCycleFilter"
           [options]="assignmentsCycleOptions"
           [(ngModel)]="cycleFilter"
         ></app-searchable-select>
+        <button type="button" class="filter-pill-clear" *ngIf="cycleFilter !== 'all'" (click)="cycleFilter = 'all'" aria-label="Reset cycle filter">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
       </div>
-      <div class="cycle-filter" *ngIf="statusFilterOptions.length > 1">
-        <label for="assignmentsStatusFilter">Status</label>
+      <div class="filter-pill" *ngIf="statusFilterOptions.length > 1" [class.is-set]="statusFilter !== 'all'">
+        <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <label for="assignmentsStatusFilter" class="filter-pill-label">Status</label>
         <app-searchable-select
           id="assignmentsStatusFilter"
           [options]="assignmentsStatusOptions"
           [(ngModel)]="statusFilter"
           (ngModelChange)="onStatusFilterChange()"
         ></app-searchable-select>
+        <button type="button" class="filter-pill-clear" *ngIf="statusFilter !== 'all'" (click)="statusFilter = 'all'; onStatusFilterChange()" aria-label="Reset status filter">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
       </div>
+      <button type="button" class="filter-reset-all" *ngIf="cycleFilter !== 'all' || statusFilter !== 'all'" (click)="resetAssignmentFilters()">
+        Reset filters
+      </button>
     </div>
 
     <div class="assignments-role-tabs">
@@ -131,21 +142,36 @@
       <button *ngIf="hasReviewerAssignments" type="button" [class.active]="assignmentsTab === 'reviews'" (click)="selectAssignmentsTab('reviews')">
         Needs Review <span class="tab-count">{{ pendingReviewActionCount }}</span>
       </button>
+      <button *ngIf="hasAllocatedOnlyAssignments" type="button" [class.active]="assignmentsTab === 'allocated'" (click)="selectAssignmentsTab('allocated')" title="Assessments on projects you're allocated to or manage, even without a personal Assessor/Reviewer/Assessee role on them">
+        Assessments <span class="tab-count">{{ myAllocatedAssessments.length }}</span>
+      </button>
     </div>
 
-    <div class="search-box">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" placeholder="Search by account, project or domain" [(ngModel)]="assignmentSearch" (ngModelChange)="onAssignmentSearchChange()">
+    <div class="search-row">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by account, project or domain" [(ngModel)]="assignmentSearch" (ngModelChange)="onAssignmentSearchChange()">
+      </div>
+      <div class="view-toggle">
+        <button type="button" [class.active]="groupedView" (click)="setGroupedView(true)" title="Group rows by account and project">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+          Grouped
+        </button>
+        <button type="button" [class.active]="!groupedView" (click)="setGroupedView(false)" title="One row per assessment">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg>
+          Flat
+        </button>
+      </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
+    <div class="table-wrap assignments-table-wrap">
+      <table *ngIf="!groupedView">
         <thead>
           <tr>
             <th class="sortable" (click)="sortAssignmentsBy('account')">Account <span class="sort-arrow">{{ assignmentSortIndicator('account') }}</span></th>
             <th class="sortable" (click)="sortAssignmentsBy('project')">Project <span class="sort-arrow">{{ assignmentSortIndicator('project') }}</span></th>
             <th class="sortable" (click)="sortAssignmentsBy('domain')">Technology Domain <span class="sort-arrow">{{ assignmentSortIndicator('domain') }}</span></th>
-            <th class="sortable" (click)="sortAssignmentsBy('role')">My Role <span class="sort-arrow">{{ assignmentSortIndicator('role') }}</span></th>
+            <th *ngIf="assignmentsTab !== 'allocated'" class="sortable" (click)="sortAssignmentsBy('role')">My Role <span class="sort-arrow">{{ assignmentSortIndicator('role') }}</span></th>
             <th class="sortable" (click)="sortAssignmentsBy('cycle')">Cycle <span class="sort-arrow">{{ assignmentSortIndicator('cycle') }}</span></th>
             <th class="sortable" (click)="sortAssignmentsBy('status')">Status <span class="sort-arrow">{{ assignmentSortIndicator('status') }}</span></th>
             <th></th>
@@ -156,31 +182,111 @@
             <td>{{ row.accountName || '-' }}</td>
             <td>{{ row.projectName || row.projectId || '-' }}</td>
             <td>{{ row.domainName || row.domainCode || '-' }}</td>
-            <td>
+            <td *ngIf="assignmentsTab !== 'allocated'">
               <span *ngFor="let role of row.roles" [class]="rolePillClass(role)">{{ role }}</span>
             </td>
             <td>{{ row.cycleLabel || '-' }}</td>
             <td>
-              <span [class]="statusClass(displayAssignmentStatus(row))">{{ displayAssignmentStatus(row) }}</span>
+              <span [class]="statusClass(displayAssignmentStatus(row)) + ' status-pill-iconed'">
+                <svg *ngIf="assignmentStatusIcon(displayAssignmentStatus(row)) === 'check'" width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg *ngIf="assignmentStatusIcon(displayAssignmentStatus(row)) === 'dot'" width="7" height="7" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+                {{ displayAssignmentStatus(row) }}
+              </span>
               <span class="urgent-tag" *ngIf="needsAction(row)">Action needed</span>
             </td>
             <td>
-              <span class="domain-link">
+              <button type="button" class="row-action" (click)="openAssignmentAction($event, row)">
                 {{ row.status === 'Approved' ? (isAssessorOn(row) ? 'View assessment' : 'View review') : (isAssessorOn(row) ? 'Open assessment' : 'Open review') }}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-              </span>
+              </button>
             </td>
           </tr>
           <tr *ngIf="!currentTabAssignments.length && (assignmentSearch || statusFilter !== 'all')">
-            <td colspan="7" class="picker-empty">No rows match the current search/status filter.</td>
+            <td [attr.colspan]="assignmentsTab === 'allocated' ? 6 : 7" class="picker-empty">No rows match the current search/status filter.</td>
           </tr>
           <tr *ngIf="!currentTabAssignments.length && !assignmentSearch && statusFilter === 'all' && assignmentsTab === 'assessments'">
             <td colspan="7" class="picker-empty">No assessments assigned to you right now.</td>
           </tr>
           <tr *ngIf="!currentTabAssignments.length && !assignmentSearch && statusFilter === 'all' && assignmentsTab === 'reviews'">
             <td colspan="7" class="picker-empty">Nothing assigned to you for review right now.</td>
+          </tr>
+          <tr *ngIf="!currentTabAssignments.length && !assignmentSearch && statusFilter === 'all' && assignmentsTab === 'allocated'">
+            <td colspan="6" class="picker-empty">No assessments on your allocated/managed projects right now.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table *ngIf="groupedView">
+        <colgroup *ngIf="assignmentsTab !== 'allocated'">
+          <col style="width:34%"><col style="width:15%"><col style="width:15%"><col style="width:16%"><col style="width:20%">
+        </colgroup>
+        <colgroup *ngIf="assignmentsTab === 'allocated'">
+          <col style="width:40%"><col style="width:18%"><col style="width:18%"><col style="width:24%">
+        </colgroup>
+        <tbody *ngFor="let g of pagedAssignmentGroups; trackBy: trackGroupByKey" class="assignment-group">
+          <tr class="group-head-row" (click)="toggleGroup(g.key)">
+            <td [attr.colspan]="assignmentsTab === 'allocated' ? 4 : 5">
+              <div class="group-head">
+                <svg class="chev" [class.open]="!isGroupCollapsed(g.key)" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
+                <span class="g-account">{{ g.accountName }}</span>
+                <span class="g-project">{{ g.projectName }}</span>
+                <span class="g-meta">
+                  <span class="g-progress" [title]="g.doneCount + ' of ' + g.totalCount + ' approved/completed'"><i [style.width.%]="groupProgressPct(g)"></i></span>
+                  <span class="g-count">{{ g.totalCount }} domain{{ g.totalCount === 1 ? '' : 's' }}</span>
+                </span>
+              </div>
+            </td>
+          </tr>
+          <ng-container *ngIf="!isGroupCollapsed(g.key)">
+            <tr class="col-header-row">
+              <td>Technology Domain</td>
+              <td *ngIf="assignmentsTab !== 'allocated'">My Role</td>
+              <td>Cycle</td>
+              <td>Status</td>
+              <td></td>
+            </tr>
+            <tr *ngFor="let row of g.rows" class="assignment-row grouped-row" [class.urgent-row]="needsAction(row)" (click)="openAssignment(row)">
+              <td>
+                <span class="domain-dot" [style.background]="domainDotColor(displayAssignmentStatus(row))"></span>
+                {{ row.domainName || row.domainCode || '-' }}
+              </td>
+              <td *ngIf="assignmentsTab !== 'allocated'">
+                <span *ngFor="let role of row.roles" [class]="rolePillClass(role)">{{ role }}</span>
+              </td>
+              <td>{{ row.cycleLabel || '-' }}</td>
+              <td>
+                <span [class]="statusClass(displayAssignmentStatus(row)) + ' status-pill-iconed'">
+                  <svg *ngIf="assignmentStatusIcon(displayAssignmentStatus(row)) === 'check'" width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg *ngIf="assignmentStatusIcon(displayAssignmentStatus(row)) === 'dot'" width="7" height="7" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+                  {{ displayAssignmentStatus(row) }}
+                </span>
+                <span class="urgent-tag" *ngIf="needsAction(row)">Action needed</span>
+              </td>
+              <td>
+                <button type="button" class="row-action" (click)="openAssignmentAction($event, row)">
+                  {{ row.status === 'Approved' ? (isAssessorOn(row) ? 'View assessment' : 'View review') : (isAssessorOn(row) ? 'Open assessment' : 'Open review') }}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+        <tbody *ngIf="!currentTabAssignments.length">
+          <tr *ngIf="assignmentSearch || statusFilter !== 'all'">
+            <td [attr.colspan]="assignmentsTab === 'allocated' ? 4 : 5" class="picker-empty">No rows match the current search/status filter.</td>
+          </tr>
+          <tr *ngIf="!assignmentSearch && statusFilter === 'all' && assignmentsTab === 'assessments'">
+            <td colspan="5" class="picker-empty">No assessments assigned to you right now.</td>
+          </tr>
+          <tr *ngIf="!assignmentSearch && statusFilter === 'all' && assignmentsTab === 'reviews'">
+            <td colspan="5" class="picker-empty">Nothing assigned to you for review right now.</td>
+          </tr>
+          <tr *ngIf="!assignmentSearch && statusFilter === 'all' && assignmentsTab === 'allocated'">
+            <td colspan="4" class="picker-empty">No assessments on your allocated/managed projects right now.</td>
           </tr>
         </tbody>
       </table>
@@ -329,6 +435,7 @@
               <th>Reviewer</th>
               <th class="sortable" (click)="sortDomainTrackerBy('status')">Status <span class="sort-arrow">{{ domainTrackerSortIndicator('status') }}</span></th>
               <th class="col-num">Parameters</th>
+              <th class="col-num">Applicable</th>
               <th class="col-num">Score</th>
               <th class="col-num">Max</th>
               <th class="col-num sortable" (click)="sortDomainTrackerBy('averageScore')">Avg <span class="sort-arrow">{{ domainTrackerSortIndicator('averageScore') }}</span></th>
@@ -344,13 +451,13 @@
               <td>{{ domain.reviewer || 'Unassigned' }}</td>
               <td><span [class]="statusClass(displayDomainStatus(domain))">{{ displayDomainStatus(domain) }}</span></td>
               <td class="col-num">{{ domain.paramCount }}</td>
+              <td class="col-num">{{ domain.applicableParamCount }}</td>
               <td class="col-num">{{ domain.sumScores }}</td>
               <td class="col-num">{{ domain.maxPossible }}</td>
-              <td class="col-num">{{ domain.averageScore !== null ? domain.averageScore : '-' }}</td>
-              <td class="col-num">{{ domain.maturityPercent !== null ? domain.maturityPercent + '%' : '-' }}</td>
+              <td class="col-num">{{ domain.averageScore !== null ? (domain.averageScore | number: '1.2-2') : '0.00' }}</td>
+              <td class="col-num">{{ domain.maturityPercent !== null ? domain.maturityPercent + '%' : '0%' }}</td>
               <td>
-                <span [class]="maturityLevelPillClass(domain.maturityLevel)" *ngIf="domain.maturityLevel; else dash3">{{ domain.maturityLevel }}</span>
-                <ng-template #dash3>-</ng-template>
+                <span [class]="maturityLevelPillClass(levelLabel(domain.averageScore, domain.applicableParamCount))">{{ levelLabel(domain.averageScore, domain.applicableParamCount) }}</span>
               </td>
             </tr>
           </tbody>
@@ -358,9 +465,10 @@
             <tr class="estate-row">
               <td [attr.colspan]="!selectedAccount ? 5 : 4">Overall Estate</td>
               <td class="col-num">{{ enterpriseSummary.totalParamCount }}</td>
+              <td class="col-num">{{ enterpriseSummary.totalApplicableParamCount }}</td>
               <td class="col-num">{{ enterpriseSummary.totalSumScores }}</td>
               <td class="col-num">{{ enterpriseSummary.totalMaxPossible }}</td>
-              <td class="col-num">{{ enterpriseSummary.overallAverageScore }}</td>
+              <td class="col-num">{{ enterpriseSummary.overallAverageScore | number: '1.2-2' }}</td>
               <td class="col-num">{{ enterpriseSummary.overallMaturityPercent }}%</td>
               <td>
                 <span [class]="maturityLevelPillClass(enterpriseSummary.overallMaturityLevel)">{{ enterpriseSummary.overallMaturityLevel }}</span>
@@ -436,7 +544,7 @@
                 </div>
               </td>
               <td class="col-num">
-                <span class="gap-badge" [class]="'badge-' + gapSeverity(risk.gap)">{{ risk.gap }}</span>
+                <span class="gap-badge" [class]="'badge-' + gapSeverity(risk.gap, risk.isNotScored)">{{ risk.isNotScored ? 'Not scored' : risk.gap }}</span>
               </td>
               <td class="recommendation-cell">{{ risk.recommendation }}</td>
             </tr>
@@ -452,6 +560,7 @@
         <span class="legend-item"><span class="legend-dot dot-warning"></span>Gap of 1</span>
         <span class="legend-item"><span class="legend-dot dot-serious"></span>Gap of 2</span>
         <span class="legend-item"><span class="legend-dot dot-critical"></span>Gap of 3+</span>
+        <span class="legend-item"><span class="legend-dot dot-muted"></span>Not scored (NA)</span>
       </div>
     </section>
   </ng-container>

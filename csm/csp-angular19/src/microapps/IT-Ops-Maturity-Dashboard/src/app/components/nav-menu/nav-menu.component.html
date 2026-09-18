@@ -7,7 +7,7 @@
   </div>
   <div class="nav-links">
     <a *ngIf="canSeeDashboard" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
-    <a *ngIf="!isGdh && canSeeMyAssignments" routerLink="/my-assignments" routerLinkActive="active">My Assignments</a>
+    <a *ngIf="!isGdh && canSeeMyAssignments" routerLink="/my-assignments" [class.active]="assessmentsActive">Assessments</a>
     <a routerLink="/reports" routerLinkActive="active">Reports</a>
     <a *ngIf="canSeeAdminSetup" routerLink="/admin" routerLinkActive="active">Admin Setup</a>
   </div>

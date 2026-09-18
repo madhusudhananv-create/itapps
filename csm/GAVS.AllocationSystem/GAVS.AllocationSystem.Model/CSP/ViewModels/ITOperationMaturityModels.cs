@@ -38,6 +38,8 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public string CycleLabel { get; set; }
         public string Status { get; set; }
         public int ParamCount { get; set; }
+        /// <summary>How many of ParamCount were actually scored (not left NA) - the "No of Applicable Parameters" scorecard column. MaxPossible is this count x 5, not ParamCount x 5.</summary>
+        public int ApplicableParamCount { get; set; }
         public int SumScores { get; set; }
         public int MaxPossible { get; set; }
         // Populated when the tracker aggregates across every account ("All accounts" on
@@ -132,6 +134,8 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public int? CurrentScore { get; set; }
         public int Gap { get; set; }
         public string RecommendedAction { get; set; }
+        /// <summary>True when the assessor marked this parameter Not Applicable rather than scoring it - shown as "Not scored"/"Not Scored" in place of a numeric gap/recommendation, with CurrentScore reported as 0 and Gap as the max (5) for sorting purposes.</summary>
+        public bool IsNotScored { get; set; }
         // Populated when the Dashboard aggregates across every account ("All accounts")
         // so the same domain name on two different accounts can be told apart instead
         // of their risks silently merging under one shared domain-name tab.

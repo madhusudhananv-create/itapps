@@ -9,6 +9,8 @@
   --border: rgba(11, 11, 11, 0.1);
   --accent: #2a78d6;
   --accent-tint: #eaf2fc;
+  --meta-reviewer: #9c3fc9;
+  --meta-assessee: #147d7d;
 
   --status-good: #0ca30c;
   --status-warning: #fab219;
@@ -36,6 +38,8 @@
     --border: rgba(255, 255, 255, 0.1);
     --accent: #3987e5;
     --accent-tint: #16223a;
+    --meta-reviewer: #c869ea;
+    --meta-assessee: #40c8c8;
     color-scheme: dark;
   }
 }
@@ -51,6 +55,8 @@
   --border: rgba(255, 255, 255, 0.1);
   --accent: #3987e5;
   --accent-tint: #16223a;
+  --meta-reviewer: #c869ea;
+  --meta-assessee: #40c8c8;
   color-scheme: dark;
 }
 
@@ -151,10 +157,49 @@
 .meta {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   color: var(--text-secondary);
   font-size: 13px;
   flex-wrap: wrap;
+}
+
+/* COE SPOC/Reviewer/Assessees as small labeled chips (icon + caption +
+   name) instead of plain "Label: value" text run together with no visual
+   separation between them. */
+.meta-item {
+  --item-color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid color-mix(in srgb, var(--item-color) 30%, var(--gridline));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--item-color) 10%, var(--surface));
+  color: var(--text-primary);
+  font-size: 12.5px;
+  line-height: 1.2;
+
+  svg {
+    color: var(--item-color);
+    flex-shrink: 0;
+  }
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--item-color);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  strong {
+    font-weight: 650;
+  }
+
+  &.spoc { --item-color: var(--accent); }
+  &.reviewer { --item-color: var(--meta-reviewer); }
+  &.assessees { --item-color: var(--meta-assessee); }
 }
 
 .return-banner {
@@ -180,6 +225,9 @@
 .status-in-progress { background: color-mix(in srgb, var(--status-serious) 20%, transparent); color: #a34a1f; }
 .status-pending-review { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
 .status-approved { background: color-mix(in srgb, var(--status-good) 18%, transparent); color: var(--status-good); }
+/* Same tinted "glass" pill as Approved, but a deeper green text - distinct
+   enough to tell the two stages apart without going to a solid dark fill. */
+.status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }
 
 .provider-tabs {
   display: flex;
@@ -211,12 +259,11 @@
 
 .parameter-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 8px;
-  padding: 10px 14px 10px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
-  transition: box-shadow 0.15s ease, border-left-color 0.15s ease;
+  border: none;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.15s ease;
 
   &:hover {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 22px rgba(0, 0, 0, 0.05);
@@ -224,14 +271,7 @@
 }
 
 .param-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.param-heading {
-  min-width: 0;
+  margin-bottom: 4px;
 }
 
 /* Q-number + Category read as one metadata row (a chip pair, not prose) -
@@ -275,8 +315,8 @@
 }
 
 .param-header h3 {
-  margin: 0 0 4px;
-  font-size: 16.5px;
+  margin: 0 0 6px;
+  font-size: 18px;
   font-weight: 650;
   letter-spacing: -0.01em;
   color: var(--text-primary);
@@ -287,32 +327,48 @@
    as "detail about the heading above" without a literal "Definition:" tag. */
 .definition {
   color: var(--text-secondary);
-  margin: 0 0 8px;
+  margin: 0 0 16px;
   font-size: 13.5px;
-  font-weight: 500;
-  line-height: 1.45;
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 70ch;
 }
 
 .card-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gridline);
 }
 
 @media (max-width: 860px) {
   .card-body {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 16px;
   }
 }
 
 .rubric-compact {
-  margin-bottom: 6px;
+  margin-bottom: 0;
+
+  > label {
+    display: block;
+    font-size: 13px;
+    font-weight: 590;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+  }
 }
 
+/* Same read-only rubric scale as the assessor's own scoring UI (see
+   maturity-assessment.component.scss) - NA sits as its own neutral chip,
+   separated from the 1-5 severity scale, each level carries its own hue at
+   rest, and the active one fills solid in that hue. Rendered with <span>
+   instead of <button> here since a reviewer never scores - just reads. */
 .rubric-steps {
   display: flex;
-  gap: 3px;
+  gap: 8px;
 }
 
 .rubric-step {
@@ -320,74 +376,84 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 4px 3px;
-  border-radius: 6px;
-  background: var(--surface-tint);
+  justify-content: center;
+  gap: 2px;
+  padding: 9px 4px 8px;
+  border: 1.5px solid var(--gridline);
+  border-bottom: 3px solid var(--gridline);
+  border-radius: 9px;
+  background: var(--surface);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  cursor: default;
+  font-family: inherit;
 
   em {
     font-style: normal;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 9.5px;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     text-align: center;
     line-height: 1.1;
   }
 
+  &.level-1 { --lvl-color: var(--status-critical); }
+  &.level-2 { --lvl-color: var(--status-serious); }
+  &.level-3 { --lvl-color: #b8860b; }
+  &.level-4 { --lvl-color: #5c8a28; }
+  &.level-5 { --lvl-color: var(--status-good); }
+
+  &.level-1, &.level-2, &.level-3, &.level-4, &.level-5 {
+    border-bottom-color: color-mix(in srgb, var(--lvl-color) 55%, var(--gridline));
+
+    em { color: color-mix(in srgb, var(--lvl-color) 75%, var(--text-muted)); }
+  }
+
   &.active {
-    background: var(--accent-tint);
-    color: var(--accent);
+    background: var(--lvl-color, var(--accent));
+    border-color: var(--lvl-color, var(--accent));
+    color: #fff;
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--lvl-color, var(--accent)) 35%, transparent);
 
-    em {
-      color: var(--accent);
-    }
+    em { color: rgba(255, 255, 255, 0.85); }
+  }
+}
+
+.na-step {
+  flex: 0 0 52px;
+  --lvl-color: var(--text-muted);
+  margin-right: 4px;
+  border-right: 1.5px solid var(--gridline);
+  padding-right: 12px;
+
+  em {
+    font-size: 8.5px;
   }
 
-  &.level-1.active {
-    background: color-mix(in srgb, var(--status-critical) 20%, transparent);
-    color: var(--status-critical);
-    em { color: var(--status-critical); }
-  }
-
-  &.level-2.active {
-    background: color-mix(in srgb, var(--status-serious) 20%, transparent);
-    color: var(--status-serious);
-    em { color: var(--status-serious); }
-  }
-
-  &.level-3.active {
-    background: color-mix(in srgb, var(--status-warning) 25%, transparent);
-    color: #8a5a00;
-    em { color: #8a5a00; }
-  }
-
-  &.level-4.active {
-    background: color-mix(in srgb, #6aa62f 20%, transparent);
-    color: #5c8a28;
-    em { color: #5c8a28; }
-  }
-
-  &.level-5.active {
-    background: color-mix(in srgb, var(--status-good) 20%, transparent);
-    color: var(--status-good);
-    em { color: var(--status-good); }
+  &.active {
+    background: var(--text-secondary);
+    border-color: var(--text-secondary);
   }
 }
 
 .rubric-active-desc {
-  margin: 5px 0 0;
-  font-size: 13px;
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  background: var(--accent-tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 10px;
+  font-size: 12.5px;
   color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.55;
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .rubric-active-desc.muted {
+  background: var(--surface-tint);
+  border-color: var(--gridline);
   color: var(--text-secondary);
   font-style: italic;
 }
@@ -500,31 +566,6 @@
   }
 }
 
-.score-readout {
-  flex-shrink: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-  padding: 3px 9px;
-  border-radius: 6px;
-  background: var(--accent-tint);
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 14px;
-
-  span {
-    font-size: 10.5px;
-    font-weight: 600;
-    opacity: 0.85;
-  }
-}
-
-.score-readout.muted {
-  background: var(--surface-tint);
-  color: var(--text-muted);
-}
-
 .notes-readout {
   margin: 0;
   padding: 5px 8px;
@@ -576,67 +617,114 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   background: var(--surface);
   color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 10px;
+  font-size: 12.5px;
+  font-weight: 650;
+  padding: 5px 14px;
   border-radius: 999px;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
-  &:hover {
-    border-color: var(--accent);
-  }
-
-  &.accept.active {
-    background: color-mix(in srgb, var(--status-good) 18%, transparent);
+  /* Explicitly colored at rest (not only once "active"), so Accept/Reject
+     read as two distinct actions instead of one plain outline pill twice. */
+  &.accept {
     border-color: var(--status-good);
     color: var(--status-good);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--status-good) 14%, transparent);
+    }
+
+    &.active {
+      background: var(--status-good);
+      border-color: var(--status-good);
+      color: #fff;
+    }
   }
 
-  &.reject.active {
-    background: color-mix(in srgb, var(--status-critical) 16%, transparent);
+  &.reject {
     border-color: var(--status-critical);
     color: var(--status-critical);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--status-critical) 12%, transparent);
+    }
+
+    &.active {
+      background: var(--status-critical);
+      border-color: var(--status-critical);
+      color: #fff;
+    }
   }
 }
 
-.finding-badge {
-  margin-top: 5px;
+/* One connected card for "what happened to this finding" - a colored left
+   rail (green = resolved, red = rejected) ties the status pill, any
+   rejection/dispute history, and the eventual Action Taken readout together
+   as a single outcome instead of a flat stack of same-weight rows. */
+.finding-outcome {
+  margin-top: 8px;
+  padding: 10px 12px 10px 14px;
+  border-left: 3px solid var(--status-good);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--status-good) 6%, var(--surface-tint));
+
+  &.is-rejected {
+    border-left-color: var(--status-critical);
+    background: color-mix(in srgb, var(--status-critical) 6%, var(--surface-tint));
+  }
 }
 
 .finding-rejection-comment {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-size: 12.5px;
   color: var(--text-secondary, #667085);
 }
 
-.finding-history {
-  margin-top: 6px;
-}
-
 .finding-pill {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .finding-pill.accepted {
-  background: color-mix(in srgb, var(--status-good) 18%, transparent);
-  color: var(--status-good);
+  background: var(--status-good);
+  color: #fff;
 }
 
 .finding-pill.rejected {
-  background: color-mix(in srgb, var(--status-critical) 16%, transparent);
-  color: var(--status-critical);
+  background: var(--status-critical);
+  color: #fff;
+}
+
+/* Nested under the finding-outcome card via the same left rail, rather than
+   its own separate box, so it reads as "then this happened" continuing the
+   status above it. */
+.action-taken-nested {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.action-taken-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  margin-bottom: 4px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .actions {

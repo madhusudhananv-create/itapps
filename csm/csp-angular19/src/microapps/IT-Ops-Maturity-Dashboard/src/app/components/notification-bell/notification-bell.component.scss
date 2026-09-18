@@ -101,6 +101,11 @@
   border: none;
   background: none;
   color: var(--bell-accent);
+  /* The button is clickable but its text renders invisible without this -
+     the CSM shell applies a global gradient-text button reset
+     (-webkit-text-fill-color: transparent) that silently wins over a plain
+     `color` declaration in WebKit browsers, even though `color` is set correctly. */
+  -webkit-text-fill-color: var(--bell-accent);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -167,6 +172,9 @@
   border: none;
   background: none;
   color: var(--bell-muted);
+  /* Same shell-wide gradient-text button reset as .bell-clear above - without
+     this the x glyph is clickable but invisible. */
+  -webkit-text-fill-color: var(--bell-muted);
   font-size: 15px;
   line-height: 1;
   cursor: pointer;

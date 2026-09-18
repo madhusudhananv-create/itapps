@@ -16,6 +16,7 @@ import { DomainSummary, EnterpriseSummary, TopRisk, CurrentUser, DomainStatus } 
 import { CustomerModel } from '../../models/account.model';
 import { statusPillClass } from '../../utils/status.util';
 import { setGdhEmailsByBusinessUnit } from '../../utils/bu-head-map.util';
+import { maturityLevelLabel } from '../../utils/rubric.util';
 
 /** Maps the backend's ITOPS_ASSESSMENT.STATUS values onto this app's DomainStatus labels. */
 const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
@@ -41,6 +42,7 @@ function toDomainSummary(row: ItOpsDomainTrackerRow): DomainSummary {
     maturityPercent: row.maturityPercent,
     maturityLevel: row.maturityLevel,
     paramCount: row.paramCount,
+    applicableParamCount: row.applicableParamCount,
     sumScores: row.sumScores,
     maxPossible: row.maxPossible,
     accountId: row.accountId ?? undefined,
@@ -66,9 +68,10 @@ function toTopRisk(row: ItOpsTopRiskRow): TopRisk {
     parameter: row.parameterName,
     currentScore: score,
     gap: row.gap,
+    isNotScored: row.isNotScored,
     accountId: row.accountId ?? undefined,
     accountName: row.accountName ?? undefined,
-    recommendation: maturityBandLabel(score),
+    recommendation: row.isNotScored ? 'Not Scored' : maturityBandLabel(score),
   };
 }
 
@@ -81,43 +84,52 @@ function computeEnterpriseSummaryFromRows(summaries: DomainSummary[]): Enterpris
   // figures exclude those domains, since folding in their all-zero scores
   // would wrongly drag the enterprise average down toward 0.
   const totalParamCount = summaries.reduce((sum, s) => sum + s.paramCount, 0);
+  const totalApplicableParamCount = summaries.reduce((sum, s) => sum + s.applicableParamCount, 0);
   const totalSumScores = summaries.reduce((sum, s) => sum + s.sumScores, 0);
   const totalMaxPossible = summaries.reduce((sum, s) => sum + s.maxPossible, 0);
 
-  const scoredDomains = summaries.filter((s) => s.status !== 'Not Started' && s.status !== 'In Progress');
-  const scoredParamCount = scoredDomains.reduce((sum, s) => sum + s.paramCount, 0);
-  const scoredSumScores = scoredDomains.reduce((sum, s) => sum + s.sumScores, 0);
-  const overallAverageScore = scoredParamCount ? Math.round((scoredSumScores / scoredParamCount) * 100) / 100 : 0;
-  const overallMaturityPercent = Math.round((overallAverageScore / 5) * 100);
-  const levelFromAvg = (avg: number): string => {
-    if (avg <= 1) return 'Ad Hoc';
-    if (avg <= 2) return 'Developing';
-    if (avg <= 3) return 'Defined';
-    if (avg <= 4) return 'Managed';
-    return 'Optimized';
-  };
+  // Avg = Sum of Scores / No. of Applicable Parameters, same formula as every
+  // per-domain row (see GetITOpsDomainTracker's avg) - a domain that's still
+  // Not Started/In Progress naturally contributes 0 to both totalSumScores
+  // and totalApplicableParamCount, so it can't skew this average without
+  // needing a separate "scored domains only" filter.
+  const overallAverageScore = totalApplicableParamCount ? Math.round((totalSumScores / totalApplicableParamCount) * 100) / 100 : 0;
+  // Maturity % = Sum of Scores / Max Score x 100 - off the raw totals, not
+  // off the already-rounded Avg, so it doesn't compound Avg's own rounding.
+  const overallMaturityPercent = totalMaxPossible ? Math.round((totalSumScores / totalMaxPossible) * 100) : 0;
 
   return {
     overallAverageScore,
     overallMaturityPercent,
-    overallMaturityLevel: overallAverageScore > 0 ? levelFromAvg(overallAverageScore) : 'Not Started',
+    // Same "N - Label" bucketing used everywhere else (see maturityLevelLabel
+    // in rubric.util.ts) - "Not Started" is kept as this KPI's own special
+    // case for a genuinely-zero average (nothing scored yet), rather than
+    // the formula's own "Not in scope" wording.
+    overallMaturityLevel: overallAverageScore > 0 ? maturityLevelLabel(overallAverageScore) : 'Not Started',
     domainsCompleted: summaries.filter((s) => s.status === 'Approved').length,
     domainsInProgress: summaries.filter((s) => s.status === 'Draft' || s.status === 'In Progress' || s.status === 'Pending Review').length,
     domainsNotStarted: summaries.filter((s) => s.status === 'Not Started').length,
     totalParamCount,
+    totalApplicableParamCount,
     totalSumScores,
     totalMaxPossible,
   };
 }
 
-type StatusLevel = 'good' | 'warning' | 'serious' | 'critical';
+type StatusLevel = 'good' | 'warning' | 'serious' | 'critical' | 'optimal';
 
-const MATURITY_LEVEL_STATUS: Record<string, StatusLevel> = {
-  'Ad Hoc': 'critical',
-  Developing: 'serious',
-  Defined: 'warning',
-  Managed: 'good',
-  Optimized: 'good',
+// Each of the 5 maturity levels gets its own distinct color - Managed (4) and
+// Optimized (5) used to both map to 'good' (identical green), making the two
+// best levels indistinguishable at a glance; 'optimal' gives level 5 its own
+// deeper tone while level 4 keeps the standard green.
+const MATURITY_LEVEL_STATUS: Record<string, StatusLevel | 'muted'> = {
+  '1 - Ad Hoc': 'critical',
+  '2 - Developing': 'serious',
+  '3 - Defined': 'warning',
+  '4 - Managed': 'good',
+  '5 - Optimized': 'optimal',
+  'Not in scope': 'muted',
+  'N/A': 'muted',
 };
 
 const PER_DOMAIN_RISK_LIMIT = 10;
@@ -224,7 +236,7 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
    */
   viewMode: 'assignments' | 'accounts' = 'accounts';
   /** Which of the two "My Assignments" role tables is showing - someone who is only ever a Reviewer has no reason to land on an empty Assessments tab, so this defaults based on what they actually have (unless a prior visit's choice was remembered). */
-  assignmentsTab: 'assessments' | 'reviews' = (localStorage.getItem(MY_ASSIGNMENTS_TAB_KEY) as any) ?? 'assessments';
+  assignmentsTab: 'assessments' | 'reviews' | 'allocated' = (localStorage.getItem(MY_ASSIGNMENTS_TAB_KEY) as any) ?? 'assessments';
   /** Free-text filter over the current tab's rows - account/project/domain name. */
   assignmentSearch = '';
   /** 'all' or one of the raw backend statuses present in myAssignments - lets either tab be narrowed to just Approved, just Pending Review, etc. instead of a separate "Completed" tab. */
@@ -234,6 +246,15 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   assignmentsPage = 1;
   readonly assignmentsPageSize = 10;
   private _cycleFilter = localStorage.getItem(MY_ASSIGNMENTS_CYCLE_KEY) ?? 'all';
+  // True the moment this employee (or a prior visit in this browser) has ever
+  // explicitly picked a cycle here - once that's happened, the auto-default
+  // below must never override it. Someone who's never touched this dropdown
+  // yet gets steered onto the current cycle instead of "All cycles" - see
+  // maybeApplyDefaultCycle(), applied the same way for every role (Assessor,
+  // Reviewer, Assessee alike).
+  private cycleFilterExplicit = localStorage.getItem(MY_ASSIGNMENTS_CYCLE_KEY) !== null;
+  private cyclesLoadedForDefault = false;
+  private assignmentsLoadedForDefault = false;
 
   /** 'all' or one of the cycle labels present in myAssignments - lets the table be narrowed to one cycle instead of always listing every cycle's rows together. Persisted across visits. */
   get cycleFilter(): string {
@@ -242,8 +263,26 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
 
   set cycleFilter(value: string) {
     this._cycleFilter = value;
+    this.cycleFilterExplicit = true;
     localStorage.setItem(MY_ASSIGNMENTS_CYCLE_KEY, value);
     this.assignmentsPage = 1;
+  }
+
+  /**
+   * Steers a first-time visitor onto the current (Open) cycle instead of
+   * leaving them on "All cycles" - runs once both the cycle list and this
+   * employee's assignments have loaded, since the default itself (the Open
+   * cycle's label) has to actually appear in this employee's own
+   * cycleOptions to be worth switching to. A no-op once the visitor has ever
+   * explicitly chosen a cycle (see cycleFilterExplicit).
+   */
+  private maybeApplyDefaultCycle(): void {
+    if (!this.cyclesLoadedForDefault || !this.assignmentsLoadedForDefault) return;
+    if (this.cycleFilterExplicit) return;
+    const openCycle = this.dashboardCycles.find((c) => c.status === 'Open');
+    if (openCycle && this.cycleOptions.includes(openCycle.cycleLabel)) {
+      this._cycleFilter = openCycle.cycleLabel;
+    }
   }
 
   constructor(
@@ -265,6 +304,19 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     const initialMode = this.route.snapshot.data['initialMode'];
     if (initialMode === 'assignments' || initialMode === 'accounts') this.viewMode = initialMode;
     this.loadMyAssignments();
+    // checkDashboardAccess()'s own cycle load only runs on the Dashboard route
+    // (viewMode === 'accounts') - My Assignments/Assessments needs the cycle
+    // list too (for maybeApplyDefaultCycle's "current cycle" default), so
+    // fetch it here unconditionally rather than only when Dashboard access
+    // happens to also be checked.
+    this.api
+      .getCycleList()
+      .pipe(catchError(() => of([])))
+      .subscribe((cycles) => {
+        if (!this.dashboardCycles.length) this.dashboardCycles = cycles;
+        this.cyclesLoadedForDefault = true;
+        this.maybeApplyDefaultCycle();
+      });
     // DB-backed BU -> GDH email map (CONFIGURATION_EXT), fetched once and cached
     // in-memory for session.service.ts's resolveIdentity() to consult synchronously -
     // see setGdhEmailsByBusinessUnit/getGdhEmailsForBusinessUnit in bu-head-map.util.ts.
@@ -593,7 +645,13 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     // assignments, not every domain mapped to a project they merely have one assignment
     // on - needed even on the single-call path below (a project picked from their own
     // picker can still have sibling domains that belong to someone else entirely).
-    const myEmpId = this.dashboardOwnScopeOnly ? localStorage.getItem('empid') || undefined : undefined;
+    // Also sent for a GDH (dashboardGdhBusinessUnits non-empty): FullAccess is true for
+    // them so they aren't "own-scope", but the backend still needs their empId to
+    // enforce the Business-Unit restriction itself server-side rather than trusting
+    // whichever BU this screen's own dropdown happens to be set to.
+    const myEmpId = (this.dashboardOwnScopeOnly || this.dashboardGdhBusinessUnits.length)
+      ? localStorage.getItem('empid') || undefined
+      : undefined;
 
     const domainRows$: Observable<ItOpsDomainTrackerRow[]> = useOwnScopeAggregate
       ? ownScopePairs.length
@@ -664,6 +722,7 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     const empId = localStorage.getItem('empid');
     if (!empId) {
       this.myAssignmentsLoading = false;
+      this.assignmentsLoadedForDefault = true;
       return;
     }
     this.api
@@ -680,16 +739,21 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         this.myAssignmentsLoading = false;
         // Default to whichever role tab actually has something in it - a
         // pure Reviewer (no Assessor rows at all) should land on "Needs
-        // Review", not an empty "My Assessments" tab. Also force off of
-        // 'assessments' when this employee has no Assessor/Assessee role at
-        // all (that tab is hidden entirely for them - see hasAssessorAssignments).
-        if (this.assignmentsTab === 'assessments' && !this.hasAssessorAssignments && this.hasReviewerAssignments) {
-          this.assignmentsTab = 'reviews';
-        } else if (this.assignmentsTab === 'reviews' && !this.hasReviewerAssignments && this.hasAssessorAssignments) {
-          this.assignmentsTab = 'assessments';
-        } else if (!this.myOpenAssessments.length && this.myPendingReviews.length) {
+        // Review", not an empty "My Assessments" tab. Also steer off of
+        // whichever tab this employee's role doesn't even show (that tab is
+        // hidden entirely for them - see hasAssessorAssignments/
+        // hasReviewerAssignments/hasAllocatedOnlyAssignments).
+        if (this.assignmentsTab === 'assessments' && !this.hasAssessorAssignments) {
+          this.assignmentsTab = this.hasReviewerAssignments ? 'reviews' : this.hasAllocatedOnlyAssignments ? 'allocated' : 'assessments';
+        } else if (this.assignmentsTab === 'reviews' && !this.hasReviewerAssignments) {
+          this.assignmentsTab = this.hasAssessorAssignments ? 'assessments' : this.hasAllocatedOnlyAssignments ? 'allocated' : 'reviews';
+        } else if (this.assignmentsTab === 'allocated' && !this.hasAllocatedOnlyAssignments) {
+          this.assignmentsTab = this.hasAssessorAssignments ? 'assessments' : this.hasReviewerAssignments ? 'reviews' : 'allocated';
+        } else if (this.assignmentsTab === 'assessments' && !this.myOpenAssessments.length && this.myPendingReviews.length) {
           this.assignmentsTab = 'reviews';
         }
+        this.assignmentsLoadedForDefault = true;
+        this.maybeApplyDefaultCycle();
       });
   }
 
@@ -777,6 +841,20 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return this.myAssignments.some((row) => this.isReviewerOn(row));
   }
 
+  /**
+   * Same idea, for the "Assessments" tab - rows GetITOpsMyAssignments returns
+   * purely because this employee is allocated to (or "owns" - BU Head/DM/PM/
+   * AM/Quality SPOC/Delivery Partner) the project, with no personal
+   * Assessor/Reviewer/Assessee role on the assessment itself (an empty
+   * row.roles is exactly how the backend marks these). "My Assessments" stays
+   * strictly Assessor/Assessee-only per that tab's own name - these
+   * allocation-only assessments get their own separate tab instead of being
+   * folded in.
+   */
+  get hasAllocatedOnlyAssignments(): boolean {
+    return this.myAssignments.some((row) => !row.roles?.length);
+  }
+
   get myOpenAssessments(): ItOpsMyAssignmentRow[] {
     return this.filteredAssignments.filter(
       (row) => this.isAssessorOn(row) || (this.isAssesseeOn(row) && row.status === 'Approved'),
@@ -818,23 +896,37 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return this.myPendingReviews.filter((row) => row.status === 'PendingReview').length;
   }
 
-  /** Rows for whichever of the two tabs is currently showing, before search/sort. */
+  /**
+   * "Assessments" tab: every allocation/ownership-only assessment (see
+   * hasAllocatedOnlyAssignments) - deliberately unfiltered by status, since
+   * these aren't "my work to act on", just projects this employee can see
+   * into.
+   */
+  get myAllocatedAssessments(): ItOpsMyAssignmentRow[] {
+    return this.filteredAssignments.filter((row) => !row.roles?.length);
+  }
+
+  /** Rows for whichever of the three tabs is currently showing, before search/sort. */
   private get currentTabAssignmentsRaw(): ItOpsMyAssignmentRow[] {
-    return this.assignmentsTab === 'reviews' ? this.myPendingReviews : this.myOpenAssessments;
+    if (this.assignmentsTab === 'reviews') return this.myPendingReviews;
+    if (this.assignmentsTab === 'allocated') return this.myAllocatedAssessments;
+    return this.myOpenAssessments;
+  }
+
+  /** Matches the same account/project/domain fields the search box narrows the tables by - shared with assignmentsSummary so the KPI tiles agree with what's actually visible. */
+  private matchesAssignmentSearch(row: ItOpsMyAssignmentRow): boolean {
+    const needle = this.assignmentSearch.trim().toLowerCase();
+    if (!needle) return true;
+    return (
+      (row.accountName ?? '').toLowerCase().includes(needle) ||
+      (row.projectName ?? row.projectId ?? '').toLowerCase().includes(needle) ||
+      (row.domainName ?? row.domainCode ?? '').toLowerCase().includes(needle)
+    );
   }
 
   /** Rows for the current tab, narrowed by the free-text search box. */
   get currentTabAssignments(): ItOpsMyAssignmentRow[] {
-    const needle = this.assignmentSearch.trim().toLowerCase();
-    let rows = this.currentTabAssignmentsRaw;
-    if (needle) {
-      rows = rows.filter(
-        (row) =>
-          (row.accountName ?? '').toLowerCase().includes(needle) ||
-          (row.projectName ?? row.projectId ?? '').toLowerCase().includes(needle) ||
-          (row.domainName ?? row.domainCode ?? '').toLowerCase().includes(needle),
-      );
-    }
+    let rows = this.currentTabAssignmentsRaw.filter((row) => this.matchesAssignmentSearch(row));
     if (this.assignmentSortColumn) {
       rows = this.sortAssignments(rows, this.assignmentSortColumn, this.assignmentSortDirection);
     }
@@ -874,6 +966,97 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     this.assignmentsPage = 1;
   }
 
+  /** Which glyph a status pill gets - a checkmark once nothing's left to do, a plain dot otherwise (color alone shouldn't be the only signal). Pairs with the `status-pill-iconed` CSS modifier, which suppresses the shared `.status-pill::before` dot so the two indicators don't double up. */
+  assignmentStatusIcon(status: string): 'check' | 'dot' {
+    return status === 'Approved' || status === 'Completed' ? 'check' : 'dot';
+  }
+
+  /** Solid dot color for the grouped view's domain-name marker - a small circle, not a reused status pill (which is sized/padded for pill+text, not a bare dot). */
+  domainDotColor(status: string): string {
+    switch (status) {
+      case 'Approved':
+      case 'Completed':
+        return 'var(--status-good)';
+      case 'Draft':
+        return 'var(--status-warning)';
+      case 'In Progress':
+        return 'var(--status-serious)';
+      case 'Pending Review':
+        return 'var(--accent)';
+      default:
+        return 'var(--text-muted)';
+    }
+  }
+
+  /** Whether "My Assignments" rows are shown grouped by account/project (default) or as the old flat one-row-per-assessment table. */
+  groupedView = true;
+
+  private collapsedGroupKeys = new Set<string>();
+
+  setGroupedView(grouped: boolean): void {
+    this.groupedView = grouped;
+  }
+
+  private groupKey(row: ItOpsMyAssignmentRow): string {
+    return `${row.custId ?? row.accountName ?? ''}|${row.projectId ?? row.projectName ?? ''}`;
+  }
+
+  toggleGroup(key: string): void {
+    if (this.collapsedGroupKeys.has(key)) {
+      this.collapsedGroupKeys.delete(key);
+    } else {
+      this.collapsedGroupKeys.add(key);
+    }
+  }
+
+  isGroupCollapsed(key: string): boolean {
+    return this.collapsedGroupKeys.has(key);
+  }
+
+  /**
+   * Groups for the CURRENT PAGE's rows only, keyed by account+project - a
+   * group's progress bar/count still reflects every one of that project's
+   * rows across the whole filtered list (not just this page), so a project
+   * split across two pages still shows accurate totals on each.
+   */
+  get pagedAssignmentGroups(): { key: string; accountName: string; projectName: string; rows: ItOpsMyAssignmentRow[]; totalCount: number; doneCount: number }[] {
+    const groups: { key: string; accountName: string; projectName: string; rows: ItOpsMyAssignmentRow[]; totalCount: number; doneCount: number }[] = [];
+    const index = new Map<string, (typeof groups)[number]>();
+    for (const row of this.pagedAssignments) {
+      const key = this.groupKey(row);
+      let g = index.get(key);
+      if (!g) {
+        g = { key, accountName: row.accountName || '-', projectName: row.projectName || row.projectId || '-', rows: [], totalCount: 0, doneCount: 0 };
+        index.set(key, g);
+        groups.push(g);
+      }
+      g.rows.push(row);
+    }
+    for (const g of groups) {
+      const allForGroup = this.currentTabAssignments.filter((r) => this.groupKey(r) === g.key);
+      g.totalCount = allForGroup.length;
+      g.doneCount = allForGroup.filter((r) => ['Approved', 'Completed'].includes(this.displayAssignmentStatus(r))).length;
+    }
+    return groups;
+  }
+
+  groupProgressPct(g: { totalCount: number; doneCount: number }): number {
+    return g.totalCount ? Math.round((g.doneCount / g.totalCount) * 100) : 0;
+  }
+
+  /**
+   * pagedAssignmentGroups is a getter that builds fresh group objects on
+   * every change-detection run (which fires on mousedown/mouseup, not just
+   * click) - without this, *ngFor's default identity-based diffing sees an
+   * entirely new array each time and tears down/rebuilds every group's DOM,
+   * including whatever element a click was mid-gesture on, silently
+   * swallowing the click. Keying by g.key instead lets Angular reuse the
+   * same DOM nodes across recomputations.
+   */
+  trackGroupByKey(_index: number, g: { key: string }): string {
+    return g.key;
+  }
+
   sortAssignmentsBy(column: AssignmentSortColumn): void {
     if (this.assignmentSortColumn === column) {
       this.assignmentSortDirection = this.assignmentSortDirection === 'asc' ? 'desc' : 'asc';
@@ -904,28 +1087,28 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return [...rows].sort((a, b) => valueOf(a).localeCompare(valueOf(b)) * factor);
   }
 
-  /** Small "at a glance" counts shown above the tabs - deliberately unaffected by the cycle/status filter/search/tab so it always reads as "everything you have", not "everything currently visible". */
+  /** Small "at a glance" counts shown above the tabs - scoped by the Cycle/Status filter pills and the free-text search box, same as the tables below (see filteredAssignments/matchesAssignmentSearch), just not by which tab is currently active. */
   get assignmentsSummary(): { openCount: number; returnedCount: number; reviewCount: number; completedCount: number } {
-    const openRows = this.myAssignments.filter((row) => this.isAssessorOn(row) && row.status !== 'Approved');
+    const rows = this.filteredAssignments.filter((row) => this.matchesAssignmentSearch(row));
+    const openRows = rows.filter((row) => this.isAssessorOn(row) && row.status !== 'Approved');
     return {
       openCount: openRows.length,
       returnedCount: openRows.filter((row) => this.isReturnedForRevision(row)).length,
-      reviewCount: this.myAssignments.filter((row) => this.isReviewerOn(row) && row.status === 'PendingReview').length,
-      // "Completed" here means genuinely nothing left to do - an Assessor/Reviewer
-      // row just needs the assessment Approved, but an Assessee row also needs
-      // every finding raised against them to already be resolved.
-      completedCount: this.myAssignments.filter(
-        (row) =>
-          row.status === 'Approved' &&
-          (this.isAssessorOn(row) || this.isReviewerOn(row) || (this.isAssesseeOn(row) && !this.hasActionableFindings(row))),
-      ).length,
+      reviewCount: rows.filter((row) => this.isReviewerOn(row) && row.status === 'PendingReview').length,
+      // "Completed" here matches the exact same rule the table's own status
+      // column uses (displayAssignmentStatus) - Approved plus every finding on
+      // the WHOLE assessment resolved (row.allFindingsResolved), not just this
+      // employee's own findings. The two used to disagree (this tile used to
+      // check only "my findings"), so an assessee row could count as
+      // "Completed" here while the grid still showed it as plain "Approved".
+      completedCount: rows.filter((row) => this.displayAssignmentStatus(row) === 'Completed').length,
     };
   }
 
-  /** Whether this row deserves the "Action needed" urgent highlight - the assessor's own work sent back for revision, an assessee row with findings of theirs still Open, or a reviewer row still genuinely awaiting this reviewer's decision (not one already Approved/Returned). */
+  /** Whether this row deserves the "Action needed" urgent highlight - the assessor's own work sent back for revision, an assessee row with findings of theirs still Open, or a reviewer row still genuinely awaiting this reviewer's decision (not one already Approved/Returned). Gated on actually holding that role - an allocation-only viewer (no personal Assessor/Reviewer/Assessee role) has nothing of their own to act on here, however the assessment's status happens to read. */
   needsAction(row: ItOpsMyAssignmentRow): boolean {
     return (
-      this.isReturnedForRevision(row) ||
+      (this.isAssessorOn(row) && this.isReturnedForRevision(row)) ||
       (this.isAssesseeOn(row) && this.hasActionableFindings(row)) ||
       (this.isReviewerOn(row) && row.status === 'PendingReview')
     );
@@ -936,13 +1119,20 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return row.status === 'ReturnedForRevision';
   }
 
-  selectAssignmentsTab(tab: 'assessments' | 'reviews'): void {
+  selectAssignmentsTab(tab: 'assessments' | 'reviews' | 'allocated'): void {
     this.assignmentsTab = tab;
     this.assignmentsPage = 1;
     localStorage.setItem(MY_ASSIGNMENTS_TAB_KEY, tab);
   }
 
   onStatusFilterChange(): void {
+    this.assignmentsPage = 1;
+  }
+
+  /** Clears both the Cycle and Status filter pills back to "all" in one click. */
+  resetAssignmentFilters(): void {
+    this.cycleFilter = 'all';
+    this.statusFilter = 'all';
     this.assignmentsPage = 1;
   }
 
@@ -985,6 +1175,12 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
    * row's already-loaded data (however locked/submitted it was) just sits
    * there.
    */
+  /** The action button's own click handler - stops the row's click (which also opens the assignment) from firing a second time on top of this one. */
+  openAssignmentAction(event: Event, row: ItOpsMyAssignmentRow): void {
+    event.stopPropagation();
+    this.openAssignment(row);
+  }
+
   openAssignment(row: ItOpsMyAssignmentRow): void {
     if (!row.custId || !row.domainCode) {
       this.toast.error('Cannot open this assessment', 'This assignment is missing its account or domain reference. Contact your administrator.');
@@ -1161,6 +1357,11 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return statusPillClass(status);
   }
 
+  /** Buckets an average score into "N - Label" (Ad Hoc/Developing/Defined/Managed/Optimized), same rule everywhere this appears - see maturityLevelLabel in rubric.util.ts. applicableParamCount drives the "Not in scope" case (E7=0 in the reference formula) when known. */
+  levelLabel(score: number | null | undefined, applicableParamCount?: number): string {
+    return maturityLevelLabel(score, applicableParamCount);
+  }
+
   progressSegments(summary: EnterpriseSummary) {
     const total = summary.domainsCompleted + summary.domainsInProgress + summary.domainsNotStarted;
     if (total === 0) return [];
@@ -1176,7 +1377,8 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return MATURITY_LEVEL_STATUS[level] ?? 'muted';
   }
 
-  gapSeverity(gap: number): StatusLevel | 'good' {
+  gapSeverity(gap: number, isNotScored?: boolean): StatusLevel | 'good' | 'muted' {
+    if (isNotScored) return 'muted';
     if (gap >= 3) return 'critical';
     if (gap === 2) return 'serious';
     if (gap === 0) return 'good';
@@ -1259,11 +1461,12 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       Reviewer: domain.reviewer || 'Unassigned',
       Status: this.displayDomainStatus(domain),
       Parameters: domain.paramCount,
+      'Applicable Parameters': domain.applicableParamCount,
       Score: domain.sumScores,
       Max: domain.maxPossible,
       Avg: domain.averageScore !== null ? domain.averageScore : '-',
       Maturity: domain.maturityPercent !== null ? `${domain.maturityPercent}%` : '-',
-      Level: domain.maturityLevel || '-',
+      Level: this.levelLabel(domain.averageScore, domain.applicableParamCount),
     };
   }
 

@@ -10,6 +10,7 @@ import { SessionService } from '../../services/session.service';
 import { ItOpsMaturityApiService, ItOpsMyAssignmentRow } from '../../services/itops-maturity-api.service';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../components/searchable-select/searchable-select.component';
 import { ReportRow, AssessmentStatus, ParameterDetailReportRow } from '../../models/maturity.model';
+import { maturityLevelLabel } from '../../utils/rubric.util';
 
 type FilterKey =
   | 'Open'
@@ -372,7 +373,11 @@ export class ReportsComponent implements OnInit {
     // an assessor/reviewer/assessee on - without it, CustomerId/ProjectId alone let a
     // project they have ONE assignment on leak every OTHER domain on that same project
     // into their report (same class of bug the Dashboard's myEmpId param fixes).
-    const myEmpId = this.hasFullAccess ? '-1' : localStorage.getItem('empid') || '-1';
+    // Also sent for a GDH (hasFullAccess is true for them too, but the SP still
+    // needs their empId to enforce the Business-Unit restriction itself
+    // server-side, rather than trusting whichever BU this screen's own filter
+    // happens to be set to).
+    const myEmpId = this.hasFullAccess && !this.gdhBusinessUnits.length ? '-1' : localStorage.getItem('empid') || '-1';
     const filterValues: Record<string, string> = {
       CustomerId: this.accountFilter || '-1',
       ProjectId: this.projectFilter || '-1',
@@ -662,6 +667,25 @@ export class ReportsComponent implements OnInit {
     return due === 'Past Due' ? 'pill-critical' : 'pill-good';
   }
 
+  /** Same "N - Label" maturity-level bucketing used everywhere else - see maturityLevelLabel in rubric.util.ts. */
+  levelLabel(averageScore: number | null): string {
+    return maturityLevelLabel(averageScore);
+  }
+
+  /** Same 5-level bucketing as levelLabel/maturityLevelLabel - Optimized (a
+   * perfect 5) gets its own distinct color rather than collapsing into the
+   * same "good" green as Managed (4-4.99), which made the two best levels
+   * indistinguishable at a glance. */
+  levelPill(averageScore: number | null): string {
+    if (averageScore === null || averageScore === undefined) return 'pill-muted';
+    if (averageScore === 0) return 'pill-muted';
+    if (averageScore < 2) return 'pill-critical';
+    if (averageScore < 3) return 'pill-serious';
+    if (averageScore < 4) return 'pill-warning';
+    if (averageScore < 5) return 'pill-good';
+    return 'pill-optimal';
+  }
+
   formatDate(iso: string | null): string {
     if (!iso) return '-';
     return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -716,6 +740,7 @@ export class ReportsComponent implements OnInit {
       'Findings Pending': r.findingsPending,
       'Average Score': r.averageScore ?? '',
       'Maturity %': r.maturityPercent ?? '',
+      'Maturity Level': this.levelLabel(r.averageScore),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);

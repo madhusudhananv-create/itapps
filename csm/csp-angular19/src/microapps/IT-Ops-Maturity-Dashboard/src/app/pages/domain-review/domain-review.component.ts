@@ -235,6 +235,18 @@ export class DomainReviewComponent implements OnInit {
     this.activeProvider = provider;
   }
 
+  /** Same rule the My Assignments grid uses for this same row (see displayAssignmentStatus in maturity-landing.component.ts) - Approved only reads as "Completed" once every finding this domain raised (score < 5) is Closed, not just decided/Accepted. Keeping this in sync means the badge here never disagrees with what the grid already showed for the row that opened this page. */
+  displayDomainStatus(): string {
+    if (!this.domain) return '';
+    if (this.domain.status === 'Approved' && this.allFindingsClosed()) return 'Completed';
+    return this.domain.status;
+  }
+
+  private allFindingsClosed(): boolean {
+    if (!this.domain) return true;
+    return this.domain.parameters.every((p) => !this.isProbableFinding(p) || p.findingStatus === 'Closed');
+  }
+
   statusClass(status: string): string {
     return statusPillClass(status);
   }

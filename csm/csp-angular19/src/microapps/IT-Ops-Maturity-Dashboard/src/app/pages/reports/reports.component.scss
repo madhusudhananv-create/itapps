@@ -369,6 +369,9 @@ tbody tr:hover {
 .pill-critical { background: color-mix(in srgb, var(--status-critical) 16%, transparent); color: var(--status-critical); }
 .pill-muted { background: color-mix(in srgb, var(--status-muted) 25%, transparent); color: var(--text-secondary); }
 .pill-info { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.pill-warning { background: color-mix(in srgb, var(--status-warning) 22%, transparent); color: color-mix(in srgb, var(--status-warning) 70%, black); }
+.pill-serious { background: color-mix(in srgb, var(--status-serious) 18%, transparent); color: var(--status-serious); }
+.pill-optimal { background: color-mix(in srgb, var(--status-optimal, #0d8f6b) 20%, transparent); color: var(--status-optimal, #0d8f6b); }
 
 .stale-tag {
   display: inline-block;

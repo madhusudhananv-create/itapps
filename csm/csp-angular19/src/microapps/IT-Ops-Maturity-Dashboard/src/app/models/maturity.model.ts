@@ -88,6 +88,8 @@ export interface DomainSummary {
   maturityPercent: number | null;
   maturityLevel: string | null;
   paramCount: number;
+  /** How many of paramCount were actually scored (not left NA) - "No of Applicable Parameters"; maxPossible is this count x 5, not paramCount x 5. */
+  applicableParamCount: number;
   sumScores: number;
   maxPossible: number;
   /** Which account this row belongs to - the Dashboard now shows every account the viewer is assigned to at once, so each row needs to say which one it's from. */
@@ -107,6 +109,8 @@ export interface TopRisk {
   parameter: string;
   currentScore: number;
   gap: number;
+  /** True when the parameter was marked Not Applicable rather than scored - displayed as "Not scored" in place of a numeric gap, with a 0% score bar and a "Not Scored" recommendation. */
+  isNotScored?: boolean;
   /** Populated when the Dashboard aggregates across every account ("All accounts"), so the same domain name on two different accounts can be told apart. */
   accountId?: string;
   accountName?: string;
@@ -121,6 +125,8 @@ export interface EnterpriseSummary {
   domainsInProgress: number;
   domainsNotStarted: number;
   totalParamCount: number;
+  /** Sum of every domain's applicableParamCount - the Overall Estate row's own "Applicable" column. */
+  totalApplicableParamCount: number;
   totalSumScores: number;
   totalMaxPossible: number;
 }
