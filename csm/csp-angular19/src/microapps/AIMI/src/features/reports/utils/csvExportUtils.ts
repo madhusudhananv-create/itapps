@@ -28,12 +28,29 @@ const CSV_HEADERS = [
   'Head Count',
   'Practice',
   '# of People Using AI',
-  'Current Phase / Services',
+  'License Count',
+  'License Provider',
+  '% Tickets Auto-Resolved by AI',
+  'MTTR Reduction vs Traditional Model',
+  '# AI Agents in Production (Not Pilots)',
+  '# End-to-End Workflows Re-imagined and Automated',
+  '# MTTD (Mean Time to Detect)',
+  '# MTTR (Mean Time to Respond or Repair)',
+  'Delivery cycle-time reduction attributable to AI',
+  '# AI agents in production — not pilots / POC',
+  'Contract Test case Pass Rate (%) (Passed Tests / Total Executed Tests) × 100',
+  'Performance Defects Detected Pre-release (%)',
+  '% workforce with externally validated AI / GenAI / Agentic AI certification',
+  'Efforts saved in hours',
+  '# FDE ( Forward Deployment Engineer) penetration as % of client-facing headcount',
+  'Accepted Score',
+  'Accepted Comment',
   'SDLC Phase',
   'Activity',
   'Applicability',
   'AI Adoption Score',
   'AI Tools Used',
+  'Client Approved',
   'Accelerators Used',
   'Work Done by AI (%)',
   'Hours Saved',
@@ -124,7 +141,24 @@ const createCSVRow = (
     headcount?: number;
     practice?: string;
     peopleUsingAI?: number;
-    currentPhase?: string;
+    licenseCount?: number;
+    licenseProvider?: string;
+    runOpsAutoResolved?: string;
+    runOpsMTTRReduction?: string;
+    runOpsAIAgents?: string;
+    runOpsAutomatedWorkflows?: string;
+    runOpsMTTD?: string;
+    runOpsMTTR?: string;
+    engineerAIAgents?: string;
+    engineerDeliveryCycleTime?: string;
+    engineerContractTestCasePassRate?: string;
+    engineerPerformanceDefectsPreRelease?: string;
+    commonAdoptionWorkforceCertification?: string;
+    commonAdoptionEffortsSaved?: string;
+    commonDeploymentEngineer?: string;
+    acceptedScore?: number;
+    acceptedScoreComment?: string;
+      
   }
 ): string[] => [
   escapeCSVValue(projectData?.businessUnit),
@@ -137,12 +171,30 @@ const createCSVRow = (
   escapeCSVValue(projectData?.headcount),
   escapeCSVValue(projectData?.practice),
   escapeCSVValue(projectData?.peopleUsingAI),
-  escapeCSVValue(projectData?.currentPhase),
+  //escapeCSVValue(projectData?.currentPhase),
+  escapeCSVValue(projectData?.licenseCount),
+  escapeCSVValue(projectData?.licenseProvider),
+  escapeCSVValue(projectData?.runOpsAutoResolved),
+  escapeCSVValue(projectData?.runOpsMTTRReduction),
+  escapeCSVValue(projectData?.runOpsAIAgents),
+  escapeCSVValue(projectData?.runOpsAutomatedWorkflows),
+  escapeCSVValue(projectData?.runOpsMTTD),
+  escapeCSVValue(projectData?.runOpsMTTR),
+  escapeCSVValue(projectData?.engineerAIAgents),
+  escapeCSVValue(projectData?.engineerDeliveryCycleTime),
+  escapeCSVValue(projectData?.engineerContractTestCasePassRate),
+  escapeCSVValue(projectData?.engineerPerformanceDefectsPreRelease),
+  escapeCSVValue(projectData?.commonAdoptionWorkforceCertification),
+  escapeCSVValue(projectData?.commonAdoptionEffortsSaved),
+  escapeCSVValue(projectData?.commonDeploymentEngineer),
+  escapeCSVValue(projectData?.acceptedScore),
+  escapeCSVValue(projectData?.acceptedScoreComment),
   escapeCSVValue(activity.sdlcPhase),
   escapeCSVValue(activity.activity),
   escapeCSVValue(activity.applicability),
   escapeCSVValue(activity.aiAdoptionScore),
   escapeCSVValue(activity.aiToolUsed),
+  //escapeCSVValue(activity.clientApproved),
   escapeCSVValue(activity.acceleratorsUsed),
   escapeCSVValue(activity.workDoneByAI),
   escapeCSVValue(activity.hoursSaved),

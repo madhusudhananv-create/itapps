@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { ActivityFormData, ActivityData } from '../types/activityTypes';
+import type { ActivityFormData, ActivityData, AIToolDetails } from '../types/activityTypes';
 import {
   getSDLCPhasesForPractice,
   getActivitiesForSDLCPhase,
 } from '../../../shared/utils/questionnaireUtils';
+
 
 const initialFormData: ActivityFormData = {
   sdlcPhase: '',
@@ -11,6 +12,7 @@ const initialFormData: ActivityFormData = {
   applicability: '',
   aiAdoptionScore: '',
   aiToolUsed: '',
+  //clientApproved: '',
   acceleratorsUsed: '',
   workDoneByAI: 0,
   hoursSaved: 0,
@@ -19,6 +21,7 @@ const initialFormData: ActivityFormData = {
   qualitativeBenefits: [],
   comments: '',
 };
+
 
 export const useActivityForm = (
   selectedPractice: string,
@@ -41,6 +44,7 @@ export const useActivityForm = (
         applicability: editingActivity.applicability,
         aiAdoptionScore: editingActivity.aiAdoptionScore,
         aiToolUsed: editingActivity.aiToolUsed,
+        //clientApproved: editingActivity.clientApproved || '',
         acceleratorsUsed: editingActivity.acceleratorsUsed || '',
         workDoneByAI: editingActivity.workDoneByAI,
         hoursSaved: editingActivity.hoursSaved,
@@ -48,6 +52,7 @@ export const useActivityForm = (
         benefitTo: editingActivity.benefitTo,
         qualitativeBenefits: editingActivity.qualitativeBenefits,
         comments: editingActivity.comments,
+        //aiToolDetails: editingActivity.aiToolDetails || {},
       };
       setFormData(editingFormData);
       setOriginalFormData(editingFormData);
@@ -95,7 +100,7 @@ export const useActivityForm = (
 
       const filteredActivities = activityList.filter(
         (activity) => !existingActivityNames.includes(activity)
-      );
+      ).sort((a, b) => a.localeCompare(b));
 
       setAvailableActivities(filteredActivities);
 
@@ -118,7 +123,7 @@ export const useActivityForm = (
   }, [formData.sdlcPhase]);
 
   const handleFormChange = useCallback(
-    (field: keyof ActivityFormData, value: string | string[] | number) => {
+    (field: keyof ActivityFormData, value: string | string[] | number | AIToolDetails) => {
       setFormData((prev) => {
         const newFormData = { ...prev, [field]: value };
 
@@ -129,6 +134,7 @@ export const useActivityForm = (
           newFormData.applicability = '';
           newFormData.aiAdoptionScore = '';
           newFormData.aiToolUsed = '';
+          //newFormData.clientApproved = '';
           newFormData.acceleratorsUsed = '';
           newFormData.workDoneByAI = 0;
           newFormData.hoursSaved = 0;
@@ -141,6 +147,7 @@ export const useActivityForm = (
           newFormData.applicability = '';
           newFormData.aiAdoptionScore = '';
           newFormData.aiToolUsed = '';
+          //newFormData.clientApproved = '';
           newFormData.acceleratorsUsed = '';
           newFormData.workDoneByAI = 0;
           newFormData.hoursSaved = 0;
@@ -152,6 +159,7 @@ export const useActivityForm = (
           // Clear AI adoption score and dependent fields
           newFormData.aiAdoptionScore = '';
           newFormData.aiToolUsed = '';
+          //newFormData.clientApproved = '';
           newFormData.acceleratorsUsed = '';
           newFormData.workDoneByAI = 0;
           newFormData.hoursSaved = 0;

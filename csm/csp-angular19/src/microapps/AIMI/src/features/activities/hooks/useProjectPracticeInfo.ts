@@ -9,12 +9,46 @@ interface UseProjectPracticeInfoProps {
   practice?: string;
 }
 
+export interface SaveProjectInfoParams {
+  peopleUsingAI: number;
+  isProjectNA?: boolean;
+  naComments?: string;
+
+  licenseCount?: number;
+  licenseProvider?: string;
+
+  runOpsAutoResolved?: string;
+  runOpsMTTRReduction?: string;
+  runOpsAIAgents?: string;
+  runOpsAutomatedWorkflows?: string;
+  runOpsMTTD?: string;
+  runOpsMTTR?: string;
+
+  engineerDeliveryCycleTime?: string;
+  engineerAIAgents?: string;
+  engineerContractTestCasePassRate?: string;
+  engineerPerformanceDefectsPreRelease?: string;
+
+  commonAdoptionWorkforceCertification?: string;
+  commonAdoptionEffortsSaved?: string;
+  commonDeploymentEngineer?: string;
+  commonGrossMarginUplift?: string;
+  commonRevenuePerFTE?: string;
+  commonMarginDifferential?: string;
+
+  presentationDone?: boolean;
+  projectFY?: string;
+  acceptedScore?: number;
+  scoreReviewed?: boolean;
+  acceptedScoreComment?: string;
+}
+
 interface UseProjectPracticeInfoReturn {
   projectInfo: ProjectInfo | null;
   practiceInfo: PracticeInfo | null;
   isLoading: boolean;
   error: string | null;
-  saveProjectInfo: (peopleUsingAI: number) => Promise<void>;
+  saveProjectInfo: (params: SaveProjectInfoParams) => Promise<void>;
   savePracticeInfo: (currentPhase: string) => Promise<void>;
 }
 
@@ -121,22 +155,29 @@ export const useProjectPracticeInfo = ({
 
   // Combined save function for project info
   const saveProjectInfo = useCallback(
-    async (peopleUsingAI: number) => {
+    async (data: SaveProjectInfoParams) => {
       if (!projectId) {
         throw new Error('Project ID is required');
       }
 
       // Validate input data
-      validateProjectInfo(projectId, peopleUsingAI);
+      validateProjectInfo(projectId, data.peopleUsingAI);
 
       setIsLoading(true);
       setError(null);
-
+console.log(
+  'ProjectInfo Before Save',
+  {
+    projectId,
+    ...data,
+  }
+);
       try {
-        const savedInfo = await projectInfoService.saveOrUpdateProjectInfo({
-          projectId,
-          peopleUsingAI,
-        });
+        const savedInfo =
+  await projectInfoService.saveOrUpdateProjectInfo({
+    projectId,
+    ...data,
+  });
         setProjectInfo(savedInfo);
       } catch (err) {
         console.error('Error saving project info:', err);

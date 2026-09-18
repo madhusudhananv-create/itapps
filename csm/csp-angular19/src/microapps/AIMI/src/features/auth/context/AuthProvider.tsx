@@ -9,6 +9,7 @@ import { AuthContext } from './AuthContext';
 import type { User } from './authTypes';
 import { authStorage } from '@auth/utils';
 import { mockAuthService } from '@auth/services';
+import { isAdminUser } from '@shared/utils/accessControl';
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,6 +26,35 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         if (authState?.isAuthenticated && storedUser) {
           setIsAuthenticated(true);
           setUser(storedUser);
+          return;
+        }
+
+        // Users normally arrive here via the CSM navbar's "Integrated Apps" menu, already
+        // logged into the main CSM app — they never go through AIMI's own mock Google
+        // Sign-In flow, so the AIMI-specific auth flag above is never set for them. Fall
+        // back to recognizing the real CSM session (same localStorage keys the Angular app
+        // and the CSAT microapp use) so a genuinely logged-in CSM user isn't shown the
+        // "Login Required" popup just because they haven't used AIMI's own mock login.
+        const csmEmpId = localStorage.getItem('empid') || '';
+        const csmToken = localStorage.getItem('token') || '';
+        if (csmEmpId && csmToken) {
+          const displayName = localStorage.getItem('displayname') || csmEmpId;
+          setIsAuthenticated(true);
+          setUser({ name: displayName, email: csmEmpId });
+
+          // DEV-ONLY: dump every value the CSM login bridge has available so admin
+          // rules can be based on the field that actually holds the O365 email/UPN.
+          if (import.meta.env.DEV) {
+            console.info('[AIMI auth] bridged CSM session values:', {
+              empid: csmEmpId,
+              displayname: displayName,
+              token: csmToken ? '<present>' : '',
+              logintype: localStorage.getItem('logintype') || '',
+              role: localStorage.getItem('role') || '',
+              customerid: localStorage.getItem('customerid') || '',
+              access: localStorage.getItem('access') || '',
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to initialize auth state:', error);
@@ -88,15 +118,18 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     }
   }, []);
 
+  const isAdmin = useMemo(() => isAdminUser(), [user]);
+
   const value = useMemo(
     () => ({
       isAuthenticated,
       user,
+      isAdmin,
       login,
       logout,
       isLoading,
     }),
-    [isAuthenticated, user, login, logout, isLoading]
+    [isAuthenticated, user, isAdmin, login, logout, isLoading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

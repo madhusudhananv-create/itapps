@@ -15,7 +15,7 @@ import {
   parseExcelDateToMMDDYYYY,
   yearQuarterMatchesCycle,
 } from '../utils/acsatExcelRowUtils';
-import { TOP10_ACCOUNT_ORDER, normalizeTop10AccountName } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, normalizeTop10AccountName } from '../utils/top10Accounts';
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -1916,12 +1916,12 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     'AgFirst Farm Credit Bank',
     'embecta MEDICAL II LLC',
     'Avaya LLC',
-    'Northern Trust Company',
+    'The Northern Trust Company',
     'Jewish Board of Family and Childrens Services JBFCS',
     'Apollo Hospitals',
     'Aditya Birla Capital Digital Limited',
     'Healthfirst',
-    'Firstsource Solutions Ltd',
+    'FIRSTSOURCE SOLUTIONS LIMITED',
     'Ooma Inc.',
     'Palo Alto Networks',
     'Hachette Book Group',
@@ -2676,7 +2676,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     'jewish board of family and childrens services jbfcs': 'JBFCS',
     'healthfirst': 'Healthfirst',
     'the northern trust company': 'Northern Trust',
-    'firstsource solutions ltd': 'Firstsource',
+    'firstsource solutions limited': 'Firstsource',
     'ooma inc.': 'Ooma',
     'arista networks india private limited': 'Arista Networks',
     'infoblox inc.': 'Infoblox',
@@ -2686,7 +2686,7 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
   const notPolledTop10Caption = useMemo(() => {
     if (!showTop10 || !sortedData || sortedData.length === 0) return '';
 
-    const notPolledNames = TOP10_ACCOUNT_ORDER.filter((accountName) => {
+    const notPolledNames = TOP10_SURVEY_ACCOUNT_ORDER.filter((accountName) => {
       const norm = normalizeTop10AccountName(accountName);
       const row = sortedData.find((r) => normalizeTop10AccountName(r.customerName) === norm);
       return !row || (row.cssSentCount || 0) === 0;
