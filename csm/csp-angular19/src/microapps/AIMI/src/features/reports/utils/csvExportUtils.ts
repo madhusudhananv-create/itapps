@@ -14,6 +14,7 @@ interface ProjectInfo {
   currentPhase: string;
   headcount?: number;
   peopleUsingAI?: number;
+  overallScoreValue?: string | number;
 }
 
 // Common CSV headers
@@ -157,7 +158,7 @@ const createCSVRow = (
     commonAdoptionWorkforceCertification?: string;
     commonAdoptionEffortsSaved?: string;
     commonDeploymentEngineer?: string;
-    overallScoreValue?: number;
+    overallScoreValue?: string | number;
     acceptedScore?: number;
     acceptedScoreComment?: string;
       
