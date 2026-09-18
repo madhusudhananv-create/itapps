@@ -1,6 +1,6 @@
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Loading } from '@shared/components/Loading';
+import { LoginRequiredDialog } from '@shared/components/LoginRequiredDialog';
 
 type ProtectedRouteProps = {
   readonly children: React.ReactNode;
@@ -20,8 +20,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
+  // A direct/bookmarked link (e.g. csmuat.neurealm.com/aimi/activities) can land here with no
+  // session at all. Rather than silently sending the user to AIMI's own mock Google Sign-In
+  // page, explain why and send them to the real CSM login (matching the CSAT microapp's
+  // equivalent popup) once they click OK.
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <LoginRequiredDialog open />;
   }
 
   return <>{children}</>;

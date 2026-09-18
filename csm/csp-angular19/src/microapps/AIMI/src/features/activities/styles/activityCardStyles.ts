@@ -11,25 +11,69 @@ export const buttonStyles = {
     py: 0.75,
     fontSize: '0.8rem',
   },
+
+  iconBase: {
+    borderRadius: 1.5,
+    p: 0.75,
+    transition: 'all 0.2s ease',
+  },
+
   view: {
-    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-    color: 'white',
+    color: '#1976d2',
     '&:hover': {
-      background: 'linear-gradient(135deg, #218838 0%, #1ea085 100%)',
+      backgroundColor: 'rgba(25, 118, 210, 0.08)',
     },
   },
+
   edit: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    color: '#1976d2',
     '&:hover': {
-      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+      backgroundColor: 'rgba(25, 118, 210, 0.08)',
     },
   },
+
+  copy: {
+    color: '#1976d2',
+    '&:hover': {
+      backgroundColor: 'rgba(25, 118, 210, 0.08)',
+    },
+  },
+
   delete: {
-    background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+    color: '#d32f2f',
+    '&:hover': {
+      backgroundColor: 'rgba(211, 47, 47, 0.08)',
+    },
+  },
+
+  // Solid (background + white text) variants for labeled contained Buttons,
+  // kept separate from the flat colors above so icon-button restyling doesn't affect them
+  solidView: {
+    backgroundColor: '#1976d2',
     color: 'white',
     '&:hover': {
-      background: 'linear-gradient(135deg, #c82333 0%, #a71e2a 100%)',
+      backgroundColor: '#1565c0',
+    },
+  },
+  solidEdit: {
+    backgroundColor: '#1976d2',
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#1565c0',
+    },
+  },
+  solidCopy: {
+    backgroundColor: '#1976d2',
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#1565c0',
+    },
+  },
+  solidDelete: {
+    backgroundColor: '#d32f2f',
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#b71c1c',
     },
   },
 };
@@ -170,14 +214,34 @@ export const activityCardStyles = {
   },
   viewButton: {
     ...buttonStyles.base,
-    ...buttonStyles.view,
+    ...buttonStyles.solidView,
   },
   editButton: {
     ...buttonStyles.base,
-    ...buttonStyles.edit,
+    ...buttonStyles.solidEdit,
   },
   deleteButton: {
     ...buttonStyles.base,
+    ...buttonStyles.solidDelete,
+  },
+  copyButton: {
+    ...buttonStyles.base,
+    ...buttonStyles.solidCopy,
+  },
+  viewIconButton: {
+    ...buttonStyles.iconBase,
+    ...buttonStyles.view,
+  },
+  editIconButton: {
+    ...buttonStyles.iconBase,
+    ...buttonStyles.edit,
+  },
+  copyIconButton: {
+    ...buttonStyles.iconBase,
+    ...buttonStyles.copy,
+  },
+  deleteIconButton: {
+    ...buttonStyles.iconBase,
     ...buttonStyles.delete,
   },
   actionButtonsContainer: {
@@ -273,10 +337,10 @@ export const activityDetailsModalStyles = {
   },
   editButton: {
     ...buttonStyles.base,
-    ...buttonStyles.edit,
+    ...buttonStyles.solidEdit,
   },
   deleteButton: {
     ...buttonStyles.base,
-    ...buttonStyles.delete,
+    ...buttonStyles.solidDelete,
   },
 };

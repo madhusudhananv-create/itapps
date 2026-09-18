@@ -4,6 +4,7 @@ import type { User } from './authTypes';
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  isAdmin: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
