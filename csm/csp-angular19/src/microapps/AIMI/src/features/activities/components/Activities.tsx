@@ -16,7 +16,7 @@ import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
 import { CommonSnackbar } from '@shared/components/CommonSnackbar';
 import { useFeatureFlags } from '@shared/hooks/useFeatureFlags';
 import { Loading } from '@shared/components/Loading';
-//import UploadFileIcon from '@mui/icons-material/UploadFile';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {
   COMPONENT_NAMES,
   preloadComponents,
@@ -518,6 +518,7 @@ export function Activities() {
       onSaveDraft: handleActivitiesSaveDraft,
       projectInfo: projectInfoFormData,
       onSaveReviewInfo: handleSaveReviewInfo,
+      onImportActivities: () => setImportDialogOpen(true),
     }),
     [
       activities,
@@ -589,14 +590,16 @@ export function Activities() {
             Manage Activities
           </Typography>
 
-          {/* <Button
+          {(
+            <Button
             variant="outlined"
             startIcon={<UploadFileIcon />}
             disabled={!projectInfoFormData.practice || !!projectInfoFormData.isProjectNA}
             onClick={() => setImportDialogOpen(true)}
           >
             Import Excel
-          </Button> */}
+          </Button>
+          )}
         </Box>
         <Typography variant="body1" sx={styles.headerDescription}>
           Track and manage AI maturity activities for your projects
@@ -658,6 +661,15 @@ export function Activities() {
 <ImportActivitiesDialog
   open={importDialogOpen}
   onClose={() => setImportDialogOpen(false)}
+  selectedPractice={projectInfoFormData.practice}
+  projectInfo={{
+    project: projectInfoFormData.project,
+    manager: projectInfoFormData.manager,
+    account: projectInfoFormData.account,
+    businessUnit: projectInfoFormData.businessUnit,
+    headcount: projectInfoFormData.headcount,
+    peopleUsingAI: projectInfoFormData.peopleUsingAI,
+  }}
   onImport={(rows) => {
     const practice = projectInfoFormData.practice;
     const validPhases = getSDLCPhasesForPractice(practice);

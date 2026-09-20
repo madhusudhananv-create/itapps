@@ -27,6 +27,7 @@ import {
   Warning as WarningIcon,
   Delete as DeleteIcon,
   Reviews,
+  UploadFile as UploadFileIcon,
 } from '@mui/icons-material';
 import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
 import { AddActivityModal } from './AddActivityModal';
@@ -81,6 +82,7 @@ interface ManageActivitiesProps {
   scoreReviewed?: boolean;
   acceptedScoreComment?: string;
 }) => Promise<void>;
+  onImportActivities?: () => void;
 }
 
 
@@ -97,6 +99,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   onSaveDraft,
   projectInfo,
   onSaveReviewInfo,
+  onImportActivities,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
@@ -959,6 +962,17 @@ const hasAcceptedScoreChanges =
             >
               Generate Report
             </Button>
+
+            {onImportActivities && (
+              <Button
+                variant="outlined"
+                startIcon={<UploadFileIcon />}
+                onClick={onImportActivities}
+                disabled={!selectedPractice || isProjectNA}
+              >
+                Import Excel
+              </Button>
+            )}
           </Box>
 
           {activities.length > 0 && (
