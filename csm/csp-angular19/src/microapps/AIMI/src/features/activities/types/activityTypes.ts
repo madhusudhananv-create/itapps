@@ -21,7 +21,7 @@ export interface ActivityFormData {
   benefitTo: string;
   qualitativeBenefits: string[];
   comments: string;
-  //aiToolDetails?: AIToolDetails;
+  aiToolDetails?: AIToolDetails;
 }
 
 
