@@ -590,16 +590,6 @@ export function Activities() {
             Manage Activities
           </Typography>
 
-          {(
-            <Button
-            variant="outlined"
-            startIcon={<UploadFileIcon />}
-            disabled={!projectInfoFormData.practice || !!projectInfoFormData.isProjectNA}
-            onClick={() => setImportDialogOpen(true)}
-          >
-            Import Excel
-          </Button>
-          )}
         </Box>
         <Typography variant="body1" sx={styles.headerDescription}>
           Track and manage AI maturity activities for your projects
