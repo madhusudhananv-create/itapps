@@ -652,6 +652,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
 
+            // A Superuser has unrestricted access everywhere else in this app (Dashboard,
+            // Reports, Admin Setup all fold Superuser into "full access" explicitly) - this
+            // endpoint used to be the one exception, with no Superuser case at all, so a
+            // Superuser with no personal Assessor/Reviewer/Assessee role and no project
+            // allocation got back an empty list and the "Assessments" nav tab hid itself as
+            // if they had no ITOps involvement whatsoever. Every assessment org-wide is
+            // added here the same way an allocated-project row is - empty Roles[], so it
+            // lands in the allocation-only "Assessments" tab (read-only browsing), never in
+            // the role-gated "My Assessments"/"Needs Review" tabs.
+            if (IsITOpsSuperuser(empId))
+            {
+                foreach (var id in CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => a.ISACTIVE).Select(a => a.ID).ToList())
+                {
+                    if (!rolesByAssessmentId.ContainsKey(id)) rolesByAssessmentId[id] = new List<string>();
+                }
+            }
+
             if (!rolesByAssessmentId.Any()) return Ok(new List<ITOPS_MyAssignmentRow>());
 
             var assessmentIds = rolesByAssessmentId.Keys.ToList();
@@ -1896,17 +1913,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (openFindingCount > 0 && assesseeIds.Any())
             {
                 var assessorIds = GetITOpsAssessorIds(assessment.ID);
+                // The reviewer just approved this assessment (this fires from their own
+                // Approve click, or the skip-review submit that stands in for one) - they
+                // have the same stake in knowing follow-up items now exist on it as the
+                // assessor does, and they're already looped back in one step later once a
+                // finding is actually closed (see the assessor+reviewer recipients on
+                // UpdateITOpsFindingAction's email). Leaving them off here was an
+                // inconsistency, not a deliberate exclusion - nothing in this method singles
+                // reviewers out the way, say, GetITOpsOwnScopeAssessmentIds deliberately
+                // narrows a GDH's access.
+                var reviewerIds = GetITOpsReviewerIds(assessment.ID);
                 var recipientIds = assesseeIds
                     .Concat(assessorIds)
+                    .Concat(reviewerIds)
                     .Where(id => !string.IsNullOrWhiteSpace(id))
                     .Distinct()
                     .ToList();
 
                 var findingWord = openFindingCount == 1 ? "finding" : "findings";
                 var assesseeNames = string.Join(", ", GetEmpNames(assesseeIds));
-                // One shared email to every assessee AND assessor on the assessment (not one
-                // per person) - NotifyITOpsMany also logs a bell entry for each recipient,
-                // assessor(s) included, since the assessment itself is just as reachable for them.
+                // One shared email to every assessee, assessor, AND reviewer on the
+                // assessment (not one per person) - NotifyITOpsMany also logs a bell entry
+                // for each recipient, since the assessment itself is just as reachable for
+                // all three roles.
                 NotifyITOpsMany(
                     recipientIds,
                     $"IT Ops Maturity: {openFindingCount} {findingWord} need your action - {domain?.NAME} - {projectName}",

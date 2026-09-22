@@ -555,6 +555,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         //   - writes require the specific role that conceptually owns that step
         //     (or superuser, who is allowed everywhere).
 
+        /// <summary>
+        /// The role codes that actually own one of the 5 Admin Setup steps
+        /// (Configure Roles is SUPERUSER-only and handled separately). Anything
+        /// NOT in this set - DASHBOARD_VIEWER, REPORT_VIEWER - is a Dashboard/
+        /// Reports-only grant with nothing to configure in Admin Setup, and must
+        /// not make GetITOpsMyRoleCodes.IsAdmin true.
+        /// </summary>
+        private static readonly HashSet<string> ITOpsAdminStepRoleCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "CYCLE_ADMINISTRATOR",
+            "DOMAIN_ADMINISTRATOR",
+            "DOMAIN_PROJECT_MAPPER",
+            "CATEGORY_PARAMETER_ADMINISTRATOR",
+            "RUNOPS_INITIATOR",
+            "TEAM_ASSIGNMENT_COORDINATOR",
+        };
+
         /// <summary>Active non-SUPERUSER ITOPS_ROLE codes this emp currently holds.</summary>
         private List<string> GetITOpsRoleCodes(string empId)
         {
@@ -661,7 +678,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 EmpId = callerEmpId,
                 IsSuperuser = isSuperuser,
                 RoleCodes = roleCodes,
-                IsAdmin = isSuperuser || roleCodes.Any(),
+                // Only a role that actually owns one of the 5 Admin Setup steps
+                // should light up the "Admin Setup" nav tab - DASHBOARD_VIEWER and
+                // REPORT_VIEWER are read-only Dashboard/Reports grants with nothing
+                // to configure here, but roleCodes.Any() used to count them too, so
+                // anyone holding just Dashboard Viewer got flagged as an IT Ops
+                // admin and could land on the Admin Setup page with no step they
+                // actually own (see the ngOnInit fallback fix on the Angular side
+                // for what happened next once they got there).
+                IsAdmin = isSuperuser || roleCodes.Any(rc => ITOpsAdminStepRoleCodes.Contains(rc)),
                 ActiveRoleCodes = activeRoleCodes
             });
         }
@@ -2070,6 +2095,70 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok();
         }
 
+        // "Delete whole row(s)" - the bulk, checkbox-driven sibling of the
+        // per-domain "x": that one only unmaps a single domain and never
+        // touches assessees (a project can still have other domains left, and
+        // its assessees are still valid for those). This instead removes
+        // EVERY domain a project has, in one shot, AND deactivates its
+        // assessees too - a project with zero domains left has nothing an
+        // assessee could be assessed against, so leaving them active was the
+        // gap being closed here.
+        [POST("RemoveITOpsProjectMappingRows")]
+        [ActionName("RemoveITOpsProjectMappingRows")]
+        [HttpPost]
+        public IHttpActionResult RemoveITOpsProjectMappingRows([FromBody] ITOPS_RemoveProjectMappingRowsRequest request)
+        {
+            var denied = DenyIfNotITOpsRole("DOMAIN_PROJECT_MAPPER", "change domain-project mappings");
+            if (denied != null) return denied;
+
+            var projectIds = (request?.ProjectIds ?? new List<string>())
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(p => p.Trim())
+                .Distinct()
+                .ToList();
+            if (!projectIds.Any()) return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var empId = GetHeaderDetails_String("empId");
+
+            var domainRows = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
+                .Where(m => projectIds.Contains(m.PROJECT_ID) && m.ISACTIVE)
+                .ToList();
+            foreach (var row in domainRows)
+            {
+                UpdateAuditFields(row, empId);
+                row.ISACTIVE = false;
+                CSPdb.ITOPS_DOMAIN_PROJECT_MAP.Update(row);
+                LogDomainProjectMappingChange(row.PROJECT_ID, row.DOMAIN_ID, "Removed", request.Reason, empId);
+            }
+            // Committed here, BEFORE the notify call below - NotifyITOpsMappingSubmitted
+            // re-queries ITOPS_DOMAIN_PROJECT_MAP fresh from the DB to see whether each
+            // project now has zero active domains left (-> "Project removed from
+            // mapping"), which only reflects reality once this batch is actually saved.
+            CSPdb.Commit(CanCommit);
+
+            // One individual email per deleted project, reusing the exact same
+            // per-project notification "+ Add domain"/Copy/Edit already share via
+            // Submit - sent here (immediately) rather than staying queued for the
+            // next manual Submit click, and BEFORE the assessees below are
+            // deactivated so they're still each project's live recipient list at
+            // the moment this reads them.
+            NotifyITOpsMappingSubmitted(projectIds);
+
+            var assesseeRows = CSPdb.ITOPS_PROJECT_ASSESSEE.GetAll()
+                .Where(a => projectIds.Contains(a.PROJECT_ID) && a.ISACTIVE)
+                .ToList();
+            foreach (var row in assesseeRows)
+            {
+                UpdateAuditFields(row, empId);
+                row.ISACTIVE = false;
+                CSPdb.ITOPS_PROJECT_ASSESSEE.Update(row);
+            }
+
+            CSPdb.Commit(CanCommit);
+
+            return Ok(new { DomainsRemoved = domainRows.Count, AssesseesRemoved = assesseeRows.Count });
+        }
+
         // Fired once when the admin clicks "Submit and Continue to Configure
         // Assessment" on the mapping screen - sends ONE consolidated email
         // (see NotifyITOpsMappingSubmitted) instead of one per mapping edit.
@@ -2253,6 +2342,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Where(a => filterProjectId == null || a.PROJECT_ID == filterProjectId)
                 .OrderByDescending(a => a.CREATED_DATE)
                 .ToList();
+
+            // Same project-allocation scoping as GetITOpsDomainProjectMappings - the
+            // audit log is a flat, unscoped table (it exists so a REMOVED mapping
+            // still shows up after the row itself is gone), so without this a
+            // non-Superuser Mapper saw every project's history org-wide, not just
+            // the ones they're actually staffed on or manage, even though the
+            // mapping screen right above it was already correctly scoped.
+            var callerEmpId = GetHeaderDetails_String("empId");
+            if (!IsITOpsSuperuser(callerEmpId))
+            {
+                var allowedProjectIds = new HashSet<string>(
+                    Cldb.AppRepo.GetProjectIdsForUser(callerEmpId, "", "")
+                        .Select(p => p.PROJ_ID)
+                        .Where(id => id != null));
+                entries = entries.Where(a => allowedProjectIds.Contains(a.PROJECT_ID)).ToList();
+            }
+
             if (!entries.Any()) return Ok(new List<ITOPS_DomainProjectMapAuditRow>());
 
             var domainIds = entries.Select(a => a.DOMAIN_ID).Distinct().ToList();

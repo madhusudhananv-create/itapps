@@ -692,7 +692,18 @@ export class AdminSetupComponent implements OnInit {
 
       // Land on the first step this user can actually act on, not always step 1.
       const first = this.visibleSteps[0];
-      if (!first) return;
+      if (!first) {
+        // isAdmin was true (e.g. a stale/overly-broad grant) but this person
+        // doesn't actually own any of the 5 steps - activeStep would otherwise
+        // sit at its unguarded default ('roles') and render that step's
+        // content with nobody having confirmed canUseStep('roles') for them.
+        this.toast.error(
+          'Admin Setup is restricted.',
+          'You need an IT Ops Maturity administrator role. Ask a superuser to grant one.',
+        );
+        this.router.navigate(['/']);
+        return;
+      }
       this.activeStep = first.key;
       if (first.key === 'scope') {
         const firstSubTab = this.visibleScopeSubTabs[0];
@@ -2112,6 +2123,17 @@ export class AdminSetupComponent implements OnInit {
       this.toast.error('Pick a project first.');
       return;
     }
+    // The assessee checklist above is seeded asynchronously (syncMappingModalAssessees) -
+    // saving before that resolves would resubmit whatever was left over in
+    // mappingModalAssesseeIds from before this project's own list loaded (an
+    // empty array on a fresh open, or the previous project's list after a
+    // project switch), silently adding/removing assessees nobody actually
+    // touched. The Save button is disabled for the same reason - this is the
+    // belt-and-braces guard in case it's ever triggered another way.
+    if (this.loadingMappingModalAssessees) {
+      this.toast.error('Still loading this project\'s assessees - please wait a moment and try again.');
+      return;
+    }
     this.savingMapping = true;
     forkJoin([
       this.api.saveDomainProjectMapping(this.mappingModalProjectId, this.mappingModalDomainIds, this.mappingModalReason),
@@ -2148,6 +2170,74 @@ export class AdminSetupComponent implements OnInit {
       },
       error: (err) => this.toast.error('Could not remove the mapping.', this.errorText(err, 'Please try again.')),
     });
+  }
+
+  // ---- Bulk-select/remove whole mapping rows (domains + assessees together) ----
+  // Deliberately separate from the per-domain "x" above: that one only ever
+  // unmaps a single domain and never touches assessees, since the project may
+  // still have other domains left. This removes EVERY domain a selected
+  // project has AND deactivates its assessees too - see
+  // RemoveITOpsProjectMappingRows for why leaving assessees active there was
+  // the actual bug being fixed.
+  selectedMappingProjectIds = new Set<string>();
+  removingSelectedMappings = false;
+
+  isMappingSelectedForRemoval(row: ItOpsDomainProjectMapping): boolean {
+    return this.selectedMappingProjectIds.has(row.projectId);
+  }
+
+  toggleMappingSelectedForRemoval(row: ItOpsDomainProjectMapping): void {
+    if (this.isMappingSelectedForRemoval(row)) this.selectedMappingProjectIds.delete(row.projectId);
+    else this.selectedMappingProjectIds.add(row.projectId);
+  }
+
+  /** "Select all" only ever acts on what's visible on the current page, same as every other paginated table here. */
+  get allMappingsOnPageSelected(): boolean {
+    const rows = this.pagedMappings;
+    return rows.length > 0 && rows.every((r) => this.isMappingSelectedForRemoval(r));
+  }
+
+  toggleAllMappingsSelectedForRemovalOnPage(): void {
+    const rows = this.pagedMappings;
+    if (this.allMappingsOnPageSelected) {
+      for (const r of rows) this.selectedMappingProjectIds.delete(r.projectId);
+    } else {
+      for (const r of rows) this.selectedMappingProjectIds.add(r.projectId);
+    }
+  }
+
+  async removeSelectedMappings(): Promise<void> {
+    const projectIds = Array.from(this.selectedMappingProjectIds);
+    if (!projectIds.length) return;
+    const rows = this.mappings.filter((m) => projectIds.includes(m.projectId));
+    const names = rows.map((r) => r.projectName ?? r.projectId).join(', ');
+
+    const ok = await this.dialog.confirm({
+      title: 'Delete selected mappings?',
+      message: `Remove every mapped domain AND deactivate every assessee for ${projectIds.length} project${projectIds.length === 1 ? '' : 's'} (${names})? This cannot be undone.`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
+    this.removingSelectedMappings = true;
+    this.api
+      .removeProjectMappingRows(projectIds)
+      .pipe(finalize(() => (this.removingSelectedMappings = false)))
+      .subscribe({
+        next: (result) => {
+          this.toast.success(
+            'Mapping(s) deleted.',
+            `${result.domainsRemoved} domain mapping(s) and ${result.assesseesRemoved} assessee(s) removed across ${projectIds.length} project(s).`,
+          );
+          for (const id of projectIds) {
+            this.selectedMappingProjectIds.delete(id);
+            this.mappingTouchedProjectIds.add(id);
+          }
+          this.loadScope();
+        },
+        error: (err) => this.toast.error('Could not delete the selected mappings.', this.errorText(err, 'Please try again.')),
+      });
   }
 
   /** Client-side filter over the mapping table - project id/name, account, or any mapped domain name. */
@@ -3127,9 +3217,20 @@ export class AdminSetupComponent implements OnInit {
       this.toast.error('Pick at least one project first.');
       return false;
     }
+    // mappings comes from loadScope() (fired on entering this step) - checking
+    // before it resolves used to mean this.mappings was still [], so
+    // `mappings.find(...)` returned undefined for every project and the old
+    // filter below (`!!m && ...`) treated "not found yet" as "complete",
+    // letting Add/Create through for a project that's actually still missing
+    // domains/assessees, just because its real data hadn't loaded in time.
+    if (this.loadingScope) {
+      this.toast.error('Still loading project mappings - please wait a moment and try again.');
+      return false;
+    }
     const incomplete = this.assessmentProjectIds
-      .map((id) => this.mappings.find((m) => m.projectId === id))
-      .filter((m): m is ItOpsDomainProjectMapping => !!m && (!m.domains?.length || !m.assessees?.length));
+      .map((id) => ({ id, mapping: this.mappings.find((m) => m.projectId === id) }))
+      .filter(({ mapping }) => !mapping || !mapping.domains?.length || !mapping.assessees?.length)
+      .map(({ id, mapping }) => mapping ?? ({ projectId: id, projectName: id } as ItOpsDomainProjectMapping));
     if (incomplete.length) {
       const names = incomplete.map((m) => m.projectName ?? m.projectId).join('\n');
       const goToScope = await this.dialog.confirm({
@@ -3476,7 +3577,7 @@ export class AdminSetupComponent implements OnInit {
     this.goToStep('team');
   }
 
-  /** Client-side filter over the "Assessments in this cycle" table - project id/name or domain name. */
+  /** Client-side filter over the "Assessments in this cycle" table - every column shown: project, account, domain, status, and every Assessee/Assessor/Reviewer name. */
   get filteredAssessmentRows(): ItOpsCycleAssessment[] {
     const needle = this.assessmentTableSearch.trim().toLowerCase();
     if (!needle) return this.assessmentRows;
@@ -3484,7 +3585,12 @@ export class AdminSetupComponent implements OnInit {
       (r) =>
         (r.projectId ?? '').toLowerCase().includes(needle) ||
         (r.projectName ?? '').toLowerCase().includes(needle) ||
-        (r.domainName ?? '').toLowerCase().includes(needle),
+        (r.accountName ?? '').toLowerCase().includes(needle) ||
+        (r.domainName ?? '').toLowerCase().includes(needle) ||
+        (r.status ?? '').toLowerCase().includes(needle) ||
+        (r.assesseeNames ?? []).some((n) => n.toLowerCase().includes(needle)) ||
+        (r.assessorNames ?? []).some((n) => n.toLowerCase().includes(needle)) ||
+        (r.reviewerNames ?? []).some((n) => n.toLowerCase().includes(needle)),
     );
   }
 

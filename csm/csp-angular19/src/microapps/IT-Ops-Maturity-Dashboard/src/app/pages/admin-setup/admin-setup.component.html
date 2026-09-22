@@ -623,6 +623,13 @@
         <button type="button" class="btn-ghost btn-info" (click)="openMappingHistoryModal()">Audit History</button>
         <button type="button" class="btn-ghost btn-info" (click)="openCopyMapModal()">Copy from another project…</button>
         <button type="button" class="btn-ghost btn-add" (click)="openBulkMapModal()">+ Bulk map</button>
+        <!-- Deleting a row here removes EVERY domain that project has AND
+             deactivates its assessees - the per-domain "x" further down never
+             touches assessees, since the project may still have other domains left. -->
+        <button type="button" class="btn-ghost btn-danger" *ngIf="selectedMappingProjectIds.size" [disabled]="removingSelectedMappings" (click)="removeSelectedMappings()">
+          <app-spinner *ngIf="removingSelectedMappings" [size]="13"></app-spinner>
+          Delete selected ({{ selectedMappingProjectIds.size }})
+        </button>
         <button type="button" class="btn-primary btn-create" (click)="openMappingModal()">+ New mapping</button></div>
       <div class="search-box">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -634,9 +641,19 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Project</th><th>Account</th><th>Mapped domains</th><th>Assessees</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th class="col-checkbox">
+                <input type="checkbox" [checked]="allMappingsOnPageSelected" (change)="toggleAllMappingsSelectedForRemovalOnPage()" aria-label="Select all mappings on this page" />
+              </th>
+              <th>Project</th><th>Account</th><th>Mapped domains</th><th>Assessees</th><th></th>
+            </tr>
+          </thead>
           <tbody>
             <tr *ngFor="let row of pagedMappings">
+              <td class="col-checkbox">
+                <input type="checkbox" [checked]="isMappingSelectedForRemoval(row)" (change)="toggleMappingSelectedForRemoval(row)" [attr.aria-label]="'Select ' + (row.projectName ?? row.projectId)" />
+              </td>
               <td><strong>{{ row.projectName }}</strong></td>
               <td>{{ row.accountName }}</td>
               <td>
@@ -675,7 +692,7 @@
               </td>
             </tr>
             <tr *ngIf="!filteredMappings.length && !loadingScope">
-              <td colspan="5" class="page-sub">{{ mappings.length ? 'No mappings match your search.' : 'No domain–project mappings yet.' }}</td>
+              <td colspan="6" class="page-sub">{{ mappings.length ? 'No mappings match your search.' : 'No domain–project mappings yet.' }}</td>
             </tr>
           </tbody>
         </table>
@@ -1074,8 +1091,8 @@
       <div class="modal-footer">
         <div class="modal-actions">
           <button type="button" class="btn-secondary" (click)="closeMappingModal()">Cancel</button>
-          <button type="button" class="btn-primary" (click)="saveMapping()" [disabled]="savingMapping || !mappingModalProjectId">
-            <app-spinner *ngIf="savingMapping" [size]="13"></app-spinner>
+          <button type="button" class="btn-primary" (click)="saveMapping()" [disabled]="savingMapping || !mappingModalProjectId || loadingMappingModalAssessees">
+            <app-spinner *ngIf="savingMapping || loadingMappingModalAssessees" [size]="13"></app-spinner>
             Save mapping
           </button>
         </div>
@@ -1166,24 +1183,24 @@
        "History" button, or every project when opened from the toolbar's
        "Audit History" button. -->
   <div class="modal-backdrop" *ngIf="mappingHistoryModalOpen" (click)="closeMappingHistoryModal()">
-    <div class="modal modal-wide" (click)="$event.stopPropagation()">
+    <div class="modal modal-wide modal-mapping-history" (click)="$event.stopPropagation()">
       <button type="button" class="modal-close" (click)="closeMappingHistoryModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <h3>Domain–Project Mapping history{{ mappingHistoryProjectId ? ' — ' + mappingHistoryProjectId : '' }}</h3>
       <p class="modal-copy">Every mapping change, with who made it, when, and why.</p>
       <div class="page-sub" *ngIf="loadingMappingHistory"><app-spinner [size]="14"></app-spinner> Loading history…</div>
       <div class="table-wrap" *ngIf="!loadingMappingHistory">
         <table>
-          <thead><tr><th>Project</th><th>Domain</th><th>Action</th><th>Reason</th><th>Changed by</th><th>Date</th></tr></thead>
+          <thead><tr><th class="col-project">Project</th><th class="col-domain">Domain</th><th class="col-action">Action</th><th class="col-reason">Reason</th><th class="col-changedby">Changed by</th><th class="col-date">Date</th></tr></thead>
           <tbody>
             <tr *ngFor="let h of mappingHistoryRows">
-              <td>{{ h.projectName || h.projectId }}</td>
-              <td>{{ h.domainName }}</td>
-              <td>
-                <span class="pill" [class.pill-good]="h.action === 'Added' || h.action === 'Reactivated'" [class.pill-critical]="h.action === 'Removed'">{{ h.action }}</span>
+              <td class="col-project" [title]="h.projectName || h.projectId">{{ h.projectName || h.projectId }}</td>
+              <td class="col-domain" [title]="h.domainName">{{ h.domainName }}</td>
+              <td class="col-action">
+                <span class="pill" [class.pill-good]="h.action === 'Added' || h.action === 'Reactivated'" [class.pill-critical]="h.action === 'Removed'" [title]="h.action">{{ h.action }}</span>
               </td>
-              <td>{{ h.reason || '—' }}</td>
-              <td>{{ h.changedByName || h.changedBy }}</td>
-              <td>{{ h.changedDate | date: 'mediumDate' }}</td>
+              <td class="col-reason" [title]="h.reason || 'No reason recorded'">{{ h.reason || '—' }}</td>
+              <td class="col-changedby" [title]="h.changedByName || h.changedBy">{{ h.changedByName || h.changedBy }}</td>
+              <td class="col-date" [title]="h.changedDate | date: 'medium'">{{ h.changedDate | date: 'mediumDate' }}</td>
             </tr>
             <tr *ngIf="!mappingHistoryRows.length">
               <td colspan="6" class="page-sub">No mapping changes logged yet.</td>
@@ -1495,7 +1512,7 @@
       <div class="page-sub" *ngIf="assessmentsError">{{ assessmentsError }}</div>
       <div class="search-box" *ngIf="assessmentRows.length">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" placeholder="Search by project or domain" [(ngModel)]="assessmentTableSearch" (ngModelChange)="onAssessmentTableSearchChange()">
+        <input type="text" placeholder="Search by project, account, domain, status, assessee, assessor, or reviewer" [(ngModel)]="assessmentTableSearch" (ngModelChange)="onAssessmentTableSearchChange()">
       </div>
       <div class="field-note selection-bar" *ngIf="selectedAssessmentIdsForRemoval.size">
         <span>{{ selectedAssessmentIdsForRemoval.size }} selected</span>

@@ -27,14 +27,24 @@ export class NavMenuComponent implements OnInit {
   canSeeAdminSetup = false;
 
   /**
-   * Whether to show the Dashboard link at all. The account/project-wide
-   * Dashboard is a DB-granted role (ITOPS_ROLE_DASHBOARD_VIEWER, or ITOps
-   * Superuser) - someone without it gets a 403-equivalent "access required"
-   * page if they navigate there directly, but the nav item itself is removed
-   * from the DOM rather than shown-then-blocked, so who can even SEE the tab
-   * is governed by the same DB grant as who can use it.
+   * Whether to show the Dashboard/Assessments/Reports links at all - the
+   * CSM-standard APP_CONTROLS/APP_ACCESS_CONTROLS mechanism, same as every
+   * other CSM tab: the shell already fetches the caller's full access-control
+   * rows once at login and caches them in localStorage['access'] (matched
+   * against localStorage['role'], the CSM_TITLE_ID), and
+   * csp-angular19/src/app/shared/access-control.ts's IsAllowed() is how the
+   * shell itself checks a RESOURCE_ID client-side from that cache - no
+   * backend round trip per check. This microapp can't import that shell
+   * class directly (separate Angular project/build), so hasTabViewAccess()
+   * below replicates just the role-based VIEW_ACCESS branch of it, matched
+   * against RESOURCE_ID 834/Dashboard, 835/Assessments, 836/Reports (see
+   * ITOperationMaturity_V2_28_TabAppControls.sql). This only decides whether
+   * the tab RENDERS - what data it shows once open is unchanged, still
+   * governed by Superuser/Assessor/Assessee/Reviewer/GDH/project-allocation
+   * (see getHasDashboardAccess/getHasReportAccess/getMyAssignments below).
    */
   canSeeDashboard = false;
+  canSeeReports = false;
 
   /**
    * True when this employee is a configured GDH (Business-Unit-level access,
@@ -78,18 +88,44 @@ export class NavMenuComponent implements OnInit {
     });
     this.adminApi.getMyAccess().subscribe((access) => (this.canSeeAdminSetup = access.isAdmin));
 
+    this.canSeeDashboard = this.hasTabViewAccess(834);
+    this.canSeeMyAssignments = this.hasTabViewAccess(835);
+    this.canSeeReports = this.hasTabViewAccess(836);
+
     const empId = localStorage.getItem('empid');
     if (empId) {
-      // Reachable now for anyone with an assignment too (scoped to their own
-      // projects), not just the full Dashboard Viewer/Superuser grant.
+      // isGdh still drives the Assessments-link suppression below (GDHs get
+      // BU-level Dashboard/Reports but have no personal assignments to track) -
+      // this is data-layer nuance, not tab rendering, so it's kept as-is.
       this.maturityApi.getHasDashboardAccess(empId).subscribe((access) => {
-        this.canSeeDashboard = access.hasAnyAssignment;
         this.isGdh = access.isGdh;
       });
-      this.maturityApi.getMyAssignments(empId).subscribe({
-        next: (rows) => (this.canSeeMyAssignments = (rows ?? []).length > 0),
-        error: () => (this.canSeeMyAssignments = false),
-      });
+    }
+  }
+
+  /**
+   * Local re-implementation of the CSM shell's AccessControl.IsAllowed()
+   * "pure role-based access" branch (csp-angular19/src/app/shared/access-control.ts) -
+   * this microapp is a separate Angular project and can't import that class
+   * directly. Reads the same localStorage['access']/['role'] the shell caches
+   * at login, so there's no backend round trip per check.
+   */
+  private hasTabViewAccess(resourceId: number): boolean {
+    try {
+      const raw = localStorage.getItem('access');
+      if (!raw) return false;
+      const rows: any[] = JSON.parse(raw);
+      const roleId = parseInt(localStorage.getItem('role') || '0', 10);
+      return rows.some(
+        (r) =>
+          r.RESOURCE_ID === resourceId &&
+          r.ACCESS_LEVEL === 1 &&
+          r.ROLE_ID === roleId &&
+          r.VIEW_ACCESS === true &&
+          r.ISACTIVE !== false,
+      );
+    } catch {
+      return false;
     }
   }
 

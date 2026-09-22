@@ -331,6 +331,40 @@ tbody td[colspan] { padding: var(--space-6) var(--space-4); text-align: center; 
 .modal-wide .table-wrap { margin-top: 8px; }
 .grant-line.audit-line { padding: 5px 0 3px; border-bottom: none; gap: 6px; }
 
+/* This particular history has 6 columns including two free-text ones
+   (Project, Reason) that could run arbitrarily long - left unconstrained,
+   those pushed the table wider than the modal, so "Changed by"/"Date" were
+   only visible after scrolling the whole popup sideways. Fixed layout with
+   explicit column widths + ellipsis truncation (full text still available
+   via the title tooltip) keeps every column on screen at once; the table
+   only widens the modal, never forces a horizontal scrollbar for it. */
+.modal-mapping-history {
+  max-width: 900px;
+
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .col-project, .col-reason {
+    max-width: 0; /* forces the fixed-layout column to respect its declared width instead of growing to fit content */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  th.col-project, td.col-project { width: 24%; }
+  th.col-domain, td.col-domain { width: 12%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The "Removed"/"Added"/"Reactivated" pill (icon + text) needs more room
+     than a plain word - at 12% it was wide enough to visually spill past its
+     own cell and sit on top of the Reason column's "—" right next to it. */
+  th.col-action, td.col-action { width: 18%; overflow: hidden; }
+  td.col-action .pill { white-space: nowrap; }
+  th.col-reason, td.col-reason { width: 14%; }
+  th.col-changedby, td.col-changedby { width: 16%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  th.col-date, td.col-date { width: 16%; white-space: nowrap; }
+}
+
 /* ---- Effective access preview ---- */
 .access-preview {
   border: 1px solid var(--border); border-radius: 8px; background: var(--page-plane);
@@ -465,6 +499,7 @@ h1 .pill { vertical-align: middle; margin-left: 6px; }
 /* Destructive actions (Revoke) get the same critical red used for pill-critical
    elsewhere - the one place red should appear among the buttons, reserved for
    things that actually remove access or data. */
+.col-checkbox { width: 34px; text-align: center; }
 .btn-ghost.btn-danger, .btn-primary.btn-danger { color: var(--status-critical); }
 .btn-ghost.btn-danger { background: color-mix(in srgb, var(--status-critical) 12%, var(--neutral-bg)); border-color: color-mix(in srgb, var(--status-critical) 28%, var(--neutral-border)); }
 .btn-ghost.btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--status-critical) 22%, var(--neutral-bg)); }

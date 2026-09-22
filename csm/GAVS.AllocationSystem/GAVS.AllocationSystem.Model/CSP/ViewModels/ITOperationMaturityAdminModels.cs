@@ -275,6 +275,20 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public List<string> EmpIds { get; set; }
     }
 
+    // "Delete whole row(s)" on the Domain-Project Mapping table - unlike the
+    // per-domain "x" (ITOPS_RemoveDomainProjectMappingRequest), which only
+    // ever unmaps ONE domain and deliberately leaves everything else on that
+    // project untouched (it may still have other domains, still needs its
+    // assessees), this removes EVERY domain the project has AND deactivates
+    // its assessees too - a project with zero domains left has nothing for an
+    // assessee to be assessed against, so leaving them active was the bug
+    // being fixed here.
+    public class ITOPS_RemoveProjectMappingRowsRequest
+    {
+        public List<string> ProjectIds { get; set; }
+        public string Reason { get; set; }
+    }
+
     public class ITOPS_DomainProjectMapAuditRow
     {
         public string ProjectId { get; set; }

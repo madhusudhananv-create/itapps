@@ -1087,21 +1087,38 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return [...rows].sort((a, b) => valueOf(a).localeCompare(valueOf(b)) * factor);
   }
 
-  /** Small "at a glance" counts shown above the tabs - scoped by the Cycle/Status filter pills and the free-text search box, same as the tables below (see filteredAssignments/matchesAssignmentSearch), just not by which tab is currently active. */
+  /**
+   * Small "at a glance" counts shown above the tabs - scoped by the Cycle/
+   * Status filter pills and the free-text search box, same as the tables
+   * below (see filteredAssignments/matchesAssignmentSearch), just not by
+   * which tab is currently active.
+   *
+   * Deliberately status-based, not role-based: every row is counted once
+   * off its own displayAssignmentStatus, regardless of whether the current
+   * user holds it as Assessor/Reviewer/Assessee. This is scorecard-only -
+   * the "Action needed"/"My Assessments"/"Pending Your Review" tab logic
+   * elsewhere on this page stays role-scoped (see needsAction, myOpenAssessments,
+   * myPendingReviews).
+   *
+   * Scoped to the currently active tab's own rows (currentTabAssignmentsRaw),
+   * not every row across all three tabs - otherwise the tiles would count
+   * assessments this employee can only see via "Needs Review"/allocation
+   * while the table underneath, on the active tab, shows a much smaller set.
+   */
   get assignmentsSummary(): { openCount: number; returnedCount: number; reviewCount: number; completedCount: number } {
-    const rows = this.filteredAssignments.filter((row) => this.matchesAssignmentSearch(row));
-    const openRows = rows.filter((row) => this.isAssessorOn(row) && row.status !== 'Approved');
+    const rows = this.currentTabAssignmentsRaw.filter((row) => this.matchesAssignmentSearch(row));
+    // isReturnedForRevision/'PendingReview' check the raw backend status directly -
+    // displayAssignmentStatus's own ReturnedForRevision->"In Progress" mapping
+    // (BACKEND_STATUS_MAP, used for the Status filter/table column) would
+    // otherwise never match a literal "Returned for Revision" comparison here.
+    const isReturned = (row: ItOpsMyAssignmentRow) => this.isReturnedForRevision(row);
+    const isPendingReview = (row: ItOpsMyAssignmentRow) => row.status === 'PendingReview';
+    const isCompleted = (row: ItOpsMyAssignmentRow) => this.displayAssignmentStatus(row) === 'Completed';
     return {
-      openCount: openRows.length,
-      returnedCount: openRows.filter((row) => this.isReturnedForRevision(row)).length,
-      reviewCount: rows.filter((row) => this.isReviewerOn(row) && row.status === 'PendingReview').length,
-      // "Completed" here matches the exact same rule the table's own status
-      // column uses (displayAssignmentStatus) - Approved plus every finding on
-      // the WHOLE assessment resolved (row.allFindingsResolved), not just this
-      // employee's own findings. The two used to disagree (this tile used to
-      // check only "my findings"), so an assessee row could count as
-      // "Completed" here while the grid still showed it as plain "Approved".
-      completedCount: rows.filter((row) => this.displayAssignmentStatus(row) === 'Completed').length,
+      openCount: rows.filter((row) => !isReturned(row) && !isPendingReview(row) && !isCompleted(row)).length,
+      returnedCount: rows.filter((row) => isReturned(row)).length,
+      reviewCount: rows.filter((row) => isPendingReview(row)).length,
+      completedCount: rows.filter((row) => isCompleted(row)).length,
     };
   }
 

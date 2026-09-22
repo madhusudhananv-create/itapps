@@ -1,8 +1,9 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withHashLocation } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
+import { sessionExpiredInterceptor } from './interceptors/session-expired.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,6 +23,6 @@ export const appConfig: ApplicationConfig = {
     // dev, UAT, and production with no server-side rewrite rule or dev-server
     // proxy config needed anywhere.
     provideRouter(routes, withHashLocation()),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([sessionExpiredInterceptor])),
   ],
 };

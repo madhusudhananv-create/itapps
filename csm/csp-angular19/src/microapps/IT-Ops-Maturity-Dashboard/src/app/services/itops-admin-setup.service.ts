@@ -662,6 +662,20 @@ export class ItOpsAdminSetupService {
     );
   }
 
+  /**
+   * "Delete whole row(s)" - removes EVERY domain the given projects have AND
+   * deactivates their assessees too, unlike removeDomainProjectMapping above
+   * (which only ever unmaps one domain and never touches assessees, since the
+   * project may still have other domains left).
+   */
+  removeProjectMappingRows(projectIds: string[], reason?: string): Observable<{ domainsRemoved: number; assesseesRemoved: number }> {
+    return this.http.post<{ domainsRemoved: number; assesseesRemoved: number }>(
+      `${this.apiurl}RemoveITOpsProjectMappingRows`,
+      { ProjectIds: projectIds, Reason: reason || null },
+      { headers: this.getHeaders() },
+    );
+  }
+
   /** Full Domain-Project Mapping change history, newest first; optionally scoped to one project. */
   getDomainProjectMappingHistory(projectId?: string): Observable<ItOpsMappingAuditRow[]> {
     const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
