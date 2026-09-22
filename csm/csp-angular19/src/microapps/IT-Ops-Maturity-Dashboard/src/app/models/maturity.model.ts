@@ -1,6 +1,6 @@
 export type MaturityScore = 'NA' | 1 | 2 | 3 | 4 | 5;
 
-export type DomainStatus = 'Not Started' | 'Draft' | 'In Progress' | 'Pending Review' | 'Approved';
+export type DomainStatus = 'Not Started' | 'Draft' | 'In Progress' | 'Pending Review' | 'Approved' | 'Suspended';
 
 export interface MaturityRubric {
   level1: string;

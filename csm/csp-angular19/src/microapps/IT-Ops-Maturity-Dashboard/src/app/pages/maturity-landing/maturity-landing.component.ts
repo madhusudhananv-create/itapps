@@ -25,7 +25,7 @@ const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
   PendingReview: 'Pending Review',
   Approved: 'Approved',
   ReturnedForRevision: 'In Progress',
-  Suspended: 'Draft',
+  Suspended: 'Suspended',
   Closed: 'Approved',
 };
 

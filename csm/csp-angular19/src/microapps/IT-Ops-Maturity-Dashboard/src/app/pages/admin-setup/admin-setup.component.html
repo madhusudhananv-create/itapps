@@ -637,7 +637,7 @@
       </div>
       <div class="field-note" *ngIf="incompleteMappingCount">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
-        <span>{{ incompleteMappingCount }} project(s) below are missing domains and/or assessees - both are required before Configure Assessment can create anything for that project.</span>
+        <span>{{ incompleteMappingCount }} project(s) below are missing domains - required before Configure Assessment can create anything for that project.</span>
       </div>
       <div class="table-wrap">
         <table>
@@ -646,7 +646,7 @@
               <th class="col-checkbox">
                 <input type="checkbox" [checked]="allMappingsOnPageSelected" (change)="toggleAllMappingsSelectedForRemovalOnPage()" aria-label="Select all mappings on this page" />
               </th>
-              <th>Project</th><th>Account</th><th>Mapped domains</th><th>Assessees</th><th></th>
+              <th>Project</th><th>Account</th><th>Mapped domains</th><th>Project Resources</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -658,7 +658,7 @@
               <td>{{ row.accountName }}</td>
               <td>
                 <div class="chip-stack">
-                  <span class="pill pill-tag" *ngFor="let d of row.domains">
+                  <span class="pill pill-tag" *ngFor="let d of row.domains" [style.background]="domainChipBackground(d.domainName)" [style.color]="domainChipColor(d.domainName)">
                     {{ d.domainName }} <button type="button" class="chip-remove" (click)="removeMappedDomain(row, d)" [attr.aria-label]="'Remove ' + d.domainName">&times;</button>
                   </span>
                   <button type="button" class="btn-ghost btn-add" (click)="openMappingModal(row.projectId)">+ Add domain</button>
@@ -669,12 +669,12 @@
                 </div>
               </td>
               <td>
-                <div class="chip-stack" *ngIf="row.assessees?.length">
-                  <span class="chip" *ngFor="let a of row.assessees"><span class="avatar" [style.background]="avatarColor(a.name)">{{ initials(a.name) }}</span>{{ a.name }}</span>
-                </div>
-                <div class="mapping-warning" *ngIf="!row.assessees?.length">
+                <button type="button" class="btn-ghost btn-resource" *ngIf="row.staffedResources?.length" (click)="openResourceListModal(row)">
+                  View resources ({{ row.staffedResources.length }})
+                </button>
+                <div class="mapping-warning" *ngIf="!row.staffedResources?.length">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
-                  No assessees set - required before this project can be assessed.
+                  No one is staffed on this project - Assessee can't be set for it in Configure Assessment yet.
                 </div>
               </td>
               <td class="row-actions">
@@ -831,7 +831,7 @@
       </div>
     </ng-container>
 
-    <div class="step-actions between">
+    <div class="step-actions between sticky">
       <button type="button" class="btn-secondary" *ngIf="canUseStep('cycle')" (click)="goToStep('cycle')">Back</button>
       <button type="button" class="btn-primary" *ngIf="canUseStep('assessment')" (click)="continueToAssessment()">Submit and Continue to Configure Assessment</button>
     </div>
@@ -1061,38 +1061,13 @@
         </button>
         <span class="page-sub">{{ mappingModalDomainIds.length }} domain(s) selected</span>
       </div>
-      <label class="modal-label">Assessees<span class="required">*</span></label>
-      <p class="modal-hint" *ngIf="!mappingModalProjectId">Select a project above first.</p>
-      <ng-container *ngIf="mappingModalProjectId">
-        <p class="modal-hint" *ngIf="loadingMappingModalAssessees"><app-spinner [size]="12"></app-spinner> Loading who's staffed on this project…</p>
-        <p class="modal-hint" *ngIf="!loadingMappingModalAssessees && !mappingModalAssesseeCandidates.length">No one is staffed on this project yet.</p>
-        <div class="search-box" *ngIf="mappingModalAssesseeCandidates.length">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="mappingModalAssesseeSearch">
-        </div>
-        <div class="multi-picker" *ngIf="mappingModalAssesseeCandidates.length">
-          <div class="multi-picker-list">
-            <label class="picker-row" *ngFor="let e of filteredMappingModalAssesseeCandidates">
-              <input type="checkbox" [checked]="isMappingAssesseeSelected(e.empId)" (change)="toggleMappingAssessee(e.empId)">
-              <span class="picker-name">{{ e.name }}</span>
-            </label>
-          </div>
-        </div>
-        <div class="picker-toolbar" *ngIf="mappingModalAssesseeCandidates.length">
-          <button type="button" class="btn-ghost" (click)="toggleAllMappingAssessees()">
-            {{ allVisibleMappingAssesseesPicked ? 'Clear all' : 'Select all listed' }}
-          </button>
-          <span class="page-sub">{{ mappingModalAssesseeIds.length }} selected</span>
-        </div>
-        <p class="modal-hint">These are the people this project's assessments are about - the same set applies across every domain assessed for this project, every cycle.</p>
-      </ng-container>
       <label class="modal-label">Reason for change <span class="page-sub" style="display:inline;">(optional, kept in Audit History)</span></label>
       <input type="text" [(ngModel)]="mappingModalReason" placeholder="e.g. onboarding new SOW scope">
       <div class="modal-footer">
         <div class="modal-actions">
           <button type="button" class="btn-secondary" (click)="closeMappingModal()">Cancel</button>
-          <button type="button" class="btn-primary" (click)="saveMapping()" [disabled]="savingMapping || !mappingModalProjectId || loadingMappingModalAssessees">
-            <app-spinner *ngIf="savingMapping || loadingMappingModalAssessees" [size]="13"></app-spinner>
+          <button type="button" class="btn-primary" (click)="saveMapping()" [disabled]="savingMapping || !mappingModalProjectId">
+            <app-spinner *ngIf="savingMapping" [size]="13"></app-spinner>
             Save mapping
           </button>
         </div>
@@ -1210,6 +1185,23 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" (click)="closeMappingHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Read-only "Project Resource" list popup - just displays row.staffedResources
+       already loaded with the grid (who's currently staffed/billed on this project,
+       and therefore eligible to be picked as Assessee later in Configure Assessment). -->
+  <div class="modal-backdrop" *ngIf="resourceListModalOpen" (click)="closeResourceListModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeResourceListModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Project Resources — {{ resourceListProjectLabel }}</h3>
+      <p class="modal-copy">Who's currently staffed on this project.</p>
+      <div class="chip-stack">
+        <span class="chip" *ngFor="let s of resourceListResources"><span class="avatar" [style.background]="avatarColor(s.name)">{{ initials(s.name) }}</span>{{ s.name }}</span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeResourceListModal()">Close</button>
       </div>
     </div>
   </div>
@@ -1359,7 +1351,7 @@
         </ng-container>
       </div>
       <p class="modal-hint">
-        Domains and assessees come from each project's own setup in Configure Scope - nothing else to pick here.
+        Domains come from each project's own setup in Configure Scope - Assessee/Assessor/Reviewer are staged per domain below.
       </p>
 
       <div class="step-actions end tight">
@@ -1403,11 +1395,8 @@
             This will create <strong>{{ newAssessmentCount }}</strong> new assessment(s) across
             <strong>{{ assessmentProjectIds.length }}</strong> project(s).
           </div>
-          <div class="page-sub" *ngIf="existingAssessmentCount && !assesseeSyncOnlyCount">
+          <div class="page-sub" *ngIf="existingAssessmentCount">
             {{ existingAssessmentCount }} assessment(s) already exist for this combination and will be left unchanged (their team stays as-is).
-          </div>
-          <div class="page-sub" *ngIf="assesseeSyncOnlyCount">
-            {{ assesseeSyncOnlyCount }} project(s) already have all their assessments created - their assessee list has changed in Configure Scope since, so clicking this will push that update onto every existing assessment for them (their assigned team stays as-is).
           </div>
           <div class="page-sub" *ngIf="retiredAssessmentCount">
             {{ retiredAssessmentCount }} not-started assessment(s) on domains no longer mapped will be retired.
@@ -1428,7 +1417,7 @@
               <th>
                 <input type="checkbox" [checked]="allStagedRowsIncluded" (change)="toggleAllStagedRowsIncluded()" aria-label="Include all rows">
               </th>
-              <th>Project</th><th>Domain</th><th>Assessee</th><th>Assessor<span class="required">*</span></th><th>Reviewer<span class="required">*</span></th>
+              <th>Project</th><th>Domain</th><th>Assessee<span class="required">*</span></th><th>Assessor<span class="required">*</span></th><th>Reviewer<span class="required">*</span></th>
             </tr>
           </thead>
           <tbody>
@@ -1444,10 +1433,26 @@
               <td><strong>{{ row.projectName }}</strong></td>
               <td>{{ row.domainName }}</td>
               <td class="people-cell">
-                <div class="chip-stack" *ngIf="row.assesseeNames.length">
-                  <span class="chip" *ngFor="let name of row.assesseeNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                <div class="chip-stack-edit" *ngIf="row.assesseeNames.length; else assesseeEmpty">
+                  <div class="chip-stack">
+                    <span class="chip" *ngFor="let name of row.assesseeNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                  </div>
+                  <button type="button" class="btn-icon" (click)="openStagedAssign(row, 'Assessee')" title="Edit assessee" aria-label="Edit assessee">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
                 </div>
-                <span class="page-sub" *ngIf="!row.assesseeNames.length">Set in Configure Scope</span>
+                <ng-template #assesseeEmpty>
+                  <button
+                    type="button"
+                    class="btn-ghost btn-add"
+                    [class.invalid]="stagingValidationFailed && isRowIncluded(row.key)"
+                    (click)="openStagedAssign(row, 'Assessee')"
+                  >+ Set assessee</button>
+                  <span class="field-error" *ngIf="stagingValidationFailed && isRowIncluded(row.key)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                    Assessee required
+                  </span>
+                </ng-template>
               </td>
               <td class="people-cell">
                 <div class="chip-stack-edit" *ngIf="row.assessorNames.length; else assessorEmpty">
@@ -1497,11 +1502,11 @@
           </tbody>
         </table>
       </div>
-      <p class="modal-hint">Every included new row needs at least one Assessor and one Reviewer - Assessor/Reviewer can be anyone in the org, not just people staffed on the project. Untick Include to leave a row staged for later instead of creating it now.</p>
+      <p class="modal-hint">Every included new row needs at least one Assessee, one Assessor, and one Reviewer - Assessor/Reviewer can be anyone in the org, while Assessee stays scoped to who's staffed on the project. Untick Include to leave a row staged for later instead of creating it now.</p>
       <div class="step-actions end tight">
         <button type="button" class="btn-primary" (click)="createAssessments()" [disabled]="creatingAssessments">
           <app-spinner *ngIf="creatingAssessments" [size]="13"></app-spinner>
-          {{ newAssessmentCount === 0 && assesseeSyncOnlyCount ? 'Create / update assessments' : 'Create assessments' }}
+          Create assessments
         </button>
       </div>
     </div>
@@ -1629,10 +1634,9 @@
     </div>
   </section>
 
-  <!-- Quick "Update assessees" for an already-created assessment's project.
-       Writes through to Configure Scope's own assessee config (ITOPS_PROJECT_ASSESSEE)
-       and re-syncs it onto every existing assessment for this project in this
-       cycle - never a separate, assessment-only assessee list. -->
+  <!-- Quick "Update assessee" for one already-created assessment - same pattern
+       as "Update assessor"/"Update reviewer" below, writes straight to
+       ITOPS_ASSESSMENT_ASSESSEE for that one assessment, nothing project-wide. -->
   <div class="modal-backdrop" *ngIf="updateAssesseesModalOpen" (click)="closeUpdateAssesseesModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <button type="button" class="modal-close" (click)="closeUpdateAssesseesModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
@@ -1760,7 +1764,10 @@
       <button type="button" class="modal-close" (click)="closeStagedAssign()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <h3>Set {{ stagedAssignRole.toLowerCase() }}</h3>
       <label class="modal-label">{{ stagedAssignRole }}</label>
-      <p class="modal-hint" *ngIf="!stagedAssignCandidates.length">No employees found.</p>
+      <p class="modal-hint" *ngIf="stagedAssignRole === 'Assessee' && loadingStagedAssigneeCandidates"><app-spinner [size]="12"></app-spinner> Loading who's staffed on this project…</p>
+      <p class="modal-hint" *ngIf="!loadingStagedAssigneeCandidates && !stagedAssignCandidates.length">
+        {{ stagedAssignRole === 'Assessee' ? 'No one is staffed on this project yet.' : 'No employees found.' }}
+      </p>
       <div class="search-box" *ngIf="stagedAssignCandidates.length">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
         <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="stagedAssignSearch">
@@ -1782,7 +1789,7 @@
       <div class="modal-footer">
         <div class="modal-actions">
           <button type="button" class="btn-secondary" (click)="closeStagedAssign()">Cancel</button>
-          <button type="button" class="btn-primary" (click)="saveStagedAssign()">Done</button>
+          <button type="button" class="btn-primary" (click)="saveStagedAssign()">Save</button>
         </div>
         <p class="modal-footnote">Not saved yet - takes effect when this pair is actually created below.</p>
       </div>
@@ -1847,7 +1854,7 @@
             <div>
               <div class="domain-name">{{ group.name }}</div>
               <div class="domain-meta">{{ group.assessmentIds.length }} project(s) in this cycle</div>
-              <div class="domain-meta" *ngIf="group.status === 'Ready'">{{ group.assessors.length }} assessor(s) · {{ group.reviewers.length }} reviewer(s)</div>
+              <div class="domain-meta" *ngIf="group.status === 'Ready'">{{ group.assessors.length }} assessor(s) · {{ group.reviewers.length }} reviewer(s) · {{ group.assessees.length }} assessee(s)</div>
               <div class="domain-meta" *ngIf="group.status === 'Needs setup'">No team assigned yet</div>
             </div>
             <span class="status-tag pill" [ngClass]="group.status === 'Ready' ? 'pill-accent' : 'pill-warning'">{{ group.status }}</span>
@@ -1873,6 +1880,16 @@
                 <button type="button" class="btn-ghost btn-add" (click)="openPicker('Reviewer', group)">+ Add</button>
               </div>
             </div>
+            <div class="role-row">
+              <div class="role-label"><strong>Assessees</strong><span>{{ group.assessees.length }} assigned</span></div>
+              <div class="role-chips chip-stack">
+                <span class="chip" *ngFor="let m of group.assessees; trackBy: trackByTeamMemberEmpId">
+                  <span class="avatar" [style.background]="avatarColor(m.empName)">{{ initials(m.empName) }}</span>{{ m.empName }}
+                  <button type="button" class="chip-remove" (click)="removeTeamMember(group, 'Assessee', m)" [attr.aria-label]="'Remove ' + m.empName">&times;</button>
+                </span>
+                <button type="button" class="btn-ghost btn-add" (click)="openPicker('Assessee', group)">+ Add</button>
+              </div>
+            </div>
           </div>
         </details>
       </div>
@@ -1887,12 +1904,13 @@
   <div class="modal-backdrop" *ngIf="pickerModalOpen" (click)="closePicker()">
     <div class="modal" (click)="$event.stopPropagation()">
       <button type="button" class="modal-close" (click)="closePicker()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      <h3>Add {{ pickerRole === 'Assessor' ? 'assessors' : 'reviewers' }} — {{ pickerDomain }}</h3>
-      <p class="modal-copy">Select one or more {{ pickerRole === 'Assessor' ? 'assessors' : 'reviewers' }} for this domain.</p>
+      <h3>Add {{ pickerRole === 'Assessor' ? 'assessors' : pickerRole === 'Reviewer' ? 'reviewers' : 'assessees' }} — {{ pickerDomain }}</h3>
+      <p class="modal-copy">Select one or more {{ pickerRole === 'Assessor' ? 'assessors' : pickerRole === 'Reviewer' ? 'reviewers' : 'assessees' }} for this domain.</p>
       <!-- The domain already carries a default owner for this role (the same one
            the assessment was seeded from) - offering it as one click beats making
            the admin type a name they already know. Hidden when there is no
-           default or that person is already on the team. -->
+           default or that person is already on the team - always hidden for
+           Assessee, which has no configured default. -->
       <div class="chip-stack" *ngIf="pickerDefaultEmpId">
         <button type="button" class="btn-ghost" (click)="addPickerDefault()" [disabled]="savingPicker">
           <app-spinner *ngIf="savingPicker" [size]="13"></app-spinner>

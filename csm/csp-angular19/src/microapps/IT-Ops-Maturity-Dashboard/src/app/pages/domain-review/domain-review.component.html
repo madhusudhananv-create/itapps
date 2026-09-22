@@ -28,7 +28,6 @@
           <em>{{ assesseeNamesList.length === 1 ? 'Assessee' : 'Assessees' }}</em><strong>{{ assesseeNames() }}</strong>
         </span>
         <span [class]="statusClass(displayDomainStatus())">{{ displayDomainStatus() }}</span>
-        <span class="suspended-pill" *ngIf="domain.suspended">Suspended</span>
       </div>
     </div>
     <div class="header-actions">
@@ -39,7 +38,14 @@
         </svg>
         Maturity Level Definitions
       </button>
-      <button type="button" class="btn-secondary suspend-btn" *ngIf="canReview()" (click)="toggleSuspend()">
+      <button
+        type="button"
+        class="btn-secondary suspend-btn"
+        *ngIf="canReview() && (domain.status === 'Pending Review' || domain.suspended)"
+        [disabled]="suspending"
+        (click)="toggleSuspend()"
+      >
+        <app-spinner *ngIf="suspending" [size]="13"></app-spinner>
         {{ domain.suspended ? 'Resume Assessment' : 'Suspend Assessment' }}
       </button>
     </div>

@@ -166,8 +166,12 @@
 
           <!-- A freshly-raised finding (score < 5) that the assessee hasn't acted
                on yet - the assessor should see at a glance that this is still
-               waiting on someone else, not assume it's been silently dropped. -->
-          <div class="finding-badge pending-note" *ngIf="isProbableFinding(param) && param.findingStatus === 'Pending'">
+               waiting on someone else, not assume it's been silently dropped.
+               Only shown once the assessment is Approved - the assessee isn't
+               actually notified of the finding (NotifyITOpsAssesseesOfOpenFindings)
+               until approval, so showing this while still Draft/Pending Review
+               misleadingly implies the assessee already knows about it. -->
+          <div class="finding-badge pending-note" *ngIf="isProbableFinding(param) && param.findingStatus === 'Pending' && domain?.status === 'Approved'">
             <span class="finding-pill pending">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               Area of improvement - yet to be accepted/rejected by Assessee

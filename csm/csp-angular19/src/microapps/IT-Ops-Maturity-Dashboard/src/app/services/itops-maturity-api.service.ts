@@ -390,6 +390,20 @@ export class ItOpsMaturityApiService {
     );
   }
 
+  /** Reviewer suspends a Pending Review assessment - only reachable while status is PendingReview. */
+  suspendAssessment(assessmentId: number): Observable<unknown> {
+    return this.http.post(`${this.apiurl}SuspendITOpsAssessment?assessmentId=${assessmentId}`, null, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  /** Reverses suspendAssessment - only reachable while status is Suspended, returns to PendingReview. */
+  resumeAssessment(assessmentId: number): Observable<unknown> {
+    return this.http.post(`${this.apiurl}ResumeITOpsAssessment?assessmentId=${assessmentId}`, null, {
+      headers: this.getHeaders(),
+    });
+  }
+
   /** Assessee accepts/rejects a probable-improvement-area finding; Comment is mandatory when rejecting. */
   decideFinding(findingId: number, accept: boolean, comment?: string): Observable<unknown> {
     return this.http.post(

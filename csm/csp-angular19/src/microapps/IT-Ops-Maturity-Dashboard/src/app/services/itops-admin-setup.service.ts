@@ -195,6 +195,8 @@ export interface ItOpsDomainProjectMapping {
   accountName: string | null;
   domains: ItOpsMappedDomain[];
   assessees: { empId: string; name: string }[];
+  /** Read-only - who's currently staffed (billed, active) on this project and therefore eligible to be picked as Assessee later in Configure Assessment. Not editable here. */
+  staffedResources: { empId: string; name: string }[];
 }
 
 /** What BulkAddITOpsDomainProjectMappings reports back about one bulk-add. */
@@ -698,7 +700,7 @@ export class ItOpsAdminSetupService {
   createAssessmentsForProjects(
     cycleId: number,
     projectIds: string[],
-    pairs?: { projectId: string; domainId: number; assessorIds?: string[]; reviewerIds?: string[] }[],
+    pairs?: { projectId: string; domainId: number; assessorIds?: string[]; reviewerIds?: string[]; assesseeIds?: string[] }[],
   ): Observable<ItOpsCycleAssessment[]> {
     return this.http.post<ItOpsCycleAssessment[]>(
       `${this.apiurl}CreateITOpsAssessmentsForProject`,
@@ -711,6 +713,7 @@ export class ItOpsAdminSetupService {
               DomainId: p.domainId,
               AssessorIds: p.assessorIds?.length ? p.assessorIds : undefined,
               ReviewerIds: p.reviewerIds?.length ? p.reviewerIds : undefined,
+              AssesseeIds: p.assesseeIds?.length ? p.assesseeIds : undefined,
             }))
           : undefined,
       },
@@ -794,6 +797,37 @@ export class ItOpsAdminSetupService {
   /** Same as removeAssessorsBulk, but for reviewers. */
   removeReviewersBulk(ids: number[]): Observable<unknown> {
     return this.http.post(`${this.apiurl}RemoveITOpsReviewersBulk`, { Ids: ids }, { headers: this.getHeaders() });
+  }
+
+  /**
+   * Per-domain assessee assignment, same as addAssessor - lets a single
+   * (project, domain) assessment row's assessee roster diverge from the
+   * project-wide default set in Configure Scope.
+   */
+  addAssessee(assessmentId: number, empId: string): Observable<ItOpsTeamMember> {
+    return this.http.post<ItOpsTeamMember>(
+      `${this.apiurl}AddITOpsAssessee`,
+      { AssessmentId: assessmentId, EmpId: empId },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Same as addAssessorsBulk, but for assessees. */
+  addAssesseesBulk(assessmentIds: number[], empId: string): Observable<ItOpsTeamMember[]> {
+    return this.http.post<ItOpsTeamMember[]>(
+      `${this.apiurl}AddITOpsAssesseesBulk`,
+      { AssessmentIds: assessmentIds, EmpId: empId },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  removeAssessee(id: number): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RemoveITOpsAssessee?id=${id}`, null, { headers: this.getHeaders() });
+  }
+
+  /** Same as removeAssessorsBulk, but for assessees. */
+  removeAssesseesBulk(ids: number[]): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RemoveITOpsAssesseesBulk`, { Ids: ids }, { headers: this.getHeaders() });
   }
 
   /**

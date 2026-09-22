@@ -1363,10 +1363,10 @@ const App = () => {
           <HomeContainer>
             <div style={{ marginTop: '2rem', textAlign: 'center' }}>
               <ActionButton
-                onClick={() => {}}
-                disabled
-                title="This section is temporarily unavailable"
-                style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                onClick={() => {
+                  setShowACSATView(true);
+                  setShowHomePage(false);
+                }}
               >
                 🏢 Account level CSAT (ACSAT)
               </ActionButton>

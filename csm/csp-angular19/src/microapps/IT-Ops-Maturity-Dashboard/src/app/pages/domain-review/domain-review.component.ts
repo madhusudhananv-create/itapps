@@ -20,7 +20,7 @@ const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
   PendingReview: 'Pending Review',
   Approved: 'Approved',
   ReturnedForRevision: 'In Progress',
-  Suspended: 'Draft',
+  Suspended: 'Suspended',
   Closed: 'Approved',
 };
 
@@ -47,6 +47,7 @@ export class DomainReviewComponent implements OnInit {
 
   /** Approve/Return are mutually exclusive on the same assessment - one shared flag disables both while either is in flight. */
   reviewing = false;
+  suspending = false;
   decidingFindingId: number | null = null;
 
   /** Evidence attached to each finding's remediation action, keyed by findingId, loaded on demand. */
@@ -182,6 +183,9 @@ export class DomainReviewComponent implements OnInit {
       coeSpoc: assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
       reviewer: assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
       status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
+      // Reflects the real backend state (assessment.status === 'Suspended'), not a
+      // local-only toggle - see toggleSuspend/suspendAssessment/resumeAssessment.
+      suspended: assessment.status === 'Suspended',
       parameters,
       returnComment: assessment.returnComment ?? undefined,
     };
@@ -330,11 +334,24 @@ export class DomainReviewComponent implements OnInit {
       });
   }
 
-  /** Suspend/Resume has no backend endpoint yet - kept as a local-only UI toggle for now. */
+  /** Persists Suspend/Resume against the backend (SuspendITOpsAssessment/ResumeITOpsAssessment) so the state survives a reload, instead of resetting itself the moment the page is revisited. */
   toggleSuspend(): void {
-    if (!this.domain) return;
-    this.domain.suspended = !this.domain.suspended;
-    this.actionMessage = this.domain.suspended ? 'Assessment suspended.' : 'Assessment resumed.';
+    if (!this.domain || !this.assessmentId || this.suspending) return;
+    const suspending = !this.domain.suspended;
+    const call = suspending ? this.api.suspendAssessment(this.assessmentId) : this.api.resumeAssessment(this.assessmentId);
+    this.suspending = true;
+    call.pipe(finalize(() => (this.suspending = false))).subscribe({
+      next: () => {
+        if (this.domain) this.domain.suspended = suspending;
+        this.actionMessage = suspending ? 'Assessment suspended.' : 'Assessment resumed.';
+        this.toast.info(suspending ? 'Assessment suspended' : 'Assessment resumed', this.domain?.name ?? 'This assessment.');
+      },
+      error: () =>
+        this.toast.error(
+          suspending ? 'Could not suspend the assessment' : 'Could not resume the assessment',
+          'Something went wrong. Please try again.',
+        ),
+    });
   }
 
   /** US-006: Assessee accepts a finding, or opens the mandatory-justification modal to reject it. */

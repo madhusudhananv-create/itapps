@@ -115,16 +115,6 @@
     white-space: nowrap;
   }
 
-  .suspended-pill {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    background: color-mix(in srgb, var(--status-critical) 16%, transparent);
-    color: var(--status-critical);
-  }
-
   h1 {
     margin: 0 0 4px;
     font-size: 20px;
@@ -225,6 +215,7 @@
 .status-in-progress { background: color-mix(in srgb, var(--status-serious) 20%, transparent); color: #a34a1f; }
 .status-pending-review { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
 .status-approved { background: color-mix(in srgb, var(--status-good) 18%, transparent); color: var(--status-good); }
+.status-suspended { background: color-mix(in srgb, var(--status-critical) 16%, transparent); color: var(--status-critical); }
 /* Same tinted "glass" pill as Approved, but a deeper green text - distinct
    enough to tell the two stages apart without going to a solid dark fill. */
 .status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }

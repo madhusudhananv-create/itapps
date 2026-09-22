@@ -6,7 +6,6 @@ import { SessionService } from '../../services/session.service';
 import { CurrentUser } from '../../models/maturity.model';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { ItOpsAdminSetupService } from '../../services/itops-admin-setup.service';
-import { ItOpsMaturityApiService } from '../../services/itops-maturity-api.service';
 
 @Component({
   selector: 'app-nav-menu',
@@ -47,20 +46,15 @@ export class NavMenuComponent implements OnInit {
   canSeeReports = false;
 
   /**
-   * True when this employee is a configured GDH (Business-Unit-level access,
-   * see GetITOpsHasDashboardAccess) - they see the Dashboard/Reports for their
-   * own BU(s) but have no personal assessor/reviewer/assessee assignments to
-   * track, so the "My Assignments" tab is hidden for them.
-   */
-  isGdh = false;
-
-  /**
-   * Whether to show the "My Assignments" link at all - true only once this
-   * employee is personally Assessor, Reviewer, or Assessee on at least one
-   * assessment (i.e. GetITOpsMyAssignments actually returns something for
-   * them). A GDH, a Dashboard/Report Viewer with no personal assignments, or
-   * anyone else with no ITOps involvement has nothing to see there, so the
-   * nav item is removed entirely rather than landing them on an empty page.
+   * Whether to show the "Assessments" link at all - governed by the same
+   * CSM-standard tab-visibility permission as Dashboard/Reports (RESOURCE_ID
+   * 835), not by role/GDH status. A GDH is treated like any other resource
+   * here: if they separately hold project allocation/ownership (or a
+   * personal Assessor/Reviewer/Assessee assignment), they see this tab too,
+   * same as any other employee - being a GDH must never suppress it. What
+   * the tab actually shows once open is unchanged, still governed by
+   * Superuser/Assessor/Assessee/Reviewer/GDH/project-allocation
+   * (see GetITOpsMyAssignments).
    */
   canSeeMyAssignments = false;
 
@@ -76,7 +70,6 @@ export class NavMenuComponent implements OnInit {
   constructor(
     private session: SessionService,
     private adminApi: ItOpsAdminSetupService,
-    private maturityApi: ItOpsMaturityApiService,
     private router: Router,
   ) {}
 
@@ -91,16 +84,6 @@ export class NavMenuComponent implements OnInit {
     this.canSeeDashboard = this.hasTabViewAccess(834);
     this.canSeeMyAssignments = this.hasTabViewAccess(835);
     this.canSeeReports = this.hasTabViewAccess(836);
-
-    const empId = localStorage.getItem('empid');
-    if (empId) {
-      // isGdh still drives the Assessments-link suppression below (GDHs get
-      // BU-level Dashboard/Reports but have no personal assignments to track) -
-      // this is data-layer nuance, not tab rendering, so it's kept as-is.
-      this.maturityApi.getHasDashboardAccess(empId).subscribe((access) => {
-        this.isGdh = access.isGdh;
-      });
-    }
   }
 
   /**

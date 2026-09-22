@@ -1294,6 +1294,7 @@ tbody tr:hover td:first-child {
 .status-in-progress { background: var(--status-serious-tint); color: var(--status-serious); }
 .status-pending-review { background: var(--accent-track); color: var(--accent); }
 .status-approved { background: var(--status-good-tint); color: var(--status-good); }
+.status-suspended { background: var(--status-muted-tint); color: var(--text-secondary); }
 /* Same tinted "glass" pill as Approved, but a deeper green text - distinct
    enough to tell the two stages apart without going to a solid dark fill. */
 .status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }

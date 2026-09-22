@@ -157,6 +157,46 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .FirstOrDefault();
         }
 
+        // Identity gates for the mutating endpoints below (ACCESS-02/03/04): the caller's
+        // own empId (from the empId header) was previously read only for audit-field
+        // stamping, never checked against who is actually allowed to act. Each of these
+        // returns null when the caller may proceed, or a 403 Forbidden result otherwise.
+        // Superuser always bypasses, consistent with every other ITOps authorization gate.
+        private IHttpActionResult DenyIfNotITOpsAssessorOnAssessment(int assessmentId, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            if (GetITOpsAssessorIds(assessmentId).Contains(empId)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not an Assessor on this assessment, so you cannot " + what + ".");
+        }
+
+        private IHttpActionResult DenyIfNotITOpsReviewerOnAssessment(int assessmentId, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            if (GetITOpsReviewerIds(assessmentId).Contains(empId)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not a Reviewer on this assessment, so you cannot " + what + ".");
+        }
+
+        // The finding's Assessee is who accepts/rejects it and later submits action-taken
+        // progress - ITOPS_FINDING.ASSESSEE_EMP_ID is the direct source of truth for that,
+        // no join needed.
+        private IHttpActionResult DenyIfNotITOpsFindingAssessee(ITOPS_FINDING finding, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            if (!string.IsNullOrWhiteSpace(finding.ASSESSEE_EMP_ID) && finding.ASSESSEE_EMP_ID == empId) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not the Assessee on this finding, so you cannot " + what + ".");
+        }
+
+        // The Assessor's decision on a rejected finding (accept/dispute, or a manual close)
+        // is scoped to the Assessors on the finding's assessment - resolved through
+        // SCORE_ID -> ITOPS_SCORE.ASSESSMENT_ID like everywhere else in this file.
+        private IHttpActionResult DenyIfNotITOpsFindingAssessor(ITOPS_FINDING finding, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+            if (assessmentId.HasValue && GetITOpsAssessorIds(assessmentId.Value).Contains(empId)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not an Assessor on this finding's assessment, so you cannot " + what + ".");
+        }
+
         private List<int> GetITOpsScoreIdsForAssessment(int assessmentId)
         {
             return CSPdb.ITOPS_SCORE.GetAll()
@@ -1754,6 +1794,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // below) - but an in-progress draft save must not be blocked on that yet.
             var empId = GetHeaderDetails_String("empId");
 
+            var scoreDenied = DenyIfNotITOpsAssessorOnAssessment(request.AssessmentId, empId, "submit a score for this assessment");
+            if (scoreDenied != null) return scoreDenied;
+
             var score = CSPdb.ITOPS_SCORE.GetAll()
                 .FirstOrDefault(s => s.ASSESSMENT_ID == request.AssessmentId && s.PARAMETER_ID == request.ParameterId);
 
@@ -1833,6 +1876,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
             if (assessment == null)
                 return NotFound();
+
+            var submitEmpId = GetHeaderDetails_String("empId");
+            var submitDenied = DenyIfNotITOpsAssessorOnAssessment(assessmentId, submitEmpId, "submit this assessment");
+            if (submitDenied != null) return submitDenied;
 
             // string.IsNullOrWhiteSpace() can't be translated by LINQ to Entities - spelled out
             // as a null/trim check instead, which SQL Server can translate directly.
@@ -1965,6 +2012,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (request == null)
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
 
+            var reviewEmpId = GetHeaderDetails_String("empId");
+            var reviewDenied = DenyIfNotITOpsReviewerOnAssessment(assessmentId, reviewEmpId, "review this assessment");
+            if (reviewDenied != null) return reviewDenied;
+
             if (!request.Approve && string.IsNullOrWhiteSpace(request.Comment))
                 return Content(HttpStatusCode.Conflict, "A comment is required when returning an assessment for revision.");
 
@@ -2010,6 +2061,53 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(assessment);
         }
 
+        // Suspend/Resume Assessment - previously a local-only UI toggle with no backend
+        // endpoint (see domain-review.component.ts's old toggleSuspend), so the state
+        // reset itself back to Pending Review on every page reload. Only reachable from
+        // the review page, which only ever shows for a Pending Review assessment, so
+        // Suspend always transitions PendingReview -> Suspended and Resume always
+        // reverses it back to PendingReview - no separate "what was it before" column
+        // needed, unlike Approve/Return which can be reached from other flows.
+        [POST("SuspendITOpsAssessment")]
+        [ActionName("SuspendITOpsAssessment")]
+        [HttpPost]
+        public IHttpActionResult SuspendITOpsAssessment(int assessmentId)
+        {
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
+            if (assessment == null)
+                return NotFound();
+
+            if (assessment.STATUS != "PendingReview")
+                return Content(HttpStatusCode.Conflict, "Only an assessment that is Pending Review can be suspended.");
+
+            assessment.STATUS = "Suspended";
+            UpdateAuditFields(assessment);
+            CSPdb.ITOPS_ASSESSMENT.Update(assessment);
+            CSPdb.Commit(CanCommit);
+
+            return Ok(assessment);
+        }
+
+        [POST("ResumeITOpsAssessment")]
+        [ActionName("ResumeITOpsAssessment")]
+        [HttpPost]
+        public IHttpActionResult ResumeITOpsAssessment(int assessmentId)
+        {
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
+            if (assessment == null)
+                return NotFound();
+
+            if (assessment.STATUS != "Suspended")
+                return Content(HttpStatusCode.Conflict, "Only a suspended assessment can be resumed.");
+
+            assessment.STATUS = "PendingReview";
+            UpdateAuditFields(assessment);
+            CSPdb.ITOPS_ASSESSMENT.Update(assessment);
+            CSPdb.Commit(CanCommit);
+
+            return Ok(assessment);
+        }
+
         // US-006: Assessee accepts or rejects a finding
         [GET("GetITOpsFindingsForAssessee")]
         [ActionName("GetITOpsFindingsForAssessee")]
@@ -2033,6 +2131,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (request == null)
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var decideEmpId = GetHeaderDetails_String("empId");
+            var decideDenied = DenyIfNotITOpsFindingAssessee(finding, decideEmpId, "accept or reject this finding");
+            if (decideDenied != null) return decideDenied;
 
             if (!request.Accept && string.IsNullOrWhiteSpace(request.Comment))
                 return Content(HttpStatusCode.Conflict, "A comment is required when rejecting a finding.");
@@ -2134,6 +2236,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (request == null)
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
 
+            var rejectionDecideEmpId = GetHeaderDetails_String("empId");
+            var rejectionDecideDenied = DenyIfNotITOpsFindingAssessor(finding, rejectionDecideEmpId, "decide this rejected finding");
+            if (rejectionDecideDenied != null) return rejectionDecideDenied;
+
             if (finding.STATUS != "Rejected")
                 return Content(HttpStatusCode.Conflict, "This finding has not been rejected by the assessee.");
 
@@ -2201,6 +2307,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (finding == null)
                 return NotFound();
 
+            var closeEmpId = GetHeaderDetails_String("empId");
+            var closeDenied = DenyIfNotITOpsFindingAssessor(finding, closeEmpId, "close this finding");
+            if (closeDenied != null) return closeDenied;
+
             finding.STATUS = "Closed";
             finding.CLOSED_DATE = DateTime.Now;
             UpdateAuditFields(finding);
@@ -2222,6 +2332,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null) return NotFound();
+
+            var actionEmpId = GetHeaderDetails_String("empId");
+            var actionDenied = DenyIfNotITOpsFindingAssessee(finding, actionEmpId, "submit an action update for this finding");
+            if (actionDenied != null) return actionDenied;
 
             if (finding.STATUS != "Accepted")
                 return Content(HttpStatusCode.Conflict, "An action update can only be submitted for an accepted finding.");

@@ -236,6 +236,13 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public string AccountName { get; set; }
         public List<ITOPS_MappedDomainRow> Domains { get; set; }
         public List<ITOPS_ProjectAssesseeRow> Assessees { get; set; }
+        // Read-only visibility only - who's currently staffed (billed, active)
+        // on this project and therefore ELIGIBLE to be picked as Assessee later
+        // in Configure Assessment. Not editable here, not written anywhere from
+        // this screen - lets an admin spot a project with nobody staffed before
+        // they reach Configure Assessment and find Assessee's candidate list
+        // empty (Assessee is mandatory to create an assessment).
+        public List<ITOPS_ProjectAssesseeRow> StaffedResources { get; set; }
     }
 
     public class ITOPS_SaveDomainProjectMappingRequest
@@ -343,6 +350,10 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         // email) right after. Null/empty means "no one staged yet" - unchanged legacy behavior.
         public List<string> AssessorIds { get; set; }
         public List<string> ReviewerIds { get; set; }
+        // Assessee is staged per (project, domain) pair here too now, same as
+        // Assessor/Reviewer - it's no longer read from the project-wide
+        // ITOPS_PROJECT_ASSESSEE table (Configure Scope no longer sets it).
+        public List<string> AssesseeIds { get; set; }
     }
 
     public class ITOPS_CycleAssessmentRow

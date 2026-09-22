@@ -496,6 +496,12 @@ h1 .pill { vertical-align: middle; margin-left: 6px; }
    as equally consequential. */
 .btn-ghost.btn-info { background: color-mix(in srgb, var(--btn-info-1) 10%, var(--neutral-bg)); color: var(--btn-info-1); border-color: color-mix(in srgb, var(--btn-info-1) 26%, var(--neutral-border)); }
 .btn-ghost.btn-info:hover:not(:disabled) { background: color-mix(in srgb, var(--btn-info-1) 18%, var(--neutral-bg)); color: var(--btn-info-1); }
+/* "View resources" in the Configure Scope grid - its own mauve tint (status-warning's
+   hue, not the warning meaning) so it reads distinctly from the teal History/Copy
+   info buttons in the same row. white-space/flex-shrink pinned explicitly since the
+   count can run to two digits ("View resources (28)") and must never wrap. */
+.btn-ghost.btn-resource { background: color-mix(in srgb, var(--status-warning) 12%, var(--neutral-bg)); color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 28%, var(--neutral-border)); white-space: nowrap; flex-shrink: 0; }
+.btn-ghost.btn-resource:hover:not(:disabled) { background: color-mix(in srgb, var(--status-warning) 20%, var(--neutral-bg)); color: var(--status-warning); }
 /* Destructive actions (Revoke) get the same critical red used for pill-critical
    elsewhere - the one place red should appear among the buttons, reserved for
    things that actually remove access or data. */
@@ -542,6 +548,20 @@ a:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-vis
 .step-actions.between { justify-content: flex-start; }
 .step-actions.start { justify-content: flex-start; }
 .step-actions.tight { margin-top: 18px; }
+/* Pinned to the bottom of the viewport as the step scrolls, instead of only
+   reachable after scrolling all the way past a (sometimes long) mapping
+   table - the wizard's Back/Submit stay one click away throughout, same as a
+   standard multi-step form footer, rather than floating in the page header
+   where it competed with the title and read as disconnected from whichever
+   sub-tab was actually active. */
+.step-actions.sticky {
+  position: sticky; bottom: 0; z-index: 5;
+  margin: 32px calc(-1 * var(--space-4, 24px)) 0; padding: 14px var(--space-4, 24px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 20px -12px rgba(0,0,0,0.18);
+}
 
 .modal-backdrop { position: fixed; inset: 0; background: rgba(6,12,18,.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 40; padding: 20px; }
 /* GSAP (see openGsapModal/closeGsapModal in the .ts) animates the scale/opacity

@@ -228,6 +228,7 @@
 .status-in-progress { background: color-mix(in srgb, var(--status-serious) 16%, transparent); color: #b3560a; }
 .status-pending-review { background: var(--accent-tint); color: var(--accent); }
 .status-approved { background: color-mix(in srgb, var(--status-good) 15%, transparent); color: color-mix(in srgb, var(--status-good) 70%, black); }
+.status-suspended { background: color-mix(in srgb, var(--status-critical) 16%, transparent); color: var(--status-critical); }
 /* Same tinted "glass" pill as Approved, but a deeper green text - distinct
    enough to tell the two stages apart without going to a solid dark fill. */
 .status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }
