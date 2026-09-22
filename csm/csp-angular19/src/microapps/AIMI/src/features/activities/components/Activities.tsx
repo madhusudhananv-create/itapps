@@ -1,5 +1,6 @@
 import { Box, Paper, Typography, Tabs, Tab, Button } from '@mui/material';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
+import { useAllocatedAccounts } from '@shared/projects/hooks/useAllocatedAccounts';
 import { ProjectInfoSelection } from './ProjectInfoSelection';
 import {
   useCallback,
@@ -236,10 +237,21 @@ export function Activities() {
 
   // Memoize computed values to prevent unnecessary re-renders
   const businessUnits = useMemo(() => getBusinessUnits(), [getBusinessUnits]);
-  const accounts = useMemo(
-    () => getAccounts(projectInfoFormData.businessUnit),
-    [getAccounts, projectInfoFormData.businessUnit]
-  );
+  const { allocatedAccountNames } = useAllocatedAccounts();
+  const accounts = useMemo(() => {
+    const accountsForBU = getAccounts(projectInfoFormData.businessUnit);
+    // Only show accounts the logged-in employee is allocated to (same
+    // restriction the CSM Angular app applies via GetCustomerIds). Show
+    // nothing until the allocation list has loaded rather than briefly
+    // showing every account first.
+    if (allocatedAccountNames === null) return [];
+    const allowed = new Set(
+      allocatedAccountNames.map((name) => name.trim().toLowerCase())
+    );
+    return accountsForBU.filter((account) =>
+      allowed.has(account.trim().toLowerCase())
+    );
+  }, [getAccounts, projectInfoFormData.businessUnit, allocatedAccountNames]);
   const projects = useMemo(
     () =>
       getProjects(
