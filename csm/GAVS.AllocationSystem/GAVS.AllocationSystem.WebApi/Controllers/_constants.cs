@@ -9,7 +9,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
     internal partial class Constants
     {
         internal const string DOMAIN = "neurealm.com";
-        internal const string QUALITY_MAIL = "quality@" + DOMAIN;
+        internal const string QUALITY_MAIL = "csmsupport@" + DOMAIN;
         internal const string PREMIER_QUALITY_TEAM = "PremierQualityTeam@" + DOMAIN;
         internal const string PEX_MAIL = "PEX_Team@" + DOMAIN;
         internal const string QUALITY_HEAD = "ambrish.sethi@" + DOMAIN;
