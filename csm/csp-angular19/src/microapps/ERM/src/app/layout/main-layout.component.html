@@ -1,0 +1,254 @@
+<div
+  class="flux-app relative flex min-h-screen overflow-hidden bg-slate-50 text-slate-900 selection:bg-sky-200/50 selection:text-slate-900"
+>
+  <!-- Flux canvas: animated mesh + aurora + dot grid -->
+  <div class="flux-mesh pointer-events-none fixed inset-0 z-0" aria-hidden="true"></div>
+  <div
+    class="pointer-events-none fixed inset-0 z-0 opacity-[0.65]"
+    aria-hidden="true"
+    style="
+      background-image: radial-gradient(
+          ellipse 120% 80% at 0% -20%,
+          rgba(56, 189, 248, 0.28),
+          transparent 55%
+        ),
+        radial-gradient(
+          ellipse 100% 60% at 100% 0%,
+          rgba(139, 92, 246, 0.2),
+          transparent 50%
+        ),
+        radial-gradient(
+          circle at 50% 100%,
+          rgba(14, 165, 233, 0.12),
+          transparent 45%
+        ),
+        radial-gradient(
+          ellipse 60% 40% at 70% 60%,
+          rgba(244, 114, 182, 0.06),
+          transparent 50%
+        );
+    "
+  ></div>
+  <div class="flux-dot-grid fixed inset-0 z-0 opacity-40" aria-hidden="true"></div>
+
+  <aside
+    class="flux-sidebar relative z-10 flex w-72 shrink-0 flex-col border-r border-slate-200/60 backdrop-blur-2xl"
+  >
+    <div class="flux-sidebar-brand relative px-5 pb-5 pt-6">
+      <div
+        class="flux-sidebar-brand-highlight pointer-events-none absolute rounded-2xl"
+        aria-hidden="true"
+      ></div>
+      <div class="relative z-[1] flex flex-col gap-2">
+        <a
+          routerLink="/dashboard"
+          class="block shrink-0 rounded-lg outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-sky-500"
+          aria-label="neurealm — home"
+        >
+          <img
+            src="assets/branding/neurealm-logo.png"
+            alt="neurealm"
+            width="220"
+            height="52"
+            class="h-11 w-auto max-w-[13.5rem] object-contain object-left"
+          />
+        </a>
+        <p class="flux-sidebar-tagline text-[10px] font-bold leading-snug text-slate-700">
+          AI-Powered Enterprise Risk Management Platform
+        </p>
+      </div>
+    </div>
+
+    <div class="flux-nav-section px-5 pb-2">
+      <span class="flux-nav-section-label">Workspace</span>
+    </div>
+
+    <nav class="relative flex flex-1 flex-col gap-1 px-3 pb-4" aria-label="Main">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="flux-nav-link--active"
+        class="flux-nav-link group rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition duration-200 ease-out"
+      >
+        <span class="flux-nav-icon" aria-hidden="true">
+          <i class="pi pi-chart-bar text-[0.95rem] transition duration-200 group-hover:scale-110"></i>
+        </span>
+        <span class="flux-nav-text">Dashboard</span>
+        <i
+          class="pi pi-chevron-right flux-nav-chevron ml-auto text-[10px] opacity-0 transition duration-200 group-hover:translate-x-0.5 group-hover:opacity-50"
+          aria-hidden="true"
+        ></i>
+      </a>
+      <a
+        routerLink="/analytics"
+        routerLinkActive="flux-nav-link--active"
+        class="flux-nav-link group rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition duration-200 ease-out"
+      >
+        <span class="flux-nav-icon" aria-hidden="true">
+          <i class="pi pi-chart-line text-[0.95rem] transition duration-200 group-hover:scale-110"></i>
+        </span>
+        <span class="flux-nav-text">Analytics</span>
+        <i
+          class="pi pi-chevron-right flux-nav-chevron ml-auto text-[10px] opacity-0 transition duration-200 group-hover:translate-x-0.5 group-hover:opacity-50"
+          aria-hidden="true"
+        ></i>
+      </a>
+      <a
+        routerLink="/key-insights"
+        routerLinkActive="flux-nav-link--active"
+        class="flux-nav-link group rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition duration-200 ease-out"
+      >
+        <span class="flux-nav-icon" aria-hidden="true">
+          <i class="pi pi-bolt text-[0.95rem] transition duration-200 group-hover:scale-110"></i>
+        </span>
+        <span class="flux-nav-text">Key Insights</span>
+        <i
+          class="pi pi-chevron-right flux-nav-chevron ml-auto text-[10px] opacity-0 transition duration-200 group-hover:translate-x-0.5 group-hover:opacity-50"
+          aria-hidden="true"
+        ></i>
+      </a>
+      <a
+        routerLink="/risk-log"
+        routerLinkActive="flux-nav-link--active"
+        class="flux-nav-link group rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition duration-200 ease-out"
+      >
+        <span class="flux-nav-icon" aria-hidden="true">
+          <i class="pi pi-pencil text-[0.95rem] transition duration-200 group-hover:scale-110"></i>
+        </span>
+        <span class="flux-nav-text">Log New Risk</span>
+        <i
+          class="pi pi-chevron-right flux-nav-chevron ml-auto text-[10px] opacity-0 transition duration-200 group-hover:translate-x-0.5 group-hover:opacity-50"
+          aria-hidden="true"
+        ></i>
+      </a>
+      <a
+        routerLink="/existing-risks"
+        routerLinkActive="flux-nav-link--active"
+        class="flux-nav-link group rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition duration-200 ease-out"
+      >
+        <span class="flux-nav-icon" aria-hidden="true">
+          <i class="pi pi-list text-[0.95rem] transition duration-200 group-hover:scale-110"></i>
+        </span>
+        <span class="flux-nav-text">Enterprise Risks</span>
+        <i
+          class="pi pi-chevron-right flux-nav-chevron ml-auto text-[10px] opacity-0 transition duration-200 group-hover:translate-x-0.5 group-hover:opacity-50"
+          aria-hidden="true"
+        ></i>
+      </a>
+      <a
+        routerLink="/critical-project-risks"
+        routerLinkActive="flux-nav-link--active"
+        class="flux-nav-link group rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition duration-200 ease-out"
+      >
+        <span class="flux-nav-icon" aria-hidden="true">
+          <i class="pi pi-exclamation-triangle text-[0.95rem] transition duration-200 group-hover:scale-110"></i>
+        </span>
+        <span class="flux-nav-text">Project Risks</span>
+        <i
+          class="pi pi-chevron-right flux-nav-chevron ml-auto text-[10px] opacity-0 transition duration-200 group-hover:translate-x-0.5 group-hover:opacity-50"
+          aria-hidden="true"
+        ></i>
+      </a>
+      <a
+        routerLink="/reports"
+        routerLinkActive="flux-nav-link--active"
+        class="flux-nav-link group rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition duration-200 ease-out"
+      >
+        <span class="flux-nav-icon" aria-hidden="true">
+          <i class="pi pi-download text-[0.95rem] transition duration-200 group-hover:scale-110"></i>
+        </span>
+        <span class="flux-nav-text">Download Reports</span>
+        <i
+          class="pi pi-chevron-right flux-nav-chevron ml-auto text-[10px] opacity-0 transition duration-200 group-hover:translate-x-0.5 group-hover:opacity-50"
+          aria-hidden="true"
+        ></i>
+      </a>
+    </nav>
+
+    <div class="flux-sidebar-footer mt-auto border-t border-slate-200/70 p-4">
+      <p-button
+        label="Sign out"
+        icon="pi pi-sign-out"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full flux-signout-btn"
+        (onClick)="logout()"
+      />
+    </div>
+  </aside>
+
+  <div class="relative z-10 flex min-w-0 flex-1 flex-col">
+    @if (showMainHeader()) {
+      <header
+        class="flux-header flex flex-wrap items-center gap-4 border-b border-slate-200/70 bg-white/70 px-5 py-4 shadow-flux-header backdrop-blur-2xl md:px-6"
+        [class.justify-between]="showLayoutTitle() && (showLayoutDataScope() || showLayoutMyRole())"
+        [class.justify-end]="(showLayoutDataScope() || showLayoutMyRole()) && !showLayoutTitle()"
+      >
+        @if (showLayoutTitle()) {
+          <div>
+            <h1 class="text-base font-semibold tracking-tight text-slate-900 md:text-lg">
+              Neurealm's ERP
+            </h1>
+            <p class="erm-muted mt-0.5 text-xs">
+              Governed risk register — organization &amp; BU views
+            </p>
+          </div>
+        }
+        @if (showLayoutDataScope() || showLayoutMyRole()) {
+          <div
+            class="flex flex-wrap items-end gap-3"
+            [class.ml-auto]="!showLayoutTitle()"
+          >
+            @if (showLayoutDataScope()) {
+              <div class="flex min-w-[200px] flex-col gap-1">
+                <label class="text-xs font-medium text-slate-600">Data scope</label>
+                <p-select
+                  [options]="headerModeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [ngModel]="headerMode()"
+                  (ngModelChange)="onHeaderModeChange($event)"
+                  styleClass="w-full md:w-56"
+                  [appendTo]="'body'"
+                />
+              </div>
+            }
+            @if (showLayoutMyRole()) {
+              <div class="flex min-w-[200px] flex-col gap-1">
+                <label class="text-xs font-medium text-slate-600">My Role</label>
+                <p-select
+                  [options]="myRoleOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [ngModel]="myRole()"
+                  (ngModelChange)="myRole.set($event)"
+                  styleClass="w-full md:w-56"
+                  [appendTo]="'body'"
+                />
+              </div>
+            }
+            @if (showLayoutDataScope() && headerMode() === 'business-unit') {
+              <div class="flex min-w-[200px] flex-col gap-1">
+                <label class="text-xs font-medium text-slate-600">Business unit</label>
+                <p-select
+                  [options]="buOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  [ngModel]="headerBu()"
+                  (ngModelChange)="onHeaderBuChange($event)"
+                  styleClass="w-full md:w-56"
+                  [appendTo]="'body'"
+                />
+              </div>
+            }
+          </div>
+        }
+      </header>
+    }
+    <main
+      class="flux-main relative flex-1 overflow-auto p-4 motion-reduce:animate-none md:p-6"
+      [@fluxMainPage]="fluxMainPageState()"
+    >
+      <router-outlet />
+    </main>
+  </div>
+</div>

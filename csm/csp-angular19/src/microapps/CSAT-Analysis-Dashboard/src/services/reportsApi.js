@@ -27,6 +27,56 @@ function getAuthHeaders(extra = {}) {
   };
 }
 
+// Styled modal (not a native window.alert) explaining why we're about to redirect, so the
+// bounce to /login doesn't look unexplained. Clicking OK performs the redirect.
+function showLoginRequiredPopup(redirectUrl) {
+  if (typeof document === 'undefined') {
+    window.location.href = redirectUrl;
+    return;
+  }
+  if (document.getElementById('csat-login-required-overlay')) return; // already shown
+
+  const overlay = document.createElement('div');
+  overlay.id = 'csat-login-required-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;';
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#ffffff;border-radius:14px;padding:2rem 2.25rem;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.35);text-align:center;';
+
+  const title = document.createElement('h3');
+  title.textContent = 'Login Required';
+  title.style.cssText = 'margin:0 0 0.75rem;font-size:1.2rem;font-weight:700;color:#1f2937;';
+
+  const message = document.createElement('p');
+  message.textContent = "You're not logged in. Click OK to log in to the CSM Platform Home screen, then open this app from Integrated Apps in the navbar.";
+  message.style.cssText = 'margin:0 0 1.75rem;font-size:0.95rem;line-height:1.5;color:#4b5563;';
+
+  const okButton = document.createElement('button');
+  okButton.textContent = 'OK';
+  okButton.style.cssText = 'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#ffffff;border:none;border-radius:8px;padding:0.65rem 2.5rem;font-size:0.9rem;font-weight:600;cursor:pointer;';
+  okButton.onclick = () => {
+    window.location.href = redirectUrl;
+  };
+
+  modal.appendChild(title);
+  modal.appendChild(message);
+  modal.appendChild(okButton);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+// This microapp has no login screen or session check of its own — it's a static bundle
+// that can be reached directly (bypassing the Angular shell's route guard) with no valid
+// session in localStorage. When that happens, GetCustomerIds has no empId/token to act on
+// and the dashboard would otherwise render with an empty customer list and no explanation.
+// Show a popup explaining why before navigating away, then send the user to the same
+// same-origin /login route the Angular app itself navigates to (see e.g. app.component.ts,
+// auth.guard.ts: router.navigateByUrl('/login')).
+function redirectToLogin() {
+  if (typeof window === 'undefined') return;
+  showLoginRequiredPopup('/login');
+}
+
 // Resolves the "All customers" filter into a comma-joined list of the
 // logged-in employee's accessible customer IDs — mirrors reports.component.ts,
 // which never sends a literal "-1"/"all" sentinel to the SP.
@@ -43,9 +93,17 @@ export async function getAllAccessibleCustomerIds() {
   }
 
   const empId = localStorage.getItem('empid') || '';
+  if (!empId) {
+    redirectToLogin();
+    throw new Error('GetCustomerIds: no session found — redirecting to login.');
+  }
   const res = await fetch(`${resolveApiBase()}GetCustomerIds?EmpId=${empId}&istoFindSLA=false`, {
     headers: getAuthHeaders(),
   });
+  if (res.status === 401 || res.status === 403) {
+    redirectToLogin();
+    throw new Error(`GetCustomerIds unauthorized: ${res.status} — redirecting to login.`);
+  }
   if (!res.ok) throw new Error(`GetCustomerIds failed: ${res.status}`);
   const data = await res.json();
   return (Array.isArray(data) ? data : [])
@@ -58,9 +116,17 @@ export async function getAllAccessibleCustomerIds() {
 // for populating a Customer dropdown. Same source as getAllAccessibleCustomerIds.
 export async function getAllAccessibleCustomers() {
   const empId = localStorage.getItem('empid') || '';
+  if (!empId) {
+    redirectToLogin();
+    throw new Error('GetCustomerIds: no session found — redirecting to login.');
+  }
   const res = await fetch(`${resolveApiBase()}GetCustomerIds?EmpId=${empId}&istoFindSLA=false`, {
     headers: getAuthHeaders(),
   });
+  if (res.status === 401 || res.status === 403) {
+    redirectToLogin();
+    throw new Error(`GetCustomerIds unauthorized: ${res.status} — redirecting to login.`);
+  }
   if (!res.ok) throw new Error(`GetCustomerIds failed: ${res.status}`);
   const data = await res.json();
   return (Array.isArray(data) ? data : [])
