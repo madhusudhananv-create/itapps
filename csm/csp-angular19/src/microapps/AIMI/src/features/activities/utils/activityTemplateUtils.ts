@@ -1,4 +1,8 @@
 import * as XLSX from 'xlsx';
+import {
+  getSDLCPhasesForPractice,
+  getActivitiesForSDLCPhase,
+} from '../../../shared/utils/questionnaireUtils';
 
 export const GUIDELINES_SHEET_NAME = 'Guidelines';
 
@@ -157,7 +161,9 @@ const buildGuidelinesRows = (): (string | number)[][] => [
   ['', 15, 'Reduced Manual Effort', '', '', '', ''],
 ];
 
-const buildPracticeSheetRows = (
+const BLANK_ROW = ['', '', '', '', '', '', '', '', '', '', '', ''];
+
+const buildPracticeSheetHeaderRows = (
   projectInfo: TemplateProjectInfo
 ): (string | number)[][] => {
   const reportingDate = new Date().toLocaleDateString();
@@ -186,8 +192,61 @@ const buildPracticeSheetRows = (
     ['', 'Reporting Date:', reportingDate, '', '', '', '', '', '', '', '', ''],
     ['', 'Project Headcount', projectInfo.headcount ?? '', '', '', '', '', '', '', '', '', ''],
     ['', '# people using AI', projectInfo.peopleUsingAI ?? '', '', '', '', '', '', '', '', '', ''],
-    ['', '', '', '', '', '', '', '', '', '', '', ''],
+    [...BLANK_ROW],
   ];
+};
+
+// Pre-fills one row per SDLC phase/activity question from this practice's
+// questionnaire, matching the reference template (Category/Phases merged
+// down each phase's row block, one blank spacer row between phases) so the
+// user only has to fill in the data columns, not retype the structure.
+const buildPhaseActivityRows = (
+  practice: string,
+  startRow: number
+): { rows: (string | number)[][]; merges: XLSX.Range[] } => {
+  const rows: (string | number)[][] = [];
+  const merges: XLSX.Range[] = [];
+  let currentRow = startRow;
+
+  const phases = getSDLCPhasesForPractice(practice);
+
+  phases.forEach((phase, phaseIndex) => {
+    const activities = getActivitiesForSDLCPhase(practice, phase);
+    if (activities.length === 0) return;
+
+    const phaseLabel = phase.replace(/:/g, '');
+    activities.forEach((activity, activityIndex) => {
+      rows.push([
+        activityIndex === 0 ? phaseLabel : '',
+        activity,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+      ]);
+    });
+
+    if (activities.length > 1) {
+      merges.push({
+        s: { r: currentRow, c: 0 },
+        e: { r: currentRow + activities.length - 1, c: 0 },
+      });
+    }
+    currentRow += activities.length;
+
+    if (phaseIndex < phases.length - 1) {
+      rows.push([...BLANK_ROW]);
+      currentRow += 1;
+    }
+  });
+
+  return { rows, merges };
 };
 
 const PRACTICE_SHEET_MERGES: XLSX.Range[] = [
@@ -215,8 +274,14 @@ export const generateAndDownloadActivityTemplate = (
   const guidelinesSheet = XLSX.utils.aoa_to_sheet(buildGuidelinesRows());
   XLSX.utils.book_append_sheet(workbook, guidelinesSheet, GUIDELINES_SHEET_NAME);
 
-  const practiceSheet = XLSX.utils.aoa_to_sheet(buildPracticeSheetRows(projectInfo));
-  practiceSheet['!merges'] = PRACTICE_SHEET_MERGES;
+  const headerRows = buildPracticeSheetHeaderRows(projectInfo);
+  const { rows: phaseRows, merges: phaseMerges } = buildPhaseActivityRows(
+    practice,
+    headerRows.length
+  );
+
+  const practiceSheet = XLSX.utils.aoa_to_sheet([...headerRows, ...phaseRows]);
+  practiceSheet['!merges'] = [...PRACTICE_SHEET_MERGES, ...phaseMerges];
   XLSX.utils.book_append_sheet(
     workbook,
     practiceSheet,

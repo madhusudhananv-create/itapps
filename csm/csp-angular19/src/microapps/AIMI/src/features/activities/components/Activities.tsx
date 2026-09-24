@@ -16,7 +16,7 @@ import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
 import { CommonSnackbar } from '@shared/components/CommonSnackbar';
 import { useFeatureFlags } from '@shared/hooks/useFeatureFlags';
 import { Loading } from '@shared/components/Loading';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
+//import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {
   COMPONENT_NAMES,
   preloadComponents,
@@ -668,9 +668,26 @@ export function Activities() {
     // questionnaire.json, so imported text must be resolved to the canonical phase/activity.
     const findMatch = (value: unknown, options: string[]) => {
       const trimmed = String(value ?? '').trim();
-      return options.find(
+
+      const exact = options.find(
         (option) => option.toLowerCase() === trimmed.toLowerCase()
       );
+      if (exact) return exact;
+
+      // Some source spreadsheets label a phase with a trailing "Phase" word
+      // (e.g. "Design & Verification Phase") even when this practice's own
+      // canonical name doesn't include it (e.g. "Design & Verification").
+      // Only fall back to this once the exact match has already failed, so a
+      // canonical name that legitimately contains "Phase" (e.g. "Implementation
+      // Phase (DFT &PD)") still matches exactly first and is never touched.
+      const withoutTrailingPhase = trimmed.replace(/\s+phase\s*$/i, '').trim();
+      if (withoutTrailingPhase !== trimmed) {
+        return options.find(
+          (option) => option.toLowerCase() === withoutTrailingPhase.toLowerCase()
+        );
+      }
+
+      return undefined;
     };
 
     const invalidRows: { rowNumber: number; reason: string }[] = [];
