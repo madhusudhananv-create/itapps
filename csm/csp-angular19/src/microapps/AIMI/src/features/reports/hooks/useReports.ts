@@ -8,6 +8,7 @@ import {
   type EnrichedActivityWithProjectInfo,
 } from '../utils/activityEnrichmentUtils';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
+import { useAllocatedAccounts } from '@shared/projects/hooks/useAllocatedAccounts';
 import { getPracticesFromQuestionnaire } from '@shared/utils/questionnaireUtils';
 
 // Type definitions for the reports form data
@@ -37,8 +38,18 @@ export interface ReportGenerationResult {
 export const useReports = () => {
   const { projectMapping, getBusinessUnits, getAccounts, getProjects } =
     useProjectHierarchy();
+  const { allocatedAccountNames } = useAllocatedAccounts();
 
   const questionnairePractices = getPracticesFromQuestionnaire();
+
+  // Only show business units/accounts the logged-in employee is allocated to
+  // (same restriction the CSM Angular app applies via GetCustomerIds, and the
+  // same filter the Project Information screen uses). null while the
+  // allocation list hasn't loaded yet.
+  const allowedAccounts = useMemo(() => {
+    if (allocatedAccountNames === null) return null;
+    return new Set(allocatedAccountNames.map((name) => name.trim().toLowerCase()));
+  }, [allocatedAccountNames]);
 
   // Form state
   const [formData, setFormData] = useState<ReportsFormData>({
@@ -114,20 +125,34 @@ export const useReports = () => {
   );
 
   // Get all available options
-  const businessUnits = useMemo(() => getBusinessUnits(), [getBusinessUnits]);
+  const businessUnits = useMemo(() => {
+    const allBusinessUnits = getBusinessUnits();
+    // Show nothing until the allocation list has loaded rather than briefly
+    // showing every business unit first.
+    if (!allowedAccounts) return [];
+    return allBusinessUnits.filter((businessUnit) =>
+      getAccounts(businessUnit).some((account) =>
+        allowedAccounts.has(account.trim().toLowerCase())
+      )
+    );
+  }, [getBusinessUnits, getAccounts, allowedAccounts]);
 
   // Get accounts based on selected business units
   const availableAccounts = useMemo(() => {
-    if (formData.businessUnits.length === 0) return [];
+    if (formData.businessUnits.length === 0 || !allowedAccounts) return [];
 
     const accounts = new Set<string>();
     formData.businessUnits.forEach((bu) => {
       const buAccounts = getAccounts(bu);
-      buAccounts.forEach((account) => accounts.add(account));
+      buAccounts.forEach((account) => {
+        if (allowedAccounts.has(account.trim().toLowerCase())) {
+          accounts.add(account);
+        }
+      });
     });
 
     return Array.from(accounts).sort();
-  }, [formData.businessUnits, getAccounts]);
+  }, [formData.businessUnits, getAccounts, allowedAccounts]);
 
   // Get projects based on selected business units and accounts
   const availableProjects = useMemo(() => {
