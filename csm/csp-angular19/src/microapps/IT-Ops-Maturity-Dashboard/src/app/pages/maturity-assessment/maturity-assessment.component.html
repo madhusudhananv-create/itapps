@@ -38,7 +38,7 @@
         </svg>
         Maturity Level Definitions
       </button>
-      <div class="progress-chip" *ngIf="progressCount() as p">
+      <div class="progress-chip" *ngIf="!awaitingProviderChoice() && progressCount() as p">
         <div class="progress-ring" [style.background]="'conic-gradient(var(--accent) ' + (p.total ? (p.answered / p.total) * 100 : 0) + '%, var(--gridline) 0)'">
           <div class="progress-ring-inner">{{ p.answered }}/{{ p.total }}</div>
         </div>
@@ -60,17 +60,35 @@
     <strong>Returned for revision:</strong> {{ domain.returnComment }}
   </div>
 
-  <div class="provider-tabs" *ngIf="providers.length > 1">
+  <div class="provider-choice" *ngIf="awaitingProviderChoice()">
+    <h2>Which cloud provider are you assessing?</h2>
+    <p class="picker-copy">
+      Pick the one this customer actually runs on. Only that provider's questions will be part of this assessment -
+      this can't be changed once saved.
+    </p>
+    <div class="provider-choice-options">
+      <button
+        type="button"
+        *ngFor="let provider of providers"
+        class="provider-choice-btn"
+        [class.selected]="provider === selectedProvider"
+        [disabled]="choosingProvider"
+        (click)="selectedProvider = provider"
+      >{{ provider }}</button>
+    </div>
+    <p class="provider-choice-error" *ngIf="providerChoiceError">{{ providerChoiceError }}</p>
     <button
       type="button"
-      *ngFor="let provider of providers"
-      class="provider-tab"
-      [class.active]="provider === activeProvider"
-      (click)="selectProvider(provider)"
-    >{{ provider }}</button>
+      class="btn-primary provider-choice-submit"
+      [disabled]="!selectedProvider || choosingProvider"
+      (click)="chooseProvider(selectedProvider!)"
+    >
+      <app-spinner *ngIf="choosingProvider" [size]="13" />
+      Submit
+    </button>
   </div>
 
-  <div class="parameter-grid">
+  <div class="parameter-grid" *ngIf="!awaitingProviderChoice()">
     <div
       class="parameter-card"
       [id]="'param-' + param.id"
@@ -231,7 +249,7 @@
     </div>
   </div>
 
-  <div class="actions" *ngIf="!isLocked()">
+  <div class="actions" *ngIf="!isLocked() && !awaitingProviderChoice()">
     <button class="btn-secondary btn-outline-accent" (click)="saveDraft()">Save Draft</button>
     <button class="btn-primary" [disabled]="submitting" (click)="openSubmitModal()">
       <app-spinner *ngIf="submitting" [size]="13" />

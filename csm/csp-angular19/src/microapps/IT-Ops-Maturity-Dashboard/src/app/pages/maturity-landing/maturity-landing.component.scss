@@ -775,34 +775,72 @@ section {
   }
 }
 
+/* Glassmorphic + neumorphic KPI card. This microapp is plain Angular/CSS (no
+   Framer Motion - that's a React-only library), so the "animation library"
+   feel is built from CSS transitions/keyframes. */
 .kpi {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--kpi-c, var(--accent));
-  border-radius: var(--radius-s);
+  gap: 14px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid color-mix(in srgb, var(--kpi-c, var(--accent)) 16%, var(--border));
+  border-radius: 14px;
   padding: 16px 18px;
-  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, #000 4%, transparent),
+    0 10px 24px -12px color-mix(in srgb, var(--kpi-c, var(--accent)) 22%, transparent);
   animation: rise-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease, border-color 220ms ease;
+
+  /* One-shot shimmer sweep across the glass on load - a light diagonal band
+     that crosses the card once, like light catching frosted glass, then
+     stays put (no looping distraction). */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, #fff 55%, transparent) 48%, transparent 65%);
+    transform: translateX(-120%);
+    animation: kpi-shimmer 1100ms 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    pointer-events: none;
+  }
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-3px) scale(1.012);
+    border-color: color-mix(in srgb, var(--kpi-c, var(--accent)) 45%, var(--border));
+    box-shadow:
+      0 2px 4px color-mix(in srgb, #000 6%, transparent),
+      0 18px 32px -14px color-mix(in srgb, var(--kpi-c, var(--accent)) 38%, transparent);
+
+    .icon {
+      transform: scale(1.08) rotate(-4deg);
+      box-shadow:
+        3px 3px 7px color-mix(in srgb, #000 10%, transparent),
+        -3px -3px 7px color-mix(in srgb, #fff 55%, transparent),
+        0 0 0 4px color-mix(in srgb, var(--kpi-c, var(--accent)) 14%, transparent);
+    }
   }
 
   .icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--kpi-tint, var(--accent-track));
     color: var(--kpi-c, var(--accent));
+    /* Soft dual-tone (light + dark) shadow - the neumorphic "pressed into the
+       surface" look - instead of a flat tinted square. */
+    box-shadow:
+      2px 2px 5px color-mix(in srgb, #000 8%, transparent),
+      -2px -2px 5px color-mix(in srgb, #fff 45%, transparent);
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease;
 
     svg {
       width: 17px;
@@ -812,16 +850,33 @@ section {
 
   .num {
     font-family: var(--font-num);
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
+    animation: kpi-num-in 420ms 180ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 
   .lbl {
     color: var(--text-secondary);
     font-size: 11.5px;
     margin-top: 2px;
+  }
+}
+
+@keyframes kpi-shimmer {
+  to { transform: translateX(120%); }
+}
+
+@keyframes kpi-num-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi, .kpi .num, .kpi::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
@@ -1103,6 +1158,46 @@ section {
   }
 }
 
+/* Same reasoning as .assignments-table-wrap above - a long domain list
+   (every mapped technology domain, unpaginated) was boxed into a fixed
+   520px inner scroll region, forcing a second, cramped scrollbar inside the
+   page's own scrollbar. Let the page itself scroll instead - but unlike
+   .assignments-table-wrap, this table's own header stays usefully sticky to
+   the VIEWPORT (not this container's now-gone scrollbar) as the list grows
+   past a screenful, since the nav bar above it isn't itself fixed/sticky. */
+.domain-tracker-table-wrap {
+  max-height: none;
+  overflow: visible;
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--surface);
+    /* Several of this table's headers are genuinely long phrases now ("No of
+       Applicable Parameters", "Sum of Scores") - forcing them onto one line
+       (the shared th { white-space: nowrap } rule) was what pushed the whole
+       table past the viewport width. Letting them wrap keeps every column a
+       reasonable width instead of one long unbroken header row. */
+    white-space: normal;
+    line-height: 1.3;
+    vertical-align: bottom;
+    max-width: 110px;
+  }
+}
+
+/* Same reasoning again - Top Risks now lists every scored parameter for the
+   active domain (not just the worst 10), so a domain with a lot of scored
+   parameters would otherwise get boxed into the same cramped inner scroll. */
+.top-risks-table-wrap {
+  max-height: none;
+  overflow: visible;
+
+  th {
+    position: static;
+  }
+}
+
 .no-access-banner {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1125,9 +1220,12 @@ th, td {
   color: var(--text-primary);
 }
 
+/* Light accent-tinted "totals" bar - stands apart from the plain white rows
+   above it without going full dark/black, which read as too heavy against
+   the rest of the page. */
 .estate-row {
   font-weight: 700;
-  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 
   td {
     border-bottom: none;
@@ -1135,6 +1233,102 @@ th, td {
     color: var(--text-primary);
     font-family: var(--font-display);
   }
+}
+
+.domain-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* Segmented status tabs above the table (All / Pending Review / Approved / ...) - a real
+   border + shadow on the container and a filled, colored active state (not just a plain
+   text-color change) so it reads as a genuine control, not a strip of plain labels. Each
+   status tab carries its own severity-colored dot, matching the row/export coloring. */
+.domain-tracker-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-tint);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 4px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border: none;
+    background: transparent;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+
+    &:hover:not(.active) {
+      color: var(--text-primary);
+      background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+    }
+
+    &.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 2px 6px color-mix(in srgb, var(--accent) 45%, transparent);
+      transform: translateY(-0.5px);
+
+      .tab-count {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+      }
+
+      .tab-dot { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
+    }
+  }
+}
+
+.tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+
+.tab-dot-warning .tab-dot { background: var(--status-warning); }
+.tab-dot-serious .tab-dot { background: var(--status-serious); }
+.tab-dot-info .tab-dot { background: var(--accent); }
+.tab-dot-critical .tab-dot { background: var(--status-critical); }
+.tab-dot-good .tab-dot { background: var(--status-good); }
+.tab-dot-good-deep .tab-dot { background: var(--status-good); }
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 th {
@@ -1271,6 +1465,8 @@ tbody tr:hover td:first-child {
   font-weight: 600;
   font-family: var(--font-display);
   letter-spacing: 0.02em;
+  /* Same fix as .level-pill - a status label is one badge, not wrappable prose. */
+  white-space: nowrap;
 
   &::before {
     content: '';
@@ -1364,6 +1560,11 @@ tbody tr:hover td:first-child {
   font-family: var(--font-display);
   font-size: 11.5px;
   font-weight: 600;
+  /* A pill is a single label, not a line of prose - it must never wrap onto a
+     second line just because its column happens to be narrow (e.g. once the
+     Domain Tracker's own headers started wrapping and tightened up column
+     widths), or "2 - Developing" reads as two stacked half-labels. */
+  white-space: nowrap;
 }
 
 .level-good { background: color-mix(in srgb, var(--status-good) 18%, transparent); color: var(--status-good); }
@@ -1515,17 +1716,32 @@ tbody tr:hover td:first-child {
   align-items: center;
   gap: 7px;
   padding: 7px 10px 7px 12px;
-  border: 1px solid var(--border);
+  border: 1.5px solid color-mix(in srgb, var(--text-primary) 22%, var(--border));
   border-radius: 999px;
   background: var(--surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-primary) 6%, transparent);
   font-size: 12.5px;
-  color: var(--text-secondary);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  color: var(--text-primary);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  /* Keeps the text weight visually stable across browser zoom levels - without
+     this, some browsers subtly heavy-up antialiased text as the zoom level
+     changes, making the same font-weight read as darker/bolder when zoomed. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 
-  /* Set state stays subtle: only the icon and the label pick up the accent,
-     everything else (border, background, the value text) stays neutral - a
-     fully accent-filled pill read as one solid blue block with no contrast
-     between "field" and "value". */
+  &:hover {
+    border-color: color-mix(in srgb, var(--text-primary) 34%, var(--border));
+  }
+
+  /* Set state stands out clearly: accent border/background tint plus the
+     icon and label picking up the accent color, so an active filter reads
+     as a distinct chip rather than blending into the reset ones. */
+  &.is-set {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  }
+
   &.is-set .filter-pill-icon {
     color: var(--accent);
   }
@@ -1536,13 +1752,13 @@ tbody tr:hover td:first-child {
 
   .filter-pill-icon {
     flex-shrink: 0;
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   .filter-pill-label {
     font-weight: 650;
     white-space: nowrap;
-    color: var(--text-secondary);
+    color: var(--text-primary);
   }
 
   app-searchable-select {
@@ -1553,8 +1769,12 @@ tbody tr:hover td:first-child {
     border: none;
     background: transparent;
     padding: 0 18px 0 0;
-    color: inherit;
+    color: var(--text-primary);
     font-weight: 600;
+  }
+
+  ::ng-deep .ss-input::placeholder {
+    color: var(--text-secondary);
   }
 
   ::ng-deep .ss-input:focus {
@@ -1563,6 +1783,7 @@ tbody tr:hover td:first-child {
 
   ::ng-deep .ss-chevron {
     right: 0;
+    color: var(--text-secondary);
   }
 }
 
@@ -1588,7 +1809,7 @@ tbody tr:hover td:first-child {
   border: none;
   background: none;
   padding: 4px 6px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -2092,14 +2313,46 @@ tbody tr:hover td:first-child {
 .domain-tracker-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 14px;
 
   h2 {
     margin: 0;
+    flex-shrink: 0;
   }
 }
+
+.domain-tracker-search {
+  flex: 1;
+  max-width: 340px;
+  margin-left: 8px;
+}
+
+.no-results-cell {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px 12px;
+}
+
+/* Left-border + faint tint per row's own status severity - the same colors the export's
+   Status column tinting uses - so something actually needing attention (Ad Hoc/Suspended/
+   Not Started) is visible scanning down a long list, not just inside its own pill.
+   The border has to live on the row's first cell, not the <tr> itself - border-collapse
+   silently drops a <tr>'s own left/right borders in every browser. */
+.domain-tracker-table-wrap tr[class^="status-row-"] td:first-child { border-left-width: 3px; border-left-style: solid; }
+.status-row-muted td:first-child { border-left-color: var(--text-muted); }
+.status-row-warning { background: color-mix(in srgb, var(--status-warning) 5%, transparent); }
+.status-row-warning td:first-child { border-left-color: var(--status-warning); }
+.status-row-serious { background: color-mix(in srgb, var(--status-serious) 5%, transparent); }
+.status-row-serious td:first-child { border-left-color: var(--status-serious); }
+.status-row-info { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+.status-row-info td:first-child { border-left-color: var(--accent); }
+.status-row-critical { background: color-mix(in srgb, var(--status-critical) 6%, transparent); }
+.status-row-critical td:first-child { border-left-color: var(--status-critical); }
+.status-row-good td:first-child { border-left-color: var(--status-good); }
+.status-row-good-deep { background: color-mix(in srgb, var(--status-good) 6%, transparent); }
+.status-row-good-deep td:first-child { border-left-color: var(--status-good); }
 
 .export-btn {
   display: inline-flex;
@@ -2114,6 +2367,12 @@ tbody tr:hover td:first-child {
   background: var(--accent);
   color: #fff;
   cursor: pointer;
+  /* Pushed to the true right edge of the header row (not just after the search
+     box, which stops growing once it hits its own max-width) - the table below
+     spans the same full width, so this lands directly above its rightmost
+     column ("Maturity Level"), reading as "export this table" rather than a
+     loose button floating mid-row. */
+  margin-left: auto;
 
   &:hover {
     filter: brightness(1.08);

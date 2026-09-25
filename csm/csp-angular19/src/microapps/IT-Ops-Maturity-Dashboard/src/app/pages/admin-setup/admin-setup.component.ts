@@ -196,10 +196,13 @@ export class AdminSetupComponent implements OnInit {
    */
   readonly steps: { key: StepKey; label: string; role: string }[] = [
     { key: 'roles', label: 'Configure Roles', role: 'SUPERUSER' },
-    { key: 'cycle', label: 'Configure Cycle', role: 'CYCLE_ADMINISTRATOR' },
-    // 'scope' isn't owned by one role - see scopeSubTabRoles - so this entry's
-    // role is only a display fallback; canUseStep/visibleSteps special-case it.
+    // Domain-project mapping is a one-time/ongoing setup concern, not tied to any one
+    // cycle - it now comes before Configure Cycle so a Superuser can set it up without
+    // needing a cycle to exist first. 'scope' isn't owned by one role - see
+    // scopeSubTabRoles - so this entry's role is only a display fallback;
+    // canUseStep/visibleSteps special-case it.
     { key: 'scope', label: 'Configure Scope', role: 'DOMAIN_PROJECT_MAPPER' },
+    { key: 'cycle', label: 'Configure Cycle', role: 'CYCLE_ADMINISTRATOR' },
     { key: 'assessment', label: 'Configure Assessment', role: 'RUNOPS_INITIATOR' },
     { key: 'team', label: 'Assign Assessor / Reviewer', role: 'TEAM_ASSIGNMENT_COORDINATOR' },
   ];
@@ -1837,9 +1840,9 @@ export class AdminSetupComponent implements OnInit {
           this.newCycleLabel = '';
           this.selectedCycleId = created.id;
           this.loadCycles();
-          // Only advance if this user actually owns Configure Scope - a plain
+          // Only advance if this user actually owns Configure Assessment - a plain
           // Cycle Administrator's job ends here.
-          if (this.canUseStep('scope')) this.goToStep('scope');
+          if (this.canUseStep('assessment')) this.goToStep('assessment');
         },
         error: (err) =>
           // The backend returns a clean 409 for a duplicate label / bad date range.
@@ -1857,7 +1860,7 @@ export class AdminSetupComponent implements OnInit {
       this.toast.error('Pick a cycle first, or start a new one.');
       return;
     }
-    if (this.canUseStep('scope')) this.goToStep('scope');
+    if (this.canUseStep('assessment')) this.goToStep('assessment');
   }
 
   // ==================================================================
@@ -2044,16 +2047,42 @@ export class AdminSetupComponent implements OnInit {
     // modal is already open.
     if (!this.projects.length) this.loadProjects();
     this.mappingModalOpen = true;
+    this.checkMappingModalStaffing();
   }
 
   onMappingModalProjectChange(): void {
     this.syncMappingModalSelection();
+    this.checkMappingModalStaffing();
+  }
+
+  /** True once the staffing check below has actually run for the currently-picked project - guards the warning from flashing true before the API call resolves. */
+  mappingModalStaffChecked = false;
+  /** True if GetITOpsAssesseeCandidates came back empty for the current project - same PROJECT_RESOURCE/BILL_FLG/END_DATE staffing check Configure Assessment's own Assessee picker uses, surfaced here so an admin sees "nobody's staffed on this yet" before mapping domains to it, not after. */
+  mappingModalNoStaff = false;
+
+  private checkMappingModalStaffing(): void {
+    const projectId = this.mappingModalProjectId;
+    this.mappingModalStaffChecked = false;
+    this.mappingModalNoStaff = false;
+    if (!projectId) return;
+    this.api.getAssesseeCandidates([projectId]).subscribe({
+      next: (candidates) => {
+        if (this.mappingModalProjectId !== projectId) return; // project changed again while this was in flight
+        this.mappingModalStaffChecked = true;
+        this.mappingModalNoStaff = !candidates.length;
+      },
+      error: () => {
+        if (this.mappingModalProjectId !== projectId) return;
+        this.mappingModalStaffChecked = true;
+      },
+    });
   }
 
   /** Changing the customer narrows the project list, so the old project no longer applies. */
   onMappingModalCustomerChange(): void {
     this.mappingModalProjectId = '';
     this.syncMappingModalSelection();
+    this.checkMappingModalStaffing();
   }
 
   private syncMappingModalSelection(): void {
@@ -2287,7 +2316,7 @@ export class AdminSetupComponent implements OnInit {
       });
     }
 
-    this.goToStep('assessment');
+    this.goToStep('cycle');
   }
 
   /** Opens the mapping change-history modal, optionally scoped to one project's row. */

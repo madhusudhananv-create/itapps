@@ -21,8 +21,10 @@
         (click)="goToStep(step.key)"
       >
         <span class="flow-num">
-          <svg *ngIf="visibleStepIndex(step.key) < visibleStepIndex(activeStep)" class="flow-num-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-          <span *ngIf="!(visibleStepIndex(step.key) < visibleStepIndex(activeStep))">{{ stepNumber(step.key) }}</span>
+          <svg *ngIf="visibleStepIndex(step.key) < visibleStepIndex(activeStep); else flowArrow" class="flow-num-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <ng-template #flowArrow>
+            <svg class="flow-num-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+          </ng-template>
         </span>
         <span class="flow-label">{{ step.label }}</span>
       </button>
@@ -202,7 +204,7 @@
     </div>
 
     <div class="step-actions end">
-      <button type="button" class="btn-primary" *ngIf="canUseStep('cycle')" (click)="goToStep('cycle')">Continue to Configure Cycle</button>
+      <button type="button" class="btn-primary" *ngIf="canUseStep('scope')" (click)="goToStep('scope')">Continue to Configure Scope</button>
     </div>
   </section>
 
@@ -479,7 +481,10 @@
     </div>
   </div>
 
-  <!-- ============ STEP 2: Configure Cycle ============ -->
+  <!-- ============ STEP 3: Configure Cycle (now after Configure Scope in
+       display order - see admin-setup.component.ts's `steps` array; this
+       section's physical position in the file is unrelated to display order,
+       since only the active *ngIf'd section ever renders) ============ -->
   <section class="maturity-page" *ngIf="activeStep === 'cycle'">
     <div class="page-head">
       <div class="icon-badge">
@@ -562,15 +567,15 @@
     </div>
 
     <div class="step-actions between">
-      <button type="button" class="btn-secondary" *ngIf="canUseStep('roles')" (click)="goToStep('roles')">Back</button>
+      <button type="button" class="btn-secondary" *ngIf="canUseStep('scope')" (click)="goToStep('scope')">Back</button>
       <button type="button" class="btn-primary" (click)="saveCycleAndContinue()" [disabled]="savingCycle">
         <app-spinner *ngIf="savingCycle" [size]="13"></app-spinner>
-        Save &amp; continue to Configure Scope
+        Save &amp; continue to Configure Assessment
       </button>
     </div>
   </section>
 
-  <!-- ============ STEP 3: Configure Scope ============ -->
+  <!-- ============ STEP 2: Configure Scope ============ -->
   <section class="maturity-page" *ngIf="activeStep === 'scope'">
     <div class="page-head">
       <div class="icon-badge">
@@ -832,8 +837,8 @@
     </ng-container>
 
     <div class="step-actions between sticky">
-      <button type="button" class="btn-secondary" *ngIf="canUseStep('cycle')" (click)="goToStep('cycle')">Back</button>
-      <button type="button" class="btn-primary" *ngIf="canUseStep('assessment')" (click)="continueToAssessment()">Submit and Continue to Configure Assessment</button>
+      <button type="button" class="btn-secondary" *ngIf="canUseStep('roles')" (click)="goToStep('roles')">Back</button>
+      <button type="button" class="btn-primary" *ngIf="canUseStep('cycle')" (click)="continueToAssessment()">Submit and Continue to Configure Cycle</button>
     </div>
   </section>
 
@@ -1045,6 +1050,10 @@
         [disabled]="mappingModalIsEdit"
         placeholder="Select a project… (type to search)"
       ></app-searchable-select>
+      <p class="modal-warning" *ngIf="mappingModalProjectId && mappingModalStaffChecked && mappingModalNoStaff">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        No one is currently allocated on this project — Assessee can't be set for it in Configure Assessment yet. Consider a different project, or get the resource allocated in D365.
+      </p>
       <label class="modal-label">Domains<span class="required">*</span></label>
       <p class="modal-hint" *ngIf="!mappingModalProjectId">Select a project above first.</p>
       <div class="multi-picker" *ngIf="mappingModalProjectId">
@@ -1629,7 +1638,7 @@
     </div>
 
     <div class="step-actions between">
-      <button type="button" class="btn-secondary" *ngIf="canUseStep('scope')" (click)="goToStep('scope')">Back</button>
+      <button type="button" class="btn-secondary" *ngIf="canUseStep('cycle')" (click)="goToStep('cycle')">Back</button>
       <button type="button" class="btn-primary" *ngIf="canUseStep('team')" (click)="goToStep('team')">Continue to Assign Assessor/ Reviewer</button>
     </div>
   </section>

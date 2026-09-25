@@ -415,7 +415,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     EmpName = GetEmpName(empId),
                     RoleLabel = roleLabel,
-                    DomainName = domainName,
+                    DomainName = ITOpsEmailDomainName(domainName, assessment.CLOUD_PROVIDER),
                     ProjectName = projectName,
                     CycleLabel = cycleLabel
                 }),
@@ -2719,12 +2719,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                     .Where(x => x.ASSESSMENT_ID == a.ID).Select(x => x.REVIEWER_EMP_ID).Distinct().ToList());
                                 var assesseeNamesForThis = GetEmpNames(assesseeRowsByAssessment
                                     .Where(x => x.ASSESSMENT_ID == a.ID).Select(x => x.ASSESSEE_EMP_ID).Distinct().ToList());
+                                var domainNameForThis = ITOpsEmailDomainName(
+                                    allDomains.ContainsKey(a.DOMAIN_ID) ? allDomains[a.DOMAIN_ID].NAME : "domain",
+                                    a.CLOUD_PROVIDER);
                                 return helper.GetEmailContent("ITOpsAssessmentsCreatedRow.htm", ToEmailValues(new
                                 {
                                     SNo = idx + 1,
                                     AccountName = accountName ?? "-",
                                     ProjectName = project.PROJ_NM ?? projectId,
-                                    DomainName = allDomains.ContainsKey(a.DOMAIN_ID) ? allDomains[a.DOMAIN_ID].NAME : "domain",
+                                    DomainName = domainNameForThis,
                                     AssesseeNames = string.Join(", ", assesseeNamesForThis),
                                     AssessorNames = string.Join(", ", assessorNamesForThis),
                                     ReviewerNames = string.Join(", ", reviewerNamesForThis)
@@ -2991,7 +2994,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     AccountName = accountName ?? "-",
                     ProjectName = projectName,
-                    DomainName = domainName,
+                    DomainName = ITOpsEmailDomainName(domainName, assessment.CLOUD_PROVIDER),
                     CycleLabel = cycleLabel
                 }));
         }

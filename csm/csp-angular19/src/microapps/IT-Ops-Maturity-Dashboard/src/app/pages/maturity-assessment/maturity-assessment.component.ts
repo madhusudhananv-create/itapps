@@ -44,8 +44,13 @@ export class MaturityAssessmentComponent implements OnInit {
   /** True until the first load attempt settles, so the "not found" message never flashes while data is still in flight. */
   loading = true;
   saveMessage = '';
+  /** Only populated for a Cloud domain assessment with no provider locked in yet - see awaitingProviderChoice(). */
   providers: string[] = [];
   activeProvider?: string;
+  /** Clicked but not yet submitted - chooseProvider() is only actually called once the Submit button is pressed. */
+  selectedProvider?: string;
+  choosingProvider = false;
+  providerChoiceError = '';
   showSubmitModal = false;
   submitting = false;
   /** Keyed by parameter id, not a single shared string - an upload error on one question must not show under every other question's evidence box too. */
@@ -108,6 +113,11 @@ export class MaturityAssessmentComponent implements OnInit {
       this.showSubmitModal = false;
       this.highlightParamId = null;
       this.evidenceUploading.clear();
+      this.providers = [];
+      this.activeProvider = undefined;
+      this.selectedProvider = undefined;
+      this.choosingProvider = false;
+      this.providerChoiceError = '';
 
       this.api
         .getOrCreateAssessment(domainCode, String(account.cusT_ID), assessmentIdParam ? Number(assessmentIdParam) : undefined)
@@ -124,8 +134,12 @@ export class MaturityAssessmentComponent implements OnInit {
             this.assessmentId = assessment.assessmentId;
             this.domain = this.toDomain(assessment, parameters);
             this.assesseeNamesList = assessment.assesseeNames ?? [];
-            this.providers = [];
-            this.activeProvider = undefined;
+            // Only ever populated for a Cloud domain assessment with no provider locked in
+            // yet (see ITOPS_AssessmentInfo.AvailableCloudProviders) - awaitingProviderChoice()
+            // uses this to show the provider picker instead of the scoring grid.
+            this.providers = assessment.availableCloudProviders ?? [];
+            this.activeProvider = assessment.cloudProvider ?? undefined;
+            this.providerChoiceError = '';
             this.loading = false;
             this.loadExistingEvidence();
             this.loadEvidenceForAcceptedFindings();
@@ -165,14 +179,15 @@ export class MaturityAssessmentComponent implements OnInit {
     });
   }
 
-  private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
+  private mapParameterRows(rows: ItOpsParameterScoreRow[]): MaturityParameter[] {
     this.parameterIdByKey.clear();
-    const parameters: MaturityParameter[] = rows.map((r) => {
+    return rows.map((r) => {
       const key = String(r.parameterId);
       this.parameterIdByKey.set(key, r.parameterId);
       return {
         id: key,
         category: r.category,
+        provider: r.provider ?? undefined,
         name: r.parameterName,
         definition: r.definition,
         rubric: {
@@ -195,14 +210,16 @@ export class MaturityAssessmentComponent implements OnInit {
         findingDisputeComment: r.disputeComment ?? undefined,
       };
     });
+  }
 
+  private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
     return {
       id: assessment.domainCode,
       name: assessment.domainName,
       coeSpoc: assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
       reviewer: assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
       status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
-      parameters,
+      parameters: this.mapParameterRows(rows),
       returnComment: assessment.returnComment ?? undefined,
     };
   }
@@ -211,10 +228,11 @@ export class MaturityAssessmentComponent implements OnInit {
     return this.assesseeNamesList.join(', ');
   }
 
+  /** GetITOpsAssessmentParameters already returns only the locked-in provider's rows once one
+   * is chosen (or every provider's rows while none is chosen yet, which awaitingProviderChoice()
+   * catches before the grid ever renders them) - no client-side filtering needed here. */
   visibleParameters(): MaturityParameter[] {
-    if (!this.domain) return [];
-    if (!this.providers.length) return this.domain.parameters;
-    return this.domain.parameters.filter((p) => p.provider === this.activeProvider);
+    return this.domain?.parameters ?? [];
   }
 
   openDefinitionsModal(): void {
@@ -225,8 +243,40 @@ export class MaturityAssessmentComponent implements OnInit {
     this.showDefinitionsModal = false;
   }
 
-  selectProvider(provider: string): void {
-    this.activeProvider = provider;
+  /** True only for a Cloud domain assessment with no provider locked in yet - shows the
+   * provider-choice screen instead of the (otherwise all-three-providers-wide) scoring grid. */
+  awaitingProviderChoice(): boolean {
+    return this.providers.length > 0 && !this.activeProvider;
+  }
+
+  /** Locks this assessment to one cloud provider (Azure/AWS/GCP) - a one-time choice, not a
+   * view filter: once saved, GetITOpsAssessmentParameters only ever returns that provider's
+   * parameters for this assessment again, and UpsertITOpsScore rejects any other provider's
+   * parameter server-side too. */
+  chooseProvider(provider: string): void {
+    if (!this.assessmentId || this.choosingProvider) return;
+    this.choosingProvider = true;
+    this.providerChoiceError = '';
+    this.api.setCloudProvider(this.assessmentId, provider).subscribe({
+      next: () => {
+        const id = this.assessmentId!;
+        this.api.getAssessmentParameters(id).subscribe({
+          next: (rows) => {
+            if (this.domain) this.domain.parameters = this.mapParameterRows(rows);
+            this.activeProvider = provider;
+            this.providers = [];
+            this.choosingProvider = false;
+          },
+          error: () => {
+            this.choosingProvider = false;
+          },
+        });
+      },
+      error: (err) => {
+        this.choosingProvider = false;
+        this.providerChoiceError = err?.error || 'Could not save your choice - please try again.';
+      },
+    });
   }
 
   isLocked(): boolean {

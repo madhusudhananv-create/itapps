@@ -177,12 +177,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
         // The finding's Assessee is who accepts/rejects it and later submits action-taken
-        // progress - ITOPS_FINDING.ASSESSEE_EMP_ID is the direct source of truth for that,
-        // no join needed.
+        // progress. ITOPS_FINDING.ASSESSEE_EMP_ID is never populated under the V2 flow (V2
+        // moved Assessee assignment to per-assessment staging in ITOPS_ASSESSMENT_ASSESSEE,
+        // same as Assessor/Reviewer) - resolved the same way DenyIfNotITOpsFindingAssessor
+        // resolves Assessor, through SCORE_ID -> ITOPS_SCORE.ASSESSMENT_ID.
         private IHttpActionResult DenyIfNotITOpsFindingAssessee(ITOPS_FINDING finding, string empId, string what)
         {
             if (IsITOpsSuperuser(empId)) return null;
-            if (!string.IsNullOrWhiteSpace(finding.ASSESSEE_EMP_ID) && finding.ASSESSEE_EMP_ID == empId) return null;
+            var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+            if (assessmentId.HasValue && GetITOpsAssesseeIds(assessmentId.Value).Contains(empId)) return null;
             return Content(HttpStatusCode.Forbidden, "You are not the Assessee on this finding, so you cannot " + what + ".");
         }
 
@@ -203,6 +206,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .Where(s => s.ISACTIVE && s.ASSESSMENT_ID == assessmentId)
                 .Select(s => s.ID)
                 .ToList();
+        }
+
+        // Domain name as shown in every ITOps notification email - the chosen Cloud provider
+        // rides along inline once one is picked, e.g. "Cloud (Azure)", rather than a separate
+        // email column. Plain domain name for every non-Cloud domain, or a Cloud domain whose
+        // assessment has no provider chosen yet.
+        private string ITOpsEmailDomainName(string domainName, string cloudProvider)
+        {
+            return !string.IsNullOrWhiteSpace(domainName) && !string.IsNullOrWhiteSpace(cloudProvider)
+                ? domainName + " (" + cloudProvider + ")"
+                : domainName;
         }
 
         // One lock per account, so the several near-simultaneous requests the landing page
@@ -1411,7 +1425,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 AssesseeEmpIds = assesseeIds,
                 AssesseeNames = GetEmpNames(assesseeIds),
                 Status = assessment.STATUS,
-                ReturnComment = assessment.RETURN_COMMENT
+                ReturnComment = assessment.RETURN_COMMENT,
+                CloudProvider = assessment.CLOUD_PROVIDER,
+                // Only worth computing when there's actually a choice left to make - an
+                // already-chosen provider (or a non-Cloud domain, whose categories all have
+                // PROVIDER null) means the frontend never needs to show the picker.
+                AvailableCloudProviders = string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER)
+                    ? CSPdb.ITOPS_CATEGORY.GetAll()
+                        .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && c.PROVIDER != null)
+                        .Select(c => c.PROVIDER)
+                        .Distinct()
+                        .OrderBy(p => p)
+                        .ToList()
+                    : null
             };
         }
 
@@ -1529,15 +1555,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var today = DateTime.Today;
             var activeCategories = CSPdb.ITOPS_CATEGORY.GetAll()
                 .Where(c => c.ISACTIVE && (c.END_DATE == null || c.END_DATE > today))
-                .Select(c => new { c.ID, c.DOMAIN_ID })
+                .Select(c => new { c.ID, c.DOMAIN_ID, c.PROVIDER })
                 .ToList();
             var activeCategoryIds = activeCategories.Select(c => c.ID).ToList();
-            var paramCountByDomain = CSPdb.ITOPS_PARAMETER.GetAll()
-                .Where(p => p.ISACTIVE && (p.END_DATE == null || p.END_DATE > today) && activeCategoryIds.Contains(p.CATEGORY_ID))
-                .Select(p => p.CATEGORY_ID)
+            var categoryIdsByDomain = activeCategories
                 .ToList()
-                .Join(activeCategories, categoryId => categoryId, c => c.ID, (categoryId, c) => c.DOMAIN_ID)
-                .GroupBy(domainId => domainId)
+                .Join(
+                    CSPdb.ITOPS_PARAMETER.GetAll().Where(p => p.ISACTIVE && (p.END_DATE == null || p.END_DATE > today) && activeCategoryIds.Contains(p.CATEGORY_ID)).Select(p => p.CATEGORY_ID).ToList(),
+                    c => c.ID, categoryId => categoryId, (c, categoryId) => c)
+                .ToList();
+            var paramCountByDomain = categoryIdsByDomain
+                .GroupBy(c => c.DOMAIN_ID)
+                .ToDictionary(g => g.Key, g => g.Count());
+            // Per (domain, provider) - lets a Cloud assessment that has chosen a provider
+            // count only that provider's parameters, instead of all three providers' 154
+            // combined (see the domainAssessments.Sum below).
+            var paramCountByDomainProvider = categoryIdsByDomain
+                .Where(c => c.PROVIDER != null)
+                .GroupBy(c => new { c.DOMAIN_ID, c.PROVIDER })
                 .ToDictionary(g => g.Key, g => g.Count());
 
             // Bulk-load the join tables once rather than per row.
@@ -1593,7 +1628,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var scored = allScores.Where(s => domainAssessmentIds.Contains(s.ASSESSMENT_ID) && s.SCORE_VALUE != null).ToList();
                 var domainScoreIds = allScores.Where(s => domainAssessmentIds.Contains(s.ASSESSMENT_ID)).Select(s => s.ID).ToList();
                 var allFindingsResolved = !domainScoreIds.Any(id => unresolvedScoreIds.Contains(id));
-                var paramCount = paramCountByDomain.ContainsKey(domainId) ? paramCountByDomain[domainId] : 0;
+                // A Cloud domain row can roll up more than one project's assessment, and each
+                // one independently locks its own CLOUD_PROVIDER - only narrow the parameter
+                // count down to one provider's ~50 when every assessment in this group agrees
+                // on the same provider; a mix (or none chosen yet) falls back to the domain's
+                // full count across all providers, same as before this feature existed.
+                var chosenProvidersHere = domainAssessments.Select(a => a.CLOUD_PROVIDER).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct().ToList();
+                var singleChosenProvider = chosenProvidersHere.Count == 1 ? chosenProvidersHere[0] : null;
+                var providerKey = new { DOMAIN_ID = domainId, PROVIDER = singleChosenProvider };
+                var paramCount = singleChosenProvider != null && paramCountByDomainProvider.ContainsKey(providerKey)
+                    ? paramCountByDomainProvider[providerKey]
+                    : (paramCountByDomain.ContainsKey(domainId) ? paramCountByDomain[domainId] : 0);
                 var applicableParamCount = scored.Count;
                 var sumScores = scored.Sum(s => s.SCORE_VALUE.Value);
                 // Max possible is the rubric ceiling for whichever parameters actually
@@ -1683,8 +1728,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             // V2: category/parameter master data is effective-dated - only rows still in
             // effect (END_DATE null or in the future) belong on the assessment form.
+            //
+            // Once a Cloud assessment has a CLOUD_PROVIDER chosen (see
+            // SetITOpsAssessmentCloudProvider), only that provider's categories load here -
+            // the other two providers' ~50 parameters each are simply never part of this
+            // assessment, not shown-and-skippable. A non-Cloud domain's categories all have
+            // PROVIDER null, so this filter is a no-op for them; a Cloud assessment with no
+            // provider chosen yet also gets every category back here (all three providers) -
+            // the frontend uses that (via AvailableCloudProviders on the assessment info) to
+            // show the provider picker instead of the scoring grid.
+            // string.IsNullOrWhiteSpace() can't be translated by LINQ to Entities - computed
+            // as a plain bool beforehand instead (assessment is already a materialized entity
+            // from FirstOrDefault above, so this itself isn't part of the SQL translation).
+            var hasChosenProvider = !string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER);
             var categories = CSPdb.ITOPS_CATEGORY.GetAll()
-                .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && (c.END_DATE == null || c.END_DATE > today))
+                .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && (c.END_DATE == null || c.END_DATE > today)
+                    && (!hasChosenProvider || c.PROVIDER == null || c.PROVIDER == assessment.CLOUD_PROVIDER))
                 .ToList()
                 .ToDictionary(c => c.ID);
             var categoryIds = categories.Keys.ToList();
@@ -1750,6 +1809,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     ParameterId = p.ID,
                     Category = category.NAME,
+                    Provider = category.PROVIDER,
                     ParameterName = p.NAME,
                     Definition = p.DEFINITION,
                     Level1_AdHoc = level(1),
@@ -1778,6 +1838,49 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(result);
         }
 
+        // Lets the Assessor pick which cloud provider (Azure/AWS/GCP) a Cloud domain
+        // assessment scores - only that provider's categories/parameters are ever scored
+        // for this assessment from then on (see GetITOpsAssessmentParameters's filter).
+        // Locked once set: this never accepts a second, different provider for the same
+        // assessment, so an accidental re-pick can't silently orphan already-entered scores.
+        [POST("SetITOpsAssessmentCloudProvider")]
+        [ActionName("SetITOpsAssessmentCloudProvider")]
+        [HttpPost]
+        public IHttpActionResult SetITOpsAssessmentCloudProvider(int assessmentId, [FromBody] ITOPS_SetCloudProviderRequest request)
+        {
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
+            if (assessment == null)
+                return NotFound();
+
+            if (request == null || string.IsNullOrWhiteSpace(request.Provider))
+                return Content(HttpStatusCode.Conflict, "A provider is required.");
+
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsAssessorOnAssessment(assessmentId, empId, "choose the cloud provider for this assessment");
+            if (denied != null) return denied;
+
+            var availableProviders = CSPdb.ITOPS_CATEGORY.GetAll()
+                .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && c.PROVIDER != null)
+                .Select(c => c.PROVIDER)
+                .Distinct()
+                .ToList();
+            if (!availableProviders.Contains(request.Provider))
+                return Content(HttpStatusCode.Conflict, "This domain has no such cloud provider to choose.");
+
+            if (!string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER) && assessment.CLOUD_PROVIDER != request.Provider)
+                return Content(HttpStatusCode.Conflict, "This assessment is already locked to " + assessment.CLOUD_PROVIDER + " and cannot be switched to a different provider.");
+
+            if (assessment.CLOUD_PROVIDER != request.Provider)
+            {
+                assessment.CLOUD_PROVIDER = request.Provider;
+                UpdateAuditFields(assessment, empId);
+                CSPdb.ITOPS_ASSESSMENT.Update(assessment);
+                CSPdb.Commit(CanCommit);
+            }
+
+            return Ok(assessment);
+        }
+
         // US-003: assessor enters score + mandatory notes; score < 5 auto-raises a Finding
         [POST("UpsertITOpsScore")]
         [ActionName("UpsertITOpsScore")]
@@ -1796,6 +1899,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var scoreDenied = DenyIfNotITOpsAssessorOnAssessment(request.AssessmentId, empId, "submit a score for this assessment");
             if (scoreDenied != null) return scoreDenied;
+
+            // Once a Cloud assessment has locked in a provider, a score can only be entered
+            // for a parameter that actually belongs to that provider - the UI never shows the
+            // other providers' parameters once one is chosen (GetITOpsAssessmentParameters
+            // filters them out), but this closes the same direct-API-call gap that ACCESS-02
+            // closed for "is this caller the Assessor" - it stops a stale/crafted request from
+            // silently scoring a parameter this assessment was never meant to include.
+            var scoreAssessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == request.AssessmentId && a.ISACTIVE);
+            if (scoreAssessment == null) return NotFound();
+            if (!string.IsNullOrWhiteSpace(scoreAssessment.CLOUD_PROVIDER))
+            {
+                var paramCategoryId = CSPdb.ITOPS_PARAMETER.GetAll().Where(p => p.ID == request.ParameterId).Select(p => (int?)p.CATEGORY_ID).FirstOrDefault();
+                var paramProvider = paramCategoryId.HasValue
+                    ? CSPdb.ITOPS_CATEGORY.GetAll().Where(c => c.ID == paramCategoryId.Value).Select(c => c.PROVIDER).FirstOrDefault()
+                    : null;
+                if (paramProvider != null && paramProvider != scoreAssessment.CLOUD_PROVIDER)
+                    return Content(HttpStatusCode.Conflict, "This assessment is locked to " + scoreAssessment.CLOUD_PROVIDER + " - this parameter belongs to a different cloud provider.");
+            }
 
             var score = CSPdb.ITOPS_SCORE.GetAll()
                 .FirstOrDefault(s => s.ASSESSMENT_ID == request.AssessmentId && s.PARAMETER_ID == request.ParameterId);
@@ -1883,9 +2004,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             // string.IsNullOrWhiteSpace() can't be translated by LINQ to Entities - spelled out
             // as a null/trim check instead, which SQL Server can translate directly.
-            var scoresMissingNotes = CSPdb.ITOPS_SCORE.GetAll()
-                .Any(s => s.ASSESSMENT_ID == assessmentId && s.ISACTIVE && s.SCORE_VALUE != null
-                    && (s.NOTES == null || s.NOTES.Trim().Length == 0));
+            //
+            // Scoped to the assessment's own chosen provider (when one is set) - a Cloud
+            // assessment can carry leftover ITOPS_SCORE rows from a provider other than the
+            // one eventually locked in (e.g. scored before SetITOpsAssessmentCloudProvider
+            // existed, or before this assessment's provider was picked). Those parameters no
+            // longer show in the grid at all, so blocking submit over a note the assessor has
+            // no way to see or fix would be a dead end, not a real validation failure.
+            var hasChosenProviderForSubmit = !string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER);
+            var scoresMissingNotes = (
+                from s in CSPdb.ITOPS_SCORE.GetAll()
+                join p in CSPdb.ITOPS_PARAMETER.GetAll() on s.PARAMETER_ID equals p.ID
+                join c in CSPdb.ITOPS_CATEGORY.GetAll() on p.CATEGORY_ID equals c.ID
+                where s.ASSESSMENT_ID == assessmentId && s.ISACTIVE && s.SCORE_VALUE != null
+                    && (s.NOTES == null || s.NOTES.Trim().Length == 0)
+                    && (!hasChosenProviderForSubmit || c.PROVIDER == null || c.PROVIDER == assessment.CLOUD_PROVIDER)
+                select s.ID
+            ).Any();
             if (scoresMissingNotes)
                 return Content(HttpStatusCode.Conflict, "Notes are mandatory for every scored parameter before submitting for review.");
 
@@ -1923,7 +2058,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         ReviewerName = string.Join(", ", GetEmpNames(reviewerIds)),
                         CoeSpocName = assessorNames,
-                        DomainName = domain?.NAME,
+                        DomainName = ITOpsEmailDomainName(domain?.NAME, assessment.CLOUD_PROVIDER),
                         ProjectName = projectName
                     }),
                     "SubmittedForReview", assessment.ID, null,
@@ -1990,7 +2125,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     ToEmailValues(new
                     {
                         AssesseeName = assesseeNames,
-                        DomainName = domain?.NAME,
+                        DomainName = ITOpsEmailDomainName(domain?.NAME, assessment.CLOUD_PROVIDER),
                         ProjectName = projectName,
                         FindingCount = openFindingCount.ToString()
                     }),
@@ -2045,7 +2180,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
                     ReviewerName = reviewerNames,
-                    DomainName = reviewedDomain?.NAME,
+                    DomainName = ITOpsEmailDomainName(reviewedDomain?.NAME, assessment.CLOUD_PROVIDER),
                     ProjectName = reviewedProjectName,
                     Decision = request.Approve ? "Approved" : "Returned for Revision",
                     Comment = request.Approve ? "-" : request.Comment
@@ -2208,7 +2343,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         {
                             CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
                             ParameterName = findingParameter?.NAME,
-                            DomainName = findingDomain?.NAME,
+                            DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
                             Decision = "Rejected",
                             Comment = request.Comment
                         }),
@@ -2286,7 +2421,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
                         ParameterName = findingParameter?.NAME,
-                        DomainName = findingDomain?.NAME,
+                        DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
                         Decision = request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened",
                         Comment = request.AssessorAccepts ? "-" : request.Comment
                     }),
@@ -2388,7 +2523,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     {
                         CoeSpocName = string.Join(", ", GetEmpNames(recipients)),
                         ParameterName = findingParameter?.NAME,
-                        DomainName = findingDomain?.NAME,
+                        DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
                         Decision = "Accepted",
                         Comment = finding.ACTION_TAKEN
                     }),
@@ -2776,7 +2911,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetITOpsTopRisks")]
         [ActionName("GetITOpsTopRisks")]
         [HttpGet]
-        public IHttpActionResult GetITOpsTopRisks(string custId = null, int take = 20, string projectId = null, int? assessmentMasterId = null, string businessUnit = null, string myEmpId = null)
+        public IHttpActionResult GetITOpsTopRisks(string custId = null, string projectId = null, int? assessmentMasterId = null, string businessUnit = null, string myEmpId = null)
         {
             var parameters = CSPdb.ITOPS_PARAMETER.GetAll().ToList().GroupBy(p => p.ID).ToDictionary(g => g.Key, g => g.First());
             var categories = CSPdb.ITOPS_CATEGORY.GetAll().ToList().GroupBy(c => c.ID).ToDictionary(g => g.Key, g => g.First());
@@ -2801,9 +2936,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // need the assessment to have been submitted for that call to be real, and it
             // should keep surfacing here for as long as it stays NA, past assessment or
             // future one alike, exactly like a normal scored gap does once submitted.
+            // Every scored (or NA) parameter is shown here now, not just the ones with an
+            // actual gap - a score of 5 still needs to appear as "No gap" (see the gap-legend
+            // in the UI, which already has a dedicated "No gap" entry that this filter used to
+            // make unreachable) so a domain's full scored coverage is visible, not just its
+            // problems.
             var submittedStatuses = new HashSet<string> { "PendingReview", "ReturnedForRevision", "Approved" };
             var scoreRows = CSPdb.ITOPS_SCORE.GetAll()
-                .Where(s => s.ISACTIVE && (!s.SCORE_VALUE.HasValue || s.SCORE_VALUE.Value < 5))
+                .Where(s => s.ISACTIVE && (!s.SCORE_VALUE.HasValue || s.SCORE_VALUE.Value <= 5))
                 .ToList();
 
             Func<ITOPS_SCORE, ITOPS_ASSESSMENT> assessmentOf = s =>
@@ -2817,6 +2957,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var a = assessmentOf(s);
                 if (a == null) return false;
                 return !s.SCORE_VALUE.HasValue || submittedStatuses.Contains(a.STATUS);
+            }).ToList();
+
+            // Once a Cloud assessment has locked in a provider, only that provider's rows
+            // belong here - a score row for one of the other two providers can still exist
+            // (e.g. scored before this assessment's provider was ever chosen, or before this
+            // gate existed) without being part of what this assessment actually assesses.
+            scoreRows = scoreRows.Where(s =>
+            {
+                var a = assessmentOf(s);
+                if (a == null || string.IsNullOrWhiteSpace(a.CLOUD_PROVIDER)) return true;
+                ITOPS_PARAMETER p;
+                if (!parameters.TryGetValue(s.PARAMETER_ID, out p)) return true;
+                ITOPS_CATEGORY c;
+                if (!categories.TryGetValue(p.CATEGORY_ID, out c)) return true;
+                return c.PROVIDER == null || c.PROVIDER == a.CLOUD_PROVIDER;
             }).ToList();
 
             if (!string.IsNullOrWhiteSpace(custId))
@@ -2908,9 +3063,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var rows = scoreRows
                 // A Not Applicable row (SCORE_VALUE null) is the largest possible gap -
-                // sorts as if Gap were 5, ahead of any actually-scored parameter.
+                // sorts as if Gap were 5, ahead of any actually-scored parameter. No Take()
+                // here - the caller already scopes this down to one custId/project/cycle (or
+                // this employee's own allocation), so every scored/NA parameter in that scope
+                // is returned; capping it here previously starved out whichever domains sorted
+                // last (e.g. Approved domains, once a single large domain's NA rows filled an
+                // arbitrary limit on their own).
                 .OrderByDescending(s => s.SCORE_VALUE.HasValue ? 5 - s.SCORE_VALUE.Value : 5)
-                .Take(take)
                 .Select(s =>
                 {
                     var parameter = parameters.ContainsKey(s.PARAMETER_ID) ? parameters[s.PARAMETER_ID] : null;

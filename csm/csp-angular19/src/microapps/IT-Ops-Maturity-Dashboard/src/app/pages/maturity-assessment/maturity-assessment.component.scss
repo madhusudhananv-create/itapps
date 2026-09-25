@@ -254,36 +254,78 @@
   margin-bottom: 14px;
 }
 
-.provider-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 14px;
-  background: var(--surface-tint);
-  border-radius: 10px;
-  padding: 3px;
-  width: fit-content;
-}
-
-.provider-tab {
-  padding: 6px 16px;
-  border: none;
-  background: transparent;
-  font-size: 12.5px;
-  font-weight: 590;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.provider-tab:hover:not(.active) {
-  color: var(--text-primary);
-}
-
-.provider-tab.active {
-  color: var(--accent);
+/* One-time provider gate shown instead of the scoring grid, until the Assessor locks in
+   which cloud provider (Azure/AWS/GCP) this assessment scores - not a switchable view. */
+.provider-choice {
   background: var(--surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  padding: 32px 28px;
+  text-align: center;
+  max-width: 560px;
+  margin: 24px auto;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 19px;
+  }
+
+  .picker-copy {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+}
+
+.provider-choice-options {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+.provider-choice-btn {
+  padding: 14px 28px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-tint);
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 12px;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--surface);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+    box-shadow: 0 0 0 1.5px var(--accent);
+  }
+}
+
+.provider-choice-error {
+  color: var(--status-critical);
+  font-size: 12.5px;
+  margin-top: 14px;
+}
+
+.provider-choice-submit {
+  margin-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .parameter-card {

@@ -62,6 +62,13 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [Column(TypeName = "date")]
         public DateTime? END_DATE { get; set; }
+
+        // Null for every non-Cloud domain's categories. For the Cloud domain, tags which
+        // provider ("Azure"/"AWS"/"GCP") this category belongs to - an assessment only ever
+        // scores ONE provider's categories/parameters (see ITOPS_ASSESSMENT.CLOUD_PROVIDER),
+        // since a customer typically runs on a single cloud provider, not all three at once.
+        [Column(TypeName = "varchar"), MaxLength(20)]
+        public string PROVIDER { get; set; }
     }
 
     // Parameter / KPI - the individual item being scored. V2: the five flat
@@ -228,6 +235,14 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         [Column(TypeName = "varchar"), MaxLength(1000)]
         public string RETURN_COMMENT { get; set; }
+
+        // Null for every non-Cloud domain, and null for a Cloud assessment until the
+        // Assessor picks one on first open (see SetITOpsAssessmentCloudProvider) - once set,
+        // it's locked for the life of this assessment (no endpoint ever changes it back to
+        // null or to a different value) and every parameter/score/aggregate for this
+        // assessment is scoped to just that provider's ITOPS_CATEGORY.PROVIDER rows.
+        [Column(TypeName = "varchar"), MaxLength(20)]
+        public string CLOUD_PROVIDER { get; set; }
     }
 
     // Multi-select assessors ("COE SPOCs") on one assessment - every assessor is

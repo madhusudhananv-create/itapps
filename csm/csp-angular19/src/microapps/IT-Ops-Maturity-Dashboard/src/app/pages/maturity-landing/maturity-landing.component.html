@@ -105,19 +105,20 @@
     </div>
 
     <div class="assignments-filters">
-      <div class="filter-pill" *ngIf="cycleOptions.length > 1" [class.is-set]="cycleFilter !== 'all'">
+      <div class="filter-pill" *ngIf="cycleOptions.length > 0" [class.is-set]="cycleFilter !== 'all'">
         <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9.5h18M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <label for="assignmentsCycleFilter" class="filter-pill-label">Cycle</label>
         <app-searchable-select
           id="assignmentsCycleFilter"
           [options]="assignmentsCycleOptions"
           [(ngModel)]="cycleFilter"
+          (ngModelChange)="onCycleFilterChange()"
         ></app-searchable-select>
-        <button type="button" class="filter-pill-clear" *ngIf="cycleFilter !== 'all'" (click)="cycleFilter = 'all'" aria-label="Reset cycle filter">
+        <button type="button" class="filter-pill-clear" *ngIf="cycleFilter !== 'all'" (click)="cycleFilter = 'all'; onCycleFilterChange()" aria-label="Reset cycle filter">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         </button>
       </div>
-      <div class="filter-pill" *ngIf="statusFilterOptions.length > 1" [class.is-set]="statusFilter !== 'all'">
+      <div class="filter-pill" *ngIf="statusFilterOptions.length > 0" [class.is-set]="statusFilter !== 'all'">
         <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         <label for="assignmentsStatusFilter" class="filter-pill-label">Status</label>
         <app-searchable-select
@@ -130,7 +131,20 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         </button>
       </div>
-      <button type="button" class="filter-reset-all" *ngIf="cycleFilter !== 'all' || statusFilter !== 'all'" (click)="resetAssignmentFilters()">
+      <div class="filter-pill" *ngIf="accountOptions.length > 0" [class.is-set]="accountFilter !== 'all'">
+        <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 21V7l9-4 9 4v14M9 21v-6h6v6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <label for="assignmentsAccountFilter" class="filter-pill-label">Account</label>
+        <app-searchable-select
+          id="assignmentsAccountFilter"
+          [options]="assignmentsAccountOptions"
+          [(ngModel)]="accountFilter"
+          (ngModelChange)="onAccountFilterChange()"
+        ></app-searchable-select>
+        <button type="button" class="filter-pill-clear" *ngIf="accountFilter !== 'all'" (click)="accountFilter = 'all'; onAccountFilterChange()" aria-label="Reset account filter">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <button type="button" class="filter-reset-all" *ngIf="cycleFilter !== 'all' || statusFilter !== 'all' || accountFilter !== 'all'" (click)="resetAssignmentFilters()">
         Reset filters
       </button>
     </div>
@@ -406,7 +420,25 @@
 
     <section class="domain-tracker">
       <div class="domain-tracker-head">
-        <h2>Domain Tracker</h2>
+        <h2>Domain Tracker <span class="domain-count-badge" *ngIf="domainSummaries.length">{{ domainSummaries.length }}</span></h2>
+        <div class="domain-tracker-tabs" *ngIf="domainTrackerStatusOptions.length > 1">
+          <button type="button" [class.active]="domainTrackerStatusFilter === 'all'" (click)="setDomainTrackerStatusFilter('all')">
+            All <span class="tab-count">{{ domainTrackerStatusCount('all') }}</span>
+          </button>
+          <button
+            type="button"
+            *ngFor="let option of domainTrackerStatusOptions"
+            [class]="'tab-dot-' + severityForStatus(option)"
+            [class.active]="domainTrackerStatusFilter === option"
+            (click)="setDomainTrackerStatusFilter(option)"
+          >
+            <i class="tab-dot" aria-hidden="true"></i>{{ option }} <span class="tab-count">{{ domainTrackerStatusCount(option) }}</span>
+          </button>
+        </div>
+        <div class="domain-tracker-search search-box" *ngIf="domainSummaries.length">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search by domain, COE SPOC or reviewer" [(ngModel)]="domainTrackerSearch">
+        </div>
         <button
           type="button"
           class="btn-secondary export-btn"
@@ -425,26 +457,33 @@
         No domain assignments were found for your login ({{ currentUser.email || currentUser.name }}).
         Contact your administrator if you believe this is unexpected.
       </p>
-      <div class="table-wrap" *ngIf="domainSummaries.length">
+      <div class="table-wrap domain-tracker-table-wrap" *ngIf="domainSummaries.length">
         <table>
           <thead>
             <tr>
+              <th class="col-num">Sr. No</th>
               <th *ngIf="!selectedAccount">Account</th>
-              <th class="sortable" (click)="sortDomainTrackerBy('name')">Technology Domain <span class="sort-arrow">{{ domainTrackerSortIndicator('name') }}</span></th>
+              <th class="sortable" (click)="sortDomainTrackerBy('name')">Domain <span class="sort-arrow">{{ domainTrackerSortIndicator('name') }}</span></th>
               <th>COE SPOC</th>
               <th>Reviewer</th>
               <th class="sortable" (click)="sortDomainTrackerBy('status')">Status <span class="sort-arrow">{{ domainTrackerSortIndicator('status') }}</span></th>
-              <th class="col-num">Parameters</th>
-              <th class="col-num">Applicable</th>
-              <th class="col-num">Score</th>
-              <th class="col-num">Max</th>
-              <th class="col-num sortable" (click)="sortDomainTrackerBy('averageScore')">Avg <span class="sort-arrow">{{ domainTrackerSortIndicator('averageScore') }}</span></th>
-              <th class="col-num sortable" (click)="sortDomainTrackerBy('maturityPercent')">Maturity <span class="sort-arrow">{{ domainTrackerSortIndicator('maturityPercent') }}</span></th>
-              <th>Level</th>
+              <th class="col-num">No. of Parameters</th>
+              <th class="col-num">No of Applicable Parameters</th>
+              <th class="col-num">Sum of Scores</th>
+              <th class="col-num">Max Possible</th>
+              <th class="col-num sortable" (click)="sortDomainTrackerBy('averageScore')">Avg Score <span class="sort-arrow">{{ domainTrackerSortIndicator('averageScore') }}</span></th>
+              <th class="col-num sortable" (click)="sortDomainTrackerBy('maturityPercent')">Maturity % <span class="sort-arrow">{{ domainTrackerSortIndicator('maturityPercent') }}</span></th>
+              <th>Maturity Level</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let domain of sortedDomainSummaries">
+            <tr *ngIf="!sortedDomainSummaries.length">
+              <td [attr.colspan]="!selectedAccount ? 13 : 12" class="no-results-cell">
+                {{ domainTrackerSearch.trim() ? ('No domains match "' + domainTrackerSearch.trim() + '".') : 'No domains in this view.' }}
+              </td>
+            </tr>
+            <tr *ngFor="let domain of sortedDomainSummaries; let i = index" [class]="'status-row-' + domainRowSeverity(domain)">
+              <td class="col-num">{{ i + 1 }}</td>
               <td *ngIf="!selectedAccount">{{ domain.accountName || '-' }}</td>
               <td class="domain-name">{{ domain.name }}</td>
               <td>{{ domain.coeSpoc || 'Unassigned' }}</td>
@@ -461,9 +500,9 @@
               </td>
             </tr>
           </tbody>
-          <tfoot *ngIf="enterpriseSummary">
+          <tfoot *ngIf="enterpriseSummary && sortedDomainSummaries.length">
             <tr class="estate-row">
-              <td [attr.colspan]="!selectedAccount ? 5 : 4">Overall Estate</td>
+              <td [attr.colspan]="!selectedAccount ? 6 : 5">Overall Estate</td>
               <td class="col-num">{{ enterpriseSummary.totalParamCount }}</td>
               <td class="col-num">{{ enterpriseSummary.totalApplicableParamCount }}</td>
               <td class="col-num">{{ enterpriseSummary.totalSumScores }}</td>
@@ -518,11 +557,11 @@
         </button>
       </div>
 
-      <p class="section-subtitle" *ngIf="activeDomainRiskTotal > visibleTopRisks.length">
-        showing {{ visibleTopRisks.length }} of {{ activeDomainRiskTotal }} parameters with a gap in {{ activeRiskDomainLabel }}
+      <p class="section-subtitle" *ngIf="visibleTopRisks.length">
+        showing all {{ activeDomainRiskTotal }} scored parameters in {{ activeRiskDomainLabel }}
       </p>
 
-      <div class="table-wrap" *ngIf="visibleTopRisks.length; else noRisks">
+      <div class="table-wrap top-risks-table-wrap" *ngIf="visibleTopRisks.length; else noRisks">
         <table>
           <thead>
             <tr>
@@ -552,7 +591,7 @@
         </table>
       </div>
       <ng-template #noRisks>
-        <p class="picker-empty">No gaps to show for this account.</p>
+        <p class="picker-empty">No scored parameters to show for this account.</p>
       </ng-template>
 
       <div class="gap-legend" *ngIf="visibleTopRisks.length">

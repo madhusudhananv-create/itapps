@@ -59,6 +59,9 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
     {
         public int ParameterId { get; set; }
         public string Category { get; set; }
+        // Null for every non-Cloud domain's parameters. "Azure"/"AWS"/"GCP" for a Cloud
+        // parameter, taken from its category's ITOPS_CATEGORY.PROVIDER.
+        public string Provider { get; set; }
         public string ParameterName { get; set; }
         public string Definition { get; set; }
         // Still five flat fields on the wire (frontend unchanged), but now sourced
@@ -243,10 +246,24 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public List<string> AssesseeNames { get; set; }
         public string Status { get; set; }
         public string ReturnComment { get; set; }
+        // Null for every non-Cloud domain, and null for a Cloud assessment until the Assessor
+        // picks a provider (see SetITOpsAssessmentCloudProvider) - "Azure"/"AWS"/"GCP" once set,
+        // and locked from then on.
+        public string CloudProvider { get; set; }
+        // Only populated for a Cloud domain assessment with no CLOUD_PROVIDER chosen yet - the
+        // distinct providers available to pick from (derived from ITOPS_CATEGORY.PROVIDER for
+        // this domain). Null/empty for every other case, so the frontend can tell "not a Cloud
+        // domain" apart from "Cloud domain, provider already chosen" (both show no picker).
+        public List<string> AvailableCloudProviders { get; set; }
     }
 
     public class ITOPS_UpdateFindingActionRequest
     {
         public string ActionTaken { get; set; }
+    }
+
+    public class ITOPS_SetCloudProviderRequest
+    {
+        public string Provider { get; set; }
     }
 }

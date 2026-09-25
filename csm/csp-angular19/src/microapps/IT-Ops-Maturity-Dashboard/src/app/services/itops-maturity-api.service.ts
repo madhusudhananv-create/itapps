@@ -52,6 +52,10 @@ export interface ItOpsAssessmentInfo {
   assesseeNames?: string[];
   status: string;
   returnComment: string | null;
+  /** Null for every non-Cloud domain, and null for a Cloud assessment until the Assessor picks a provider (see setCloudProvider) - "Azure"/"AWS"/"GCP" once set, and locked from then on. */
+  cloudProvider?: string | null;
+  /** Only populated for a Cloud domain assessment with no cloudProvider chosen yet - the distinct providers to offer in the picker. */
+  availableCloudProviders?: string[] | null;
 }
 
 export interface ItOpsDomainTrackerRow {
@@ -106,6 +110,8 @@ export interface ItOpsTopRiskRow {
 export interface ItOpsParameterScoreRow {
   parameterId: number;
   category: string;
+  /** Null for every non-Cloud domain's parameters. "Azure"/"AWS"/"GCP" for a Cloud parameter. */
+  provider?: string | null;
   parameterName: string;
   definition: string;
   level1_AdHoc: string;
@@ -288,14 +294,20 @@ export class ItOpsMaturityApiService {
     );
   }
 
-  /** myEmpId: same own-scope narrowing as getDomainTracker's myEmpId - see its comment. */
-  getTopRisks(custId: string, take = 100, projectId?: string, assessmentMasterId?: number, businessUnit?: string, myEmpId?: string): Observable<ItOpsTopRiskRow[]> {
+  /**
+   * myEmpId: same own-scope narrowing as getDomainTracker's myEmpId - see its comment.
+   * No result-count limit - the backend already scopes this to one custId/project/cycle (or
+   * this employee's own allocation) before returning, so every scored/NA parameter in that
+   * scope comes back; an arbitrary cap here previously starved out whichever domains happened
+   * to sort last (see GetITOpsTopRisks's own comment on why it dropped its Take()).
+   */
+  getTopRisks(custId: string, projectId?: string, assessmentMasterId?: number, businessUnit?: string, myEmpId?: string): Observable<ItOpsTopRiskRow[]> {
     const projectParam = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
     const cycleParam = assessmentMasterId ? `&assessmentMasterId=${assessmentMasterId}` : '';
     const buParam = businessUnit ? `&businessUnit=${encodeURIComponent(businessUnit)}` : '';
     const myEmpIdParam = myEmpId ? `&myEmpId=${encodeURIComponent(myEmpId)}` : '';
     return this.http.get<ItOpsTopRiskRow[]>(
-      `${this.apiurl}GetITOpsTopRisks?custId=${encodeURIComponent(custId)}&take=${take}${projectParam}${cycleParam}${buParam}${myEmpIdParam}`,
+      `${this.apiurl}GetITOpsTopRisks?custId=${encodeURIComponent(custId)}${projectParam}${cycleParam}${buParam}${myEmpIdParam}`,
       { headers: this.getHeaders() },
     );
   }
@@ -318,6 +330,15 @@ export class ItOpsMaturityApiService {
   getAssessmentParameters(assessmentId: number): Observable<ItOpsParameterScoreRow[]> {
     return this.http.get<ItOpsParameterScoreRow[]>(
       `${this.apiurl}GetITOpsAssessmentParameters?assessmentId=${assessmentId}`,
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Locks a Cloud assessment to one provider (Azure/AWS/GCP) - only reachable once, before or during scoring; a second call with a different provider is rejected server-side. */
+  setCloudProvider(assessmentId: number, provider: string): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}SetITOpsAssessmentCloudProvider?assessmentId=${assessmentId}`,
+      { Provider: provider },
       { headers: this.getHeaders() },
     );
   }

@@ -5,7 +5,10 @@
      Add, remove, or reorder columns here - no C# change needed as long as the
      column uses a placeholder already listed below. Available placeholders:
        {{SNo}}, {{AccountName}}, {{ProjectName}}, {{DomainName}},
-       {{AssesseeNames}}, {{AssessorNames}}, {{ReviewerNames}} -->
+       {{AssesseeNames}}, {{AssessorNames}}, {{ReviewerNames}}
+     {{DomainName}} already carries the Cloud provider inline once the Assessor has picked
+     one for a Cloud domain row, e.g. "Cloud (Azure)" - plain "Cloud" until then (and for
+     every non-Cloud domain, just its own name, unaffected). -->
 <tr>
 <td valign=top width=36 style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{SNo}}</td>
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{AccountName}}</td>

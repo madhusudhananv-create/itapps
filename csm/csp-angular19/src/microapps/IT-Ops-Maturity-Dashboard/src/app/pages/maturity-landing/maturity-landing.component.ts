@@ -51,15 +51,6 @@ function toDomainSummary(row: ItOpsDomainTrackerRow): DomainSummary {
   };
 }
 
-/** Maturity band label from a 0-5 score, matching the % scale used elsewhere (score/5*100). */
-function maturityBandLabel(score: number): string {
-  if (score >= 5) return 'Optimized';
-  if (score >= 4) return 'Well Managed';
-  if (score >= 3) return 'Foundation Established';
-  if (score >= 2) return 'Needs Work';
-  return 'Critical Gap';
-}
-
 function toTopRisk(row: ItOpsTopRiskRow): TopRisk {
   const score = row.currentScore ?? 0;
   return {
@@ -71,7 +62,12 @@ function toTopRisk(row: ItOpsTopRiskRow): TopRisk {
     isNotScored: row.isNotScored,
     accountId: row.accountId ?? undefined,
     accountName: row.accountName ?? undefined,
-    recommendation: row.isNotScored ? 'Not Scored' : maturityBandLabel(score),
+    // The assessor's own words, added when they scored/submitted this parameter (backend
+    // resolves this to the finding's RECOMMENDED_ACTION when one exists, otherwise the score's
+    // own NOTES) - a generic maturity-band label ("Well Managed"/"Needs Work"/etc.) told the
+    // viewer nothing they couldn't already see from the Score/Gap columns, and silently hid
+    // whatever real notes the assessor actually wrote.
+    recommendation: row.isNotScored ? 'Not Scored' : (row.recommendedAction?.trim() || '-'),
   };
 }
 
@@ -106,8 +102,16 @@ function computeEnterpriseSummaryFromRows(summaries: DomainSummary[]): Enterpris
     // case for a genuinely-zero average (nothing scored yet), rather than
     // the formula's own "Not in scope" wording.
     overallMaturityLevel: overallAverageScore > 0 ? maturityLevelLabel(overallAverageScore) : 'Not Started',
-    domainsCompleted: summaries.filter((s) => s.status === 'Approved').length,
-    domainsInProgress: summaries.filter((s) => s.status === 'Draft' || s.status === 'In Progress' || s.status === 'Pending Review').length,
+    // "Completed" is a stricter bar than raw Approved everywhere else in this app (see
+    // displayDomainStatus) - an Approved domain still reads as merely Approved until every
+    // finding it raised is Closed too. This KPI was counting plain Approved regardless, so an
+    // Approved-but-still-actionable domain silently counted as "completed" here while its own
+    // row correctly still showed "Approved", not "Completed" - a real inconsistency, not two
+    // different intentional metrics.
+    domainsCompleted: summaries.filter((s) => s.status === 'Approved' && s.allFindingsResolved).length,
+    domainsInProgress: summaries.filter((s) =>
+      s.status === 'Draft' || s.status === 'In Progress' || s.status === 'Pending Review' || (s.status === 'Approved' && !s.allFindingsResolved),
+    ).length,
     domainsNotStarted: summaries.filter((s) => s.status === 'Not Started').length,
     totalParamCount,
     totalApplicableParamCount,
@@ -131,8 +135,6 @@ const MATURITY_LEVEL_STATUS: Record<string, StatusLevel | 'muted'> = {
   'Not in scope': 'muted',
   'N/A': 'muted',
 };
-
-const PER_DOMAIN_RISK_LIMIT = 10;
 
 interface RiskDomainTab {
   /** Unique match key: domain name alone normally, or domain+account when the same domain name exists on more than one account ("All accounts"). */
@@ -170,6 +172,10 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
 
   domainTrackerSortColumn: 'name' | 'status' | 'maturityPercent' | 'averageScore' | null = null;
   domainTrackerSortDirection: 'asc' | 'desc' = 'asc';
+  /** Free-text filter over the Domain Tracker rows - account/domain/COE SPOC/reviewer name. */
+  domainTrackerSearch = '';
+  /** Which status tab is active above the Domain Tracker table - 'all' or one of the actual display-status values present (see domainTrackerStatusOptions). */
+  domainTrackerStatusFilter = 'all';
 
   accounts: CustomerModel[] = [];
   selectedAccount: CustomerModel | null = null;
@@ -241,6 +247,8 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   assignmentSearch = '';
   /** 'all' or one of the raw backend statuses present in myAssignments - lets either tab be narrowed to just Approved, just Pending Review, etc. instead of a separate "Completed" tab. */
   statusFilter = 'all';
+  /** 'all' or one of the account names present in the currently selected cycle (see accountOptions) - lets either tab be narrowed to just one account. */
+  accountFilter = 'all';
   assignmentSortColumn: AssignmentSortColumn | null = null;
   assignmentSortDirection: 'asc' | 'desc' = 'asc';
   assignmentsPage = 1;
@@ -675,12 +683,12 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         ? forkJoin(
             ownScopePairs.map((p) =>
               this.api
-                .getTopRisks(p.custId, 100, p.projectId, this.selectedCycle?.id, undefined, myEmpId)
+                .getTopRisks(p.custId, p.projectId, this.selectedCycle?.id, undefined, myEmpId)
                 .pipe(catchError(() => of([] as ItOpsTopRiskRow[]))),
             ),
           ).pipe(map((lists) => lists.flat()))
         : of([] as ItOpsTopRiskRow[])
-      : this.api.getTopRisks(custId, 100, projectId, this.selectedCycle?.id, businessUnit, myEmpId).pipe(
+      : this.api.getTopRisks(custId, projectId, this.selectedCycle?.id, businessUnit, myEmpId).pipe(
           catchError((err) => {
             console.error('IT Ops Maturity Dashboard: failed to load top risks', err);
             return of([] as ItOpsTopRiskRow[]);
@@ -808,9 +816,44 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return [{ value: 'all', label: 'All statuses' }, ...this.statusFilterOptions.map((s) => ({ value: s, label: s }))];
   }
 
+  /** Distinct account names present in myAssignments FOR THE CURRENTLY SELECTED CYCLE only (not
+   * every cycle's accounts) - switching Cycle narrows which accounts this offers, same as it
+   * narrows the grid below. "All cycles" falls back to every account across all cycles. */
+  get accountOptions(): string[] {
+    const seen = new Set<string>();
+    const options: string[] = [];
+    const rows = this.cycleFilter === 'all' ? this.myAssignments : this.myAssignments.filter((row) => row.cycleLabel === this.cycleFilter);
+    for (const row of rows) {
+      const label = row.accountName;
+      if (label && !seen.has(label)) {
+        seen.add(label);
+        options.push(label);
+      }
+    }
+    return options.sort((a, b) => a.localeCompare(b));
+  }
+
+  /** Options for the "My Assignments" Account combobox - "All accounts" plus every distinct account actually present in the selected cycle. */
+  get assignmentsAccountOptions(): SearchableSelectOption[] {
+    return [{ value: 'all', label: 'All accounts' }, ...this.accountOptions.map((a) => ({ value: a, label: a }))];
+  }
+
+  /** Picking a cycle that no longer contains the previously-selected account resets Account back to "All accounts", instead of silently filtering everything out. */
+  onCycleFilterChange(): void {
+    this.assignmentsPage = 1;
+    if (this.accountFilter !== 'all' && !this.accountOptions.includes(this.accountFilter)) {
+      this.accountFilter = 'all';
+    }
+  }
+
+  onAccountFilterChange(): void {
+    this.assignmentsPage = 1;
+  }
+
   get filteredAssignments(): ItOpsMyAssignmentRow[] {
     let rows = this.myAssignments;
     if (this.cycleFilter !== 'all') rows = rows.filter((row) => row.cycleLabel === this.cycleFilter);
+    if (this.accountFilter !== 'all') rows = rows.filter((row) => row.accountName === this.accountFilter);
     if (this.statusFilter !== 'all') rows = rows.filter((row) => this.displayAssignmentStatus(row) === this.statusFilter);
     return rows;
   }
@@ -1146,9 +1189,10 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     this.assignmentsPage = 1;
   }
 
-  /** Clears both the Cycle and Status filter pills back to "all" in one click. */
+  /** Clears the Cycle, Account and Status filter pills back to "all" in one click. */
   resetAssignmentFilters(): void {
     this.cycleFilter = 'all';
+    this.accountFilter = 'all';
     this.statusFilter = 'all';
     this.assignmentsPage = 1;
   }
@@ -1334,7 +1378,11 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       forDomain = this.sortRisks(forDomain, this.riskSortColumn, this.riskSortDirection);
     }
     this.activeDomainRiskTotal = forDomain.length;
-    this.visibleTopRisks = forDomain.slice(0, PER_DOMAIN_RISK_LIMIT);
+    // Every scored parameter for this domain is shown, not just the worst 10 - that cap made
+    // sense when this table only ever listed actual gaps (rarely more than a handful), but now
+    // that "No gap" (score 5) rows are included too, capping it would silently drop them off
+    // the end since they always sort last (largest-gap-first).
+    this.visibleTopRisks = forDomain;
   }
 
   private sortRisks(risks: TopRisk[], column: RiskSortColumn, direction: SortDirection): TopRisk[] {
@@ -1423,6 +1471,28 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return domain.status;
   }
 
+  /** Which severity color a display-status reads as - same palette the export's Status column
+   * tinting uses, so a row with something actually wrong (Ad Hoc/Not Started/Suspended) is
+   * visible at a glance without reading every pill individually down a long list. Also drives
+   * the status-tab dots, so a tab's own color matches what selecting it highlights below. */
+  severityForStatus(status: string): string {
+    switch (status) {
+      case 'Not Started': return 'muted';
+      case 'Draft': return 'warning';
+      case 'In Progress':
+      case 'Returned for Revision': return 'serious';
+      case 'Pending Review': return 'info';
+      case 'Suspended': return 'critical';
+      case 'Completed': return 'good-deep';
+      case 'Approved': return 'good';
+      default: return 'muted';
+    }
+  }
+
+  domainRowSeverity(domain: DomainSummary): string {
+    return this.severityForStatus(this.displayDomainStatus(domain));
+  }
+
   sortDomainTrackerBy(column: 'name' | 'status' | 'maturityPercent' | 'averageScore'): void {
     if (this.domainTrackerSortColumn === column) {
       this.domainTrackerSortDirection = this.domainTrackerSortDirection === 'asc' ? 'desc' : 'asc';
@@ -1437,11 +1507,41 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return this.domainTrackerSortDirection === 'asc' ? '▲' : '▼';
   }
 
+  /** Distinct display-statuses actually present in domainSummaries, in a fixed workflow order -
+   * what the status tabs offer besides "All". Built from what's really there (not a hardcoded
+   * Pending/Approved pair) so a status like "Completed" only shows up as its own tab once a
+   * domain has actually reached it, and never shows an empty, do-nothing tab otherwise. */
+  get domainTrackerStatusOptions(): string[] {
+    const order = ['Not Started', 'Draft', 'In Progress', 'Pending Review', 'Returned for Revision', 'Suspended', 'Approved', 'Completed'];
+    const present = new Set(this.domainSummaries.map((d) => this.displayDomainStatus(d)));
+    return order.filter((s) => present.has(s));
+  }
+
+  setDomainTrackerStatusFilter(filter: string): void {
+    this.domainTrackerStatusFilter = filter;
+  }
+
+  /** How many domains a status tab represents - 'all' counts everything, any other value counts a matching displayDomainStatus. */
+  domainTrackerStatusCount(filter: string): number {
+    if (filter === 'all') return this.domainSummaries.length;
+    return this.domainSummaries.filter((d) => this.displayDomainStatus(d) === filter).length;
+  }
+
+  /** domainSummaries narrowed by domainTrackerSearch (account/domain/COE SPOC/reviewer name) and the active status tab, before sorting. */
+  get filteredDomainSummaries(): DomainSummary[] {
+    const needle = this.domainTrackerSearch.trim().toLowerCase();
+    return this.domainSummaries.filter((d) => {
+      if (this.domainTrackerStatusFilter !== 'all' && this.displayDomainStatus(d) !== this.domainTrackerStatusFilter) return false;
+      if (!needle) return true;
+      return [d.name, d.accountName, d.coeSpoc, d.reviewer].some((v) => (v ?? '').toLowerCase().includes(needle));
+    });
+  }
+
   get sortedDomainSummaries(): DomainSummary[] {
-    if (!this.domainTrackerSortColumn) return this.domainSummaries;
+    if (!this.domainTrackerSortColumn) return this.filteredDomainSummaries;
     const column = this.domainTrackerSortColumn;
     const factor = this.domainTrackerSortDirection === 'asc' ? 1 : -1;
-    return [...this.domainSummaries].sort((a, b) => {
+    return [...this.filteredDomainSummaries].sort((a, b) => {
       const av = column === 'name' || column === 'status' ? (a[column] ?? '') : (a[column] ?? -1);
       const bv = column === 'name' || column === 'status' ? (b[column] ?? '') : (b[column] ?? -1);
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * factor;
@@ -1469,21 +1569,35 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return (cleaned || fallback).slice(0, 31);
   }
 
-  /** One row of the Domain Tracker table, shaped for an Excel sheet (mirrors the visible columns). */
-  private domainTrackerExportRow(domain: DomainSummary): Record<string, unknown> {
+  /** One row of the Domain Tracker table, shaped for an Excel sheet - column names kept in
+   * lockstep with the on-screen table's own headers (maturity-landing.component.html), so
+   * renaming a header there is the one place that needs to change. */
+  private domainTrackerExportRow(domain: DomainSummary, index: number): Record<string, unknown> {
     return {
+      'Sr. No': index + 1,
       Account: domain.accountName || '-',
-      'Technology Domain': domain.name,
+      Domain: domain.name,
       'COE SPOC': domain.coeSpoc || 'Unassigned',
       Reviewer: domain.reviewer || 'Unassigned',
       Status: this.displayDomainStatus(domain),
-      Parameters: domain.paramCount,
-      'Applicable Parameters': domain.applicableParamCount,
-      Score: domain.sumScores,
-      Max: domain.maxPossible,
-      Avg: domain.averageScore !== null ? domain.averageScore : '-',
-      Maturity: domain.maturityPercent !== null ? `${domain.maturityPercent}%` : '-',
-      Level: this.levelLabel(domain.averageScore, domain.applicableParamCount),
+      'No. of Parameters': domain.paramCount,
+      'No of Applicable Parameters': domain.applicableParamCount,
+      'Sum of Scores': domain.sumScores,
+      'Max Possible': domain.maxPossible,
+      'Avg Score': domain.averageScore !== null ? domain.averageScore : '-',
+      'Maturity %': domain.maturityPercent !== null ? `${domain.maturityPercent}%` : '-',
+      'Maturity Level': this.levelLabel(domain.averageScore, domain.applicableParamCount),
+    };
+  }
+
+  /** One row of the Top Risks / Largest Gaps table, shaped for an Excel sheet (mirrors the on-screen columns exactly - see maturity-landing.component.html's risk table). */
+  private topRiskExportRow(risk: TopRisk): Record<string, unknown> {
+    return {
+      Category: risk.category,
+      Parameter: risk.parameter,
+      Score: `${risk.currentScore} / 5`,
+      Gap: risk.isNotScored ? 'Not scored' : risk.gap,
+      Recommendation: risk.recommendation,
     };
   }
 
@@ -1493,10 +1607,92 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
    * (e.g. every account's "NOC" row together) so a reader can jump straight to one
    * domain's data across every account/project. Every sheet leads with the filters
    * (Cycle/Business Unit/Account/Project) that were in effect, so the export is
-   * self-describing even once it's been saved and reopened later.
+   * self-describing even once it's been saved and reopened later. Each per-domain sheet
+   * also carries that domain's own Top Risks / Largest Gaps table underneath its summary
+   * row(s), matching the same grid the Dashboard shows for that domain tab.
    */
   async exportDomainTracker(): Promise<void> {
-    const XLSX = await import('xlsx');
+    // xlsx-js-style is a drop-in fork of the plain "xlsx" (SheetJS Community Edition)
+    // package with the exact same API - SheetJS CE can write values/column widths/sheet
+    // names but has no cell-styling support at all, so it could never carry over the
+    // Dashboard's own color-coded look (header bars, Status/Gap/Level severity colors).
+    // Unlike "xlsx", this package is CommonJS-only - a dynamic import() of it can resolve
+    // to { default: <the real module> } instead of the module's exports directly,
+    // depending on the bundler's interop, so both shapes are handled here.
+    const xlsxJsStyleModule = await import('xlsx-js-style');
+    const XLSX = ((xlsxJsStyleModule as unknown as { default?: typeof xlsxJsStyleModule }).default ?? xlsxJsStyleModule) as typeof xlsxJsStyleModule;
+
+    // Thin grid lines around every cell - like the on-screen table's own row dividers -
+    // merged into whatever fill/font a cell already gets so nothing loses its border by
+    // having a second style (status tint, zebra stripe, etc.) applied on top of it.
+    const BORDER_LINE = { style: 'thin', color: { rgb: 'C7D3E8' } };
+    const CELL_BORDER = { top: BORDER_LINE, bottom: BORDER_LINE, left: BORDER_LINE, right: BORDER_LINE };
+    const bordered = (style: Record<string, unknown> = {}) => ({ ...style, border: CELL_BORDER });
+    const RIGHT_ALIGN = { alignment: { horizontal: 'right' } };
+
+    const TITLE_STYLE = bordered({ font: { bold: true, sz: 14, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '15325C' } }, alignment: { horizontal: 'center', vertical: 'center' } });
+    const HEADER_STYLE = bordered({ font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1F497D' } }, alignment: { horizontal: 'left' } });
+    const TOTALS_STYLE = bordered({ font: { bold: true }, fill: { fgColor: { rgb: 'D9E4F5' } } });
+    const SECTION_TITLE_STYLE = bordered({ font: { bold: true, sz: 12, color: { rgb: '1F497D' } } });
+    // Alternating row tint (zebra striping) for plain data cells that get no severity tint
+    // of their own - reads much closer to the Dashboard's own subtly-banded table than a
+    // flat, undifferentiated block of rows.
+    const ZEBRA_EVEN = bordered({ fill: { fgColor: { rgb: 'F2F6FC' } } });
+    const ZEBRA_ODD = bordered({});
+    // The filter block (Cycle/Business Unit/Account/Project) at the top of every sheet -
+    // labels get the same navy/white treatment as a real column header, so it reads as a
+    // small key-value table rather than plain unstyled text sitting above the real one.
+    const FILTER_LABEL_STYLE = bordered({ font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1F497D' } } });
+    const FILTER_VALUE_STYLE = bordered({ font: { bold: true, color: { rgb: '1F497D' } }, fill: { fgColor: { rgb: 'DCE6F7' } } });
+    /** Columns whose values are numbers/percentages - right-aligned like a spreadsheet naturally would, instead of the default left-aligned text. */
+    const NUMERIC_COLUMN_NAMES = new Set([
+      'Sr. No', 'No. of Parameters', 'No of Applicable Parameters', 'Sum of Scores', 'Max Possible', 'Avg Score', 'Maturity %', 'Gap',
+    ]);
+
+    // Same severity palette the on-screen pills use (status-pill/gap-badge classes in
+    // maturity-landing.component.scss), just as Excel fill/font colors instead of CSS.
+    const TINTS: Record<string, { fill: string; text: string }> = {
+      muted: { fill: 'ECECEC', text: '595959' },
+      warning: { fill: 'FFF2CC', text: '9C6500' },
+      serious: { fill: 'FDE2D0', text: 'B75E09' },
+      critical: { fill: 'FDD9D9', text: 'C0392B' },
+      info: { fill: 'DCE6F7', text: '1F497D' },
+      good: { fill: 'C6EFCE', text: '256029' },
+      goodDeep: { fill: 'A9D8B8', text: '14532D' },
+    };
+    const tintStyle = (key: keyof typeof TINTS) => bordered({ font: { bold: true, color: { rgb: TINTS[key].text } }, fill: { fgColor: { rgb: TINTS[key].fill } }, alignment: { horizontal: 'center' } });
+
+    const statusTint = (status: string): keyof typeof TINTS => {
+      switch (status) {
+        case 'Not Started': return 'muted';
+        case 'Draft': return 'warning';
+        case 'In Progress':
+        case 'Returned for Revision': return 'serious';
+        case 'Pending Review': return 'info';
+        case 'Suspended': return 'critical';
+        case 'Completed': return 'goodDeep';
+        case 'Approved': return 'good';
+        default: return 'muted';
+      }
+    };
+    const gapTint = (gap: unknown): keyof typeof TINTS => {
+      if (gap === 'Not scored' || gap === '-') return 'muted';
+      const n = Number(gap);
+      if (Number.isNaN(n)) return 'muted';
+      if (n >= 3) return 'critical';
+      if (n === 2) return 'serious';
+      if (n === 0) return 'good';
+      return 'warning';
+    };
+    const levelTint = (level: string): keyof typeof TINTS => {
+      if (!level) return 'muted';
+      if (level.startsWith('1')) return 'critical';
+      if (level.startsWith('2')) return 'serious';
+      if (level.startsWith('3')) return 'warning';
+      if (level.startsWith('4')) return 'good';
+      if (level.startsWith('5')) return 'goodDeep';
+      return 'muted';
+    };
 
     const filterInfo: [string, string][] = [
       ['Cycle', this.selectedCycle?.cycleLabel || 'All cycles'],
@@ -1505,20 +1701,135 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       ['Project', this.selectedProject?.projectName || 'All projects'],
     ];
 
-    const buildSheet = (rows: DomainSummary[], includeFilterInfo: boolean) => {
-      const aoa: unknown[][] = includeFilterInfo ? filterInfo.map(([label, value]) => [`${label}:`, value]) : [];
-      if (includeFilterInfo) aoa.push([]);
-      const dataRows = rows.map((d) => this.domainTrackerExportRow(d));
-      const headers = Object.keys(dataRows[0] ?? this.domainTrackerExportRow(rows[0]));
+    // Matches the on-screen table's own footer row exactly (maturity-landing.component.html
+    // lines 478-489) - previously the export stopped at the last domain row, silently
+    // dropping the one aggregate figure (Overall Estate) the dashboard itself always shows,
+    // and any fix to the per-row numbers (like the Cloud provider narrowing) never carried
+    // through to this total unless it was re-derived by hand.
+    const overallEstateRow = (): Record<string, unknown> | null => {
+      const s = this.enterpriseSummary;
+      if (!s) return null;
+      return {
+        'Sr. No': '',
+        Account: '',
+        Domain: 'Overall Estate',
+        'COE SPOC': '',
+        Reviewer: '',
+        Status: '',
+        'No. of Parameters': s.totalParamCount,
+        'No of Applicable Parameters': s.totalApplicableParamCount,
+        'Sum of Scores': s.totalSumScores,
+        'Max Possible': s.totalMaxPossible,
+        'Avg Score': s.overallAverageScore,
+        'Maturity %': `${s.overallMaturityPercent}%`,
+        'Maturity Level': s.overallMaturityLevel,
+      };
+    };
+
+    const buildSheet = (rows: DomainSummary[], sheetTitle: string, includeFilterInfo: boolean, includeOverallEstate: boolean, topRisksForDomainName?: string) => {
+      const aoa: unknown[][] = [[sheetTitle]];
+      const titleRowIndex = 0;
+      if (includeFilterInfo) filterInfo.forEach(([label, value]) => aoa.push([`${label}:`, value]));
+      const filterInfoRowCount = includeFilterInfo ? filterInfo.length : 0;
+      const filterInfoStartRow = 1;
+      aoa.push([]);
+      const dataRows = rows.map((d, i) => this.domainTrackerExportRow(d, i));
+      const headers = Object.keys(dataRows[0] ?? this.domainTrackerExportRow(rows[0], 0));
+      const headerRowIndex = aoa.length;
       aoa.push(headers);
+      const firstDataRowIndex = aoa.length;
       dataRows.forEach((row) => aoa.push(headers.map((h) => row[h])));
+      const totalsRow = includeOverallEstate ? overallEstateRow() : null;
+      const totalsRowIndex = totalsRow ? aoa.length : -1;
+      if (totalsRow) aoa.push(headers.map((h) => totalsRow[h]));
+      const lastDataRowIndex = aoa.length - 1;
+
+      let riskHeaderRowIndex = -1;
+      let riskFirstDataRowIndex = -1;
+      let riskLastDataRowIndex = -1;
+      let riskHeaders: string[] = [];
+      if (topRisksForDomainName) {
+        // Every account this sheet's summary rows cover, not just one - a domain-name sheet
+        // can roll up more than one account ("All accounts" view), and its risk table should
+        // cover exactly the same set the summary rows above it do.
+        const accountIdsHere = new Set(rows.map((d) => d.accountId ?? undefined));
+        const risks = this.scopedTopRisks.filter((r) => r.domain === topRisksForDomainName && accountIdsHere.has(r.accountId));
+        if (risks.length) {
+          aoa.push([]);
+          aoa.push(['Top Risks / Largest Gaps']);
+          const riskRows = risks.map((r) => this.topRiskExportRow(r));
+          riskHeaders = Object.keys(riskRows[0]);
+          riskHeaderRowIndex = aoa.length;
+          aoa.push(riskHeaders);
+          riskFirstDataRowIndex = aoa.length;
+          riskRows.forEach((row) => aoa.push(riskHeaders.map((h) => row[h])));
+          riskLastDataRowIndex = aoa.length - 1;
+        }
+      }
+
       const worksheet = XLSX.utils.aoa_to_sheet(aoa);
-      worksheet['!cols'] = headers.map((h) => ({ wch: Math.max(14, h.length + 2) }));
+      const colCount = Math.max(headers.length, riskHeaders.length, 2);
+      worksheet['!cols'] = Array.from({ length: colCount }, (_, c) => {
+        const h = headers[c] ?? riskHeaders[c] ?? '';
+        return { wch: Math.max(14, String(h).length + 2) };
+      });
+      worksheet['!rows'] = [{ hpt: 26 }];
+
+      const setStyle = (r: number, c: number, style: unknown) => {
+        const ref = XLSX.utils.encode_cell({ r, c });
+        if (!worksheet[ref]) worksheet[ref] = { t: 's', v: '' };
+        (worksheet[ref] as { s?: unknown }).s = style;
+      };
+      const cellText = (r: number, c: number): string => {
+        const ref = XLSX.utils.encode_cell({ r, c });
+        const cell = worksheet[ref] as { v?: unknown } | undefined;
+        return cell?.v != null ? String(cell.v) : '';
+      };
+
+      // Title banner, merged across every column this sheet actually uses.
+      worksheet['!merges'] = [{ s: { r: titleRowIndex, c: 0 }, e: { r: titleRowIndex, c: colCount - 1 } }];
+      setStyle(titleRowIndex, 0, TITLE_STYLE);
+
+      for (let r = filterInfoStartRow; r < filterInfoStartRow + filterInfoRowCount; r++) {
+        setStyle(r, 0, FILTER_LABEL_STYLE);
+        setStyle(r, 1, FILTER_VALUE_STYLE);
+      }
+
+      headers.forEach((_, c) => setStyle(headerRowIndex, c, HEADER_STYLE));
+      if (totalsRowIndex >= 0) headers.forEach((_, c) => setStyle(totalsRowIndex, c, TOTALS_STYLE));
+
+      const statusCol = headers.indexOf('Status');
+      const levelCol = headers.indexOf('Maturity Level');
+      const lastPlainDataRowIndex = totalsRowIndex >= 0 ? totalsRowIndex - 1 : lastDataRowIndex;
+      for (let r = firstDataRowIndex; r <= lastPlainDataRowIndex; r++) {
+        const zebra = (r - firstDataRowIndex) % 2 === 0 ? ZEBRA_EVEN : ZEBRA_ODD;
+        headers.forEach((h, c) => {
+          if (c === statusCol) setStyle(r, c, tintStyle(statusTint(cellText(r, c))));
+          else if (c === levelCol) setStyle(r, c, tintStyle(levelTint(cellText(r, c))));
+          else setStyle(r, c, NUMERIC_COLUMN_NAMES.has(h) ? { ...zebra, ...RIGHT_ALIGN } : zebra);
+        });
+      }
+      // Every sheet can filter/sort its own summary table right from the header row.
+      worksheet['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: headerRowIndex, c: 0 }, e: { r: lastDataRowIndex, c: headers.length - 1 } }) };
+
+      if (riskHeaderRowIndex >= 0) {
+        setStyle(riskHeaderRowIndex - 1, 0, SECTION_TITLE_STYLE);
+        riskHeaders.forEach((_, c) => setStyle(riskHeaderRowIndex, c, HEADER_STYLE));
+        const gapCol = riskHeaders.indexOf('Gap');
+        for (let r = riskFirstDataRowIndex; r <= riskLastDataRowIndex; r++) {
+          const zebra = (r - riskFirstDataRowIndex) % 2 === 0 ? ZEBRA_EVEN : ZEBRA_ODD;
+          riskHeaders.forEach((h, c) => {
+            if (c === gapCol) setStyle(r, c, tintStyle(gapTint(cellText(r, c))));
+            else setStyle(r, c, NUMERIC_COLUMN_NAMES.has(h) ? { ...zebra, ...RIGHT_ALIGN } : zebra);
+          });
+        }
+      }
+
       return worksheet;
     };
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, buildSheet(this.sortedDomainSummaries, true), 'Domain Tracker');
+    XLSX.utils.book_append_sheet(workbook, buildSheet(this.sortedDomainSummaries, 'IT Operations Maturity Dashboard - Domain Tracker', true, true), 'Domain Tracker');
 
     // Group by domain name so the SAME domain across different accounts ("All
     // accounts" view) lands on one sheet together, instead of one sheet per row.
@@ -1537,7 +1848,7 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         sheetName = `${this.sheetSafeName(domainName, `Domain ${unnamedCount}`).slice(0, 28)} (${suffix++})`;
       }
       usedSheetNames.add(sheetName);
-      XLSX.utils.book_append_sheet(workbook, buildSheet(rows, false), sheetName);
+      XLSX.utils.book_append_sheet(workbook, buildSheet(rows, `IT Operations Maturity Dashboard - ${domainName}`, false, false, domainName), sheetName);
     }
 
     XLSX.writeFile(workbook, `IT-Ops-Domain-Tracker_${new Date().toISOString().slice(0, 10)}.xlsx`);
