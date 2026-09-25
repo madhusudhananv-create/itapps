@@ -1,4 +1,14 @@
-import { Box, Paper, Typography, Tabs, Tab, Button } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  Tabs,
+  Tab,
+  Button,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
 import { ProjectInfoSelection } from './ProjectInfoSelection';
 import {
@@ -590,6 +600,20 @@ export function Activities() {
             Manage Activities
           </Typography>
 
+          <Tooltip title="User Manual">
+            <IconButton
+              aria-label="Open user manual"
+              onClick={() =>
+                window.open(
+                  `${import.meta.env.BASE_URL}manuals/AIMI_User_Manual.html`,
+                  '_blank',
+                  'noopener,noreferrer'
+                )
+              }
+            >
+              <MenuBookIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
         <Typography variant="body1" sx={styles.headerDescription}>
           Track and manage AI maturity activities for your projects
