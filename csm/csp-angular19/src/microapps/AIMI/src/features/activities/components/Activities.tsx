@@ -1,5 +1,6 @@
 import { Box, Paper, Typography, Tabs, Tab, Button } from '@mui/material';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
+import { useAllocatedAccounts } from '@shared/projects/hooks/useAllocatedAccounts';
 import { ProjectInfoSelection } from './ProjectInfoSelection';
 import {
   useCallback,
@@ -235,11 +236,33 @@ export function Activities() {
   });
 
   // Memoize computed values to prevent unnecessary re-renders
-  const businessUnits = useMemo(() => getBusinessUnits(), [getBusinessUnits]);
-  const accounts = useMemo(
-    () => getAccounts(projectInfoFormData.businessUnit),
-    [getAccounts, projectInfoFormData.businessUnit]
-  );
+  const { allocatedAccountNames } = useAllocatedAccounts();
+  // Only show accounts/business units the logged-in employee is allocated to
+  // (same restriction the CSM Angular app applies via GetCustomerIds). null
+  // while the allocation list hasn't loaded yet.
+  const allowedAccounts = useMemo(() => {
+    if (allocatedAccountNames === null) return null;
+    return new Set(allocatedAccountNames.map((name) => name.trim().toLowerCase()));
+  }, [allocatedAccountNames]);
+
+  const businessUnits = useMemo(() => {
+    const allBusinessUnits = getBusinessUnits();
+    // Show nothing until the allocation list has loaded rather than briefly
+    // showing every business unit first.
+    if (!allowedAccounts) return [];
+    return allBusinessUnits.filter((businessUnit) =>
+      getAccounts(businessUnit).some((account) =>
+        allowedAccounts.has(account.trim().toLowerCase())
+      )
+    );
+  }, [getBusinessUnits, getAccounts, allowedAccounts]);
+  const accounts = useMemo(() => {
+    const accountsForBU = getAccounts(projectInfoFormData.businessUnit);
+    if (!allowedAccounts) return [];
+    return accountsForBU.filter((account) =>
+      allowedAccounts.has(account.trim().toLowerCase())
+    );
+  }, [getAccounts, projectInfoFormData.businessUnit, allowedAccounts]);
   const projects = useMemo(
     () =>
       getProjects(

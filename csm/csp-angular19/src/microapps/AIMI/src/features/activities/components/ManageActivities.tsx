@@ -712,7 +712,14 @@ const hasAcceptedScoreChanges =
 
   const handleGenerateReport = () => {
     try {
-      generateAndDownloadReport(activities, projectInfo);
+      const overallScoreValue = areAllActivitiesNotApplicable(activities)
+        ? 'N/A'
+        : calculateAverageAIAdoptionScore(activities).toFixed(2);
+
+      generateAndDownloadReport(
+        activities,
+        projectInfo ? { ...projectInfo, overallScoreValue } : undefined
+      );
       showSnackbar('Report generated and downloaded successfully!', 'success');
     } catch (error) {
       console.error('Error generating report:', error);
