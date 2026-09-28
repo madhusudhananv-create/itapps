@@ -403,8 +403,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         /// <summary>Step 5: notifies the person just assigned as assessor/reviewer on one domain assessment (email + bell - a real assessment id exists here).</summary>
         private void NotifyITOpsTeamAssignment(ITOPS_ASSESSMENT assessment, string roleLabel, string empId)
         {
-            var domainName = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID)?.NAME ?? "domain";
-            var projectName = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID)?.PROJ_NM ?? assessment.PROJECT_ID;
+            var domain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID);
+            var domainName = domain?.NAME ?? "domain";
+            var project = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID);
+            var projectName = project?.PROJ_NM ?? assessment.PROJECT_ID;
             var cycleLabel = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == assessment.ASSESSMENT_MASTER_ID)?.CYCLE_LABEL;
 
             NotifyITOps(
@@ -415,9 +417,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     EmpName = GetEmpName(empId),
                     RoleLabel = roleLabel,
+                    AssignmentSection = GetITOpsAssignmentSectionLabel(roleLabel),
                     DomainName = ITOpsEmailDomainName(domainName, assessment.CLOUD_PROVIDER),
                     ProjectName = projectName,
-                    CycleLabel = cycleLabel
+                    CycleLabel = cycleLabel,
+                    // /review (domain-review.component.ts) hosts BOTH the Reviewer's own
+                    // approve/return actions AND the Assessee's own accept/reject-a-finding
+                    // actions - /assessment (maturity-assessment.component.ts) is Assessor-only
+                    // (score entry + Accept/Dispute Rejection). So forReview is true for
+                    // everyone except an Assessor.
+                    AssessmentLink = GetITOpsAssessmentLink(domain?.CODE, assessment.ID, !string.Equals(roleLabel, "Assessor", StringComparison.OrdinalIgnoreCase), project?.CUST_ID)
                 }),
                 "TeamAssigned", assessment.ID, null,
                 $"You've been assigned as {roleLabel} for {domainName} — {projectName}, cycle {cycleLabel}.");
@@ -447,8 +456,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var fromEmpName = !string.IsNullOrWhiteSpace(fromEmpId) ? GetEmpName(fromEmpId) : null;
 
             var domainIds = items.Select(i => i.Item1.DOMAIN_ID).Distinct().ToList();
-            var domainNames = CSPdb.ITOPS_DOMAIN.GetAll().Where(d => domainIds.Contains(d.ID)).ToDictionary(d => d.ID, d => d.NAME);
+            var domains = CSPdb.ITOPS_DOMAIN.GetAll().Where(d => domainIds.Contains(d.ID)).ToDictionary(d => d.ID);
+            var domainNames = domains.ToDictionary(kv => kv.Key, kv => kv.Value.NAME);
             var projectNames = GetITOpsProjectNameMap(items.Select(i => i.Item1.PROJECT_ID).ToList());
+            var projectIds = items.Select(i => i.Item1.PROJECT_ID).Distinct().ToList();
+            var projectCustIds = Cldb.PROJECT.GetAll().Where(p => projectIds.Contains(p.PROJ_ID)).ToDictionary(p => p.PROJ_ID, p => p.CUST_ID);
             var masterIds = items.Select(i => i.Item1.ASSESSMENT_MASTER_ID).Distinct().ToList();
             var cycleLabels = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().Where(m => masterIds.Contains(m.ID)).ToDictionary(m => m.ID, m => m.CYCLE_LABEL);
             var distinctRoles = items.Select(i => i.Item2).Distinct().ToList();
@@ -476,8 +488,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         AssessmentMasterId = i.Item1.ASSESSMENT_MASTER_ID,
                         Cycle = cycleLabels.ContainsKey(i.Item1.ASSESSMENT_MASTER_ID) ? cycleLabels[i.Item1.ASSESSMENT_MASTER_ID] : "-",
                         Role = i.Item2,
+                        Section = GetITOpsAssignmentSectionLabel(i.Item2),
                         FromEmpName = fromEmpName ?? "",
-                        PreviouslyCell = previouslyCell
+                        PreviouslyCell = previouslyCell,
+                        // Nothing to open on a removal. Otherwise same role check as the
+                        // single-assignment email: /review hosts both the Reviewer's and the
+                        // Assessee's own actions, /assessment is Assessor-only.
+                        AssessmentLink = isRemoved
+                            ? "#"
+                            : GetITOpsAssessmentLink(
+                                domains.ContainsKey(i.Item1.DOMAIN_ID) ? domains[i.Item1.DOMAIN_ID].CODE : null,
+                                i.Item1.ID,
+                                !string.Equals(i.Item2, "Assessor", StringComparison.OrdinalIgnoreCase),
+                                projectCustIds.ContainsKey(i.Item1.PROJECT_ID) ? projectCustIds[i.Item1.PROJECT_ID] : null)
                     })
                     .OrderBy(r => r.Domain).ThenBy(r => r.Project)
                     .ToList();
@@ -494,8 +517,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         r.AssessmentMasterId,
                         r.Cycle,
                         r.Role,
+                        r.Section,
                         r.FromEmpName,
-                        r.PreviouslyCell
+                        r.PreviouslyCell,
+                        r.AssessmentLink
                     }))));
 
                 var previouslyHeaderCell = fromEmpName != null

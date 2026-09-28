@@ -60,7 +60,11 @@
     <strong>Returned for revision:</strong> {{ domain.returnComment }}
   </div>
 
-  <div class="provider-choice" *ngIf="awaitingProviderChoice()">
+  <div class="provider-choice" *ngIf="awaitingProviderChoice() && !isAssessor()">
+    <p class="picker-copy">Waiting for the assessor to choose a cloud provider before scoring can begin.</p>
+  </div>
+
+  <div class="provider-choice" *ngIf="awaitingProviderChoice() && isAssessor()">
     <h2>Which cloud provider are you assessing?</h2>
     <p class="picker-copy">
       Pick the one this customer actually runs on. Only that provider's questions will be part of this assessment -
@@ -113,7 +117,7 @@
               type="button"
               class="rubric-step na-step"
               [class.active]="isSelected(param, 'NA')"
-              [disabled]="isLocked()"
+              [disabled]="isLocked() || !isAssessor()"
               (click)="selectScore(param, 'NA')"
             >NA<em>Not Applicable</em></button>
             <button
@@ -121,7 +125,7 @@
               [class]="'rubric-step level-' + lvl.value"
               *ngFor="let lvl of rubricLevels"
               [class.active]="param.score === lvl.value"
-              [disabled]="isLocked()"
+              [disabled]="isLocked() || !isAssessor()"
               [title]="lvl.label + ': ' + param.rubric[lvl.key]"
               (click)="selectScore(param, lvl.value)"
             >{{ lvl.value }}<em>{{ lvl.label }}</em></button>
@@ -164,14 +168,14 @@
               name="notes-{{ param.id }}"
               rows="2"
               [class.invalid]="notesRequired(param)"
-              [disabled]="isLocked()"
+              [disabled]="isLocked() || !isAssessor()"
             ></textarea>
           </div>
 
           <div class="evidence">
             <label>Evidence Upload <span class="hint">(PDF, JPG, PNG &middot; max 10MB)</span></label>
-            <label class="upload-btn" [class.disabled]="isLocked() || evidenceUploading.has(param.id)">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" [disabled]="isLocked() || evidenceUploading.has(param.id)" (change)="onEvidenceSelected($event, param)" hidden />
+            <label class="upload-btn" [class.disabled]="isLocked() || !isAssessor() || evidenceUploading.has(param.id)">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" [disabled]="isLocked() || !isAssessor() || evidenceUploading.has(param.id)" (change)="onEvidenceSelected($event, param)" hidden />
               <app-spinner *ngIf="evidenceUploading.has(param.id)" [size]="13"></app-spinner>
               {{ evidenceUploading.has(param.id) ? 'Uploading…' : 'Choose File' }}
             </label>
@@ -218,7 +222,7 @@
             <p class="finding-rejection-comment" *ngIf="param.findingDisputeComment">
               <strong>Assessor's dispute:</strong> {{ param.findingDisputeComment }}
             </p>
-            <div class="rejection-decision" *ngIf="param.findingStatus === 'Rejected'">
+            <div class="rejection-decision" *ngIf="param.findingStatus === 'Rejected' && isAssessor()">
               <ng-container *ngIf="decidingRejectionParamId !== param.id">
                 <button type="button" class="btn-decide-rejection" (click)="openRejectionDecision(param)">Accept / Dispute Rejection</button>
               </ng-container>
@@ -249,7 +253,7 @@
     </div>
   </div>
 
-  <div class="actions" *ngIf="!isLocked() && !awaitingProviderChoice()">
+  <div class="actions" *ngIf="isAssessor() && !isLocked() && !awaitingProviderChoice()">
     <button class="btn-secondary btn-outline-accent" (click)="saveDraft()">Save Draft</button>
     <button class="btn-primary" [disabled]="submitting" (click)="openSubmitModal()">
       <app-spinner *ngIf="submitting" [size]="13" />

@@ -93,7 +93,14 @@ export class DomainReviewComponent implements OnInit {
     // Angular's default reuse strategy when navigating between two "My
     // Assignments" rows for the SAME domain (different project/cycle), and
     // only the assessmentId query param actually differs between them.
-    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
+    // getAccounts() is included here (not just called for its side effect) so this waits
+    // for it to resolve before reading selectedAccount below - a deep link straight into
+    // this route (e.g. a notification-email link with ?custId=...) never goes through
+    // MaturityLandingComponent, which is otherwise the only place that normally triggers
+    // AccountService.preselectFromUrl. Without this, selectedAccount is read before the
+    // account list (and the custId preselection) has ever loaded, and the page falls
+    // straight into "Domain not found".
+    combineLatest([this.route.paramMap, this.route.queryParamMap, this.accountService.getAccounts()]).subscribe(([params, queryParams]) => {
       const domainCode = params.get('domainId');
       const assessmentIdParam = queryParams.get('assessmentId');
       const account = this.accountService.selectedAccount;
@@ -180,8 +187,13 @@ export class DomainReviewComponent implements OnInit {
     return {
       id: assessment.domainCode,
       name: assessment.domainName,
-      coeSpoc: assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
-      reviewer: assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
+      // coeSpocNames/reviewerNames are the authoritative multi-assessor/multi-reviewer
+      // lists - coeSpocName/reviewerName only ever reflect the first one added (see
+      // GetITOpsPrimaryAssessorId/GetITOpsPrimaryReviewerId's own "legacy singular
+      // field" comment), so falling back to them would silently drop every assessor
+      // or reviewer after the first.
+      coeSpoc: assessment.coeSpocNames?.length ? assessment.coeSpocNames.join(', ') : assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
+      reviewer: assessment.reviewerNames?.length ? assessment.reviewerNames.join(', ') : assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
       status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
       // Reflects the real backend state (assessment.status === 'Suspended'), not a
       // local-only toggle - see toggleSuspend/suspendAssessment/resumeAssessment.

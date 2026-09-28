@@ -44,9 +44,12 @@ export interface ItOpsAssessmentInfo {
   custId: string;
   coeSpocEmpId: string | null;
   coeSpocName: string | null;
+  coeSpocEmpIds?: string[];
+  coeSpocNames?: string[];
   reviewerEmpId: string | null;
   reviewerEmpIds?: string[];
   reviewerName: string | null;
+  reviewerNames?: string[];
   assesseeEmpId: string | null;
   assesseeEmpIds?: string[];
   assesseeNames?: string[];

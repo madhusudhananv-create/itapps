@@ -699,6 +699,19 @@
   color: #fff;
 }
 
+.finding-pill.pending {
+  background: color-mix(in srgb, var(--status-warning) 20%, transparent);
+  color: color-mix(in srgb, var(--status-warning) 65%, black);
+}
+
+.finding-badge.pending-note {
+  margin-top: 4px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--status-warning) 45%, transparent);
+  background: color-mix(in srgb, var(--status-warning) 8%, var(--surface-tint));
+}
+
 /* Nested under the finding-outcome card via the same left rail, rather than
    its own separate box, so it reads as "then this happened" continuing the
    status above it. */

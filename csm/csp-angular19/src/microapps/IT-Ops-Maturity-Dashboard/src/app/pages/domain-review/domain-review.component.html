@@ -135,6 +135,16 @@
           <!-- Accept/Reject is a one-time decision - only offered while the finding is still
                undecided ('Pending' = freshly Open, or reopened after a disputed rejection).
                Once decided (Accepted/Rejected/Closed) it must not be re-toggled. -->
+          <!-- Non-assessee (Reviewer/Assessor) equivalent of the Assessee's own Accept/Reject
+               prompt above - same "Pending = freshly Open or reopened after a disputed
+               rejection" state, just informational since only the Assessee decides. Matches
+               maturity-assessment.component.html's own pending-note block. -->
+          <div class="finding-badge pending-note" *ngIf="isProbableFinding(param) && !isAssessee() && param.findingStatus === 'Pending' && domain?.status === 'Approved'">
+            <span class="finding-pill pending">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Area of improvement - yet to be accepted/rejected by Assessee
+            </span>
+          </div>
           <div class="finding-actions" *ngIf="isProbableFinding(param) && isAssessee() && param.findingStatus === 'Pending'">
             <span class="finding-label">Probable area of improvement:</span>
             <button
@@ -158,9 +168,9 @@
           <div
             class="finding-outcome"
             [class.is-rejected]="param.findingStatus === 'Rejected'"
-            *ngIf="isProbableFinding(param) && param.findingStatus && param.findingStatus !== 'Pending' && (isAssessee() ? param.findingStatus === 'Rejected' || param.findingStatus === 'Closed' : true)"
+            *ngIf="isProbableFinding(param) && ((param.findingStatus && param.findingStatus !== 'Pending' && (isAssessee() ? param.findingStatus === 'Rejected' || param.findingStatus === 'Closed' : true)) || (!isAssessee() && (param.findingRejectionComment || param.findingDisputeComment)))"
           >
-            <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'">
+            <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
               <svg *ngIf="param.findingStatus !== 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
               <svg *ngIf="param.findingStatus === 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
               <ng-container *ngIf="isAssessee(); else notAssesseeLabel">{{ param.findingStatus === 'Rejected' ? "Finding rejected - awaiting assessor's decision" : 'Finding closed' }}</ng-container>
@@ -173,7 +183,7 @@
             <p class="finding-rejection-comment" *ngIf="isAssessee() && param.findingDisputeComment">
               <strong>Assessor's response:</strong> {{ param.findingDisputeComment }}
             </p>
-            <p class="finding-rejection-comment" *ngIf="!isAssessee() && param.findingStatus === 'Rejected' && param.findingRejectionComment">
+            <p class="finding-rejection-comment" *ngIf="!isAssessee() && param.findingRejectionComment">
               <strong>Rejection reason:</strong> {{ param.findingRejectionComment }}
             </p>
             <p class="finding-rejection-comment" *ngIf="!isAssessee() && param.findingDisputeComment">
