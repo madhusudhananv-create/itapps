@@ -17,7 +17,7 @@
       <div class="meta">
         <span class="meta-item spoc">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <em>COE SPOC</em><strong>{{ domain.coeSpoc }}</strong>
+          <em>Assessor</em><strong>{{ domain.coeSpoc }}</strong>
         </span>
         <span class="meta-item reviewer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="2"/></svg>
@@ -291,7 +291,7 @@
 <div class="modal-backdrop" *ngIf="showReturnModal" (click)="closeReturnModal()">
   <div class="modal" (click)="$event.stopPropagation()">
     <h3>Return for Revision</h3>
-    <p class="modal-copy">This will unlock the assessment for the COE SPOC and set its status back to In Progress. A comment explaining the rejection is required.</p>
+    <p class="modal-copy">This will unlock the assessment for the Assessor and set its status back to In Progress. A comment explaining the rejection is required.</p>
     <label class="modal-label">Comment <span class="required">*</span></label>
     <textarea [(ngModel)]="returnComment" rows="4" placeholder="Explain what needs to change..."></textarea>
     <p class="field-error" *ngIf="returnCommentError">{{ returnCommentError }}</p>

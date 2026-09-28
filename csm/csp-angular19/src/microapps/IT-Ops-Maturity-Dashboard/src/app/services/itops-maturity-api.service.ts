@@ -161,6 +161,23 @@ export class ItOpsMaturityApiService {
     });
   }
 
+  /** Best-effort daily-active-user log (ITOPS_USER_VISIT, see
+   * ITOperationMaturity_V2_32_DailyActiveUsers.sql) - fire-and-forget, the backend swallows
+   * its own failures and always returns 200, so callers don't need to handle errors either. */
+  recordVisit(): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RecordITOpsVisit`, null, { headers: this.getHeaders() });
+  }
+
+  /** Admin Setup's "Active Users" tab - daily distinct-user counts, `fromDate`/`toDate` as
+   * 'yyyy-MM-dd'; the backend defaults to the last 30 days when either is omitted. */
+  getDailyActiveUsers(fromDate?: string, toDate?: string): Observable<any[]> {
+    const params: string[] = [];
+    if (fromDate) params.push(`fromDate=${encodeURIComponent(fromDate)}`);
+    if (toDate) params.push(`toDate=${encodeURIComponent(toDate)}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<any[]>(`${this.apiurl}GetITOpsDailyActiveUsers${qs}`, { headers: this.getHeaders() });
+  }
+
   getDomainList(): Observable<ItOpsDomainListRow[]> {
     return this.http.get<ItOpsDomainListRow[]>(`${this.apiurl}GetITOpsDomainList`, { headers: this.getHeaders() });
   }

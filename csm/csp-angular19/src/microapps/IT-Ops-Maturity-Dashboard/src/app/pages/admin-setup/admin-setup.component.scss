@@ -774,3 +774,48 @@ details[open] .domain-summary .chevron { transform: rotate(90deg); }
 .metric-card .m-label { font-size: var(--text-xs); font-family: var(--font-mono); color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
 .metric-card .m-icon { width: 22px; height: 22px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex: none; }
 .metric-card .m-value { font-size: var(--text-2xl); font-family: var(--font-mono); font-weight: 700; margin-top: var(--space-2); letter-spacing: -0.01em; color: var(--text-primary); }
+
+/* ---- Step 6: Active Users - date-range toolbar + summary cards + daily table. ---- */
+.usage-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+.usage-date-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: 600;
+
+  input[type="date"] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font: inherit;
+    color: var(--text-primary);
+    background: var(--surface);
+  }
+}
+.usage-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.usage-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.usage-card-value { font-size: var(--text-2xl); font-weight: 700; color: var(--accent); letter-spacing: -0.01em; }
+.usage-card-label { font-size: var(--text-xs); color: var(--text-muted); }
+.usage-users-cell { color: var(--text-secondary); max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-loading { display: flex; align-items: center; gap: var(--space-2); color: var(--text-muted); padding: var(--space-4) 0; }

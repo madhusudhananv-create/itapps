@@ -1910,6 +1910,67 @@
     </div>
   </section>
 
+  <section class="maturity-page" *ngIf="activeStep === 'usage'">
+    <h2>Active Users</h2>
+    <p class="step-copy">Daily count of distinct users who accessed IT Ops Maturity, recorded once per employee per calendar day.</p>
+
+    <div class="usage-toolbar">
+      <label class="usage-date-label">
+        From
+        <input type="date" [(ngModel)]="usageFromDate" [max]="usageToDate" (change)="onUsageDateRangeChange()">
+      </label>
+      <label class="usage-date-label">
+        To
+        <input type="date" [(ngModel)]="usageToDate" [min]="usageFromDate" [max]="isoDaysAgo(0)" (change)="onUsageDateRangeChange()">
+      </label>
+      <button type="button" class="btn-secondary" (click)="loadUsage()" [disabled]="usageLoading">
+        <app-spinner *ngIf="usageLoading" [size]="13"></app-spinner>
+        Refresh
+      </button>
+    </div>
+
+    <div class="usage-summary-cards" *ngIf="!usageLoading">
+      <div class="usage-card">
+        <span class="usage-card-value">{{ usageDistinctUserCount }}</span>
+        <span class="usage-card-label">Distinct users in range</span>
+      </div>
+      <div class="usage-card">
+        <span class="usage-card-value">{{ usageAverageDaily }}</span>
+        <span class="usage-card-label">Avg. daily active users</span>
+      </div>
+      <div class="usage-card" *ngIf="usagePeakDay">
+        <span class="usage-card-value">{{ usagePeakDay.activeUsers }}</span>
+        <span class="usage-card-label">Peak day ({{ formatUsageDate(usagePeakDay.visitDate) }})</span>
+      </div>
+    </div>
+
+    <div class="table-wrap" *ngIf="!usageLoading && usageRows.length; else usageEmptyOrLoading">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="col-num">Active Users</th>
+            <th>Users</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of usageRows">
+            <td class="nowrap">{{ formatUsageDate(row.visitDate) }}</td>
+            <td class="col-num">{{ row.activeUsers }}</td>
+            <td class="usage-users-cell" [title]="row.users">{{ row.users }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #usageEmptyOrLoading>
+      <div class="usage-loading" *ngIf="usageLoading">
+        <app-spinner [size]="18"></app-spinner>
+        <span>Loading usage data…</span>
+      </div>
+      <p class="empty-state" *ngIf="!usageLoading">No visits recorded in this date range.</p>
+    </ng-template>
+  </section>
+
   <div class="modal-backdrop" *ngIf="pickerModalOpen" (click)="closePicker()">
     <div class="modal" (click)="$event.stopPropagation()">
       <button type="button" class="modal-close" (click)="closePicker()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>

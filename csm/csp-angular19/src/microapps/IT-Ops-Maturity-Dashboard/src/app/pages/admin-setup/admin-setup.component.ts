@@ -32,8 +32,10 @@ import {
   ItOpsRoleAssignmentHistory,
   ItOpsTeamMember,
 } from '../../services/itops-admin-setup.service';
+import { ItOpsMaturityApiService } from '../../services/itops-maturity-api.service';
+import { hasAppResourceViewAccess } from '../../utils/app-access.util';
 
-type StepKey = 'roles' | 'cycle' | 'scope' | 'assessment' | 'team';
+type StepKey = 'roles' | 'cycle' | 'scope' | 'assessment' | 'team' | 'usage';
 
 /** One row of Step 4's "Add" staging table - a planned (project x domain) pair, with whatever Assessor/Reviewer has been staged for it locally (not saved until "Create assessments"). */
 interface StagedAssessmentRow {
@@ -205,6 +207,11 @@ export class AdminSetupComponent implements OnInit {
     { key: 'cycle', label: 'Configure Cycle', role: 'CYCLE_ADMINISTRATOR' },
     { key: 'assessment', label: 'Configure Assessment', role: 'RUNOPS_INITIATOR' },
     { key: 'team', label: 'Assign Assessor / Reviewer', role: 'TEAM_ASSIGNMENT_COORDINATOR' },
+    // Not part of the setup workflow proper, and not gated by an ITOPS_ROLE at all - see
+    // canUseStep's dedicated 'usage' branch below (APP_CONTROLS/APP_ACCESS_CONTROLS,
+    // RESOURCE_ID 837). 'role' here is unused for this entry, kept only so every steps[]
+    // row has the same shape.
+    { key: 'usage', label: 'Active Users', role: 'SUPERUSER' },
   ];
 
   /**
@@ -647,11 +654,74 @@ export class AdminSetupComponent implements OnInit {
 
   constructor(
     private api: ItOpsAdminSetupService,
+    private maturityApi: ItOpsMaturityApiService,
     private toast: ToastService,
     private router: Router,
     private host: ElementRef<HTMLElement>,
     private dialog: DialogService,
   ) {}
+
+  // ---- Step 6: Active Users (visibility via APP_CONTROLS/APP_ACCESS_CONTROLS, RESOURCE_ID
+  // 837 - see ITOperationMaturity_V2_33_ActiveUsersAppControl.sql - not tied to any
+  // ITOPS_ROLE, "specific users" is whichever role/title has VIEW_ACCESS = 1 on that
+  // resource, configured directly in the DB, same mechanism as the Dashboard/Assessments/
+  // Reports tabs in nav-menu.component.ts) ----
+  // See app-access.util.ts's hasAppResourceViewAccess - full parity with the CSM shell's
+  // AccessControl.IsAllowed(), including the EMP_ID-delegation tier (a resource granted to
+  // a specific employee regardless of their role/title).
+  readonly usageTabVisible = hasAppResourceViewAccess(837);
+  usageLoading = false;
+  usageRows: { visitDate: string; activeUsers: number; users: string }[] = [];
+  usageFromDate = this.isoDaysAgo(29);
+  usageToDate = this.isoDaysAgo(0);
+
+  isoDaysAgo(days: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /** Total distinct users across the whole selected range, not just any single day - the
+   * headline number this tab exists to answer ("how many people use ITOps"). */
+  get usageDistinctUserCount(): number {
+    return new Set(this.usageRows.flatMap((r) => (r.users || '').split(',').map((u) => u.trim()).filter(Boolean))).size;
+  }
+
+  get usageAverageDaily(): number {
+    if (!this.usageRows.length) return 0;
+    return Math.round((this.usageRows.reduce((sum, r) => sum + r.activeUsers, 0) / this.usageRows.length) * 10) / 10;
+  }
+
+  get usagePeakDay(): { visitDate: string; activeUsers: number } | null {
+    if (!this.usageRows.length) return null;
+    return this.usageRows.reduce((max, r) => (r.activeUsers > max.activeUsers ? r : max), this.usageRows[0]);
+  }
+
+  loadUsage(): void {
+    this.usageLoading = true;
+    this.maturityApi.getDailyActiveUsers(this.usageFromDate, this.usageToDate).pipe(
+      catchError(() => {
+        this.toast.error('Failed to load', 'Could not load active-user data. Please try again.');
+        return of([]);
+      }),
+      finalize(() => (this.usageLoading = false)),
+    ).subscribe((rows) => {
+      this.usageRows = (rows ?? []).map((r: any) => ({
+        visitDate: r.visitDate ?? r.VisitDate,
+        activeUsers: Number(r.activeUsers ?? r.ActiveUsers ?? 0),
+        users: r.users ?? r.Users ?? '',
+      }));
+    });
+  }
+
+  onUsageDateRangeChange(): void {
+    this.loadUsage();
+  }
+
+  formatUsageDate(iso: string): string {
+    if (!iso) return '-';
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
 
   /** Closes the Step 4 project checklist when the user clicks anywhere outside it, same as the searchable-select combobox above it. */
   /**
@@ -753,6 +823,13 @@ export class AdminSetupComponent implements OnInit {
     if (!this.access) return false;
     const def = this.steps.find((s) => s.key === step);
 
+    // Governed purely by the CSM-standard APP_CONTROLS/APP_ACCESS_CONTROLS mechanism
+    // (RESOURCE_ID 837, see ITOperationMaturity_V2_33_ActiveUsersAppControl.sql) - same
+    // as Dashboard/Assessments/Reports (nav-menu.component.ts's hasTabViewAccess), not by
+    // ITOPS_ROLE/Superuser status. Visible to nobody until specific roles/titles are
+    // granted VIEW_ACCESS = 1 on that resource directly in the DB.
+    if (step === 'usage') return this.usageTabVisible;
+
     if (step === 'scope') {
       const activeScopeRoles = Object.values(this.scopeSubTabRoles).filter((role) => this.access!.activeRoleCodes.includes(role));
       if (!activeScopeRoles.length) return false;
@@ -831,6 +908,7 @@ export class AdminSetupComponent implements OnInit {
         this.loadScope();
         this.loadAssessments();
       }
+      if (step === 'usage') this.loadUsage();
       return;
     }
     this.loadedSteps.add(step);
@@ -852,6 +930,9 @@ export class AdminSetupComponent implements OnInit {
         break;
       case 'team':
         this.ensureTeamContext();
+        break;
+      case 'usage':
+        this.loadUsage();
         break;
     }
   }

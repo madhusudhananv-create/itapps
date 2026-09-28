@@ -394,7 +394,7 @@
           <thead>
             <tr>
               <th>Technology Domain</th>
-              <th>COE SPOC</th>
+              <th>Assessor</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -437,7 +437,7 @@
         </div>
         <div class="domain-tracker-search search-box" *ngIf="domainSummaries.length">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" placeholder="Search by domain, COE SPOC or reviewer" [(ngModel)]="domainTrackerSearch">
+          <input type="text" placeholder="Search by domain, Assessor or reviewer" [(ngModel)]="domainTrackerSearch">
         </div>
         <button
           type="button"
@@ -464,7 +464,7 @@
               <th class="col-num">Sr. No</th>
               <th *ngIf="!selectedAccount">Account</th>
               <th class="sortable" (click)="sortDomainTrackerBy('name')">Domain <span class="sort-arrow">{{ domainTrackerSortIndicator('name') }}</span></th>
-              <th>COE SPOC</th>
+              <th>Assessor</th>
               <th>Reviewer</th>
               <th class="sortable" (click)="sortDomainTrackerBy('status')">Status <span class="sort-arrow">{{ domainTrackerSortIndicator('status') }}</span></th>
               <th class="col-num">No. of Parameters</th>

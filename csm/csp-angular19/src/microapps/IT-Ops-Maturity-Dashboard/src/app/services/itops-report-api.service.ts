@@ -59,6 +59,21 @@ function setParamValue(p: ReportSpParam, value: string): ReportSpParam {
   return updated;
 }
 
+/** Pure internal id/code columns that should never render as their own table column or
+ * Excel column, no matter what the SP returns them as - everything else the SP outputs
+ * becomes a real column (see `rawColumns` below and reports.component.ts's column-style
+ * lookup, which decides plain text vs. a special render like a status pill). */
+const HIDDEN_RAW_KEYS = new Set(['assessmentid', 'domainid', 'customerid', 'domaincode'].map((k) => k.toLowerCase()));
+
+/** Every field a report SP returned, in the SP's own SELECT order, minus the internal id
+ * columns above - this (not a hardcoded Angular field list) is what drives which columns
+ * the Reports page renders and exports. */
+function rawColumnsFrom(row: any): { key: string; value: any }[] {
+  return Object.keys(row ?? {})
+    .filter((key) => !HIDDEN_RAW_KEYS.has(key.toLowerCase()))
+    .map((key) => ({ key, value: row[key] }));
+}
+
 /** Reads a raw SP result-row field, tolerating whatever casing Json.NET's camelCase
  * naming strategy produces for a plain (non-acronym) alias - e.g. "AverageScore"
  * always becomes "averageScore", never "AVERAGESCORE" or similar - but this stays
@@ -72,7 +87,9 @@ function read(row: any, ...keys: string[]): any {
 }
 
 function toAssessmentStatus(value: any): AssessmentStatus {
-  return value === 'Suspended' || value === 'Closed' ? value : 'Open';
+  return value === 'Suspended' || value === 'Closed' || value === 'NotStarted' || value === 'InProgress' || value === 'Completed'
+    ? value
+    : 'Open';
 }
 
 function toDueStatus(value: any): DueStatus {
@@ -108,9 +125,10 @@ function mapDomainRow(row: any): ReportRow {
     period: read(row, 'period', 'Period') ?? '',
     domainId: String(read(row, 'domainId', 'DomainId') ?? read(row, 'domainCode', 'DomainCode') ?? ''),
     domainName: read(row, 'domainName', 'DomainName') ?? '',
-    coeSpoc: read(row, 'coeSpoc', 'CoeSpoc') ?? '',
+    assessor: read(row, 'assessor', 'Assessor') ?? '',
     reviewer: read(row, 'reviewer', 'Reviewer') ?? '',
-    coeSpocEmail: read(row, 'coeSpocEmail', 'CoeSpocEmail') ?? undefined,
+    assessee: read(row, 'assessee', 'Assessee') ?? undefined,
+    assessorEmail: read(row, 'assessorEmail', 'AssessorEmail') ?? undefined,
     reviewerEmail: read(row, 'reviewerEmail', 'ReviewerEmail') ?? undefined,
     assessmentStatus: toAssessmentStatus(read(row, 'assessmentStatus', 'AssessmentStatus')),
     dueStatus: toDueStatus(read(row, 'dueStatus', 'DueStatus')),
@@ -124,8 +142,23 @@ function mapDomainRow(row: any): ReportRow {
     findingsAccepted: toNumber(read(row, 'findingsAccepted', 'FindingsAccepted')),
     findingsRejected: toNumber(read(row, 'findingsRejected', 'FindingsRejected')),
     findingsPending: toNumber(read(row, 'findingsPending', 'FindingsPending')),
+    findingsClosed: toNumber(read(row, 'findingsClosed', 'FindingsClosed')),
     averageScore: toNullableNumber(read(row, 'averageScore', 'AverageScore')),
     maturityPercent: toNullableNumber(read(row, 'maturityPercent', 'MaturityPercent')),
+    paramCount: toNumber(read(row, 'paramCount', 'ParamCount')),
+    applicableParamCount: toNumber(read(row, 'applicableParamCount', 'ApplicableParamCount')),
+    sumScores: toNumber(read(row, 'sumScores', 'SumScores')),
+    maxPossible: toNumber(read(row, 'maxPossible', 'MaxPossible')),
+    createdDate: toIsoOrNull(read(row, 'createdDate', 'CreatedDate')),
+    createdBy: read(row, 'createdBy', 'CreatedBy') ?? null,
+    updatedDate: toIsoOrNull(read(row, 'updatedDate', 'UpdatedDate')),
+    updatedBy: read(row, 'updatedBy', 'UpdatedBy') ?? null,
+    totalFindingsRaised: toNumber(read(row, 'totalFindingsRaised', 'TotalFindingsRaised')),
+    overdueFindingsCount: toNumber(read(row, 'overdueFindingsCount', 'OverdueFindingsCount')),
+    escalationCount: toNumber(read(row, 'escalationCount', 'EscalationCount')),
+    lastActivityType: read(row, 'lastActivityType', 'LastActivityType') ?? null,
+    lastActivityDate: toIsoOrNull(read(row, 'lastActivityDate', 'LastActivityDate')),
+    rawColumns: rawColumnsFrom(row),
   };
 }
 
@@ -144,6 +177,19 @@ function mapParameterRow(row: any): ParameterDetailReportRow {
     reviewer: read(row, 'reviewer', 'Reviewer') ?? '',
     assessee: read(row, 'assessee', 'Assessee') ?? null,
     findingStatus: read(row, 'findingStatus', 'FindingStatus') ?? null,
+    assessorComments: read(row, 'assessorComments', 'AssessorComments') ?? null,
+    assesseeAcceptComments: read(row, 'assesseeAcceptComments', 'AssesseeAcceptComments') ?? null,
+    assesseeRejectComments: read(row, 'assesseeRejectComments', 'AssesseeRejectComments') ?? null,
+    assessorDisputeComments: read(row, 'assessorDisputeComments', 'AssessorDisputeComments') ?? null,
+    assessmentStatus: toAssessmentStatus(read(row, 'assessmentStatus', 'AssessmentStatus')),
+    minRequiredScore: toNullableNumber(read(row, 'minRequiredScore', 'MinRequiredScore')),
+    gap: toNullableNumber(read(row, 'gap', 'Gap')),
+    targetDate: toIsoOrNull(read(row, 'targetDate', 'TargetDate')),
+    createdDate: toIsoOrNull(read(row, 'createdDate', 'CreatedDate')),
+    createdBy: read(row, 'createdBy', 'CreatedBy') ?? null,
+    updatedDate: toIsoOrNull(read(row, 'updatedDate', 'UpdatedDate')),
+    updatedBy: read(row, 'updatedBy', 'UpdatedBy') ?? null,
+    rawColumns: rawColumnsFrom(row),
   };
 }
 

@@ -14,17 +14,13 @@ import { maturityLevelLabel } from '../../utils/rubric.util';
 
 type FilterKey =
   | 'Open'
-  | 'Closed'
+  | 'In Progress'
+  | 'Completed'
   | 'Suspended'
   | 'Past Due'
   | 'On Target'
   | 'Draft > 15 days'
-  | 'Draft > 30 days'
-  | 'No Management Update'
-  | 'Long Dated'
-  | 'Findings Accepted'
-  | 'Findings Rejected'
-  | 'Findings Pending';
+  | 'Draft > 30 days';
 
 type SortColumn =
   | 'accountName'
@@ -41,18 +37,169 @@ type ParamSortColumn = 'accountName' | 'businessUnit' | 'period' | 'projectName'
 
 const FILTER_KEYS: FilterKey[] = [
   'Open',
-  'Closed',
+  'In Progress',
+  'Completed',
   'Suspended',
   'Past Due',
   'On Target',
   'Draft > 15 days',
   'Draft > 30 days',
-  'No Management Update',
-  'Long Dated',
-  'Findings Accepted',
-  'Findings Rejected',
-  'Findings Pending',
 ];
+
+/** Parameter Detail report's own quick filters - mirrors row.findingStatus ('Accepted'/'Rejected'/'Open'/'Closed', shown as 'Pending' for Open - see findingPill). */
+type ParamFilterKey = 'Findings Accepted' | 'Findings Rejected' | 'Findings Pending' | 'Findings Closed';
+const PARAM_FILTER_KEYS: ParamFilterKey[] = ['Findings Accepted', 'Findings Rejected', 'Findings Pending', 'Findings Closed'];
+
+/** The Reports page's column list/order/labels are built ENTIRELY from whatever the report
+ * SP actually returns (ReportRow.rawColumns / ParameterDetailReportRow.rawColumns, captured
+ * in the SP's own SELECT order) - not from a fixed Angular field list. Adding a column to
+ * the SP is enough on its own for a new plain-text column to appear on screen and in the
+ * Excel export.
+ *
+ * The one thing that still needs a one-line code change is deciding a column's VISUAL
+ * STYLE - whether it renders as plain text or as something bespoke like a status pill, a
+ * findings badge cluster, or the maturity bar. That's exactly what DOMAIN_COLUMN_STYLES/
+ * PARAM_COLUMN_STYLES below are: a lookup from raw SP column name to a render style. A
+ * column with no entry here still renders (as plain wrapped text) - the lookup only
+ * upgrades a handful of columns to a richer visual. `group` folds several raw columns that
+ * together make up one visual (e.g. dueStatus + lastUpdated + longDated -> one "Due /
+ * Updated" cell) into a single emitted column, positioned at the first of its raw columns. */
+type ColumnRenderer =
+  | 'text' | 'wrap' | 'question' | 'date' | 'num'
+  | 'status-pill' | 'finding-status-pill'
+  | 'due-updated' | 'findings' | 'maturity-bar' | 'maturity-level' | 'last-activity' | 'score-with-min';
+
+interface ColumnDef {
+  key: string;
+  label: string;
+  renderer: ColumnRenderer;
+  sortKey?: SortColumn | ParamSortColumn;
+  title?: string;
+}
+
+interface ColumnStyle {
+  renderer: ColumnRenderer;
+  sortKey?: SortColumn | ParamSortColumn;
+  title?: string;
+  /** When set, this raw column doesn't emit its own <th>/<td> - it's one of the raw
+   * columns that together make up the named group's single composite column. */
+  group?: string;
+}
+
+/** groupId -> the virtual column(s) that group emits, in order, once (at the position of
+ * whichever of its member raw columns appears first in the SP's SELECT list). */
+const COLUMN_GROUPS: Record<string, ColumnDef[]> = {
+  'due-updated': [{ key: 'due-updated', label: 'Due / Updated', renderer: 'due-updated', sortKey: 'dueStatus' }],
+  findings: [{ key: 'findings', label: 'Findings', renderer: 'findings' }],
+  maturity: [
+    { key: 'maturity-bar', label: 'Maturity %', renderer: 'maturity-bar', sortKey: 'maturityPercent' },
+    { key: 'maturity-level', label: 'Maturity Level', renderer: 'maturity-level' },
+  ],
+  'last-activity': [{ key: 'last-activity', label: 'Last Activity', renderer: 'last-activity' }],
+  score: [{ key: 'score', label: 'Score', renderer: 'score-with-min', sortKey: 'score' }],
+};
+
+const DOMAIN_COLUMN_STYLES: Record<string, ColumnStyle> = {
+  account: { renderer: 'text', sortKey: 'accountName' },
+  project: { renderer: 'wrap', sortKey: 'projectName' },
+  businessunit: { renderer: 'wrap', sortKey: 'businessUnit' },
+  period: { renderer: 'text', sortKey: 'period' },
+  domainname: { renderer: 'wrap', sortKey: 'domainName' },
+  assessor: { renderer: 'wrap' },
+  reviewer: { renderer: 'wrap' },
+  assessee: { renderer: 'wrap' },
+  assessoremail: { renderer: 'wrap' },
+  revieweremail: { renderer: 'wrap' },
+  assessmentstatus: { renderer: 'status-pill', sortKey: 'assessmentStatus' },
+  duestatus: { renderer: 'text', group: 'due-updated' },
+  targetdate: { renderer: 'date' },
+  lastupdated: { renderer: 'text', group: 'due-updated' },
+  daysinceupdate: { renderer: 'text', group: 'due-updated' },
+  draftover15days: { renderer: 'text', group: 'due-updated' },
+  draftover30days: { renderer: 'text', group: 'due-updated' },
+  nomanagementupdate: { renderer: 'text', group: 'due-updated' },
+  longdated: { renderer: 'text', group: 'due-updated' },
+  findingsaccepted: { renderer: 'text', group: 'findings' },
+  findingsrejected: { renderer: 'text', group: 'findings' },
+  findingspending: { renderer: 'text', group: 'findings' },
+  findingsclosed: { renderer: 'num' },
+  totalfindingsraised: { renderer: 'num', title: 'Every finding ever raised on this assessment, across all statuses' },
+  overduefindingscount: { renderer: 'num', title: 'Open findings whose target date has already passed' },
+  escalationcount: { renderer: 'num', title: "Distinct findings disputed (Assessor re-rejected the Assessee's rejection) at least once" },
+  lastactivitytype: { renderer: 'text', group: 'last-activity' },
+  lastactivitydate: { renderer: 'text', group: 'last-activity' },
+  createddate: { renderer: 'date' },
+  createdby: { renderer: 'wrap' },
+  updateddate: { renderer: 'date' },
+  updatedby: { renderer: 'wrap' },
+  averagescore: { renderer: 'text', group: 'maturity' },
+  maturitypercent: { renderer: 'text', group: 'maturity' },
+  paramcount: { renderer: 'num', title: 'No. of Parameters - every currently-effective parameter in the domain' },
+  applicableparamcount: { renderer: 'num', title: 'No of Applicable Parameters - how many were actually scored' },
+  sumscores: { renderer: 'num' },
+  maxpossible: { renderer: 'num' },
+};
+
+const PARAM_COLUMN_STYLES: Record<string, ColumnStyle> = {
+  account: { renderer: 'text', sortKey: 'accountName' },
+  businessunit: { renderer: 'wrap', sortKey: 'businessUnit' },
+  project: { renderer: 'wrap', sortKey: 'projectName' },
+  period: { renderer: 'text', sortKey: 'period' },
+  domainname: { renderer: 'wrap', sortKey: 'domainName' },
+  category: { renderer: 'wrap', sortKey: 'category' },
+  parameter: { renderer: 'wrap', sortKey: 'parameter' },
+  question: { renderer: 'question' },
+  score: { renderer: 'text', group: 'score' },
+  minrequiredscore: { renderer: 'text', group: 'score' },
+  gap: { renderer: 'num', title: 'Gap - how far the score fell below the minimum required score' },
+  targetdate: { renderer: 'date' },
+  createddate: { renderer: 'date' },
+  createdby: { renderer: 'wrap' },
+  updateddate: { renderer: 'date' },
+  updatedby: { renderer: 'wrap' },
+  assessor: { renderer: 'wrap' },
+  reviewer: { renderer: 'wrap' },
+  assessee: { renderer: 'wrap' },
+  findingstatus: { renderer: 'finding-status-pill', sortKey: 'findingStatus' },
+  assessorcomments: { renderer: 'wrap' },
+  assesseeacceptcomments: { renderer: 'wrap' },
+  assesseerejectcomments: { renderer: 'wrap' },
+  assessordisputecomments: { renderer: 'wrap' },
+  assessmentstatus: { renderer: 'status-pill' },
+};
+
+/** Turns a raw SQL alias like "cloudProvider" into a readable column label ("Cloud
+ * Provider") for a column nobody wrote a style entry for. */
+function labelFromKey(key: string): string {
+  const spaced = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+  return spaced.trim();
+}
+
+function buildColumns(
+  rows: { rawColumns: { key: string; value: any }[] }[],
+  styles: Record<string, ColumnStyle>,
+): ColumnDef[] {
+  const order = rows[0]?.rawColumns.map((c) => c.key) ?? [];
+  const result: ColumnDef[] = [];
+  const emittedGroups = new Set<string>();
+  for (const key of order) {
+    const style = styles[key.toLowerCase()];
+    if (style?.group) {
+      if (emittedGroups.has(style.group)) continue;
+      emittedGroups.add(style.group);
+      result.push(...(COLUMN_GROUPS[style.group] ?? []));
+      continue;
+    }
+    // Label always comes from the SP's own column name, never a hand-typed override - a
+    // renamed SP alias renames the header/export column too, no Angular change needed.
+    if (style) {
+      result.push({ key, label: labelFromKey(key), renderer: style.renderer, sortKey: style.sortKey, title: style.title });
+    } else {
+      result.push({ key, label: labelFromKey(key), renderer: 'wrap' });
+    }
+  }
+  return result;
+}
 
 @Component({
   selector: 'app-reports',
@@ -161,13 +308,20 @@ export class ReportsComponent implements OnInit {
   sortColumn: SortColumn | null = null;
   sortDirection: 'asc' | 'desc' = 'asc';
   page = 1;
-  readonly pageSize = 25;
+  pageSize = 25;
+  readonly pageSizeOptions = [25, 50, 100];
+  /** Free-text match across account/project/domain/COE SPOC/reviewer - same idea for both reports, no server round trip since everything's already loaded. */
+  searchText = '';
 
   // ---- Parameter Detail report state ----
   paramRows: ParameterDetailReportRow[] = [];
+  filteredParamRows: ParameterDetailReportRow[] = [];
+  paramFilterKeys = PARAM_FILTER_KEYS;
+  activeParamFilters = new Set<ParamFilterKey>();
   paramSortColumn: ParamSortColumn | null = null;
   paramSortDirection: 'asc' | 'desc' = 'asc';
   paramPage = 1;
+  paramSearchText = '';
 
   constructor(
     private reportApi: ItOpsReportApiService,
@@ -407,8 +561,8 @@ export class ReportsComponent implements OnInit {
       if (useOwnScopeAggregate) {
         if (!ownScopePairs.length) {
           this.paramRows = [];
+          this.applyParamFilters();
           this.rowsLoading = false;
-          this.paramPage = 1;
           return;
         }
         forkJoin(
@@ -417,15 +571,15 @@ export class ReportsComponent implements OnInit {
           ),
         ).subscribe((lists) => {
           this.paramRows = lists.flat();
+          this.applyParamFilters();
           this.rowsLoading = false;
-          this.paramPage = 1;
         });
         return;
       }
       this.reportApi.getParameterDetailReportRows(filterValues).subscribe((rows) => {
         this.paramRows = rows;
+        this.applyParamFilters();
         this.rowsLoading = false;
-        this.paramPage = 1;
       });
       return;
     }
@@ -459,17 +613,48 @@ export class ReportsComponent implements OnInit {
     return this.activeFilters.has(key);
   }
 
+  /** How many of the CURRENT (search-matched) rows this chip would add/remove - lets someone judge a chip's effect before clicking it, without needing every OTHER active chip's restriction applied first (each count is independent of the others). */
+  filterCount(key: FilterKey): number {
+    const rows = this.searchFilteredRows(this.allRows, this.searchText);
+    return rows.filter((r) => this.matchesFilter(r, key)).length;
+  }
+
+  paramFilterCount(key: ParamFilterKey): number {
+    const rows = this.searchFilteredParamRows(this.paramRows, this.paramSearchText);
+    return rows.filter((r) => this.matchesParamFilter(r, key)).length;
+  }
+
   clearFilters(): void {
     this.activeFilters.clear();
     this.applyFilters();
+  }
+
+  /** Unlike clearFilters() (chips only, kept for anyone already used to that link), this resets every dropdown, chip, and the search box back to "All" and reloads - the one-click "start over" a user reasonably expects from a "Reset" action. */
+  resetAllFilters(): void {
+    this.cycleFilter = '';
+    this.businessUnitFilter = '';
+    this.accountFilter = '';
+    this.projectFilter = '';
+    this.domainFilter = '';
+    this.projectsForAccount = [];
+    this.activeFilters.clear();
+    this.activeParamFilters.clear();
+    this.searchText = '';
+    this.paramSearchText = '';
+    if (!this.hasFullAccess) {
+      this.refreshOwnScopeFilterOptions();
+    }
+    this.loadReportData();
   }
 
   private matchesFilter(row: ReportRow, key: FilterKey): boolean {
     switch (key) {
       case 'Open':
         return row.assessmentStatus === 'Open';
-      case 'Closed':
-        return row.assessmentStatus === 'Closed';
+      case 'In Progress':
+        return row.assessmentStatus === 'InProgress';
+      case 'Completed':
+        return row.assessmentStatus === 'Completed';
       case 'Suspended':
         return row.assessmentStatus === 'Suspended';
       case 'Past Due':
@@ -480,34 +665,102 @@ export class ReportsComponent implements OnInit {
         return row.draftOver15Days;
       case 'Draft > 30 days':
         return row.draftOver30Days;
-      case 'No Management Update':
-        return row.noManagementUpdate;
-      case 'Long Dated':
-        return row.longDated;
-      case 'Findings Accepted':
-        return row.findingsAccepted > 0;
-      case 'Findings Rejected':
-        return row.findingsRejected > 0;
-      case 'Findings Pending':
-        return row.findingsPending > 0;
     }
   }
 
+  /** Matches account/project/domain/COE SPOC/reviewer - case-insensitive substring, same fields a reader would actually scan the table by. */
+  private searchFilteredRows(rows: ReportRow[], text: string): ReportRow[] {
+    const q = text.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) =>
+      [r.accountName, r.projectName, r.domainName, r.assessor, r.reviewer].some((v) => (v ?? '').toLowerCase().includes(q)),
+    );
+  }
+
+  private searchFilteredParamRows(rows: ParameterDetailReportRow[], text: string): ParameterDetailReportRow[] {
+    const q = text.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) =>
+      [r.accountName, r.projectName, r.domainName, r.parameter, r.assessor, r.reviewer].some((v) => (v ?? '').toLowerCase().includes(q)),
+    );
+  }
+
   private applyFilters(): void {
-    let rows = this.allRows;
+    let rows = this.searchFilteredRows(this.allRows, this.searchText);
     if (this.activeFilters.size) {
-      rows = rows.filter((r) => Array.from(this.activeFilters).every((key) => this.matchesFilter(r, key)));
+      // OR across selected chips, not AND - these are mutually exclusive buckets of the
+      // same field (a row can't be both "Open" and "Completed"), so requiring every chip
+      // to match at once would always return zero rows once more than one was selected.
+      // Selecting several chips means "show me any of these", same as any tag/chip filter.
+      rows = rows.filter((r) => Array.from(this.activeFilters).some((key) => this.matchesFilter(r, key)));
     }
     this.filteredRows = rows;
     this.page = 1;
   }
 
+  onSearchTextChange(): void {
+    this.applyFilters();
+  }
+
+  // ---- Parameter Detail report: quick filters + search ----
+  toggleParamFilter(key: ParamFilterKey): void {
+    if (this.activeParamFilters.has(key)) {
+      this.activeParamFilters.delete(key);
+    } else {
+      this.activeParamFilters.add(key);
+    }
+    this.applyParamFilters();
+  }
+
+  isParamFilterActive(key: ParamFilterKey): boolean {
+    return this.activeParamFilters.has(key);
+  }
+
+  clearParamFilters(): void {
+    this.activeParamFilters.clear();
+    this.applyParamFilters();
+  }
+
+  /** findingStatus is a raw backend value - 'Open' is this report's equivalent of the Domain report's "pending" bucket (see findingPill). */
+  private matchesParamFilter(row: ParameterDetailReportRow, key: ParamFilterKey): boolean {
+    switch (key) {
+      case 'Findings Accepted':
+        return row.findingStatus === 'Accepted';
+      case 'Findings Rejected':
+        return row.findingStatus === 'Rejected';
+      case 'Findings Pending':
+        return row.findingStatus === 'Open';
+      case 'Findings Closed':
+        return row.findingStatus === 'Closed';
+    }
+  }
+
+  private applyParamFilters(): void {
+    let rows = this.searchFilteredParamRows(this.paramRows, this.paramSearchText);
+    if (this.activeParamFilters.size) {
+      // OR across selected chips - same reasoning as applyFilters above (Accepted/Rejected/
+      // Pending/Closed are mutually exclusive, so AND would always yield zero rows).
+      rows = rows.filter((r) => Array.from(this.activeParamFilters).some((key) => this.matchesParamFilter(r, key)));
+    }
+    this.filteredParamRows = rows;
+    this.paramPage = 1;
+  }
+
+  onParamSearchTextChange(): void {
+    this.applyParamFilters();
+  }
+
+  onPageSizeChange(): void {
+    this.page = 1;
+    this.paramPage = 1;
+  }
+
   /** "At a glance" counts across every currently-filtered row, unaffected by pagination. */
-  get summary(): { total: number; pastDue: number; noMgmtUpdate: number; findingsPending: number } {
+  get summary(): { total: number; pastDue: number; notStarted: number; findingsPending: number } {
     return {
       total: this.filteredRows.length,
       pastDue: this.filteredRows.filter((r) => r.dueStatus === 'Past Due').length,
-      noMgmtUpdate: this.filteredRows.filter((r) => r.noManagementUpdate).length,
+      notStarted: this.filteredRows.filter((r) => r.assessmentStatus === 'NotStarted').length,
       findingsPending: this.filteredRows.filter((r) => r.findingsPending > 0).length,
     };
   }
@@ -525,6 +778,23 @@ export class ReportsComponent implements OnInit {
   sortIndicator(column: SortColumn): string {
     if (this.sortColumn !== column) return '';
     return this.sortDirection === 'asc' ? '▲' : '▼';
+  }
+
+  /** Union of every column the report SP is currently returning, styled and ordered per
+   * DOMAIN_COLUMN_STYLES/COLUMN_GROUPS (module scope, above the @Component) - see the big
+   * comment there for how this stays SP-driven rather than a fixed Angular field list. */
+  get dynamicDomainColumns(): ColumnDef[] {
+    return buildColumns(this.allRows, DOMAIN_COLUMN_STYLES);
+  }
+
+  get dynamicParamColumns(): ColumnDef[] {
+    return buildColumns(this.paramRows, PARAM_COLUMN_STYLES);
+  }
+
+  /** Looks up one column's raw value on a row for the template's plain-text/date/num
+   * renderers - rawColumns is a small array, so a linear find is simpler than indexing. */
+  colValue(row: { rawColumns: { key: string; value: any }[] }, key: string): any {
+    return row.rawColumns?.find((c) => c.key === key)?.value ?? null;
   }
 
   get sortedRows(): ReportRow[] {
@@ -598,7 +868,7 @@ export class ReportsComponent implements OnInit {
   }
 
   get sortedParamRows(): ParameterDetailReportRow[] {
-    if (!this.paramSortColumn) return this.paramRows;
+    if (!this.paramSortColumn) return this.filteredParamRows;
     const column = this.paramSortColumn;
     const factor = this.paramSortDirection === 'asc' ? 1 : -1;
     const valueOf = (r: ParameterDetailReportRow): string | number => {
@@ -614,7 +884,7 @@ export class ReportsComponent implements OnInit {
         case 'findingStatus': return r.findingStatus ?? '';
       }
     };
-    return [...this.paramRows].sort((a, b) => {
+    return [...this.filteredParamRows].sort((a, b) => {
       const av = valueOf(a);
       const bv = valueOf(b);
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * factor;
@@ -658,9 +928,17 @@ export class ReportsComponent implements OnInit {
   }
 
   statusPill(status: AssessmentStatus): string {
-    if (status === 'Closed') return 'pill-good';
-    if (status === 'Suspended') return 'pill-muted';
+    if (status === 'Completed') return 'pill-optimal';
+    if (status === 'Suspended' || status === 'NotStarted') return 'pill-muted';
+    if (status === 'InProgress') return 'pill-warning';
     return 'pill-info';
+  }
+
+  /** assessmentStatus is a raw backend enum value ('NotStarted'/'InProgress' have no space) - everything else already reads fine as-is. */
+  statusLabel(status: AssessmentStatus): string {
+    if (status === 'NotStarted') return 'Not Started';
+    if (status === 'InProgress') return 'In Progress';
+    return status;
   }
 
   duePill(due: string | null): string {
@@ -691,57 +969,89 @@ export class ReportsComponent implements OnInit {
     return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
+  /** Short filename fragment for whichever scope filters are actually set, so a shared export doesn't read as "All accounts" when it's really one account/cycle - falls back to "All-Scope" when nothing's selected. */
+  private exportScopeSlug(): string {
+    const parts: string[] = [];
+    const accountName = this.accountsWithAssessments.find((a) => a.cusT_ID === this.accountFilter)?.cusT_NM;
+    if (accountName) parts.push(accountName);
+    const cycleLabel = this.dashboardCycles.find((c) => String(c.id) === this.cycleFilter)?.cycleLabel;
+    if (cycleLabel) parts.push(cycleLabel);
+    if (this.businessUnitFilter) parts.push(this.businessUnitFilter);
+    if (!parts.length) return 'All-Scope';
+    return parts.map((p) => p.replace(/[^a-z0-9]+/gi, '-')).join('_');
+  }
+
+  /** Builds one Excel row purely from the same column list the table renders - so the
+   * export always matches what's on screen, and a new SP column lands in both with no
+   * separate export code to update. Composite columns (a status pill, the findings badge
+   * cluster, the maturity bar) expand back out into their own plain export columns, since
+   * a spreadsheet cell can't hold a progress bar. */
+  private exportRowFrom(row: any, columns: ColumnDef[]): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const col of columns) {
+      switch (col.renderer) {
+        case 'date':
+          out[col.label] = this.formatDate(this.colValue(row, col.key));
+          break;
+        case 'status-pill':
+          out[col.label] = this.statusLabel(this.colValue(row, col.key));
+          break;
+        case 'due-updated':
+          out['Due Status'] = row.dueStatus ?? '';
+          out['Last Updated'] = this.formatDate(row.lastUpdated);
+          break;
+        case 'findings':
+          out['Findings Accepted'] = row.findingsAccepted;
+          out['Findings Rejected'] = row.findingsRejected;
+          out['Findings Pending'] = row.findingsPending;
+          break;
+        case 'maturity-bar':
+          out['Average Score'] = row.averageScore ?? '';
+          out['Maturity %'] = row.maturityPercent ?? '';
+          break;
+        case 'maturity-level':
+          out['Maturity Level'] = this.levelLabel(row.averageScore);
+          break;
+        case 'last-activity':
+          out['Last Activity Type'] = row.lastActivityType ?? '';
+          out['Last Activity Date'] = this.formatDate(row.lastActivityDate);
+          break;
+        case 'score-with-min':
+          out['Score'] = row.score ?? '';
+          out['Min Required Score'] = row.minRequiredScore ?? '';
+          break;
+        case 'finding-status-pill':
+        case 'text':
+        case 'wrap':
+        case 'question':
+        case 'num':
+        default:
+          out[col.label] = this.colValue(row, col.key) ?? '';
+      }
+    }
+    return out;
+  }
+
   async exportToExcel(): Promise<void> {
     const XLSX = await import('xlsx');
+    const dateSlug = new Date().toISOString().slice(0, 10);
 
     if (this.isParameterReport) {
-      const exportRows = this.paramRows.map((r) => ({
-        Account: r.accountName,
-        'Business Unit': r.businessUnit,
-        Project: r.projectName,
-        Period: r.period,
-        'Technology Domain': r.domainName,
-        Category: r.category,
-        Parameter: r.parameter,
-        Question: r.question,
-        Score: r.score ?? '',
-        Assessor: r.assessor,
-        Reviewer: r.reviewer,
-        Assessee: r.assessee ?? '',
-        'Finding Status': r.findingStatus ?? '',
-      }));
+      // sortedParamRows, not paramRows/filteredParamRows - the export should match what's
+      // actually on screen (current sort + filters + search), not the raw unsorted fetch.
+      const columns = this.dynamicParamColumns;
+      const exportRows = this.sortedParamRows.map((r) => this.exportRowFrom(r, columns));
       const worksheet = XLSX.utils.json_to_sheet(exportRows);
       worksheet['!cols'] = Object.keys(exportRows[0] ?? {}).map((key) => ({ wch: Math.max(14, key.length + 2) }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Parameter Detail Report');
-      XLSX.writeFile(workbook, `IT-Ops-Parameter-Detail-Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      XLSX.writeFile(workbook, `IT-Ops-Parameter-Detail-Report_${this.exportScopeSlug()}_${dateSlug}.xlsx`);
       return;
     }
 
-    const exportRows = this.filteredRows.map((r) => ({
-      'Business Unit': r.businessUnit,
-      'Account Name': r.accountName,
-      Project: r.projectName,
-      Period: r.period,
-      'Technology Domain': r.domainName,
-      'COE SPOC': r.coeSpoc,
-      Reviewer: r.reviewer,
-      'Assessment Status': r.assessmentStatus,
-      'Due Status': r.dueStatus ?? '',
-      'Target Completion Date': this.formatDate(r.targetDate),
-      'Last Updated': this.formatDate(r.lastUpdated),
-      'Days Since Update': r.daysSinceUpdate,
-      'Draft > 15 Days': r.draftOver15Days ? 'Yes' : 'No',
-      'Draft > 30 Days': r.draftOver30Days ? 'Yes' : 'No',
-      'No Management Update': r.noManagementUpdate ? 'Yes' : 'No',
-      'Long Dated': r.longDated ? 'Yes' : 'No',
-      'Findings Accepted': r.findingsAccepted,
-      'Findings Rejected': r.findingsRejected,
-      'Findings Pending': r.findingsPending,
-      'Average Score': r.averageScore ?? '',
-      'Maturity %': r.maturityPercent ?? '',
-      'Maturity Level': this.levelLabel(r.averageScore),
-    }));
+    // sortedRows, not filteredRows - same "what you see is what you export" reasoning.
+    const columns = this.dynamicDomainColumns;
+    const exportRows = this.sortedRows.map((r) => this.exportRowFrom(r, columns));
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
     worksheet['!cols'] = Object.keys(exportRows[0] ?? {}).map((key) => ({ wch: Math.max(14, key.length + 2) }));
@@ -749,7 +1059,7 @@ export class ReportsComponent implements OnInit {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'IT Ops Maturity Report');
 
-    const fileName = `IT-Ops-Maturity-Report_All-Accounts_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const fileName = `IT-Ops-Maturity-Report_${this.exportScopeSlug()}_${dateSlug}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   }
 }

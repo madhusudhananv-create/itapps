@@ -1205,6 +1205,51 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(table);
         }
 
+        // Admin Setup's "Active Users" tab (Superuser-only) - daily distinct-user counts
+        // from ITOPS_USER_VISIT (see ITOperationMaturity_V2_32_DailyActiveUsers.sql).
+        // report_getITOpsDailyActiveUsers is deliberately NOT registered in
+        // REPORTS_SP_DETAILS (its @FromDate/@ToDate shape doesn't match the Reports page's
+        // filter set), so this calls it directly through the same generic
+        // AppRepository.GetTable() every other report SP runs through, rather than
+        // reusing GetITOpsReportData's registered-SP flow.
+        [GET("GetITOpsDailyActiveUsers")]
+        [ActionName("GetITOpsDailyActiveUsers")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsDailyActiveUsers(string fromDate = null, string toDate = null)
+        {
+            var effectiveFrom = string.IsNullOrWhiteSpace(fromDate) ? DateTime.Today.AddDays(-29).ToString("yyyy-MM-dd") : fromDate;
+            var effectiveTo = string.IsNullOrWhiteSpace(toDate) ? DateTime.Today.ToString("yyyy-MM-dd") : toDate;
+            var lstParams = new List<REPORTS_PARAMS>
+            {
+                new REPORTS_PARAMS { PARAM_NAME = "FromDate", PARAM_VALUE = effectiveFrom },
+                new REPORTS_PARAMS { PARAM_NAME = "ToDate", PARAM_VALUE = effectiveTo },
+            };
+            var table = Cldb.AppRepo.GetTable("dbo.report_getITOpsDailyActiveUsers", lstParams);
+            return Ok(table);
+        }
+
+        // Best-effort daily-active-user log for the IT Ops Maturity microapp (see
+        // ITOperationMaturity_V2_32_DailyActiveUsers.sql) - fired once per calendar day by
+        // the Angular app on startup. Deliberately fire-and-forget: never let a usage-log
+        // failure surface as an error to the user, so this always returns Ok() regardless
+        // of what RecordITOpsVisit does internally.
+        [POST("RecordITOpsVisit")]
+        [ActionName("RecordITOpsVisit")]
+        [HttpPost]
+        public IHttpActionResult RecordITOpsVisit()
+        {
+            var empId = GetHeaderDetails_String("empId");
+            try
+            {
+                Cldb.AppRepo.RecordITOpsVisit(empId);
+            }
+            catch
+            {
+                // swallow - a failed usage-log write must never block or error out the app
+            }
+            return Ok();
+        }
+
         // The IT Ops Maturity account picker should list every account regardless
         // of the logged-in user's own project staffing/allocation - assessor and
         // reviewer assignments for this module are managed independently of that

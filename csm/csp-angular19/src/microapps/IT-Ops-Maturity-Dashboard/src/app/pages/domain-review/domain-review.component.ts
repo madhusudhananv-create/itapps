@@ -339,8 +339,8 @@ export class DomainReviewComponent implements OnInit {
             this.domain.returnComment = comment;
           }
           this.showReturnModal = false;
-          this.actionMessage = 'Returned to COE SPOC for revision.';
-          this.toast.info('Returned for revision', `${this.domain?.name ?? 'This domain'} was sent back to the COE SPOC.`);
+          this.actionMessage = 'Returned to Assessor for revision.';
+          this.toast.info('Returned for revision', `${this.domain?.name ?? 'This domain'} was sent back to the Assessor.`);
         },
         error: () => this.toast.error('Return failed', 'Something went wrong returning this assessment. Please try again.'),
       });
@@ -531,7 +531,7 @@ export class DomainReviewComponent implements OnInit {
           this.lastSavedActionTaken.set(findingId, actionTaken);
           this.pendingEvidenceFiles[findingId] = [];
           this.loadEvidence(findingId);
-          this.toast.success('Finding closed', `Your action on "${param.name}" has been recorded and shared with the COE SPOC and Reviewer.`);
+          this.toast.success('Finding closed', `Your action on "${param.name}" has been recorded and shared with the Assessor and Reviewer.`);
         },
         error: () => this.toast.error('Submit failed', 'Something went wrong submitting this action update. Please try again.'),
       });

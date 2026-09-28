@@ -6,6 +6,7 @@ import { SessionService } from '../../services/session.service';
 import { CurrentUser } from '../../models/maturity.model';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { ItOpsAdminSetupService } from '../../services/itops-admin-setup.service';
+import { hasAppResourceViewAccess } from '../../utils/app-access.util';
 
 @Component({
   selector: 'app-nav-menu',
@@ -86,30 +87,12 @@ export class NavMenuComponent implements OnInit {
     this.canSeeReports = this.hasTabViewAccess(836);
   }
 
-  /**
-   * Local re-implementation of the CSM shell's AccessControl.IsAllowed()
-   * "pure role-based access" branch (csp-angular19/src/app/shared/access-control.ts) -
-   * this microapp is a separate Angular project and can't import that class
-   * directly. Reads the same localStorage['access']/['role'] the shell caches
-   * at login, so there's no backend round trip per check.
-   */
+  /** See app-access.util.ts's hasAppResourceViewAccess - full parity with the CSM shell's
+   * AccessControl.IsAllowed() view-access check, including the EMP_ID delegation tier this
+   * used to be missing (a resource granted to a specific employee, independent of their
+   * normal role/title, silently didn't work here before). */
   private hasTabViewAccess(resourceId: number): boolean {
-    try {
-      const raw = localStorage.getItem('access');
-      if (!raw) return false;
-      const rows: any[] = JSON.parse(raw);
-      const roleId = parseInt(localStorage.getItem('role') || '0', 10);
-      return rows.some(
-        (r) =>
-          r.RESOURCE_ID === resourceId &&
-          r.ACCESS_LEVEL === 1 &&
-          r.ROLE_ID === roleId &&
-          r.VIEW_ACCESS === true &&
-          r.ISACTIVE !== false,
-      );
-    } catch {
-      return false;
-    }
+    return hasAppResourceViewAccess(resourceId);
   }
 
   private updateAssessmentsActive(url: string): void {
