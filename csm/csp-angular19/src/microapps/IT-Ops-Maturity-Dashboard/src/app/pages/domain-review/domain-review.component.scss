@@ -1,0 +1,961 @@
+:host {
+  --page-plane: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-tint: #f3f4f6;
+  --text-primary: #0b0b0b;
+  --text-secondary: #3a3935;
+  --text-muted: #6b6a63;
+  --gridline: #e1e0d9;
+  --border: rgba(11, 11, 11, 0.1);
+  --accent: #2a78d6;
+  --accent-tint: #eaf2fc;
+  --meta-reviewer: #9c3fc9;
+  --meta-assessee: #147d7d;
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+  --status-muted: #c3c2b7;
+
+  color-scheme: light;
+  display: block;
+  background: var(--page-plane);
+  min-height: 100%;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) :host {
+    --page-plane: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-tint: #232322;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --gridline: #2c2c2a;
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #3987e5;
+    --accent-tint: #16223a;
+    --meta-reviewer: #c869ea;
+    --meta-assessee: #40c8c8;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] :host {
+  --page-plane: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-tint: #232322;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --gridline: #2c2c2a;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #3987e5;
+  --accent-tint: #16223a;
+  --meta-reviewer: #c869ea;
+  --meta-assessee: #40c8c8;
+  color-scheme: dark;
+}
+
+.review-page {
+  padding: 16px 24px 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.parameter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.review-header {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  .header-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .suspend-btn {
+    flex-shrink: 0;
+  }
+
+  .definitions-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .suspended-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--status-critical) 16%, transparent);
+    color: var(--status-critical);
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(90deg, var(--text-primary), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.readonly-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  color: var(--text-muted);
+  -webkit-text-fill-color: var(--text-muted);
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+/* COE SPOC/Reviewer/Assessees as small labeled chips (icon + caption +
+   name) instead of plain "Label: value" text run together with no visual
+   separation between them. */
+.meta-item {
+  --item-color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid color-mix(in srgb, var(--item-color) 30%, var(--gridline));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--item-color) 10%, var(--surface));
+  color: var(--text-primary);
+  font-size: 12.5px;
+  line-height: 1.2;
+
+  svg {
+    color: var(--item-color);
+    flex-shrink: 0;
+  }
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--item-color);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  strong {
+    font-weight: 650;
+  }
+
+  &.spoc { --item-color: var(--accent); }
+  &.reviewer { --item-color: var(--meta-reviewer); }
+  &.assessees { --item-color: var(--meta-assessee); }
+}
+
+.return-banner {
+  background: color-mix(in srgb, var(--status-critical) 10%, transparent);
+  color: var(--status-critical);
+  border: 1px solid color-mix(in srgb, var(--status-critical) 30%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  margin-bottom: 12px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-not-started { background: color-mix(in srgb, var(--status-muted) 25%, transparent); color: var(--text-secondary); }
+.status-draft { background: color-mix(in srgb, var(--status-warning) 22%, transparent); color: #8a5a00; }
+.status-in-progress { background: color-mix(in srgb, var(--status-serious) 20%, transparent); color: #a34a1f; }
+.status-pending-review { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.status-approved { background: color-mix(in srgb, var(--status-good) 18%, transparent); color: var(--status-good); }
+/* Same tinted "glass" pill as Approved, but a deeper green text - distinct
+   enough to tell the two stages apart without going to a solid dark fill. */
+.status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }
+
+.provider-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.provider-tab {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.provider-tab:hover {
+  color: var(--accent);
+}
+
+.provider-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.parameter-card {
+  background: var(--surface);
+  border: none;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 22px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.param-header {
+  margin-bottom: 4px;
+}
+
+/* Q-number + Category read as one metadata row (a chip pair, not prose) -
+   deliberately not "Category: X" text, since a pill already reads as
+   metadata without needing a label to say so. */
+.param-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.sno {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.param-header h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+/* The question's own supporting description - kept unlabelled: its smaller
+   size, muted color, and position directly under the heading already read
+   as "detail about the heading above" without a literal "Definition:" tag. */
+.definition {
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+.card-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gridline);
+}
+
+@media (max-width: 860px) {
+  .card-body {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.rubric-compact {
+  margin-bottom: 0;
+
+  > label {
+    display: block;
+    font-size: 13px;
+    font-weight: 590;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+  }
+}
+
+/* Same read-only rubric scale as the assessor's own scoring UI (see
+   maturity-assessment.component.scss) - NA sits as its own neutral chip,
+   separated from the 1-5 severity scale, each level carries its own hue at
+   rest, and the active one fills solid in that hue. Rendered with <span>
+   instead of <button> here since a reviewer never scores - just reads. */
+.rubric-steps {
+  display: flex;
+  gap: 8px;
+}
+
+.rubric-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 9px 4px 8px;
+  border: 1.5px solid var(--gridline);
+  border-bottom: 3px solid var(--gridline);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 9.5px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  &.level-1 { --lvl-color: var(--status-critical); }
+  &.level-2 { --lvl-color: var(--status-serious); }
+  &.level-3 { --lvl-color: #b8860b; }
+  &.level-4 { --lvl-color: #5c8a28; }
+  &.level-5 { --lvl-color: var(--status-good); }
+
+  &.level-1, &.level-2, &.level-3, &.level-4, &.level-5 {
+    border-bottom-color: color-mix(in srgb, var(--lvl-color) 55%, var(--gridline));
+
+    em { color: color-mix(in srgb, var(--lvl-color) 75%, var(--text-muted)); }
+  }
+
+  &.active {
+    background: var(--lvl-color, var(--accent));
+    border-color: var(--lvl-color, var(--accent));
+    color: #fff;
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--lvl-color, var(--accent)) 35%, transparent);
+
+    em { color: rgba(255, 255, 255, 0.85); }
+  }
+}
+
+.na-step {
+  flex: 0 0 52px;
+  --lvl-color: var(--text-muted);
+  margin-right: 4px;
+  border-right: 1.5px solid var(--gridline);
+  padding-right: 12px;
+
+  em {
+    font-size: 8.5px;
+  }
+
+  &.active {
+    background: var(--text-secondary);
+    border-color: var(--text-secondary);
+  }
+}
+
+.rubric-active-desc {
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  background: var(--accent-tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.55;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.rubric-active-desc.muted {
+  background: var(--surface-tint);
+  border-color: var(--gridline);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.info-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+
+  &:hover {
+    color: var(--accent);
+    background: var(--accent-tint);
+  }
+}
+
+.modal.rubric-modal {
+  max-width: 560px;
+}
+
+.modal.definitions-modal {
+  max-width: 1180px;
+  width: 92vw;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+}
+
+.rubric-full {
+  background: var(--surface-tint);
+  border-radius: 8px;
+  padding: 6px 16px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.rubric-level {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gridline);
+  color: var(--text-secondary);
+  border-radius: 4px;
+
+  strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 12.5px;
+    margin-bottom: 2px;
+  }
+}
+
+.rubric-level:last-child {
+  border-bottom: none;
+}
+
+.rubric-level.rubric-active {
+  background: var(--accent-tint);
+  margin: 0 -12px;
+  padding: 8px 12px;
+
+  strong {
+    color: var(--accent);
+  }
+}
+
+.min-required {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.warning-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--status-critical) 14%, transparent);
+  color: var(--status-critical);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.readonly-field {
+  margin-bottom: 2px;
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 650;
+    margin-bottom: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.notes-readout {
+  margin: 0;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--surface-tint);
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  display: inline-block;
+}
+
+.notes-readout.muted {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.evidence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  margin-left: 6px;
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font: inherit;
+  vertical-align: middle;
+}
+
+.finding-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.finding-label {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.finding-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 650;
+  padding: 5px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Explicitly colored at rest (not only once "active"), so Accept/Reject
+     read as two distinct actions instead of one plain outline pill twice. */
+  &.accept {
+    border-color: var(--status-good);
+    color: var(--status-good);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--status-good) 14%, transparent);
+    }
+
+    &.active {
+      background: var(--status-good);
+      border-color: var(--status-good);
+      color: #fff;
+    }
+  }
+
+  &.reject {
+    border-color: var(--status-critical);
+    color: var(--status-critical);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--status-critical) 12%, transparent);
+    }
+
+    &.active {
+      background: var(--status-critical);
+      border-color: var(--status-critical);
+      color: #fff;
+    }
+  }
+}
+
+/* One connected card for "what happened to this finding" - a colored left
+   rail (green = resolved, red = rejected) ties the status pill, any
+   rejection/dispute history, and the eventual Action Taken readout together
+   as a single outcome instead of a flat stack of same-weight rows. */
+.finding-outcome {
+  margin-top: 8px;
+  padding: 10px 12px 10px 14px;
+  border-left: 3px solid var(--status-good);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--status-good) 6%, var(--surface-tint));
+
+  &.is-rejected {
+    border-left-color: var(--status-critical);
+    background: color-mix(in srgb, var(--status-critical) 6%, var(--surface-tint));
+  }
+}
+
+.finding-rejection-comment {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary, #667085);
+}
+
+.finding-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.finding-pill.accepted {
+  background: var(--status-good);
+  color: #fff;
+}
+
+.finding-pill.rejected {
+  background: var(--status-critical);
+  color: #fff;
+}
+
+/* Nested under the finding-outcome card via the same left rail, rather than
+   its own separate box, so it reads as "then this happened" continuing the
+   status above it. */
+.action-taken-nested {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.action-taken-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  margin-bottom: 4px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 650;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--status-critical);
+  color: var(--status-critical);
+}
+
+.save-message {
+  font-size: 13px;
+  color: var(--status-good);
+  font-weight: 600;
+}
+
+.not-found {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--gridline);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: itops-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes itops-spin {
+  to { transform: rotate(360deg); }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 11, 11, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: 650;
+  }
+}
+
+.modal-copy {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 650;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.modal textarea,
+.modal input[type="date"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  margin-bottom: 12px;
+}
+
+.action-update-block {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--gridline);
+
+  textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    resize: vertical;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  &.readonly {
+    border-top-style: solid;
+  }
+}
+
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.evidence-list .evidence-chip {
+  margin-left: 0;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.evidence-chip.pending {
+  background: var(--accent-tint, color-mix(in srgb, var(--accent) 12%, transparent));
+  color: var(--accent);
+}
+
+.action-update-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-tint);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.remove-file {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+
+  &:hover {
+    color: var(--status-critical);
+  }
+}
+
+.field-error {
+  color: var(--status-critical);
+  font-size: 12.5px;
+  margin: 6px 0 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}

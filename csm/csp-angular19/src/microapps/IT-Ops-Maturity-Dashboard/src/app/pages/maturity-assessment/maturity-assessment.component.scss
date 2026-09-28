@@ -1,0 +1,1076 @@
+:host {
+  --page-plane: #f5f5f7;
+  --surface: #ffffff;
+  --surface-tint: #e9e9eb;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-muted: #98989d;
+  --gridline: rgba(0, 0, 0, 0.06);
+  --border: rgba(0, 0, 0, 0.08);
+  --accent: #0071e3;
+  --accent-tint: rgba(0, 113, 227, 0.08);
+  --meta-reviewer: #af52de;
+  --meta-assessee: #147d7d;
+
+  --status-good: #34c759;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #ff3b30;
+  --status-muted: #d1d1d6;
+
+  color-scheme: light;
+  display: block;
+  background: var(--page-plane);
+  min-height: 100%;
+  font-family: -apple-system, "SF Pro Text", "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) :host {
+    --page-plane: #000000;
+    --surface: #1c1c1e;
+    --surface-tint: #2c2c2e;
+    --text-primary: #f5f5f7;
+    --text-secondary: #9a9a9e;
+    --text-muted: #69696d;
+    --gridline: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.09);
+    --accent: #0a84ff;
+    --accent-tint: rgba(10, 132, 255, 0.14);
+    --meta-reviewer: #bf5af2;
+    --meta-assessee: #40c8c8;
+    --status-good: #30d158;
+    --status-warning: #ffcc4d;
+    --status-serious: #ff9166;
+    --status-critical: #ff453a;
+    --status-muted: #48484a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] :host {
+  --page-plane: #000000;
+  --surface: #1c1c1e;
+  --surface-tint: #2c2c2e;
+  --text-primary: #f5f5f7;
+  --text-secondary: #9a9a9e;
+  --text-muted: #69696d;
+  --gridline: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.09);
+  --accent: #0a84ff;
+  --accent-tint: rgba(10, 132, 255, 0.14);
+  --meta-reviewer: #bf5af2;
+  --meta-assessee: #40c8c8;
+  --status-good: #30d158;
+  --status-warning: #ffcc4d;
+  --status-serious: #ff9166;
+  --status-critical: #ff453a;
+  --status-muted: #48484a;
+  color-scheme: dark;
+}
+
+.assessment-page {
+  padding: 20px 24px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.parameter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 590;
+}
+
+.back-link:hover {
+  opacity: 0.75;
+}
+
+.assessment-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    /* solid ink instead of gradient text-fill — reads cleaner at this weight
+       and matches the rest of the restrained, mostly-monochrome system */
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+/* COE SPOC/Reviewer/Assessees as small labeled chips (icon + caption +
+   name) instead of plain "Label: value" text run together with no visual
+   separation between them. */
+.meta-item {
+  --item-color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid color-mix(in srgb, var(--item-color) 30%, var(--gridline));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--item-color) 10%, var(--surface));
+  color: var(--text-primary);
+  font-size: 12.5px;
+  line-height: 1.2;
+
+  svg {
+    color: var(--item-color);
+    flex-shrink: 0;
+  }
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--item-color);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  strong {
+    font-weight: 650;
+  }
+
+  &.spoc { --item-color: var(--accent); }
+  &.reviewer { --item-color: var(--meta-reviewer); }
+  &.assessees { --item-color: var(--meta-assessee); }
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.definitions-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.progress-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.progress-ring {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-ring-inner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 590;
+}
+
+.progress-chip span:last-child {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-not-started { background: color-mix(in srgb, var(--status-muted) 30%, transparent); color: var(--text-secondary); }
+.status-draft { background: color-mix(in srgb, var(--status-warning) 16%, transparent); color: #9a6700; }
+.status-in-progress { background: color-mix(in srgb, var(--status-serious) 16%, transparent); color: #b3560a; }
+.status-pending-review { background: var(--accent-tint); color: var(--accent); }
+.status-approved { background: color-mix(in srgb, var(--status-good) 15%, transparent); color: color-mix(in srgb, var(--status-good) 70%, black); }
+/* Same tinted "glass" pill as Approved, but a deeper green text - distinct
+   enough to tell the two stages apart without going to a solid dark fill. */
+.status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }
+
+.locked-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-tint);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  margin-bottom: 12px;
+}
+
+.return-banner {
+  background: color-mix(in srgb, var(--status-critical) 8%, transparent);
+  color: var(--status-critical);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
+}
+
+.provider-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  background: var(--surface-tint);
+  border-radius: 10px;
+  padding: 3px;
+  width: fit-content;
+}
+
+.provider-tab {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 590;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.provider-tab:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+.provider-tab.active {
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.parameter-card {
+  background: var(--surface);
+  border: none;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.15s ease;
+
+  /* accent now lives in the Q-number chip rather than a colored left
+     border — one accent element per card instead of two competing ones */
+}
+
+.parameter-card.invalid-highlight {
+  box-shadow: 0 0 0 2px var(--status-critical), 0 6px 18px rgba(0, 0, 0, 0.05);
+  animation: invalid-pulse 1.1s ease-in-out 2;
+}
+
+@keyframes invalid-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--status-critical), 0 6px 18px rgba(0, 0, 0, 0.05); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--status-critical) 30%, transparent), 0 6px 18px rgba(0, 0, 0, 0.05); }
+}
+
+.param-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sno {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 650;
+  flex-shrink: 0;
+}
+
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.param-header h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.definition {
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+.card-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gridline);
+}
+
+@media (max-width: 860px) {
+  .card-body {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.scoring-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rubric-compact {
+  margin-bottom: 0;
+
+  > label {
+    display: block;
+    font-size: 13px;
+    font-weight: 590;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+
+    .hint {
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+  }
+}
+
+/* Rubric scale: NA sits as its own neutral chip, visually separated by a
+   gap from the 1-5 severity scale so it doesn't read as "level 0" of the
+   same progression. Each level carries its own hue at rest (a thin colored
+   underline + tinted label) so the scale's shape is legible before you've
+   picked anything, not just after; the active state fills solid in that
+   same hue so "selected" reads unambiguously instead of a generic white
+   pill that looks identical regardless of which level was chosen. */
+.rubric-steps {
+  display: flex;
+  gap: 8px;
+}
+
+.rubric-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 9px 4px 8px;
+  border: 1.5px solid var(--gridline);
+  border-bottom: 3px solid var(--gridline);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 9.5px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  &:hover:not(:disabled):not(.active) {
+    border-color: var(--lvl-color, var(--accent));
+    background: color-mix(in srgb, var(--lvl-color, var(--accent)) 6%, var(--surface));
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  &.level-1 { --lvl-color: var(--status-critical); }
+  &.level-2 { --lvl-color: var(--status-serious); }
+  &.level-3 { --lvl-color: #b8860b; }
+  &.level-4 { --lvl-color: #5c8a28; }
+  &.level-5 { --lvl-color: var(--status-good); }
+
+  &.level-1, &.level-2, &.level-3, &.level-4, &.level-5 {
+    border-bottom-color: color-mix(in srgb, var(--lvl-color) 55%, var(--gridline));
+
+    em { color: color-mix(in srgb, var(--lvl-color) 75%, var(--text-muted)); }
+  }
+
+  &.active {
+    background: var(--lvl-color, var(--accent));
+    border-color: var(--lvl-color, var(--accent));
+    color: #fff;
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--lvl-color, var(--accent)) 35%, transparent);
+
+    em { color: rgba(255, 255, 255, 0.85); }
+  }
+}
+
+.na-step {
+  flex: 0 0 52px;
+  --lvl-color: var(--text-muted);
+  margin-right: 4px;
+  border-right: 1.5px solid var(--gridline);
+  padding-right: 12px;
+
+  em {
+    font-size: 8.5px;
+  }
+
+  &.active {
+    background: var(--text-secondary);
+    border-color: var(--text-secondary);
+  }
+}
+
+.rubric-active-desc {
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  background: var(--accent-tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.55;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.rubric-active-desc.muted {
+  background: var(--surface-tint);
+  border-color: var(--gridline);
+  color: var(--text-secondary);
+  font-style: normal;
+}
+
+.info-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  margin-left: auto;
+
+  &:hover {
+    color: var(--accent);
+  }
+}
+
+.modal.rubric-modal {
+  max-width: 560px;
+}
+
+.modal.definitions-modal {
+  max-width: 1180px;
+  width: 92vw;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+  }
+}
+
+.rubric-full {
+  background: var(--surface-tint);
+  border-radius: 10px;
+  padding: 4px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.rubric-level {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gridline);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  transition: background 0.12s ease;
+
+  strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 12.5px;
+    margin-bottom: 3px;
+    font-weight: 590;
+  }
+}
+
+.rubric-level:last-child {
+  border-bottom: none;
+}
+
+.rubric-level.rubric-active {
+  background: var(--accent-tint);
+  margin: 0 -12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+
+  strong {
+    color: var(--accent);
+  }
+}
+
+.min-required {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 590;
+}
+
+.warning-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--status-critical) 10%, transparent);
+  color: var(--status-critical);
+  font-weight: 590;
+  font-size: 12px;
+}
+
+.scoring, .notes, .evidence {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 590;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: normal;
+  /* dropped the uppercase/tracked/accent-colored label treatment —
+     sentence-case labels read calmer and match the rest of the type
+     system; color no longer needs to carry "this is a label" on its own */
+}
+
+.required {
+  color: var(--status-critical);
+  font-weight: 590;
+}
+
+.hint {
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13.5px;
+  resize: vertical;
+  background: #fbfbfc;
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px var(--accent-tint);
+}
+
+textarea.invalid {
+  border-color: var(--status-critical);
+  background: color-mix(in srgb, var(--status-critical) 5%, var(--surface));
+}
+
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: none;
+  background: var(--surface-tint);
+  font-size: 12.5px;
+  font-weight: 590;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background 0.15s ease;
+}
+
+.upload-btn:hover {
+  background: color-mix(in srgb, var(--surface-tint) 80%, black 6%);
+}
+
+.upload-btn.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-tint);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.file-name-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.file-name-link:hover { color: var(--accent); }
+.file-name-link:disabled { cursor: default; text-decoration: none; }
+
+.remove-file {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+}
+
+.remove-file:hover {
+  color: var(--status-critical);
+}
+
+.field-error {
+  color: var(--status-critical);
+  font-size: 12.5px;
+  margin: 8px 0 0;
+}
+
+.finding-badge {
+  margin-top: 4px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-tint);
+}
+
+.finding-pill {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finding-pill.accepted {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--status-good);
+  color: #fff;
+}
+
+.finding-pill.rejected {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--status-critical);
+  color: #fff;
+}
+
+/* One connected card for "what happened to this finding" - a colored left
+   rail (green = resolved, red = rejected) ties the status pill, any
+   rejection/dispute history, and the eventual Action Taken readout together
+   as a single outcome instead of two disconnected plain boxes. */
+.finding-outcome {
+  margin-top: 4px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--status-good);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--status-good) 6%, var(--surface-tint));
+
+  &.is-rejected {
+    border-left-color: var(--status-critical);
+    background: color-mix(in srgb, var(--status-critical) 6%, var(--surface-tint));
+  }
+}
+
+/* Nested under finding-outcome via the same left rail, rather than its own
+   separate box, so it reads as "then this happened" continuing the status. */
+.action-taken-nested {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.action-taken-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  margin-bottom: 5px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.finding-pill.pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: color-mix(in srgb, var(--status-warning) 20%, transparent);
+  color: color-mix(in srgb, var(--status-warning) 65%, black);
+}
+
+.finding-badge.pending-note {
+  border: 1px dashed color-mix(in srgb, var(--status-warning) 45%, transparent);
+  background: color-mix(in srgb, var(--status-warning) 8%, var(--surface-tint));
+}
+
+.finding-rejection-comment {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+
+  strong { color: var(--text-primary); font-weight: 590; }
+}
+
+.finding-assessee {
+  margin-left: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.rejection-decision {
+  margin-top: 10px;
+}
+
+/* Solid accent fill so this call-to-action stands out against the pink
+   "Rejected" card behind it - a plain gray .btn-secondary blended straight
+   into that tinted background and read as inert/disabled. */
+.btn-decide-rejection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition: background 0.15s ease, transform 0.1s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 85%, black);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.rejection-decision-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--surface);
+
+  textarea {
+    width: 100%;
+    resize: vertical;
+    font: inherit;
+  }
+}
+
+.rejection-decision-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12.5px;
+}
+
+.action-update-block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gridline);
+}
+
+.notes-readout {
+  margin: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  display: inline-block;
+}
+
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.evidence-list .evidence-chip {
+  margin-left: 0;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.evidence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font: inherit;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btn-secondary {
+  background: var(--surface-tint);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--surface-tint) 80%, black 6%);
+}
+
+/* Save Draft - a real secondary action (not as committed as Submit), but
+   still tied to the accent hue via an outline rather than the flat neutral
+   gray .btn-secondary uses elsewhere, so it doesn't read as disabled/inert
+   next to the solid blue Submit button. */
+.btn-outline-accent {
+  background: var(--accent-tint);
+  color: var(--accent);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.btn-outline-accent:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 14%, var(--accent-tint));
+  border-color: var(--accent);
+}
+
+.save-message {
+  font-size: 13px;
+  color: var(--status-good);
+  font-weight: 600;
+}
+
+.not-found {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+
+  .spinner {
+    width: 26px;
+    height: 26px;
+    border: 3px solid var(--gridline);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: itops-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes itops-spin {
+  to { transform: rotate(360deg); }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 26px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+}
+
+.modal-copy {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}

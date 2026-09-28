@@ -1,0 +1,1980 @@
+<div class="admin-setup">
+
+  <!-- Nothing renders until GetITOpsMyRoleCodes says what this user may do;
+       a user with no admin role at all is redirected away in ngOnInit. Same
+       centered full-page treatment as the "Loading scope configuration…"
+       overlay below, rather than a plain inline line, since at this point
+       there's nothing else on screen for it to sit next to. -->
+  <div class="loading-overlay" *ngIf="!accessResolved">
+    <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading…</div>
+  </div>
+
+  <ng-container *ngIf="accessResolved && access?.isAdmin">
+
+  <div class="flow-nav">
+    <ng-container *ngFor="let step of visibleSteps; let last = last">
+      <button
+        type="button"
+        class="flow-step"
+        [class.active]="activeStep === step.key"
+        [class.done]="visibleStepIndex(step.key) < visibleStepIndex(activeStep)"
+        (click)="goToStep(step.key)"
+      >
+        <span class="flow-num">
+          <svg *ngIf="visibleStepIndex(step.key) < visibleStepIndex(activeStep)" class="flow-num-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <span *ngIf="!(visibleStepIndex(step.key) < visibleStepIndex(activeStep))">{{ stepNumber(step.key) }}</span>
+        </span>
+        <span class="flow-label">{{ step.label }}</span>
+      </button>
+      <span class="flow-arrow" [class.done]="visibleStepIndex(step.key) < visibleStepIndex(activeStep)" *ngIf="!last">&rsaquo;</span>
+    </ng-container>
+  </div>
+
+  <!-- ============ STEP 1: Configure Roles ============ -->
+  <section class="maturity-page" *ngIf="activeStep === 'roles'">
+    <div class="page-head">
+      <div class="icon-badge">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+      </div>
+      <div>
+        <h1>Configure Roles <span class="pill pill-critical">Superuser only</span></h1>
+        <div class="page-sub">Grant which employees can perform each step, by role. Only a Superuser reaches this screen.</div>
+      </div>
+      <div class="page-actions">
+        <!-- The table shows live state; the trail shows how it got there
+             (every grant ever made, including ones since revoked). -->
+        <button type="button" class="btn-ghost btn-info" (click)="openAuditTrail()">View audit trail</button>
+        <button type="button" class="btn-primary" *ngIf="isSuperuser" (click)="openRoleModal()">+ Assign role</button>
+      </div>
+    </div>
+
+    <div class="page-sub" *ngIf="loadingRoles"><app-spinner [size]="14"></app-spinner> Loading role assignments…</div>
+    <div class="page-sub" *ngIf="rolesError">{{ rolesError }}</div>
+
+    <div class="metric-row" *ngIf="!loadingRoles && groupedRoleGrants.length">
+      <div class="metric-card">
+        <div class="m-label">
+          <span class="m-icon" style="background: color-mix(in srgb, var(--status-critical) 14%, transparent); color: var(--status-critical);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.9 6 6.6.6-5 4.4 1.5 6.5-6-3.6-6 3.6L7.5 13l-5-4.4 6.6-.6z"/></svg>
+          </span>
+          Superusers
+        </div>
+        <div class="m-value">{{ roleMetricSuperusersDisplay }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">
+          <span class="m-icon" style="background: color-mix(in srgb, var(--status-good) 16%, transparent); color: var(--status-good);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+          </span>
+          Employees with access
+        </div>
+        <div class="m-value">{{ roleMetricEmployeesDisplay }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">
+          <span class="m-icon" style="background: var(--accent-track); color: var(--accent);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </span>
+          Roles granted
+        </div>
+        <div class="m-value">{{ roleMetricGrantsDisplay }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">
+          <span class="m-icon" style="background: color-mix(in srgb, var(--status-warning) 20%, transparent); color: var(--status-warning);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>
+          </span>
+          Last change
+        </div>
+        <div class="m-value" style="font-size: var(--text-md);">{{ roleMetricLastChange }}</div>
+      </div>
+    </div>
+
+    <!-- Same Filter/Contains-Exact pattern as CSM's Customer Satisfaction Survey
+         "Customer Details" screen: Contains matches anywhere in the name,
+         Exact requires the whole name to match (case-insensitive either way). -->
+    <div class="filter-search-box" *ngIf="!loadingRoles && groupedRoleGrants.length">
+      <div class="search-box filter-field">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Filter employees…" [(ngModel)]="roleTableSearch" (ngModelChange)="onRoleTableSearchChange()">
+      </div>
+      <div class="filter-mode-toggle">
+        <button
+          type="button"
+          [class.active]="roleTableFilterMode === 'contains'"
+          (click)="roleTableFilterMode = 'contains'; onRoleTableSearchChange()"
+          title="Matches text anywhere in the name"
+        >Contains</button>
+        <button
+          type="button"
+          [class.active]="roleTableFilterMode === 'exact'"
+          (click)="roleTableFilterMode = 'exact'; onRoleTableSearchChange()"
+          title="Matches the full name exactly"
+        >Exact</button>
+      </div>
+    </div>
+
+    <div class="table-wrap" *ngIf="!loadingRoles">
+      <table>
+        <thead><tr><th>Employee</th><th>Roles held</th></tr></thead>
+        <tbody>
+          <!-- One row per EMPLOYEE, and within it one line per ROLE — the same role
+               held on several projects is one line with a chip per scope, not the
+               same role name repeated once per project. Every grant is still its
+               own DB row, so each scope chip revokes exactly its own assignment. -->
+          <tr *ngFor="let emp of pagedRoleGrants; trackBy: trackByEmpId">
+            <td class="emp-cell">
+              <strong>{{ emp.empName }}</strong>
+              <div class="page-sub">
+                {{ emp.roleGroups.length }} role(s)<ng-container *ngIf="emp.grants.length !== emp.roleGroups.length"> · {{ emp.grants.length }} grant(s)</ng-container>
+              </div>
+              <!-- "What can this person actually do?" — derived from the grants
+                   already on this row, no extra call. -->
+              <div class="emp-cell-actions">
+                <button type="button" class="btn-ghost btn-info" (click)="openAccessPreview(emp)">Preview access</button>
+                <button type="button" class="btn-ghost btn-info" (click)="openAuditTrail(emp)">History</button>
+              </div>
+            </td>
+            <td>
+              <div class="grant-list">
+                <div class="grant-line" *ngFor="let group of emp.roleGroups; let first = first; trackBy: trackByRoleGroup">
+                  <span class="pill pill-good">{{ group.roleName }}</span>
+                  <!-- Single scope: unchanged layout. Edit (employee-wide) is the
+                       only per-role action now - a single "Revoke" opens a
+                       checklist of every role this employee holds, to remove
+                       one or more at once, instead of a control per line. -->
+                  <ng-container *ngIf="group.grants.length === 1">
+                    <span class="pill pill-muted">{{ group.grants[0].scope }}</span>
+                    <span class="grant-date page-sub">{{ group.grants[0].grantedOn | date: 'dd MMM yyyy' }}</span>
+                    <span class="grant-actions" *ngIf="isSuperuser">
+                      <!-- ONE edit entry point per employee: their whole role/scope
+                           picture is edited at once, each role with its own scope.
+                           Shown once, on the first role line, next to Revoke. -->
+                      <ng-container *ngIf="first">
+                        <button type="button" class="btn-ghost" (click)="openEmployeeRoleEditModal(emp)">Edit roles</button>
+                        <button type="button" class="btn-ghost btn-danger" (click)="openRevokeModal(emp)">Revoke</button>
+                      </ng-container>
+                    </span>
+                  </ng-container>
+
+                  <!-- Several scopes: Edit and Revoke (both employee-wide, first
+                       line only) before the chip stack. -->
+                  <ng-container *ngIf="group.grants.length > 1">
+                    <ng-container *ngIf="isSuperuser && first">
+                      <button type="button" class="btn-ghost" (click)="openEmployeeRoleEditModal(emp)">Edit roles</button>
+                      <button type="button" class="btn-ghost btn-danger" (click)="openRevokeModal(emp)">Revoke</button>
+                    </ng-container>
+                    <span class="chip-stack scope-chips">
+                      <span class="chip" *ngFor="let grant of group.grants; trackBy: trackByGrantId">{{ grant.scope }}</span>
+                    </span>
+                    <span class="grant-date page-sub" [title]="'Earliest of ' + group.grants.length + ' grants'">{{ group.grantedOn | date: 'dd MMM yyyy' }}</span>
+                  </ng-container>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!roleGrants.length">
+            <td colspan="2" class="page-sub">No roles granted yet.</td>
+          </tr>
+          <tr *ngIf="roleGrants.length && !filteredRoleGrants.length">
+            <td colspan="2" class="page-sub">No employees match this filter.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" *ngIf="filteredRoleGrants.length">
+      <div class="pagination-size">
+        <label for="rolePageSize">Rows per page</label>
+        <select id="rolePageSize" [(ngModel)]="roleTablePageSize" (ngModelChange)="onRoleTablePageSizeChange()">
+          <option *ngFor="let size of roleTablePageSizeOptions" [ngValue]="size">{{ size }}</option>
+        </select>
+      </div>
+      <div class="pagination-range">{{ roleTableRangeLabel }}</div>
+      <div class="pagination-nav">
+        <button type="button" class="btn-icon" [disabled]="roleTablePage <= 1" (click)="goToRoleTablePage(roleTablePage - 1)" aria-label="Previous page">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 6-6 6 6 6"/></svg>
+        </button>
+        <span class="pagination-page">Page {{ roleTableCurrentPage }} of {{ roleTableTotalPages }}</span>
+        <button type="button" class="btn-icon" [disabled]="roleTablePage >= roleTableTotalPages" (click)="goToRoleTablePage(roleTablePage + 1)" aria-label="Next page">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="step-actions end">
+      <button type="button" class="btn-primary" *ngIf="canUseStep('cycle')" (click)="goToStep('cycle')">Continue to Configure Cycle</button>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="roleModalOpen" (click)="closeRoleModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeRoleModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Assign a role</h3>
+      <label class="modal-label">Employees<span class="required">*</span></label>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="roleFormEmpSearch" (input)="searchRoleFormEmp()" (focus)="searchRoleFormEmp()">
+      </div>
+      <!-- Search-and-add, same pattern as the Step 4 assessee picker: clicking a
+           result adds it to the chip list below rather than replacing the box. -->
+      <div class="multi-picker" *ngIf="roleFormEmpResults.length">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let e of roleFormEmpResults" (click)="addRoleFormEmp(e)">
+            <span class="picker-name">{{ e.name }}</span>
+            <span class="picker-role" *ngIf="isRoleFormEmpPicked(e.empId)">Added</span>
+          </label>
+        </div>
+      </div>
+      <div class="chip-stack assessee-chips" *ngIf="roleFormEmps.length">
+        <span class="chip" *ngFor="let e of roleFormEmps">
+          <span class="avatar" [style.background]="avatarColor(e.name)">{{ initials(e.name) }}</span>{{ e.name }}
+          <button type="button" class="chip-remove" (click)="removeRoleFormEmp(e)" [attr.aria-label]="'Remove ' + e.name">&times;</button>
+        </span>
+      </div>
+      <p class="modal-hint">{{ roleFormEmps.length }} employee(s) selected. Every role and scope below is granted to all of them.</p>
+      <label class="modal-label">Roles<span class="required">*</span></label>
+      <div class="multi-picker">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let opt of roleOptions" [title]="opt.description || opt.roleCode">
+            <input type="checkbox" [checked]="isRoleFormRolePicked(opt.roleId)" (change)="toggleRoleFormRole(opt.roleId)">
+            <span class="picker-name">{{ opt.roleName }}</span>
+          </label>
+          <p class="modal-hint" *ngIf="!roleOptions.length">No roles are configured.</p>
+        </div>
+      </div>
+      <div class="picker-toolbar" *ngIf="roleOptions.length">
+        <button type="button" class="btn-ghost" (click)="toggleAllRoleFormRoles()">
+          {{ allRoleFormRolesPicked ? 'Clear all' : 'Select all listed' }}
+        </button>
+        <span class="page-sub">{{ roleFormRoleIds.length }} role(s) selected</span>
+      </div>
+      <div class="field-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        Each role applies to all of this person's allocated projects - a role never grants access beyond their real project staffing. This will create {{ roleGrantRowCount }} grant(s) — one per employee, per role.
+      </div>
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeRoleModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="grantRole()" [disabled]="savingRole">
+            <app-spinner *ngIf="savingRole" [size]="13"></app-spinner>
+            Grant role(s)
+          </button>
+        </div>
+        <p class="modal-footnote">Each role unlocks one setup step, scoped to this person's own allocated projects.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revoke: pick one or more of this employee's CURRENT grants to remove.
+       Not a blanket "revoke everything" - each grant is its own checkbox, so
+       one or more (up to all) can be removed in a single confirmed action. -->
+  <div class="modal-backdrop" *ngIf="revokeModalOpen" (click)="closeRevokeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeRevokeModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Revoke roles</h3>
+      <p class="modal-copy">Select one or more roles held by <strong>{{ revokeModalEmp?.empName }}</strong> to revoke. Unselected roles are left exactly as they are.</p>
+      <div class="multi-picker">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let grant of revokeModalEmp?.grants">
+            <input type="checkbox" [checked]="isRevokeSelected(grant.id)" (change)="toggleRevokeSelection(grant.id)">
+            <span class="picker-name">{{ grant.roleName }} <span class="picker-role">{{ grant.scope }} · granted {{ grant.grantedOn | date: 'dd MMM yyyy' }}</span></span>
+          </label>
+        </div>
+      </div>
+      <div class="picker-toolbar" *ngIf="revokeModalEmp?.grants?.length">
+        <button type="button" class="btn-ghost" (click)="toggleAllRevokeSelection()">
+          {{ allRevokeSelected ? 'Clear all' : 'Select all listed' }}
+        </button>
+        <span class="page-sub">{{ revokeModalSelectedIds.length }} selected</span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeRevokeModal()">Cancel</button>
+        <button type="button" class="btn-primary btn-danger" (click)="confirmRevokeSelected()" [disabled]="savingRevoke || !revokeModalSelectedIds.length">
+          <app-spinner *ngIf="savingRevoke" [size]="13"></app-spinner>
+          Revoke {{ revokeModalSelectedIds.length || '' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Last-Superuser guard: this replaces the normal revoke warning entirely
+       when the grant being removed is the ONLY active Superuser left - a
+       replacement must be named and granted Superuser before the original
+       revoke (Revoke checklist or unticking it in Edit roles) is allowed to
+       run, so there is never a moment with zero Superusers. -->
+  <div class="modal-backdrop" *ngIf="lastSuperuserModalOpen" (click)="closeLastSuperuserModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeLastSuperuserModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Name a replacement Superuser first</h3>
+      <p class="modal-copy">Pick a CSM SuperAdmin to take over before this last Superuser can be revoked.</p>
+      <label class="modal-label">Replacement<span class="required">*</span></label>
+      <div class="chip-stack" *ngIf="lastSuperuserPick">
+        <span class="chip"><span class="avatar" [style.background]="avatarColor(lastSuperuserPick.name)">{{ initials(lastSuperuserPick.name) }}</span>{{ lastSuperuserPick.name }}</span>
+        <button type="button" class="btn-ghost" (click)="lastSuperuserPick = null">Change</button>
+      </div>
+      <div class="search-box" *ngIf="!lastSuperuserPick">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="lastSuperuserSearch" (input)="searchLastSuperuserReplacement()" (focus)="searchLastSuperuserReplacement()">
+      </div>
+      <div class="multi-picker" *ngIf="!lastSuperuserPick && lastSuperuserResults.length">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let c of lastSuperuserResults">
+            <span class="picker-name">{{ c.name }}</span>
+            <button type="button" class="btn-ghost" (click)="pickLastSuperuserReplacement(c)">Select</button>
+          </label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeLastSuperuserModal()">Cancel</button>
+        <button type="button" class="btn-primary" (click)="confirmLastSuperuserReplacement()" [disabled]="savingLastSuperuserReplacement || !lastSuperuserPick">
+          <app-spinner *ngIf="savingLastSuperuserReplacement" [size]="13"></app-spinner>
+          Grant Superuser &amp; continue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit ONE EMPLOYEE's entire role/scope picture. Every role they hold opens
+       ticked, and each ticked role carries its OWN scope control underneath it —
+       one person can hold some roles org-wide and others on specific projects. -->
+  <div class="modal-backdrop" *ngIf="roleEditModalOpen" (click)="closeRoleEditModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeRoleEditModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Edit roles</h3>
+      <label class="modal-label">Employee</label>
+      <input type="text" [value]="roleEditEmpName" disabled>
+      <label class="modal-label">Roles &amp; scope<span class="required">*</span></label>
+      <div class="picker-toolbar" *ngIf="roleOptions.length">
+        <button type="button" class="btn-ghost" (click)="toggleAllRoleEditRoles()">
+          {{ allRoleEditRolesPicked ? 'Clear all' : 'Select all' }}
+        </button>
+        <span class="page-sub">{{ roleEditEntries.length }} role(s) selected</span>
+      </div>
+      <div class="role-scope-list">
+        <div class="role-scope-block" *ngFor="let opt of roleOptions">
+          <label class="picker-row" [title]="opt.description || opt.roleCode">
+            <input type="checkbox" [checked]="isRoleEditRolePicked(opt.roleId)" (change)="toggleRoleEditRole(opt.roleId)">
+            <span class="picker-name">{{ opt.roleName }}</span>
+          </label>
+
+          <!-- Scope is no longer a per-role choice - every role applies to all of
+               this person's allocated projects (Cycle Administrator has no project
+               dimension at all, so it gets no scope line whatsoever). -->
+          <div class="role-scope-body" *ngIf="roleEditEntry(opt.roleId) as entry">
+            <p class="page-sub" *ngIf="opt.roleCode === 'SUPERUSER' || opt.roleCode === 'DASHBOARD_VIEWER' || opt.roleCode === 'REPORT_VIEWER'">Org-wide &mdash; applies to every account and project.</p>
+            <p class="page-sub" *ngIf="opt.roleCode !== 'CYCLE_ADMINISTRATOR' && opt.roleCode !== 'SUPERUSER' && opt.roleCode !== 'DASHBOARD_VIEWER' && opt.roleCode !== 'REPORT_VIEWER'">Applies to all of this person's allocated projects.</p>
+          </div>
+        </div>
+        <p class="modal-hint" *ngIf="!roleOptions.length">No roles are configured.</p>
+      </div>
+      <div class="field-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        This person will end up with {{ roleEditRowCount }} grant(s) in total. Roles left unchanged keep their original granted date.
+      </div>
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeRoleEditModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveRoleEdit()" [disabled]="savingRoleEdit">
+            <app-spinner *ngIf="savingRoleEdit" [size]="13"></app-spinner>
+            Save changes
+          </button>
+        </div>
+        <p class="modal-footnote">Every role applies to this person's own allocated projects. Unticking removes it entirely; unchanged roles are left as-is.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit trail: every ITOPS_ROLE_ASSIGNMENT ever created, active or since
+       revoked, newest activity first. A revoke is a soft-delete that keeps the
+       row, so one row carries both its grant and (when inactive) its revoke. -->
+  <div class="modal-backdrop" *ngIf="auditModalOpen" (click)="closeAuditTrail()">
+    <div class="modal modal-wide" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeAuditTrail()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Role audit trail<ng-container *ngIf="auditEmpName"> — {{ auditEmpName }}</ng-container></h3>
+      <p class="modal-copy">Every grant and revoke, newest first — revoked roles stay listed, not deleted.</p>
+
+      <div class="page-sub" *ngIf="loadingAudit"><app-spinner [size]="14"></app-spinner> Loading audit trail…</div>
+      <div class="page-sub" *ngIf="auditError">{{ auditError }}</div>
+
+      <div class="table-wrap" *ngIf="!loadingAudit && !auditError">
+        <table>
+          <thead><tr><th>Grant</th><th>Granted</th><th>Revoked</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let row of auditRows; trackBy: trackByAuditRow">
+              <td>
+                <strong>{{ row.empName }}</strong>
+                <div class="grant-line audit-line">
+                  <span class="pill pill-good">{{ row.roleName || row.roleCode }}</span>
+                  <span class="pill pill-muted">{{ row.scope }}</span>
+                </div>
+                <span class="pill" [ngClass]="'pill-' + auditStateTone(row)">{{ auditStateLabel(row) }}</span>
+              </td>
+              <td>
+                <strong>Granted</strong>
+                <div class="page-sub">{{ row.createdDate | date: 'dd MMM yyyy, HH:mm' }}</div>
+                <div class="page-sub">by {{ row.createdByName || row.createdBy || 'Unknown' }}</div>
+              </td>
+              <td>
+                <ng-container *ngIf="auditWasRevoked(row)">
+                  <strong>Revoked</strong>
+                  <div class="page-sub">{{ row.updatedDate | date: 'dd MMM yyyy, HH:mm' }}</div>
+                  <div class="page-sub">by {{ row.updatedByName || row.updatedBy || 'Unknown' }}</div>
+                </ng-container>
+                <ng-container *ngIf="!auditWasRevoked(row)">
+                  <span class="page-sub">Still active</span>
+                  <!-- An active row touched after creation was re-granted or had
+                       its scope edited — not a revoke, so it says so plainly. -->
+                  <div class="page-sub" *ngIf="auditWasUpdated(row)">
+                    Last changed {{ row.updatedDate | date: 'dd MMM yyyy, HH:mm' }} by {{ row.updatedByName || row.updatedBy }}
+                  </div>
+                </ng-container>
+              </td>
+            </tr>
+            <tr *ngIf="!auditRows.length">
+              <td colspan="3" class="page-sub">No role grants have ever been recorded.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeAuditTrail()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Effective access preview: which of the five steps this person can reach,
+       and the scope they reach each at. Derived entirely from grants already
+       loaded — no backend call. -->
+  <div class="modal-backdrop" *ngIf="accessPreviewOpen" (click)="closeAccessPreview()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeAccessPreview()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Effective access — {{ accessPreviewEmpName }}</h3>
+      <p class="modal-copy">
+        Reaches {{ accessPreviewReachCount }} of {{ steps.length }} setup steps.
+        <ng-container *ngIf="accessPreviewSuperuser">This person is a superuser, so every step is open to them regardless of individual grants.</ng-container>
+      </p>
+      <div class="access-preview">
+        <div class="access-step" *ngFor="let step of accessPreviewSteps; trackBy: trackByPreviewStep">
+          <div class="access-step-head">
+            <span class="access-mark" [class.yes]="step.canReach" [attr.aria-label]="step.canReach ? 'Can reach' : 'Cannot reach'">
+              <svg *ngIf="step.canReach" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5 10 17.5 19 7"/></svg>
+              <svg *ngIf="!step.canReach" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </span>
+            <span class="access-step-name">{{ step.number }}. {{ step.label }}</span>
+            <span class="pill pill-critical" *ngIf="step.canReach && step.viaSuperuser">Superuser</span>
+          </div>
+          <div class="access-step-scope" *ngIf="step.canReach">
+            <span class="pill pill-accent" *ngIf="step.allProjects">All projects</span>
+            <span class="chip-stack" *ngIf="!step.allProjects">
+              <span class="chip" *ngFor="let p of step.projectNames">{{ p }}</span>
+            </span>
+          </div>
+          <div class="access-step-scope page-sub" *ngIf="!step.canReach">Needs {{ step.role }}</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeAccessPreview()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STEP 2: Configure Cycle ============ -->
+  <section class="maturity-page" *ngIf="activeStep === 'cycle'">
+    <div class="page-head">
+      <div class="icon-badge">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      </div>
+      <div>
+        <h1>Configure Cycle <span class="pill pill-accent">Requires: Cycle Administrator</span></h1>
+        <div class="page-sub">Create and manage assessment cycles, e.g. "H1 FY27".</div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="cycle-toggle">
+        <button type="button" [class.active]="cycleMode === 'existing'" (click)="setCycleMode('existing')">Use an existing cycle</button>
+        <button type="button" [class.active]="cycleMode === 'new'" (click)="setCycleMode('new')">Start a new cycle</button>
+      </div>
+
+      <div class="page-sub" *ngIf="loadingCycles"><app-spinner [size]="14"></app-spinner> Loading cycles…</div>
+      <div class="page-sub" *ngIf="cyclesError">{{ cyclesError }}</div>
+
+      <ng-container *ngIf="cycleMode === 'existing'">
+        <label class="modal-label">Cycle<span class="required">*</span></label>
+        <app-searchable-select
+          [(ngModel)]="selectedCycleIdStr"
+          [options]="cycleSelectOptions"
+          placeholder="Select a cycle… (type to search)"
+        ></app-searchable-select>
+        <p class="modal-hint">No cycles yet? Use "Start a new cycle" instead — this list only fills in once one exists.</p>
+      </ng-container>
+
+      <ng-container *ngIf="cycleMode === 'new'">
+        <label class="modal-label">Cycle label<span class="required">*</span></label>
+        <input type="text" placeholder="e.g. H1 FY27" [(ngModel)]="newCycleLabel">
+        <div class="form-row">
+          <div><label class="modal-label">Start date<span class="required">*</span></label><input type="date" [(ngModel)]="newCycleStart"></div>
+          <div><label class="modal-label">End date<span class="required">*</span></label><input type="date" [(ngModel)]="newCycleEnd"></div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Cycle completion dashboard: how far the SELECTED cycle has actually got,
+         across every project in it, without a trip to Reports. Only shown once
+         an existing cycle is actually picked in "Use an existing cycle" above -
+         not a standing list of every cycle regardless of what's selected. -->
+    <div class="section-gap" *ngIf="cycleMode === 'existing' && selectedCycle as c">
+      <div class="section-head">
+        <h2>Cycle progress</h2>
+      </div>
+      <div class="cycle-progress-list">
+        <div class="cycle-progress-card selected">
+          <div class="cycle-progress-head">
+            <div>
+              <strong>{{ c.cycleLabel }}</strong>
+              <span class="pill pill-muted">{{ c.status ?? 'Open' }}</span>
+            </div>
+            <span class="pill" [ngClass]="'pill-' + cycleCompletionTone(c)">
+              {{ c.completionPercent }}% complete
+            </span>
+          </div>
+          <div class="cycle-progress-meter" [attr.aria-label]="c.completionPercent + '% complete'">
+            <span [style.width.%]="c.completionPercent"></span>
+          </div>
+          <div class="cycle-progress-stats">
+            <span class="page-sub">
+              {{ c.completedCount }} of {{ c.assessmentCount }} assessment(s) approved or closed
+            </span>
+            <span class="chip-stack">
+              <span
+                class="pill"
+                *ngFor="let s of c.statusCounts; trackBy: trackByCycleStatus"
+                [ngClass]="'pill-' + assessmentStatusTone(s.status)"
+              >
+                {{ assessmentStatusLabel(s.status) }} · {{ s.count }}
+              </span>
+              <span class="pill pill-muted" *ngIf="!c.assessmentCount">No assessments yet</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions between">
+      <button type="button" class="btn-secondary" *ngIf="canUseStep('roles')" (click)="goToStep('roles')">Back</button>
+      <button type="button" class="btn-primary" (click)="saveCycleAndContinue()" [disabled]="savingCycle">
+        <app-spinner *ngIf="savingCycle" [size]="13"></app-spinner>
+        Save &amp; continue to Configure Scope
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ STEP 3: Configure Scope ============ -->
+  <section class="maturity-page" *ngIf="activeStep === 'scope'">
+    <div class="page-head">
+      <div class="icon-badge">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      </div>
+      <div>
+        <h1>Configure Scope
+          <span class="pill pill-accent" *ngIf="scopeSubTab === 'domains'">Requires: Domain Administrator</span>
+          <span class="pill pill-accent" *ngIf="scopeSubTab === 'mapping'">Requires: Scope Administrator</span>
+          <span class="pill pill-accent" *ngIf="scopeSubTab === 'catalog'">Requires: Category &amp; Parameter Administrator</span>
+        </h1>
+        <div class="page-sub">Standing configuration: which domains exist and which projects each applies to.</div>
+      </div>
+    </div>
+
+    <div class="subtabs">
+      <button type="button" class="subtab-btn" *ngIf="canUseScopeSubTab('domains')" [class.active]="scopeSubTab === 'domains'" (click)="setScopeSubTab('domains')">Domains</button>
+      <button type="button" class="subtab-btn" *ngIf="canUseScopeSubTab('mapping')" [class.active]="scopeSubTab === 'mapping'" (click)="setScopeSubTab('mapping')">Domain–Project Mapping</button>
+      <button type="button" class="subtab-btn" *ngIf="canUseScopeSubTab('catalog')" [class.active]="scopeSubTab === 'catalog'" (click)="setScopeSubTab('catalog')">Categories &amp; Parameters</button>
+    </div>
+
+    <div class="loading-overlay" *ngIf="loadingScope">
+      <div class="loading-overlay-content"><app-spinner [size]="28"></app-spinner> Loading scope configuration…</div>
+    </div>
+    <div class="page-sub" *ngIf="scopeError">{{ scopeError }}</div>
+
+    <ng-container *ngIf="scopeSubTab === 'domains' && canUseScopeSubTab('domains')">
+      <div class="section-head"><h2>Domains</h2><span class="count">{{ domains.length }} active</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Domain</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let d of domains">
+              <td><strong>{{ d.name }}</strong></td>
+              <td class="row-actions"><div class="row-actions-group"><button type="button" class="btn-ghost" (click)="openDomainEditModal(d)">Edit</button></div></td>
+            </tr>
+            <tr *ngIf="!domains.length && !loadingScope">
+              <td colspan="2" class="page-sub">No domains configured yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="scopeSubTab === 'mapping' && canUseScopeSubTab('mapping')">
+      <div class="section-head"><h2>Domain–Project Mapping</h2><span class="count">Controls which domains are offered per project</span>
+        <!-- Three deliberately separate actions: "+ New mapping" REPLACES one
+             project's exact domain set, "+ Bulk map" only ADDS combinations,
+             and "Copy from another project…" makes targets match a source. -->
+        <button type="button" class="btn-ghost btn-info" (click)="openMappingHistoryModal()">Audit History</button>
+        <button type="button" class="btn-ghost btn-info" (click)="openCopyMapModal()">Copy from another project…</button>
+        <button type="button" class="btn-ghost btn-add" (click)="openBulkMapModal()">+ Bulk map</button>
+        <button type="button" class="btn-primary btn-create" (click)="openMappingModal()">+ New mapping</button></div>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by project name, project code, account, domain, or assessee name" [(ngModel)]="mappingSearch" (ngModelChange)="onMappingSearchChange()">
+      </div>
+      <div class="field-note" *ngIf="incompleteMappingCount">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <span>{{ incompleteMappingCount }} project(s) below are missing domains and/or assessees - both are required before Configure Assessment can create anything for that project.</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Project</th><th>Account</th><th>Mapped domains</th><th>Assessees</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let row of pagedMappings">
+              <td><strong>{{ row.projectName }}</strong></td>
+              <td>{{ row.accountName }}</td>
+              <td>
+                <div class="chip-stack">
+                  <span class="pill pill-tag" *ngFor="let d of row.domains">
+                    {{ d.domainName }} <button type="button" class="chip-remove" (click)="removeMappedDomain(row, d)" [attr.aria-label]="'Remove ' + d.domainName">&times;</button>
+                  </span>
+                  <button type="button" class="btn-ghost btn-add" (click)="openMappingModal(row.projectId)">+ Add domain</button>
+                </div>
+                <div class="mapping-warning" *ngIf="!row.domains?.length">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                  No domains mapped - Configure Assessment can't create anything for this project yet.
+                </div>
+              </td>
+              <td>
+                <div class="chip-stack" *ngIf="row.assessees?.length">
+                  <span class="chip" *ngFor="let a of row.assessees"><span class="avatar" [style.background]="avatarColor(a.name)">{{ initials(a.name) }}</span>{{ a.name }}</span>
+                </div>
+                <div class="mapping-warning" *ngIf="!row.assessees?.length">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                  No assessees set - required before this project can be assessed.
+                </div>
+              </td>
+              <td class="row-actions">
+                <div class="row-actions-group row-actions-icons">
+                  <button type="button" class="btn-icon" (click)="openMappingHistoryModal(row.projectId)" title="History" aria-label="View mapping history for this project">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                  </button>
+                  <button type="button" class="btn-icon" (click)="openCopyMapModal(row.projectId)" title="Copy to…" aria-label="Copy this project's mapping to another project">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                  </button>
+                  <button type="button" class="btn-icon" (click)="openMappingModal(row.projectId)" title="Edit" aria-label="Edit this project's domain mapping">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredMappings.length && !loadingScope">
+              <td colspan="5" class="page-sub">{{ mappings.length ? 'No mappings match your search.' : 'No domain–project mappings yet.' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" *ngIf="filteredMappings.length">
+        <div class="pagination-size">
+          <label for="mappingPageSize">Rows per page</label>
+          <select id="mappingPageSize" [(ngModel)]="mappingTablePageSize" (ngModelChange)="onMappingTablePageSizeChange()">
+            <option *ngFor="let size of mappingTablePageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </div>
+        <div class="pagination-range">{{ mappingTableRangeLabel }}</div>
+        <div class="pagination-nav">
+          <button type="button" class="btn-icon" [disabled]="mappingTablePage <= 1" (click)="goToMappingTablePage(mappingTablePage - 1)" aria-label="Previous page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 6-6 6 6 6"/></svg>
+          </button>
+          <span class="pagination-page">Page {{ mappingTableCurrentPage }} of {{ mappingTableTotalPages }}</span>
+          <button type="button" class="btn-icon" [disabled]="mappingTablePage >= mappingTableTotalPages" (click)="goToMappingTablePage(mappingTablePage + 1)" aria-label="Next page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Categories & Parameters: the scoring catalogue itself. Everything here
+         is effective-dated master data, so the copy repeatedly says so - an
+         admin who thinks "Save" rewrites the row would be surprised by a new
+         version appearing, and an admin who thinks it rewrites history would
+         (rightly) be afraid to touch it at all. -->
+    <ng-container *ngIf="scopeSubTab === 'catalog' && canUseScopeSubTab('catalog')">
+      <div class="form-card">
+        <label class="modal-label">Domain<span class="required">*</span></label>
+        <select [(ngModel)]="catalogDomainId" (ngModelChange)="onCatalogDomainChange()">
+          <option *ngFor="let d of domains" [ngValue]="d.domainId">{{ d.name }}</option>
+        </select>
+        <div class="field-note">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          Categories and parameters are <strong>versioned, not overwritten</strong>. Editing a parameter's definition or rubric wording ends the current version today and starts a new one — the old wording stays exactly as it was for every assessment already scored against it.
+        </div>
+      </div>
+
+      <div class="section-head">
+        <h2>Categories</h2>
+        <span class="count">{{ catalogCategories.length }} {{ catalogShowRetired ? 'version(s)' : 'in effect' }} · {{ catalogDomainName }}</span>
+        <button type="button" class="btn-ghost" (click)="toggleCatalogRetired()">
+          {{ catalogShowRetired ? 'Hide retired versions' : 'Show retired versions' }}
+        </button>
+        <button type="button" class="btn-primary btn-create" (click)="openCategoryCreateModal()">+ New category</button>
+      </div>
+
+      <div class="page-sub" *ngIf="loadingCatalog"><app-spinner [size]="14"></app-spinner> Loading categories…</div>
+      <div class="page-sub" *ngIf="catalogError">{{ catalogError }}</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Category</th><th>Order</th><th>Parameters</th><th>Effective</th><th></th></tr></thead>
+          <tbody>
+            <ng-container *ngFor="let c of catalogCategories; trackBy: trackByCategoryId">
+              <tr>
+                <td>
+                  <button type="button" class="btn-ghost" (click)="toggleCategory(c)">
+                    {{ catalogCategoryId === c.categoryId ? '▾' : '▸' }} <strong>{{ c.name }}</strong>
+                  </button>
+                  <span class="pill pill-warning" *ngIf="!c.isCurrent">Retired</span>
+                </td>
+                <td>{{ c.displayOrder }}</td>
+                <td>{{ c.parameterCount }}</td>
+                <td>
+                  {{ effectiveRange(c.startDate, c.endDate) }}
+                  <span class="pill pill-accent" *ngIf="c.versionCount > 1">v{{ c.versionCount }}</span>
+                </td>
+                <td class="row-actions">
+                  <div class="row-actions-group">
+                    <button type="button" class="btn-ghost btn-info" (click)="openCategoryVersions(c)">History</button>
+                    <button type="button" class="btn-ghost btn-info" *ngIf="c.isCurrent" (click)="openCategoryRenameModal(c)">Rename</button>
+                    <button type="button" class="btn-primary" *ngIf="c.isCurrent" (click)="openCategoryVersionModal(c)">Edit (creates new version)</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="catalogCategoryId === c.categoryId">
+                <td colspan="5">
+                  <div class="section-head">
+                    <h2>Parameters in {{ c.name }}</h2>
+                    <span class="count">{{ catalogParameters.length }} listed</span>
+                    <button type="button" class="btn-primary btn-create" *ngIf="c.isCurrent" (click)="openParameterCreateModal()">+ New parameter</button>
+                  </div>
+                  <div class="page-sub" *ngIf="loadingCatalogParameters"><app-spinner [size]="14"></app-spinner> Loading parameters…</div>
+                  <p class="modal-hint" *ngIf="!loadingCatalogParameters && !catalogParameters.length">No parameters in this category version yet.</p>
+
+                  <div class="domain-accordion">
+                    <details class="domain-card" *ngFor="let p of catalogParameters; trackBy: trackByParameterId">
+                      <summary class="domain-summary">
+                        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 6 6 6-6 6"/></svg>
+                        <div>
+                          <div class="domain-name">{{ p.name }}</div>
+                          <div class="domain-meta">
+                            {{ effectiveRange(p.startDate, p.endDate) }}
+                            · min score {{ p.minRequiredScore ?? '—' }}
+                            · order {{ p.displayOrder }}
+                            <ng-container *ngIf="p.scoreCount"> · scored on {{ p.scoreCount }} assessment(s)</ng-container>
+                          </div>
+                        </div>
+                        <span class="status-tag pill" [ngClass]="p.isCurrent ? 'pill-accent' : 'pill-warning'">{{ p.isCurrent ? 'In effect' : 'Retired' }}</span>
+                      </summary>
+                      <div class="domain-body">
+                        <p class="modal-copy">{{ p.definition || 'No definition recorded.' }}</p>
+                        <div class="table-wrap">
+                          <table>
+                            <thead><tr><th>Level</th><th>Rubric</th></tr></thead>
+                            <tbody>
+                              <tr *ngFor="let l of p.levels; trackBy: trackByLevelNo">
+                                <td><strong>{{ l.levelNo }}</strong> · {{ levelLabel(l.levelNo) }}</td>
+                                <td>{{ l.description || '—' }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div class="step-actions between">
+                          <button type="button" class="btn-secondary" (click)="openParameterVersions(p)">Version history ({{ p.versionCount }})</button>
+                          <span>
+                            <button type="button" class="btn-ghost btn-info" *ngIf="p.isCurrent" (click)="openParameterRenameModal(p)">Rename</button>
+                            <button type="button" class="btn-primary" *ngIf="p.isCurrent" (click)="openParameterVersionModal(p)">{{ p.scoreCount ? 'Edit (creates new version)' : 'Edit' }}</button>
+                          </span>
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <tr *ngIf="!catalogCategories.length && !loadingCatalog">
+              <td colspan="5" class="page-sub">No categories configured for this domain yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <div class="step-actions between">
+      <button type="button" class="btn-secondary" *ngIf="canUseStep('cycle')" (click)="goToStep('cycle')">Back</button>
+      <button type="button" class="btn-primary" *ngIf="canUseStep('assessment')" (click)="continueToAssessment()">Submit and Continue to Configure Assessment</button>
+    </div>
+  </section>
+
+  <!-- ---- Categories & Parameters modals ---- -->
+
+  <div class="modal-backdrop" *ngIf="categoryModalOpen" (click)="closeCategoryModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeCategoryModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>{{ categoryEditId === null ? 'New category' : 'Rename category' }}</h3>
+      <label class="modal-label">Category name<span class="required">*</span></label>
+      <input type="text" placeholder="e.g. Access Controls" [(ngModel)]="categoryFormName">
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeCategoryModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveCategory()" [disabled]="savingCategory">
+            <app-spinner *ngIf="savingCategory" [size]="13"></app-spinner>
+            Save
+          </button>
+        </div>
+        <p class="modal-footnote" *ngIf="categoryEditId === null">Effective today, on every assessment scored from now on. Existing assessments are unaffected.</p>
+        <p class="modal-footnote" *ngIf="categoryEditId !== null">An in-place label change — no new version. Applied across this category's whole history; nothing scored changes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- "New version" as an actual edit form rather than a blind clone-and-save
+       click - display order is the only thing on a category worth changing
+       per version (the name is the immutable lineage key; renaming it is its
+       own separate in-place action, not a version). -->
+  <div class="modal-backdrop" *ngIf="categoryVersionModalOpen" (click)="closeCategoryVersionModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeCategoryVersionModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>New version — {{ categoryVersionEditing?.name }}</h3>
+      <label class="modal-label">Display order</label>
+      <input type="number" [(ngModel)]="categoryVersionFormOrder">
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeCategoryVersionModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveCategoryVersion()" [disabled]="savingCategory">
+            <app-spinner *ngIf="savingCategory" [size]="13"></app-spinner>
+            Create new version
+          </button>
+        </div>
+        <p class="modal-footnote">Ends the current version today and starts a new one with this display order. Every parameter still in effect carries forward; earlier versions are untouched.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="parameterModalOpen" (click)="closeParameterModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeParameterModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>{{ parameterEditId === null ? 'New parameter' : 'Edit ' + parameterFormName }}</h3>
+
+      <div class="field-note" *ngIf="parameterEditId !== null && parameterEditing?.scoreCount">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>
+          <strong>Saving creates a new version of this parameter, effective today.</strong>
+          The previous version's definition and rubric wording are preserved exactly as they are, so any assessment that already used it still reads the way it was scored.
+          {{ parameterEditing?.scoreCount }} assessment(s) have already scored the current version.
+          The name is not editable here because it links the versions together — use <strong>Rename</strong> instead.
+        </span>
+      </div>
+      <div class="field-note" *ngIf="parameterEditId !== null && !parameterEditing?.scoreCount">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>
+          <strong>Nothing has scored against this version yet</strong>, so saving corrects it in place — no new version is created.
+          The name is not editable here because it links the versions together — use <strong>Rename</strong> instead.
+        </span>
+      </div>
+
+      <ng-container *ngIf="parameterEditId === null">
+        <label class="modal-label">Parameter name<span class="required">*</span></label>
+        <input type="text" placeholder="e.g. Privileged access review cadence" [(ngModel)]="parameterFormName">
+      </ng-container>
+
+      <label class="modal-label">Definition</label>
+      <textarea rows="3" placeholder="What this parameter measures" [(ngModel)]="parameterFormDefinition"></textarea>
+
+      <label class="modal-label">Minimum required score (1–5)</label>
+      <input type="number" min="1" max="5" placeholder="Leave blank to inherit the domain's minimum" [(ngModel)]="parameterFormMinScore">
+      <p class="modal-hint">Versioned along with the wording: it is the bar a past finding's gap was measured against, so it is never changed under an existing score.</p>
+
+      <label class="modal-label">Maturity rubric</label>
+      <div *ngFor="let l of parameterFormLevels; trackBy: trackByLevelNo">
+        <label class="modal-label">{{ l.levelNo }} · {{ levelLabel(l.levelNo) }}</label>
+        <textarea rows="2" [placeholder]="'What level ' + l.levelNo + ' looks like'" [(ngModel)]="l.description"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeParameterModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveParameter()" [disabled]="savingParameter">
+            <app-spinner *ngIf="savingParameter" [size]="13"></app-spinner>
+            {{ parameterEditId === null ? 'Create parameter' : 'Save as new version' }}
+          </button>
+        </div>
+        <p class="modal-footnote" *ngIf="parameterEditId === null">Effective today with the rubric below, on every assessment scored from now on.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="parameterRenameModalOpen" (click)="closeParameterRenameModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeParameterRenameModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Rename parameter</h3>
+      <label class="modal-label">Parameter name<span class="required">*</span></label>
+      <input type="text" [(ngModel)]="parameterRenameName">
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeParameterRenameModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveParameterRename()" [disabled]="savingParameterRename">
+            <app-spinner *ngIf="savingParameterRename" [size]="13"></app-spinner>
+            Save
+          </button>
+        </div>
+        <p class="modal-footnote">An in-place label change — no new version. Nothing already scored changes.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="versionModalOpen" (click)="closeVersionModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeVersionModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>{{ versionTitle }}</h3>
+      <p class="modal-copy">Every version, oldest first — wording is frozen once a version is retired.</p>
+      <div class="page-sub" *ngIf="loadingVersions"><app-spinner [size]="14"></app-spinner> Loading version history…</div>
+
+      <div class="table-wrap" *ngIf="parameterVersions.length">
+        <table>
+          <thead><tr><th>Effective</th><th>Min</th><th>Definition</th><th>Scored</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let v of parameterVersions; trackBy: trackByParameterId">
+              <td>
+                {{ effectiveRange(v.startDate, v.endDate) }}
+                <span class="pill pill-accent" *ngIf="v.isCurrent">Current</span>
+              </td>
+              <td>{{ v.minRequiredScore ?? '—' }}</td>
+              <td>{{ v.definition || '—' }}</td>
+              <td>{{ v.scoreCount }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" *ngIf="categoryVersions.length">
+        <table>
+          <thead><tr><th>Effective</th><th>Name</th><th>Parameters</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let v of categoryVersions; trackBy: trackByCategoryId">
+              <td>
+                {{ effectiveRange(v.startDate, v.endDate) }}
+                <span class="pill pill-accent" *ngIf="v.isCurrent">Current</span>
+              </td>
+              <td>{{ v.name }}</td>
+              <td>{{ v.parameterCount }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="modal-hint" *ngIf="!loadingVersions && !parameterVersions.length && !categoryVersions.length">No version history found.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeVersionModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="domainEditModalOpen" (click)="closeDomainEditModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeDomainEditModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Rename domain</h3>
+      <label class="modal-label">Domain name<span class="required">*</span></label>
+      <input type="text" placeholder="e.g. Change Management" [(ngModel)]="domainFormName">
+      <div class="field-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        Assessors and reviewers aren't set here — they're assigned per domain in "Assign Assessor / Reviewer" (step 5).
+      </div>
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeDomainEditModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveDomainName()" [disabled]="savingDomain">
+            <app-spinner *ngIf="savingDomain" [size]="13"></app-spinner>
+            Save
+          </button>
+        </div>
+        <p class="modal-footnote">Only the display name changes — code, categories, and existing assessments stay as they are.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="mappingModalOpen" (click)="closeMappingModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeMappingModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Map domains to a project</h3>
+      <label class="modal-label">Customer</label>
+      <app-searchable-select
+        [(ngModel)]="mappingModalAccountName"
+        (ngModelChange)="onMappingModalCustomerChange()"
+        [options]="customerSelectOptions"
+        [disabled]="mappingModalIsEdit"
+        emptyLabel="All customers"
+        placeholder="All customers — type to search"
+      ></app-searchable-select>
+      <label class="modal-label">Project<span class="required">*</span></label>
+      <app-searchable-select
+        [(ngModel)]="mappingModalProjectId"
+        (ngModelChange)="onMappingModalProjectChange()"
+        [options]="projectSelectOptions(mappingModalAccountName)"
+        [disabled]="mappingModalIsEdit"
+        placeholder="Select a project… (type to search)"
+      ></app-searchable-select>
+      <label class="modal-label">Domains<span class="required">*</span></label>
+      <p class="modal-hint" *ngIf="!mappingModalProjectId">Select a project above first.</p>
+      <div class="multi-picker" *ngIf="mappingModalProjectId">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let d of domains">
+            <input type="checkbox" [checked]="isMappingDomainSelected(d.domainId)" (change)="toggleMappingDomain(d.domainId)">
+            <span class="picker-name">{{ d.name }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="picker-toolbar" *ngIf="mappingModalProjectId && domains.length">
+        <button type="button" class="btn-ghost" (click)="toggleAllMappingDomains()">
+          {{ allMappingDomainsPicked ? 'Clear all' : 'Select all listed' }}
+        </button>
+        <span class="page-sub">{{ mappingModalDomainIds.length }} domain(s) selected</span>
+      </div>
+      <label class="modal-label">Assessees<span class="required">*</span></label>
+      <p class="modal-hint" *ngIf="!mappingModalProjectId">Select a project above first.</p>
+      <ng-container *ngIf="mappingModalProjectId">
+        <p class="modal-hint" *ngIf="loadingMappingModalAssessees"><app-spinner [size]="12"></app-spinner> Loading who's staffed on this project…</p>
+        <p class="modal-hint" *ngIf="!loadingMappingModalAssessees && !mappingModalAssesseeCandidates.length">No one is staffed on this project yet.</p>
+        <div class="search-box" *ngIf="mappingModalAssesseeCandidates.length">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="mappingModalAssesseeSearch">
+        </div>
+        <div class="multi-picker" *ngIf="mappingModalAssesseeCandidates.length">
+          <div class="multi-picker-list">
+            <label class="picker-row" *ngFor="let e of filteredMappingModalAssesseeCandidates">
+              <input type="checkbox" [checked]="isMappingAssesseeSelected(e.empId)" (change)="toggleMappingAssessee(e.empId)">
+              <span class="picker-name">{{ e.name }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="picker-toolbar" *ngIf="mappingModalAssesseeCandidates.length">
+          <button type="button" class="btn-ghost" (click)="toggleAllMappingAssessees()">
+            {{ allVisibleMappingAssesseesPicked ? 'Clear all' : 'Select all listed' }}
+          </button>
+          <span class="page-sub">{{ mappingModalAssesseeIds.length }} selected</span>
+        </div>
+        <p class="modal-hint">These are the people this project's assessments are about - the same set applies across every domain assessed for this project, every cycle.</p>
+      </ng-container>
+      <label class="modal-label">Reason for change <span class="page-sub" style="display:inline;">(optional, kept in Audit History)</span></label>
+      <input type="text" [(ngModel)]="mappingModalReason" placeholder="e.g. onboarding new SOW scope">
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeMappingModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveMapping()" [disabled]="savingMapping || !mappingModalProjectId">
+            <app-spinner *ngIf="savingMapping" [size]="13"></app-spinner>
+            Save mapping
+          </button>
+        </div>
+        <p class="modal-footnote">This is the project's complete domain set — unticking unmaps it. Doesn't start an assessment. For several projects at once, use <strong>Bulk map</strong> instead.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk map: many domains x many projects, ADDITIVE ONLY. Kept separate from
+       "New mapping" above (which is replace-semantics for one project) so a
+       bulk save can never wipe a domain set the admin never looked at. -->
+  <div class="modal-backdrop" *ngIf="bulkMapModalOpen" (click)="closeBulkMapModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeBulkMapModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Bulk map domains to projects</h3>
+
+      <label class="modal-label">Customer</label>
+      <app-searchable-select
+        [(ngModel)]="bulkMapAccountName"
+        (ngModelChange)="onBulkMapCustomerChange()"
+        [options]="customerSelectOptions"
+        emptyLabel="All customers"
+        placeholder="All customers — type to search"
+      ></app-searchable-select>
+
+      <label class="modal-label">Projects<span class="required">*</span></label>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by project name" [(ngModel)]="bulkMapProjectSearch">
+      </div>
+      <div class="multi-picker">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let p of projectsForCustomer(bulkMapAccountName, bulkMapProjectSearch)">
+            <input type="checkbox" [checked]="isBulkMapProjectPicked(p.projectId)" (change)="toggleBulkMapProject(p.projectId)">
+            <span class="picker-name">{{ p.projectName }} <span class="picker-role">{{ p.accountName }}</span></span>
+          </label>
+          <p class="modal-hint" *ngIf="!projectsForCustomer(bulkMapAccountName, bulkMapProjectSearch).length">No projects match.</p>
+        </div>
+      </div>
+      <div class="picker-toolbar">
+        <button type="button" class="btn-ghost" (click)="toggleAllBulkMapProjects()">
+          {{ allVisibleBulkMapProjectsPicked ? 'Clear all' : 'Select all listed' }}
+        </button>
+        <span class="page-sub">{{ bulkMapProjectIds.length }} project(s) selected</span>
+      </div>
+
+      <label class="modal-label">Domains<span class="required">*</span></label>
+      <div class="multi-picker">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let d of domains">
+            <input type="checkbox" [checked]="isBulkMapDomainPicked(d.domainId)" (change)="toggleBulkMapDomain(d.domainId)">
+            <span class="picker-name">{{ d.name }}</span>
+          </label>
+          <p class="modal-hint" *ngIf="!domains.length">No domains configured.</p>
+        </div>
+      </div>
+      <div class="picker-toolbar" *ngIf="domains.length">
+        <button type="button" class="btn-ghost" (click)="toggleAllBulkMapDomains()">
+          {{ allBulkMapDomainsPicked ? 'Clear all' : 'Select all listed' }}
+        </button>
+        <span class="page-sub">{{ bulkMapDomainIds.length }} domain(s) selected</span>
+      </div>
+      <p class="modal-hint">Every domain is mapped to every selected project.</p>
+
+      <div class="field-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        This will add up to <strong>{{ bulkMapNewCount }}</strong> mapping(s) across {{ bulkMapProjectIds.length }} project(s)<span *ngIf="bulkMapExistingCount">; {{ bulkMapExistingCount }} of the {{ bulkMapPlannedCount }} combination(s) already exist and are left as they are</span>. Existing mappings are never removed.
+      </div>
+
+      <label class="modal-label">Reason for change <span class="page-sub" style="display:inline;">(optional, kept in Audit History)</span></label>
+      <input type="text" [(ngModel)]="bulkMapReason" placeholder="e.g. onboarding new SOW scope">
+
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeBulkMapModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveBulkMapping()" [disabled]="savingBulkMap">
+            <app-spinner *ngIf="savingBulkMap" [size]="13"></app-spinner>
+            Add mappings
+          </button>
+        </div>
+        <p class="modal-footnote">Adds only — existing mappings are never removed. To set an exact list for one project, use "+ New mapping" instead.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Domain-Project Mapping audit history: every Add/Reactivate/Remove ever
+       logged, newest first, scoped to one project when opened from a row's
+       "History" button, or every project when opened from the toolbar's
+       "Audit History" button. -->
+  <div class="modal-backdrop" *ngIf="mappingHistoryModalOpen" (click)="closeMappingHistoryModal()">
+    <div class="modal modal-wide" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeMappingHistoryModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Domain–Project Mapping history{{ mappingHistoryProjectId ? ' — ' + mappingHistoryProjectId : '' }}</h3>
+      <p class="modal-copy">Every mapping change, with who made it, when, and why.</p>
+      <div class="page-sub" *ngIf="loadingMappingHistory"><app-spinner [size]="14"></app-spinner> Loading history…</div>
+      <div class="table-wrap" *ngIf="!loadingMappingHistory">
+        <table>
+          <thead><tr><th>Project</th><th>Domain</th><th>Action</th><th>Reason</th><th>Changed by</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let h of mappingHistoryRows">
+              <td>{{ h.projectName || h.projectId }}</td>
+              <td>{{ h.domainName }}</td>
+              <td>
+                <span class="pill" [class.pill-good]="h.action === 'Added' || h.action === 'Reactivated'" [class.pill-critical]="h.action === 'Removed'">{{ h.action }}</span>
+              </td>
+              <td>{{ h.reason || '—' }}</td>
+              <td>{{ h.changedByName || h.changedBy }}</td>
+              <td>{{ h.changedDate | date: 'mediumDate' }}</td>
+            </tr>
+            <tr *ngIf="!mappingHistoryRows.length">
+              <td colspan="6" class="page-sub">No mapping changes logged yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeMappingHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Copy mapping: REPLACE per target — each target ends up with exactly the
+       source's domain set. Meant for onboarding a project into an account whose
+       domain set is already settled. -->
+  <div class="modal-backdrop" *ngIf="copyMapModalOpen" (click)="closeCopyMapModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeCopyMapModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Copy mapping from another project</h3>
+
+      <label class="modal-label">Copy from — customer</label>
+      <app-searchable-select
+        [(ngModel)]="copyMapSourceAccountName"
+        (ngModelChange)="onCopyMapSourceCustomerChange()"
+        [options]="customerSelectOptions"
+        emptyLabel="All customers"
+        placeholder="All customers — type to search"
+      ></app-searchable-select>
+      <label class="modal-label">Copy from — project<span class="required">*</span></label>
+      <app-searchable-select
+        [(ngModel)]="copyMapSourceProjectId"
+        (ngModelChange)="onCopyMapSourceChange()"
+        [options]="projectSelectOptions(copyMapSourceAccountName)"
+        placeholder="Select the source project… (type to search)"
+      ></app-searchable-select>
+      <div class="chip-stack" *ngIf="copyMapSourceProjectId && copyMapSourceDomains.length">
+        <span class="pill pill-tag" *ngFor="let d of copyMapSourceDomains">{{ d.domainName }}</span>
+      </div>
+      <p class="modal-hint" *ngIf="copyMapSourceProjectId && !copyMapSourceDomains.length">
+        That project has no mapped domains yet — there is nothing to copy from it.
+      </p>
+
+      <label class="modal-label">Copy onto — customer</label>
+      <app-searchable-select
+        [(ngModel)]="copyMapTargetAccountName"
+        (ngModelChange)="onCopyMapTargetCustomerChange()"
+        [options]="customerSelectOptions"
+        emptyLabel="All customers"
+        placeholder="All customers — type to search"
+      ></app-searchable-select>
+      <label class="modal-label">Copy onto — projects<span class="required">*</span></label>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by project name" [(ngModel)]="copyMapTargetProjectSearch">
+      </div>
+      <div class="multi-picker">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let p of projectsForCustomer(copyMapTargetAccountName, copyMapTargetProjectSearch)">
+            <input
+              type="checkbox"
+              [checked]="isCopyMapTargetPicked(p.projectId)"
+              [disabled]="p.projectId === copyMapSourceProjectId"
+              (change)="toggleCopyMapTarget(p.projectId)">
+            <span class="picker-name">
+              {{ p.projectName }} <span class="picker-role">{{ p.accountName }}</span>
+              <span class="picker-role" *ngIf="p.projectId === copyMapSourceProjectId">source</span>
+            </span>
+          </label>
+          <p class="modal-hint" *ngIf="!projectsForCustomer(copyMapTargetAccountName, copyMapTargetProjectSearch).length">No projects match.</p>
+        </div>
+      </div>
+      <div class="picker-toolbar">
+        <button type="button" class="btn-ghost" (click)="toggleAllCopyMapTargets()">
+          {{ allVisibleCopyMapTargetsPicked ? 'Clear all' : 'Select all listed' }}
+        </button>
+        <span class="page-sub">{{ copyMapTargetProjectIds.length }} target project(s) selected</span>
+      </div>
+
+      <div class="field-note" *ngIf="copyMapOverwriteTargets.length">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        {{ copyMapOverwriteTargets.length }} selected project(s) already have domains the source doesn't — those will be unmapped: {{ copyMapOverwriteTargets.join(', ') }}.
+      </div>
+      <div class="field-note" *ngIf="!copyMapOverwriteTargets.length">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        {{ copyMapTargetProjectIds.length }} project(s) will end up with the source's {{ copyMapSourceDomains.length }} domain(s). Nothing existing is lost.
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeCopyMapModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="copyMapping()" [disabled]="savingCopyMap">
+            <app-spinner *ngIf="savingCopyMap" [size]="13"></app-spinner>
+            Copy mapping
+          </button>
+        </div>
+        <p class="modal-footnote">Replaces each target's domain set with the source's exact set. The source itself is unchanged.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STEP 4: Configure Assessment ============ -->
+  <section class="maturity-page" *ngIf="activeStep === 'assessment'">
+    <div class="page-head">
+      <div class="icon-badge">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div>
+        <h1>Configure Assessment <span class="pill pill-accent">Requires: Assessment Coordinator</span></h1>
+        <div class="page-sub">Pick the cycle and project(s), then Add to set Assessor/Reviewer per assessment before creating.</div>
+      </div>
+    </div>
+
+    <div class="step4-grid">
+    <div class="form-card">
+      <label class="modal-label">Cycle<span class="required">*</span></label>
+      <app-searchable-select
+        [(ngModel)]="selectedCycleIdStr"
+        (ngModelChange)="loadAssessments()"
+        [options]="cycleSelectOptions"
+        placeholder="Select a cycle… (type to search)"
+      ></app-searchable-select>
+
+      <!-- Only projects already mapped in Configure Scope are offered - a
+           project with nothing mapped has nothing for this step to do. -->
+      <label class="modal-label">Projects<span class="required">*</span></label>
+      <div class="assessment-projects-picker" [class.open]="assessmentProjectsPickerOpen">
+        <button type="button" class="picker-control" (click)="toggleAssessmentProjectsPicker()">
+          <span>{{ assessmentProjectIds.length ? assessmentProjectIds.length + ' project(s) selected' : 'Select projects… (click to browse)' }}</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <ng-container *ngIf="assessmentProjectsPickerOpen">
+          <div class="search-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" placeholder="Search by project name" [(ngModel)]="assessmentProjectSearch">
+          </div>
+          <div class="multi-picker">
+            <div class="multi-picker-list">
+              <label class="picker-row" *ngFor="let m of mappedProjectsForAssessment">
+                <input type="checkbox" [checked]="isAssessmentProjectPicked(m.projectId)" (change)="toggleAssessmentProject(m.projectId)">
+                <span class="picker-name">{{ m.projectName }} <span class="picker-role">{{ m.accountName }}</span></span>
+              </label>
+              <p class="modal-hint" *ngIf="!mappedProjectsForAssessment.length">
+                {{ !mappings.length
+                  ? 'No projects have any domains mapped yet - map them in Configure Scope first.'
+                  : (assessmentProjectSearch ? 'No projects match.' : 'Every mapped project already has an up-to-date assessment for this cycle - nothing new to create.') }}
+              </p>
+            </div>
+          </div>
+          <div class="picker-toolbar">
+            <button type="button" class="btn-ghost" (click)="toggleAllAssessmentProjects()">
+              {{ allVisibleAssessmentProjectsPicked ? 'Clear all' : 'Select all listed' }}
+            </button>
+            <span class="page-sub">{{ assessmentProjectIds.length }} project(s) selected</span>
+          </div>
+        </ng-container>
+      </div>
+      <p class="modal-hint">
+        Domains and assessees come from each project's own setup in Configure Scope - nothing else to pick here.
+      </p>
+
+      <div class="step-actions end tight">
+        <button type="button" class="btn-secondary" *ngIf="showAssessmentStaging && stagedRows.length" (click)="backFromStaging()">Edit selection</button>
+        <button type="button" class="btn-primary" *ngIf="!showAssessmentStaging || !stagedRows.length" (click)="stageAssessments()" [disabled]="loadingStagedCandidates">
+          <app-spinner *ngIf="loadingStagedCandidates" [size]="13"></app-spinner>
+          Add
+        </button>
+      </div>
+    </div>
+
+    <!-- Live recap of the form on the left, filling the wide empty space this
+         page otherwise has on anything wider than the 620px form-card. -->
+    <aside class="assessment-summary">
+      <h3>Selection summary</h3>
+      <div class="summary-row">
+        <div class="summary-label">Cycle</div>
+        <div class="summary-value">{{ selectedCycle ? cycleLabelFor(selectedCycle) : '—' }}</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Projects ({{ assessmentProjectIds.length }})</div>
+        <div class="chip-stack" *ngIf="pickedAssessmentProjectLabels.length; else noneProjects">
+          <span class="pill pill-muted" *ngFor="let label of pickedAssessmentProjectLabels">{{ label }}</span>
+        </div>
+        <ng-template #noneProjects><div class="summary-value muted">None selected yet</div></ng-template>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Domains (from Configure Scope)</div>
+        <div class="chip-stack" *ngIf="plannedDomainNames.length; else noneDomains">
+          <span class="pill pill-muted" *ngFor="let name of plannedDomainNames">{{ name }}</span>
+        </div>
+        <ng-template #noneDomains><div class="summary-value muted">Pick a project to see its mapped domains</div></ng-template>
+      </div>
+
+      <!-- Pre-create summary: live, cross-references the selection against what
+           GetITOpsAssessmentsForCycle already returned. -->
+      <div class="create-summary" *ngIf="plannedAssessmentCount">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div>
+          <div>
+            This will create <strong>{{ newAssessmentCount }}</strong> new assessment(s) across
+            <strong>{{ assessmentProjectIds.length }}</strong> project(s).
+          </div>
+          <div class="page-sub" *ngIf="existingAssessmentCount && !assesseeSyncOnlyCount">
+            {{ existingAssessmentCount }} assessment(s) already exist for this combination and will be left unchanged (their team stays as-is).
+          </div>
+          <div class="page-sub" *ngIf="assesseeSyncOnlyCount">
+            {{ assesseeSyncOnlyCount }} project(s) already have all their assessments created - their assessee list has changed in Configure Scope since, so clicking this will push that update onto every existing assessment for them (their assigned team stays as-is).
+          </div>
+          <div class="page-sub" *ngIf="retiredAssessmentCount">
+            {{ retiredAssessmentCount }} not-started assessment(s) on domains no longer mapped will be retired.
+          </div>
+        </div>
+      </div>
+    </aside>
+    </div>
+
+    <!-- "Add" staging: every planned (project x domain) pair, so Assessor/Reviewer
+         can be set per pair before anything is actually created. -->
+    <div class="section-gap" *ngIf="showAssessmentStaging && stagedRows.length">
+      <div class="section-head"><h2>Review before creating</h2><span class="count">{{ stagedRows.length }} pair(s)</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" [checked]="allStagedRowsIncluded" (change)="toggleAllStagedRowsIncluded()" aria-label="Include all rows">
+              </th>
+              <th>Project</th><th>Domain</th><th>Assessee</th><th>Assessor<span class="required">*</span></th><th>Reviewer<span class="required">*</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of stagedRows; trackBy: trackByStagedRowKey">
+              <td>
+                <input
+                  type="checkbox"
+                  [checked]="isRowIncluded(row.key)"
+                  (change)="toggleRowIncluded(row.key)"
+                  [attr.aria-label]="'Include ' + row.projectName + ' — ' + row.domainName"
+                >
+              </td>
+              <td><strong>{{ row.projectName }}</strong></td>
+              <td>{{ row.domainName }}</td>
+              <td class="people-cell">
+                <div class="chip-stack" *ngIf="row.assesseeNames.length">
+                  <span class="chip" *ngFor="let name of row.assesseeNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                </div>
+                <span class="page-sub" *ngIf="!row.assesseeNames.length">Set in Configure Scope</span>
+              </td>
+              <td class="people-cell">
+                <div class="chip-stack-edit" *ngIf="row.assessorNames.length; else assessorEmpty">
+                  <div class="chip-stack">
+                    <span class="chip" *ngFor="let name of row.assessorNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                  </div>
+                  <button type="button" class="btn-icon" (click)="openStagedAssign(row, 'Assessor')" title="Edit assessor" aria-label="Edit assessor">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+                <ng-template #assessorEmpty>
+                  <button
+                    type="button"
+                    class="btn-ghost btn-add"
+                    [class.invalid]="stagingValidationFailed && isRowIncluded(row.key)"
+                    (click)="openStagedAssign(row, 'Assessor')"
+                  >+ Set assessor</button>
+                  <span class="field-error" *ngIf="stagingValidationFailed && isRowIncluded(row.key)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                    Assessor required
+                  </span>
+                </ng-template>
+              </td>
+              <td class="people-cell">
+                <div class="chip-stack-edit" *ngIf="row.reviewerNames.length; else reviewerEmpty">
+                  <div class="chip-stack">
+                    <span class="chip" *ngFor="let name of row.reviewerNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                  </div>
+                  <button type="button" class="btn-icon" (click)="openStagedAssign(row, 'Reviewer')" title="Edit reviewer" aria-label="Edit reviewer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+                <ng-template #reviewerEmpty>
+                  <button
+                    type="button"
+                    class="btn-ghost btn-add"
+                    [class.invalid]="stagingValidationFailed && isRowIncluded(row.key)"
+                    (click)="openStagedAssign(row, 'Reviewer')"
+                  >+ Set reviewer</button>
+                  <span class="field-error" *ngIf="stagingValidationFailed && isRowIncluded(row.key)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                    Reviewer required
+                  </span>
+                </ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="modal-hint">Every included new row needs at least one Assessor and one Reviewer - Assessor/Reviewer can be anyone in the org, not just people staffed on the project. Untick Include to leave a row staged for later instead of creating it now.</p>
+      <div class="step-actions end tight">
+        <button type="button" class="btn-primary" (click)="createAssessments()" [disabled]="creatingAssessments">
+          <app-spinner *ngIf="creatingAssessments" [size]="13"></app-spinner>
+          {{ newAssessmentCount === 0 && assesseeSyncOnlyCount ? 'Create / update assessments' : 'Create assessments' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="section-gap">
+      <div class="section-head"><h2>Assessments in this cycle</h2><span class="count">{{ filteredAssessmentRows.length }} of {{ assessmentRows.length }} created</span></div>
+      <div class="page-sub" *ngIf="loadingAssessments"><app-spinner [size]="14"></app-spinner> Loading assessments…</div>
+      <div class="page-sub" *ngIf="assessmentsError">{{ assessmentsError }}</div>
+      <div class="search-box" *ngIf="assessmentRows.length">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by project or domain" [(ngModel)]="assessmentTableSearch" (ngModelChange)="onAssessmentTableSearchChange()">
+      </div>
+      <div class="field-note selection-bar" *ngIf="selectedAssessmentIdsForRemoval.size">
+        <span>{{ selectedAssessmentIdsForRemoval.size }} selected</span>
+        <button
+          type="button"
+          class="btn-ghost btn-danger"
+          [disabled]="removingSelectedAssessments"
+          (click)="removeSelectedAssessments()"
+        >
+          <app-spinner *ngIf="removingSelectedAssessments" [size]="12"></app-spinner>
+          Delete selected
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" [checked]="allRemovableRowsOnPageSelected" (change)="toggleAllAssessmentsSelectedForRemovalOnPage()" aria-label="Select all removable rows on this page">
+              </th>
+              <th>Project</th><th>Domain</th><th>Status</th><th>Assessee</th><th>Assessor</th><th>Reviewer</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of pagedAssessmentRows">
+              <td>
+                <input
+                  type="checkbox"
+                  *ngIf="canRemoveAssessment(row)"
+                  [checked]="isAssessmentSelectedForRemoval(row)"
+                  (change)="toggleAssessmentSelectedForRemoval(row)"
+                  [attr.aria-label]="'Select ' + row.projectName + ' — ' + row.domainName"
+                >
+              </td>
+              <td><strong>{{ row.projectName }}</strong></td>
+              <td>{{ row.domainName }}</td>
+              <td><span class="pill" [ngClass]="'pill-' + statusTone(row)">{{ statusLabel(row) }}</span></td>
+              <td class="people-cell">
+                <div class="chip-stack-edit">
+                  <div class="chip-stack" *ngIf="row.assesseeNames.length">
+                    <span class="chip" *ngFor="let name of row.assesseeNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                  </div>
+                  <span class="pill pill-critical" *ngIf="!row.assesseeNames.length">Unassigned</span>
+                  <button type="button" class="btn-icon" (click)="openUpdateAssesseesModal(row)" title="Update this project's assessees - also updates Configure Scope" aria-label="Edit assessees">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+              </td>
+              <td class="people-cell">
+                <div class="chip-stack-edit">
+                  <div class="chip-stack" *ngIf="row.assessorNames.length">
+                    <span class="chip" *ngFor="let name of row.assessorNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                  </div>
+                  <span class="pill pill-critical" *ngIf="!row.assessorNames.length">Unassigned</span>
+                  <button type="button" class="btn-icon" (click)="openUpdateAssessorModal(row)" title="Update this assessment's assessor" aria-label="Edit assessor">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+              </td>
+              <td class="people-cell">
+                <div class="chip-stack-edit">
+                  <div class="chip-stack" *ngIf="row.reviewerNames.length">
+                    <span class="chip" *ngFor="let name of row.reviewerNames"><span class="avatar" [style.background]="avatarColor(name)">{{ initials(name) }}</span>{{ name }}</span>
+                  </div>
+                  <span class="pill pill-critical" *ngIf="!row.reviewerNames.length">Unassigned</span>
+                  <button type="button" class="btn-icon" (click)="openUpdateReviewerModal(row)" title="Update this assessment's reviewer" aria-label="Edit reviewer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+              </td>
+              <td class="row-actions">
+                <button
+                  type="button"
+                  class="btn-icon btn-danger"
+                  *ngIf="canRemoveAssessment(row)"
+                  [disabled]="removingAssessmentId === row.assessmentId"
+                  (click)="removeAssessment(row)"
+                  title="Remove this assessment"
+                  aria-label="Remove this assessment"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredAssessmentRows.length && !loadingAssessments">
+              <td colspan="8" class="page-sub">{{ assessmentRows.length ? 'No assessments match your search.' : 'No assessments visible to you for this cycle - either none exist yet, or they belong to projects you don\'t have access to.' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" *ngIf="filteredAssessmentRows.length">
+        <div class="pagination-size">
+          <label for="assessmentPageSize">Rows per page</label>
+          <select id="assessmentPageSize" [(ngModel)]="assessmentTablePageSize" (ngModelChange)="onAssessmentTablePageSizeChange()">
+            <option *ngFor="let size of assessmentTablePageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </div>
+        <div class="pagination-range">{{ assessmentTableRangeLabel }}</div>
+        <div class="pagination-nav">
+          <button type="button" class="btn-icon" [disabled]="assessmentTablePage <= 1" (click)="goToAssessmentTablePage(assessmentTablePage - 1)" aria-label="Previous page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 6-6 6 6 6"/></svg>
+          </button>
+          <span class="pagination-page">Page {{ assessmentTableCurrentPage }} of {{ assessmentTableTotalPages }}</span>
+          <button type="button" class="btn-icon" [disabled]="assessmentTablePage >= assessmentTableTotalPages" (click)="goToAssessmentTablePage(assessmentTablePage + 1)" aria-label="Next page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions between">
+      <button type="button" class="btn-secondary" *ngIf="canUseStep('scope')" (click)="goToStep('scope')">Back</button>
+      <button type="button" class="btn-primary" *ngIf="canUseStep('team')" (click)="goToStep('team')">Continue to Assign Assessor/ Reviewer</button>
+    </div>
+  </section>
+
+  <!-- Quick "Update assessees" for an already-created assessment's project.
+       Writes through to Configure Scope's own assessee config (ITOPS_PROJECT_ASSESSEE)
+       and re-syncs it onto every existing assessment for this project in this
+       cycle - never a separate, assessment-only assessee list. -->
+  <div class="modal-backdrop" *ngIf="updateAssesseesModalOpen" (click)="closeUpdateAssesseesModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeUpdateAssesseesModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Update assessees — {{ updateAssesseesProjectLabel }}</h3>
+      <label class="modal-label">Assessees<span class="required">*</span></label>
+      <p class="modal-hint" *ngIf="loadingUpdateAssessees"><app-spinner [size]="12"></app-spinner> Loading who's staffed on this project…</p>
+      <ng-container *ngIf="!loadingUpdateAssessees">
+        <p class="modal-hint" *ngIf="!updateAssesseesCandidates.length">No one is staffed on this project yet.</p>
+        <div class="search-box" *ngIf="updateAssesseesCandidates.length">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="updateAssesseesSearch">
+        </div>
+        <div class="multi-picker" *ngIf="updateAssesseesCandidates.length">
+          <div class="multi-picker-list">
+            <label class="picker-row" *ngFor="let e of filteredUpdateAssesseesCandidates">
+              <input type="checkbox" [checked]="isUpdateAssesseeSelected(e.empId)" (change)="toggleUpdateAssessee(e.empId)">
+              <span class="picker-name">{{ e.name }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="picker-toolbar" *ngIf="updateAssesseesCandidates.length">
+          <button type="button" class="btn-ghost" (click)="toggleAllUpdateAssessees()">
+            {{ allVisibleUpdateAssesseesPicked ? 'Clear all' : 'Select all listed' }}
+          </button>
+          <span class="page-sub">{{ updateAssesseesSelectedIds.length }} selected</span>
+        </div>
+      </ng-container>
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeUpdateAssesseesModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveUpdateAssessees()" [disabled]="savingUpdateAssessees">
+            <app-spinner *ngIf="savingUpdateAssessees" [size]="13"></app-spinner>
+            Save &amp; sync
+          </button>
+        </div>
+        <p class="modal-footnote">Updates Configure Scope and syncs onto every assessment already created for this project this cycle. Assessors/reviewers are unaffected.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="updateAssessorModalOpen" (click)="closeUpdateAssessorModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeUpdateAssessorModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Update assessor — {{ updateAssessorProjectLabel }}</h3>
+      <label class="modal-label">Assessor</label>
+      <p class="modal-hint" *ngIf="loadingUpdateAssessor"><app-spinner [size]="12"></app-spinner> Loading employees…</p>
+      <ng-container *ngIf="!loadingUpdateAssessor">
+        <p class="modal-hint" *ngIf="!updateAssessorCandidates.length">No employees found.</p>
+        <div class="search-box" *ngIf="updateAssessorCandidates.length">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="updateAssessorSearch">
+        </div>
+        <div class="multi-picker" *ngIf="updateAssessorCandidates.length">
+          <div class="multi-picker-list">
+            <label class="picker-row" *ngFor="let e of filteredUpdateAssessorCandidates">
+              <input type="checkbox" [checked]="isUpdateAssessorSelected(e.empId)" (change)="toggleUpdateAssessor(e.empId)">
+              <span class="picker-name">{{ e.name }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="picker-toolbar" *ngIf="updateAssessorCandidates.length">
+          <button type="button" class="btn-ghost" (click)="toggleAllUpdateAssessor()">
+            {{ allVisibleUpdateAssessorPicked ? 'Clear all' : 'Select all listed' }}
+          </button>
+          <span class="page-sub">{{ updateAssessorSelectedIds.length }} selected</span>
+        </div>
+      </ng-container>
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeUpdateAssessorModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveUpdateAssessor()" [disabled]="savingUpdateAssessor">
+            <app-spinner *ngIf="savingUpdateAssessor" [size]="13"></app-spinner>
+            Save &amp; sync
+          </button>
+        </div>
+        <p class="modal-footnote">Applies immediately to this one assessment.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="updateReviewerModalOpen" (click)="closeUpdateReviewerModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeUpdateReviewerModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Update reviewer — {{ updateReviewerProjectLabel }}</h3>
+      <label class="modal-label">Reviewer</label>
+      <p class="modal-hint" *ngIf="loadingUpdateReviewer"><app-spinner [size]="12"></app-spinner> Loading employees…</p>
+      <ng-container *ngIf="!loadingUpdateReviewer">
+        <p class="modal-hint" *ngIf="!updateReviewerCandidates.length">No employees found.</p>
+        <div class="search-box" *ngIf="updateReviewerCandidates.length">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="updateReviewerSearch">
+        </div>
+        <div class="multi-picker" *ngIf="updateReviewerCandidates.length">
+          <div class="multi-picker-list">
+            <label class="picker-row" *ngFor="let e of filteredUpdateReviewerCandidates">
+              <input type="checkbox" [checked]="isUpdateReviewerSelected(e.empId)" (change)="toggleUpdateReviewer(e.empId)">
+              <span class="picker-name">{{ e.name }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="picker-toolbar" *ngIf="updateReviewerCandidates.length">
+          <button type="button" class="btn-ghost" (click)="toggleAllUpdateReviewer()">
+            {{ allVisibleUpdateReviewerPicked ? 'Clear all' : 'Select all listed' }}
+          </button>
+          <span class="page-sub">{{ updateReviewerSelectedIds.length }} selected</span>
+        </div>
+      </ng-container>
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeUpdateReviewerModal()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveUpdateReviewer()" [disabled]="savingUpdateReviewer">
+            <app-spinner *ngIf="savingUpdateReviewer" [size]="13"></app-spinner>
+            Save &amp; sync
+          </button>
+        </div>
+        <p class="modal-footnote">Applies immediately to this one assessment.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staged assign: sets Assessor/Reviewer on a not-yet-created (project x domain)
+       pair - purely local state until "Create assessments" is clicked. -->
+  <div class="modal-backdrop" *ngIf="stagedAssignOpen" (click)="closeStagedAssign()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeStagedAssign()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Set {{ stagedAssignRole.toLowerCase() }}</h3>
+      <label class="modal-label">{{ stagedAssignRole }}</label>
+      <p class="modal-hint" *ngIf="!stagedAssignCandidates.length">No employees found.</p>
+      <div class="search-box" *ngIf="stagedAssignCandidates.length">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="stagedAssignSearch">
+      </div>
+      <div class="multi-picker" *ngIf="stagedAssignCandidates.length">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let e of filteredStagedAssignCandidates">
+            <input type="checkbox" [checked]="isStagedAssignSelected(e.empId)" (change)="toggleStagedAssign(e.empId)">
+            <span class="picker-name">{{ e.name }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="picker-toolbar" *ngIf="stagedAssignCandidates.length">
+        <button type="button" class="btn-ghost" (click)="toggleAllStagedAssign()">
+          {{ allVisibleStagedAssignPicked ? 'Clear all' : 'Select all listed' }}
+        </button>
+        <span class="page-sub">{{ stagedAssignSelectedIds.length }} selected</span>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeStagedAssign()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="saveStagedAssign()">Done</button>
+        </div>
+        <p class="modal-footnote">Not saved yet - takes effect when this pair is actually created below.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STEP 5: Assign Assessor / Reviewer ============ -->
+  <section class="maturity-page" *ngIf="activeStep === 'team'">
+    <div class="page-head">
+      <div class="icon-badge">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="8" r="3.2"/><path d="M2.5 20c.5-3.5 3-5.5 6.5-5.5s6 2 6.5 5.5M14.5 14.7c3 .3 5 2.2 5.5 5.3"/></svg>
+      </div>
+      <div>
+        <h1>Assign Assessor / Reviewer <span class="pill pill-accent">Requires: Team Assignment Coordinator</span></h1>
+        <div class="page-sub">Cycle {{ selectedCycle?.cycleLabel }}. Assign assessors and reviewers per domain below.</div>
+      </div>
+    </div>
+
+    <!-- Cross-cycle, cross-project action, so it sits at the top of the step
+         rather than on any one domain row. -->
+    <div class="section-head">
+      <button type="button" class="btn-ghost" (click)="openReassignModal()">Reassign…</button>
+    </div>
+
+    <!-- Own cycle picker: a user who only holds Team Assignment Coordinator
+         never sees Configure Cycle, so this step has to be able to choose its
+         own context. No card wrapper - it's just the one field, so a boxed
+         panel around it would be empty weight. -->
+    <div class="field-row" style="grid-template-columns: 1fr;">
+      <div>
+        <label class="modal-label">Cycle<span class="required">*</span></label>
+        <app-searchable-select
+          [(ngModel)]="selectedCycleIdStr"
+          (ngModelChange)="onTeamCycleChange()"
+          [options]="cycleSelectOptions"
+          placeholder="Select a cycle… (type to search)"
+        ></app-searchable-select>
+      </div>
+    </div>
+
+    <div class="section-gap">
+      <div class="section-head">
+        <h2>Domains in this cycle</h2>
+        <span class="count">{{ filteredDomainGroups.length }} of {{ groupedDomainTeams.length }}</span>
+      </div>
+      <div class="page-sub" *ngIf="loadingTeams"><app-spinner [size]="14"></app-spinner> Loading domain teams…</div>
+      <div class="page-sub" *ngIf="teamsError">{{ teamsError }}</div>
+      <div class="search-box" *ngIf="groupedDomainTeams.length">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by domain" [(ngModel)]="teamDomainSearch">
+      </div>
+      <p class="modal-hint" *ngIf="!loadingTeams && !domainTeams.length">No assessments exist for this cycle yet — create them in Configure Assessment first.</p>
+      <p class="modal-hint" *ngIf="!loadingTeams && groupedDomainTeams.length && !filteredDomainGroups.length">No domains match your search.</p>
+
+      <!-- One card per domain for the whole cycle - assigning an assessor or
+           reviewer here applies to every project that includes this domain, so
+           the same team never has to be re-picked project by project. -->
+      <div class="domain-accordion" *ngIf="!loadingTeams && filteredDomainGroups.length">
+        <details class="domain-card" *ngFor="let group of filteredDomainGroups; trackBy: trackByDomainId; let first = first" [open]="first">
+          <summary class="domain-summary">
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 6 6 6-6 6"/></svg>
+            <div>
+              <div class="domain-name">{{ group.name }}</div>
+              <div class="domain-meta">{{ group.assessmentIds.length }} project(s) in this cycle</div>
+              <div class="domain-meta" *ngIf="group.status === 'Ready'">{{ group.assessors.length }} assessor(s) · {{ group.reviewers.length }} reviewer(s)</div>
+              <div class="domain-meta" *ngIf="group.status === 'Needs setup'">No team assigned yet</div>
+            </div>
+            <span class="status-tag pill" [ngClass]="group.status === 'Ready' ? 'pill-accent' : 'pill-warning'">{{ group.status }}</span>
+          </summary>
+          <div class="domain-body">
+            <div class="role-row">
+              <div class="role-label"><strong>Assessors</strong><span>{{ group.assessors.length }} assigned</span></div>
+              <div class="role-chips chip-stack">
+                <span class="chip" *ngFor="let m of group.assessors; trackBy: trackByTeamMemberEmpId">
+                  <span class="avatar" [style.background]="avatarColor(m.empName)">{{ initials(m.empName) }}</span>{{ m.empName }}
+                  <button type="button" class="chip-remove" (click)="removeTeamMember(group, 'Assessor', m)" [attr.aria-label]="'Remove ' + m.empName">&times;</button>
+                </span>
+                <button type="button" class="btn-ghost btn-add" (click)="openPicker('Assessor', group)">+ Add</button>
+              </div>
+            </div>
+            <div class="role-row">
+              <div class="role-label"><strong>Reviewers</strong><span>{{ group.reviewers.length }} assigned</span></div>
+              <div class="role-chips chip-stack">
+                <span class="chip" *ngFor="let m of group.reviewers; trackBy: trackByTeamMemberEmpId">
+                  <span class="avatar" [style.background]="avatarColor(m.empName)">{{ initials(m.empName) }}</span>{{ m.empName }}
+                  <button type="button" class="chip-remove" (click)="removeTeamMember(group, 'Reviewer', m)" [attr.aria-label]="'Remove ' + m.empName">&times;</button>
+                </span>
+                <button type="button" class="btn-ghost btn-add" (click)="openPicker('Reviewer', group)">+ Add</button>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="step-actions between">
+      <button type="button" class="btn-secondary" *ngIf="canUseStep('assessment')" (click)="goToStep('assessment')">Back to Assessments</button>
+      <button type="button" class="btn-primary" (click)="submitDomainTeams()">Submit</button>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="pickerModalOpen" (click)="closePicker()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closePicker()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Add {{ pickerRole === 'Assessor' ? 'assessors' : 'reviewers' }} — {{ pickerDomain }}</h3>
+      <p class="modal-copy">Select one or more {{ pickerRole === 'Assessor' ? 'assessors' : 'reviewers' }} for this domain.</p>
+      <!-- The domain already carries a default owner for this role (the same one
+           the assessment was seeded from) - offering it as one click beats making
+           the admin type a name they already know. Hidden when there is no
+           default or that person is already on the team. -->
+      <div class="chip-stack" *ngIf="pickerDefaultEmpId">
+        <button type="button" class="btn-ghost" (click)="addPickerDefault()" [disabled]="savingPicker">
+          <app-spinner *ngIf="savingPicker" [size]="13"></app-spinner>
+          Use default ({{ pickerDefaultName }})
+        </button>
+        <span class="modal-hint">This domain's default {{ pickerRole === 'Assessor' ? 'assessor' : 'reviewer' }}.</span>
+      </div>
+
+      <label class="modal-label">Search employees</label>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search by name or employee ID" [(ngModel)]="pickerSearch" (input)="searchPicker()" (focus)="searchPicker()">
+      </div>
+      <div class="multi-picker">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let c of pickerCandidates">
+            <span class="picker-name">{{ c.name }}</span>
+            <button type="button" class="btn-ghost" (click)="addPickedMember(c)" [disabled]="savingPicker">Add</button>
+          </label>
+          <p class="modal-hint" *ngIf="!pickerCandidates.length">No matches.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closePicker()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="reassignModalOpen" (click)="closeReassignModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeReassignModal()" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Reassign every assignment</h3>
+      <p class="modal-copy">Replaces <strong>every</strong> assignment the first person holds with the second, across every assessment and cycle.</p>
+
+      <label class="modal-label">Replace<span class="required">*</span></label>
+      <div class="chip-stack" *ngIf="reassignFrom">
+        <span class="chip"><span class="avatar" [style.background]="avatarColor(reassignFrom.name)">{{ initials(reassignFrom.name) }}</span>{{ reassignFrom.name }}</span>
+        <button type="button" class="btn-ghost" (click)="reassignFrom = null; reassignPreview = null">Change</button>
+      </div>
+      <div class="search-box" *ngIf="!reassignFrom">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search the assessor/reviewer" [(ngModel)]="reassignFromSearch" (input)="searchReassignFrom()" (focus)="searchReassignFrom()">
+      </div>
+      <div class="multi-picker" *ngIf="!reassignFrom && reassignFromResults.length">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let c of reassignFromResults">
+            <span class="picker-name">{{ c.name }}</span>
+            <button type="button" class="btn-ghost" (click)="pickReassignFrom(c)">Select</button>
+          </label>
+        </div>
+      </div>
+
+      <label class="modal-label">With<span class="required">*</span></label>
+      <div class="chip-stack" *ngIf="reassignTo">
+        <span class="chip"><span class="avatar" [style.background]="avatarColor(reassignTo.name)">{{ initials(reassignTo.name) }}</span>{{ reassignTo.name }}</span>
+        <button type="button" class="btn-ghost" (click)="reassignTo = null; reassignPreview = null">Change</button>
+      </div>
+      <div class="search-box" *ngIf="!reassignTo">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search their replacement" [(ngModel)]="reassignToSearch" (input)="searchReassignTo()" (focus)="searchReassignTo()">
+      </div>
+      <div class="multi-picker" *ngIf="!reassignTo && reassignToResults.length">
+        <div class="multi-picker-list">
+          <label class="picker-row" *ngFor="let c of reassignToResults">
+            <span class="picker-name">{{ c.name }}</span>
+            <button type="button" class="btn-ghost" (click)="pickReassignTo(c)">Select</button>
+          </label>
+        </div>
+      </div>
+
+      <div class="page-sub" *ngIf="loadingReassignPreview"><app-spinner [size]="14"></app-spinner> Checking what this would affect…</div>
+
+      <div class="field-note" *ngIf="reassignPreview && !loadingReassignPreview">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span *ngIf="reassignPreview.totalRows">
+          <strong>{{ reassignPreview.totalRows }} assignment(s)</strong> across <strong>{{ reassignPreview.assessmentCount }} assessment(s)</strong> would move —
+          {{ reassignPreview.assessorRows }} as assessor, {{ reassignPreview.reviewerRows }} as reviewer.
+          <ng-container *ngIf="reassignPreview.mergedRows">
+            {{ reassignPreview.mergedRows }} of them are assessments {{ reassignPreview.toEmpName }} is already on, so those are merged into one assignment rather than duplicated.
+          </ng-container>
+        </span>
+        <span *ngIf="!reassignPreview.totalRows">{{ reassignPreview.fromEmpName }} holds no active assessor or reviewer assignments — nothing to reassign.</span>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeReassignModal()">Cancel</button>
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="confirmReassign()"
+          [disabled]="savingReassign || loadingReassignPreview || !reassignPreview || !reassignPreview.totalRows"
+        >
+          <app-spinner *ngIf="savingReassign" [size]="13"></app-spinner>
+          Reassign {{ reassignPreview?.totalRows || 0 }} assignment(s)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  </ng-container>
+
+</div>
