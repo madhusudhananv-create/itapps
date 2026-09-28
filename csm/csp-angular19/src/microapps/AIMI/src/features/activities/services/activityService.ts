@@ -18,6 +18,50 @@ import type { ActivityWithProjectInfo } from '../types/activityTypes';
 // Collection name for activities
 const ACTIVITIES_COLLECTION = 'activities';
 
+// Firestore rejects an 'in' clause with more than 30 comparison values, and
+// combining it with a second 'in' clause caps the combined disjunctions at
+// 30 as well - so we chunk the primary filter into batches of 30 and always
+// apply any secondary filter (e.g. practices) client-side after fetching.
+const FIRESTORE_IN_CLAUSE_LIMIT = 30;
+
+const chunkArray = <T,>(items: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+};
+
+/**
+ * Fetch activities matching any of `values` for `field`, transparently
+ * batching into multiple queries when `values` exceeds Firestore's 30-value
+ * 'in' clause limit, then merging and de-duplicating the results.
+ */
+const getActivitiesByFieldValues = async (
+  field: 'businessUnit' | 'account' | 'project',
+  values: string[]
+): Promise<ActivityWithProjectInfo[]> => {
+  const batches = chunkArray(values, FIRESTORE_IN_CLAUSE_LIMIT);
+
+  const batchResults = await Promise.all(
+    batches.map(async (batch) => {
+      const q = query(
+        collection(db, ACTIVITIES_COLLECTION),
+        where(field, 'in', batch),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(convertFirestoreToActivity);
+    })
+  );
+
+  const activitiesById = new Map<string, ActivityWithProjectInfo>();
+  for (const activity of batchResults.flat()) {
+    activitiesById.set(activity.id, activity);
+  }
+  return Array.from(activitiesById.values());
+};
+
 // Interface for Firestore activity document
 interface FirestoreActivity
   extends Omit<ActivityWithProjectInfo, 'id' | 'createdAt' | 'updatedAt'> {
@@ -374,30 +418,15 @@ export const activityService = {
     try {
       if (businessUnits.length === 0) return [];
 
-      let q;
+      const activities = await getActivitiesByFieldValues(
+        'businessUnit',
+        businessUnits
+      );
+
       if (practices && practices.length > 0) {
-        // Filter by both business units and practices
-        q = query(
-          collection(db, ACTIVITIES_COLLECTION),
-          where('businessUnit', 'in', businessUnits),
-          where('practice', 'in', practices),
-          orderBy('createdAt', 'desc')
-        );
-      } else {
-        // Filter by business units only
-        q = query(
-          collection(db, ACTIVITIES_COLLECTION),
-          where('businessUnit', 'in', businessUnits),
-          orderBy('createdAt', 'desc')
-        );
+        const practiceSet = new Set(practices);
+        return activities.filter((activity) => practiceSet.has(activity.practice));
       }
-
-      const querySnapshot = await getDocs(q);
-      const activities: ActivityWithProjectInfo[] = [];
-
-      querySnapshot.forEach((doc) => {
-        activities.push(convertFirestoreToActivity(doc));
-      });
 
       return activities;
     } catch (error) {
@@ -419,30 +448,12 @@ export const activityService = {
     try {
       if (accounts.length === 0) return [];
 
-      let q;
+      const activities = await getActivitiesByFieldValues('account', accounts);
+
       if (practices && practices.length > 0) {
-        // Filter by both accounts and practices
-        q = query(
-          collection(db, ACTIVITIES_COLLECTION),
-          where('account', 'in', accounts),
-          where('practice', 'in', practices),
-          orderBy('createdAt', 'desc')
-        );
-      } else {
-        // Filter by accounts only
-        q = query(
-          collection(db, ACTIVITIES_COLLECTION),
-          where('account', 'in', accounts),
-          orderBy('createdAt', 'desc')
-        );
+        const practiceSet = new Set(practices);
+        return activities.filter((activity) => practiceSet.has(activity.practice));
       }
-
-      const querySnapshot = await getDocs(q);
-      const activities: ActivityWithProjectInfo[] = [];
-
-      querySnapshot.forEach((doc) => {
-        activities.push(convertFirestoreToActivity(doc));
-      });
 
       return activities;
     } catch (error) {
@@ -464,30 +475,12 @@ export const activityService = {
     try {
       if (projects.length === 0) return [];
 
-      let q;
+      const activities = await getActivitiesByFieldValues('project', projects);
+
       if (practices && practices.length > 0) {
-        // Filter by both projects and practices
-        q = query(
-          collection(db, ACTIVITIES_COLLECTION),
-          where('project', 'in', projects),
-          where('practice', 'in', practices),
-          orderBy('createdAt', 'desc')
-        );
-      } else {
-        // Filter by projects only
-        q = query(
-          collection(db, ACTIVITIES_COLLECTION),
-          where('project', 'in', projects),
-          orderBy('createdAt', 'desc')
-        );
+        const practiceSet = new Set(practices);
+        return activities.filter((activity) => practiceSet.has(activity.practice));
       }
-
-      const querySnapshot = await getDocs(q);
-      const activities: ActivityWithProjectInfo[] = [];
-
-      querySnapshot.forEach((doc) => {
-        activities.push(convertFirestoreToActivity(doc));
-      });
 
       return activities;
     } catch (error) {
