@@ -1,0 +1,43 @@
+-- Cross-project read backing the Reports page and the Dashboard/Project Statistics
+-- screens - replaces the old getActivitiesByBusinessUnits / getActivitiesByAccounts /
+-- getActivitiesByProjects client methods with one flexible, filtered, set-based query.
+-- Any of the four table-valued parameters may be passed empty, meaning "no filter on
+-- that dimension" (mirrors the old client-side "All" multi-select behaviour).
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetActivitiesByFilter' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetActivitiesByFilter]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetActivitiesByFilter]
+    @BUSINESS_UNITS dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY,
+    @ACCOUNTS dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY,
+    @PROJECTS dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY,
+    @PRACTICES dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        a.ID, a.PROJECT_ID, a.PROJECT, a.ACCOUNT, a.BUSINESS_UNIT, a.PRACTICE,
+        a.SDLC_PHASE, a.ACTIVITY, a.APPLICABILITY, a.AI_ADOPTION_SCORE, a.WORK_DONE_BY_AI,
+        a.HOURS_SAVED, a.REVENUE_GENERATED, a.BENEFIT_TO, a.COMMENTS, a.STATUS,
+        a.CREATED_BY, a.CREATED_DATE, a.UPDATED_BY, a.UPDATED_DATE,
+        (SELECT TOOL_NAME, ACCESS_TYPE, LICENSE_COUNT, NETWORK_TYPE
+           FROM AIMI_ACTIVITY_AI_TOOL t WHERE t.ACTIVITY_ID = a.ID
+           FOR JSON PATH) AS AI_TOOLS_JSON,
+        (SELECT ACCELERATOR_NAME
+           FROM AIMI_ACTIVITY_ACCELERATOR ac WHERE ac.ACTIVITY_ID = a.ID
+           FOR JSON PATH) AS ACCELERATORS_JSON,
+        (SELECT BENEFIT_NAME
+           FROM AIMI_ACTIVITY_QUALITATIVE_BENEFIT qb WHERE qb.ACTIVITY_ID = a.ID
+           FOR JSON PATH) AS QUALITATIVE_BENEFITS_JSON
+    FROM AIMI_ACTIVITY a
+    WHERE a.ISACTIVE = 1
+      AND (NOT EXISTS (SELECT 1 FROM @BUSINESS_UNITS) OR a.BUSINESS_UNIT IN (SELECT VALUE_TEXT FROM @BUSINESS_UNITS))
+      AND (NOT EXISTS (SELECT 1 FROM @ACCOUNTS)       OR a.ACCOUNT       IN (SELECT VALUE_TEXT FROM @ACCOUNTS))
+      AND (NOT EXISTS (SELECT 1 FROM @PROJECTS)       OR a.PROJECT       IN (SELECT VALUE_TEXT FROM @PROJECTS))
+      AND (NOT EXISTS (SELECT 1 FROM @PRACTICES)      OR a.PRACTICE      IN (SELECT VALUE_TEXT FROM @PRACTICES))
+    ORDER BY a.CREATED_DATE DESC;
+END
+GO
