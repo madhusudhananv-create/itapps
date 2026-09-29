@@ -2400,5 +2400,233 @@ namespace GAVS.AllocationSystem.Data
             var QueryResult = dbContext.Database.SqlQuery<AllProcessList>("[dbo].[getProcessModelListByProcessAreaIds] @processAreaIds",param1).ToList();
             return QueryResult;
         }
+
+        // ---- AIMI (AI Maturity Index) stored procedures ----
+        // Each wraps one usp_AIMI_* proc (WebApi/DB Scripts/01 StoredProcedure/BAS/,
+        // tables/types in Release 2.6.2.sql). Follows the same CSPDbContext +
+        // Database.SqlQuery<T> pattern as the ITOps section above; TVP-typed
+        // parameters (AIMI_STRING_LIST_TABLE_TYPE / AIMI_ID_LIST_TABLE_TYPE /
+        // AIMI_AI_TOOL_TABLE_TYPE) reuse this class's existing ToDataTable<T> helper.
+
+        private SqlParameter BuildAimiStructuredParam(string name, DataTable table, string sqlTypeName)
+        {
+            return new SqlParameter(name, table) { SqlDbType = SqlDbType.Structured, TypeName = sqlTypeName };
+        }
+
+        private DataTable ToAimiStringListTable(List<string> values)
+        {
+            return ToDataTable((values ?? new List<string>()).Select(v => new AimiStringListRow { VALUE_TEXT = v }).ToList());
+        }
+
+        private DataTable ToAimiIdListTable(List<int> values)
+        {
+            return ToDataTable((values ?? new List<int>()).Select(v => new AimiIdListRow { ID = v }).ToList());
+        }
+
+        public List<AimiActivitySpRow> AimiGetActivities(int? id, string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@ID", (object)id ?? DBNull.Value);
+            var param2 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param3 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<AimiActivitySpRow>(
+                "[dbo].[usp_AIMI_GetActivities] @ID, @PROJECT_ID, @PRACTICE", param1, param2, param3).ToList();
+        }
+
+        public List<AimiActivitySpRow> AimiGetActivitiesByFilter(List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = BuildAimiStructuredParam("@BUSINESS_UNITS", ToAimiStringListTable(businessUnits), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param2 = BuildAimiStructuredParam("@ACCOUNTS", ToAimiStringListTable(accounts), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param3 = BuildAimiStructuredParam("@PROJECTS", ToAimiStringListTable(projects), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param4 = BuildAimiStructuredParam("@PRACTICES", ToAimiStringListTable(practices), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            return dbContext.Database.SqlQuery<AimiActivitySpRow>(
+                "[dbo].[usp_AIMI_GetActivitiesByFilter] @BUSINESS_UNITS, @ACCOUNTS, @PROJECTS, @PRACTICES",
+                param1, param2, param3, param4).ToList();
+        }
+
+        // @ID is InputOutput on the proc: pass an existing id to update that row, or
+        // null to insert; either way the proc sets @ID to the row's final id, which
+        // this method returns. EF6's Database.SqlQuery only populates an output
+        // SqlParameter's .Value once the reader has been fully drained (.ToList()),
+        // even though this proc's result set is empty.
+        public int AimiUpsertActivity(int? id, string projectId, string project, string account, string businessUnit,
+            string practice, string sdlcPhase, string activity, string applicability, byte? aiAdoptionScore,
+            byte? workDoneByAi, decimal? hoursSaved, string revenueGenerated, string benefitTo, string comments,
+            string status, List<AimiAiToolTvpRow> aiTools, List<string> accelerators, List<string> qualitativeBenefits,
+            string empId)
+        {
+            var dbContext = new CSPDbContext();
+
+            var idParam = new SqlParameter("@ID", SqlDbType.Int) { Direction = ParameterDirection.InputOutput, Value = (object)id ?? DBNull.Value };
+            var param2 = new SqlParameter("@PROJECT_ID", projectId);
+            var param3 = new SqlParameter("@PROJECT", (object)project ?? DBNull.Value);
+            var param4 = new SqlParameter("@ACCOUNT", (object)account ?? DBNull.Value);
+            var param5 = new SqlParameter("@BUSINESS_UNIT", (object)businessUnit ?? DBNull.Value);
+            var param6 = new SqlParameter("@PRACTICE", practice);
+            var param7 = new SqlParameter("@SDLC_PHASE", sdlcPhase);
+            var param8 = new SqlParameter("@ACTIVITY", activity);
+            var param9 = new SqlParameter("@APPLICABILITY", (object)applicability ?? DBNull.Value);
+            var param10 = new SqlParameter("@AI_ADOPTION_SCORE", (object)aiAdoptionScore ?? DBNull.Value);
+            var param11 = new SqlParameter("@WORK_DONE_BY_AI", (object)workDoneByAi ?? DBNull.Value);
+            var param12 = new SqlParameter("@HOURS_SAVED", (object)hoursSaved ?? DBNull.Value);
+            var param13 = new SqlParameter("@REVENUE_GENERATED", (object)revenueGenerated ?? DBNull.Value);
+            var param14 = new SqlParameter("@BENEFIT_TO", (object)benefitTo ?? DBNull.Value);
+            var param15 = new SqlParameter("@COMMENTS", (object)comments ?? DBNull.Value);
+            var param16 = new SqlParameter("@STATUS", (object)status ?? DBNull.Value);
+            var param17 = BuildAimiStructuredParam("@AI_TOOLS", ToDataTable(aiTools ?? new List<AimiAiToolTvpRow>()), "dbo.AIMI_AI_TOOL_TABLE_TYPE");
+            var param18 = BuildAimiStructuredParam("@ACCELERATORS", ToAimiStringListTable(accelerators), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param19 = BuildAimiStructuredParam("@QUALITATIVE_BENEFITS", ToAimiStringListTable(qualitativeBenefits), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param20 = new SqlParameter("@EMP_ID", empId);
+
+            dbContext.Database.SqlQuery<int>(
+                "[dbo].[usp_AIMI_UpsertActivity] @ID OUTPUT, @PROJECT_ID, @PROJECT, @ACCOUNT, @BUSINESS_UNIT, @PRACTICE, @SDLC_PHASE, @ACTIVITY, @APPLICABILITY, @AI_ADOPTION_SCORE, @WORK_DONE_BY_AI, @HOURS_SAVED, @REVENUE_GENERATED, @BENEFIT_TO, @COMMENTS, @STATUS, @AI_TOOLS, @ACCELERATORS, @QUALITATIVE_BENEFITS, @EMP_ID",
+                idParam, param2, param3, param4, param5, param6, param7, param8, param9, param10,
+                param11, param12, param13, param14, param15, param16, param17, param18, param19, param20).ToList();
+
+            return (int)idParam.Value;
+        }
+
+        public void AimiDeleteActivity(int? id, List<int> ids, string empId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@ID", (object)id ?? DBNull.Value);
+            var param2 = BuildAimiStructuredParam("@IDS", ToAimiIdListTable(ids), "dbo.AIMI_ID_LIST_TABLE_TYPE");
+            var param3 = new SqlParameter("@EMP_ID", empId);
+            dbContext.Database.SqlQuery<int>("[dbo].[usp_AIMI_DeleteActivity] @ID, @IDS, @EMP_ID", param1, param2, param3).ToList();
+        }
+
+        public List<AimiProjectInfoSpRow> AimiGetProjectInfo(string projectId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<AimiProjectInfoSpRow>(
+                "[dbo].[usp_AIMI_GetProjectInfo] @PROJECT_ID", param1).ToList();
+        }
+
+        public int AimiUpsertProjectInfo(int? id, string projectId, int? peopleUsingAi, bool isProjectNa, string naComments,
+            int? licenseCount, string licenseProvider, string runopsAutoResolved, string runopsMttrReduction,
+            string runopsAiAgents, string runopsAutomatedWorkflows, string runopsMttd, string runopsMttr,
+            string engineerAiAgents, string engineerDeliveryCycleTime, string engineerContractTestCasePassRate,
+            string engineerPerformanceDefectsPreRelease, string commonAdoptionWorkforceCertification,
+            string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool presentationDone,
+            string projectFy, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId)
+        {
+            var dbContext = new CSPDbContext();
+
+            var idParam = new SqlParameter("@ID", SqlDbType.Int) { Direction = ParameterDirection.InputOutput, Value = (object)id ?? DBNull.Value };
+            var param2 = new SqlParameter("@PROJECT_ID", projectId);
+            var param3 = new SqlParameter("@PEOPLE_USING_AI", (object)peopleUsingAi ?? DBNull.Value);
+            var param4 = new SqlParameter("@IS_PROJECT_NA", isProjectNa);
+            var param5 = new SqlParameter("@NA_COMMENTS", (object)naComments ?? DBNull.Value);
+            var param6 = new SqlParameter("@LICENSE_COUNT", (object)licenseCount ?? DBNull.Value);
+            var param7 = new SqlParameter("@LICENSE_PROVIDER", (object)licenseProvider ?? DBNull.Value);
+            var param8 = new SqlParameter("@RUNOPS_AUTO_RESOLVED", (object)runopsAutoResolved ?? DBNull.Value);
+            var param9 = new SqlParameter("@RUNOPS_MTTR_REDUCTION", (object)runopsMttrReduction ?? DBNull.Value);
+            var param10 = new SqlParameter("@RUNOPS_AI_AGENTS", (object)runopsAiAgents ?? DBNull.Value);
+            var param11 = new SqlParameter("@RUNOPS_AUTOMATED_WORKFLOWS", (object)runopsAutomatedWorkflows ?? DBNull.Value);
+            var param12 = new SqlParameter("@RUNOPS_MTTD", (object)runopsMttd ?? DBNull.Value);
+            var param13 = new SqlParameter("@RUNOPS_MTTR", (object)runopsMttr ?? DBNull.Value);
+            var param14 = new SqlParameter("@ENGINEER_AI_AGENTS", (object)engineerAiAgents ?? DBNull.Value);
+            var param15 = new SqlParameter("@ENGINEER_DELIVERY_CYCLE_TIME", (object)engineerDeliveryCycleTime ?? DBNull.Value);
+            var param16 = new SqlParameter("@ENGINEER_CONTRACT_TEST_CASE_PASS_RATE", (object)engineerContractTestCasePassRate ?? DBNull.Value);
+            var param17 = new SqlParameter("@ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE", (object)engineerPerformanceDefectsPreRelease ?? DBNull.Value);
+            var param18 = new SqlParameter("@COMMON_ADOPTION_WORKFORCE_CERTIFICATION", (object)commonAdoptionWorkforceCertification ?? DBNull.Value);
+            var param19 = new SqlParameter("@COMMON_ADOPTION_EFFORTS_SAVED", (object)commonAdoptionEffortsSaved ?? DBNull.Value);
+            var param20 = new SqlParameter("@COMMON_DEPLOYMENT_ENGINEER", (object)commonDeploymentEngineer ?? DBNull.Value);
+            var param21 = new SqlParameter("@PRESENTATION_DONE", presentationDone);
+            var param22 = new SqlParameter("@PROJECT_FY", (object)projectFy ?? DBNull.Value);
+            var param23 = new SqlParameter("@ACCEPTED_SCORE", (object)acceptedScore ?? DBNull.Value);
+            var param24 = new SqlParameter("@SCORE_REVIEWED", scoreReviewed);
+            var param25 = new SqlParameter("@ACCEPTED_SCORE_COMMENT", (object)acceptedScoreComment ?? DBNull.Value);
+            var param26 = new SqlParameter("@EMP_ID", empId);
+
+            dbContext.Database.SqlQuery<int>(
+                "[dbo].[usp_AIMI_UpsertProjectInfo] @ID OUTPUT, @PROJECT_ID, @PEOPLE_USING_AI, @IS_PROJECT_NA, @NA_COMMENTS, @LICENSE_COUNT, @LICENSE_PROVIDER, " +
+                "@RUNOPS_AUTO_RESOLVED, @RUNOPS_MTTR_REDUCTION, @RUNOPS_AI_AGENTS, @RUNOPS_AUTOMATED_WORKFLOWS, @RUNOPS_MTTD, @RUNOPS_MTTR, " +
+                "@ENGINEER_AI_AGENTS, @ENGINEER_DELIVERY_CYCLE_TIME, @ENGINEER_CONTRACT_TEST_CASE_PASS_RATE, @ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE, " +
+                "@COMMON_ADOPTION_WORKFORCE_CERTIFICATION, @COMMON_ADOPTION_EFFORTS_SAVED, @COMMON_DEPLOYMENT_ENGINEER, " +
+                "@PRESENTATION_DONE, @PROJECT_FY, @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT, @EMP_ID",
+                idParam, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12,
+                param13, param14, param15, param16, param17, param18, param19, param20, param21, param22, param23,
+                param24, param25, param26).ToList();
+
+            return (int)idParam.Value;
+        }
+
+        public List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param2 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<AimiPracticeInfoSpRow>(
+                "[dbo].[usp_AIMI_GetPracticeInfo] @PROJECT_ID, @PRACTICE", param1, param2).ToList();
+        }
+
+        public int AimiUpsertPracticeInfo(int? id, string projectId, string practice, string currentPhase, string empId)
+        {
+            var dbContext = new CSPDbContext();
+            var idParam = new SqlParameter("@ID", SqlDbType.Int) { Direction = ParameterDirection.InputOutput, Value = (object)id ?? DBNull.Value };
+            var param2 = new SqlParameter("@PROJECT_ID", projectId);
+            var param3 = new SqlParameter("@PRACTICE", practice);
+            var param4 = new SqlParameter("@CURRENT_PHASE", (object)currentPhase ?? DBNull.Value);
+            var param5 = new SqlParameter("@EMP_ID", empId);
+
+            dbContext.Database.SqlQuery<int>(
+                "[dbo].[usp_AIMI_UpsertPracticeInfo] @ID OUTPUT, @PROJECT_ID, @PRACTICE, @CURRENT_PHASE, @EMP_ID",
+                idParam, param2, param3, param4, param5).ToList();
+
+            return (int)idParam.Value;
+        }
+
+        public List<AimiAiToolMetricSpRow> AimiGetAIToolMetrics(string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param2 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<AimiAiToolMetricSpRow>(
+                "[dbo].[usp_AIMI_GetAIToolMetrics] @PROJECT_ID, @PRACTICE", param1, param2).ToList();
+        }
+
+        public List<AimiAiToolBySdlcPhaseSpRow> AimiGetAIToolsBySDLCPhase(string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param2 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<AimiAiToolBySdlcPhaseSpRow>(
+                "[dbo].[usp_AIMI_GetAIToolsBySDLCPhase] @PROJECT_ID, @PRACTICE", param1, param2).ToList();
+        }
+
+        public AimiDashboardSummarySpRow AimiGetDashboardSummary(string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param2 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<AimiDashboardSummarySpRow>(
+                "[dbo].[usp_AIMI_GetDashboardSummary] @PROJECT_ID, @PRACTICE", param1, param2).FirstOrDefault();
+        }
+
+        public List<AimiQualitativeBenefitAnalysisSpRow> AimiGetQualitativeBenefitAnalysis(string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param2 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<AimiQualitativeBenefitAnalysisSpRow>(
+                "[dbo].[usp_AIMI_GetQualitativeBenefitAnalysis] @PROJECT_ID, @PRACTICE", param1, param2).ToList();
+        }
+
+        public List<AimiReportDataSpRow> AimiGetReportData(string projectId, string practice, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param2 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            var param3 = BuildAimiStructuredParam("@BUSINESS_UNITS", ToAimiStringListTable(businessUnits), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param4 = BuildAimiStructuredParam("@ACCOUNTS", ToAimiStringListTable(accounts), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param5 = BuildAimiStructuredParam("@PROJECTS", ToAimiStringListTable(projects), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param6 = BuildAimiStructuredParam("@PRACTICES", ToAimiStringListTable(practices), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            return dbContext.Database.SqlQuery<AimiReportDataSpRow>(
+                "[dbo].[usp_AIMI_GetReportData] @PROJECT_ID, @PRACTICE, @BUSINESS_UNITS, @ACCOUNTS, @PROJECTS, @PRACTICES",
+                param1, param2, param3, param4, param5, param6).ToList();
+        }
     }
 }

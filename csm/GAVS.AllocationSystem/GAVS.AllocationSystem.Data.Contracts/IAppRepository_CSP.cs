@@ -294,5 +294,34 @@ namespace GAVS.AllocationSystem.Data.Contracts
         List<ITOpsDomainProjectMapDomainSpRow> ITOpsGetDomainProjectMapDomains(string projectId);
         List<ITOpsDomainProjectMapAssesseeSpRow> ITOpsGetDomainProjectMapAssessees(string projectId);
         List<ITOpsCategoryForDomainSpRow> ITOpsGetCategoriesForDomain(int? domainId, int? categoryId, bool includeExpired);
+
+        // ---- AIMI (AI Maturity Index) stored procedures (see WebApi/DB Scripts/01
+        // StoredProcedure/BAS/usp_AIMI_*.sql and Release 2.6.2.sql) ----
+        List<AimiActivitySpRow> AimiGetActivities(int? id, string projectId, string practice);
+        List<AimiActivitySpRow> AimiGetActivitiesByFilter(List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
+        int AimiUpsertActivity(int? id, string projectId, string project, string account, string businessUnit,
+            string practice, string sdlcPhase, string activity, string applicability, byte? aiAdoptionScore,
+            byte? workDoneByAi, decimal? hoursSaved, string revenueGenerated, string benefitTo, string comments,
+            string status, List<AimiAiToolTvpRow> aiTools, List<string> accelerators, List<string> qualitativeBenefits,
+            string empId);
+        void AimiDeleteActivity(int? id, List<int> ids, string empId);
+
+        List<AimiProjectInfoSpRow> AimiGetProjectInfo(string projectId);
+        int AimiUpsertProjectInfo(int? id, string projectId, int? peopleUsingAi, bool isProjectNa, string naComments,
+            int? licenseCount, string licenseProvider, string runopsAutoResolved, string runopsMttrReduction,
+            string runopsAiAgents, string runopsAutomatedWorkflows, string runopsMttd, string runopsMttr,
+            string engineerAiAgents, string engineerDeliveryCycleTime, string engineerContractTestCasePassRate,
+            string engineerPerformanceDefectsPreRelease, string commonAdoptionWorkforceCertification,
+            string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool presentationDone,
+            string projectFy, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId);
+
+        List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice);
+        int AimiUpsertPracticeInfo(int? id, string projectId, string practice, string currentPhase, string empId);
+
+        List<AimiAiToolMetricSpRow> AimiGetAIToolMetrics(string projectId, string practice);
+        List<AimiAiToolBySdlcPhaseSpRow> AimiGetAIToolsBySDLCPhase(string projectId, string practice);
+        AimiDashboardSummarySpRow AimiGetDashboardSummary(string projectId, string practice);
+        List<AimiQualitativeBenefitAnalysisSpRow> AimiGetQualitativeBenefitAnalysis(string projectId, string practice);
+        List<AimiReportDataSpRow> AimiGetReportData(string projectId, string practice, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
     }
 }
