@@ -8,7 +8,7 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
-    {{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}
+    {{ backLink === '/my-assignments' ? 'Back to My Assessments' : 'Back to Dashboard' }}
   </a>
 
   <header class="review-header">
@@ -262,7 +262,7 @@
 
 <div class="not-found" *ngIf="!domain && !loading">
   <p>Domain not found.</p>
-  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}</a>
+  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assessments' : 'Back to Dashboard' }}</a>
 </div>
 
 <div class="modal-backdrop" *ngIf="rubricModalParam" (click)="closeRubricModal()">

@@ -118,19 +118,6 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         </button>
       </div>
-      <div class="filter-pill" *ngIf="statusFilterOptions.length > 0" [class.is-set]="statusFilter !== 'all'">
-        <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-        <label for="assignmentsStatusFilter" class="filter-pill-label">Status</label>
-        <app-searchable-select
-          id="assignmentsStatusFilter"
-          [options]="assignmentsStatusOptions"
-          [(ngModel)]="statusFilter"
-          (ngModelChange)="onStatusFilterChange()"
-        ></app-searchable-select>
-        <button type="button" class="filter-pill-clear" *ngIf="statusFilter !== 'all'" (click)="statusFilter = 'all'; onStatusFilterChange()" aria-label="Reset status filter">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-        </button>
-      </div>
       <div class="filter-pill" *ngIf="accountOptions.length > 0" [class.is-set]="accountFilter !== 'all'">
         <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 21V7l9-4 9 4v14M9 21v-6h6v6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         <label for="assignmentsAccountFilter" class="filter-pill-label">Account</label>
@@ -141,6 +128,19 @@
           (ngModelChange)="onAccountFilterChange()"
         ></app-searchable-select>
         <button type="button" class="filter-pill-clear" *ngIf="accountFilter !== 'all'" (click)="accountFilter = 'all'; onAccountFilterChange()" aria-label="Reset account filter">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="filter-pill" *ngIf="statusFilterOptions.length > 0" [class.is-set]="statusFilter !== 'all'">
+        <svg class="filter-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <label for="assignmentsStatusFilter" class="filter-pill-label">Status</label>
+        <app-searchable-select
+          id="assignmentsStatusFilter"
+          [options]="assignmentsStatusOptions"
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="onStatusFilterChange()"
+        ></app-searchable-select>
+        <button type="button" class="filter-pill-clear" *ngIf="statusFilter !== 'all'" (click)="statusFilter = 'all'; onStatusFilterChange()" aria-label="Reset status filter">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         </button>
       </div>

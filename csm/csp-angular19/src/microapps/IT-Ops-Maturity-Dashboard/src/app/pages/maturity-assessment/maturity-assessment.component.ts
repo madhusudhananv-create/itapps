@@ -195,6 +195,7 @@ export class MaturityAssessmentComponent implements OnInit {
 
   private mapParameterRows(rows: ItOpsParameterScoreRow[]): MaturityParameter[] {
     this.parameterIdByKey.clear();
+    this.touchedParamIds.clear();
     return rows.map((r) => {
       const key = String(r.parameterId);
       this.parameterIdByKey.set(key, r.parameterId);
@@ -411,13 +412,21 @@ export class MaturityAssessmentComponent implements OnInit {
     this.rubricModalParam = null;
   }
 
+  /** Parameters the Assessor has actually acted on this session, or that already had a real
+   * ITOPS_SCORE row saved from a previous visit (param.scoreId) - see isSelected()'s NA
+   * case for why this exists: NULL is how both "never answered" and "explicitly marked NA"
+   * are represented, so without this, every untouched question would show NA pre-selected
+   * the moment the page loads, instead of showing nothing until the Assessor picks one. */
+  private touchedParamIds = new Set<string>();
+
   selectScore(param: MaturityParameter, option: 'NA' | 1 | 2 | 3 | 4 | 5): void {
     if (this.isLocked()) return;
+    this.touchedParamIds.add(param.id);
     param.score = option === 'NA' ? null : option;
   }
 
   isSelected(param: MaturityParameter, option: 'NA' | 1 | 2 | 3 | 4 | 5): boolean {
-    if (option === 'NA') return param.score === null;
+    if (option === 'NA') return param.score === null && (!!param.scoreId || this.touchedParamIds.has(param.id));
     return param.score === option;
   }
 

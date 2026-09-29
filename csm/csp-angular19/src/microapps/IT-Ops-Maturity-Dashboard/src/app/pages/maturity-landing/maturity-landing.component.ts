@@ -157,6 +157,9 @@ type AssignmentSortColumn = 'account' | 'project' | 'domain' | 'role' | 'cycle' 
 /** Remembered across visits so a Reviewer who always lives on one tab/cycle doesn't have to re-pick it every time. */
 const MY_ASSIGNMENTS_TAB_KEY = 'itops-my-assignments-tab';
 const MY_ASSIGNMENTS_CYCLE_KEY = 'itops-my-assignments-cycle';
+const MY_ASSIGNMENTS_STATUS_KEY = 'itops-my-assignments-status';
+const MY_ASSIGNMENTS_ACCOUNT_KEY = 'itops-my-assignments-account';
+const MY_ASSIGNMENTS_GROUPED_KEY = 'itops-my-assignments-grouped';
 
 @Component({
   selector: 'app-maturity-landing',
@@ -245,10 +248,28 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   assignmentsTab: 'assessments' | 'reviews' | 'allocated' = (localStorage.getItem(MY_ASSIGNMENTS_TAB_KEY) as any) ?? 'assessments';
   /** Free-text filter over the current tab's rows - account/project/domain name. */
   assignmentSearch = '';
-  /** 'all' or one of the raw backend statuses present in myAssignments - lets either tab be narrowed to just Approved, just Pending Review, etc. instead of a separate "Completed" tab. */
-  statusFilter = 'all';
-  /** 'all' or one of the account names present in the currently selected cycle (see accountOptions) - lets either tab be narrowed to just one account. */
-  accountFilter = 'all';
+  private _statusFilter = localStorage.getItem(MY_ASSIGNMENTS_STATUS_KEY) ?? 'all';
+  private _accountFilter = localStorage.getItem(MY_ASSIGNMENTS_ACCOUNT_KEY) ?? 'all';
+
+  /** 'all' or one of the raw backend statuses present in myAssignments - lets either tab be narrowed to just Approved, just Pending Review, etc. instead of a separate "Completed" tab. Persisted across visits, same as cycleFilter, so opening an assessment/review and coming back doesn't silently drop the filter. */
+  get statusFilter(): string {
+    return this._statusFilter;
+  }
+
+  set statusFilter(value: string) {
+    this._statusFilter = value;
+    localStorage.setItem(MY_ASSIGNMENTS_STATUS_KEY, value);
+  }
+
+  /** 'all' or one of the account names present in the currently selected cycle (see accountOptions) - lets either tab be narrowed to just one account. Persisted across visits, same as cycleFilter. */
+  get accountFilter(): string {
+    return this._accountFilter;
+  }
+
+  set accountFilter(value: string) {
+    this._accountFilter = value;
+    localStorage.setItem(MY_ASSIGNMENTS_ACCOUNT_KEY, value);
+  }
   assignmentSortColumn: AssignmentSortColumn | null = null;
   assignmentSortDirection: 'asc' | 'desc' = 'asc';
   assignmentsPage = 1;
@@ -1031,13 +1052,14 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     }
   }
 
-  /** Whether "My Assignments" rows are shown grouped by account/project (default) or as the old flat one-row-per-assessment table. */
-  groupedView = true;
+  /** Whether "My Assignments" rows are shown grouped by account/project (default) or as the old flat one-row-per-assessment table. Persisted across visits, same as cycleFilter. */
+  groupedView = (localStorage.getItem(MY_ASSIGNMENTS_GROUPED_KEY) ?? 'true') === 'true';
 
   private collapsedGroupKeys = new Set<string>();
 
   setGroupedView(grouped: boolean): void {
     this.groupedView = grouped;
+    localStorage.setItem(MY_ASSIGNMENTS_GROUPED_KEY, String(grouped));
   }
 
   private groupKey(row: ItOpsMyAssignmentRow): string {
