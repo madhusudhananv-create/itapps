@@ -16,6 +16,7 @@ import {
 } from '../../../shared/utils/questionnaireUtils';
 import { SelectField } from './FormFieldComponents';
 import { modalStyles } from '../styles/formStyles';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface CopyActivityDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ export const CopyActivityDialog: React.FC<CopyActivityDialogProps> = ({
   sourceActivity,
   existingActivities,
 }) => {
+  const { isAdmin } = useAuth();
   const [targetSdlcPhase, setTargetSdlcPhase] = useState('');
   const [targetActivity, setTargetActivity] = useState('');
 
@@ -149,8 +151,9 @@ export const CopyActivityDialog: React.FC<CopyActivityDialogProps> = ({
         <Button
           onClick={handleConfirm}
           variant="contained"
-          disabled={!targetSdlcPhase || !targetActivity}
+          disabled={!targetSdlcPhase || !targetActivity || !isAdmin}
           sx={modalStyles.primaryButton}
+          title={!isAdmin ? 'Only admin can copy activities' : ''}
         >
           Copy
         </Button>

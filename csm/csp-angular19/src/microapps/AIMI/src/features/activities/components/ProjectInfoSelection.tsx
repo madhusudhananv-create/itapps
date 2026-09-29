@@ -1654,12 +1654,14 @@ const fyChanged =
               isInfoLoading ||
               !isPeopleUsingAIValid() ||
               !isNACommentsValid() ||
-              !hasUnsavedAIMetrics()
+              !hasUnsavedAIMetrics() ||
+              !isAdmin
             }
             sx={styles.saveButton}
             startIcon={
               isInfoLoading ? <CircularProgress size={16} /> : undefined
             }
+            title={!isAdmin ? 'Only admin can save AI Adoption Metrics' : ''}
           >
             {isInfoLoading ? 'Saving...' : 'Save Metrics'}
           </Button>

@@ -954,8 +954,9 @@ const hasAcceptedScoreChanges =
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleAddActivity}
-              disabled={!selectedPractice || isProjectNA}
+              disabled={!selectedPractice || isProjectNA || !isAdmin}
               sx={styles.addButton}
+              title={!isAdmin ? 'Only admin can add activities' : ''}
             >
               Add Activity
             </Button>
@@ -975,7 +976,8 @@ const hasAcceptedScoreChanges =
                 variant="outlined"
                 startIcon={<UploadFileIcon />}
                 onClick={onImportActivities}
-                disabled={!selectedPractice || isProjectNA}
+                disabled={!selectedPractice || isProjectNA || !isAdmin}
+                title={!isAdmin ? 'Only admin can import activities' : ''}
               >
                 Import Excel
               </Button>
@@ -1206,8 +1208,15 @@ const hasAcceptedScoreChanges =
           <Button
             variant="outlined"
             onClick={handleSaveDraftClick}
-            disabled={!selectedPractice || !canSubmitOrSaveDraft || isSavingDraft || isSubmitting}
+            disabled={
+              !selectedPractice ||
+              !canSubmitOrSaveDraft ||
+              isSavingDraft ||
+              isSubmitting ||
+              !isAdmin
+            }
             sx={styles.saveDraftButton}
+            title={!isAdmin ? 'Only admin can save activities' : ''}
           >
             {isSavingDraft ? 'Saving...' : 'Save as Draft'}
           </Button>
@@ -1215,8 +1224,15 @@ const hasAcceptedScoreChanges =
             variant="contained"
             startIcon={<SendIcon />}
             onClick={handleSubmit}
-            disabled={!selectedPractice || !canSubmitOrSaveDraft || isSubmitting || isSavingDraft}
+            disabled={
+              !selectedPractice ||
+              !canSubmitOrSaveDraft ||
+              isSubmitting ||
+              isSavingDraft ||
+              !isAdmin
+            }
             sx={styles.submitButton}
+            title={!isAdmin ? 'Only admin can submit activities' : ''}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Activities'}
           </Button>

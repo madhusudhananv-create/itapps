@@ -399,15 +399,19 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
         {(onEdit || onDelete) && (
           <Box sx={activityDetailsModalStyles.actionButtons}>
             {onEdit && (
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={() => onEdit(activity)}
-                disabled={actionsDisabled}
-                sx={activityDetailsModalStyles.editButton}
-              >
-                Edit
-              </Button>
+              <Tooltip title={!isAdmin ? 'Only admin can edit the activity' : ''}>
+                <span>
+                  <Button
+                    variant="contained"
+                    startIcon={<EditIcon />}
+                    onClick={() => onEdit(activity)}
+                    disabled={actionsDisabled || !isAdmin}
+                    sx={activityDetailsModalStyles.editButton}
+                  >
+                    Edit
+                  </Button>
+                </span>
+              </Tooltip>
             )}
             {onDelete && (
               <Tooltip
