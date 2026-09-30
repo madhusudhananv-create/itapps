@@ -216,7 +216,7 @@ h1, h2, h3 { margin: 0; }
   background: var(--status-muted); color: var(--text-secondary);
   transition: background 150ms ease, color 150ms ease;
 }
-.flow-num-check { display: flex; }
+.flow-num-check, .flow-num-arrow { display: flex; }
 
 .flow-step.done .flow-label { color: var(--text-secondary); }
 .flow-step.done .flow-num { background: var(--status-good); color: #fff; }
@@ -331,6 +331,40 @@ tbody td[colspan] { padding: var(--space-6) var(--space-4); text-align: center; 
 .modal-wide .table-wrap { margin-top: 8px; }
 .grant-line.audit-line { padding: 5px 0 3px; border-bottom: none; gap: 6px; }
 
+/* This particular history has 6 columns including two free-text ones
+   (Project, Reason) that could run arbitrarily long - left unconstrained,
+   those pushed the table wider than the modal, so "Changed by"/"Date" were
+   only visible after scrolling the whole popup sideways. Fixed layout with
+   explicit column widths + ellipsis truncation (full text still available
+   via the title tooltip) keeps every column on screen at once; the table
+   only widens the modal, never forces a horizontal scrollbar for it. */
+.modal-mapping-history {
+  max-width: 900px;
+
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .col-project, .col-reason {
+    max-width: 0; /* forces the fixed-layout column to respect its declared width instead of growing to fit content */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  th.col-project, td.col-project { width: 24%; }
+  th.col-domain, td.col-domain { width: 12%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The "Removed"/"Added"/"Reactivated" pill (icon + text) needs more room
+     than a plain word - at 12% it was wide enough to visually spill past its
+     own cell and sit on top of the Reason column's "—" right next to it. */
+  th.col-action, td.col-action { width: 18%; overflow: hidden; }
+  td.col-action .pill { white-space: nowrap; }
+  th.col-reason, td.col-reason { width: 14%; }
+  th.col-changedby, td.col-changedby { width: 16%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  th.col-date, td.col-date { width: 16%; white-space: nowrap; }
+}
+
 /* ---- Effective access preview ---- */
 .access-preview {
   border: 1px solid var(--border); border-radius: 8px; background: var(--page-plane);
@@ -381,6 +415,25 @@ tbody td[colspan] { padding: var(--space-6) var(--space-4); text-align: center; 
    both are required before Configure Assessment can create anything for it. */
 .mapping-warning { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; font-size: var(--text-xs); color: var(--status-warning); max-width: 260px; }
 .mapping-warning svg { flex: none; margin-top: 1px; }
+
+/* Red (not amber) - deliberately more alarming than .mapping-warning above,
+   since this appears the moment a project is picked in "New mapping", before
+   any domains are chosen, specifically to steer the admin toward a different
+   project rather than mapping one nobody can ever be set as Assessee for. */
+.modal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--status-critical) 10%, transparent);
+  color: var(--status-critical);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+
+  svg { flex: none; margin-top: 2px; }
+}
 .pill-critical { background: color-mix(in srgb, var(--status-critical) 14%, transparent); color: var(--status-critical); font-weight: 700; }
 .pill-critical::before { content: "!"; display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid currentColor; font-size: 9px; line-height: 1; }
 h1 .pill { vertical-align: middle; margin-left: 6px; }
@@ -462,9 +515,16 @@ h1 .pill { vertical-align: middle; margin-left: 6px; }
    as equally consequential. */
 .btn-ghost.btn-info { background: color-mix(in srgb, var(--btn-info-1) 10%, var(--neutral-bg)); color: var(--btn-info-1); border-color: color-mix(in srgb, var(--btn-info-1) 26%, var(--neutral-border)); }
 .btn-ghost.btn-info:hover:not(:disabled) { background: color-mix(in srgb, var(--btn-info-1) 18%, var(--neutral-bg)); color: var(--btn-info-1); }
+/* "View resources" in the Configure Scope grid - its own mauve tint (status-warning's
+   hue, not the warning meaning) so it reads distinctly from the teal History/Copy
+   info buttons in the same row. white-space/flex-shrink pinned explicitly since the
+   count can run to two digits ("View resources (28)") and must never wrap. */
+.btn-ghost.btn-resource { background: color-mix(in srgb, var(--status-warning) 12%, var(--neutral-bg)); color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 28%, var(--neutral-border)); white-space: nowrap; flex-shrink: 0; }
+.btn-ghost.btn-resource:hover:not(:disabled) { background: color-mix(in srgb, var(--status-warning) 20%, var(--neutral-bg)); color: var(--status-warning); }
 /* Destructive actions (Revoke) get the same critical red used for pill-critical
    elsewhere - the one place red should appear among the buttons, reserved for
    things that actually remove access or data. */
+.col-checkbox { width: 34px; text-align: center; }
 .btn-ghost.btn-danger, .btn-primary.btn-danger { color: var(--status-critical); }
 .btn-ghost.btn-danger { background: color-mix(in srgb, var(--status-critical) 12%, var(--neutral-bg)); border-color: color-mix(in srgb, var(--status-critical) 28%, var(--neutral-border)); }
 .btn-ghost.btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--status-critical) 22%, var(--neutral-bg)); }
@@ -507,6 +567,20 @@ a:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-vis
 .step-actions.between { justify-content: flex-start; }
 .step-actions.start { justify-content: flex-start; }
 .step-actions.tight { margin-top: 18px; }
+/* Pinned to the bottom of the viewport as the step scrolls, instead of only
+   reachable after scrolling all the way past a (sometimes long) mapping
+   table - the wizard's Back/Submit stay one click away throughout, same as a
+   standard multi-step form footer, rather than floating in the page header
+   where it competed with the title and read as disconnected from whichever
+   sub-tab was actually active. */
+.step-actions.sticky {
+  position: sticky; bottom: 0; z-index: 5;
+  margin: 32px calc(-1 * var(--space-4, 24px)) 0; padding: 14px var(--space-4, 24px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 20px -12px rgba(0,0,0,0.18);
+}
 
 .modal-backdrop { position: fixed; inset: 0; background: rgba(6,12,18,.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 40; padding: 20px; }
 /* GSAP (see openGsapModal/closeGsapModal in the .ts) animates the scale/opacity
@@ -700,3 +774,48 @@ details[open] .domain-summary .chevron { transform: rotate(90deg); }
 .metric-card .m-label { font-size: var(--text-xs); font-family: var(--font-mono); color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
 .metric-card .m-icon { width: 22px; height: 22px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex: none; }
 .metric-card .m-value { font-size: var(--text-2xl); font-family: var(--font-mono); font-weight: 700; margin-top: var(--space-2); letter-spacing: -0.01em; color: var(--text-primary); }
+
+/* ---- Step 6: Active Users - date-range toolbar + summary cards + daily table. ---- */
+.usage-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+.usage-date-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: 600;
+
+  input[type="date"] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font: inherit;
+    color: var(--text-primary);
+    background: var(--surface);
+  }
+}
+.usage-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.usage-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.usage-card-value { font-size: var(--text-2xl); font-weight: 700; color: var(--accent); letter-spacing: -0.01em; }
+.usage-card-label { font-size: var(--text-xs); color: var(--text-muted); }
+.usage-users-cell { color: var(--text-secondary); max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-loading { display: flex; align-items: center; gap: var(--space-2); color: var(--text-muted); padding: var(--space-4) 0; }

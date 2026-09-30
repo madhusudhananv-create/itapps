@@ -21,6 +21,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         List<CSM_INFO> GetCSMList();
         IEnumerable<CustomerProjectDetails> GetCustomerProjectDetails();
         DataTable GetTable(string spName, List<REPORTS_PARAMS> lstparams);
+        void RecordITOpsVisit(string empId);
         IEnumerable<StaffingSummary> GetStaffingSummaryDetails(string custId, string ProjectId = null);
         IEnumerable<StaffingProject> GetStaffingProjectSummary(string custId, string ProjectId = null);
         IEnumerable<StaffingProject> GetStaffingProjectDetails(string projectId);

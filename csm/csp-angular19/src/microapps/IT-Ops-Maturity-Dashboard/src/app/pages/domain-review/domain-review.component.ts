@@ -20,7 +20,7 @@ const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
   PendingReview: 'Pending Review',
   Approved: 'Approved',
   ReturnedForRevision: 'In Progress',
-  Suspended: 'Draft',
+  Suspended: 'Suspended',
   Closed: 'Approved',
 };
 
@@ -42,11 +42,17 @@ export class DomainReviewComponent implements OnInit {
   domain?: TechnologyDomain;
   /** True until the first load attempt settles, so the "not found" message never flashes while data is still in flight. */
   loading = true;
+  /** True only when the signed-in employee is an Assessee here with no current project
+   * allocation - see ItOpsAssessmentInfo.assesseeAllocationExpired. Shows a banner asking
+   * them to extend their D365 allocation; the accept/reject/action-update calls are also
+   * blocked server-side, so this is purely informational, not the actual gate. */
+  assesseeAllocationExpired = false;
   providers: string[] = [];
   activeProvider?: string;
 
   /** Approve/Return are mutually exclusive on the same assessment - one shared flag disables both while either is in flight. */
   reviewing = false;
+  suspending = false;
   decidingFindingId: number | null = null;
 
   /** Evidence attached to each finding's remediation action, keyed by findingId, loaded on demand. */
@@ -92,7 +98,14 @@ export class DomainReviewComponent implements OnInit {
     // Angular's default reuse strategy when navigating between two "My
     // Assignments" rows for the SAME domain (different project/cycle), and
     // only the assessmentId query param actually differs between them.
-    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
+    // getAccounts() is included here (not just called for its side effect) so this waits
+    // for it to resolve before reading selectedAccount below - a deep link straight into
+    // this route (e.g. a notification-email link with ?custId=...) never goes through
+    // MaturityLandingComponent, which is otherwise the only place that normally triggers
+    // AccountService.preselectFromUrl. Without this, selectedAccount is read before the
+    // account list (and the custId preselection) has ever loaded, and the page falls
+    // straight into "Domain not found".
+    combineLatest([this.route.paramMap, this.route.queryParamMap, this.accountService.getAccounts()]).subscribe(([params, queryParams]) => {
       const domainCode = params.get('domainId');
       const assessmentIdParam = queryParams.get('assessmentId');
       const account = this.accountService.selectedAccount;
@@ -108,6 +121,7 @@ export class DomainReviewComponent implements OnInit {
       this.assessmentId = undefined;
       this.assesseeNamesList = [];
       this.assesseeEmpIds = [];
+      this.assesseeAllocationExpired = false;
       this.reviewerEmpIds = [];
       this.evidenceByFindingId = {};
       this.pendingEvidenceFiles = {};
@@ -135,6 +149,7 @@ export class DomainReviewComponent implements OnInit {
             }
             this.assesseeNamesList = assessment.assesseeNames ?? [];
             this.assesseeEmpIds = assessment.assesseeEmpIds ?? [];
+            this.assesseeAllocationExpired = assessment.assesseeAllocationExpired ?? false;
             this.reviewerEmpIds = assessment.reviewerEmpIds ?? (assessment.reviewerEmpId ? [assessment.reviewerEmpId] : []);
             this.providers = [];
             this.activeProvider = undefined;
@@ -179,9 +194,17 @@ export class DomainReviewComponent implements OnInit {
     return {
       id: assessment.domainCode,
       name: assessment.domainName,
-      coeSpoc: assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
-      reviewer: assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
+      // coeSpocNames/reviewerNames are the authoritative multi-assessor/multi-reviewer
+      // lists - coeSpocName/reviewerName only ever reflect the first one added (see
+      // GetITOpsPrimaryAssessorId/GetITOpsPrimaryReviewerId's own "legacy singular
+      // field" comment), so falling back to them would silently drop every assessor
+      // or reviewer after the first.
+      coeSpoc: assessment.coeSpocNames?.length ? assessment.coeSpocNames.join(', ') : assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
+      reviewer: assessment.reviewerNames?.length ? assessment.reviewerNames.join(', ') : assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
       status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
+      // Reflects the real backend state (assessment.status === 'Suspended'), not a
+      // local-only toggle - see toggleSuspend/suspendAssessment/resumeAssessment.
+      suspended: assessment.status === 'Suspended',
       parameters,
       returnComment: assessment.returnComment ?? undefined,
     };
@@ -323,18 +346,31 @@ export class DomainReviewComponent implements OnInit {
             this.domain.returnComment = comment;
           }
           this.showReturnModal = false;
-          this.actionMessage = 'Returned to COE SPOC for revision.';
-          this.toast.info('Returned for revision', `${this.domain?.name ?? 'This domain'} was sent back to the COE SPOC.`);
+          this.actionMessage = 'Returned to Assessor for revision.';
+          this.toast.info('Returned for revision', `${this.domain?.name ?? 'This domain'} was sent back to the Assessor.`);
         },
         error: () => this.toast.error('Return failed', 'Something went wrong returning this assessment. Please try again.'),
       });
   }
 
-  /** Suspend/Resume has no backend endpoint yet - kept as a local-only UI toggle for now. */
+  /** Persists Suspend/Resume against the backend (SuspendITOpsAssessment/ResumeITOpsAssessment) so the state survives a reload, instead of resetting itself the moment the page is revisited. */
   toggleSuspend(): void {
-    if (!this.domain) return;
-    this.domain.suspended = !this.domain.suspended;
-    this.actionMessage = this.domain.suspended ? 'Assessment suspended.' : 'Assessment resumed.';
+    if (!this.domain || !this.assessmentId || this.suspending) return;
+    const suspending = !this.domain.suspended;
+    const call = suspending ? this.api.suspendAssessment(this.assessmentId) : this.api.resumeAssessment(this.assessmentId);
+    this.suspending = true;
+    call.pipe(finalize(() => (this.suspending = false))).subscribe({
+      next: () => {
+        if (this.domain) this.domain.suspended = suspending;
+        this.actionMessage = suspending ? 'Assessment suspended.' : 'Assessment resumed.';
+        this.toast.info(suspending ? 'Assessment suspended' : 'Assessment resumed', this.domain?.name ?? 'This assessment.');
+      },
+      error: () =>
+        this.toast.error(
+          suspending ? 'Could not suspend the assessment' : 'Could not resume the assessment',
+          'Something went wrong. Please try again.',
+        ),
+    });
   }
 
   /** US-006: Assessee accepts a finding, or opens the mandatory-justification modal to reject it. */
@@ -458,6 +494,7 @@ export class DomainReviewComponent implements OnInit {
 
   /** Submit Update should only be clickable while there's actually something new to send - not while a submit is already in flight, and not again for text that's already been saved with no new evidence attached. */
   canSubmitActionUpdate(param: MaturityParameter): boolean {
+    if (this.assesseeAllocationExpired) return false;
     if (!param.findingId || this.submittingActionId === param.findingId) return false;
     const current = (param.findingActionTaken ?? '').trim();
     if (!current) return false;
@@ -502,7 +539,7 @@ export class DomainReviewComponent implements OnInit {
           this.lastSavedActionTaken.set(findingId, actionTaken);
           this.pendingEvidenceFiles[findingId] = [];
           this.loadEvidence(findingId);
-          this.toast.success('Finding closed', `Your action on "${param.name}" has been recorded and shared with the COE SPOC and Reviewer.`);
+          this.toast.success('Finding closed', `Your action on "${param.name}" has been recorded and shared with the Assessor and Reviewer.`);
         },
         error: () => this.toast.error('Submit failed', 'Something went wrong submitting this action update. Please try again.'),
       });

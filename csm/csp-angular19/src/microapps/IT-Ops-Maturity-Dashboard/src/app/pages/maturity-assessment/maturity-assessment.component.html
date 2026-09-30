@@ -8,7 +8,7 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
-    {{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}
+    {{ backLink === '/my-assignments' ? 'Back to My Assessments' : 'Back to Dashboard' }}
   </a>
 
   <header class="assessment-header">
@@ -17,7 +17,7 @@
       <div class="meta">
         <span class="meta-item spoc">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <em>COE SPOC</em><strong>{{ domain.coeSpoc }}</strong>
+          <em>Assessor</em><strong>{{ domain.coeSpoc }}</strong>
         </span>
         <span class="meta-item reviewer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="2"/></svg>
@@ -38,7 +38,7 @@
         </svg>
         Maturity Level Definitions
       </button>
-      <div class="progress-chip" *ngIf="progressCount() as p">
+      <div class="progress-chip" *ngIf="!awaitingProviderChoice() && progressCount() as p">
         <div class="progress-ring" [style.background]="'conic-gradient(var(--accent) ' + (p.total ? (p.answered / p.total) * 100 : 0) + '%, var(--gridline) 0)'">
           <div class="progress-ring-inner">{{ p.answered }}/{{ p.total }}</div>
         </div>
@@ -60,17 +60,39 @@
     <strong>Returned for revision:</strong> {{ domain.returnComment }}
   </div>
 
-  <div class="provider-tabs" *ngIf="providers.length > 1">
-    <button
-      type="button"
-      *ngFor="let provider of providers"
-      class="provider-tab"
-      [class.active]="provider === activeProvider"
-      (click)="selectProvider(provider)"
-    >{{ provider }}</button>
+  <div class="provider-choice" *ngIf="awaitingProviderChoice() && !isAssessor()">
+    <p class="picker-copy">Waiting for the assessor to choose a cloud provider before scoring can begin.</p>
   </div>
 
-  <div class="parameter-grid">
+  <div class="provider-choice" *ngIf="awaitingProviderChoice() && isAssessor()">
+    <h2>Which cloud provider are you assessing?</h2>
+    <p class="picker-copy">
+      Pick the one this customer actually runs on. Only that provider's questions will be part of this assessment -
+      this can't be changed once saved.
+    </p>
+    <div class="provider-choice-options">
+      <button
+        type="button"
+        *ngFor="let provider of providers"
+        class="provider-choice-btn"
+        [class.selected]="provider === selectedProvider"
+        [disabled]="choosingProvider"
+        (click)="selectedProvider = provider"
+      >{{ provider }}</button>
+    </div>
+    <p class="provider-choice-error" *ngIf="providerChoiceError">{{ providerChoiceError }}</p>
+    <button
+      type="button"
+      class="btn-primary provider-choice-submit"
+      [disabled]="!selectedProvider || choosingProvider"
+      (click)="chooseProvider(selectedProvider!)"
+    >
+      <app-spinner *ngIf="choosingProvider" [size]="13" />
+      Submit
+    </button>
+  </div>
+
+  <div class="parameter-grid" *ngIf="!awaitingProviderChoice()">
     <div
       class="parameter-card"
       [id]="'param-' + param.id"
@@ -95,7 +117,7 @@
               type="button"
               class="rubric-step na-step"
               [class.active]="isSelected(param, 'NA')"
-              [disabled]="isLocked()"
+              [disabled]="isLocked() || !isAssessor()"
               (click)="selectScore(param, 'NA')"
             >NA<em>Not Applicable</em></button>
             <button
@@ -103,7 +125,7 @@
               [class]="'rubric-step level-' + lvl.value"
               *ngFor="let lvl of rubricLevels"
               [class.active]="param.score === lvl.value"
-              [disabled]="isLocked()"
+              [disabled]="isLocked() || !isAssessor()"
               [title]="lvl.label + ': ' + param.rubric[lvl.key]"
               (click)="selectScore(param, lvl.value)"
             >{{ lvl.value }}<em>{{ lvl.label }}</em></button>
@@ -146,14 +168,14 @@
               name="notes-{{ param.id }}"
               rows="2"
               [class.invalid]="notesRequired(param)"
-              [disabled]="isLocked()"
+              [disabled]="isLocked() || !isAssessor()"
             ></textarea>
           </div>
 
           <div class="evidence">
             <label>Evidence Upload <span class="hint">(PDF, JPG, PNG &middot; max 10MB)</span></label>
-            <label class="upload-btn" [class.disabled]="isLocked() || evidenceUploading.has(param.id)">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" [disabled]="isLocked() || evidenceUploading.has(param.id)" (change)="onEvidenceSelected($event, param)" hidden />
+            <label class="upload-btn" [class.disabled]="isLocked() || !isAssessor() || evidenceUploading.has(param.id)">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" [disabled]="isLocked() || !isAssessor() || evidenceUploading.has(param.id)" (change)="onEvidenceSelected($event, param)" hidden />
               <app-spinner *ngIf="evidenceUploading.has(param.id)" [size]="13"></app-spinner>
               {{ evidenceUploading.has(param.id) ? 'Uploading…' : 'Choose File' }}
             </label>
@@ -166,8 +188,12 @@
 
           <!-- A freshly-raised finding (score < 5) that the assessee hasn't acted
                on yet - the assessor should see at a glance that this is still
-               waiting on someone else, not assume it's been silently dropped. -->
-          <div class="finding-badge pending-note" *ngIf="isProbableFinding(param) && param.findingStatus === 'Pending'">
+               waiting on someone else, not assume it's been silently dropped.
+               Only shown once the assessment is Approved - the assessee isn't
+               actually notified of the finding (NotifyITOpsAssesseesOfOpenFindings)
+               until approval, so showing this while still Draft/Pending Review
+               misleadingly implies the assessee already knows about it. -->
+          <div class="finding-badge pending-note" *ngIf="isProbableFinding(param) && param.findingStatus === 'Pending' && domain?.status === 'Approved'">
             <span class="finding-pill pending">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               Area of improvement - yet to be accepted/rejected by Assessee
@@ -196,7 +222,7 @@
             <p class="finding-rejection-comment" *ngIf="param.findingDisputeComment">
               <strong>Assessor's dispute:</strong> {{ param.findingDisputeComment }}
             </p>
-            <div class="rejection-decision" *ngIf="param.findingStatus === 'Rejected'">
+            <div class="rejection-decision" *ngIf="param.findingStatus === 'Rejected' && isAssessor()">
               <ng-container *ngIf="decidingRejectionParamId !== param.id">
                 <button type="button" class="btn-decide-rejection" (click)="openRejectionDecision(param)">Accept / Dispute Rejection</button>
               </ng-container>
@@ -227,7 +253,7 @@
     </div>
   </div>
 
-  <div class="actions" *ngIf="!isLocked()">
+  <div class="actions" *ngIf="isAssessor() && !isLocked() && !awaitingProviderChoice()">
     <button class="btn-secondary btn-outline-accent" (click)="saveDraft()">Save Draft</button>
     <button class="btn-primary" [disabled]="submitting" (click)="openSubmitModal()">
       <app-spinner *ngIf="submitting" [size]="13" />
@@ -242,7 +268,7 @@
 
 <div class="not-found" *ngIf="!domain && !loading">
   <p>Domain not found.</p>
-  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}</a>
+  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assessments' : 'Back to Dashboard' }}</a>
 </div>
 
 <div class="modal-backdrop" *ngIf="rubricModalParam" (click)="closeRubricModal()">

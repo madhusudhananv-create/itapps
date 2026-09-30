@@ -1,6 +1,6 @@
 export type MaturityScore = 'NA' | 1 | 2 | 3 | 4 | 5;
 
-export type DomainStatus = 'Not Started' | 'Draft' | 'In Progress' | 'Pending Review' | 'Approved';
+export type DomainStatus = 'Not Started' | 'Draft' | 'In Progress' | 'Pending Review' | 'Approved' | 'Suspended';
 
 export interface MaturityRubric {
   level1: string;
@@ -56,7 +56,7 @@ export interface TechnologyDomain {
   suspended?: boolean;
 }
 
-export type AssessmentStatus = 'Open' | 'Closed' | 'Suspended';
+export type AssessmentStatus = 'Open' | 'Closed' | 'Suspended' | 'NotStarted' | 'InProgress' | 'Completed';
 export type DueStatus = 'Past Due' | 'On Target' | null;
 
 export type UserRole = 'SPOC' | 'FunctionHead' | 'GDH' | 'NoAccess';
@@ -147,9 +147,11 @@ export interface ReportRow {
   period: string;
   domainId: string;
   domainName: string;
-  coeSpoc: string;
+  /** Comma-joined - an assessment can have more than one Assessor/Reviewer/Assessee. */
+  assessor: string;
   reviewer: string;
-  coeSpocEmail?: string;
+  assessee?: string;
+  assessorEmail?: string;
   reviewerEmail?: string;
   assessmentStatus: AssessmentStatus;
   dueStatus: DueStatus;
@@ -163,8 +165,33 @@ export interface ReportRow {
   findingsAccepted: number;
   findingsRejected: number;
   findingsPending: number;
+  findingsClosed: number;
   averageScore: number | null;
   maturityPercent: number | null;
+  /** Every currently-effective parameter in the domain (Cloud Provider-narrowed where applicable) - independent of applicableParamCount, which is only the ones actually scored. */
+  paramCount: number;
+  applicableParamCount: number;
+  sumScores: number;
+  maxPossible: number;
+  createdDate: string | null;
+  createdBy: string | null;
+  updatedDate: string | null;
+  updatedBy: string | null;
+  /** findingsAccepted + findingsRejected + findingsPending + findingsClosed. */
+  totalFindingsRaised: number;
+  /** Open findings whose TARGET_DATE has already passed. */
+  overdueFindingsCount: number;
+  /** Distinct findings on this assessment that were disputed (Assessor re-rejected the Assessee's rejection) at least once. */
+  escalationCount: number;
+  /** Most recent ITOPS_FINDING_ACTIVITY entry across every finding on this assessment - independent of lastUpdated, which is the assessment record's own save time. */
+  lastActivityType: string | null;
+  lastActivityDate: string | null;
+  /** Every field the report SP returned, in the SP's own SELECT order, raw (pre-typing) -
+   * the table's column list/order/labels are built entirely from this, not from the typed
+   * fields above, so a new SP column appears with zero Angular change. The typed fields
+   * above still exist for business logic that needs to KNOW what a field means (filtering,
+   * sorting, the summary ribbon) - that can't come from the SP alone. */
+  rawColumns: { key: string; value: any }[];
 }
 
 /** One row per (assessment, parameter) - the Reports page's parameter-level detail report. */
@@ -185,6 +212,25 @@ export interface ParameterDetailReportRow {
   /** Only set once this parameter raised a finding (score < 5). */
   assessee: string | null;
   findingStatus: string | null;
+  /** Falls back to the domain's own MIN_REQUIRED_SCORE when the parameter doesn't override it. */
+  minRequiredScore: number | null;
+  gap: number | null;
+  targetDate: string | null;
+  createdDate: string | null;
+  createdBy: string | null;
+  updatedDate: string | null;
+  updatedBy: string | null;
+  /** Assessor's comment when the finding was raised (the recommended remediation). */
+  assessorComments: string | null;
+  /** Assessee's own comment when accepting a finding. */
+  assesseeAcceptComments: string | null;
+  /** Assessee's justification when rejecting a finding. */
+  assesseeRejectComments: string | null;
+  /** Assessor's reason for disputing (re-rejecting) the Assessee's rejection - only set while it's still the last thing that happened on this finding. */
+  assessorDisputeComments: string | null;
+  assessmentStatus: AssessmentStatus;
+  /** Every field the report SP returned, in the SP's own SELECT order, raw - see ReportRow.rawColumns. */
+  rawColumns: { key: string; value: any }[];
 }
 
 export function maturityLevelFromScore(avgScore: number): string {
