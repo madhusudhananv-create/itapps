@@ -14,7 +14,11 @@
     {{AssessmentMasterId}}  - raw cycle/assessment-master id
     {{Cycle}}               - cycle label, or "-" if unknown
     {{Role}}                - "Assessor" or "Reviewer"
+    {{Section}}             - which "My Assignments" tab that role's work shows up under -
+                              "My Assessments" (Assessor) or "Needs Review" (Reviewer)
     {{FromEmpName}}         - outgoing person's name on a bulk reassignment, else blank
+    {{AssessmentLink}}      - deep link straight into this row's own assessment ("#" on a
+                              removal - nothing left to open)
     {{PreviouslyCell}}      - pre-rendered "Previously held by" <td> (see
                               ITOpsTeamAssignedBulkPreviouslyCell.htm), blank when not a reassignment
 -->
@@ -23,6 +27,8 @@
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Domain}}</td>
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Project}}</td>
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Role}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Section}}</td>
 <td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'>{{Cycle}}</td>
+<td valign=top style='padding:10px 12px;border-bottom:1px solid #eeeeee;'><a href="{{AssessmentLink}}" style='color:#1F497D;font-weight:bold;'>Open</a></td>
 {{PreviouslyCell}}
 </tr>

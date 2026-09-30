@@ -34,6 +34,8 @@ export interface ItOpsMyAssignmentRow {
   allFindingsResolved?: boolean;
   /** When this assessment was last submitted for review, if ever - drives the Needs Review tab's default oldest-first order. */
   submittedDate?: string | null;
+  /** When this assessment record was first created - drives "My Assessments"'s default status-then-recency ordering (newest-created first within each status group). */
+  createdDate?: string | null;
 }
 
 export interface ItOpsAssessmentInfo {
@@ -44,14 +46,27 @@ export interface ItOpsAssessmentInfo {
   custId: string;
   coeSpocEmpId: string | null;
   coeSpocName: string | null;
+  coeSpocEmpIds?: string[];
+  coeSpocNames?: string[];
   reviewerEmpId: string | null;
   reviewerEmpIds?: string[];
   reviewerName: string | null;
+  reviewerNames?: string[];
   assesseeEmpId: string | null;
   assesseeEmpIds?: string[];
   assesseeNames?: string[];
   status: string;
   returnComment: string | null;
+  /** Null for every non-Cloud domain, and null for a Cloud assessment until the Assessor picks a provider (see setCloudProvider) - "Azure"/"AWS"/"GCP" once set, and locked from then on. */
+  cloudProvider?: string | null;
+  /** Only populated for a Cloud domain assessment with no cloudProvider chosen yet - the distinct providers to offer in the picker. */
+  availableCloudProviders?: string[] | null;
+  /** True only when the signed-in employee is an Assessee here AND no longer has a current,
+   * billable project allocation - being staged as Assessee never expires on its own, so the
+   * backend re-checks this live on every load (see BuildITOpsAssessmentInfo). Drives a
+   * banner telling them to extend their D365 project allocation before they can act on
+   * findings - the same accept/reject/action-update calls are also blocked server-side. */
+  assesseeAllocationExpired?: boolean;
 }
 
 export interface ItOpsDomainTrackerRow {
@@ -106,6 +121,8 @@ export interface ItOpsTopRiskRow {
 export interface ItOpsParameterScoreRow {
   parameterId: number;
   category: string;
+  /** Null for every non-Cloud domain's parameters. "Azure"/"AWS"/"GCP" for a Cloud parameter. */
+  provider?: string | null;
   parameterName: string;
   definition: string;
   level1_AdHoc: string;
@@ -150,6 +167,23 @@ export class ItOpsMaturityApiService {
       token: localStorage.getItem('token') || '',
       empId: localStorage.getItem('empid') || '',
     });
+  }
+
+  /** Best-effort daily-active-user log (ITOPS_USER_VISIT, see
+   * ITOperationMaturity_V2_32_DailyActiveUsers.sql) - fire-and-forget, the backend swallows
+   * its own failures and always returns 200, so callers don't need to handle errors either. */
+  recordVisit(): Observable<unknown> {
+    return this.http.post(`${this.apiurl}RecordITOpsVisit`, null, { headers: this.getHeaders() });
+  }
+
+  /** Admin Setup's "Active Users" tab - daily distinct-user counts, `fromDate`/`toDate` as
+   * 'yyyy-MM-dd'; the backend defaults to the last 30 days when either is omitted. */
+  getDailyActiveUsers(fromDate?: string, toDate?: string): Observable<any[]> {
+    const params: string[] = [];
+    if (fromDate) params.push(`fromDate=${encodeURIComponent(fromDate)}`);
+    if (toDate) params.push(`toDate=${encodeURIComponent(toDate)}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<any[]>(`${this.apiurl}GetITOpsDailyActiveUsers${qs}`, { headers: this.getHeaders() });
   }
 
   getDomainList(): Observable<ItOpsDomainListRow[]> {
@@ -288,14 +322,20 @@ export class ItOpsMaturityApiService {
     );
   }
 
-  /** myEmpId: same own-scope narrowing as getDomainTracker's myEmpId - see its comment. */
-  getTopRisks(custId: string, take = 100, projectId?: string, assessmentMasterId?: number, businessUnit?: string, myEmpId?: string): Observable<ItOpsTopRiskRow[]> {
+  /**
+   * myEmpId: same own-scope narrowing as getDomainTracker's myEmpId - see its comment.
+   * No result-count limit - the backend already scopes this to one custId/project/cycle (or
+   * this employee's own allocation) before returning, so every scored/NA parameter in that
+   * scope comes back; an arbitrary cap here previously starved out whichever domains happened
+   * to sort last (see GetITOpsTopRisks's own comment on why it dropped its Take()).
+   */
+  getTopRisks(custId: string, projectId?: string, assessmentMasterId?: number, businessUnit?: string, myEmpId?: string): Observable<ItOpsTopRiskRow[]> {
     const projectParam = projectId ? `&projectId=${encodeURIComponent(projectId)}` : '';
     const cycleParam = assessmentMasterId ? `&assessmentMasterId=${assessmentMasterId}` : '';
     const buParam = businessUnit ? `&businessUnit=${encodeURIComponent(businessUnit)}` : '';
     const myEmpIdParam = myEmpId ? `&myEmpId=${encodeURIComponent(myEmpId)}` : '';
     return this.http.get<ItOpsTopRiskRow[]>(
-      `${this.apiurl}GetITOpsTopRisks?custId=${encodeURIComponent(custId)}&take=${take}${projectParam}${cycleParam}${buParam}${myEmpIdParam}`,
+      `${this.apiurl}GetITOpsTopRisks?custId=${encodeURIComponent(custId)}${projectParam}${cycleParam}${buParam}${myEmpIdParam}`,
       { headers: this.getHeaders() },
     );
   }
@@ -318,6 +358,15 @@ export class ItOpsMaturityApiService {
   getAssessmentParameters(assessmentId: number): Observable<ItOpsParameterScoreRow[]> {
     return this.http.get<ItOpsParameterScoreRow[]>(
       `${this.apiurl}GetITOpsAssessmentParameters?assessmentId=${assessmentId}`,
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Locks a Cloud assessment to one provider (Azure/AWS/GCP) - only reachable once, before or during scoring; a second call with a different provider is rejected server-side. */
+  setCloudProvider(assessmentId: number, provider: string): Observable<unknown> {
+    return this.http.post(
+      `${this.apiurl}SetITOpsAssessmentCloudProvider?assessmentId=${assessmentId}`,
+      { Provider: provider },
       { headers: this.getHeaders() },
     );
   }
@@ -388,6 +437,20 @@ export class ItOpsMaturityApiService {
       { Approve: approve, Comment: comment ?? null },
       { headers: this.getHeaders() },
     );
+  }
+
+  /** Reviewer suspends a Pending Review assessment - only reachable while status is PendingReview. */
+  suspendAssessment(assessmentId: number): Observable<unknown> {
+    return this.http.post(`${this.apiurl}SuspendITOpsAssessment?assessmentId=${assessmentId}`, null, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  /** Reverses suspendAssessment - only reachable while status is Suspended, returns to PendingReview. */
+  resumeAssessment(assessmentId: number): Observable<unknown> {
+    return this.http.post(`${this.apiurl}ResumeITOpsAssessment?assessmentId=${assessmentId}`, null, {
+      headers: this.getHeaders(),
+    });
   }
 
   /** Assessee accepts/rejects a probable-improvement-area finding; Comment is mandatory when rejecting. */

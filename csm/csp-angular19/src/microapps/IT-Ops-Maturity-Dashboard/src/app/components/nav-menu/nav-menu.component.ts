@@ -6,7 +6,7 @@ import { SessionService } from '../../services/session.service';
 import { CurrentUser } from '../../models/maturity.model';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { ItOpsAdminSetupService } from '../../services/itops-admin-setup.service';
-import { ItOpsMaturityApiService } from '../../services/itops-maturity-api.service';
+import { hasAppResourceViewAccess } from '../../utils/app-access.util';
 
 @Component({
   selector: 'app-nav-menu',
@@ -27,30 +27,35 @@ export class NavMenuComponent implements OnInit {
   canSeeAdminSetup = false;
 
   /**
-   * Whether to show the Dashboard link at all. The account/project-wide
-   * Dashboard is a DB-granted role (ITOPS_ROLE_DASHBOARD_VIEWER, or ITOps
-   * Superuser) - someone without it gets a 403-equivalent "access required"
-   * page if they navigate there directly, but the nav item itself is removed
-   * from the DOM rather than shown-then-blocked, so who can even SEE the tab
-   * is governed by the same DB grant as who can use it.
+   * Whether to show the Dashboard/Assessments/Reports links at all - the
+   * CSM-standard APP_CONTROLS/APP_ACCESS_CONTROLS mechanism, same as every
+   * other CSM tab: the shell already fetches the caller's full access-control
+   * rows once at login and caches them in localStorage['access'] (matched
+   * against localStorage['role'], the CSM_TITLE_ID), and
+   * csp-angular19/src/app/shared/access-control.ts's IsAllowed() is how the
+   * shell itself checks a RESOURCE_ID client-side from that cache - no
+   * backend round trip per check. This microapp can't import that shell
+   * class directly (separate Angular project/build), so hasTabViewAccess()
+   * below replicates just the role-based VIEW_ACCESS branch of it, matched
+   * against RESOURCE_ID 834/Dashboard, 835/Assessments, 836/Reports (see
+   * ITOperationMaturity_V2_28_TabAppControls.sql). This only decides whether
+   * the tab RENDERS - what data it shows once open is unchanged, still
+   * governed by Superuser/Assessor/Assessee/Reviewer/GDH/project-allocation
+   * (see getHasDashboardAccess/getHasReportAccess/getMyAssignments below).
    */
   canSeeDashboard = false;
+  canSeeReports = false;
 
   /**
-   * True when this employee is a configured GDH (Business-Unit-level access,
-   * see GetITOpsHasDashboardAccess) - they see the Dashboard/Reports for their
-   * own BU(s) but have no personal assessor/reviewer/assessee assignments to
-   * track, so the "My Assignments" tab is hidden for them.
-   */
-  isGdh = false;
-
-  /**
-   * Whether to show the "My Assignments" link at all - true only once this
-   * employee is personally Assessor, Reviewer, or Assessee on at least one
-   * assessment (i.e. GetITOpsMyAssignments actually returns something for
-   * them). A GDH, a Dashboard/Report Viewer with no personal assignments, or
-   * anyone else with no ITOps involvement has nothing to see there, so the
-   * nav item is removed entirely rather than landing them on an empty page.
+   * Whether to show the "Assessments" link at all - governed by the same
+   * CSM-standard tab-visibility permission as Dashboard/Reports (RESOURCE_ID
+   * 835), not by role/GDH status. A GDH is treated like any other resource
+   * here: if they separately hold project allocation/ownership (or a
+   * personal Assessor/Reviewer/Assessee assignment), they see this tab too,
+   * same as any other employee - being a GDH must never suppress it. What
+   * the tab actually shows once open is unchanged, still governed by
+   * Superuser/Assessor/Assessee/Reviewer/GDH/project-allocation
+   * (see GetITOpsMyAssignments).
    */
   canSeeMyAssignments = false;
 
@@ -66,7 +71,6 @@ export class NavMenuComponent implements OnInit {
   constructor(
     private session: SessionService,
     private adminApi: ItOpsAdminSetupService,
-    private maturityApi: ItOpsMaturityApiService,
     private router: Router,
   ) {}
 
@@ -78,19 +82,17 @@ export class NavMenuComponent implements OnInit {
     });
     this.adminApi.getMyAccess().subscribe((access) => (this.canSeeAdminSetup = access.isAdmin));
 
-    const empId = localStorage.getItem('empid');
-    if (empId) {
-      // Reachable now for anyone with an assignment too (scoped to their own
-      // projects), not just the full Dashboard Viewer/Superuser grant.
-      this.maturityApi.getHasDashboardAccess(empId).subscribe((access) => {
-        this.canSeeDashboard = access.hasAnyAssignment;
-        this.isGdh = access.isGdh;
-      });
-      this.maturityApi.getMyAssignments(empId).subscribe({
-        next: (rows) => (this.canSeeMyAssignments = (rows ?? []).length > 0),
-        error: () => (this.canSeeMyAssignments = false),
-      });
-    }
+    this.canSeeDashboard = this.hasTabViewAccess(834);
+    this.canSeeMyAssignments = this.hasTabViewAccess(835);
+    this.canSeeReports = this.hasTabViewAccess(836);
+  }
+
+  /** See app-access.util.ts's hasAppResourceViewAccess - full parity with the CSM shell's
+   * AccessControl.IsAllowed() view-access check, including the EMP_ID delegation tier this
+   * used to be missing (a resource granted to a specific employee, independent of their
+   * normal role/title, silently didn't work here before). */
+  private hasTabViewAccess(resourceId: number): boolean {
+    return hasAppResourceViewAccess(resourceId);
   }
 
   private updateAssessmentsActive(url: string): void {

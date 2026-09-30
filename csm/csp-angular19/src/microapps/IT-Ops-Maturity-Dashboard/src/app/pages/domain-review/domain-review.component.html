@@ -8,7 +8,7 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
-    {{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}
+    {{ backLink === '/my-assignments' ? 'Back to My Assessments' : 'Back to Dashboard' }}
   </a>
 
   <header class="review-header">
@@ -17,7 +17,7 @@
       <div class="meta">
         <span class="meta-item spoc">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <em>COE SPOC</em><strong>{{ domain.coeSpoc }}</strong>
+          <em>Assessor</em><strong>{{ domain.coeSpoc }}</strong>
         </span>
         <span class="meta-item reviewer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="2"/></svg>
@@ -28,7 +28,6 @@
           <em>{{ assesseeNamesList.length === 1 ? 'Assessee' : 'Assessees' }}</em><strong>{{ assesseeNames() }}</strong>
         </span>
         <span [class]="statusClass(displayDomainStatus())">{{ displayDomainStatus() }}</span>
-        <span class="suspended-pill" *ngIf="domain.suspended">Suspended</span>
       </div>
     </div>
     <div class="header-actions">
@@ -39,7 +38,14 @@
         </svg>
         Maturity Level Definitions
       </button>
-      <button type="button" class="btn-secondary suspend-btn" *ngIf="canReview()" (click)="toggleSuspend()">
+      <button
+        type="button"
+        class="btn-secondary suspend-btn"
+        *ngIf="canReview() && (domain.status === 'Pending Review' || domain.suspended)"
+        [disabled]="suspending"
+        (click)="toggleSuspend()"
+      >
+        <app-spinner *ngIf="suspending" [size]="13"></app-spinner>
         {{ domain.suspended ? 'Resume Assessment' : 'Suspend Assessment' }}
       </button>
     </div>
@@ -47,6 +53,13 @@
 
   <div class="return-banner" *ngIf="domain.returnComment">
     <strong>Previously returned for revision:</strong> {{ domain.returnComment }}
+  </div>
+
+  <div class="allocation-expired-banner" *ngIf="assesseeAllocationExpired">
+    <strong>Your project allocation has expired.</strong>
+    Please ask your Delivery/Project Manager to extend your project allocation in D365 to
+    proceed with this assessment - accepting/rejecting findings and submitting updates are
+    disabled until then.
   </div>
 
   <div class="provider-tabs" *ngIf="providers.length > 1">
@@ -129,18 +142,30 @@
           <!-- Accept/Reject is a one-time decision - only offered while the finding is still
                undecided ('Pending' = freshly Open, or reopened after a disputed rejection).
                Once decided (Accepted/Rejected/Closed) it must not be re-toggled. -->
+          <!-- Non-assessee (Reviewer/Assessor) equivalent of the Assessee's own Accept/Reject
+               prompt above - same "Pending = freshly Open or reopened after a disputed
+               rejection" state, just informational since only the Assessee decides. Matches
+               maturity-assessment.component.html's own pending-note block. -->
+          <div class="finding-badge pending-note" *ngIf="isProbableFinding(param) && !isAssessee() && param.findingStatus === 'Pending' && domain?.status === 'Approved'">
+            <span class="finding-pill pending">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Area of improvement - yet to be accepted/rejected by Assessee
+            </span>
+          </div>
           <div class="finding-actions" *ngIf="isProbableFinding(param) && isAssessee() && param.findingStatus === 'Pending'">
             <span class="finding-label">Probable area of improvement:</span>
             <button
               type="button"
               class="finding-btn accept"
-              [disabled]="decidingFindingId === param.findingId"
+              [disabled]="decidingFindingId === param.findingId || assesseeAllocationExpired"
+              [title]="assesseeAllocationExpired ? 'Your project allocation has expired - ask your Delivery/Project Manager to extend it in D365.' : ''"
               (click)="setFinding(param, 'Accepted')"
             ><app-spinner *ngIf="decidingFindingId === param.findingId" [size]="12" /> Accept</button>
             <button
               type="button"
               class="finding-btn reject"
-              [disabled]="decidingFindingId === param.findingId"
+              [disabled]="decidingFindingId === param.findingId || assesseeAllocationExpired"
+              [title]="assesseeAllocationExpired ? 'Your project allocation has expired - ask your Delivery/Project Manager to extend it in D365.' : ''"
               (click)="setFinding(param, 'Rejected')"
             >Reject</button>
           </div>
@@ -152,9 +177,9 @@
           <div
             class="finding-outcome"
             [class.is-rejected]="param.findingStatus === 'Rejected'"
-            *ngIf="isProbableFinding(param) && param.findingStatus && param.findingStatus !== 'Pending' && (isAssessee() ? param.findingStatus === 'Rejected' || param.findingStatus === 'Closed' : true)"
+            *ngIf="isProbableFinding(param) && ((param.findingStatus && param.findingStatus !== 'Pending' && (isAssessee() ? param.findingStatus === 'Rejected' || param.findingStatus === 'Closed' : true)) || (!isAssessee() && (param.findingRejectionComment || param.findingDisputeComment)))"
           >
-            <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'">
+            <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
               <svg *ngIf="param.findingStatus !== 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
               <svg *ngIf="param.findingStatus === 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
               <ng-container *ngIf="isAssessee(); else notAssesseeLabel">{{ param.findingStatus === 'Rejected' ? "Finding rejected - awaiting assessor's decision" : 'Finding closed' }}</ng-container>
@@ -167,7 +192,7 @@
             <p class="finding-rejection-comment" *ngIf="isAssessee() && param.findingDisputeComment">
               <strong>Assessor's response:</strong> {{ param.findingDisputeComment }}
             </p>
-            <p class="finding-rejection-comment" *ngIf="!isAssessee() && param.findingStatus === 'Rejected' && param.findingRejectionComment">
+            <p class="finding-rejection-comment" *ngIf="!isAssessee() && param.findingRejectionComment">
               <strong>Rejection reason:</strong> {{ param.findingRejectionComment }}
             </p>
             <p class="finding-rejection-comment" *ngIf="!isAssessee() && param.findingDisputeComment">
@@ -246,7 +271,7 @@
 
 <div class="not-found" *ngIf="!domain && !loading">
   <p>Domain not found.</p>
-  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assignments' : 'Back to Dashboard' }}</a>
+  <a [routerLink]="backLink">{{ backLink === '/my-assignments' ? 'Back to My Assessments' : 'Back to Dashboard' }}</a>
 </div>
 
 <div class="modal-backdrop" *ngIf="rubricModalParam" (click)="closeRubricModal()">
@@ -275,7 +300,7 @@
 <div class="modal-backdrop" *ngIf="showReturnModal" (click)="closeReturnModal()">
   <div class="modal" (click)="$event.stopPropagation()">
     <h3>Return for Revision</h3>
-    <p class="modal-copy">This will unlock the assessment for the COE SPOC and set its status back to In Progress. A comment explaining the rejection is required.</p>
+    <p class="modal-copy">This will unlock the assessment for the Assessor and set its status back to In Progress. A comment explaining the rejection is required.</p>
     <label class="modal-label">Comment <span class="required">*</span></label>
     <textarea [(ngModel)]="returnComment" rows="4" placeholder="Explain what needs to change..."></textarea>
     <p class="field-error" *ngIf="returnCommentError">{{ returnCommentError }}</p>
