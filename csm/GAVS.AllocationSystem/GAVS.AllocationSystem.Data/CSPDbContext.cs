@@ -247,6 +247,28 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<PROJECT_SCOPE_VALUES>().ToTable("dbo.PROJECT_SCOPE_VALUES");
             modelBuilder.Entity<INTEGRATION_REQUEST_DATA>().ToTable("dbo.INTEGRATION_REQUEST_DATA");
             modelBuilder.Entity<DROPDOWN_OPTIONS>().ToTable("dbo.DROPDOWN_OPTIONS");
+
+            modelBuilder.Entity<ITOPS_DOMAIN>().ToTable("dbo.ITOPS_DOMAIN");
+            modelBuilder.Entity<ITOPS_CATEGORY>().ToTable("dbo.ITOPS_CATEGORY");
+            modelBuilder.Entity<ITOPS_PARAMETER>().ToTable("dbo.ITOPS_PARAMETER");
+            modelBuilder.Entity<ITOPS_PARAMETER_LEVEL>().ToTable("dbo.ITOPS_PARAMETER_LEVEL");
+            modelBuilder.Entity<ITOPS_ROLE>().ToTable("dbo.ITOPS_ROLE");
+            modelBuilder.Entity<ITOPS_ROLE_ASSIGNMENT>().ToTable("dbo.ITOPS_ROLE_ASSIGNMENT");
+            modelBuilder.Entity<ITOPS_DOMAIN_PROJECT_MAP>().ToTable("dbo.ITOPS_DOMAIN_PROJECT_MAP");
+            modelBuilder.Entity<ITOPS_DOMAIN_PROJECT_MAP_AUDIT>().ToTable("dbo.ITOPS_DOMAIN_PROJECT_MAP_AUDIT");
+            modelBuilder.Entity<ITOPS_PROJECT_ASSESSEE>().ToTable("dbo.ITOPS_PROJECT_ASSESSEE");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_MASTER>().ToTable("dbo.ITOPS_ASSESSMENT_MASTER");
+            modelBuilder.Entity<ITOPS_ASSESSMENT>().ToTable("dbo.ITOPS_ASSESSMENT");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_ASSESSOR>().ToTable("dbo.ITOPS_ASSESSMENT_ASSESSOR");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_REVIEWER>().ToTable("dbo.ITOPS_ASSESSMENT_REVIEWER");
+            modelBuilder.Entity<ITOPS_ASSESSMENT_ASSESSEE>().ToTable("dbo.ITOPS_ASSESSMENT_ASSESSEE");
+            modelBuilder.Entity<ITOPS_SCORE>().ToTable("dbo.ITOPS_SCORE");
+            modelBuilder.Entity<ITOPS_EVIDENCE>().ToTable("dbo.ITOPS_EVIDENCE");
+            modelBuilder.Entity<ITOPS_FINDING>().ToTable("dbo.ITOPS_FINDING");
+            modelBuilder.Entity<ITOPS_FINDING_ACTIVITY>().ToTable("dbo.ITOPS_FINDING_ACTIVITY");
+            modelBuilder.Entity<ITOPS_NOTIFICATION>().ToTable("dbo.ITOPS_NOTIFICATION");
+            modelBuilder.Entity<ITOPS_REPORT_SP_DETAILS>().ToTable("dbo.ITOPS_REPORT_SP_DETAILS");
+            modelBuilder.Entity<ITOPS_REPORT_PARAMS>().ToTable("dbo.ITOPS_REPORT_PARAMS");
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
         }
         public virtual DbSet<APP_ACCESS_CONTROLS> APP_ACCESS_CONTROLS { get; set; }
@@ -463,6 +485,28 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<INTEGRATION_REQUEST_DATA> INTEGRATION_REQUEST_DATA { get; set; }
 
         public virtual DbSet<DROPDOWN_OPTIONS> DROPDOWN_OPTIONS { get; set; }
+
+        public virtual DbSet<ITOPS_DOMAIN> ITOPS_DOMAIN { get; set; }
+        public virtual DbSet<ITOPS_CATEGORY> ITOPS_CATEGORY { get; set; }
+        public virtual DbSet<ITOPS_PARAMETER> ITOPS_PARAMETER { get; set; }
+        public virtual DbSet<ITOPS_PARAMETER_LEVEL> ITOPS_PARAMETER_LEVEL { get; set; }
+        public virtual DbSet<ITOPS_ROLE> ITOPS_ROLE { get; set; }
+        public virtual DbSet<ITOPS_ROLE_ASSIGNMENT> ITOPS_ROLE_ASSIGNMENT { get; set; }
+        public virtual DbSet<ITOPS_DOMAIN_PROJECT_MAP> ITOPS_DOMAIN_PROJECT_MAP { get; set; }
+        public virtual DbSet<ITOPS_DOMAIN_PROJECT_MAP_AUDIT> ITOPS_DOMAIN_PROJECT_MAP_AUDIT { get; set; }
+        public virtual DbSet<ITOPS_PROJECT_ASSESSEE> ITOPS_PROJECT_ASSESSEE { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_MASTER> ITOPS_ASSESSMENT_MASTER { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT> ITOPS_ASSESSMENT { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_ASSESSOR> ITOPS_ASSESSMENT_ASSESSOR { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_REVIEWER> ITOPS_ASSESSMENT_REVIEWER { get; set; }
+        public virtual DbSet<ITOPS_ASSESSMENT_ASSESSEE> ITOPS_ASSESSMENT_ASSESSEE { get; set; }
+        public virtual DbSet<ITOPS_SCORE> ITOPS_SCORE { get; set; }
+        public virtual DbSet<ITOPS_EVIDENCE> ITOPS_EVIDENCE { get; set; }
+        public virtual DbSet<ITOPS_FINDING> ITOPS_FINDING { get; set; }
+        public virtual DbSet<ITOPS_FINDING_ACTIVITY> ITOPS_FINDING_ACTIVITY { get; set; }
+        public virtual DbSet<ITOPS_NOTIFICATION> ITOPS_NOTIFICATION { get; set; }
+        public virtual DbSet<ITOPS_REPORT_SP_DETAILS> ITOPS_REPORT_SP_DETAILS { get; set; }
+        public virtual DbSet<ITOPS_REPORT_PARAMS> ITOPS_REPORT_PARAMS { get; set; }
 
     }
 }

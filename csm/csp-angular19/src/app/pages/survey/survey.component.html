@@ -151,7 +151,7 @@ The insights we gain from your feedback will guide the strategic actions we take
         </td>
         
         <!-- NPS Comments -->
-        <td *ngIf="questions_NPS && bShowNpsComments" colspan="1" class="nps-comments-cell">
+        <td *ngIf="questions_NPS && bShowNpsComments" colspan="1" class="nps-comments-cell" data-label="Remarks">
           <div class="survey-textarea">
             <span class="comments-hint">
               <span class="required">*</span>
@@ -188,14 +188,14 @@ The insights we gain from your feedback will guide the strategic actions we take
     <!-- Criteria Questions Body -->
     <tbody *ngIf="questions_Criteria">
       <tr *ngFor="let criteria of questions_Criteria;let i = index" class="criteria-row">
-        <td class="criteria-question">
+        <td class="criteria-question" data-label="Survey Question">
           <span class="required">*</span>
           {{criteria.question}}
-          <mat-icon  *ngIf="criteria.questioN_DETAIL && criteria.questioN_DETAIL.trim() !== ''" 
+          <mat-icon  *ngIf="criteria.questioN_DETAIL && criteria.questioN_DETAIL.trim() !== ''"
            class="info-icon"
-           (click)="tooltip.toggle()" 
-           #tooltip="matTooltip"  
-           [matTooltip]="getDetail(criteria.questioN_DETAIL)" 
+           (click)="tooltip.toggle()"
+           #tooltip="matTooltip"
+           [matTooltip]="getDetail(criteria.questioN_DETAIL)"
             matTooltipClass="custom-tooltip"
             matTooltipPosition="above"
             (click)="onInfoIconClick($event, tooltip)"
@@ -204,16 +204,16 @@ The insights we gain from your feedback will guide the strategic actions we take
             info
           </mat-icon>
         </td>
-        
-        <td class="star-rating-cell">
+
+        <td class="star-rating-cell" data-label="Rating">
           <div class="perspective-label" *ngIf="proj != '' && proj != null">
             {{criteria.perspective}}
           </div>
           <app-star-rating [disabled]="IsCompleted" [Scale]="criteria.ratinG_SCALE ?? 1" [rating]="criteria.rating ?? 0"
             [starCount]="starCount" [color]="starColor" (ratingUpdated)="onRatingChanged($event,i)"></app-star-rating>
         </td>
-        
-        <td class="remarks-cell">
+
+        <td class="remarks-cell" data-label="Remarks">
           <div class="textarea-wrapper">
             <textarea name="txtCriteriaComments[{{i}}]" [(ngModel)]="criteria.ratinG_DESCRIPTION"
               class="modern-textarea" [disabled]="IsCompleted" maxlength="1000"
