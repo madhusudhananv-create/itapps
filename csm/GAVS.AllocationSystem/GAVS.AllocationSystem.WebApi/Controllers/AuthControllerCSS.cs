@@ -118,7 +118,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     }
                     else
                     {
-                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, DateTime.Now, "DRAFT", empId, meetingDate, isCSMNotified, 0);
+                        CSPdb.AppRepo.UpdateCSSBatchCustomers(replies.CSS_BATCH_CUSTOMERS_EXTENDED.ID, replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_ID.GetValueOrDefault(), replies.CSS_BATCH_CUSTOMERS_EXTENDED.SURVEY_SENT_DATE.Value, null, "DRAFT", empId, meetingDate, isCSMNotified, 0);
                     }
                 }
                 else if (replies.CSS_BATCH_CUSTOMER_MONTHLY_EXTENDED != null)
@@ -624,10 +624,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (acsat)
             {
                 string configValue = helper.GetDBConfig("CSS_VALIDITY_DATE", "-1");
-                DateTime configCsatValidityDate = DateTime.Parse(configValue);               
+                DateTime configCsatValidityDate = DateTime.Parse(configValue);
                 int.TryParse(helper.GetDBConfig("CSS_ACTIONITEM_TARGET_DATE_ADDDAYS", "-1"), out targetdateDaysACSAT);
                 overview.PLANNED_TARGET_DATE = configCsatValidityDate.AddDays(targetdateDaysACSAT);
-            }              
+            }
             else
             {
                 int.TryParse(helper.GetDBConfig("PCSAT_CSS_ACTIONITEM_TARGET_DATE_ADDDAYS", "-1"), out targetdateDaysPCSAT);
@@ -894,7 +894,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             string ccmail = string.Empty;  //helper.GetDBConfig("CSS_SUCCESS_MAIL_CC", "-1");
             if (!string.IsNullOrWhiteSpace(replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC))
                 // ccmail += "," + replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
-                ccmail =  replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
+                ccmail = replies.CSS_BATCH_CUSTOMERS_EXTENDED.SPOC;
             string subject = string.Empty;
             string mailContent = string.Empty;
             var batch = CSPdb.CSS_BATCHES.GetAll().FirstOrDefault(b => b.ID == replies.CSS_BATCH_CUSTOMERS_EXTENDED.BATCH_ID);

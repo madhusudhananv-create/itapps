@@ -14,6 +14,7 @@ interface ProjectInfo {
   currentPhase: string;
   headcount?: number;
   peopleUsingAI?: number;
+  overallScoreValue?: string | number;
 }
 
 // Common CSV headers
@@ -37,12 +38,13 @@ const CSV_HEADERS = [
   '# MTTD (Mean Time to Detect)',
   '# MTTR (Mean Time to Respond or Repair)',
   'Delivery cycle-time reduction attributable to AI',
-  '# AI agents in production — not pilots / POC',
+  '# AI agents in production (not pilots / POC)',
   'Contract Test case Pass Rate (%) (Passed Tests / Total Executed Tests) × 100',
   'Performance Defects Detected Pre-release (%)',
   '% workforce with externally validated AI / GenAI / Agentic AI certification',
   'Efforts saved in hours',
   '# FDE ( Forward Deployment Engineer) penetration as % of client-facing headcount',
+  'Overall Score',
   'Accepted Score',
   'Accepted Comment',
   'SDLC Phase',
@@ -156,6 +158,7 @@ const createCSVRow = (
     commonAdoptionWorkforceCertification?: string;
     commonAdoptionEffortsSaved?: string;
     commonDeploymentEngineer?: string;
+    overallScoreValue?: string | number;
     acceptedScore?: number;
     acceptedScoreComment?: string;
       
@@ -187,6 +190,7 @@ const createCSVRow = (
   escapeCSVValue(projectData?.commonAdoptionWorkforceCertification),
   escapeCSVValue(projectData?.commonAdoptionEffortsSaved),
   escapeCSVValue(projectData?.commonDeploymentEngineer),
+  escapeCSVValue(projectData?.overallScoreValue),
   escapeCSVValue(projectData?.acceptedScore),
   escapeCSVValue(projectData?.acceptedScoreComment),
   escapeCSVValue(activity.sdlcPhase),
