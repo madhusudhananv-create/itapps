@@ -55,6 +55,13 @@
     <strong>Previously returned for revision:</strong> {{ domain.returnComment }}
   </div>
 
+  <div class="allocation-expired-banner" *ngIf="assesseeAllocationExpired">
+    <strong>Your project allocation has expired.</strong>
+    Please ask your Delivery/Project Manager to extend your project allocation in D365 to
+    proceed with this assessment - accepting/rejecting findings and submitting updates are
+    disabled until then.
+  </div>
+
   <div class="provider-tabs" *ngIf="providers.length > 1">
     <button
       type="button"
@@ -150,13 +157,15 @@
             <button
               type="button"
               class="finding-btn accept"
-              [disabled]="decidingFindingId === param.findingId"
+              [disabled]="decidingFindingId === param.findingId || assesseeAllocationExpired"
+              [title]="assesseeAllocationExpired ? 'Your project allocation has expired - ask your Delivery/Project Manager to extend it in D365.' : ''"
               (click)="setFinding(param, 'Accepted')"
             ><app-spinner *ngIf="decidingFindingId === param.findingId" [size]="12" /> Accept</button>
             <button
               type="button"
               class="finding-btn reject"
-              [disabled]="decidingFindingId === param.findingId"
+              [disabled]="decidingFindingId === param.findingId || assesseeAllocationExpired"
+              [title]="assesseeAllocationExpired ? 'Your project allocation has expired - ask your Delivery/Project Manager to extend it in D365.' : ''"
               (click)="setFinding(param, 'Rejected')"
             >Reject</button>
           </div>

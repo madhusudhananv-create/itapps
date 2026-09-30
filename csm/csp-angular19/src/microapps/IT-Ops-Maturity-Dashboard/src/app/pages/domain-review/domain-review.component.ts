@@ -42,6 +42,11 @@ export class DomainReviewComponent implements OnInit {
   domain?: TechnologyDomain;
   /** True until the first load attempt settles, so the "not found" message never flashes while data is still in flight. */
   loading = true;
+  /** True only when the signed-in employee is an Assessee here with no current project
+   * allocation - see ItOpsAssessmentInfo.assesseeAllocationExpired. Shows a banner asking
+   * them to extend their D365 allocation; the accept/reject/action-update calls are also
+   * blocked server-side, so this is purely informational, not the actual gate. */
+  assesseeAllocationExpired = false;
   providers: string[] = [];
   activeProvider?: string;
 
@@ -116,6 +121,7 @@ export class DomainReviewComponent implements OnInit {
       this.assessmentId = undefined;
       this.assesseeNamesList = [];
       this.assesseeEmpIds = [];
+      this.assesseeAllocationExpired = false;
       this.reviewerEmpIds = [];
       this.evidenceByFindingId = {};
       this.pendingEvidenceFiles = {};
@@ -143,6 +149,7 @@ export class DomainReviewComponent implements OnInit {
             }
             this.assesseeNamesList = assessment.assesseeNames ?? [];
             this.assesseeEmpIds = assessment.assesseeEmpIds ?? [];
+            this.assesseeAllocationExpired = assessment.assesseeAllocationExpired ?? false;
             this.reviewerEmpIds = assessment.reviewerEmpIds ?? (assessment.reviewerEmpId ? [assessment.reviewerEmpId] : []);
             this.providers = [];
             this.activeProvider = undefined;
@@ -487,6 +494,7 @@ export class DomainReviewComponent implements OnInit {
 
   /** Submit Update should only be clickable while there's actually something new to send - not while a submit is already in flight, and not again for text that's already been saved with no new evidence attached. */
   canSubmitActionUpdate(param: MaturityParameter): boolean {
+    if (this.assesseeAllocationExpired) return false;
     if (!param.findingId || this.submittingActionId === param.findingId) return false;
     const current = (param.findingActionTaken ?? '').trim();
     if (!current) return false;

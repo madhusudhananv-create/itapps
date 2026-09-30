@@ -185,8 +185,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             if (IsITOpsSuperuser(empId)) return null;
             var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
-            if (assessmentId.HasValue && GetITOpsAssesseeIds(assessmentId.Value).Contains(empId)) return null;
-            return Content(HttpStatusCode.Forbidden, "You are not the Assessee on this finding, so you cannot " + what + ".");
+            if (!assessmentId.HasValue || !GetITOpsAssesseeIds(assessmentId.Value).Contains(empId))
+                return Content(HttpStatusCode.Forbidden, "You are not the Assessee on this finding, so you cannot " + what + ".");
+
+            // Being staged as Assessee (ITOPS_ASSESSMENT_ASSESSEE) never expires on its own,
+            // even once the underlying project allocation that made someone eligible for it
+            // in the first place has ended - re-check it live here rather than trusting that
+            // static snapshot indefinitely. See IsITOpsEmpCurrentlyAllocated and
+            // BuildITOpsAssessmentInfo.AssesseeAllocationExpired (the page-load banner this
+            // mirrors, so the same block never comes as a surprise mid-action).
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value);
+            if (assessment != null && !IsITOpsEmpCurrentlyAllocated(empId, assessment.PROJECT_ID))
+            {
+                return Content(HttpStatusCode.Forbidden,
+                    "Your allocation on this project has expired, so you cannot " + what + ". " +
+                    "Please ask your Delivery/Project Manager to extend your project allocation in D365 to proceed with this assessment.");
+            }
+
+            return null;
         }
 
         // The Assessor's decision on a rejected finding (accept/dispute, or a manual close)
@@ -959,7 +975,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Roles = rolesByAssessmentId[a.ID],
                     OpenFindingsForMe = openFindingCountByAssessment.ContainsKey(a.ID) ? openFindingCountByAssessment[a.ID] : 0,
                     AllFindingsResolved = !unresolvedAssessmentIds.Contains(a.ID),
-                    SubmittedDate = a.SUBMITTED_DATE
+                    SubmittedDate = a.SUBMITTED_DATE,
+                    CreatedDate = a.CREATED_DATE
                 };
             })
             .OrderBy(r => r.AccountName)
@@ -1018,6 +1035,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         /// list should see IT Ops Maturity Dashboard/Reports data for that project even
         /// with no ITOps role (Assessor/Reviewer/Assessee) at all.
         /// </summary>
+        // Same "currently allocated" check GetITOpsAssesseeCandidates uses when first
+        // offering someone as a candidate Assessee (ITOperationMaturityAdminController.cs) -
+        // BILL_FLG matters here too, same reasoning: without it this would pass for a
+        // historical resource row that merely hasn't reached its END_DATE yet, not just
+        // someone actually billed/staffed on the project right now.
+        private bool IsITOpsEmpCurrentlyAllocated(string empId, string projectId)
+        {
+            if (string.IsNullOrWhiteSpace(empId) || string.IsNullOrWhiteSpace(projectId)) return false;
+            return Cldb.PROJECT_RESOURCE.GetAll()
+                .Any(pr => pr.PROJ_ID == projectId && pr.EMP_ID == empId && pr.BILL_FLG == true && pr.END_DATE >= DateTime.Now);
+        }
+
         private List<string> GetITOpsAllocatedProjectIds(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return new List<string>();
@@ -1565,6 +1594,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var reviewerIds = GetITOpsReviewerIds(assessment.ID);
             var assesseeIds = GetITOpsAssesseeIds(assessment.ID);
 
+            // The caller's own empId (from the shared empId header, same as every other
+            // read here) - only used to decide whether THIS person, if they're an Assessee
+            // on this assessment, still has a current project allocation. Not a security
+            // gate (nothing here restricts who can call GetOrCreateITOpsAssessment), purely
+            // drives the "extend your allocation in D365" banner for whoever's actually
+            // looking at the page.
+            var callerEmpId = GetHeaderDetails_String("empId");
+            var assesseeAllocationExpired = !string.IsNullOrWhiteSpace(callerEmpId)
+                && assesseeIds.Contains(callerEmpId)
+                && !IsITOpsEmpCurrentlyAllocated(callerEmpId, assessment.PROJECT_ID);
+
             if (string.IsNullOrWhiteSpace(custId))
             {
                 custId = Cldb.PROJECT.GetAll()
@@ -1607,7 +1647,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         .Distinct()
                         .OrderBy(p => p)
                         .ToList()
-                    : null
+                    : null,
+                AssesseeAllocationExpired = assesseeAllocationExpired
             };
         }
 

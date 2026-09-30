@@ -34,6 +34,8 @@ export interface ItOpsMyAssignmentRow {
   allFindingsResolved?: boolean;
   /** When this assessment was last submitted for review, if ever - drives the Needs Review tab's default oldest-first order. */
   submittedDate?: string | null;
+  /** When this assessment record was first created - drives "My Assessments"'s default status-then-recency ordering (newest-created first within each status group). */
+  createdDate?: string | null;
 }
 
 export interface ItOpsAssessmentInfo {
@@ -59,6 +61,12 @@ export interface ItOpsAssessmentInfo {
   cloudProvider?: string | null;
   /** Only populated for a Cloud domain assessment with no cloudProvider chosen yet - the distinct providers to offer in the picker. */
   availableCloudProviders?: string[] | null;
+  /** True only when the signed-in employee is an Assessee here AND no longer has a current,
+   * billable project allocation - being staged as Assessee never expires on its own, so the
+   * backend re-checks this live on every load (see BuildITOpsAssessmentInfo). Drives a
+   * banner telling them to extend their D365 project allocation before they can act on
+   * findings - the same accept/reject/action-update calls are also blocked server-side. */
+  assesseeAllocationExpired?: boolean;
 }
 
 export interface ItOpsDomainTrackerRow {

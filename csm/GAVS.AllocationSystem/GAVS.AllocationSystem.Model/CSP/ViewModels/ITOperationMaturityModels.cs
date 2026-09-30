@@ -194,6 +194,10 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         // reads in the order things actually became their responsibility, not an
         // arbitrary account/domain alphabetical order.
         public DateTime? SubmittedDate { get; set; }
+        // When this assessment record was first created - drives "My Assessments"'s
+        // default status-then-recency ordering (see maturity-landing.component.ts's
+        // sortMyAssignmentsDefault): newest-created first within each status group.
+        public DateTime? CreatedDate { get; set; }
     }
 
     public class ITOPS_EvidenceRow
@@ -255,6 +259,17 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         // this domain). Null/empty for every other case, so the frontend can tell "not a Cloud
         // domain" apart from "Cloud domain, provider already chosen" (both show no picker).
         public List<string> AvailableCloudProviders { get; set; }
+        // True only when the CALLER (whoever's token this request is running as) is an
+        // Assessee on this assessment AND no longer has a current, billable PROJECT_RESOURCE
+        // allocation on its project (BILL_FLG = true, END_DATE >= today) - same "currently
+        // staffed" check GetITOpsAssesseeCandidates uses when first offering someone as a
+        // candidate Assessee. Being an Assessee is a point-in-time snapshot (ITOPS_ASSESSMENT_
+        // ASSESSEE never expires on its own even after the underlying allocation does), so
+        // this is re-checked live on every load rather than trusted from that snapshot -
+        // false for every other role (Assessor/Reviewer/allocation-only), and false for an
+        // Assessee whose allocation is still current. Drives a warning banner telling them to
+        // extend their D365 project allocation before they can act on findings.
+        public bool AssesseeAllocationExpired { get; set; }
     }
 
     public class ITOPS_UpdateFindingActionRequest

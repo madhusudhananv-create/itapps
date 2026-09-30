@@ -298,20 +298,15 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Steers a first-time visitor onto the current (Open) cycle instead of
-   * leaving them on "All cycles" - runs once both the cycle list and this
-   * employee's assignments have loaded, since the default itself (the Open
-   * cycle's label) has to actually appear in this employee's own
-   * cycleOptions to be worth switching to. A no-op once the visitor has ever
-   * explicitly chosen a cycle (see cycleFilterExplicit).
+   * "My Assessments"/"Needs Review" now always default to "All cycles" - this used to
+   * steer a first-time visitor onto the current (Open) cycle instead, but that hid rows
+   * from other cycles by default in a way that read as missing data rather than a filter.
+   * Kept as a no-op (rather than deleting the call sites) so cycleFilterExplicit/
+   * cyclesLoadedForDefault/assignmentsLoadedForDefault stay meaningful if a future default
+   * is ever wanted again.
    */
   private maybeApplyDefaultCycle(): void {
-    if (!this.cyclesLoadedForDefault || !this.assignmentsLoadedForDefault) return;
-    if (this.cycleFilterExplicit) return;
-    const openCycle = this.dashboardCycles.find((c) => c.status === 'Open');
-    if (openCycle && this.cycleOptions.includes(openCycle.cycleLabel)) {
-      this._cycleFilter = openCycle.cycleLabel;
-    }
+    // Intentionally does nothing - see comment above.
   }
 
   constructor(
@@ -919,10 +914,35 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return this.myAssignments.some((row) => !row.roles?.length);
   }
 
+  /** Default status order for "My Assessments" - which bucket leads depends on which role
+   * THIS row is being shown under (a row can be both Assessor and Assessee; Assessor takes
+   * priority for ranking since that's the more active role). Any status not in the list
+   * (e.g. Suspended) sorts after everything named here, not before. */
+  private readonly ASSESSOR_STATUS_ORDER = ['Not Started', 'In Progress', 'Draft', 'Pending Review', 'Approved', 'Completed'];
+  private readonly ASSESSEE_STATUS_ORDER = ['Approved', 'In Progress', 'Draft', 'Pending Review', 'Not Started', 'Completed'];
+
+  private statusRankFor(order: string[], label: string): number {
+    const idx = order.indexOf(label);
+    return idx === -1 ? order.length : idx;
+  }
+
   get myOpenAssessments(): ItOpsMyAssignmentRow[] {
-    return this.filteredAssignments.filter(
+    const rows = this.filteredAssignments.filter(
       (row) => this.isAssessorOn(row) || (this.isAssesseeOn(row) && row.status === 'Approved'),
     );
+    // Default order: status bucket first (Assessor and Assessee each get their own bucket
+    // order, per row - see ASSESSOR_STATUS_ORDER/ASSESSEE_STATUS_ORDER), then
+    // recently-created-first within the same bucket.
+    return rows.slice().sort((a, b) => {
+      const orderA = this.isAssessorOn(a) ? this.ASSESSOR_STATUS_ORDER : this.ASSESSEE_STATUS_ORDER;
+      const orderB = this.isAssessorOn(b) ? this.ASSESSOR_STATUS_ORDER : this.ASSESSEE_STATUS_ORDER;
+      const rankA = this.statusRankFor(orderA, this.displayAssignmentStatus(a));
+      const rankB = this.statusRankFor(orderB, this.displayAssignmentStatus(b));
+      if (rankA !== rankB) return rankA - rankB;
+      const createdA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+      const createdB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+      return createdB - createdA;
+    });
   }
 
   /**
@@ -935,17 +955,19 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
    * "needs review" in any sense yet.
    */
   get myPendingReviews(): ItOpsMyAssignmentRow[] {
-    // Default order: oldest-submitted-first, so the queue reads in the order
-    // things actually became this reviewer's responsibility - rows with no
-    // submission date (shouldn't normally happen once past NotStarted) sort last.
+    // Default order: Pending Review rows first (recently-created-first among themselves),
+    // then every other status below (also recently-created-first) - so the reviewer's
+    // actual queue leads, with everything already decided sitting below it for reference.
     return this.filteredAssignments
       .filter((row) => this.isReviewerOn(row) && row.status !== 'NotStarted')
       .slice()
       .sort((a, b) => {
-        if (!a.submittedDate && !b.submittedDate) return 0;
-        if (!a.submittedDate) return 1;
-        if (!b.submittedDate) return -1;
-        return new Date(a.submittedDate).getTime() - new Date(b.submittedDate).getTime();
+        const rankA = a.status === 'PendingReview' ? 0 : 1;
+        const rankB = b.status === 'PendingReview' ? 0 : 1;
+        if (rankA !== rankB) return rankA - rankB;
+        const createdA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+        const createdB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+        return createdB - createdA;
       });
   }
 
