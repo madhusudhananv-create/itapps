@@ -173,7 +173,7 @@ const KNOWN_SP_IDS = {
   'reports_getcssinitateddetails': 6,   // "Customer Success Survey Status"
   'reports_csat_combined': 48,          // "Customer Success Survey Report All A/C– PCSAT"
   'reports_csat_halfyearly': 64,        // "Customer Success Survey Report All A/C– ACSAT"
-  'reports_getacsatcustomersuccesssurvey': 70, // "ACSAT Survey Status Report"
+  'reports_getacsatcustomersucesssurvey': 70, // "ACSAT Survey Status Report" (DB name misspells "Sucess")
 };
 
 async function resolveSpDetail(spName) {

@@ -1,9 +1,10 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Download, ArrowLeft, Search, X, TrendingUp } from 'lucide-react';
+import { Download, ArrowLeft, Search, X, TrendingUp, Users, Trophy, Building2, BarChart3, Calendar, CheckCircle2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
+import { showAcsatAlert } from '../utils/acsatAlert';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
 import { parseExcelDateToMMDDYYYY } from '../utils/acsatExcelRowUtils';
 import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName, normalizeTop10AccountName } from '../utils/top10Accounts';
@@ -18,78 +19,80 @@ const DashboardContainer = styled.div`
 
 const Header = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
 `;
 
 const Title = styled.h1`
-  color: #1f2937;
-  font-size: 2rem;
+  color: #16233D;
+  font-size: 1.15rem;
   font-weight: 700;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
   text-align: center;
 `;
 
 const BackButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
+  background: transparent;
+  color: #16233D;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  
+  gap: 0.4rem;
+
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    border-color: #7c3aed;
+    background: #7c3aed;
+    color: white;
   }
 `;
 
 const DownloadButton = styled.button`
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
+  background: transparent;
+  color: #1B8A5A;
+  border: 1px solid #1B8A5A;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  
+  gap: 0.4rem;
+  white-space: nowrap;
+
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    background: #1B8A5A;
+    color: white;
   }
 `;
 
 const TrendAnalysisButton = styled.button`
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
+  background: ${props => props.active ? '#1D4ED8' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#1D4ED8'};
+  border: 1px solid #1D4ED8;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  white-space: nowrap;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+    background: #1D4ED8;
+    color: white;
   }
 `;
 
@@ -121,13 +124,13 @@ const findSheetColumn = (firstRow, matchers, fallback) => {
 
 const getTrendRowValue = (row, columnKey, ...fallbackNames) => {
   if (!row) return '';
-  if (columnKey && row[columnKey] !== undefined && row[columnKey] !== '') return row[columnKey];
+  if (columnKey && row[columnKey] !== undefined && row[columnKey] !== '' && row[columnKey] !== null) return row[columnKey];
   const keys = Object.keys(row);
   const names = [columnKey, ...fallbackNames].filter(Boolean);
   for (const name of names) {
     const norm = String(name).toLowerCase().replace(/[\s_]/g, '');
     const key = keys.find((k) => (k || '').trim().toLowerCase().replace(/[\s_]/g, '') === norm);
-    if (key !== undefined) return row[key];
+    if (key !== undefined && row[key] !== null && row[key] !== undefined) return row[key];
   }
   return '';
 };
@@ -239,7 +242,7 @@ const styleTrendDiffExcelCell = (cell, diff) => {
   }
 };
 
-const ACSAT_BU_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
+const ACSAT_BU_DISPLAY_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
 
 const sortBuTrendRows = (rows) => {
   return [...rows].sort((a, b) => {
@@ -456,8 +459,13 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
     }
 
     if (groupBy === 'top10') {
+      // Match by customer name against the known Top 10 roster first (same as the
+      // main dashboard's isTop10DashboardAccount), since the TYPE OF ACCOUNT column
+      // in an uploaded trend file isn't always populated/reliable on its own.
+      const rowCustomerName = getTrendRowValue(row, custNameCol, 'CUSTOMER NAME', 'CUST_NM').toString().trim();
       const typeOfAccount = getTrendRowValue(row, typeOfAccountCol, 'TYPE OF ACCOUNT').toString().trim();
-      if (isBlankEmptyOrNaTypeOfAccount(typeOfAccount)) {
+      const isTop10 = top10AccountNames.some((name) => matchesTop10AccountName(rowCustomerName, name)) || isTop10TypeOfAccount(typeOfAccount);
+      if (!isTop10) {
         if (parseExcelDateToMMDDYYYY(getTrendRowValue(row, sentDateCol, 'CSAT SENT DATE'))) {
           otherAccountsPolled += 1;
         }
@@ -466,7 +474,6 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
         }
         return;
       }
-      if (!isTop10TypeOfAccount(typeOfAccount)) return;
     }
 
     const customerId = normalizeCustomerIdKey(
@@ -559,85 +566,30 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
   };
 };
 
-const Top10Button = styled.button`
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
+const ToggleButton = styled.button`
+  background: ${props => props.active ? '#1D4ED8' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#1D4ED8'};
+  border: 1px solid #1D4ED8;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  
+  white-space: nowrap;
+
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    background: #1D4ED8;
+    color: white;
   }
 `;
 
-const BUWiseButton = styled.button`
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-  }
-`;
-
-const ShowAllButton = styled.button`
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  }
-`;
-
-const CXOAnalysisButton = styled.button`
-  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
-  }
-`;
+const Top10Button = ToggleButton;
+const BUWiseButton = ToggleButton;
+const ShowAllButton = ToggleButton;
+const CXOAnalysisButton = ToggleButton;
 
 const SuccessMessage = styled.div`
   background: #f0fdf4;
@@ -663,11 +615,10 @@ const ErrorMessage = styled.div`
 
 const TableContainer = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
-  margin-top: 2rem;
+  margin-top: 0.75rem;
 `;
 
 const Table = styled.table`
@@ -682,17 +633,17 @@ const TableHeader = styled.thead`
 `;
 
 const TableHeaderCell = styled.th`
-  padding: 1rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   text-align: center;
   vertical-align: middle;
-  font-weight: bold;
+  font-weight: 600;
   border: 1px solid #ffffff;
   background: #1e3a8a;
   color: #ffffff;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   cursor: pointer;
   user-select: none;
-  
+
   &:hover {
     background: #1e40af;
   }
@@ -711,31 +662,31 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   text-align: ${props => props.isNumeric ? 'center' : 'left'};
   vertical-align: middle;
   border: 1px solid #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #374151;
 `;
 
 const TrendDiffCell = styled.td`
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   border: 1px solid #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: ${(props) => props.diffColor || '#374151'};
   background: #ffffff;
 `;
 
 const ResponseRateCell = styled.td`
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   border: 1px solid #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: ${props => {
     if (props.surveysReceived === 0 || props.rate === 0) return '#ffffff'; // White text for zero Response %
@@ -766,33 +717,34 @@ const ScrollableTableContainer = styled.div`
 `;
 
 const FormulaContainer = styled.div`
-  background: #f8fafc;
+  background: #fafbfc;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin: 1rem 0;
+  border-left: 3px solid #B7791F;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
 `;
 
 const FormulaTitle = styled.h3`
-  color: #374151;
-  font-size: 1.125rem;
+  color: #16233D;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.4rem 0;
 `;
 
 const FormulaText = styled.p`
   color: #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
 `;
 
 const SearchContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin: 1rem 0;
-  padding: 1rem;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.75rem;
   background: white;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -800,11 +752,11 @@ const SearchContainer = styled.div`
 
 const SearchInput = styled.input`
   width: 200px;
-  padding: 0.5rem;
-  border: 1px solid #6b7280;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 0.875rem;
-  
+  font-size: 0.8rem;
+
   &:focus {
     outline: none;
     border-color: #3b82f6;
@@ -857,22 +809,22 @@ const GrandTotalRow = styled.tr`
 `;
 
 const GrandTotalCell = styled.td`
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   text-align: ${props => props.isNumeric ? 'center' : 'left'};
   vertical-align: middle;
   border: 1px solid #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: bold;
   color: #000000;
   background: #f8fafc;
 `;
 
 const GrandTotalResponseRateCell = styled.td`
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   border: 1px solid #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: bold;
   color: ${props => {
     if (props.surveysReceived === 0 || props.rate === 0) return '#ffffff'; // White text for zero Response %
@@ -895,22 +847,22 @@ const OtherAccountRow = styled.tr`
 `;
 
 const OtherAccountCell = styled.td`
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   text-align: ${props => props.isNumeric ? 'center' : 'left'};
   vertical-align: middle;
   border: 1px solid #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: bold;
   color: #000000;
   background: #fed7aa;
 `;
 
 const OtherAccountResponseRateCell = styled.td`
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   border: 1px solid #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: bold;
   color: ${props => {
     if (props.surveysReceived === 0 || props.rate === 0) return '#ffffff'; // White text for zero Response %
@@ -930,35 +882,40 @@ const LegendContainer = styled.div`
   background: white;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
-  padding: 1rem;
-  margin: 1rem 0;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
 `;
 
 const LegendTitle = styled.h3`
-  color: #374151;
-  font-size: 1rem;
+  color: #16233D;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin: 0 0 0.75rem 0;
+  margin: 0;
+  white-space: nowrap;
 `;
 
 const LegendItem = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  gap: 0.4rem;
 `;
 
 const LegendColor = styled.div`
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   border-radius: 4px;
-  margin-right: 0.75rem;
   border: 1px solid #6b7280;
 `;
 
 const LegendText = styled.span`
   color: #374151;
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   font-weight: 500;
+  white-space: nowrap;
 `;
 
 const ACSATResponseRateDashboard = ({
@@ -998,7 +955,7 @@ const ACSATResponseRateDashboard = ({
       const name = (row?.customerName ?? '').toString().trim();
       if (!name) return;
       const key = normalizeTop10AccountName(name);
-      polledByAccountName[key] = (polledByAccountName[key] || 0) + (row?.polled || 0);
+      polledByAccountName[key] = (polledByAccountName[key] || 0) + (row?.surveysSent || 0);
     });
     return computeEffectiveTop10AccountNames(polledByAccountName);
   }, [processedData]);
@@ -1741,7 +1698,7 @@ const ACSATResponseRateDashboard = ({
       ...row,
       responseRate: row.surveysSent > 0 ? (row.surveysReceived / row.surveysSent) * 100 : 0
     }));
-    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
+    const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
     const sorted = unsorted.sort((a, b) => {
       const aBU = (a.businessUnit || '').toString().trim();
       const bBU = (b.businessUnit || '').toString().trim();
@@ -1823,16 +1780,16 @@ const ACSATResponseRateDashboard = ({
   };
 
   const handleViewAcsatTrendAnalysis = () => {
+    if (showAcsatTrendAnalysis) {
+      setShowAcsatTrendAnalysis(false);
+      return;
+    }
     if (!acsatTrendViewMode) {
-      alert('ACSAT trend analysis is available only in Show All Accounts, Top 10 Account, or BU wise dashboard view.');
+      showAcsatAlert('ACSAT trend analysis is available only in Show All Accounts, Top 10 Account, or BU wise dashboard view.');
       return;
     }
     if (!trendAnalysisFiles?.length) {
-      alert('Please upload ACSAT trend files using "Upload data for ACSAT trend analysis" on the Upload ACSAT Data page.');
-      return;
-    }
-    if (showAcsatTrendAnalysis) {
-      scrollToAcsatTrendSection();
+      showAcsatAlert('Please upload ACSAT trend files using "Upload data for ACSAT trend analysis" on the Upload ACSAT Data page.');
       return;
     }
     setShowAcsatTrendAnalysis(true);
@@ -2358,7 +2315,7 @@ const ACSATResponseRateDashboard = ({
     });
     
     // Sort by Business Unit (case-insensitive matching)
-    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC'];
+    const businessUnitOrder = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
     combinedData.sort((a, b) => {
       const aBU = (a.businessUnit || '').toString().trim();
       const bBU = (b.businessUnit || '').toString().trim();
@@ -2448,7 +2405,7 @@ const ACSATResponseRateDashboard = ({
   // Export CXO Analysis to Excel
   const exportCXOAnalysisToExcel = async () => {
     if (!cxoAnalysisData || cxoAnalysisData.length === 0) {
-      alert('No CXO analysis data to download');
+      showAcsatAlert('No CXO analysis data to download');
       return;
     }
 
@@ -2935,7 +2892,7 @@ const ACSATResponseRateDashboard = ({
 
       // Add legend section
       worksheet.addRow([]);
-      const legendTitleRow = worksheet.addRow(['📊 Response Rate Legend']);
+      const legendTitleRow = worksheet.addRow(['Response Rate Legend']);
       const legendTitleRowNum = legendTitleRow.number;
       legendTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1D4ED8' } };
       legendTitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -3001,14 +2958,14 @@ const ACSATResponseRateDashboard = ({
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting CXO analysis to Excel:', error);
-      alert('Error exporting to Excel. Please try again.');
+      showAcsatAlert('Error exporting to Excel. Please try again.');
     }
   };
 
   // Export to Excel
   const exportAcsatTrendAnalysisToExcel = async () => {
     if (!acsatTrendAnalysisData?.length || !acsatTrendAnalysisData.some((f) => f.hasData)) {
-      alert('No ACSAT trend analysis data to download');
+      showAcsatAlert('No ACSAT trend analysis data to download');
       return;
     }
 
@@ -3146,13 +3103,13 @@ const ACSATResponseRateDashboard = ({
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting ACSAT trend analysis to Excel:', error);
-      alert('Error exporting trend analysis to Excel. Please try again.');
+      showAcsatAlert('Error exporting trend analysis to Excel. Please try again.');
     }
   };
 
   const exportToExcel = async () => {
     if (!processedData || processedData.length === 0) {
-      alert('No data to download');
+      showAcsatAlert('No data to download');
       return;
     }
 
@@ -3651,7 +3608,7 @@ const ACSATResponseRateDashboard = ({
 
       // Add formula section with NPS Dashboard style formatting
       worksheet.addRow([]);
-      const formulaTitleRow = worksheet.addRow(['📊 Response Rate Calculation Formula']);
+      const formulaTitleRow = worksheet.addRow(['Response Rate Calculation Formula']);
       const formulaTitleRowNum = formulaTitleRow.number;
       formulaTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1D4ED8' } };
       formulaTitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -3669,7 +3626,7 @@ const ACSATResponseRateDashboard = ({
 
       // Add legend section with NPS Dashboard style formatting
       worksheet.addRow([]);
-      const legendTitleRow = worksheet.addRow(['📊 Response Rate Legend']);
+      const legendTitleRow = worksheet.addRow(['Response Rate Legend']);
       const legendTitleRowNum = legendTitleRow.number;
       legendTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1D4ED8' } };
       legendTitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -3738,7 +3695,7 @@ const ACSATResponseRateDashboard = ({
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
-      alert('Error exporting to Excel. Please try again.');
+      showAcsatAlert('Error exporting to Excel. Please try again.');
     }
   };
 
@@ -3755,7 +3712,7 @@ const ACSATResponseRateDashboard = ({
       <DashboardContainer>
         <Header>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <Title>📈 Org level/BU wise dashboard for Response Rate</Title>
+            <Title><TrendingUp size={16} style={{ marginRight: '0.4rem' }} /> Org level/BU wise dashboard for Response Rate</Title>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <BackButton onClick={onBack}>
                 <ArrowLeft size={16} />
@@ -3774,89 +3731,90 @@ const ACSATResponseRateDashboard = ({
       <Header>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <Title>
-            {showCXOAnalysis ? '👥 CXO and Non CXO Response rate analysis' :
-             showTop10 ? '🏆 Top 10 Account - Response Rate' : 
-             groupByBU ? '🏢 BU wise dashboard for Response Rate' : 
-             '📈 Org level/BU wise dashboard for Response Rate'}
+            {showCXOAnalysis ? <><Users size={16} style={{ marginRight: '0.4rem' }} /> CXO and Non CXO Response rate analysis</> :
+             showTop10 ? <><Trophy size={16} style={{ marginRight: '0.4rem' }} /> Top 10 Account - Response Rate</> :
+             groupByBU ? <><Building2 size={16} style={{ marginRight: '0.4rem' }} /> BU wise dashboard for Response Rate</> :
+             <><TrendingUp size={16} style={{ marginRight: '0.4rem' }} /> Org level/BU wise dashboard for Response Rate</>}
           </Title>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <BUWiseButton onClick={() => {
+            <BUWiseButton active={groupByBU && !showCXOAnalysis} onClick={() => {
               setShowCXOAnalysis(false);
               setGroupByBU(true);
               setShowTop10(false);
-              setShowAcsatTrendAnalysis(false);
             }}>
-              🏢 BU wise dashboard for Response Rate
+              <Building2 size={16} style={{ marginRight: '0.4rem' }} /> BU wise dashboard for Response Rate
             </BUWiseButton>
-            <Top10Button onClick={() => {
+            <Top10Button active={showTop10 && !showCXOAnalysis} onClick={() => {
               setShowCXOAnalysis(false);
               setShowTop10(true);
               setGroupByBU(false);
-              setShowAcsatTrendAnalysis(false);
             }}>
-              🏆 Top 10 Account - Response Rate
+              <Trophy size={16} style={{ marginRight: '0.4rem' }} /> Top 10 Account - Response Rate
             </Top10Button>
-            <ShowAllButton onClick={() => {
+            <ShowAllButton active={!groupByBU && !showTop10 && !showCXOAnalysis} onClick={() => {
               setShowCXOAnalysis(false);
-              if (groupByBU || showTop10) setShowAcsatTrendAnalysis(false);
               setGroupByBU(false);
               setShowTop10(false);
             }}>
-              📊 Show All Accounts
+              <BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> Show All Accounts
             </ShowAllButton>
-            <CXOAnalysisButton onClick={() => {
+            <CXOAnalysisButton active={showCXOAnalysis} onClick={() => {
               setShowCXOAnalysis(true);
               setGroupByBU(false);
               setShowTop10(false);
             }}>
-              👥 CXO and Non CXO Response rate analysis
+              <Users size={16} style={{ marginRight: '0.4rem' }} /> CXO and Non CXO Response rate analysis
             </CXOAnalysisButton>
             <DownloadButton onClick={showCXOAnalysis ? exportCXOAnalysisToExcel : exportToExcel}>
               <Download size={16} />
               Download Excel
             </DownloadButton>
+            <TrendAnalysisButton type="button" active={showAcsatTrendAnalysis} onClick={handleViewAcsatTrendAnalysis}>
+              <TrendingUp size={16} />
+              {showAcsatTrendAnalysis ? 'Hide ACSAT trend analysis' : 'View ACSAT trend analysis'}
+            </TrendAnalysisButton>
             <BackButton onClick={onBack}>
               <ArrowLeft size={16} />
               Back to ACSAT
             </BackButton>
-            <TrendAnalysisButton type="button" onClick={handleViewAcsatTrendAnalysis}>
-              <TrendingUp size={16} />
-              View ACSAT trend analysis
-            </TrendAnalysisButton>
           </div>
         </div>
 
-        {acsatCycleStartDateFormatted && (
-          <div style={{ 
-            marginTop: '0.5rem', 
-            padding: '0.75rem', 
-            background: '#f0f9ff', 
-            borderRadius: '6px', 
+        {(acsatCycleStartDateFormatted || processedData.length > 0) && (
+          <div style={{
+            marginTop: '0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.5rem 1rem',
+            padding: '0.4rem 0.75rem',
+            background: '#f0f9ff',
+            borderRadius: '6px',
             border: '1px solid #0ea5e9',
-            textAlign: 'center',
             color: '#0c4a6e',
-            fontSize: '0.875rem',
+            fontSize: '0.8rem',
             fontWeight: '500'
           }}>
-            📅 CSAT Cycle Start Date: {acsatCycleStartDateFormatted}
+            {acsatCycle && (
+              <span><Calendar size={14} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} /> Cycle: {acsatCycle}</span>
+            )}
+            {processedData.length > 0 && (
+              <span>
+                <CheckCircle2 size={14} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} /> {
+                  showTop10 ? `Top 10: ${displayData.length} of ${processedData.length} accounts` :
+                  groupByBU ? `${displayData.length} business units` :
+                  `${displayData.length} of ${processedData.length} accounts`
+                }
+              </span>
+            )}
           </div>
-        )}
-        
-        {processedData.length > 0 && (
-          <SuccessMessage>
-            ✅ Data loaded successfully! {
-              showTop10 ? `Showing Top 10 accounts: ${displayData.length} of ${processedData.length} accounts` :
-              groupByBU ? `Showing ${displayData.length} business units` :
-              `Showing ${displayData.length} of ${processedData.length} accounts`
-            }
-          </SuccessMessage>
         )}
       </Header>
 
       {/* Response Rate Calculation Formula */}
       {!showCXOAnalysis && (
       <FormulaContainer>
-        <FormulaTitle>📊 Response Rate Calculation Formula</FormulaTitle>
+        <FormulaTitle><BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> Response Rate Calculation Formula</FormulaTitle>
         <FormulaText>
             <strong>Response% = (Responded / Polled) × 100</strong>
         </FormulaText>
@@ -3866,10 +3824,10 @@ const ACSATResponseRateDashboard = ({
       </FormulaContainer>
       )}
 
-       {/* Search Container */}
        {!showCXOAnalysis && (
-       <SearchContainer>
-         <Search size={20} color="#6b7280" />
+       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between', margin: '0.5rem 0' }}>
+       <SearchContainer style={{ margin: 0 }}>
+         <Search size={16} color="#6b7280" />
         <SearchInput
           type="text"
           placeholder={
@@ -3886,12 +3844,9 @@ const ACSATResponseRateDashboard = ({
            </ClearButton>
          )}
        </SearchContainer>
-       )}
 
-       {/* Response Rate Color Legend */}
-      {!showCXOAnalysis && (
-       <LegendContainer>
-         <LegendTitle>📊 Response Rate Color Legend</LegendTitle>
+       <LegendContainer style={{ flex: '1 1 auto' }}>
+         <LegendTitle>Response Rate:</LegendTitle>
          <LegendItem>
            <LegendColor style={{ backgroundColor: '#FF0000' }} />
             <LegendText>Red &lt; 50%</LegendText>
@@ -3906,9 +3861,10 @@ const ACSATResponseRateDashboard = ({
          </LegendItem>
         <LegendItem>
           <LegendColor style={{ backgroundColor: '#f3f4f6' }} />
-          <LegendText>Gray = No surveys received (0)</LegendText>
+          <LegendText>Gray = No surveys</LegendText>
          </LegendItem>
        </LegendContainer>
+       </div>
       )}
 
       {/* CXO and Non-CXO Response Rate Analysis Table */}
@@ -4125,9 +4081,12 @@ const ACSATResponseRateDashboard = ({
               </OtherAccountRow>
             )}
             {showTop10 && (() => {
-              const polledByAccountName = new Map(
-                (processedData || []).map(row => [(row.customerName || '').toString().trim().toLowerCase(), row.polled])
-              );
+              const polledByAccountName = new Map();
+              (processedData || []).forEach(row => {
+                const key = (row.customerName || '').toString().trim().toLowerCase();
+                if (!key) return;
+                polledByAccountName.set(key, (polledByAccountName.get(key) || 0) + (row.surveysSent || 0));
+              });
               const notPolledCaption = buildTop10NotPolledCaption(polledByAccountName);
               if (!notPolledCaption) return null;
               const colCount = 6 + (showMainTableTrendColumns ? acsatTrendAnalysisData.length : 0);
@@ -4164,7 +4123,7 @@ const ACSATResponseRateDashboard = ({
               {acsatTrendSectionTitle}
             </div>
             {acsatTrendAnalysisData.some((f) => f.hasData) && (
-              <DownloadButton type="button" onClick={exportAcsatTrendAnalysisToExcel} style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }}>
+              <DownloadButton type="button" onClick={exportAcsatTrendAnalysisToExcel} style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem', background: 'transparent', color: 'white', border: '1px solid white' }}>
                 <Download size={16} />
                 Download Excel
               </DownloadButton>

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, FileText, BarChart3, Search, CheckCircle2, TrendingUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useCSATContext } from '../context/CSATContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import html2canvas from 'html2canvas';
+import { showAcsatAlert } from '../utils/acsatAlert';
 
 const DashboardContainer = styled.div`
-  padding: 2rem;
+  padding: 1rem;
   background: #f8fafc;
   min-height: 100vh;
 `;
@@ -16,42 +17,47 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 1rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
 `;
 
 const Title = styled.h1`
-  color: #1f2937;
-  font-size: 1.875rem;
+  color: #16233D;
+  font-size: 1.15rem;
   font-weight: 700;
   margin: 0;
 `;
 
 const BackButton = styled.button`
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  background: transparent;
+  color: #16233D;
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 
   &:hover {
-    background: #2563eb;
+    border-color: #7c3aed;
+    background: #7c3aed;
+    color: white;
   }
 `;
 
 const ContentContainer = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   overflow: hidden;
 `;
 
@@ -63,31 +69,32 @@ const TableContainer = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   border: 2px solid #6b7280;
 `;
 
 const TableHeader = styled.th`
   background: #1e3a8a;
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   font-weight: 600;
   color: white;
+  font-size: 0.8rem;
   border: 1px solid #9ca3af;
   position: sticky;
   top: 0;
   z-index: 10;
   cursor: pointer;
   user-select: none;
-  
+
   &:hover {
     background: #1e40af;
   }
 `;
 
 const TableCell = styled.td`
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   color: #374151;
   text-align: ${props => props.isNumeric ? 'center' : 'left'};
@@ -130,46 +137,48 @@ const SuccessMessage = styled.div`
 `;
 
 const ExportButton = styled.button`
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  background: transparent;
+  color: #1B8A5A;
+  border: 1px solid #1B8A5A;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 
   &:hover {
-    background: #059669;
+    background: #1B8A5A;
+    color: white;
   }
 `;
 
 const SearchContainer = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: 1rem;
-  padding: 1rem;
+  margin-bottom: 0.5rem;
+  padding: 0.6rem 0.75rem;
   background: #f8fafc;
   border-radius: 8px;
 `;
 
 const SearchInput = styled.input`
-  width: 300px;
-  max-width: 300px;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  width: 240px;
+  max-width: 240px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 0.875rem;
-  
+  font-size: 0.8rem;
+
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #1D4ED8;
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.1);
   }
 `;
 
@@ -177,8 +186,9 @@ const ClearButton = styled.button`
   background: #6b7280;
   color: white;
   border: none;
-  padding: 0.75rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -192,11 +202,11 @@ const RemarksUploadContainer = styled.div`
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.5rem;
   background: #eff6ff;
-  padding: 1rem 1.25rem;
+  padding: 0.6rem 0.75rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 `;
 const FileInput = styled.input`
   padding: 0.7rem 0.8rem;
@@ -666,7 +676,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
   // Download chart as image
   const downloadCombinedChartImage = async () => {
     if (!combinedChartRef.current) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -693,7 +703,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       }, 'image/png');
     } catch (error) {
       console.error('Error downloading chart:', error);
-      alert('Error downloading chart image');
+      showAcsatAlert('Error downloading chart image');
     }
   };
 
@@ -701,7 +711,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
   const downloadQualitativeAnalysisExcel = () => {
     try {
       if (!filteredData || filteredData.length === 0) {
-        alert('No data available to download');
+        showAcsatAlert('No data available to download');
         return;
       }
 
@@ -763,7 +773,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       XLSX.writeFile(wb, fileName);
     } catch (error) {
       console.error('Error downloading qualitative analysis:', error);
-      alert('Error downloading qualitative analysis data');
+      showAcsatAlert('Error downloading qualitative analysis data');
     }
   };
 
@@ -807,7 +817,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
   const downloadRemarksSentimentAnalysisExcel = () => {
     try {
       if (!remarksData || remarksData.length === 0) {
-        alert('No remarks data available to download. Please upload remarks and try again.');
+        showAcsatAlert('No remarks data available to download. Please upload remarks and try again.');
         return;
       }
 
@@ -958,11 +968,11 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       XLSX.writeFile(wb, fileName);
       
       console.log('✅ Excel file downloaded:', fileName);
-      alert('Sentiment Analysis Excel file downloaded successfully!');
+      showAcsatAlert('Sentiment Analysis Excel file downloaded successfully!');
     } catch (err) {
       console.error('❌ Error downloading Remarks Sentiment Analysis:', err);
       console.error('Error details:', err.stack);
-      alert('Error downloading Remarks Sentiment Analysis. Please check the console for details.');
+      showAcsatAlert('Error downloading Remarks Sentiment Analysis. Please check the console for details.');
     }
   };
 
@@ -1002,7 +1012,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       ].reduce((a, b) => a + b, 0);
 
       if (allCounts === 0) {
-        alert('No remarks data available to download. Please upload remarks and try again.');
+        showAcsatAlert('No remarks data available to download. Please upload remarks and try again.');
         return;
       }
 
@@ -1175,10 +1185,10 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
           link.download = fileName;
           link.click();
           window.URL.revokeObjectURL(url);
-          alert('Remarks Bucket Analysis Excel file downloaded successfully!');
+          showAcsatAlert('Remarks Bucket Analysis Excel file downloaded successfully!');
         }).catch((err) => {
           console.error('Error downloading Excel file:', err);
-          alert('Error downloading Excel file. Please try again.');
+          showAcsatAlert('Error downloading Excel file. Please try again.');
         });
         
         return; // Exit early since we're using ExcelJS
@@ -1193,7 +1203,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       XLSX.writeFile(wb, fileName);
     } catch (err) {
       console.error('Error downloading Remarks Bucket Analysis:', err);
-      alert('Error downloading Remarks Bucket Analysis.');
+      showAcsatAlert('Error downloading Remarks Bucket Analysis.');
     }
   };
 
@@ -1221,7 +1231,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       console.log('✅ Remarks file name set:', file.name);
     } catch (err) {
       console.error('Failed to read Remarks file:', err);
-      alert('Failed to read the Remarks file. Please ensure it is a valid Excel/CSV file.');
+      showAcsatAlert('Failed to read the Remarks file. Please ensure it is a valid Excel/CSV file.');
     }
   };
 
@@ -2162,7 +2172,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
 
   const exportToExcel = () => {
     if (filteredData.length === 0) {
-      alert('No data to export');
+      showAcsatAlert('No data to export');
       return;
     }
 
@@ -2253,7 +2263,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
 
     } catch (error) {
       console.error('Error exporting data:', error);
-      alert('Error exporting data');
+      showAcsatAlert('Error exporting data');
     }
   };
 
@@ -2447,7 +2457,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       
     } catch (error) {
       console.error('Error exporting bucket analysis:', error);
-      alert('Error exporting bucket analysis data');
+      showAcsatAlert('Error exporting bucket analysis data');
     }
   };
 
@@ -2896,7 +2906,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       
     } catch (error) {
       console.error('Error exporting strength bucket analysis:', error);
-      alert('Error exporting strength bucket analysis data');
+      showAcsatAlert('Error exporting strength bucket analysis data');
     }
   };
 
@@ -3170,7 +3180,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       
     } catch (error) {
       console.error('Error exporting sub improvement bucket analysis:', error);
-      alert('Error exporting sub improvement bucket analysis data');
+      showAcsatAlert('Error exporting sub improvement bucket analysis data');
     }
   };
 
@@ -3444,7 +3454,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       
     } catch (error) {
       console.error('Error exporting sub strength bucket analysis:', error);
-      alert('Error exporting sub strength bucket analysis data');
+      showAcsatAlert('Error exporting sub strength bucket analysis data');
     }
   };
 
@@ -3573,7 +3583,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       
     } catch (error) {
       console.error('Error exporting comprehensive account-wise analysis:', error);
-      alert('Error exporting comprehensive account-wise analysis data');
+      showAcsatAlert('Error exporting comprehensive account-wise analysis data');
     }
   };
 
@@ -3705,7 +3715,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
       
     } catch (error) {
       console.error('Error exporting comprehensive BU-wise analysis:', error);
-      alert('Error exporting comprehensive BU-wise analysis data');
+      showAcsatAlert('Error exporting comprehensive BU-wise analysis data');
     }
   };
 
@@ -3713,7 +3723,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
     return (
       <DashboardContainer>
         <Header>
-          <Title>📝 Org level/BU wise Qualitative analysis with bucket analysis</Title>
+          <Title><FileText size={20} style={{ marginRight: '0.4rem' }} /> Org level/BU wise Qualitative analysis with bucket analysis</Title>
           <BackButton onClick={onBack}>
             <ArrowLeft size={20} />
             Back
@@ -3730,7 +3740,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
     return (
       <DashboardContainer>
         <Header>
-          <Title>📝 Org level/BU wise Qualitative analysis with bucket analysis</Title>
+          <Title><FileText size={20} style={{ marginRight: '0.4rem' }} /> Org level/BU wise Qualitative analysis with bucket analysis</Title>
           <BackButton onClick={onBack}>
             <ArrowLeft size={20} />
             Back
@@ -3747,8 +3757,8 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
     <DashboardContainer>
       <Header>
         <BackButton onClick={onBack}><ArrowLeft size={22}/>Back</BackButton>
-        <Title>📝 Org level/BU wise Qualitative analysis with bucket analysis</Title>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <Title><FileText size={20} style={{ marginRight: '0.4rem' }} /> Org level/BU wise Qualitative analysis with bucket analysis</Title>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <ExportButton onClick={downloadQualitativeAnalysisExcel}>
             <Download size={20} />
             Download Excel
@@ -3794,7 +3804,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
               type="button"
               onClick={() => setShowRemarksBucketAnalysis((prev) => !prev)}
             >
-              {showRemarksBucketAnalysis ? 'Hide Bucket Analysis' : '📊 Show Bucket Analysis'}
+              {showRemarksBucketAnalysis ? 'Hide Bucket Analysis' : <><BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> Show Bucket Analysis</>}
             </RemarksBucketButton>
           </>
         )}
@@ -4463,7 +4473,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                           Chart data length: {chartData?.length || 0}, Combined data length: {combinedRemarksAccountData?.length || 0}
                         </div>
                         <div style={{ fontSize: '0.8rem', marginTop: '10px', color: '#cbd5e1', fontFamily: 'monospace', textAlign: 'left', background: '#f1f5f9', padding: '10px', borderRadius: '4px' }}>
-                          <div>🔍 DEBUG INFO:</div>
+                          <div><Search size={14} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> DEBUG INFO:</div>
                           <div>chartData exists: {chartData ? 'Yes' : 'No'}</div>
                           <div>chartData type: {typeof chartData}</div>
                           <div>chartData length: {chartData?.length || 0}</div>
@@ -4498,7 +4508,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h3 style={{ color: '#1f2937', margin: 0, fontSize: '1.25rem' }}>
-                    📊 Areas of Improvement Bucket Analysis
+                    <BarChart3 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Areas of Improvement Bucket Analysis
                   </h3>
                   <button
                     onClick={exportBucketAnalysis}
@@ -4670,16 +4680,16 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
             ) : (
               <>
                 {/* Sub Areas of Improvement Bucket Analysis Section */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', padding: '0.6rem 0.75rem', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
                   <div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937', fontSize: '1.1rem' }}>
-                      🔍 Sub Areas of Improvement Bucket Analysis
+                    <h3 style={{ margin: '0 0 0.3rem 0', color: '#1f2937', fontSize: '0.95rem' }}>
+                      <Search size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Sub Areas of Improvement Bucket Analysis
                     </h3>
-                    <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>
+                    <p style={{ margin: '0', color: '#6b7280', fontSize: '0.78rem' }}>
                       Analyze specific improvement sub-areas by account or business unit with counts
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
                         onClick={() => setSubImprovementBucketViewType('account')}
@@ -4690,7 +4700,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                           backgroundColor: subImprovementBucketViewType === 'account' ? '#DC2626' : '#ffffff',
                           color: subImprovementBucketViewType === 'account' ? '#ffffff' : '#374151',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500'
                         }}
                       >
@@ -4705,7 +4715,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                           backgroundColor: subImprovementBucketViewType === 'bu' ? '#DC2626' : '#ffffff',
                           color: subImprovementBucketViewType === 'bu' ? '#ffffff' : '#374151',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500'
                         }}
                       >
@@ -4715,13 +4725,13 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                     <button
                       onClick={() => setShowSubImprovementBucketAnalysis(!showSubImprovementBucketAnalysis)}
                       style={{
-                        padding: '0.5rem 1rem',
+                        padding: '0.35rem 0.7rem',
                         border: '1px solid #DC2626',
                         borderRadius: '6px',
                         backgroundColor: showSubImprovementBucketAnalysis ? '#DC2626' : '#ffffff',
                         color: showSubImprovementBucketAnalysis ? '#ffffff' : '#DC2626',
                         cursor: 'pointer',
-                        fontSize: '0.9rem',
+                        fontSize: '0.78rem',
                         fontWeight: '500'
                       }}
                     >
@@ -4731,13 +4741,13 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       <button
                         onClick={exportSubImprovementBucketAnalysis}
                         style={{
-                          padding: '0.5rem 1rem',
+                          padding: '0.35rem 0.7rem',
                           border: '1px solid #DC2626',
                           borderRadius: '6px',
                           backgroundColor: '#DC2626',
                           color: '#ffffff',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500',
                           marginLeft: '0.5rem',
                           display: 'flex',
@@ -4754,8 +4764,8 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
 
                 {/* Sub Areas of Improvement Bucket Analysis Display */}
                 {showSubImprovementBucketAnalysis && (
-                  <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #fecaca', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-                    <h3 style={{ margin: '0 0 1rem 0', color: '#1f2937', fontSize: '1.2rem' }}>
+                  <div style={{ marginBottom: '0.75rem', padding: '0.85rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #fecaca', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                    <h3 style={{ margin: '0 0 0.6rem 0', color: '#1f2937', fontSize: '1rem' }}>
                       {subImprovementBucketViewType === 'account' ? 'Account-wise' : 'BU-wise'} Sub Areas of Improvement Analysis
                     </h3>
                     
@@ -4896,16 +4906,16 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                 )}
 
                 {/* Sub Strength Bucket Analysis Section */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', padding: '0.6rem 0.75rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                   <div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937', fontSize: '1.1rem' }}>
-                      💪 Sub Strength Bucket Analysis
+                    <h3 style={{ margin: '0 0 0.3rem 0', color: '#1f2937', fontSize: '0.95rem' }}>
+                      <TrendingUp size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Sub Strength Bucket Analysis
                     </h3>
-                    <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>
+                    <p style={{ margin: '0', color: '#6b7280', fontSize: '0.78rem' }}>
                       Analyze specific strength sub-areas by account or business unit with counts
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
                         onClick={() => setSubStrengthBucketViewType('account')}
@@ -4916,7 +4926,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                           backgroundColor: subStrengthBucketViewType === 'account' ? '#059669' : '#ffffff',
                           color: subStrengthBucketViewType === 'account' ? '#ffffff' : '#374151',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500'
                         }}
                       >
@@ -4931,7 +4941,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                           backgroundColor: subStrengthBucketViewType === 'bu' ? '#059669' : '#ffffff',
                           color: subStrengthBucketViewType === 'bu' ? '#ffffff' : '#374151',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500'
                         }}
                       >
@@ -4941,13 +4951,13 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                     <button
                       onClick={() => setShowSubStrengthBucketAnalysis(!showSubStrengthBucketAnalysis)}
                       style={{
-                        padding: '0.5rem 1rem',
+                        padding: '0.35rem 0.7rem',
                         border: '1px solid #059669',
                         borderRadius: '6px',
                         backgroundColor: showSubStrengthBucketAnalysis ? '#059669' : '#ffffff',
                         color: showSubStrengthBucketAnalysis ? '#ffffff' : '#059669',
                         cursor: 'pointer',
-                        fontSize: '0.9rem',
+                        fontSize: '0.78rem',
                         fontWeight: '500'
                       }}
                     >
@@ -4957,13 +4967,13 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       <button
                         onClick={exportSubStrengthBucketAnalysis}
                         style={{
-                          padding: '0.5rem 1rem',
+                          padding: '0.35rem 0.7rem',
                           border: '1px solid #059669',
                           borderRadius: '6px',
                           backgroundColor: '#059669',
                           color: '#ffffff',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500',
                           marginLeft: '0.5rem',
                           display: 'flex',
@@ -4980,8 +4990,8 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
 
                 {/* Sub Strength Bucket Analysis Display */}
                 {showSubStrengthBucketAnalysis && (
-                  <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-                    <h3 style={{ margin: '0 0 1rem 0', color: '#1f2937', fontSize: '1.2rem' }}>
+                  <div style={{ marginBottom: '0.75rem', padding: '0.85rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                    <h3 style={{ margin: '0 0 0.6rem 0', color: '#1f2937', fontSize: '1rem' }}>
                       {subStrengthBucketViewType === 'account' ? 'Account-wise' : 'BU-wise'} Sub Strength Analysis
                     </h3>
                     
@@ -5122,16 +5132,16 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                 )}
 
                 {/* Strength Bucket Analysis Section */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', padding: '0.6rem 0.75rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                   <div>
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937', fontSize: '1.1rem' }}>
-                      ✅ Strength Bucket Analysis
+                    <h3 style={{ margin: '0 0 0.3rem 0', color: '#1f2937', fontSize: '0.95rem' }}>
+                      <CheckCircle2 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Strength Bucket Analysis
                     </h3>
-                    <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>
+                    <p style={{ margin: '0', color: '#6b7280', fontSize: '0.78rem' }}>
                       Analyze strength areas by account or business unit with counts
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
                         onClick={() => setStrengthBucketViewType('account')}
@@ -5142,7 +5152,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                           backgroundColor: strengthBucketViewType === 'account' ? '#059669' : '#ffffff',
                           color: strengthBucketViewType === 'account' ? '#ffffff' : '#374151',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500'
                         }}
                       >
@@ -5157,7 +5167,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                           backgroundColor: strengthBucketViewType === 'bu' ? '#059669' : '#ffffff',
                           color: strengthBucketViewType === 'bu' ? '#ffffff' : '#374151',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500'
                         }}
                       >
@@ -5167,13 +5177,13 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                     <button
                       onClick={() => setShowStrengthBucketAnalysis(!showStrengthBucketAnalysis)}
                       style={{
-                        padding: '0.5rem 1rem',
+                        padding: '0.35rem 0.7rem',
                         border: '1px solid #059669',
                         borderRadius: '6px',
                         backgroundColor: showStrengthBucketAnalysis ? '#059669' : '#ffffff',
                         color: showStrengthBucketAnalysis ? '#ffffff' : '#059669',
                         cursor: 'pointer',
-                        fontSize: '0.9rem',
+                        fontSize: '0.78rem',
                         fontWeight: '500'
                       }}
                     >
@@ -5183,13 +5193,13 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       <button
                         onClick={exportStrengthBucketAnalysis}
                         style={{
-                          padding: '0.5rem 1rem',
+                          padding: '0.35rem 0.7rem',
                           border: '1px solid #059669',
                           borderRadius: '6px',
                           backgroundColor: '#059669',
                           color: '#ffffff',
                           cursor: 'pointer',
-                          fontSize: '0.9rem',
+                          fontSize: '0.78rem',
                           fontWeight: '500',
                           marginLeft: '0.5rem',
                           display: 'flex',
@@ -5206,8 +5216,8 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
 
                 {/* Strength Bucket Analysis Display */}
                 {showStrengthBucketAnalysis && (
-                  <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-                    <h3 style={{ margin: '0 0 1rem 0', color: '#1f2937', fontSize: '1.2rem' }}>
+                  <div style={{ marginBottom: '0.75rem', padding: '0.85rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                    <h3 style={{ margin: '0 0 0.6rem 0', color: '#1f2937', fontSize: '1rem' }}>
                       {strengthBucketViewType === 'account' ? 'Account-wise' : 'BU-wise'} Strength Analysis
                     </h3>
                     
@@ -5395,10 +5405,10 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       <TableCell>{row['Team Commitment & Collaboration']}</TableCell>
                       <TableCell>{row['Timely Resource Fulfillment']}</TableCell>
                       <TableCell>{row['Quality of Delivery']}</TableCell>
-                      <TableCell>{row.areasOfImprovement}</TableCell>
-                      <TableCell>{row.strength}</TableCell>
-                      <TableCell>{row.subAreasOfImprovement}</TableCell>
-                      <TableCell>{row.subStrength}</TableCell>
+                      <TableCell style={{ lineHeight: '1.3' }}>{row.areasOfImprovement}</TableCell>
+                      <TableCell style={{ lineHeight: '1.3' }}>{row.strength}</TableCell>
+                      <TableCell style={{ lineHeight: '1.3' }}>{row.subAreasOfImprovement}</TableCell>
+                      <TableCell style={{ lineHeight: '1.3' }}>{row.subStrength}</TableCell>
                     </TableRow>
                   ))}
                 </tbody>
