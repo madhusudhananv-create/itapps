@@ -1,343 +1,281 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  getDocs,
-  getDoc,
-  query,
-  where,
-  deleteDoc,
-  serverTimestamp,
-  orderBy,
-} from 'firebase/firestore';
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { db } from '@shared/config/firebaseConfig';
-import type { ActivityWithProjectInfo } from '../types/activityTypes';
+import { aimiApiClient, getCurrentEmpId } from '@shared/services/aimiApiClient';
+import type {
+  ActivityWithProjectInfo,
+  ActivityStatus,
+} from '../types/activityTypes';
 
-// Collection name for activities
-const ACTIVITIES_COLLECTION = 'activities';
+// Was Firestore-backed (collection 'activities'); now calls the SQL-backed
+// AimiController endpoints (usp_AIMI_GetActivities / GetActivitiesByFilter /
+// UpsertActivity / DeleteActivity). Every exported function here keeps its
+// original signature so callers (activityStorageUtils, hooks, components)
+// need no changes - only the implementation swapped data sources.
+//
+// GetAimiActivitiesByFilter takes all four dimensions (business units,
+// accounts, projects, practices) as SQL table-valued parameters in one call,
+// which is why the old 30-value Firestore 'in' clause batching workaround
+// (FIRESTORE_IN_CLAUSE_LIMIT/chunkArray/getActivitiesByFieldValues) is gone -
+// TVPs have no such cap, and practice narrowing is now done by SQL itself
+// instead of a client-side post-filter.
 
-// Firestore rejects an 'in' clause with more than 30 comparison values, and
-// combining it with a second 'in' clause caps the combined disjunctions at
-// 30 as well - so we chunk the primary filter into batches of 30 and always
-// apply any secondary filter (e.g. practices) client-side after fetching.
-const FIRESTORE_IN_CLAUSE_LIMIT = 30;
-
-const chunkArray = <T,>(items: T[], size: number): T[][] => {
-  const chunks: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    chunks.push(items.slice(i, i + size));
-  }
-  return chunks;
+const ENDPOINTS = {
+  GET_ACTIVITIES: '/api/AllSys/GetAimiActivities',
+  GET_ACTIVITIES_BY_FILTER: '/api/AllSys/GetAimiActivitiesByFilter',
+  UPSERT_ACTIVITY: '/api/AllSys/UpsertAimiActivity',
+  DELETE_ACTIVITY: '/api/AllSys/DeleteAimiActivity',
 };
 
-/**
- * Fetch activities matching any of `values` for `field`, transparently
- * batching into multiple queries when `values` exceeds Firestore's 30-value
- * 'in' clause limit, then merging and de-duplicating the results.
- */
-const getActivitiesByFieldValues = async (
-  field: 'businessUnit' | 'account' | 'project',
-  values: string[]
-): Promise<ActivityWithProjectInfo[]> => {
-  const batches = chunkArray(values, FIRESTORE_IN_CLAUSE_LIMIT);
-
-  const batchResults = await Promise.all(
-    batches.map(async (batch) => {
-      const q = query(
-        collection(db, ACTIVITIES_COLLECTION),
-        where(field, 'in', batch),
-        orderBy('createdAt', 'desc')
-      );
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(convertFirestoreToActivity);
-    })
-  );
-
-  const activitiesById = new Map<string, ActivityWithProjectInfo>();
-  for (const activity of batchResults.flat()) {
-    activitiesById.set(activity.id, activity);
-  }
-  return Array.from(activitiesById.values());
-};
-
-// Interface for Firestore activity document
-interface FirestoreActivity
-  extends Omit<ActivityWithProjectInfo, 'id' | 'createdAt' | 'updatedAt'> {
-  createdAt: unknown; // Firestore timestamp
-  updatedAt: unknown; // Firestore timestamp
+// Row shape returned by GetAimiActivities/GetAimiActivitiesByFilter - mirrors
+// AimiActivityResponse in the C# API (GAVS.AllocationSystem.Model.CSP.ViewModels),
+// UPPER_SNAKE field names matching the SQL columns.
+interface ApiAiTool {
+  TOOL_NAME: string;
+  ACCESS_TYPE: string | null;
+  LICENSE_COUNT: number | null;
+  NETWORK_TYPE: string | null;
 }
 
-/**
- * Convert Firestore document to ActivityWithProjectInfo
- */
-const convertFirestoreToActivity = (
-  doc: QueryDocumentSnapshot<DocumentData>
-): ActivityWithProjectInfo => {
-  const data = doc.data() as FirestoreActivity;
-  return {
-    id: doc.id,
-    sdlcPhase: data.sdlcPhase,
-    activity: data.activity,
-    applicability: data.applicability,
-    aiAdoptionScore: data.aiAdoptionScore,
-    aiToolUsed: data.aiToolUsed,
-    //clientApproved: data.clientApproved || '',
-    acceleratorsUsed: data.acceleratorsUsed || '',
-    workDoneByAI: data.workDoneByAI,
-    hoursSaved: data.hoursSaved,
-    revenueGenerated: data.revenueGenerated,
-    benefitTo: data.benefitTo,
-    qualitativeBenefits: data.qualitativeBenefits,
-    comments: data.comments,
-    //aiToolDetails: data.aiToolDetails || {},
-    status: data.status || 'submitted',
-    projectId: data.projectId,
-    practice: data.practice,
-    project: data.project,
-    account: data.account,
-    businessUnit: data.businessUnit,
-    createdAt:
-      data.createdAt &&
-      typeof data.createdAt === 'object' &&
-      'toDate' in data.createdAt
-        ? (data.createdAt as { toDate(): Date }).toDate()
-        : new Date(),
-    updatedAt:
-      data.updatedAt &&
-      typeof data.updatedAt === 'object' &&
-      'toDate' in data.updatedAt
-        ? (data.updatedAt as { toDate(): Date }).toDate()
-        : undefined,
-  };
+interface ApiActivityRow {
+  ID: number;
+  PROJECT_ID: string;
+  PROJECT: string | null;
+  ACCOUNT: string | null;
+  BUSINESS_UNIT: string | null;
+  PRACTICE: string;
+  SDLC_PHASE: string;
+  ACTIVITY: string;
+  APPLICABILITY: string | null;
+  AI_ADOPTION_SCORE: number | null;
+  WORK_DONE_BY_AI: number | null;
+  HOURS_SAVED: number | null;
+  REVENUE_GENERATED: string | null;
+  BENEFIT_TO: string | null;
+  COMMENTS: string | null;
+  STATUS: string | null;
+  CREATED_BY: string | null;
+  CREATED_DATE: string | null;
+  UPDATED_BY: string | null;
+  UPDATED_DATE: string | null;
+  AI_TOOLS: ApiAiTool[];
+  ACCELERATORS: string[];
+  QUALITATIVE_BENEFITS: string[];
+}
+
+const toStringArray = (value: string | string[] | undefined): string[] => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
 };
 
-/**
- * Convert ActivityWithProjectInfo to Firestore document
- */
-const convertActivityToFirestore = (
+/** ApiActivityRow (SQL) -> ActivityWithProjectInfo (existing client shape). */
+const fromApiActivity = (row: ApiActivityRow): ActivityWithProjectInfo => ({
+  id: String(row.ID),
+  sdlcPhase: row.SDLC_PHASE,
+  activity: row.ACTIVITY,
+  applicability: row.APPLICABILITY || '',
+  aiAdoptionScore:
+    row.AI_ADOPTION_SCORE === null || row.AI_ADOPTION_SCORE === undefined
+      ? ''
+      : String(row.AI_ADOPTION_SCORE),
+  aiToolUsed: row.AI_TOOLS.map((t) => t.TOOL_NAME),
+  acceleratorsUsed: row.ACCELERATORS,
+  workDoneByAI: row.WORK_DONE_BY_AI ?? 0,
+  hoursSaved: row.HOURS_SAVED ?? 0,
+  revenueGenerated: row.REVENUE_GENERATED || '',
+  benefitTo: row.BENEFIT_TO || '',
+  qualitativeBenefits: row.QUALITATIVE_BENEFITS ?? [],
+  comments: row.COMMENTS || '',
+  status: (row.STATUS as ActivityStatus) || 'submitted',
+  projectId: row.PROJECT_ID,
+  practice: row.PRACTICE,
+  project: row.PROJECT || '',
+  account: row.ACCOUNT || '',
+  businessUnit: row.BUSINESS_UNIT || '',
+  createdAt: row.CREATED_DATE ? new Date(row.CREATED_DATE) : new Date(),
+  updatedAt: row.UPDATED_DATE ? new Date(row.UPDATED_DATE) : undefined,
+});
+
+/** ActivityWithProjectInfo (existing client shape) -> UpsertAimiActivity request body. */
+const toUpsertPayload = (
+  id: string | undefined,
   activity: Omit<ActivityWithProjectInfo, 'id'>
-): Omit<FirestoreActivity, 'createdAt' | 'updatedAt'> => {
+) => ({
+  ID: id ? Number(id) : null,
+  PROJECT_ID: activity.projectId,
+  PROJECT: activity.project,
+  ACCOUNT: activity.account,
+  BUSINESS_UNIT: activity.businessUnit,
+  PRACTICE: activity.practice,
+  SDLC_PHASE: activity.sdlcPhase,
+  ACTIVITY: activity.activity,
+  APPLICABILITY: activity.applicability,
+  AI_ADOPTION_SCORE:
+    activity.aiAdoptionScore && activity.aiAdoptionScore !== 'N/A'
+      ? Number(activity.aiAdoptionScore)
+      : null,
+  WORK_DONE_BY_AI: activity.workDoneByAI ?? null,
+  HOURS_SAVED: activity.hoursSaved ?? null,
+  REVENUE_GENERATED: activity.revenueGenerated,
+  BENEFIT_TO: activity.benefitTo,
+  COMMENTS: activity.comments,
+  STATUS: activity.status || 'draft',
+  AI_TOOLS: toStringArray(activity.aiToolUsed).map((name) => ({
+    TOOL_NAME: name,
+    ACCESS_TYPE: null,
+    LICENSE_COUNT: null,
+    NETWORK_TYPE: null,
+  })),
+  ACCELERATORS: toStringArray(activity.acceleratorsUsed),
+  QUALITATIVE_BENEFITS: activity.qualitativeBenefits ?? [],
+});
+
+const upsert = async (
+  id: string | undefined,
+  activity: Omit<ActivityWithProjectInfo, 'id'>
+): Promise<ActivityWithProjectInfo> => {
+  const result = await aimiApiClient.post<{ ID: number }>(
+    ENDPOINTS.UPSERT_ACTIVITY,
+    toUpsertPayload(id, activity)
+  );
   return {
-    sdlcPhase: activity.sdlcPhase,
-    activity: activity.activity,
-    applicability: activity.applicability,
-    aiAdoptionScore: activity.aiAdoptionScore,
-    aiToolUsed: activity.aiToolUsed,
-    //clientApproved: activity.clientApproved || '',
-    acceleratorsUsed: activity.acceleratorsUsed || '',
-    workDoneByAI: activity.workDoneByAI,
-    hoursSaved: activity.hoursSaved,
-    revenueGenerated: activity.revenueGenerated,
-    benefitTo: activity.benefitTo,
-    qualitativeBenefits: activity.qualitativeBenefits,
-    comments: activity.comments,
-    //aiToolDetails: activity.aiToolDetails || {},
-    status: activity.status || 'submitted',
-    projectId: activity.projectId,
-    practice: activity.practice,
-    project: activity.project,
-    account: activity.account,
-    businessUnit: activity.businessUnit,
+    ...activity,
+    id: String(result.ID),
   };
 };
 
 export const activityService = {
-  /**
-   * Save a new activity to Firestore
-   */
+  /** Insert a new activity. */
   saveActivity: async (
     activity: Omit<ActivityWithProjectInfo, 'id'>
   ): Promise<ActivityWithProjectInfo> => {
     try {
-      const activityData = convertActivityToFirestore(activity);
-      const docRef = await addDoc(collection(db, ACTIVITIES_COLLECTION), {
-        ...activityData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      // Return the created activity with the generated ID
-      return {
-        ...activity,
-        id: docRef.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      return await upsert(undefined, activity);
     } catch (error) {
-      console.error('Error saving activity to Firestore:', error);
+      console.error('Error saving activity:', error);
       throw error;
     }
   },
 
-  /**
-   * Save multiple activities to Firestore
-   */
+  /** Insert multiple activities one by one (matches existing sequential behaviour). */
   saveActivities: async (
     activities: Omit<ActivityWithProjectInfo, 'id'>[]
   ): Promise<ActivityWithProjectInfo[]> => {
     try {
       const savedActivities: ActivityWithProjectInfo[] = [];
-
-      // Save activities one by one (for better error handling)
       for (const activity of activities) {
-        const savedActivity = await activityService.saveActivity(activity);
-        savedActivities.push(savedActivity);
+        savedActivities.push(await activityService.saveActivity(activity));
       }
-
       return savedActivities;
     } catch (error) {
-      console.error('Error saving activities to Firestore:', error);
+      console.error('Error saving activities:', error);
       throw error;
     }
   },
 
   /**
-   * Update an existing activity in Firestore
+   * Update an existing activity. UpsertAimiActivity replaces the row (and its
+   * AI tool/accelerator/qualitative benefit selections) wholesale, so - same
+   * as every call site of this function today - `updates` must carry the
+   * activity's full field set, not a partial patch.
    */
   updateActivity: async (
     activityId: string,
     updates: Partial<Omit<ActivityWithProjectInfo, 'id' | 'createdAt'>>
   ): Promise<ActivityWithProjectInfo> => {
     try {
-      const activityRef = doc(db, ACTIVITIES_COLLECTION, activityId);
-      await updateDoc(activityRef, {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
-
-      // Return the updated activity
-      return await activityService.getActivityById(activityId);
+      return await upsert(
+        activityId,
+        updates as Omit<ActivityWithProjectInfo, 'id'>
+      );
     } catch (error) {
-      console.error('Error updating activity in Firestore:', error);
+      console.error('Error updating activity:', error);
       throw error;
     }
   },
 
-  /**
-   * Delete an activity from Firestore
-   */
+  /** Soft-delete a single activity. */
   deleteActivity: async (activityId: string): Promise<void> => {
     try {
-      const activityRef = doc(db, ACTIVITIES_COLLECTION, activityId);
-      await deleteDoc(activityRef);
+      await aimiApiClient.post(ENDPOINTS.DELETE_ACTIVITY, {
+        ID: Number(activityId),
+        IDS: [],
+        EMP_ID: getCurrentEmpId(),
+      });
     } catch (error) {
-      console.error('Error deleting activity from Firestore:', error);
+      console.error('Error deleting activity:', error);
       throw error;
     }
   },
 
-  /**
-   * Fetch activities by project ID and practice from Firestore
-   */
+  /** Fetch activities for one project + practice. */
   getActivitiesByProjectIdAndPractice: async (
     projectId: string,
     practice: string
   ): Promise<ActivityWithProjectInfo[]> => {
     try {
-      const q = query(
-        collection(db, ACTIVITIES_COLLECTION),
-        where('projectId', '==', projectId),
-        where('practice', '==', practice),
-        orderBy('createdAt', 'desc')
+      const rows = await aimiApiClient.get<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES,
+        { projectId, practice }
       );
-
-      const querySnapshot = await getDocs(q);
-      const activities: ActivityWithProjectInfo[] = [];
-
-      querySnapshot.forEach((doc) => {
-        activities.push(convertFirestoreToActivity(doc));
-      });
-
-      return activities;
+      return rows.map(fromApiActivity);
     } catch (error) {
       console.error(
-        'Error fetching activities by project ID and practice from Firestore:',
+        'Error fetching activities by project ID and practice:',
         error
       );
       throw error;
     }
   },
 
-  /**
-   * Fetch all activities by project ID from Firestore
-   */
+  /** Fetch all activities for one project. */
   getActivitiesByProjectId: async (
     projectId: string
   ): Promise<ActivityWithProjectInfo[]> => {
     try {
-      const q = query(
-        collection(db, ACTIVITIES_COLLECTION),
-        where('projectId', '==', projectId),
-        orderBy('createdAt', 'desc')
+      const rows = await aimiApiClient.get<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES,
+        { projectId }
       );
-
-      const querySnapshot = await getDocs(q);
-      const activities: ActivityWithProjectInfo[] = [];
-
-      querySnapshot.forEach((doc) => {
-        activities.push(convertFirestoreToActivity(doc));
-      });
-
-      return activities;
+      return rows.map(fromApiActivity);
     } catch (error) {
-      console.error(
-        'Error fetching activities by project ID from Firestore:',
-        error
-      );
+      console.error('Error fetching activities by project ID:', error);
       throw error;
     }
   },
 
-  /**
-   * Fetch a single activity by ID from Firestore
-   */
+  /** Fetch a single activity by ID. */
   getActivityById: async (
     activityId: string
   ): Promise<ActivityWithProjectInfo> => {
     try {
-      const activityRef = doc(db, ACTIVITIES_COLLECTION, activityId);
-      const activityDoc = await getDoc(activityRef);
-
-      if (!activityDoc.exists()) {
+      const rows = await aimiApiClient.get<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES,
+        { id: activityId }
+      );
+      if (rows.length === 0) {
         throw new Error(`Activity with ID ${activityId} not found`);
       }
-
-      return convertFirestoreToActivity(activityDoc);
+      return fromApiActivity(rows[0]);
     } catch (error) {
-      console.error('Error fetching activity by ID from Firestore:', error);
+      console.error('Error fetching activity by ID:', error);
       throw error;
     }
   },
 
-  /**
-   * Fetch all activities from Firestore
-   */
+  /** Fetch every activity across every project. */
   getAllActivities: async (): Promise<ActivityWithProjectInfo[]> => {
     try {
-      const q = query(
-        collection(db, ACTIVITIES_COLLECTION),
-        orderBy('createdAt', 'desc')
+      const rows = await aimiApiClient.get<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES
       );
-
-      const querySnapshot = await getDocs(q);
-      const activities: ActivityWithProjectInfo[] = [];
-
-      querySnapshot.forEach((doc) => {
-        activities.push(convertFirestoreToActivity(doc));
-      });
-
-      return activities;
+      return rows.map(fromApiActivity);
     } catch (error) {
-      console.error('Error fetching all activities from Firestore:', error);
+      console.error('Error fetching all activities:', error);
       throw error;
     }
   },
 
   /**
-   * Upsert activities for a specific project and practice
-   * Updates existing activities and creates new ones efficiently
+   * Upsert activities for a specific project and practice.
+   * Updates existing activities and creates new ones efficiently.
    */
   upsertActivitiesForProject: async (
     activities: ActivityWithProjectInfo[]
@@ -348,7 +286,6 @@ export const activityService = {
       const projectId = activities[0].projectId;
       const practice = activities[0].practice;
 
-      // Get existing activities for comparison
       const existingActivities =
         await activityService.getActivitiesByProjectIdAndPractice(
           projectId,
@@ -360,10 +297,8 @@ export const activityService = {
 
       const upsertedActivities: ActivityWithProjectInfo[] = [];
 
-      // Process each activity
       for (const activity of activities) {
         if (activity.id && existingActivityMap.has(activity.id)) {
-          // Update existing activity using the existing updateActivity method
           const { id, ...updateData } = activity;
           const updatedActivity = await activityService.updateActivity(
             id,
@@ -371,7 +306,6 @@ export const activityService = {
           );
           upsertedActivities.push(updatedActivity);
         } else {
-          // Create new activity using the existing saveActivity method
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { id, ...activityWithoutId } = activity;
           const savedActivity =
@@ -382,112 +316,77 @@ export const activityService = {
 
       return upsertedActivities;
     } catch (error) {
-      console.error(
-        'Error upserting activities for project in Firestore:',
-        error
-      );
+      console.error('Error upserting activities for project:', error);
       throw error;
     }
   },
 
   /**
-   * Clear all activities from Firestore (use with caution!)
+   * Clear all activities (use with caution!). No bulk "clear everything"
+   * proc exists server-side, so this deletes every currently-known activity
+   * one by one - matches the old Firestore behaviour's effect, just phrased
+   * as N calls instead of N Firestore deletes.
    */
   clearAllActivities: async (): Promise<void> => {
     try {
-      const querySnapshot = await getDocs(
-        collection(db, ACTIVITIES_COLLECTION)
-      );
-      const deletePromises = querySnapshot.docs.map((doc) =>
-        deleteDoc(doc.ref)
-      );
-      await Promise.all(deletePromises);
+      const all = await activityService.getAllActivities();
+      await Promise.all(all.map((a) => activityService.deleteActivity(a.id)));
     } catch (error) {
-      console.error('Error clearing all activities from Firestore:', error);
+      console.error('Error clearing all activities:', error);
       throw error;
     }
   },
 
-  /**
-   * Fetch activities by multiple business units and practices from Firestore
-   */
+  /** Fetch activities across multiple business units (and optionally practices). */
   getActivitiesByBusinessUnits: async (
     businessUnits: string[],
     practices?: string[]
   ): Promise<ActivityWithProjectInfo[]> => {
     try {
       if (businessUnits.length === 0) return [];
-
-      const activities = await getActivitiesByFieldValues(
-        'businessUnit',
-        businessUnits
+      const rows = await aimiApiClient.post<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES_BY_FILTER,
+        { businessUnits, practices: practices ?? [] }
       );
-
-      if (practices && practices.length > 0) {
-        const practiceSet = new Set(practices);
-        return activities.filter((activity) => practiceSet.has(activity.practice));
-      }
-
-      return activities;
+      return rows.map(fromApiActivity);
     } catch (error) {
-      console.error(
-        'Error fetching activities by business units from Firestore:',
-        error
-      );
+      console.error('Error fetching activities by business units:', error);
       throw error;
     }
   },
 
-  /**
-   * Fetch activities by multiple accounts and practices from Firestore
-   */
+  /** Fetch activities across multiple accounts (and optionally practices). */
   getActivitiesByAccounts: async (
     accounts: string[],
     practices?: string[]
   ): Promise<ActivityWithProjectInfo[]> => {
     try {
       if (accounts.length === 0) return [];
-
-      const activities = await getActivitiesByFieldValues('account', accounts);
-
-      if (practices && practices.length > 0) {
-        const practiceSet = new Set(practices);
-        return activities.filter((activity) => practiceSet.has(activity.practice));
-      }
-
-      return activities;
-    } catch (error) {
-      console.error(
-        'Error fetching activities by accounts from Firestore:',
-        error
+      const rows = await aimiApiClient.post<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES_BY_FILTER,
+        { accounts, practices: practices ?? [] }
       );
+      return rows.map(fromApiActivity);
+    } catch (error) {
+      console.error('Error fetching activities by accounts:', error);
       throw error;
     }
   },
 
-  /**
-   * Fetch activities by multiple projects and practices from Firestore
-   */
+  /** Fetch activities across multiple projects (and optionally practices). */
   getActivitiesByProjects: async (
     projects: string[],
     practices?: string[]
   ): Promise<ActivityWithProjectInfo[]> => {
     try {
       if (projects.length === 0) return [];
-
-      const activities = await getActivitiesByFieldValues('project', projects);
-
-      if (practices && practices.length > 0) {
-        const practiceSet = new Set(practices);
-        return activities.filter((activity) => practiceSet.has(activity.practice));
-      }
-
-      return activities;
-    } catch (error) {
-      console.error(
-        'Error fetching activities by projects from Firestore:',
-        error
+      const rows = await aimiApiClient.post<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES_BY_FILTER,
+        { projects, practices: practices ?? [] }
       );
+      return rows.map(fromApiActivity);
+    } catch (error) {
+      console.error('Error fetching activities by projects:', error);
       throw error;
     }
   },

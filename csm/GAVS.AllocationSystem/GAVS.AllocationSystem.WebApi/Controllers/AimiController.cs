@@ -180,7 +180,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .ToList(),
                 request.ACCELERATORS, request.QUALITATIVE_BENEFITS, empId);
 
-            return Ok(new { ID = newId });
+            return Ok(new AimiIdResult { ID = newId });
         }
 
         // Soft-deletes one activity (ID) and/or a batch (IDS) - admin-gated per the
@@ -234,7 +234,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 request.COMMON_ADOPTION_EFFORTS_SAVED, request.COMMON_DEPLOYMENT_ENGINEER, request.PRESENTATION_DONE,
                 request.PROJECT_FY, request.ACCEPTED_SCORE, request.SCORE_REVIEWED, request.ACCEPTED_SCORE_COMMENT, empId);
 
-            return Ok(new { ID = newId });
+            return Ok(new AimiIdResult { ID = newId });
         }
 
         // ------------------------------------------------------------------
@@ -260,7 +260,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var empId = GetHeaderDetails_String("empId");
             var newId = CSPdb.AppRepo.AimiUpsertPracticeInfo(request.ID, request.PROJECT_ID, request.PRACTICE, request.CURRENT_PHASE, empId);
-            return Ok(new { ID = newId });
+            return Ok(new AimiIdResult { ID = newId });
         }
 
         // ------------------------------------------------------------------
@@ -299,12 +299,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         public IHttpActionResult GetAimiQualitativeBenefitAnalysis(string projectId = null, string practice = null)
         {
             var rows = CSPdb.AppRepo.AimiGetQualitativeBenefitAnalysis(projectId, practice);
-            var result = rows.Select(r => new
+            var result = rows.Select(r => new AimiQualitativeBenefitAnalysisResponse
             {
-                r.BENEFIT_NAME,
-                r.FREQUENCY,
-                r.TOTAL_HOURS_SAVED,
-                r.MOST_FREQUENT_TOOL,
+                BENEFIT_NAME = r.BENEFIT_NAME,
+                FREQUENCY = r.FREQUENCY,
+                TOTAL_HOURS_SAVED = r.TOTAL_HOURS_SAVED,
+                MOST_FREQUENT_TOOL = r.MOST_FREQUENT_TOOL,
                 ASSOCIATED_TOOLS = ParseAimiNameArray<AssociatedToolJsonRow>(r.ASSOCIATED_TOOLS_JSON, t => t.TOOL_NAME),
             }).ToList();
             return Ok(result);
@@ -326,5 +326,71 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 request.ProjectId, request.Practice, request.BusinessUnits, request.Accounts, request.Projects, request.Practices);
             return Ok(rows.Select(ToAimiReportRowResponse).ToList());
         }
+
+        // ------------------------------------------------------------------
+        // Lookup/master data - the questionnaire practice/phase/activity catalog
+        // and option-list suggestion tables that used to be hardcoded/derived
+        // from a static questionnaire.json in the React client (see
+        // Release 2.6.3.sql). Each endpoint returns flat rows; the client
+        // reassembles the practice -> phase -> activity tree itself, the same
+        // way it already pivots flat SDLC_PHASE/TOOL_NAME rows elsewhere.
+        // ------------------------------------------------------------------
+
+        [GET("GetAimiPractices")]
+        [ActionName("GetAimiPractices")]
+        [HttpGet]
+        public IHttpActionResult GetAimiPractices()
+        {
+            return Ok(CSPdb.AppRepo.AimiGetPractices());
+        }
+
+        [GET("GetAimiSdlcPhases")]
+        [ActionName("GetAimiSdlcPhases")]
+        [HttpGet]
+        public IHttpActionResult GetAimiSdlcPhases()
+        {
+            return Ok(CSPdb.AppRepo.AimiGetSdlcPhases());
+        }
+
+        [GET("GetAimiQuestionnaireActivities")]
+        [ActionName("GetAimiQuestionnaireActivities")]
+        [HttpGet]
+        public IHttpActionResult GetAimiQuestionnaireActivities()
+        {
+            return Ok(CSPdb.AppRepo.AimiGetQuestionnaireActivities());
+        }
+
+        [GET("GetAimiQualitativeBenefitOptions")]
+        [ActionName("GetAimiQualitativeBenefitOptions")]
+        [HttpGet]
+        public IHttpActionResult GetAimiQualitativeBenefitOptions()
+        {
+            return Ok(CSPdb.AppRepo.AimiGetQualitativeBenefits());
+        }
+
+        [GET("GetAimiAiAdoptionScoreOptions")]
+        [ActionName("GetAimiAiAdoptionScoreOptions")]
+        [HttpGet]
+        public IHttpActionResult GetAimiAiAdoptionScoreOptions()
+        {
+            return Ok(CSPdb.AppRepo.AimiGetAiAdoptionScores());
+        }
+
+        [GET("GetAimiAiToolOptions")]
+        [ActionName("GetAimiAiToolOptions")]
+        [HttpGet]
+        public IHttpActionResult GetAimiAiToolOptions()
+        {
+            return Ok(CSPdb.AppRepo.AimiGetAiTools());
+        }
+
+        [GET("GetAimiAcceleratorOptions")]
+        [ActionName("GetAimiAcceleratorOptions")]
+        [HttpGet]
+        public IHttpActionResult GetAimiAcceleratorOptions()
+        {
+            return Ok(CSPdb.AppRepo.AimiGetAccelerators());
+        }
+
     }
 }

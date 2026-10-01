@@ -16,11 +16,9 @@ import {
   Visibility as VisibilityIcon,
   //ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
-import {
-  AI_ADOPTION_SCORES,
-  APPLICABILITY_OPTIONS,
-} from '../types/activityTypes';
+import { APPLICABILITY_OPTIONS } from '../types/activityTypes';
 import type { ActivityData } from '../types/activityTypes';
+import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
 import { ActivityDetailsModal } from './ActivityDetailsModal';
 import {
   activityCardStyles,
@@ -66,8 +64,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 }) => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const featureFlags = useFeatureFlags('activities');
-    const { isAdmin } = useAuth();
-  
+  const { isAdmin } = useAuth();
+  const { aiAdoptionScores: AI_ADOPTION_SCORES } = useAimiOptionLists();
+
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {

@@ -17,7 +17,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-import { AI_ADOPTION_SCORES } from '@activities/types/activityTypes';
+import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
 import { getScoreColor } from '@shared/utils/scoreColorUtils';
 
 interface AIAdoptionGuidelinesModalProps {
@@ -28,6 +28,7 @@ interface AIAdoptionGuidelinesModalProps {
 export const AIAdoptionGuidelinesModal: React.FC<
   AIAdoptionGuidelinesModalProps
 > = ({ open, onClose }) => {
+  const { aiAdoptionScores: AI_ADOPTION_SCORES } = useAimiOptionLists();
   return (
     <Dialog
       open={open}

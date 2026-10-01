@@ -32,9 +32,6 @@ export interface SaveProjectInfoParams {
   commonAdoptionWorkforceCertification?: string;
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
-  commonGrossMarginUplift?: string;
-  commonRevenuePerFTE?: string;
-  commonMarginDifferential?: string;
 
   presentationDone?: boolean;
   projectFY?: string;

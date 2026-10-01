@@ -29,10 +29,7 @@ import {
   BlockRounded,
  // Radio,
 } from '@mui/icons-material';
-import {
-  getPracticesFromQuestionnaire,
-  //getSDLCPhasesForPractice,
-} from '@shared/utils/questionnaireUtils';
+import { useQuestionnaireLookup } from '@shared/lookups/useQuestionnaireLookup';
 import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
 import type { PracticeInfo } from '@shared/practices/services/practiceInfoService';
 import type { ProjectInfo } from '@shared/projects/services/projectInfoService';
@@ -75,9 +72,6 @@ interface FormData {
   engineerContractTestCasePassRate?: string;
   engineerPerformanceDefectsPreRelease?: string;
   commonAdoptionWorkforceCertification?: string;
-  commonGrossMarginUplift?: string;
-  commonRevenuePerFTE?: string;
-  commonMarginDifferential?: string;
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
   presentationDone?: boolean;
@@ -289,6 +283,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
   });
 
   // Get practices and SDLC phases from questionnaire data
+  const { getPracticesFromQuestionnaire } = useQuestionnaireLookup();
   const questionnairePractices = getPracticesFromQuestionnaire();
   //const [availablePhases, setAvailablePhases] = useState<string[]>([]);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
@@ -371,10 +366,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
   const commonChanged =
     !!formData.commonAdoptionWorkforceCertification ||
     !!formData.commonAdoptionEffortsSaved ||
-    !!formData.commonDeploymentEngineer ||
-    !!formData.commonGrossMarginUplift ||
-    !!formData.commonRevenuePerFTE ||
-    !!formData.commonMarginDifferential;
+    !!formData.commonDeploymentEngineer;
 
   const licenseChanged =
     !!formData.licenseCount ||
@@ -484,18 +476,6 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
     onFormChange(
       'commonDeploymentEngineer',
       projectInfo?.commonDeploymentEngineer ?? ''
-    );
-    onFormChange(
-      'commonGrossMarginUplift',
-      projectInfo?.commonGrossMarginUplift ?? ''
-    );
-    onFormChange(
-      'commonRevenuePerFTE',
-      projectInfo?.commonRevenuePerFTE ?? ''
-    );
-    onFormChange(
-      'commonMarginDifferential',
-      projectInfo?.commonMarginDifferential ?? ''
     );
 
     // Project Level Fields
@@ -660,10 +640,7 @@ const engineeringChanged =
 const commonChanged =
   !!formData.commonAdoptionWorkforceCertification ||
   !!formData.commonAdoptionEffortsSaved ||
-  !!formData.commonDeploymentEngineer ||
-  !!formData.commonGrossMarginUplift ||
-  !!formData.commonRevenuePerFTE ||
-  !!formData.commonMarginDifferential;
+  !!formData.commonDeploymentEngineer;
 
 const licenseChanged =
   formData.licenseCount !== undefined ||
@@ -715,12 +692,6 @@ const fyChanged =
               formData.commonAdoptionEffortsSaved,
             commonDeploymentEngineer:
               formData.commonDeploymentEngineer,
-            commonGrossMarginUplift:
-              formData.commonGrossMarginUplift,
-            commonRevenuePerFTE:
-              formData.commonRevenuePerFTE,
-            commonMarginDifferential:
-              formData.commonMarginDifferential,
 
             presentationDone: formData.presentationDone,
             projectFY: formData.projectFY,

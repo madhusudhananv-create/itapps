@@ -30,10 +30,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  getSDLCPhasesForPractice,
-  getActivitiesForSDLCPhase,
-} from '../../../shared/utils/questionnaireUtils';
+import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup';
 
 const ManageActivities = lazy(() =>
   import('./ManageActivities').then((module) => ({
@@ -76,9 +73,6 @@ interface ProjectInfoFormData {
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
   commonAdoptionWorkforceCertification?: string;
-  commonGrossMarginUplift?: string;
-  commonRevenuePerFTE?: string;
-  commonMarginDifferential?: string;
   engineerAIAgents?: string;
   engineerDeliveryCycleTime?: string;
   engineerContractTestCasePassRate?: string;
@@ -187,6 +181,8 @@ export function Activities() {
     getProjectInfo,
     getOriginalProjectData,
   } = useProjectHierarchy();
+  const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
+    useQuestionnaireLookup();
   const [isLoading] = useState(false);
   const {
     submitSuccess,
@@ -374,9 +370,6 @@ export function Activities() {
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
-          newData.commonGrossMarginUplift = '';
-          newData.commonRevenuePerFTE = '';
-          newData.commonMarginDifferential = '';
           newData.engineerAIAgents = '';
           newData.engineerDeliveryCycleTime = '';
           newData.engineerContractTestCasePassRate = '';
@@ -413,9 +406,6 @@ export function Activities() {
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
-          newData.commonGrossMarginUplift = '';
-          newData.commonRevenuePerFTE = '';
-          newData.commonMarginDifferential = '';
           newData.engineerAIAgents = '';
           newData.engineerDeliveryCycleTime = '';
           newData.engineerContractTestCasePassRate = '';
@@ -473,9 +463,6 @@ export function Activities() {
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
-          newData.commonGrossMarginUplift = '';
-          newData.commonRevenuePerFTE = '';
-          newData.commonMarginDifferential = '';
           newData.engineerAIAgents = '';
           newData.engineerDeliveryCycleTime = '';
           newData.engineerContractTestCasePassRate = '';

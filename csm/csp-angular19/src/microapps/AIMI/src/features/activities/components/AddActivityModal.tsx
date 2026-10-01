@@ -12,14 +12,12 @@ import {
 } from '@mui/material';
 import type { ActivityFormData, ActivityData } from '../types/activityTypes';
 import {
-  AI_ADOPTION_SCORES,
   REVENUE_GENERATED_OPTIONS,
   BENEFIT_TO_OPTIONS,
   APPLICABILITY_OPTIONS,
   //CLIENT_APPROVED_OPTIONS,
-  COMMON_AI_TOOLS,
-  COMMON_ACCELERATORS,
 } from '../types/activityTypes';
+import { useAimiOptionLists } from '@shared/lookups/useAimiOptionLists';
 import { CommonAutocomplete } from '@shared/components/CommonAutocomplete';
 import { AIAdoptionGuidelinesModal } from '@shared/components/AIAdoptionGuidelines/AIAdoptionGuidelinesModal';
 import { ApplicabilityGuidelinesModal } from '@shared/components/ApplicabilityGuidelines/ApplicabilityGuidelinesModal';
@@ -80,6 +78,12 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
     resetForm,
     isPhaseNA,
   } = useActivityForm(selectedPractice, editingActivity, existingActivities);
+
+  const {
+    aiAdoptionScores: AI_ADOPTION_SCORES,
+    aiTools: COMMON_AI_TOOLS,
+    accelerators: COMMON_ACCELERATORS,
+  } = useAimiOptionLists();
 
   const handleQualitativeBenefitsChange = (value: string[]) => {
     handleFormChange('qualitativeBenefits', value);

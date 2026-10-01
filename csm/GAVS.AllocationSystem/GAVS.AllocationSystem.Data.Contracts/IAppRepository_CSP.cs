@@ -323,5 +323,17 @@ namespace GAVS.AllocationSystem.Data.Contracts
         AimiDashboardSummarySpRow AimiGetDashboardSummary(string projectId, string practice);
         List<AimiQualitativeBenefitAnalysisSpRow> AimiGetQualitativeBenefitAnalysis(string projectId, string practice);
         List<AimiReportDataSpRow> AimiGetReportData(string projectId, string practice, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
+
+        // ---- AIMI lookup/master-data stored procedures (questionnaire practice/
+        // phase/activity catalog + option-list suggestion tables; see
+        // WebApi/DB Scripts/01 StoredProcedure/BAS/usp_AIMI_Get*.sql and
+        // Release 2.6.3.sql) ----
+        List<AimiPracticeSpRow> AimiGetPractices();
+        List<AimiSdlcPhaseSpRow> AimiGetSdlcPhases();
+        List<AimiQuestionnaireActivitySpRow> AimiGetQuestionnaireActivities();
+        List<AimiNamedLookupSpRow> AimiGetQualitativeBenefits();
+        List<AimiAiAdoptionScoreSpRow> AimiGetAiAdoptionScores();
+        List<AimiNameOnlySpRow> AimiGetAiTools();
+        List<AimiNameOnlySpRow> AimiGetAccelerators();
     }
 }

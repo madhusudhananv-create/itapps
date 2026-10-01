@@ -2446,10 +2446,11 @@ namespace GAVS.AllocationSystem.Data
         }
 
         // @ID is InputOutput on the proc: pass an existing id to update that row, or
-        // null to insert; either way the proc sets @ID to the row's final id, which
-        // this method returns. EF6's Database.SqlQuery only populates an output
-        // SqlParameter's .Value once the reader has been fully drained (.ToList()),
-        // even though this proc's result set is empty.
+        // null to insert; either way the proc sets @ID and also returns it as a
+        // plain one-column result set, which this method reads via .Single() -
+        // Database.SqlQuery<int> against a proc with only an OUTPUT parameter and
+        // no result set throws "the data reader has more than one field", so the
+        // proc can't rely on @ID OUTPUT alone.
         public int AimiUpsertActivity(int? id, string projectId, string project, string account, string businessUnit,
             string practice, string sdlcPhase, string activity, string applicability, byte? aiAdoptionScore,
             byte? workDoneByAi, decimal? hoursSaved, string revenueGenerated, string benefitTo, string comments,
@@ -2479,12 +2480,10 @@ namespace GAVS.AllocationSystem.Data
             var param19 = BuildAimiStructuredParam("@QUALITATIVE_BENEFITS", ToAimiStringListTable(qualitativeBenefits), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
             var param20 = new SqlParameter("@EMP_ID", empId);
 
-            dbContext.Database.SqlQuery<int>(
+            return dbContext.Database.SqlQuery<int>(
                 "[dbo].[usp_AIMI_UpsertActivity] @ID OUTPUT, @PROJECT_ID, @PROJECT, @ACCOUNT, @BUSINESS_UNIT, @PRACTICE, @SDLC_PHASE, @ACTIVITY, @APPLICABILITY, @AI_ADOPTION_SCORE, @WORK_DONE_BY_AI, @HOURS_SAVED, @REVENUE_GENERATED, @BENEFIT_TO, @COMMENTS, @STATUS, @AI_TOOLS, @ACCELERATORS, @QUALITATIVE_BENEFITS, @EMP_ID",
                 idParam, param2, param3, param4, param5, param6, param7, param8, param9, param10,
-                param11, param12, param13, param14, param15, param16, param17, param18, param19, param20).ToList();
-
-            return (int)idParam.Value;
+                param11, param12, param13, param14, param15, param16, param17, param18, param19, param20).Single();
         }
 
         public void AimiDeleteActivity(int? id, List<int> ids, string empId)
@@ -2541,7 +2540,7 @@ namespace GAVS.AllocationSystem.Data
             var param25 = new SqlParameter("@ACCEPTED_SCORE_COMMENT", (object)acceptedScoreComment ?? DBNull.Value);
             var param26 = new SqlParameter("@EMP_ID", empId);
 
-            dbContext.Database.SqlQuery<int>(
+            return dbContext.Database.SqlQuery<int>(
                 "[dbo].[usp_AIMI_UpsertProjectInfo] @ID OUTPUT, @PROJECT_ID, @PEOPLE_USING_AI, @IS_PROJECT_NA, @NA_COMMENTS, @LICENSE_COUNT, @LICENSE_PROVIDER, " +
                 "@RUNOPS_AUTO_RESOLVED, @RUNOPS_MTTR_REDUCTION, @RUNOPS_AI_AGENTS, @RUNOPS_AUTOMATED_WORKFLOWS, @RUNOPS_MTTD, @RUNOPS_MTTR, " +
                 "@ENGINEER_AI_AGENTS, @ENGINEER_DELIVERY_CYCLE_TIME, @ENGINEER_CONTRACT_TEST_CASE_PASS_RATE, @ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE, " +
@@ -2549,9 +2548,7 @@ namespace GAVS.AllocationSystem.Data
                 "@PRESENTATION_DONE, @PROJECT_FY, @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT, @EMP_ID",
                 idParam, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12,
                 param13, param14, param15, param16, param17, param18, param19, param20, param21, param22, param23,
-                param24, param25, param26).ToList();
-
-            return (int)idParam.Value;
+                param24, param25, param26).Single();
         }
 
         public List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice)
@@ -2572,11 +2569,9 @@ namespace GAVS.AllocationSystem.Data
             var param4 = new SqlParameter("@CURRENT_PHASE", (object)currentPhase ?? DBNull.Value);
             var param5 = new SqlParameter("@EMP_ID", empId);
 
-            dbContext.Database.SqlQuery<int>(
+            return dbContext.Database.SqlQuery<int>(
                 "[dbo].[usp_AIMI_UpsertPracticeInfo] @ID OUTPUT, @PROJECT_ID, @PRACTICE, @CURRENT_PHASE, @EMP_ID",
-                idParam, param2, param3, param4, param5).ToList();
-
-            return (int)idParam.Value;
+                idParam, param2, param3, param4, param5).Single();
         }
 
         public List<AimiAiToolMetricSpRow> AimiGetAIToolMetrics(string projectId, string practice)
@@ -2628,5 +2623,50 @@ namespace GAVS.AllocationSystem.Data
                 "[dbo].[usp_AIMI_GetReportData] @PROJECT_ID, @PRACTICE, @BUSINESS_UNITS, @ACCOUNTS, @PROJECTS, @PRACTICES",
                 param1, param2, param3, param4, param5, param6).ToList();
         }
+
+        // ---- AIMI lookup/master-data stored procedures ----
+
+        public List<AimiPracticeSpRow> AimiGetPractices()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiPracticeSpRow>("[dbo].[usp_AIMI_GetPractices]").ToList();
+        }
+
+        public List<AimiSdlcPhaseSpRow> AimiGetSdlcPhases()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiSdlcPhaseSpRow>("[dbo].[usp_AIMI_GetSdlcPhases]").ToList();
+        }
+
+        public List<AimiQuestionnaireActivitySpRow> AimiGetQuestionnaireActivities()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiQuestionnaireActivitySpRow>("[dbo].[usp_AIMI_GetQuestionnaireActivities]").ToList();
+        }
+
+        public List<AimiNamedLookupSpRow> AimiGetQualitativeBenefits()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiNamedLookupSpRow>("[dbo].[usp_AIMI_GetQualitativeBenefits]").ToList();
+        }
+
+        public List<AimiAiAdoptionScoreSpRow> AimiGetAiAdoptionScores()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiAiAdoptionScoreSpRow>("[dbo].[usp_AIMI_GetAiAdoptionScores]").ToList();
+        }
+
+        public List<AimiNameOnlySpRow> AimiGetAiTools()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiNameOnlySpRow>("[dbo].[usp_AIMI_GetAiTools]").ToList();
+        }
+
+        public List<AimiNameOnlySpRow> AimiGetAccelerators()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiNameOnlySpRow>("[dbo].[usp_AIMI_GetAccelerators]").ToList();
+        }
+
     }
 }

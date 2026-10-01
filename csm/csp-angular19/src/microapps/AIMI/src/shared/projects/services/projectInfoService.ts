@@ -1,19 +1,14 @@
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
-} from 'firebase/firestore';
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { db } from '@shared/config/firebaseConfig';
+import { aimiApiClient } from '@shared/services/aimiApiClient';
 
-// Collection name
-const PROJECT_INFO_COLLECTION = 'projectInfo';
+// Was Firestore-backed (collection 'projectInfo'); now calls the SQL-backed
+// AimiController endpoints (usp_AIMI_GetProjectInfo / UpsertAimiProjectInfo).
 
-// Interface for project info document
+const ENDPOINTS = {
+  GET_PROJECT_INFO: '/api/AllSys/GetAimiProjectInfo',
+  UPSERT_PROJECT_INFO: '/api/AllSys/UpsertAimiProjectInfo',
+};
+
+// Interface for project info
 export interface ProjectInfo {
   projectId: string;
   peopleUsingAI: number;
@@ -39,175 +34,109 @@ export interface ProjectInfo {
   commonAdoptionWorkforceCertification?: string;
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
-  commonGrossMarginUplift?: string;
-  commonRevenuePerFTE?: string;
-  commonMarginDifferential?: string;
 
   presentationDone?: boolean;
   projectFY?: string;
   acceptedScore?: number;
-scoreReviewed?: boolean;
-acceptedScoreComment?: string;
+  scoreReviewed?: boolean;
+  acceptedScoreComment?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-
-// Interface for Firestore documents
-interface FirestoreProjectInfo
-  extends Omit<ProjectInfo, 'createdAt' | 'updatedAt'> {
-  createdAt: unknown; // Firestore timestamp
-  updatedAt: unknown; // Firestore timestamp
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
+// Row shape returned by GetAimiProjectInfo - mirrors AimiProjectInfoSpRow in
+// the C# API, UPPER_SNAKE field names matching the SQL columns.
+interface ApiProjectInfoRow {
+  ID: number;
+  PROJECT_ID: string;
+  PEOPLE_USING_AI: number | null;
+  IS_PROJECT_NA: boolean;
+  NA_COMMENTS: string | null;
+  LICENSE_COUNT: number | null;
+  LICENSE_PROVIDER: string | null;
+  RUNOPS_AUTO_RESOLVED: string | null;
+  RUNOPS_MTTR_REDUCTION: string | null;
+  RUNOPS_AI_AGENTS: string | null;
+  RUNOPS_AUTOMATED_WORKFLOWS: string | null;
+  RUNOPS_MTTD: string | null;
+  RUNOPS_MTTR: string | null;
+  ENGINEER_AI_AGENTS: string | null;
+  ENGINEER_DELIVERY_CYCLE_TIME: string | null;
+  ENGINEER_CONTRACT_TEST_CASE_PASS_RATE: string | null;
+  ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE: string | null;
+  COMMON_ADOPTION_WORKFORCE_CERTIFICATION: string | null;
+  COMMON_ADOPTION_EFFORTS_SAVED: string | null;
+  COMMON_DEPLOYMENT_ENGINEER: string | null;
+  PRESENTATION_DONE: boolean;
+  PROJECT_FY: string | null;
+  ACCEPTED_SCORE: number | null;
+  SCORE_REVIEWED: boolean;
+  ACCEPTED_SCORE_COMMENT: string | null;
+  CREATED_DATE: string | null;
+  UPDATED_DATE: string | null;
 }
 
-/**
- * Convert Firestore document to ProjectInfo
- */
-const convertFirestoreToProjectInfo = (
-  doc: QueryDocumentSnapshot<DocumentData>
-): ProjectInfo => {
-  const data = doc.data() as FirestoreProjectInfo;
-  return {
- 
-  projectId: data.projectId,
-  peopleUsingAI: data.peopleUsingAI,
-
-  isProjectNA: data.isProjectNA ?? false,
-  naComments: data.naComments ?? '',
-
-  licenseCount: data.licenseCount,
-  licenseProvider: data.licenseProvider,
-
-  runOpsAutoResolved: data.runOpsAutoResolved,
-  runOpsMTTRReduction: data.runOpsMTTRReduction,
-  runOpsAIAgents: data.runOpsAIAgents,
-  runOpsAutomatedWorkflows: data.runOpsAutomatedWorkflows,
-  runOpsMTTD: data.runOpsMTTD,
-  runOpsMTTR: data.runOpsMTTR,
-
-  engineerAIAgents: data.engineerAIAgents,
-  engineerDeliveryCycleTime:
-    data.engineerDeliveryCycleTime,
+const fromApiProjectInfo = (row: ApiProjectInfoRow): ProjectInfo => ({
+  projectId: row.PROJECT_ID,
+  peopleUsingAI: row.PEOPLE_USING_AI ?? 0,
+  isProjectNA: row.IS_PROJECT_NA ?? false,
+  naComments: row.NA_COMMENTS ?? '',
+  licenseCount: row.LICENSE_COUNT ?? undefined,
+  licenseProvider: row.LICENSE_PROVIDER ?? undefined,
+  runOpsAutoResolved: row.RUNOPS_AUTO_RESOLVED ?? undefined,
+  runOpsMTTRReduction: row.RUNOPS_MTTR_REDUCTION ?? undefined,
+  runOpsAIAgents: row.RUNOPS_AI_AGENTS ?? undefined,
+  runOpsAutomatedWorkflows: row.RUNOPS_AUTOMATED_WORKFLOWS ?? undefined,
+  runOpsMTTD: row.RUNOPS_MTTD ?? undefined,
+  runOpsMTTR: row.RUNOPS_MTTR ?? undefined,
+  engineerAIAgents: row.ENGINEER_AI_AGENTS ?? undefined,
+  engineerDeliveryCycleTime: row.ENGINEER_DELIVERY_CYCLE_TIME ?? undefined,
   engineerContractTestCasePassRate:
-    data.engineerContractTestCasePassRate,
+    row.ENGINEER_CONTRACT_TEST_CASE_PASS_RATE ?? undefined,
   engineerPerformanceDefectsPreRelease:
-    data.engineerPerformanceDefectsPreRelease,
-
+    row.ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE ?? undefined,
   commonAdoptionWorkforceCertification:
-    data.commonAdoptionWorkforceCertification,
-  commonAdoptionEffortsSaved:
-    data.commonAdoptionEffortsSaved,
+    row.COMMON_ADOPTION_WORKFORCE_CERTIFICATION ?? undefined,
+  commonAdoptionEffortsSaved: row.COMMON_ADOPTION_EFFORTS_SAVED ?? undefined,
+  commonDeploymentEngineer: row.COMMON_DEPLOYMENT_ENGINEER ?? undefined,
+  presentationDone: row.PRESENTATION_DONE ?? false,
+  projectFY: row.PROJECT_FY ?? '',
+  acceptedScore: row.ACCEPTED_SCORE ?? undefined,
+  scoreReviewed: row.SCORE_REVIEWED ?? false,
+  acceptedScoreComment: row.ACCEPTED_SCORE_COMMENT ?? '',
+  createdAt: row.CREATED_DATE ? new Date(row.CREATED_DATE) : new Date(),
+  updatedAt: row.UPDATED_DATE ? new Date(row.UPDATED_DATE) : new Date(),
+});
 
-  commonDeploymentEngineer:
-    data.commonDeploymentEngineer,
-
-  commonGrossMarginUplift:
-    data.commonGrossMarginUplift,
-
-  commonRevenuePerFTE:
-    data.commonRevenuePerFTE,
-
-  commonMarginDifferential:
-    data.commonMarginDifferential,
-
-  presentationDone:
-    data.presentationDone ?? false,
-
-  projectFY:
-    data.projectFY ?? '',
-    acceptedScore: data.acceptedScore,
-    scoreReviewed: data.scoreReviewed ?? false,
-    acceptedScoreComment: data.acceptedScoreComment ?? '',
-
-  createdAt:
-    data.createdAt &&
-    typeof data.createdAt === 'object' &&
-    'toDate' in data.createdAt
-      ? (data.createdAt as { toDate(): Date }).toDate()
-      : new Date(),
-
-  updatedAt:
-    data.updatedAt &&
-    typeof data.updatedAt === 'object' &&
-    'toDate' in data.updatedAt
-      ? (data.updatedAt as { toDate(): Date }).toDate()
-      : new Date(),
-};
-    
-};
-
-/**
- * Convert ProjectInfo to Firestore document
- */
-/**
- * Convert ProjectInfo to Firestore document
- */
-const convertProjectInfoToFirestore = (
-  projectInfo: Omit<ProjectInfo, 'createdAt' | 'updatedAt'>
-): Record<string, unknown> => {
-  const data: Record<string, unknown> = {
-    projectId: projectInfo.projectId,
-    peopleUsingAI: projectInfo.peopleUsingAI,
-
-    isProjectNA: projectInfo.isProjectNA ?? false,
-    naComments: projectInfo.naComments ?? '',
-
-    licenseCount: projectInfo.licenseCount,
-    licenseProvider: projectInfo.licenseProvider,
-
-    runOpsAutoResolved: projectInfo.runOpsAutoResolved,
-    runOpsMTTRReduction: projectInfo.runOpsMTTRReduction,
-    runOpsAIAgents: projectInfo.runOpsAIAgents,
-    runOpsAutomatedWorkflows:
-      projectInfo.runOpsAutomatedWorkflows,
-    runOpsMTTD: projectInfo.runOpsMTTD,
-    runOpsMTTR: projectInfo.runOpsMTTR,
-
-    engineerAIAgents: projectInfo.engineerAIAgents,
-    engineerDeliveryCycleTime:
-      projectInfo.engineerDeliveryCycleTime,
-    engineerContractTestCasePassRate:
-      projectInfo.engineerContractTestCasePassRate,
-    engineerPerformanceDefectsPreRelease:
-      projectInfo.engineerPerformanceDefectsPreRelease,
-
-    commonAdoptionWorkforceCertification:
-      projectInfo.commonAdoptionWorkforceCertification,
-    commonAdoptionEffortsSaved:
-      projectInfo.commonAdoptionEffortsSaved,
-    commonDeploymentEngineer:
-      projectInfo.commonDeploymentEngineer,
-    commonGrossMarginUplift:
-      projectInfo.commonGrossMarginUplift,
-    commonRevenuePerFTE:
-      projectInfo.commonRevenuePerFTE,
-    commonMarginDifferential:
-      projectInfo.commonMarginDifferential,
-
-    presentationDone:
-      projectInfo.presentationDone,
-
-    projectFY:
-      projectInfo.projectFY,
-      acceptedScore: projectInfo.acceptedScore,
-      scoreReviewed: projectInfo.scoreReviewed,
-      acceptedScoreComment: projectInfo.acceptedScoreComment,
-  };
-
-  // Remove undefined values because Firestore doesn't support them
-  Object.keys(data).forEach((key) => {
-    if (data[key] === undefined) {
-      delete data[key];
-    }
-  });
-
-  return data;
-};
-
-
+const toUpsertPayload = (projectInfo: Omit<ProjectInfo, 'createdAt' | 'updatedAt'>) => ({
+  PROJECT_ID: projectInfo.projectId,
+  PEOPLE_USING_AI: projectInfo.peopleUsingAI,
+  IS_PROJECT_NA: projectInfo.isProjectNA ?? false,
+  NA_COMMENTS: projectInfo.naComments,
+  LICENSE_COUNT: projectInfo.licenseCount,
+  LICENSE_PROVIDER: projectInfo.licenseProvider,
+  RUNOPS_AUTO_RESOLVED: projectInfo.runOpsAutoResolved,
+  RUNOPS_MTTR_REDUCTION: projectInfo.runOpsMTTRReduction,
+  RUNOPS_AI_AGENTS: projectInfo.runOpsAIAgents,
+  RUNOPS_AUTOMATED_WORKFLOWS: projectInfo.runOpsAutomatedWorkflows,
+  RUNOPS_MTTD: projectInfo.runOpsMTTD,
+  RUNOPS_MTTR: projectInfo.runOpsMTTR,
+  ENGINEER_AI_AGENTS: projectInfo.engineerAIAgents,
+  ENGINEER_DELIVERY_CYCLE_TIME: projectInfo.engineerDeliveryCycleTime,
+  ENGINEER_CONTRACT_TEST_CASE_PASS_RATE:
+    projectInfo.engineerContractTestCasePassRate,
+  ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE:
+    projectInfo.engineerPerformanceDefectsPreRelease,
+  COMMON_ADOPTION_WORKFORCE_CERTIFICATION:
+    projectInfo.commonAdoptionWorkforceCertification,
+  COMMON_ADOPTION_EFFORTS_SAVED: projectInfo.commonAdoptionEffortsSaved,
+  COMMON_DEPLOYMENT_ENGINEER: projectInfo.commonDeploymentEngineer,
+  PRESENTATION_DONE: projectInfo.presentationDone ?? false,
+  PROJECT_FY: projectInfo.projectFY,
+  ACCEPTED_SCORE: projectInfo.acceptedScore,
+  SCORE_REVIEWED: projectInfo.scoreReviewed ?? false,
+  ACCEPTED_SCORE_COMMENT: projectInfo.acceptedScoreComment,
+});
 
 /**
  * Save or update project info (upsert operation)
@@ -216,52 +145,18 @@ const saveOrUpdateProjectInfo = async (
   projectInfo: Omit<ProjectInfo, 'createdAt' | 'updatedAt'>
 ): Promise<ProjectInfo> => {
   try {
-    // Check if info already exists
-    const q = query(
-      collection(db, PROJECT_INFO_COLLECTION),
-      where('projectId', '==', projectInfo.projectId)
+    await aimiApiClient.post(
+      ENDPOINTS.UPSERT_PROJECT_INFO,
+      toUpsertPayload(projectInfo)
     );
 
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      // Create new document
-      const infoData = convertProjectInfoToFirestore(projectInfo);
-      
-await addDoc(collection(db, PROJECT_INFO_COLLECTION), {
-  ...infoData,
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
-});
-
-      return {
-        ...projectInfo,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-    } else {
-      // Update existing document
-      const docRef = querySnapshot.docs[0].ref;
-      const projectData =
-  convertProjectInfoToFirestore(projectInfo);
-console.log(
-  'Saving Payload',
-  convertProjectInfoToFirestore(projectInfo)
-);
-await updateDoc(docRef, {
-  ...projectData,
-  updatedAt: serverTimestamp(),
-});
-
-      return {
-        ...projectInfo,
-        createdAt:
-          querySnapshot.docs[0].data().createdAt?.toDate() ?? new Date(),
-        updatedAt: new Date(),
-      };
-    }
+    return {
+      ...projectInfo,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
   } catch (error) {
-    console.error('Error saving or updating project info in Firestore:', error);
+    console.error('Error saving or updating project info:', error);
     throw error;
   }
 };
@@ -271,74 +166,45 @@ await updateDoc(docRef, {
  */
 const getProjectInfo = async (projectId: string): Promise<ProjectInfo> => {
   try {
-    const q = query(
-      collection(db, PROJECT_INFO_COLLECTION),
-      where('projectId', '==', projectId)
+    const rows = await aimiApiClient.get<ApiProjectInfoRow[]>(
+      ENDPOINTS.GET_PROJECT_INFO,
+      { projectId }
     );
 
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      // Return default object when no document exists
+    if (rows.length === 0) {
+      // Return default object when no row exists yet
       return {
         projectId,
         peopleUsingAI: 0,
-
         isProjectNA: false,
         naComments: '',
-
         licenseCount: 0,
         licenseProvider: '',
-
         presentationDone: false,
         projectFY: '',
-
         createdAt: new Date(),
         updatedAt: new Date(),
       };
     }
 
-    const projectInfo = convertFirestoreToProjectInfo(querySnapshot.docs[0]);
-
-    // Return default object if peopleUsingAI is undefined
-    if (
-      projectInfo.peopleUsingAI === undefined ||
-      projectInfo.peopleUsingAI === null
-    ) {
-      return {
-        projectId,
-        peopleUsingAI: 0,
-        isProjectNA: projectInfo.isProjectNA ?? false,
-        naComments: projectInfo.naComments ?? '',
-        createdAt: projectInfo.createdAt || new Date(),
-        updatedAt: projectInfo.updatedAt || new Date(),
-      };
-    }
-
-    return projectInfo;
+    return fromApiProjectInfo(rows[0]);
   } catch (error) {
-    console.error('Error fetching project info from Firestore:', error);
+    console.error('Error fetching project info:', error);
     throw error;
   }
 };
 
 /**
- * Get all project info from Firestore
+ * Get all project info
  */
 const getAllProjectInfo = async (): Promise<ProjectInfo[]> => {
   try {
-    const querySnapshot = await getDocs(
-      collection(db, PROJECT_INFO_COLLECTION)
+    const rows = await aimiApiClient.get<ApiProjectInfoRow[]>(
+      ENDPOINTS.GET_PROJECT_INFO
     );
-    const projectInfoList: ProjectInfo[] = [];
-
-    querySnapshot.forEach((doc) => {
-      projectInfoList.push(convertFirestoreToProjectInfo(doc));
-    });
-
-    return projectInfoList;
+    return rows.map(fromApiProjectInfo);
   } catch (error) {
-    console.error('Error fetching all project info from Firestore:', error);
+    console.error('Error fetching all project info:', error);
     throw error;
   }
 };

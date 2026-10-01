@@ -8,6 +8,7 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from '@auth/context/AuthProvider';
 import { ProjectDataProvider } from '@shared/context/ProjectDataProvider';
+import { AimiLookupProvider } from '@shared/lookups/AimiLookupProvider';
 import { Loading } from '@shared/components/Loading';
 import { useFeatureFlags } from '@shared/hooks/useFeatureFlags';
 
@@ -147,9 +148,11 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <ProjectDataProvider>
-          <Router basename="/aimi">
-            <AppRoutes />
-          </Router>
+          <AimiLookupProvider>
+            <Router basename="/aimi">
+              <AppRoutes />
+            </Router>
+          </AimiLookupProvider>
         </ProjectDataProvider>
       </AuthProvider>
     </ThemeProvider>
