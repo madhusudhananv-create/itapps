@@ -323,6 +323,7 @@ namespace GAVS.AllocationSystem.Data
         public IRepository_CSP<ITOPS_NOTIFICATION> ITOPS_NOTIFICATION { get { return GetStandardRepo<ITOPS_NOTIFICATION>(); } }
         public IRepository_CSP<ITOPS_REPORT_SP_DETAILS> ITOPS_REPORT_SP_DETAILS { get { return GetStandardRepo<ITOPS_REPORT_SP_DETAILS>(); } }
         public IRepository_CSP<ITOPS_REPORT_PARAMS> ITOPS_REPORT_PARAMS { get { return GetStandardRepo<ITOPS_REPORT_PARAMS>(); } }
+        public IRepository_CSP<ITOPS_SCORE_RECOMMENDATION> ITOPS_SCORE_RECOMMENDATION { get { return GetStandardRepo<ITOPS_SCORE_RECOMMENDATION>(); } }
 
 
         protected void CreateDbContext()

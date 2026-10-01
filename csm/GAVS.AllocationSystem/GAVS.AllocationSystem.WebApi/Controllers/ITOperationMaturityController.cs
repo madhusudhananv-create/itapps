@@ -3339,14 +3339,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 scoreRows = scoreRows.Where(s => allowedAssessmentIds.Contains(s.ASSESSMENT_ID)).ToList();
             }
 
-            // Recommended-action text still comes from the finding (the assessor's own
-            // words on that gap), when one exists - it just no longer gates visibility.
-            var scoreIdsInScope = scoreRows.Select(s => s.ID).ToList();
-            var findingByScoreId = CSPdb.ITOPS_FINDING.GetAll()
-                .Where(f => f.ISACTIVE && scoreIdsInScope.Contains(f.SCORE_ID))
+            // Recommendation text is standard wording per 1-5 score band, held in
+            // ITOPS_SCORE_RECOMMENDATION so it can be reworded in the database without an
+            // application deploy (see ITOperationMaturity_V2_34_ScoreRecommendationMaster.sql).
+            var recommendationByScore = CSPdb.ITOPS_SCORE_RECOMMENDATION.GetAll()
+                .Where(r => r.ISACTIVE)
                 .ToList()
-                .GroupBy(f => f.SCORE_ID)
-                .ToDictionary(g => g.Key, g => g.OrderByDescending(f => f.ID).First());
+                .GroupBy(r => r.SCORE_VALUE)
+                .ToDictionary(g => g.Key, g => g.OrderBy(r => r.DISPLAY_ORDER).First());
 
             // So the SAME domain name on two different accounts stays distinguishable
             // ("All accounts" on the Dashboard) instead of merging into one shared tab.
@@ -3380,19 +3380,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var category = parameter != null && categories.ContainsKey(parameter.CATEGORY_ID) ? categories[parameter.CATEGORY_ID] : null;
                     var assessment = assessmentOf(s);
                     var domain = assessment != null && domains.ContainsKey(assessment.DOMAIN_ID) ? domains[assessment.DOMAIN_ID] : null;
-                    ITOPS_FINDING finding;
-                    findingByScoreId.TryGetValue(s.ID, out finding);
                     var custIdForRow = assessment != null && projectCustId.ContainsKey(assessment.PROJECT_ID) ? projectCustId[assessment.PROJECT_ID] : null;
                     var isNotScored = !s.SCORE_VALUE.HasValue;
 
-                    // RECOMMENDED_ACTION is never actually populated anywhere in the app (no
-                    // UI ever writes it) - it was always null, silently forcing every single
-                    // row onto the generic "Advance X from level Y toward Z" filler text below.
-                    // The assessor's own words already exist, in ITOPS_SCORE.NOTES (mandatory
-                    // for any score) - surface that as the real recommendation instead.
-                    var recommendation = isNotScored
-                        ? "Not Scored"
-                        : (!string.IsNullOrWhiteSpace(finding?.RECOMMENDED_ACTION) ? finding.RECOMMENDED_ACTION : s.NOTES);
+                    // The standard maturity band for this score, not the assessor's own notes -
+                    // ITOPS_SCORE.NOTES is working text written for the reviewer, and showing it
+                    // here put raw scratch notes in front of everyone reading the Dashboard.
+                    ITOPS_SCORE_RECOMMENDATION band = null;
+                    if (!isNotScored) recommendationByScore.TryGetValue(s.SCORE_VALUE.Value, out band);
+
+                    var recommendation = isNotScored ? "Not Scored" : band?.LABEL;
 
                     return new ITOPS_TopRiskRow
                     {
@@ -3403,6 +3400,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         Gap = isNotScored ? 5 : 5 - s.SCORE_VALUE.Value,
                         IsNotScored = isNotScored,
                         RecommendedAction = recommendation,
+                        RecommendationDetail = band?.DESCRIPTION,
                         AccountId = custIdForRow,
                         AccountName = custIdForRow != null && custNames.ContainsKey(custIdForRow) ? custNames[custIdForRow] : custIdForRow
                     };

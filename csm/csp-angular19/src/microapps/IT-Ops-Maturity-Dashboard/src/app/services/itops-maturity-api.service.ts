@@ -111,7 +111,10 @@ export interface ItOpsTopRiskRow {
   parameterName: string;
   currentScore: number | null;
   gap: number;
+  /** Maturity-band label for this score, from the ITOPS_SCORE_RECOMMENDATION master ("Critical Gap", "Needs Work", ...), or "Not Scored" for a Not Applicable parameter. */
   recommendedAction: string | null;
+  /** Longer guidance behind recommendedAction, from the same master row - used as the cell's tooltip. */
+  recommendationDetail?: string | null;
   /** True when the parameter was marked Not Applicable rather than scored - shown as "Not scored" instead of a numeric gap. */
   isNotScored: boolean;
   accountId?: string | null;
