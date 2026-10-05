@@ -59,11 +59,36 @@ export class AccountService {
   }
 
   private preselectFromUrl(accounts: CustomerModel[]): void {
-    if (this.selectedAccountSubject.value) return;
-    const custId = new URLSearchParams(window.location.search).get('custId');
+    const custId = this.readCustIdFromUrl();
     if (!custId) return;
+    // A custId in the URL (e.g. a notification-email deep link) always wins over whatever
+    // account happens to already be stored from a previous session - otherwise a recipient
+    // who last viewed a different account gets sent straight to "Domain not found" instead
+    // of the account/domain the email was actually about.
+    if (this.selectedAccountSubject.value && String(this.selectedAccountSubject.value.cusT_ID) === String(custId)) return;
     const match = accounts.find((a) => String(a.cusT_ID) === String(custId));
     if (match) this.selectAccount(match);
+  }
+
+  /**
+   * custId can arrive either in location.search (?custId=... before the #) or inside the
+   * hash-routed query string (#/review/domain?assessmentId=1&custId=...) - checked in that
+   * order, hash last. UAT/prod IIS has a canonical-URL redirect that strips a request's
+   * explicit "index.html" AND its query string, but a browser always re-attaches the
+   * original fragment onto a redirect target that carries none of its own - so a custId
+   * placed before the # can get silently dropped there while the same value after the #
+   * survives untouched. GetITOpsAssessmentLink (backend) puts it after the # for exactly
+   * this reason; location.search is still checked first for any other caller that isn't
+   * subject to that redirect (e.g. the navbar's own "open in new tab" link).
+   */
+  private readCustIdFromUrl(): string | null {
+    const fromSearch = new URLSearchParams(window.location.search).get('custId');
+    if (fromSearch) return fromSearch;
+
+    const hash = window.location.hash || '';
+    const queryIndex = hash.indexOf('?');
+    if (queryIndex === -1) return null;
+    return new URLSearchParams(hash.substring(queryIndex + 1)).get('custId');
   }
 
   selectAccount(account: CustomerModel): void {

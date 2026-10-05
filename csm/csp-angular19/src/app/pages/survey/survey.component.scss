@@ -647,30 +647,98 @@ $soft-slate: #f1f5f9;
   
   .modern-survey-table {
     font-size: 12px;
-    
+    display: block;
+    width: 100%;
+
+    thead, tbody, tfoot {
+      display: block;
+      width: 100%;
+    }
+
     thead, tbody, tfoot {
       tr {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+
         td, th {
+          display: block;
+          width: 100% !important;
+          box-sizing: border-box;
           padding: 12px 16px;
         }
       }
     }
-  }
-  
-  .rating-pills {
-    a {
-      padding: 10px 16px;
-      font-size: 13px;
+
+    // Column-header row is meaningless once cells stack; replace it with
+    // a per-cell label instead (see td[data-label] below).
+    .criteria-header {
+      display: none;
+    }
+
+    tbody .criteria-row {
+      margin-bottom: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
+
+      td {
+        border-left: none;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+    }
+
+    td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .star-rating-cell,
+    .remarks-cell,
+    .nps-rating-cell,
+    .nps-comments-cell {
+      text-align: left;
     }
   }
-  
+
+  .rating-pills {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    border-radius: 0;
+    overflow: visible;
+
+    a {
+      flex: none;
+      padding: 8px 2px;
+      font-size: 12px;
+      border-radius: 6px;
+
+      &.pillStart,
+      &.pillEnd {
+        border-radius: 6px;
+      }
+    }
+  }
+
   .btn-draft,
   .btn-submit {
     width: 100%;
     justify-content: center;
     margin: 8px 0;
   }
-  
+
   .btn-draft {
     margin-right: 0;
   }

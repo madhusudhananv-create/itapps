@@ -8,7 +8,9 @@ import {
   Box,
   Typography,
   FormHelperText,
-  //Tooltip,
+  Checkbox,
+  FormControlLabel,
+  Tooltip,
 } from '@mui/material';
 import type { ActivityFormData, ActivityData } from '../types/activityTypes';
 import {
@@ -28,8 +30,8 @@ import {
   isApplicable,
   isNoAIAdoption,
   validateAIToolsOrAccelerators,
-  //validateAITools,
-  //validateAIToolDetails,
+  validateAITools,
+  validateAIToolDetails,
 } from '../utils/formValidationUtils';
 import {
   SelectField,
@@ -40,13 +42,14 @@ import {
 } from './FormFieldComponents';
 import { QualitativeBenefitsField } from './QualitativeBenefitsField';
 import { modalStyles } from '../styles/formStyles';
-//import { AIToolDetailsDialog } from './AIToolDetailsDialog';
+import { AIToolDetailsDialog } from './AIToolDetailsDialog';
 
 interface AddActivityModalProps {
   open: boolean;
   onClose: () => void;
   onSave: (activityData: ActivityFormData) => void;
   onSaveAndAddNew: (activityData: ActivityFormData) => void;
+  onMarkPhaseAsNA?: (sdlcPhase: string) => void;
   selectedPractice: string;
   editingActivity?: ActivityData | null;
   existingActivities?: ActivityData[];
@@ -57,17 +60,21 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   onClose,
   onSave,
   onSaveAndAddNew,
+  onMarkPhaseAsNA,
   selectedPractice,
   editingActivity,
   existingActivities = [],
 }) => {
   const [guidelinesModalOpen, setGuidelinesModalOpen] = useState(false);
-  //const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false);
+  const [toolDetailsOpen, setToolDetailsModalOpen] = useState(false);
 
   const [
     applicabilityGuidelinesModalOpen,
     setApplicabilityGuidelinesModalOpen,
   ] = useState(false);
+
+  const [markPhaseAsNAChecked, setMarkPhaseAsNAChecked] = useState(false);
+  const [phaseNAConfirmOpen, setPhaseNAConfirmOpen] = useState(false);
 
   const {
     formData,
@@ -98,11 +105,11 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const hasAIToolsOrAccelerators = validateAIToolsOrAccelerators(formData);
 
   // When AI Tools Used is selected, its details and Client Approved become mandatory
-  /* const hasAITools = validateAITools(formData.aiToolUsed);
+   const hasAITools = validateAITools(formData.aiToolUsed);
   const aiToolDetailsComplete = validateAIToolDetails(
     formData.aiToolUsed,
     formData.aiToolDetails
-  ); */
+  );
   //validation pop-up
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -166,6 +173,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
 
   const handleClose = () => {
     resetForm();
+    setMarkPhaseAsNAChecked(false);
     onClose();
   };
 
@@ -175,6 +183,25 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
       return;
     }
     handleClose();
+  };
+
+  const handleMarkPhaseAsNAChange = (checked: boolean) => {
+    if (checked) {
+      setPhaseNAConfirmOpen(true);
+    } else {
+      setMarkPhaseAsNAChecked(false);
+    }
+  };
+
+  const handleCancelPhaseNA = () => {
+    setPhaseNAConfirmOpen(false);
+  };
+
+  const handleConfirmPhaseNA = () => {
+    setPhaseNAConfirmOpen(false);
+    setMarkPhaseAsNAChecked(false);
+    onMarkPhaseAsNA?.(formData.sdlcPhase);
+    resetForm();
   };
 
   return (
@@ -201,6 +228,21 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                   }))}
                   required={true}
                 />
+                {!editingActivity &&
+                  formData.sdlcPhase &&
+                  formData.sdlcPhase !== 'NA' && (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={markPhaseAsNAChecked}
+                          onChange={(e) =>
+                            handleMarkPhaseAsNAChange(e.target.checked)
+                          }
+                        />
+                      }
+                      label="Mark all activity as NA"
+                    />
+                  )}
               </Box>
 
               {/* Activity */}
@@ -322,52 +364,52 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                     </Typography>
                   }
                 />
-                {/* <Tooltip
-                title={
-                  Array.isArray(formData.aiToolUsed) &&
-                  formData.aiToolUsed.length > 0
-                    ? 'Configure access type and license details for selected AI tools'
-                    : 'Select one or more AI tools to configure details'
-                }
-                arrow
-              >
-                <span>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color:
-                        Array.isArray(formData.aiToolUsed) &&
-                        formData.aiToolUsed.length > 0
-                          ? hasAITools && !aiToolDetailsComplete
-                            ? 'error.main'
-                            : 'primary.main'
-                          : 'text.disabled',
-                      cursor:
-                        Array.isArray(formData.aiToolUsed) &&
-                        formData.aiToolUsed.length > 0
-                          ? 'pointer'
-                          : 'not-allowed',
-                      textDecoration: 'underline',
-                      fontWeight: 500,
-                    }}
-                    onClick={() => {
-                      if (
-                        Array.isArray(formData.aiToolUsed) &&
-                        formData.aiToolUsed.length > 0
-                      ) {
-                        setToolDetailsModalOpen(true);
-                      }
-                    }}
-                  >
-                    Configure AI Tool Details{hasAITools ? ' *' : ''}
-                  </Typography>
-                </span>
-              </Tooltip>
-              {hasAITools && !aiToolDetailsComplete && (
-                <FormHelperText error>
-                  Please configure AI tool details if AI tools are selected
-                </FormHelperText>
-              )} */}
+                <Tooltip
+                  title={
+                    Array.isArray(formData.aiToolUsed) &&
+                    formData.aiToolUsed.length > 0
+                      ? 'Configure access type and license details for selected AI tools'
+                      : 'Select one or more AI tools to configure details'
+                  }
+                  arrow
+                >
+                  <span>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color:
+                          Array.isArray(formData.aiToolUsed) &&
+                          formData.aiToolUsed.length > 0
+                            ? hasAITools && !aiToolDetailsComplete
+                              ? 'error.main'
+                              : 'primary.main'
+                            : 'text.disabled',
+                        cursor:
+                          Array.isArray(formData.aiToolUsed) &&
+                          formData.aiToolUsed.length > 0
+                            ? 'pointer'
+                            : 'not-allowed',
+                        textDecoration: 'underline',
+                        fontWeight: 500,
+                      }}
+                      onClick={() => {
+                        if (
+                          Array.isArray(formData.aiToolUsed) &&
+                          formData.aiToolUsed.length > 0
+                        ) {
+                          setToolDetailsModalOpen(true);
+                        }
+                      }}
+                    >
+                      Configure AI Tool Details{hasAITools ? ' *' : ''}
+                    </Typography>
+                  </span>
+                </Tooltip>
+                {hasAITools && !aiToolDetailsComplete && (
+                  <FormHelperText error>
+                    Please configure AI tool details if AI tools are selected
+                  </FormHelperText>
+                )}
               </Box>
               
               
@@ -477,7 +519,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         open={applicabilityGuidelinesModalOpen}
         onClose={() => setApplicabilityGuidelinesModalOpen(false)}
       />
-      {/* <AIToolDetailsDialog
+      <AIToolDetailsDialog
         open={toolDetailsOpen}
         onClose={() => setToolDetailsModalOpen(false)}
         aiTools={
@@ -489,7 +531,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         onChange={(value) =>
           handleFormChange('aiToolDetails', value)
         }
-      /> */}
+      />
       <Dialog
       open={validationDialogOpen}
       onClose={() => setValidationDialogOpen(false)}
@@ -512,6 +554,38 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
           onClick={() => setValidationDialogOpen(false)}
         >
           OK
+        </Button>
+      </DialogActions>
+    </Dialog>
+
+    <Dialog
+      open={phaseNAConfirmOpen}
+      onClose={handleCancelPhaseNA}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle>Mark Entire Phase as Not Applicable?</DialogTitle>
+
+      <DialogContent>
+        <Typography sx={{ mb: 2 }}>
+          All activities under: <strong>{formData.sdlcPhase.replace(/:/g, '')}</strong>{' '}
+          will automatically be marked as: Applicability = Activity NA
+        </Typography>
+        <Typography color="error">
+          Any existing activity data under this phase will be overwritten.
+        </Typography>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={handleCancelPhaseNA} color="inherit">
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={handleConfirmPhaseNA}
+        >
+          Confirm
         </Button>
       </DialogActions>
     </Dialog>

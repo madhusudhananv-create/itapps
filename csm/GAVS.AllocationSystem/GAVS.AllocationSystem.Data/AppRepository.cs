@@ -176,6 +176,37 @@ namespace GAVS.AllocationSystem.Data
 
         }
 
+        // Best-effort IT Ops Maturity daily-visit log (see
+        // ITOperationMaturity_V2_32_DailyActiveUsers.sql) - fires once per employee per
+        // calendar day from the Angular app's own startup, idempotent via the SP's own
+        // "already logged today" check. No new EF-mapped entity for this on purpose - same
+        // raw-ADO stored-procedure style as GetTable() above, since this is a one-off
+        // fire-and-forget write, not something the ORM layer needs to know about.
+        public void RecordITOpsVisit(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return;
+            using (var context = new CloudDbContext())
+            {
+                var conn = context.Database.Connection;
+                var connectionState = conn.State;
+                try
+                {
+                    if (connectionState != ConnectionState.Open) conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "dbo.usp_ITOpsRecordVisit";
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@EmpId", empId));
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                finally
+                {
+                    if (connectionState != ConnectionState.Closed) conn.Close();
+                }
+            }
+        }
+
         public IEnumerable<StaffingSummary> GetStaffingSummaryDetails(string custId, string ProjectId = null)
         {
             var context = new CloudDbContext();

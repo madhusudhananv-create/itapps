@@ -21,7 +21,7 @@ const BACKEND_STATUS_MAP: Record<string, DomainStatus> = {
   PendingReview: 'Pending Review',
   Approved: 'Approved',
   ReturnedForRevision: 'In Progress',
-  Suspended: 'Draft',
+  Suspended: 'Suspended',
   Closed: 'Approved',
 };
 
@@ -44,8 +44,13 @@ export class MaturityAssessmentComponent implements OnInit {
   /** True until the first load attempt settles, so the "not found" message never flashes while data is still in flight. */
   loading = true;
   saveMessage = '';
+  /** Only populated for a Cloud domain assessment with no provider locked in yet - see awaitingProviderChoice(). */
   providers: string[] = [];
   activeProvider?: string;
+  /** Clicked but not yet submitted - chooseProvider() is only actually called once the Submit button is pressed. */
+  selectedProvider?: string;
+  choosingProvider = false;
+  providerChoiceError = '';
   showSubmitModal = false;
   submitting = false;
   /** Keyed by parameter id, not a single shared string - an upload error on one question must not show under every other question's evidence box too. */
@@ -54,6 +59,12 @@ export class MaturityAssessmentComponent implements OnInit {
   highlightParamId: string | null = null;
   /** This assessment's own assignees (not the account-wide selection - a project's assessment shows only who's actually assigned to IT). */
   assesseeNamesList: string[] = [];
+  /** This assessment's own assessor(s) - used to gate Assessor-only actions (Accept/Dispute
+   * Rejection) so a non-assessor who reaches this page (e.g. an Assessee/Reviewer following
+   * their own notification-email link, which also points at /assessment for some triggers)
+   * doesn't see a button that only ever worked for them via the backend's own
+   * DenyIfNotITOpsFindingAssessor check - it just silently errored instead of being hidden. */
+  private assessorEmpIds: string[] = [];
   /** Evidence attached to each finding's remediation action (by the Assessee), keyed by findingId, loaded on demand - read-only here, the COE SPOC never edits it. */
   evidenceByFindingId: Record<number, ItOpsEvidenceRow[]> = {};
   /** Where "Back" goes - the Dashboard by default, or My Assignments when opened from there (?from=assignments). */
@@ -85,7 +96,14 @@ export class MaturityAssessmentComponent implements OnInit {
     // the assessmentId query param actually differs between them, so without this
     // subscription ngOnInit never runs again and the previously-loaded assessment
     // (however locked/submitted) just stays on screen.
-    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
+    // getAccounts() is included here (not just called for its side effect) so this waits
+    // for it to resolve before reading selectedAccount below - a deep link straight into
+    // this route (e.g. a notification-email link with ?custId=...) never goes through
+    // MaturityLandingComponent, which is otherwise the only place that normally triggers
+    // AccountService.preselectFromUrl. Without this, selectedAccount is read before the
+    // account list (and the custId preselection) has ever loaded, and the page falls
+    // straight into "Domain not found".
+    combineLatest([this.route.paramMap, this.route.queryParamMap, this.accountService.getAccounts()]).subscribe(([params, queryParams]) => {
       const domainCode = params.get('domainId');
       const assessmentIdParam = queryParams.get('assessmentId');
       const account = this.accountService.selectedAccount;
@@ -108,6 +126,11 @@ export class MaturityAssessmentComponent implements OnInit {
       this.showSubmitModal = false;
       this.highlightParamId = null;
       this.evidenceUploading.clear();
+      this.providers = [];
+      this.activeProvider = undefined;
+      this.selectedProvider = undefined;
+      this.choosingProvider = false;
+      this.providerChoiceError = '';
 
       this.api
         .getOrCreateAssessment(domainCode, String(account.cusT_ID), assessmentIdParam ? Number(assessmentIdParam) : undefined)
@@ -124,8 +147,13 @@ export class MaturityAssessmentComponent implements OnInit {
             this.assessmentId = assessment.assessmentId;
             this.domain = this.toDomain(assessment, parameters);
             this.assesseeNamesList = assessment.assesseeNames ?? [];
-            this.providers = [];
-            this.activeProvider = undefined;
+            this.assessorEmpIds = assessment.coeSpocEmpIds ?? (assessment.coeSpocEmpId ? [assessment.coeSpocEmpId] : []);
+            // Only ever populated for a Cloud domain assessment with no provider locked in
+            // yet (see ITOPS_AssessmentInfo.AvailableCloudProviders) - awaitingProviderChoice()
+            // uses this to show the provider picker instead of the scoring grid.
+            this.providers = assessment.availableCloudProviders ?? [];
+            this.activeProvider = assessment.cloudProvider ?? undefined;
+            this.providerChoiceError = '';
             this.loading = false;
             this.loadExistingEvidence();
             this.loadEvidenceForAcceptedFindings();
@@ -165,14 +193,16 @@ export class MaturityAssessmentComponent implements OnInit {
     });
   }
 
-  private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
+  private mapParameterRows(rows: ItOpsParameterScoreRow[]): MaturityParameter[] {
     this.parameterIdByKey.clear();
-    const parameters: MaturityParameter[] = rows.map((r) => {
+    this.touchedParamIds.clear();
+    return rows.map((r) => {
       const key = String(r.parameterId);
       this.parameterIdByKey.set(key, r.parameterId);
       return {
         id: key,
         category: r.category,
+        provider: r.provider ?? undefined,
         name: r.parameterName,
         definition: r.definition,
         rubric: {
@@ -195,14 +225,21 @@ export class MaturityAssessmentComponent implements OnInit {
         findingDisputeComment: r.disputeComment ?? undefined,
       };
     });
+  }
 
+  private toDomain(assessment: ItOpsAssessmentInfo, rows: ItOpsParameterScoreRow[]): TechnologyDomain {
     return {
       id: assessment.domainCode,
       name: assessment.domainName,
-      coeSpoc: assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
-      reviewer: assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
+      // coeSpocNames/reviewerNames are the authoritative multi-assessor/multi-reviewer
+      // lists - coeSpocName/reviewerName only ever reflect the first one added (see
+      // GetITOpsPrimaryAssessorId/GetITOpsPrimaryReviewerId's own "legacy singular
+      // field" comment), so falling back to them would silently drop every assessor
+      // or reviewer after the first.
+      coeSpoc: assessment.coeSpocNames?.length ? assessment.coeSpocNames.join(', ') : assessment.coeSpocName ?? assessment.coeSpocEmpId ?? '',
+      reviewer: assessment.reviewerNames?.length ? assessment.reviewerNames.join(', ') : assessment.reviewerName ?? assessment.reviewerEmpId ?? '',
       status: BACKEND_STATUS_MAP[assessment.status] ?? 'Not Started',
-      parameters,
+      parameters: this.mapParameterRows(rows),
       returnComment: assessment.returnComment ?? undefined,
     };
   }
@@ -211,10 +248,11 @@ export class MaturityAssessmentComponent implements OnInit {
     return this.assesseeNamesList.join(', ');
   }
 
+  /** GetITOpsAssessmentParameters already returns only the locked-in provider's rows once one
+   * is chosen (or every provider's rows while none is chosen yet, which awaitingProviderChoice()
+   * catches before the grid ever renders them) - no client-side filtering needed here. */
   visibleParameters(): MaturityParameter[] {
-    if (!this.domain) return [];
-    if (!this.providers.length) return this.domain.parameters;
-    return this.domain.parameters.filter((p) => p.provider === this.activeProvider);
+    return this.domain?.parameters ?? [];
   }
 
   openDefinitionsModal(): void {
@@ -225,8 +263,40 @@ export class MaturityAssessmentComponent implements OnInit {
     this.showDefinitionsModal = false;
   }
 
-  selectProvider(provider: string): void {
-    this.activeProvider = provider;
+  /** True only for a Cloud domain assessment with no provider locked in yet - shows the
+   * provider-choice screen instead of the (otherwise all-three-providers-wide) scoring grid. */
+  awaitingProviderChoice(): boolean {
+    return this.providers.length > 0 && !this.activeProvider;
+  }
+
+  /** Locks this assessment to one cloud provider (Azure/AWS/GCP) - a one-time choice, not a
+   * view filter: once saved, GetITOpsAssessmentParameters only ever returns that provider's
+   * parameters for this assessment again, and UpsertITOpsScore rejects any other provider's
+   * parameter server-side too. */
+  chooseProvider(provider: string): void {
+    if (!this.assessmentId || this.choosingProvider) return;
+    this.choosingProvider = true;
+    this.providerChoiceError = '';
+    this.api.setCloudProvider(this.assessmentId, provider).subscribe({
+      next: () => {
+        const id = this.assessmentId!;
+        this.api.getAssessmentParameters(id).subscribe({
+          next: (rows) => {
+            if (this.domain) this.domain.parameters = this.mapParameterRows(rows);
+            this.activeProvider = provider;
+            this.providers = [];
+            this.choosingProvider = false;
+          },
+          error: () => {
+            this.choosingProvider = false;
+          },
+        });
+      },
+      error: (err) => {
+        this.choosingProvider = false;
+        this.providerChoiceError = err?.error || 'Could not save your choice - please try again.';
+      },
+    });
   }
 
   isLocked(): boolean {
@@ -255,6 +325,12 @@ export class MaturityAssessmentComponent implements OnInit {
 
   evidenceDownloadUrl(evidenceId: number): string {
     return this.api.evidenceDownloadUrl(evidenceId);
+  }
+
+  /** Only one of this assessment's own assessor(s) may Accept/Dispute a rejection - same idea as domain-review.component.ts's isAssessee(). */
+  isAssessor(): boolean {
+    const empId = localStorage.getItem('empid');
+    return !!empId && this.assessorEmpIds.includes(empId);
   }
 
   openRejectionDecision(param: MaturityParameter): void {
@@ -336,13 +412,21 @@ export class MaturityAssessmentComponent implements OnInit {
     this.rubricModalParam = null;
   }
 
+  /** Parameters the Assessor has actually acted on this session, or that already had a real
+   * ITOPS_SCORE row saved from a previous visit (param.scoreId) - see isSelected()'s NA
+   * case for why this exists: NULL is how both "never answered" and "explicitly marked NA"
+   * are represented, so without this, every untouched question would show NA pre-selected
+   * the moment the page loads, instead of showing nothing until the Assessor picks one. */
+  private touchedParamIds = new Set<string>();
+
   selectScore(param: MaturityParameter, option: 'NA' | 1 | 2 | 3 | 4 | 5): void {
     if (this.isLocked()) return;
+    this.touchedParamIds.add(param.id);
     param.score = option === 'NA' ? null : option;
   }
 
   isSelected(param: MaturityParameter, option: 'NA' | 1 | 2 | 3 | 4 | 5): boolean {
-    if (option === 'NA') return param.score === null;
+    if (option === 'NA') return param.score === null && (!!param.scoreId || this.touchedParamIds.has(param.id));
     return param.score === option;
   }
 

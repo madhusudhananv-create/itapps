@@ -29,7 +29,9 @@ const CONFIG = {
         q127Forecast:     'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\forecast-data',
         fy27TargetActuals:'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\revenue-targets-actuals',
         obForecast:       'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\orderbooking-forecast',
-        obTargetsACV:     'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\orderbooking-targets-acv'
+        obTargetsACV:     'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\orderbooking-targets-acv',
+        partnershipOB:    'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\partnership-orderbooking',
+        neugainOpps:      'C:\\Sites\\ITApps\\Webapp\\pipeline-healthcare\\neugain-opportunities'
     }
 };
 
@@ -48,7 +50,9 @@ const FOLDER_URL_MAP = {
     '/pipeline-healthcare/forecast-data/':           'q127Forecast',
     '/pipeline-healthcare/revenue-targets-actuals/': 'fy27TargetActuals',
     '/pipeline-healthcare/orderbooking-forecast/':   'obForecast',
-    '/pipeline-healthcare/orderbooking-targets-acv/': 'obTargetsACV'
+    '/pipeline-healthcare/orderbooking-targets-acv/': 'obTargetsACV',
+    '/pipeline-healthcare/partnership-orderbooking/': 'partnershipOB',
+    '/pipeline-healthcare/neugain-opportunities/':   'neugainOpps'
 };
 
 /**

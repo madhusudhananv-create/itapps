@@ -241,29 +241,33 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               </IconButton>
             </Tooltip>
             {onEdit && (
-              <Tooltip title="Edit Activity">
-                <IconButton
-                  size="small"
-                  onClick={() => onEdit(activity)}
-                  disabled={actionsDisabled}
-                  sx={activityCardStyles.editIconButton}
-                  aria-label="Edit Activity"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
+              <Tooltip title={!isAdmin ? 'Only admin can edit the activity' : 'Edit Activity'}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onEdit(activity)}
+                    disabled={actionsDisabled || !isAdmin}
+                    sx={activityCardStyles.editIconButton}
+                    aria-label="Edit Activity"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </span>
               </Tooltip>
             )}
             {/* {onCopy && (
-              <Tooltip title="Copy Activity">
-                <IconButton
-                  size="small"
-                  onClick={() => onCopy(activity)}
-                  disabled={actionsDisabled}
-                  sx={activityCardStyles.copyIconButton}
-                  aria-label="Copy Activity"
-                >
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
+              <Tooltip title={!isAdmin ? 'Only admin can copy the activity' : 'Copy Activity'}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onCopy(activity)}
+                    disabled={actionsDisabled || !isAdmin}
+                    sx={activityCardStyles.copyIconButton}
+                    aria-label="Copy Activity"
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                </span>
               </Tooltip>
             )} */}
             {onDelete && featureFlags.showDeleteButton && (

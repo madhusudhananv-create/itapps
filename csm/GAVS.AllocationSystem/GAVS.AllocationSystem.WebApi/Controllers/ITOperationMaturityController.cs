@@ -157,12 +157,82 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .FirstOrDefault();
         }
 
+        // Identity gates for the mutating endpoints below (ACCESS-02/03/04): the caller's
+        // own empId (from the empId header) was previously read only for audit-field
+        // stamping, never checked against who is actually allowed to act. Each of these
+        // returns null when the caller may proceed, or a 403 Forbidden result otherwise.
+        // Superuser always bypasses, consistent with every other ITOps authorization gate.
+        private IHttpActionResult DenyIfNotITOpsAssessorOnAssessment(int assessmentId, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            if (GetITOpsAssessorIds(assessmentId).Contains(empId)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not an Assessor on this assessment, so you cannot " + what + ".");
+        }
+
+        private IHttpActionResult DenyIfNotITOpsReviewerOnAssessment(int assessmentId, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            if (GetITOpsReviewerIds(assessmentId).Contains(empId)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not a Reviewer on this assessment, so you cannot " + what + ".");
+        }
+
+        // The finding's Assessee is who accepts/rejects it and later submits action-taken
+        // progress. ITOPS_FINDING.ASSESSEE_EMP_ID is never populated under the V2 flow (V2
+        // moved Assessee assignment to per-assessment staging in ITOPS_ASSESSMENT_ASSESSEE,
+        // same as Assessor/Reviewer) - resolved the same way DenyIfNotITOpsFindingAssessor
+        // resolves Assessor, through SCORE_ID -> ITOPS_SCORE.ASSESSMENT_ID.
+        private IHttpActionResult DenyIfNotITOpsFindingAssessee(ITOPS_FINDING finding, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+            if (!assessmentId.HasValue || !GetITOpsAssesseeIds(assessmentId.Value).Contains(empId))
+                return Content(HttpStatusCode.Forbidden, "You are not the Assessee on this finding, so you cannot " + what + ".");
+
+            // Being staged as Assessee (ITOPS_ASSESSMENT_ASSESSEE) never expires on its own,
+            // even once the underlying project allocation that made someone eligible for it
+            // in the first place has ended - re-check it live here rather than trusting that
+            // static snapshot indefinitely. See IsITOpsEmpCurrentlyAllocated and
+            // BuildITOpsAssessmentInfo.AssesseeAllocationExpired (the page-load banner this
+            // mirrors, so the same block never comes as a surprise mid-action).
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value);
+            if (assessment != null && !IsITOpsEmpCurrentlyAllocated(empId, assessment.PROJECT_ID))
+            {
+                return Content(HttpStatusCode.Forbidden,
+                    "Your allocation on this project has expired, so you cannot " + what + ". " +
+                    "Please ask your Delivery/Project Manager to extend your project allocation in D365 to proceed with this assessment.");
+            }
+
+            return null;
+        }
+
+        // The Assessor's decision on a rejected finding (accept/dispute, or a manual close)
+        // is scoped to the Assessors on the finding's assessment - resolved through
+        // SCORE_ID -> ITOPS_SCORE.ASSESSMENT_ID like everywhere else in this file.
+        private IHttpActionResult DenyIfNotITOpsFindingAssessor(ITOPS_FINDING finding, string empId, string what)
+        {
+            if (IsITOpsSuperuser(empId)) return null;
+            var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+            if (assessmentId.HasValue && GetITOpsAssessorIds(assessmentId.Value).Contains(empId)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not an Assessor on this finding's assessment, so you cannot " + what + ".");
+        }
+
         private List<int> GetITOpsScoreIdsForAssessment(int assessmentId)
         {
             return CSPdb.ITOPS_SCORE.GetAll()
                 .Where(s => s.ISACTIVE && s.ASSESSMENT_ID == assessmentId)
                 .Select(s => s.ID)
                 .ToList();
+        }
+
+        // Domain name as shown in every ITOps notification email - the chosen Cloud provider
+        // rides along inline once one is picked, e.g. "Cloud (Azure)", rather than a separate
+        // email column. Plain domain name for every non-Cloud domain, or a Cloud domain whose
+        // assessment has no provider chosen yet.
+        private string ITOpsEmailDomainName(string domainName, string cloudProvider)
+        {
+            return !string.IsNullOrWhiteSpace(domainName) && !string.IsNullOrWhiteSpace(cloudProvider)
+                ? domainName + " (" + cloudProvider + ")"
+                : domainName;
         }
 
         // One lock per account, so the several near-simultaneous requests the landing page
@@ -348,6 +418,101 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
         }
 
+        // Same CONFIGURATION_EXT/helper.GetDBConfig mechanism as GetITOpsPlatformCcEmails above,
+        // for the RunOps Head(s) Cc'd on the "findings need your action" email (see
+        // NotifyITOpsAssesseesOfOpenFindings) - a single global row (CUST_ID '-1'), not
+        // per-Business-Unit like the GDH emails. No hardcoded fallback here (unlike Platform
+        // Cc): there's no single "real" RunOps Head address to fall back to, so an
+        // unconfigured environment simply Cc's nobody for this one, rather than a guessed
+        // address that could be wrong. See ITOperationMaturity_V2_31_RunOpsHeadConfig.sql.
+        private const string ITOPS_RUNOPS_HEAD_CONFIG_KEY = "ITRUNOPS_HEAD";
+
+        private List<string> GetITOpsRunOpsHeadEmails()
+        {
+            var configured = helper.GetDBConfig(ITOPS_RUNOPS_HEAD_CONFIG_KEY, "-1");
+            if (string.IsNullOrWhiteSpace(configured)) return new List<string>();
+            return configured.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(e => e.Trim())
+                // Guards against the seed script's own placeholder VALUE
+                // ('REPLACE_WITH_RUNOPS_HEAD_EMAIL') ever silently Cc'ing a bogus
+                // non-address if the real one hasn't been set yet in this environment.
+                .Where(e => !string.IsNullOrWhiteSpace(e) && e.Contains("@"))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        /// <summary>Account (customer) name for a project's CUST_ID - null-safe, for the Account column every ITOps notification email now carries alongside Project.</summary>
+        private string GetITOpsAccountName(string custId)
+        {
+            if (string.IsNullOrWhiteSpace(custId)) return null;
+            return Cldb.CUSTOMER.GetAll().Where(c => c.CUST_ID == custId).Select(c => c.CUST_NM).FirstOrDefault();
+        }
+
+        /// <summary>Cycle label for an assessment's ASSESSMENT_MASTER_ID - null-safe, for the Cycle line every assessment-related ITOps email now carries alongside Account/Project (previously missing, making it unclear which cycle's email had just fired).</summary>
+        private string GetITOpsCycleLabel(int assessmentMasterId)
+        {
+            return CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == assessmentMasterId)?.CYCLE_LABEL;
+        }
+
+        /// <summary>
+        /// Which tab of the microapp's "My Assignments" page (maturity-landing.component.ts)
+        /// a given role's work shows up under - Reviewer gets its own "Needs Review" tab,
+        /// while Assessor and Assessee rows both surface on "My Assessments" (see
+        /// maturity-landing.component.ts's hasActionableFindings/isAssesseeOn - an Assessee row
+        /// only ever appears there once Approved). Used so a role-assignment email can tell the
+        /// recipient exactly where to look instead of just "log in for details".
+        /// </summary>
+        private string GetITOpsAssignmentSectionLabel(string roleLabel)
+        {
+            return string.Equals(roleLabel, "Reviewer", StringComparison.OrdinalIgnoreCase)
+                ? "Needs Review"
+                : "My Assessments";
+        }
+
+        /// <summary>
+        /// Deep link straight into the assessment (Reviewer's /review/:domainCode or the
+        /// Assessor's /assessment/:domainCode, matching this microapp's own routes -
+        /// app.routes.ts) so a notification email doesn't just say "log in and go find it".
+        /// Base URL is derived from the calling browser's own Referrer (same
+        /// dev/uat/prod-agnostic pattern already used for links elsewhere in this codebase -
+        /// see AuthController/AuthControllerCSS's UrlReferrer-based links), so this needs no
+        /// per-environment config and is always correct for whichever host actually made the
+        /// request. Falls back to the ITOpsDashboardBaseUrl AppSetting (if ever configured) and
+        /// then to "#" (a harmless no-op link) when neither is available, rather than risking a
+        /// guessed/wrong URL in a production email. The email templating here is plain
+        /// placeholder substitution with no conditional blocks, so the button row in the
+        /// template is always present.
+        /// </summary>
+        private string GetITOpsAssessmentLink(string domainCode, int assessmentId, bool forReview, string custId)
+        {
+            if (string.IsNullOrWhiteSpace(domainCode)) return "#";
+
+            string baseUrl = null;
+            var referrer = HttpContext.Current?.Request?.UrlReferrer;
+            if (referrer != null && referrer.IsAbsoluteUri)
+            {
+                baseUrl = referrer.GetLeftPart(UriPartial.Authority);
+            }
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                baseUrl = ConfigurationManager.AppSettings["ITOpsDashboardBaseUrl"];
+            }
+            if (string.IsNullOrWhiteSpace(baseUrl)) return "#";
+
+            var path = forReview ? "review" : "assessment";
+            // custId lives INSIDE the hash-routed query (after the #), not in location.search
+            // before it. UAT/prod IIS has a canonical-URL redirect that strips both the
+            // explicit "index.html" and any query string ahead of the #; a browser always
+            // re-attaches the original fragment to a redirect target that has none of its own
+            // (standard behaviour, not an Angular/app quirk), so anything after # survives
+            // that redirect untouched while anything before it does not. Putting custId here
+            // means AccountService.preselectFromUrl has to read it out of the hash's own query
+            // string instead of window.location.search - see that method's own comment.
+            var url = baseUrl.TrimEnd('/') + "/it-ops-maturity-dashboard/#/" + path + "/" + domainCode + "?assessmentId=" + assessmentId;
+            if (!string.IsNullOrWhiteSpace(custId)) url += "&custId=" + Uri.EscapeDataString(custId);
+            return url;
+        }
+
         /// <summary>
         /// Sends one IT Ops Maturity notification email using the same EmailProvider/GetEmailContent
         /// pipeline every other CSM notification already goes through. Resolves toEmpId to an email
@@ -382,6 +547,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 var fromEmail = ConfigurationManager.AppSettings["emailid"];
                 var fromPassword = ConfigurationManager.AppSettings["emailpassword"];
+                AddITOpsMailBrandingValues(values);
                 var content = helper.GetEmailContent(templateFileName, values);
 
                 var ep = new EmailProvider(Cldb, CSPdb);
@@ -398,13 +564,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
         /// <summary>
+        /// Injects {{BASE_URL}} (the image host for the footer's Neurealm logo/social icons -
+        /// same AppSetting, "BaseImageUrl", the CSAT survey emails already use, so no new
+        /// config is needed) into every ITOps email's values right before rendering, instead
+        /// of every one of this file's ~20 ToEmailValues(...) call sites having to remember
+        /// to add it themselves.
+        /// </summary>
+        private static void AddITOpsMailBrandingValues(Dictionary<string, string> values)
+        {
+            if (values == null) return;
+            if (!values.ContainsKey("BASE_URL"))
+                values["BASE_URL"] = ConfigurationManager.AppSettings["BaseImageUrl"] ?? "";
+        }
+
+        /// <summary>
         /// Same as SendITOpsNotificationEmailToMany, but with an explicit CC list
         /// (e.g. the project's assessors/reviewers/Quality SPOC) - EmailProvider
         /// already accepts a separate cc field, this is just the first caller that
         /// needs it. Anyone already on the To line is dropped from Cc rather than
-        /// appearing on both.
+        /// appearing on both. extraCcEmails is for CC addresses that are already raw
+        /// email strings rather than empIds to resolve (e.g. GDH/RunOps Head emails,
+        /// which come straight out of CONFIGURATION_EXT, not EMP_INFO).
         /// </summary>
-        private void SendITOpsNotificationEmailWithCc(List<string> toEmpIds, List<string> ccEmpIds, string subject, string templateFileName, Dictionary<string, string> values)
+        private void SendITOpsNotificationEmailWithCc(List<string> toEmpIds, List<string> ccEmpIds, string subject, string templateFileName, Dictionary<string, string> values, List<string> extraCcEmails = null)
         {
             try
             {
@@ -415,11 +597,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .ToList();
                 if (!toEmails.Any()) return;
 
-                // Explicit ccEmpIds (e.g. the outgoing person on a reassignment) PLUS the
-                // CSM Platform mailbox on every notification - see GetITOpsPlatformCcEmails.
+                // Explicit ccEmpIds (e.g. the outgoing person on a reassignment) PLUS
+                // extraCcEmails (already-resolved raw addresses) PLUS the CSM Platform
+                // mailbox on every notification - see GetITOpsPlatformCcEmails.
                 var ccEmails = (ccEmpIds ?? new List<string>())
                     .Select(GetEmpEmail)
                     .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .Concat(extraCcEmails ?? new List<string>())
                     .Concat(GetITOpsPlatformCcEmails())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .Except(toEmails, StringComparer.OrdinalIgnoreCase)
@@ -427,6 +611,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
                 var fromEmail = ConfigurationManager.AppSettings["emailid"];
                 var fromPassword = ConfigurationManager.AppSettings["emailpassword"];
+                AddITOpsMailBrandingValues(values);
                 var content = helper.GetEmailContent(templateFileName, values);
 
                 var ep = new EmailProvider(Cldb, CSPdb);
@@ -491,6 +676,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private void NotifyITOpsMany(List<string> toEmpIds, string subject, string templateFileName, Dictionary<string, string> values, string notificationType, int? assessmentId, int? findingId, string message)
         {
             SendITOpsNotificationEmailToMany(toEmpIds, subject, templateFileName, values);
+            foreach (var empId in (toEmpIds ?? new List<string>()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct())
+            {
+                CreateITOpsNotification(empId, notificationType, assessmentId, findingId, message);
+            }
+        }
+
+        /// <summary>Same as NotifyITOpsMany, but with an explicit Cc list (empIds and/or raw addresses) - see SendITOpsNotificationEmailWithCc.</summary>
+        private void NotifyITOpsManyWithCc(List<string> toEmpIds, List<string> ccEmpIds, string subject, string templateFileName, Dictionary<string, string> values, string notificationType, int? assessmentId, int? findingId, string message, List<string> extraCcEmails = null)
+        {
+            SendITOpsNotificationEmailWithCc(toEmpIds, ccEmpIds, subject, templateFileName, values, extraCcEmails);
             foreach (var empId in (toEmpIds ?? new List<string>()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct())
             {
                 CreateITOpsNotification(empId, notificationType, assessmentId, findingId, message);
@@ -652,6 +847,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
             }
 
+            // A Superuser has unrestricted access everywhere else in this app (Dashboard,
+            // Reports, Admin Setup all fold Superuser into "full access" explicitly) - this
+            // endpoint used to be the one exception, with no Superuser case at all, so a
+            // Superuser with no personal Assessor/Reviewer/Assessee role and no project
+            // allocation got back an empty list and the "Assessments" nav tab hid itself as
+            // if they had no ITOps involvement whatsoever. Every assessment org-wide is
+            // added here the same way an allocated-project row is - empty Roles[], so it
+            // lands in the allocation-only "Assessments" tab (read-only browsing), never in
+            // the role-gated "My Assessments"/"Needs Review" tabs.
+            if (IsITOpsSuperuser(empId))
+            {
+                foreach (var id in CSPdb.ITOPS_ASSESSMENT.GetAll().Where(a => a.ISACTIVE).Select(a => a.ID).ToList())
+                {
+                    if (!rolesByAssessmentId.ContainsKey(id)) rolesByAssessmentId[id] = new List<string>();
+                }
+            }
+
             if (!rolesByAssessmentId.Any()) return Ok(new List<ITOPS_MyAssignmentRow>());
 
             var assessmentIds = rolesByAssessmentId.Keys.ToList();
@@ -763,7 +975,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     Roles = rolesByAssessmentId[a.ID],
                     OpenFindingsForMe = openFindingCountByAssessment.ContainsKey(a.ID) ? openFindingCountByAssessment[a.ID] : 0,
                     AllFindingsResolved = !unresolvedAssessmentIds.Contains(a.ID),
-                    SubmittedDate = a.SUBMITTED_DATE
+                    SubmittedDate = a.SUBMITTED_DATE,
+                    CreatedDate = a.CREATED_DATE
                 };
             })
             .OrderBy(r => r.AccountName)
@@ -822,6 +1035,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         /// list should see IT Ops Maturity Dashboard/Reports data for that project even
         /// with no ITOps role (Assessor/Reviewer/Assessee) at all.
         /// </summary>
+        // Same "currently allocated" check GetITOpsAssesseeCandidates uses when first
+        // offering someone as a candidate Assessee (ITOperationMaturityAdminController.cs) -
+        // BILL_FLG matters here too, same reasoning: without it this would pass for a
+        // historical resource row that merely hasn't reached its END_DATE yet, not just
+        // someone actually billed/staffed on the project right now.
+        private bool IsITOpsEmpCurrentlyAllocated(string empId, string projectId)
+        {
+            if (string.IsNullOrWhiteSpace(empId) || string.IsNullOrWhiteSpace(projectId)) return false;
+            return Cldb.PROJECT_RESOURCE.GetAll()
+                .Any(pr => pr.PROJ_ID == projectId && pr.EMP_ID == empId && pr.BILL_FLG == true && pr.END_DATE >= DateTime.Now);
+        }
+
         private List<string> GetITOpsAllocatedProjectIds(string empId)
         {
             if (string.IsNullOrWhiteSpace(empId)) return new List<string>();
@@ -1007,6 +1232,51 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var table = Cldb.AppRepo.GetTable(spName, lstParams ?? new List<REPORTS_PARAMS>());
             return Ok(table);
+        }
+
+        // Admin Setup's "Active Users" tab (Superuser-only) - daily distinct-user counts
+        // from ITOPS_USER_VISIT (see ITOperationMaturity_V2_32_DailyActiveUsers.sql).
+        // report_getITOpsDailyActiveUsers is deliberately NOT registered in
+        // REPORTS_SP_DETAILS (its @FromDate/@ToDate shape doesn't match the Reports page's
+        // filter set), so this calls it directly through the same generic
+        // AppRepository.GetTable() every other report SP runs through, rather than
+        // reusing GetITOpsReportData's registered-SP flow.
+        [GET("GetITOpsDailyActiveUsers")]
+        [ActionName("GetITOpsDailyActiveUsers")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsDailyActiveUsers(string fromDate = null, string toDate = null)
+        {
+            var effectiveFrom = string.IsNullOrWhiteSpace(fromDate) ? DateTime.Today.AddDays(-29).ToString("yyyy-MM-dd") : fromDate;
+            var effectiveTo = string.IsNullOrWhiteSpace(toDate) ? DateTime.Today.ToString("yyyy-MM-dd") : toDate;
+            var lstParams = new List<REPORTS_PARAMS>
+            {
+                new REPORTS_PARAMS { PARAM_NAME = "FromDate", PARAM_VALUE = effectiveFrom },
+                new REPORTS_PARAMS { PARAM_NAME = "ToDate", PARAM_VALUE = effectiveTo },
+            };
+            var table = Cldb.AppRepo.GetTable("dbo.report_getITOpsDailyActiveUsers", lstParams);
+            return Ok(table);
+        }
+
+        // Best-effort daily-active-user log for the IT Ops Maturity microapp (see
+        // ITOperationMaturity_V2_32_DailyActiveUsers.sql) - fired once per calendar day by
+        // the Angular app on startup. Deliberately fire-and-forget: never let a usage-log
+        // failure surface as an error to the user, so this always returns Ok() regardless
+        // of what RecordITOpsVisit does internally.
+        [POST("RecordITOpsVisit")]
+        [ActionName("RecordITOpsVisit")]
+        [HttpPost]
+        public IHttpActionResult RecordITOpsVisit()
+        {
+            var empId = GetHeaderDetails_String("empId");
+            try
+            {
+                Cldb.AppRepo.RecordITOpsVisit(empId);
+            }
+            catch
+            {
+                // swallow - a failed usage-log write must never block or error out the app
+            }
+            return Ok();
         }
 
         // The IT Ops Maturity account picker should list every account regardless
@@ -1324,6 +1594,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var reviewerIds = GetITOpsReviewerIds(assessment.ID);
             var assesseeIds = GetITOpsAssesseeIds(assessment.ID);
 
+            // The caller's own empId (from the shared empId header, same as every other
+            // read here) - only used to decide whether THIS person, if they're an Assessee
+            // on this assessment, still has a current project allocation. Not a security
+            // gate (nothing here restricts who can call GetOrCreateITOpsAssessment), purely
+            // drives the "extend your allocation in D365" banner for whoever's actually
+            // looking at the page.
+            var callerEmpId = GetHeaderDetails_String("empId");
+            var assesseeAllocationExpired = !string.IsNullOrWhiteSpace(callerEmpId)
+                && assesseeIds.Contains(callerEmpId)
+                && !IsITOpsEmpCurrentlyAllocated(callerEmpId, assessment.PROJECT_ID);
+
             if (string.IsNullOrWhiteSpace(custId))
             {
                 custId = Cldb.PROJECT.GetAll()
@@ -1354,7 +1635,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 AssesseeEmpIds = assesseeIds,
                 AssesseeNames = GetEmpNames(assesseeIds),
                 Status = assessment.STATUS,
-                ReturnComment = assessment.RETURN_COMMENT
+                ReturnComment = assessment.RETURN_COMMENT,
+                CloudProvider = assessment.CLOUD_PROVIDER,
+                // Only worth computing when there's actually a choice left to make - an
+                // already-chosen provider (or a non-Cloud domain, whose categories all have
+                // PROVIDER null) means the frontend never needs to show the picker.
+                AvailableCloudProviders = string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER)
+                    ? CSPdb.ITOPS_CATEGORY.GetAll()
+                        .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && c.PROVIDER != null)
+                        .Select(c => c.PROVIDER)
+                        .Distinct()
+                        .OrderBy(p => p)
+                        .ToList()
+                    : null,
+                AssesseeAllocationExpired = assesseeAllocationExpired
             };
         }
 
@@ -1472,15 +1766,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var today = DateTime.Today;
             var activeCategories = CSPdb.ITOPS_CATEGORY.GetAll()
                 .Where(c => c.ISACTIVE && (c.END_DATE == null || c.END_DATE > today))
-                .Select(c => new { c.ID, c.DOMAIN_ID })
+                .Select(c => new { c.ID, c.DOMAIN_ID, c.PROVIDER })
                 .ToList();
             var activeCategoryIds = activeCategories.Select(c => c.ID).ToList();
-            var paramCountByDomain = CSPdb.ITOPS_PARAMETER.GetAll()
-                .Where(p => p.ISACTIVE && (p.END_DATE == null || p.END_DATE > today) && activeCategoryIds.Contains(p.CATEGORY_ID))
-                .Select(p => p.CATEGORY_ID)
+            var categoryIdsByDomain = activeCategories
                 .ToList()
-                .Join(activeCategories, categoryId => categoryId, c => c.ID, (categoryId, c) => c.DOMAIN_ID)
-                .GroupBy(domainId => domainId)
+                .Join(
+                    CSPdb.ITOPS_PARAMETER.GetAll().Where(p => p.ISACTIVE && (p.END_DATE == null || p.END_DATE > today) && activeCategoryIds.Contains(p.CATEGORY_ID)).Select(p => p.CATEGORY_ID).ToList(),
+                    c => c.ID, categoryId => categoryId, (c, categoryId) => c)
+                .ToList();
+            var paramCountByDomain = categoryIdsByDomain
+                .GroupBy(c => c.DOMAIN_ID)
+                .ToDictionary(g => g.Key, g => g.Count());
+            // Per (domain, provider) - lets a Cloud assessment that has chosen a provider
+            // count only that provider's parameters, instead of all three providers' 154
+            // combined (see the domainAssessments.Sum below).
+            var paramCountByDomainProvider = categoryIdsByDomain
+                .Where(c => c.PROVIDER != null)
+                .GroupBy(c => new { c.DOMAIN_ID, c.PROVIDER })
                 .ToDictionary(g => g.Key, g => g.Count());
 
             // Bulk-load the join tables once rather than per row.
@@ -1536,7 +1839,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var scored = allScores.Where(s => domainAssessmentIds.Contains(s.ASSESSMENT_ID) && s.SCORE_VALUE != null).ToList();
                 var domainScoreIds = allScores.Where(s => domainAssessmentIds.Contains(s.ASSESSMENT_ID)).Select(s => s.ID).ToList();
                 var allFindingsResolved = !domainScoreIds.Any(id => unresolvedScoreIds.Contains(id));
-                var paramCount = paramCountByDomain.ContainsKey(domainId) ? paramCountByDomain[domainId] : 0;
+                // A Cloud domain row can roll up more than one project's assessment, and each
+                // one independently locks its own CLOUD_PROVIDER - only narrow the parameter
+                // count down to one provider's ~50 when every assessment in this group agrees
+                // on the same provider; a mix (or none chosen yet) falls back to the domain's
+                // full count across all providers, same as before this feature existed.
+                var chosenProvidersHere = domainAssessments.Select(a => a.CLOUD_PROVIDER).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct().ToList();
+                var singleChosenProvider = chosenProvidersHere.Count == 1 ? chosenProvidersHere[0] : null;
+                var providerKey = new { DOMAIN_ID = domainId, PROVIDER = singleChosenProvider };
+                var paramCount = singleChosenProvider != null && paramCountByDomainProvider.ContainsKey(providerKey)
+                    ? paramCountByDomainProvider[providerKey]
+                    : (paramCountByDomain.ContainsKey(domainId) ? paramCountByDomain[domainId] : 0);
                 var applicableParamCount = scored.Count;
                 var sumScores = scored.Sum(s => s.SCORE_VALUE.Value);
                 // Max possible is the rubric ceiling for whichever parameters actually
@@ -1626,8 +1939,22 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             // V2: category/parameter master data is effective-dated - only rows still in
             // effect (END_DATE null or in the future) belong on the assessment form.
+            //
+            // Once a Cloud assessment has a CLOUD_PROVIDER chosen (see
+            // SetITOpsAssessmentCloudProvider), only that provider's categories load here -
+            // the other two providers' ~50 parameters each are simply never part of this
+            // assessment, not shown-and-skippable. A non-Cloud domain's categories all have
+            // PROVIDER null, so this filter is a no-op for them; a Cloud assessment with no
+            // provider chosen yet also gets every category back here (all three providers) -
+            // the frontend uses that (via AvailableCloudProviders on the assessment info) to
+            // show the provider picker instead of the scoring grid.
+            // string.IsNullOrWhiteSpace() can't be translated by LINQ to Entities - computed
+            // as a plain bool beforehand instead (assessment is already a materialized entity
+            // from FirstOrDefault above, so this itself isn't part of the SQL translation).
+            var hasChosenProvider = !string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER);
             var categories = CSPdb.ITOPS_CATEGORY.GetAll()
-                .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && (c.END_DATE == null || c.END_DATE > today))
+                .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && (c.END_DATE == null || c.END_DATE > today)
+                    && (!hasChosenProvider || c.PROVIDER == null || c.PROVIDER == assessment.CLOUD_PROVIDER))
                 .ToList()
                 .ToDictionary(c => c.ID);
             var categoryIds = categories.Keys.ToList();
@@ -1693,6 +2020,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 {
                     ParameterId = p.ID,
                     Category = category.NAME,
+                    Provider = category.PROVIDER,
                     ParameterName = p.NAME,
                     Definition = p.DEFINITION,
                     Level1_AdHoc = level(1),
@@ -1721,6 +2049,49 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(result);
         }
 
+        // Lets the Assessor pick which cloud provider (Azure/AWS/GCP) a Cloud domain
+        // assessment scores - only that provider's categories/parameters are ever scored
+        // for this assessment from then on (see GetITOpsAssessmentParameters's filter).
+        // Locked once set: this never accepts a second, different provider for the same
+        // assessment, so an accidental re-pick can't silently orphan already-entered scores.
+        [POST("SetITOpsAssessmentCloudProvider")]
+        [ActionName("SetITOpsAssessmentCloudProvider")]
+        [HttpPost]
+        public IHttpActionResult SetITOpsAssessmentCloudProvider(int assessmentId, [FromBody] ITOPS_SetCloudProviderRequest request)
+        {
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
+            if (assessment == null)
+                return NotFound();
+
+            if (request == null || string.IsNullOrWhiteSpace(request.Provider))
+                return Content(HttpStatusCode.Conflict, "A provider is required.");
+
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsAssessorOnAssessment(assessmentId, empId, "choose the cloud provider for this assessment");
+            if (denied != null) return denied;
+
+            var availableProviders = CSPdb.ITOPS_CATEGORY.GetAll()
+                .Where(c => c.DOMAIN_ID == assessment.DOMAIN_ID && c.ISACTIVE && c.PROVIDER != null)
+                .Select(c => c.PROVIDER)
+                .Distinct()
+                .ToList();
+            if (!availableProviders.Contains(request.Provider))
+                return Content(HttpStatusCode.Conflict, "This domain has no such cloud provider to choose.");
+
+            if (!string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER) && assessment.CLOUD_PROVIDER != request.Provider)
+                return Content(HttpStatusCode.Conflict, "This assessment is already locked to " + assessment.CLOUD_PROVIDER + " and cannot be switched to a different provider.");
+
+            if (assessment.CLOUD_PROVIDER != request.Provider)
+            {
+                assessment.CLOUD_PROVIDER = request.Provider;
+                UpdateAuditFields(assessment, empId);
+                CSPdb.ITOPS_ASSESSMENT.Update(assessment);
+                CSPdb.Commit(CanCommit);
+            }
+
+            return Ok(assessment);
+        }
+
         // US-003: assessor enters score + mandatory notes; score < 5 auto-raises a Finding
         [POST("UpsertITOpsScore")]
         [ActionName("UpsertITOpsScore")]
@@ -1736,6 +2107,27 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // (enforced client-side in openSubmitModal() and re-checked in SubmitITOpsAssessment
             // below) - but an in-progress draft save must not be blocked on that yet.
             var empId = GetHeaderDetails_String("empId");
+
+            var scoreDenied = DenyIfNotITOpsAssessorOnAssessment(request.AssessmentId, empId, "submit a score for this assessment");
+            if (scoreDenied != null) return scoreDenied;
+
+            // Once a Cloud assessment has locked in a provider, a score can only be entered
+            // for a parameter that actually belongs to that provider - the UI never shows the
+            // other providers' parameters once one is chosen (GetITOpsAssessmentParameters
+            // filters them out), but this closes the same direct-API-call gap that ACCESS-02
+            // closed for "is this caller the Assessor" - it stops a stale/crafted request from
+            // silently scoring a parameter this assessment was never meant to include.
+            var scoreAssessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == request.AssessmentId && a.ISACTIVE);
+            if (scoreAssessment == null) return NotFound();
+            if (!string.IsNullOrWhiteSpace(scoreAssessment.CLOUD_PROVIDER))
+            {
+                var paramCategoryId = CSPdb.ITOPS_PARAMETER.GetAll().Where(p => p.ID == request.ParameterId).Select(p => (int?)p.CATEGORY_ID).FirstOrDefault();
+                var paramProvider = paramCategoryId.HasValue
+                    ? CSPdb.ITOPS_CATEGORY.GetAll().Where(c => c.ID == paramCategoryId.Value).Select(c => c.PROVIDER).FirstOrDefault()
+                    : null;
+                if (paramProvider != null && paramProvider != scoreAssessment.CLOUD_PROVIDER)
+                    return Content(HttpStatusCode.Conflict, "This assessment is locked to " + scoreAssessment.CLOUD_PROVIDER + " - this parameter belongs to a different cloud provider.");
+            }
 
             var score = CSPdb.ITOPS_SCORE.GetAll()
                 .FirstOrDefault(s => s.ASSESSMENT_ID == request.AssessmentId && s.PARAMETER_ID == request.ParameterId);
@@ -1817,11 +2209,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            var submitEmpId = GetHeaderDetails_String("empId");
+            var submitDenied = DenyIfNotITOpsAssessorOnAssessment(assessmentId, submitEmpId, "submit this assessment");
+            if (submitDenied != null) return submitDenied;
+
             // string.IsNullOrWhiteSpace() can't be translated by LINQ to Entities - spelled out
             // as a null/trim check instead, which SQL Server can translate directly.
-            var scoresMissingNotes = CSPdb.ITOPS_SCORE.GetAll()
-                .Any(s => s.ASSESSMENT_ID == assessmentId && s.ISACTIVE && s.SCORE_VALUE != null
-                    && (s.NOTES == null || s.NOTES.Trim().Length == 0));
+            //
+            // Scoped to the assessment's own chosen provider (when one is set) - a Cloud
+            // assessment can carry leftover ITOPS_SCORE rows from a provider other than the
+            // one eventually locked in (e.g. scored before SetITOpsAssessmentCloudProvider
+            // existed, or before this assessment's provider was picked). Those parameters no
+            // longer show in the grid at all, so blocking submit over a note the assessor has
+            // no way to see or fix would be a dead end, not a real validation failure.
+            var hasChosenProviderForSubmit = !string.IsNullOrWhiteSpace(assessment.CLOUD_PROVIDER);
+            var scoresMissingNotes = (
+                from s in CSPdb.ITOPS_SCORE.GetAll()
+                join p in CSPdb.ITOPS_PARAMETER.GetAll() on s.PARAMETER_ID equals p.ID
+                join c in CSPdb.ITOPS_CATEGORY.GetAll() on p.CATEGORY_ID equals c.ID
+                where s.ASSESSMENT_ID == assessmentId && s.ISACTIVE && s.SCORE_VALUE != null
+                    && (s.NOTES == null || s.NOTES.Trim().Length == 0)
+                    && (!hasChosenProviderForSubmit || c.PROVIDER == null || c.PROVIDER == assessment.CLOUD_PROVIDER)
+                select s.ID
+            ).Any();
             if (scoresMissingNotes)
                 return Content(HttpStatusCode.Conflict, "Notes are mandatory for every scored parameter before submitting for review.");
 
@@ -1851,16 +2261,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (!skipReview)
             {
                 var assessorNames = string.Join(", ", GetEmpNames(assessorIds));
-                NotifyITOpsMany(
+                // Dex Partner (PROJECT.QUALITY_SPOC) is Cc'd on this trigger per the
+                // notification-email spec - see the Trigger 1 table.
+                var submitCcEmpIds = new List<string>();
+                if (!string.IsNullOrWhiteSpace(project?.QUALITY_SPOC)) submitCcEmpIds.Add(project.QUALITY_SPOC);
+                NotifyITOpsManyWithCc(
                     reviewerIds,
+                    submitCcEmpIds,
                     $"IT Ops Maturity: {domain?.NAME} assessment submitted for review - {projectName}",
                     "ITOpsSubmittedForReview.htm",
                     ToEmailValues(new
                     {
                         ReviewerName = string.Join(", ", GetEmpNames(reviewerIds)),
                         CoeSpocName = assessorNames,
-                        DomainName = domain?.NAME,
-                        ProjectName = projectName
+                        DomainName = ITOpsEmailDomainName(domain?.NAME, assessment.CLOUD_PROVIDER),
+                        AccountName = GetITOpsAccountName(project?.CUST_ID) ?? "-",
+                        ProjectName = projectName,
+                        CycleLabel = GetITOpsCycleLabel(assessment.ASSESSMENT_MASTER_ID) ?? "-",
+                        AssessmentLink = GetITOpsAssessmentLink(domain?.CODE, assessment.ID, true, project?.CUST_ID)
                     }),
                     "SubmittedForReview", assessment.ID, null,
                     $"{domain?.NAME} assessment for {projectName} submitted for your review by {assessorNames}.");
@@ -1896,30 +2314,60 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (openFindingCount > 0 && assesseeIds.Any())
             {
                 var assessorIds = GetITOpsAssessorIds(assessment.ID);
+                // The reviewer just approved this assessment (this fires from their own
+                // Approve click, or the skip-review submit that stands in for one) - they
+                // have the same stake in knowing follow-up items now exist on it as the
+                // assessor does, and they're already looped back in one step later once a
+                // finding is actually closed (see the assessor+reviewer recipients on
+                // UpdateITOpsFindingAction's email). Leaving them off here was an
+                // inconsistency, not a deliberate exclusion - nothing in this method singles
+                // reviewers out the way, say, GetITOpsOwnScopeAssessmentIds deliberately
+                // narrows a GDH's access.
+                var reviewerIds = GetITOpsReviewerIds(assessment.ID);
                 var recipientIds = assesseeIds
                     .Concat(assessorIds)
+                    .Concat(reviewerIds)
                     .Where(id => !string.IsNullOrWhiteSpace(id))
                     .Distinct()
                     .ToList();
 
                 var findingWord = openFindingCount == 1 ? "finding" : "findings";
                 var assesseeNames = string.Join(", ", GetEmpNames(assesseeIds));
-                // One shared email to every assessee AND assessor on the assessment (not one
-                // per person) - NotifyITOpsMany also logs a bell entry for each recipient,
-                // assessor(s) included, since the assessment itself is just as reachable for them.
-                NotifyITOpsMany(
+
+                // Cc per the notification-email spec (Trigger 3): Dex Partner
+                // (QUALITY_SPOC) + CSM (DP_ID) as empIds, plus the Business Unit's GDH(s)
+                // ("BU Head") and the RunOps Head(s) as already-resolved raw addresses -
+                // see GetITOpsGdhEmailsForBusinessUnit/GetITOpsRunOpsHeadEmails.
+                var findingsProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID);
+                var findingsNeedActionCcEmpIds = new List<string>();
+                if (!string.IsNullOrWhiteSpace(findingsProject?.QUALITY_SPOC)) findingsNeedActionCcEmpIds.Add(findingsProject.QUALITY_SPOC);
+                if (!string.IsNullOrWhiteSpace(findingsProject?.DP_ID)) findingsNeedActionCcEmpIds.Add(findingsProject.DP_ID);
+                var findingsNeedActionExtraCc = GetITOpsGdhEmailsForBusinessUnit(assessment.BUSINESS_UNIT)
+                    .Concat(GetITOpsRunOpsHeadEmails())
+                    .ToList();
+
+                // One shared email to every assessee, assessor, AND reviewer on the
+                // assessment (not one per person) - NotifyITOpsMany also logs a bell entry
+                // for each recipient, since the assessment itself is just as reachable for
+                // all three roles.
+                NotifyITOpsManyWithCc(
                     recipientIds,
+                    findingsNeedActionCcEmpIds,
                     $"IT Ops Maturity: {openFindingCount} {findingWord} need your action - {domain?.NAME} - {projectName}",
                     "ITOpsFindingsNeedAction.htm",
                     ToEmailValues(new
                     {
                         AssesseeName = assesseeNames,
-                        DomainName = domain?.NAME,
+                        DomainName = ITOpsEmailDomainName(domain?.NAME, assessment.CLOUD_PROVIDER),
+                        AccountName = GetITOpsAccountName(findingsProject?.CUST_ID) ?? "-",
                         ProjectName = projectName,
-                        FindingCount = openFindingCount.ToString()
+                        CycleLabel = GetITOpsCycleLabel(assessment.ASSESSMENT_MASTER_ID) ?? "-",
+                        FindingCount = openFindingCount.ToString(),
+                        AssessmentLink = GetITOpsAssessmentLink(domain?.CODE, assessment.ID, true, findingsProject?.CUST_ID)
                     }),
                     "FindingsNeedAction", assessment.ID, null,
-                    $"{openFindingCount} probable area{(openFindingCount == 1 ? "" : "s")} of improvement raised in {domain?.NAME} need your review.");
+                    $"{openFindingCount} probable area{(openFindingCount == 1 ? "" : "s")} of improvement raised in {domain?.NAME} need your review.",
+                    findingsNeedActionExtraCc);
             }
         }
 
@@ -1935,6 +2383,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (request == null)
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var reviewEmpId = GetHeaderDetails_String("empId");
+            var reviewDenied = DenyIfNotITOpsReviewerOnAssessment(assessmentId, reviewEmpId, "review this assessment");
+            if (reviewDenied != null) return reviewDenied;
 
             if (!request.Approve && string.IsNullOrWhiteSpace(request.Comment))
                 return Content(HttpStatusCode.Conflict, "A comment is required when returning an assessment for revision.");
@@ -1957,18 +2409,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var reviewedProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == assessment.PROJECT_ID);
             var reviewedProjectName = reviewedProject?.PROJ_NM ?? assessment.PROJECT_ID;
             var reviewerNames = string.Join(", ", GetEmpNames(reviewerIds));
-            NotifyITOpsMany(
+            // Dex Partner (PROJECT.QUALITY_SPOC) is Cc'd on this trigger per the
+            // notification-email spec - see the Trigger 2 table.
+            var reviewDecisionCcEmpIds = new List<string>();
+            if (!string.IsNullOrWhiteSpace(reviewedProject?.QUALITY_SPOC)) reviewDecisionCcEmpIds.Add(reviewedProject.QUALITY_SPOC);
+            NotifyITOpsManyWithCc(
                 assessorIds,
+                reviewDecisionCcEmpIds,
                 $"IT Ops Maturity: {reviewedDomain?.NAME} assessment {(request.Approve ? "approved" : "returned for revision")} - {reviewedProjectName}",
                 "ITOpsReviewDecision.htm",
                 ToEmailValues(new
                 {
                     CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
                     ReviewerName = reviewerNames,
-                    DomainName = reviewedDomain?.NAME,
+                    DomainName = ITOpsEmailDomainName(reviewedDomain?.NAME, assessment.CLOUD_PROVIDER),
+                    AccountName = GetITOpsAccountName(reviewedProject?.CUST_ID) ?? "-",
                     ProjectName = reviewedProjectName,
+                    CycleLabel = GetITOpsCycleLabel(assessment.ASSESSMENT_MASTER_ID) ?? "-",
                     Decision = request.Approve ? "Approved" : "Returned for Revision",
-                    Comment = request.Approve ? "-" : request.Comment
+                    Comment = request.Approve ? "-" : request.Comment,
+                    // This always goes to the Assessor, whose own editable page is
+                    // /assessment (maturity-assessment.component.ts) regardless of decision -
+                    // /review (domain-review.component.ts) is the Reviewer's own page and has
+                    // no Assessor-facing UI at all, so forReview must be false here.
+                    AssessmentLink = GetITOpsAssessmentLink(reviewedDomain?.CODE, assessment.ID, false, reviewedProject?.CUST_ID)
                 }),
                 request.Approve ? "AssessmentApproved" : "AssessmentReturned", assessment.ID, null,
                 $"{reviewedDomain?.NAME} assessment for {reviewedProjectName} {(request.Approve ? "approved" : "returned for revision")} by {reviewerNames}.");
@@ -1977,6 +2441,53 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // areas of improvement (findings) already raised while scoring.
             if (request.Approve)
                 NotifyITOpsAssesseesOfOpenFindings(assessment, reviewedDomain, reviewedProjectName);
+
+            return Ok(assessment);
+        }
+
+        // Suspend/Resume Assessment - previously a local-only UI toggle with no backend
+        // endpoint (see domain-review.component.ts's old toggleSuspend), so the state
+        // reset itself back to Pending Review on every page reload. Only reachable from
+        // the review page, which only ever shows for a Pending Review assessment, so
+        // Suspend always transitions PendingReview -> Suspended and Resume always
+        // reverses it back to PendingReview - no separate "what was it before" column
+        // needed, unlike Approve/Return which can be reached from other flows.
+        [POST("SuspendITOpsAssessment")]
+        [ActionName("SuspendITOpsAssessment")]
+        [HttpPost]
+        public IHttpActionResult SuspendITOpsAssessment(int assessmentId)
+        {
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
+            if (assessment == null)
+                return NotFound();
+
+            if (assessment.STATUS != "PendingReview")
+                return Content(HttpStatusCode.Conflict, "Only an assessment that is Pending Review can be suspended.");
+
+            assessment.STATUS = "Suspended";
+            UpdateAuditFields(assessment);
+            CSPdb.ITOPS_ASSESSMENT.Update(assessment);
+            CSPdb.Commit(CanCommit);
+
+            return Ok(assessment);
+        }
+
+        [POST("ResumeITOpsAssessment")]
+        [ActionName("ResumeITOpsAssessment")]
+        [HttpPost]
+        public IHttpActionResult ResumeITOpsAssessment(int assessmentId)
+        {
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
+            if (assessment == null)
+                return NotFound();
+
+            if (assessment.STATUS != "Suspended")
+                return Content(HttpStatusCode.Conflict, "Only a suspended assessment can be resumed.");
+
+            assessment.STATUS = "PendingReview";
+            UpdateAuditFields(assessment);
+            CSPdb.ITOPS_ASSESSMENT.Update(assessment);
+            CSPdb.Commit(CanCommit);
 
             return Ok(assessment);
         }
@@ -2004,6 +2515,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (request == null)
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var decideEmpId = GetHeaderDetails_String("empId");
+            var decideDenied = DenyIfNotITOpsFindingAssessee(finding, decideEmpId, "accept or reject this finding");
+            if (decideDenied != null) return decideDenied;
 
             if (!request.Accept && string.IsNullOrWhiteSpace(request.Comment))
                 return Content(HttpStatusCode.Conflict, "A comment is required when rejecting a finding.");
@@ -2067,19 +2582,37 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 }
                 else
                 {
+                    // Dex Partner (QUALITY_SPOC) + CSM (DP_ID) Cc'd on every Trigger 4 email
+                    // per the notification-email spec, plus Account/Project now on every
+                    // finding-decision email (previously carried neither).
+                    var rejectedProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == findingAssessment.PROJECT_ID);
+                    var rejectedProjectName = rejectedProject?.PROJ_NM ?? findingAssessment.PROJECT_ID;
+                    var rejectedCcEmpIds = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(rejectedProject?.QUALITY_SPOC)) rejectedCcEmpIds.Add(rejectedProject.QUALITY_SPOC);
+                    if (!string.IsNullOrWhiteSpace(rejectedProject?.DP_ID)) rejectedCcEmpIds.Add(rejectedProject.DP_ID);
+
                     // A rejection has no later "submit" step - the rejection comment IS the
                     // final input from the assessee, so the email goes out right away.
-                    NotifyITOpsMany(
+                    NotifyITOpsManyWithCc(
                         assessorIds,
+                        rejectedCcEmpIds,
                         $"IT Ops Maturity: finding rejected - {findingDomain?.NAME}",
                         "ITOpsFindingDecision.htm",
                         ToEmailValues(new
                         {
-                            CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
+                            RecipientName = string.Join(", ", GetEmpNames(assessorIds)),
                             ParameterName = findingParameter?.NAME,
-                            DomainName = findingDomain?.NAME,
+                            DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
+                            AccountName = GetITOpsAccountName(rejectedProject?.CUST_ID) ?? "-",
+                            ProjectName = rejectedProjectName,
+                            CycleLabel = GetITOpsCycleLabel(findingAssessment.ASSESSMENT_MASTER_ID) ?? "-",
                             Decision = "Rejected",
-                            Comment = request.Comment
+                            DecidedBy = GetEmpName(decideEmpId),
+                            Comment = request.Comment,
+                            // Sent to the Assessor, who Accepts/Disputes this rejection from
+                            // their own /assessment page (maturity-assessment.component.ts) -
+                            // that action doesn't exist on /review at all.
+                            AssessmentLink = GetITOpsAssessmentLink(findingDomain?.CODE, findingAssessment.ID, false, rejectedProject?.CUST_ID)
                         }),
                         "FindingRejected", null, finding.ID,
                         $"Finding \"{findingParameter?.NAME}\" in {findingDomain?.NAME} was rejected by the assessee.");
@@ -2104,6 +2637,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (request == null)
                 return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var rejectionDecideEmpId = GetHeaderDetails_String("empId");
+            var rejectionDecideDenied = DenyIfNotITOpsFindingAssessor(finding, rejectionDecideEmpId, "decide this rejected finding");
+            if (rejectionDecideDenied != null) return rejectionDecideDenied;
 
             if (finding.STATUS != "Rejected")
                 return Content(HttpStatusCode.Conflict, "This finding has not been rejected by the assessee.");
@@ -2140,20 +2677,43 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var findingParameter = findingScore != null ? CSPdb.ITOPS_PARAMETER.GetAll().FirstOrDefault(p => p.ID == findingScore.PARAMETER_ID) : null;
             var findingDomain = findingAssessment != null ? CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == findingAssessment.DOMAIN_ID) : null;
 
-            if (findingAssessment != null && !string.IsNullOrEmpty(finding.ASSESSEE_EMP_ID))
+            // finding.ASSESSEE_EMP_ID is never populated under the V2 flow (see the note on
+            // ITOPS_FINDING.ASSESSEE_EMP_ID near the top of this file) - the real assessee
+            // list lives on the assessment via ITOPS_ASSESSMENT_ASSESSEE, same as everywhere
+            // else in this controller. Gating on the never-set column meant this email never
+            // actually sent.
+            var rejectionDecisionAssesseeIds = findingAssessment != null
+                ? GetITOpsAssesseeIds(findingAssessment.ID).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList()
+                : new List<string>();
+            if (findingAssessment != null && rejectionDecisionAssesseeIds.Any())
             {
                 var assessorIds = GetITOpsAssessorIds(findingAssessment.ID);
-                NotifyITOpsMany(
-                    new List<string> { finding.ASSESSEE_EMP_ID },
+                var rejectionDecisionProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == findingAssessment.PROJECT_ID);
+                var rejectionDecisionProjectName = rejectionDecisionProject?.PROJ_NM ?? findingAssessment.PROJECT_ID;
+                var rejectionDecisionCcEmpIds = new List<string>();
+                if (!string.IsNullOrWhiteSpace(rejectionDecisionProject?.QUALITY_SPOC)) rejectionDecisionCcEmpIds.Add(rejectionDecisionProject.QUALITY_SPOC);
+                if (!string.IsNullOrWhiteSpace(rejectionDecisionProject?.DP_ID)) rejectionDecisionCcEmpIds.Add(rejectionDecisionProject.DP_ID);
+                NotifyITOpsManyWithCc(
+                    rejectionDecisionAssesseeIds,
+                    rejectionDecisionCcEmpIds,
                     $"IT Ops Maturity: your rejection was {(request.AssessorAccepts ? "accepted" : "disputed")} - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
                     ToEmailValues(new
                     {
-                        CoeSpocName = string.Join(", ", GetEmpNames(assessorIds)),
+                        // This one goes to the ASSESSEE (their rejection was just decided on),
+                        // not the assessor - greet them by their own name, and attribute the
+                        // decision to the assessor, unlike the other two call sites of this
+                        // shared template where the assessee is the one who acted.
+                        RecipientName = string.Join(", ", GetEmpNames(rejectionDecisionAssesseeIds)),
                         ParameterName = findingParameter?.NAME,
-                        DomainName = findingDomain?.NAME,
+                        DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
+                        AccountName = GetITOpsAccountName(rejectionDecisionProject?.CUST_ID) ?? "-",
+                        ProjectName = rejectionDecisionProjectName,
+                        CycleLabel = GetITOpsCycleLabel(findingAssessment.ASSESSMENT_MASTER_ID) ?? "-",
                         Decision = request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened",
-                        Comment = request.AssessorAccepts ? "-" : request.Comment
+                        DecidedBy = string.Join(", ", GetEmpNames(assessorIds)),
+                        Comment = request.AssessorAccepts ? "-" : request.Comment,
+                        AssessmentLink = GetITOpsAssessmentLink(findingDomain?.CODE, findingAssessment.ID, true, rejectionDecisionProject?.CUST_ID)
                     }),
                     request.AssessorAccepts ? "FindingRejectionAccepted" : "FindingRejectionDisputed", assessmentId, finding.ID,
                     $"Your rejection of \"{findingParameter?.NAME}\" in {findingDomain?.NAME} was {(request.AssessorAccepts ? "accepted - the finding is now closed." : "disputed - please reconsider and act on it.")}");
@@ -2171,6 +2731,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null)
                 return NotFound();
+
+            var closeEmpId = GetHeaderDetails_String("empId");
+            var closeDenied = DenyIfNotITOpsFindingAssessor(finding, closeEmpId, "close this finding");
+            if (closeDenied != null) return closeDenied;
 
             finding.STATUS = "Closed";
             finding.CLOSED_DATE = DateTime.Now;
@@ -2193,6 +2757,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null) return NotFound();
+
+            var actionEmpId = GetHeaderDetails_String("empId");
+            var actionDenied = DenyIfNotITOpsFindingAssessee(finding, actionEmpId, "submit an action update for this finding");
+            if (actionDenied != null) return actionDenied;
 
             if (finding.STATUS != "Accepted")
                 return Content(HttpStatusCode.Conflict, "An action update can only be submitted for an accepted finding.");
@@ -2232,22 +2800,36 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 // This is the one email for the whole accept -> act -> close cycle: it fires
                 // here (not on the earlier Accept click) so it always carries the assessee's
-                // actual remediation comment instead of an empty "Comment: -".
+                // actual remediation comment instead of an empty "Comment: -". Assessor only -
+                // the Reviewer isn't on the hook for remediation, so they're left off this one.
                 var recipients = GetITOpsAssessorIds(findingAssessment.ID)
-                    .Concat(GetITOpsReviewerIds(findingAssessment.ID))
                     .Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
 
-                NotifyITOpsMany(
+                var actionUpdateProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == findingAssessment.PROJECT_ID);
+                var actionUpdateProjectName = actionUpdateProject?.PROJ_NM ?? findingAssessment.PROJECT_ID;
+                var actionUpdateCcEmpIds = new List<string>();
+                if (!string.IsNullOrWhiteSpace(actionUpdateProject?.QUALITY_SPOC)) actionUpdateCcEmpIds.Add(actionUpdateProject.QUALITY_SPOC);
+                if (!string.IsNullOrWhiteSpace(actionUpdateProject?.DP_ID)) actionUpdateCcEmpIds.Add(actionUpdateProject.DP_ID);
+
+                NotifyITOpsManyWithCc(
                     recipients,
+                    actionUpdateCcEmpIds,
                     $"IT Ops Maturity: finding accepted - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
                     ToEmailValues(new
                     {
-                        CoeSpocName = string.Join(", ", GetEmpNames(recipients)),
+                        RecipientName = string.Join(", ", GetEmpNames(recipients)),
                         ParameterName = findingParameter?.NAME,
-                        DomainName = findingDomain?.NAME,
+                        DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
+                        AccountName = GetITOpsAccountName(actionUpdateProject?.CUST_ID) ?? "-",
+                        ProjectName = actionUpdateProjectName,
+                        CycleLabel = GetITOpsCycleLabel(findingAssessment.ASSESSMENT_MASTER_ID) ?? "-",
                         Decision = "Accepted",
-                        Comment = finding.ACTION_TAKEN
+                        DecidedBy = GetEmpName(actionEmpId),
+                        Comment = finding.ACTION_TAKEN,
+                        // Sent to the Assessor - their own /assessment page, same reasoning as
+                        // the other two Assessor-facing finding-decision emails above.
+                        AssessmentLink = GetITOpsAssessmentLink(findingDomain?.CODE, findingAssessment.ID, false, actionUpdateProject?.CUST_ID)
                     }),
                     "FindingActionUpdate", null, finding.ID,
                     $"Action update submitted on \"{findingParameter?.NAME}\" in {findingDomain?.NAME}.");
@@ -2633,7 +3215,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [GET("GetITOpsTopRisks")]
         [ActionName("GetITOpsTopRisks")]
         [HttpGet]
-        public IHttpActionResult GetITOpsTopRisks(string custId = null, int take = 20, string projectId = null, int? assessmentMasterId = null, string businessUnit = null, string myEmpId = null)
+        public IHttpActionResult GetITOpsTopRisks(string custId = null, string projectId = null, int? assessmentMasterId = null, string businessUnit = null, string myEmpId = null)
         {
             var parameters = CSPdb.ITOPS_PARAMETER.GetAll().ToList().GroupBy(p => p.ID).ToDictionary(g => g.Key, g => g.First());
             var categories = CSPdb.ITOPS_CATEGORY.GetAll().ToList().GroupBy(c => c.ID).ToDictionary(g => g.Key, g => g.First());
@@ -2658,9 +3240,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             // need the assessment to have been submitted for that call to be real, and it
             // should keep surfacing here for as long as it stays NA, past assessment or
             // future one alike, exactly like a normal scored gap does once submitted.
+            // Every scored (or NA) parameter is shown here now, not just the ones with an
+            // actual gap - a score of 5 still needs to appear as "No gap" (see the gap-legend
+            // in the UI, which already has a dedicated "No gap" entry that this filter used to
+            // make unreachable) so a domain's full scored coverage is visible, not just its
+            // problems.
             var submittedStatuses = new HashSet<string> { "PendingReview", "ReturnedForRevision", "Approved" };
             var scoreRows = CSPdb.ITOPS_SCORE.GetAll()
-                .Where(s => s.ISACTIVE && (!s.SCORE_VALUE.HasValue || s.SCORE_VALUE.Value < 5))
+                .Where(s => s.ISACTIVE && (!s.SCORE_VALUE.HasValue || s.SCORE_VALUE.Value <= 5))
                 .ToList();
 
             Func<ITOPS_SCORE, ITOPS_ASSESSMENT> assessmentOf = s =>
@@ -2674,6 +3261,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var a = assessmentOf(s);
                 if (a == null) return false;
                 return !s.SCORE_VALUE.HasValue || submittedStatuses.Contains(a.STATUS);
+            }).ToList();
+
+            // Once a Cloud assessment has locked in a provider, only that provider's rows
+            // belong here - a score row for one of the other two providers can still exist
+            // (e.g. scored before this assessment's provider was ever chosen, or before this
+            // gate existed) without being part of what this assessment actually assesses.
+            scoreRows = scoreRows.Where(s =>
+            {
+                var a = assessmentOf(s);
+                if (a == null || string.IsNullOrWhiteSpace(a.CLOUD_PROVIDER)) return true;
+                ITOPS_PARAMETER p;
+                if (!parameters.TryGetValue(s.PARAMETER_ID, out p)) return true;
+                ITOPS_CATEGORY c;
+                if (!categories.TryGetValue(p.CATEGORY_ID, out c)) return true;
+                return c.PROVIDER == null || c.PROVIDER == a.CLOUD_PROVIDER;
             }).ToList();
 
             if (!string.IsNullOrWhiteSpace(custId))
@@ -2765,9 +3367,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var rows = scoreRows
                 // A Not Applicable row (SCORE_VALUE null) is the largest possible gap -
-                // sorts as if Gap were 5, ahead of any actually-scored parameter.
+                // sorts as if Gap were 5, ahead of any actually-scored parameter. No Take()
+                // here - the caller already scopes this down to one custId/project/cycle (or
+                // this employee's own allocation), so every scored/NA parameter in that scope
+                // is returned; capping it here previously starved out whichever domains sorted
+                // last (e.g. Approved domains, once a single large domain's NA rows filled an
+                // arbitrary limit on their own).
                 .OrderByDescending(s => s.SCORE_VALUE.HasValue ? 5 - s.SCORE_VALUE.Value : 5)
-                .Take(take)
                 .Select(s =>
                 {
                     var parameter = parameters.ContainsKey(s.PARAMETER_ID) ? parameters[s.PARAMETER_ID] : null;

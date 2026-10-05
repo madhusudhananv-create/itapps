@@ -1,0 +1,15 @@
+<div class="dialog-backdrop" *ngIf="expired">
+  <div class="dialog" role="alertdialog" aria-modal="true">
+    <div class="dialog-icon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+        <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+    <h3>Session Expired</h3>
+    <p class="dialog-message">Session Expired. Please login again.</p>
+    <div class="dialog-actions">
+      <button type="button" class="dialog-btn dialog-btn-primary" (click)="acknowledge()">OK</button>
+    </div>
+  </div>
+</div>

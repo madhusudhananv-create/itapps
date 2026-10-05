@@ -1,4 +1,14 @@
-import { Box, Paper, Typography, Tabs, Tab, Button } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  Tabs,
+  Tab,
+  Button,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
 import { useAllocatedAccounts } from '@shared/projects/hooks/useAllocatedAccounts';
 import { ProjectInfoSelection } from './ProjectInfoSelection';
@@ -500,6 +510,7 @@ export function Activities() {
       projectInfo: projectInfoFormData,
       acceptedScoreInfo,
       onSaveReviewInfo: handleSaveReviewInfo,
+      onImportActivities: () => setImportDialogOpen(true),
     }),
     [
       activities,
@@ -572,14 +583,20 @@ export function Activities() {
             Manage Activities
           </Typography>
 
-          {/* <Button
-            variant="outlined"
-            startIcon={<UploadFileIcon />}
-            disabled={!projectInfoFormData.practice || !!projectInfoFormData.isProjectNA}
-            onClick={() => setImportDialogOpen(true)}
-          >
-            Import Excel
-          </Button> */}
+          <Tooltip title="User Manual">
+            <IconButton
+              aria-label="Open user manual"
+              onClick={() =>
+                window.open(
+                  `${import.meta.env.BASE_URL}manuals/AIMI_User_Manual.html`,
+                  '_blank',
+                  'noopener,noreferrer'
+                )
+              }
+            >
+              <MenuBookIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
         <Typography variant="body1" sx={styles.headerDescription}>
           Track and manage AI maturity activities for your projects
@@ -641,6 +658,15 @@ export function Activities() {
 <ImportActivitiesDialog
   open={importDialogOpen}
   onClose={() => setImportDialogOpen(false)}
+  selectedPractice={projectInfoFormData.practice}
+  projectInfo={{
+    project: projectInfoFormData.project,
+    manager: projectInfoFormData.manager,
+    account: projectInfoFormData.account,
+    businessUnit: projectInfoFormData.businessUnit,
+    headcount: projectInfoFormData.headcount,
+    peopleUsingAI: projectInfoFormData.peopleUsingAI,
+  }}
   onImport={(rows) => {
     const practice = projectInfoFormData.practice;
     const validPhases = getSDLCPhasesForPractice(practice);
@@ -649,9 +675,26 @@ export function Activities() {
     // questionnaire.json, so imported text must be resolved to the canonical phase/activity.
     const findMatch = (value: unknown, options: string[]) => {
       const trimmed = String(value ?? '').trim();
-      return options.find(
+
+      const exact = options.find(
         (option) => option.toLowerCase() === trimmed.toLowerCase()
       );
+      if (exact) return exact;
+
+      // Some source spreadsheets label a phase with a trailing "Phase" word
+      // (e.g. "Design & Verification Phase") even when this practice's own
+      // canonical name doesn't include it (e.g. "Design & Verification").
+      // Only fall back to this once the exact match has already failed, so a
+      // canonical name that legitimately contains "Phase" (e.g. "Implementation
+      // Phase (DFT &PD)") still matches exactly first and is never touched.
+      const withoutTrailingPhase = trimmed.replace(/\s+phase\s*$/i, '').trim();
+      if (withoutTrailingPhase !== trimmed) {
+        return options.find(
+          (option) => option.toLowerCase() === withoutTrailingPhase.toLowerCase()
+        );
+      }
+
+      return undefined;
     };
 
     const invalidRows: { rowNumber: number; reason: string }[] = [];
