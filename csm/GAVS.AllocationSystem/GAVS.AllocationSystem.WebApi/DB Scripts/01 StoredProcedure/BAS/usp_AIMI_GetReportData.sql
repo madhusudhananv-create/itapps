@@ -9,7 +9,7 @@
 --      ("Projects > Accounts > Business Units, Practice always narrows further").
 --
 -- Returns one row per activity, joined with that project's AI Adoption Metrics
--- (AIMI_PROJECT_INFO) and Accepted Score, i.e. every AIMI-owned column of the
+-- (AIMI_PROJECT_INFO); Accepted Score comes from the activity rows, i.e. every AIMI-owned column of the
 -- existing CSV export (csvExportUtils.ts). Business Head / Account Manager /
 -- Manager / Head Count are NOT included here - those come from the CSM project
 -- master data (PROJECT/EMP_INFO), not from the AIMI domain, and are enriched by
@@ -57,8 +57,6 @@ BEGIN
         p.COMMON_ADOPTION_WORKFORCE_CERTIFICATION,
         p.COMMON_ADOPTION_EFFORTS_SAVED,
         p.COMMON_DEPLOYMENT_ENGINEER,
-        p.ACCEPTED_SCORE,
-        p.ACCEPTED_SCORE_COMMENT,
 
         -- Activity-level fields
         a.ID AS ACTIVITY_ID,
@@ -80,6 +78,8 @@ BEGIN
            FROM AIMI_ACTIVITY_QUALITATIVE_BENEFIT qb WHERE qb.ACTIVITY_ID = a.ID
            FOR JSON PATH) AS QUALITATIVE_BENEFITS_JSON,
         a.COMMENTS,
+        a.ACCEPTED_SCORE,
+        a.ACCEPTED_SCORE_COMMENT,
         a.CREATED_DATE,
         a.UPDATED_DATE
     FROM AIMI_ACTIVITY a

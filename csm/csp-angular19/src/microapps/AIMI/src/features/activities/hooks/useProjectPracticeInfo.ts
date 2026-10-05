@@ -35,9 +35,6 @@ export interface SaveProjectInfoParams {
 
   presentationDone?: boolean;
   projectFY?: string;
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
 }
 
 interface UseProjectPracticeInfoReturn {

@@ -36,14 +36,25 @@ BEGIN
     BEGIN TRY
         IF @ID IS NULL OR NOT EXISTS (SELECT 1 FROM AIMI_ACTIVITY WHERE ID = @ID)
         BEGIN
+            -- A new activity inherits the practice's current review (Accepted Score etc.)
+            -- so the reviewed score still shows once every activity row carries it.
+            DECLARE @ACCEPTED_SCORE DECIMAL(4,2), @SCORE_REVIEWED BIT = 0, @ACCEPTED_SCORE_COMMENT NVARCHAR(MAX);
+            SELECT TOP 1 @ACCEPTED_SCORE = ACCEPTED_SCORE, @SCORE_REVIEWED = SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT = ACCEPTED_SCORE_COMMENT
+              FROM AIMI_ACTIVITY
+             WHERE PROJECT_ID = @PROJECT_ID AND PRACTICE = @PRACTICE AND ISACTIVE = 1
+               AND (ACCEPTED_SCORE IS NOT NULL OR SCORE_REVIEWED = 1 OR ACCEPTED_SCORE_COMMENT IS NOT NULL)
+             ORDER BY UPDATED_DATE DESC;
+
             INSERT INTO AIMI_ACTIVITY
                 (PROJECT_ID, PROJECT, ACCOUNT, BUSINESS_UNIT, PRACTICE, SDLC_PHASE, ACTIVITY,
                  APPLICABILITY, AI_ADOPTION_SCORE, WORK_DONE_BY_AI, HOURS_SAVED, REVENUE_GENERATED,
-                 BENEFIT_TO, COMMENTS, STATUS, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE, ISACTIVE)
+                 BENEFIT_TO, COMMENTS, STATUS, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE, ISACTIVE,
+                 ACCEPTED_SCORE, SCORE_REVIEWED, ACCEPTED_SCORE_COMMENT)
             VALUES
                 (@PROJECT_ID, @PROJECT, @ACCOUNT, @BUSINESS_UNIT, @PRACTICE, @SDLC_PHASE, @ACTIVITY,
                  @APPLICABILITY, @AI_ADOPTION_SCORE, @WORK_DONE_BY_AI, @HOURS_SAVED, @REVENUE_GENERATED,
-                 @BENEFIT_TO, @COMMENTS, @STATUS, @EMP_ID, GETDATE(), @EMP_ID, GETDATE(), 1);
+                 @BENEFIT_TO, @COMMENTS, @STATUS, @EMP_ID, GETDATE(), @EMP_ID, GETDATE(), 1,
+                 @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT);
 
             SET @ID = SCOPE_IDENTITY();
         END
@@ -85,6 +96,12 @@ BEGIN
         SELECT @ID, VALUE_TEXT FROM @QUALITATIVE_BENEFITS;
 
         COMMIT TRANSACTION;
+
+        -- EF6's Database.SqlQuery<int> is unreliable when a proc only has an
+        -- OUTPUT parameter and no result set (throws "data reader has more
+        -- than one field"), so the id is also returned as a plain one-column
+        -- result set instead of relying solely on @ID OUTPUT.
+        SELECT @ID AS ID;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;

@@ -37,9 +37,6 @@ export interface ProjectInfo {
 
   presentationDone?: boolean;
   projectFY?: string;
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -69,9 +66,6 @@ interface ApiProjectInfoRow {
   COMMON_DEPLOYMENT_ENGINEER: string | null;
   PRESENTATION_DONE: boolean;
   PROJECT_FY: string | null;
-  ACCEPTED_SCORE: number | null;
-  SCORE_REVIEWED: boolean;
-  ACCEPTED_SCORE_COMMENT: string | null;
   CREATED_DATE: string | null;
   UPDATED_DATE: string | null;
 }
@@ -101,9 +95,6 @@ const fromApiProjectInfo = (row: ApiProjectInfoRow): ProjectInfo => ({
   commonDeploymentEngineer: row.COMMON_DEPLOYMENT_ENGINEER ?? undefined,
   presentationDone: row.PRESENTATION_DONE ?? false,
   projectFY: row.PROJECT_FY ?? '',
-  acceptedScore: row.ACCEPTED_SCORE ?? undefined,
-  scoreReviewed: row.SCORE_REVIEWED ?? false,
-  acceptedScoreComment: row.ACCEPTED_SCORE_COMMENT ?? '',
   createdAt: row.CREATED_DATE ? new Date(row.CREATED_DATE) : new Date(),
   updatedAt: row.UPDATED_DATE ? new Date(row.UPDATED_DATE) : new Date(),
 });
@@ -133,9 +124,6 @@ const toUpsertPayload = (projectInfo: Omit<ProjectInfo, 'createdAt' | 'updatedAt
   COMMON_DEPLOYMENT_ENGINEER: projectInfo.commonDeploymentEngineer,
   PRESENTATION_DONE: projectInfo.presentationDone ?? false,
   PROJECT_FY: projectInfo.projectFY,
-  ACCEPTED_SCORE: projectInfo.acceptedScore,
-  SCORE_REVIEWED: projectInfo.scoreReviewed ?? false,
-  ACCEPTED_SCORE_COMMENT: projectInfo.acceptedScoreComment,
 });
 
 /**

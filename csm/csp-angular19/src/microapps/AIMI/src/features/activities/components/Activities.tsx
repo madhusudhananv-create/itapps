@@ -13,7 +13,7 @@ import {
 import type { ActivityData } from '../types/activityTypes';
 import { useActivitySubmission } from '../hooks/useActivitySubmission';
 import { useActivityState } from '../hooks/useActivityState';
-import { useProjectPracticeInfo } from '../hooks/useProjectPracticeInfo';
+import { useAcceptedScore } from '../hooks/useAcceptedScore';
 import { CommonSnackbar } from '@shared/components/CommonSnackbar';
 import { useFeatureFlags } from '@shared/hooks/useFeatureFlags';
 import { Loading } from '@shared/components/Loading';
@@ -78,9 +78,6 @@ interface ProjectInfoFormData {
   engineerContractTestCasePassRate?: string;
   engineerPerformanceDefectsPreRelease?: string;
   projectFY?: string;
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
 }
 // Global styling object
 const styles = {
@@ -283,30 +280,13 @@ export function Activities() {
     selectedPractice: projectInfoFormData.practice,
   });
 
-  // Fetch project info directly here (in addition to ProjectInfoSelection's own
-  // fetch) so the review-score dialog can save without threading a callback
-  // through the form-data sync effect.
-  const { projectInfo: reviewProjectInfo, saveProjectInfo: saveReviewProjectInfo } =
-    useProjectPracticeInfo({
+  // Admin review of the Overall Score. Stored on the activity rows and saved on its
+  // own, so it never goes through (or overwrites) the project info.
+  const { review: acceptedScoreInfo, saveReview: handleSaveReviewInfo } =
+    useAcceptedScore({
       projectId: projectInfoFormData.projectId,
       practice: projectInfoFormData.practice,
     });
-
-  const handleSaveReviewInfo = useCallback(
-    async (reviewInfo: {
-      acceptedScore?: number;
-      scoreReviewed?: boolean;
-      acceptedScoreComment?: string;
-    }) => {
-      await saveReviewProjectInfo({
-        peopleUsingAI: reviewProjectInfo?.peopleUsingAI ?? 0,
-        isProjectNA: reviewProjectInfo?.isProjectNA,
-        naComments: reviewProjectInfo?.naComments,
-        ...reviewInfo,
-      });
-    },
-    [saveReviewProjectInfo, reviewProjectInfo]
-  );
 
   const handleActivitiesSubmit = useCallback(
     async (activities: ActivityData[]) => {
@@ -375,9 +355,6 @@ export function Activities() {
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          newData.acceptedScore = undefined;
-          newData.scoreReviewed = false;
-          newData.acceptedScoreComment = '';
 
           // Auto-populate business head when business unit is selected
           if (value) {
@@ -411,9 +388,6 @@ export function Activities() {
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          newData.acceptedScore = undefined;
-          newData.scoreReviewed = false;
-          newData.acceptedScoreComment = '';
           // Auto-populate account manager when account is selected
           if (value) {
             const csm = getCSMForAccount(newData.businessUnit, value as string);
@@ -468,9 +442,6 @@ export function Activities() {
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          newData.acceptedScore = undefined;
-          newData.scoreReviewed = false;
-          newData.acceptedScoreComment = '';
         }
 
         return newData;
@@ -527,6 +498,7 @@ export function Activities() {
       onSubmit: handleActivitiesSubmit,
       onSaveDraft: handleActivitiesSaveDraft,
       projectInfo: projectInfoFormData,
+      acceptedScoreInfo,
       onSaveReviewInfo: handleSaveReviewInfo,
     }),
     [
@@ -540,6 +512,7 @@ export function Activities() {
       handleActivitiesSubmit,
       handleActivitiesSaveDraft,
       projectInfoFormData,
+      acceptedScoreInfo,
       handleSaveReviewInfo,
     ]
   );

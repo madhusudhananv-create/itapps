@@ -76,9 +76,6 @@ interface FormData {
   commonDeploymentEngineer?: string;
   presentationDone?: boolean;
   projectFY?: string;
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
 
 }
 
@@ -92,6 +89,16 @@ interface ProjectInfoSelectionProps {
 }
 
 // Global styling object
+// Pill badge used for the Project Applicable Yes / No (Project NA) options
+const applicableBadgeSx = {
+  display: 'inline-block',
+  fontWeight: 600,
+  fontSize: '0.85rem',
+  px: 1.5,
+  py: 0.25,
+  borderRadius: 1,
+};
+
 const styles = {
   formGrid: {
     display: 'grid',
@@ -488,19 +495,6 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       projectInfo?.projectFY ?? ''
     );
 
-    // Review Score
-    onFormChange(
-      'acceptedScore',
-      projectInfo?.acceptedScore ?? ''
-    );
-    onFormChange(
-      'scoreReviewed',
-      projectInfo?.scoreReviewed ?? false
-    );
-    onFormChange(
-      'acceptedScoreComment',
-      projectInfo?.acceptedScoreComment ?? ''
-    );
     lastProjectInfo.current = projectInfo;
   }
 }, [projectInfo, onFormChange]);
@@ -1100,14 +1094,40 @@ const fyChanged =
                     }
                   />
                 }
+                renderValue={(value) => (
+                  <Box
+                    component="span"
+                    sx={{
+                      ...applicableBadgeSx,
+                      bgcolor: value === 'Yes' ? '#4caf50' : '#bdbdbd',
+                      color: value === 'Yes' ? 'white' : '#424242',
+                    }}
+                  >
+                    {value === 'Yes' ? 'Yes' : 'No (Project NA)'}
+                  </Box>
+                )}
                 sx={
                   formData.project
                     ? styles.select
                     : { ...styles.select, ...styles.emptyField }
                 }
               >
-                <MenuItem value="Yes">Yes</MenuItem>
-                <MenuItem value="No">No (Project NA)</MenuItem>
+                <MenuItem value="Yes">
+                  <Box
+                    component="span"
+                    sx={{ ...applicableBadgeSx, bgcolor: '#4caf50', color: 'white' }}
+                  >
+                    Yes
+                  </Box>
+                </MenuItem>
+                <MenuItem value="No">
+                  <Box
+                    component="span"
+                    sx={{ ...applicableBadgeSx, bgcolor: '#bdbdbd', color: '#424242' }}
+                  >
+                    No (Project NA)
+                  </Box>
+                </MenuItem>
               </Select>
             </FormControl>
 
@@ -1616,7 +1636,9 @@ const fyChanged =
           </Box>
         </Box>
 
-        {/* Save Button */}
+        
+      </Box>
+      {/* Save Button */}
         <Box sx={styles.saveButtonContainer}>
           <Button
             onClick={handleSaveAIMetrics}
@@ -1635,7 +1657,6 @@ const fyChanged =
             {isInfoLoading ? 'Saving...' : 'Save Metrics'}
           </Button>
         </Box>
-      </Box>
 </AccordionDetails>
           </Accordion>
       {/* Success Message Snackbar */}

@@ -49,6 +49,9 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         [JsonProperty("CREATED_DATE")] public DateTime? CREATED_DATE { get; set; }
         [JsonProperty("UPDATED_BY")] public string UPDATED_BY { get; set; }
         [JsonProperty("UPDATED_DATE")] public DateTime? UPDATED_DATE { get; set; }
+        [JsonProperty("ACCEPTED_SCORE")] public decimal? ACCEPTED_SCORE { get; set; }
+        [JsonProperty("SCORE_REVIEWED")] public bool SCORE_REVIEWED { get; set; }
+        [JsonProperty("ACCEPTED_SCORE_COMMENT")] public string ACCEPTED_SCORE_COMMENT { get; set; }
         [JsonProperty("AI_TOOLS_JSON")] public string AI_TOOLS_JSON { get; set; }
         [JsonProperty("ACCELERATORS_JSON")] public string ACCELERATORS_JSON { get; set; }
         [JsonProperty("QUALITATIVE_BENEFITS_JSON")] public string QUALITATIVE_BENEFITS_JSON { get; set; }
@@ -127,9 +130,6 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         [JsonProperty("COMMON_DEPLOYMENT_ENGINEER")] public string COMMON_DEPLOYMENT_ENGINEER { get; set; }
         [JsonProperty("PRESENTATION_DONE")] public bool PRESENTATION_DONE { get; set; }
         [JsonProperty("PROJECT_FY")] public string PROJECT_FY { get; set; }
-        [JsonProperty("ACCEPTED_SCORE")] public decimal? ACCEPTED_SCORE { get; set; }
-        [JsonProperty("SCORE_REVIEWED")] public bool SCORE_REVIEWED { get; set; }
-        [JsonProperty("ACCEPTED_SCORE_COMMENT")] public string ACCEPTED_SCORE_COMMENT { get; set; }
         [JsonProperty("CREATED_BY")] public string CREATED_BY { get; set; }
         [JsonProperty("CREATED_DATE")] public DateTime? CREATED_DATE { get; set; }
         [JsonProperty("UPDATED_BY")] public string UPDATED_BY { get; set; }

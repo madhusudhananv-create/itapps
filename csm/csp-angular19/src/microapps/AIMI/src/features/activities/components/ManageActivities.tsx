@@ -32,6 +32,7 @@ import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
 import { AddActivityModal } from './AddActivityModal';
 import { ActivityCard } from './ActivityCard';
 import { CopyActivityDialog } from './CopyActivityDialog';
+import type { AcceptedScoreInfo } from '../services/activityService';
 import type {
   ActivityFormData,
   ActivityData,
@@ -71,15 +72,9 @@ interface ManageActivitiesProps {
     currentPhase: string;
     isProjectNA?: boolean;
     naComments?: string;
-    acceptedScore?: number;
-    scoreReviewed?: boolean;
-    acceptedScoreComment?: string;
   };
-  onSaveReviewInfo?: (reviewInfo: {
-  acceptedScore?: number;
-  scoreReviewed?: boolean;
-  acceptedScoreComment?: string;
-}) => Promise<void>;
+  acceptedScoreInfo?: AcceptedScoreInfo;
+  onSaveReviewInfo?: (reviewInfo: AcceptedScoreInfo) => Promise<void>;
 }
 
 
@@ -95,6 +90,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   onSubmit,
   onSaveDraft,
   projectInfo,
+  acceptedScoreInfo,
   onSaveReviewInfo,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -127,29 +123,17 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [acceptedScore, setAcceptedScore] = useState('');
-const [scoreReviewed, setScoreReviewed] = useState(false);
-const [acceptedScoreComment, setAcceptedScoreComment] = useState('');
-const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [scoreReviewed, setScoreReviewed] = useState(false);
+  const [acceptedScoreComment, setAcceptedScoreComment] = useState('');
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
 
-useEffect(() => {
-  if (projectInfo) {
-    setAcceptedScore(
-      String(projectInfo.acceptedScore ?? '')
-    );
-
-    setScoreReviewed(
-      projectInfo.scoreReviewed ?? false
-    );
-
-    setAcceptedScoreComment(
-      projectInfo.acceptedScoreComment ?? ''
-    );
-  }
-}, [projectInfo]);
-const hasAcceptedScoreChanges =
-  acceptedScore !== String(projectInfo?.acceptedScore ?? '') ||
-  scoreReviewed !== (projectInfo?.scoreReviewed ?? false) ||
-  acceptedScoreComment !== (projectInfo?.acceptedScoreComment ?? '');
+  // Seed the review dialog from the saved review each time it opens (or the saved
+  // review changes), so cancelled edits don't linger.
+  useEffect(() => {
+    setAcceptedScore(String(acceptedScoreInfo?.acceptedScore ?? ''));
+    setScoreReviewed(acceptedScoreInfo?.scoreReviewed ?? false);
+    setAcceptedScoreComment(acceptedScoreInfo?.acceptedScoreComment ?? '');
+  }, [acceptedScoreInfo, commentDialogOpen]);
 
   // Ids of activities auto-saved as drafts (on add/edit/copy) that haven't been
   // explicitly confirmed via the "Save as Draft" button yet - these still show as Unsaved
@@ -195,10 +179,7 @@ const hasAcceptedScoreChanges =
     () => activities.some((activity) => activity.status !== 'submitted'),
     [activities]
   );
-  const canSubmitOrSaveDraft =
-  hasUnsavedChanges ||
-  hasDraftActivities ||
-  hasAcceptedScoreChanges;
+  const canSubmitOrSaveDraft = hasUnsavedChanges || hasDraftActivities;
   const isProjectNA = !!projectInfo?.isProjectNA;
 
   // Group activities by SDLC Phase
@@ -297,6 +278,17 @@ const hasAcceptedScoreChanges =
       fontWeight: 600,
       bgcolor: '#4caf50',
       color: 'white',
+      px: 1.5,
+      py: 0.25,
+      borderRadius: 1,
+      minWidth: '50px',
+      textAlign: 'center',
+      fontSize: '0.9rem',
+    },
+    enteredScoreValue: {
+      fontWeight: 600,
+      bgcolor: '#ffc107',
+      color: '#212529',
       px: 1.5,
       py: 0.25,
       borderRadius: 1,
@@ -718,7 +710,9 @@ const hasAcceptedScoreChanges =
 
       generateAndDownloadReport(
         activities,
-        projectInfo ? { ...projectInfo, overallScoreValue } : undefined
+        projectInfo
+          ? { ...projectInfo, overallScoreValue, ...acceptedScoreInfo }
+          : undefined
       );
       showSnackbar('Report generated and downloaded successfully!', 'success');
     } catch (error) {
@@ -862,13 +856,24 @@ const hasAcceptedScoreChanges =
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   <Box sx={styles.scoreContainer}>
                     <Typography variant="body2" sx={styles.overallScoreLabel}>
-                      Overall Score:
+                      Entered Overall Score:
                     </Typography>
 
-                    <Typography variant="h6" sx={styles.overallScoreValue}>
+                    <Typography variant="h6" sx={styles.enteredScoreValue}>
                       {areAllActivitiesNotApplicable(activities)
                         ? 'N/A'
                         : calculateAverageAIAdoptionScore(activities).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  <Box sx={styles.scoreContainer}>
+                    <Typography variant="body2" sx={styles.overallScoreLabel}>
+                      Accepted Score:
+                    </Typography>
+
+                    <Typography variant="h6" sx={styles.overallScoreValue}>
+                      {acceptedScoreInfo?.acceptedScore !== undefined
+                        ? Number(acceptedScoreInfo.acceptedScore).toFixed(2)
+                        : '-'}
                     </Typography>
                   </Box>
                   {isAuthenticated && (

@@ -59,6 +59,9 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         [JsonProperty("CREATED_DATE")] public DateTime? CREATED_DATE { get; set; }
         [JsonProperty("UPDATED_BY")] public string UPDATED_BY { get; set; }
         [JsonProperty("UPDATED_DATE")] public DateTime? UPDATED_DATE { get; set; }
+        [JsonProperty("ACCEPTED_SCORE")] public decimal? ACCEPTED_SCORE { get; set; }
+        [JsonProperty("SCORE_REVIEWED")] public bool SCORE_REVIEWED { get; set; }
+        [JsonProperty("ACCEPTED_SCORE_COMMENT")] public string ACCEPTED_SCORE_COMMENT { get; set; }
         [JsonProperty("AI_TOOLS")] public List<AimiAiToolDto> AI_TOOLS { get; set; }
         [JsonProperty("ACCELERATORS")] public List<string> ACCELERATORS { get; set; }
         [JsonProperty("QUALITATIVE_BENEFITS")] public List<string> QUALITATIVE_BENEFITS { get; set; }
@@ -173,6 +176,15 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         [JsonProperty("COMMON_DEPLOYMENT_ENGINEER")] public string COMMON_DEPLOYMENT_ENGINEER { get; set; }
         [JsonProperty("PRESENTATION_DONE")] public bool PRESENTATION_DONE { get; set; }
         [JsonProperty("PROJECT_FY")] public string PROJECT_FY { get; set; }
+    }
+
+    // Admin review of a project's Overall Score - saved against the project's activities
+    // (not the project info row) so it can't overwrite the AI Adoption Metrics.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiAcceptedScoreUpdateRequest
+    {
+        [JsonProperty("PROJECT_ID")] public string PROJECT_ID { get; set; }
+        [JsonProperty("PRACTICE")] public string PRACTICE { get; set; }
         [JsonProperty("ACCEPTED_SCORE")] public decimal? ACCEPTED_SCORE { get; set; }
         [JsonProperty("SCORE_REVIEWED")] public bool SCORE_REVIEWED { get; set; }
         [JsonProperty("ACCEPTED_SCORE_COMMENT")] public string ACCEPTED_SCORE_COMMENT { get; set; }

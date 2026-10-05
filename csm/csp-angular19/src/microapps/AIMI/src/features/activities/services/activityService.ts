@@ -22,7 +22,16 @@ const ENDPOINTS = {
   GET_ACTIVITIES_BY_FILTER: '/api/AllSys/GetAimiActivitiesByFilter',
   UPSERT_ACTIVITY: '/api/AllSys/UpsertAimiActivity',
   DELETE_ACTIVITY: '/api/AllSys/DeleteAimiActivity',
+  UPDATE_ACCEPTED_SCORE: '/api/AllSys/UpdateAimiAcceptedScore',
 };
+
+// Admin review of a project's Overall Score. Stored on the activity rows (all
+// activities of a project + practice carry the same values), not on project info.
+export interface AcceptedScoreInfo {
+  acceptedScore?: number;
+  scoreReviewed: boolean;
+  acceptedScoreComment: string;
+}
 
 // Row shape returned by GetAimiActivities/GetAimiActivitiesByFilter - mirrors
 // AimiActivityResponse in the C# API (GAVS.AllocationSystem.Model.CSP.ViewModels),
@@ -55,6 +64,9 @@ interface ApiActivityRow {
   CREATED_DATE: string | null;
   UPDATED_BY: string | null;
   UPDATED_DATE: string | null;
+  ACCEPTED_SCORE: number | null;
+  SCORE_REVIEWED: boolean;
+  ACCEPTED_SCORE_COMMENT: string | null;
   AI_TOOLS: ApiAiTool[];
   ACCELERATORS: string[];
   QUALITATIVE_BENEFITS: string[];
@@ -221,6 +233,62 @@ export const activityService = {
         'Error fetching activities by project ID and practice:',
         error
       );
+      throw error;
+    }
+  },
+
+  /**
+   * Read the Accepted Score review for one project + practice. Every activity row
+   * carries the same values, so the first row that has any review data is used.
+   */
+  getAcceptedScore: async (
+    projectId: string,
+    practice: string
+  ): Promise<AcceptedScoreInfo> => {
+    try {
+      const rows = await aimiApiClient.get<ApiActivityRow[]>(
+        ENDPOINTS.GET_ACTIVITIES,
+        { projectId, practice }
+      );
+      const reviewed = rows.find(
+        (row) =>
+          row.ACCEPTED_SCORE !== null ||
+          row.SCORE_REVIEWED ||
+          !!row.ACCEPTED_SCORE_COMMENT
+      );
+      return {
+        acceptedScore: reviewed?.ACCEPTED_SCORE ?? undefined,
+        scoreReviewed: reviewed?.SCORE_REVIEWED ?? false,
+        acceptedScoreComment: reviewed?.ACCEPTED_SCORE_COMMENT ?? '',
+      };
+    } catch (error) {
+      console.error('Error fetching accepted score:', error);
+      throw error;
+    }
+  },
+
+  /** Save the Accepted Score review onto the project + practice's activities. */
+  updateAcceptedScore: async (
+    projectId: string,
+    practice: string,
+    review: AcceptedScoreInfo
+  ): Promise<void> => {
+    try {
+      const result = await aimiApiClient.post<{ ID: number }>(
+        ENDPOINTS.UPDATE_ACCEPTED_SCORE,
+        {
+          PROJECT_ID: projectId,
+          PRACTICE: practice,
+          ACCEPTED_SCORE: review.acceptedScore ?? null,
+          SCORE_REVIEWED: review.scoreReviewed,
+          ACCEPTED_SCORE_COMMENT: review.acceptedScoreComment,
+        }
+      );
+      if (!result?.ID) {
+        throw new Error('No saved activities found to attach the review to');
+      }
+    } catch (error) {
+      console.error('Error updating accepted score:', error);
       throw error;
     }
   },

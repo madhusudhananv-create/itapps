@@ -74,6 +74,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 CREATED_DATE = row.CREATED_DATE,
                 UPDATED_BY = row.UPDATED_BY,
                 UPDATED_DATE = row.UPDATED_DATE,
+                ACCEPTED_SCORE = row.ACCEPTED_SCORE,
+                SCORE_REVIEWED = row.SCORE_REVIEWED,
+                ACCEPTED_SCORE_COMMENT = row.ACCEPTED_SCORE_COMMENT,
                 AI_TOOLS = ParseAimiAiTools(row.AI_TOOLS_JSON),
                 ACCELERATORS = ParseAimiNameArray<AcceleratorJsonRow>(row.ACCELERATORS_JSON, r => r.ACCELERATOR_NAME),
                 QUALITATIVE_BENEFITS = ParseAimiNameArray<QualitativeBenefitJsonRow>(row.QUALITATIVE_BENEFITS_JSON, r => r.BENEFIT_NAME),
@@ -232,9 +235,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 request.ENGINEER_AI_AGENTS, request.ENGINEER_DELIVERY_CYCLE_TIME, request.ENGINEER_CONTRACT_TEST_CASE_PASS_RATE,
                 request.ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE, request.COMMON_ADOPTION_WORKFORCE_CERTIFICATION,
                 request.COMMON_ADOPTION_EFFORTS_SAVED, request.COMMON_DEPLOYMENT_ENGINEER, request.PRESENTATION_DONE,
-                request.PROJECT_FY, request.ACCEPTED_SCORE, request.SCORE_REVIEWED, request.ACCEPTED_SCORE_COMMENT, empId);
+                request.PROJECT_FY, empId);
 
             return Ok(new AimiIdResult { ID = newId });
+        }
+
+        // Admin review of the Overall Score (Accepted Score / Score Reviewed / Comments).
+        // Stored on the project's activities and written through its own proc so saving a
+        // review can't touch any other data.
+        [POST("UpdateAimiAcceptedScore")]
+        [ActionName("UpdateAimiAcceptedScore")]
+        [HttpPost]
+        public IHttpActionResult UpdateAimiAcceptedScore([FromBody] AimiAcceptedScoreUpdateRequest request)
+        {
+            if (request == null) return BadRequest("Request body is required.");
+            if (string.IsNullOrWhiteSpace(request.PROJECT_ID) || string.IsNullOrWhiteSpace(request.PRACTICE))
+                return BadRequest("PROJECT_ID and PRACTICE are required.");
+
+            var empId = GetHeaderDetails_String("empId");
+            var updatedCount = CSPdb.AppRepo.AimiUpdateAcceptedScore(
+                request.PROJECT_ID, request.PRACTICE, request.ACCEPTED_SCORE, request.SCORE_REVIEWED,
+                request.ACCEPTED_SCORE_COMMENT, empId);
+
+            return Ok(new AimiIdResult { ID = updatedCount });
         }
 
         // ------------------------------------------------------------------

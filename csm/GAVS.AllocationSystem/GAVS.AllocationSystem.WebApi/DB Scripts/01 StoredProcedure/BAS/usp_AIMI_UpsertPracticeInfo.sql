@@ -36,5 +36,11 @@ BEGIN
                UPDATED_DATE = GETDATE()
          WHERE ID = @ID;
     END
+
+    -- EF6's Database.SqlQuery<int> is unreliable when a proc only has an
+    -- OUTPUT parameter and no result set (throws "data reader has more than
+    -- one field"), so the id is also returned as a plain one-column result
+    -- set instead of relying solely on @ID OUTPUT.
+    SELECT @ID AS ID;
 END
 GO
