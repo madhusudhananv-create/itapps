@@ -242,106 +242,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> _ensureAssessmentsLocks =
             new System.Collections.Concurrent.ConcurrentDictionary<string, object>();
 
-        // Backs the Domain Tracker/Executive Dashboard: for the current cycle, every
-        // project of this account must have a row for each domain mapped to it in
-        // ITOPS_DOMAIN_PROJECT_MAP, even before its assessor has opened it, so
-        // "Not Started" domains show up too.
-        //
-        // V2 changes vs V1: keyed on (cycle, domain, project) rather than (domain,
-        // account); the domain list comes from ITOPS_DOMAIN_PROJECT_MAP rather than
-        // "every active domain"; and the domain's default assessor/reviewer are
-        // inserted as IS_PRIMARY join rows rather than flat columns.
-        private void EnsureAssessmentsForAccount(string custId)
-        {
-            var gate = _ensureAssessmentsLocks.GetOrAdd(custId ?? string.Empty, _ => new object());
-            lock (gate)
-            {
-                var master = GetCurrentITOpsAssessmentMaster();
-                if (master == null) return; // no open cycle -> nothing to seed
-
-                var projectIds = GetITOpsProjectIdsForCustomer(custId);
-                if (!projectIds.Any()) return;
-
-                var mappings = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
-                    .Where(m => m.ISACTIVE && projectIds.Contains(m.PROJECT_ID))
-                    .Select(m => new { m.DOMAIN_ID, m.PROJECT_ID })
-                    .ToList();
-                if (!mappings.Any()) return;
-
-                var activeDomainIds = CSPdb.ITOPS_DOMAIN.GetAll()
-                    .Where(d => d.ISACTIVE)
-                    .Select(d => d.ID)
-                    .ToList();
-
-                // Deliberately NOT filtered to ISACTIVE: RemoveITOpsAssessment soft-
-                // deletes a Not Started assessment (ISACTIVE = false) rather than
-                // hard-deleting it, precisely so it stays remembered as "this pair
-                // was deliberately removed" - if this check only looked at active
-                // rows, a removed assessment would look identical to one that was
-                // simply never created, and the very next Dashboard/Reports load for
-                // this account would silently recreate it out from under the admin.
-                var existing = CSPdb.ITOPS_ASSESSMENT.GetAll()
-                    .Where(a => a.ASSESSMENT_MASTER_ID == master.ID && projectIds.Contains(a.PROJECT_ID))
-                    .Select(a => new { a.DOMAIN_ID, a.PROJECT_ID })
-                    .ToList();
-
-                var missing = mappings
-                    .Where(m => activeDomainIds.Contains(m.DOMAIN_ID))
-                    .Where(m => !existing.Any(e => e.DOMAIN_ID == m.DOMAIN_ID && e.PROJECT_ID == m.PROJECT_ID))
-                    .ToList();
-                if (!missing.Any()) return;
-
-                var empId = GetHeaderDetails_String("empId");
-                var domains = CSPdb.ITOPS_DOMAIN.GetAll().Where(d => d.ISACTIVE).ToList();
-                var accountName = Cldb.CUSTOMER.GetAll().Where(c => c.CUST_ID == custId).Select(c => c.CUST_NM).FirstOrDefault();
-                var projects = Cldb.PROJECT.GetAll().Where(p => projectIds.Contains(p.PROJ_ID)).ToList();
-
-                foreach (var m in missing)
-                {
-                    var domain = domains.FirstOrDefault(d => d.ID == m.DOMAIN_ID);
-                    if (domain == null) continue;
-                    var project = projects.FirstOrDefault(p => p.PROJ_ID == m.PROJECT_ID);
-
-                    var assessment = new ITOPS_ASSESSMENT
-                    {
-                        ASSESSMENT_MASTER_ID = master.ID,
-                        DOMAIN_ID = domain.ID,
-                        PROJECT_ID = m.PROJECT_ID,
-                        BUSINESS_UNIT = project != null ? project.BUSINESS_UNIT : null,
-                        ACCOUNT_NAME = accountName,
-                        STATUS = "NotStarted"
-                    };
-                    UpdateAuditFields(assessment, empId);
-                    CSPdb.ITOPS_ASSESSMENT.Add(assessment);
-                    try
-                    {
-                        CSPdb.Commit(CanCommit); // need the identity before the join rows can reference it
-                    }
-                    catch (Exception ex)
-                    {
-                        if (!IsUniqueViolation(ex)) throw;
-                        // The in-process lock above only serializes callers on THIS
-                        // worker process - a second IIS worker process (or a second
-                        // server behind the load balancer) can still race this same
-                        // (cycle, domain, project) insert and win first. That's not a
-                        // real failure: the assessment already exists, just created by
-                        // the other request instead of this one. Detach the failed
-                        // entity so EF's change tracker drops it - otherwise the next
-                        // Commit() in this loop (or the one below) keeps retrying to
-                        // insert the same still-tracked row and fails every time.
-                        // EF6 special-cases Added -> Deleted as an immediate Detach (no
-                        // DB round trip, since the row was never actually inserted) -
-                        // exactly "forget this entity" without needing DbContext exposed
-                        // through the ICSPDB interface.
-                        CSPdb.ITOPS_ASSESSMENT.Delete(assessment);
-                        continue;
-                    }
-
-                    SeedITOpsDefaultOwners(assessment, domain, empId);
-                }
-                CSPdb.Commit(CanCommit);
-            }
-        }
+        // REMOVED (was EnsureAssessmentsForAccount): used to silently create a real
+        // ITOPS_ASSESSMENT row (STATUS = NotStarted, domain defaults seeded as
+        // assessor/reviewer) for every domain mapped to a project the moment anyone
+        // loaded the Dashboard/Executive Summary for that account - before Configure
+        // Assessment's own "Create assessments" step ever ran. This repeatedly produced
+        // assessments nobody staged, with no Assessee and a stale/default
+        // Assessor/Reviewer, surfacing as "phantom" rows in Configure Assessment's grid.
+        // An ITOPS_ASSESSMENT row is now created ONLY by
+        // ITOperationMaturityAdminController's explicit "Create assessments" action (and
+        // by GetOrCreateITOpsAssessment, when an already-assigned Assessor/Reviewer/
+        // Assessee opens a specific assessment they were actually staged on). A domain
+        // mapped in Configure Scope but never staged in Configure Assessment simply does
+        // not appear on the Dashboard/Domain Tracker until it is staged - this is the
+        // intended trade-off, not a regression: visibility before staging is no longer
+        // considered worth the risk of creating assessments nobody asked for.
 
         // Inserts the domain's DEFAULT_ASSESSOR_ID / DEFAULT_REVIEWER_ID as the
         // assessment's first assessor/reviewer join rows (V1 set flat columns on
@@ -1664,7 +1579,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<string> projectIds = null;
             if (custIdProvided)
             {
-                EnsureAssessmentsForAccount(custId);
+                // No auto-create here (see the removed EnsureAssessmentsForAccount note
+                // above) - the tracker now only ever shows a domain once a real
+                // ITOPS_ASSESSMENT row exists for it, i.e. once Configure Assessment has
+                // actually staged it.
                 projectIds = GetITOpsProjectIdsForCustomer(custId);
                 if (!projectIds.Any()) return Ok(new List<ITOPS_DomainTrackerRow>());
             }
@@ -1693,12 +1611,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (!string.IsNullOrWhiteSpace(businessUnit))
                 assessmentList = assessmentList.Where(a => a.BUSINESS_UNIT == businessUnit).ToList();
 
-            // A domain unmapped from a project AFTER an assessment was already created
-            // for it (Configure Scope changed later) leaves a stale ITOPS_ASSESSMENT row
-            // behind - EnsureAssessmentsForAccount only ever ADDS missing rows, it never
-            // removes one whose mapping was since dropped. The tracker should reflect the
-            // domain set the project is mapped to RIGHT NOW, not everything a domain ever
-            // had an assessment for historically.
+            // A domain unmapped from a project AFTER an assessment was already created for
+            // it (Configure Scope changed later) leaves a stale ITOPS_ASSESSMENT row behind
+            // - nothing here ever removes one whose mapping was since dropped. The tracker
+            // should reflect the domain set the project is mapped to RIGHT NOW, not
+            // everything a domain ever had an assessment for historically.
             var hasProjectFilter = !string.IsNullOrWhiteSpace(projectId);
             var currentlyMappedDomainIds = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll().Where(m => m.ISACTIVE).ToList()
                 .Where(m => hasProjectFilter ? m.PROJECT_ID == projectId : (projectIds == null || projectIds.Contains(m.PROJECT_ID)))
@@ -2838,41 +2755,43 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(finding);
         }
 
-        // BEHAVIOUR CHANGE (V2 schema): ITOPS_EVIDENCE lost its FINDING_ID column - it is
-        // SCORE_ID-only now (an approved regression from V1). Evidence for a finding is
-        // therefore the evidence attached to the finding's own score, so this endpoint
-        // returns the score's evidence. The route and response shape are unchanged.
+        // FINDING_ID (V2_35) separates this from the score's own evidence - only rows the
+        // Assessee attached against this specific finding's Action Taken, not whatever the
+        // Assessor attached while scoring. Evidence uploaded before V2_35 ran has
+        // FINDING_ID = NULL and so will not appear here even if it was conceptually a
+        // finding attachment at the time (see V2_35's migration note).
         [GET("GetITOpsFindingEvidence")]
         [ActionName("GetITOpsFindingEvidence")]
         [HttpGet]
         public IHttpActionResult GetITOpsFindingEvidence(int findingId)
         {
-            var scoreId = CSPdb.ITOPS_FINDING.GetAll()
-                .Where(f => f.ID == findingId && f.ISACTIVE)
-                .Select(f => (int?)f.SCORE_ID)
-                .FirstOrDefault();
-            if (!scoreId.HasValue) return Ok(new List<ITOPS_EvidenceRow>());
-            return Ok(GetITOpsEvidenceForScore(scoreId.Value));
+            return Ok(GetITOpsEvidenceForFinding(findingId));
         }
 
         /// <summary>
-        /// Same idea as GetITOpsFindingEvidence, but for a parameter's score
-        /// directly - used by the assessment scoring screen, where evidence is
-        /// attached per-parameter before (or without) a finding ever existing
-        /// (a score of 5 has no finding at all).
+        /// Same idea as GetITOpsFindingEvidence, but for a parameter's score directly - used
+        /// by the assessment scoring screen, where evidence is attached per-parameter before
+        /// (or without) a finding ever existing (a score of 5 has no finding at all).
+        /// Excludes any row tagged with a FINDING_ID, so an Assessee's Action Taken evidence
+        /// never leaks back into the Assessor's own scoring-evidence list.
         /// </summary>
         [GET("GetITOpsScoreEvidence")]
         [ActionName("GetITOpsScoreEvidence")]
         [HttpGet]
         public IHttpActionResult GetITOpsScoreEvidence(int scoreId)
         {
-            return Ok(GetITOpsEvidenceForScore(scoreId));
+            return Ok(GetITOpsEvidenceRows(e => e.ISACTIVE && e.SCORE_ID == scoreId && e.FINDING_ID == null));
         }
 
-        private List<ITOPS_EvidenceRow> GetITOpsEvidenceForScore(int scoreId)
+        private List<ITOPS_EvidenceRow> GetITOpsEvidenceForFinding(int findingId)
+        {
+            return GetITOpsEvidenceRows(e => e.ISACTIVE && e.FINDING_ID == findingId);
+        }
+
+        private List<ITOPS_EvidenceRow> GetITOpsEvidenceRows(Func<ITOPS_EVIDENCE, bool> predicate)
         {
             var rows = CSPdb.ITOPS_EVIDENCE.GetAll()
-                .Where(e => e.ISACTIVE && e.SCORE_ID == scoreId)
+                .Where(predicate)
                 .OrderByDescending(e => e.CREATED_DATE)
                 .ToList();
             if (!rows.Any()) return new List<ITOPS_EvidenceRow>();
@@ -2901,7 +2820,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // the file is saved to the shared ~/UploadFile/ folder under a random
         // GUID name and recorded in the shared FILE_DATA table (Cldb) - ITOPS_EVIDENCE
         // just links a score to that FILE_DATA row via FILE_DATA_ID.
-        // V2: stored against the finding's SCORE_ID (see GetITOpsFindingEvidence above).
+        // V2_35: tagged with FINDING_ID so it reads back only via
+        // GetITOpsFindingEvidence, never via GetITOpsScoreEvidence.
         [POST("UploadITOpsFindingEvidence")]
         [ActionName("UploadITOpsFindingEvidence")]
         [HttpPost]
@@ -2909,10 +2829,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null) return NotFound();
-            return UploadITOpsEvidenceForScore(finding.SCORE_ID);
+            return UploadITOpsEvidenceForScore(finding.SCORE_ID, findingId);
         }
 
-        /// <summary>Same idea as UploadITOpsFindingEvidence, but for a parameter's score directly - see GetITOpsScoreEvidence.</summary>
+        /// <summary>Same idea as UploadITOpsFindingEvidence, but for a parameter's score directly - see GetITOpsScoreEvidence. Never tags FINDING_ID, so this never shows up under a finding's own Action Taken evidence.</summary>
         [POST("UploadITOpsScoreEvidence")]
         [ActionName("UploadITOpsScoreEvidence")]
         [HttpPost]
@@ -2920,10 +2840,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var score = CSPdb.ITOPS_SCORE.GetAll().FirstOrDefault(s => s.ID == scoreId);
             if (score == null) return NotFound();
-            return UploadITOpsEvidenceForScore(scoreId);
+            return UploadITOpsEvidenceForScore(scoreId, findingId: null);
         }
 
-        private IHttpActionResult UploadITOpsEvidenceForScore(int scoreId)
+        private IHttpActionResult UploadITOpsEvidenceForScore(int scoreId, int? findingId)
         {
             var empId = GetHeaderDetails_String("empId");
             var httpRequest = HttpContext.Current.Request;
@@ -2960,7 +2880,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var evidence = new ITOPS_EVIDENCE
                 {
                     SCORE_ID = scoreId,
-                    FILE_DATA_ID = fileData.ID
+                    FILE_DATA_ID = fileData.ID,
+                    FINDING_ID = findingId
                 };
                 UpdateAuditFields(evidence, empId);
                 CSPdb.ITOPS_EVIDENCE.Add(evidence);
@@ -3161,8 +3082,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsExecutiveSummary(string custId = null)
         {
-            if (!string.IsNullOrWhiteSpace(custId))
-                EnsureAssessmentsForAccount(custId);
+            // No auto-create here (see the removed EnsureAssessmentsForAccount note on
+            // GetITOpsDomainTracker) - this endpoint already excludes NotStarted/Draft
+            // assessments per its own acceptance criteria, so removing the call changes
+            // nothing it displays.
 
             List<ITOPS_ASSESSMENT> allAssessments;
             if (!string.IsNullOrWhiteSpace(custId))
@@ -3339,14 +3262,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 scoreRows = scoreRows.Where(s => allowedAssessmentIds.Contains(s.ASSESSMENT_ID)).ToList();
             }
 
-            // Recommended-action text still comes from the finding (the assessor's own
-            // words on that gap), when one exists - it just no longer gates visibility.
-            var scoreIdsInScope = scoreRows.Select(s => s.ID).ToList();
-            var findingByScoreId = CSPdb.ITOPS_FINDING.GetAll()
-                .Where(f => f.ISACTIVE && scoreIdsInScope.Contains(f.SCORE_ID))
+            // Recommendation text is standard wording per 1-5 score band, held in
+            // ITOPS_SCORE_RECOMMENDATION so it can be reworded in the database without an
+            // application deploy (see ITOperationMaturity_V2_34_ScoreRecommendationMaster.sql).
+            var recommendationByScore = CSPdb.ITOPS_SCORE_RECOMMENDATION.GetAll()
+                .Where(r => r.ISACTIVE)
                 .ToList()
-                .GroupBy(f => f.SCORE_ID)
-                .ToDictionary(g => g.Key, g => g.OrderByDescending(f => f.ID).First());
+                .GroupBy(r => r.SCORE_VALUE)
+                .ToDictionary(g => g.Key, g => g.OrderBy(r => r.DISPLAY_ORDER).First());
 
             // So the SAME domain name on two different accounts stays distinguishable
             // ("All accounts" on the Dashboard) instead of merging into one shared tab.
@@ -3380,19 +3303,16 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var category = parameter != null && categories.ContainsKey(parameter.CATEGORY_ID) ? categories[parameter.CATEGORY_ID] : null;
                     var assessment = assessmentOf(s);
                     var domain = assessment != null && domains.ContainsKey(assessment.DOMAIN_ID) ? domains[assessment.DOMAIN_ID] : null;
-                    ITOPS_FINDING finding;
-                    findingByScoreId.TryGetValue(s.ID, out finding);
                     var custIdForRow = assessment != null && projectCustId.ContainsKey(assessment.PROJECT_ID) ? projectCustId[assessment.PROJECT_ID] : null;
                     var isNotScored = !s.SCORE_VALUE.HasValue;
 
-                    // RECOMMENDED_ACTION is never actually populated anywhere in the app (no
-                    // UI ever writes it) - it was always null, silently forcing every single
-                    // row onto the generic "Advance X from level Y toward Z" filler text below.
-                    // The assessor's own words already exist, in ITOPS_SCORE.NOTES (mandatory
-                    // for any score) - surface that as the real recommendation instead.
-                    var recommendation = isNotScored
-                        ? "Not Scored"
-                        : (!string.IsNullOrWhiteSpace(finding?.RECOMMENDED_ACTION) ? finding.RECOMMENDED_ACTION : s.NOTES);
+                    // The standard maturity band for this score, not the assessor's own notes -
+                    // ITOPS_SCORE.NOTES is working text written for the reviewer, and showing it
+                    // here put raw scratch notes in front of everyone reading the Dashboard.
+                    ITOPS_SCORE_RECOMMENDATION band = null;
+                    if (!isNotScored) recommendationByScore.TryGetValue(s.SCORE_VALUE.Value, out band);
+
+                    var recommendation = isNotScored ? "Not Scored" : band?.LABEL;
 
                     return new ITOPS_TopRiskRow
                     {
@@ -3403,6 +3323,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         Gap = isNotScored ? 5 : 5 - s.SCORE_VALUE.Value,
                         IsNotScored = isNotScored,
                         RecommendedAction = recommendation,
+                        RecommendationDetail = band?.DESCRIPTION,
                         AccountId = custIdForRow,
                         AccountName = custIdForRow != null && custNames.ContainsKey(custIdForRow) ? custNames[custIdForRow] : custIdForRow
                     };

@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import * as XLSX from 'xlsx';
 import Header from './components/Header';
+import AcsatAlertModal from './components/AcsatAlertModal';
+import { Calendar, Check, CheckCircle2, RefreshCw, Loader2, BarChart3, TrendingUp, FileText, Target, Star, Link2 } from 'lucide-react';
 import FilterPanel from './components/FilterPanel';
 import AnalyticsCharts from './components/AnalyticsCharts';
 import DataTable from './components/DataTable';
@@ -39,9 +41,9 @@ import PCSATQualitativeAnalysisDashboard from './components/PCSATQualitativeAnal
 import ACSATResponseRateDashboard from './components/ACSATResponseRateDashboard';
 import TrendAnalysisUpload from './components/TrendAnalysisUpload';
 import { csatData, accounts, projects, businessUnits } from './data/dummyData';
-import { fetchPCSATReportData } from './services/csatReportsService';
+import { fetchPCSATReportData, fetchACSATReportData } from './services/csatReportsService';
 import { getAllAccessibleCustomers } from './services/reportsApi';
-import { formatDateToMMDDYYYY, getHalfYearLabel, getHalfYearOptions } from './utils/dateUtils';
+import { formatDateToMMDDYYYY, getHalfYearLabel, getHalfYearOptions, getAnnualOptions } from './utils/dateUtils';
 import { useCSATContext } from './context/CSATContext';
 
 const AppContainer = styled.div`
@@ -252,7 +254,6 @@ const App = () => {
   const [currentDashboard, setCurrentDashboard] = useState(null);
   const [showHomePage, setShowHomePage] = useState(true);
   const [showPCSATView, setShowPCSATView] = useState(false);
-  const [showACSATView, setShowACSATView] = useState(false);
   const [showACSATUpload, setShowACSATUpload] = useState(false);
   const [acsatFileUploaded, setAcsatFileUploaded] = useState(false);
   const [acsatExcelData, setAcsatExcelData] = useState(null);
@@ -270,9 +271,38 @@ const App = () => {
   const [trendAnalysisFiles, setTrendAnalysisFiles] = useState([]);
   const [showACSATTrendAnalysis, setShowACSATTrendAnalysis] = useState(false);
   
-  // ACSAT-specific CSAT date state
+  // ACSAT-specific CSAT date state (derived from the Annual/Year dropdown below,
+  // kept for the ACSAT dashboard components that already expect these props)
   const [acsatCycleStartDate, setAcsatCycleStartDate] = useState(null);
   const [acsatCycleStartDateFormatted, setAcsatCycleStartDateFormatted] = useState('');
+
+  // ACSAT report-fetch state (live API data instead of manual Excel upload)
+  const [acsatFetchLoading, setAcsatFetchLoading] = useState(false);
+  const [acsatFetchError, setAcsatFetchError] = useState(null);
+  const annualOptions = useMemo(() => getAnnualOptions(), []);
+  const [acsatReportPeriod, setAcsatReportPeriod] = useState(annualOptions[0] || null);
+
+  // ACSAT customer filter (mirrors PCSAT's, reuses the same accessible-customer
+  // list loaded below — [] means "All Customers")
+  const [acsatSelectedCustomers, setAcsatSelectedCustomers] = useState([]);
+  const [acsatCustomerSearchTerm, setAcsatCustomerSearchTerm] = useState('');
+  const [acsatCustomerDropdownOpen, setAcsatCustomerDropdownOpen] = useState(false);
+  const acsatReportCustomerIds = acsatSelectedCustomers.length > 0
+    ? acsatSelectedCustomers.map(c => c.id).join(',')
+    : '-1';
+  const toggleAcsatCustomer = (customer) => {
+    setAcsatSelectedCustomers(prev =>
+      prev.some(c => c.id === customer.id)
+        ? prev.filter(c => c.id !== customer.id)
+        : [...prev, customer]
+    );
+  };
+  const acsatCustomerDropdownRef = React.useRef(null);
+  useEffect(() => {
+    if (acsatCustomerDropdownOpen && acsatCustomerDropdownRef.current) {
+      acsatCustomerDropdownRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [acsatCustomerDropdownOpen]);
 
   // PCSAT report-fetch filters (Phase 1: live API data instead of Excel upload)
   const halfYearOptions = useMemo(() => getHalfYearOptions(), []);
@@ -310,6 +340,10 @@ const App = () => {
 
   const filteredPcsatCustomerOptions = pcsatCustomerOptions.filter(c =>
     c.name.toLowerCase().includes(pcsatCustomerSearchTerm.toLowerCase())
+  );
+
+  const filteredAcsatCustomerOptions = pcsatCustomerOptions.filter(c =>
+    c.name.toLowerCase().includes(acsatCustomerSearchTerm.toLowerCase())
   );
 
   const pcsatCustomerDropdownRef = React.useRef(null);
@@ -487,6 +521,39 @@ const App = () => {
       setPcsatFetchError(err.message || 'Failed to fetch CSAT data from the server.');
     } finally {
       setPcsatFetchLoading(false);
+    }
+  };
+
+  const handleFetchACSATReportData = async () => {
+    if (!acsatReportPeriod) {
+      setAcsatFetchError('Please select an Annual cycle before proceeding.');
+      return;
+    }
+    setAcsatFetchLoading(true);
+    setAcsatFetchError(null);
+    try {
+      const { startDate: startDateStr, endDate: endDateStr, label } = acsatReportPeriod;
+      const dateObj = new Date(startDateStr);
+      setAcsatCycleStartDate(dateObj);
+      setAcsatCycleStartDateFormatted(formatDateToMMDDYYYY(dateObj));
+      updateAcsatCycle(label);
+
+      const workbook = await fetchACSATReportData({
+        startDate: startDateStr,
+        endDate: endDateStr,
+        customerIds: acsatReportCustomerIds,
+      });
+      console.log('=== ACSAT fetched report data ===');
+      console.log('Sheet names:', workbook.SheetNames);
+
+      setAcsatExcelData(workbook);
+      setAcsatFileUploaded(true);
+      setAcsatFileName(`ACSAT_${label}.xlsx`);
+    } catch (err) {
+      console.error('Failed to fetch ACSAT report data:', err);
+      setAcsatFetchError(err.message || 'Failed to fetch ACSAT data from the server.');
+    } finally {
+      setAcsatFetchLoading(false);
     }
   };
 
@@ -1229,6 +1296,40 @@ const App = () => {
     });
   };
 
+  // Fetches the live ACSAT reports (detail + status) for a comparison Annual
+  // cycle and saves it as a trend file entry, mirroring handleFetchPCSATTrendRange
+  // — replaces manually uploading a historical ACSAT Excel file. Sheet names
+  // match the real workbook shape used elsewhere so ACSAT dashboards' existing
+  // findAcsatReceivedReportSheetName/findAcsatSentReceivedSheetName lookups work unchanged.
+  const handleFetchACSATTrendRange = async (startDate, endDate) => {
+    const workbook = await fetchACSATReportData({
+      startDate,
+      endDate,
+      customerIds: acsatReportCustomerIds,
+    });
+    const detailRows = XLSX.utils.sheet_to_json(workbook.Sheets['CSAT Received Report']);
+    const statusRows = XLSX.utils.sheet_to_json(workbook.Sheets['CSAT Sent and Received Report']);
+
+    const baseName = annualOptions.find(o => o.startDate === startDate)?.label || `${startDate} to ${endDate}`;
+    let saveName = baseName;
+    let counter = 1;
+    while (acsatTrendAnalysisFiles.some(f => f.saveName === saveName)) {
+      saveName = `${baseName} (${counter})`;
+      counter += 1;
+    }
+
+    addAcsatTrendFile({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      saveName,
+      originalName: `API Fetch (${startDate} to ${endDate})`,
+      fileSize: 0,
+      sheetNames: ['CSAT Received Report', 'CSAT Sent and Received Report'],
+      sheets: { 'CSAT Received Report': detailRows, 'CSAT Sent and Received Report': statusRows },
+      totalRows: detailRows.length + statusRows.length,
+      uploadedAt: new Date().toISOString()
+    });
+  };
+
   const handleRemoveTrendFile = (fileId) => {
     setTrendAnalysisFiles(prev => prev.filter(f => f.id !== fileId));
   };
@@ -1346,7 +1447,8 @@ const App = () => {
 
   return (
     <AppContainer>
-      <Header 
+      <AcsatAlertModal />
+      <Header
         totalRecords={stats.totalRecords}
         averageScore={stats.averageScore}
         totalAccounts={stats.totalAccounts}
@@ -1364,7 +1466,7 @@ const App = () => {
             <div style={{ marginTop: '2rem', textAlign: 'center' }}>
               <ActionButton
                 onClick={() => {
-                  setShowACSATView(true);
+                  setShowACSATUpload(true);
                   setShowHomePage(false);
                 }}
               >
@@ -1520,7 +1622,7 @@ const App = () => {
               <UploadButton
                 onClick={() => {
                   if (!pcsatReportStartDate || !pcsatReportEndDate) {
-                    alert('Please select both Start Date and End Date before proceeding.');
+                    showAcsatAlert('Please select both Start Date and End Date before proceeding.');
                     return;
                   }
                   handleFetchPCSATReportData();
@@ -1535,391 +1637,251 @@ const App = () => {
               </UploadButton>
             </UploadSection>
           </HomeContainer>
-        ) : showACSATView ? (
-          <HomeContainer>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <HomeTitle style={{ margin: 0 }}>Account level CSAT (ACSAT)</HomeTitle>
-              <ActionButton
-                onClick={() => {
-                  setShowACSATView(false);
-                  setShowHomePage(true);
-                }}
-                style={{ 
-                  background: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
-                  color: 'white'
-                }}
-              >
-                ← Back to Home
-              </ActionButton>
-            </div>
-            
-            <CSATDateSection>
-              <DateSectionTitle>
-                📅 Set CSAT Cycle Start Date
-              </DateSectionTitle>
-              <p style={{ marginBottom: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                Select the start date for your CSAT analysis cycle
-              </p>
-              <DateInput
-                type="date"
-                value={acsatCycleStartDate ? acsatCycleStartDate.toISOString().split('T')[0] : ''}
-                onChange={(e) => {
-                  const date = e.target.value;
-                  if (date) {
-                    const dateObj = new Date(date);
-                    const formattedDate = formatDateToMMDDYYYY(dateObj);
-                    setAcsatCycleStartDate(dateObj);
-                    setAcsatCycleStartDateFormatted(formattedDate);
-                    console.log('ACSAT CSAT Cycle Start Date set:', { date: dateObj, formatted: formattedDate });
-                  } else {
-                    setAcsatCycleStartDate(null);
-                    setAcsatCycleStartDateFormatted('');
-                    console.log('ACSAT CSAT Cycle Start Date cleared');
-                  }
-                }}
-                placeholder="Select CSAT cycle start date"
-              />
-              {acsatCycleStartDateFormatted && (
-                <DateDisplay>
-                  <span>✓</span>
-                  <span>CSAT Cycle Start Date: {acsatCycleStartDateFormatted}</span>
-                </DateDisplay>
-              )}
-            </CSATDateSection>
-            
-            <UploadSection>
-              <UploadButton 
-                onClick={() => {
-                  if (!acsatCycleStartDateFormatted) {
-                    alert('Please select a CSAT Cycle Start Date before proceeding.');
-                    return;
-                  }
-                  setShowACSATUpload(true);
-                  setShowACSATView(false);
-                  // Reset file upload state when entering upload view
-                  setAcsatFileUploaded(false);
-                  setAcsatExcelData(null);
-                  setAcsatFileName(null);
-                }}
-                disabled={!acsatCycleStartDateFormatted}
-                style={{
-                  opacity: !acsatCycleStartDateFormatted ? 0.5 : 1,
-                  cursor: !acsatCycleStartDateFormatted ? 'not-allowed' : 'pointer'
-                }}
-              >
-                📊 Upload ACSAT Data
-              </UploadButton>
-              <p style={{ marginTop: '1rem', color: !acsatCycleStartDateFormatted ? 'red' : '#6b7280', fontSize: '0.875rem' }}>
-                {!acsatCycleStartDateFormatted 
-                  ? 'Please select a CSAT Cycle Start Date to enable file upload'
-                  : 'Upload your Excel file (.xlsx) to get started with ACSAT analysis'
-                }
-              </p>
-              <div style={{ 
-                marginTop: '1.5rem', 
-                padding: '1rem', 
-                background: '#f8fafc', 
-                borderRadius: '8px', 
-                border: '1px solid #e2e8f0',
-                fontSize: '0.875rem',
-                color: '#64748b'
-              }}>
-                <strong>Supported formats:</strong> .xlsx files<br/>
-                <strong>Features:</strong> Drag & drop, automatic data processing, multiple dashboard views
-              </div>
-            </UploadSection>
-          </HomeContainer>
         ) : showACSATUpload ? (
           (() => {
             return (
           <HomeContainer>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <HomeTitle style={{ margin: 0 }}>Upload ACSAT Data</HomeTitle>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: acsatFileUploaded ? '0.75rem' : '2rem' }}>
+              <HomeTitle style={{ margin: 0, fontSize: acsatFileUploaded ? '1.1rem' : undefined }}>{acsatFileUploaded ? 'ACSAT Dashboards' : 'Fetch ACSAT Data'}</HomeTitle>
               <ActionButton
                 onClick={() => {
-                  if (acsatFileUploaded) {
-                    const confirmReset = window.confirm('Going back will reset your uploaded file. Are you sure you want to continue?');
-                    if (!confirmReset) return;
-                  }
                   setShowACSATUpload(false);
-                  setShowACSATView(true);
-                  // Reset file upload state when going back
+                  setShowHomePage(true);
+                  // Reset fetched data when going back
                   setAcsatFileUploaded(false);
                   setAcsatExcelData(null);
                   setAcsatFileName(null);
                 }}
-                style={{ 
-                  background: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
-                  color: 'white'
+                style={{
+                  background: 'transparent',
+                  color: '#16233D',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: 'none'
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#7c3aed'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = '#7c3aed'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#16233D'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
               >
-                ← Back to ACSAT
+                ← Back to Home
               </ActionButton>
             </div>
 
-            <div style={{ 
-              background: 'white', 
-              borderRadius: '12px', 
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
-              border: '1px solid #e2e8f0', 
-              padding: '2rem', 
-              margin: '2rem 0',
+            {!acsatFileUploaded && (
+            <div style={{
+              background: 'white',
+              borderRadius: '10px',
+              border: '1px solid #e2e8f0',
+              padding: '1.5rem',
+              margin: '1rem 0',
               textAlign: 'center'
             }}>
-               <p style={{ 
-                 marginBottom: '1.5rem', 
-                 color: 'white', 
-                 fontSize: '0.875rem',
-                 background: '#3b82f6',
-                 padding: '0.75rem 1rem',
+              <p style={{ margin: '0 0 1.25rem', color: '#6b7280', fontSize: '0.85rem' }}>
+                Select an annual cycle and, optionally, a customer to retrieve ACSAT data from the CSM Reports API.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem', textAlign: 'left' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, color: '#374151', fontSize: '0.8rem' }}>
+                    <Calendar size={14} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Select Cycle
+                  </label>
+                  <select
+                    value={acsatReportPeriod?.label || ''}
+                    onChange={(e) => setAcsatReportPeriod(annualOptions.find(o => o.label === e.target.value) || null)}
+                    style={{ minWidth: '180px', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.85rem' }}
+                  >
+                    {annualOptions.map(o => (
+                      <option key={o.label} value={o.label}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, color: '#374151', fontSize: '0.8rem' }}>
+                    Customer
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={
+                      pcsatCustomerOptionsLoading
+                        ? 'Loading customers...'
+                        : acsatSelectedCustomers.length > 0
+                          ? `${acsatSelectedCustomers.length} selected`
+                          : 'All Customers'
+                    }
+                    value={acsatCustomerSearchTerm}
+                    onChange={(e) => { setAcsatCustomerSearchTerm(e.target.value); setAcsatCustomerDropdownOpen(true); }}
+                    onFocus={() => setAcsatCustomerDropdownOpen(true)}
+                    disabled={pcsatCustomerOptionsLoading}
+                    style={{ minWidth: '220px', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.85rem' }}
+                  />
+                  {acsatCustomerDropdownOpen && (
+                    <div
+                      ref={acsatCustomerDropdownRef}
+                      style={{
+                        position: 'absolute',
+                        zIndex: 30,
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        marginTop: '2px',
+                        width: '260px',
+                        maxHeight: '260px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                      }}>
+                      <div
+                        onClick={() => setAcsatSelectedCustomers([])}
+                        style={{
+                          padding: '0.4rem 0.6rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #f1f5f9',
+                          color: acsatSelectedCustomers.length === 0 ? '#667eea' : '#374151'
+                        }}
+                      >
+                        <Check size={14} style={{ marginRight: '0.2rem', verticalAlign: 'text-bottom' }} />All Customers {acsatSelectedCustomers.length === 0 ? '(selected)' : ''}
+                      </div>
+                      <div style={{ overflowY: 'auto', flex: '1 1 auto' }}>
+                        {filteredAcsatCustomerOptions.length === 0 ? (
+                          <div style={{ padding: '0.5rem 0.6rem', fontSize: '0.8rem', color: '#94a3b8' }}>No matches</div>
+                        ) : (
+                          filteredAcsatCustomerOptions.map(c => (
+                            <label
+                              key={c.id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                padding: '0.3rem 0.6rem',
+                                fontSize: '0.8rem',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={acsatSelectedCustomers.some(s => s.id === c.id)}
+                                onChange={() => toggleAcsatCustomer(c)}
+                              />
+                              {c.name}
+                            </label>
+                          ))
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right', padding: '0.35rem 0.5rem', borderTop: '1px solid #f1f5f9' }}>
+                        <button
+                          onClick={() => { setAcsatCustomerDropdownOpen(false); setAcsatCustomerSearchTerm(''); }}
+                          style={{
+                            padding: '0.25rem 0.75rem',
+                            background: '#667eea',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+               <p style={{
+                 marginBottom: '1.25rem',
+                 color: '#1D4ED8',
+                 fontSize: '0.8rem',
+                 background: '#eff6ff',
+                 border: '1px solid #bfdbfe',
+                 padding: '0.6rem 0.9rem',
                  borderRadius: '6px',
                  fontWeight: '500'
                }}>
-                 Select your Excel file (.xlsx) containing ACSAT data
+                 This will retrieve ACSAT data for <strong>{acsatReportPeriod?.label || 'the selected cycle'}</strong> from the CSM Reports API.
                </p>
-              
-              
-              
-              {acsatFileUploaded ? (
-                // Show uploaded file status
-                <div style={{ 
-                  border: '2px solid #10b981', 
-                  borderRadius: '8px', 
-                  padding: '2rem', 
-                  margin: '1rem 0',
-                  background: '#f0fdf4',
-                  textAlign: 'center'
+
+              <div style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '1.5rem',
+                margin: '1rem 0',
+                background: '#fafbfc',
+                textAlign: 'center'
+              }}>
+                <UploadButton
+                  onClick={handleFetchACSATReportData}
+                  disabled={acsatFetchLoading}
+                  style={{
+                    background: '#1D4ED8',
+                    boxShadow: 'none',
+                    opacity: acsatFetchLoading ? 0.5 : 1,
+                    cursor: acsatFetchLoading ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {acsatFetchLoading ? <><Loader2 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'text-bottom' }} />Fetching...</> : acsatFileUploaded ? <><RefreshCw size={16} style={{ marginRight: '0.4rem', verticalAlign: 'text-bottom' }} />Re-fetch ACSAT Data</> : <><BarChart3 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'text-bottom' }} />Fetch ACSAT Data</>}
+                </UploadButton>
+                {acsatFileUploaded && !acsatFetchLoading && (
+                  <p style={{ color: '#065f46', fontSize: '0.875rem', marginTop: '1rem' }}>
+                    <CheckCircle2 size={14} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Data loaded for {acsatFileName}
+                  </p>
+                )}
+                {acsatFetchError && (
+                  <p style={{ color: '#dc2626', fontSize: '0.875rem', marginTop: '1rem' }}>{acsatFetchError}</p>
+                )}
+              </div>
+            </div>
+            )}
+
+              {acsatFileUploaded && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem',
+                  background: '#f0f9ff',
+                  borderRadius: '8px',
+                  border: '1px solid #0ea5e9',
+                  textAlign: 'left'
                 }}>
-                  <div style={{ 
-                    fontSize: '3rem', 
-                    marginBottom: '1rem',
-                    color: '#10b981'
-                  }}>
-                    ✅
-                  </div>
-                  <h4 style={{ 
-                    margin: '0 0 0.5rem 0', 
-                    color: '#065f46', 
-                    fontSize: '1.125rem',
-                    fontWeight: '600'
-                  }}>
-                    File Successfully Uploaded
-                  </h4>
-                  <div style={{ 
-                    margin: '0 0 1rem 0', 
-                    padding: '0.75rem', 
-                    background: '#d1fae5', 
-                    borderRadius: '6px',
-                    border: '1px solid #a7f3d0'
-                  }}>
-                    <p style={{ 
-                      margin: '0 0 0.25rem 0', 
-                      color: '#065f46', 
-                      fontSize: '0.875rem',
-                      fontWeight: '600'
-                    }}>
-                      📄 File Name:
-                    </p>
-                    <p style={{ 
-                      margin: '0', 
-                      color: '#047857', 
-                      fontSize: '0.875rem',
-                      fontFamily: 'monospace',
-                      wordBreak: 'break-all'
-                    }}>
-                      {acsatFileName || 'Unknown file'}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0, color: '#0c4a6e', fontSize: '0.95rem' }}>
+                      Available Dashboards for ACSAT ({acsatReportPeriod?.label})
+                    </h4>
                     <button
                       onClick={() => {
-                        // Reset file upload state to allow new upload
                         setAcsatFileUploaded(false);
                         setAcsatExcelData(null);
                         setAcsatFileName(null);
                       }}
                       style={{
-                        background: '#ef4444',
+                        padding: '0.3rem 0.75rem',
+                        background: '#0ea5e9',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
+                        fontSize: '0.75rem',
                         cursor: 'pointer'
                       }}
                     >
-                      Remove File
+                      <RefreshCw size={14} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Change Cycle
                     </button>
-                    <button
-                      onClick={() => {
-                        // Trigger file input
-                        document.getElementById('acsat-file-input').click();
-                      }}
-                      style={{
-                        background: '#3b82f6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Upload New File
-                    </button>
-                  </div>
-                  <input
-                    id="acsat-file-input"
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={async (e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        try {
-                          console.log('New ACSAT file selected:', file.name);
-                          
-                          // Use the same file processing logic as the main upload
-                          const data = await file.arrayBuffer();
-                          const workbook = XLSX.read(data, { type: 'array' });
-                          
-                          // Store the processed data
-                          setAcsatExcelData(workbook);
-                          setAcsatFileUploaded(true);
-                          setAcsatFileName(file.name);
-                        } catch (error) {
-                          console.error('Error processing ACSAT file:', error);
-                          alert('Error processing file. Please try again.');
-                        }
-                      }
-                    }}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-              ) : (
-                // Show file upload area
-                <div style={{ 
-                  border: '2px dashed #d1d5db', 
-                  borderRadius: '8px', 
-                  padding: '2rem', 
-                  margin: '1rem 0',
-                  background: '#f9fafb'
-                }}>
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={async (e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        try {
-                          console.log('ACSAT file selected:', file.name);
-                          
-                          // Use the same file processing logic as the main upload
-                          const data = await file.arrayBuffer();
-                          const workbook = XLSX.read(data, { type: 'array' });
-                          
-                          // Store the processed data
-                          setAcsatExcelData(workbook);
-                          setAcsatFileUploaded(true);
-                          setAcsatFileName(file.name);
-                        } catch (error) {
-                          console.error('Error processing ACSAT file:', error);
-                          alert('Error processing file. Please try again.');
-                        }
-                      }
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      padding: '1rem', 
-                      border: 'none', 
-                      background: 'transparent',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  <p style={{ marginTop: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                    Click to select file or drag and drop
-                  </p>
-                </div>
-              )}
-              
-              {acsatFileUploaded && (
-                <div style={{ 
-                  marginTop: '2rem', 
-                  padding: '1rem', 
-                  background: '#f0f9ff', 
-                  borderRadius: '8px', 
-                  border: '1px solid #0ea5e9',
-                  textAlign: 'left'
-                }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#0c4a6e', fontSize: '1rem' }}>
-                    Available Dashboards for ACSAT: {acsatFileUploaded ? '(File Uploaded)' : '(No File)'}
-                  </h4>
-                  
-                  {/* CSAT Cycle Selection */}
-                  <div style={{ 
-                    marginBottom: '1.5rem', 
-                    padding: '1rem', 
-                    background: '#f8fafc', 
-                    borderRadius: '8px', 
-                    border: '1px solid #e2e8f0' 
-                  }}>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '0.5rem', 
-                      color: '#374151', 
-                      fontSize: '0.875rem', 
-                      fontWeight: '600' 
-                    }}>
-                      Select CSAT cycle <span style={{ color: 'red' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={acsatCycle}
-                      onChange={(e) => updateAcsatCycle(e.target.value)}
-                      placeholder="Enter CSAT cycle (e.g., 2024-Q1, 2024-Q2, etc.)"
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: acsatCycle ? '2px solid #10b981' : '2px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '0.875rem',
-                        outline: 'none',
-                        transition: 'border-color 0.2s',
-                        background: acsatCycle ? '#f0fdf4' : 'white'
-                      }}
-                      required
-                    />
-                    {!acsatCycle && (
-                      <p style={{ 
-                        margin: '0.5rem 0 0 0', 
-                        color: 'red', 
-                        fontSize: '0.75rem' 
-                      }}>
-                        This field is required to proceed with dashboard analysis
-                      </p>
-                    )}
                   </div>
 
                   <div style={{
-                    marginBottom: '1.5rem',
-                    padding: '1.5rem',
+                    marginBottom: '0.75rem',
+                    padding: '0.75rem',
                     background: '#f8fafc',
-                    borderRadius: '12px',
+                    borderRadius: '10px',
                     border: '2px solid #e2e8f0',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}>
-                    <h4 style={{ margin: '0 0 1rem 0', color: '#1e3a8a', fontSize: '1rem' }}>
-                      Available Dashboards
-                    </h4>
                     <div
                       role="button"
                       tabIndex={0}
                       style={{
-                        padding: '0.75rem 1rem',
+                        padding: '0.4rem 0.9rem',
                         background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
                         borderRadius: '8px',
                         border: '1px solid #0d9488',
                         cursor: 'pointer',
-                        minHeight: '50px',
+                        minHeight: '34px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1942,36 +1904,33 @@ const App = () => {
                         }
                       }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>
-                        📈 Upload data for ACSAT trend analysis
-                        {acsatTrendAnalysisFiles.length > 0 ? ` (${acsatTrendAnalysisFiles.length} file${acsatTrendAnalysisFiles.length === 1 ? '' : 's'} in session)` : ''}
+                      <strong style={{ color: 'white', fontSize: '0.75rem', textAlign: 'center', lineHeight: '1.2' }}>
+                        <TrendingUp size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Fetch ACSAT Trend Analysis
+                        {acsatTrendAnalysisFiles.length > 0 ? ` (${acsatTrendAnalysisFiles.length} file${acsatTrendAnalysisFiles.length === 1 ? '' : 's'})` : ''}
                       </strong>
                     </div>
-                    <p style={{ margin: '0.75rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                      Multiple Excel files supported. Data is kept for this session and can be renamed for later use by ACSAT dashboards.
-                    </p>
                   </div>
 
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-                    gap: '1rem',
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                    gap: '0.5rem',
                     maxWidth: '100%',
-                    padding: '1.5rem',
+                    padding: '0.75rem',
                     background: '#f8fafc',
-                    borderRadius: '12px',
+                    borderRadius: '10px',
                     border: '2px solid #e2e8f0',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}>
                     <div style={{ 
-                      padding: '0.75rem 1rem', 
+                      padding: '0.65rem 0.9rem', 
                       background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', 
                       borderRadius: '8px', 
                       border: '1px solid #3b82f6',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                       opacity: 1,
-                      minHeight: '50px',
+                      minHeight: '54px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1979,11 +1938,11 @@ const App = () => {
                       maxWidth: '100%',
                       justifySelf: 'stretch'
                     }}
-                    onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'}
-                    onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'}
                     onClick={() => {
                       if (!acsatCycle) {
-                        alert('Please select a CSAT cycle before proceeding!');
+                        showAcsatAlert('Please select a CSAT cycle before proceeding!');
                         return;
                       }
                       // Navigate to the Account Level Rating Dashboard
@@ -1991,18 +1950,18 @@ const App = () => {
                       setShowAccountLevelRating(true);
                     }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>📈 Org level/BU wise rating for each perspective Dashboard</strong>
+                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.25' }}><TrendingUp size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Org level/BU wise rating for each perspective Dashboard</strong>
                     </div>
                     <div
                       style={{
-                        padding: '0.75rem 1rem', 
+                        padding: '0.65rem 0.9rem', 
                         background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', 
                         borderRadius: '8px', 
                         border: '1px solid #f59e0b',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         opacity: 1,
-                        minHeight: '50px',
+                        minHeight: '54px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -2010,11 +1969,11 @@ const App = () => {
                         maxWidth: '100%',
                         justifySelf: 'stretch'
                       }}
-                      onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'}
-                      onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'}
                       onClick={() => {
                         if (!acsatCycle) {
-                          alert('Please select a CSAT cycle before proceeding!');
+                          showAcsatAlert('Please select a CSAT cycle before proceeding!');
                           return;
                         }
                         // Navigate to Org level Qualitative analysis Dashboard
@@ -2022,22 +1981,22 @@ const App = () => {
                           setShowACSATUpload(false);
                           setShowOrgLevelQualitativeAnalysis(true);
                         } else {
-                          alert('Please upload an Excel file first!');
+                          showAcsatAlert('Please upload an Excel file first!');
                         }
                       }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>📝 Org level/BU wise Qualitative analysis with bucket analysis</strong>
+                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.25' }}><FileText size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Org level/BU wise Qualitative analysis with bucket analysis</strong>
                     </div>
                     <div
                       style={{
-                        padding: '0.75rem 1rem', 
+                        padding: '0.65rem 0.9rem', 
                         background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', 
                         borderRadius: '8px', 
                         border: '1px solid #ef4444',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         opacity: 1,
-                        minHeight: '50px',
+                        minHeight: '54px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -2045,11 +2004,11 @@ const App = () => {
                         maxWidth: '100%',
                         justifySelf: 'stretch'
                       }}
-                      onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'}
-                      onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}
                       onClick={() => {
                         if (!acsatCycle) {
-                          alert('Please select a CSAT cycle before proceeding!');
+                          showAcsatAlert('Please select a CSAT cycle before proceeding!');
                           return;
                         }
                         // Navigate to Top Expectations Analysis Dashboard
@@ -2063,22 +2022,22 @@ const App = () => {
                           setShowTopExpectationsAnalysis(true);
                         } else {
                           console.log('❌ No Excel file uploaded');
-                          alert('Please upload an Excel file first!');
+                          showAcsatAlert('Please upload an Excel file first!');
                         }
                       }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>🎯 Org level/BU wise Top Expectations Analysis</strong>
+                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.25' }}><Target size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Org level/BU wise Top Expectations Analysis</strong>
                     </div>
                     <div
                       style={{
-                        padding: '0.75rem 1rem', 
+                        padding: '0.65rem 0.9rem', 
                         background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', 
                         borderRadius: '8px', 
                         border: '1px solid #06b6d4',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         opacity: 1,
-                        minHeight: '50px',
+                        minHeight: '54px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -2086,11 +2045,11 @@ const App = () => {
                         maxWidth: '100%',
                         justifySelf: 'stretch'
                       }}
-                      onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)'}
-                      onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)'}
                       onClick={() => {
                         if (!acsatCycle) {
-                          alert('Please select a CSAT cycle before proceeding!');
+                          showAcsatAlert('Please select a CSAT cycle before proceeding!');
                           return;
                         }
                         // Navigate to NPS Dashboard
@@ -2098,15 +2057,15 @@ const App = () => {
                           setShowACSATUpload(false);
                           setShowNPSDashboard(true);
                         } else {
-                          alert('Please upload an Excel file first!');
+                          showAcsatAlert('Please upload an Excel file first!');
                         }
                       }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>⭐ Org level/BU wise dashboard for NPS</strong>
+                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.25' }}><Star size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Org level/BU wise dashboard for NPS</strong>
                     </div>
                     <div
                       style={{
-                        padding: '0.75rem 1rem', 
+                        padding: '0.65rem 0.9rem', 
                         background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', 
                         color: 'white', 
                         border: 'none', 
@@ -2116,18 +2075,18 @@ const App = () => {
                         fontSize: '0.8rem',
                         fontWeight: '500',
                         textAlign: 'center',
-                        minHeight: '60px',
+                        minHeight: '54px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                         width: '100%'
                       }}
-                      onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'}
-                      onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'}
                       onClick={() => {
                         if (!acsatCycle) {
-                          alert('Please select a CSAT cycle before proceeding!');
+                          showAcsatAlert('Please select a CSAT cycle before proceeding!');
                           return;
                         }
                         // Navigate to NPS Correlation Dashboard
@@ -2135,22 +2094,22 @@ const App = () => {
                           setShowACSATUpload(false);
                           setShowNPSCorrelation(true);
                         } else {
-                          alert('Please upload an Excel file first!');
+                          showAcsatAlert('Please upload an Excel file first!');
                         }
                       }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>🔗 Org level/BU wise Co-relation of NPS rating and perspective score</strong>
+                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.25' }}><Link2 size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Org level/BU wise Co-relation of NPS rating and perspective score</strong>
                     </div>
                     <div
                       style={{
-                        padding: '0.75rem 1rem', 
+                        padding: '0.65rem 0.9rem', 
                         background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
                         borderRadius: '8px', 
                         border: '1px solid #10b981',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         opacity: 1,
-                        minHeight: '50px',
+                        minHeight: '54px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -2158,11 +2117,11 @@ const App = () => {
                         maxWidth: '100%',
                         justifySelf: 'stretch'
                       }}
-                      onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)'}
-                      onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}
                       onClick={() => {
                         if (!acsatCycle) {
-                          alert('Please select a CSAT cycle before proceeding!');
+                          showAcsatAlert('Please select a CSAT cycle before proceeding!');
                           return;
                         }
                         // Navigate to ACSAT Count Dashboard
@@ -2170,22 +2129,22 @@ const App = () => {
                           setShowACSATUpload(false);
                           setShowACSATCountDashboard(true);
                         } else {
-                          alert('Please upload an Excel file first!');
+                          showAcsatAlert('Please upload an Excel file first!');
                         }
                       }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>📊 Org level/BU wise % of 4,5 rater for Each Perspective</strong>
+                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.25' }}><BarChart3 size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Org level/BU wise % of 4,5 rater for Each Perspective</strong>
                     </div>
                     <div
                       style={{
-                        padding: '0.75rem 1rem', 
+                        padding: '0.65rem 0.9rem', 
                         background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', 
                         borderRadius: '8px', 
                         border: '1px solid #f97316',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         opacity: 1,
-                        minHeight: '50px',
+                        minHeight: '54px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -2193,11 +2152,11 @@ const App = () => {
                         maxWidth: '100%',
                         justifySelf: 'stretch'
                       }}
-                      onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)'}
-                      onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'}
                       onClick={() => {
                         if (!acsatCycle) {
-                          alert('Please select a CSAT cycle before proceeding!');
+                          showAcsatAlert('Please select a CSAT cycle before proceeding!');
                           return;
                         }
                         // Navigate to Response Rate Dashboard
@@ -2205,51 +2164,51 @@ const App = () => {
                           setShowACSATUpload(false);
                           setShowACSATResponseRateDashboard(true);
                         } else {
-                          alert('Please upload an Excel file first!');
+                          showAcsatAlert('Please upload an Excel file first!');
                         }
                       }}
                     >
-                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.3' }}>📈 Org level/BU wise dashboard for Response Rate</strong>
+                      <strong style={{ color: 'white', fontSize: '0.8rem', textAlign: 'center', lineHeight: '1.25' }}><TrendingUp size={16} style={{ marginRight: '0.3rem', verticalAlign: 'text-bottom' }} />Org level/BU wise dashboard for Response Rate</strong>
                     </div>
                   </div>
                 </div>
               )}
-              
-              <div style={{ 
-                marginTop: '1.5rem', 
-                padding: '1rem', 
-                background: '#f8fafc', 
-                borderRadius: '8px', 
-                border: '1px solid #e2e8f0',
-                fontSize: '0.875rem',
-                color: '#64748b'
-              }}>
-                <strong>Supported formats:</strong> .xlsx, .xls files<br/>
-                <strong>Features:</strong> Account-level analysis, perspective-based insights, comprehensive reporting
-              </div>
-            </div>
+
+              {!acsatFileUploaded && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: '0.6rem 0.75rem',
+                  background: '#f8fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '0.8rem',
+                  color: '#64748b'
+                }}>
+                  <strong>Data source:</strong> CSM Reports API (live) &bull; <strong>Features:</strong> Account-level analysis, perspective-based insights, comprehensive reporting
+                </div>
+              )}
           </HomeContainer>
             );
           })()
         ) : showACSATTrendAnalysis ? (
           <TrendAnalysisUpload
-            title="Upload data for ACSAT trend analysis"
+            title="Fetch data for ACSAT trend analysis"
             backLabel="← Back to ACSAT"
-            description="Upload one or more historical ACSAT Excel files (.xlsx or .xls). You can select multiple files at once or upload them one by one. Each file is parsed and stored in memory for the entire browser session under a unique saved name (auto-numbered if names collide). Rename any file after upload. ACSAT dashboards use these files for trend analysis (e.g. H2 vs H1 comparison)."
+            description="Fetch a comparison Annual cycle's ACSAT data (detail + status reports) from the server. Each fetch is saved with a unique name and persists for the entire session so ACSAT dashboards can use it for trend analysis."
             showSessionPersistenceNote
             onBack={() => {
               setShowACSATTrendAnalysis(false);
-              if (acsatFileUploaded) {
-                setShowACSATUpload(true);
-              } else {
-                setShowACSATView(true);
-              }
+              setShowACSATUpload(true);
             }}
             trendFiles={acsatTrendAnalysisFiles}
             onAddTrendFile={addAcsatTrendFile}
             onRemoveTrendFile={removeAcsatTrendFile}
             onRenameTrendFile={renameAcsatTrendFile}
-            filesSectionTitle="Uploaded ACSAT trend files (saved for this session)"
+            onFetchRange={handleFetchACSATTrendRange}
+            currentPeriodStartDate={acsatReportPeriod?.startDate}
+            periodOptions={annualOptions}
+            periodLabelFn={(startDate) => annualOptions.find(o => o.startDate === startDate)?.label || ''}
+            filesSectionTitle="Fetched ACSAT trend cycles (saved for this session)"
           />
         ) : showAccountLevelRating ? (
           <AccountLevelRatingDashboard 

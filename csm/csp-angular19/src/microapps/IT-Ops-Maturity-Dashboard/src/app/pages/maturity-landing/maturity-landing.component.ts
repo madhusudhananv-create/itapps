@@ -62,12 +62,12 @@ function toTopRisk(row: ItOpsTopRiskRow): TopRisk {
     isNotScored: row.isNotScored,
     accountId: row.accountId ?? undefined,
     accountName: row.accountName ?? undefined,
-    // The assessor's own words, added when they scored/submitted this parameter (backend
-    // resolves this to the finding's RECOMMENDED_ACTION when one exists, otherwise the score's
-    // own NOTES) - a generic maturity-band label ("Well Managed"/"Needs Work"/etc.) told the
-    // viewer nothing they couldn't already see from the Score/Gap columns, and silently hid
-    // whatever real notes the assessor actually wrote.
+    // Standard maturity band for the score, maintained in the ITOPS_SCORE_RECOMMENDATION
+    // master table so the wording can be changed in the database without a deploy. Showing
+    // the assessor's own ITOPS_SCORE.NOTES here instead put raw working notes in front of
+    // every Dashboard viewer.
     recommendation: row.isNotScored ? 'Not Scored' : (row.recommendedAction?.trim() || '-'),
+    recommendationDetail: row.recommendationDetail?.trim() || undefined,
   };
 }
 
@@ -153,6 +153,8 @@ type RiskSortColumn = 'category' | 'currentScore' | 'gap';
 type SortDirection = 'asc' | 'desc';
 
 type AssignmentSortColumn = 'account' | 'project' | 'domain' | 'role' | 'cycle' | 'status';
+/** Which "My Assignments" summary tile the table is drilled into - see matchesSummaryBucket. */
+type AssignmentSummaryFilter = 'all' | 'open' | 'returned' | 'review' | 'completed';
 
 /** Remembered across visits so a Reviewer who always lives on one tab/cycle doesn't have to re-pick it every time. */
 const MY_ASSIGNMENTS_TAB_KEY = 'itops-my-assignments-tab';
@@ -248,6 +250,14 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   assignmentsTab: 'assessments' | 'reviews' | 'allocated' = (localStorage.getItem(MY_ASSIGNMENTS_TAB_KEY) as any) ?? 'assessments';
   /** Free-text filter over the current tab's rows - account/project/domain name. */
   assignmentSearch = '';
+  /**
+   * Which summary tile (Open / Returned for Revision / Pending for Review / Completed) the
+   * table is currently drilled into, or 'all'. Deliberately NOT persisted, unlike the
+   * Cycle/Account/Status pills: this is a one-click drill-down off a tile the user can see
+   * right above the table, so silently restoring it on a later visit - with the tile's
+   * pressed state the only clue - would just look like rows had gone missing.
+   */
+  summaryFilter: AssignmentSummaryFilter = 'all';
   private _statusFilter = localStorage.getItem(MY_ASSIGNMENTS_STATUS_KEY) ?? 'all';
   private _accountFilter = localStorage.getItem(MY_ASSIGNMENTS_ACCOUNT_KEY) ?? 'all';
 
@@ -866,12 +876,24 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     this.assignmentsPage = 1;
   }
 
-  get filteredAssignments(): ItOpsMyAssignmentRow[] {
+  /**
+   * Cycle/Account/Status-filtered rows, BEFORE any summary-tile drill-down. The tiles count
+   * from this rather than from filteredAssignments: counting post-drill-down would zero out
+   * the other three tiles the moment one was selected, disabling them and leaving the Reset
+   * filters button as the only way back.
+   */
+  private get assignmentsBeforeSummaryFilter(): ItOpsMyAssignmentRow[] {
     let rows = this.myAssignments;
     if (this.cycleFilter !== 'all') rows = rows.filter((row) => row.cycleLabel === this.cycleFilter);
     if (this.accountFilter !== 'all') rows = rows.filter((row) => row.accountName === this.accountFilter);
     if (this.statusFilter !== 'all') rows = rows.filter((row) => this.displayAssignmentStatus(row) === this.statusFilter);
     return rows;
+  }
+
+  get filteredAssignments(): ItOpsMyAssignmentRow[] {
+    const rows = this.assignmentsBeforeSummaryFilter;
+    if (this.summaryFilter === 'all') return rows;
+    return rows.filter((row) => this.matchesSummaryBucket(row, this.summaryFilter));
   }
 
   /**
@@ -926,10 +948,18 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return idx === -1 ? order.length : idx;
   }
 
+  /**
+   * Which of the three tabs a row belongs to. One definition, used both to build each tab's
+   * table and to count the summary tiles above it, so the two can't drift apart.
+   */
+  private belongsToTab(row: ItOpsMyAssignmentRow, tab: 'assessments' | 'reviews' | 'allocated'): boolean {
+    if (tab === 'reviews') return this.isReviewerOn(row) && row.status !== 'NotStarted';
+    if (tab === 'allocated') return !row.roles?.length;
+    return this.isAssessorOn(row) || (this.isAssesseeOn(row) && row.status === 'Approved');
+  }
+
   get myOpenAssessments(): ItOpsMyAssignmentRow[] {
-    const rows = this.filteredAssignments.filter(
-      (row) => this.isAssessorOn(row) || (this.isAssesseeOn(row) && row.status === 'Approved'),
-    );
+    const rows = this.filteredAssignments.filter((row) => this.belongsToTab(row, 'assessments'));
     // Default order: status bucket first (Assessor and Assessee each get their own bucket
     // order, per row - see ASSESSOR_STATUS_ORDER/ASSESSEE_STATUS_ORDER), then
     // recently-created-first within the same bucket.
@@ -959,7 +989,7 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     // then every other status below (also recently-created-first) - so the reviewer's
     // actual queue leads, with everything already decided sitting below it for reference.
     return this.filteredAssignments
-      .filter((row) => this.isReviewerOn(row) && row.status !== 'NotStarted')
+      .filter((row) => this.belongsToTab(row, 'reviews'))
       .slice()
       .sort((a, b) => {
         const rankA = a.status === 'PendingReview' ? 0 : 1;
@@ -983,13 +1013,31 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   }
 
   /**
+   * Counts for the three role-tab badges. These deliberately ignore any summary-tile
+   * drill-down (unlike the tables they head) - a badge is how you decide whether a tab is
+   * worth switching to, so it has to keep reporting what that tab actually holds rather
+   * than how many survive a filter applied on the tab you're looking at now.
+   */
+  get assessmentsTabCount(): number {
+    return this.assignmentsBeforeSummaryFilter.filter((row) => this.belongsToTab(row, 'assessments')).length;
+  }
+
+  get reviewsTabCount(): number {
+    return this.assignmentsBeforeSummaryFilter.filter((row) => this.belongsToTab(row, 'reviews') && row.status === 'PendingReview').length;
+  }
+
+  get allocatedTabCount(): number {
+    return this.assignmentsBeforeSummaryFilter.filter((row) => this.belongsToTab(row, 'allocated')).length;
+  }
+
+  /**
    * "Assessments" tab: every allocation/ownership-only assessment (see
    * hasAllocatedOnlyAssignments) - deliberately unfiltered by status, since
    * these aren't "my work to act on", just projects this employee can see
    * into.
    */
   get myAllocatedAssessments(): ItOpsMyAssignmentRow[] {
-    return this.filteredAssignments.filter((row) => !row.roles?.length);
+    return this.filteredAssignments.filter((row) => this.belongsToTab(row, 'allocated'));
   }
 
   /** Rows for whichever of the three tabs is currently showing, before search/sort. */
@@ -1193,20 +1241,65 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
    * while the table underneath, on the active tab, shows a much smaller set.
    */
   get assignmentsSummary(): { openCount: number; returnedCount: number; reviewCount: number; completedCount: number } {
-    const rows = this.currentTabAssignmentsRaw.filter((row) => this.matchesAssignmentSearch(row));
-    // isReturnedForRevision/'PendingReview' check the raw backend status directly -
-    // displayAssignmentStatus's own ReturnedForRevision->"In Progress" mapping
-    // (BACKEND_STATUS_MAP, used for the Status filter/table column) would
-    // otherwise never match a literal "Returned for Revision" comparison here.
-    const isReturned = (row: ItOpsMyAssignmentRow) => this.isReturnedForRevision(row);
-    const isPendingReview = (row: ItOpsMyAssignmentRow) => row.status === 'PendingReview';
-    const isCompleted = (row: ItOpsMyAssignmentRow) => this.displayAssignmentStatus(row) === 'Completed';
+    const rows = this.assignmentsBeforeSummaryFilter
+      .filter((row) => this.belongsToTab(row, this.assignmentsTab))
+      .filter((row) => this.matchesAssignmentSearch(row));
     return {
-      openCount: rows.filter((row) => !isReturned(row) && !isPendingReview(row) && !isCompleted(row)).length,
-      returnedCount: rows.filter((row) => isReturned(row)).length,
-      reviewCount: rows.filter((row) => isPendingReview(row)).length,
-      completedCount: rows.filter((row) => isCompleted(row)).length,
+      openCount: rows.filter((row) => this.matchesSummaryBucket(row, 'open')).length,
+      returnedCount: rows.filter((row) => this.matchesSummaryBucket(row, 'returned')).length,
+      reviewCount: rows.filter((row) => this.matchesSummaryBucket(row, 'review')).length,
+      completedCount: rows.filter((row) => this.matchesSummaryBucket(row, 'completed')).length,
     };
+  }
+
+  /**
+   * The single definition of which summary tile a row belongs to - used both to count the
+   * tiles and to filter the table when one is clicked, so a tile reading "13 Open" always
+   * opens exactly those 13 rows.
+   *
+   * isReturnedForRevision/'PendingReview' check the raw backend status directly -
+   * displayAssignmentStatus's own ReturnedForRevision->"In Progress" mapping
+   * (BACKEND_STATUS_MAP, used for the Status filter/table column) would otherwise never
+   * match a literal "Returned for Revision" comparison here. "Open" is deliberately the
+   * remainder (everything not returned, not awaiting review and not complete) rather than a
+   * fixed status list, so a row can never fall through all four tiles.
+   */
+  private matchesSummaryBucket(row: ItOpsMyAssignmentRow, bucket: AssignmentSummaryFilter): boolean {
+    const isReturned = this.isReturnedForRevision(row);
+    const isPendingReview = row.status === 'PendingReview';
+    const isCompleted = this.displayAssignmentStatus(row) === 'Completed';
+    switch (bucket) {
+      case 'returned': return isReturned;
+      case 'review': return isPendingReview;
+      case 'completed': return isCompleted;
+      case 'open': return !isReturned && !isPendingReview && !isCompleted;
+      default: return true;
+    }
+  }
+
+  /**
+   * Clicking the tile that's already applied clears it, so the tiles double as an on/off
+   * drill-down rather than a one-way trip that needs the Reset filters button.
+   *
+   * A tile counting 0 is inert (it stays fully legible rather than greying out - it's still
+   * a stat worth reading - but drilling into it could only ever produce an empty table). The
+   * guard lives here as well as in the template so keyboard Enter/Space can't bypass it.
+   */
+  toggleSummaryFilter(bucket: AssignmentSummaryFilter): void {
+    if (!this.summaryBucketCount(bucket)) return;
+    this.summaryFilter = this.summaryFilter === bucket ? 'all' : bucket;
+    this.assignmentsPage = 1;
+  }
+
+  private summaryBucketCount(bucket: AssignmentSummaryFilter): number {
+    const summary = this.assignmentsSummary;
+    switch (bucket) {
+      case 'open': return summary.openCount;
+      case 'returned': return summary.returnedCount;
+      case 'review': return summary.reviewCount;
+      case 'completed': return summary.completedCount;
+      default: return 0;
+    }
   }
 
   /** Whether this row deserves the "Action needed" urgent highlight - the assessor's own work sent back for revision, an assessee row with findings of theirs still Open, or a reviewer row still genuinely awaiting this reviewer's decision (not one already Approved/Returned). Gated on actually holding that role - an allocation-only viewer (no personal Assessor/Reviewer/Assessee role) has nothing of their own to act on here, however the assessment's status happens to read. */
@@ -1226,6 +1319,10 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
   selectAssignmentsTab(tab: 'assessments' | 'reviews' | 'allocated'): void {
     this.assignmentsTab = tab;
     this.assignmentsPage = 1;
+    // The tiles are counted per tab, so a drill-down from the old tab's tiles means nothing
+    // on the new one - carrying it over would silently show an empty table (e.g. "Returned"
+    // on a Needs Review tab that has none).
+    this.summaryFilter = 'all';
     localStorage.setItem(MY_ASSIGNMENTS_TAB_KEY, tab);
   }
 
@@ -1233,11 +1330,12 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     this.assignmentsPage = 1;
   }
 
-  /** Clears the Cycle, Account and Status filter pills back to "all" in one click. */
+  /** Clears the Cycle, Account and Status filter pills - and any summary-tile drill-down - back to "all" in one click. */
   resetAssignmentFilters(): void {
     this.cycleFilter = 'all';
     this.accountFilter = 'all';
     this.statusFilter = 'all';
+    this.summaryFilter = 'all';
     this.assignmentsPage = 1;
   }
 

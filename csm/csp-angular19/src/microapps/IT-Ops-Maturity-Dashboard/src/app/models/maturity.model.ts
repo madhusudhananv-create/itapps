@@ -114,7 +114,10 @@ export interface TopRisk {
   /** Populated when the Dashboard aggregates across every account ("All accounts"), so the same domain name on two different accounts can be told apart. */
   accountId?: string;
   accountName?: string;
+  /** Maturity-band label for the score, maintained in the ITOPS_SCORE_RECOMMENDATION master table. */
   recommendation: string;
+  /** Longer guidance behind the label, shown as the cell's hover tooltip. */
+  recommendationDetail?: string;
 }
 
 export interface EnterpriseSummary {

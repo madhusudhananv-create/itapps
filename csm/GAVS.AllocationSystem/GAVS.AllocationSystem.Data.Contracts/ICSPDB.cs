@@ -301,6 +301,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IRepository_CSP<ITOPS_NOTIFICATION> ITOPS_NOTIFICATION { get; }
         IRepository_CSP<ITOPS_REPORT_SP_DETAILS> ITOPS_REPORT_SP_DETAILS { get; }
         IRepository_CSP<ITOPS_REPORT_PARAMS> ITOPS_REPORT_PARAMS { get; }
+        IRepository_CSP<ITOPS_SCORE_RECOMMENDATION> ITOPS_SCORE_RECOMMENDATION { get; }
 
     }
 }

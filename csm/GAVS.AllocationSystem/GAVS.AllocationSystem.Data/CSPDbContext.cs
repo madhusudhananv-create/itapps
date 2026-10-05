@@ -269,6 +269,7 @@ namespace GAVS.AllocationSystem.Data
             modelBuilder.Entity<ITOPS_NOTIFICATION>().ToTable("dbo.ITOPS_NOTIFICATION");
             modelBuilder.Entity<ITOPS_REPORT_SP_DETAILS>().ToTable("dbo.ITOPS_REPORT_SP_DETAILS");
             modelBuilder.Entity<ITOPS_REPORT_PARAMS>().ToTable("dbo.ITOPS_REPORT_PARAMS");
+            modelBuilder.Entity<ITOPS_SCORE_RECOMMENDATION>().ToTable("dbo.ITOPS_SCORE_RECOMMENDATION");
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
         }
         public virtual DbSet<APP_ACCESS_CONTROLS> APP_ACCESS_CONTROLS { get; set; }
@@ -507,6 +508,7 @@ namespace GAVS.AllocationSystem.Data
         public virtual DbSet<ITOPS_NOTIFICATION> ITOPS_NOTIFICATION { get; set; }
         public virtual DbSet<ITOPS_REPORT_SP_DETAILS> ITOPS_REPORT_SP_DETAILS { get; set; }
         public virtual DbSet<ITOPS_REPORT_PARAMS> ITOPS_REPORT_PARAMS { get; set; }
+        public virtual DbSet<ITOPS_SCORE_RECOMMENDATION> ITOPS_SCORE_RECOMMENDATION { get; set; }
 
     }
 }
