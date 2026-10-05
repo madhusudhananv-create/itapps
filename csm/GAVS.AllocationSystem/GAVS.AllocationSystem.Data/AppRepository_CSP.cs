@@ -2509,7 +2509,7 @@ namespace GAVS.AllocationSystem.Data
             string engineerAiAgents, string engineerDeliveryCycleTime, string engineerContractTestCasePassRate,
             string engineerPerformanceDefectsPreRelease, string commonAdoptionWorkforceCertification,
             string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool presentationDone,
-            string projectFy, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId)
+            string projectFy, string empId)
         {
             var dbContext = new CSPDbContext();
 
@@ -2535,20 +2535,33 @@ namespace GAVS.AllocationSystem.Data
             var param20 = new SqlParameter("@COMMON_DEPLOYMENT_ENGINEER", (object)commonDeploymentEngineer ?? DBNull.Value);
             var param21 = new SqlParameter("@PRESENTATION_DONE", presentationDone);
             var param22 = new SqlParameter("@PROJECT_FY", (object)projectFy ?? DBNull.Value);
-            var param23 = new SqlParameter("@ACCEPTED_SCORE", (object)acceptedScore ?? DBNull.Value);
-            var param24 = new SqlParameter("@SCORE_REVIEWED", scoreReviewed);
-            var param25 = new SqlParameter("@ACCEPTED_SCORE_COMMENT", (object)acceptedScoreComment ?? DBNull.Value);
-            var param26 = new SqlParameter("@EMP_ID", empId);
+            var param23 = new SqlParameter("@EMP_ID", empId);
 
             return dbContext.Database.SqlQuery<int>(
                 "[dbo].[usp_AIMI_UpsertProjectInfo] @ID OUTPUT, @PROJECT_ID, @PEOPLE_USING_AI, @IS_PROJECT_NA, @NA_COMMENTS, @LICENSE_COUNT, @LICENSE_PROVIDER, " +
                 "@RUNOPS_AUTO_RESOLVED, @RUNOPS_MTTR_REDUCTION, @RUNOPS_AI_AGENTS, @RUNOPS_AUTOMATED_WORKFLOWS, @RUNOPS_MTTD, @RUNOPS_MTTR, " +
                 "@ENGINEER_AI_AGENTS, @ENGINEER_DELIVERY_CYCLE_TIME, @ENGINEER_CONTRACT_TEST_CASE_PASS_RATE, @ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE, " +
                 "@COMMON_ADOPTION_WORKFORCE_CERTIFICATION, @COMMON_ADOPTION_EFFORTS_SAVED, @COMMON_DEPLOYMENT_ENGINEER, " +
-                "@PRESENTATION_DONE, @PROJECT_FY, @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT, @EMP_ID",
+                "@PRESENTATION_DONE, @PROJECT_FY, @EMP_ID",
                 idParam, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12,
-                param13, param14, param15, param16, param17, param18, param19, param20, param21, param22, param23,
-                param24, param25, param26).Single();
+                param13, param14, param15, param16, param17, param18, param19, param20, param21, param22, param23).Single();
+        }
+
+        // Touches only ACCEPTED_SCORE / SCORE_REVIEWED / ACCEPTED_SCORE_COMMENT on the project's
+        // activities for the practice; returns how many activity rows were updated.
+        public int AimiUpdateAcceptedScore(string projectId, string practice, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", projectId);
+            var param2 = new SqlParameter("@PRACTICE", practice);
+            var param3 = new SqlParameter("@ACCEPTED_SCORE", (object)acceptedScore ?? DBNull.Value);
+            var param4 = new SqlParameter("@SCORE_REVIEWED", scoreReviewed);
+            var param5 = new SqlParameter("@ACCEPTED_SCORE_COMMENT", (object)acceptedScoreComment ?? DBNull.Value);
+            var param6 = new SqlParameter("@EMP_ID", empId);
+
+            return dbContext.Database.SqlQuery<int>(
+                "[dbo].[usp_AIMI_UpdateAcceptedScore] @PROJECT_ID, @PRACTICE, @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT, @EMP_ID",
+                param1, param2, param3, param4, param5, param6).Single();
         }
 
         public List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice)

@@ -313,7 +313,8 @@ namespace GAVS.AllocationSystem.Data.Contracts
             string engineerAiAgents, string engineerDeliveryCycleTime, string engineerContractTestCasePassRate,
             string engineerPerformanceDefectsPreRelease, string commonAdoptionWorkforceCertification,
             string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool presentationDone,
-            string projectFy, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId);
+            string projectFy, string empId);
+        int AimiUpdateAcceptedScore(string projectId, string practice, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId);
 
         List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice);
         int AimiUpsertPracticeInfo(int? id, string projectId, string practice, string currentPhase, string empId);
