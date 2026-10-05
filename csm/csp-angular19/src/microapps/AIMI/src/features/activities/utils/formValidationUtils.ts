@@ -78,6 +78,48 @@ export const validateAIToolDetails = (
   });
 };
 
+// Lists everything that stops an activity from being submitted, using the same rules
+// as the Add/Edit Activity modal. Used to validate activities that never went through
+// that modal (e.g. imported from Excel) before they are submitted.
+export const getActivityValidationErrors = (
+  activity: ActivityFormData
+): string[] => {
+  const errors: string[] = [];
+
+  if (!activity.applicability) {
+    errors.push('Applicability is required');
+    return errors;
+  }
+
+  if (!isApplicable(activity.applicability)) return errors;
+
+  if (!activity.aiAdoptionScore) {
+    errors.push('AI Adoption Score is required');
+    return errors;
+  }
+
+  if (isNoAIAdoption(activity.aiAdoptionScore)) return errors;
+
+  if (!validateAIToolsOrAccelerators(activity)) {
+    errors.push('Select at least one AI tool or accelerator');
+  }
+
+  if (!validateAIToolDetails(activity.aiToolUsed, activity.aiToolDetails)) {
+    errors.push(
+      'Configure AI tool details (access type, and number of licenses when Licensed)'
+    );
+  }
+
+  if (
+    activity.aiAdoptionScore === '4' &&
+    !(Number(activity.workDoneByAI) > 0)
+  ) {
+    errors.push('% Work Done by AI must be greater than 0 for Full Adoption');
+  }
+
+  return errors;
+};
+
 export const validateOptionalFields = (formData: ActivityFormData): boolean => {
   return !!(
     validateAIToolsOrAccelerators(formData) &&

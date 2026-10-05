@@ -41,9 +41,6 @@ CREATE TABLE AIMI_PROJECT_INFO (
 
     PRESENTATION_DONE BIT NOT NULL DEFAULT(0),
     PROJECT_FY VARCHAR(10) NULL,
-    ACCEPTED_SCORE DECIMAL(4,2) NULL,
-    SCORE_REVIEWED BIT NOT NULL DEFAULT(0),
-    ACCEPTED_SCORE_COMMENT NVARCHAR(MAX) NULL,
 
     CREATED_BY VARCHAR(10) NULL,
     CREATED_DATE DATETIME NULL,
@@ -109,6 +106,12 @@ CREATE TABLE AIMI_ACTIVITY (
     BENEFIT_TO VARCHAR(20) NULL,             -- Neurealm | Customer | Both
     COMMENTS NVARCHAR(MAX) NULL,
     STATUS VARCHAR(20) NULL,                 -- draft | submitted
+
+    -- Admin review of the Overall Score (Accepted Score). Every activity of a project + practice
+    -- carries the same values; written only by usp_AIMI_UpdateAcceptedScore.
+    ACCEPTED_SCORE DECIMAL(4,2) NULL,
+    SCORE_REVIEWED BIT NOT NULL DEFAULT(0),
+    ACCEPTED_SCORE_COMMENT NVARCHAR(MAX) NULL,
 
     CREATED_BY VARCHAR(10) NULL,
     CREATED_DATE DATETIME NULL,
@@ -297,7 +300,9 @@ GO
 -- review score) exactly the same way the client already gates its own UI.
 ----------------------------------------------------------------------------------------------------
 
-------Stored Procedure(SP)-----------
+----------------------------------------------------------------------------------------------------
+-- Stored procedures (latest versions - source of truth: 01 StoredProcedure\BAS\usp_AIMI_*.sql)
+----------------------------------------------------------------------------------------------------
 
 -- Soft-deletes one activity (@ID) and/or a batch of activities (@IDS), matching the
 -- house convention of ISACTIVE=0 rather than a hard DELETE. Covers both the single
@@ -352,6 +357,7 @@ BEGIN
         a.ID, a.PROJECT_ID, a.PROJECT, a.ACCOUNT, a.BUSINESS_UNIT, a.PRACTICE,
         a.SDLC_PHASE, a.ACTIVITY, a.APPLICABILITY, a.AI_ADOPTION_SCORE, a.WORK_DONE_BY_AI,
         a.HOURS_SAVED, a.REVENUE_GENERATED, a.BENEFIT_TO, a.COMMENTS, a.STATUS,
+        a.ACCEPTED_SCORE, a.SCORE_REVIEWED, a.ACCEPTED_SCORE_COMMENT,
         a.CREATED_BY, a.CREATED_DATE, a.UPDATED_BY, a.UPDATED_DATE,
         (SELECT TOOL_NAME, ACCESS_TYPE, LICENSE_COUNT, NETWORK_TYPE
            FROM AIMI_ACTIVITY_AI_TOOL t WHERE t.ACTIVITY_ID = a.ID
@@ -395,6 +401,7 @@ BEGIN
         a.ID, a.PROJECT_ID, a.PROJECT, a.ACCOUNT, a.BUSINESS_UNIT, a.PRACTICE,
         a.SDLC_PHASE, a.ACTIVITY, a.APPLICABILITY, a.AI_ADOPTION_SCORE, a.WORK_DONE_BY_AI,
         a.HOURS_SAVED, a.REVENUE_GENERATED, a.BENEFIT_TO, a.COMMENTS, a.STATUS,
+        a.ACCEPTED_SCORE, a.SCORE_REVIEWED, a.ACCEPTED_SCORE_COMMENT,
         a.CREATED_BY, a.CREATED_DATE, a.UPDATED_BY, a.UPDATED_DATE,
         (SELECT TOOL_NAME, ACCESS_TYPE, LICENSE_COUNT, NETWORK_TYPE
            FROM AIMI_ACTIVITY_AI_TOOL t WHERE t.ACTIVITY_ID = a.ID
@@ -610,7 +617,7 @@ GO
 --      ("Projects > Accounts > Business Units, Practice always narrows further").
 --
 -- Returns one row per activity, joined with that project's AI Adoption Metrics
--- (AIMI_PROJECT_INFO) and Accepted Score, i.e. every AIMI-owned column of the
+-- (AIMI_PROJECT_INFO); Accepted Score comes from the activity rows, i.e. every AIMI-owned column of the
 -- existing CSV export (csvExportUtils.ts). Business Head / Account Manager /
 -- Manager / Head Count are NOT included here - those come from the CSM project
 -- master data (PROJECT/EMP_INFO), not from the AIMI domain, and are enriched by
@@ -658,8 +665,6 @@ BEGIN
         p.COMMON_ADOPTION_WORKFORCE_CERTIFICATION,
         p.COMMON_ADOPTION_EFFORTS_SAVED,
         p.COMMON_DEPLOYMENT_ENGINEER,
-        p.ACCEPTED_SCORE,
-        p.ACCEPTED_SCORE_COMMENT,
 
         -- Activity-level fields
         a.ID AS ACTIVITY_ID,
@@ -681,6 +686,8 @@ BEGIN
            FROM AIMI_ACTIVITY_QUALITATIVE_BENEFIT qb WHERE qb.ACTIVITY_ID = a.ID
            FOR JSON PATH) AS QUALITATIVE_BENEFITS_JSON,
         a.COMMENTS,
+        a.ACCEPTED_SCORE,
+        a.ACCEPTED_SCORE_COMMENT,
         a.CREATED_DATE,
         a.UPDATED_DATE
     FROM AIMI_ACTIVITY a
@@ -693,6 +700,41 @@ BEGIN
       AND (NOT EXISTS (SELECT 1 FROM @PROJECTS)       OR a.PROJECT       IN (SELECT VALUE_TEXT FROM @PROJECTS))
       AND (NOT EXISTS (SELECT 1 FROM @PRACTICES)      OR a.PRACTICE      IN (SELECT VALUE_TEXT FROM @PRACTICES))
     ORDER BY a.BUSINESS_UNIT, a.ACCOUNT, a.PROJECT, a.PRACTICE, a.SDLC_PHASE, a.CREATED_DATE;
+END
+GO
+
+-- Saves the admin review (Accepted Score / Score Reviewed / Comments) for a project's
+-- activities. Touches ONLY these three columns, so unlike the old project-info upsert it
+-- cannot overwrite any other data. Scoped to PROJECT_ID + PRACTICE because the Overall Score
+-- it reviews is calculated from that practice's activities.
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_UpdateAcceptedScore' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_UpdateAcceptedScore]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_UpdateAcceptedScore]
+    @PROJECT_ID VARCHAR(20),
+    @PRACTICE VARCHAR(100),
+    @ACCEPTED_SCORE DECIMAL(4,2) = NULL,
+    @SCORE_REVIEWED BIT = 0,
+    @ACCEPTED_SCORE_COMMENT NVARCHAR(MAX) = NULL,
+    @EMP_ID VARCHAR(10)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE AIMI_ACTIVITY
+       SET ACCEPTED_SCORE = @ACCEPTED_SCORE,
+           SCORE_REVIEWED = @SCORE_REVIEWED,
+           ACCEPTED_SCORE_COMMENT = @ACCEPTED_SCORE_COMMENT,
+           UPDATED_BY = @EMP_ID,
+           UPDATED_DATE = GETDATE()
+     WHERE PROJECT_ID = @PROJECT_ID
+       AND PRACTICE = @PRACTICE
+       AND ISACTIVE = 1;
+
+    SELECT @@ROWCOUNT AS ID;
 END
 GO
 
@@ -734,14 +776,25 @@ BEGIN
     BEGIN TRY
         IF @ID IS NULL OR NOT EXISTS (SELECT 1 FROM AIMI_ACTIVITY WHERE ID = @ID)
         BEGIN
+            -- A new activity inherits the practice's current review (Accepted Score etc.)
+            -- so the reviewed score still shows once every activity row carries it.
+            DECLARE @ACCEPTED_SCORE DECIMAL(4,2), @SCORE_REVIEWED BIT = 0, @ACCEPTED_SCORE_COMMENT NVARCHAR(MAX);
+            SELECT TOP 1 @ACCEPTED_SCORE = ACCEPTED_SCORE, @SCORE_REVIEWED = SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT = ACCEPTED_SCORE_COMMENT
+              FROM AIMI_ACTIVITY
+             WHERE PROJECT_ID = @PROJECT_ID AND PRACTICE = @PRACTICE AND ISACTIVE = 1
+               AND (ACCEPTED_SCORE IS NOT NULL OR SCORE_REVIEWED = 1 OR ACCEPTED_SCORE_COMMENT IS NOT NULL)
+             ORDER BY UPDATED_DATE DESC;
+
             INSERT INTO AIMI_ACTIVITY
                 (PROJECT_ID, PROJECT, ACCOUNT, BUSINESS_UNIT, PRACTICE, SDLC_PHASE, ACTIVITY,
                  APPLICABILITY, AI_ADOPTION_SCORE, WORK_DONE_BY_AI, HOURS_SAVED, REVENUE_GENERATED,
-                 BENEFIT_TO, COMMENTS, STATUS, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE, ISACTIVE)
+                 BENEFIT_TO, COMMENTS, STATUS, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE, ISACTIVE,
+                 ACCEPTED_SCORE, SCORE_REVIEWED, ACCEPTED_SCORE_COMMENT)
             VALUES
                 (@PROJECT_ID, @PROJECT, @ACCOUNT, @BUSINESS_UNIT, @PRACTICE, @SDLC_PHASE, @ACTIVITY,
                  @APPLICABILITY, @AI_ADOPTION_SCORE, @WORK_DONE_BY_AI, @HOURS_SAVED, @REVENUE_GENERATED,
-                 @BENEFIT_TO, @COMMENTS, @STATUS, @EMP_ID, GETDATE(), @EMP_ID, GETDATE(), 1);
+                 @BENEFIT_TO, @COMMENTS, @STATUS, @EMP_ID, GETDATE(), @EMP_ID, GETDATE(), 1,
+                 @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT);
 
             SET @ID = SCOPE_IDENTITY();
         END
@@ -783,6 +836,12 @@ BEGIN
         SELECT @ID, VALUE_TEXT FROM @QUALITATIVE_BENEFITS;
 
         COMMIT TRANSACTION;
+
+        -- EF6's Database.SqlQuery<int> is unreliable when a proc only has an
+        -- OUTPUT parameter and no result set (throws "data reader has more
+        -- than one field"), so the id is also returned as a plain one-column
+        -- result set instead of relying solely on @ID OUTPUT.
+        SELECT @ID AS ID;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -829,6 +888,12 @@ BEGIN
                UPDATED_DATE = GETDATE()
          WHERE ID = @ID;
     END
+
+    -- EF6's Database.SqlQuery<int> is unreliable when a proc only has an
+    -- OUTPUT parameter and no result set (throws "data reader has more than
+    -- one field"), so the id is also returned as a plain one-column result
+    -- set instead of relying solely on @ID OUTPUT.
+    SELECT @ID AS ID;
 END
 GO
 
@@ -864,9 +929,6 @@ CREATE PROCEDURE [dbo].[usp_AIMI_UpsertProjectInfo]
     @COMMON_DEPLOYMENT_ENGINEER VARCHAR(100) = NULL,
     @PRESENTATION_DONE BIT = 0,
     @PROJECT_FY VARCHAR(10) = NULL,
-    @ACCEPTED_SCORE DECIMAL(4,2) = NULL,
-    @SCORE_REVIEWED BIT = 0,
-    @ACCEPTED_SCORE_COMMENT NVARCHAR(MAX) = NULL,
     @EMP_ID VARCHAR(10)
 AS
 BEGIN
@@ -883,7 +945,7 @@ BEGIN
              ENGINEER_AI_AGENTS, ENGINEER_DELIVERY_CYCLE_TIME, ENGINEER_CONTRACT_TEST_CASE_PASS_RATE,
              ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE,
              COMMON_ADOPTION_WORKFORCE_CERTIFICATION, COMMON_ADOPTION_EFFORTS_SAVED, COMMON_DEPLOYMENT_ENGINEER,
-             PRESENTATION_DONE, PROJECT_FY, ACCEPTED_SCORE, SCORE_REVIEWED, ACCEPTED_SCORE_COMMENT,
+             PRESENTATION_DONE, PROJECT_FY,
              CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE, ISACTIVE)
         VALUES
             (@PROJECT_ID, @PEOPLE_USING_AI, @IS_PROJECT_NA, @NA_COMMENTS, @LICENSE_COUNT, @LICENSE_PROVIDER,
@@ -892,7 +954,7 @@ BEGIN
              @ENGINEER_AI_AGENTS, @ENGINEER_DELIVERY_CYCLE_TIME, @ENGINEER_CONTRACT_TEST_CASE_PASS_RATE,
              @ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE,
              @COMMON_ADOPTION_WORKFORCE_CERTIFICATION, @COMMON_ADOPTION_EFFORTS_SAVED, @COMMON_DEPLOYMENT_ENGINEER,
-             @PRESENTATION_DONE, @PROJECT_FY, @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT,
+             @PRESENTATION_DONE, @PROJECT_FY,
              @EMP_ID, GETDATE(), @EMP_ID, GETDATE(), 1);
 
         SET @ID = SCOPE_IDENTITY();
@@ -920,12 +982,15 @@ BEGIN
                COMMON_DEPLOYMENT_ENGINEER = @COMMON_DEPLOYMENT_ENGINEER,
                PRESENTATION_DONE = @PRESENTATION_DONE,
                PROJECT_FY = @PROJECT_FY,
-               ACCEPTED_SCORE = @ACCEPTED_SCORE,
-               SCORE_REVIEWED = @SCORE_REVIEWED,
-               ACCEPTED_SCORE_COMMENT = @ACCEPTED_SCORE_COMMENT,
                UPDATED_BY = @EMP_ID,
                UPDATED_DATE = GETDATE()
          WHERE ID = @ID;
     END
+
+    -- EF6's Database.SqlQuery<int> is unreliable when a proc only has an
+    -- OUTPUT parameter and no result set (throws "data reader has more than
+    -- one field"), so the id is also returned as a plain one-column result
+    -- set instead of relying solely on @ID OUTPUT.
+    SELECT @ID AS ID;
 END
 GO

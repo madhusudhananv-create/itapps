@@ -30,6 +30,8 @@ import {
   UploadFile as UploadFileIcon,
 } from '@mui/icons-material';
 import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
+import { getActivityValidationErrors } from '../utils/formValidationUtils';
+import { activityService } from '../services/activityService';
 import { AddActivityModal } from './AddActivityModal';
 import { ActivityCard } from './ActivityCard';
 import { CopyActivityDialog } from './CopyActivityDialog';
@@ -48,7 +50,7 @@ import {
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
 import { useAuth } from '@auth/hooks/useAuth';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
-import { getActivitiesForSDLCPhase } from '../../../shared/utils/questionnaireUtils';
+import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup';
 //import ScoreIcon from '@mui/icons-material/Score';
 
 interface ManageActivitiesProps {
@@ -77,6 +79,7 @@ interface ManageActivitiesProps {
   };
   acceptedScoreInfo?: AcceptedScoreInfo;
   onSaveReviewInfo?: (reviewInfo: AcceptedScoreInfo) => Promise<void>;
+  onImportActivities?: () => void;
 }
 
 
@@ -125,6 +128,9 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [submitValidationIssues, setSubmitValidationIssues] = useState<
+    string[]
+  >([]);
   const [acceptedScore, setAcceptedScore] = useState('');
   const [scoreReviewed, setScoreReviewed] = useState(false);
   const [acceptedScoreComment, setAcceptedScoreComment] = useState('');
@@ -145,6 +151,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   );
 
   const { isAdmin, isAuthenticated } = useAuth();
+  const { getActivitiesForSDLCPhase } = useQuestionnaireLookup();
   const featureFlags = useFeatureFlags('activities');
   const canBulkDelete = isAdmin && featureFlags.showDeleteButton;
 
@@ -497,17 +504,32 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
     });
   };
 
-  const handleConfirmDelete = () => {
-    if (deleteConfirmation.activityId) {
-      onDeleteActivity(deleteConfirmation.activityId);
+  // Only activities already saved to SQL have a database id (a plain int). Unsaved ones
+  // (Date.now() / uuid ids) exist only in the browser, so there is nothing to delete server-side.
+  const deleteFromDatabase = async (activityIds: string[]) => {
+    await activityService.deleteActivities(
+      activityIds.filter((id) => /^\d{1,9}$/.test(id))
+    );
+  };
+
+  const handleConfirmDelete = async () => {
+    const activityId = deleteConfirmation.activityId;
+    setDeleteConfirmation({ open: false, activityId: null, activityName: '' });
+    if (!activityId) return;
+
+    try {
+      await deleteFromDatabase([activityId]);
+      onDeleteActivity(activityId);
       setPendingAutoSaveIds((prev) => {
         const next = new Set(prev);
-        next.delete(deleteConfirmation.activityId!);
+        next.delete(activityId);
         return next;
       });
       showSnackbar('Activity deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      showSnackbar('Error deleting activity. Please try again.', 'error');
     }
-    setDeleteConfirmation({ open: false, activityId: null, activityName: '' });
   };
 
   const handleCancelDelete = () => {
@@ -551,8 +573,18 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
     setBulkDeleteConfirmation({ open: true, phase, activityIds });
   };
 
-  const handleConfirmBulkDelete = () => {
+  const handleConfirmBulkDelete = async () => {
     const { activityIds } = bulkDeleteConfirmation;
+
+    try {
+      await deleteFromDatabase(activityIds);
+    } catch (error) {
+      console.error('Error deleting activities:', error);
+      showSnackbar('Error deleting activities. Please try again.', 'error');
+      setBulkDeleteConfirmation({ open: false, phase: '', activityIds: [] });
+      return;
+    }
+
     activityIds.forEach((id) => onDeleteActivity(id));
     setSelectedActivityIds((prev) => {
       const next = new Set(prev);
@@ -873,6 +905,25 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
         );
         return;
       }
+    }
+
+    // Activities that skipped the Add/Edit modal (e.g. Excel import) can be missing
+    // mandatory data - block the submit and tell the user exactly what to fix.
+    const invalidActivities = activities
+      .map((activity) => ({
+        activity,
+        errors: getActivityValidationErrors(activity),
+      }))
+      .filter(({ errors }) => errors.length > 0);
+
+    if (invalidActivities.length > 0) {
+      setSubmitValidationIssues(
+        invalidActivities.map(
+          ({ activity, errors }) =>
+            `${activity.sdlcPhase} > ${activity.activity}: ${errors.join('; ')}`
+        )
+      );
+      return;
     }
 
     // Set submitting state to prevent multiple clicks
@@ -1451,6 +1502,38 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
     )}
   </DialogActions>
 </Dialog>
+      <Dialog
+        open={submitValidationIssues.length > 0}
+        onClose={() => setSubmitValidationIssues([])}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ color: 'warning.main' }}>
+          Cannot submit - mandatory data missing
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 1 }}>
+            Edit the following activities and fill in the missing details, then
+            submit again:
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+            {submitValidationIssues.map((issue) => (
+              <li key={issue}>
+                <Typography variant="body2">{issue}</Typography>
+              </li>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={() => setSubmitValidationIssues([])}
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Snackbar for notifications */}
       <CommonSnackbar
         open={snackbar.open}

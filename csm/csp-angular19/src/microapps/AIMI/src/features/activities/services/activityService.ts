@@ -88,6 +88,16 @@ const fromApiActivity = (row: ApiActivityRow): ActivityWithProjectInfo => ({
       ? ''
       : String(row.AI_ADOPTION_SCORE),
   aiToolUsed: row.AI_TOOLS.map((t) => t.TOOL_NAME),
+  aiToolDetails: Object.fromEntries(
+    row.AI_TOOLS.map((t) => [
+      t.TOOL_NAME,
+      {
+        accessType: t.ACCESS_TYPE ?? '',
+        licenseCount: t.LICENSE_COUNT ?? 0,
+        networkType: t.NETWORK_TYPE ?? '',
+      },
+    ])
+  ),
   acceleratorsUsed: row.ACCELERATORS,
   workDoneByAI: row.WORK_DONE_BY_AI ?? 0,
   hoursSaved: row.HOURS_SAVED ?? 0,
@@ -129,12 +139,16 @@ const toUpsertPayload = (
   BENEFIT_TO: activity.benefitTo,
   COMMENTS: activity.comments,
   STATUS: activity.status || 'draft',
-  AI_TOOLS: toStringArray(activity.aiToolUsed).map((name) => ({
-    TOOL_NAME: name,
-    ACCESS_TYPE: null,
-    LICENSE_COUNT: null,
-    NETWORK_TYPE: null,
-  })),
+  AI_TOOLS: toStringArray(activity.aiToolUsed).map((name) => {
+    const details = activity.aiToolDetails?.[name];
+    return {
+      TOOL_NAME: name,
+      ACCESS_TYPE: details?.accessType || null,
+      LICENSE_COUNT:
+        details?.accessType === 'Licensed' ? details.licenseCount : null,
+      NETWORK_TYPE: details?.networkType || null,
+    };
+  }),
   ACCELERATORS: toStringArray(activity.acceleratorsUsed),
   QUALITATIVE_BENEFITS: activity.qualitativeBenefits ?? [],
 });
@@ -213,6 +227,20 @@ export const activityService = {
       });
     } catch (error) {
       console.error('Error deleting activity:', error);
+      throw error;
+    }
+  },
+
+  /** Soft-delete several activities in one call (ISACTIVE = 0). */
+  deleteActivities: async (activityIds: string[]): Promise<void> => {
+    if (activityIds.length === 0) return;
+    try {
+      await aimiApiClient.post(ENDPOINTS.DELETE_ACTIVITY, {
+        ID: null,
+        IDS: activityIds.map(Number),
+      });
+    } catch (error) {
+      console.error('Error deleting activities:', error);
       throw error;
     }
   },

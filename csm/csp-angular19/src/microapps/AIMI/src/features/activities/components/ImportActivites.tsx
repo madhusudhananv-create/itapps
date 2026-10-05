@@ -21,6 +21,8 @@ import {
   TEMPLATE_DATA_START_ROW,
   generateAndDownloadActivityTemplate,
 } from '../utils/activityTemplateUtils';
+import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup';
+import { useAimiOptionLists } from '../../../shared/lookups/useAimiOptionLists';
 
 interface ImportProjectInfo {
   project?: string;
@@ -62,6 +64,10 @@ const isRowBlank = (row: unknown[]): boolean =>
 export const ImportActivitiesDialog: React.FC<
   ImportActivitiesDialogProps
 > = ({ open, onClose, onImport, selectedPractice, projectInfo }) => {
+  const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
+    useQuestionnaireLookup();
+  const { aiTools, accelerators, qualitativeBenefits, aiAdoptionScores } =
+    useAimiOptionLists();
   const [fileName, setFileName] = useState('');
   const [activities, setActivities] = useState<any[]>([]);
   const [uploadError, setUploadError] = useState('');
@@ -150,7 +156,17 @@ export const ImportActivitiesDialog: React.FC<
   };
 
   const downloadTemplate = () => {
-    generateAndDownloadActivityTemplate(selectedPractice, projectInfo);
+    generateAndDownloadActivityTemplate(
+      selectedPractice,
+      projectInfo,
+      { getSDLCPhasesForPractice, getActivitiesForSDLCPhase },
+      {
+        aiTools,
+        accelerators,
+        qualitativeBenefits: qualitativeBenefits.map((b) => b.value),
+        aiAdoptionScores,
+      }
+    );
   };
 
   return (

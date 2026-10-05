@@ -34,6 +34,7 @@ export const CopyActivityDialog: React.FC<CopyActivityDialogProps> = ({
 }) => {
   const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
     useQuestionnaireLookup();
+  const { isAdmin } = useAuth();
   const [targetSdlcPhase, setTargetSdlcPhase] = useState('');
   const [targetActivity, setTargetActivity] = useState('');
 

@@ -21,6 +21,9 @@ import {
   Suspense,
 } from 'react';
 import type { ActivityData } from '../types/activityTypes';
+import { useAimiOptionLists } from '../../../shared/lookups/useAimiOptionLists';
+import { normalizeImportedRow } from '../utils/importNormalizeUtils';
+import type { NormalizedImportFields } from '../utils/importNormalizeUtils';
 import { useActivitySubmission } from '../hooks/useActivitySubmission';
 import { useActivityState } from '../hooks/useActivityState';
 import { useAcceptedScore } from '../hooks/useAcceptedScore';
@@ -190,6 +193,7 @@ export function Activities() {
   } = useProjectHierarchy();
   const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
     useQuestionnaireLookup();
+  const { aiTools, accelerators, qualitativeBenefits } = useAimiOptionLists();
   const [isLoading] = useState(false);
   const {
     submitSuccess,
@@ -699,7 +703,7 @@ export function Activities() {
 
     const invalidRows: { rowNumber: number; reason: string }[] = [];
     const normalizedRows: Array<{
-      row: Record<string, unknown>;
+      fields: NormalizedImportFields;
       sdlcPhase: string;
       activity: string;
     }> = [];
@@ -736,7 +740,23 @@ export function Activities() {
         return;
       }
 
-      normalizedRows.push({ row, sdlcPhase: matchedPhase, activity: matchedActivity });
+      // Resolve the remaining columns to canonical option values so they bind in the
+      // Add/Edit form; anything that matches no option is reported instead of silently dropped.
+      const { fields, errors } = normalizeImportedRow(row, {
+        aiTools,
+        accelerators,
+        qualitativeBenefits: qualitativeBenefits.map((b) => b.value),
+      });
+      if (errors.length > 0) {
+        invalidRows.push({ rowNumber, reason: errors.join(', ') });
+        return;
+      }
+
+      normalizedRows.push({
+        fields,
+        sdlcPhase: matchedPhase,
+        activity: matchedActivity,
+      });
     });
 
 if (invalidRows.length > 0) {
@@ -749,48 +769,14 @@ if (invalidRows.length > 0) {
   setImportValidationOpen(true);
   return;
 }
-    normalizedRows.forEach(({ row, sdlcPhase, activity }) => {
+    normalizedRows.forEach(({ fields, sdlcPhase, activity }) => {
       addActivity({
         id: crypto.randomUUID(),
         createdAt: new Date(),
         status: 'draft',
-
         sdlcPhase,
         activity,
-        applicability: String(row['Applicability'] || ''),
-        aiAdoptionScore: String(row['AI Adoption Score'] || ''),
-
-        aiToolUsed: row['AI Tools Used']
-          ? String(row['AI Tools Used'])
-              .split(',')
-              .map((x) => x.trim())
-          : [],
-
-        //clientApproved: String(row['Client Approved'] || ''),
-
-        acceleratorsUsed: row['Accelerators Used']
-          ? String(row['Accelerators Used'])
-              .split(',')
-              .map((x) => x.trim())
-          : [],
-
-        workDoneByAI: Number(row['% Work Done by AI']) || 0,
-
-        hoursSaved: Number(row['Hours Saved']) || 0,
-
-        revenueGenerated: String(row['Revenue Generated'] || ''),
-
-        benefitTo: String(row['Benefit To'] || ''),
-
-        qualitativeBenefits: row['Qualitative Benefits']
-          ? String(row['Qualitative Benefits'])
-              .split(',')
-              .map((x) => x.trim())
-          : [],
-
-        comments: String(row['Comments'] || ''),
-
-        //aiToolDetails: {},
+        ...fields,
       });
     });
   }}

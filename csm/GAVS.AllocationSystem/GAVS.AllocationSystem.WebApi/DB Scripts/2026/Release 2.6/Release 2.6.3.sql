@@ -973,3 +973,172 @@ INSERT INTO AIMI_ACCELERATOR (NAME) VALUES
     (N'Zoom');
 END
 GO
+
+----------------------------------------------------------------------------------------------------
+-- Stored procedures that read the lookup tables above (source: 01 StoredProcedure\BAS\usp_AIMI_*.sql)
+----------------------------------------------------------------------------------------------------
+
+-- Reads the master Practice list (was hardcoded/derived client-side from
+-- questionnaire.json's practices[] array). See AIMI_PRACTICE in
+-- Release 2.6.3.sql.
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetPractices' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetPractices]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetPractices]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT ID, NAME, SORT_ORDER
+    FROM AIMI_PRACTICE
+    WHERE ISACTIVE = 1
+    ORDER BY SORT_ORDER;
+END
+GO
+
+-- Reads the master SDLC Phase list, scoped per practice (phase names are NOT
+-- a global enum - each practice has its own phase vocabulary, see the note in
+-- Release 2.6.3.sql). Was hardcoded/derived client-side from
+-- questionnaire.json's practices[].sdlcPhases[] array.
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetSdlcPhases' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetSdlcPhases]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetSdlcPhases]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        sp.ID,
+        sp.PRACTICE_ID,
+        p.NAME AS PRACTICE_NAME,
+        sp.NAME,
+        sp.SORT_ORDER
+    FROM AIMI_SDLC_PHASE sp
+    JOIN AIMI_PRACTICE p ON p.ID = sp.PRACTICE_ID
+    WHERE sp.ISACTIVE = 1 AND p.ISACTIVE = 1
+    ORDER BY p.SORT_ORDER, sp.SORT_ORDER;
+END
+GO
+
+-- Reads the master questionnaire Activity catalog per SDLC phase (was
+-- hardcoded/derived client-side from questionnaire.json's
+-- practices[].sdlcPhases[].activities[] array). Distinct from AIMI_ACTIVITY,
+-- which stores the per-project activity log entries a user submits, not the
+-- master catalog of possible activities the questionnaire presents.
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetQuestionnaireActivities' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetQuestionnaireActivities]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetQuestionnaireActivities]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        qa.ID,
+        qa.SDLC_PHASE_ID,
+        p.NAME AS PRACTICE_NAME,
+        sp.NAME AS SDLC_PHASE_NAME,
+        qa.ACTIVITY,
+        qa.SORT_ORDER
+    FROM AIMI_QUESTIONNAIRE_ACTIVITY qa
+    JOIN AIMI_SDLC_PHASE sp ON sp.ID = qa.SDLC_PHASE_ID
+    JOIN AIMI_PRACTICE p ON p.ID = sp.PRACTICE_ID
+    WHERE qa.ISACTIVE = 1 AND sp.ISACTIVE = 1 AND p.ISACTIVE = 1
+    ORDER BY p.SORT_ORDER, sp.SORT_ORDER, qa.SORT_ORDER;
+END
+GO
+
+-- Reads the master Qualitative Benefit suggestion list (was activityTypes.ts
+-- QUALITATIVE_BENEFITS). Distinct from AIMI_ACTIVITY_QUALITATIVE_BENEFIT,
+-- which stores which benefits were picked for a given logged activity.
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetQualitativeBenefits' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetQualitativeBenefits]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetQualitativeBenefits]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT NAME, SORT_ORDER
+    FROM AIMI_QUALITATIVE_BENEFIT
+    WHERE ISACTIVE = 1
+    ORDER BY SORT_ORDER;
+END
+GO
+
+-- Reads the AI Adoption Score scale 0-5 (was activityTypes.ts
+-- AI_ADOPTION_SCORES). COLOR_HEX exists on the table for a future move of the
+-- client's scoreColorUtils.ts color mapping into data too, but is not
+-- currently consumed - display color stays client-side for now.
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetAiAdoptionScores' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetAiAdoptionScores]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetAiAdoptionScores]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT SCORE, LABEL, DESCRIPTION, COLOR_HEX
+    FROM AIMI_AI_ADOPTION_SCORE
+    ORDER BY SCORE;
+END
+GO
+
+-- Reads the AI Tool autocomplete suggestion list (was activityTypes.ts
+-- COMMON_AI_TOOLS). Distinct from AIMI_ACTIVITY_AI_TOOL, the per-activity
+-- junction table (which also accepts free-text tools typed in that aren't in
+-- this suggestion list).
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetAiTools' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetAiTools]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetAiTools]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT NAME
+    FROM AIMI_AI_TOOL
+    WHERE ISACTIVE = 1
+    ORDER BY NAME;
+END
+GO
+
+-- Reads the Accelerator autocomplete suggestion list (was activityTypes.ts
+-- COMMON_ACCELERATORS). Distinct from AIMI_ACTIVITY_ACCELERATOR, the
+-- per-activity junction table.
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetAccelerators' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetAccelerators]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetAccelerators]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT NAME
+    FROM AIMI_ACCELERATOR
+    WHERE ISACTIVE = 1
+    ORDER BY NAME;
+END
+GO

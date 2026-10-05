@@ -1,8 +1,19 @@
 import * as XLSX from 'xlsx';
-import {
-  getSDLCPhasesForPractice,
-  getActivitiesForSDLCPhase,
-} from '../../../shared/utils/questionnaireUtils';
+
+// Questionnaire data now comes from SQL via useQuestionnaireLookup (a hook), so the
+// caller passes these getters in rather than this util importing static JSON helpers.
+export interface QuestionnaireGetters {
+  getSDLCPhasesForPractice: (practice: string) => string[];
+  getActivitiesForSDLCPhase: (practice: string, phase: string) => string[];
+}
+
+// Option lists (from the AIMI lookup tables) printed on the Guidelines sheet
+export interface TemplateLookups {
+  aiTools: string[];
+  accelerators: string[];
+  qualitativeBenefits: string[];
+  aiAdoptionScores: { value: string; label: string; description: string }[];
+}
 
 export const GUIDELINES_SHEET_NAME = 'Guidelines';
 
@@ -44,122 +55,61 @@ const sanitizeSheetName = (name: string): string => {
   return (cleaned || 'Practice').slice(0, 31);
 };
 
-const buildGuidelinesRows = (): (string | number)[][] => [
-  ['Applicability', '', '', '', '', 'AI Tools used', ''],
-  ['SN', 'Applicability', 'Definition', '', '', 'SN', 'Value'],
-  [
-    1,
-    'Yes',
-    'The activity is currently being performed and is supported by AI capabilities.',
-    '',
-    '',
-    1,
-    'Chat GPT',
-  ],
-  [
-    2,
-    'No',
-    'The activity is not feasible for AI enablement due to technical, operational, or strategic constraints.',
-    '',
-    '',
-    2,
-    'Bard',
-  ],
-  [
-    3,
-    'Activity NA',
-    'The activity is out of scope and not part of the current operational or delivery framework.',
-    '',
-    '',
-    3,
-    'Claude',
-  ],
-  [
-    4,
-    'Customer NA',
-    'The activity has been explicitly excluded based on customer requirements or preferences.',
-    '',
-    '',
-    4,
-    'Copy.ai',
-  ],
-  ['', '', '', '', '', 5, 'Dall E'],
-  ['', '', '', '', '', 6, 'Git Hub Co pilot'],
-  ['AI Adoption Score', '', '', '', '', 7, 'Grammarly'],
-  ['Score', 'Label', 'Description', '', '', 8, 'Jasper'],
-  [
-    0,
-    'No AI Adopted',
-    'No AI tools or techniques are being used. Traditional manual processes are in place.',
-    '',
-    '',
-    9,
-    'Mid Journey',
-  ],
-  [
-    1,
-    'Basic Awareness',
-    'The team is aware of AI capabilities, but no implementation has occurred. Planning or research phase.',
-    '',
-    '',
-    10,
-    'Notion',
-  ],
-  [
-    2,
-    'Initial Implementation',
-    'Basic AI tools are used occasionally. Limited integration with existing processes.',
-    '',
-    '',
-    11,
-    'If Any other - ADD',
-  ],
-  [
-    3,
-    'Partial Adoption',
-    'AI tools are regularly used and integrated into some workflows. Clear benefits are observed. Start on agents & agentic',
-    '',
-    '',
-    '',
-    '',
-  ],
-  [
-    4,
-    'Full Adoption',
-    'AI is deeply integrated into most processes. Significant efficiency gains and innovation. Agentic Runops',
-    '',
-    '',
-    'Accelators Used',
-    '',
-  ],
-  [
-    5,
-    'Optimized/Automated',
-    'Cutting-edge AI implementation. Industry-leading practices and maximum automation. ',
-    '',
-    '',
-    'SN',
-    'Value',
-  ],
-  ['', '', '', '', '', 1, 'Azure Devops'],
-  ['', 'Qualitative Benefits ', '', '', '', 2, 'AWS code Pipeline'],
-  ['', 'SN', 'Value', '', '', 3, 'Bamboo'],
-  ['', 1, 'Better Compliance', '', '', 4, 'CircleCI'],
-  ['', 2, 'Better Resource Utilization', '', '', 5, 'Git Hub action'],
-  ['', 3, 'Enhanced Scalability', '', '', 6, 'Git hub CI / CD'],
-  ['', 4, 'Enhanced Customer Experience', '', '', 7, 'Go CD'],
-  ['', 5, 'Faster Delivery', '', '', 8, 'Jenkins'],
-  ['', 6, 'Faster Time to Market', '', '', 9, 'Team City'],
-  ['', 7, 'Improved Accuracy', '', '', 10, 'Travis CI'],
-  ['', 8, 'Improved Collaboration', '', '', 11, 'If Any other - ADD'],
-  ['', 9, 'Improved Decision-Making', '', '', '', ''],
-  ['', 10, 'Improved Quality', '', '', '', ''],
-  ['', 11, 'Improved Risk Management', '', '', '', ''],
-  ['', 12, 'Improved Monitoring and Reporting', '', '', '', ''],
-  ['', 13, 'Increased Efficiency', '', '', '', ''],
-  ['', 14, 'Reduced Cost', '', '', '', ''],
-  ['', 15, 'Reduced Manual Effort', '', '', '', ''],
+type GuidelineRow = (string | number)[];
+
+const APPLICABILITY_DEFINITIONS: [string, string][] = [
+  ['Yes', 'The activity is currently being performed and is supported by AI capabilities.'],
+  ['No', 'The activity is not feasible for AI enablement due to technical, operational, or strategic constraints.'],
+  ['Activity NA', 'The activity is out of scope and not part of the current operational or delivery framework.'],
+  ['Customer NA', 'The activity has been explicitly excluded based on customer requirements or preferences.'],
 ];
+
+// Guidelines sheet: left block (Applicability / AI Adoption Score / Qualitative Benefits)
+// and right block (AI Tools / Accelerators) side by side. Every option list comes from
+// the AIMI lookup tables, so the template always matches what the app accepts.
+const buildGuidelinesRows = (lookups: TemplateLookups): (string | number)[][] => {
+  const left: GuidelineRow[] = [
+    ['Applicability', '', ''],
+    ['SN', 'Applicability', 'Definition'],
+    ...APPLICABILITY_DEFINITIONS.map(
+      ([value, definition], index): GuidelineRow => [index + 1, value, definition]
+    ),
+    ['', '', ''],
+    ['AI Adoption Score', '', ''],
+    ['Score', 'Label', 'Description'],
+    ...lookups.aiAdoptionScores.map(
+      (score): GuidelineRow => [score.value, score.label, score.description]
+    ),
+    ['', '', ''],
+    ['', 'Qualitative Benefits', ''],
+    ['', 'SN', 'Value'],
+    ...lookups.qualitativeBenefits.map(
+      (benefit, index): GuidelineRow => ['', index + 1, benefit]
+    ),
+  ];
+
+  const right: GuidelineRow[] = [
+    ['AI Tools used', ''],
+    ['SN', 'Value'],
+    ...lookups.aiTools.map((tool, index): GuidelineRow => [index + 1, tool]),
+    [lookups.aiTools.length + 1, 'If Any other - ADD'],
+    ['', ''],
+    ['Accelerators Used', ''],
+    ['SN', 'Value'],
+    ...lookups.accelerators.map(
+      (accelerator, index): GuidelineRow => [index + 1, accelerator]
+    ),
+    [lookups.accelerators.length + 1, 'If Any other - ADD'],
+  ];
+
+  const rowCount = Math.max(left.length, right.length);
+  return Array.from({ length: rowCount }, (_, i) => [
+    ...(left[i] ?? ['', '', '']),
+    '',
+    '',
+    ...(right[i] ?? ['', '']),
+  ]);
+};
 
 const BLANK_ROW = ['', '', '', '', '', '', '', '', '', '', '', ''];
 
@@ -202,7 +152,8 @@ const buildPracticeSheetHeaderRows = (
 // user only has to fill in the data columns, not retype the structure.
 const buildPhaseActivityRows = (
   practice: string,
-  startRow: number
+  startRow: number,
+  { getSDLCPhasesForPractice, getActivitiesForSDLCPhase }: QuestionnaireGetters
 ): { rows: (string | number)[][]; merges: XLSX.Range[] } => {
   const rows: (string | number)[][] = [];
   const merges: XLSX.Range[] = [];
@@ -267,17 +218,20 @@ const PRACTICE_SHEET_MERGES: XLSX.Range[] = [
 
 export const generateAndDownloadActivityTemplate = (
   practice: string,
-  projectInfo: TemplateProjectInfo = {}
+  projectInfo: TemplateProjectInfo = {},
+  questionnaire: QuestionnaireGetters,
+  lookups: TemplateLookups
 ): void => {
   const workbook = XLSX.utils.book_new();
 
-  const guidelinesSheet = XLSX.utils.aoa_to_sheet(buildGuidelinesRows());
+  const guidelinesSheet = XLSX.utils.aoa_to_sheet(buildGuidelinesRows(lookups));
   XLSX.utils.book_append_sheet(workbook, guidelinesSheet, GUIDELINES_SHEET_NAME);
 
   const headerRows = buildPracticeSheetHeaderRows(projectInfo);
   const { rows: phaseRows, merges: phaseMerges } = buildPhaseActivityRows(
     practice,
-    headerRows.length
+    headerRows.length,
+    questionnaire
   );
 
   const practiceSheet = XLSX.utils.aoa_to_sheet([...headerRows, ...phaseRows]);
