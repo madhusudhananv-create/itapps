@@ -242,106 +242,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> _ensureAssessmentsLocks =
             new System.Collections.Concurrent.ConcurrentDictionary<string, object>();
 
-        // Backs the Domain Tracker/Executive Dashboard: for the current cycle, every
-        // project of this account must have a row for each domain mapped to it in
-        // ITOPS_DOMAIN_PROJECT_MAP, even before its assessor has opened it, so
-        // "Not Started" domains show up too.
-        //
-        // V2 changes vs V1: keyed on (cycle, domain, project) rather than (domain,
-        // account); the domain list comes from ITOPS_DOMAIN_PROJECT_MAP rather than
-        // "every active domain"; and the domain's default assessor/reviewer are
-        // inserted as IS_PRIMARY join rows rather than flat columns.
-        private void EnsureAssessmentsForAccount(string custId)
-        {
-            var gate = _ensureAssessmentsLocks.GetOrAdd(custId ?? string.Empty, _ => new object());
-            lock (gate)
-            {
-                var master = GetCurrentITOpsAssessmentMaster();
-                if (master == null) return; // no open cycle -> nothing to seed
-
-                var projectIds = GetITOpsProjectIdsForCustomer(custId);
-                if (!projectIds.Any()) return;
-
-                var mappings = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll()
-                    .Where(m => m.ISACTIVE && projectIds.Contains(m.PROJECT_ID))
-                    .Select(m => new { m.DOMAIN_ID, m.PROJECT_ID })
-                    .ToList();
-                if (!mappings.Any()) return;
-
-                var activeDomainIds = CSPdb.ITOPS_DOMAIN.GetAll()
-                    .Where(d => d.ISACTIVE)
-                    .Select(d => d.ID)
-                    .ToList();
-
-                // Deliberately NOT filtered to ISACTIVE: RemoveITOpsAssessment soft-
-                // deletes a Not Started assessment (ISACTIVE = false) rather than
-                // hard-deleting it, precisely so it stays remembered as "this pair
-                // was deliberately removed" - if this check only looked at active
-                // rows, a removed assessment would look identical to one that was
-                // simply never created, and the very next Dashboard/Reports load for
-                // this account would silently recreate it out from under the admin.
-                var existing = CSPdb.ITOPS_ASSESSMENT.GetAll()
-                    .Where(a => a.ASSESSMENT_MASTER_ID == master.ID && projectIds.Contains(a.PROJECT_ID))
-                    .Select(a => new { a.DOMAIN_ID, a.PROJECT_ID })
-                    .ToList();
-
-                var missing = mappings
-                    .Where(m => activeDomainIds.Contains(m.DOMAIN_ID))
-                    .Where(m => !existing.Any(e => e.DOMAIN_ID == m.DOMAIN_ID && e.PROJECT_ID == m.PROJECT_ID))
-                    .ToList();
-                if (!missing.Any()) return;
-
-                var empId = GetHeaderDetails_String("empId");
-                var domains = CSPdb.ITOPS_DOMAIN.GetAll().Where(d => d.ISACTIVE).ToList();
-                var accountName = Cldb.CUSTOMER.GetAll().Where(c => c.CUST_ID == custId).Select(c => c.CUST_NM).FirstOrDefault();
-                var projects = Cldb.PROJECT.GetAll().Where(p => projectIds.Contains(p.PROJ_ID)).ToList();
-
-                foreach (var m in missing)
-                {
-                    var domain = domains.FirstOrDefault(d => d.ID == m.DOMAIN_ID);
-                    if (domain == null) continue;
-                    var project = projects.FirstOrDefault(p => p.PROJ_ID == m.PROJECT_ID);
-
-                    var assessment = new ITOPS_ASSESSMENT
-                    {
-                        ASSESSMENT_MASTER_ID = master.ID,
-                        DOMAIN_ID = domain.ID,
-                        PROJECT_ID = m.PROJECT_ID,
-                        BUSINESS_UNIT = project != null ? project.BUSINESS_UNIT : null,
-                        ACCOUNT_NAME = accountName,
-                        STATUS = "NotStarted"
-                    };
-                    UpdateAuditFields(assessment, empId);
-                    CSPdb.ITOPS_ASSESSMENT.Add(assessment);
-                    try
-                    {
-                        CSPdb.Commit(CanCommit); // need the identity before the join rows can reference it
-                    }
-                    catch (Exception ex)
-                    {
-                        if (!IsUniqueViolation(ex)) throw;
-                        // The in-process lock above only serializes callers on THIS
-                        // worker process - a second IIS worker process (or a second
-                        // server behind the load balancer) can still race this same
-                        // (cycle, domain, project) insert and win first. That's not a
-                        // real failure: the assessment already exists, just created by
-                        // the other request instead of this one. Detach the failed
-                        // entity so EF's change tracker drops it - otherwise the next
-                        // Commit() in this loop (or the one below) keeps retrying to
-                        // insert the same still-tracked row and fails every time.
-                        // EF6 special-cases Added -> Deleted as an immediate Detach (no
-                        // DB round trip, since the row was never actually inserted) -
-                        // exactly "forget this entity" without needing DbContext exposed
-                        // through the ICSPDB interface.
-                        CSPdb.ITOPS_ASSESSMENT.Delete(assessment);
-                        continue;
-                    }
-
-                    SeedITOpsDefaultOwners(assessment, domain, empId);
-                }
-                CSPdb.Commit(CanCommit);
-            }
-        }
+        // REMOVED (was EnsureAssessmentsForAccount): used to silently create a real
+        // ITOPS_ASSESSMENT row (STATUS = NotStarted, domain defaults seeded as
+        // assessor/reviewer) for every domain mapped to a project the moment anyone
+        // loaded the Dashboard/Executive Summary for that account - before Configure
+        // Assessment's own "Create assessments" step ever ran. This repeatedly produced
+        // assessments nobody staged, with no Assessee and a stale/default
+        // Assessor/Reviewer, surfacing as "phantom" rows in Configure Assessment's grid.
+        // An ITOPS_ASSESSMENT row is now created ONLY by
+        // ITOperationMaturityAdminController's explicit "Create assessments" action (and
+        // by GetOrCreateITOpsAssessment, when an already-assigned Assessor/Reviewer/
+        // Assessee opens a specific assessment they were actually staged on). A domain
+        // mapped in Configure Scope but never staged in Configure Assessment simply does
+        // not appear on the Dashboard/Domain Tracker until it is staged - this is the
+        // intended trade-off, not a regression: visibility before staging is no longer
+        // considered worth the risk of creating assessments nobody asked for.
 
         // Inserts the domain's DEFAULT_ASSESSOR_ID / DEFAULT_REVIEWER_ID as the
         // assessment's first assessor/reviewer join rows (V1 set flat columns on
@@ -1664,7 +1579,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             List<string> projectIds = null;
             if (custIdProvided)
             {
-                EnsureAssessmentsForAccount(custId);
+                // No auto-create here (see the removed EnsureAssessmentsForAccount note
+                // above) - the tracker now only ever shows a domain once a real
+                // ITOPS_ASSESSMENT row exists for it, i.e. once Configure Assessment has
+                // actually staged it.
                 projectIds = GetITOpsProjectIdsForCustomer(custId);
                 if (!projectIds.Any()) return Ok(new List<ITOPS_DomainTrackerRow>());
             }
@@ -1693,12 +1611,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (!string.IsNullOrWhiteSpace(businessUnit))
                 assessmentList = assessmentList.Where(a => a.BUSINESS_UNIT == businessUnit).ToList();
 
-            // A domain unmapped from a project AFTER an assessment was already created
-            // for it (Configure Scope changed later) leaves a stale ITOPS_ASSESSMENT row
-            // behind - EnsureAssessmentsForAccount only ever ADDS missing rows, it never
-            // removes one whose mapping was since dropped. The tracker should reflect the
-            // domain set the project is mapped to RIGHT NOW, not everything a domain ever
-            // had an assessment for historically.
+            // A domain unmapped from a project AFTER an assessment was already created for
+            // it (Configure Scope changed later) leaves a stale ITOPS_ASSESSMENT row behind
+            // - nothing here ever removes one whose mapping was since dropped. The tracker
+            // should reflect the domain set the project is mapped to RIGHT NOW, not
+            // everything a domain ever had an assessment for historically.
             var hasProjectFilter = !string.IsNullOrWhiteSpace(projectId);
             var currentlyMappedDomainIds = CSPdb.ITOPS_DOMAIN_PROJECT_MAP.GetAll().Where(m => m.ISACTIVE).ToList()
                 .Where(m => hasProjectFilter ? m.PROJECT_ID == projectId : (projectIds == null || projectIds.Contains(m.PROJECT_ID)))
@@ -3165,8 +3082,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsExecutiveSummary(string custId = null)
         {
-            if (!string.IsNullOrWhiteSpace(custId))
-                EnsureAssessmentsForAccount(custId);
+            // No auto-create here (see the removed EnsureAssessmentsForAccount note on
+            // GetITOpsDomainTracker) - this endpoint already excludes NotStarted/Draft
+            // assessments per its own acceptance criteria, so removing the call changes
+            // nothing it displays.
 
             List<ITOPS_ASSESSMENT> allAssessments;
             if (!string.IsNullOrWhiteSpace(custId))

@@ -458,11 +458,7 @@ export class DomainReviewComponent implements OnInit {
     return param.findingId ? this.evidenceByFindingId[param.findingId] ?? [] : [];
   }
 
-  evidenceDownloadUrl(evidenceId: number): string {
-    return this.api.evidenceDownloadUrl(evidenceId);
-  }
-
-  /** For a parameter's own evidence (as opposed to a finding's action-update evidence, downloaded via evidenceDownloadUrl above). */
+  /** Finding/score evidence alike - always fetched as a blob with the required token/empId headers, never a plain anchor navigation (see downloadEvidence() in the API service). */
   downloadEvidenceFile(evidence: { id: number; fileName: string }): void {
     this.api.downloadEvidence(evidence.id, evidence.fileName);
   }

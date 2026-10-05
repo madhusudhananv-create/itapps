@@ -501,7 +501,4 @@ export class ItOpsMaturityApiService {
     });
   }
 
-  evidenceDownloadUrl(evidenceId: number): string {
-    return `${this.apiurl}DownloadITOpsEvidence?evidenceId=${evidenceId}`;
-  }
 }

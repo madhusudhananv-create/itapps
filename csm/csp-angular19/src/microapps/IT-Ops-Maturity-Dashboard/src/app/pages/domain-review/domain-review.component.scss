@@ -599,6 +599,17 @@
   vertical-align: middle;
 }
 
+/* The downloadable filename inside an .evidence-chip span - a <button>, not an <a href>,
+   because DownloadITOpsEvidence needs the same token/empId headers as every other API
+   call, which a plain anchor navigation can't attach (see downloadEvidence() in the API
+   service). The chip around it already supplies the pill look, so this stays bare. */
+.evidence-link {
+  all: unset;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
 .finding-actions {
   display: flex;
   align-items: center;

@@ -323,10 +323,6 @@ export class MaturityAssessmentComponent implements OnInit {
     return param.findingId ? this.evidenceByFindingId[param.findingId] ?? [] : [];
   }
 
-  evidenceDownloadUrl(evidenceId: number): string {
-    return this.api.evidenceDownloadUrl(evidenceId);
-  }
-
   /** Only one of this assessment's own assessor(s) may Accept/Dispute a rejection - same idea as domain-review.component.ts's isAssessee(). */
   isAssessor(): boolean {
     const empId = localStorage.getItem('empid');

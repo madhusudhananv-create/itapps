@@ -243,7 +243,7 @@
               <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
               <div class="evidence-list" *ngIf="evidenceFor(param).length">
                 <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
-                  <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+                  <button type="button" class="evidence-link" (click)="downloadEvidence(ev)">{{ ev.fileName }}</button>
                 </span>
               </div>
             </div>
