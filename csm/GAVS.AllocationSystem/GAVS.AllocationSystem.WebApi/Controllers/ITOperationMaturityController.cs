@@ -2838,41 +2838,43 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             return Ok(finding);
         }
 
-        // BEHAVIOUR CHANGE (V2 schema): ITOPS_EVIDENCE lost its FINDING_ID column - it is
-        // SCORE_ID-only now (an approved regression from V1). Evidence for a finding is
-        // therefore the evidence attached to the finding's own score, so this endpoint
-        // returns the score's evidence. The route and response shape are unchanged.
+        // FINDING_ID (V2_35) separates this from the score's own evidence - only rows the
+        // Assessee attached against this specific finding's Action Taken, not whatever the
+        // Assessor attached while scoring. Evidence uploaded before V2_35 ran has
+        // FINDING_ID = NULL and so will not appear here even if it was conceptually a
+        // finding attachment at the time (see V2_35's migration note).
         [GET("GetITOpsFindingEvidence")]
         [ActionName("GetITOpsFindingEvidence")]
         [HttpGet]
         public IHttpActionResult GetITOpsFindingEvidence(int findingId)
         {
-            var scoreId = CSPdb.ITOPS_FINDING.GetAll()
-                .Where(f => f.ID == findingId && f.ISACTIVE)
-                .Select(f => (int?)f.SCORE_ID)
-                .FirstOrDefault();
-            if (!scoreId.HasValue) return Ok(new List<ITOPS_EvidenceRow>());
-            return Ok(GetITOpsEvidenceForScore(scoreId.Value));
+            return Ok(GetITOpsEvidenceForFinding(findingId));
         }
 
         /// <summary>
-        /// Same idea as GetITOpsFindingEvidence, but for a parameter's score
-        /// directly - used by the assessment scoring screen, where evidence is
-        /// attached per-parameter before (or without) a finding ever existing
-        /// (a score of 5 has no finding at all).
+        /// Same idea as GetITOpsFindingEvidence, but for a parameter's score directly - used
+        /// by the assessment scoring screen, where evidence is attached per-parameter before
+        /// (or without) a finding ever existing (a score of 5 has no finding at all).
+        /// Excludes any row tagged with a FINDING_ID, so an Assessee's Action Taken evidence
+        /// never leaks back into the Assessor's own scoring-evidence list.
         /// </summary>
         [GET("GetITOpsScoreEvidence")]
         [ActionName("GetITOpsScoreEvidence")]
         [HttpGet]
         public IHttpActionResult GetITOpsScoreEvidence(int scoreId)
         {
-            return Ok(GetITOpsEvidenceForScore(scoreId));
+            return Ok(GetITOpsEvidenceRows(e => e.ISACTIVE && e.SCORE_ID == scoreId && e.FINDING_ID == null));
         }
 
-        private List<ITOPS_EvidenceRow> GetITOpsEvidenceForScore(int scoreId)
+        private List<ITOPS_EvidenceRow> GetITOpsEvidenceForFinding(int findingId)
+        {
+            return GetITOpsEvidenceRows(e => e.ISACTIVE && e.FINDING_ID == findingId);
+        }
+
+        private List<ITOPS_EvidenceRow> GetITOpsEvidenceRows(Func<ITOPS_EVIDENCE, bool> predicate)
         {
             var rows = CSPdb.ITOPS_EVIDENCE.GetAll()
-                .Where(e => e.ISACTIVE && e.SCORE_ID == scoreId)
+                .Where(predicate)
                 .OrderByDescending(e => e.CREATED_DATE)
                 .ToList();
             if (!rows.Any()) return new List<ITOPS_EvidenceRow>();
@@ -2901,7 +2903,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // the file is saved to the shared ~/UploadFile/ folder under a random
         // GUID name and recorded in the shared FILE_DATA table (Cldb) - ITOPS_EVIDENCE
         // just links a score to that FILE_DATA row via FILE_DATA_ID.
-        // V2: stored against the finding's SCORE_ID (see GetITOpsFindingEvidence above).
+        // V2_35: tagged with FINDING_ID so it reads back only via
+        // GetITOpsFindingEvidence, never via GetITOpsScoreEvidence.
         [POST("UploadITOpsFindingEvidence")]
         [ActionName("UploadITOpsFindingEvidence")]
         [HttpPost]
@@ -2909,10 +2912,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null) return NotFound();
-            return UploadITOpsEvidenceForScore(finding.SCORE_ID);
+            return UploadITOpsEvidenceForScore(finding.SCORE_ID, findingId);
         }
 
-        /// <summary>Same idea as UploadITOpsFindingEvidence, but for a parameter's score directly - see GetITOpsScoreEvidence.</summary>
+        /// <summary>Same idea as UploadITOpsFindingEvidence, but for a parameter's score directly - see GetITOpsScoreEvidence. Never tags FINDING_ID, so this never shows up under a finding's own Action Taken evidence.</summary>
         [POST("UploadITOpsScoreEvidence")]
         [ActionName("UploadITOpsScoreEvidence")]
         [HttpPost]
@@ -2920,10 +2923,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var score = CSPdb.ITOPS_SCORE.GetAll().FirstOrDefault(s => s.ID == scoreId);
             if (score == null) return NotFound();
-            return UploadITOpsEvidenceForScore(scoreId);
+            return UploadITOpsEvidenceForScore(scoreId, findingId: null);
         }
 
-        private IHttpActionResult UploadITOpsEvidenceForScore(int scoreId)
+        private IHttpActionResult UploadITOpsEvidenceForScore(int scoreId, int? findingId)
         {
             var empId = GetHeaderDetails_String("empId");
             var httpRequest = HttpContext.Current.Request;
@@ -2960,7 +2963,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var evidence = new ITOPS_EVIDENCE
                 {
                     SCORE_ID = scoreId,
-                    FILE_DATA_ID = fileData.ID
+                    FILE_DATA_ID = fileData.ID,
+                    FINDING_ID = findingId
                 };
                 UpdateAuditFields(evidence, empId);
                 CSPdb.ITOPS_EVIDENCE.Add(evidence);

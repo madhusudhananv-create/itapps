@@ -313,14 +313,21 @@ GO
 -- FILE_DATA_ID only (V2_17) - evidence files live in the shared FILE_DATA
 -- table (Cldb.FILE_DATA), soft cross-database reference, no real FK, same
 -- convention as every other Cldb reference from an ITOPS table.
+-- FINDING_ID (V2_35) - NULL = Assessor's scoring evidence, not NULL = Assessee's
+-- Action Taken evidence for that finding. Separates the two lists that previously
+-- shared this table keyed only by SCORE_ID (see GetITOpsScoreEvidence /
+-- GetITOpsFindingEvidence in ITOperationMaturityController.cs).
 CREATE TABLE ITOPS_EVIDENCE (
     ID INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     SCORE_ID INT NOT NULL,
     FILE_DATA_ID INT NOT NULL,
+    FINDING_ID INT NULL,
     CREATED_BY VARCHAR(10), CREATED_DATE DATETIME,
     UPDATED_BY VARCHAR(10), UPDATED_DATE DATETIME,
     ISACTIVE BIT,
     CONSTRAINT FK_ITOPS_EVIDENCE_SCORE FOREIGN KEY (SCORE_ID) REFERENCES ITOPS_SCORE(ID)
+    -- FK_ITOPS_EVIDENCE_FINDING added further down, once ITOPS_FINDING exists
+    -- (this table is created before it in this script).
 );
 GO
 
@@ -346,6 +353,11 @@ CREATE TABLE ITOPS_FINDING (
     CONSTRAINT FK_ITOPS_FINDING_ASSESSEE FOREIGN KEY (ASSESSEE_EMP_ID) REFERENCES EMP_INFO(EMP_ID),
     CONSTRAINT FK_ITOPS_FINDING_RETARGET_APPROVER FOREIGN KEY (RETARGET_APPROVED_BY) REFERENCES EMP_INFO(EMP_ID)
 );
+GO
+
+-- Deferred from ITOPS_EVIDENCE's own CREATE TABLE above - ITOPS_FINDING didn't exist yet.
+ALTER TABLE ITOPS_EVIDENCE WITH CHECK
+    ADD CONSTRAINT FK_ITOPS_EVIDENCE_FINDING FOREIGN KEY (FINDING_ID) REFERENCES ITOPS_FINDING(ID);
 GO
 
 CREATE TABLE ITOPS_FINDING_ACTIVITY (

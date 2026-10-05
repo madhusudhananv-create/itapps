@@ -306,6 +306,15 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int SCORE_ID { get; set; }
 
         public int FILE_DATA_ID { get; set; }
+
+        // NULL = evidence attached by the Assessor while scoring the parameter.
+        // Set = evidence attached by the Assessee against this specific finding's
+        // remediation (Action Taken). Both rows still carry the same SCORE_ID (a
+        // finding's score never changes), but this column is what keeps "evidence
+        // for the score" and "evidence for the finding" from being the same list -
+        // see GetITOpsScoreEvidence/GetITOpsFindingEvidence in
+        // ITOperationMaturityController.cs.
+        public int? FINDING_ID { get; set; }
     }
 
     // Findings - the trackable action item derived from a below-target score.
