@@ -2182,20 +2182,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (!skipReview)
             {
-                var assessorNames = string.Join(", ", GetEmpNames(assessorIds));
+                // Who submitted it - only the one assessor who clicked Submit (submitEmpId),
+                // not every assessor on the assessment. Still Cc all assessors below so the
+                // rest stay notified their assessment moved into review.
+                var submitterName = GetEmpName(submitEmpId);
                 // Dex Partner (PROJECT.QUALITY_SPOC) is Cc'd on this trigger per the
                 // notification-email spec - see the Trigger 1 table.
                 var submitCcEmpIds = new List<string>();
                 if (!string.IsNullOrWhiteSpace(project?.QUALITY_SPOC)) submitCcEmpIds.Add(project.QUALITY_SPOC);
+                submitCcEmpIds.AddRange(assessorIds.Where(id => !string.IsNullOrWhiteSpace(id) && id != submitEmpId));
                 NotifyITOpsManyWithCc(
                     reviewerIds,
-                    submitCcEmpIds,
+                    submitCcEmpIds.Distinct().ToList(),
                     $"IT Ops Maturity: {domain?.NAME} assessment submitted for review - {projectName}",
                     "ITOpsSubmittedForReview.htm",
                     ToEmailValues(new
                     {
                         ReviewerName = string.Join(", ", GetEmpNames(reviewerIds)),
-                        CoeSpocName = assessorNames,
+                        CoeSpocName = submitterName,
                         DomainName = ITOpsEmailDomainName(domain?.NAME, assessment.CLOUD_PROVIDER),
                         AccountName = GetITOpsAccountName(project?.CUST_ID) ?? "-",
                         ProjectName = projectName,
@@ -2203,7 +2207,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         AssessmentLink = GetITOpsAssessmentLink(domain?.CODE, assessment.ID, true, project?.CUST_ID)
                     }),
                     "SubmittedForReview", assessment.ID, null,
-                    $"{domain?.NAME} assessment for {projectName} submitted for your review by {assessorNames}.");
+                    $"{domain?.NAME} assessment for {projectName} submitted for your review by {submitterName}.");
             }
             else
             {
@@ -2655,11 +2659,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     request.AssessorAccepts ? "FindingRejectionAccepted" : "FindingRejectionDisputed", assessmentId, finding.ID,
                     $"Your rejection of \"{findingParameter?.NAME}\" in {findingDomain?.NAME} was {(request.AssessorAccepts ? "accepted - the finding is now closed." : "disputed - please reconsider and act on it.")}");
 
-                // Reviewer also needs to know when a rejection is accepted/closed (or disputed),
-                // same as the assessee email above, but addressed to the Reviewer and naming all
-                // assessors so every assessor is visible to them, with assessors Cc'd so they stay
-                // notified on their own decision too.
-                if (reviewerIds.Any())
+                // Reviewer only needs to know once a finding is actually closed (rejection
+                // accepted) - a dispute just reopens it for the assessee to act on again,
+                // nothing final for the Reviewer to review yet, so no email on that path.
+                if (request.AssessorAccepts && reviewerIds.Any())
                 {
                     NotifyITOpsManyWithCc(
                         reviewerIds,
