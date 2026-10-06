@@ -33,9 +33,13 @@ function toDomainSummary(row: ItOpsDomainTrackerRow): DomainSummary {
   return {
     id: row.domainCode,
     name: row.domainName,
-    coeSpoc: row.coeSpocName ?? '',
+    // Comma-joined from the plural list - a domain can have more than one Assessor/Reviewer
+    // across the project(s) it rolls up (see domainAssessmentIds grouping server-side).
+    // row.coeSpocName/reviewerName are each only the FIRST one and would silently hide the
+    // rest.
+    coeSpoc: row.coeSpocNames?.length ? row.coeSpocNames.join(', ') : (row.coeSpocName ?? ''),
     coeSpocEmpId: row.coeSpocEmpId,
-    reviewer: row.reviewerName ?? '',
+    reviewer: row.reviewerNames?.length ? row.reviewerNames.join(', ') : (row.reviewerName ?? ''),
     reviewerEmpId: row.reviewerEmpId,
     status: BACKEND_STATUS_MAP[row.status] ?? 'Not Started',
     averageScore: row.averageScore,
@@ -1719,8 +1723,8 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       'Sr. No': index + 1,
       Account: domain.accountName || '-',
       Domain: domain.name,
-      Assessor: domain.coeSpoc || 'Unassigned',
-      Reviewer: domain.reviewer || 'Unassigned',
+      'Assessor(s)': domain.coeSpoc || 'Unassigned',
+      'Reviewer(s)': domain.reviewer || 'Unassigned',
       Status: this.displayDomainStatus(domain),
       'No. of Parameters': domain.paramCount,
       'No of Applicable Parameters': domain.applicableParamCount,
@@ -1855,8 +1859,8 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         'Sr. No': '',
         Account: '',
         Domain: 'Overall Estate',
-        Assessor: '',
-        Reviewer: '',
+        'Assessor(s)': '',
+        'Reviewer(s)': '',
         Status: '',
         'No. of Parameters': s.totalParamCount,
         'No of Applicable Parameters': s.totalApplicableParamCount,

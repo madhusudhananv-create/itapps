@@ -431,7 +431,7 @@
           <thead>
             <tr>
               <th>Technology Domain</th>
-              <th>Assessor</th>
+              <th>Assessor(s)</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -501,8 +501,8 @@
               <th class="col-num">Sr. No</th>
               <th *ngIf="!selectedAccount">Account</th>
               <th class="sortable" (click)="sortDomainTrackerBy('name')">Domain <span class="sort-arrow">{{ domainTrackerSortIndicator('name') }}</span></th>
-              <th>Assessor</th>
-              <th>Reviewer</th>
+              <th>Assessor(s)</th>
+              <th>Reviewer(s)</th>
               <th class="sortable" (click)="sortDomainTrackerBy('status')">Status <span class="sort-arrow">{{ domainTrackerSortIndicator('status') }}</span></th>
               <th class="col-num">No. of Parameters</th>
               <th class="col-num">No of Applicable Parameters</th>
