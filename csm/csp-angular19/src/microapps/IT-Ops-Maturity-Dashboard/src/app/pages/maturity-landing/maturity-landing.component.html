@@ -537,17 +537,17 @@
               </td>
             </tr>
           </tbody>
-          <tfoot *ngIf="enterpriseSummary && sortedDomainSummaries.length">
+          <tfoot *ngIf="domainTrackerEstateSummary as summary">
             <tr class="estate-row">
               <td [attr.colspan]="!selectedAccount ? 6 : 5">Overall Estate</td>
-              <td class="col-num">{{ enterpriseSummary.totalParamCount }}</td>
-              <td class="col-num">{{ enterpriseSummary.totalApplicableParamCount }}</td>
-              <td class="col-num">{{ enterpriseSummary.totalSumScores }}</td>
-              <td class="col-num">{{ enterpriseSummary.totalMaxPossible }}</td>
-              <td class="col-num">{{ enterpriseSummary.overallAverageScore | number: '1.2-2' }}</td>
-              <td class="col-num">{{ enterpriseSummary.overallMaturityPercent }}%</td>
+              <td class="col-num">{{ summary.totalParamCount }}</td>
+              <td class="col-num">{{ summary.totalApplicableParamCount }}</td>
+              <td class="col-num">{{ summary.totalSumScores }}</td>
+              <td class="col-num">{{ summary.totalMaxPossible }}</td>
+              <td class="col-num">{{ summary.overallAverageScore | number: '1.2-2' }}</td>
+              <td class="col-num">{{ summary.overallMaturityPercent }}%</td>
               <td>
-                <span [class]="maturityLevelPillClass(enterpriseSummary.overallMaturityLevel)">{{ enterpriseSummary.overallMaturityLevel }}</span>
+                <span [class]="maturityLevelPillClass(summary.overallMaturityLevel)">{{ summary.overallMaturityLevel }}</span>
               </td>
             </tr>
           </tfoot>
@@ -606,6 +606,7 @@
               <th>Parameter</th>
               <th class="col-num sortable" (click)="sortByColumn('currentScore')">Score <span class="sort-arrow">{{ sortIndicator('currentScore') }}</span></th>
               <th class="col-num sortable" (click)="sortByColumn('gap')">Gap <span class="sort-arrow">{{ sortIndicator('gap') }}</span></th>
+              <th class="col-num">% Score</th>
               <th>Recommendation</th>
             </tr>
           </thead>
@@ -616,11 +617,12 @@
               <td class="col-num">
                 <div class="score-bar-wrap">
                   <div class="score-bar"><i [class]="'fill-' + pctSeverity(scorePct(risk.currentScore))" [style.width.%]="scorePct(risk.currentScore)"></i></div>
-                  <span class="score-txt">{{ risk.currentScore }} / 5</span>
+                  <span class="score-txt">{{ risk.isNotScored ? 'NA' : (risk.currentScore + ' / 5') }}</span>
                 </div>
               </td>
+              <td class="col-num gap-cell">{{ risk.isNotScored ? 'Not scored' : risk.gap }}</td>
               <td class="col-num">
-                <span class="gap-badge" [class]="'badge-' + gapSeverity(risk.gap, risk.isNotScored)">{{ risk.isNotScored ? 'Not scored' : risk.gap }}</span>
+                <span class="pct-badge" [class]="'badge-' + scoreBandSeverity(risk.isNotScored ? null : risk.currentScore, risk.isNotScored)">{{ risk.isNotScored ? 'Not scored' : (scorePct(risk.currentScore) + '%') }}</span>
               </td>
               <td class="recommendation-cell" [title]="risk.recommendationDetail || ''">{{ risk.recommendation }}</td>
             </tr>
@@ -632,11 +634,12 @@
       </ng-template>
 
       <div class="gap-legend" *ngIf="visibleTopRisks.length">
-        <span class="legend-item"><span class="legend-dot dot-good"></span>No gap</span>
-        <span class="legend-item"><span class="legend-dot dot-warning"></span>Gap of 1</span>
-        <span class="legend-item"><span class="legend-dot dot-serious"></span>Gap of 2</span>
-        <span class="legend-item"><span class="legend-dot dot-critical"></span>Gap of 3+</span>
-        <span class="legend-item"><span class="legend-dot dot-muted"></span>Not scored (NA)</span>
+        <span class="legend-item"><span class="legend-dot dot-critical"></span>Critical Gap</span>
+        <span class="legend-item"><span class="legend-dot dot-serious"></span>Needs Work</span>
+        <span class="legend-item"><span class="legend-dot dot-warning"></span>Foundation Established</span>
+        <span class="legend-item"><span class="legend-dot dot-good"></span>Well Managed</span>
+        <span class="legend-item"><span class="legend-dot dot-optimal"></span>Optimized</span>
+        <span class="legend-item"><span class="legend-dot dot-muted"></span>Not Applicable</span>
       </div>
     </section>
   </ng-container>

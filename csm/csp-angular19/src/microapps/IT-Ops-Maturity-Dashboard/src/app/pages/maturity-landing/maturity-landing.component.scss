@@ -30,6 +30,7 @@
   --status-warning-tint: rgba(250, 178, 25, 0.18);
   --status-serious-tint: rgba(236, 131, 90, 0.18);
   --status-critical-tint: rgba(255, 59, 48, 0.15);
+  --status-optimal-tint: rgba(13, 143, 107, 0.15);
   --status-muted-tint: rgba(142, 142, 147, 0.15);
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -93,6 +94,7 @@
     --status-warning-tint: rgba(255, 204, 77, 0.22);
     --status-serious-tint: rgba(255, 145, 102, 0.22);
     --status-critical-tint: rgba(255, 69, 58, 0.22);
+    --status-optimal-tint: rgba(34, 201, 155, 0.22);
     --status-muted-tint: rgba(142, 142, 147, 0.22);
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
     --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
@@ -127,6 +129,7 @@
   --status-warning-tint: rgba(255, 204, 77, 0.22);
   --status-serious-tint: rgba(255, 145, 102, 0.22);
   --status-critical-tint: rgba(255, 69, 58, 0.22);
+  --status-optimal-tint: rgba(34, 201, 155, 0.22);
   --status-muted-tint: rgba(142, 142, 147, 0.22);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
@@ -1117,6 +1120,7 @@ section {
 .dot-warning, .fill-warning { background: var(--status-warning); }
 .dot-serious, .fill-serious { background: var(--status-serious); }
 .dot-critical, .fill-critical { background: var(--status-critical); }
+.dot-optimal, .fill-optimal { background: var(--status-optimal); }
 .dot-muted { background: var(--text-muted); }
 .dot-muted { background: var(--status-muted); }
 
@@ -1495,7 +1499,15 @@ tbody tr:hover td:first-child {
    enough to tell the two stages apart without going to a solid dark fill. */
 .status-pill.status-completed { background: color-mix(in srgb, #146c3e 16%, transparent); color: #146c3e; }
 
-.gap-badge {
+/* Gap is deliberately plain text now - the on-screen severity color lives on the %
+   Score column instead (see .pct-badge below), so the same figure isn't colored twice. */
+.gap-cell {
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.gap-badge, .pct-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1514,6 +1526,7 @@ tbody tr:hover td:first-child {
 .badge-warning { background: var(--status-warning-tint); color: var(--status-warning); }
 .badge-serious { background: var(--status-serious-tint); color: var(--status-serious); }
 .badge-critical { background: var(--status-critical); color: #fff; }
+.badge-optimal { background: var(--status-optimal-tint); color: var(--status-optimal); }
 .badge-muted { background: color-mix(in srgb, var(--text-muted) 16%, transparent); color: var(--text-muted); }
 
 .score-bar-wrap {

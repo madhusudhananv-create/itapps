@@ -70,7 +70,7 @@ function toTopRisk(row: ItOpsTopRiskRow): TopRisk {
     // master table so the wording can be changed in the database without a deploy. Showing
     // the assessor's own ITOPS_SCORE.NOTES here instead put raw working notes in front of
     // every Dashboard viewer.
-    recommendation: row.isNotScored ? 'Not Scored' : (row.recommendedAction?.trim() || '-'),
+    recommendation: row.isNotScored ? 'Not Applicable' : (row.recommendedAction?.trim() || '-'),
     recommendationDetail: row.recommendationDetail?.trim() || undefined,
   };
 }
@@ -1588,12 +1588,24 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return MATURITY_LEVEL_STATUS[level] ?? 'muted';
   }
 
-  gapSeverity(gap: number, isNotScored?: boolean): StatusLevel | 'good' | 'muted' {
-    if (isNotScored) return 'muted';
-    if (gap >= 3) return 'critical';
-    if (gap === 2) return 'serious';
-    if (gap === 0) return 'good';
-    return 'warning';
+  /**
+   * Which of the 5 ITOPS_SCORE_RECOMMENDATION bands a parameter's own score falls in -
+   * drives the % Score column's color (the Gap column itself is deliberately left
+   * uncolored; the % Score value is the one highlighted figure in this row, matching the
+   * same 5 bands the Recommendation column's text already comes from, so the color and the
+   * word next to it always agree). 'muted' for a Not Applicable (NA) parameter - a skipped
+   * question isn't a maturity level, so it gets no severity color at all.
+   */
+  scoreBandSeverity(score: number | null, isNotScored?: boolean): StatusLevel | 'muted' {
+    if (isNotScored || score === null) return 'muted';
+    switch (score) {
+      case 1: return 'critical'; // Critical Gap
+      case 2: return 'serious'; // Needs Work
+      case 3: return 'warning'; // Foundation Established
+      case 4: return 'good'; // Well Managed
+      case 5: return 'optimal'; // Optimized
+      default: return 'muted';
+    }
   }
 
   scorePct(score: number | null): number {
@@ -1683,6 +1695,13 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // "Overall Estate" footer row in the Domain Tracker table - scoped to whatever the status
+  // tab/search currently show, not every domain regardless of filter (that's enterpriseSummary,
+  // used by the KPI cards above the table, which stay whole-estate on purpose).
+  get domainTrackerEstateSummary(): EnterpriseSummary | undefined {
+    return this.filteredDomainSummaries.length ? computeEnterpriseSummaryFromRows(this.filteredDomainSummaries) : undefined;
+  }
+
   get sortedDomainSummaries(): DomainSummary[] {
     if (!this.domainTrackerSortColumn) return this.filteredDomainSummaries;
     const column = this.domainTrackerSortColumn;
@@ -1741,8 +1760,9 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     return {
       Category: risk.category,
       Parameter: risk.parameter,
-      Score: `${risk.currentScore} / 5`,
+      Score: risk.isNotScored ? 'NA' : `${risk.currentScore} / 5`,
       Gap: risk.isNotScored ? 'Not scored' : risk.gap,
+      '% Score': risk.isNotScored ? 'Not scored' : `${this.scorePct(risk.currentScore)}%`,
       Recommendation: risk.recommendation,
     };
   }
@@ -1792,7 +1812,7 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
     const FILTER_VALUE_STYLE = bordered({ font: { bold: true, color: { rgb: '1F497D' } }, fill: { fgColor: { rgb: 'DCE6F7' } } });
     /** Columns whose values are numbers/percentages - right-aligned like a spreadsheet naturally would, instead of the default left-aligned text. */
     const NUMERIC_COLUMN_NAMES = new Set([
-      'Sr. No', 'No. of Parameters', 'No of Applicable Parameters', 'Sum of Scores', 'Max Possible', 'Avg Score', 'Maturity %', 'Gap',
+      'Sr. No', 'No. of Parameters', 'No of Applicable Parameters', 'Sum of Scores', 'Max Possible', 'Avg Score', 'Maturity %', 'Gap', '% Score',
     ]);
 
     // Same severity palette the on-screen pills use (status-pill/gap-badge classes in
@@ -1821,14 +1841,19 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
         default: return 'muted';
       }
     };
-    const gapTint = (gap: unknown): keyof typeof TINTS => {
-      if (gap === 'Not scored' || gap === '-') return 'muted';
-      const n = Number(gap);
-      if (Number.isNaN(n)) return 'muted';
-      if (n >= 3) return 'critical';
-      if (n === 2) return 'serious';
-      if (n === 0) return 'good';
-      return 'warning';
+    // Colors the % Score cell off the SAME row's Recommendation text (not the % figure
+    // itself) - one source of truth for "which band is this", so the color and the word
+    // next to it in the Recommendation column can never disagree. Mirrors
+    // scoreBandSeverity() in the component (the on-screen version of this same mapping).
+    const recommendationTint = (recommendation: unknown): keyof typeof TINTS => {
+      switch (recommendation) {
+        case 'Critical Gap': return 'critical';
+        case 'Needs Work': return 'serious';
+        case 'Foundation Established': return 'warning';
+        case 'Well Managed': return 'good';
+        case 'Optimized': return 'goodDeep';
+        default: return 'muted'; // Not Applicable, or anything unrecognized
+      }
     };
     const levelTint = (level: string): keyof typeof TINTS => {
       if (!level) return 'muted';
@@ -1961,11 +1986,12 @@ export class MaturityLandingComponent implements OnInit, AfterViewInit {
       if (riskHeaderRowIndex >= 0) {
         setStyle(riskHeaderRowIndex - 1, 0, SECTION_TITLE_STYLE);
         riskHeaders.forEach((_, c) => setStyle(riskHeaderRowIndex, c, HEADER_STYLE));
-        const gapCol = riskHeaders.indexOf('Gap');
+        const pctScoreCol = riskHeaders.indexOf('% Score');
+        const recommendationCol = riskHeaders.indexOf('Recommendation');
         for (let r = riskFirstDataRowIndex; r <= riskLastDataRowIndex; r++) {
           const zebra = (r - riskFirstDataRowIndex) % 2 === 0 ? ZEBRA_EVEN : ZEBRA_ODD;
           riskHeaders.forEach((h, c) => {
-            if (c === gapCol) setStyle(r, c, tintStyle(gapTint(cellText(r, c))));
+            if (c === pctScoreCol) setStyle(r, c, tintStyle(recommendationTint(cellText(r, recommendationCol))));
             else setStyle(r, c, NUMERIC_COLUMN_NAMES.has(h) ? { ...zebra, ...RIGHT_ALIGN } : zebra);
           });
         }
