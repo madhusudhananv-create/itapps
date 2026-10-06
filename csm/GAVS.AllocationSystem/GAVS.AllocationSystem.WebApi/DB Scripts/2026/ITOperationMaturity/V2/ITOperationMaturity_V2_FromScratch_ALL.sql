@@ -43,8 +43,8 @@
 
 IF OBJECT_ID('ITOPS_NOTIFICATION', 'U') IS NOT NULL DROP TABLE ITOPS_NOTIFICATION;
 IF OBJECT_ID('ITOPS_FINDING_ACTIVITY', 'U') IS NOT NULL DROP TABLE ITOPS_FINDING_ACTIVITY;
-IF OBJECT_ID('ITOPS_FINDING', 'U') IS NOT NULL DROP TABLE ITOPS_FINDING;
 IF OBJECT_ID('ITOPS_EVIDENCE', 'U') IS NOT NULL DROP TABLE ITOPS_EVIDENCE;
+IF OBJECT_ID('ITOPS_FINDING', 'U') IS NOT NULL DROP TABLE ITOPS_FINDING;
 IF OBJECT_ID('ITOPS_SCORE', 'U') IS NOT NULL DROP TABLE ITOPS_SCORE;
 IF OBJECT_ID('ITOPS_ASSESSMENT_ASSESSEE', 'U') IS NOT NULL DROP TABLE ITOPS_ASSESSMENT_ASSESSEE;
 IF OBJECT_ID('ITOPS_ASSESSMENT_REVIEWER', 'U') IS NOT NULL DROP TABLE ITOPS_ASSESSMENT_REVIEWER;
@@ -461,7 +461,7 @@ VALUES
     ('CYCLE_ADMINISTRATOR', 'Cycle Administrator', 'Can create and maintain IT Operations Maturity assessment cycles (Configure Cycle).', 1, @empId, GETDATE(), @empId, GETDATE()),
     ('DOMAIN_PROJECT_MAPPER', 'Scope Administrator', 'Can maintain the domain catalog and which technology domains apply to which projects (Configure Scope).', 1, @empId, GETDATE(), @empId, GETDATE()),
     ('RUNOPS_INITIATOR', 'Assessment Coordinator', 'Can create assessment cycles and start IT Operations Maturity assessments for a project (Configure Assessment).', 1, @empId, GETDATE(), @empId, GETDATE()),
-    ('TEAM_ASSIGNMENT_COORDINATOR', 'Team Assignment Coordinator', 'Can assign assessors and reviewers per domain on an assessment (Assign Assessor / Reviewer).', 1, @empId, GETDATE(), @empId, GETDATE());
+    ('TEAM_ASSIGNMENT_COORDINATOR', 'Team Assignment Coordinator', 'Can assign assessors and reviewers per domain on an assessment (Assign Assessor / Reviewer).', 0, @empId, GETDATE(), @empId, GETDATE());
 GO
 
 SELECT ID, ROLE_CODE, ROLE_NAME FROM ITOPS_ROLE ORDER BY ID;
@@ -499,8 +499,8 @@ IF NOT EXISTS (
     WHERE ROLE_ID = @superuserRoleId AND EMP_ID = @empId AND PROJECT_ID IS NULL AND ISACTIVE = 1
 )
 BEGIN
-    INSERT INTO ITOPS_ROLE_ASSIGNMENT (ROLE_ID, EMP_ID, PROJECT_ID, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
-    VALUES (@superuserRoleId, @empId, NULL, 1, @empId, GETDATE(), @empId, GETDATE());
+    INSERT INTO ITOPS_ROLE_ASSIGNMENT (ROLE_ID, EMP_ID, PROJECT_ID, SCOPE_TYPE, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
+    VALUES (@superuserRoleId, @empId, NULL, 'ORG', 1, @empId, GETDATE(), @empId, GETDATE());
 END
 GO
 
@@ -531,13 +531,13 @@ DECLARE @empId VARCHAR(50) = '104744';
 IF NOT EXISTS (SELECT 1 FROM ITOPS_ROLE WHERE ROLE_CODE = 'DOMAIN_ADMINISTRATOR')
 BEGIN
     INSERT INTO ITOPS_ROLE (ROLE_CODE, ROLE_NAME, DESCRIPTION, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
-    VALUES ('DOMAIN_ADMINISTRATOR', 'Domain Administrator', 'Can create and rename IT Ops Maturity domains (Configure Scope - Domains tab).', 1, @empId, GETDATE(), @empId, GETDATE());
+    VALUES ('DOMAIN_ADMINISTRATOR', 'Domain Administrator', 'Can create and rename IT Ops Maturity domains (Configure Scope - Domains tab).', 0, @empId, GETDATE(), @empId, GETDATE());
 END
 
 IF NOT EXISTS (SELECT 1 FROM ITOPS_ROLE WHERE ROLE_CODE = 'CATEGORY_PARAMETER_ADMINISTRATOR')
 BEGIN
     INSERT INTO ITOPS_ROLE (ROLE_CODE, ROLE_NAME, DESCRIPTION, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
-    VALUES ('CATEGORY_PARAMETER_ADMINISTRATOR', 'Category & Parameter Administrator', 'Can create, edit and version the scoring catalogue - categories and parameters (Configure Scope - Categories & Parameters tab).', 1, @empId, GETDATE(), @empId, GETDATE());
+    VALUES ('CATEGORY_PARAMETER_ADMINISTRATOR', 'Category & Parameter Administrator', 'Can create, edit and version the scoring catalogue - categories and parameters (Configure Scope - Categories & Parameters tab).', 0, @empId, GETDATE(), @empId, GETDATE());
 END
 GO
 

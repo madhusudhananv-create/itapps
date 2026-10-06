@@ -1122,3 +1122,11 @@ textarea:disabled {
   gap: 10px;
   margin-top: 20px;
 }
+
+.char-count {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+}

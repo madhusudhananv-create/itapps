@@ -372,12 +372,22 @@ export class MaturityAssessmentComponent implements OnInit {
   }
 
   /**
-   * Notes are only mandatory for an actual 1-5 score - NA (including a
-   * parameter left untouched, which renders as NA by default - see
-   * isSelected()) never requires a justification comment before submission.
+   * Notes are only mandatory for an actual 1-5 score - explicit NA never requires a
+   * justification comment before submission.
    */
   notesRequired(param: MaturityParameter): boolean {
     return typeof param.score === 'number' && !param.notes;
+  }
+
+  /**
+   * True once this parameter has a real answer: a 1-5 score, or NA explicitly selected
+   * (isSelected's NA branch - touched this session, or already had a saved score from a
+   * previous visit). False for a parameter nobody has ever touched - Submit must block on
+   * this, or whatever was left untouched silently goes to review as if it had been
+   * deliberately marked NA.
+   */
+  isAnswered(param: MaturityParameter): boolean {
+    return typeof param.score === 'number' || this.isSelected(param, 'NA');
   }
 
   /** Same rule the My Assignments grid uses for this same row (see displayAssignmentStatus in maturity-landing.component.ts) - Approved only reads as "Completed" once every finding this domain raised (score < 5) is Closed, not just decided/Accepted. */
@@ -524,9 +534,21 @@ export class MaturityAssessmentComponent implements OnInit {
    * not Top Risks, not the domain tracker's applicable-parameter count - could
    * ever see them as NA; upserting all of them keeps that in sync going forward.
    */
+  /**
+   * Only ever persists a parameter the Assessor actually touched this session, or one that
+   * already has a real ITOPS_SCORE row from a previous visit (param.scoreId) - same
+   * condition as isSelected()'s NA branch, deliberately, so the two can never disagree about
+   * which parameters have a real decision behind them.
+   *
+   * Previously this saved EVERY parameter unconditionally (score: null for anything
+   * untouched), which silently wrote a real NULL/NA ITOPS_SCORE row for every question the
+   * Assessor had never even looked at. The very next load then showed NA pre-selected on
+   * all of them (isSelected()'s NA branch trusts param.scoreId) - "Save Draft marks
+   * everything NA" was this filter being absent, not a display bug.
+   */
   private persistAllScores(): Observable<unknown> {
     if (!this.assessmentId || !this.domain) return of(null);
-    const toSave = this.domain.parameters;
+    const toSave = this.domain.parameters.filter((p) => this.touchedParamIds.has(p.id) || !!p.scoreId);
     if (!toSave.length) return of(null);
     const calls: Observable<unknown>[] = toSave.map((p) => {
       const parameterId = this.parameterIdByKey.get(p.id);
@@ -548,13 +570,23 @@ export class MaturityAssessmentComponent implements OnInit {
 
   openSubmitModal(): void {
     if (!this.domain) return;
-    const firstMissing = this.domain.parameters.find((p) => this.notesRequired(p));
-    if (firstMissing) {
-      this.saveMessage = 'Notes are required for every scored parameter.';
-      this.toast.error('Notes required', 'Add notes for every scored parameter before submitting for review.');
-      this.scrollToParam(firstMissing);
+
+    const firstUnanswered = this.domain.parameters.find((p) => !this.isAnswered(p));
+    if (firstUnanswered) {
+      this.saveMessage = 'Every parameter needs a score, or must be marked NA.';
+      this.toast.error('Scoring incomplete', 'Select a score (or NA) for every parameter before submitting for review.');
+      this.scrollToParam(firstUnanswered);
       return;
     }
+
+    const firstMissingNotes = this.domain.parameters.find((p) => this.notesRequired(p));
+    if (firstMissingNotes) {
+      this.saveMessage = 'Notes are required for every scored parameter.';
+      this.toast.error('Notes required', 'Add notes for every scored parameter before submitting for review.');
+      this.scrollToParam(firstMissingNotes);
+      return;
+    }
+
     this.showSubmitModal = true;
   }
 

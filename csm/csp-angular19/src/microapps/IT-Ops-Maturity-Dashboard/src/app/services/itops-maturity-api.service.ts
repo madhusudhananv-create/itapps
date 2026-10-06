@@ -76,8 +76,14 @@ export interface ItOpsDomainTrackerRow {
   domainName: string;
   coeSpocEmpId: string | null;
   coeSpocName: string | null;
+  /** Every Assessor on the domain's assessment(s), not just the first - CoeSpocEmpId/Name above are a legacy singular pair kept for callers that only ever showed one. */
+  coeSpocEmpIds?: string[];
+  coeSpocNames?: string[];
   reviewerEmpId: string | null;
   reviewerName: string | null;
+  /** Every Reviewer on the domain's assessment(s), not just the first - same relationship to ReviewerEmpId/Name as coeSpocEmpIds/Names above. */
+  reviewerEmpIds?: string[];
+  reviewerNames?: string[];
   status: string;
   paramCount: number;
   /** How many of paramCount were actually scored (not left NA) - the "No of Applicable Parameters" scorecard column; maxPossible is this count x 5, not paramCount x 5. */

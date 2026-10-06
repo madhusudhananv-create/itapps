@@ -398,7 +398,10 @@ export class DomainReviewComponent implements OnInit {
 
   openRejectModal(param: MaturityParameter): void {
     this.rejectingParam = param;
-    this.rejectComment = param.findingRejectionComment ?? '';
+    // Always start blank - a re-reject (after the assessor disputed) is a new reason, not
+    // an edit of the old one. Prefilling the prior comment let someone confirm-reject
+    // without changing it, silently dropping the new justification.
+    this.rejectComment = '';
     this.rejectCommentError = '';
   }
 
