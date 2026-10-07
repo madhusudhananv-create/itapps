@@ -107,7 +107,16 @@
               </svg>
             </button>
           </p>
-          <p class="rubric-active-desc muted" *ngIf="!param.score">
+          <p class="rubric-active-desc muted" *ngIf="!param.score && param.scoreId">
+            Not Applicable.
+            <button type="button" class="info-icon-btn" (click)="openRubricModal(param)" aria-label="View full scoring guide" title="View full scoring guide">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 11v5.5M12 7.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </button>
+          </p>
+          <p class="rubric-active-desc muted" *ngIf="!param.score && !param.scoreId">
             Not scored yet.
             <button type="button" class="info-icon-btn" (click)="openRubricModal(param)" aria-label="View full scoring guide" title="View full scoring guide">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -177,7 +186,10 @@
           <div
             class="finding-outcome"
             [class.is-rejected]="param.findingStatus === 'Rejected'"
-            *ngIf="isProbableFinding(param) && ((param.findingStatus && param.findingStatus !== 'Pending' && (isAssessee() ? param.findingStatus === 'Rejected' || param.findingStatus === 'Closed' : true)) || (!isAssessee() && (param.findingRejectionComment || param.findingDisputeComment)))"
+            *ngIf="isProbableFinding(param) && (
+              (isAssessee() && (param.findingStatus === 'Rejected' || param.findingStatus === 'Closed' || param.findingDisputeComment)) ||
+              (!isAssessee() && (param.findingStatus && param.findingStatus !== 'Pending' || param.findingRejectionComment || param.findingDisputeComment))
+            )"
           >
             <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
               <svg *ngIf="param.findingStatus !== 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -207,7 +219,7 @@
               <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
               <div class="evidence-list" *ngIf="evidenceFor(param).length">
                 <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
-                  <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+                  <button type="button" class="evidence-link" (click)="downloadEvidenceFile(ev)">{{ ev.fileName }}</button>
                 </span>
               </div>
             </div>
@@ -224,7 +236,7 @@
 
             <div class="evidence-list" *ngIf="evidenceFor(param).length">
               <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
-                <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+                <button type="button" class="evidence-link" (click)="downloadEvidenceFile(ev)">{{ ev.fileName }}</button>
               </span>
             </div>
             <div class="evidence-list" *ngIf="pendingEvidenceFor(param).length">

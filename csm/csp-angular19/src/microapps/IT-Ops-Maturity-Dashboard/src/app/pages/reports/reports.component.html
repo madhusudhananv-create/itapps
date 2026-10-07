@@ -272,6 +272,7 @@
                 <span [class.below-min]="row.minRequiredScore !== null && row.score !== null && row.score < row.minRequiredScore">{{ row.score ?? 'N/A' }}</span>
                 <span class="cell-secondary" *ngIf="row.minRequiredScore !== null" [title]="'Min required score: ' + row.minRequiredScore"> / {{ row.minRequiredScore }}</span>
               </td>
+              <td *ngSwitchCase="'max-score'" class="col-num">5</td>
               <td *ngSwitchCase="'finding-status-pill'">
                 <span class="pill" [class]="findingPill(row.findingStatus)" *ngIf="row.findingStatus">{{ row.findingStatus }}</span>
                 <span *ngIf="!row.findingStatus">-</span>

@@ -398,7 +398,10 @@ export class DomainReviewComponent implements OnInit {
 
   openRejectModal(param: MaturityParameter): void {
     this.rejectingParam = param;
-    this.rejectComment = param.findingRejectionComment ?? '';
+    // Always start blank - a re-reject (after the assessor disputed) is a new reason, not
+    // an edit of the old one. Prefilling the prior comment let someone confirm-reject
+    // without changing it, silently dropping the new justification.
+    this.rejectComment = '';
     this.rejectCommentError = '';
   }
 
@@ -458,11 +461,7 @@ export class DomainReviewComponent implements OnInit {
     return param.findingId ? this.evidenceByFindingId[param.findingId] ?? [] : [];
   }
 
-  evidenceDownloadUrl(evidenceId: number): string {
-    return this.api.evidenceDownloadUrl(evidenceId);
-  }
-
-  /** For a parameter's own evidence (as opposed to a finding's action-update evidence, downloaded via evidenceDownloadUrl above). */
+  /** Finding/score evidence alike - always fetched as a blob with the required token/empId headers, never a plain anchor navigation (see downloadEvidence() in the API service). */
   downloadEvidenceFile(evidence: { id: number; fileName: string }): void {
     this.api.downloadEvidence(evidence.id, evidence.fileName);
   }

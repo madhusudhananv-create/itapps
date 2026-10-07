@@ -139,7 +139,16 @@
               </svg>
             </button>
           </p>
-          <p class="rubric-active-desc muted" *ngIf="!param.score">
+          <p class="rubric-active-desc muted" *ngIf="!param.score && isSelected(param, 'NA')">
+            Not Applicable.
+            <button type="button" class="info-icon-btn" (click)="openRubricModal(param)" aria-label="View full scoring guide" title="View full scoring guide">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 11v5.5M12 7.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </button>
+          </p>
+          <p class="rubric-active-desc muted" *ngIf="!param.score && !isSelected(param, 'NA')">
             Not scored yet. Click a level above to score it.
             <button type="button" class="info-icon-btn" (click)="openRubricModal(param)" aria-label="View full scoring guide" title="View full scoring guide">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -167,9 +176,11 @@
               [(ngModel)]="param.notes"
               name="notes-{{ param.id }}"
               rows="2"
+              maxlength="200"
               [class.invalid]="notesRequired(param)"
               [disabled]="isLocked() || !isAssessor()"
             ></textarea>
+            <span class="char-count">{{ param.notes.length }}/200</span>
           </div>
 
           <div class="evidence">
@@ -243,7 +254,7 @@
               <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
               <div class="evidence-list" *ngIf="evidenceFor(param).length">
                 <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
-                  <a [href]="evidenceDownloadUrl(ev.id)" target="_blank" rel="noopener">{{ ev.fileName }}</a>
+                  <button type="button" class="evidence-link" (click)="downloadEvidence(ev)">{{ ev.fileName }}</button>
                 </span>
               </div>
             </div>

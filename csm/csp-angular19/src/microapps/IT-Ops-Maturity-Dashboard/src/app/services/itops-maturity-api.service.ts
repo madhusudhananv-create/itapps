@@ -76,8 +76,14 @@ export interface ItOpsDomainTrackerRow {
   domainName: string;
   coeSpocEmpId: string | null;
   coeSpocName: string | null;
+  /** Every Assessor on the domain's assessment(s), not just the first - CoeSpocEmpId/Name above are a legacy singular pair kept for callers that only ever showed one. */
+  coeSpocEmpIds?: string[];
+  coeSpocNames?: string[];
   reviewerEmpId: string | null;
   reviewerName: string | null;
+  /** Every Reviewer on the domain's assessment(s), not just the first - same relationship to ReviewerEmpId/Name as coeSpocEmpIds/Names above. */
+  reviewerEmpIds?: string[];
+  reviewerNames?: string[];
   status: string;
   paramCount: number;
   /** How many of paramCount were actually scored (not left NA) - the "No of Applicable Parameters" scorecard column; maxPossible is this count x 5, not paramCount x 5. */
@@ -111,7 +117,10 @@ export interface ItOpsTopRiskRow {
   parameterName: string;
   currentScore: number | null;
   gap: number;
+  /** Maturity-band label for this score, from the ITOPS_SCORE_RECOMMENDATION master ("Critical Gap", "Needs Work", ...), or "Not Scored" for a Not Applicable parameter. */
   recommendedAction: string | null;
+  /** Longer guidance behind recommendedAction, from the same master row - used as the cell's tooltip. */
+  recommendationDetail?: string | null;
   /** True when the parameter was marked Not Applicable rather than scored - shown as "Not scored" instead of a numeric gap. */
   isNotScored: boolean;
   accountId?: string | null;
@@ -498,7 +507,4 @@ export class ItOpsMaturityApiService {
     });
   }
 
-  evidenceDownloadUrl(evidenceId: number): string {
-    return `${this.apiurl}DownloadITOpsEvidence?evidenceId=${evidenceId}`;
-  }
 }

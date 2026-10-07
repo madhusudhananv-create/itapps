@@ -2599,9 +2599,12 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (!domains.Any()) continue; // nothing mapped to this project - skip it rather than error the whole batch
 
-            // Serialised on the same per-account gate EnsureAssessmentsForAccount uses,
-            // so a concurrent landing-page load can't race this into duplicate
-            // (cycle, domain, project) assessment rows.
+            // Serialised per account so two concurrent "Create assessments" submissions
+            // (or one of these racing a GetOrCreateITOpsAssessment open-on-first-view) can't
+            // both read "no row yet" and insert duplicate (cycle, domain, project) rows.
+            // _ensureAssessmentsLocks previously also gated the Dashboard's own auto-create
+            // path (removed - see ITOperationMaturityController.cs); the field is shared infra,
+            // kept here regardless of that removal.
             var gate = _ensureAssessmentsLocks.GetOrAdd(project.CUST_ID ?? string.Empty, _ => new object());
             lock (gate)
             {

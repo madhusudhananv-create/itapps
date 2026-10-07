@@ -66,7 +66,16 @@
 
   <section class="my-assignments" *ngIf="!myAssignmentsLoading && viewMode === 'assignments'">
     <div class="assignments-summary" *ngIf="assignmentsSummary as summary">
-      <div class="summary-chip chip-accent">
+      <button
+        type="button"
+        class="summary-chip chip-accent"
+        [class.is-filtered]="summaryFilter === 'open'"
+        [class.is-empty]="!summary.openCount"
+        [attr.aria-disabled]="!summary.openCount"
+        [attr.aria-pressed]="summaryFilter === 'open'"
+        [title]="!summary.openCount ? 'No Open assessments to show' : summaryFilter === 'open' ? 'Showing only Open assessments - select again to show all' : 'Show only Open assessments'"
+        (click)="toggleSummaryFilter('open')"
+      >
         <span class="chip-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
@@ -74,8 +83,18 @@
           <span class="n">{{ summary.openCount }}</span>
           <span class="l">Open</span>
         </span>
-      </div>
-      <div class="summary-chip chip-serious" [class.urgent]="summary.returnedCount">
+      </button>
+      <button
+        type="button"
+        class="summary-chip chip-serious"
+        [class.urgent]="summary.returnedCount"
+        [class.is-filtered]="summaryFilter === 'returned'"
+        [class.is-empty]="!summary.returnedCount"
+        [attr.aria-disabled]="!summary.returnedCount"
+        [attr.aria-pressed]="summaryFilter === 'returned'"
+        [title]="!summary.returnedCount ? 'No assessments returned for revision' : summaryFilter === 'returned' ? 'Showing only assessments returned for revision - select again to show all' : 'Show only assessments returned for revision'"
+        (click)="toggleSummaryFilter('returned')"
+      >
         <span class="chip-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
@@ -83,8 +102,17 @@
           <span class="n">{{ summary.returnedCount }}</span>
           <span class="l">Returned for Revision</span>
         </span>
-      </div>
-      <div class="summary-chip chip-warning">
+      </button>
+      <button
+        type="button"
+        class="summary-chip chip-warning"
+        [class.is-filtered]="summaryFilter === 'review'"
+        [class.is-empty]="!summary.reviewCount"
+        [attr.aria-disabled]="!summary.reviewCount"
+        [attr.aria-pressed]="summaryFilter === 'review'"
+        [title]="!summary.reviewCount ? 'No assessments pending review' : summaryFilter === 'review' ? 'Showing only assessments pending review - select again to show all' : 'Show only assessments pending review'"
+        (click)="toggleSummaryFilter('review')"
+      >
         <span class="chip-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
         </span>
@@ -92,8 +120,17 @@
           <span class="n">{{ summary.reviewCount }}</span>
           <span class="l">Pending for Review</span>
         </span>
-      </div>
-      <div class="summary-chip chip-good">
+      </button>
+      <button
+        type="button"
+        class="summary-chip chip-good"
+        [class.is-filtered]="summaryFilter === 'completed'"
+        [class.is-empty]="!summary.completedCount"
+        [attr.aria-disabled]="!summary.completedCount"
+        [attr.aria-pressed]="summaryFilter === 'completed'"
+        [title]="!summary.completedCount ? 'No completed assessments to show' : summaryFilter === 'completed' ? 'Showing only completed assessments - select again to show all' : 'Show only completed assessments'"
+        (click)="toggleSummaryFilter('completed')"
+      >
         <span class="chip-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
@@ -101,7 +138,7 @@
           <span class="n">{{ summary.completedCount }}</span>
           <span class="l">Completed</span>
         </span>
-      </div>
+      </button>
     </div>
 
     <div class="assignments-filters">
@@ -144,20 +181,20 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
         </button>
       </div>
-      <button type="button" class="filter-reset-all" *ngIf="cycleFilter !== 'all' || statusFilter !== 'all' || accountFilter !== 'all'" (click)="resetAssignmentFilters()">
+      <button type="button" class="filter-reset-all" *ngIf="cycleFilter !== 'all' || statusFilter !== 'all' || accountFilter !== 'all' || summaryFilter !== 'all'" (click)="resetAssignmentFilters()">
         Reset filters
       </button>
     </div>
 
     <div class="assignments-role-tabs">
       <button *ngIf="hasAssessorAssignments" type="button" [class.active]="assignmentsTab === 'assessments'" (click)="selectAssignmentsTab('assessments')">
-        My Assessments <span class="tab-count">{{ myOpenAssessments.length }}</span>
+        My Assessments <span class="tab-count">{{ assessmentsTabCount }}</span>
       </button>
       <button *ngIf="hasReviewerAssignments" type="button" [class.active]="assignmentsTab === 'reviews'" (click)="selectAssignmentsTab('reviews')">
-        Needs Review <span class="tab-count">{{ pendingReviewActionCount }}</span>
+        Needs Review <span class="tab-count">{{ reviewsTabCount }}</span>
       </button>
       <button *ngIf="hasAllocatedOnlyAssignments" type="button" [class.active]="assignmentsTab === 'allocated'" (click)="selectAssignmentsTab('allocated')" title="Assessments on projects you're allocated to or manage, even without a personal Assessor/Reviewer/Assessee role on them">
-        Assessments <span class="tab-count">{{ myAllocatedAssessments.length }}</span>
+        Assessments <span class="tab-count">{{ allocatedTabCount }}</span>
       </button>
     </div>
 
@@ -394,7 +431,7 @@
           <thead>
             <tr>
               <th>Technology Domain</th>
-              <th>Assessor</th>
+              <th>Assessor(s)</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -464,8 +501,8 @@
               <th class="col-num">Sr. No</th>
               <th *ngIf="!selectedAccount">Account</th>
               <th class="sortable" (click)="sortDomainTrackerBy('name')">Domain <span class="sort-arrow">{{ domainTrackerSortIndicator('name') }}</span></th>
-              <th>Assessor</th>
-              <th>Reviewer</th>
+              <th>Assessor(s)</th>
+              <th>Reviewer(s)</th>
               <th class="sortable" (click)="sortDomainTrackerBy('status')">Status <span class="sort-arrow">{{ domainTrackerSortIndicator('status') }}</span></th>
               <th class="col-num">No. of Parameters</th>
               <th class="col-num">No of Applicable Parameters</th>
@@ -500,17 +537,17 @@
               </td>
             </tr>
           </tbody>
-          <tfoot *ngIf="enterpriseSummary && sortedDomainSummaries.length">
+          <tfoot *ngIf="domainTrackerEstateSummary as summary">
             <tr class="estate-row">
               <td [attr.colspan]="!selectedAccount ? 6 : 5">Overall Estate</td>
-              <td class="col-num">{{ enterpriseSummary.totalParamCount }}</td>
-              <td class="col-num">{{ enterpriseSummary.totalApplicableParamCount }}</td>
-              <td class="col-num">{{ enterpriseSummary.totalSumScores }}</td>
-              <td class="col-num">{{ enterpriseSummary.totalMaxPossible }}</td>
-              <td class="col-num">{{ enterpriseSummary.overallAverageScore | number: '1.2-2' }}</td>
-              <td class="col-num">{{ enterpriseSummary.overallMaturityPercent }}%</td>
+              <td class="col-num">{{ summary.totalParamCount }}</td>
+              <td class="col-num">{{ summary.totalApplicableParamCount }}</td>
+              <td class="col-num">{{ summary.totalSumScores }}</td>
+              <td class="col-num">{{ summary.totalMaxPossible }}</td>
+              <td class="col-num">{{ summary.overallAverageScore | number: '1.2-2' }}</td>
+              <td class="col-num">{{ summary.overallMaturityPercent }}%</td>
               <td>
-                <span [class]="maturityLevelPillClass(enterpriseSummary.overallMaturityLevel)">{{ enterpriseSummary.overallMaturityLevel }}</span>
+                <span [class]="maturityLevelPillClass(summary.overallMaturityLevel)">{{ summary.overallMaturityLevel }}</span>
               </td>
             </tr>
           </tfoot>
@@ -569,6 +606,7 @@
               <th>Parameter</th>
               <th class="col-num sortable" (click)="sortByColumn('currentScore')">Score <span class="sort-arrow">{{ sortIndicator('currentScore') }}</span></th>
               <th class="col-num sortable" (click)="sortByColumn('gap')">Gap <span class="sort-arrow">{{ sortIndicator('gap') }}</span></th>
+              <th class="col-num">% Score</th>
               <th>Recommendation</th>
             </tr>
           </thead>
@@ -579,13 +617,14 @@
               <td class="col-num">
                 <div class="score-bar-wrap">
                   <div class="score-bar"><i [class]="'fill-' + pctSeverity(scorePct(risk.currentScore))" [style.width.%]="scorePct(risk.currentScore)"></i></div>
-                  <span class="score-txt">{{ risk.currentScore }} / 5</span>
+                  <span class="score-txt">{{ risk.isNotScored ? 'NA' : (risk.currentScore + ' / 5') }}</span>
                 </div>
               </td>
+              <td class="col-num gap-cell">{{ risk.isNotScored ? 'Not scored' : risk.gap }}</td>
               <td class="col-num">
-                <span class="gap-badge" [class]="'badge-' + gapSeverity(risk.gap, risk.isNotScored)">{{ risk.isNotScored ? 'Not scored' : risk.gap }}</span>
+                <span class="pct-badge" [class]="'badge-' + scoreBandSeverity(risk.isNotScored ? null : risk.currentScore, risk.isNotScored)">{{ risk.isNotScored ? 'Not scored' : (scorePct(risk.currentScore) + '%') }}</span>
               </td>
-              <td class="recommendation-cell">{{ risk.recommendation }}</td>
+              <td class="recommendation-cell" [title]="risk.recommendationDetail || ''">{{ risk.recommendation }}</td>
             </tr>
           </tbody>
         </table>
@@ -595,11 +634,12 @@
       </ng-template>
 
       <div class="gap-legend" *ngIf="visibleTopRisks.length">
-        <span class="legend-item"><span class="legend-dot dot-good"></span>No gap</span>
-        <span class="legend-item"><span class="legend-dot dot-warning"></span>Gap of 1</span>
-        <span class="legend-item"><span class="legend-dot dot-serious"></span>Gap of 2</span>
-        <span class="legend-item"><span class="legend-dot dot-critical"></span>Gap of 3+</span>
-        <span class="legend-item"><span class="legend-dot dot-muted"></span>Not scored (NA)</span>
+        <span class="legend-item"><span class="legend-dot dot-critical"></span>Critical Gap</span>
+        <span class="legend-item"><span class="legend-dot dot-serious"></span>Needs Work</span>
+        <span class="legend-item"><span class="legend-dot dot-warning"></span>Foundation Established</span>
+        <span class="legend-item"><span class="legend-dot dot-good"></span>Well Managed</span>
+        <span class="legend-item"><span class="legend-dot dot-optimal"></span>Optimized</span>
+        <span class="legend-item"><span class="legend-dot dot-muted"></span>Not Applicable</span>
       </div>
     </section>
   </ng-container>
