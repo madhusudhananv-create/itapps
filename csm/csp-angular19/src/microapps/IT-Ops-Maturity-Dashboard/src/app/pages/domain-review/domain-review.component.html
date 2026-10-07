@@ -302,7 +302,29 @@
 
 <div class="modal-backdrop" *ngIf="showDefinitionsModal" (click)="closeDefinitionsModal()">
   <div class="modal definitions-modal" (click)="$event.stopPropagation()">
-    <img src="assets/images/Maturity_level_Definition.png" alt="Maturity Level Definitions" />
+    <div class="definitions-table">
+      <div class="definitions-header">Maturity Level Definitions</div>
+      <div class="definitions-row level-1">
+        <div class="level-chip">Level 1 &middot; Ad Hoc</div>
+        <div class="level-desc">No formal processes. Entirely reactive. All tasks performed manually. No metrics tracked. Incidents drive all activity.</div>
+      </div>
+      <div class="definitions-row level-2">
+        <div class="level-chip">Level 2 &middot; Developing</div>
+        <div class="level-desc">Some processes defined but inconsistently applied. Limited tooling. Partial visibility into the environment. Metrics tracked ad hoc.</div>
+      </div>
+      <div class="definitions-row level-3">
+        <div class="level-chip">Level 3 &middot; Defined</div>
+        <div class="level-desc">Standardised and documented processes. Mostly automated. Metrics tracked and reported regularly. SLAs defined.</div>
+      </div>
+      <div class="definitions-row level-4">
+        <div class="level-chip">Level 4 &middot; Managed</div>
+        <div class="level-desc">Metrics-driven, proactive operations. Integrated tooling across domains. SLA targets consistently met. Exceptions formally managed.</div>
+      </div>
+      <div class="definitions-row level-5">
+        <div class="level-chip">Level 5 &middot; Optimized</div>
+        <div class="level-desc">Continuous improvement culture. Fully automated end-to-end. Predictive analytics. Industry-leading practices. Zero manual toil.</div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-primary" (click)="closeDefinitionsModal()">Close</button>
     </div>
