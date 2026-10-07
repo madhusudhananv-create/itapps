@@ -80,6 +80,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 .ToList();
         }
 
+        // Default {{ActionNote}} line for ITOpsFindingDecision.htm - every finding-decision
+        // email except the Reviewer's rejection-decision notice uses this unchanged wording.
+        private const string ITOpsEmailDefaultActionNote =
+            "Please log in to the CSM application, open the IT Operations Maturity Dashboard from Integrated Apps in the navbar, and go to Assessments &gt; My Assessments for details.";
+
         private List<string> GetITOpsReviewerIds(int assessmentId)
         {
             return CSPdb.ITOPS_ASSESSMENT_REVIEWER.GetAll()
@@ -2177,20 +2182,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             if (!skipReview)
             {
-                var assessorNames = string.Join(", ", GetEmpNames(assessorIds));
+                // Who submitted it - only the one assessor who clicked Submit (submitEmpId),
+                // not every assessor on the assessment. Still Cc all assessors below so the
+                // rest stay notified their assessment moved into review.
+                var submitterName = GetEmpName(submitEmpId);
                 // Dex Partner (PROJECT.QUALITY_SPOC) is Cc'd on this trigger per the
                 // notification-email spec - see the Trigger 1 table.
                 var submitCcEmpIds = new List<string>();
                 if (!string.IsNullOrWhiteSpace(project?.QUALITY_SPOC)) submitCcEmpIds.Add(project.QUALITY_SPOC);
+                submitCcEmpIds.AddRange(assessorIds.Where(id => !string.IsNullOrWhiteSpace(id) && id != submitEmpId));
                 NotifyITOpsManyWithCc(
                     reviewerIds,
-                    submitCcEmpIds,
+                    submitCcEmpIds.Distinct().ToList(),
                     $"IT Ops Maturity: {domain?.NAME} assessment submitted for review - {projectName}",
                     "ITOpsSubmittedForReview.htm",
                     ToEmailValues(new
                     {
                         ReviewerName = string.Join(", ", GetEmpNames(reviewerIds)),
-                        CoeSpocName = assessorNames,
+                        CoeSpocName = submitterName,
                         DomainName = ITOpsEmailDomainName(domain?.NAME, assessment.CLOUD_PROVIDER),
                         AccountName = GetITOpsAccountName(project?.CUST_ID) ?? "-",
                         ProjectName = projectName,
@@ -2198,7 +2207,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         AssessmentLink = GetITOpsAssessmentLink(domain?.CODE, assessment.ID, true, project?.CUST_ID)
                     }),
                     "SubmittedForReview", assessment.ID, null,
-                    $"{domain?.NAME} assessment for {projectName} submitted for your review by {assessorNames}.");
+                    $"{domain?.NAME} assessment for {projectName} submitted for your review by {submitterName}.");
             }
             else
             {
@@ -2507,12 +2516,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     var rejectedCcEmpIds = new List<string>();
                     if (!string.IsNullOrWhiteSpace(rejectedProject?.QUALITY_SPOC)) rejectedCcEmpIds.Add(rejectedProject.QUALITY_SPOC);
                     if (!string.IsNullOrWhiteSpace(rejectedProject?.DP_ID)) rejectedCcEmpIds.Add(rejectedProject.DP_ID);
+                    // Cc every other assessee on the finding too - one assessee rejected, but
+                    // all assessees on the assessment should stay in the loop, not just the one
+                    // who acted.
+                    var rejectedOtherAssesseeIds = GetITOpsAssesseeIds(findingAssessment.ID)
+                        .Where(id => !string.IsNullOrWhiteSpace(id) && id != decideEmpId).Distinct();
+                    rejectedCcEmpIds.AddRange(rejectedOtherAssesseeIds);
 
                     // A rejection has no later "submit" step - the rejection comment IS the
                     // final input from the assessee, so the email goes out right away.
                     NotifyITOpsManyWithCc(
                         assessorIds,
-                        rejectedCcEmpIds,
+                        rejectedCcEmpIds.Distinct().ToList(),
                         $"IT Ops Maturity: finding rejected - {findingDomain?.NAME}",
                         "ITOpsFindingDecision.htm",
                         ToEmailValues(new
@@ -2526,6 +2541,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                             Decision = "Rejected",
                             DecidedBy = GetEmpName(decideEmpId),
                             Comment = request.Comment,
+                            ActionNote = ITOpsEmailDefaultActionNote,
                             // Sent to the Assessor, who Accepts/Disputes this rejection from
                             // their own /assessment page (maturity-assessment.component.ts) -
                             // that action doesn't exist on /review at all.
@@ -2605,14 +2621,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (findingAssessment != null && rejectionDecisionAssesseeIds.Any())
             {
                 var assessorIds = GetITOpsAssessorIds(findingAssessment.ID);
+                var reviewerIds = GetITOpsReviewerIds(findingAssessment.ID);
                 var rejectionDecisionProject = Cldb.PROJECT.GetAll().FirstOrDefault(p => p.PROJ_ID == findingAssessment.PROJECT_ID);
                 var rejectionDecisionProjectName = rejectionDecisionProject?.PROJ_NM ?? findingAssessment.PROJECT_ID;
                 var rejectionDecisionCcEmpIds = new List<string>();
                 if (!string.IsNullOrWhiteSpace(rejectionDecisionProject?.QUALITY_SPOC)) rejectionDecisionCcEmpIds.Add(rejectionDecisionProject.QUALITY_SPOC);
                 if (!string.IsNullOrWhiteSpace(rejectionDecisionProject?.DP_ID)) rejectionDecisionCcEmpIds.Add(rejectionDecisionProject.DP_ID);
+
+                // DecidedBy must name only the one assessor who actually clicked Accept/Dispute
+                // (empId), not every assessor on the finding - GetEmpNames(assessorIds) here
+                // wrongly listed all of them even when only one acted.
+                var rejectionDecidedByName = GetEmpName(empId);
+
                 NotifyITOpsManyWithCc(
                     rejectionDecisionAssesseeIds,
-                    rejectionDecisionCcEmpIds,
+                    rejectionDecisionCcEmpIds.Concat(assessorIds).Distinct().ToList(),
                     $"IT Ops Maturity: your rejection was {(request.AssessorAccepts ? "accepted" : "disputed")} - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
                     ToEmailValues(new
@@ -2628,12 +2651,43 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         ProjectName = rejectionDecisionProjectName,
                         CycleLabel = GetITOpsCycleLabel(findingAssessment.ASSESSMENT_MASTER_ID) ?? "-",
                         Decision = request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened",
-                        DecidedBy = string.Join(", ", GetEmpNames(assessorIds)),
+                        DecidedBy = rejectionDecidedByName,
                         Comment = request.AssessorAccepts ? "-" : request.Comment,
+                        ActionNote = ITOpsEmailDefaultActionNote,
                         AssessmentLink = GetITOpsAssessmentLink(findingDomain?.CODE, findingAssessment.ID, true, rejectionDecisionProject?.CUST_ID)
                     }),
                     request.AssessorAccepts ? "FindingRejectionAccepted" : "FindingRejectionDisputed", assessmentId, finding.ID,
                     $"Your rejection of \"{findingParameter?.NAME}\" in {findingDomain?.NAME} was {(request.AssessorAccepts ? "accepted - the finding is now closed." : "disputed - please reconsider and act on it.")}");
+
+                // Reviewer only needs to know once a finding is actually closed (rejection
+                // accepted) - a dispute just reopens it for the assessee to act on again,
+                // nothing final for the Reviewer to review yet, so no email on that path.
+                if (request.AssessorAccepts && reviewerIds.Any())
+                {
+                    NotifyITOpsManyWithCc(
+                        reviewerIds,
+                        rejectionDecisionCcEmpIds.Concat(assessorIds).Distinct().ToList(),
+                        $"IT Ops Maturity: finding rejection {(request.AssessorAccepts ? "accepted - closed" : "disputed - reopened")} - {findingDomain?.NAME}",
+                        "ITOpsFindingDecision.htm",
+                        ToEmailValues(new
+                        {
+                            RecipientName = string.Join(", ", GetEmpNames(reviewerIds)),
+                            ParameterName = findingParameter?.NAME,
+                            DomainName = ITOpsEmailDomainName(findingDomain?.NAME, findingAssessment.CLOUD_PROVIDER),
+                            AccountName = GetITOpsAccountName(rejectionDecisionProject?.CUST_ID) ?? "-",
+                            ProjectName = rejectionDecisionProjectName,
+                            CycleLabel = GetITOpsCycleLabel(findingAssessment.ASSESSMENT_MASTER_ID) ?? "-",
+                            Decision = request.AssessorAccepts ? "Rejection Accepted - Closed" : "Rejection Disputed - Reopened",
+                            DecidedBy = rejectionDecidedByName,
+                            Comment = request.AssessorAccepts ? "-" : request.Comment,
+                            // Reviewer didn't decide this - the assessor did - so point them to
+                            // the assessor for questions instead of the generic "go log in" line.
+                            ActionNote = "Please connect with the assessor if you have any query regarding this.",
+                            AssessmentLink = GetITOpsAssessmentLink(findingDomain?.CODE, findingAssessment.ID, true, rejectionDecisionProject?.CUST_ID)
+                        }),
+                        request.AssessorAccepts ? "FindingRejectionAcceptedReviewer" : "FindingRejectionDisputedReviewer", assessmentId, finding.ID,
+                        $"\"{findingParameter?.NAME}\" rejection in {findingDomain?.NAME} was {(request.AssessorAccepts ? "accepted and closed" : "disputed and reopened")} by {rejectionDecidedByName}. Reach out to the assessor with any concerns.");
+                }
             }
 
             CSPdb.Commit(CanCommit);
@@ -2727,10 +2781,14 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var actionUpdateCcEmpIds = new List<string>();
                 if (!string.IsNullOrWhiteSpace(actionUpdateProject?.QUALITY_SPOC)) actionUpdateCcEmpIds.Add(actionUpdateProject.QUALITY_SPOC);
                 if (!string.IsNullOrWhiteSpace(actionUpdateProject?.DP_ID)) actionUpdateCcEmpIds.Add(actionUpdateProject.DP_ID);
+                // Cc every other assessee too - one assessee submitted the action, but all
+                // assessees on the assessment should stay notified, not just the one who acted.
+                actionUpdateCcEmpIds.AddRange(GetITOpsAssesseeIds(findingAssessment.ID)
+                    .Where(id => !string.IsNullOrWhiteSpace(id) && id != actionEmpId).Distinct());
 
                 NotifyITOpsManyWithCc(
                     recipients,
-                    actionUpdateCcEmpIds,
+                    actionUpdateCcEmpIds.Distinct().ToList(),
                     $"IT Ops Maturity: finding accepted - {findingDomain?.NAME}",
                     "ITOpsFindingDecision.htm",
                     ToEmailValues(new
@@ -2744,6 +2802,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         Decision = "Accepted",
                         DecidedBy = GetEmpName(actionEmpId),
                         Comment = finding.ACTION_TAKEN,
+                        ActionNote = ITOpsEmailDefaultActionNote,
                         // Sent to the Assessor - their own /assessment page, same reasoning as
                         // the other two Assessor-facing finding-decision emails above.
                         AssessmentLink = GetITOpsAssessmentLink(findingDomain?.CODE, findingAssessment.ID, false, actionUpdateProject?.CUST_ID)
