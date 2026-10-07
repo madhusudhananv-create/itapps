@@ -104,11 +104,13 @@ export const getActivityValidationErrors = (
     errors.push('Select at least one AI tool or accelerator');
   }
 
-  if (!validateAIToolDetails(activity.aiToolUsed, activity.aiToolDetails)) {
-    errors.push(
-      'Configure AI tool details (access type, and number of licenses when Licensed)'
-    );
-  }
+  // 'Configure AI Tool Details' is disabled for the Firebase->SQL migration, so the
+  // details are not required to submit. Re-enable together with the dialog.
+  // if (!validateAIToolDetails(activity.aiToolUsed, activity.aiToolDetails)) {
+  //   errors.push(
+  //     'Configure AI tool details (access type, and number of licenses when Licensed)'
+  //   );
+  // }
 
   if (
     activity.aiAdoptionScore === '4' &&

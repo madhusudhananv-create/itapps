@@ -34,27 +34,86 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   if (response.status === 204) {
     return undefined as T;
   }
-  return (await response.json()) as T;
+  // Some endpoints (e.g. DeleteAimiActivity, the log endpoints) return 200 with no body
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 };
 
 /** empId of the current bridged CSM session, for CREATED_BY/UPDATED_BY stamping. */
 export const getCurrentEmpId = (): string => localStorage.getItem('empid') || '';
 
+const LOG_ENDPOINTS = {
+  USER_ACTIVITY: '/api/AllSys/LogAimiUserActivity',
+  ERROR: '/api/AllSys/LogAimiError',
+};
+
+/**
+ * Fire-and-forget POST used for usage/error logging. It never throws and never
+ * reports its own failures, so logging can't break the app or loop on itself.
+ * The server resolves the user's e-mail from the empId header.
+ */
+const postQuietly = async (endpoint: string, body: unknown): Promise<void> => {
+  try {
+    await fetch(buildUrl(endpoint), {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify(body),
+    });
+  } catch {
+    // intentionally ignored
+  }
+};
+
+// Every failed AIMI API call (HTTP error or network failure) is recorded in
+// AIMI_ERROR_LOG, then rethrown unchanged for the caller to handle as before.
+const reportApiError = (method: string, endpoint: string, error: unknown) => {
+  if (
+    endpoint === LOG_ENDPOINTS.USER_ACTIVITY ||
+    endpoint === LOG_ENDPOINTS.ERROR
+  ) {
+    return;
+  }
+  const err = error instanceof Error ? error : new Error(String(error));
+  void postQuietly(LOG_ENDPOINTS.ERROR, {
+    MODULE: 'API',
+    ACTION: `${method} ${endpoint.split('/').pop()}`,
+    REQUEST_URL: endpoint,
+    ERROR_MESSAGE: err.message,
+    EXCEPTION_TYPE: err.name,
+    STACK_TRACE: err.stack,
+  });
+};
+
 export const aimiApiClient = {
   get: async <T>(endpoint: string, params?: QueryParams): Promise<T> => {
-    const response = await fetch(buildUrl(endpoint, params), {
-      method: 'GET',
-      headers: buildHeaders(),
-    });
-    return handleResponse<T>(response);
+    try {
+      const response = await fetch(buildUrl(endpoint, params), {
+        method: 'GET',
+        headers: buildHeaders(),
+      });
+      return await handleResponse<T>(response);
+    } catch (error) {
+      reportApiError('GET', endpoint, error);
+      throw error;
+    }
   },
 
   post: async <T>(endpoint: string, body?: unknown): Promise<T> => {
-    const response = await fetch(buildUrl(endpoint), {
-      method: 'POST',
-      headers: buildHeaders(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-    return handleResponse<T>(response);
+    try {
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'POST',
+        headers: buildHeaders(),
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+      return await handleResponse<T>(response);
+    } catch (error) {
+      reportApiError('POST', endpoint, error);
+      throw error;
+    }
   },
+
+  /** Quiet POST for logging calls - see postQuietly. */
+  postQuietly,
 };
+
+export { LOG_ENDPOINTS };

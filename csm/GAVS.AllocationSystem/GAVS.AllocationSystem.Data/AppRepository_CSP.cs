@@ -2492,7 +2492,9 @@ namespace GAVS.AllocationSystem.Data
             var param1 = new SqlParameter("@ID", (object)id ?? DBNull.Value);
             var param2 = BuildAimiStructuredParam("@IDS", ToAimiIdListTable(ids), "dbo.AIMI_ID_LIST_TABLE_TYPE");
             var param3 = new SqlParameter("@EMP_ID", empId);
-            dbContext.Database.SqlQuery<int>("[dbo].[usp_AIMI_DeleteActivity] @ID, @IDS, @EMP_ID", param1, param2, param3).ToList();
+            // The proc returns no result set, so it must be run as a command - SqlQuery<int>
+            // against it throws "The data reader has more than one field".
+            dbContext.Database.ExecuteSqlCommand("[dbo].[usp_AIMI_DeleteActivity] @ID, @IDS, @EMP_ID", param1, param2, param3);
         }
 
         public List<AimiProjectInfoSpRow> AimiGetProjectInfo(string projectId)
@@ -2562,6 +2564,37 @@ namespace GAVS.AllocationSystem.Data
             return dbContext.Database.SqlQuery<int>(
                 "[dbo].[usp_AIMI_UpdateAcceptedScore] @PROJECT_ID, @PRACTICE, @ACCEPTED_SCORE, @SCORE_REVIEWED, @ACCEPTED_SCORE_COMMENT, @EMP_ID",
                 param1, param2, param3, param4, param5, param6).Single();
+        }
+
+        // The proc resolves the user's e-mail from EMP_INFO using the CSM employee id.
+        public void AimiInsertUserActivityLog(string empId, string module, string action, string projectId, string practice, string requestUrl, string ipAddress)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@EMP_ID", (object)empId ?? DBNull.Value);
+            var param2 = new SqlParameter("@MODULE", module);
+            var param3 = new SqlParameter("@ACTION", action);
+            var param4 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param5 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            var param6 = new SqlParameter("@REQUEST_URL", (object)requestUrl ?? DBNull.Value);
+            var param7 = new SqlParameter("@IP_ADDRESS", (object)ipAddress ?? DBNull.Value);
+            dbContext.Database.ExecuteSqlCommand(
+                "[dbo].[usp_AIMI_InsertUserActivityLog] @EMP_ID, @MODULE, @ACTION, @PROJECT_ID, @PRACTICE, @REQUEST_URL, @IP_ADDRESS",
+                param1, param2, param3, param4, param5, param6, param7);
+        }
+
+        public void AimiInsertErrorLog(string empId, string module, string action, string requestUrl, string errorMessage, string exceptionType, string stackTrace)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@EMP_ID", (object)empId ?? DBNull.Value);
+            var param2 = new SqlParameter("@MODULE", (object)module ?? DBNull.Value);
+            var param3 = new SqlParameter("@ACTION", (object)action ?? DBNull.Value);
+            var param4 = new SqlParameter("@REQUEST_URL", (object)requestUrl ?? DBNull.Value);
+            var param5 = new SqlParameter("@ERROR_MESSAGE", (object)errorMessage ?? DBNull.Value);
+            var param6 = new SqlParameter("@EXCEPTION_TYPE", (object)exceptionType ?? DBNull.Value);
+            var param7 = new SqlParameter("@STACK_TRACE", (object)stackTrace ?? DBNull.Value);
+            dbContext.Database.ExecuteSqlCommand(
+                "[dbo].[usp_AIMI_InsertErrorLog] @EMP_ID, @MODULE, @ACTION, @REQUEST_URL, @ERROR_MESSAGE, @EXCEPTION_TYPE, @STACK_TRACE",
+                param1, param2, param3, param4, param5, param6, param7);
         }
 
         public List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice)

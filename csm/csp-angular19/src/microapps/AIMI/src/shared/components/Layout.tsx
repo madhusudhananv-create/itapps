@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { CommonSnackbar } from './CommonSnackbar';
 import { getAppEnvironment } from '@shared/config/firebaseConfig';
+import { logUserActivity } from '@shared/services/aimiLogService';
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -59,6 +61,19 @@ const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     setShowEnvironmentNotice(true);
   }, []);
+
+  // Usage log: one LOGIN entry per browser session
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem('aimiLoginLogged')) {
+        sessionStorage.setItem('aimiLoginLogged', '1');
+        logUserActivity({ module: 'Auth', action: 'LOGIN' });
+      }
+    } catch {
+      // sessionStorage unavailable - skip the once-per-session login entry
+    }
+  }, []);
+
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);

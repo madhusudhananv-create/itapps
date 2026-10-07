@@ -1638,32 +1638,36 @@ const fyChanged =
 
         
       </Box>
-      {/* Save Button */}
-        <Box sx={styles.saveButtonContainer}>
-          <Button
-            onClick={handleSaveAIMetrics}
-            disabled={
-              !formData.project ||
-              isInfoLoading ||
-              !isPeopleUsingAIValid() ||
-              !isNACommentsValid() ||
-              !hasUnsavedAIMetrics() ||
-              !isAdmin
-            }
-            sx={styles.saveButton}
-            startIcon={
-              isInfoLoading ? <CircularProgress size={16} /> : undefined
-            }
-            title={!isAdmin ? 'Only admin can save AI Adoption Metrics' : ''}
-          >
-            {isInfoLoading ? 'Saving...' : 'Save Metrics'}
-          </Button>
-        </Box>
 </AccordionDetails>
           </Accordion>
+      {/* Common Save button - saves Project Information and AI Adoption Metrics together */}
+      <Box sx={styles.saveButtonContainer}>
+        <Button
+          onClick={handleSaveAIMetrics}
+          disabled={
+            !formData.project ||
+            isInfoLoading ||
+            !isPeopleUsingAIValid() ||
+            !isNACommentsValid() ||
+            !hasUnsavedAIMetrics() ||
+            !isAdmin
+          }
+          sx={styles.saveButton}
+          startIcon={
+            isInfoLoading ? <CircularProgress size={16} /> : undefined
+          }
+          title={
+            !isAdmin
+              ? 'Only admin can save Project Information and AI Adoption Metrics'
+              : ''
+          }
+        >
+          {isInfoLoading ? 'Saving...' : 'Save'}
+        </Button>
+      </Box>
       {/* Success Message Snackbar */}
       <CommonSnackbar
-        message="AI adoption metrics saved successfully!"
+        message="Project & Adoption Metrics saved successfully!"
         open={showSaveSuccess}
         autoHideDuration={3000}
         onClose={() => setShowSaveSuccess(false)}

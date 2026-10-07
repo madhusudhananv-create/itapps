@@ -261,6 +261,65 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         }
 
         // ------------------------------------------------------------------
+        // Usage / error logging (AIMI_USER_ACTIVITY_LOG, AIMI_ERROR_LOG)
+        // ------------------------------------------------------------------
+        // Best-effort: logging must never break the user's action, so failures are
+        // swallowed and the call always returns 200. The user comes from the empId
+        // header; the stored procs resolve the e-mail from EMP_INFO.
+
+        private static string Truncate(string value, int maxLength)
+        {
+            return string.IsNullOrEmpty(value) || value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        }
+
+        [POST("LogAimiUserActivity")]
+        [ActionName("LogAimiUserActivity")]
+        [HttpPost]
+        public IHttpActionResult LogAimiUserActivity([FromBody] AimiUserActivityLogRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.MODULE) || string.IsNullOrWhiteSpace(request.ACTION))
+                return BadRequest("MODULE and ACTION are required.");
+
+            try
+            {
+                string ip = null;
+                try
+                {
+                    if (System.Web.HttpContext.Current != null)
+                        ip = System.Web.HttpContext.Current.Request.UserHostAddress;
+                }
+                catch { }
+
+                CSPdb.AppRepo.AimiInsertUserActivityLog(
+                    GetHeaderDetails_String("empId"), Truncate(request.MODULE, 50), Truncate(request.ACTION, 100),
+                    Truncate(request.PROJECT_ID, 20), Truncate(request.PRACTICE, 100),
+                    Truncate(request.REQUEST_URL, 500), Truncate(ip, 50));
+            }
+            catch { }
+
+            return Ok();
+        }
+
+        [POST("LogAimiError")]
+        [ActionName("LogAimiError")]
+        [HttpPost]
+        public IHttpActionResult LogAimiError([FromBody] AimiErrorLogRequest request)
+        {
+            if (request == null) return BadRequest("Request body is required.");
+
+            try
+            {
+                CSPdb.AppRepo.AimiInsertErrorLog(
+                    GetHeaderDetails_String("empId"), Truncate(request.MODULE, 50), Truncate(request.ACTION, 100),
+                    Truncate(request.REQUEST_URL, 500), Truncate(request.ERROR_MESSAGE, 4000),
+                    Truncate(request.EXCEPTION_TYPE, 200), Truncate(request.STACK_TRACE, 8000));
+            }
+            catch { }
+
+            return Ok();
+        }
+
+        // ------------------------------------------------------------------
         // Practice Info (per-project, per-practice current phase)
         // ------------------------------------------------------------------
 

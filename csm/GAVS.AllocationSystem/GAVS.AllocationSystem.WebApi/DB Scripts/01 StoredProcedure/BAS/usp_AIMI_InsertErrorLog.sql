@@ -1,0 +1,35 @@
+-- Records one application error in AIMI_ERROR_LOG. As with the user activity log, only the
+-- CSM employee id is passed in; the e-mail is resolved from EMP_INFO (falling back to the
+-- EMP_ID, or NULL when the error happened before a user was known).
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_InsertErrorLog' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_InsertErrorLog]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_InsertErrorLog]
+    @EMP_ID VARCHAR(10) = NULL,
+    @MODULE VARCHAR(50) = NULL,
+    @ACTION VARCHAR(100) = NULL,
+    @REQUEST_URL VARCHAR(500) = NULL,
+    @ERROR_MESSAGE NVARCHAR(MAX) = NULL,
+    @EXCEPTION_TYPE VARCHAR(200) = NULL,
+    @STACK_TRACE NVARCHAR(MAX) = NULL,
+    @REQUEST_PAYLOAD NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @EMAIL_ID VARCHAR(100);
+
+    IF NULLIF(@EMP_ID, '') IS NOT NULL
+        SELECT @EMAIL_ID = ISNULL(NULLIF(LTRIM(RTRIM(EMAIL_ID)), ''), @EMP_ID)
+          FROM EMP_INFO
+         WHERE EMP_ID = @EMP_ID;
+
+    INSERT INTO AIMI_ERROR_LOG
+        (EMAIL_ID, MODULE, ACTION, REQUEST_URL, ERROR_MESSAGE, EXCEPTION_TYPE, STACK_TRACE, REQUEST_PAYLOAD, CREATED_DATE)
+    VALUES
+        (ISNULL(@EMAIL_ID, NULLIF(@EMP_ID, '')), @MODULE, @ACTION, @REQUEST_URL, @ERROR_MESSAGE, @EXCEPTION_TYPE, @STACK_TRACE, @REQUEST_PAYLOAD, GETDATE());
+END
+GO

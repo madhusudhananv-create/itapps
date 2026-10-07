@@ -199,6 +199,30 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         [JsonProperty("CURRENT_PHASE")] public string CURRENT_PHASE { get; set; }
     }
 
+    // Client-reported AIMI user action (AIMI_USER_ACTIVITY_LOG). The user is identified
+    // server-side from the empId header and resolved to an e-mail by the stored proc.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiUserActivityLogRequest
+    {
+        [JsonProperty("MODULE")] public string MODULE { get; set; }
+        [JsonProperty("ACTION")] public string ACTION { get; set; }
+        [JsonProperty("PROJECT_ID")] public string PROJECT_ID { get; set; }
+        [JsonProperty("PRACTICE")] public string PRACTICE { get; set; }
+        [JsonProperty("REQUEST_URL")] public string REQUEST_URL { get; set; }
+    }
+
+    // Client-reported AIMI error (AIMI_ERROR_LOG).
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiErrorLogRequest
+    {
+        [JsonProperty("MODULE")] public string MODULE { get; set; }
+        [JsonProperty("ACTION")] public string ACTION { get; set; }
+        [JsonProperty("REQUEST_URL")] public string REQUEST_URL { get; set; }
+        [JsonProperty("ERROR_MESSAGE")] public string ERROR_MESSAGE { get; set; }
+        [JsonProperty("EXCEPTION_TYPE")] public string EXCEPTION_TYPE { get; set; }
+        [JsonProperty("STACK_TRACE")] public string STACK_TRACE { get; set; }
+    }
+
     public class AimiReportDataRequest
     {
         public string ProjectId { get; set; }

@@ -4,7 +4,7 @@ import {
   Typography,
   Tabs,
   Tab,
-  Button,
+  //Button,
   IconButton,
   Tooltip,
 } from '@mui/material';
@@ -21,9 +21,10 @@ import {
   Suspense,
 } from 'react';
 import type { ActivityData } from '../types/activityTypes';
-import { useAimiOptionLists } from '../../../shared/lookups/useAimiOptionLists';
-import { normalizeImportedRow } from '../utils/importNormalizeUtils';
-import type { NormalizedImportFields } from '../utils/importNormalizeUtils';
+// 'Import Excel' - disabled for the Firebase->SQL migration
+// import { useAimiOptionLists } from '../../../shared/lookups/useAimiOptionLists';
+// import { normalizeImportedRow } from '../utils/importNormalizeUtils';
+// import type { NormalizedImportFields } from '../utils/importNormalizeUtils';
 import { useActivitySubmission } from '../hooks/useActivitySubmission';
 import { useActivityState } from '../hooks/useActivityState';
 import { useAcceptedScore } from '../hooks/useAcceptedScore';
@@ -36,14 +37,14 @@ import {
   preloadComponents,
   type ComponentName,
 } from '@shared/utils/preloadComponents';
-import { ImportActivitiesDialog } from './ImportActivites';
-import {
+// import { ImportActivitiesDialog } from './ImportActivites'; // 'Import Excel' - disabled for the Firebase->SQL migration
+/* import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-} from '@mui/material';
-import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup';
+} from '@mui/material'; */
+// import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup'; // used only by the Excel import (disabled)
 
 const ManageActivities = lazy(() =>
   import('./ManageActivities').then((module) => ({
@@ -191,9 +192,10 @@ export function Activities() {
     getProjectInfo,
     getOriginalProjectData,
   } = useProjectHierarchy();
-  const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
-    useQuestionnaireLookup();
-  const { aiTools, accelerators, qualitativeBenefits } = useAimiOptionLists();
+  // Used only by the Excel import (disabled for the Firebase->SQL migration):
+  // const { getSDLCPhasesForPractice, getActivitiesForSDLCPhase } =
+  //   useQuestionnaireLookup();
+  // const { aiTools, accelerators, qualitativeBenefits } = useAimiOptionLists();
   const [isLoading] = useState(false);
   const {
     submitSuccess,
@@ -208,6 +210,7 @@ export function Activities() {
   const [activeTab, setActiveTab] = useState(0);
   const featureFlags = useFeatureFlags('dashboard');
 
+/* DISABLED - 'Import Excel' - disabled for the Firebase->SQL migration
   //import excel state
   const [importDialogOpen, setImportDialogOpen] = useState(false);  // Form state
   const [importValidationOpen, setImportValidationOpen] =
@@ -215,6 +218,7 @@ export function Activities() {
 
   const [importValidationMessage, setImportValidationMessage] =
   useState('');
+*/
   const [projectInfoFormData, setProjectInfoFormData] =
   useState<ProjectInfoFormData>({
     businessUnit: '',
@@ -514,7 +518,7 @@ export function Activities() {
       projectInfo: projectInfoFormData,
       acceptedScoreInfo,
       onSaveReviewInfo: handleSaveReviewInfo,
-      onImportActivities: () => setImportDialogOpen(true),
+      // onImportActivities: () => setImportDialogOpen(true), // 'Import Excel' - disabled for the Firebase->SQL migration
     }),
     [
       activities,
@@ -659,6 +663,7 @@ export function Activities() {
       )}
 
       {/* Import Activities Dialog */}
+{/* DISABLED - 'Import Excel' - disabled for the Firebase->SQL migration
 <ImportActivitiesDialog
   open={importDialogOpen}
   onClose={() => setImportDialogOpen(false)}
@@ -806,6 +811,7 @@ if (invalidRows.length > 0) {
     </Button>
   </DialogActions>
 </Dialog>
+*/}
 {/* Success Message Snackbar */}
 <CommonSnackbar {...snackbarProps} />
 <CommonSnackbar {...draftSnackbarProps} />

@@ -316,6 +316,9 @@ namespace GAVS.AllocationSystem.Data.Contracts
             string projectFy, string empId);
         int AimiUpdateAcceptedScore(string projectId, string practice, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId);
 
+        void AimiInsertUserActivityLog(string empId, string module, string action, string projectId, string practice, string requestUrl, string ipAddress);
+        void AimiInsertErrorLog(string empId, string module, string action, string requestUrl, string errorMessage, string exceptionType, string stackTrace);
+
         List<AimiPracticeInfoSpRow> AimiGetPracticeInfo(string projectId, string practice);
         int AimiUpsertPracticeInfo(int? id, string projectId, string practice, string currentPhase, string empId);
 
