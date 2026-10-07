@@ -1522,11 +1522,11 @@ tbody tr:hover td:first-child {
   white-space: nowrap;
 }
 
-.badge-good { background: color-mix(in srgb, var(--status-good) 20%, transparent); color: var(--status-good); }
-.badge-warning { background: var(--status-warning-tint); color: var(--status-warning); }
-.badge-serious { background: var(--status-serious-tint); color: var(--status-serious); }
+.badge-good { background: var(--status-good); color: #fff; }
+.badge-warning { background: var(--status-warning); color: #fff; }
+.badge-serious { background: var(--status-serious); color: #fff; }
 .badge-critical { background: var(--status-critical); color: #fff; }
-.badge-optimal { background: var(--status-optimal-tint); color: var(--status-optimal); }
+.badge-optimal { background: var(--status-optimal); color: #fff; }
 .badge-muted { background: color-mix(in srgb, var(--text-muted) 16%, transparent); color: var(--text-muted); }
 
 .score-bar-wrap {

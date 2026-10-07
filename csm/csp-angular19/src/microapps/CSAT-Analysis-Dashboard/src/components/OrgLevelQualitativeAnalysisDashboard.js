@@ -725,10 +725,6 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
         'Meeting Delivery Commitments': row['Meeting Delivery Commitments'] || '',
         'Customer Engagement and Relationship': row['Customer Engagement and Relationship'] || '',
         'Partner adding value to Customer Business': row['Partner adding value to Customer Business'] || '',
-        'Resource Competency': row['Resource Competency'] || '',
-        'Team Commitment & Collaboration': row['Team Commitment & Collaboration'] || '',
-        'Timely Resource Fulfillment': row['Timely Resource Fulfillment'] || '',
-        'Quality of Delivery': row['Quality of Delivery'] || '',
         'Areas of Improvement': row.areasOfImprovement || '',
         'Strength': row.strength || '',
         'Sub Areas of Improvement': row.subAreasOfImprovement || '',
@@ -749,10 +745,6 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
         { wch: 30 },  // Meeting Delivery Commitments
         { wch: 30 },  // Customer Engagement and Relationship
         { wch: 30 },  // Partner adding value to Customer Business
-        { wch: 30 },  // Resource Competency
-        { wch: 30 },  // Team Commitment & Collaboration
-        { wch: 30 },  // Timely Resource Fulfillment
-        { wch: 30 },  // Quality of Delivery
         { wch: 30 },  // Areas of Improvement
         { wch: 30 },  // Strength
         { wch: 30 },  // Sub Areas of Improvement
@@ -1808,11 +1800,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
           'NPS',
           'Meeting Delivery Commitments',
           'Customer Engagement and Relationship',
-          'Partner adding value to Customer Business',
-          'Resource Competency',
-          'Team Commitment & Collaboration',
-          'Timely Resource Fulfillment',
-          'Quality of Delivery'
+          'Partner adding value to Customer Business'
         ];
 
         // Process data with date filtering and group by customer
@@ -2192,10 +2180,6 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
         { header: 'Meeting Delivery Commitments', key: 'Meeting Delivery Commitments', width: 30 },
         { header: 'Customer Engagement and Relationship', key: 'Customer Engagement and Relationship', width: 30 },
         { header: 'Partner adding value to Customer Business', key: 'Partner adding value to Customer Business', width: 30 },
-        { header: 'Resource Competency', key: 'Resource Competency', width: 30 },
-        { header: 'Team Commitment & Collaboration', key: 'Team Commitment & Collaboration', width: 30 },
-        { header: 'Timely Resource Fulfillment', key: 'Timely Resource Fulfillment', width: 30 },
-        { header: 'Quality of Delivery', key: 'Quality of Delivery', width: 30 },
         { header: 'Areas of Improvement', key: 'areasOfImprovement', width: 25 },
         { header: 'Strength', key: 'strength', width: 25 },
         { header: 'Sub Areas of Improvement', key: 'subAreasOfImprovement', width: 30 },
@@ -5380,10 +5364,6 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                     <TableHeader>Meeting Delivery Commitments</TableHeader>
                     <TableHeader>Customer Engagement and Relationship</TableHeader>
                     <TableHeader>Partner adding value to Customer Business</TableHeader>
-                    <TableHeader>Resource Competency</TableHeader>
-                    <TableHeader>Team Commitment & Collaboration</TableHeader>
-                    <TableHeader>Timely Resource Fulfillment</TableHeader>
-                    <TableHeader>Quality of Delivery</TableHeader>
                     <TableHeader>Areas of Improvement</TableHeader>
                     <TableHeader>Strength</TableHeader>
                     <TableHeader>Sub Areas of Improvement</TableHeader>
@@ -5401,10 +5381,6 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
                       <TableCell>{row['Meeting Delivery Commitments']}</TableCell>
                       <TableCell>{row['Customer Engagement and Relationship']}</TableCell>
                       <TableCell>{row['Partner adding value to Customer Business']}</TableCell>
-                      <TableCell>{row['Resource Competency']}</TableCell>
-                      <TableCell>{row['Team Commitment & Collaboration']}</TableCell>
-                      <TableCell>{row['Timely Resource Fulfillment']}</TableCell>
-                      <TableCell>{row['Quality of Delivery']}</TableCell>
                       <TableCell style={{ lineHeight: '1.3' }}>{row.areasOfImprovement}</TableCell>
                       <TableCell style={{ lineHeight: '1.3' }}>{row.strength}</TableCell>
                       <TableCell style={{ lineHeight: '1.3' }}>{row.subAreasOfImprovement}</TableCell>
@@ -5421,7 +5397,7 @@ const OrgLevelQualitativeAnalysisDashboard = ({ excelData, acsatCycleStartDate, 
           <StatusContainer>
             <div>No data found matching the criteria</div>
             <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#9ca3af' }}>
-              Ensure your file has sheet &quot;CSAT received Report&quot; (or Sheet1) with columns: BUSINESS UNIT (or BUSSINESS UNIT), CUSTOMER_ID (or CUST_ID), CUSTOMER NAME (or CUST_NM), RESPONDENT NAME, PERSPECTIVE, RATING_DESCRIPTION. Rows must have PERSPECTIVE in: NPS, Meeting Delivery Commitments, Customer Engagement and Relationship, Partner adding value to Customer Business, Resource Competency, Team Commitment & Collaboration, Timely Resource Fulfillment, Quality of Delivery. If CSAT cycle start date or YEAR-QUARTER is set, rows must match.
+              Ensure your file has sheet &quot;CSAT received Report&quot; (or Sheet1) with columns: BUSINESS UNIT (or BUSSINESS UNIT), CUSTOMER_ID (or CUST_ID), CUSTOMER NAME (or CUST_NM), RESPONDENT NAME, PERSPECTIVE, RATING_DESCRIPTION. Rows must have PERSPECTIVE in: NPS, Meeting Delivery Commitments, Customer Engagement and Relationship, Partner adding value to Customer Business. If CSAT cycle start date or YEAR-QUARTER is set, rows must match.
             </div>
           </StatusContainer>
         )}
