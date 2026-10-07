@@ -254,6 +254,30 @@ export const generateAndDownloadReport = (
 };
 
 /**
+ * Generate and download the single-project report (Manage Activities > Generate Report)
+ * from rows read via usp_AIMI_GetReportData, which already carry the project's AI Adoption
+ * Metrics and Accepted Score on every row.
+ */
+export const generateAndDownloadProjectReport = (
+  activities: EnrichedActivityWithProjectInfo[],
+  overallScoreValue: string | number
+): void => {
+  validateActivities(activities);
+
+  const rows = activities.map((activity) =>
+    createCSVRow(activity, { ...activity, overallScoreValue })
+  );
+  const csvContent = generateCSVContent(CSV_HEADERS, rows);
+
+  const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const projectName = activities[0].project || 'Unknown';
+  const practiceName = activities[0].practice || 'Unknown';
+  const filename = `AI_Maturity_Report_${projectName}_${practiceName}_${timestamp}.csv`;
+
+  downloadCSV(csvContent, filename);
+};
+
+/**
  * Generate and download multi-activities report
  */
 export const generateAndDownloadMultiReport = (

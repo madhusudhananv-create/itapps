@@ -29,7 +29,8 @@ import {
   Reviews,
   // UploadFile as UploadFileIcon, // 'Import Excel' - disabled for the Firebase->SQL migration
 } from '@mui/icons-material';
-import { generateAndDownloadReport } from '../../reports/utils/csvExportUtils';
+import { generateAndDownloadProjectReport } from '../../reports/utils/csvExportUtils';
+import { reportService } from '../../reports/services/reportService';
 import { getActivityValidationErrors } from '../utils/formValidationUtils';
 import { activityService } from '../services/activityService';
 import { AddActivityModal } from './AddActivityModal';
@@ -76,6 +77,7 @@ interface ManageActivitiesProps {
     currentPhase: string;
     isProjectNA?: boolean;
     naComments?: string;
+    headcount?: number;
   };
   acceptedScoreInfo?: AcceptedScoreInfo;
   onSaveReviewInfo?: (reviewInfo: AcceptedScoreInfo) => Promise<void>;
@@ -128,6 +130,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [submitValidationIssues, setSubmitValidationIssues] = useState<
     string[]
   >([]);
@@ -855,22 +858,48 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   };
 
 */
-  const handleGenerateReport = () => {
-    try {
-      const overallScoreValue = areAllActivitiesNotApplicable(activities)
-        ? 'N/A'
-        : calculateAverageAIAdoptionScore(activities).toFixed(2);
+  // The report is read from SQL (usp_AIMI_GetReportData: activities joined with the project's
+  // AI Adoption Metrics and Accepted Score) instead of being built from whatever is on screen,
+  // so it always reflects what is saved. The button is disabled while there are unsaved changes.
+  const handleGenerateReport = async () => {
+    if (!projectInfo?.projectId) return;
 
-      generateAndDownloadReport(
-        activities,
-        projectInfo
-          ? { ...projectInfo, overallScoreValue, ...acceptedScoreInfo }
-          : undefined
+    setIsGeneratingReport(true);
+    try {
+      const rows = await reportService.getReportData(
+        { projectId: projectInfo.projectId, practice: projectInfo.practice },
+        new Map([
+          [
+            projectInfo.projectId,
+            {
+              businessHead: projectInfo.businessHead,
+              accountManager: projectInfo.accountManager,
+              manager: projectInfo.manager,
+              headcount: projectInfo.headcount,
+            },
+          ],
+        ])
       );
+
+      if (rows.length === 0) {
+        showSnackbar(
+          'No saved activities found for this project and practice',
+          'error'
+        );
+        return;
+      }
+
+      const overallScoreValue = areAllActivitiesNotApplicable(rows)
+        ? 'N/A'
+        : calculateAverageAIAdoptionScore(rows).toFixed(2);
+
+      generateAndDownloadProjectReport(rows, overallScoreValue);
       showSnackbar('Report generated and downloaded successfully!', 'success');
     } catch (error) {
       console.error('Error generating report:', error);
       showSnackbar('Error generating report. Please try again.', 'error');
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -1011,7 +1040,11 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
               variant="outlined"
               startIcon={<DownloadIcon />}
               onClick={handleGenerateReport}
-              disabled={activities.length === 0 || hasUnsavedChanges}
+              disabled={
+                activities.length === 0 ||
+                hasUnsavedChanges ||
+                isGeneratingReport
+              }
               sx={styles.generateReportButton}
             >
               Generate Report

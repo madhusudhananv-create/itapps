@@ -48,6 +48,7 @@ const Reports = lazy(() =>
     default: module.Reports,
   }))
 );
+
 const Backup = lazy(() =>
   import('@backup/components/Backup').then((module) => ({
     default: module.Backup,
