@@ -618,6 +618,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
   const [remarksFileName, setRemarksFileName] = useState('');
   const [remarksData, setRemarksData] = useState([]);
   const remarksInputRef = useRef(null);
+  const tableContainerRef = useRef(null);
   const [remarksImpView, setRemarksImpView] = useState('account'); // 'account' | 'bu'
   const [remarksStrView, setRemarksStrView] = useState('account'); // 'account' | 'bu'
 
@@ -3393,7 +3394,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         </SummaryContainer>
       )}
 
-      <TableContainer>
+      <TableContainer ref={tableContainerRef}>
         <Table>
           <TableHeader>
             <tr>
@@ -3461,7 +3462,10 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         </Table>
       </TableContainer>
 
-      <ScrollIndicator>
+      <ScrollIndicator
+        style={{ cursor: 'pointer' }}
+        onClick={() => tableContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      >
         <BarChart3 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Scroll to view all data
       </ScrollIndicator>
     </Container>

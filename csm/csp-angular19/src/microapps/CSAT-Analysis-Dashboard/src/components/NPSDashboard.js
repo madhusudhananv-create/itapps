@@ -4402,7 +4402,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Get top 5 accounts with highest NPS scores (only for account-wise data)
       if (!groupByBU && result.length > 0) {
-        const nonGrandTotalData = result.filter(group => !group.isGrandTotal);
+        const nonGrandTotalData = result.filter(group => !group.isGrandTotal && !group.isGrandTotalPercentageRow);
         const sortedByNPS = [...nonGrandTotalData].sort((a, b) => b.npsScore - a.npsScore);
         summaryData.top5Accounts = sortedByNPS.slice(0, 5).map((group, index) => ({
           rank: index + 1,
@@ -7897,7 +7897,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       worksheet.addRow(['Promoters: Ratings of 9 or 10 for perspective "NPS"']);
       worksheet.addRow(['Detractors: Ratings less than 7 for perspective "NPS"']);
       worksheet.addRow([`Date Filter: CSAT SENT DATE and CSAT RECEIVED DATE = ${acsatCycleStartDateFormatted}`]);
-      worksheet.addRow([`Data Source: CSAT sent and received Report`]);
+      worksheet.addRow([`Data Source: ACSAT Survey Status Report`]);
       worksheet.addRow([]);
       worksheet.addRow(['NPS Score Legend:']);
       const legendRow1 = worksheet.addRow(['Green: =75%', 'Orange: 0% to 74.99%', 'Red: <0%']);
@@ -9239,7 +9239,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 <Info size={14} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> <strong>Promoters:</strong> Ratings of 9 or 10 for perspective "NPS" | <strong>Passives:</strong> Ratings of 7 or 8 for perspective "NPS" | <strong>Detractors:</strong> Ratings less than 7 for perspective "NPS"
             </p>
             <p style={{ margin: '0.25rem 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
-              ℹ️ Filtered by: CSAT SENT DATE and CSAT RECEIVED DATE = {acsatCycleStartDateFormatted} | <strong>Data Source:</strong> CSAT sent and received Report
+              ℹ️ Filtered by: CSAT SENT DATE and CSAT RECEIVED DATE = {acsatCycleStartDateFormatted} | <strong>Data Source:</strong> ACSAT Survey Status Report
             </p>
           </div>
           {respondentLevelData.length === 0 ? (
