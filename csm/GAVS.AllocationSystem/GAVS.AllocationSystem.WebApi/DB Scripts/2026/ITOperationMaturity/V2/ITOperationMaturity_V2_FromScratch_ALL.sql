@@ -43,8 +43,8 @@
 
 IF OBJECT_ID('ITOPS_NOTIFICATION', 'U') IS NOT NULL DROP TABLE ITOPS_NOTIFICATION;
 IF OBJECT_ID('ITOPS_FINDING_ACTIVITY', 'U') IS NOT NULL DROP TABLE ITOPS_FINDING_ACTIVITY;
-IF OBJECT_ID('ITOPS_FINDING', 'U') IS NOT NULL DROP TABLE ITOPS_FINDING;
 IF OBJECT_ID('ITOPS_EVIDENCE', 'U') IS NOT NULL DROP TABLE ITOPS_EVIDENCE;
+IF OBJECT_ID('ITOPS_FINDING', 'U') IS NOT NULL DROP TABLE ITOPS_FINDING;
 IF OBJECT_ID('ITOPS_SCORE', 'U') IS NOT NULL DROP TABLE ITOPS_SCORE;
 IF OBJECT_ID('ITOPS_ASSESSMENT_ASSESSEE', 'U') IS NOT NULL DROP TABLE ITOPS_ASSESSMENT_ASSESSEE;
 IF OBJECT_ID('ITOPS_ASSESSMENT_REVIEWER', 'U') IS NOT NULL DROP TABLE ITOPS_ASSESSMENT_REVIEWER;
@@ -91,6 +91,9 @@ CREATE TABLE ITOPS_CATEGORY (
     DISPLAY_ORDER INT NOT NULL DEFAULT 0,
     START_DATE DATE NOT NULL,
     END_DATE DATE NULL,
+    -- Which cloud provider ("Azure"/"AWS"/"GCP") this category belongs to - NULL for every
+    -- non-Cloud domain's categories. See V2_30_CloudProvider.sql.
+    PROVIDER VARCHAR(20) NULL,
     CREATED_BY VARCHAR(10), CREATED_DATE DATETIME,
     UPDATED_BY VARCHAR(10), UPDATED_DATE DATETIME,
     ISACTIVE BIT,
@@ -233,6 +236,10 @@ CREATE TABLE ITOPS_ASSESSMENT (
     SUBMITTED_DATE DATETIME NULL,
     APPROVED_DATE DATETIME NULL,
     RETURN_COMMENT VARCHAR(1000) NULL,
+    -- Which cloud provider this Cloud assessment scores - NULL until the Assessor picks
+    -- one on first open, then locked. NULL forever for every non-Cloud domain. See
+    -- V2_30_CloudProvider.sql.
+    CLOUD_PROVIDER VARCHAR(20) NULL,
     CREATED_BY VARCHAR(10), CREATED_DATE DATETIME,
     UPDATED_BY VARCHAR(10), UPDATED_DATE DATETIME,
     ISACTIVE BIT,
@@ -306,14 +313,21 @@ GO
 -- FILE_DATA_ID only (V2_17) - evidence files live in the shared FILE_DATA
 -- table (Cldb.FILE_DATA), soft cross-database reference, no real FK, same
 -- convention as every other Cldb reference from an ITOPS table.
+-- FINDING_ID (V2_35) - NULL = Assessor's scoring evidence, not NULL = Assessee's
+-- Action Taken evidence for that finding. Separates the two lists that previously
+-- shared this table keyed only by SCORE_ID (see GetITOpsScoreEvidence /
+-- GetITOpsFindingEvidence in ITOperationMaturityController.cs).
 CREATE TABLE ITOPS_EVIDENCE (
     ID INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
     SCORE_ID INT NOT NULL,
     FILE_DATA_ID INT NOT NULL,
+    FINDING_ID INT NULL,
     CREATED_BY VARCHAR(10), CREATED_DATE DATETIME,
     UPDATED_BY VARCHAR(10), UPDATED_DATE DATETIME,
     ISACTIVE BIT,
     CONSTRAINT FK_ITOPS_EVIDENCE_SCORE FOREIGN KEY (SCORE_ID) REFERENCES ITOPS_SCORE(ID)
+    -- FK_ITOPS_EVIDENCE_FINDING added further down, once ITOPS_FINDING exists
+    -- (this table is created before it in this script).
 );
 GO
 
@@ -339,6 +353,11 @@ CREATE TABLE ITOPS_FINDING (
     CONSTRAINT FK_ITOPS_FINDING_ASSESSEE FOREIGN KEY (ASSESSEE_EMP_ID) REFERENCES EMP_INFO(EMP_ID),
     CONSTRAINT FK_ITOPS_FINDING_RETARGET_APPROVER FOREIGN KEY (RETARGET_APPROVED_BY) REFERENCES EMP_INFO(EMP_ID)
 );
+GO
+
+-- Deferred from ITOPS_EVIDENCE's own CREATE TABLE above - ITOPS_FINDING didn't exist yet.
+ALTER TABLE ITOPS_EVIDENCE WITH CHECK
+    ADD CONSTRAINT FK_ITOPS_EVIDENCE_FINDING FOREIGN KEY (FINDING_ID) REFERENCES ITOPS_FINDING(ID);
 GO
 
 CREATE TABLE ITOPS_FINDING_ACTIVITY (
@@ -442,7 +461,7 @@ VALUES
     ('CYCLE_ADMINISTRATOR', 'Cycle Administrator', 'Can create and maintain IT Operations Maturity assessment cycles (Configure Cycle).', 1, @empId, GETDATE(), @empId, GETDATE()),
     ('DOMAIN_PROJECT_MAPPER', 'Scope Administrator', 'Can maintain the domain catalog and which technology domains apply to which projects (Configure Scope).', 1, @empId, GETDATE(), @empId, GETDATE()),
     ('RUNOPS_INITIATOR', 'Assessment Coordinator', 'Can create assessment cycles and start IT Operations Maturity assessments for a project (Configure Assessment).', 1, @empId, GETDATE(), @empId, GETDATE()),
-    ('TEAM_ASSIGNMENT_COORDINATOR', 'Team Assignment Coordinator', 'Can assign assessors and reviewers per domain on an assessment (Assign Assessor / Reviewer).', 1, @empId, GETDATE(), @empId, GETDATE());
+    ('TEAM_ASSIGNMENT_COORDINATOR', 'Team Assignment Coordinator', 'Can assign assessors and reviewers per domain on an assessment (Assign Assessor / Reviewer).', 0, @empId, GETDATE(), @empId, GETDATE());
 GO
 
 SELECT ID, ROLE_CODE, ROLE_NAME FROM ITOPS_ROLE ORDER BY ID;
@@ -480,8 +499,8 @@ IF NOT EXISTS (
     WHERE ROLE_ID = @superuserRoleId AND EMP_ID = @empId AND PROJECT_ID IS NULL AND ISACTIVE = 1
 )
 BEGIN
-    INSERT INTO ITOPS_ROLE_ASSIGNMENT (ROLE_ID, EMP_ID, PROJECT_ID, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
-    VALUES (@superuserRoleId, @empId, NULL, 1, @empId, GETDATE(), @empId, GETDATE());
+    INSERT INTO ITOPS_ROLE_ASSIGNMENT (ROLE_ID, EMP_ID, PROJECT_ID, SCOPE_TYPE, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
+    VALUES (@superuserRoleId, @empId, NULL, 'ORG', 1, @empId, GETDATE(), @empId, GETDATE());
 END
 GO
 
@@ -512,13 +531,13 @@ DECLARE @empId VARCHAR(50) = '104744';
 IF NOT EXISTS (SELECT 1 FROM ITOPS_ROLE WHERE ROLE_CODE = 'DOMAIN_ADMINISTRATOR')
 BEGIN
     INSERT INTO ITOPS_ROLE (ROLE_CODE, ROLE_NAME, DESCRIPTION, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
-    VALUES ('DOMAIN_ADMINISTRATOR', 'Domain Administrator', 'Can create and rename IT Ops Maturity domains (Configure Scope - Domains tab).', 1, @empId, GETDATE(), @empId, GETDATE());
+    VALUES ('DOMAIN_ADMINISTRATOR', 'Domain Administrator', 'Can create and rename IT Ops Maturity domains (Configure Scope - Domains tab).', 0, @empId, GETDATE(), @empId, GETDATE());
 END
 
 IF NOT EXISTS (SELECT 1 FROM ITOPS_ROLE WHERE ROLE_CODE = 'CATEGORY_PARAMETER_ADMINISTRATOR')
 BEGIN
     INSERT INTO ITOPS_ROLE (ROLE_CODE, ROLE_NAME, DESCRIPTION, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
-    VALUES ('CATEGORY_PARAMETER_ADMINISTRATOR', 'Category & Parameter Administrator', 'Can create, edit and version the scoring catalogue - categories and parameters (Configure Scope - Categories & Parameters tab).', 1, @empId, GETDATE(), @empId, GETDATE());
+    VALUES ('CATEGORY_PARAMETER_ADMINISTRATOR', 'Category & Parameter Administrator', 'Can create, edit and version the scoring catalogue - categories and parameters (Configure Scope - Categories & Parameters tab).', 0, @empId, GETDATE(), @empId, GETDATE());
 END
 GO
 
@@ -842,31 +861,51 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
+        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         c.CUST_NM AS Account,
         p.PROJ_NM AS Project,
-        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         -- "All cycles" is a valid filter selection here (unlike the Dashboard, which
         -- dropped it after the cross-cycle merge bug) - Period lets rows from different
         -- cycles be told apart instead of blending together in one flat list.
         am.CYCLE_LABEL AS Period,
         d.NAME AS DomainName,
         d.CODE AS DomainCode,
-        ISNULL(coe.FRST_NM, asr.ASSESSOR_EMP_ID) AS CoeSpoc,
-        ISNULL(rev.FRST_NM, rvr.REVIEWER_EMP_ID) AS Reviewer,
-        coe.EMAIL_ID AS CoeSpocEmail,
-        rev.EMAIL_ID AS ReviewerEmail,
+        asr.AssessorNames AS Assessor,
+        rvr.ReviewerNames AS Reviewer,
+        asse.AssesseeNames AS Assessee,
+        asr.AssessorEmails AS AssessorEmail,
+        rvr.ReviewerEmails AS ReviewerEmail,
         CASE
             WHEN a.STATUS = 'Suspended' THEN 'Suspended'
-            WHEN a.STATUS IN ('Approved', 'Closed') THEN 'Closed'
+            -- Approved/Closed with any finding still Open/Accepted/Rejected (i.e. not
+            -- yet Closed) reads as still in progress - an assessment isn't really
+            -- "done" while findings raised on it haven't reached their own terminal
+            -- state, even though the assessment record itself was finalized.
+            WHEN a.STATUS IN ('Approved', 'Closed')
+                 AND (ISNULL(f.FindingsPending, 0) + ISNULL(f.FindingsAccepted, 0) + ISNULL(f.FindingsRejected, 0)) > 0
+                 THEN 'InProgress'
+            -- Nothing left outstanding - either every finding ever raised on it has
+            -- actually reached Closed, or none were ever raised at all (e.g. never
+            -- scored, or scored with nothing below the threshold). Either way there's
+            -- nothing left to do, so both read as "Completed" rather than splitting
+            -- out a separate "Closed" bucket that a viewer would have to reason about.
+            WHEN a.STATUS IN ('Approved', 'Closed') THEN 'Completed'
+            WHEN a.STATUS = 'NotStarted' THEN 'NotStarted'
             ELSE 'Open'
         END AS AssessmentStatus,
         CASE
-            WHEN a.STATUS IN ('Suspended', 'Approved', 'Closed') THEN NULL
-            WHEN td.MinTargetDate IS NULL THEN NULL
-            WHEN td.MinTargetDate < CAST(GETDATE() AS DATE) THEN 'Past Due'
+            WHEN a.STATUS = 'Suspended' THEN NULL
+            WHEN a.STATUS IN ('Approved', 'Closed')
+                 AND (ISNULL(f.FindingsPending, 0) + ISNULL(f.FindingsAccepted, 0) + ISNULL(f.FindingsRejected, 0)) = 0
+                 THEN NULL
+            WHEN am.END_DATE IS NULL THEN NULL
+            WHEN am.END_DATE < CAST(GETDATE() AS DATE) THEN 'Past Due'
             ELSE 'On Target'
         END AS DueStatus,
-        td.MinTargetDate AS TargetDate,
+        am.END_DATE AS TargetDate,
+        ISNULL(cb.FRST_NM, a.CREATED_BY) AS CreatedBy,
+        a.UPDATED_DATE AS UpdatedDate,
+        ISNULL(ub.FRST_NM, a.UPDATED_BY) AS UpdatedBy,
         ISNULL(a.UPDATED_DATE, a.CREATED_DATE) AS LastUpdated,
         DATEDIFF(day, ISNULL(a.UPDATED_DATE, a.CREATED_DATE), GETDATE()) AS DaysSinceUpdate,
         CASE WHEN a.STATUS IN ('Draft', 'ReturnedForRevision')
@@ -882,8 +921,19 @@ BEGIN
         ISNULL(f.FindingsAccepted, 0) AS FindingsAccepted,
         ISNULL(f.FindingsRejected, 0) AS FindingsRejected,
         ISNULL(f.FindingsPending, 0) AS FindingsPending,
+        ISNULL(f.FindingsClosed, 0) AS FindingsClosed,
+        (ISNULL(f.FindingsAccepted, 0) + ISNULL(f.FindingsRejected, 0) + ISNULL(f.FindingsPending, 0) + ISNULL(f.FindingsClosed, 0)) AS TotalFindingsRaised,
+        ISNULL(f.OverdueFindings, 0) AS OverdueFindingsCount,
+        ISNULL(esc.EscalationCount, 0) AS EscalationCount,
+        la.ACTIVITY_TYPE AS LastActivityType,
+        la.CREATED_DATE AS LastActivityDate,
+        a.CREATED_DATE AS CreatedDate,
         sc.AverageScore AS AverageScore,
         sc.MaturityPercent AS MaturityPercent,
+        pc.ParamCount AS ParamCount,
+        ISNULL(sc.ApplicableParamCount, 0) AS ApplicableParamCount,
+        ISNULL(sc.SumScores, 0) AS SumScores,
+        ISNULL(sc.ApplicableParamCount, 0) * 5 AS MaxPossible,
         a.ID AS AssessmentId,
         d.ID AS DomainId,
         p.CUST_ID AS CustomerId
@@ -892,32 +942,36 @@ BEGIN
     JOIN PROJECT p ON p.PROJ_ID = a.PROJECT_ID
     JOIN CUSTOMER c ON c.CUST_ID = p.CUST_ID
     LEFT JOIN ITOPS_ASSESSMENT_MASTER am ON am.ID = a.ASSESSMENT_MASTER_ID
+    LEFT JOIN EMP_INFO cb ON cb.EMP_ID = a.CREATED_BY AND cb.DOR IS NULL
+    LEFT JOIN EMP_INFO ub ON ub.EMP_ID = a.UPDATED_BY AND ub.DOR IS NULL
     OUTER APPLY (
-        SELECT TOP 1 ASSESSOR_EMP_ID
-        FROM ITOPS_ASSESSMENT_ASSESSOR
-        WHERE ASSESSMENT_ID = a.ID AND ISACTIVE = 1
-        ORDER BY ID
+        SELECT STRING_AGG(ISNULL(e.FRST_NM, aa.ASSESSOR_EMP_ID), ', ') AS AssessorNames,
+            STRING_AGG(e.EMAIL_ID, ', ') AS AssessorEmails
+        FROM ITOPS_ASSESSMENT_ASSESSOR aa
+        LEFT JOIN EMP_INFO e ON e.EMP_ID = aa.ASSESSOR_EMP_ID AND e.DOR IS NULL
+        WHERE aa.ASSESSMENT_ID = a.ID AND aa.ISACTIVE = 1
     ) asr
     OUTER APPLY (
-        SELECT TOP 1 REVIEWER_EMP_ID
-        FROM ITOPS_ASSESSMENT_REVIEWER
-        WHERE ASSESSMENT_ID = a.ID AND ISACTIVE = 1
-        ORDER BY ID
+        SELECT STRING_AGG(ISNULL(e.FRST_NM, ar.REVIEWER_EMP_ID), ', ') AS ReviewerNames,
+            STRING_AGG(e.EMAIL_ID, ', ') AS ReviewerEmails
+        FROM ITOPS_ASSESSMENT_REVIEWER ar
+        LEFT JOIN EMP_INFO e ON e.EMP_ID = ar.REVIEWER_EMP_ID AND e.DOR IS NULL
+        WHERE ar.ASSESSMENT_ID = a.ID AND ar.ISACTIVE = 1
     ) rvr
-    LEFT JOIN EMP_INFO coe ON coe.EMP_ID = asr.ASSESSOR_EMP_ID AND coe.DOR IS NULL
-    LEFT JOIN EMP_INFO rev ON rev.EMP_ID = rvr.REVIEWER_EMP_ID AND rev.DOR IS NULL
-    LEFT JOIN (
-        SELECT s.ASSESSMENT_ID, MIN(fnd.TARGET_DATE) AS MinTargetDate
-        FROM ITOPS_SCORE s
-        JOIN ITOPS_FINDING fnd ON fnd.SCORE_ID = s.ID
-        WHERE fnd.ISACTIVE = 1 AND fnd.STATUS = 'Open' AND fnd.TARGET_DATE IS NOT NULL
-        GROUP BY s.ASSESSMENT_ID
-    ) td ON td.ASSESSMENT_ID = a.ID
+    OUTER APPLY (
+        SELECT STRING_AGG(ISNULL(e.FRST_NM, ae.ASSESSEE_EMP_ID), ', ') AS AssesseeNames
+        FROM ITOPS_ASSESSMENT_ASSESSEE ae
+        LEFT JOIN EMP_INFO e ON e.EMP_ID = ae.ASSESSEE_EMP_ID AND e.DOR IS NULL
+        WHERE ae.ASSESSMENT_ID = a.ID AND ae.ISACTIVE = 1
+    ) asse
     LEFT JOIN (
         SELECT s.ASSESSMENT_ID,
             SUM(CASE WHEN fnd.STATUS = 'Accepted' THEN 1 ELSE 0 END) AS FindingsAccepted,
             SUM(CASE WHEN fnd.STATUS = 'Rejected' THEN 1 ELSE 0 END) AS FindingsRejected,
-            SUM(CASE WHEN fnd.STATUS = 'Open' THEN 1 ELSE 0 END) AS FindingsPending
+            SUM(CASE WHEN fnd.STATUS = 'Open' THEN 1 ELSE 0 END) AS FindingsPending,
+            SUM(CASE WHEN fnd.STATUS = 'Closed' THEN 1 ELSE 0 END) AS FindingsClosed,
+            SUM(CASE WHEN fnd.STATUS = 'Open' AND fnd.TARGET_DATE IS NOT NULL
+                     AND fnd.TARGET_DATE < CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS OverdueFindings
         FROM ITOPS_SCORE s
         JOIN ITOPS_FINDING fnd ON fnd.SCORE_ID = s.ID
         WHERE fnd.ISACTIVE = 1
@@ -926,11 +980,42 @@ BEGIN
     LEFT JOIN (
         SELECT ASSESSMENT_ID,
             CAST(AVG(CAST(SCORE_VALUE AS DECIMAL(10, 2))) AS DECIMAL(10, 2)) AS AverageScore,
-            CAST(AVG(CAST(SCORE_VALUE AS DECIMAL(10, 2))) / 5.0 * 100 AS DECIMAL(10, 2)) AS MaturityPercent
+            CAST(AVG(CAST(SCORE_VALUE AS DECIMAL(10, 2))) / 5.0 * 100 AS DECIMAL(10, 2)) AS MaturityPercent,
+            COUNT(*) AS ApplicableParamCount,
+            SUM(CAST(SCORE_VALUE AS INT)) AS SumScores
         FROM ITOPS_SCORE
         WHERE ISACTIVE = 1 AND SCORE_VALUE IS NOT NULL
         GROUP BY ASSESSMENT_ID
     ) sc ON sc.ASSESSMENT_ID = a.ID
+    LEFT JOIN (
+        SELECT s3.ASSESSMENT_ID, COUNT(DISTINCT fa3.FINDING_ID) AS EscalationCount
+        FROM ITOPS_SCORE s3
+        JOIN ITOPS_FINDING fnd3 ON fnd3.SCORE_ID = s3.ID
+        JOIN ITOPS_FINDING_ACTIVITY fa3 ON fa3.FINDING_ID = fnd3.ID AND fa3.ISACTIVE = 1 AND fa3.ACTIVITY_TYPE = 'Escalation'
+        WHERE fnd3.ISACTIVE = 1
+        GROUP BY s3.ASSESSMENT_ID
+    ) esc ON esc.ASSESSMENT_ID = a.ID
+    OUTER APPLY (
+        SELECT TOP 1 fa4.ACTIVITY_TYPE, fa4.CREATED_DATE
+        FROM ITOPS_SCORE s4
+        JOIN ITOPS_FINDING fnd4 ON fnd4.SCORE_ID = s4.ID
+        JOIN ITOPS_FINDING_ACTIVITY fa4 ON fa4.FINDING_ID = fnd4.ID AND fa4.ISACTIVE = 1
+        WHERE s4.ASSESSMENT_ID = a.ID AND fnd4.ISACTIVE = 1
+        ORDER BY fa4.CREATED_DATE DESC, fa4.ID DESC
+    ) la
+    -- Every currently-effective parameter in the assessment's domain (respecting the
+    -- Cloud Provider narrowing, same rule as the Parameter Detail report's own category
+    -- join) - "No. of Parameters" on the Reports page, independent of how many were
+    -- actually scored (that's ApplicableParamCount, from sc above).
+    OUTER APPLY (
+        SELECT COUNT(*) AS ParamCount
+        FROM ITOPS_CATEGORY cat
+        JOIN ITOPS_PARAMETER par ON par.CATEGORY_ID = cat.ID AND par.ISACTIVE = 1
+            AND (par.END_DATE IS NULL OR par.END_DATE > CAST(GETDATE() AS DATE))
+        WHERE cat.DOMAIN_ID = d.ID AND cat.ISACTIVE = 1
+            AND (cat.END_DATE IS NULL OR cat.END_DATE > CAST(GETDATE() AS DATE))
+            AND (a.CLOUD_PROVIDER IS NULL OR cat.PROVIDER IS NULL OR cat.PROVIDER = a.CLOUD_PROVIDER)
+    ) pc
     WHERE a.ISACTIVE = 1
       AND (@CustomerId = '-1' OR p.CUST_ID = @CustomerId)
       AND (@ProjectId = '-1' OR a.PROJECT_ID = @ProjectId)
@@ -960,15 +1045,25 @@ BEGIN
     -- (silently dropped) instead of showing up with "N/A". Score/finding are LEFT JOINed
     -- on, so every question in the domain always has a row.
     SELECT
+        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         c.CUST_NM AS Account,
         p.PROJ_NM AS Project,
-        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         am.CYCLE_LABEL AS Period,
         d.NAME AS DomainName,
         cat.NAME AS Category,
         par.NAME AS Parameter,
         par.DEFINITION AS Question,
         s.SCORE_VALUE AS Score,
+        ISNULL(par.MIN_REQUIRED_SCORE, d.MIN_REQUIRED_SCORE) AS MinRequiredScore,
+        f.GAP AS Gap,
+        -- ITOPS_FINDING.TARGET_DATE is never actually set anywhere in the app (no UI field,
+        -- no backend write path), so it's always NULL - the cycle's own end date is used
+        -- here instead as a meaningful stand-in target for closing out the finding.
+        am.END_DATE AS TargetDate,
+        s.CREATED_DATE AS CreatedDate,
+        ISNULL(scb.FRST_NM, s.CREATED_BY) AS CreatedBy,
+        s.UPDATED_DATE AS UpdatedDate,
+        ISNULL(sub.FRST_NM, s.UPDATED_BY) AS UpdatedBy,
         asr.AssessorNames AS Assessor,
         rvr.ReviewerNames AS Reviewer,
         -- Assessee is who's ASSIGNED to the assessment (ITOPS_ASSESSMENT_ASSESSEE, multi-
@@ -976,12 +1071,34 @@ BEGIN
         -- app never actually populates (no code path writes it), so it always reads empty.
         asse.AssesseeNames AS Assessee,
         ISNULL(f.STATUS, 'N/A') AS FindingStatus,
+        -- Assessor's comment when the finding was raised (the recommended remediation).
+        f.RECOMMENDED_ACTION AS AssessorComments,
+        -- Assessee's own comment when accepting a finding (remediation progress/notes).
+        f.ACTION_TAKEN AS AssesseeAcceptComments,
+        -- Assessee's justification when rejecting a finding.
+        f.REJECTION_COMMENT AS AssesseeRejectComments,
+        -- Assessor's reason for disputing (re-rejecting) the Assessee's rejection, reopening
+        -- the finding - lives in the free-form activity trail, not on ITOPS_FINDING itself.
+        -- Only surfaced while it's still the LAST thing that happened on this finding (matches
+        -- GetITOpsAssessmentParameters's own DisputeComment rule) - once the assessee rejects
+        -- again after a dispute, that older dispute reason is stale and must not show here.
+        CASE WHEN da.ACTIVITY_TYPE = 'Escalation' THEN da.COMMENTS ELSE NULL END AS AssessorDisputeComments,
+        CASE
+            WHEN a.STATUS = 'Suspended' THEN 'Suspended'
+            WHEN a.STATUS IN ('Approved', 'Closed')
+                 AND (ISNULL(fagg.FindingsPending, 0) + ISNULL(fagg.FindingsAccepted, 0) + ISNULL(fagg.FindingsRejected, 0)) > 0
+                 THEN 'InProgress'
+            WHEN a.STATUS IN ('Approved', 'Closed') THEN 'Completed'
+            WHEN a.STATUS = 'NotStarted' THEN 'NotStarted'
+            ELSE 'Open'
+        END AS AssessmentStatus,
         a.ID AS AssessmentId,
         d.ID AS DomainId
     FROM ITOPS_ASSESSMENT a
     JOIN ITOPS_DOMAIN d ON d.ID = a.DOMAIN_ID AND d.ISACTIVE = 1
     JOIN ITOPS_CATEGORY cat ON cat.DOMAIN_ID = d.ID AND cat.ISACTIVE = 1
         AND (cat.END_DATE IS NULL OR cat.END_DATE > CAST(GETDATE() AS DATE))
+        AND (a.CLOUD_PROVIDER IS NULL OR cat.PROVIDER IS NULL OR cat.PROVIDER = a.CLOUD_PROVIDER)
     JOIN ITOPS_PARAMETER par ON par.CATEGORY_ID = cat.ID AND par.ISACTIVE = 1
         AND (par.END_DATE IS NULL OR par.END_DATE > CAST(GETDATE() AS DATE))
     JOIN PROJECT p ON p.PROJ_ID = a.PROJECT_ID
@@ -989,6 +1106,25 @@ BEGIN
     LEFT JOIN ITOPS_ASSESSMENT_MASTER am ON am.ID = a.ASSESSMENT_MASTER_ID
     LEFT JOIN ITOPS_SCORE s ON s.ASSESSMENT_ID = a.ID AND s.PARAMETER_ID = par.ID AND s.ISACTIVE = 1
     LEFT JOIN ITOPS_FINDING f ON f.SCORE_ID = s.ID AND f.ISACTIVE = 1
+    LEFT JOIN EMP_INFO scb ON scb.EMP_ID = s.CREATED_BY AND scb.DOR IS NULL
+    LEFT JOIN EMP_INFO sub ON sub.EMP_ID = s.UPDATED_BY AND sub.DOR IS NULL
+    OUTER APPLY (
+        SELECT TOP 1 fa.ACTIVITY_TYPE, fa.COMMENTS
+        FROM ITOPS_FINDING_ACTIVITY fa
+        WHERE fa.FINDING_ID = f.ID AND fa.ISACTIVE = 1
+            AND fa.ACTIVITY_TYPE IN ('Escalation', 'Comment')
+        ORDER BY fa.ID DESC
+    ) da
+    LEFT JOIN (
+        SELECT s2.ASSESSMENT_ID,
+            SUM(CASE WHEN fnd2.STATUS = 'Accepted' THEN 1 ELSE 0 END) AS FindingsAccepted,
+            SUM(CASE WHEN fnd2.STATUS = 'Rejected' THEN 1 ELSE 0 END) AS FindingsRejected,
+            SUM(CASE WHEN fnd2.STATUS = 'Open' THEN 1 ELSE 0 END) AS FindingsPending
+        FROM ITOPS_SCORE s2
+        JOIN ITOPS_FINDING fnd2 ON fnd2.SCORE_ID = s2.ID
+        WHERE fnd2.ISACTIVE = 1
+        GROUP BY s2.ASSESSMENT_ID
+    ) fagg ON fagg.ASSESSMENT_ID = a.ID
     OUTER APPLY (
         SELECT STRING_AGG(ISNULL(e.FRST_NM, aa.ASSESSOR_EMP_ID), ', ') AS AssessorNames
         FROM ITOPS_ASSESSMENT_ASSESSOR aa
@@ -1098,28 +1234,48 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
+        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         c.CUST_NM AS Account,
         p.PROJ_NM AS Project,
-        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         am.CYCLE_LABEL AS Period,
         d.NAME AS DomainName,
         d.CODE AS DomainCode,
-        ISNULL(coe.FRST_NM, asr.ASSESSOR_EMP_ID) AS CoeSpoc,
-        ISNULL(rev.FRST_NM, rvr.REVIEWER_EMP_ID) AS Reviewer,
-        coe.EMAIL_ID AS CoeSpocEmail,
-        rev.EMAIL_ID AS ReviewerEmail,
+        asr.AssessorNames AS Assessor,
+        rvr.ReviewerNames AS Reviewer,
+        asse.AssesseeNames AS Assessee,
+        asr.AssessorEmails AS AssessorEmail,
+        rvr.ReviewerEmails AS ReviewerEmail,
         CASE
             WHEN a.STATUS = 'Suspended' THEN 'Suspended'
-            WHEN a.STATUS IN ('Approved', 'Closed') THEN 'Closed'
+            -- Approved/Closed with any finding still Open/Accepted/Rejected (i.e. not
+            -- yet Closed) reads as still in progress - an assessment isn't really
+            -- "done" while findings raised on it haven't reached their own terminal
+            -- state, even though the assessment record itself was finalized.
+            WHEN a.STATUS IN ('Approved', 'Closed')
+                 AND (ISNULL(f.FindingsPending, 0) + ISNULL(f.FindingsAccepted, 0) + ISNULL(f.FindingsRejected, 0)) > 0
+                 THEN 'InProgress'
+            -- Nothing left outstanding - either every finding ever raised on it has
+            -- actually reached Closed, or none were ever raised at all (e.g. never
+            -- scored, or scored with nothing below the threshold). Either way there's
+            -- nothing left to do, so both read as "Completed" rather than splitting
+            -- out a separate "Closed" bucket that a viewer would have to reason about.
+            WHEN a.STATUS IN ('Approved', 'Closed') THEN 'Completed'
+            WHEN a.STATUS = 'NotStarted' THEN 'NotStarted'
             ELSE 'Open'
         END AS AssessmentStatus,
         CASE
-            WHEN a.STATUS IN ('Suspended', 'Approved', 'Closed') THEN NULL
-            WHEN td.MinTargetDate IS NULL THEN NULL
-            WHEN td.MinTargetDate < CAST(GETDATE() AS DATE) THEN 'Past Due'
+            WHEN a.STATUS = 'Suspended' THEN NULL
+            WHEN a.STATUS IN ('Approved', 'Closed')
+                 AND (ISNULL(f.FindingsPending, 0) + ISNULL(f.FindingsAccepted, 0) + ISNULL(f.FindingsRejected, 0)) = 0
+                 THEN NULL
+            WHEN am.END_DATE IS NULL THEN NULL
+            WHEN am.END_DATE < CAST(GETDATE() AS DATE) THEN 'Past Due'
             ELSE 'On Target'
         END AS DueStatus,
-        td.MinTargetDate AS TargetDate,
+        am.END_DATE AS TargetDate,
+        ISNULL(cb.FRST_NM, a.CREATED_BY) AS CreatedBy,
+        a.UPDATED_DATE AS UpdatedDate,
+        ISNULL(ub.FRST_NM, a.UPDATED_BY) AS UpdatedBy,
         ISNULL(a.UPDATED_DATE, a.CREATED_DATE) AS LastUpdated,
         DATEDIFF(day, ISNULL(a.UPDATED_DATE, a.CREATED_DATE), GETDATE()) AS DaysSinceUpdate,
         CASE WHEN a.STATUS IN ('Draft', 'ReturnedForRevision')
@@ -1135,8 +1291,19 @@ BEGIN
         ISNULL(f.FindingsAccepted, 0) AS FindingsAccepted,
         ISNULL(f.FindingsRejected, 0) AS FindingsRejected,
         ISNULL(f.FindingsPending, 0) AS FindingsPending,
+        ISNULL(f.FindingsClosed, 0) AS FindingsClosed,
+        (ISNULL(f.FindingsAccepted, 0) + ISNULL(f.FindingsRejected, 0) + ISNULL(f.FindingsPending, 0) + ISNULL(f.FindingsClosed, 0)) AS TotalFindingsRaised,
+        ISNULL(f.OverdueFindings, 0) AS OverdueFindingsCount,
+        ISNULL(esc.EscalationCount, 0) AS EscalationCount,
+        la.ACTIVITY_TYPE AS LastActivityType,
+        la.CREATED_DATE AS LastActivityDate,
+        a.CREATED_DATE AS CreatedDate,
         sc.AverageScore AS AverageScore,
         sc.MaturityPercent AS MaturityPercent,
+        pc.ParamCount AS ParamCount,
+        ISNULL(sc.ApplicableParamCount, 0) AS ApplicableParamCount,
+        ISNULL(sc.SumScores, 0) AS SumScores,
+        ISNULL(sc.ApplicableParamCount, 0) * 5 AS MaxPossible,
         a.ID AS AssessmentId,
         d.ID AS DomainId,
         p.CUST_ID AS CustomerId
@@ -1145,32 +1312,36 @@ BEGIN
     JOIN PROJECT p ON p.PROJ_ID = a.PROJECT_ID
     JOIN CUSTOMER c ON c.CUST_ID = p.CUST_ID
     LEFT JOIN ITOPS_ASSESSMENT_MASTER am ON am.ID = a.ASSESSMENT_MASTER_ID
+    LEFT JOIN EMP_INFO cb ON cb.EMP_ID = a.CREATED_BY AND cb.DOR IS NULL
+    LEFT JOIN EMP_INFO ub ON ub.EMP_ID = a.UPDATED_BY AND ub.DOR IS NULL
     OUTER APPLY (
-        SELECT TOP 1 ASSESSOR_EMP_ID
-        FROM ITOPS_ASSESSMENT_ASSESSOR
-        WHERE ASSESSMENT_ID = a.ID AND ISACTIVE = 1
-        ORDER BY ID
+        SELECT STRING_AGG(ISNULL(e.FRST_NM, aa.ASSESSOR_EMP_ID), ', ') AS AssessorNames,
+            STRING_AGG(e.EMAIL_ID, ', ') AS AssessorEmails
+        FROM ITOPS_ASSESSMENT_ASSESSOR aa
+        LEFT JOIN EMP_INFO e ON e.EMP_ID = aa.ASSESSOR_EMP_ID AND e.DOR IS NULL
+        WHERE aa.ASSESSMENT_ID = a.ID AND aa.ISACTIVE = 1
     ) asr
     OUTER APPLY (
-        SELECT TOP 1 REVIEWER_EMP_ID
-        FROM ITOPS_ASSESSMENT_REVIEWER
-        WHERE ASSESSMENT_ID = a.ID AND ISACTIVE = 1
-        ORDER BY ID
+        SELECT STRING_AGG(ISNULL(e.FRST_NM, ar.REVIEWER_EMP_ID), ', ') AS ReviewerNames,
+            STRING_AGG(e.EMAIL_ID, ', ') AS ReviewerEmails
+        FROM ITOPS_ASSESSMENT_REVIEWER ar
+        LEFT JOIN EMP_INFO e ON e.EMP_ID = ar.REVIEWER_EMP_ID AND e.DOR IS NULL
+        WHERE ar.ASSESSMENT_ID = a.ID AND ar.ISACTIVE = 1
     ) rvr
-    LEFT JOIN EMP_INFO coe ON coe.EMP_ID = asr.ASSESSOR_EMP_ID AND coe.DOR IS NULL
-    LEFT JOIN EMP_INFO rev ON rev.EMP_ID = rvr.REVIEWER_EMP_ID AND rev.DOR IS NULL
-    LEFT JOIN (
-        SELECT s.ASSESSMENT_ID, MIN(fnd.TARGET_DATE) AS MinTargetDate
-        FROM ITOPS_SCORE s
-        JOIN ITOPS_FINDING fnd ON fnd.SCORE_ID = s.ID
-        WHERE fnd.ISACTIVE = 1 AND fnd.STATUS = 'Open' AND fnd.TARGET_DATE IS NOT NULL
-        GROUP BY s.ASSESSMENT_ID
-    ) td ON td.ASSESSMENT_ID = a.ID
+    OUTER APPLY (
+        SELECT STRING_AGG(ISNULL(e.FRST_NM, ae.ASSESSEE_EMP_ID), ', ') AS AssesseeNames
+        FROM ITOPS_ASSESSMENT_ASSESSEE ae
+        LEFT JOIN EMP_INFO e ON e.EMP_ID = ae.ASSESSEE_EMP_ID AND e.DOR IS NULL
+        WHERE ae.ASSESSMENT_ID = a.ID AND ae.ISACTIVE = 1
+    ) asse
     LEFT JOIN (
         SELECT s.ASSESSMENT_ID,
             SUM(CASE WHEN fnd.STATUS = 'Accepted' THEN 1 ELSE 0 END) AS FindingsAccepted,
             SUM(CASE WHEN fnd.STATUS = 'Rejected' THEN 1 ELSE 0 END) AS FindingsRejected,
-            SUM(CASE WHEN fnd.STATUS = 'Open' THEN 1 ELSE 0 END) AS FindingsPending
+            SUM(CASE WHEN fnd.STATUS = 'Open' THEN 1 ELSE 0 END) AS FindingsPending,
+            SUM(CASE WHEN fnd.STATUS = 'Closed' THEN 1 ELSE 0 END) AS FindingsClosed,
+            SUM(CASE WHEN fnd.STATUS = 'Open' AND fnd.TARGET_DATE IS NOT NULL
+                     AND fnd.TARGET_DATE < CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS OverdueFindings
         FROM ITOPS_SCORE s
         JOIN ITOPS_FINDING fnd ON fnd.SCORE_ID = s.ID
         WHERE fnd.ISACTIVE = 1
@@ -1179,11 +1350,42 @@ BEGIN
     LEFT JOIN (
         SELECT ASSESSMENT_ID,
             CAST(AVG(CAST(SCORE_VALUE AS DECIMAL(10, 2))) AS DECIMAL(10, 2)) AS AverageScore,
-            CAST(AVG(CAST(SCORE_VALUE AS DECIMAL(10, 2))) / 5.0 * 100 AS DECIMAL(10, 2)) AS MaturityPercent
+            CAST(AVG(CAST(SCORE_VALUE AS DECIMAL(10, 2))) / 5.0 * 100 AS DECIMAL(10, 2)) AS MaturityPercent,
+            COUNT(*) AS ApplicableParamCount,
+            SUM(CAST(SCORE_VALUE AS INT)) AS SumScores
         FROM ITOPS_SCORE
         WHERE ISACTIVE = 1 AND SCORE_VALUE IS NOT NULL
         GROUP BY ASSESSMENT_ID
     ) sc ON sc.ASSESSMENT_ID = a.ID
+    LEFT JOIN (
+        SELECT s3.ASSESSMENT_ID, COUNT(DISTINCT fa3.FINDING_ID) AS EscalationCount
+        FROM ITOPS_SCORE s3
+        JOIN ITOPS_FINDING fnd3 ON fnd3.SCORE_ID = s3.ID
+        JOIN ITOPS_FINDING_ACTIVITY fa3 ON fa3.FINDING_ID = fnd3.ID AND fa3.ISACTIVE = 1 AND fa3.ACTIVITY_TYPE = 'Escalation'
+        WHERE fnd3.ISACTIVE = 1
+        GROUP BY s3.ASSESSMENT_ID
+    ) esc ON esc.ASSESSMENT_ID = a.ID
+    OUTER APPLY (
+        SELECT TOP 1 fa4.ACTIVITY_TYPE, fa4.CREATED_DATE
+        FROM ITOPS_SCORE s4
+        JOIN ITOPS_FINDING fnd4 ON fnd4.SCORE_ID = s4.ID
+        JOIN ITOPS_FINDING_ACTIVITY fa4 ON fa4.FINDING_ID = fnd4.ID AND fa4.ISACTIVE = 1
+        WHERE s4.ASSESSMENT_ID = a.ID AND fnd4.ISACTIVE = 1
+        ORDER BY fa4.CREATED_DATE DESC, fa4.ID DESC
+    ) la
+    -- Every currently-effective parameter in the assessment's domain (respecting the
+    -- Cloud Provider narrowing, same rule as the Parameter Detail report's own category
+    -- join) - "No. of Parameters" on the Reports page, independent of how many were
+    -- actually scored (that's ApplicableParamCount, from sc above).
+    OUTER APPLY (
+        SELECT COUNT(*) AS ParamCount
+        FROM ITOPS_CATEGORY cat
+        JOIN ITOPS_PARAMETER par ON par.CATEGORY_ID = cat.ID AND par.ISACTIVE = 1
+            AND (par.END_DATE IS NULL OR par.END_DATE > CAST(GETDATE() AS DATE))
+        WHERE cat.DOMAIN_ID = d.ID AND cat.ISACTIVE = 1
+            AND (cat.END_DATE IS NULL OR cat.END_DATE > CAST(GETDATE() AS DATE))
+            AND (a.CLOUD_PROVIDER IS NULL OR cat.PROVIDER IS NULL OR cat.PROVIDER = a.CLOUD_PROVIDER)
+    ) pc
     WHERE a.ISACTIVE = 1
       AND (@CustomerId = '-1' OR p.CUST_ID = @CustomerId)
       AND (@ProjectId = '-1' OR a.PROJECT_ID = @ProjectId)
@@ -1234,25 +1436,57 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
+        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         c.CUST_NM AS Account,
         p.PROJ_NM AS Project,
-        ISNULL(a.BUSINESS_UNIT, 'Unknown') AS BusinessUnit,
         am.CYCLE_LABEL AS Period,
         d.NAME AS DomainName,
         cat.NAME AS Category,
         par.NAME AS Parameter,
         par.DEFINITION AS Question,
         s.SCORE_VALUE AS Score,
+        ISNULL(par.MIN_REQUIRED_SCORE, d.MIN_REQUIRED_SCORE) AS MinRequiredScore,
+        f.GAP AS Gap,
+        -- ITOPS_FINDING.TARGET_DATE is never actually set anywhere in the app (no UI field,
+        -- no backend write path), so it's always NULL - the cycle's own end date is used
+        -- here instead as a meaningful stand-in target for closing out the finding.
+        am.END_DATE AS TargetDate,
+        s.CREATED_DATE AS CreatedDate,
+        ISNULL(scb.FRST_NM, s.CREATED_BY) AS CreatedBy,
+        s.UPDATED_DATE AS UpdatedDate,
+        ISNULL(sub.FRST_NM, s.UPDATED_BY) AS UpdatedBy,
         asr.AssessorNames AS Assessor,
         rvr.ReviewerNames AS Reviewer,
         asse.AssesseeNames AS Assessee,
         ISNULL(f.STATUS, 'N/A') AS FindingStatus,
+        -- Assessor's comment when the finding was raised (the recommended remediation).
+        f.RECOMMENDED_ACTION AS AssessorComments,
+        -- Assessee's own comment when accepting a finding (remediation progress/notes).
+        f.ACTION_TAKEN AS AssesseeAcceptComments,
+        -- Assessee's justification when rejecting a finding.
+        f.REJECTION_COMMENT AS AssesseeRejectComments,
+        -- Assessor's reason for disputing (re-rejecting) the Assessee's rejection, reopening
+        -- the finding - lives in the free-form activity trail, not on ITOPS_FINDING itself.
+        -- Only surfaced while it's still the LAST thing that happened on this finding (matches
+        -- GetITOpsAssessmentParameters's own DisputeComment rule) - once the assessee rejects
+        -- again after a dispute, that older dispute reason is stale and must not show here.
+        CASE WHEN da.ACTIVITY_TYPE = 'Escalation' THEN da.COMMENTS ELSE NULL END AS AssessorDisputeComments,
+        CASE
+            WHEN a.STATUS = 'Suspended' THEN 'Suspended'
+            WHEN a.STATUS IN ('Approved', 'Closed')
+                 AND (ISNULL(fagg.FindingsPending, 0) + ISNULL(fagg.FindingsAccepted, 0) + ISNULL(fagg.FindingsRejected, 0)) > 0
+                 THEN 'InProgress'
+            WHEN a.STATUS IN ('Approved', 'Closed') THEN 'Completed'
+            WHEN a.STATUS = 'NotStarted' THEN 'NotStarted'
+            ELSE 'Open'
+        END AS AssessmentStatus,
         a.ID AS AssessmentId,
         d.ID AS DomainId
     FROM ITOPS_ASSESSMENT a
     JOIN ITOPS_DOMAIN d ON d.ID = a.DOMAIN_ID AND d.ISACTIVE = 1
     JOIN ITOPS_CATEGORY cat ON cat.DOMAIN_ID = d.ID AND cat.ISACTIVE = 1
         AND (cat.END_DATE IS NULL OR cat.END_DATE > CAST(GETDATE() AS DATE))
+        AND (a.CLOUD_PROVIDER IS NULL OR cat.PROVIDER IS NULL OR cat.PROVIDER = a.CLOUD_PROVIDER)
     JOIN ITOPS_PARAMETER par ON par.CATEGORY_ID = cat.ID AND par.ISACTIVE = 1
         AND (par.END_DATE IS NULL OR par.END_DATE > CAST(GETDATE() AS DATE))
     JOIN PROJECT p ON p.PROJ_ID = a.PROJECT_ID
@@ -1260,6 +1494,25 @@ BEGIN
     LEFT JOIN ITOPS_ASSESSMENT_MASTER am ON am.ID = a.ASSESSMENT_MASTER_ID
     LEFT JOIN ITOPS_SCORE s ON s.ASSESSMENT_ID = a.ID AND s.PARAMETER_ID = par.ID AND s.ISACTIVE = 1
     LEFT JOIN ITOPS_FINDING f ON f.SCORE_ID = s.ID AND f.ISACTIVE = 1
+    LEFT JOIN EMP_INFO scb ON scb.EMP_ID = s.CREATED_BY AND scb.DOR IS NULL
+    LEFT JOIN EMP_INFO sub ON sub.EMP_ID = s.UPDATED_BY AND sub.DOR IS NULL
+    OUTER APPLY (
+        SELECT TOP 1 fa.ACTIVITY_TYPE, fa.COMMENTS
+        FROM ITOPS_FINDING_ACTIVITY fa
+        WHERE fa.FINDING_ID = f.ID AND fa.ISACTIVE = 1
+            AND fa.ACTIVITY_TYPE IN ('Escalation', 'Comment')
+        ORDER BY fa.ID DESC
+    ) da
+    LEFT JOIN (
+        SELECT s2.ASSESSMENT_ID,
+            SUM(CASE WHEN fnd2.STATUS = 'Accepted' THEN 1 ELSE 0 END) AS FindingsAccepted,
+            SUM(CASE WHEN fnd2.STATUS = 'Rejected' THEN 1 ELSE 0 END) AS FindingsRejected,
+            SUM(CASE WHEN fnd2.STATUS = 'Open' THEN 1 ELSE 0 END) AS FindingsPending
+        FROM ITOPS_SCORE s2
+        JOIN ITOPS_FINDING fnd2 ON fnd2.SCORE_ID = s2.ID
+        WHERE fnd2.ISACTIVE = 1
+        GROUP BY s2.ASSESSMENT_ID
+    ) fagg ON fagg.ASSESSMENT_ID = a.ID
     OUTER APPLY (
         SELECT STRING_AGG(ISNULL(e.FRST_NM, aa.ASSESSOR_EMP_ID), ', ') AS AssessorNames
         FROM ITOPS_ASSESSMENT_ASSESSOR aa
@@ -10062,4 +10315,182 @@ begin
 	(@ReportsResourceId,13,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate())
 end
 
+GO
+
+-- V2_33: Admin Setup's "Active Users" tab (RESOURCE_ID 837) - see
+-- ITOperationMaturity_V2_33_ActiveUsersAppControl.sql for the full rationale. Unlike
+-- Dashboard/Assessments/Reports above, every role starts at VIEW_ACCESS = 0 except role 7
+-- - nobody sees this usage-telemetry tab until specific role(s)/title(s) are explicitly
+-- granted VIEW_ACCESS = 1 on this resource directly in APP_ACCESS_CONTROLS.
+Declare @EMPID varchar(10) = '104744'
+Declare @ActiveUsersResourceId int = 837
+Declare @ActiveUsersResourceName varchar(250) = 'IT Operations Maturity > Active Users'
+
+If not exists(select 1 from APP_CONTROLS where RESOURCE_NAME = @ActiveUsersResourceName)
+begin
+	insert into APP_CONTROLS (RESOURCE_ID,RESOURCE_TYPE,RESOURCE_NAME,COMMENTS,CREATED_BY,CREATED_DATE,UPDATED_BY,UPDATED_DATE,ISACTIVE)
+	values (@ActiveUsersResourceId,'Control',@ActiveUsersResourceName,null,@EMPID,GETDATE(),@EMPID,GETDATE(),1)
+	set @ActiveUsersResourceId = (select RESOURCE_ID from APP_CONTROLS where RESOURCE_NAME = @ActiveUsersResourceName)
+end
+
+If not exists(select 1 from APP_ACCESS_CONTROLS where RESOURCE_ID = @ActiveUsersResourceId)
+begin
+	insert into APP_ACCESS_CONTROLS
+	(RESOURCE_ID,ROLE_ID,EMP_ID,CUST_ID,PROJ_ID,COMMENTS,CREATED_BY,UPDATED_BY,VIEW_ACCESS,CREATE_ACCESS,
+	EDIT_ACCESS,DELETE_ACCESS,DEFAULT_ACCESS,ISACTIVE,ACCESS_LEVEL,CREATED_DATE,UPDATED_DATE)
+	values
+	(@ActiveUsersResourceId,1,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,2,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,3,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,4,'104744','','',null,@EMPID,@EMPID,1,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,5,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,6,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,7,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,8,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,9,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,10,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,11,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,12,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate()),
+	(@ActiveUsersResourceId,13,'','','',null,@EMPID,@EMPID,0,0,0,0,0,1,1,getdate(),getdate())
+end
+
+GO
+
+-- V2_30: backfill each Cloud category's PROVIDER from its own name prefix ("Azure - IAM" ->
+-- "Azure") now that all the Cloud category rows above have been seeded.
+UPDATE c
+SET c.PROVIDER = LEFT(c.NAME, CHARINDEX(' - ', c.NAME) - 1)
+FROM ITOPS_CATEGORY c
+INNER JOIN ITOPS_DOMAIN dm ON dm.ID = c.DOMAIN_ID
+WHERE dm.CODE = 'cloud'
+  AND c.PROVIDER IS NULL
+  AND CHARINDEX(' - ', c.NAME) > 0;
+GO
+
+
+IF NOT EXISTS (SELECT 1 FROM CONFIGURATION_EXT WHERE [KEY] = 'ITRUNOPS_HEAD' AND CUST_ID = '-1')
+BEGIN
+    DECLARE @empId VARCHAR(50) = '104744';
+
+    INSERT INTO CONFIGURATION_EXT (
+        [KEY], DESCRIPTION, VALUE, COMMENTS, CUST_ID, PROJ_ID, ISENCRYPT, ISACTIVE,
+        START_DATE, END_DATE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE
+    )
+    VALUES (
+        'ITRUNOPS_HEAD',
+        'Cc address(es) for the RunOps Head on the IT Ops Maturity "findings need your action" email (comma/semicolon-separated).',
+        'ashish.nagar@neurealm.com,prasad.deshpande@neurealm.com,parameswaran.s@neurealm.com',
+        NULL, '-1', NULL, 0, 1,
+        NULL, NULL, @empId, GETDATE(), @empId, GETDATE()
+    );
+END
+GO
+
+SELECT ID, [KEY], VALUE, CUST_ID FROM CONFIGURATION_EXT WHERE [KEY] = 'ITRUNOPS_HEAD';
+GO
+
+----------------------------------------------------IT Operations Maturity V2 - Daily active user tracking----------------------------------------------
+-- See ITOperationMaturity_V2_32_DailyActiveUsers.sql for the full rationale - folded in
+-- here too since this file provisions a fresh DB from scratch. Records, once per employee
+-- per calendar day, that someone opened the IT Ops Maturity microapp; idempotent per
+-- (EMP_ID, VISIT_DATE). No FK to EMP_INFO on purpose - a best-effort usage log must never
+-- fail just because a token's EMP_ID doesn't resolve to an active employee row.
+IF OBJECT_ID('ITOPS_USER_VISIT', 'U') IS NULL
+BEGIN
+    CREATE TABLE ITOPS_USER_VISIT (
+        ID INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+        EMP_ID VARCHAR(50) NOT NULL,
+        VISIT_DATE DATE NOT NULL,
+        FIRST_VISIT_TIME DATETIME NOT NULL
+    );
+    CREATE UNIQUE INDEX UQ_ITOPS_USER_VISIT ON ITOPS_USER_VISIT(EMP_ID, VISIT_DATE);
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_ITOpsRecordVisit
+    @EmpId VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF @EmpId IS NULL OR LTRIM(RTRIM(@EmpId)) = '' RETURN;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM ITOPS_USER_VISIT
+        WHERE EMP_ID = @EmpId AND VISIT_DATE = CAST(GETDATE() AS DATE)
+    )
+    BEGIN
+        INSERT INTO ITOPS_USER_VISIT (EMP_ID, VISIT_DATE, FIRST_VISIT_TIME)
+        VALUES (@EmpId, CAST(GETDATE() AS DATE), GETDATE());
+    END
+END
+GO
+
+-- Not registered in REPORTS_SP_DETAILS (so it won't show up in the Reports page picker,
+-- which is wired for the assessment-shaped filter set) - query this directly for now, or
+-- ask for it to be wired up as its own small usage-report view once you want to see it in
+-- the app rather than via SSMS.
+CREATE OR ALTER PROCEDURE dbo.report_getITOpsDailyActiveUsers
+    @FromDate DATE = NULL,
+    @ToDate DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+        v.VISIT_DATE AS VisitDate,
+        COUNT(DISTINCT v.EMP_ID) AS ActiveUsers,
+        STRING_AGG(ISNULL(e.FRST_NM, v.EMP_ID), ', ') AS Users
+    FROM ITOPS_USER_VISIT v
+    LEFT JOIN EMP_INFO e ON e.EMP_ID = v.EMP_ID AND e.DOR IS NULL
+    WHERE (@FromDate IS NULL OR v.VISIT_DATE >= @FromDate)
+      AND (@ToDate IS NULL OR v.VISIT_DATE <= @ToDate)
+    GROUP BY v.VISIT_DATE
+    ORDER BY v.VISIT_DATE DESC;
+END
+GO
+
+----------------------------------------------------IT Operations Maturity V2 - Score recommendation master----------------------------------------------
+-- See ITOperationMaturity_V2_34_ScoreRecommendationMaster.sql for the full rationale - folded in
+-- here so a from-scratch build gets the Dashboard's Recommendation wording without running that
+-- script separately. The Recommendation column shows a standard maturity band per 1-5 score;
+-- keeping the text here means it can be reworded in the database without an application deploy.
+IF OBJECT_ID('ITOPS_SCORE_RECOMMENDATION', 'U') IS NULL
+BEGIN
+    CREATE TABLE ITOPS_SCORE_RECOMMENDATION (
+        ID INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+        SCORE_VALUE INT NOT NULL,
+        LABEL VARCHAR(100) NOT NULL,
+        DESCRIPTION VARCHAR(500) NULL,
+        DISPLAY_ORDER INT NOT NULL DEFAULT 0,
+        CREATED_BY VARCHAR(50) NULL,
+        CREATED_DATE DATETIME NOT NULL DEFAULT GETDATE(),
+        UPDATED_BY VARCHAR(50) NULL,
+        UPDATED_DATE DATETIME NOT NULL DEFAULT GETDATE(),
+        ISACTIVE BIT NOT NULL DEFAULT 1
+    );
+
+    CREATE UNIQUE INDEX UQ_ITOPS_SCORE_RECOMMENDATION_SCORE
+        ON ITOPS_SCORE_RECOMMENDATION(SCORE_VALUE)
+        WHERE ISACTIVE = 1;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM ITOPS_SCORE_RECOMMENDATION WHERE SCORE_VALUE = 1 AND ISACTIVE = 1)
+    INSERT INTO ITOPS_SCORE_RECOMMENDATION (SCORE_VALUE, LABEL, DESCRIPTION, DISPLAY_ORDER, CREATED_BY, UPDATED_BY)
+    VALUES (1, 'Critical Gap', 'Immediate action required. Fundamental controls are missing.', 1, 'SYSTEM', 'SYSTEM');
+
+IF NOT EXISTS (SELECT 1 FROM ITOPS_SCORE_RECOMMENDATION WHERE SCORE_VALUE = 2 AND ISACTIVE = 1)
+    INSERT INTO ITOPS_SCORE_RECOMMENDATION (SCORE_VALUE, LABEL, DESCRIPTION, DISPLAY_ORDER, CREATED_BY, UPDATED_BY)
+    VALUES (2, 'Needs Work', 'Significant effort needed. Basic processes must be formalised.', 2, 'SYSTEM', 'SYSTEM');
+
+IF NOT EXISTS (SELECT 1 FROM ITOPS_SCORE_RECOMMENDATION WHERE SCORE_VALUE = 3 AND ISACTIVE = 1)
+    INSERT INTO ITOPS_SCORE_RECOMMENDATION (SCORE_VALUE, LABEL, DESCRIPTION, DISPLAY_ORDER, CREATED_BY, UPDATED_BY)
+    VALUES (3, 'Foundation Established', 'Defined processes in place. Focus on automation and consistency.', 3, 'SYSTEM', 'SYSTEM');
+
+IF NOT EXISTS (SELECT 1 FROM ITOPS_SCORE_RECOMMENDATION WHERE SCORE_VALUE = 4 AND ISACTIVE = 1)
+    INSERT INTO ITOPS_SCORE_RECOMMENDATION (SCORE_VALUE, LABEL, DESCRIPTION, DISPLAY_ORDER, CREATED_BY, UPDATED_BY)
+    VALUES (4, 'Well Managed', 'Strong maturity. Fine-tune and optimise remaining gaps.', 4, 'SYSTEM', 'SYSTEM');
+
+IF NOT EXISTS (SELECT 1 FROM ITOPS_SCORE_RECOMMENDATION WHERE SCORE_VALUE = 5 AND ISACTIVE = 1)
+    INSERT INTO ITOPS_SCORE_RECOMMENDATION (SCORE_VALUE, LABEL, DESCRIPTION, DISPLAY_ORDER, CREATED_BY, UPDATED_BY)
+    VALUES (5, 'Optimized', 'Best-in-class. Maintain and share as internal best practice.', 5, 'SYSTEM', 'SYSTEM');
 GO

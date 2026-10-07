@@ -12,6 +12,20 @@
     <a *ngIf="canSeeAdminSetup" routerLink="/admin" routerLinkActive="active">Admin Setup</a>
   </div>
   <div class="nav-identity" *ngIf="currentUser">
+    <a
+      class="manual-link"
+      href="assets/docs/USER-MANUAL.html"
+      target="_blank"
+      rel="noopener"
+      title="User Manual"
+      aria-label="Open User Manual in a new tab"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H18a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 0 4 22V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+        <path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H19" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+        <path d="M8 8h7M8 11.2h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </a>
     <app-notification-bell />
     <span class="identity-name" [attr.data-initials]="identityInitials">{{ currentUser.name }}</span>
     <button type="button" class="logout-btn" (click)="logout()">Logout</button>

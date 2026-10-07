@@ -306,6 +306,15 @@ namespace GAVS.AllocationSystem.Model.CSP
         public int SCORE_ID { get; set; }
 
         public int FILE_DATA_ID { get; set; }
+
+        // NULL = evidence attached by the Assessor while scoring the parameter.
+        // Set = evidence attached by the Assessee against this specific finding's
+        // remediation (Action Taken). Both rows still carry the same SCORE_ID (a
+        // finding's score never changes), but this column is what keeps "evidence
+        // for the score" and "evidence for the finding" from being the same list -
+        // see GetITOpsScoreEvidence/GetITOpsFindingEvidence in
+        // ITOperationMaturityController.cs.
+        public int? FINDING_ID { get; set; }
     }
 
     // Findings - the trackable action item derived from a below-target score.
@@ -382,5 +391,24 @@ namespace GAVS.AllocationSystem.Model.CSP
 
         public bool IS_SENT { get; set; }
         public DateTime? SENT_DATE { get; set; }
+    }
+
+    // Reference: the Dashboard's "Recommendation" text per 1-5 score band. Editable in the
+    // database so the wording can change without an application deploy - see
+    // DB Scripts/2026/ITOperationMaturity/V2/ITOperationMaturity_V2_34_ScoreRecommendationMaster.sql.
+    // Not Applicable parameters have no score and never read from here.
+    public class ITOPS_SCORE_RECOMMENDATION : EntityBase
+    {
+        public int SCORE_VALUE { get; set; }
+
+        // What the Dashboard actually renders, e.g. "Critical Gap", "Well Managed".
+        [Column(TypeName = "varchar"), MaxLength(100)]
+        public string LABEL { get; set; }
+
+        // Longer guidance behind the label; surfaced as the cell's hover tooltip.
+        [Column(TypeName = "varchar"), MaxLength(500)]
+        public string DESCRIPTION { get; set; }
+
+        public int DISPLAY_ORDER { get; set; }
     }
 }

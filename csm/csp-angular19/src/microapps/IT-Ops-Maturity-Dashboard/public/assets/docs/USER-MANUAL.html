@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IT Ops Maturity Dashboard — User Manual</title>
+<meta name="description" content="Operating guide for the IT Operations Maturity Dashboard: Admin Setup, Assessment, Dashboard and Reports.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* ============================================================
+     Design tokens — light is the base, dark redefines tokens only
+     Palette derived from the product's own indigo toolbar (#5d6795)
+     ============================================================ */
+  :root {
+    --bg:            #f4f6fa;
+    --surface:       #ffffff;
+    --surface-2:     #eef1f7;
+    --surface-3:     #e4e9f2;
+    --border:        #dce1ec;
+    --border-strong: #c3cbdc;
+
+    --fg:            #111527;
+    --fg-soft:       #39415a;
+    --muted:         #58617a;
+    --faint:         #7a8398;
+
+    --accent:        #3b4aa0;
+    --accent-hover:  #2e3b85;
+    --accent-soft:   #e7ebfa;
+    --accent-line:   #c6cff1;
+    --on-accent:     #ffffff;
+
+    --ok:            #0f7049;
+    --ok-soft:       #e3f5ec;
+    --warn:          #8a5a00;
+    --warn-soft:     #fdf0da;
+    --stop:          #a52420;
+    --stop-soft:     #fbe9e8;
+
+    --ring:          0 0 0 3px rgba(59,74,160,.28);
+    --sh-1:          0 1px 1px rgba(17,21,39,.04);
+    --sh-2:          0 2px 6px -2px rgba(17,21,39,.14);
+
+    --r-s: 8px; --r-m: 12px; --r-l: 16px;
+
+    --f-display: "Sora", "Segoe UI", system-ui, sans-serif;
+    --f-body:    "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, monospace;
+
+    --nav-w: 282px;
+    --bar-h: 56px;
+
+    --t-fast: 120ms cubic-bezier(.2,0,.2,1);
+    --t-base: 200ms cubic-bezier(.2,0,.2,1);
+
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0b0e18; --surface:#141927; --surface-2:#1b2132; --surface-3:#232a3e;
+      --border:#283048; --border-strong:#3a445f;
+      --fg:#eef1f8; --fg-soft:#c9d1e3; --muted:#9aa5bd; --faint:#7d879d;
+      --accent:#93a6ff; --accent-hover:#aebcff; --accent-soft:#1c2444; --accent-line:#33406e; --on-accent:#0b0e18;
+      --ok:#54d49c; --ok-soft:#0f2e22; --warn:#e8b45c; --warn-soft:#32260f; --stop:#ff968d; --stop-soft:#361a19;
+      --ring: 0 0 0 3px rgba(147,166,255,.35);
+      --sh-1: 0 1px 1px rgba(0,0,0,.3);
+      --sh-2: 0 2px 8px -3px rgba(0,0,0,.6);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0b0e18; --surface:#141927; --surface-2:#1b2132; --surface-3:#232a3e;
+    --border:#283048; --border-strong:#3a445f;
+    --fg:#eef1f8; --fg-soft:#c9d1e3; --muted:#9aa5bd; --faint:#7d879d;
+    --accent:#93a6ff; --accent-hover:#aebcff; --accent-soft:#1c2444; --accent-line:#33406e; --on-accent:#0b0e18;
+    --ok:#54d49c; --ok-soft:#0f2e22; --warn:#e8b45c; --warn-soft:#32260f; --stop:#ff968d; --stop-soft:#361a19;
+    --ring: 0 0 0 3px rgba(147,166,255,.35);
+    --sh-1: 0 1px 1px rgba(0,0,0,.3);
+    --sh-2: 0 2px 8px -3px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: none; box-shadow: var(--ring); border-radius: 6px; }
+
+  .skip-link {
+    position: absolute; left: 12px; top: -60px; z-index: 100;
+    background: var(--accent); color: var(--on-accent);
+    padding: 10px 16px; border-radius: var(--r-s); font-weight: 600; text-decoration: none;
+    transition: top var(--t-fast);
+  }
+  .skip-link:focus { top: 12px; }
+
+  /* ---------------- Top utility bar ---------------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    min-height: var(--bar-h);
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 20px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .progress {
+    position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%;
+    background: var(--accent);
+    transform: scaleX(0); transform-origin: 0 50%;
+    transition: transform 80ms linear;
+  }
+  .topbar .crumb {
+    font-family: var(--f-mono); font-size: 12px; color: var(--muted);
+    letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar .crumb b { color: var(--fg); font-weight: 500; }
+  .topbar .spacer { flex: 1; }
+
+  .icon-btn {
+    width: 40px; height: 40px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: var(--r-s);
+    background: var(--surface); color: var(--fg-soft);
+    cursor: pointer; transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--fg); border-color: var(--border-strong); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .menu-btn { display: none; }
+
+  /* ---------------- Shell ---------------- */
+  .shell { display: flex; align-items: flex-start; max-width: 1400px; margin: 0 auto; }
+
+  /* ---------------- Sidebar ---------------- */
+  .sidenav {
+    width: var(--nav-w); flex-shrink: 0;
+    position: sticky; top: var(--bar-h);
+    height: calc(100vh - var(--bar-h));
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 24px 16px 48px 24px;
+    border-right: 1px solid var(--border);
+  }
+  .brand { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding-bottom: 20px; }
+  .brand-logo {
+    height: 34px; display: inline-flex; align-items: center;
+    background: #fff; border: 1px solid var(--border); border-radius: var(--r-s); padding: 5px 10px;
+  }
+  .brand-logo img { height: 100%; width: auto; display: block; }
+  .brand-name { font-family: var(--f-display); font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .brand-name span { display: block; font-family: var(--f-body); font-weight: 400; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+
+  .nav-filter { position: relative; margin: 4px 0 18px; }
+  .nav-filter svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--faint); pointer-events: none; }
+  .nav-filter input {
+    width: 100%; padding: 9px 12px 9px 32px;
+    font-family: var(--f-body); font-size: 13.5px; color: var(--fg);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-s);
+  }
+  .nav-filter input::placeholder { color: var(--faint); }
+  .nav-filter input:focus { outline: none; border-color: var(--accent); box-shadow: var(--ring); }
+
+  .nav-group { margin-bottom: 18px; }
+  .nav-group > .nav-top {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: var(--r-s);
+    font-family: var(--f-display); font-weight: 600; font-size: 13.5px;
+    color: var(--fg); text-decoration: none;
+    transition: background var(--t-fast);
+  }
+  .nav-group > .nav-top:hover { background: var(--surface-2); }
+  .nav-sub { margin: 2px 0 0 11px; padding-left: 15px; border-left: 1px solid var(--border); }
+  .nav-sub a {
+    display: block; padding: 6px 10px; border-radius: 6px;
+    color: var(--muted); font-size: 13.5px; text-decoration: none;
+    transition: color var(--t-fast), background var(--t-fast);
+  }
+  .nav-sub a:hover { color: var(--fg); background: var(--surface-2); }
+  .nav-sub a[aria-current="true"],
+  .nav-group > .nav-top[aria-current="true"] { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .nav-hidden { display: none !important; }
+
+  /* ---------------- Content ---------------- */
+  main { flex: 1; min-width: 0; padding: 48px 72px 120px; max-width: 960px; }
+
+  .hero { margin-bottom: 40px; }
+  .hero h1 {
+    font-family: var(--f-display); font-weight: 700; font-size: clamp(30px, 4vw, 40px);
+    line-height: 1.12; letter-spacing: -.02em; margin: 0 0 14px; text-wrap: balance;
+  }
+  .hero .lede { font-size: 17.5px; line-height: 1.6; color: var(--fg-soft); max-width: 64ch; margin: 0; }
+
+  .fact-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+  .fact {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    padding: 7px 15px; font-size: 13px; color: var(--muted); box-shadow: var(--sh-1);
+  }
+  .fact b { color: var(--fg); font-weight: 600; }
+  .fact svg { width: 15px; height: 15px; color: var(--accent); flex-shrink: 0; }
+
+  .note {
+    display: flex; gap: 13px; align-items: flex-start;
+    background: var(--accent-soft); border: 1px solid var(--accent-line);
+    border-radius: var(--r-m); padding: 16px 18px; margin: 32px 0 0;
+    font-size: 14.5px; line-height: 1.6; color: var(--fg-soft);
+  }
+  .note svg { width: 19px; height: 19px; flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+  .note b { color: var(--fg); font-weight: 600; }
+
+  section.chapter { margin-top: 72px; scroll-margin-top: calc(var(--bar-h) + 20px); }
+  .chapter-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .chapter-head h2 {
+    font-family: var(--f-display); font-weight: 700; font-size: 26px;
+    letter-spacing: -.015em; margin: 0; text-wrap: balance;
+  }
+  .chapter > .intro { color: var(--fg-soft); font-size: 15.5px; max-width: 72ch; margin: 0 0 8px; }
+  .rule { height: 1px; background: var(--border); border: 0; margin: 20px 0 28px; }
+
+  h3.topic {
+    font-family: var(--f-display); font-weight: 600; font-size: 19px; letter-spacing: -.01em;
+    margin: 44px 0 12px; scroll-margin-top: calc(var(--bar-h) + 20px);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  h4.minor {
+    font-family: var(--f-display); font-weight: 600; font-size: 15.5px;
+    margin: 30px 0 10px; color: var(--fg);
+  }
+  p { margin: 0 0 15px; max-width: 74ch; }
+  ul, ol { margin: 0 0 18px; padding-left: 20px; max-width: 74ch; }
+  li { margin-bottom: 8px; }
+  li::marker { color: var(--faint); }
+  strong { font-weight: 600; color: var(--fg); }
+  code {
+    font-family: var(--f-mono); font-size: .86em;
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: .12em .42em; border-radius: 5px; color: var(--fg-soft);
+  }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--f-mono); font-size: 12.5px; font-weight: 500; letter-spacing: .02em;
+    padding: 3px 9px; border-radius: 6px; border: 1px solid; white-space: nowrap;
+  }
+  .tag.role-assessor { color: var(--accent); background: var(--accent-soft); border-color: var(--accent-line); }
+  .tag.role-reviewer { color: var(--warn); background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+  .tag.role-assessee { color: var(--ok); background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
+  .tag.st-ok  { color: var(--ok);   background: var(--ok-soft);   border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
+  .tag.st-no  { color: var(--stop); background: var(--stop-soft); border-color: color-mix(in srgb, var(--stop) 30%, transparent); }
+  .tag.st-pend{ color: var(--warn); background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+
+  /* ---------------- Step cards (Admin Setup is genuinely sequential) ---------------- */
+  .steps { display: grid; gap: 12px; margin: 22px 0 8px; }
+  .step-card {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-m);
+    padding: 14px 18px; box-shadow: var(--sh-1);
+    text-decoration: none; color: inherit;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  }
+  .step-card:hover { border-color: var(--accent-line); box-shadow: var(--sh-2); transform: translateY(-1px); }
+  .step-card .idx {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--surface-3); color: var(--fg-soft);
+    font-family: var(--f-mono); font-size: 12.5px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .step-card .sc-body strong { display: block; font-family: var(--f-display); font-size: 15px; }
+  .step-card .sc-body span { font-size: 13.5px; color: var(--muted); }
+  .step-card .gate {
+    font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 4px 9px; border-radius: 6px; white-space: nowrap;
+  }
+
+  /* ---------------- Figures + lightbox ---------------- */
+  figure.shot { margin: 20px 0 30px; }
+  .shot-frame {
+    position: relative; display: block; width: 100%; padding: 0; cursor: zoom-in;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-m);
+    overflow: hidden; box-shadow: var(--sh-1);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+  }
+  .shot-frame:hover { border-color: var(--border-strong); box-shadow: var(--sh-2); }
+  .shot-frame img { display: block; width: 100%; height: auto; }
+  .shot-frame.tall { max-height: 520px; }
+  .shot-frame.tall img { object-fit: cover; object-position: top; max-height: 520px; }
+  .shot-frame.tall::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 110px;
+    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--bg) 92%, transparent));
+    pointer-events: none;
+  }
+  .zoom-hint {
+    position: absolute; right: 12px; bottom: 12px; z-index: 1;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--f-mono); font-size: 12.5px;
+    background: var(--surface); color: var(--fg-soft);
+    border: 1px solid var(--border-strong); border-radius: 999px; padding: 5px 11px;
+    box-shadow: var(--sh-1);
+  }
+  .zoom-hint svg { width: 13px; height: 13px; }
+  figure.shot figcaption {
+    display: flex; gap: 9px; align-items: flex-start;
+    margin-top: 10px; font-size: 13.5px; line-height: 1.55; color: var(--muted); max-width: 74ch;
+  }
+  figure.shot figcaption svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 4px; color: var(--faint); }
+
+  dialog.lightbox {
+    border: none; padding: 0; max-width: 96vw; max-height: 94vh; width: auto;
+    background: var(--surface); border-radius: var(--r-l); box-shadow: var(--sh-2);
+    color: var(--fg); overflow: hidden;
+  }
+  dialog.lightbox::backdrop { background: rgba(8,10,18,.72); backdrop-filter: blur(3px); }
+  .lb-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px 10px 18px; border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .lb-bar p { margin: 0; font-size: 13.5px; color: var(--muted); flex: 1; max-width: none; }
+  .lb-body { overflow: auto; max-height: calc(94vh - 58px); background: var(--surface-2); }
+  .lb-body img { display: block; width: auto; max-width: 100%; height: auto; margin: 0 auto; }
+
+  /* ---------------- Findings lifecycle diagram ---------------- */
+  .lifecycle {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l);
+    padding: 26px 24px 22px; margin: 26px 0 30px; box-shadow: var(--sh-1);
+  }
+  .lifecycle h4 { margin: 0 0 4px; font-family: var(--f-display); font-size: 15.5px; }
+  .lifecycle .lc-sub { margin: 0 0 22px; font-size: 13.5px; color: var(--muted); max-width: none; }
+  .lc-track { display: grid; gap: 14px; }
+  .lc-row { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: start; }
+  .lc-lane {
+    font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
+    padding-top: 12px; text-align: right;
+  }
+  .lc-steps { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .lc-node {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 15px; font-size: 13.5px; font-weight: 500;
+  }
+  .lc-node .pip { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+  .lc-node.is-pend { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--warn); }
+  .lc-node.is-pend .pip { background: var(--warn); }
+  .lc-node.is-ok { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok); }
+  .lc-node.is-ok .pip { background: var(--ok); }
+  .lc-node.is-no { background: var(--stop-soft); border-color: color-mix(in srgb, var(--stop) 30%, transparent); color: var(--stop); }
+  .lc-node.is-no .pip { background: var(--stop); }
+  .lc-node.is-act { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+  .lc-node.is-act .pip { background: var(--accent); }
+  .lc-arrow { display: inline-flex; align-items: center; color: var(--faint); }
+  .lc-arrow svg { width: 20px; height: 14px; }
+  .lc-loop {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
+    background: var(--surface-2); border: 1px dashed var(--border-strong);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .lc-legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--muted);
+  }
+  .lc-legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .lc-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  /* ---------------- Decision panels ---------------- */
+  .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; margin: 22px 0 28px; }
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-m);
+    padding: 20px 22px; box-shadow: var(--sh-1);
+  }
+  .panel h4 { margin: 0 0 12px; display: flex; align-items: center; gap: 9px; font-size: 15px; }
+  .panel h4 .badge {
+    width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .panel h4 .badge svg { width: 14px; height: 14px; }
+  .panel.ok h4 .badge { background: var(--ok-soft); color: var(--ok); }
+  .panel.no h4 .badge { background: var(--stop-soft); color: var(--stop); }
+  .panel ul { margin: 0; padding-left: 19px; font-size: 14.2px; }
+  .panel li:last-child { margin-bottom: 0; }
+
+  /* ---------------- Tables ---------------- */
+  .table-wrap {
+    overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-m);
+    background: var(--surface); box-shadow: var(--sh-1); margin: 18px 0 26px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14.2px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 13px 18px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th {
+    background: var(--surface-2); font-family: var(--f-mono); font-weight: 500;
+    font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+    position: sticky; top: 0;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td.role-cell { white-space: nowrap; }
+
+  /* ---------------- Footer / to-top ---------------- */
+  footer.doc-foot {
+    margin-top: 80px; padding-top: 22px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    font-size: 13px; color: var(--muted);
+  }
+  .to-top {
+    position: fixed; right: 26px; bottom: 26px; z-index: 30;
+    opacity: 0; visibility: hidden; transform: translateY(8px);
+    transition: opacity var(--t-base), transform var(--t-base), visibility var(--t-base);
+    box-shadow: var(--sh-2);
+  }
+  .to-top.show { opacity: 1; visibility: visible; transform: none; }
+
+  /* ---------------- Responsive ---------------- */
+  .scrim { display: none; }
+  @media (max-width: 1040px) {
+    main { padding: 40px 36px 96px; }
+  }
+  @media (max-width: 880px) {
+    .menu-btn { display: inline-flex; }
+    .sidenav {
+      position: fixed; top: var(--bar-h); left: 0; z-index: 45;
+      height: calc(100dvh - var(--bar-h)); width: 300px;
+      background: var(--surface);
+      transform: translateX(-102%); transition: transform var(--t-base);
+      box-shadow: var(--sh-2);
+    }
+    .sidenav.open { transform: none; }
+    .scrim {
+      display: block; position: fixed; inset: var(--bar-h) 0 0 0; z-index: 44;
+      background: rgba(8,10,18,.5); opacity: 0; visibility: hidden;
+      transition: opacity var(--t-base), visibility var(--t-base);
+    }
+    .scrim.show { opacity: 1; visibility: visible; }
+    main { padding: 32px 20px 90px; max-width: none; }
+    .lc-row { grid-template-columns: 1fr; }
+    .lc-lane { text-align: left; padding-top: 0; }
+  }
+
+  @media print {
+    .topbar, .sidenav, .scrim, .to-top, .zoom-hint { display: none !important; }
+    main { padding: 0; max-width: none; }
+    .shot-frame.tall { max-height: none; }
+    .shot-frame.tall img { max-height: none; object-fit: fill; }
+    .shot-frame.tall::after { display: none; }
+    section.chapter { break-inside: avoid-page; }
+    figure.shot { break-inside: avoid; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+
+<div class="topbar">
+  <div class="progress" id="progress"></div>
+  <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation" aria-expanded="false" aria-controls="sidenav">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+  <div class="crumb" id="crumb">User Manual · <b>Overview</b></div>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="themeBtn" aria-label="Switch to dark theme" title="Toggle theme">
+    <svg id="iconSun" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.6 5.4l-1.6 1.6M7 17l-1.6 1.6M18.6 18.6 17 17M7 7 5.4 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <svg id="iconMoon" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="icon-btn" id="printBtn" aria-label="Print this manual" title="Print">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 9V4h10v5M7 19H5a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><rect x="7" y="14" width="10" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/></svg>
+  </button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+
+  <!-- ============================ NAV ============================ -->
+  <nav class="sidenav" id="sidenav" aria-label="Manual contents">
+    <div class="brand">
+      <span class="brand-logo"><img src="../images/GAVS_Logo.png" alt="Neurealm" width="120" height="24"></span>
+      <span class="brand-name">IT Ops Maturity<span>User Manual</span></span>
+    </div>
+
+    <div class="nav-filter">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.4" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="search" id="navFilter" placeholder="Filter sections…" aria-label="Filter manual sections">
+    </div>
+
+    <div id="navTree">
+      <div class="nav-group">
+        <a class="nav-top" href="#overview">Overview</a>
+      </div>
+
+      <div class="nav-group">
+        <a class="nav-top" href="#admin-setup">Admin Setup</a>
+        <div class="nav-sub">
+          <a href="#admin-roles">Configure Roles</a>
+          <a href="#admin-scope">Configure Scope</a>
+          <a href="#admin-cycle">Configure Cycle</a>
+          <a href="#admin-assessment">Configure Assessment</a>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <a class="nav-top" href="#assessment">Assessment</a>
+        <div class="nav-sub">
+          <a href="#assessment-assessor">Assessor</a>
+          <a href="#assessment-reviewer">Reviewer</a>
+          <a href="#assessment-assessee">Assessee</a>
+          <a href="#findings">Findings lifecycle</a>
+          <a href="#findings-assessor">Assessor's decision</a>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <a class="nav-top" href="#dashboard">Dashboard</a>
+      </div>
+
+      <div class="nav-group">
+        <a class="nav-top" href="#reports">Reports</a>
+        <div class="nav-sub">
+          <a href="#reports-domain">Domain Assessment Report</a>
+          <a href="#reports-parameter">Parameter Detail Report</a>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <a class="nav-top" href="#reference">Role reference</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================ CONTENT ============================ -->
+  <main id="content">
+
+    <header class="hero" id="overview">
+      <h1>IT Ops Maturity Dashboard — User Manual</h1>
+      <p class="lede">A project-level view of technology domain maturity, assessment progress and prioritized improvement opportunities. This guide covers each area of the application (Admin Setup, Assessment, Dashboard and Reports) in the order a new user encounters them.</p>
+      <div class="fact-row">
+        <span class="fact"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>4 sections</span>
+        <span class="fact"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3.2 19a5.8 5.8 0 0 1 11.6 0M16 11.2a3 3 0 1 0-1.4-5.6M17 19a5 5 0 0 0-1.4-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Administrator · Assessor · Reviewer · Assessee</span>
+        <span class="fact"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Cycle-based assessments</span>
+      </div>
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5.5M12 7.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <div><b>A note on the screenshots.</b> The signed-in user's name in the top navigation bar is masked in every screenshot in this manual. Names appearing elsewhere, such as in the Assessor, Reviewer or Assessee columns of a table, are business data rather than session identities, and are shown for illustration. Select any screenshot to view it full size.</div>
+      </div>
+    </header>
+
+    <!-- ===================== 1. ADMIN SETUP ===================== -->
+    <section class="chapter" id="admin-setup">
+      <div class="chapter-head"><h2>Admin Setup</h2></div>
+      <p class="intro">Admin Setup holds the standing data the rest of the application depends on: who may act in which role, which technology domains apply to which projects, the assessment cycles in use, and the staged Assessor / Reviewer / Assessee assignments for each project-domain pair.</p>
+      <hr class="rule">
+
+      <p>The area is organized as four configuration steps, navigated using the step tabs at the top of the page. Each step is gated to its own role, and a <strong>Superuser</strong> holds all of them at once, making a Superuser the only user who can complete every step end to end. Everyone else sees only the step tabs their own role grants.</p>
+
+      <div class="steps">
+        <a class="step-card" href="#admin-roles">
+          <span class="idx">1</span>
+          <span class="sc-body"><strong>Configure Roles</strong><span>Grant employees the roles that govern access across the application.</span></span>
+          <span class="gate">Superuser</span>
+        </a>
+        <a class="step-card" href="#admin-scope">
+          <span class="idx">2</span>
+          <span class="sc-body"><strong>Configure Scope</strong><span>Map technology domains to the projects they apply to.</span></span>
+          <span class="gate">Scope Administrator</span>
+        </a>
+        <a class="step-card" href="#admin-cycle">
+          <span class="idx">3</span>
+          <span class="sc-body"><strong>Configure Cycle</strong><span>Define the assessment cycles and their open windows.</span></span>
+          <span class="gate">Cycle Administrator</span>
+        </a>
+        <a class="step-card" href="#admin-assessment">
+          <span class="idx">4</span>
+          <span class="sc-body"><strong>Configure Assessment</strong><span>Stage the three roles per domain, then create the assessments.</span></span>
+          <span class="gate">Assessment Coordinator</span>
+        </a>
+      </div>
+
+      <h3 class="topic" id="admin-roles">Configure Roles <span class="tag">Superuser only</span></h3>
+      <p>Grants employees the functional roles (Scope Administrator, Cycle Administrator, Assessment Coordinator, and so on) that determine what they can see and do elsewhere in the application. Each row represents one employee's role grants; access can be scoped to a specific resource set, and a grant can be revoked without deleting its history.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="Configure Roles: the employee-to-role mapping table.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/admin-01-configure-roles.png" alt="The Configure Roles screen, listing employees and the roles granted to each" width="1583" height="1422" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>The employee-to-role mapping table, with per-grant scope and effective date.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="admin-scope">Configure Scope <span class="tag">Scope Administrator</span></h3>
+      <p>Defines the Domain–Project Mapping: which technology domains (Linux, Windows, Cloud, Network and the rest) are in scope for each project. Use <strong>+ New mapping</strong> or <strong>+ Bulk map</strong> to add domains to a project, or <strong>Copy from another project…</strong> to reuse an existing configuration.</p>
+      <p>The read-only <strong>Project Resources</strong> column shows who currently holds an active allocation on the project. Where nobody is staffed, the application says so explicitly: that project cannot yet be given an Assessee in Configure Assessment.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="Configure Scope: the Domain–Project Mapping grid, showing mapped domains and current staffing per project.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/admin-02-configure-scope.png" alt="The Configure Scope screen, showing each project with its mapped domains and staffed resources" width="1583" height="1136" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>The Domain–Project Mapping grid, showing mapped domains and current staffing per project.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="admin-cycle">Configure Cycle <span class="tag">Cycle Administrator</span></h3>
+      <p>Defines the assessment cycles, for example <code>2026 - FY27</code> or <code>Q2 - RunOps</code>, together with their open and close dates. Every assessment is created against one named cycle, and the cycle determines the window in which scoring is expected to complete.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="Configure Cycle: cycle definitions and their active windows.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/admin-03-configure-cycle.png" alt="The Configure Cycle screen, listing assessment cycles and their date ranges" width="1600" height="1000" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Cycle definitions and their active windows.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="admin-assessment">Configure Assessment <span class="tag">Assessment Coordinator</span></h3>
+      <p>The final staging step. For each project-domain pair already defined in Configure Scope, select a cycle, then assign the Assessor, Reviewer and Assessee before selecting <strong>Create assessments</strong>. All three roles are mandatory for a domain to be created. If the Assessee candidate list comes up empty, return to Configure Scope and confirm the project is staffed.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="Configure Assessment: staging Assessor, Reviewer and Assessee assignments ahead of assessment creation.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/admin-04-configure-assessment.png" alt="The Configure Assessment screen, staging an Assessor, Reviewer and Assessee for each project domain" width="1583" height="1207" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Staging Assessor, Reviewer and Assessee assignments ahead of assessment creation.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ===================== 2. ASSESSMENT ===================== -->
+    <section class="chapter" id="assessment">
+      <div class="chapter-head"><h2>Assessment</h2></div>
+      <p class="intro">The Assessments area is where Assessors score technology domains, Reviewers approve or return that scoring, and Assessees track progress and respond to findings raised against their own project. What a user sees here is determined entirely by the role they hold on each assessment.</p>
+      <hr class="rule">
+
+      <h3 class="topic" id="assessment-assessor">Assessor <span class="tag role-assessor">Scores the domain</span></h3>
+      <p>The <strong>My Assessments</strong> tab lists every project/domain assignment in which the signed-in user is the Assessor, grouped by account and project, with running counts for Open, Returned for Revision, Pending for Review and Completed. Select <strong>Open assessment</strong> to begin scoring.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="My Assessments: every domain currently assigned to this Assessor, grouped by account and project.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-01-assessor-myassessments.png" alt="The My Assessments list for an Assessor, grouped by account and project" width="1583" height="1566" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>My Assessments: every domain currently assigned to this Assessor.</figcaption>
+      </figure>
+      <p>Within an assessment, each parameter is scored individually against a five-level maturity rubric, with space for notes and supporting evidence. Scores start unset rather than pre-filled, so nothing is reported as complete until the Assessor has deliberately entered a value.</p>
+      <figure class="shot">
+        <button class="shot-frame tall" type="button" data-caption="The scoring screen for a technology domain, showing the 1–5 maturity rubric, notes and evidence upload per parameter.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand full page</span>
+          <img src="manual-assets/assessment-02-assessor-scoring-screen.png" alt="The Assessor scoring screen, with a 1 to 5 maturity rubric, notes field and evidence upload for each parameter" width="1583" height="7917" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>The scoring screen, shown truncated: select it to view every parameter in the domain.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="assessment-reviewer">Reviewer <span class="tag role-reviewer">Approves or returns</span></h3>
+      <p>The <strong>Needs Review</strong> tab lists every domain an Assessor has submitted and that is awaiting this Reviewer's decision. Each row stays flagged <span class="tag st-pend">Action needed</span> until it has been actioned.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="Needs Review: domains awaiting this Reviewer's decision.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-03-reviewer-needsreview.png" alt="The Needs Review tab, listing domains that are pending the Reviewer's decision" width="1583" height="1353" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Needs Review: domains awaiting this Reviewer's decision.</figcaption>
+      </figure>
+      <p>Opening a review surfaces the Assessor's scores and supporting notes in full. From there the Reviewer either <strong>Approves</strong> the assessment, or <strong>Returns it for Revision</strong> with a comment explaining what must change. A returned assessment unlocks for the Assessor and moves back to In Progress.</p>
+      <figure class="shot">
+        <button class="shot-frame tall" type="button" data-caption="The review screen: the Assessor's submitted scores and notes, with Approve and Return for Revision actions.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand full page</span>
+          <img src="manual-assets/assessment-04-reviewer-review-screen.png" alt="The Reviewer's read-only view of submitted scores, with Approve and Return for Revision actions" width="1583" height="6038" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Reviewing submitted scores, shown truncated: approve, or return for revision with a comment.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="assessment-assessee">Assessee <span class="tag role-assessee">Owns the findings</span></h3>
+      <p>Assessees are the project resources a given assessment concerns. They receive a read-only view of every scored parameter for their domain, but hold a distinct authority in the workflow: only an Assessee may accept or reject an individual <strong>finding</strong>.</p>
+      <p>Any parameter scored below the maximum (below 5) is treated as a probable area of improvement and raised as a finding once the Reviewer has approved the assessment. If the Assessee no longer holds an active allocation on the project, the application prompts them to have that allocation extended in D365; while the prompt is showing, accepting or rejecting findings and submitting remediation updates are both disabled.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="The assessments list as seen by an Assessee.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-05-assessee-view.png" alt="The assessments list as seen by an Assessee" width="1600" height="1000" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>The assessments list as seen by an Assessee.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="findings">Findings lifecycle</h3>
+      <p>Findings become actionable, presented with Accept and Reject controls, once the domain assessment has been approved by the Reviewer. From that point a finding follows one of two paths, and a rejected finding can return to the Assessee more than once.</p>
+
+      <div class="lifecycle">
+        <h4>How a finding reaches closure</h4>
+        <p class="lc-sub">Every finding starts Pending. It is closed either by the Assessee's own remediation update, or by the Assessor accepting the Assessee's rejection.</p>
+        <div class="lc-track">
+          <div class="lc-row">
+            <div class="lc-lane">Accepted path</div>
+            <div class="lc-steps">
+              <span class="lc-node is-pend"><i class="pip"></i>Pending</span>
+              <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="lc-node is-act"><i class="pip"></i>Accepted</span>
+              <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="lc-node"><i class="pip"></i>Action Taken submitted</span>
+              <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="lc-node is-ok"><i class="pip"></i>Closed</span>
+            </div>
+          </div>
+          <div class="lc-row">
+            <div class="lc-lane">Rejected path</div>
+            <div class="lc-steps">
+              <span class="lc-node is-pend"><i class="pip"></i>Pending</span>
+              <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="lc-node is-no"><i class="pip"></i>Rejected, with reason</span>
+              <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="lc-node is-act"><i class="pip"></i>Assessor decides</span>
+              <span class="lc-arrow" aria-hidden="true"><svg viewBox="0 0 24 14" fill="none"><path d="M1 7h20m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="lc-node is-ok"><i class="pip"></i>Closed</span>
+            </div>
+          </div>
+          <div class="lc-row">
+            <div class="lc-lane">If disputed</div>
+            <div class="lc-steps">
+              <span class="lc-loop">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Assessor disputes with a comment, so the finding returns to Pending and the Assessee decides again
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="lc-legend">
+          <span><i style="background:var(--warn)"></i>Awaiting the Assessee</span>
+          <span><i style="background:var(--accent)"></i>Awaiting the Assessor</span>
+          <span><i style="background:var(--ok)"></i>Resolved</span>
+          <span><i style="background:var(--stop)"></i>Disputed state</span>
+        </div>
+      </div>
+
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="A parameter scored below 5 is flagged as a probable area of improvement, with Accept and Reject controls shown only to the Assessee.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-06-assessee-finding-accept-reject.png" alt="A finding flagged as a probable area of improvement, with Accept and Reject buttons" width="1440" height="900" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>A parameter scored below 5, flagged as a probable area of improvement with Accept and Reject controls.</figcaption>
+      </figure>
+
+      <div class="panels">
+        <div class="panel ok">
+          <h4><span class="badge"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>If the Assessee accepts</h4>
+          <ul>
+            <li>The finding moves to <strong>Accepted</strong>.</li>
+            <li>An <strong>Action Taken</strong> field opens on the same finding, where the Assessee records the remediation carried out and may attach evidence (PDF, JPG or PNG, up to 10&nbsp;MB).</li>
+            <li>Submitting that update closes the finding immediately. No separate Assessor sign-off is required.</li>
+            <li>The domain assessment reads as fully <strong>Completed</strong> only once every finding it raised has reached Closed.</li>
+          </ul>
+        </div>
+        <div class="panel no">
+          <h4><span class="badge"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>If the Assessee rejects</h4>
+          <ul>
+            <li>A dialog requires a <strong>mandatory comment</strong> setting out the basis for rejection; it cannot be submitted without one.</li>
+            <li>The finding moves to <strong>Rejected</strong> and reads "awaiting assessor's decision".</li>
+            <li>Responsibility passes to that assessment's own Assessor. The Assessee cannot reverse a rejection unilaterally once it is submitted.</li>
+          </ul>
+        </div>
+      </div>
+
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="Two findings on the same assessment from the Assessee's perspective: one rejected and awaiting the Assessor, one accepted, remediated and closed.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-07-assessee-finding-rejected.png" alt="Two findings: one rejected and awaiting the Assessor's decision, one accepted, remediated and closed" width="1440" height="900" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Two findings on one assessment, as the Assessee sees them: <span class="tag st-no">Rejected</span> awaiting the Assessor, and <span class="tag st-ok">Closed</span> after remediation.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="findings-assessor">Resolving a rejected finding <span class="tag role-assessor">Assessor decides</span></h3>
+      <p>On the Assessor's own assessment screen, a rejected finding displays the Assessee's rejection comment together with two available actions.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="The Assessor's view of a finding the Assessee rejected, with the stated reason and the Accept / Dispute Rejection control.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-09-assessor-rejection-decision.png" alt="The Assessor's view of a rejected finding, showing the rejection reason and an Accept or Dispute Rejection control" width="1440" height="900" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>The Assessor's view of a rejected finding, with the stated reason and the Accept / Dispute Rejection control.</figcaption>
+      </figure>
+      <ul>
+        <li><strong>Accept the rejection</strong> confirms the finding as invalid and moves it directly to Closed. Nothing further is required of the Assessee.</li>
+        <li><strong>Dispute the rejection</strong> requires its own mandatory comment explaining why the finding should stand. The finding reopens to the Assessee, who then sees the dispute comment alongside their original rejection reason and must decide again.</li>
+      </ul>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="The expanded decision form. A dispute comment is mandatory only when disputing; accepting the rejection requires none.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/assessment-10-assessor-accept-dispute-form.png" alt="The expanded Accept Rejection and Dispute Rejection form with its comment field" width="1440" height="900" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>The expanded decision form: a dispute comment is mandatory only when disputing.</figcaption>
+      </figure>
+      <p>This exchange continues until the finding is either accepted and closed through the Assessee's remediation update, or closed outright by the Assessor accepting the original rejection.</p>
+    </section>
+
+    <!-- ===================== 3. DASHBOARD ===================== -->
+    <section class="chapter" id="dashboard">
+      <div class="chapter-head"><h2>Dashboard</h2></div>
+      <p class="intro">The Dashboard is the application's landing page, presenting an organization-wide view of technology domain maturity, assessment progress and the leading improvement opportunities across every account and project. Use the cycle, business unit, account and project selectors in the header to narrow the view.</p>
+      <hr class="rule">
+      <figure class="shot">
+        <button class="shot-frame tall" type="button" data-caption="The Dashboard: maturity and progress across all accounts and projects, filtered by cycle, business unit, account and project.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand full page</span>
+          <img src="manual-assets/dashboard-01-overview.png" alt="The Dashboard, showing domain maturity and assessment progress across accounts and projects" width="1583" height="1894" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Maturity overview across all accounts and projects.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ===================== 4. REPORTS ===================== -->
+    <section class="chapter" id="reports">
+      <div class="chapter-head"><h2>Reports</h2></div>
+      <p class="intro">Reports present a complete, filterable and exportable view of every assessment. Status filters (Open, In Progress, Completed, Suspended, Past Due, On Target, Draft&nbsp;&gt;&nbsp;15 days and Draft&nbsp;&gt;&nbsp;30 days) narrow the list in one click, and the search field locates a specific account, project, domain, Assessor or Reviewer. <strong>Download Excel</strong> exports the current filtered view.</p>
+      <hr class="rule">
+
+      <h3 class="topic" id="reports-domain">Domain Assessment Report</h3>
+      <p>One row per project-domain assessment, carrying the assigned Assessor, Reviewer and Assessee, current status, key dates, maturity percentage and level, and the finding counts behind them.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="The Domain Assessment Report: one row per project-domain assessment.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/reports-01-domain-assessment.png" alt="The Domain Assessment Report, listing one row per project-domain assessment" width="1600" height="1000" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>The full Domain Assessment Report, with status filters and Excel export.</figcaption>
+      </figure>
+
+      <h3 class="topic" id="reports-parameter">Parameter Detail Report</h3>
+      <p>Drills down to one row per scored parameter within each domain assessment, for a granular view of individual scores and the findings they raised.</p>
+      <figure class="shot">
+        <button class="shot-frame" type="button" data-caption="The Parameter Detail Report: one row per scored parameter.">
+          <span class="zoom-hint"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 8.5v5M8.5 11h5M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Expand</span>
+          <img src="manual-assets/reports-02-parameter-detail.png" alt="The Parameter Detail Report, listing one row per scored parameter" width="1600" height="1000" loading="lazy">
+        </button>
+        <figcaption><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.6"/></svg>Per-parameter score breakdown.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ===================== REFERENCE ===================== -->
+    <section class="chapter" id="reference">
+      <div class="chapter-head"><h2>Role reference</h2></div>
+      <p class="intro">Each role below grants a distinct set of actions. A Superuser holds every Admin Setup role at once; the remaining roles are assigned per employee in Configure Roles.</p>
+      <hr class="rule">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th scope="col">Role</th><th scope="col">What the role can do</th><th scope="col">Where</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="role-cell"><strong>Superuser</strong></td><td>Holds all Admin Setup roles; the only role able to complete every configuration step, including Configure Roles.</td><td>Admin Setup</td></tr>
+            <tr><td class="role-cell"><strong>Scope Administrator</strong></td><td>Maps technology domains to projects and maintains the Domain–Project Mapping.</td><td>Configure Scope</td></tr>
+            <tr><td class="role-cell"><strong>Cycle Administrator</strong></td><td>Creates and maintains assessment cycles and their open windows.</td><td>Configure Cycle</td></tr>
+            <tr><td class="role-cell"><strong>Assessment Coordinator</strong></td><td>Stages Assessor, Reviewer and Assessee per domain and creates the assessments.</td><td>Configure Assessment</td></tr>
+            <tr><td class="role-cell"><strong>Assessor</strong></td><td>Scores assigned domains, submits them for review, and accepts or disputes findings the Assessee has rejected.</td><td>Assessments</td></tr>
+            <tr><td class="role-cell"><strong>Reviewer</strong></td><td>Approves submitted domains or returns them for revision with a comment.</td><td>Assessments</td></tr>
+            <tr><td class="role-cell"><strong>Assessee</strong></td><td>Views assessment status for their project, accepts or rejects findings, and records remediation against accepted findings.</td><td>Assessments</td></tr>
+            <tr><td class="role-cell"><strong>Dashboard / Reports viewer</strong></td><td>Views the Dashboard and Reports without edit rights.</td><td>Dashboard, Reports</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="doc-foot">
+      <span>IT Ops Maturity Dashboard — User Manual</span>
+      <span>For questions about access or role assignment, contact your Scope Administrator.</span>
+    </footer>
+  </main>
+</div>
+
+<button class="icon-btn to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
+<dialog class="lightbox" id="lightbox" aria-label="Screenshot viewer">
+  <div class="lb-bar">
+    <p id="lbCaption"></p>
+    <button class="icon-btn" id="lbClose" aria-label="Close screenshot viewer">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="lb-body" id="lbBody"></div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Theme: system by default, explicit choice remembered ---------- */
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  var iconSun = document.getElementById('iconSun');
+  var iconMoon = document.getElementById('iconMoon');
+
+  function store(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+  function read(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+  function currentlyDark() {
+    var set = root.getAttribute('data-theme');
+    if (set) return set === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function paintThemeButton() {
+    var dark = currentlyDark();
+    iconSun.style.display = dark ? 'none' : '';
+    iconMoon.style.display = dark ? '' : 'none';
+    themeBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+  var saved = read('itops-manual-theme');
+  if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+  paintThemeButton();
+
+  themeBtn.addEventListener('click', function () {
+    var next = currentlyDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    store('itops-manual-theme', next);
+    paintThemeButton();
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+
+  /* ---------- Reading progress ---------- */
+  var progress = document.getElementById('progress');
+  var toTop = document.getElementById('toTop');
+  function onScroll() {
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    var ratio = max > 0 ? window.scrollY / max : 0;
+    progress.style.transform = 'scaleX(' + ratio.toFixed(4) + ')';
+    toTop.classList.toggle('show', window.scrollY > 600);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+  toTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  /* ---------- Scrollspy: highlight nav + breadcrumb ---------- */
+  var crumb = document.getElementById('crumb');
+  var links = Array.prototype.slice.call(document.querySelectorAll('#navTree a[href^="#"]'));
+  var targets = links
+    .map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
+    .filter(Boolean);
+
+  function activate(id) {
+    links.forEach(function (a) {
+      var on = a.getAttribute('href') === '#' + id;
+      if (on) { a.setAttribute('aria-current', 'true'); } else { a.removeAttribute('aria-current'); }
+    });
+    var active = links.filter(function (a) { return a.getAttribute('href') === '#' + id; })[0];
+    if (active) {
+      var group = active.closest('.nav-group');
+      var top = group ? group.querySelector('.nav-top') : null;
+      var label = active.textContent.trim();
+      var section = top ? top.textContent.trim() : label;
+      crumb.innerHTML = 'User Manual · <b>' + (section === label ? label : section + ' › ' + label) + '</b>';
+    }
+  }
+
+  if ('IntersectionObserver' in window) {
+    var visible = new Map();
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0); });
+      var best = null, bestRatio = 0;
+      visible.forEach(function (ratio, id) { if (ratio > bestRatio) { bestRatio = ratio; best = id; } });
+      if (best) activate(best);
+    }, { rootMargin: '-80px 0px -65% 0px', threshold: [0, .25, .6, 1] });
+    targets.forEach(function (t) { spy.observe(t); });
+  }
+
+  /* ---------- Sidebar filter ---------- */
+  var filter = document.getElementById('navFilter');
+  filter.addEventListener('input', function () {
+    var q = filter.value.trim().toLowerCase();
+    document.querySelectorAll('#navTree .nav-group').forEach(function (group) {
+      var top = group.querySelector('.nav-top');
+      var subs = Array.prototype.slice.call(group.querySelectorAll('.nav-sub a'));
+      var topHit = top.textContent.toLowerCase().indexOf(q) > -1;
+      var anySub = false;
+      subs.forEach(function (a) {
+        var hit = !q || topHit || a.textContent.toLowerCase().indexOf(q) > -1;
+        a.classList.toggle('nav-hidden', !hit);
+        if (hit) anySub = true;
+      });
+      group.classList.toggle('nav-hidden', !!q && !topHit && !anySub);
+    });
+  });
+
+  /* ---------- Mobile drawer ---------- */
+  var sidenav = document.getElementById('sidenav');
+  var scrim = document.getElementById('scrim');
+  var menuBtn = document.getElementById('menuBtn');
+  function setDrawer(open) {
+    sidenav.classList.toggle('open', open);
+    scrim.classList.toggle('show', open);
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    menuBtn.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+  }
+  menuBtn.addEventListener('click', function () { setDrawer(!sidenav.classList.contains('open')); });
+  scrim.addEventListener('click', function () { setDrawer(false); });
+  sidenav.addEventListener('click', function (e) { if (e.target.closest('a')) setDrawer(false); });
+
+  /* ---------- Screenshot lightbox ---------- */
+  var lb = document.getElementById('lightbox');
+  var lbBody = document.getElementById('lbBody');
+  var lbCaption = document.getElementById('lbCaption');
+  var lastTrigger = null;
+
+  document.querySelectorAll('.shot-frame').forEach(function (frame) {
+    frame.addEventListener('click', function () {
+      var source = frame.querySelector('img');
+      if (typeof lb.showModal !== 'function') {
+        window.open(source.src, '_blank', 'noopener');
+        return;
+      }
+      var full = document.createElement('img');
+      full.src = source.getAttribute('src');
+      full.alt = source.getAttribute('alt') || '';
+      full.width = source.width;
+      full.height = source.height;
+      lbBody.replaceChildren(full);
+      lbCaption.textContent = frame.getAttribute('data-caption') || '';
+      lastTrigger = frame;
+      lb.showModal();
+    });
+  });
+  document.getElementById('lbClose').addEventListener('click', function () { lb.close(); });
+  lb.addEventListener('click', function (e) { if (e.target === lb) lb.close(); });
+  lb.addEventListener('close', function () {
+    lbBody.replaceChildren();
+    if (lastTrigger) { lastTrigger.focus(); lastTrigger = null; }
+  });
+
+  /* ---------- Escape also closes the drawer ---------- */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && sidenav.classList.contains('open')) setDrawer(false);
+  });
+})();
+</script>
+</body>
+</html>

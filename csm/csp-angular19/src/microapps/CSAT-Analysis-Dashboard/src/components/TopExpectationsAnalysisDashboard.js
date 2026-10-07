@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import * as XLSX from 'xlsx';
 import { useCSATContext } from '../context/CSATContext';
 import { normalizeBusinessUnitDisplay } from '../utils/normalizeBusinessUnitDisplay';
+import { BarChart3, FileText, Download, Search, X, AlertTriangle, CheckCircle2, EyeOff } from 'lucide-react';
+import { showAcsatAlert } from '../utils/acsatAlert';
 import {
   buildRowFromHeaders,
   getCsatReceivedDateFromRow,
@@ -14,37 +16,41 @@ import {
 } from '../utils/acsatExcelRowUtils';
 
 const Container = styled.div`
-  padding: 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 1rem;
+  background: #f8fafc;
   min-height: 100vh;
 `;
 
 const Header = styled.div`
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
   text-align: center;
-  margin-bottom: 2rem;
 `;
 
 const Title = styled.h1`
-  font-size: 2.5rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #16233D;
+  margin-bottom: 0.3rem;
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.1rem;
+  font-size: 0.85rem;
   color: #64748b;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 `;
 
 const DateInfo = styled.div`
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 2rem;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 0;
   text-align: center;
+  font-size: 0.85rem;
 `;
 
 const DateLabel = styled.span`
@@ -61,83 +67,67 @@ const ControlsContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.5rem;
 `;
 
 const ToggleButton = styled.button`
-  background: ${props => props.active 
-    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' 
-    : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'};
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  background: ${props => props.active ? '#1D4ED8' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#1D4ED8'};
+  border: 1px solid #1D4ED8;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active {
-    transform: translateY(0);
+    background: #1D4ED8;
+    color: white;
   }
 `;
 
 const DownloadButton = styled.button`
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  background: transparent;
+  color: #1B8A5A;
+  border: 1px solid #1B8A5A;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active {
-    transform: translateY(0);
+    background: #1B8A5A;
+    color: white;
   }
 `;
 
 const BackButton = styled.button`
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  background: transparent;
+  color: #16233D;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active {
-    transform: translateY(0);
+    border-color: #7c3aed;
+    background: #7c3aed;
+    color: white;
   }
 `;
 
 const TableContainer = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   overflow: auto;
   max-height: 80vh;
   max-width: 100%;
@@ -181,14 +171,14 @@ const TableHeader = styled.thead`
 `;
 
 const TableHeaderCell = styled.th`
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  background: #1e3a8a;
   color: white;
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   text-align: center;
   vertical-align: middle;
-  font-weight: 700;
-  font-size: 0.95rem;
-  border: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border: 1px solid #9ca3af;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -200,30 +190,28 @@ const TableRow = styled.tr`
   &:nth-child(even) {
     background-color: #f8fafc;
   }
-  
+
   &:hover {
-    background-color: #e0f2fe;
-    transform: scale(1.01);
-    transition: all 0.2s ease;
+    background-color: #f3f4f6;
   }
 `;
 
 const TableCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: ${props => props.isNumeric ? 'center' : 'left'};
   vertical-align: middle;
   border: 1px solid #e2e8f0;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #2d3748;
 `;
 
 const BusinessUnitCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: left;
   vertical-align: middle;
   border: 1px solid #e2e8f0;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #2d3748;
   background-color: #f1f5f9;
@@ -233,10 +221,10 @@ const BusinessUnitCell = styled.td`
 `;
 
 const CustomerIdCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   border: 1px solid #e2e8f0;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #2d3748;
   background-color: #f8fafc;
@@ -630,6 +618,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
   const [remarksFileName, setRemarksFileName] = useState('');
   const [remarksData, setRemarksData] = useState([]);
   const remarksInputRef = useRef(null);
+  const tableContainerRef = useRef(null);
   const [remarksImpView, setRemarksImpView] = useState('account'); // 'account' | 'bu'
   const [remarksStrView, setRemarksStrView] = useState('account'); // 'account' | 'bu'
 
@@ -654,7 +643,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
       console.log('📝 Loaded Remarks for Top Expectations:', { file: file.name, rows: json.length, sample: json.slice(0, 3) });
     } catch (err) {
       console.error('Failed to read Remarks file:', err);
-      alert('Failed to read the Remarks file. Please ensure it is a valid Excel file.');
+      showAcsatAlert('Failed to read the Remarks file. Please ensure it is a valid Excel file.');
     }
   };
 
@@ -1785,7 +1774,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
   const downloadExcel = () => {
     if (!processedData.data || processedData.data.length === 0) {
-      alert('No data available to download');
+      showAcsatAlert('No data available to download');
       return;
     }
 
@@ -1852,7 +1841,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
       processedData.data.forEach((row, rowIndex) => {
          const dataRow = firstSheetData.length > 0
            ? [
-               row.sno || (rowIndex + 1),
+               rowIndex + 1,
                normalizeBusinessUnitDisplay(row.businessUnit) || '',
                row.customerName || '',
                row.respondentName || 'N/A',
@@ -1862,7 +1851,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                row['Top Expectations - Doing Well'] || 'N/A'
              ]
            : [
-               row.sno || (rowIndex + 1),
+               rowIndex + 1,
                normalizeBusinessUnitDisplay(row.businessUnit) || '',
                row.customerName || '',
                row.respondentName || 'N/A'
@@ -1949,7 +1938,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         const summaryStartRow = worksheet.lastRow.number + 1;
         
         // Simple Summary Title
-        const simpleSummaryTitleRow = worksheet.addRow(['📊 Top Expectations Analysis Dashboard Summary']);
+        const simpleSummaryTitleRow = worksheet.addRow(['Top Expectations Analysis Dashboard Summary']);
         const simpleTitleRowNum = simpleSummaryTitleRow.number;
         simpleSummaryTitleRow.getCell(1).font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
         simpleSummaryTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
@@ -1965,7 +1954,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         
         // Top Expectations - Can do Better summary
         if (processedData.summary.improvements.length > 0) {
-          const improvementsSummaryRow = worksheet.addRow(['⚠️ Categories that have been identified as Top Expectations - Can do Better based on the Customer remarks provided in CSAT:']);
+          const improvementsSummaryRow = worksheet.addRow(['Categories that have been identified as Top Expectations - Can do Better based on the Customer remarks provided in CSAT:']);
           const improvementsSummaryRowNum = improvementsSummaryRow.number;
           improvementsSummaryRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FFDC2626' } };
           improvementsSummaryRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -1990,7 +1979,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
           // Add spacing
           worksheet.addRow([]);
           
-          const strengthsSummaryRow = worksheet.addRow(['✅ Categories that have been identified as Top Expectations - Doing Well based on the Customer remarks provided in CSAT:']);
+          const strengthsSummaryRow = worksheet.addRow(['Categories that have been identified as Top Expectations - Doing Well based on the Customer remarks provided in CSAT:']);
           const strengthsSummaryRowNum = strengthsSummaryRow.number;
           strengthsSummaryRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF059669' } };
           strengthsSummaryRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -2048,7 +2037,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
       });
     } catch (error) {
       console.error('Error generating Excel file:', error);
-      alert('Error generating Excel file: ' + error.message);
+      showAcsatAlert('Error generating Excel file: ' + error.message);
     }
   };
 
@@ -2060,7 +2049,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
     
     if (!bucketAnalysis || (!bucketAnalysis.improvements && !bucketAnalysis.strengths)) {
       console.log('❌ No bucket analysis data available');
-      alert('No bucket analysis data available to download');
+      showAcsatAlert('No bucket analysis data available to download');
       return;
     }
 
@@ -2078,7 +2067,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
       if (bucketEntries.length === 0) {
         console.log('❌ No data available for the selected view type');
-        alert('No data available for the selected view type');
+        showAcsatAlert('No data available for the selected view type');
         return;
       }
 
@@ -2188,7 +2177,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
     } catch (error) {
       console.error('Error downloading bucket analysis Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
 
@@ -2200,7 +2189,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
     
     if (!bucketAnalysis || (!bucketAnalysis.improvements && !bucketAnalysis.strengths)) {
       console.log('❌ No bucket analysis data available');
-      alert('No bucket analysis data available to download');
+      showAcsatAlert('No bucket analysis data available to download');
       return;
     }
 
@@ -2218,7 +2207,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
       if (bucketEntries.length === 0) {
         console.log('❌ No doing well data available for the selected view type');
-        alert('No data available for the selected view type');
+        showAcsatAlert('No data available for the selected view type');
         return;
       }
 
@@ -2328,7 +2317,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
     } catch (error) {
       console.error('Error downloading doing well bucket analysis Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
 
@@ -2346,14 +2335,14 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
   return (
     <Container>
       <Header>
-        <Title>📊 Top Expectations Analysis Dashboard</Title>
+        <Title><BarChart3 size={32} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> Top Expectations Analysis Dashboard</Title>
         <Subtitle>
           Account-wise Analysis - 
           Survey Data Analysis and Insights
         </Subtitle>
         <DateInfo>
-          <DateLabel>CSAT Cycle Start Date: </DateLabel>
-          <DateValue>{acsatCycleStartDateFormatted || 'Not Set'}</DateValue>
+          <DateLabel>Cycle: </DateLabel>
+          <DateValue>{acsatCycle || 'Not Set'}</DateValue>
         </DateInfo>
       </Header>
 
@@ -2361,7 +2350,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <label htmlFor="remarks-upload" style={{ fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>
-              📝 Remarks for Top Expectations:
+              <FileText size={16} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> Remarks for Top Expectations:
             </label>
             <input
               id="remarks-upload"
@@ -2403,7 +2392,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <DownloadButton onClick={downloadExcel}>
-              📥 Download Excel Report
+              <Download size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Download Excel Report
             </DownloadButton>
             {Array.isArray(remarksData) && remarksData.length > 0 && (
               <button
@@ -2414,13 +2403,13 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                   border: 'none',
                   borderRadius: '8px',
                   padding: '0.6rem 1rem',
-                  fontSize: '0.875rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
                 title="Show Bucket Analysis"
               >
-                📊 Show Bucket Analysis
+                <BarChart3 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Show Bucket Analysis
               </button>
             )}
             {Array.isArray(remarksData) && remarksData.length > 0 && showBucketAnalysis && (
@@ -2493,7 +2482,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                     window.URL.revokeObjectURL(url);
                   } catch (err) {
                     console.error('Error exporting Remarks-based Bucket Analysis:', err);
-                    alert('Failed to download Remarks-based Bucket Analysis.');
+                    showAcsatAlert('Failed to download Remarks-based Bucket Analysis.');
                   }
                 }}
                 style={{
@@ -2502,13 +2491,13 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                   border: 'none',
                   borderRadius: '8px',
                   padding: '0.6rem 1rem',
-                  fontSize: '0.875rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
                 title="Download Remarks-based Bucket Analysis"
               >
-                📥 Download Remarks Analysis
+                <Download size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Download Remarks Analysis
               </button>
             )}
             {Array.isArray(remarksData) && remarksData.length > 0 && showBucketAnalysis && (
@@ -2520,13 +2509,13 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                   border: 'none',
                   borderRadius: '8px',
                   padding: '0.6rem 1rem',
-                  fontSize: '0.875rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
                 title="Hide Bucket Analysis"
               >
-                🙈 Hide Bucket Analysis
+                <EyeOff size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Hide Bucket Analysis
               </button>
             )}
             <BackButton onClick={onBack}>
@@ -2538,7 +2527,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
 
       <div style={{ display: 'flex', gap: '2rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <SearchContainer>
-          <SearchLabel htmlFor="customer-search">🔍 Search Customer:</SearchLabel>
+          <SearchLabel htmlFor="customer-search"><Search size={16} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> Search Customer:</SearchLabel>
           <SearchInput
             id="customer-search"
             type="text"
@@ -2548,7 +2537,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
           />
           {searchTerm && (
             <ClearButton onClick={() => setSearchTerm('')}>
-              ✕ Clear
+              <X size={14} style={{ marginRight: '0.2rem', verticalAlign: 'middle' }} /> Clear
             </ClearButton>
           )}
         </SearchContainer>
@@ -2561,7 +2550,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
           {/* Top Expectations - Can do Better from Remarks */}
           <div style={{ marginBottom: '1rem', padding: '1rem', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.05rem' }}>📝 Remarks - Top Expectations - Can do Better Bucket Analysis</h3>
+              <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.05rem' }}><FileText size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Remarks - Top Expectations - Can do Better Bucket Analysis</h3>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={() => setRemarksImpView('account')} style={{ padding: '0.4rem 0.75rem', borderRadius: 6, border: '1px solid #d1d5db', background: remarksImpView==='account' ? '#1d4ed8' : '#ffffff', color: remarksImpView==='account' ? '#ffffff' : '#111827', fontWeight: 600 }}>Account-wise</button>
                 <button onClick={() => setRemarksImpView('bu')} style={{ padding: '0.4rem 0.75rem', borderRadius: 6, border: '1px solid #d1d5db', background: remarksImpView==='bu' ? '#1d4ed8' : '#ffffff', color: remarksImpView==='bu' ? '#ffffff' : '#111827', fontWeight: 600 }}>BU-wise</button>
@@ -2576,7 +2565,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
               ]);
               return (
                 <div style={{ marginTop: '0.75rem', overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
                       <tr style={{ background: '#1e3a8a', color: '#ffffff' }}>
                         <th style={{ padding: '0.6rem', border: '1px solid #9ca3af' }}>Sr. No.</th>
@@ -2610,7 +2599,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
           {/* Top Expectations - Doing Well from Remarks */}
           <div style={{ padding: '1rem', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.05rem' }}>📝 Remarks - Top Expectations - Doing Well Bucket Analysis</h3>
+              <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.05rem' }}><FileText size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Remarks - Top Expectations - Doing Well Bucket Analysis</h3>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={() => setRemarksStrView('account')} style={{ padding: '0.4rem 0.75rem', borderRadius: 6, border: '1px solid #d1d5db', background: remarksStrView==='account' ? '#1d4ed8' : '#ffffff', color: remarksStrView==='account' ? '#ffffff' : '#111827', fontWeight: 600 }}>Account-wise</button>
                 <button onClick={() => setRemarksStrView('bu')} style={{ padding: '0.4rem 0.75rem', borderRadius: 6, border: '1px solid #d1d5db', background: remarksStrView==='bu' ? '#1d4ed8' : '#ffffff', color: remarksStrView==='bu' ? '#ffffff' : '#111827', fontWeight: 600 }}>BU-wise</button>
@@ -2625,7 +2614,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
               ]);
               return (
                 <div style={{ marginTop: '0.75rem', overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
                       <tr style={{ background: '#1e3a8a', color: '#ffffff' }}>
                         <th style={{ padding: '0.6rem', border: '1px solid #9ca3af' }}>Sr. No.</th>
@@ -2657,7 +2646,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
           </div>
 
           <div style={{ padding: '1rem', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-            <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.05rem' }}>📊 Account Wise Top Expectations Analysis Dashboard</h3>
+            <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.05rem' }}><BarChart3 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Account Wise Top Expectations Analysis Dashboard</h3>
             <p style={{ margin: '0.5rem 0 1rem', color: '#475569', fontSize: '0.9rem' }}>
               Derived from both <strong>Remarks - Top Expectations - Doing Well</strong> and <strong>Remarks - Top Expectations - Can do Better</strong> bucket analyses.
             </p>
@@ -2722,7 +2711,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                       });
                     } catch (err) {
                       console.error('Error exporting Account Wise Top Expectations:', err);
-                      alert('Failed to download Account Wise Top Expectations data.');
+                      showAcsatAlert('Failed to download Account Wise Top Expectations data.');
                     }
                   }}
                   style={{
@@ -2736,13 +2725,13 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                     cursor: 'pointer'
                   }}
                 >
-                  📥 Download Dashboard
+                  <Download size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Download Dashboard
                 </button>
               </div>
             )}
           {accountWiseTopExpectationsRemarksData && accountWiseTopExpectationsRemarksData.length > 0 ? (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                 <thead>
                   <tr style={{ background: '#1e3a8a', color: '#ffffff' }}>
                     <th style={{ padding: '0.6rem', border: '1px solid #1e293b' }}>Sr. No.</th>
@@ -2778,7 +2767,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
         <div>
           <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937', fontSize: '1.1rem' }}>
-            📊 Top Expectations - Can do Better Bucket Analysis
+            <BarChart3 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Top Expectations - Can do Better Bucket Analysis
           </h3>
           <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>
             Analyze top expectations areas by account or business unit with counts
@@ -2847,7 +2836,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                 marginLeft: '0.5rem'
               }}
             >
-              📥 Download Excel
+              <Download size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Download Excel
             </button>
           )}
         </div>
@@ -2884,56 +2873,56 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                   <thead>
                     <tr style={{ backgroundColor: '#1e3a8a' }}>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Sr. No.
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Top Expectations - Can do Better
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'center', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Count
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         {bucketViewType === 'account' ? 'Accounts' : 'Business Units'}
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Respondent Names
                       </th>
@@ -2946,18 +2935,18 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                         borderBottom: '1px solid #e5e7eb'
                       }}>
                         <td style={{ 
-                          padding: '12px 16px', 
+                          padding: '0.5rem 0.75rem', 
                           borderRight: '1px solid #e5e7eb',
-                          fontSize: '0.875rem',
+                          fontSize: '0.8rem',
                           color: '#374151',
                           fontWeight: '500'
                         }}>
                           {index + 1}
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
+                          padding: '0.5rem 0.75rem', 
                           borderRight: '1px solid #e5e7eb',
-                          fontSize: '0.875rem',
+                          fontSize: '0.8rem',
                           color: '#1f2937',
                           fontWeight: '500',
                           maxWidth: '300px',
@@ -2966,10 +2955,10 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                           {area}
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
+                          padding: '0.5rem 0.75rem', 
                           textAlign: 'center',
                           borderRight: '1px solid #e5e7eb',
-                          fontSize: '0.875rem'
+                          fontSize: '0.8rem'
                         }}>
                           <span style={{ 
                             display: 'inline-block',
@@ -2984,8 +2973,8 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                           </span>
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
-                          fontSize: '0.875rem',
+                          padding: '0.5rem 0.75rem', 
+                          fontSize: '0.8rem',
                           color: '#6b7280',
                           maxWidth: '400px',
                           wordWrap: 'break-word'
@@ -3027,8 +3016,8 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                           )}
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
-                          fontSize: '0.875rem',
+                          padding: '0.5rem 0.75rem', 
+                          fontSize: '0.8rem',
                           color: '#6b7280',
                           maxWidth: '400px',
                           wordWrap: 'break-word'
@@ -3064,7 +3053,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
         <div>
           <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937', fontSize: '1.1rem' }}>
-            ✅ Top Expectations - Doing Well Bucket Analysis
+            <CheckCircle2 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Top Expectations - Doing Well Bucket Analysis
           </h3>
           <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>
             Analyze strength areas by account or business unit with counts
@@ -3133,7 +3122,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                 marginLeft: '0.5rem'
               }}
             >
-              📥 Download Excel
+              <Download size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Download Excel
             </button>
           )}
         </div>
@@ -3170,56 +3159,56 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                   <thead>
                     <tr style={{ backgroundColor: '#059669' }}>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Sr. No.
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Area of Strength
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'center', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Count
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
                         borderRight: '1px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         {doingWellBucketViewType === 'account' ? 'Accounts' : 'Business Units'}
                       </th>
                       <th style={{ 
-                        padding: '12px 16px', 
+                        padding: '0.5rem 0.75rem', 
                         textAlign: 'left', 
                         fontWeight: '600', 
                         color: '#ffffff',
                         borderBottom: '2px solid #d1d5db',
-                        fontSize: '0.875rem'
+                        fontSize: '0.8rem'
                       }}>
                         Respondent Names
                       </th>
@@ -3232,18 +3221,18 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                         borderBottom: '1px solid #e5e7eb'
                       }}>
                         <td style={{ 
-                          padding: '12px 16px', 
+                          padding: '0.5rem 0.75rem', 
                           borderRight: '1px solid #e5e7eb',
-                          fontSize: '0.875rem',
+                          fontSize: '0.8rem',
                           color: '#374151',
                           fontWeight: '500'
                         }}>
                           {index + 1}
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
+                          padding: '0.5rem 0.75rem', 
                           borderRight: '1px solid #e5e7eb',
-                          fontSize: '0.875rem',
+                          fontSize: '0.8rem',
                           color: '#1f2937',
                           fontWeight: '500',
                           maxWidth: '300px',
@@ -3252,10 +3241,10 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                           {area}
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
+                          padding: '0.5rem 0.75rem', 
                           textAlign: 'center',
                           borderRight: '1px solid #e5e7eb',
-                          fontSize: '0.875rem'
+                          fontSize: '0.8rem'
                         }}>
                           <span style={{ 
                             display: 'inline-block',
@@ -3270,8 +3259,8 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                           </span>
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
-                          fontSize: '0.875rem',
+                          padding: '0.5rem 0.75rem', 
+                          fontSize: '0.8rem',
                           color: '#6b7280',
                           maxWidth: '400px',
                           wordWrap: 'break-word'
@@ -3313,8 +3302,8 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                           )}
                         </td>
                         <td style={{ 
-                          padding: '12px 16px', 
-                          fontSize: '0.875rem',
+                          padding: '0.5rem 0.75rem', 
+                          fontSize: '0.8rem',
                           color: '#6b7280',
                           maxWidth: '400px',
                           wordWrap: 'break-word'
@@ -3361,11 +3350,11 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
       {/* Top Expectations Analysis Summary */}
       {processedData?.summary && (processedData.summary.improvements.length > 0 || processedData.summary.strengths.length > 0) && (
         <SummaryContainer>
-          <SummaryTitle>📊 Top Expectations Analysis Summary</SummaryTitle>
+          <SummaryTitle><BarChart3 size={22} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Top Expectations Analysis Summary</SummaryTitle>
           
           <SummaryGrid>
             <SummaryCard>
-              <SummaryCardTitle>⚠️ Categories identified as Top Expectations - Can do Better</SummaryCardTitle>
+              <SummaryCardTitle><AlertTriangle size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Categories identified as Top Expectations - Can do Better</SummaryCardTitle>
               <CategoryList>
                 {processedData.summary.improvements.length > 0 ? (
                   processedData.summary.improvements.map(([category, count], index) => (
@@ -3384,7 +3373,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
             </SummaryCard>
             
             <SummaryCard>
-              <SummaryCardTitle>✅ Categories identified as Top Expectations - Doing Well</SummaryCardTitle>
+              <SummaryCardTitle><CheckCircle2 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Categories identified as Top Expectations - Doing Well</SummaryCardTitle>
               <CategoryList>
                 {processedData.summary.strengths.length > 0 ? (
                   processedData.summary.strengths.map(([category, count], index) => (
@@ -3405,7 +3394,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         </SummaryContainer>
       )}
 
-      <TableContainer>
+      <TableContainer ref={tableContainerRef}>
         <Table>
           <TableHeader>
             <tr>
@@ -3439,7 +3428,7 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
                 }
                 return (
                 <TableRow key={index}>
-                  <TableCell style={{ textAlign: 'center', fontWeight: 'bold' }}>{row.sno}</TableCell>
+                  <TableCell style={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</TableCell>
                   <BusinessUnitCell>{normalizeBusinessUnitDisplay(row.businessUnit)}</BusinessUnitCell>
                   <TableCell>{row.customerName}</TableCell>
                   <TableCell>{row.respondentName}</TableCell>
@@ -3473,8 +3462,11 @@ function TopExpectationsAnalysisDashboard({ excelData, acsatCycleStartDate, acsa
         </Table>
       </TableContainer>
 
-      <ScrollIndicator>
-        📊 Scroll to view all data
+      <ScrollIndicator
+        style={{ cursor: 'pointer' }}
+        onClick={() => tableContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      >
+        <BarChart3 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Scroll to view all data
       </ScrollIndicator>
     </Container>
   );

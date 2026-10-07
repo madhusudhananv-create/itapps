@@ -67,7 +67,7 @@ const PARAM_FILTER_KEYS: ParamFilterKey[] = ['Findings Accepted', 'Findings Reje
 type ColumnRenderer =
   | 'text' | 'wrap' | 'question' | 'date' | 'num'
   | 'status-pill' | 'finding-status-pill'
-  | 'due-updated' | 'findings' | 'maturity-bar' | 'maturity-level' | 'last-activity' | 'score-with-min';
+  | 'due-updated' | 'findings' | 'maturity-bar' | 'maturity-level' | 'last-activity' | 'score-with-min' | 'max-score';
 
 interface ColumnDef {
   key: string;
@@ -96,7 +96,10 @@ const COLUMN_GROUPS: Record<string, ColumnDef[]> = {
     { key: 'maturity-level', label: 'Maturity Level', renderer: 'maturity-level' },
   ],
   'last-activity': [{ key: 'last-activity', label: 'Last Activity', renderer: 'last-activity' }],
-  score: [{ key: 'score', label: 'Score', renderer: 'score-with-min', sortKey: 'score' }],
+  score: [
+    { key: 'score', label: 'Score', renderer: 'score-with-min', sortKey: 'score' },
+    { key: 'maxscore', label: 'Maximum Score', renderer: 'max-score' },
+  ],
 };
 
 const DOMAIN_COLUMN_STYLES: Record<string, ColumnStyle> = {
@@ -1018,7 +1021,10 @@ export class ReportsComponent implements OnInit {
           break;
         case 'score-with-min':
           out['Score'] = row.score ?? '';
-          out['Min Required Score'] = row.minRequiredScore ?? '';
+          break;
+        case 'max-score':
+          // Rubric scale is always 1-5 - a constant, not a per-row SP column.
+          out['Maximum Score'] = 5;
           break;
         case 'finding-status-pill':
         case 'text':

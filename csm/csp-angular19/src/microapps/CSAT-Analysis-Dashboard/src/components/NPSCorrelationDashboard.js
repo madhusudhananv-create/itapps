@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, CheckCircle2, Building2, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { useCSATContext } from '../context/CSATContext';
 import { normalizeBusinessUnitDisplay, businessUnitsMatch } from '../utils/normalizeBusinessUnitDisplay';
+import { showAcsatAlert } from '../utils/acsatAlert';
 import {
   getCsatReceivedDateFromRow,
   getCsatSentDateFromRow,
@@ -25,55 +26,59 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 1rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
 `;
 
 const Title = styled.h1`
-  color: #1f2937;
-  font-size: 1.5rem;
-  font-weight: 600;
+  color: #16233D;
+  font-size: 1.15rem;
+  font-weight: 700;
   margin: 0;
 `;
 
 const BackButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: #16233D;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 
   &:hover {
-    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
-    transform: translateY(-1px);
+    border-color: #7c3aed;
+    background: #7c3aed;
+    color: white;
   }
 `;
 
 const DownloadButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: #1B8A5A;
+  border: 1px solid #1B8A5A;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    transform: translateY(-1px);
+    background: #1B8A5A;
+    color: white;
   }
 `;
 
@@ -81,63 +86,69 @@ const ControlsContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.75rem;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
 `;
 
 const ToggleButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: ${props => props.active ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'};
-  color: white;
-  border: none;
-  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  background: ${props => props.active ? '#1D4ED8' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#1D4ED8'};
+  border: 1px solid #1D4ED8;
+  border-radius: 999px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 
   &:hover {
-    transform: translateY(-1px);
+    background: #1D4ED8;
+    color: white;
   }
 `;
 
 const SearchContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 `;
 
 const SearchLabel = styled.label`
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.8rem;
   color: #374151;
 `;
 
 const SearchInput = styled.input`
-  padding: 0.5rem 1rem;
-  border: 2px solid #e5e7eb;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 0.875rem;
-  width: 250px;
-  transition: border-color 0.2s ease;
+  font-size: 0.8rem;
+  width: 200px;
+  transition: border-color 0.15s ease;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: #1D4ED8;
   }
 `;
 
 const ClearButton = styled.button`
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.75rem;
   background: #ef4444;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
 
   &:hover {
     background: #dc2626;
@@ -146,8 +157,8 @@ const ClearButton = styled.button`
 
 const TableContainer = styled.div`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   overflow: auto;
   max-height: 70vh;
   overflow-y: auto;
@@ -158,7 +169,7 @@ const Table = styled.table`
   width: 100%;
   min-width: 1400px;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 `;
 
 const TableHeader = styled.thead`
@@ -169,17 +180,18 @@ const TableHeader = styled.thead`
 `;
 
 const TableHeaderCell = styled.th`
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   font-weight: 600;
   color: white;
+  font-size: 0.8rem;
   border: 1px solid #ffffff;
   white-space: normal;
   word-wrap: break-word;
-  line-height: 1.4;
-  min-width: 120px;
-  max-width: 150px;
+  line-height: 1.3;
+  min-width: 110px;
+  max-width: 140px;
 
   &:first-child {
     position: sticky;
@@ -200,8 +212,8 @@ const SortableHeaderCell = styled(TableHeaderCell)`
 `;
 
 const SortIcon = styled.span`
-  margin-left: 0.5rem;
-  font-size: 0.875rem;
+  margin-left: 0.4rem;
+  font-size: 0.75rem;
   opacity: 0.8;
 `;
 
@@ -218,7 +230,7 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #6b7280;
   white-space: nowrap;
   text-align: ${props => props.isNumeric ? 'center' : 'left'};
@@ -234,7 +246,7 @@ const TableCell = styled.td`
 `;
 
 const NPSCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #6b7280;
   white-space: nowrap;
   text-align: center;
@@ -268,7 +280,7 @@ const NPSCell = styled.td`
 `;
 
 const PerspectiveCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #6b7280;
   white-space: nowrap;
   text-align: center;
@@ -1912,20 +1924,20 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
           const validHighestScore = typeof highestScore === 'number' && !isNaN(highestScore) ? highestScore : 0;
           
           correlationAnalysis.insights.push(
-            `🎯 **${highestImpact}** has the highest impact on NPS with a score of ${validHighestScore.toFixed(1)}%`
+            `**${highestImpact}** has the highest impact on NPS with a score of ${validHighestScore.toFixed(1)}%`
           );
           
           if (Math.abs(highestCorrelation) >= 0.7) {
             correlationAnalysis.insights.push(
-              `📈 Strong ${highestCorrelation > 0 ? 'positive' : 'negative'} correlation (${highestCorrelation.toFixed(3)}) between NPS and ${highestImpact}`
+              `Strong ${highestCorrelation > 0 ? 'positive' : 'negative'} correlation (${highestCorrelation.toFixed(3)}) between NPS and ${highestImpact}`
             );
           } else if (Math.abs(highestCorrelation) >= 0.5) {
             correlationAnalysis.insights.push(
-              `📊 Moderate ${highestCorrelation > 0 ? 'positive' : 'negative'} correlation (${highestCorrelation.toFixed(3)}) between NPS and ${highestImpact}`
+              `Moderate ${highestCorrelation > 0 ? 'positive' : 'negative'} correlation (${highestCorrelation.toFixed(3)}) between NPS and ${highestImpact}`
             );
           } else {
             correlationAnalysis.insights.push(
-              `📉 Weak correlation (${highestCorrelation.toFixed(3)}) between NPS and ${highestImpact}`
+              `Weak correlation (${highestCorrelation.toFixed(3)}) between NPS and ${highestImpact}`
             );
           }
 
@@ -1933,7 +1945,7 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
           if (sortedImpacts.length > 1) {
             const [secondImpact, secondScore] = sortedImpacts[1];
             correlationAnalysis.insights.push(
-              `🥈 **${secondImpact}** is the second most impactful perspective (${secondScore.toFixed(1)}%)`
+              `**${secondImpact}** is the second most impactful perspective (${secondScore.toFixed(1)}%)`
             );
           }
         }
@@ -1950,7 +1962,7 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
   // Download Excel function
   const downloadExcel = async () => {
     if (!processedData?.data || processedData.data.length === 0) {
-      alert('No data available to download');
+      showAcsatAlert('No data available to download');
       return;
     }
 
@@ -2375,7 +2387,7 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
       if (viewType === 'bu' && processedData.analysis && processedData.analysis.impactScores && Object.keys(processedData.analysis.impactScores).length > 0) {
         // Add NPS Impact Analysis section
         worksheet.addRow([]);
-        const npsImpactTitleRow = worksheet.addRow(['📊 NPS Impact Analysis']);
+        const npsImpactTitleRow = worksheet.addRow(['NPS Impact Analysis']);
         npsImpactTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1F2937' } };
         npsImpactTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
 
@@ -2481,7 +2493,7 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
         stack: error.stack,
         name: error.name
       });
-      alert(`Error downloading Excel file: ${error.message}`);
+      showAcsatAlert(`Error downloading Excel file: ${error.message}`);
     }
   };
 
@@ -2514,39 +2526,14 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
 
       {uploadedData && (
         <SuccessMessage>
-          ✅ Data loaded successfully! Found {uploadedData.length} records from Excel file.
+          <CheckCircle2 size={16} style={{ marginRight: '0.4rem' }} /> Data loaded successfully! Found {uploadedData.length} records from Excel file.
         </SuccessMessage>
       )}
 
       <ControlsContainer>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <ToggleButton 
-            active={viewType === 'respondent'}
-            onClick={() => setViewType('respondent')}
-          >
-            Show by Respondent Name
-          </ToggleButton>
-          <ToggleButton 
-            active={viewType === 'account'}
-            onClick={() => setViewType('account')}
-          >
-            Show by Account
-          </ToggleButton>
-          <ToggleButton 
-            active={viewType === 'bu'}
-            onClick={() => setViewType('bu')}
-          >
-            🏢 Show by BU Only
-          </ToggleButton>
-          <DownloadButton onClick={downloadExcel}>
-            <Download size={16} />
-            Download Excel
-          </DownloadButton>
-        </div>
-        
         <SearchContainer>
           <SearchLabel htmlFor="search">
-            🔍 Search:
+<Search size={14} style={{ marginRight: '0.3rem' }} /> Search:
           </SearchLabel>
           <SearchInput
             id="search"
@@ -2561,6 +2548,31 @@ const NPSCorrelationDashboard = ({ excelData, acsatCycleStartDate, acsatCycleSta
             </ClearButton>
           )}
         </SearchContainer>
+
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <ToggleButton
+            active={viewType === 'respondent'}
+            onClick={() => setViewType('respondent')}
+          >
+            Show by Respondent Name
+          </ToggleButton>
+          <ToggleButton
+            active={viewType === 'account'}
+            onClick={() => setViewType('account')}
+          >
+            Show by Account
+          </ToggleButton>
+          <ToggleButton
+            active={viewType === 'bu'}
+            onClick={() => setViewType('bu')}
+          >
+<Building2 size={16} style={{ marginRight: '0.4rem' }} /> Show by BU Only
+          </ToggleButton>
+          <DownloadButton onClick={downloadExcel}>
+            <Download size={16} />
+            Download Excel
+          </DownloadButton>
+        </div>
       </ControlsContainer>
 
       {/* Impact Score Formula Section removed as per request */}

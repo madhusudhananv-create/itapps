@@ -136,7 +136,10 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public string ParameterName { get; set; }
         public int? CurrentScore { get; set; }
         public int Gap { get; set; }
+        /// <summary>The maturity-band label for this parameter's score, read from ITOPS_SCORE_RECOMMENDATION ("Critical Gap", "Needs Work", ...), or the literal "Not Scored" for a Not Applicable parameter. This is what the Dashboard's Recommendation column renders.</summary>
         public string RecommendedAction { get; set; }
+        /// <summary>The longer guidance behind RecommendedAction, from the same master row - shown as the cell's hover tooltip. Null for Not Applicable parameters, or when no master row exists for the score.</summary>
+        public string RecommendationDetail { get; set; }
         /// <summary>True when the assessor marked this parameter Not Applicable rather than scoring it - shown as "Not scored"/"Not Scored" in place of a numeric gap/recommendation, with CurrentScore reported as 0 and Gap as the max (5) for sorting purposes.</summary>
         public bool IsNotScored { get; set; }
         // Populated when the Dashboard aggregates across every account ("All accounts")
