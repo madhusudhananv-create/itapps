@@ -177,11 +177,13 @@
       </div>
     </section>
 
+    <ng-container *ngTemplateOutlet="columnToolbar"></ng-container>
+
     <div class="table-wrap" *ngIf="filteredRows.length; else noRows">
       <table>
         <thead>
           <tr>
-            <ng-container *ngFor="let col of dynamicDomainColumns">
+            <ng-container *ngFor="let col of visibleDomainColumns; trackBy: trackByColKey">
               <th *ngIf="col.sortKey" class="sortable" [class.col-num]="col.renderer === 'num'" [title]="col.title" (click)="sortBy($any(col.sortKey))">
                 {{ col.label }} <span class="sort-arrow">{{ sortIndicator($any(col.sortKey)) }}</span>
               </th>
@@ -191,7 +193,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let row of pagedRows">
-            <ng-container *ngFor="let col of dynamicDomainColumns" [ngSwitch]="col.renderer">
+            <ng-container *ngFor="let col of visibleDomainColumns; trackBy: trackByColKey" [ngSwitch]="col.renderer">
               <td *ngSwitchCase="'status-pill'" [title]="statusLabel(row.assessmentStatus)">
                 <span class="pill" [class]="statusPill(row.assessmentStatus)">{{ statusLabel(row.assessmentStatus) }}</span>
               </td>
@@ -253,11 +255,13 @@
 
   <!-- ============ Parameter Detail report ============ -->
   <ng-container *ngIf="!loading && !rowsLoading && isParameterReport">
+    <ng-container *ngTemplateOutlet="columnToolbar"></ng-container>
+
     <div class="table-wrap" *ngIf="filteredParamRows.length; else noParamRows">
       <table>
         <thead>
           <tr>
-            <ng-container *ngFor="let col of dynamicParamColumns">
+            <ng-container *ngFor="let col of visibleParamColumns; trackBy: trackByColKey">
               <th *ngIf="col.sortKey" class="sortable" [class.col-num]="col.renderer === 'num'" [title]="col.title" (click)="paramSortBy($any(col.sortKey))">
                 {{ col.label }} <span class="sort-arrow">{{ paramSortIndicator($any(col.sortKey)) }}</span>
               </th>
@@ -267,12 +271,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let row of pagedParamRows">
-            <ng-container *ngFor="let col of dynamicParamColumns" [ngSwitch]="col.renderer">
+            <ng-container *ngFor="let col of visibleParamColumns; trackBy: trackByColKey" [ngSwitch]="col.renderer">
               <td *ngSwitchCase="'score-with-min'" class="col-num score-cell">
                 <span [class.below-min]="row.minRequiredScore !== null && row.score !== null && row.score < row.minRequiredScore">{{ row.score ?? 'N/A' }}</span>
                 <span class="cell-secondary" *ngIf="row.minRequiredScore !== null" [title]="'Min required score: ' + row.minRequiredScore"> / {{ row.minRequiredScore }}</span>
               </td>
-              <td *ngSwitchCase="'max-score'" class="col-num">5</td>
               <td *ngSwitchCase="'finding-status-pill'">
                 <span class="pill" [class]="findingPill(row.findingStatus)" *ngIf="row.findingStatus">{{ row.findingStatus }}</span>
                 <span *ngIf="!row.findingStatus">-</span>
@@ -310,4 +313,42 @@
       <p class="empty-state">No parameters match the selected filters.</p>
     </ng-template>
   </ng-container>
+
+  <!-- Column picker - reused for both reports via activeColumns/isColumnVisible, which
+       switch on isParameterReport internally. Entirely driven by whatever columns the
+       current report's SP returns, so a new SP column shows up here with zero Angular
+       change (see the big comment on buildColumns in reports.component.ts). -->
+  <ng-template #columnToolbar>
+    <div class="column-toolbar" *ngIf="hasScrollableColumns">
+      <span class="col-count-info">{{ visibleColumnCount }} / {{ activeColumns.length }} columns</span>
+      <div class="col-picker-wrap">
+        <button type="button" class="col-filter-btn" (click)="columnMenuOpen = !columnMenuOpen">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 6h16M4 12h10M4 18h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Columns
+        </button>
+        <div class="col-picker-menu" *ngIf="columnMenuOpen">
+          <input
+            type="text"
+            class="col-picker-search"
+            placeholder="Search columns..."
+            [(ngModel)]="columnSearchText"
+          />
+          <label class="col-picker-all">
+            <input type="checkbox" [checked]="allColumnsSelected" (change)="toggleAllColumns()" />
+            Select all
+          </label>
+          <div class="col-picker-divider"></div>
+          <div class="col-picker-list">
+            <label class="col-picker-item" *ngFor="let col of filteredColumnNames; trackBy: trackByColKey">
+              <input type="checkbox" [checked]="isColumnVisible(col.key)" (change)="toggleColumn(col.key)" />
+              <span [title]="col.label">{{ col.label }}</span>
+            </label>
+            <p class="col-picker-empty" *ngIf="!filteredColumnNames.length">No columns match</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
 </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -67,7 +67,7 @@ const PARAM_FILTER_KEYS: ParamFilterKey[] = ['Findings Accepted', 'Findings Reje
 type ColumnRenderer =
   | 'text' | 'wrap' | 'question' | 'date' | 'num'
   | 'status-pill' | 'finding-status-pill'
-  | 'due-updated' | 'findings' | 'maturity-bar' | 'maturity-level' | 'last-activity' | 'score-with-min' | 'max-score';
+  | 'due-updated' | 'findings' | 'maturity-bar' | 'maturity-level' | 'last-activity' | 'score-with-min';
 
 interface ColumnDef {
   key: string;
@@ -96,10 +96,7 @@ const COLUMN_GROUPS: Record<string, ColumnDef[]> = {
     { key: 'maturity-level', label: 'Maturity Level', renderer: 'maturity-level' },
   ],
   'last-activity': [{ key: 'last-activity', label: 'Last Activity', renderer: 'last-activity' }],
-  score: [
-    { key: 'score', label: 'Score', renderer: 'score-with-min', sortKey: 'score' },
-    { key: 'maxscore', label: 'Maximum Score', renderer: 'max-score' },
-  ],
+  score: [{ key: 'score', label: 'Score', renderer: 'score-with-min', sortKey: 'score' }],
 };
 
 const DOMAIN_COLUMN_STYLES: Record<string, ColumnStyle> = {
@@ -116,6 +113,7 @@ const DOMAIN_COLUMN_STYLES: Record<string, ColumnStyle> = {
   assessmentstatus: { renderer: 'status-pill', sortKey: 'assessmentStatus' },
   duestatus: { renderer: 'text', group: 'due-updated' },
   targetdate: { renderer: 'date' },
+  returncomment: { renderer: 'wrap' },
   lastupdated: { renderer: 'text', group: 'due-updated' },
   daysinceupdate: { renderer: 'text', group: 'due-updated' },
   draftover15days: { renderer: 'text', group: 'due-updated' },
@@ -154,7 +152,7 @@ const PARAM_COLUMN_STYLES: Record<string, ColumnStyle> = {
   question: { renderer: 'question' },
   score: { renderer: 'text', group: 'score' },
   minrequiredscore: { renderer: 'text', group: 'score' },
-  gap: { renderer: 'num', title: 'Gap - how far the score fell below the minimum required score' },
+  maxrequiredscore: { renderer: 'num' },
   targetdate: { renderer: 'date' },
   createddate: { renderer: 'date' },
   createdby: { renderer: 'wrap' },
@@ -244,6 +242,80 @@ export class ReportsComponent implements OnInit {
 
   get isParameterReport(): boolean {
     return this.selectedReport === ItOpsReportApiService.PARAMETER_REPORT_NAME;
+  }
+
+  // ---- Column picker (show/hide columns) ----
+  // Keyed by column key, per report (domain vs parameter), so switching tabs doesn't carry
+  // one report's hidden columns onto the other's unrelated column set. A key with no entry
+  // reads as visible - this is what makes a brand-new SP column (one nobody has ever
+  // explicitly hidden) show up checked/visible automatically, with zero code change here.
+  domainColumnVisibility: Record<string, boolean> = {};
+  paramColumnVisibility: Record<string, boolean> = {};
+  columnMenuOpen = false;
+  columnSearchText = '';
+
+  get activeColumns(): ColumnDef[] {
+    return this.isParameterReport ? this.dynamicParamColumns : this.dynamicDomainColumns;
+  }
+
+  /** dynamicDomainColumns/dynamicParamColumns rebuild a brand-new ColumnDef[] (new object
+   * identities) on every call, since they're plain getters over buildColumns() - without a
+   * trackBy, *ngFor's default identity-based diffing treats every re-render as "remove all,
+   * add all", tearing down and recreating every checkbox's DOM node on each toggle (and on
+   * any unrelated change detection pass) - a known cause of a checkbox toggle not sticking
+   * visually. Tracking by the column's own key keeps each row's DOM node stable instead. */
+  trackByColKey(_index: number, col: ColumnDef): string {
+    return col.key;
+  }
+
+  private get activeColumnVisibility(): Record<string, boolean> {
+    return this.isParameterReport ? this.paramColumnVisibility : this.domainColumnVisibility;
+  }
+
+  isColumnVisible(key: string): boolean {
+    return this.activeColumnVisibility[key] !== false;
+  }
+
+  toggleColumn(key: string): void {
+    this.activeColumnVisibility[key] = !this.isColumnVisible(key);
+  }
+
+  get allColumnsSelected(): boolean {
+    return this.activeColumns.every((c) => this.isColumnVisible(c.key));
+  }
+
+  toggleAllColumns(): void {
+    const newState = !this.allColumnsSelected;
+    const visibility = this.activeColumnVisibility;
+    this.activeColumns.forEach((c) => (visibility[c.key] = newState));
+  }
+
+  get visibleColumnCount(): number {
+    return this.activeColumns.filter((c) => this.isColumnVisible(c.key)).length;
+  }
+
+  get hasScrollableColumns(): boolean {
+    return this.activeColumns.length > 8;
+  }
+
+  get filteredColumnNames(): ColumnDef[] {
+    const q = this.columnSearchText.toLowerCase().trim();
+    return q ? this.activeColumns.filter((c) => c.label.toLowerCase().includes(q)) : this.activeColumns;
+  }
+
+  get visibleDomainColumns(): ColumnDef[] {
+    return this.dynamicDomainColumns.filter((c) => this.domainColumnVisibility[c.key] !== false);
+  }
+
+  get visibleParamColumns(): ColumnDef[] {
+    return this.dynamicParamColumns.filter((c) => this.paramColumnVisibility[c.key] !== false);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.columnMenuOpen) return;
+    const target = event.target as HTMLElement;
+    if (!target.closest('.col-picker-wrap')) this.columnMenuOpen = false;
   }
 
   // ---- Cycle/Business Unit/Account/Project/Domain filters (server-side, drive the SP params) ----
@@ -402,6 +474,8 @@ export class ReportsComponent implements OnInit {
   onReportChange(): void {
     this.page = 1;
     this.paramPage = 1;
+    this.columnMenuOpen = false;
+    this.columnSearchText = '';
     this.loadReportData();
   }
 
@@ -1022,10 +1096,6 @@ export class ReportsComponent implements OnInit {
         case 'score-with-min':
           out['Score'] = row.score ?? '';
           break;
-        case 'max-score':
-          // Rubric scale is always 1-5 - a constant, not a per-row SP column.
-          out['Maximum Score'] = 5;
-          break;
         case 'finding-status-pill':
         case 'text':
         case 'wrap':
@@ -1045,7 +1115,7 @@ export class ReportsComponent implements OnInit {
     if (this.isParameterReport) {
       // sortedParamRows, not paramRows/filteredParamRows - the export should match what's
       // actually on screen (current sort + filters + search), not the raw unsorted fetch.
-      const columns = this.dynamicParamColumns;
+      const columns = this.visibleParamColumns;
       const exportRows = this.sortedParamRows.map((r) => this.exportRowFrom(r, columns));
       const worksheet = XLSX.utils.json_to_sheet(exportRows);
       worksheet['!cols'] = Object.keys(exportRows[0] ?? {}).map((key) => ({ wch: Math.max(14, key.length + 2) }));
@@ -1056,7 +1126,7 @@ export class ReportsComponent implements OnInit {
     }
 
     // sortedRows, not filteredRows - same "what you see is what you export" reasoning.
-    const columns = this.dynamicDomainColumns;
+    const columns = this.visibleDomainColumns;
     const exportRows = this.sortedRows.map((r) => this.exportRowFrom(r, columns));
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
