@@ -14,6 +14,7 @@ import {
   Dashboard,
   Assignment,
   Assessment,
+  Insights,
   Backup,
   ChevronLeft,
   ChevronRight,
@@ -169,6 +170,7 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const activitiesFlags = useFeatureFlags('activities');
   const reportsFlags = useFeatureFlags('reports');
   const backupFlags = useFeatureFlags('backup');
+  const analyticsFlags = useFeatureFlags('analytics');
 
   const navItems = [
     {
@@ -191,6 +193,13 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
       icon: <Assessment />,
       badge: null,
       enabled: reportsFlags.enabled,
+    },
+    {
+      label: 'Analytics',
+      path: '/analytics',
+      icon: <Insights />,
+      badge: null,
+      enabled: analyticsFlags.enabled && isAdmin,
     },
     {
       label: 'Data Backup',

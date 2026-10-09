@@ -228,7 +228,7 @@ export const useReports = () => {
         selectedItems = formData.accounts;
       } else if (formData.businessUnits.length > 0) {
         reportType = 'business-units';
-        selectedItems = [...formData.businessUnits, 'New Growth'];
+        selectedItems = formData.businessUnits;
       } else {
         throw new Error('Please select at least one filter option');
       }

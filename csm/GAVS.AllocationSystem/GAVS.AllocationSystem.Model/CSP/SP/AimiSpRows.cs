@@ -272,4 +272,34 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         [JsonProperty("COLOR_HEX")] public string COLOR_HEX { get; set; }
     }
 
+    // usp_AIMI_GetScoreAnalytics - monthly score history, one row per group per month
+    // (IS_TOTAL = true rows carry the overall figure for the same filters, GROUP_NAME null).
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiScoreAnalyticsSpRow
+    {
+        [JsonProperty("GROUP_NAME")] public string GROUP_NAME { get; set; }
+        [JsonProperty("IS_TOTAL")] public bool IS_TOTAL { get; set; }
+        [JsonProperty("SNAPSHOT_MONTH")] public DateTime SNAPSHOT_MONTH { get; set; }
+        [JsonProperty("CURRENT_SCORE")] public decimal? CURRENT_SCORE { get; set; }
+        [JsonProperty("ACCEPTED_SCORE")] public decimal? ACCEPTED_SCORE { get; set; }
+        [JsonProperty("PROJECT_COUNT")] public int PROJECT_COUNT { get; set; }
+    }
+
+    // usp_AIMI_GetScoreReport - a single column holding the whole report as a JSON array. The
+    // columns and their titles are decided in the database (AIMI_SCORE_REPORT_COLUMN), so no
+    // C# class mirrors them; the API passes the JSON straight through.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiScoreReportJsonRow
+    {
+        [JsonProperty("REPORT_JSON")] public string REPORT_JSON { get; set; }
+    }
+
+    // usp_AIMI_GetScoreFilterOptions - DIMENSION is BU | ACCOUNT | PROJECT | PRACTICE.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiScoreFilterOptionSpRow
+    {
+        [JsonProperty("DIMENSION")] public string DIMENSION { get; set; }
+        [JsonProperty("VALUE_TEXT")] public string VALUE_TEXT { get; set; }
+    }
+
 }

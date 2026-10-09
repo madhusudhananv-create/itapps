@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Web.Http;
 
 namespace GAVS.AllocationSystem.WebApi.Controllers
@@ -258,6 +259,88 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 request.ACCEPTED_SCORE_COMMENT, empId);
 
             return Ok(new AimiIdResult { ID = updatedCount });
+        }
+
+        // ------------------------------------------------------------------
+        // Analytics dashboard: monthly score history (AIMI_SCORE_HISTORY)
+        // ------------------------------------------------------------------
+        // Admin only (same resource id 833 as the delete action). The dashboard reads stored
+        // monthly snapshots. The current month's snapshot is kept up to date by the trigger
+        // TR_AIMI_ACTIVITY_ScoreSnapshot on every activity change, and again when the dashboard loads.
+
+        private void RequireAimiAdmin()
+        {
+            var empId = GetHeaderDetails_String("empId");
+            // CheckAccessForFeature lets customer logins (no EMP_INFO row) through, which is
+            // not acceptable for company-wide score history.
+            if (string.IsNullOrWhiteSpace(empId) || Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId) == null)
+                throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.Forbidden, "AIMI Analytics is available to administrators only."));
+            CheckAccessForFeature(833);
+        }
+
+        // Values for the BU / Account / Project / Practice filter popups.
+        [GET("GetAimiScoreFilterOptions")]
+        [ActionName("GetAimiScoreFilterOptions")]
+        [HttpGet]
+        public IHttpActionResult GetAimiScoreFilterOptions()
+        {
+            RequireAimiAdmin();
+            return Ok(CSPdb.AppRepo.AimiGetScoreFilterOptions());
+        }
+
+        // Monthly history for the chosen level and filters (see usp_AIMI_GetScoreAnalytics.sql).
+        [POST("GetAimiScoreAnalytics")]
+        [ActionName("GetAimiScoreAnalytics")]
+        [HttpPost]
+        public IHttpActionResult GetAimiScoreAnalytics([FromBody] AimiScoreAnalyticsRequest request)
+        {
+            RequireAimiAdmin();
+            request = request ?? new AimiScoreAnalyticsRequest();
+
+            var level = (request.Level ?? "").Trim().ToUpperInvariant();
+            if (level != "BU" && level != "ACCOUNT" && level != "PROJECT" && level != "PRACTICE")
+                return BadRequest("Level must be BU, ACCOUNT, PROJECT or PRACTICE.");
+
+            var rows = CSPdb.AppRepo.AimiGetScoreAnalytics(
+                level, request.Months ?? 12, request.BusinessUnits, request.Accounts, request.Projects, request.Practices);
+            return Ok(rows);
+        }
+
+        // Report rows for "Download report" (see usp_AIMI_GetScoreReport.sql): one row per group at the
+        // requested Level, with the same filters as GetAimiScoreAnalytics so it matches the dashboard.
+        [POST("GetAimiScoreReport")]
+        [ActionName("GetAimiScoreReport")]
+        [HttpPost]
+        public IHttpActionResult GetAimiScoreReport([FromBody] AimiScoreAnalyticsRequest request)
+        {
+            RequireAimiAdmin();
+            request = request ?? new AimiScoreAnalyticsRequest();
+
+            var level = (request.Level ?? "").Trim().ToUpperInvariant();
+            if (level != "BU" && level != "ACCOUNT" && level != "PROJECT" && level != "PRACTICE")
+                return BadRequest("Level must be BU, ACCOUNT, PROJECT or PRACTICE.");
+
+            // The database decides the columns and their titles (AIMI_SCORE_REPORT_COLUMN) and returns
+            // the rows as JSON; pass it through untouched so the global camelCase serializer
+            // can't rename those titles.
+            var json = CSPdb.AppRepo.AimiGetScoreReport(
+                level, request.Months ?? 12, request.BusinessUnits, request.Accounts, request.Projects, request.Practices);
+            return ResponseMessage(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            });
+        }
+
+        // Captures (or refreshes) a month's snapshot for every project and practice. Used for
+        // an on-demand refresh and by a month-end scheduler.
+        [POST("CaptureAimiScoreSnapshot")]
+        [ActionName("CaptureAimiScoreSnapshot")]
+        [HttpPost]
+        public IHttpActionResult CaptureAimiScoreSnapshot([FromBody] AimiScoreSnapshotRequest request)
+        {
+            RequireAimiAdmin();
+            CSPdb.AppRepo.AimiCaptureScoreSnapshot(request?.Month, null, null, GetHeaderDetails_String("empId"));
+            return Ok();
         }
 
         // ------------------------------------------------------------------

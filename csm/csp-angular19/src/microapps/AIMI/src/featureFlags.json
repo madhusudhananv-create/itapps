@@ -23,6 +23,9 @@
     "showGenerateButton": true,
     "showMultiSelectDropdowns": true
   },
+  "analytics": {
+    "enabled": true
+  },
   "backup": {
     "enabled": false
   }

@@ -233,6 +233,24 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public List<string> Practices { get; set; }
     }
 
+    // Request for the AIMI Analytics dashboard. Level is BU | ACCOUNT | PROJECT | PRACTICE; an empty
+    // list on a dimension means "no filter there". Plain PascalCase, so it camelCases cleanly.
+    public class AimiScoreAnalyticsRequest
+    {
+        public string Level { get; set; }
+        public int? Months { get; set; }
+        public List<string> BusinessUnits { get; set; }
+        public List<string> Accounts { get; set; }
+        public List<string> Projects { get; set; }
+        public List<string> Practices { get; set; }
+    }
+
+    public class AimiScoreSnapshotRequest
+    {
+        // Any date inside the month to (re)capture; omitted = the current month.
+        public DateTime? Month { get; set; }
+    }
+
     // Anonymous types can't carry [JsonProperty] attributes, so any controller
     // response that isn't already one of the named DTOs above needs one of
     // these instead - otherwise the global camelCase resolver silently mangles

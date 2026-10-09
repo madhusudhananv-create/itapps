@@ -2670,6 +2670,57 @@ namespace GAVS.AllocationSystem.Data
                 param1, param2, param3, param4, param5, param6).ToList();
         }
 
+        // ---- AIMI Analytics (monthly score history) ----
+
+        public List<AimiScoreFilterOptionSpRow> AimiGetScoreFilterOptions()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<AimiScoreFilterOptionSpRow>("[dbo].[usp_AIMI_GetScoreFilterOptions]").ToList();
+        }
+
+        public List<AimiScoreAnalyticsSpRow> AimiGetScoreAnalytics(string level, int months, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@LEVEL", level);
+            var param2 = new SqlParameter("@MONTHS", months);
+            var param3 = BuildAimiStructuredParam("@BUSINESS_UNITS", ToAimiStringListTable(businessUnits), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param4 = BuildAimiStructuredParam("@ACCOUNTS", ToAimiStringListTable(accounts), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param5 = BuildAimiStructuredParam("@PROJECTS", ToAimiStringListTable(projects), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param6 = BuildAimiStructuredParam("@PRACTICES", ToAimiStringListTable(practices), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            return dbContext.Database.SqlQuery<AimiScoreAnalyticsSpRow>(
+                "[dbo].[usp_AIMI_GetScoreAnalytics] @LEVEL, @MONTHS, @BUSINESS_UNITS, @ACCOUNTS, @PROJECTS, @PRACTICES",
+                param1, param2, param3, param4, param5, param6).ToList();
+        }
+
+        // Returns the report as a JSON array; its columns and titles are configured in the database.
+        public string AimiGetScoreReport(string level, int months, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@LEVEL", level);
+            var param2 = new SqlParameter("@MONTHS", months);
+            var param3 = BuildAimiStructuredParam("@BUSINESS_UNITS", ToAimiStringListTable(businessUnits), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param4 = BuildAimiStructuredParam("@ACCOUNTS", ToAimiStringListTable(accounts), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param5 = BuildAimiStructuredParam("@PROJECTS", ToAimiStringListTable(projects), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param6 = BuildAimiStructuredParam("@PRACTICES", ToAimiStringListTable(practices), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var row = dbContext.Database.SqlQuery<AimiScoreReportJsonRow>(
+                "[dbo].[usp_AIMI_GetScoreReport] @LEVEL, @MONTHS, @BUSINESS_UNITS, @ACCOUNTS, @PROJECTS, @PRACTICES",
+                param1, param2, param3, param4, param5, param6).FirstOrDefault();
+            return row?.REPORT_JSON ?? "[]";
+        }
+
+        public void AimiCaptureScoreSnapshot(DateTime? snapshotMonth, string projectId, string practice, string empId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@SNAPSHOT_MONTH", SqlDbType.Date) { Value = (object)snapshotMonth ?? DBNull.Value };
+            var param2 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param3 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            var param4 = new SqlParameter("@EMP_ID", (object)empId ?? DBNull.Value);
+            // No result set, so run as a command (see AimiDeleteActivity).
+            dbContext.Database.ExecuteSqlCommand(
+                "[dbo].[usp_AIMI_CaptureScoreSnapshot] @SNAPSHOT_MONTH, @PROJECT_ID, @PRACTICE, @EMP_ID",
+                param1, param2, param3, param4);
+        }
+
         // ---- AIMI lookup/master-data stored procedures ----
 
         public List<AimiPracticeSpRow> AimiGetPractices()

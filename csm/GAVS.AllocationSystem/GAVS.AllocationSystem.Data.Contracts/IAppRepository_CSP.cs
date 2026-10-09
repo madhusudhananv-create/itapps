@@ -328,6 +328,12 @@ namespace GAVS.AllocationSystem.Data.Contracts
         List<AimiQualitativeBenefitAnalysisSpRow> AimiGetQualitativeBenefitAnalysis(string projectId, string practice);
         List<AimiReportDataSpRow> AimiGetReportData(string projectId, string practice, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
 
+        // AIMI Analytics: monthly score history (AIMI_SCORE_HISTORY, Release 2.6.4.sql)
+        List<AimiScoreFilterOptionSpRow> AimiGetScoreFilterOptions();
+        List<AimiScoreAnalyticsSpRow> AimiGetScoreAnalytics(string level, int months, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
+        string AimiGetScoreReport(string level, int months, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
+        void AimiCaptureScoreSnapshot(DateTime? snapshotMonth, string projectId, string practice, string empId);
+
         // ---- AIMI lookup/master-data stored procedures (questionnaire practice/
         // phase/activity catalog + option-list suggestion tables; see
         // WebApi/DB Scripts/01 StoredProcedure/BAS/usp_AIMI_Get*.sql and
