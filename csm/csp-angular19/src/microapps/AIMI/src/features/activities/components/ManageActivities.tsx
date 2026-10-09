@@ -27,7 +27,7 @@ import {
   Warning as WarningIcon,
   Delete as DeleteIcon,
   Reviews,
-  // UploadFile as UploadFileIcon, // 'Import Excel' - disabled for the Firebase->SQL migration
+  UploadFile as UploadFileIcon,
 } from '@mui/icons-material';
 import { downloadReportTable } from '../../reports/utils/reportTable';
 import { reportService } from '../../reports/services/reportService';
@@ -51,7 +51,7 @@ import {
 import { CommonSnackbar } from '../../../shared/components/CommonSnackbar';
 import { useAuth } from '@auth/hooks/useAuth';
 import { useFeatureFlags } from '../../../shared/hooks/useFeatureFlags';
-// import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup'; // used only by 'Mark all activity as NA' (disabled)
+import { useQuestionnaireLookup } from '../../../shared/lookups/useQuestionnaireLookup';
 //import ScoreIcon from '@mui/icons-material/Score';
 
 interface ManageActivitiesProps {
@@ -81,7 +81,7 @@ interface ManageActivitiesProps {
   };
   acceptedScoreInfo?: AcceptedScoreInfo;
   onSaveReviewInfo?: (reviewInfo: AcceptedScoreInfo) => Promise<void>;
-  // onImportActivities?: () => void; // 'Import Excel' - disabled for the Firebase->SQL migration
+  onImportActivities?: () => void;
 }
 
 
@@ -99,7 +99,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   projectInfo,
   acceptedScoreInfo,
   onSaveReviewInfo,
-  // onImportActivities, // 'Import Excel' - disabled for the Firebase->SQL migration
+  onImportActivities,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
@@ -154,7 +154,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   );
 
   const { isAdmin, isAuthenticated } = useAuth();
-  // const { getActivitiesForSDLCPhase } = useQuestionnaireLookup(); // used only by 'Mark all activity as NA' (disabled)
+  const { getActivitiesForSDLCPhase } = useQuestionnaireLookup();
   const featureFlags = useFeatureFlags('activities');
   const canBulkDelete = isAdmin && featureFlags.showDeleteButton;
 
@@ -742,7 +742,6 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
 
   // Bulk-marks every activity in a phase as "Activity NA", overwriting any existing
   // data for those activities in this phase
-/* DISABLED - 'Mark all activity as NA' - disabled for the Firebase->SQL migration
   const handleMarkPhaseAsNA = async (phase: string) => {
     const activityNames = getActivitiesForSDLCPhase(selectedPractice, phase);
     if (activityNames.length === 0) return;
@@ -857,7 +856,6 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
     }
   };
 
-*/
   // The report is read from SQL (usp_AIMI_GetReportData: activities joined with the project's
   // AI Adoption Metrics and Accepted Score) instead of being built from whatever is on screen,
   // so it always reflects what is saved. The button is disabled while there are unsaved changes.
@@ -1042,7 +1040,6 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
               Generate Report
             </Button>
 
-{/* DISABLED - 'Import Excel' - disabled for the Firebase->SQL migration
             {onImportActivities && (
               <Button
                 variant="outlined"
@@ -1054,7 +1051,6 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
                 Import Excel
               </Button>
             )}
-*/}
           </Box>
 
           {activities.length > 0 && (
@@ -1329,7 +1325,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
         onClose={handleCloseModal}
         onSave={handleSaveActivity}
         onSaveAndAddNew={handleSaveAndAddNew}
-        /* onMarkPhaseAsNA={handleMarkPhaseAsNA} - 'Mark all activity as NA' disabled for the Firebase->SQL migration */
+        onMarkPhaseAsNA={handleMarkPhaseAsNA}
         selectedPractice={selectedPractice}
         editingActivity={editingActivity}
         existingActivities={activities}

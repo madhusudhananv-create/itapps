@@ -245,6 +245,19 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         public List<string> Practices { get; set; }
     }
 
+    // Request for the activity reports. ReportType is PROJECT (Manage Activities) or MULTI (Reports page);
+    // the filters work like AimiReportDataRequest's.
+    public class AimiActivityReportRequest
+    {
+        public string ReportType { get; set; }
+        public string ProjectId { get; set; }
+        public string Practice { get; set; }
+        public List<string> BusinessUnits { get; set; }
+        public List<string> Accounts { get; set; }
+        public List<string> Projects { get; set; }
+        public List<string> Practices { get; set; }
+    }
+
     public class AimiScoreSnapshotRequest
     {
         // Any date inside the month to (re)capture; omitted = the current month.

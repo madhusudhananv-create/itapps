@@ -111,8 +111,8 @@ BEGIN
     JOIN A ON A.GROUP_NAME = L.GROUP_NAME
     WHERE L.RN = 1;
 
-    -- 2) Pick and title the columns from the config table. Only fields that really exist in #R
-    --    are accepted, so the table can never inject anything into the generated query.
+    -- 2) Pick and title the columns from the config table. Only the fields listed below (the ones #R
+    --    holds) are accepted, so the table can never inject anything into the generated query.
     DECLARE @COLS NVARCHAR(MAX);
     SELECT @COLS = STRING_AGG(CAST('R.' + QUOTENAME(c.FIELD) + ' AS '
                        + QUOTENAME(REPLACE(c.HEADER, '{MONTHS}', CAST(@MONTHS AS VARCHAR(5)))) AS NVARCHAR(MAX)), ', ')
@@ -120,14 +120,15 @@ BEGIN
     FROM AIMI_SCORE_REPORT_COLUMN c
     WHERE c.REPORT_LEVEL = @LEVEL
       AND c.IS_ACTIVE = 1
-      AND EXISTS (SELECT 1 FROM tempdb.sys.columns tc
-                  WHERE tc.object_id = OBJECT_ID('tempdb..#R') AND tc.name = c.FIELD);
+      AND c.FIELD IN ('GROUP_NAME', 'BUSINESS_UNIT', 'ACCOUNT', 'PROJECT_ID', 'AS_OF_MONTH',
+                      'OVERALL_SCORE', 'ACCEPTED_SCORE', 'DIFFERENCE', 'AVERAGE_SCORE');
 
     IF @COLS IS NULL SET @COLS = N'R.GROUP_NAME AS [Name]';   -- nothing configured: still return something
 
     -- 3) One JSON array, property names = the configured titles, in the configured order.
-    DECLARE @SQL NVARCHAR(MAX) =
-        N'SELECT ISNULL((SELECT ' + @COLS + N' FROM #R R ORDER BY R.GROUP_NAME FOR JSON PATH, INCLUDE_NULL_VALUES), N''[]'') AS REPORT_JSON;';
-    EXEC (@SQL);
+    DECLARE @SQL NVARCHAR(MAX);
+    SET @SQL = N'SELECT ISNULL((SELECT ' + @COLS;
+    SET @SQL = @SQL + N' FROM #R R ORDER BY R.GROUP_NAME FOR JSON PATH, INCLUDE_NULL_VALUES), N''[]'') AS REPORT_JSON;';
+    EXEC sys.sp_executesql @SQL;
 END
 GO

@@ -481,6 +481,29 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // share; see usp_AIMI_GetReportData.sql's header note.
         // ------------------------------------------------------------------
 
+        // Activity reports with their columns and titles configured in the database
+        // (AIMI_ACTIVITY_REPORT_COLUMN, see usp_AIMI_GetActivityReport.sql). Returns a JSON array of
+        // row objects keyed by column title, passed through untouched so the global camelCase
+        // serializer can't rename those titles.
+        [POST("GetAimiActivityReport")]
+        [ActionName("GetAimiActivityReport")]
+        [HttpPost]
+        public IHttpActionResult GetAimiActivityReport([FromBody] AimiActivityReportRequest request)
+        {
+            request = request ?? new AimiActivityReportRequest();
+            var reportType = (request.ReportType ?? "").Trim().ToUpperInvariant();
+            if (reportType != "PROJECT" && reportType != "MULTI")
+                return BadRequest("ReportType must be PROJECT or MULTI.");
+
+            var json = CSPdb.AppRepo.AimiGetActivityReport(
+                reportType, request.ProjectId, request.Practice,
+                request.BusinessUnits, request.Accounts, request.Projects, request.Practices);
+            return ResponseMessage(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            });
+        }
+
         [POST("GetAimiReportData")]
         [ActionName("GetAimiReportData")]
         [HttpPost]

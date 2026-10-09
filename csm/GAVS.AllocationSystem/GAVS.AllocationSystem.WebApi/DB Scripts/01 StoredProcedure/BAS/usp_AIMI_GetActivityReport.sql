@@ -1,0 +1,195 @@
+-- Activity reports: Manage Activities > "Generate Report" (REPORT_TYPE 'PROJECT') and the Reports page >
+-- "Generate Reports" (REPORT_TYPE 'MULTI'). One row per activity.
+--
+-- The columns, their titles and their order are NOT fixed here: they come from
+-- AIMI_ACTIVITY_REPORT_COLUMN for the requested report type, so they can be renamed, hidden or
+-- reordered by updating that table. The proc returns a single column, REPORT_JSON, holding a JSON
+-- array of row objects whose property names are those titles (in order); the client just shows what
+-- it receives.
+--
+-- Everything the report shows is read here, nothing is added in the browser:
+--   * activity, AI Adoption Metrics and accepted score: AIMI_ACTIVITY / AIMI_PROJECT_INFO
+--   * Business Head, Account Manager, Manager and Head Count: the CSM project master
+--     (PROJECT / EMP_INFO / PROJ_RESOURCE), the same source as GetProjectListTemp
+--       BUSINESS_HEAD    = project's BU head          (PROJ_BUHEAD_EMP_ID)
+--       ACCOUNT_MANAGER  = project's CSM              (DP_ID, what the app has always shown here)
+--       MANAGER          = project manager            (PROJ_PM_EMP_ID)
+--       HEADCOUNT        = billable current resources
+--   * OVERALL_SCORE: the project + practice score shown on Manage Activities. 'N/A' when none of its
+--     activities is applicable, otherwise the average AI Adoption Score (SDLC phase 'NA' and
+--     unscored activities skipped), 2 decimals.
+--
+-- Fields available to the config table:
+--   BUSINESS_UNIT, BUSINESS_HEAD, ACCOUNT, ACCOUNT_MANAGER, PROJECT, PROJECT_ID, MANAGER, HEADCOUNT,
+--   PRACTICE, PEOPLE_USING_AI, LICENSE_COUNT, LICENSE_PROVIDER, RUNOPS_AUTO_RESOLVED,
+--   RUNOPS_MTTR_REDUCTION, RUNOPS_AI_AGENTS, RUNOPS_AUTOMATED_WORKFLOWS, RUNOPS_MTTD, RUNOPS_MTTR,
+--   ENGINEER_AI_AGENTS, ENGINEER_DELIVERY_CYCLE_TIME, ENGINEER_CONTRACT_TEST_CASE_PASS_RATE,
+--   ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE, COMMON_ADOPTION_WORKFORCE_CERTIFICATION,
+--   COMMON_ADOPTION_EFFORTS_SAVED, COMMON_DEPLOYMENT_ENGINEER, OVERALL_SCORE, ACCEPTED_SCORE,
+--   ACCEPTED_SCORE_COMMENT, SDLC_PHASE, ACTIVITY, APPLICABILITY, AI_ADOPTION_SCORE, AI_TOOLS_USED,
+--   ACCELERATORS_USED, WORK_DONE_BY_AI, HOURS_SAVED, REVENUE_GENERATED, BENEFIT_TO,
+--   QUALITATIVE_BENEFITS, COMMENTS, CREATED_DATE, LAST_UPDATED_DATE
+--
+-- Filters are the same as usp_AIMI_GetReportData: @PROJECT_ID / @PRACTICE for one project, or any of
+-- the four lists (an empty list means "no filter on that dimension").
+IF EXISTS(SELECT 1 FROM sys.procedures WHERE name ='usp_AIMI_GetActivityReport' AND TYPE='P')
+BEGIN
+       DROP PROCEDURE [dbo].[usp_AIMI_GetActivityReport]
+END
+GO
+
+CREATE PROCEDURE [dbo].[usp_AIMI_GetActivityReport]
+    @REPORT_TYPE VARCHAR(20),
+    @PROJECT_ID VARCHAR(20) = NULL,
+    @PRACTICE VARCHAR(100) = NULL,
+    @BUSINESS_UNITS dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY,
+    @ACCOUNTS dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY,
+    @PROJECTS dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY,
+    @PRACTICES dbo.AIMI_STRING_LIST_TABLE_TYPE READONLY
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- 1) Compute every available field, one row per activity.
+    CREATE TABLE #A (
+        SORT_CREATED DATETIME,
+        BUSINESS_UNIT VARCHAR(100),
+        BUSINESS_HEAD NVARCHAR(200),
+        ACCOUNT NVARCHAR(200),
+        ACCOUNT_MANAGER NVARCHAR(200),
+        PROJECT NVARCHAR(200),
+        PROJECT_ID VARCHAR(20),
+        MANAGER NVARCHAR(200),
+        HEADCOUNT INT,
+        PRACTICE VARCHAR(100),
+        PEOPLE_USING_AI INT,
+        LICENSE_COUNT INT,
+        LICENSE_PROVIDER NVARCHAR(200),
+        RUNOPS_AUTO_RESOLVED NVARCHAR(MAX),
+        RUNOPS_MTTR_REDUCTION NVARCHAR(MAX),
+        RUNOPS_AI_AGENTS NVARCHAR(MAX),
+        RUNOPS_AUTOMATED_WORKFLOWS NVARCHAR(MAX),
+        RUNOPS_MTTD NVARCHAR(MAX),
+        RUNOPS_MTTR NVARCHAR(MAX),
+        ENGINEER_AI_AGENTS NVARCHAR(MAX),
+        ENGINEER_DELIVERY_CYCLE_TIME NVARCHAR(MAX),
+        ENGINEER_CONTRACT_TEST_CASE_PASS_RATE NVARCHAR(MAX),
+        ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE NVARCHAR(MAX),
+        COMMON_ADOPTION_WORKFORCE_CERTIFICATION NVARCHAR(MAX),
+        COMMON_ADOPTION_EFFORTS_SAVED NVARCHAR(MAX),
+        COMMON_DEPLOYMENT_ENGINEER NVARCHAR(MAX),
+        OVERALL_SCORE VARCHAR(10),
+        ACCEPTED_SCORE DECIMAL(4,2),
+        ACCEPTED_SCORE_COMMENT NVARCHAR(MAX),
+        SDLC_PHASE VARCHAR(200),
+        ACTIVITY VARCHAR(500),
+        APPLICABILITY VARCHAR(20),
+        AI_ADOPTION_SCORE TINYINT,
+        AI_TOOLS_USED NVARCHAR(MAX),
+        ACCELERATORS_USED NVARCHAR(MAX),
+        WORK_DONE_BY_AI TINYINT,
+        HOURS_SAVED DECIMAL(10,2),
+        REVENUE_GENERATED VARCHAR(5),
+        BENEFIT_TO VARCHAR(20),
+        QUALITATIVE_BENEFITS NVARCHAR(MAX),
+        COMMENTS NVARCHAR(MAX),
+        CREATED_DATE VARCHAR(10),
+        LAST_UPDATED_DATE VARCHAR(10)
+    );
+
+    INSERT INTO #A
+    SELECT
+        a.CREATED_DATE,
+        a.BUSINESS_UNIT,
+        bh.FRST_NM,
+        a.ACCOUNT,
+        csm.FRST_NM,
+        a.PROJECT,
+        a.PROJECT_ID,
+        pm.FRST_NM,
+        (SELECT COUNT(*) FROM PROJ_RESOURCE pr
+          WHERE pr.PROJ_ID = a.PROJECT_ID AND pr.BILL_FLG = 1 AND pr.CURR_INDC = 'y' AND pr.END_DATE >= GETDATE()),
+        a.PRACTICE,
+        pi.PEOPLE_USING_AI,
+        pi.LICENSE_COUNT,
+        pi.LICENSE_PROVIDER,
+        pi.RUNOPS_AUTO_RESOLVED,
+        pi.RUNOPS_MTTR_REDUCTION,
+        pi.RUNOPS_AI_AGENTS,
+        pi.RUNOPS_AUTOMATED_WORKFLOWS,
+        pi.RUNOPS_MTTD,
+        pi.RUNOPS_MTTR,
+        pi.ENGINEER_AI_AGENTS,
+        pi.ENGINEER_DELIVERY_CYCLE_TIME,
+        pi.ENGINEER_CONTRACT_TEST_CASE_PASS_RATE,
+        pi.ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE,
+        pi.COMMON_ADOPTION_WORKFORCE_CERTIFICATION,
+        pi.COMMON_ADOPTION_EFFORTS_SAVED,
+        pi.COMMON_DEPLOYMENT_ENGINEER,
+        CASE
+            WHEN SUM(CASE WHEN a.APPLICABILITY = 'Yes' THEN 1 ELSE 0 END)
+                 OVER (PARTITION BY a.PROJECT_ID, a.PRACTICE) = 0 THEN 'N/A'
+            ELSE CAST(CAST(ROUND(ISNULL(
+                     AVG(CASE WHEN a.SDLC_PHASE <> 'NA' AND a.AI_ADOPTION_SCORE IS NOT NULL
+                              THEN CAST(a.AI_ADOPTION_SCORE AS DECIMAL(9,4)) END)
+                     OVER (PARTITION BY a.PROJECT_ID, a.PRACTICE), 0), 2) AS DECIMAL(4,2)) AS VARCHAR(10))
+        END,
+        a.ACCEPTED_SCORE,
+        a.ACCEPTED_SCORE_COMMENT,
+        a.SDLC_PHASE,
+        a.ACTIVITY,
+        a.APPLICABILITY,
+        a.AI_ADOPTION_SCORE,
+        (SELECT STRING_AGG(t.TOOL_NAME, ', ') FROM AIMI_ACTIVITY_AI_TOOL t WHERE t.ACTIVITY_ID = a.ID),
+        (SELECT STRING_AGG(ac.ACCELERATOR_NAME, ', ') FROM AIMI_ACTIVITY_ACCELERATOR ac WHERE ac.ACTIVITY_ID = a.ID),
+        a.WORK_DONE_BY_AI,
+        a.HOURS_SAVED,
+        a.REVENUE_GENERATED,
+        a.BENEFIT_TO,
+        (SELECT STRING_AGG(qb.BENEFIT_NAME, ', ') FROM AIMI_ACTIVITY_QUALITATIVE_BENEFIT qb WHERE qb.ACTIVITY_ID = a.ID),
+        a.COMMENTS,
+        CONVERT(VARCHAR(10), a.CREATED_DATE, 23),
+        CONVERT(VARCHAR(10), a.UPDATED_DATE, 23)
+    FROM AIMI_ACTIVITY a
+    LEFT JOIN AIMI_PROJECT_INFO pi ON pi.PROJECT_ID = a.PROJECT_ID AND pi.ISACTIVE = 1
+    LEFT JOIN PROJECT p ON p.PROJ_ID = a.PROJECT_ID
+    LEFT JOIN EMP_INFO bh  ON bh.EMP_ID  = p.PROJ_BUHEAD_EMP_ID
+    LEFT JOIN EMP_INFO pm  ON pm.EMP_ID  = p.PROJ_PM_EMP_ID
+    LEFT JOIN EMP_INFO csm ON csm.EMP_ID = p.DP_ID
+    WHERE a.ISACTIVE = 1
+      AND (@PROJECT_ID IS NULL OR a.PROJECT_ID = @PROJECT_ID)
+      AND (@PRACTICE IS NULL OR a.PRACTICE = @PRACTICE)
+      AND (NOT EXISTS (SELECT 1 FROM @BUSINESS_UNITS) OR a.BUSINESS_UNIT IN (SELECT VALUE_TEXT FROM @BUSINESS_UNITS))
+      AND (NOT EXISTS (SELECT 1 FROM @ACCOUNTS)       OR a.ACCOUNT       IN (SELECT VALUE_TEXT FROM @ACCOUNTS))
+      AND (NOT EXISTS (SELECT 1 FROM @PROJECTS)       OR a.PROJECT       IN (SELECT VALUE_TEXT FROM @PROJECTS))
+      AND (NOT EXISTS (SELECT 1 FROM @PRACTICES)      OR a.PRACTICE      IN (SELECT VALUE_TEXT FROM @PRACTICES));
+
+    -- 2) Pick and title the columns from the config table. Only the fields listed below (the ones #A
+    --    holds) are accepted, so the table can never inject anything into the generated query.
+    DECLARE @COLS NVARCHAR(MAX);
+    SELECT @COLS = STRING_AGG(CAST('A.' + QUOTENAME(c.FIELD) + ' AS ' + QUOTENAME(c.HEADER) AS NVARCHAR(MAX)), ', ')
+                   WITHIN GROUP (ORDER BY c.SORT_ORDER)
+    FROM AIMI_ACTIVITY_REPORT_COLUMN c
+    WHERE c.REPORT_TYPE = @REPORT_TYPE
+      AND c.IS_ACTIVE = 1
+      AND c.FIELD IN ('BUSINESS_UNIT', 'BUSINESS_HEAD', 'ACCOUNT', 'ACCOUNT_MANAGER', 'PROJECT', 'PROJECT_ID',
+                      'MANAGER', 'HEADCOUNT', 'PRACTICE', 'PEOPLE_USING_AI', 'LICENSE_COUNT', 'LICENSE_PROVIDER',
+                      'RUNOPS_AUTO_RESOLVED', 'RUNOPS_MTTR_REDUCTION', 'RUNOPS_AI_AGENTS',
+                      'RUNOPS_AUTOMATED_WORKFLOWS', 'RUNOPS_MTTD', 'RUNOPS_MTTR', 'ENGINEER_AI_AGENTS',
+                      'ENGINEER_DELIVERY_CYCLE_TIME', 'ENGINEER_CONTRACT_TEST_CASE_PASS_RATE',
+                      'ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE', 'COMMON_ADOPTION_WORKFORCE_CERTIFICATION',
+                      'COMMON_ADOPTION_EFFORTS_SAVED', 'COMMON_DEPLOYMENT_ENGINEER', 'OVERALL_SCORE',
+                      'ACCEPTED_SCORE', 'ACCEPTED_SCORE_COMMENT', 'SDLC_PHASE', 'ACTIVITY', 'APPLICABILITY',
+                      'AI_ADOPTION_SCORE', 'AI_TOOLS_USED', 'ACCELERATORS_USED', 'WORK_DONE_BY_AI', 'HOURS_SAVED',
+                      'REVENUE_GENERATED', 'BENEFIT_TO', 'QUALITATIVE_BENEFITS', 'COMMENTS', 'CREATED_DATE',
+                      'LAST_UPDATED_DATE');
+
+    IF @COLS IS NULL SET @COLS = N'A.PROJECT AS [Project], A.ACTIVITY AS [Activity]';   -- nothing configured
+
+    -- 3) One JSON array, property names = the configured titles, in the configured order.
+    DECLARE @SQL NVARCHAR(MAX);
+    SET @SQL = N'SELECT ISNULL((SELECT ' + @COLS;
+    SET @SQL = @SQL + N' FROM #A A ORDER BY A.BUSINESS_UNIT, A.ACCOUNT, A.PROJECT, A.PRACTICE, A.SDLC_PHASE, A.SORT_CREATED FOR JSON PATH, INCLUDE_NULL_VALUES), N''[]'') AS REPORT_JSON;';
+    EXEC sys.sp_executesql @SQL;
+END
+GO
