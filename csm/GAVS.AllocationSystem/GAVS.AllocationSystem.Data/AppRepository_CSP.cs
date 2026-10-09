@@ -2692,6 +2692,24 @@ namespace GAVS.AllocationSystem.Data
                 param1, param2, param3, param4, param5, param6).ToList();
         }
 
+        // Activity reports (Manage Activities > Generate Report, Reports page > Generate Reports). Returns
+        // the report as a JSON array; its columns and titles are configured in the database.
+        public string AimiGetActivityReport(string reportType, string projectId, string practice, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@REPORT_TYPE", reportType);
+            var param2 = new SqlParameter("@PROJECT_ID", (object)projectId ?? DBNull.Value);
+            var param3 = new SqlParameter("@PRACTICE", (object)practice ?? DBNull.Value);
+            var param4 = BuildAimiStructuredParam("@BUSINESS_UNITS", ToAimiStringListTable(businessUnits), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param5 = BuildAimiStructuredParam("@ACCOUNTS", ToAimiStringListTable(accounts), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param6 = BuildAimiStructuredParam("@PROJECTS", ToAimiStringListTable(projects), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var param7 = BuildAimiStructuredParam("@PRACTICES", ToAimiStringListTable(practices), "dbo.AIMI_STRING_LIST_TABLE_TYPE");
+            var row = dbContext.Database.SqlQuery<AimiScoreReportJsonRow>(
+                "[dbo].[usp_AIMI_GetActivityReport] @REPORT_TYPE, @PROJECT_ID, @PRACTICE, @BUSINESS_UNITS, @ACCOUNTS, @PROJECTS, @PRACTICES",
+                param1, param2, param3, param4, param5, param6, param7).FirstOrDefault();
+            return row?.REPORT_JSON ?? "[]";
+        }
+
         // Returns the report as a JSON array; its columns and titles are configured in the database.
         public string AimiGetScoreReport(string level, int months, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices)
         {

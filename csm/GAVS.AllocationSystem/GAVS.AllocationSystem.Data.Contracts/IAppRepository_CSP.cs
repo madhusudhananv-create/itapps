@@ -331,6 +331,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         // AIMI Analytics: monthly score history (AIMI_SCORE_HISTORY, Release 2.6.4.sql)
         List<AimiScoreFilterOptionSpRow> AimiGetScoreFilterOptions();
         List<AimiScoreAnalyticsSpRow> AimiGetScoreAnalytics(string level, int months, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
+        string AimiGetActivityReport(string reportType, string projectId, string practice, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
         string AimiGetScoreReport(string level, int months, List<string> businessUnits, List<string> accounts, List<string> projects, List<string> practices);
         void AimiCaptureScoreSnapshot(DateTime? snapshotMonth, string projectId, string practice, string empId);
 

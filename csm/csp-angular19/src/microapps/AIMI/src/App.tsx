@@ -7,6 +7,7 @@ import {
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from '@auth/context/AuthProvider';
+import { useAuth } from '@auth/hooks/useAuth';
 import { ProjectDataProvider } from '@shared/context/ProjectDataProvider';
 import { AimiLookupProvider } from '@shared/lookups/AimiLookupProvider';
 import { Loading } from '@shared/components/Loading';
@@ -46,6 +47,12 @@ const Dashboard = lazy(() =>
 const Reports = lazy(() =>
   import('@reports/components/Reports').then((module) => ({
     default: module.Reports,
+  }))
+);
+
+const Analytics = lazy(() =>
+  import('@features/analytics/components/Analytics').then((module) => ({
+    default: module.Analytics,
   }))
 );
 
@@ -96,6 +103,8 @@ function AppRoutes() {
   const activitiesFlags = useFeatureFlags('activities');
   const reportsFlags = useFeatureFlags('reports');
   const backupFlags = useFeatureFlags('backup');
+  const analyticsFlags = useFeatureFlags('analytics');
+  const { isAdmin } = useAuth();
 
   // Determine default route based on feature flags
   const getDefaultRoute = () => {
@@ -124,6 +133,9 @@ function AppRoutes() {
                   )}
                   {reportsFlags.enabled && (
                     <Route path="/reports" element={<Reports />} />
+                  )}
+                  {analyticsFlags.enabled && isAdmin && (
+                    <Route path="/analytics" element={<Analytics />} />
                   )}
                   {backupFlags.enabled && (
                     <Route path="/backup" element={<Backup />} />

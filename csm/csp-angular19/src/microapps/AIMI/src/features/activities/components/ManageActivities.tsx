@@ -29,7 +29,7 @@ import {
   Reviews,
   // UploadFile as UploadFileIcon, // 'Import Excel' - disabled for the Firebase->SQL migration
 } from '@mui/icons-material';
-import { generateAndDownloadProjectReport } from '../../reports/utils/csvExportUtils';
+import { downloadReportTable } from '../../reports/utils/reportTable';
 import { reportService } from '../../reports/services/reportService';
 import { getActivityValidationErrors } from '../utils/formValidationUtils';
 import { activityService } from '../services/activityService';
@@ -866,22 +866,14 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
 
     setIsGeneratingReport(true);
     try {
-      const rows = await reportService.getReportData(
-        { projectId: projectInfo.projectId, practice: projectInfo.practice },
-        new Map([
-          [
-            projectInfo.projectId,
-            {
-              businessHead: projectInfo.businessHead,
-              accountManager: projectInfo.accountManager,
-              manager: projectInfo.manager,
-              headcount: projectInfo.headcount,
-            },
-          ],
-        ])
-      );
+      // The database builds the whole report and decides its columns and titles
+      // (usp_AIMI_GetActivityReport, AIMI_ACTIVITY_REPORT_COLUMN).
+      const report = await reportService.getActivityReport('PROJECT', {
+        projectId: projectInfo.projectId,
+        practice: projectInfo.practice,
+      });
 
-      if (rows.length === 0) {
+      if (report.rows.length === 0) {
         showSnackbar(
           'No saved activities found for this project and practice',
           'error'
@@ -889,11 +881,11 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
         return;
       }
 
-      const overallScoreValue = areAllActivitiesNotApplicable(rows)
-        ? 'N/A'
-        : calculateAverageAIAdoptionScore(rows).toFixed(2);
-
-      generateAndDownloadProjectReport(rows, overallScoreValue);
+      const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      downloadReportTable(
+        report,
+        `AI_Maturity_Report_${projectInfo.project || 'Unknown'}_${projectInfo.practice || 'Unknown'}_${timestamp}.csv`
+      );
       showSnackbar('Report generated and downloaded successfully!', 'success');
     } catch (error) {
       console.error('Error generating report:', error);

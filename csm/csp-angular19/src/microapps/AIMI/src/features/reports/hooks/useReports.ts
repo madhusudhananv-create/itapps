@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { reportService } from '../services/reportService';
-import { generateAndDownloadMultiReport } from '../utils/csvExportUtils';
-import type { EnrichedActivityWithProjectInfo } from '../utils/activityEnrichmentUtils';
+import { downloadReportTable } from '../utils/reportTable';
 import { useProjectHierarchy } from '@shared/projects/hooks/useProjectHierarchy';
 import { useAllocatedAccounts } from '@shared/projects/hooks/useAllocatedAccounts';
 import { useQuestionnaireLookup } from '@shared/lookups/useQuestionnaireLookup';
@@ -31,8 +30,7 @@ export interface ReportGenerationResult {
 }
 
 export const useReports = () => {
-  const { projectMapping, getBusinessUnits, getAccounts, getProjects } =
-    useProjectHierarchy();
+  const { getBusinessUnits, getAccounts, getProjects } = useProjectHierarchy();
   const { allocatedAccountNames } = useAllocatedAccounts();
   const { getPracticesFromQuestionnaire } = useQuestionnaireLookup();
 
@@ -70,55 +68,6 @@ export const useReports = () => {
     message: '',
     severity: 'success',
   });
-
-  // Sort activities based on applied filter
-  const sortActivitiesByFilter = useCallback(
-    (
-      activities: EnrichedActivityWithProjectInfo[],
-      reportType: 'business-units' | 'accounts' | 'projects'
-    ) => {
-      return [...activities].sort((a, b) => {
-        switch (reportType) {
-          case 'business-units': {
-            // Sort by business unit, then by account, then by project
-            const buComparison = a.businessUnit.localeCompare(b.businessUnit);
-            if (buComparison !== 0) return buComparison;
-
-            const accountComparison = a.account.localeCompare(b.account);
-            if (accountComparison !== 0) return accountComparison;
-
-            return a.project.localeCompare(b.project);
-          }
-
-          case 'accounts': {
-            // Sort by account, then by project, then by business unit
-            const accComparison = a.account.localeCompare(b.account);
-            if (accComparison !== 0) return accComparison;
-
-            const projComparison = a.project.localeCompare(b.project);
-            if (projComparison !== 0) return projComparison;
-
-            return a.businessUnit.localeCompare(b.businessUnit);
-          }
-
-          case 'projects': {
-            // Sort by project, then by account, then by business unit
-            const projectComparison = a.project.localeCompare(b.project);
-            if (projectComparison !== 0) return projectComparison;
-
-            const accComp = a.account.localeCompare(b.account);
-            if (accComp !== 0) return accComp;
-
-            return a.businessUnit.localeCompare(b.businessUnit);
-          }
-
-          default:
-            return 0;
-        }
-      });
-    },
-    []
-  );
 
   // Get all available options
   const businessUnits = useMemo(() => {
@@ -233,23 +182,18 @@ export const useReports = () => {
         throw new Error('Please select at least one filter option');
       }
 
-      // One API call: the SP already joins activities with their project's AI
-      // Adoption Metrics server-side, replacing the old fetch-activities +
-      // fetch-every-ProjectInfo + fetch-every-PracticeInfo + client-side-join flow.
-      const enrichedActivities = await reportService.getReportData(
-        {
-          businessUnits:
-            formData.businessUnits.length > 0
-              ? formData.businessUnits
-              : undefined,
-          accounts: formData.accounts.length > 0 ? formData.accounts : undefined,
-          projects: formData.projects.length > 0 ? formData.projects : undefined,
-          practices,
-        },
-        projectMapping
-      );
+      // One API call: the database builds the whole report (activities, AI Adoption Metrics,
+      // business head / account manager / manager / head count, overall score) and decides its
+      // columns and titles, already sorted. Nothing is joined or named in the browser.
+      const report = await reportService.getActivityReport('MULTI', {
+        businessUnits:
+          formData.businessUnits.length > 0 ? formData.businessUnits : undefined,
+        accounts: formData.accounts.length > 0 ? formData.accounts : undefined,
+        projects: formData.projects.length > 0 ? formData.projects : undefined,
+        practices,
+      });
 
-      if (enrichedActivities.length === 0) {
+      if (report.rows.length === 0) {
         setSnackbar({
           open: true,
           message: 'No activities found for the selected filters',
@@ -258,24 +202,25 @@ export const useReports = () => {
         return;
       }
 
-      // Sort activities based on applied filter
-      const sortedActivities = sortActivitiesByFilter(
-        enrichedActivities,
-        reportType
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:.]/g, '-')
+        .slice(0, 19);
+      downloadReportTable(
+        report,
+        `AI_Maturity_Report_${reportType}_${timestamp}.csv`
       );
-      // Generate and download the CSV report with generic filename
-      generateAndDownloadMultiReport(sortedActivities, reportType);
 
       setSnackbar({
         open: true,
-        message: `Report generated successfully! ${enrichedActivities.length} activities exported.`,
+        message: `Report generated successfully! ${report.rows.length} activities exported.`,
         severity: 'success',
       });
 
       return {
         reportType,
         selectedItems,
-        activitiesCount: enrichedActivities.length,
+        activitiesCount: report.rows.length,
       } as ReportGenerationResult;
     } catch (error) {
       console.error('Error generating report:', error);
@@ -289,7 +234,7 @@ export const useReports = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [projectMapping, sortActivitiesByFilter, formData]);
+  }, [formData]);
 
   // Close snackbar
   const closeSnackbar = useCallback(() => {
