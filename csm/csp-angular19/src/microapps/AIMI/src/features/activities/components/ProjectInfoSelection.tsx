@@ -352,8 +352,10 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
       !!formData.isProjectNA !== !!projectInfo?.isProjectNA;
 
     const naCommentsChanged =
-      !!formData.isProjectNA &&
       (formData.naComments ?? '') !== (projectInfo?.naComments ?? '');
+
+    const presentationChanged =
+      !!formData.presentationDone !== !!projectInfo?.presentationDone;
     const runOpsChanged =
     !!formData.runOpsAutoResolved ||
     !!formData.runOpsMTTRReduction ||
@@ -384,6 +386,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
     peopleUsingAIChanged ||
     projectNAChanged ||
     naCommentsChanged ||
+    presentationChanged ||
     runOpsChanged ||
     engineeringChanged ||
     commonChanged ||
@@ -641,8 +644,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
         formData.peopleUsingAI !== undefined;
       const projectNAChanged =
         !!formData.isProjectNA !== !!projectInfo?.isProjectNA ||
-        ((formData.isProjectNA ?? false) &&
-          (formData.naComments ?? '') !== (projectInfo?.naComments ?? ''));
+        (formData.naComments ?? '') !== (projectInfo?.naComments ?? '');
           const runOpsChanged =
   !!formData.runOpsAutoResolved ||
   !!formData.runOpsMTTRReduction ||
