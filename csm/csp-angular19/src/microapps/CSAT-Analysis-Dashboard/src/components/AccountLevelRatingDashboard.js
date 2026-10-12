@@ -1140,6 +1140,19 @@ const buildAcsatTop10TrendFromFile = (file, { top10AccountNames }) => {
   const otherAccountsTotal = rows.length > 0
     ? buildAcsatTrendSummaryRow('Other Accounts', otherSent.polled, otherSent.responded, otherPerspectiveAgg, perspectives)
     : null;
+  // Overall = Top 10 + Other, weighted by combined perspective rating counts (not a simple average of the two averages)
+  const overallPerspectiveAgg = {};
+  perspectives.forEach((p) => {
+    const t = top10PerspectiveAgg[p];
+    const o = otherPerspectiveAgg[p];
+    overallPerspectiveAgg[p] = {
+      sum: (t?.sum || 0) + (o?.sum || 0),
+      count: (t?.count || 0) + (o?.count || 0)
+    };
+  });
+  const overallTotal = rows.length > 0
+    ? buildAcsatTrendSummaryRow('Overall', top10Sent.polled + otherSent.polled, top10Sent.responded + otherSent.responded, overallPerspectiveAgg, perspectives)
+    : null;
 
   return {
     saveName: file.saveName || file.originalName || 'Trend file',
@@ -1147,6 +1160,7 @@ const buildAcsatTop10TrendFromFile = (file, { top10AccountNames }) => {
     perspectives,
     top10AccountsTotal,
     otherAccountsTotal,
+    overallTotal,
     hasData: rows.length > 0,
     error: rows.length === 0
       ? 'No Top 10 Criteria rows found in CSAT received Report (TYPE OF ACCOUNT = Top 10, QUESTION_CATEGORY = Criteria).'
@@ -1677,6 +1691,9 @@ const addTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
   }
   if (fileData.otherAccountsTotal) {
     appendTop10TrendSummaryRowToSheet(trendSheet, fileData.otherAccountsTotal, fileData.perspectives, 'FFFED7AA');
+  }
+  if (fileData.overallTotal) {
+    appendTop10TrendSummaryRowToSheet(trendSheet, fileData.overallTotal, fileData.perspectives, 'FFE4DFEC');
   }
 
   trendSheet.columns = [
@@ -3045,6 +3062,34 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     };
   }, [showTop10, processedData, secondSheetData, acsatCycle, acsatCycleStartDateFormatted]);
 
+  // Overall = Top 10 + Other Accounts combined. Sent/Received are simple sums; each
+  // perspective rating is a weighted average (by rating count), which equals averaging
+  // ALL rows for that perspective with no typeOfAccount filter (Top10 rows + Other rows = all rows).
+  const overallTotals = useMemo(() => {
+    if (!showTop10 || !grandTotals || !otherAccountTotals || !processedData) return null;
+    const rawData = processedData.rawData || [];
+    const targetPerspectives = [
+      'Meeting Delivery Commitments',
+      'Customer Engagement and Relationship',
+      'Partner adding value to Customer Business'
+    ];
+    const perspectiveAverages = {};
+    targetPerspectives.forEach((p) => {
+      const ratings = rawData
+        .filter((r) => (r.perspective || '').toString().trim() === p)
+        .map((r) => parseFloat(r.rating))
+        .filter((v) => !isNaN(v));
+      perspectiveAverages[p] = ratings.length > 0
+        ? (ratings.reduce((s, v) => s + v, 0) / ratings.length).toFixed(2)
+        : 'N/A';
+    });
+    return {
+      cssSentCount: grandTotals.cssSentCount + otherAccountTotals.cssSentCount,
+      cssReceivedCount: grandTotals.cssReceivedCount + otherAccountTotals.cssReceivedCount,
+      perspectives: perspectiveAverages
+    };
+  }, [showTop10, grandTotals, otherAccountTotals, processedData]);
+
   // Footnote: which fixed-roster Top 10 accounts had zero "Polled" count in the loaded data
   // (i.e. were effectively backfilled by other accounts in this Top 10 view).
   const top10NotPolledCaption = useMemo(() => {
@@ -3203,6 +3248,21 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
         ? null
         : parseFloat(mainRaw);
     const trendRaw = getBuWiseTrendRatingFromRow(top10MainTrendSource.otherAccountsTotal, perspective);
+    const trendValue = trendRaw == null ? null : parseFloat(trendRaw);
+    return computeBuPerspectiveTrendDiff(
+      mainValue == null || Number.isNaN(mainValue) ? null : mainValue,
+      trendValue == null || Number.isNaN(trendValue) ? null : trendValue
+    );
+  };
+
+  const getOverallPerspectiveTrendDiff = (perspective) => {
+    if (!overallTotals?.perspectives || !top10MainTrendSource) return null;
+    const mainRaw = overallTotals.perspectives[perspective];
+    const mainValue =
+      mainRaw === 'N/A' || mainRaw == null || mainRaw === ''
+        ? null
+        : parseFloat(mainRaw);
+    const trendRaw = getBuWiseTrendRatingFromRow(top10MainTrendSource.overallTotal, perspective);
     const trendValue = trendRaw == null ? null : parseFloat(trendRaw);
     return computeBuPerspectiveTrendDiff(
       mainValue == null || Number.isNaN(mainValue) ? null : mainValue,
@@ -4301,6 +4361,84 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
           });
         }
       }
+
+      // Add Overall row (Top 10 + Other Accounts combined, only for Top 10 view)
+      if (showTop10 && overallTotals) {
+        const overallRow = groupByBU
+          ? [
+              '',
+              'Overall',
+              ...(processedData.headers.cssColumns || []).map(column =>
+                column === 'Polled' ? overallTotals.cssSentCount :
+                column === 'Responded' ? overallTotals.cssReceivedCount :
+                0
+              ),
+              ...(processedData.headers.perspectives || []).map(perspective =>
+                overallTotals.perspectives[perspective] || 'N/A'
+              )
+            ]
+          : (() => {
+              const base = [
+              '',
+              'Overall',
+              '-',
+              ...(processedData.headers.cssColumns || []).map(column =>
+                column === 'Polled' ? overallTotals.cssSentCount :
+                column === 'Responded' ? overallTotals.cssReceivedCount :
+                0
+                )
+              ];
+              const out = [];
+              (processedData.headers.perspectives || []).forEach((perspective) => {
+                out.push(overallTotals.perspectives[perspective] || 'N/A');
+                if (includeTop10MainTrendCols && perspective === 'Partner adding value to Customer Business') {
+                  ACSAT_MAIN_BU_PERSPECTIVES.forEach((p) => {
+                    out.push(formatBuTrendDiffDisplay(getOverallPerspectiveTrendDiff(p)).text);
+                  });
+                }
+              });
+              return [...base, ...out];
+            })();
+        const overallExcelRow = worksheet.addRow(overallRow);
+        overallExcelRow.eachCell((cell, colNumber) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE4DFEC' } };
+          cell.font = { bold: true, color: { argb: 'FF000000' } };
+
+          const isNumericColumn = colNumber > (groupByBU ? 2 : 3);
+
+          cell.alignment = {
+            horizontal: isNumericColumn ? 'center' : 'left',
+            vertical: 'middle',
+            wrapText: !isNumericColumn
+          };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } }
+          };
+        });
+
+        if (includeTop10MainTrendCols && !groupByBU) {
+          ACSAT_MAIN_BU_PERSPECTIVES.forEach((perspective) => {
+            const headerLabel = getBuWiseMainTrendColumnLabel(perspective);
+            let colIndex1Based = null;
+            for (let col = 1; col <= worksheet.columnCount; col++) {
+              const headerVal = headerRow.getCell(col)?.value;
+              if (headerVal === headerLabel) {
+                colIndex1Based = col;
+                break;
+              }
+            }
+            if (!colIndex1Based) return;
+            const cell = overallExcelRow.getCell(colIndex1Based);
+            applyBuTrendDiffExcelCellStyle(
+              cell,
+              formatBuTrendDiffDisplay(getOverallPerspectiveTrendDiff(perspective))
+            );
+          });
+        }
+      }
     }
 
     // Add legend below the data and grand total
@@ -4862,6 +5000,44 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
                     })}
                   </Tr>
                 )}
+                {/* Overall Row (Top 10 + Other Accounts combined) - only for Top 10 view */}
+                {showTop10 && overallTotals && (
+                  <Tr style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold', borderTop: '2px solid #8E7CC3' }}>
+                    <Td style={{ fontWeight: 'bold', color: '#000000' }}></Td>
+                    <BusinessUnitTd style={{ fontWeight: 'bold', color: '#000000' }}>Overall</BusinessUnitTd>
+                    {!groupByBU && <CustomerNameTd style={{ fontWeight: 'bold', color: '#000000' }}>-</CustomerNameTd>}
+                    {processedData.headers.cssColumns && processedData.headers.cssColumns.map(column => (
+                      <Td key={column} isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>
+                        {column === 'Polled' ? overallTotals.cssSentCount :
+                         column === 'Responded' ? overallTotals.cssReceivedCount :
+                         '-'}
+                      </Td>
+                    ))}
+                    {processedData.headers.perspectives && processedData.headers.perspectives.map(perspective => {
+                      const ratingValue = overallTotals.perspectives[perspective];
+                      const parsedRating = ratingValue === 'N/A' || ratingValue === null || ratingValue === undefined || ratingValue === ''
+                        ? null
+                        : parseFloat(ratingValue);
+                      return (
+                        <React.Fragment key={perspective}>
+                      <RatingCell
+                            rating={parsedRating}
+                        style={{ fontWeight: 'bold', color: '#000000' }}
+                      >
+                            {ratingValue}
+                      </RatingCell>
+                          {showTop10MainTrendColumns && perspective === 'Partner adding value to Customer Business' &&
+                            ACSAT_MAIN_BU_PERSPECTIVES.map((p) =>
+                              renderBuWiseTrendDiffCell(getOverallPerspectiveTrendDiff(p), {
+                                bold: true,
+                                cellKey: `overall-trend-${p}`
+                              })
+                            )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </Tr>
+                )}
                 {showTop10 && top10NotPolledCaption && (
                   <Tr>
                     <Td colSpan={
@@ -5070,6 +5246,36 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
                                 return (
                                   <RatingCell
                                     key={`other-total-${p}`}
+                                    rating={ratingForCell}
+                                    style={{ fontWeight: 'bold', color: '#000000' }}
+                                  >
+                                    {val === '-' || val == null ? '-' : val}
+                                  </RatingCell>
+                                );
+                              })}
+                            </Tr>
+                          )}
+                          {showTop10 && !groupByBU && fileData.overallTotal && (
+                            <Tr style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold', borderTop: '2px solid #8E7CC3' }}>
+                              <Td style={{ fontWeight: 'bold', color: '#000000' }}></Td>
+                              <BusinessUnitTd style={{ fontWeight: 'bold', color: '#000000' }}>
+                                {fileData.overallTotal.businessUnit}
+                              </BusinessUnitTd>
+                              <CustomerNameTd style={{ fontWeight: 'bold', color: '#000000' }}>
+                                {fileData.overallTotal.customerName}
+                              </CustomerNameTd>
+                              <Td isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>
+                                {fileData.overallTotal.Polled ?? 0}
+                              </Td>
+                              <Td isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>
+                                {fileData.overallTotal.Responded ?? 0}
+                              </Td>
+                              {(fileData.perspectives || []).map((p) => {
+                                const val = fileData.overallTotal[p];
+                                const ratingForCell = (val === '-' || val == null) ? null : parseFloat(val);
+                                return (
+                                  <RatingCell
+                                    key={`overall-total-${p}`}
                                     rating={ratingForCell}
                                     style={{ fontWeight: 'bold', color: '#000000' }}
                                   >

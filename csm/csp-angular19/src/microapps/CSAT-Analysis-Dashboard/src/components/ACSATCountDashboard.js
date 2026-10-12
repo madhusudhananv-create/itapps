@@ -1122,6 +1122,9 @@ const addSatisfiedTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) =
   if (fileData.otherAccountsRow) {
     appendTop10TrendSummaryRowToSheet(fileData.otherAccountsRow, 'FFFED7AA');
   }
+  if (fileData.overallRow) {
+    appendTop10TrendSummaryRowToSheet(fileData.overallRow, 'FFE4DFEC');
+  }
 
   trendSheet.columns = [
     { width: 10 },
@@ -1875,22 +1878,41 @@ const buildTop10SatisfiedCustomersTrendFromFile = (file, { top10AccountNames = [
 
   const grandTotal = rows.length > 0
     ? {
+        ...mapAccountWiseTrendGroupToRow({ perspectives: top10PerspectiveStats }, perspectives),
         businessUnit: '',
         customerName: 'Top 10 Accounts',
         polled: rows.reduce((sum, r) => sum + (r.polled || 0), 0),
         responded: rows.reduce((sum, r) => sum + (r.responded || 0), 0),
-        ...mapAccountWiseTrendGroupToRow({ perspectives: top10PerspectiveStats }, perspectives),
       }
     : null;
 
   const otherSentReceived = aggregateOtherAccountsSentReceivedFromFile(file);
   const otherAccountsRow = grandTotal
     ? {
+        ...mapAccountWiseTrendGroupToRow({ perspectives: otherPerspectiveStats }, perspectives),
         businessUnit: '',
         customerName: 'Other Accounts',
         polled: otherSentReceived.polled,
         responded: otherSentReceived.responded,
-        ...mapAccountWiseTrendGroupToRow({ perspectives: otherPerspectiveStats }, perspectives),
+      }
+    : null;
+
+  const combinedPerspectiveStats = {};
+  perspectives.forEach((p) => {
+    const top10St = top10PerspectiveStats[p] || { satisfied: 0, input: 0 };
+    const otherSt = otherPerspectiveStats[p] || { satisfied: 0, input: 0 };
+    combinedPerspectiveStats[p] = {
+      satisfied: top10St.satisfied + otherSt.satisfied,
+      input: top10St.input + otherSt.input,
+    };
+  });
+  const overallRow = grandTotal
+    ? {
+        ...mapAccountWiseTrendGroupToRow({ perspectives: combinedPerspectiveStats }, perspectives),
+        businessUnit: '',
+        customerName: 'Overall',
+        polled: (grandTotal.polled || 0) + (otherAccountsRow?.polled || 0),
+        responded: (grandTotal.responded || 0) + (otherAccountsRow?.responded || 0),
       }
     : null;
 
@@ -1900,6 +1922,7 @@ const buildTop10SatisfiedCustomersTrendFromFile = (file, { top10AccountNames = [
     perspectives,
     grandTotal,
     otherAccountsRow,
+    overallRow,
     hasData: rows.length > 0,
     error: rows.length === 0
       ? 'No Top 10 Criteria rows found in CSAT received Report (QUESTION_CATEGORY = Criteria, TYPE OF ACCOUNT = Top 10).'
@@ -2887,6 +2910,33 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     };
   }, [showTop10, uploadedData, secondSheetData, acsatCycle, isDateOnOrAfterCsatStart]);
 
+  // Combined "Overall" totals (Top 10 Accounts + Other Accounts) for Top 10 view
+  const overallTotals = useMemo(() => {
+    if (!showTop10 || !grandTotals || !otherAccountTotals) return null;
+
+    const targetPerspectives = ACSAT_SATISFIED_TARGET_PERSPECTIVES;
+    const perspectives = {};
+    const perspectiveInputTotals = {};
+
+    targetPerspectives.forEach((p) => {
+      const combinedInputTotal = (grandTotals.perspectiveInputTotals?.[p] || 0) + (otherAccountTotals.perspectiveInputTotals?.[p] || 0);
+      const combinedSatisfiedCount =
+        Math.round(((grandTotals.perspectives?.[p] || 0) / 100) * (grandTotals.perspectiveInputTotals?.[p] || 0)) +
+        Math.round(((otherAccountTotals.perspectives?.[p] || 0) / 100) * (otherAccountTotals.perspectiveInputTotals?.[p] || 0));
+      perspectiveInputTotals[p] = combinedInputTotal;
+      perspectives[p] = combinedInputTotal > 0
+        ? Math.round((combinedSatisfiedCount / combinedInputTotal) * 10000) / 100
+        : 0;
+    });
+
+    return {
+      cssSentCount: grandTotals.cssSentCount + otherAccountTotals.cssSentCount,
+      cssReceivedCount: grandTotals.cssReceivedCount + otherAccountTotals.cssReceivedCount,
+      perspectives,
+      perspectiveInputTotals,
+    };
+  }, [showTop10, grandTotals, otherAccountTotals]);
+
   const isAccountWiseSatisfiedView = !groupByBU && !showTop10;
   const isTop10SatisfiedView = !groupByBU && showTop10;
   const isBuWiseSatisfiedView = groupByBU && !showTop10;
@@ -3130,6 +3180,17 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
     const current = parseSatisfiedTrendPercent(otherAccountTotals.perspectives?.[perspective]);
     const trend = parseSatisfiedTrendPercent(
       top10MainTrendSource.otherAccountsRow.perspectivePercentages?.[perspective]
+    );
+    return formatSatisfiedPerspectiveTrendDiff(current, trend);
+  };
+
+  const getOverallTrendDiffDisplay = (perspective) => {
+    if (!top10MainTrendSource?.overallRow || !overallTotals) {
+      return { diffText: '-', arrow: '', diffColor: '#6b7280', arrowColor: '#6b7280', excelColor: 'FF6B7280' };
+    }
+    const current = parseSatisfiedTrendPercent(overallTotals.perspectives?.[perspective]);
+    const trend = parseSatisfiedTrendPercent(
+      top10MainTrendSource.overallRow.perspectivePercentages?.[perspective]
     );
     return formatSatisfiedPerspectiveTrendDiff(current, trend);
   };
@@ -3770,6 +3831,83 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
               });
             }
             otherRow.height = 60;
+          }
+
+          // Add Overall row (Top 10 + Other Accounts, only for Top 10 view)
+          if (showTop10 && overallTotals) {
+            const overallRowValues = [
+              '',
+              'Overall',
+              ...(groupByBU ? [] : ['-']),
+              overallTotals.cssSentCount,
+              overallTotals.cssReceivedCount,
+              `${overallTotals.perspectives['Meeting Delivery Commitments']}%`,
+              `${overallTotals.perspectives['Customer Engagement and Relationship']}%`,
+              `${overallTotals.perspectives['Partner adding value to Customer Business']}%`,
+              ...(showTop10MainTrendColumns
+                ? ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((p) => {
+                    const display = getOverallTrendDiffDisplay(p);
+                    return display.excelValue || display.diffText;
+                  })
+                : []),
+            ];
+            const overallExcelRow = worksheet.addRow(overallRowValues);
+            overallExcelRow.eachCell((cell, colNumber) => {
+              cell.font = { bold: true, color: { argb: 'FF000000' } };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE4DFEC' } };
+
+              const isNumericColumn = colNumber > (groupByBU ? 2 : 3);
+
+              if (isNumericColumn && colNumber <= (groupByBU ? 5 : 6)) {
+                cell.numFmt = '0';
+              }
+
+              cell.alignment = {
+                horizontal: isNumericColumn ? 'center' : 'left',
+                vertical: 'middle',
+                wrapText: !isNumericColumn,
+                indent: !isNumericColumn ? 1 : 0,
+                readingOrder: 'left-to-right'
+              };
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } }
+              };
+            });
+
+            const percentageColumnIndicesOverall = groupByBU ? [5, 6, 7] : [6, 7, 8];
+            const perspectivesListOverall = ['Meeting Delivery Commitments', 'Customer Engagement and Relationship', 'Partner adding value to Customer Business'];
+            perspectivesListOverall.forEach((perspective, index) => {
+              const cellIndex = percentageColumnIndicesOverall[index];
+              const cell = overallExcelRow.getCell(cellIndex);
+
+              cell.alignment = {
+                horizontal: 'center',
+                vertical: 'middle',
+                wrapText: false,
+                indent: 0,
+                readingOrder: 'left-to-right'
+              };
+            });
+
+            if (showTop10MainTrendColumns) {
+              const trendStartColOverall = groupByBU ? 8 : 9;
+              ACSAT_SATISFIED_TARGET_PERSPECTIVES.forEach((perspective, trendIndex) => {
+                const cell = overallExcelRow.getCell(trendStartColOverall + trendIndex);
+                const display = getOverallTrendDiffDisplay(perspective);
+                applySatisfiedTrendDiffExcelCellStyle(cell, display);
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE4DFEC' } };
+                cell.border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
+                };
+              });
+            }
+            overallExcelRow.height = 60;
           }
         }
 
@@ -4638,6 +4776,38 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
               })}
               </TableRow>
             )}
+        {/* Overall Row (Top 10 + Other Accounts) - only for Top 10 view */}
+        {showTop10 && overallTotals && (
+          <TableRow style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold', borderTop: '2px solid #8064A2' }}>
+            <TableCell isFirstColumn style={{ fontWeight: 'bold', color: '#000000' }}></TableCell>
+            <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>Overall</TableCell>
+            {!groupByBU && <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>-</TableCell>}
+            <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{overallTotals.cssSentCount}</TableCell>
+            <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{overallTotals.cssReceivedCount}</TableCell>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Meeting Delivery Commitments']} responded={overallTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+              {overallTotals.perspectives['Meeting Delivery Commitments']}%
+            </TableCell>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Customer Engagement and Relationship']} responded={overallTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+              {overallTotals.perspectives['Customer Engagement and Relationship']}%
+            </TableCell>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Partner adding value to Customer Business']} responded={overallTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+              {overallTotals.perspectives['Partner adding value to Customer Business']}%
+            </TableCell>
+            {showTop10MainTrendColumns &&
+              ACSAT_SATISFIED_TARGET_PERSPECTIVES.map((perspective) => {
+                const display = getOverallTrendDiffDisplay(perspective);
+                return (
+                  <TableCell
+                    key={`overall-trend-${perspective}`}
+                    isNumeric
+                    style={{ textAlign: 'center', fontWeight: 'bold', background: '#E4DFEC' }}
+                  >
+                    {renderSatisfiedTrendDiffContent(display)}
+                  </TableCell>
+                );
+              })}
+          </TableRow>
+        )}
             {showTop10 && notPolledTop10Caption && (
               <TableRow>
                 <TableCell
@@ -5026,6 +5196,33 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
                                   style={{ fontWeight: 'bold' }}
                                 >
                                   {`${fileData.otherAccountsRow.perspectivePercentages?.[perspective] || '0.00'}%`}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          )}
+                          {fileData.overallRow && (
+                            <TableRow style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold', borderTop: '2px solid #8064A2' }}>
+                              <TableCell isFirstColumn></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.customerName || 'Overall'}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.polled ?? 0}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.responded ?? 0}
+                              </TableCell>
+                              {(fileData.perspectives || ACSAT_SATISFIED_TARGET_PERSPECTIVES).map((perspective) => (
+                                <TableCell
+                                  key={`top10-overall-${perspective}`}
+                                  isPercentage
+                                  isNumeric
+                                  value={fileData.overallRow.perspectivePercentages?.[perspective] || '0.00'}
+                                  responded={fileData.overallRow.perspectiveInputCounts?.[perspective] || 0}
+                                  style={{ fontWeight: 'bold' }}
+                                >
+                                  {`${fileData.overallRow.perspectivePercentages?.[perspective] || '0.00'}%`}
                                 </TableCell>
                               ))}
                             </TableRow>
