@@ -11,7 +11,26 @@ export interface EnrichedActivityWithProjectInfo
   manager: string;
   headcount?: number;
   currentPhase?: string;
+
+  // AI Adoption Metrics and Accepted Score, taken from the project's info
   peopleUsingAI?: number;
+  licenseCount?: number;
+  licenseProvider?: string;
+  runOpsAutoResolved?: string;
+  runOpsMTTRReduction?: string;
+  runOpsAIAgents?: string;
+  runOpsAutomatedWorkflows?: string;
+  runOpsMTTD?: string;
+  runOpsMTTR?: string;
+  engineerAIAgents?: string;
+  engineerDeliveryCycleTime?: string;
+  engineerContractTestCasePassRate?: string;
+  engineerPerformanceDefectsPreRelease?: string;
+  commonAdoptionWorkforceCertification?: string;
+  commonAdoptionEffortsSaved?: string;
+  commonDeploymentEngineer?: string;
+  acceptedScore?: number;
+  acceptedScoreComment?: string;
 }
 
 /**
@@ -42,7 +61,7 @@ export const enrichActivitiesWithProjectInfo = (
     // Get project mapping data
     const mapping = projectMapping.get(activity.projectId);
 
-    // Get project info for peopleUsingAI
+    // Get project info (AI Adoption Metrics, accepted score)
     const projectInfo = projectInfoMap.get(activity.projectId);
 
     // Get practice info for currentPhase
@@ -56,7 +75,28 @@ export const enrichActivitiesWithProjectInfo = (
       manager: mapping?.manager ?? '',
       headcount: mapping?.headcount,
       currentPhase: practiceInfo?.currentPhase ?? '',
+
       peopleUsingAI: projectInfo?.peopleUsingAI,
+      licenseCount: projectInfo?.licenseCount,
+      licenseProvider: projectInfo?.licenseProvider,
+      runOpsAutoResolved: projectInfo?.runOpsAutoResolved,
+      runOpsMTTRReduction: projectInfo?.runOpsMTTRReduction,
+      runOpsAIAgents: projectInfo?.runOpsAIAgents,
+      runOpsAutomatedWorkflows: projectInfo?.runOpsAutomatedWorkflows,
+      runOpsMTTD: projectInfo?.runOpsMTTD,
+      runOpsMTTR: projectInfo?.runOpsMTTR,
+      engineerAIAgents: projectInfo?.engineerAIAgents,
+      engineerDeliveryCycleTime: projectInfo?.engineerDeliveryCycleTime,
+      engineerContractTestCasePassRate:
+        projectInfo?.engineerContractTestCasePassRate,
+      engineerPerformanceDefectsPreRelease:
+        projectInfo?.engineerPerformanceDefectsPreRelease,
+      commonAdoptionWorkforceCertification:
+        projectInfo?.commonAdoptionWorkforceCertification,
+      commonAdoptionEffortsSaved: projectInfo?.commonAdoptionEffortsSaved,
+      commonDeploymentEngineer: projectInfo?.commonDeploymentEngineer,
+      acceptedScore: projectInfo?.acceptedScore,
+      acceptedScoreComment: projectInfo?.acceptedScoreComment,
     };
   });
 };
