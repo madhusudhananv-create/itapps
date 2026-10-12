@@ -51,19 +51,30 @@ export const useProjectHierarchy = () => {
   const { data: projectData, loading, error } = useProjectData();
 
   // Memoize hierarchical project data construction and project mapping
-  const { hierarchicalData, projectMapping } = useMemo(() => {
+  const { hierarchicalData, projectMapping, businessUnitHeads } = useMemo(() => {
     if (!projectData || projectData.length === 0) {
       return {
         hierarchicalData: { businessUnits: {} },
         projectMapping: new Map<string, ProjectMapping>(),
+        businessUnitHeads: {} as Record<string, string>,
       };
     }
 
     const businessUnits: Record<string, BusinessUnitInfo> = {};
     const projectMapping = new Map<string, ProjectMapping>();
+    // How many projects name each person as BU Head, per business unit
+    const buHeadCounts: Record<string, Map<string, number>> = {};
 
     projectData.forEach((project: ProjectData) => {
       const businessUnit = normalizeBusinessUnit(project.businessUnit || 'Other');
+
+      // BU Head is stored on every project, so a changed BU Head can still be on some
+      // projects as the old person. Count them so the one most projects agree on wins.
+      const buHeadName = project.buHead?.trim();
+      if (buHeadName) {
+        const counts = (buHeadCounts[businessUnit] ??= new Map<string, number>());
+        counts.set(buHeadName, (counts.get(buHeadName) ?? 0) + 1);
+      }
       const account = project.customerName || 'Unknown Account';
       const projectName = project.projectName || 'Unknown Project';
       const manager = project.pm || 'Unassigned';
@@ -109,9 +120,24 @@ export const useProjectHierarchy = () => {
       };
     });
 
+    // The most common BU Head per business unit (first one seen wins a tie)
+    const businessUnitHeads: Record<string, string> = {};
+    Object.entries(buHeadCounts).forEach(([businessUnit, counts]) => {
+      let best = '';
+      let bestCount = 0;
+      counts.forEach((count, name) => {
+        if (count > bestCount) {
+          best = name;
+          bestCount = count;
+        }
+      });
+      businessUnitHeads[businessUnit] = best;
+    });
+
     return {
       hierarchicalData: { businessUnits },
       projectMapping,
+      businessUnitHeads,
     };
   }, [projectData]);
 
@@ -208,24 +234,10 @@ export const useProjectHierarchy = () => {
     (businessUnit: string): string => {
       if (!businessUnit || loading) return '';
 
-      // Find the first project in this business unit to get BU Head
-      const buData = hierarchicalData.businessUnits[businessUnit];
-      if (buData) {
-        for (const account of Object.values(buData.accounts)) {
-          for (const project of Object.values(account.projects)) {
-            // Get BU Head from the first project found
-            const originalProjectData = projectData.find(
-              (p: ProjectData) => p.projectName === project.name
-            );
-            if (originalProjectData) {
-              return originalProjectData.buHead ?? '';
-            }
-          }
-        }
-      }
-      return '';
+      // The BU Head most of this business unit's projects agree on (see businessUnitHeads)
+      return businessUnitHeads[businessUnit] ?? '';
     },
-    [hierarchicalData.businessUnits, projectData, loading]
+    [businessUnitHeads, loading]
   );
 
   // Get original project data including headcount
