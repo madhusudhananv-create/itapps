@@ -29,6 +29,8 @@ import {
   hasFormChanges,
   isApplicable,
   isNoAIAdoption,
+  requiresComments,
+  COMMENTS_REQUIRED_MESSAGE,
   validateAIToolsOrAccelerators,
   // validateAITools, // 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
   // validateAIToolDetails, // 'Configure AI Tool Details' - disabled for the Firebase->SQL migration
@@ -99,6 +101,10 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   // Check if fields should be enabled based on applicability
   const applicable = isApplicable(formData.applicability);
   const noAIAdoption = isNoAIAdoption(formData.aiAdoptionScore);
+
+  // Activity NA / Customer NA need a comment saying why
+  const commentsRequired = requiresComments(formData.applicability);
+  const commentsMissing = commentsRequired && !formData.comments?.trim();
 
   // Check if at least one of AI Tools or Accelerators is required
   const needsAIToolsOrAccelerators = applicable && !noAIAdoption;
@@ -482,6 +488,9 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
                 disabled={false}
                 placeholder="Enter additional comments or notes"
                 rows={4}
+                required={commentsRequired}
+                error={commentsMissing}
+                helperText={commentsMissing ? COMMENTS_REQUIRED_MESSAGE : undefined}
               />
             </Box>
           </Box>
