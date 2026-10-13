@@ -308,15 +308,19 @@ export function Activities() {
 
   const handleActivitiesSubmit = useCallback(
     async (activities: ActivityData[]) => {
-      try {
-        // Submit activities (this will handle Firestore saving)
-        await submitActivities(
-          activities,
-          projectInfoFormData,
-          markActivitiesAsSaved
-        );
-      } catch (error) {
-        console.error('Error submitting activities:', error);
+      // submitActivities reports an API failure through its result rather than throwing, so
+      // pass it on: ManageActivities then shows the error toast and keeps the activities
+      // flagged as unsaved, instead of the failed submit passing silently.
+      const result = await submitActivities(
+        activities,
+        projectInfoFormData,
+        markActivitiesAsSaved
+      );
+      if (!result.success) {
+        console.error('Error submitting activities:', result.error);
+        throw result.error instanceof Error
+          ? result.error
+          : new Error('Submitting activities failed');
       }
     },
     [submitActivities, projectInfoFormData, markActivitiesAsSaved]

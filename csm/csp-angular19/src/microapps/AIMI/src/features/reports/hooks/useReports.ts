@@ -197,15 +197,18 @@ export const useReports = () => {
     []
   );
 
-  // Check if generate button should be enabled
-  const isGenerateEnabled = useMemo(() => {
-    return (
-      formData.businessUnits.length > 0 ||
-      formData.accounts.length > 0 ||
-      formData.projects.length > 0 ||
-      formData.practices.length > 0
-    );
-  }, [formData]);
+  // Practice only narrows a report, it cannot start one, so a Business Unit, Account or
+  // Project is needed before Generate Reports is enabled.
+  const hasPrimaryFilter =
+    formData.businessUnits.length > 0 ||
+    formData.accounts.length > 0 ||
+    formData.projects.length > 0;
+
+  const isGenerateEnabled = hasPrimaryFilter;
+
+  // Practice chosen on its own: tell the user what is missing instead of leaving the button
+  // disabled without a reason
+  const isPracticeOnly = !hasPrimaryFilter && formData.practices.length > 0;
 
   // Handle generate reports
   const handleGenerateReports = useCallback(async () => {
@@ -230,7 +233,9 @@ export const useReports = () => {
         reportType = 'business-units';
         selectedItems = [...formData.businessUnits, 'New Growth'];
       } else {
-        throw new Error('Please select at least one filter option');
+        throw new Error(
+          'Select a Business Unit, Account or Project to generate a report. Practice alone is not enough.'
+        );
       }
 
       // One API call: the SP already joins activities with their project's AI
@@ -285,7 +290,8 @@ export const useReports = () => {
           error instanceof Error ? error.message : 'Failed to generate report',
         severity: 'error',
       });
-      throw error;
+      // The snackbar above already tells the user; re-throwing would only surface as an
+      // unhandled promise rejection because the button's click handler doesn't catch it.
     } finally {
       setIsGenerating(false);
     }
@@ -316,6 +322,7 @@ export const useReports = () => {
     // UI state
     isGenerating,
     isGenerateEnabled,
+    isPracticeOnly,
     snackbar,
   };
 };
