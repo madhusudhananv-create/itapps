@@ -943,10 +943,9 @@ BEGIN
             ELSE 'On Target'
         END AS DueStatus,
         am.END_DATE AS TargetDate,
-        -- Reviewer's reason when sending the assessment back (Return for Revision) -
-        -- only meaningful while the assessment actually carries that status; cleared
-        -- (set NULL) by the app the moment it's approved instead of being overwritten
-        -- by a future return, so it always reflects the LATEST return, if any.
+        -- Reviewer's reason the last time this assessment was sent back for revision.
+        -- Kept even after approval so the report still shows it as history; overwritten
+        -- only by a later return, so it always reflects the LATEST return, if any.
         a.RETURN_COMMENT AS ReturnComment,
         ISNULL(cb.FRST_NM, a.CREATED_BY) AS CreatedBy,
         a.UPDATED_DATE AS UpdatedDate,

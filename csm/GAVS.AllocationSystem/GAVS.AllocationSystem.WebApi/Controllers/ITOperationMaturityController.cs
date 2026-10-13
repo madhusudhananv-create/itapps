@@ -2318,7 +2318,10 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 return Content(HttpStatusCode.Conflict, "A comment is required when returning an assessment for revision.");
 
             assessment.STATUS = request.Approve ? "Approved" : "ReturnedForRevision";
-            assessment.RETURN_COMMENT = request.Approve ? null : request.Comment;
+            // Keep the last return reason even after approval - the Domain Assessment
+            // Report shows it as history, so clearing it on approve would hide it.
+            if (!request.Approve)
+                assessment.RETURN_COMMENT = request.Comment;
             assessment.APPROVED_DATE = request.Approve ? DateTime.Now : (DateTime?)null;
             UpdateAuditFields(assessment);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
