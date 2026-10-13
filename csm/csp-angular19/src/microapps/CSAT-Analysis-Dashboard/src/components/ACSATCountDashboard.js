@@ -4716,13 +4716,13 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
                 {!groupByBU && <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>-</TableCell>}
                 <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{grandTotals.cssSentCount}</TableCell>
                 <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{grandTotals.cssReceivedCount}</TableCell>
-                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Meeting Delivery Commitments']} responded={grandTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Meeting Delivery Commitments']} responded={grandTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', }}>
                   {grandTotals.perspectives['Meeting Delivery Commitments']}%
                 </TableCell>
-                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Customer Engagement and Relationship']} responded={grandTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Customer Engagement and Relationship']} responded={grandTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', }}>
                   {grandTotals.perspectives['Customer Engagement and Relationship']}%
                 </TableCell>
-                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Partner adding value to Customer Business']} responded={grandTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+                <TableCell isPercentage isNumeric value={grandTotals.perspectives['Partner adding value to Customer Business']} responded={grandTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', }}>
                   {grandTotals.perspectives['Partner adding value to Customer Business']}%
                 </TableCell>
                 {showMainTrendColumns &&
@@ -4752,13 +4752,13 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             {!groupByBU && <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>-</TableCell>}
             <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{otherAccountTotals.cssSentCount}</TableCell>
             <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{otherAccountTotals.cssReceivedCount}</TableCell>
-            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Meeting Delivery Commitments']} responded={otherAccountTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Meeting Delivery Commitments']} responded={otherAccountTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', }}>
               {otherAccountTotals.perspectives['Meeting Delivery Commitments']}%
             </TableCell>
-            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Customer Engagement and Relationship']} responded={otherAccountTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Customer Engagement and Relationship']} responded={otherAccountTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', }}>
               {otherAccountTotals.perspectives['Customer Engagement and Relationship']}%
             </TableCell>
-            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Partner adding value to Customer Business']} responded={otherAccountTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+            <TableCell isPercentage isNumeric value={otherAccountTotals.perspectives['Partner adding value to Customer Business']} responded={otherAccountTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', }}>
               {otherAccountTotals.perspectives['Partner adding value to Customer Business']}%
             </TableCell>
             {showTop10MainTrendColumns &&
@@ -4784,13 +4784,13 @@ const ACSATCountDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDa
             {!groupByBU && <TableCell style={{ fontWeight: 'bold', color: '#000000' }}>-</TableCell>}
             <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{overallTotals.cssSentCount}</TableCell>
             <TableCell isNumeric style={{ fontWeight: 'bold', color: '#000000' }}>{overallTotals.cssReceivedCount}</TableCell>
-            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Meeting Delivery Commitments']} responded={overallTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Meeting Delivery Commitments']} responded={overallTotals.perspectiveInputTotals?.['Meeting Delivery Commitments'] || 0} style={{ fontWeight: 'bold', }}>
               {overallTotals.perspectives['Meeting Delivery Commitments']}%
             </TableCell>
-            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Customer Engagement and Relationship']} responded={overallTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Customer Engagement and Relationship']} responded={overallTotals.perspectiveInputTotals?.['Customer Engagement and Relationship'] || 0} style={{ fontWeight: 'bold', }}>
               {overallTotals.perspectives['Customer Engagement and Relationship']}%
             </TableCell>
-            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Partner adding value to Customer Business']} responded={overallTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', color: '#000000' }}>
+            <TableCell isPercentage isNumeric value={overallTotals.perspectives['Partner adding value to Customer Business']} responded={overallTotals.perspectiveInputTotals?.['Partner adding value to Customer Business'] || 0} style={{ fontWeight: 'bold', }}>
               {overallTotals.perspectives['Partner adding value to Customer Business']}%
             </TableCell>
             {showTop10MainTrendColumns &&

@@ -4982,9 +4982,9 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
                         : parseFloat(ratingValue);
                       return (
                         <React.Fragment key={perspective}>
-                      <RatingCell 
+                      <RatingCell
                             rating={parsedRating}
-                        style={{ fontWeight: 'bold', color: '#000000' }}
+                        style={{ fontWeight: 'bold' }}
                       >
                             {ratingValue}
                       </RatingCell>
@@ -5022,7 +5022,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
                         <React.Fragment key={perspective}>
                       <RatingCell
                             rating={parsedRating}
-                        style={{ fontWeight: 'bold', color: '#000000' }}
+                        style={{ fontWeight: 'bold' }}
                       >
                             {ratingValue}
                       </RatingCell>
