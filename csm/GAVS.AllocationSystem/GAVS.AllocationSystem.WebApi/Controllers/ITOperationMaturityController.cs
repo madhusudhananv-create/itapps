@@ -1683,6 +1683,18 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     .Where(f => f.ISACTIVE && allScoreIdsForTracker.Contains(f.SCORE_ID) && f.STATUS != "Closed")
                     .Select(f => f.SCORE_ID));
 
+            // "Findings past due" dashboard KPI - still-open (Accepted) findings whose
+            // TARGET_DATE has passed, grouped by score so each domain's tracker row can
+            // sum just the ones under its own scores.
+            var pastDueScoreIds = CSPdb.ITOPS_FINDING.GetAll()
+                .Where(f => f.ISACTIVE && allScoreIdsForTracker.Contains(f.SCORE_ID) && f.STATUS == "Accepted"
+                    && f.TARGET_DATE != null && f.TARGET_DATE.Value < DateTime.Today)
+                .Select(f => f.SCORE_ID)
+                .ToList();
+            var pastDueCountByScoreId = pastDueScoreIds
+                .GroupBy(id => id)
+                .ToDictionary(g => g.Key, g => g.Count());
+
             // Only currently-effective (END_DATE null or future) categories/parameters count
             // toward the denominator, per the V2 effective-dating of master data.
             var today = DateTime.Today;
@@ -1839,7 +1851,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     MaturityLevel = GetMaturityLevel(maturityPct),
                     AccountId = groupCustId,
                     AccountName = groupCustId != null && custNames.ContainsKey(groupCustId) ? custNames[groupCustId] : groupCustId,
-                    AllFindingsResolved = allFindingsResolved
+                    AllFindingsResolved = allFindingsResolved,
+                    PastDueFindingsCount = domainScoreIds.Sum(id => pastDueCountByScoreId.ContainsKey(id) ? pastDueCountByScoreId[id] : 0)
                 };
             }).ToList();
 
@@ -1910,6 +1923,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
 
             var assesseeIdList = findingsByScoreId.Values.Select(f => f.ASSESSEE_EMP_ID).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
             var assesseeNameById = assesseeIdList.ToDictionary(id => id, GetEmpName);
+            var ownerIdList = findingsByScoreId.Values.Select(f => f.OWNER_EMP_ID).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+            var ownerNameById = ownerIdList.ToDictionary(id => id, GetEmpName);
 
             // Surface the assessor's latest dispute reason (if any) alongside the finding -
             // it lives in the free-form activity trail, not on ITOPS_FINDING itself. Only
@@ -1964,7 +1979,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                         : null,
                     DisputeComment = finding != null && disputeCommentByFindingId.ContainsKey(finding.ID)
                         ? disputeCommentByFindingId[finding.ID]
-                        : null
+                        : null,
+                    OwnerEmpId = finding?.OWNER_EMP_ID,
+                    OwnerName = finding != null && !string.IsNullOrEmpty(finding.OWNER_EMP_ID) && ownerNameById.ContainsKey(finding.OWNER_EMP_ID)
+                        ? ownerNameById[finding.OWNER_EMP_ID]
+                        : null,
+                    TargetDate = finding?.TARGET_DATE,
+                    Priority = finding?.PRIORITY,
+                    ActualClosureDate = finding?.ACTUAL_CLOSURE_DATE,
+                    // Derived, never stored - Completed once closed, In Progress once owner +
+                    // target date are both set, otherwise Open (freshly accepted).
+                    RemediationStatus = finding == null || finding.STATUS != "Accepted" && finding.STATUS != "Closed"
+                        ? null
+                        : finding.STATUS == "Closed"
+                            ? "Completed"
+                            : (finding.OWNER_EMP_ID != null && finding.TARGET_DATE != null ? "InProgress" : "Open"),
+                    PastDue = finding != null && finding.STATUS == "Accepted" && finding.TARGET_DATE.HasValue
+                        && finding.TARGET_DATE.Value.Date < DateTime.Now.Date
                 };
             }).ToList();
 
@@ -2457,6 +2488,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             finding.STATUS = request.Accept ? "Accepted" : "Rejected";
             finding.REJECTION_COMMENT = request.Accept ? null : request.Comment;
             finding.ACTION_TAKEN = request.ActionTaken;
+            // Owner defaults to the assessee who accepted it - they can reassign it to
+            // another staffed project member afterwards via SetITOpsFindingRemediationPlan.
+            if (request.Accept) finding.OWNER_EMP_ID = decideEmpId;
             UpdateAuditFields(finding, empId);
             CSPdb.ITOPS_FINDING.Update(finding);
 
@@ -2742,11 +2776,17 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (request == null || string.IsNullOrWhiteSpace(request.ActionTaken))
                 return Content(HttpStatusCode.Conflict, "Describe the action taken before submitting.");
 
+            if (request.ActualClosureDate == null)
+                return Content(HttpStatusCode.Conflict, "Enter the actual closure date before submitting.");
+
             var empId = GetHeaderDetails_String("empId");
             finding.ACTION_TAKEN = request.ActionTaken.Trim();
             finding.LAST_MANAGEMENT_UPDATE = DateTime.Now;
             finding.STATUS = "Closed";
+            // CLOSED_DATE stays the system audit timestamp (when this row changed);
+            // ACTUAL_CLOSURE_DATE is the owner-reported date the remediation was done.
             finding.CLOSED_DATE = DateTime.Now;
+            finding.ACTUAL_CLOSURE_DATE = request.ActualClosureDate.Value.Date;
             UpdateAuditFields(finding, empId);
             CSPdb.ITOPS_FINDING.Update(finding);
 
@@ -2813,6 +2853,81 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     "FindingActionUpdate", null, finding.ID,
                     $"Action update submitted on \"{findingParameter?.NAME}\" in {findingDomain?.NAME}.");
             }
+
+            return Ok(finding);
+        }
+
+        // Owner picker for an Accepted finding - restricted to members currently staffed
+        // on the finding's project, same staffing rule GetITOpsAssesseeCandidates uses
+        // (ITOperationMaturityAdminController.cs), so a reassigned owner is always someone
+        // actually on the team right now.
+        [GET("GetITOpsFindingOwnerCandidates")]
+        [ActionName("GetITOpsFindingOwnerCandidates")]
+        [HttpGet]
+        public IHttpActionResult GetITOpsFindingOwnerCandidates(int findingId)
+        {
+            var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
+            if (finding == null) return NotFound();
+
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsFindingAssessee(finding, empId, "view owner options for this finding");
+            if (denied != null) return denied;
+
+            var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+            var assessment = assessmentId.HasValue ? CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value) : null;
+            if (assessment == null || string.IsNullOrWhiteSpace(assessment.PROJECT_ID)) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var staffedEmpIds = Cldb.PROJECT_RESOURCE.GetAll()
+                .Where(pr => pr.PROJ_ID == assessment.PROJECT_ID && pr.BILL_FLG == true && pr.END_DATE >= DateTime.Now)
+                .Select(pr => pr.EMP_ID)
+                .Distinct()
+                .ToList();
+            if (!staffedEmpIds.Any()) return Ok(new List<ITOPS_EmployeeRosterRow>());
+
+            var rows = Cldb.EMP_INFO.GetAll()
+                .Where(e => staffedEmpIds.Contains(e.EMP_ID) && e.DOR == null)
+                .OrderBy(e => e.FRST_NM)
+                .Select(e => new ITOPS_EmployeeRosterRow { EmpId = e.EMP_ID, Name = e.FRST_NM, Title = e.EMP_CSP_ROLE })
+                .ToList();
+
+            return Ok(rows);
+        }
+
+        // Sets/changes an Accepted finding's remediation plan (owner, target date,
+        // priority) - the "In Progress" step between Accept and the eventual Action
+        // Taken + closure submit. Can be called again before closure to reassign the
+        // owner or adjust the target date; locked once the finding is Closed.
+        [POST("SetITOpsFindingRemediationPlan")]
+        [ActionName("SetITOpsFindingRemediationPlan")]
+        [HttpPost]
+        public IHttpActionResult SetITOpsFindingRemediationPlan(int findingId, [FromBody] ITOPS_FindingRemediationPlanRequest request)
+        {
+            var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
+            if (finding == null) return NotFound();
+            if (request == null) return Content(HttpStatusCode.Conflict, ERROR_MSG);
+
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsFindingAssessee(finding, empId, "set the remediation plan for this finding");
+            if (denied != null) return denied;
+
+            if (finding.STATUS != "Accepted")
+                return Content(HttpStatusCode.Conflict, "A remediation plan can only be set for an accepted finding.");
+
+            if (!string.IsNullOrWhiteSpace(request.OwnerEmpId))
+            {
+                var assessmentId = GetITOpsAssessmentIdForScore(finding.SCORE_ID);
+                var assessment = assessmentId.HasValue ? CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value) : null;
+                if (assessment == null || !IsITOpsEmpCurrentlyAllocated(request.OwnerEmpId, assessment.PROJECT_ID))
+                    return Content(HttpStatusCode.Conflict, "The chosen owner is not currently staffed on this project.");
+                finding.OWNER_EMP_ID = request.OwnerEmpId;
+            }
+
+            if (request.TargetDate.HasValue) finding.TARGET_DATE = request.TargetDate.Value.Date;
+            if (!string.IsNullOrWhiteSpace(request.Priority)) finding.PRIORITY = request.Priority;
+
+            UpdateAuditFields(finding, empId);
+            CSPdb.ITOPS_FINDING.Update(finding);
+            CSPdb.Commit(CanCommit);
 
             return Ok(finding);
         }

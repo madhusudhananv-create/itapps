@@ -249,6 +249,15 @@
               </div>
             </div>
 
+            <p class="finding-rejection-comment" *ngIf="(param.findingStatus === 'Accepted' || param.findingStatus === 'Closed') && (param.findingOwnerName || param.findingTargetDate)">
+              <strong>Remediation:</strong>
+              <span *ngIf="param.findingOwnerName" title="Owner - who is doing the remediation work">Owner {{ param.findingOwnerName }}</span>
+              <span *ngIf="param.findingTargetDate" title="Target date - when the fix was committed to be done by"> &middot; Target {{ param.findingTargetDate | date: 'mediumDate' }}</span>
+              <span *ngIf="param.findingPriority" title="Priority set when planning the remediation"> &middot; {{ param.findingPriority }} priority</span>
+              <span *ngIf="param.findingPastDue" class="finding-pill rejected" style="margin-left:6px;" title="Target date has passed - still open">Past due</span>
+              <span *ngIf="param.findingActualClosureDate" title="Actual closure date - when the remediation was actually completed"> &middot; Closed {{ param.findingActualClosureDate | date: 'mediumDate' }}</span>
+            </p>
+
             <div class="action-taken-nested" *ngIf="(param.findingStatus === 'Accepted' || param.findingStatus === 'Closed') && (param.findingActionTaken || evidenceFor(param).length)">
               <span class="action-taken-label">Action taken{{ param.findingAssesseeName ? ' (by ' + param.findingAssesseeName + ')' : '' }}</span>
               <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
