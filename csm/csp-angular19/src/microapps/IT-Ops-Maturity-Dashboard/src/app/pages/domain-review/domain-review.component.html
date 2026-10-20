@@ -194,7 +194,7 @@
             <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
               <svg *ngIf="param.findingStatus !== 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
               <svg *ngIf="param.findingStatus === 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
-              <ng-container *ngIf="isAssessee(); else notAssesseeLabel">{{ param.findingStatus === 'Rejected' ? "Finding rejected - awaiting assessor's decision" : 'Finding closed' }}</ng-container>
+              <ng-container *ngIf="isAssessee(); else notAssesseeLabel">{{ param.findingStatus === 'Rejected' ? "Finding rejected - awaiting assessor's decision" : (param.findingStatus === 'Closed' ? 'Finding closed' : 'Finding accepted - add action taken below') }}</ng-container>
               <ng-template #notAssesseeLabel>Finding {{ param.findingStatus }}</ng-template>
             </span>
 
@@ -215,6 +215,23 @@
               class="action-taken-nested"
               *ngIf="(param.findingStatus === 'Accepted' || param.findingStatus === 'Closed') && (!isAssessee() || param.findingStatus === 'Closed') && (param.findingActionTaken || evidenceFor(param).length)"
             >
+              <div class="remediation-summary-bar" *ngIf="param.findingOwnerName || param.findingTargetDate || param.findingActualClosureDate">
+                <span class="remediation-summary-chip" *ngIf="param.findingOwnerName" title="Owner - who did the remediation work">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  {{ param.findingOwnerName }}
+                </span>
+                <span class="remediation-summary-chip" *ngIf="param.findingTargetDate" title="Target date - when the fix was committed to be done by">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  Target {{ param.findingTargetDate | date: 'mediumDate' }}
+                </span>
+                <span class="remediation-summary-chip priority-{{ (param.findingPriority || '').toLowerCase() }}" *ngIf="param.findingPriority" title="Priority set when planning the remediation">
+                  {{ param.findingPriority }} priority
+                </span>
+                <span class="remediation-summary-chip" *ngIf="param.findingActualClosureDate" title="Actual closure date - when the remediation was actually completed">
+                  Closed {{ param.findingActualClosureDate | date: 'mediumDate' }}
+                </span>
+              </div>
+
               <span class="action-taken-label">Action taken</span>
               <p class="notes-readout">{{ param.findingActionTaken || 'No action recorded yet.' }}</p>
               <div class="evidence-list" *ngIf="evidenceFor(param).length">
@@ -225,14 +242,103 @@
             </div>
           </div>
 
-          <div class="action-update-block" *ngIf="param.findingStatus === 'Accepted' && isAssessee()">
-            <label class="modal-label">Action Taken</label>
+          <!-- Remediation plan: owner + target date + priority, before the finding can
+               move to In Progress and unlock the Action Taken step below. -->
+          <div
+            class="remediation-card"
+            *ngIf="param.findingStatus === 'Accepted' && param.findingRemediationStatus !== 'InProgress' && param.findingRemediationStatus !== 'Completed' && isAssessee()"
+          >
+            <div class="remediation-card-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v4l3 2M21 12a9 9 0 1 1-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Plan the remediation
+            </div>
+
+            <div class="remediation-grid">
+              <div class="remediation-field">
+                <label class="remediation-label" title="Who will do the remediation work - defaults to you, reassignable within the project team">Owner</label>
+                <app-searchable-select
+                  [options]="ownerOptionsFor(param)"
+                  [(ngModel)]="param.findingOwnerEmpId"
+                  name="owner-{{ param.id }}"
+                  placeholder="Search owner…"
+                ></app-searchable-select>
+              </div>
+
+              <div class="remediation-field">
+                <label class="remediation-label" [attr.for]="'target-' + param.id" title="Date the remediation is committed to be done by">Target date</label>
+                <input class="remediation-date" type="date" [id]="'target-' + param.id" [(ngModel)]="param.findingTargetDate" name="target-{{ param.id }}" />
+              </div>
+
+              <div class="remediation-field">
+                <label class="remediation-label" title="How urgent this remediation is">Priority</label>
+                <div class="priority-toggle" role="radiogroup" aria-label="Priority">
+                  <button
+                    type="button"
+                    class="priority-btn priority-low"
+                    role="radio"
+                    [attr.aria-checked]="param.findingPriority === 'Low'"
+                    [class.active]="param.findingPriority === 'Low'"
+                    (click)="param.findingPriority = 'Low'"
+                  >Low</button>
+                  <button
+                    type="button"
+                    class="priority-btn priority-medium"
+                    role="radio"
+                    [attr.aria-checked]="param.findingPriority === 'Medium'"
+                    [class.active]="param.findingPriority === 'Medium'"
+                    (click)="param.findingPriority = 'Medium'"
+                  >Medium</button>
+                  <button
+                    type="button"
+                    class="priority-btn priority-high"
+                    role="radio"
+                    [attr.aria-checked]="param.findingPriority === 'High'"
+                    [class.active]="param.findingPriority === 'High'"
+                    (click)="param.findingPriority = 'High'"
+                  >High</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-update-footer">
+              <button
+                type="button"
+                class="btn-primary"
+                [disabled]="!param.findingOwnerEmpId || !param.findingTargetDate || savingRemediationPlanId === param.findingId"
+                (click)="saveRemediationPlan(param)"
+              >
+                <app-spinner *ngIf="savingRemediationPlanId === param.findingId" [size]="13" />
+                Save &amp; move to In Progress
+              </button>
+            </div>
+          </div>
+
+          <div class="action-update-block" *ngIf="param.findingStatus === 'Accepted' && param.findingRemediationStatus === 'InProgress' && isAssessee()">
+            <div class="remediation-summary-bar" *ngIf="param.findingOwnerName || param.findingTargetDate">
+              <span class="remediation-summary-chip" *ngIf="param.findingOwnerName" title="Owner - who is doing the remediation work">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                {{ param.findingOwnerName }}
+              </span>
+              <span class="remediation-summary-chip" *ngIf="param.findingTargetDate" [class.past-due]="param.findingPastDue" [title]="param.findingPastDue ? 'Target date has passed - still open' : 'Target date - when the fix is committed to be done by'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Target {{ param.findingTargetDate | date: 'mediumDate' }}
+                <ng-container *ngIf="param.findingPastDue"> &middot; Past due</ng-container>
+              </span>
+              <span class="remediation-summary-chip priority-{{ (param.findingPriority || '').toLowerCase() }}" *ngIf="param.findingPriority" title="Priority set when planning the remediation">
+                {{ param.findingPriority }} priority
+              </span>
+            </div>
+
+            <label class="modal-label" title="Describe what was actually done to fix this finding">Action Taken</label>
             <textarea
               [(ngModel)]="param.findingActionTaken"
               name="action-{{ param.id }}"
               rows="3"
               placeholder="Describe the remediation action taken so far..."
             ></textarea>
+
+            <label class="remediation-label" title="Date the remediation was actually completed - required to close this finding">Actual closure date</label>
+            <input class="remediation-date" type="date" [(ngModel)]="param.findingActualClosureDate" name="closure-{{ param.id }}" />
 
             <div class="evidence-list" *ngIf="evidenceFor(param).length">
               <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">

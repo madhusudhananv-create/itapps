@@ -346,12 +346,20 @@ CREATE TABLE ITOPS_FINDING (
     REJECTION_COMMENT VARCHAR(1000) NULL,
     LAST_MANAGEMENT_UPDATE DATETIME NULL,
     CLOSED_DATE DATETIME NULL,
+    -- Remediation tracking (see V2_36_FindingRemediationFields.sql) - OWNER_EMP_ID
+    -- defaults to ASSESSEE_EMP_ID but can be reassigned within the project's staffed
+    -- team; ACTUAL_CLOSURE_DATE is the owner-reported completion date, distinct from
+    -- CLOSED_DATE which stays the system audit timestamp.
+    OWNER_EMP_ID VARCHAR(50) NULL,
+    PRIORITY VARCHAR(10) NULL,
+    ACTUAL_CLOSURE_DATE DATE NULL,
     CREATED_BY VARCHAR(10), CREATED_DATE DATETIME,
     UPDATED_BY VARCHAR(10), UPDATED_DATE DATETIME,
     ISACTIVE BIT,
     CONSTRAINT FK_ITOPS_FINDING_SCORE FOREIGN KEY (SCORE_ID) REFERENCES ITOPS_SCORE(ID),
     CONSTRAINT FK_ITOPS_FINDING_ASSESSEE FOREIGN KEY (ASSESSEE_EMP_ID) REFERENCES EMP_INFO(EMP_ID),
-    CONSTRAINT FK_ITOPS_FINDING_RETARGET_APPROVER FOREIGN KEY (RETARGET_APPROVED_BY) REFERENCES EMP_INFO(EMP_ID)
+    CONSTRAINT FK_ITOPS_FINDING_RETARGET_APPROVER FOREIGN KEY (RETARGET_APPROVED_BY) REFERENCES EMP_INFO(EMP_ID),
+    CONSTRAINT FK_ITOPS_FINDING_OWNER FOREIGN KEY (OWNER_EMP_ID) REFERENCES EMP_INFO(EMP_ID)
 );
 GO
 
@@ -943,10 +951,9 @@ BEGIN
             ELSE 'On Target'
         END AS DueStatus,
         am.END_DATE AS TargetDate,
-        -- Reviewer's reason when sending the assessment back (Return for Revision) -
-        -- only meaningful while the assessment actually carries that status; cleared
-        -- (set NULL) by the app the moment it's approved instead of being overwritten
-        -- by a future return, so it always reflects the LATEST return, if any.
+        -- Reviewer's reason the last time this assessment was sent back for revision.
+        -- Kept even after approval so the report still shows it as history; overwritten
+        -- only by a later return, so it always reflects the LATEST return, if any.
         a.RETURN_COMMENT AS ReturnComment,
         ISNULL(cb.FRST_NM, a.CREATED_BY) AS CreatedBy,
         a.UPDATED_DATE AS UpdatedDate,
@@ -1120,7 +1127,14 @@ BEGIN
         par.NAME AS Parameter,
         par.DEFINITION AS Question,
         s.SCORE_VALUE AS Score,
-        am.END_DATE AS TargetDate,
+        -- Finding-level target date (V2_36_FindingRemediationFields.sql), falling back to
+        -- the cycle's own end date for findings accepted before that feature existed.
+        ISNULL(f.TARGET_DATE, am.END_DATE) AS TargetDate,
+        ISNULL(fo.FRST_NM, f.OWNER_EMP_ID) AS Owner,
+        f.PRIORITY AS Priority,
+        f.ACTUAL_CLOSURE_DATE AS ActualClosureDate,
+        CASE WHEN f.TARGET_DATE IS NOT NULL AND f.ACTUAL_CLOSURE_DATE IS NOT NULL
+             THEN DATEDIFF(day, f.TARGET_DATE, f.ACTUAL_CLOSURE_DATE) END AS DaysToClose,
         s.CREATED_DATE AS CreatedDate,
         ISNULL(scb.FRST_NM, s.CREATED_BY) AS CreatedBy,
         s.UPDATED_DATE AS UpdatedDate,
@@ -1168,6 +1182,7 @@ BEGIN
     LEFT JOIN ITOPS_FINDING f ON f.SCORE_ID = s.ID AND f.ISACTIVE = 1
     LEFT JOIN EMP_INFO scb ON scb.EMP_ID = s.CREATED_BY AND scb.DOR IS NULL
     LEFT JOIN EMP_INFO sub ON sub.EMP_ID = s.UPDATED_BY AND sub.DOR IS NULL
+    LEFT JOIN EMP_INFO fo ON fo.EMP_ID = f.OWNER_EMP_ID AND fo.DOR IS NULL
     OUTER APPLY (
         SELECT TOP 1 fa.ACTIVITY_TYPE, fa.COMMENTS
         FROM ITOPS_FINDING_ACTIVITY fa
