@@ -305,6 +305,8 @@ namespace GAVS.AllocationSystem.Data.Contracts
             string status, List<AimiAiToolTvpRow> aiTools, List<string> accelerators, List<string> qualitativeBenefits,
             string empId);
         void AimiDeleteActivity(int? id, List<int> ids, string empId);
+        List<AimiActivityChangeSpRow> AimiGetPendingActivityChanges(string projectId, string practice);
+        void AimiClearActivityChanges(string projectId, string practice);
 
         List<AimiProjectInfoSpRow> AimiGetProjectInfo(string projectId);
         int AimiUpsertProjectInfo(int? id, string projectId, int? peopleUsingAi, bool isProjectNa, string naComments,
@@ -312,7 +314,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
             string runopsAiAgents, string runopsAutomatedWorkflows, string runopsMttd, string runopsMttr,
             string engineerAiAgents, string engineerDeliveryCycleTime, string engineerContractTestCasePassRate,
             string engineerPerformanceDefectsPreRelease, string commonAdoptionWorkforceCertification,
-            string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool presentationDone,
+            string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool pptStatus, bool presentationDone,
             string projectFy, string empId);
         int AimiUpdateAcceptedScore(string projectId, string practice, decimal? acceptedScore, bool scoreReviewed, string acceptedScoreComment, string empId);
 

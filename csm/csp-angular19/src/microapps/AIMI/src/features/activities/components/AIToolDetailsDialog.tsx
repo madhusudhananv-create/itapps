@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,6 +14,7 @@ import {
 
 import { SelectField, NumberField } from './FormFieldComponents';
 import type { AIToolDetails } from '../types/activityTypes';
+import { validateAIToolDetails } from '../utils/formValidationUtils';
 
 interface AIToolDetailsDialogProps {
   open: boolean;
@@ -54,29 +55,45 @@ export const AIToolDetailsDialog: React.FC<
   aiToolDetails,
   onChange,
 }) => {
+  // Edits are held here until Save, so Cancel can discard them and it is clear when they were applied.
+  const [draft, setDraft] = useState<AIToolDetails>(aiToolDetails);
+
+  useEffect(() => {
+    if (open) setDraft(aiToolDetails);
+    // Only reset when the pop-up opens, not on every edit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const detailsComplete = validateAIToolDetails(aiTools, draft);
+
+  const handleSave = () => {
+    onChange(draft);
+    onClose();
+  };
+
   const updateToolDetails = (
     tool: string,
     field: 'accessType' | 'licenseCount' | 'networkType',
     value: string | number
   ) => {
-    onChange({
-      ...aiToolDetails,
+    setDraft({
+      ...draft,
 
       [tool]: {
 accessType:
           field === 'accessType'
             ? String(value)
-            : aiToolDetails?.[tool]?.accessType || '',
+            : draft?.[tool]?.accessType || '',
 
         licenseCount:
           field === 'licenseCount'
             ? Number(value)
-            : aiToolDetails?.[tool]?.licenseCount || 0,
+            : draft?.[tool]?.licenseCount || 0,
 
         networkType:
           field === 'networkType'
             ? String(value)
-            : aiToolDetails?.[tool]?.networkType || '',
+            : draft?.[tool]?.networkType || '',
       },
     });
   };
@@ -107,6 +124,10 @@ accessType:
               <TableCell>
                 <strong>No. of Licenses</strong>
               </TableCell>
+
+              <TableCell>
+                <strong>Network Type</strong>
+              </TableCell>
             </TableRow>
           </TableHead>
 
@@ -119,7 +140,7 @@ accessType:
                   <SelectField
                     label=""
                     value={
-                      aiToolDetails?.[tool]?.accessType || ''
+                      draft?.[tool]?.accessType || ''
                     }
                     onChange={(value) =>
                       updateToolDetails(
@@ -136,7 +157,7 @@ accessType:
                   <NumberField
                     label=""
                     value={
-                      aiToolDetails?.[tool]?.licenseCount || 0
+                      draft?.[tool]?.licenseCount || 0
                     }
                     onChange={(value) =>
                       updateToolDetails(
@@ -147,7 +168,7 @@ accessType:
                     }
                     min={0}
                     disabled={
-                      aiToolDetails?.[tool]?.accessType !==
+                      draft?.[tool]?.accessType !==
                       'Licensed'
                     }
                   />
@@ -156,7 +177,7 @@ accessType:
                   <SelectField
                     label=""
                     value={
-                      aiToolDetails?.[tool]?.networkType || ''
+                      draft?.[tool]?.networkType || ''
                     }
                     onChange={(value) =>
                       updateToolDetails(
@@ -175,8 +196,15 @@ accessType:
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>
-          Close
+        <Button onClick={onClose} color="inherit">
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          disabled={!detailsComplete}
+        >
+          Save
         </Button>
       </DialogActions>
     </Dialog>

@@ -23,6 +23,7 @@ const ENDPOINTS = {
   UPSERT_ACTIVITY: '/api/AllSys/UpsertAimiActivity',
   DELETE_ACTIVITY: '/api/AllSys/DeleteAimiActivity',
   UPDATE_ACCEPTED_SCORE: '/api/AllSys/UpdateAimiAcceptedScore',
+  SEND_SUBMIT_MAIL: '/api/AllSys/SendAimiSubmitMail',
 };
 
 // Admin review of a project's Overall Score. Stored on the activity rows (all
@@ -228,6 +229,21 @@ export const activityService = {
     } catch (error) {
       console.error('Error deleting activity:', error);
       throw error;
+    }
+  },
+
+  /**
+   * Asks the API to send the "Activities submitted" mail (what was added / updated /
+   * deleted since the last submit). Best effort - a mail problem must never fail the submit.
+   */
+  sendSubmitMail: async (projectId: string, practice: string): Promise<void> => {
+    try {
+      await aimiApiClient.post(ENDPOINTS.SEND_SUBMIT_MAIL, {
+        PROJECT_ID: projectId,
+        PRACTICE: practice,
+      });
+    } catch (error) {
+      console.error('Error sending submit mail:', error);
     }
   },
 

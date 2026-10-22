@@ -151,6 +151,14 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         [JsonProperty("IDS")] public List<int> IDS { get; set; }
     }
 
+    // Asks the API to send the "Activities submitted" mail for one project + practice.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiSubmitMailRequest
+    {
+        [JsonProperty("PROJECT_ID")] public string PROJECT_ID { get; set; }
+        [JsonProperty("PRACTICE")] public string PRACTICE { get; set; }
+    }
+
     [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
     public class AimiProjectInfoUpsertRequest
     {
@@ -174,6 +182,7 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
         [JsonProperty("COMMON_ADOPTION_WORKFORCE_CERTIFICATION")] public string COMMON_ADOPTION_WORKFORCE_CERTIFICATION { get; set; }
         [JsonProperty("COMMON_ADOPTION_EFFORTS_SAVED")] public string COMMON_ADOPTION_EFFORTS_SAVED { get; set; }
         [JsonProperty("COMMON_DEPLOYMENT_ENGINEER")] public string COMMON_DEPLOYMENT_ENGINEER { get; set; }
+        [JsonProperty("PPT_STATUS")] public bool PPT_STATUS { get; set; }
         [JsonProperty("PRESENTATION_DONE")] public bool PRESENTATION_DONE { get; set; }
         [JsonProperty("PROJECT_FY")] public string PROJECT_FY { get; set; }
     }

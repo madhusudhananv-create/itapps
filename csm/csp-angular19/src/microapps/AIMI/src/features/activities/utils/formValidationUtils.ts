@@ -151,6 +151,11 @@ export const isFormValid = (formData: ActivityFormData): boolean => {
     return false;
   }
 
+  // Selected AI tools must be configured (access type, and license count when Licensed)
+  if (!validateAIToolDetails(formData.aiToolUsed, formData.aiToolDetails)) {
+    return false;
+  }
+
   // When AI Tools Used is selected, its details and Client Approved become mandatory
   /* if (validateAITools(formData.aiToolUsed)) {
     return (
@@ -175,9 +180,14 @@ export const hasFormChanges = (
     formData.activity !== originalFormData.activity ||
     formData.applicability !== originalFormData.applicability ||
     formData.aiAdoptionScore !== originalFormData.aiAdoptionScore ||
-    formData.aiToolUsed !== originalFormData.aiToolUsed ||
+    JSON.stringify(formData.aiToolUsed) !==
+      JSON.stringify(originalFormData.aiToolUsed) ||
+    // Access type / licenses / network type edited in the Configure AI Tool Details pop-up
+    JSON.stringify(formData.aiToolDetails ?? {}) !==
+      JSON.stringify(originalFormData.aiToolDetails ?? {}) ||
     //formData.clientApproved !== originalFormData.clientApproved ||
-    formData.acceleratorsUsed !== originalFormData.acceleratorsUsed ||
+    JSON.stringify(formData.acceleratorsUsed) !==
+      JSON.stringify(originalFormData.acceleratorsUsed) ||
     formData.workDoneByAI !== originalFormData.workDoneByAI ||
     formData.hoursSaved !== originalFormData.hoursSaved ||
     formData.revenueGenerated !== originalFormData.revenueGenerated ||

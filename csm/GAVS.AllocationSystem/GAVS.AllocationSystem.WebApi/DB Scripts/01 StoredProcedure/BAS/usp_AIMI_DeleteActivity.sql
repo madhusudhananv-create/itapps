@@ -17,6 +17,8 @@ BEGIN
 
     UPDATE AIMI_ACTIVITY
        SET ISACTIVE = 0,
+           -- an activity added and deleted before any submit was never reported, so nothing to report
+           CHANGE_TYPE = CASE WHEN CHANGE_TYPE = 'Added' THEN NULL ELSE 'Deleted' END,
            UPDATED_BY = @EMP_ID,
            UPDATED_DATE = GETDATE()
      WHERE ISACTIVE = 1

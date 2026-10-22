@@ -33,6 +33,7 @@ export interface SaveProjectInfoParams {
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
 
+  pptStatus?: boolean;
   presentationDone?: boolean;
   projectFY?: string;
 }

@@ -128,6 +128,7 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
         [JsonProperty("COMMON_ADOPTION_WORKFORCE_CERTIFICATION")] public string COMMON_ADOPTION_WORKFORCE_CERTIFICATION { get; set; }
         [JsonProperty("COMMON_ADOPTION_EFFORTS_SAVED")] public string COMMON_ADOPTION_EFFORTS_SAVED { get; set; }
         [JsonProperty("COMMON_DEPLOYMENT_ENGINEER")] public string COMMON_DEPLOYMENT_ENGINEER { get; set; }
+        [JsonProperty("PPT_STATUS")] public bool PPT_STATUS { get; set; }
         [JsonProperty("PRESENTATION_DONE")] public bool PRESENTATION_DONE { get; set; }
         [JsonProperty("PROJECT_FY")] public string PROJECT_FY { get; set; }
         [JsonProperty("CREATED_BY")] public string CREATED_BY { get; set; }
@@ -253,6 +254,23 @@ namespace GAVS.AllocationSystem.Model.CSP.SP
     {
         [JsonProperty("NAME")] public string NAME { get; set; }
         [JsonProperty("SORT_ORDER")] public int SORT_ORDER { get; set; }
+    }
+
+    // usp_AIMI_GetPendingActivityChanges - one activity added/updated/deleted since the last submit mail.
+    [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]
+    public class AimiActivityChangeSpRow
+    {
+        [JsonProperty("ID")] public int ID { get; set; }
+        [JsonProperty("PROJECT_ID")] public string PROJECT_ID { get; set; }
+        [JsonProperty("PROJECT")] public string PROJECT { get; set; }
+        [JsonProperty("ACCOUNT")] public string ACCOUNT { get; set; }
+        [JsonProperty("BUSINESS_UNIT")] public string BUSINESS_UNIT { get; set; }
+        [JsonProperty("PRACTICE")] public string PRACTICE { get; set; }
+        [JsonProperty("SDLC_PHASE")] public string SDLC_PHASE { get; set; }
+        [JsonProperty("ACTIVITY")] public string ACTIVITY { get; set; }
+        [JsonProperty("APPLICABILITY")] public string APPLICABILITY { get; set; }
+        [JsonProperty("AI_ADOPTION_SCORE")] public byte? AI_ADOPTION_SCORE { get; set; }
+        [JsonProperty("CHANGE_TYPE")] public string CHANGE_TYPE { get; set; }
     }
 
     // AIMI_AI_TOOL / AIMI_ACCELERATOR have no SORT_ORDER column - alphabetical

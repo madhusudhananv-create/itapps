@@ -82,6 +82,7 @@ interface ProjectInfoFormData {
   runOpsMTTR?: string;
   licenseCount?: number;
   licenseProvider?: string;
+  pptStatus?: boolean;
   presentationDone?: boolean;
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
@@ -361,6 +362,7 @@ export function Activities() {
           newData.runOpsAutomatedWorkflows = '';
           newData.runOpsMTTD = '';
           newData.runOpsMTTR = '';
+          newData.pptStatus = false;
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
@@ -394,6 +396,7 @@ export function Activities() {
           newData.runOpsAutomatedWorkflows = '';
           newData.runOpsMTTD = '';
           newData.runOpsMTTR = '';
+          newData.pptStatus = false;
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';
@@ -448,6 +451,7 @@ export function Activities() {
           newData.runOpsAutomatedWorkflows = '';
           newData.runOpsMTTD = '';
           newData.runOpsMTTR = '';
+          newData.pptStatus = false;
           newData.presentationDone = false;
           newData.commonDeploymentEngineer = '';
           newData.commonAdoptionWorkforceCertification = '';

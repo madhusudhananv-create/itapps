@@ -35,6 +35,7 @@ export interface ProjectInfo {
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
 
+  pptStatus?: boolean;
   presentationDone?: boolean;
   projectFY?: string;
   createdAt?: Date;
@@ -64,6 +65,7 @@ interface ApiProjectInfoRow {
   COMMON_ADOPTION_WORKFORCE_CERTIFICATION: string | null;
   COMMON_ADOPTION_EFFORTS_SAVED: string | null;
   COMMON_DEPLOYMENT_ENGINEER: string | null;
+  PPT_STATUS: boolean;
   PRESENTATION_DONE: boolean;
   PROJECT_FY: string | null;
   CREATED_DATE: string | null;
@@ -93,6 +95,7 @@ const fromApiProjectInfo = (row: ApiProjectInfoRow): ProjectInfo => ({
     row.COMMON_ADOPTION_WORKFORCE_CERTIFICATION ?? undefined,
   commonAdoptionEffortsSaved: row.COMMON_ADOPTION_EFFORTS_SAVED ?? undefined,
   commonDeploymentEngineer: row.COMMON_DEPLOYMENT_ENGINEER ?? undefined,
+  pptStatus: row.PPT_STATUS ?? false,
   presentationDone: row.PRESENTATION_DONE ?? false,
   projectFY: row.PROJECT_FY ?? '',
   createdAt: row.CREATED_DATE ? new Date(row.CREATED_DATE) : new Date(),
@@ -122,6 +125,7 @@ const toUpsertPayload = (projectInfo: Omit<ProjectInfo, 'createdAt' | 'updatedAt
     projectInfo.commonAdoptionWorkforceCertification,
   COMMON_ADOPTION_EFFORTS_SAVED: projectInfo.commonAdoptionEffortsSaved,
   COMMON_DEPLOYMENT_ENGINEER: projectInfo.commonDeploymentEngineer,
+  PPT_STATUS: projectInfo.pptStatus ?? false,
   PRESENTATION_DONE: projectInfo.presentationDone ?? false,
   PROJECT_FY: projectInfo.projectFY,
 });
@@ -168,6 +172,7 @@ const getProjectInfo = async (projectId: string): Promise<ProjectInfo> => {
         naComments: '',
         licenseCount: 0,
         licenseProvider: '',
+        pptStatus: false,
         presentationDone: false,
         projectFY: '',
         createdAt: new Date(),

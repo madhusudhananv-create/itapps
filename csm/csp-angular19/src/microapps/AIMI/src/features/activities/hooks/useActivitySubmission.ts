@@ -5,6 +5,7 @@ import type {
   ActivityWithProjectInfo,
 } from '../types/activityTypes';
 import { activityStorageUtils } from '@activities/utils/activityStorageUtils';
+import { activityService } from '../services/activityService';
 import { logError } from '@shared/services/aimiLogService';
 
 interface FormData {
@@ -103,6 +104,10 @@ export const useActivitySubmission = () => {
     try {
       const { projectId, activities: updatedActivityData } =
         await persistActivities(activities, formData, 'submitted');
+
+      // One mail per submit listing what was added / updated / deleted. Not awaited and
+      // never throws, so a mail problem can't hold up or fail the submit.
+      void activityService.sendSubmitMail(projectId, formData.practice);
 
       // Show success message
       setSubmitSuccess(true);

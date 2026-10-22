@@ -136,6 +136,7 @@ const restoreProjectInfo = async (
         ),
         COMMON_ADOPTION_EFFORTS_SAVED: toText(row.COMMON_ADOPTION_EFFORTS_SAVED),
         COMMON_DEPLOYMENT_ENGINEER: toText(row.COMMON_DEPLOYMENT_ENGINEER),
+        PPT_STATUS: toFlag(row.PPT_STATUS),
         PRESENTATION_DONE: toFlag(row.PRESENTATION_DONE),
         PROJECT_FY: toText(row.PROJECT_FY),
       });

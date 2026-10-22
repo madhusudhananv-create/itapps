@@ -2497,6 +2497,23 @@ namespace GAVS.AllocationSystem.Data
             dbContext.Database.ExecuteSqlCommand("[dbo].[usp_AIMI_DeleteActivity] @ID, @IDS, @EMP_ID", param1, param2, param3);
         }
 
+        public List<AimiActivityChangeSpRow> AimiGetPendingActivityChanges(string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", projectId);
+            var param2 = new SqlParameter("@PRACTICE", practice);
+            return dbContext.Database.SqlQuery<AimiActivityChangeSpRow>(
+                "[dbo].[usp_AIMI_GetPendingActivityChanges] @PROJECT_ID, @PRACTICE", param1, param2).ToList();
+        }
+
+        public void AimiClearActivityChanges(string projectId, string practice)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@PROJECT_ID", projectId);
+            var param2 = new SqlParameter("@PRACTICE", practice);
+            dbContext.Database.ExecuteSqlCommand("[dbo].[usp_AIMI_ClearActivityChanges] @PROJECT_ID, @PRACTICE", param1, param2);
+        }
+
         public List<AimiProjectInfoSpRow> AimiGetProjectInfo(string projectId)
         {
             var dbContext = new CSPDbContext();
@@ -2510,7 +2527,7 @@ namespace GAVS.AllocationSystem.Data
             string runopsAiAgents, string runopsAutomatedWorkflows, string runopsMttd, string runopsMttr,
             string engineerAiAgents, string engineerDeliveryCycleTime, string engineerContractTestCasePassRate,
             string engineerPerformanceDefectsPreRelease, string commonAdoptionWorkforceCertification,
-            string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool presentationDone,
+            string commonAdoptionEffortsSaved, string commonDeploymentEngineer, bool pptStatus, bool presentationDone,
             string projectFy, string empId)
         {
             var dbContext = new CSPDbContext();
@@ -2538,15 +2555,16 @@ namespace GAVS.AllocationSystem.Data
             var param21 = new SqlParameter("@PRESENTATION_DONE", presentationDone);
             var param22 = new SqlParameter("@PROJECT_FY", (object)projectFy ?? DBNull.Value);
             var param23 = new SqlParameter("@EMP_ID", empId);
+            var param24 = new SqlParameter("@PPT_STATUS", pptStatus);
 
             return dbContext.Database.SqlQuery<int>(
                 "[dbo].[usp_AIMI_UpsertProjectInfo] @ID OUTPUT, @PROJECT_ID, @PEOPLE_USING_AI, @IS_PROJECT_NA, @NA_COMMENTS, @LICENSE_COUNT, @LICENSE_PROVIDER, " +
                 "@RUNOPS_AUTO_RESOLVED, @RUNOPS_MTTR_REDUCTION, @RUNOPS_AI_AGENTS, @RUNOPS_AUTOMATED_WORKFLOWS, @RUNOPS_MTTD, @RUNOPS_MTTR, " +
                 "@ENGINEER_AI_AGENTS, @ENGINEER_DELIVERY_CYCLE_TIME, @ENGINEER_CONTRACT_TEST_CASE_PASS_RATE, @ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE, " +
                 "@COMMON_ADOPTION_WORKFORCE_CERTIFICATION, @COMMON_ADOPTION_EFFORTS_SAVED, @COMMON_DEPLOYMENT_ENGINEER, " +
-                "@PRESENTATION_DONE, @PROJECT_FY, @EMP_ID",
+                "@PRESENTATION_DONE, @PROJECT_FY, @EMP_ID, @PPT_STATUS",
                 idParam, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12,
-                param13, param14, param15, param16, param17, param18, param19, param20, param21, param22, param23).Single();
+                param13, param14, param15, param16, param17, param18, param19, param20, param21, param22, param23, param24).Single();
         }
 
         // Touches only ACCEPTED_SCORE / SCORE_REVIEWED / ACCEPTED_SCORE_COMMENT on the project's

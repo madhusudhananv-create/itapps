@@ -229,13 +229,23 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (string.IsNullOrWhiteSpace(request.PROJECT_ID)) return BadRequest("PROJECT_ID is required.");
 
             var empId = GetHeaderDetails_String("empId");
+
+            // PPT Status / Presentation Done are editable by AIMI admins (resource 833, which includes
+            // the DevX team) only. For anyone else keep the stored values, whatever the client sent.
+            if (!IsAimiAdmin(empId))
+            {
+                var existing = CSPdb.AppRepo.AimiGetProjectInfo(request.PROJECT_ID).FirstOrDefault();
+                request.PPT_STATUS = existing != null && existing.PPT_STATUS;
+                request.PRESENTATION_DONE = existing != null && existing.PRESENTATION_DONE;
+            }
+
             var newId = CSPdb.AppRepo.AimiUpsertProjectInfo(
                 request.ID, request.PROJECT_ID, request.PEOPLE_USING_AI, request.IS_PROJECT_NA, request.NA_COMMENTS,
                 request.LICENSE_COUNT, request.LICENSE_PROVIDER, request.RUNOPS_AUTO_RESOLVED, request.RUNOPS_MTTR_REDUCTION,
                 request.RUNOPS_AI_AGENTS, request.RUNOPS_AUTOMATED_WORKFLOWS, request.RUNOPS_MTTD, request.RUNOPS_MTTR,
                 request.ENGINEER_AI_AGENTS, request.ENGINEER_DELIVERY_CYCLE_TIME, request.ENGINEER_CONTRACT_TEST_CASE_PASS_RATE,
                 request.ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE, request.COMMON_ADOPTION_WORKFORCE_CERTIFICATION,
-                request.COMMON_ADOPTION_EFFORTS_SAVED, request.COMMON_DEPLOYMENT_ENGINEER, request.PRESENTATION_DONE,
+                request.COMMON_ADOPTION_EFFORTS_SAVED, request.COMMON_DEPLOYMENT_ENGINEER, request.PPT_STATUS, request.PRESENTATION_DONE,
                 request.PROJECT_FY, empId);
 
             return Ok(new AimiIdResult { ID = newId });
@@ -267,6 +277,143 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // Admin only (same resource id 833 as the delete action). The dashboard reads stored
         // monthly snapshots. The current month's snapshot is kept up to date by the trigger
         // TR_AIMI_ACTIVITY_ScoreSnapshot on every activity change, and again when the dashboard loads.
+
+        // Writes a mail problem to AIMI_ERROR_LOG (the same table the AIMI app's own error log uses).
+        private void LogAimiMailError(string empId, string action, string message, Exception ex = null)
+        {
+            try
+            {
+                CSPdb.AppRepo.AimiInsertErrorLog(empId, "ActivityMail", Truncate(action, 100),
+                    Truncate(Request?.RequestUri?.ToString(), 500), Truncate(message, 4000),
+                    Truncate(ex?.GetType().ToString(), 200), Truncate(ex?.ToString(), 8000));
+            }
+            catch { }
+        }
+
+        // Sent once per "Submit Activities" (not on every draft save, edit or delete). Lists what was added,
+        // updated and deleted since the previous submit, using AIMI_ACTIVITY.CHANGE_TYPE, which the save/delete
+        // procs maintain. Nothing is sent when nothing changed.
+        [POST("SendAimiSubmitMail")]
+        [ActionName("SendAimiSubmitMail")]
+        [HttpPost]
+        public IHttpActionResult SendAimiSubmitMail([FromBody] AimiSubmitMailRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.PROJECT_ID) || string.IsNullOrWhiteSpace(request.PRACTICE))
+                return BadRequest("PROJECT_ID and PRACTICE are required.");
+
+            SendAimiSubmitMailInternal(GetHeaderDetails_String("empId"), request.PROJECT_ID, request.PRACTICE);
+            return Ok();
+        }
+
+        // The person who submitted is on To; the AIMI admin mail IDs (configuration_ext key AIMI_admin_mail) and
+        // the DevX mailbox are on CC, so we don't list every employee holding admin access. Mail trouble must
+        // never fail the submit itself, so it is written to AIMI_ERROR_LOG instead of being thrown. A mail that
+        // was sent also gets its row in EMAIL_LOG from EmailProvider. The change flags are cleared only after a
+        // successful send, so a failed mail is retried with the next submit.
+        private void SendAimiSubmitMailInternal(string empId, string projectId, string practice)
+        {
+            try
+            {
+                var changes = CSPdb.AppRepo.AimiGetPendingActivityChanges(projectId, practice);
+                if (!changes.Any()) return;
+
+                var submitter = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId);
+                var submitterName = submitter == null ? empId : ((submitter.FRST_NM + " " + submitter.LAST_NM).Trim());
+                if (submitter == null || string.IsNullOrWhiteSpace(submitter.EMAIL_ID))
+                {
+                    LogAimiMailError(empId, "Submit", "Mail not sent: no email address found for employee " + empId);
+                    return;
+                }
+                var to = submitter.EMAIL_ID.Trim();
+                var cc = helper.ConcatEmails(new List<string> { helper.GetDBConfig("AIMI_admin_mail", "-1"), Constants.DEVX_MAIL });
+
+                Func<string, string> enc = s => System.Web.HttpUtility.HtmlEncode(s ?? "");
+                var added = changes.Where(c => c.CHANGE_TYPE == "Added").ToList();
+                var updated = changes.Where(c => c.CHANGE_TYPE == "Updated").ToList();
+                var deleted = changes.Where(c => c.CHANGE_TYPE == "Deleted").ToList();
+
+                var summary = new List<string>();
+                if (added.Any()) summary.Add(added.Count + " added");
+                if (updated.Any()) summary.Add(updated.Count + " updated");
+                if (deleted.Any()) summary.Add(deleted.Count + " deleted");
+
+                var sections = new System.Text.StringBuilder();
+                sections.Append(BuildAimiChangeSection("Added", "Newly added activities", "#2e7d32", "#ffffff", "none", added, enc));
+                sections.Append(BuildAimiChangeSection("Updated", "Updated activities", "#b26a00", "#fff4d6", "none", updated, enc));
+                sections.Append(BuildAimiChangeSection("Deleted", "Deleted activities", "#c62828", "#ffffff", "line-through", deleted, enc));
+
+                var first = changes.First();
+                var mailContent = helper.GetEmailContent("AimiActivityUpdate.htm", new Dictionary<string, string>
+                {
+                    { "Submitted_By", enc(submitterName) },
+                    { "Date", DateTime.Now.ToString("dd MMM yyyy HH:mm") },
+                    { "Account", enc(first.ACCOUNT) },
+                    { "Project", enc(first.PROJECT) },
+                    { "Practice", enc(first.PRACTICE) },
+                    { "Summary", enc(string.Join(", ", summary)) },
+                    { "CHANGE_SECTIONS", sections.ToString() },
+                });
+
+                var subject = "AIMI - Activities submitted : " + first.PROJECT + " (" + first.PRACTICE + ")";
+
+                var ep = new EmailProvider(Cldb, CSPdb);
+                // ProjId is left empty on purpose: a "PROJ..." id makes EmailProvider add the whole GSLab
+                // DEVEX_CC_LIST, which this mail doesn't want.
+                var sent = ep.SendEmail(
+                    new EmailConfig { environment = enumEnvironment.Dev, smtpAccount = _email, smtpHost = "smtp.office365.com", smtpPassword = _password, smtpPortValue = "587" },
+                    new EmailContent { from = _email, to = to, cc = cc, content = mailContent, subject = subject, hasAttachments = false, attachmentFilePath = "" },
+                    Request);
+
+                if (sent)
+                    CSPdb.AppRepo.AimiClearActivityChanges(projectId, practice);
+                else
+                    LogAimiMailError(empId, "Submit", "Submit mail not sent for project " + first.PROJECT + ". See EMAIL_LOG for the SMTP error.");
+            }
+            catch (Exception ex)
+            {
+                LogAimiMailError(empId, "Submit", "Submit mail failed: " + ex.Message, ex);
+            }
+        }
+
+        // One coloured table (heading + rows) for the submit mail; empty string when there is nothing in it.
+        // Inline styles only - mail clients ignore most <style> blocks.
+        private static string BuildAimiChangeSection(string label, string heading, string accent, string rowBackground,
+            string textDecoration, List<AimiActivityChangeSpRow> rows, Func<string, string> enc)
+        {
+            if (rows == null || !rows.Any()) return "";
+
+            var cell = "padding:8px 12px;border:1px solid #d9d9d9;text-align:left;vertical-align:top;";
+            var sb = new System.Text.StringBuilder();
+            sb.Append("<p style=\"margin:22px 0 6px 0;font-size:14px;font-weight:bold;color:" + accent + ";\">"
+                + "<span style=\"background:" + accent + ";color:#ffffff;padding:2px 10px;border-radius:10px;font-size:12px;\">" + label + "</span>"
+                + "&nbsp; " + heading + " (" + rows.Count + ")</p>");
+            sb.Append("<table cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;font-size:13px;\">");
+            sb.Append("<tr style=\"background:#f2f2f2;\">"
+                + "<th style=\"" + cell + "\">SDLC Phase</th><th style=\"" + cell + "\">Activity</th>"
+                + "<th style=\"" + cell + "\">Applicability</th><th style=\"" + cell + "\">AI Adoption Score</th></tr>");
+            foreach (var r in rows)
+            {
+                sb.Append("<tr style=\"background:" + rowBackground + ";text-decoration:" + textDecoration + ";\">"
+                    + "<td style=\"" + cell + "\">" + enc(r.SDLC_PHASE) + "</td>"
+                    + "<td style=\"" + cell + "\">" + enc(r.ACTIVITY) + "</td>"
+                    + "<td style=\"" + cell + "\">" + enc(r.APPLICABILITY) + "</td>"
+                    + "<td style=\"" + cell + "\">" + (r.AI_ADOPTION_SCORE.HasValue ? r.AI_ADOPTION_SCORE.Value.ToString() : "-") + "</td></tr>");
+            }
+            sb.Append("</table>");
+            return sb.ToString();
+        }
+
+        // Non-throwing twin of CheckAccessForFeature(833): true only for company employees whose role
+        // or employee id holds an active AIMI admin access row. Customer logins are never admins.
+        private bool IsAimiAdmin(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return false;
+            var role = Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == empId)?.CSM_TITLE_ID;
+            if (!role.HasValue) return false;
+            return CSPdb.APP_ACCESS_CONTROLS.GetAll().Any(t => t.RESOURCE_ID == 833
+                && (t.VIEW_ACCESS || t.CREATE_ACCESS || t.EDIT_ACCESS || t.DELETE_ACCESS)
+                && (t.ROLE_ID == role.Value || t.EMP_ID.Contains(empId)) && t.ISACTIVE == true);
+        }
 
         private void RequireAimiAdmin()
         {

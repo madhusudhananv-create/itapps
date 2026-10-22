@@ -74,6 +74,7 @@ interface FormData {
   commonAdoptionWorkforceCertification?: string;
   commonAdoptionEffortsSaved?: string;
   commonDeploymentEngineer?: string;
+  pptStatus?: boolean;
   presentationDone?: boolean;
   projectFY?: string;
 
@@ -486,6 +487,7 @@ export const ProjectInfoSelection: React.FC<ProjectInfoSelectionProps> = ({
     );
 
     // Project Level Fields
+    onFormChange('pptStatus', projectInfo?.pptStatus ?? false);
     onFormChange(
       'presentationDone',
       projectInfo?.presentationDone ?? false
@@ -641,6 +643,7 @@ const licenseChanged =
   !!formData.licenseProvider;
 
 const presentationChanged =
+  formData.pptStatus !== undefined ||
   formData.presentationDone !== undefined;
 
 const fyChanged =
@@ -687,6 +690,7 @@ const fyChanged =
             commonDeploymentEngineer:
               formData.commonDeploymentEngineer,
 
+            pptStatus: formData.pptStatus,
             presentationDone: formData.presentationDone,
             projectFY: formData.projectFY,
 
@@ -1067,13 +1071,17 @@ const fyChanged =
             <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: '2fr 1fr',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
               gap: 2,
               alignItems: 'center',
             }}
           >
-            {/* Project Applicable */}
-            <FormControl fullWidth variant="outlined">
+            {/* Project Applicable - full row, the two tick boxes sit below it */}
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={{ gridColumn: '1 / -1' }}
+            >
               <InputLabel sx={styles.inputLabel}>
                 Project Applicable
               </InputLabel>
@@ -1131,26 +1139,54 @@ const fyChanged =
               </Select>
             </FormControl>
 
-            {/* Presentation Done */}
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.presentationDone ?? false}
-                  onChange={(e) =>
-                    onFormChange(
-                      'presentationDone',
-                      e.target.checked
-                    )
+            {/* PPT Status - editable by AIMI admins (incl. DevX) only */}
+            <Tooltip title={!isAdmin ? 'Only admin can edit PPT Status' : ''}>
+              <span>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.pptStatus ?? false}
+                      onChange={(e) =>
+                        onFormChange('pptStatus', e.target.checked)
+                      }
+                      disabled={
+                        !isAdmin || !formData.project || formData.isProjectNA
+                      }
+                    />
                   }
-                  disabled={!formData.project || formData.isProjectNA}
+                  label="PPT Status"
+                  sx={{
+                    mt: 1.5,
+                    ml: 1,
+                  }}
                 />
-              }
-              label="Presentation Status"
-              sx={{
-                mt: 1.5,
-                ml: 1,
-              }}
-            />
+              </span>
+            </Tooltip>
+            {/* Presentation Done - editable by AIMI admins (incl. DevX) only */}
+            <Tooltip
+              title={!isAdmin ? 'Only admin can edit Presentation Done' : ''}
+            >
+              <span>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.presentationDone ?? false}
+                      onChange={(e) =>
+                        onFormChange('presentationDone', e.target.checked)
+                      }
+                      disabled={
+                        !isAdmin || !formData.project || formData.isProjectNA
+                      }
+                    />
+                  }
+                  label="Presentation Done"
+                  sx={{
+                    mt: 1.5,
+                    ml: 1,
+                  }}
+                />
+              </span>
+            </Tooltip>
           </Box>
           </Box>
 
