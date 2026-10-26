@@ -933,37 +933,6 @@ const fyChanged =
 
             <Box>
               <Tooltip
-                title={!formData.account ? 'Please select account first.' : ''}
-                placement="top"
-              >
-                <TextField
-                  fullWidth
-                  label="CSM:"
-                  value={formData.accountManager}
-                  variant="outlined"
-                  disabled={!formData.account}
-                  InputProps={{
-                    startAdornment: (
-                      <PersonRounded
-                        sx={
-                          formData.accountManager ? styles.icon : styles.emptyIcon
-                        }
-                      />
-                    ),
-                    readOnly: true,
-                  }}
-                  placeholder="Select account to auto-populate"
-                  sx={
-                    formData.accountManager
-                      ? styles.textField
-                      : { ...styles.textField, ...styles.emptyField }
-                  }
-                />
-              </Tooltip>
-            </Box>
-
-            <Box>
-              <Tooltip
                 title={!formData.account ? 'Please select account first.' : formData.project || ''
                 }
                 placement="top"
@@ -998,7 +967,38 @@ const fyChanged =
               </Tooltip>
             </Box>
 
-            {/* Second Row - Auto-populated Fields */}
+            {/* Second Row - Auto-populated from the selected project: CSM, Manager (PM), Head Count */}
+            <Box>
+              <Tooltip
+                title={!formData.project ? 'Please select project first.' : ''}
+                placement="top"
+              >
+                <TextField
+                  fullWidth
+                  label="CSM:"
+                  value={formData.accountManager}
+                  variant="outlined"
+                  disabled={!formData.project}
+                  InputProps={{
+                    startAdornment: (
+                      <PersonRounded
+                        sx={
+                          formData.accountManager ? styles.icon : styles.emptyIcon
+                        }
+                      />
+                    ),
+                    readOnly: true,
+                  }}
+                  placeholder="Select project to auto-populate"
+                  sx={
+                    formData.accountManager
+                      ? styles.textField
+                      : { ...styles.textField, ...styles.emptyField }
+                  }
+                />
+              </Tooltip>
+            </Box>
+
             <Box>
               <Tooltip
                 title={!formData.project ? 'Please select project first.' : ''}
