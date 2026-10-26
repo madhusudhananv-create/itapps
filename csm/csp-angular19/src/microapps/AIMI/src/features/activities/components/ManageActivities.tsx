@@ -28,6 +28,7 @@ import {
   Delete as DeleteIcon,
   Reviews,
   UploadFile as UploadFileIcon,
+  ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
 import { downloadReportTable } from '../../reports/utils/reportTable';
 import { reportService } from '../../reports/services/reportService';
@@ -36,6 +37,7 @@ import { activityService } from '../services/activityService';
 import { AddActivityModal } from './AddActivityModal';
 import { ActivityCard } from './ActivityCard';
 import { CopyActivityDialog } from './CopyActivityDialog';
+import { CopyActivitiesDialog } from './CopyActivitiesDialog';
 import type { AcceptedScoreInfo } from '../services/activityService';
 import type {
   ActivityFormData,
@@ -118,6 +120,7 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   const [copySourceActivity, setCopySourceActivity] =
     useState<ActivityData | null>(null);
   const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
+  const [isCopyActivitiesOpen, setIsCopyActivitiesOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     open: boolean;
     activityId: string | null;
@@ -471,6 +474,71 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
   const handleCopyClick = (activity: ActivityData) => {
     setCopySourceActivity(activity);
     setIsCopyDialogOpen(true);
+  };
+
+  // Saves the copied activities (from the Copy dialog) as drafts, the same way a single
+  // add/edit is auto-saved, and syncs the on-screen list with what was persisted.
+  const handleConfirmCopyMany = async (copied: ActivityData[]) => {
+    setIsCopyActivitiesOpen(false);
+    if (copied.length === 0) return;
+
+    const label = `${copied.length} ${copied.length === 1 ? 'activity' : 'activities'}`;
+    const addOrUpdateLocally = (activity: ActivityData) => {
+      if (activities.some((existing) => existing.id === activity.id)) {
+        onUpdateActivity(activity);
+      } else {
+        onAddActivity(activity);
+      }
+    };
+
+    if (!projectInfo?.projectId) {
+      copied.forEach(addOrUpdateLocally);
+      showSnackbar(`${label} copied.`, 'success');
+      return;
+    }
+
+    const toSave: ActivityWithProjectInfo[] = copied.map((activity) => ({
+      ...activity,
+      status: 'draft',
+      projectId: projectInfo.projectId,
+      project: projectInfo.project,
+      practice: projectInfo.practice,
+      account: projectInfo.account,
+      businessUnit: projectInfo.businessUnit,
+    }));
+
+    try {
+      const saved = await activityStorageUtils.upsertActivitiesForProject(toSave);
+
+      saved.forEach((savedActivity, index) => {
+        const original = copied[index];
+        const committed: ActivityData = {
+          ...original,
+          id: savedActivity.id,
+          status: savedActivity.status,
+          createdAt: new Date(savedActivity.createdAt),
+          updatedAt: savedActivity.updatedAt
+            ? new Date(savedActivity.updatedAt)
+            : undefined,
+        };
+        if (onCommitActivity && original.id !== savedActivity.id) {
+          onCommitActivity(original.id, committed);
+        } else {
+          addOrUpdateLocally(committed);
+        }
+      });
+
+      setPendingAutoSaveIds((prev) => {
+        const next = new Set(prev);
+        saved.forEach((savedActivity) => next.add(savedActivity.id));
+        return next;
+      });
+      showSnackbar(`${label} copied. Review them and submit when ready.`, 'success');
+    } catch (error) {
+      console.error('Error copying activities:', error);
+      copied.forEach(addOrUpdateLocally);
+      showSnackbar('Saved locally. We will retry saving automatically.', 'error');
+    }
   };
 
   const handleCloseCopyDialog = () => {
@@ -1040,6 +1108,16 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
               Generate Report
             </Button>
 
+            <Button
+              variant="outlined"
+              startIcon={<ContentCopyIcon />}
+              onClick={() => setIsCopyActivitiesOpen(true)}
+              disabled={!selectedPractice || isProjectNA || !projectInfo?.projectId}
+              title="Copy data between activities, phases or projects"
+            >
+              Copy
+            </Button>
+
             {onImportActivities && (
               <Button
                 variant="outlined"
@@ -1328,6 +1406,21 @@ export const ManageActivities: React.FC<ManageActivitiesProps> = ({
         onMarkPhaseAsNA={handleMarkPhaseAsNA}
         selectedPractice={selectedPractice}
         editingActivity={editingActivity}
+        existingActivities={activities}
+      />
+
+      {/* Copy Activities: activity -> activity, phase -> phase, project -> project */}
+      <CopyActivitiesDialog
+        open={isCopyActivitiesOpen}
+        onClose={() => setIsCopyActivitiesOpen(false)}
+        onConfirm={(copied) => void handleConfirmCopyMany(copied)}
+        selectedPractice={selectedPractice}
+        currentProject={{
+          projectId: projectInfo?.projectId ?? '',
+          businessUnit: projectInfo?.businessUnit ?? '',
+          account: projectInfo?.account ?? '',
+          project: projectInfo?.project ?? '',
+        }}
         existingActivities={activities}
       />
 
