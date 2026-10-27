@@ -1133,9 +1133,7 @@ BEGIN
         ISNULL(fo.FRST_NM, f.OWNER_EMP_ID) AS Owner,
         f.PRIORITY AS Priority,
         f.ACTUAL_CLOSURE_DATE AS ActualClosureDate,
-        CASE WHEN f.TARGET_DATE IS NOT NULL AND f.ACTUAL_CLOSURE_DATE IS NOT NULL
-             THEN DATEDIFF(day, f.TARGET_DATE, f.ACTUAL_CLOSURE_DATE) END AS DaysToClose,
-        s.CREATED_DATE AS CreatedDate,
+         s.CREATED_DATE AS CreatedDate,
         ISNULL(scb.FRST_NM, s.CREATED_BY) AS CreatedBy,
         s.UPDATED_DATE AS UpdatedDate,
         ISNULL(sub.FRST_NM, s.UPDATED_BY) AS UpdatedBy,

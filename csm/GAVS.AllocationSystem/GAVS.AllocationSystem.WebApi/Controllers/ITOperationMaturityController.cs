@@ -2143,9 +2143,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            var draftEmpId = GetHeaderDetails_String("empId");
+            var draftDenied = DenyIfNotITOpsAssessorOnAssessment(assessmentId, draftEmpId, "save this assessment");
+            if (draftDenied != null) return draftDenied;
+
             if (assessment.STATUS == "NotStarted")
                 assessment.STATUS = "Draft";
-            UpdateAuditFields(assessment);
+            UpdateAuditFields(assessment, draftEmpId);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
             CSPdb.Commit(CanCommit);
 
@@ -2421,11 +2425,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            var suspendEmpId = GetHeaderDetails_String("empId");
+            var suspendDenied = DenyIfNotITOpsReviewerOnAssessment(assessmentId, suspendEmpId, "suspend this assessment");
+            if (suspendDenied != null) return suspendDenied;
+
             if (assessment.STATUS != "PendingReview")
                 return Content(HttpStatusCode.Conflict, "Only an assessment that is Pending Review can be suspended.");
 
             assessment.STATUS = "Suspended";
-            UpdateAuditFields(assessment);
+            UpdateAuditFields(assessment, suspendEmpId);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
             CSPdb.Commit(CanCommit);
 
@@ -2441,11 +2449,15 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (assessment == null)
                 return NotFound();
 
+            var resumeEmpId = GetHeaderDetails_String("empId");
+            var resumeDenied = DenyIfNotITOpsReviewerOnAssessment(assessmentId, resumeEmpId, "resume this assessment");
+            if (resumeDenied != null) return resumeDenied;
+
             if (assessment.STATUS != "Suspended")
                 return Content(HttpStatusCode.Conflict, "Only a suspended assessment can be resumed.");
 
             assessment.STATUS = "PendingReview";
-            UpdateAuditFields(assessment);
+            UpdateAuditFields(assessment, resumeEmpId);
             CSPdb.ITOPS_ASSESSMENT.Update(assessment);
             CSPdb.Commit(CanCommit);
 
