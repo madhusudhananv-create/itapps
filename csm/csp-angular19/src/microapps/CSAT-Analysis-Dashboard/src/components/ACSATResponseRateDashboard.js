@@ -548,6 +548,21 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
         }
       : null;
 
+  // Overall row (Top 10 view only): Top 10 Accounts + Other Accounts combined grand total.
+  const overallRow =
+    groupBy === 'top10'
+      ? {
+          businessUnit: '',
+          customerName: 'Overall',
+          polled: totalPolled + otherAccountsPolled,
+          responded: totalResponded + otherAccountsResponded,
+          responseRatePct:
+            (totalPolled + otherAccountsPolled) > 0
+              ? ((totalResponded + otherAccountsResponded) / (totalPolled + otherAccountsPolled)) * 100
+              : 0,
+        }
+      : null;
+
   const emptyError =
     groupBy === 'bu'
       ? 'No BU trend rows found in CSAT sent and received Report.'
@@ -560,6 +575,7 @@ const buildResponseRateTrendFromFile = (file, { groupBy = 'account', top10Accoun
     rows,
     grandTotal,
     otherAccountsRow,
+    overallRow,
     hasData: rows.length > 0,
     groupBy,
     error: rows.length === 0 ? emptyError : null,
@@ -858,6 +874,44 @@ const OtherAccountCell = styled.td`
 `;
 
 const OtherAccountResponseRateCell = styled.td`
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid #6b7280;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: ${props => {
+    if (props.surveysReceived === 0 || props.rate === 0) return '#ffffff'; // White text for zero Response %
+    if (props.rate >= 75) return '#000000'; // Black text for Green >=75%
+    if (props.rate >= 50 && props.rate < 75) return '#000000'; // Black text for Orange 50%-75%
+    return '#ffffff'; // White text for Red <50%
+  }};
+  background: ${props => {
+    if (props.surveysReceived === 0 || props.rate === 0) return '#FF0000'; // Red for zero Response %
+    if (props.rate >= 75) return '#C6EFCE'; // Green >=75% (Excel standard)
+    if (props.rate >= 50 && props.rate < 75) return '#FFA500'; // Orange 50%-75% (Excel standard)
+    return '#FF0000'; // Red <50% (Excel standard)
+  }};
+`;
+
+const OverallRow = styled.tr`
+  background: #ede9fe;
+  font-weight: bold;
+  border-top: 2px solid #7c3aed;
+`;
+
+const OverallCell = styled.td`
+  padding: 0.5rem 0.75rem;
+  text-align: ${props => props.isNumeric ? 'center' : 'left'};
+  vertical-align: middle;
+  border: 1px solid #6b7280;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #000000;
+  background: #d9d2e9;
+`;
+
+const OverallResponseRateCell = styled.td`
   padding: 0.5rem 0.75rem;
   text-align: center;
   vertical-align: middle;
@@ -1940,6 +1994,18 @@ const ACSATResponseRateDashboard = ({
       overallResponseRate
     };
   }, [showTop10, rawSecondSheetData, typeOfAccountMap, acsatCycle, cycleStartDateFormatted]);
+
+  // Overall row (Top 10 view only): Top 10 Accounts + Other Accounts combined grand total.
+  const overallTotals = useMemo(() => {
+    if (!showTop10 || !grandTotals || !otherAccountTotals) return null;
+    const totalSent = (grandTotals.totalSent || 0) + (otherAccountTotals.totalSent || 0);
+    const totalReceived = (grandTotals.totalReceived || 0) + (otherAccountTotals.totalReceived || 0);
+    return {
+      totalSent,
+      totalReceived,
+      overallResponseRate: totalSent > 0 ? (totalReceived / totalSent) * 100 : 0
+    };
+  }, [showTop10, grandTotals, otherAccountTotals]);
 
   // Process CXO and Non-CXO Response Rate Analysis
   const cxoAnalysisData = useMemo(() => {
@@ -3080,6 +3146,30 @@ const ACSATResponseRateDashboard = ({
           );
         }
 
+        if (!isBuTrendExport && acsatTrendViewMode === 'top10' && fileData.overallRow) {
+          const overall = fileData.overallRow;
+          const overallResponded = overall.responded ?? 0;
+          const overallRow = ws.addRow([
+            '',
+            '',
+            overall.customerName || 'Overall',
+            overall.polled ?? 0,
+            overallResponded,
+            overallResponded === 0 ? 0 : roundResponseRateOneDecimal(overall.responseRatePct),
+          ]);
+          overallRow.eachCell((cell, colNumber) => {
+            cell.border = cellBorder;
+            cell.font = { bold: true, color: { argb: 'FF000000' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D2E9' } };
+            cell.alignment = { horizontal: colNumber <= textColCount ? 'left' : 'center', vertical: 'middle' };
+          });
+          styleTrendAnalysisResponseRateExcelCell(
+            overallRow.getCell(responseRateColNumber),
+            overall.responseRatePct,
+            overallResponded
+          );
+        }
+
         ws.getColumn(1).width = 10;
         ws.getColumn(2).width = 22;
         if (!isBuTrendExport) ws.getColumn(3).width = 35;
@@ -3606,6 +3696,96 @@ const ACSATResponseRateDashboard = ({
         otherAccountRow.height = 30;
       }
 
+      // Add Overall Row - Only for Top 10 view: Top 10 Accounts + Other Accounts combined
+      if (showTop10 && overallTotals) {
+        const overallSurveysReceived = overallTotals.totalReceived === 0 ? 0 : (overallTotals.totalReceived || 0);
+        const overallResponseRate = overallTotals.totalReceived === 0 ? 0 : (Math.round((overallTotals.overallResponseRate || 0) * 10) / 10);
+
+        const overallRowData = [
+          '', // Empty Sr. No.
+          '', // Empty Business Unit
+          'Overall', // Account Name
+          overallTotals.totalSent, // Polled
+          overallSurveysReceived, // Responded
+          overallResponseRate, // Response%
+        ];
+
+        const overallExcelRow = worksheet.addRow(overallRowData);
+        const overallResponseRateColumnNumber = 6;
+        const overallRespondedColumnNumber = 5;
+        const overallRespondedCell = overallExcelRow.getCell(overallRespondedColumnNumber);
+        overallRespondedCell.value = overallSurveysReceived;
+        overallRespondedCell.numFmt = '0';
+
+        overallExcelRow.eachCell((cell, colNumber) => {
+          const isNumericColumn = colNumber > 3;
+          cell.font = { bold: true, color: { argb: 'FF000000' } };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D2E9' } };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } }
+          };
+          if (isNumericColumn) {
+            cell.numFmt = colNumber === overallResponseRateColumnNumber ? '0.0"%"' : '0';
+            if (cell.value === null || cell.value === undefined) cell.value = 0;
+          }
+          cell.alignment = {
+            horizontal: isNumericColumn ? 'center' : 'left',
+            vertical: 'middle',
+            wrapText: false,
+            indent: 0,
+            readingOrder: 'left-to-right'
+          };
+        });
+
+        const overallResponseRateCell = overallExcelRow.getCell(overallResponseRateColumnNumber);
+        overallResponseRateCell.numFmt = '0.0"%"';
+        overallResponseRateCell.value = overallResponseRate;
+        if (overallTotals.totalReceived === 0) {
+          overallResponseRateCell.font = { color: { argb: 'FF000000' }, bold: true };
+          overallResponseRateCell.fill = undefined;
+        } else if (overallTotals.overallResponseRate >= 75) {
+          overallResponseRateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+          overallResponseRateCell.font = { color: { argb: 'FF000000' }, bold: true };
+        } else if (overallTotals.overallResponseRate >= 50 && overallTotals.overallResponseRate < 75) {
+          overallResponseRateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+          overallResponseRateCell.font = { color: { argb: 'FF000000' }, bold: true };
+        } else {
+          overallResponseRateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          overallResponseRateCell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+        }
+        overallResponseRateCell.alignment = {
+          horizontal: 'center',
+          vertical: 'middle',
+          wrapText: false,
+          indent: 0,
+          readingOrder: 'left-to-right'
+        };
+
+        if (includeTrendExportCols) {
+          const trendColStart = 7;
+          acsatTrendAnalysisData.forEach((fileData, fileIdx) => {
+            const overallTrend = fileData.overallRow;
+            const diff = overallTrend
+              ? computeResponseRateTrendDiff(overallResponseRate, overallTrend)
+              : null;
+            const trendCell = overallExcelRow.getCell(trendColStart + fileIdx);
+            styleTrendDiffExcelCell(trendCell, diff);
+            trendCell.border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+            trendCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D2E9' } };
+          });
+        }
+
+        overallExcelRow.height = 30;
+      }
+
       // Add formula section with NPS Dashboard style formatting
       worksheet.addRow([]);
       const formulaTitleRow = worksheet.addRow(['Response Rate Calculation Formula']);
@@ -4080,6 +4260,46 @@ const ACSATResponseRateDashboard = ({
                   })}
               </OtherAccountRow>
             )}
+            {/* Overall Row - Only for Top 10 view: Top 10 Accounts + Other Accounts combined */}
+            {showTop10 && overallTotals && (
+              <OverallRow>
+                <OverallCell></OverallCell>
+                <OverallCell></OverallCell>
+                <OverallCell>Overall</OverallCell>
+                <OverallCell isNumeric>{overallTotals.totalSent}</OverallCell>
+                <OverallCell isNumeric>{overallTotals.totalReceived === 0 ? 0 : overallTotals.totalReceived}</OverallCell>
+                <OverallResponseRateCell rate={overallTotals.overallResponseRate} surveysReceived={overallTotals.totalReceived}>
+                  {overallTotals.totalReceived === 0 ? '0%' : `${(Math.round(overallTotals.overallResponseRate * 10) / 10).toFixed(1)}%`}
+                </OverallResponseRateCell>
+                {showMainTableTrendColumns &&
+                  acsatTrendAnalysisData.map((fileData, fileIdx) => {
+                    const dashboardOverallRate =
+                      overallTotals.totalReceived === 0
+                        ? 0
+                        : roundResponseRateOneDecimal(overallTotals.overallResponseRate);
+                    const gt = fileData.grandTotal;
+                    const otherTrend = fileData.otherAccountsRow;
+                    const overallTrendPolled = (gt?.polled || 0) + (otherTrend?.polled || 0);
+                    const overallTrendResponded = (gt?.responded || 0) + (otherTrend?.responded || 0);
+                    const overallTrend = (gt || otherTrend)
+                      ? { responseRatePct: overallTrendPolled > 0 ? (overallTrendResponded / overallTrendPolled) * 100 : 0 }
+                      : null;
+                    const diff = overallTrend
+                      ? computeResponseRateTrendDiff(dashboardOverallRate, overallTrend)
+                      : null;
+                    const display = formatResponseRateTrendDiffDisplay(diff);
+                    return (
+                      <OverallCell
+                        key={`overall-trend-${fileIdx}`}
+                        isNumeric
+                        style={{ fontWeight: 600, color: display.color }}
+                      >
+                        {display.text}
+                      </OverallCell>
+                    );
+                  })}
+              </OverallRow>
+            )}
             {showTop10 && (() => {
               const polledByAccountName = new Map();
               (processedData || []).forEach(row => {
@@ -4220,6 +4440,25 @@ const ACSATResponseRateDashboard = ({
                                   : `${(Math.round(fileData.otherAccountsRow.responseRatePct * 10) / 10).toFixed(1)}%`}
                               </OtherAccountResponseRateCell>
                             </OtherAccountRow>
+                          )}
+                          {acsatTrendViewMode === 'top10' && fileData.overallRow && (
+                            <OverallRow>
+                              <OverallCell></OverallCell>
+                              <OverallCell></OverallCell>
+                              <OverallCell>{fileData.overallRow.customerName || 'Overall'}</OverallCell>
+                              <OverallCell isNumeric>{fileData.overallRow.polled ?? 0}</OverallCell>
+                              <OverallCell isNumeric>
+                                {fileData.overallRow.responded === 0 ? 0 : fileData.overallRow.responded}
+                              </OverallCell>
+                              <OverallResponseRateCell
+                                rate={fileData.overallRow.responseRatePct || 0}
+                                surveysReceived={fileData.overallRow.responded || 0}
+                              >
+                                {(fileData.overallRow.responded || 0) === 0
+                                  ? '0%'
+                                  : `${(Math.round(fileData.overallRow.responseRatePct * 10) / 10).toFixed(1)}%`}
+                              </OverallResponseRateCell>
+                            </OverallRow>
                           )}
                         </TableBody>
                       </Table>

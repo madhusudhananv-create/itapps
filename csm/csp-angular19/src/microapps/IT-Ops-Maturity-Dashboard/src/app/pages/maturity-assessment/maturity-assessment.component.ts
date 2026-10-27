@@ -11,6 +11,7 @@ import { statusPillClass } from '../../utils/status.util';
 import { RUBRIC_LEVELS, rubricScoreKey } from '../../utils/rubric.util';
 import { ToastService } from '../../services/toast.service';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { errorText } from '../../utils/error-text.util';
 
 const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
 
@@ -187,6 +188,13 @@ export class MaturityAssessmentComponent implements OnInit {
           findingActionTaken: r.findingActionTaken ?? undefined,
           findingAssesseeName: r.assesseeName ?? undefined,
           findingDisputeComment: r.disputeComment ?? undefined,
+          findingOwnerEmpId: r.ownerEmpId ?? undefined,
+          findingOwnerName: r.ownerName ?? undefined,
+          findingPriority: (r.priority as MaturityParameter['findingPriority']) ?? undefined,
+          findingTargetDate: r.targetDate ?? undefined,
+          findingActualClosureDate: r.actualClosureDate ?? undefined,
+          findingRemediationStatus: (r.remediationStatus as MaturityParameter['findingRemediationStatus']) ?? undefined,
+          findingPastDue: r.pastDue ?? undefined,
         };
       });
       this.loadEvidenceForAcceptedFindings();
@@ -223,6 +231,13 @@ export class MaturityAssessmentComponent implements OnInit {
         findingActionTaken: r.findingActionTaken ?? undefined,
         findingAssesseeName: r.assesseeName ?? undefined,
         findingDisputeComment: r.disputeComment ?? undefined,
+        findingOwnerEmpId: r.ownerEmpId ?? undefined,
+        findingOwnerName: r.ownerName ?? undefined,
+        findingPriority: (r.priority as MaturityParameter['findingPriority']) ?? undefined,
+        findingTargetDate: r.targetDate ?? undefined,
+        findingActualClosureDate: r.actualClosureDate ?? undefined,
+        findingRemediationStatus: (r.remediationStatus as MaturityParameter['findingRemediationStatus']) ?? undefined,
+        findingPastDue: r.pastDue ?? undefined,
       };
     });
   }
@@ -294,7 +309,7 @@ export class MaturityAssessmentComponent implements OnInit {
       },
       error: (err) => {
         this.choosingProvider = false;
-        this.providerChoiceError = err?.error || 'Could not save your choice - please try again.';
+        this.providerChoiceError = errorText(err, 'Could not save your choice - please try again.');
       },
     });
   }
@@ -358,7 +373,7 @@ export class MaturityAssessmentComponent implements OnInit {
           this.reloadParameters();
         },
         error: (err) => {
-          this.rejectionDecisionError = err?.error ?? 'Could not record this decision. Please try again.';
+          this.rejectionDecisionError = errorText(err, 'Could not record this decision. Please try again.');
         },
       });
   }

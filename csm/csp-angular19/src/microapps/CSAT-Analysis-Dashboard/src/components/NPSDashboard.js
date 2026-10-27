@@ -2013,6 +2013,21 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
   );
 
   const groups = new Map();
+  // Top 10 mode only: raw tally for rows whose TYPE OF ACCOUNT is not Top 10
+  // (blank/empty/N/A/other), aggregated into the "Other Accounts" row.
+  const otherAccountsTally = {
+    businessUnit: '',
+    customerId: '',
+    customerName: 'Other Accounts',
+    polled: 0,
+    responded: 0,
+    predictedPromoters: 0,
+    predictedDetractors: 0,
+    predictedPassives: 0,
+    actualPromoters: 0,
+    actualDetractors: 0,
+    actualPassives: 0,
+  };
 
   const ensureGroup = (key, meta) => {
     if (!groups.has(key)) {
@@ -2034,6 +2049,7 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
   };
 
   data.forEach((row) => {
+    let aggForOtherAccounts = false;
     if (top10Only) {
       const typeOfAccount = getNpsTrendRowValue(
         row,
@@ -2042,7 +2058,34 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
         'TYPE_OF_ACCOUNT',
         'Type of Account'
       );
-      if (!isTop10TypeOfAccount(typeOfAccount)) return;
+      if (!isTop10TypeOfAccount(typeOfAccount)) {
+        aggForOtherAccounts = true;
+      }
+    }
+
+    if (aggForOtherAccounts) {
+      if (hasNpsTrendSheetDateValue(row, sentDateCol, 'CSAT SENT DATE')) {
+        otherAccountsTally.polled += 1;
+      }
+      const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
+      const isCompletedStatus = statusVal === 'completed';
+      const hasReceived = isCompletedStatus && hasNpsTrendSheetDateValue(row, receivedDateCol, 'CSAT RECEIVED DATE');
+      if (hasReceived) {
+        otherAccountsTally.responded += 1;
+        const predictedScore = parseNpsTrendScoreValue(row, predictedScoreCol, 'PREDICTED SCORE', 'PREDICTED_SCORE');
+        if (predictedScore !== null) {
+          if (predictedScore === 9 || predictedScore === 10) otherAccountsTally.predictedPromoters += 1;
+          else if (predictedScore < 7) otherAccountsTally.predictedDetractors += 1;
+          else if (predictedScore === 7 || predictedScore === 8) otherAccountsTally.predictedPassives += 1;
+        }
+        const actualScore = parseNpsTrendScoreValue(row, actualScoreCol, 'ACTUAL SCORE', 'ACTUAL_SCORE');
+        if (actualScore !== null) {
+          if (actualScore === 9 || actualScore === 10) otherAccountsTally.actualPromoters += 1;
+          else if (actualScore < 7) otherAccountsTally.actualDetractors += 1;
+          else if (actualScore === 7 || actualScore === 8) otherAccountsTally.actualPassives += 1;
+        }
+      }
+      return;
     }
 
     const businessUnit = normalizeBusinessUnitDisplay(
@@ -2137,10 +2180,15 @@ const buildNpsTrendFromSentReceivedFile = (file, { mode = 'account' } = {}) => {
 
   const grandTotal = aggregateNpsAccountTrendGrandTotal(rows);
 
+  const otherAccountsRow = top10Only
+    ? mapNpsAccountTrendGroupToRow({ ...otherAccountsTally, npsRatingSum: 0, npsRatingCount: 0 })
+    : null;
+
   return {
     saveName: file.saveName || file.originalName || 'Trend file',
     rows,
     grandTotal,
+    otherAccountsRow,
     hasData: rows.length > 0,
     error: rows.length === 0
       ? top10Only
@@ -2264,14 +2312,41 @@ const addNpsTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
       } else if (colNumber === 2 || colNumber === 3) {
         cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
       } else if (colNumber === 6) {
-        cell.value = `${Number(rowData[5] ?? 0).toFixed(1)}%`;
+        const responded = Number(rowData[4] ?? 0);
+        const rate = Number(rowData[5] ?? 0);
+        cell.value = `${rate.toFixed(1)}%`;
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      } else if (colNumber === 10) {
-        cell.value = Number(rowData[9] ?? 0).toFixed(2);
+        if (responded === 0 || rate === 0) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          cell.font = { bold, color: { argb: 'FFFFFFFF' } };
+        } else if (rate >= 75) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else if (rate >= 50) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          cell.font = { bold, color: { argb: 'FFFFFFFF' } };
+        }
+      } else if (colNumber === 10 || colNumber === 14) {
+        const rawScore = colNumber === 10 ? rowData[9] : rowData[13];
+        const score = rawScore === '-' || rawScore === null || rawScore === undefined ? NaN : Number(rawScore);
+        cell.value = isNaN(score) ? '-' : score.toFixed(2);
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      } else if (colNumber === 14) {
-        cell.value = Number(rowData[13] ?? 0).toFixed(2);
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (isNaN(score)) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else if (score >= 75) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else if (score >= 0) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } };
+          cell.font = { bold, color: { argb: 'FF000000' } };
+        } else {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } };
+          cell.font = { bold, color: { argb: 'FFFFFFFF' } };
+        }
       } else if (colNumber >= 4) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         if ([4, 5, 7, 8, 9, 11, 12, 13].includes(colNumber)) {
@@ -2320,6 +2395,52 @@ const addNpsTop10TrendSheetToWorkbook = (workbook, fileData, sheetIndex) => {
         gt.actualNps ?? 0,
       ],
       { bold: true, fill: 'FFE2E8F0' }
+    );
+  }
+
+  if (fileData.otherAccountsRow) {
+    const oa = fileData.otherAccountsRow;
+    appendTrendDataRow(
+      [
+        '',
+        '',
+        oa.customerName || 'Other Accounts',
+        oa.polled ?? 0,
+        oa.responded ?? 0,
+        oa.responseRatePct ?? 0,
+        oa.predictedPromoters ?? 0,
+        oa.predictedDetractors ?? 0,
+        oa.predictedPassives ?? 0,
+        oa.predictedNps ?? 0,
+        oa.actualPromoters ?? 0,
+        oa.actualDetractors ?? 0,
+        oa.actualPassives ?? 0,
+        oa.actualNps ?? 0,
+      ],
+      { bold: true, fill: 'FFBDD7EE' }
+    );
+  }
+
+  if (fileData.overallRow) {
+    const ov = fileData.overallRow;
+    appendTrendDataRow(
+      [
+        '',
+        '',
+        ov.customerName || 'Overall',
+        ov.polled ?? 0,
+        ov.responded ?? 0,
+        ov.responseRatePct ?? 0,
+        ov.predictedPromoters ?? 0,
+        ov.predictedDetractors ?? 0,
+        ov.predictedPassives ?? 0,
+        ov.predictedNps ?? 0,
+        ov.actualPromoters ?? 0,
+        ov.actualDetractors ?? 0,
+        ov.actualPassives ?? 0,
+        ov.actualNps ?? 0,
+      ],
+      { bold: true, fill: 'FFE4DFEC' }
     );
   }
 
@@ -3127,12 +3248,32 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const built = buildTop10NpsTrendFromFile(file);
       const rows = sortTop10NpsTrendRows(built.rows, top10AccountNames);
       const grandTotal = aggregateNpsAccountTrendGrandTotal(rows);
+      const namedGrandTotal = grandTotal ? { ...grandTotal, customerName: 'Top 10 Accounts' } : null;
+      const otherAccountsRow = built.otherAccountsRow || null;
+      const overallRow =
+        namedGrandTotal && otherAccountsRow
+          ? mapNpsAccountTrendGroupToRow({
+              businessUnit: '',
+              customerId: '',
+              customerName: 'Overall',
+              polled: (namedGrandTotal.polled || 0) + (otherAccountsRow.polled || 0),
+              responded: (namedGrandTotal.responded || 0) + (otherAccountsRow.responded || 0),
+              predictedPromoters: (namedGrandTotal.predictedPromoters || 0) + (otherAccountsRow.predictedPromoters || 0),
+              predictedDetractors: (namedGrandTotal.predictedDetractors || 0) + (otherAccountsRow.predictedDetractors || 0),
+              predictedPassives: (namedGrandTotal.predictedPassives || 0) + (otherAccountsRow.predictedPassives || 0),
+              actualPromoters: (namedGrandTotal.actualPromoters || 0) + (otherAccountsRow.actualPromoters || 0),
+              actualDetractors: (namedGrandTotal.actualDetractors || 0) + (otherAccountsRow.actualDetractors || 0),
+              actualPassives: (namedGrandTotal.actualPassives || 0) + (otherAccountsRow.actualPassives || 0),
+              npsRatingSum: 0,
+              npsRatingCount: 0,
+            })
+          : null;
       return {
         ...built,
         rows,
-        grandTotal: grandTotal
-          ? { ...grandTotal, customerName: 'Top 10 Accounts' }
-          : null,
+        grandTotal: namedGrandTotal,
+        otherAccountsRow,
+        overallRow,
       };
     });
   }, [
@@ -10659,6 +10800,70 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                               <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.grandTotal.actualPassives ?? 0}</TableCell>
                               <NPSCell score={fileData.grandTotal.actualNps ?? 0} style={{ fontWeight: 'bold' }}>
                                 {(fileData.grandTotal.actualNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                            </TableRow>
+                          )}
+                          {fileData.otherAccountsRow && (
+                            <TableRow style={{ backgroundColor: '#BDD7EE', fontWeight: 'bold' }}>
+                              <TableCell isFirstColumn />
+                              <TableCell />
+                              <TableCell style={{ fontWeight: 'bold' }}>
+                                {fileData.otherAccountsRow.customerName || 'Other Accounts'}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.polled ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.responded ?? 0}</TableCell>
+                              <ResponseRateCell
+                                rate={fileData.otherAccountsRow.responseRatePct || 0}
+                                surveysReceived={fileData.otherAccountsRow.responded || 0}
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {(fileData.otherAccountsRow.responded || 0) === 0
+                                  ? '0%'
+                                  : `${(fileData.otherAccountsRow.responseRatePct || 0).toFixed(1)}%`}
+                              </ResponseRateCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.predictedPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.predictedDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.predictedPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.otherAccountsRow.predictedNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.otherAccountsRow.predictedNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.actualPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.actualDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.otherAccountsRow.actualPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.otherAccountsRow.actualNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.otherAccountsRow.actualNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                            </TableRow>
+                          )}
+                          {fileData.overallRow && (
+                            <TableRow style={{ backgroundColor: '#E4DFEC', fontWeight: 'bold' }}>
+                              <TableCell isFirstColumn />
+                              <TableCell />
+                              <TableCell style={{ fontWeight: 'bold' }}>
+                                {fileData.overallRow.customerName || 'Overall'}
+                              </TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.polled ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.responded ?? 0}</TableCell>
+                              <ResponseRateCell
+                                rate={fileData.overallRow.responseRatePct || 0}
+                                surveysReceived={fileData.overallRow.responded || 0}
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {(fileData.overallRow.responded || 0) === 0
+                                  ? '0%'
+                                  : `${(fileData.overallRow.responseRatePct || 0).toFixed(1)}%`}
+                              </ResponseRateCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.predictedPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.predictedDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.predictedPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.overallRow.predictedNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.overallRow.predictedNps ?? 0).toFixed(2)}
+                              </NPSCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.actualPromoters ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.actualDetractors ?? 0}</TableCell>
+                              <TableCell isNumeric style={{ fontWeight: 'bold' }}>{fileData.overallRow.actualPassives ?? 0}</TableCell>
+                              <NPSCell score={fileData.overallRow.actualNps ?? 0} style={{ fontWeight: 'bold' }}>
+                                {(fileData.overallRow.actualNps ?? 0).toFixed(2)}
                               </NPSCell>
                             </TableRow>
                           )}
