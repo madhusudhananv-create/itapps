@@ -14,6 +14,11 @@ const { exec } = require('child_process');
 const CONFIG = {
     port: 8080,
     pullOpportunitiesExe: 'C:\\Pull_OpenAll_Oppor_Partnership.exe',
+    pullOpportunitiesExes: [
+        'C:\\Pull_OpenAll_Oppor_Partnership.exe',
+        'C:\\All_Opportunities_with_Neugain.exe',
+        'C:\\Active_Partnerships_and_Advisors.exe'
+    ],
 
     // Local folders where files are stored (absolute paths)
     localFolders: {
@@ -72,20 +77,31 @@ function findLatestFile(folderPath) {
 }
 
 /**
- * Run Pull_OpenAll_Oppor_Partnership.exe
+ * Run one exe and resolve with its stdout
  */
-function runPullOpportunities() {
+function runExe(exePath) {
     return new Promise((resolve, reject) => {
-        if (!fs.existsSync(CONFIG.pullOpportunitiesExe)) {
-            reject(new Error(`Exe not found: ${CONFIG.pullOpportunitiesExe}`));
+        if (!fs.existsSync(exePath)) {
+            reject(new Error(`Exe not found: ${exePath}`));
             return;
         }
-        exec(`"${CONFIG.pullOpportunitiesExe}"`, {
+        exec(`"${exePath}"`, {
             timeout: 10 * 60 * 1000,
             maxBuffer: 10 * 1024 * 1024,
             windowsHide: true
-        }, (err, stdout) => err ? reject(err) : resolve({ success: true, output: stdout }));
+        }, (err, stdout) => err ? reject(err) : resolve(stdout));
     });
+}
+
+/**
+ * Run all pull-on-login exes in sequence
+ */
+async function runPullOpportunities() {
+    const output = [];
+    for (const exePath of CONFIG.pullOpportunitiesExes) {
+        output.push(await runExe(exePath));
+    }
+    return { success: true, output: output.join('\n') };
 }
 
 /**
