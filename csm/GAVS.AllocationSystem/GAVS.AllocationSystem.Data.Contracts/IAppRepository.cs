@@ -21,6 +21,7 @@ namespace GAVS.AllocationSystem.Data.Contracts
         List<CSM_INFO> GetCSMList();
         IEnumerable<CustomerProjectDetails> GetCustomerProjectDetails();
         DataTable GetTable(string spName, List<REPORTS_PARAMS> lstparams);
+        void RecordITOpsVisit(string empId);
         IEnumerable<StaffingSummary> GetStaffingSummaryDetails(string custId, string ProjectId = null);
         IEnumerable<StaffingProject> GetStaffingProjectSummary(string custId, string ProjectId = null);
         IEnumerable<StaffingProject> GetStaffingProjectDetails(string projectId);
@@ -35,6 +36,8 @@ namespace GAVS.AllocationSystem.Data.Contracts
         IEnumerable<Projects> Projects(string EmpId, string ProjectId);
         IEnumerable<ProjectsBaseCustomer> GetEmployeeAccounts(string EmpId, string ProjectId);
         IEnumerable<ProjectBase> GetProjectIdsForUser(string empId, string customerId, string projectId);
+        bool IsSuperAdmin(string empId);
+        List<string> GetSuperAdminEmpIds();
         IEnumerable<Projects> ProjectsWithBillingProj(string EmpId, string ProjectId);
         void Insert_PROJ_RESRC_TIME_ENTRY(DataTable records);
         void Insert_PROJ_RESRC_TIME_ENTRY_PSA(DataTable records);

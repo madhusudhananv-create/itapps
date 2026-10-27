@@ -176,6 +176,37 @@ namespace GAVS.AllocationSystem.Data
 
         }
 
+        // Best-effort IT Ops Maturity daily-visit log (see
+        // ITOperationMaturity_V2_32_DailyActiveUsers.sql) - fires once per employee per
+        // calendar day from the Angular app's own startup, idempotent via the SP's own
+        // "already logged today" check. No new EF-mapped entity for this on purpose - same
+        // raw-ADO stored-procedure style as GetTable() above, since this is a one-off
+        // fire-and-forget write, not something the ORM layer needs to know about.
+        public void RecordITOpsVisit(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId)) return;
+            using (var context = new CloudDbContext())
+            {
+                var conn = context.Database.Connection;
+                var connectionState = conn.State;
+                try
+                {
+                    if (connectionState != ConnectionState.Open) conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "dbo.usp_ITOpsRecordVisit";
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@EmpId", empId));
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                finally
+                {
+                    if (connectionState != ConnectionState.Closed) conn.Close();
+                }
+            }
+        }
+
         public IEnumerable<StaffingSummary> GetStaffingSummaryDetails(string custId, string ProjectId = null)
         {
             var context = new CloudDbContext();
@@ -295,6 +326,32 @@ namespace GAVS.AllocationSystem.Data
 
         }
 
+
+        /// <summary>
+        /// VW_EMP_INFO_Active.SuperAdmin - the same flag usp_get_project_new /
+        /// usp_get_projectIds check internally to bypass their own allocation
+        /// filter. Exposed directly here so callers (e.g. IT Ops Maturity's
+        /// Superuser-eligibility check) can ask "is this specific employee a
+        /// CSM SuperAdmin?" without going through a project-list SP.
+        /// </summary>
+        public bool IsSuperAdmin(string empId)
+        {
+            var context = new CloudDbContext();
+            var param1 = new SqlParameter("@EmpId", empId);
+            var result = context.Database
+                .SqlQuery<bool?>("SELECT TOP 1 SuperAdmin FROM VW_EMP_INFO_Active WHERE EMP_ID = @EmpId", param1)
+                .FirstOrDefault();
+            return result == true;
+        }
+
+        /// <summary>Every EMP_ID currently flagged SuperAdmin in CSM - used to build the "pick a replacement" candidate list when the last IT Ops Superuser is being revoked.</summary>
+        public List<string> GetSuperAdminEmpIds()
+        {
+            var context = new CloudDbContext();
+            return context.Database
+                .SqlQuery<string>("SELECT DISTINCT EMP_ID FROM VW_EMP_INFO_Active WHERE SuperAdmin = 1")
+                .ToList();
+        }
 
         public IEnumerable<CustomerProjectIds> CustomerProjectIds(string EmpId)
         {

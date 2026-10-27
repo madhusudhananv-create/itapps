@@ -333,9 +333,14 @@ const TrendAnalysisUpload = ({
   onFetchRange,
   // Start date (yyyy-MM-dd) of whatever period is currently selected on the main
   // "Fetch CSAT Data from Server" screen. When provided, the default comparison
-  // period here is set to ONE half-year BEFORE that selection (e.g. main screen
+  // period here is set to ONE period BEFORE that selection (e.g. main screen
   // = H2 2025 → trend default = H1 2025), not a fixed "last completed" period.
-  currentPeriodStartDate
+  currentPeriodStartDate,
+  // Period option list + label fn for the comparison-period dropdown, when
+  // onFetchRange is used. Defaults to PCSAT's half-year periods; ACSAT passes
+  // its Annual - YYYY options instead.
+  periodOptions,
+  periodLabelFn
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -344,10 +349,12 @@ const TrendAnalysisUpload = ({
   const [success, setSuccess] = useState('');
   const [renameTarget, setRenameTarget] = useState(null);
   const [renameValue, setRenameValue] = useState('');
-  const halfYearOptions = useMemo(() => getHalfYearOptions(), []);
-  // Default comparison period = one half-year before the currently selected main
+  const defaultHalfYearOptions = useMemo(() => getHalfYearOptions(), []);
+  const halfYearOptions = periodOptions || defaultHalfYearOptions;
+  const getPeriodLabel = periodLabelFn || getHalfYearLabel;
+  // Default comparison period = one period before the currently selected main
   // period, when that's available and found in the option list. Otherwise fall
-  // back to the half-year before the last completed one (options[1] / options[0]).
+  // back to the period before the last completed one (options[1] / options[0]).
   const currentPeriodIndex = currentPeriodStartDate
     ? halfYearOptions.findIndex(o => o.startDate === currentPeriodStartDate)
     : -1;
@@ -377,7 +384,7 @@ const TrendAnalysisUpload = ({
     const rangeSignature = `API Fetch (${fetchStartDate} to ${fetchEndDate})`;
     const alreadyFetched = (trendFilesRef.current || []).some(f => f.originalName === rangeSignature);
     if (alreadyFetched) {
-      setError(`"${getHalfYearLabel(fetchStartDate)}" has already been fetched for trend analysis. Please select a different period, or remove the existing entry first if you want to re-fetch it.`);
+      setError(`"${getPeriodLabel(fetchStartDate)}" has already been fetched for trend analysis. Please select a different period, or remove the existing entry first if you want to re-fetch it.`);
       setSuccess('');
       return;
     }
@@ -386,7 +393,7 @@ const TrendAnalysisUpload = ({
     setSuccess('');
     try {
       await onFetchRange(fetchStartDate, fetchEndDate);
-      setSuccess(`Data for ${getHalfYearLabel(fetchStartDate)} fetched and saved for trend analysis.`);
+      setSuccess(`Data for ${getPeriodLabel(fetchStartDate)} fetched and saved for trend analysis.`);
     } catch (err) {
       setError(err.message || 'Failed to fetch data for the selected range.');
     } finally {
@@ -411,7 +418,7 @@ const TrendAnalysisUpload = ({
       setSuccess('');
       try {
         await onFetchRange(fetchStartDate, fetchEndDate);
-        setSuccess(`Data for ${getHalfYearLabel(fetchStartDate)} fetched and saved for trend analysis.`);
+        setSuccess(`Data for ${getPeriodLabel(fetchStartDate)} fetched and saved for trend analysis.`);
       } catch (err) {
         setError(err.message || 'Failed to fetch data for the selected range.');
       } finally {
@@ -596,7 +603,7 @@ const TrendAnalysisUpload = ({
               <FetchLabel>Period</FetchLabel>
               <FetchInput
                 as="select"
-                value={getHalfYearLabel(fetchStartDate)}
+                value={getPeriodLabel(fetchStartDate)}
                 onChange={(e) => handlePeriodChange(e.target.value)}
               >
                 {halfYearOptions.map(o => (

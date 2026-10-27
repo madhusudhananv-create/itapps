@@ -85,6 +85,21 @@ export const getHalfYearLabel = (startDate) => {
 };
 
 /**
+ * Builds the list of selectable annual (Jan 1 - Dec 31) periods from 2025 up
+ * to the current year, newest first — for ACSAT's "Annual - YYYY" cycle
+ * dropdown, mirroring getHalfYearOptions below for PCSAT.
+ * @returns {Array<{label: string, startDate: string, endDate: string}>}
+ */
+export const getAnnualOptions = () => {
+  const currentYear = new Date().getFullYear();
+  const options = [];
+  for (let year = currentYear; year >= 2025; year--) {
+    options.push({ label: `Annual - ${year}`, startDate: `${year}-01-01`, endDate: `${year}-12-31` });
+  }
+  return options;
+};
+
+/**
  * Builds the list of selectable half-year periods (H1/H2) from 2025 up to
  * the current "last completed" half-year, newest first — for a period
  * dropdown instead of manual Start/End Date entry.

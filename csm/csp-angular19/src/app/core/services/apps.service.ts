@@ -248,6 +248,19 @@ export class AppsService {
   }
 
   /**
+   * IT Ops Maturity's nav-icon visibility isn't just role-based (APP_ACCESS_CONTROLS
+   * resource 830) - anyone actually assigned as COE SPOC, Reviewer, GDH, or Assessee
+   * on any ITOPS_ASSESSMENT should see the icon too, regardless of their CSM role.
+   * See ITOperationMaturityController.GetITOpsHasAccess.
+   */
+  getITOpsHasAccess(empId: string): Observable<boolean> {
+    return this.http.get<boolean>(
+      `${this.apiurl}/GetITOpsHasAccess?empId=${empId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
    * Get customer access controls
    * @param emailId Customer email
    * @param projid Project ID (PROJ_ID is a string identifier, e.g. "201P000123", not numeric)

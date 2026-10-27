@@ -1,12 +1,13 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { TrendingUp, Download } from 'lucide-react';
+import { TrendingUp, Download, BarChart3, Calendar, Users, Building2, Trophy, CheckCircle2, Calculator, ThumbsUp, ThumbsDown, Mail, Target, Search, X, Donut, PieChart as PieChartIcon, Info, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useCSATContext } from '../context/CSATContext';
 import { normalizeBusinessUnitDisplay, getBusinessUnitFromRow } from '../utils/normalizeBusinessUnitDisplay';
 import { isDateGreaterThanOrEqual } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts';
 import html2canvas from 'html2canvas';
+import { showAcsatAlert } from '../utils/acsatAlert';
 import {
   TOP10_ACCOUNT_ORDER,
   TOP10_SURVEY_ACCOUNT_ORDER,
@@ -428,120 +429,140 @@ const NPSLabel = (props) => {
   );
 };
 
+// --- NPS design tokens ---------------------------------------------------
+// ink: primary chrome/text · canvas: page bg · hairline: dividers
+// promoter/amber/detractor: UI-chrome accents (data-cell colors stay Excel-
+// standard green/orange/red for scanning consistency with the rest of CSAT).
+// Display type: Space Grotesk (titles) · UI type: Inter (controls/labels)
+// Data type: IBM Plex Mono (every numeric cell — the instrument-panel read).
+const NPS_INK = '#16233D';
+const NPS_CANVAS = '#F5F6F8';
+const NPS_HAIRLINE = '#E2E5EA';
+const NPS_PROMOTER = '#1B8A5A';
+const NPS_AMBER = '#B7791F';
+const NPS_ACTIVE = '#1D4ED8';
+
 const DashboardContainer = styled.div`
-  padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+  background: ${NPS_CANVAS};
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: ${NPS_INK};
 `;
 
 const Header = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  padding: 2rem;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
+  background: #ffffff;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid ${NPS_HAIRLINE};
+  margin-bottom: 0.75rem;
 `;
 
 const Title = styled.h1`
-  color: #2d3748;
-  font-size: 2.5rem;
+  color: ${NPS_INK};
+  font-size: 1.2rem;
   font-weight: 700;
-  margin: 0 0 1rem 0;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem 0;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 2px;
+    background: ${NPS_AMBER};
+  }
 `;
 
 const BackButton = styled.button`
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-size: 1rem;
+  background: transparent;
+  color: ${NPS_INK};
+  border: 1px solid ${NPS_HAIRLINE};
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  transition: all 0.15s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    border-color: #7c3aed;
+    background: #7c3aed;
+    color: #ffffff;
   }
 `;
 
 const TrendAnalysisButton = styled.button`
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
+  background: ${props => props.active ? NPS_ACTIVE : 'transparent'};
+  color: ${props => props.active ? '#ffffff' : NPS_INK};
+  border: 1px solid ${props => props.active ? NPS_ACTIVE : NPS_INK};
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-  width: 100%;
+  gap: 0.4rem;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  width: auto;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+    background: ${NPS_ACTIVE};
+    border-color: ${NPS_ACTIVE};
+    color: #ffffff;
   }
 `;
 
 const ToggleButton = styled.button`
-  background: ${props => props.active 
-    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' 
-    : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
-  };
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-size: 1rem;
+  background: ${props => props.active ? NPS_ACTIVE : 'transparent'};
+  color: ${props => props.active ? '#ffffff' : NPS_INK};
+  border: 1px solid ${props => props.active ? NPS_ACTIVE : NPS_HAIRLINE};
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin: 0 0.5rem;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  transition: all 0.15s ease;
+  margin: 0;
+  white-space: nowrap;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    border-color: ${NPS_ACTIVE};
   }
 `;
 
 const DownloadButton = styled.button`
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-size: 1rem;
+  background: transparent;
+  color: ${NPS_PROMOTER};
+  border: 1px solid ${NPS_PROMOTER};
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin: 0 0.5rem;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  transition: all 0.15s ease;
+  margin: 0;
+  white-space: nowrap;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    background: ${NPS_PROMOTER};
+    color: #ffffff;
   }
 `;
 
 const TableContainer = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 0.75rem;
+  border: 1px solid ${NPS_HAIRLINE};
   overflow: auto;
   max-height: 80vh;
   max-width: 100%;
@@ -581,17 +602,15 @@ const TableContainer = styled.div`
 
 const Table = styled.table`
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 1200px;
   background: white;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  table-layout: fixed;
+  border: 2px solid #6b7280;
 `;
 
 const TableHeader = styled.thead`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1e3a8a;
   position: sticky;
   top: 0;
   left: 0;
@@ -599,22 +618,22 @@ const TableHeader = styled.thead`
 `;
 
 const TableHeaderCell = styled.th`
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   text-align: center;
   vertical-align: middle;
-  font-weight: 700;
+  font-weight: 600;
   color: white;
-  font-size: 1rem;
+  font-size: 0.8rem;
   text-transform: none;
-  letter-spacing: 0.5px;
-  border: 1px solid #ffffff;
+  letter-spacing: 0.05em;
+  border: 1px solid #9ca3af;
   position: ${props => props.isFirstColumn ? 'sticky' : 'static'};
   left: ${props => props.isFirstColumn ? '0' : 'auto'};
-  background: ${props => props.isFirstColumn && !props.style?.backgroundColor ? 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)' : 'transparent'};
-  z-index: ${props => props.isFirstColumn ? '11' : '10'};
-  
+  background: ${props => !props.style?.backgroundColor ? '#1e3a8a' : 'transparent'};
+  z-index: ${props => props.isFirstColumn ? '11' : 'auto'};
+
   &:hover {
-    background: ${props => props.isFirstColumn ? 'linear-gradient(135deg, #4c51bf 0%, #553c9a 100%)' : '#1e40af'} !important;
+    background: #1e3a8a !important;
     cursor: pointer;
   }
 `;
@@ -624,12 +643,10 @@ const TableBody = styled.tbody`
 `;
 
 const TableRow = styled.tr`
-  transition: all 0.3s ease;
   border-bottom: 1px solid #e2e8f0;
 
   &:hover {
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-    transform: scale(1.01);
+    background: #f9fafb;
   }
 
   &:last-child {
@@ -638,9 +655,9 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   color: #2d3748;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   border: 1px solid #6b7280;
   position: ${props => props.isFirstColumn ? 'sticky' : 'static'};
   left: ${props => props.isFirstColumn ? '0' : 'auto'};
@@ -673,98 +690,100 @@ const ErrorMessage = styled.div`
 `;
 
 const NPSFormulaContainer = styled.div`
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border: 2px solid #cbd5e0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin: 1rem 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #fafbfc;
+  border: 1px solid ${NPS_HAIRLINE};
+  border-left: 3px solid ${NPS_AMBER};
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
 `;
 
 const FormulaTitle = styled.h3`
-  color: #2d3748;
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0 0 1rem 0;
+  color: ${NPS_INK};
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 `;
 
 const FormulaText = styled.div`
-  color: #4a5568;
-  font-size: 1rem;
+  color: ${NPS_INK};
+  font-size: 0.85rem;
   font-weight: 600;
   text-align: center;
-  line-height: 1.6;
-  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  margin-bottom: 0.4rem;
 `;
 
 const FormulaBreakdown = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 `;
 
 const FormulaItem = styled.div`
   background: white;
-  padding: 0.75rem;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 `;
 
 const FormulaItemTitle = styled.div`
   font-weight: 700;
   color: #2d3748;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.2rem;
 `;
 
 const FormulaItemText = styled.div`
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: #6b7280;
-  line-height: 1.4;
+  line-height: 1.3;
 `;
 
 const LegendContainer = styled.div`
   background: #f8f9fa;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 1rem;
-  margin: 1rem 0;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
 `;
 
 const LegendTitle = styled.div`
   font-weight: 700;
   color: #2d3748;
-  font-size: 1rem;
-  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0;
   text-align: center;
+  white-space: nowrap;
 `;
 
 const LegendItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.4rem;
+  margin-bottom: 0;
 `;
 
 const LegendColor = styled.div`
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   border-radius: 4px;
   background: ${props => props.color};
   border: 1px solid #6b7280;
 `;
 
 const LegendText = styled.div`
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   color: #4a5568;
   font-weight: 500;
+  white-space: nowrap;
 `;
 
 const ChartContainer = styled.div`
@@ -865,28 +884,28 @@ const SummaryTableRow = styled.tr`
 `;
 
 const SummaryTableCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   border: 1px solid #6b7280;
-  font-size: 1rem;
+  font-size: 0.8rem;
   color: #374151;
   font-weight: ${props => props.fontWeight || '600'};
 `;
 
 const SummaryTableCellPercentage = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   border: 1px solid #6b7280;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #000000; // Black text for all percentage columns in table
 `;
 
 const SummaryNPSCell = styled.td`
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   border: 1px solid #6b7280;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 700;
   background-color: ${props => {
     if (props.score >= 75) return '#C6EFCE'; // Light Green 2 >=75% (Great) - Excel standard
@@ -912,8 +931,8 @@ const SuccessMessage = styled.div`
 `;
 
 const ResponseRateCell = styled.td`
-  padding: 1rem;
-  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
   border: 1px solid #6b7280;
   font-weight: 600;
   text-align: center;
@@ -933,8 +952,8 @@ const ResponseRateCell = styled.td`
 `;
 
 const NPSCell = styled.td`
-  padding: 1rem;
-  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
   border: 1px solid #6b7280;
   font-weight: 700;
   text-align: center;
@@ -964,8 +983,8 @@ const NPSCell = styled.td`
 `;
 
 const NpsTrendDiffCell = styled.td`
-  padding: 1rem;
-  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
   border: 1px solid #6b7280;
   font-weight: 600;
   text-align: center;
@@ -978,8 +997,8 @@ const SearchContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 1rem 0;
-  padding: 0.75rem;
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.6rem;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 10px;
   border: 1px solid #e2e8f0;
@@ -1091,21 +1110,31 @@ const SummaryContainer = styled.div`
 `;
 
 const SummaryTitle = styled.h2`
-  color: #2d3748;
-  font-size: 1.8rem;
+  color: ${NPS_INK};
+  font-size: 1.4rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.25rem;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 2px;
+    background: ${NPS_AMBER};
+  }
 `;
 
 const SummaryGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 1.25rem;
   margin-bottom: 1.5rem;
 
   @media (max-width: 768px) {
@@ -1114,15 +1143,15 @@ const SummaryGrid = styled.div`
 `;
 
 const SummaryCard = styled.div`
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border: 2px solid #cbd5e0;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid ${NPS_HAIRLINE};
+  border-radius: 10px;
+  padding: 1.25rem;
 `;
 
 const SummaryCardTitle = styled.h3`
-  color: #2d3748;
-  font-size: 1.2rem;
+  color: ${NPS_INK};
+  font-size: 1.05rem;
   font-weight: 600;
   margin-bottom: 1rem;
   text-align: center;
@@ -1139,26 +1168,25 @@ const TopAccountItem = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
+  background: #fafbfc;
+  border-radius: 6px;
+  border: 1px solid ${NPS_HAIRLINE};
+  transition: all 0.15s ease;
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
+    border-color: ${NPS_PROMOTER};
   }
 `;
 
 const AccountName = styled.span`
   font-weight: 600;
-  color: #2d3748;
+  color: ${NPS_INK};
   font-size: 0.9rem;
 `;
 
 const AccountNPS = styled.span`
   font-weight: 700;
-  color: #059669;
+  color: ${NPS_PROMOTER};
   font-size: 0.9rem;
 `;
 
@@ -1172,9 +1200,8 @@ const AchievedNPSContainer = styled.div`
 
 const AchievedNPSValue = styled.div`
   font-size: 3rem;
-  font-weight: 800;
+  font-weight: 700;
   margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   /* Color coding based on NPS score */
   color: ${props => {
     if (props.npsScore >= 75) return '#000000'; // Black text for Dark Green (=75%)
@@ -1194,7 +1221,7 @@ const AchievedNPSValue = styled.div`
 const AchievedNPSLabel = styled.div`
   font-size: 1.1rem;
   font-weight: 600;
-  color: #4a5568;
+  color: ${NPS_INK};
   margin-bottom: 0.5rem;
 `;
 
@@ -1360,7 +1387,7 @@ const rowsFromSheetJson = (jsonData) => {
 };
 
 // Normalize Excel date values to MM-DD-YYYY, then compare >= cycle start (also MM-DD-YYYY).
-// Empty or unparseable dates return false � they must not count toward Polled/Responded.
+// Empty or unparseable dates return false — they must not count toward Polled/Responded.
 const isDateOnOrAfterCsatStart = (dateValue, cycleStartDate) => {
   if (dateValue == null || dateValue === '' || String(dateValue).trim() === '' || dateValue === 'N/A') {
     return false;
@@ -2755,7 +2782,7 @@ const formatNpsResponseRateTrendDiffDisplay = (diff) => {
   if (diff > 0) {
     return {
       diffText: `+${diff.toFixed(1)}%`,
-      arrow: '?',
+      arrow: '↑',
       diffColor: '#1f2937',
       arrowColor: '#16a34a',
     };
@@ -2763,7 +2790,7 @@ const formatNpsResponseRateTrendDiffDisplay = (diff) => {
   if (diff < 0) {
     return {
       diffText: `${diff.toFixed(1)}%`,
-      arrow: '?',
+      arrow: '↓',
       diffColor: '#1f2937',
       arrowColor: '#dc2626',
     };
@@ -2778,7 +2805,7 @@ const formatNpsCountTrendDiffDisplay = (diff) => {
   if (diff > 0) {
     return {
       diffText: `+${diff}`,
-      arrow: '?',
+      arrow: '↑',
       diffColor: '#1f2937',
       arrowColor: '#16a34a',
     };
@@ -2786,7 +2813,7 @@ const formatNpsCountTrendDiffDisplay = (diff) => {
   if (diff < 0) {
     return {
       diffText: `${diff}`,
-      arrow: '?',
+      arrow: '↓',
       diffColor: '#1f2937',
       arrowColor: '#dc2626',
     };
@@ -2801,7 +2828,7 @@ const formatNpsActualNpsTrendDiffDisplay = (diff) => {
   if (diff > 0) {
     return {
       diffText: `+${diff.toFixed(2)}`,
-      arrow: '?',
+      arrow: '↑',
       diffColor: '#1f2937',
       arrowColor: '#16a34a',
     };
@@ -2809,7 +2836,7 @@ const formatNpsActualNpsTrendDiffDisplay = (diff) => {
   if (diff < 0) {
     return {
       diffText: diff.toFixed(2),
-      arrow: '?',
+      arrow: '↓',
       diffColor: '#1f2937',
       arrowColor: '#dc2626',
     };
@@ -2983,6 +3010,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   const [showTop10, setShowTop10] = useState(false);
   const [showRespondedComparison, setShowRespondedComparison] = useState(false);
   const [showVerticalGraph, setShowVerticalGraph] = useState(false);
+  const [showFormulaDetails, setShowFormulaDetails] = useState(false);
   const [showTop10Chart, setShowTop10Chart] = useState(false);
   const chartRef = useRef(null);
   const orgLevelChartRef = useRef(null);
@@ -3019,17 +3047,20 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   };
 
   const handleViewAcsatTrendAnalysis = () => {
+    if (showAcsatTrendAnalysis) {
+      setShowAcsatTrendAnalysis(false);
+      return;
+    }
     if (!acsatNpsTrendViewMode) {
-      alert('ACSAT trend analysis is available only in Account-wise, Top 10, or BU-wise NPS view on this dashboard.');
+      showAcsatAlert('ACSAT trend analysis is available only in Account-wise, Top 10, or BU-wise NPS view on this dashboard.');
       return;
     }
     if (!trendAnalysisFiles?.length) {
-      alert('Please upload ACSAT trend files using "Upload data for ACSAT trend analysis" on the Upload ACSAT Data page.');
+      showAcsatAlert('Please upload ACSAT trend files using "Upload data for ACSAT trend analysis" on the Upload ACSAT Data page.');
       return;
     }
-    const shouldDelayScroll = !showAcsatTrendAnalysis;
     setShowAcsatTrendAnalysis(true);
-    setTimeout(scrollToAcsatTrendSection, shouldDelayScroll ? 150 : 0);
+    setTimeout(scrollToAcsatTrendSection, 150);
   };
 
   // Top 10 account names in order (aligned with Account/BU wise Response Rate dashboard)
@@ -3130,7 +3161,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       ? [singleFileData].filter((f) => f?.hasData && f.rows?.length)
       : acsatBuNpsTrendAnalysisData.filter((f) => f.hasData && f.rows?.length);
     if (!trendFiles.length) {
-      alert('No BU-wise NPS trend data available to download.');
+      showAcsatAlert('No BU-wise NPS trend data available to download.');
       return;
     }
     try {
@@ -3155,7 +3186,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading BU NPS trend Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
 
@@ -3165,17 +3196,29 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   const showBuMainNpsTrendColumns =
     isBuWiseNpsView && showAcsatTrendAnalysis && !!trendAnalysisFiles?.length;
 
-  const showMainNpsTrendColumns = showAccountMainNpsTrendColumns || showBuMainNpsTrendColumns;
+  const showTop10MainNpsTrendColumns =
+    isTop10NpsView && showAcsatTrendAnalysis && !!trendAnalysisFiles?.length;
+
+  const showMainNpsTrendColumns = showAccountMainNpsTrendColumns || showBuMainNpsTrendColumns || showTop10MainNpsTrendColumns;
 
   const mainNpsTrendAnalysisData = showBuMainNpsTrendColumns
     ? acsatBuNpsTrendAnalysisData
-    : showAccountMainNpsTrendColumns
-      ? acsatNpsTrendAnalysisData
-      : [];
+    : showTop10MainNpsTrendColumns
+      ? acsatTop10NpsTrendAnalysisData
+      : showAccountMainNpsTrendColumns
+        ? acsatNpsTrendAnalysisData
+        : [];
+
+  // Account-wise and Top 10 trend rows are both keyed by customerName, so they
+  // share the same lookup builder/finder (findNpsMainTrendRow) — only BU-wise
+  // uses the separate businessUnit-keyed lookup below.
+  const accountLikeNpsTrendAnalysisData = showTop10MainNpsTrendColumns
+    ? acsatTop10NpsTrendAnalysisData
+    : acsatNpsTrendAnalysisData;
 
   const npsMainTrendLookups = useMemo(
-    () => acsatNpsTrendAnalysisData.map((fileData) => buildNpsMainTrendLookup(fileData.rows || [])),
-    [acsatNpsTrendAnalysisData]
+    () => accountLikeNpsTrendAnalysisData.map((fileData) => buildNpsMainTrendLookup(fileData.rows || [])),
+    [accountLikeNpsTrendAnalysisData]
   );
 
   const npsBuMainTrendLookups = useMemo(
@@ -3251,7 +3294,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       ? [singleFileData].filter((f) => f?.hasData && f.rows?.length)
       : acsatTop10NpsTrendAnalysisData.filter((f) => f.hasData && f.rows?.length);
     if (!trendFiles.length) {
-      alert('No Top 10 account-wise NPS trend data available to download.');
+      showAcsatAlert('No Top 10 account-wise NPS trend data available to download.');
       return;
     }
     try {
@@ -3276,7 +3319,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading Top 10 NPS trend Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
 
@@ -3285,7 +3328,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       ? [singleFileData].filter((f) => f?.hasData && f.rows?.length)
       : acsatNpsTrendAnalysisData.filter((f) => f.hasData && f.rows?.length);
     if (!trendFiles.length) {
-      alert('No account-wise NPS trend data available to download.');
+      showAcsatAlert('No account-wise NPS trend data available to download.');
       return;
     }
     try {
@@ -3310,7 +3353,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading NPS trend Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
   
@@ -3320,7 +3363,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   // Load first sheet data (CSAT received Report) for NPS ratings
   useEffect(() => {
     if (!excelData) {
-      npsWarn('excelData is missing or null � upload an ACSAT Excel file first');
+      npsWarn('excelData is missing or null — upload an ACSAT Excel file first');
       setFirstSheetData([]);
       setSheetLoadDebug(prev => ({
         ...prev,
@@ -3402,7 +3445,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         rowsBefore: processedData.length,
         rowsAfter: filteredData.length,
         filteredOut,
-        acsatCycle: acsatCycle || '(none � all rows kept)',
+        acsatCycle: acsatCycle || '(none — all rows kept)',
       });
 
       setFirstSheetData(filteredData);
@@ -3517,7 +3560,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         rowsBefore: processedData.length,
         rowsAfter: filteredData.length,
         filteredOut,
-        acsatCycle: acsatCycle || '(none � all rows kept)',
+        acsatCycle: acsatCycle || '(none — all rows kept)',
       });
 
       const normalizedSecond = filteredData.map(row => {
@@ -3588,7 +3631,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     if (!secondSheetData || secondSheetData.length === 0) {
       emptyReason = sheetLoadDebug.secondSheet.reason
         || sheetLoadDebug.firstSheet.reason
-        || 'Second sheet (CSAT sent and received Report) has no data � check sheet name and YEAR-QUARTER filter';
+        || 'Second sheet (CSAT sent and received Report) has no data — check sheet name and YEAR-QUARTER filter';
       npsWarn('No second sheet data for processing', { emptyReason, sheetLoadDebug });
       return { data: [], summary: emptySummary, emptyReason };
     }
@@ -4104,7 +4147,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const beforeSentFilter = result.length;
       result = result.filter(group => group.sentCount > 0);
       if (result.length === 0 && beforeSentFilter > 0) {
-        emptyReason = `No rows after Polled>0 filter (${beforeSentFilter} groups had sentCount=0 � CSAT SENT DATE may be before cycle start ${acsatCycleStartDateFormatted || 'N/A'})`;
+        emptyReason = `No rows after Polled>0 filter (${beforeSentFilter} groups had sentCount=0 — CSAT SENT DATE may be before cycle start ${acsatCycleStartDateFormatted || 'N/A'})`;
         npsWarn(emptyReason, { beforeSentFilter, acsatCycleStartDateFormatted });
       }
 
@@ -4359,7 +4402,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Get top 5 accounts with highest NPS scores (only for account-wise data)
       if (!groupByBU && result.length > 0) {
-        const nonGrandTotalData = result.filter(group => !group.isGrandTotal);
+        const nonGrandTotalData = result.filter(group => !group.isGrandTotal && !group.isGrandTotalPercentageRow);
         const sortedByNPS = [...nonGrandTotalData].sort((a, b) => b.npsScore - a.npsScore);
         summaryData.top5Accounts = sortedByNPS.slice(0, 5).map((group, index) => ({
           rank: index + 1,
@@ -4906,7 +4949,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
   const emptyDisplayMessage = useMemo(() => {
     if (!excelData) {
-      return 'No Excel file data � upload an ACSAT Excel file first.';
+      return 'No Excel file data — upload an ACSAT Excel file first.';
     }
     if (sheetLoadDebug.secondSheet.status === 'pending' && sheetLoadDebug.firstSheet.status === 'pending') {
       return 'Loading data...';
@@ -5613,7 +5656,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const passives = respondent.passivesCount;
       const detractors = respondent.detractorsCount;
       
-      // Calculate NPS: (Promoters - Detractors) / Responded � 100
+      // Calculate NPS: (Promoters - Detractors) / Responded × 100
       const nps = csatReceivedDateCount > 0 ? ((promoters - detractors) / csatReceivedDateCount) * 100 : 0;
       
       if (index < 3) {
@@ -5815,7 +5858,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
   // Download Excel
   const downloadExcel = async () => {
     if (!processedData.data || processedData.data.length === 0) {
-      alert('No data to download');
+      showAcsatAlert('No data to download');
       return;
     }
 
@@ -6384,7 +6427,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               otherAccount.receivedCount === 0 ? '-' : (otherAccount.npsAvgRating == null ? '-' : parseFloat((Math.round(Number(otherAccount.npsAvgRating) * 100) / 100).toFixed(2)))
             ];
 
-        const otherAccountRow = worksheet.addRow(otherAccountRowData);
+        const otherAccountRowDataFinal = includeMainNpsTrendColumns
+          ? injectNpsMainTrendExcelColumns(otherAccountRowData, otherAccount, mainTrendFiles, mainTrendExcelOptions({ dashOnly: true }))
+          : otherAccountRowData;
+
+        const otherAccountRow = worksheet.addRow(otherAccountRowDataFinal);
         
         // Apply word wrapping and alignment to all cells in the Other Account row
         // Text columns (Sr. No., Business Unit, Customer Name) - left align
@@ -6832,7 +6879,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               '-'  // Don't display NPS score for percentage row
             ];
 
-        const percentageExcelRow = worksheet.addRow(percentageRowData);
+        const percentageRowDataFinal = includeMainNpsTrendColumns
+          ? injectNpsMainTrendExcelColumns(percentageRowData, percentageRow, mainTrendFiles, mainTrendExcelOptions({ dashOnly: true }))
+          : percentageRowData;
+
+        const percentageExcelRow = worksheet.addRow(percentageRowDataFinal);
         
         // Apply word wrapping and alignment to all cells in the percentage row
         percentageExcelRow.eachCell((cell, colNumber) => {
@@ -6924,7 +6975,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               '-'  // Don't display NPS score for percentage row
             ];
 
-        const otherAccountPercentageExcelRow = worksheet.addRow(otherAccountPercentageRowData);
+        const otherAccountPercentageRowDataFinal = includeMainNpsTrendColumns
+          ? injectNpsMainTrendExcelColumns(otherAccountPercentageRowData, otherAccountPercentageRow, mainTrendFiles, mainTrendExcelOptions({ dashOnly: true }))
+          : otherAccountPercentageRowData;
+
+        const otherAccountPercentageExcelRow = worksheet.addRow(otherAccountPercentageRowDataFinal);
         
         // Apply word wrapping and alignment to all cells in the Other Account percentage row
         otherAccountPercentageExcelRow.eachCell((cell, colNumber) => {
@@ -7014,7 +7069,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               overallRow.receivedCount === 0 ? '-' : (overallRow.npsAvgRating == null ? '-' : parseFloat((Math.round(Number(overallRow.npsAvgRating) * 100) / 100).toFixed(2)))
             ];
 
-        const overallExcelRow = worksheet.addRow(overallRowData);
+        const overallRowDataFinal = includeMainNpsTrendColumns
+          ? injectNpsMainTrendExcelColumns(overallRowData, overallRow, mainTrendFiles, mainTrendExcelOptions({ useGrandTotalTrend: true }))
+          : overallRowData;
+
+        const overallExcelRow = worksheet.addRow(overallRowDataFinal);
         
         // Apply word wrapping and alignment to all cells in the Overall row
         overallExcelRow.eachCell((cell, colNumber) => {
@@ -7149,7 +7208,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               '-' // Don't display NPS score for percentage row
             ];
 
-        const overallPercentageExcelRow = worksheet.addRow(overallPercentageRowData);
+        const overallPercentageRowDataFinal = includeMainNpsTrendColumns
+          ? injectNpsMainTrendExcelColumns(overallPercentageRowData, overallPercentageRow, mainTrendFiles, mainTrendExcelOptions({ dashOnly: true }))
+          : overallPercentageRowData;
+
+        const overallPercentageExcelRow = worksheet.addRow(overallPercentageRowDataFinal);
         
         // Apply word wrapping and alignment to all cells in the Overall percentage row
         overallPercentageExcelRow.eachCell((cell, colNumber) => {
@@ -7206,14 +7269,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       formulaTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7FAFC' } };
       
       // Add formula
-      const formulaRow = worksheet.addRow(['NPS = (#Promoters - # Detractors) / Responded � 100']);
+      const formulaRow = worksheet.addRow(['NPS = (#Promoters - # Detractors) / Responded × 100']);
       formulaRow.getCell(1).font = { bold: true, color: { argb: 'FF4A5568' } };
       
       // Add breakdown
       worksheet.addRow(['Where:']);
-      worksheet.addRow(['� Promoters: Customers who gave ratings 9 or 10']);
-      worksheet.addRow(['� Detractors: Customers who gave ratings less than 7']);
-      worksheet.addRow(['� Responded: Count of CSAT RECEIVED DATE from CSAT received Report']);
+      worksheet.addRow(['• Promoters: Customers who gave ratings 9 or 10']);
+      worksheet.addRow(['• Detractors: Customers who gave ratings less than 7']);
+      worksheet.addRow(['• Responded: Count of CSAT RECEIVED DATE from CSAT received Report']);
       
       // Add legend
       const legendStartRow = formulaStartRow + 6;
@@ -7251,7 +7314,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const summaryStartRow = worksheet.lastRow.number + 1;
       
       // NPS Dashboard Summary Title
-      const summaryTitleRow = worksheet.addRow(['?? NPS Dashboard Summary']);
+      const summaryTitleRow = worksheet.addRow(['NPS Dashboard Summary']);
       const summaryTitleRowNum = summaryTitleRow.number;
       summaryTitleRow.getCell(1).font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
       summaryTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; // Navy blue
@@ -7261,7 +7324,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Add Achieved NPS Score
       worksheet.addRow([]);
-      const achievedNPSTitleRow = worksheet.addRow(['?? Achieved NPS Score']);
+      const achievedNPSTitleRow = worksheet.addRow(['Achieved NPS Score']);
       const achievedNPSTitleRowNum = achievedNPSTitleRow.number;
       achievedNPSTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF059669' } };
       achievedNPSTitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -7316,7 +7379,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         worksheet.addRow([]);
         topAccountsStartRow = worksheet.lastRow.number + 1;
         
-        const topAccountsTitleRow = worksheet.addRow(['?? Top 5 Accounts (Highest NPS)']);
+        const topAccountsTitleRow = worksheet.addRow(['Top 5 Accounts (Highest NPS)']);
         const topAccountsTitleRowNum = topAccountsTitleRow.number;
         topAccountsTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
         topAccountsTitleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; // Navy blue
@@ -7464,7 +7527,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Add NPS Legend to Excel
       worksheet.addRow([]);
-      const npsLegendTitleRow = worksheet.addRow(['?? NPS Score Legend']);
+      const npsLegendTitleRow = worksheet.addRow(['NPS Score Legend']);
       const npsLegendTitleRowNum = npsLegendTitleRow.number;
       npsLegendTitleRow.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1D4ED8' } };
       npsLegendTitleRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
@@ -7528,14 +7591,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       console.error('Error downloading Excel:', error);
       console.error('Error stack:', error.stack);
       console.error('Error message:', error.message);
-      alert(`Error downloading Excel file: ${error.message || 'Unknown error'}`);
+      showAcsatAlert(`Error downloading Excel file: ${error.message || 'Unknown error'}`);
     }
   };
 
   // Download Chart as Image
   const downloadChartImage = async () => {
     if (!chartRef.current || !showVerticalGraph) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -7557,14 +7620,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       }, 'image/png');
     } catch (error) {
       console.error('Error downloading chart:', error);
-      alert('Error downloading chart image');
+      showAcsatAlert('Error downloading chart image');
     }
   };
 
   // Download Top 10 Chart as Image
   const downloadTop10ChartImage = async () => {
     if (!top10ChartRef.current || !showTop10Chart) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -7582,14 +7645,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       window.URL.revokeObjectURL(link.href);
     } catch (error) {
       console.error('Error downloading Top 10 chart image:', error);
-      alert('Error downloading chart image');
+      showAcsatAlert('Error downloading chart image');
     }
   };
 
   // Download Other Account Chart as Image
   const downloadOtherAccountChartImage = async () => {
     if (!otherAccountChartRef.current || !showTop10Chart) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -7607,14 +7670,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       window.URL.revokeObjectURL(link.href);
     } catch (error) {
       console.error('Error downloading Other Account chart image:', error);
-      alert('Error downloading chart image');
+      showAcsatAlert('Error downloading chart image');
     }
   };
 
   // Download Org Level Chart as Image
   const downloadOrgLevelChartImage = async () => {
     if (!orgLevelChartRef.current || !showVerticalGraph) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -7636,14 +7699,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       }, 'image/png');
     } catch (error) {
       console.error('Error downloading chart:', error);
-      alert('Error downloading chart image');
+      showAcsatAlert('Error downloading chart image');
     }
   };
 
   // Download Respondent Chart as Image
   const downloadRespondentChartImage = async () => {
     if (!respondentChartRef.current || !showRespondedComparison) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -7665,14 +7728,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       }, 'image/png');
     } catch (error) {
       console.error('Error downloading chart:', error);
-      alert('Error downloading chart image');
+      showAcsatAlert('Error downloading chart image');
     }
   };
 
   // Download Donut Chart as Image
   const downloadDonutChartImage = async () => {
     if (!donutChartRef.current || !showRespondedComparison) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -7694,14 +7757,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       }, 'image/png');
     } catch (error) {
       console.error('Error downloading donut chart:', error);
-      alert('Error downloading donut chart image');
+      showAcsatAlert('Error downloading donut chart image');
     }
   };
 
   // Download Pie Chart as Image
   const downloadPieChartImage = async () => {
     if (!pieChartRef.current || !showRespondedComparison) {
-      alert('No chart available to download');
+      showAcsatAlert('No chart available to download');
       return;
     }
 
@@ -7723,14 +7786,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       }, 'image/png');
     } catch (error) {
       console.error('Error downloading pie chart:', error);
-      alert('Error downloading pie chart image');
+      showAcsatAlert('Error downloading pie chart image');
     }
   };
 
   // Download Responded Level Comparison Excel
   const downloadRespondedLevelComparisonExcel = async () => {
     if (!respondentLevelData || respondentLevelData.length === 0) {
-      alert('No respondent data to download');
+      showAcsatAlert('No respondent data to download');
       return;
     }
 
@@ -7830,11 +7893,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
       // Add information rows
       worksheet.addRow([]);
-      worksheet.addRow(['NPS Calculation Formula: (#Promoters - # Detractors) � Responded � 100']);
+      worksheet.addRow(['NPS Calculation Formula: (#Promoters - # Detractors) ÷ Responded × 100']);
       worksheet.addRow(['Promoters: Ratings of 9 or 10 for perspective "NPS"']);
       worksheet.addRow(['Detractors: Ratings less than 7 for perspective "NPS"']);
       worksheet.addRow([`Date Filter: CSAT SENT DATE and CSAT RECEIVED DATE = ${acsatCycleStartDateFormatted}`]);
-      worksheet.addRow([`Data Source: CSAT sent and received Report`]);
+      worksheet.addRow([`Data Source: ACSAT Survey Status Report`]);
       worksheet.addRow([]);
       worksheet.addRow(['NPS Score Legend:']);
       const legendRow1 = worksheet.addRow(['Green: =75%', 'Orange: 0% to 74.99%', 'Red: <0%']);
@@ -7870,20 +7933,26 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading Responded Level Comparison Excel:', error);
-      alert('Error downloading Excel file');
+      showAcsatAlert('Error downloading Excel file');
     }
   };
 
   return (
     <DashboardContainer>
       <Header>
-        <Title>?? {showTop10 ? 'Top 10 Accounts-NPS' : 'NPS Dashboard'}</Title>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '0.75rem', minWidth: '220px' }}>
-            <BackButton onClick={onBack}>? Back to ACSAT</BackButton>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Title style={{ margin: 0 }}><BarChart3 size={20} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> {showTop10 ? 'Top 10 Accounts-NPS' : 'NPS Dashboard'}</Title>
+            {acsatCycle && (
+              <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 500 }}>
+                <Calendar size={14} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> Cycle: {acsatCycle}
+              </span>
+            )}
           </div>
+          <BackButton onClick={onBack}>← Back to ACSAT</BackButton>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <ToggleButton 
             active={!groupByBU && !showTop10 && !showRespondedComparison && !showVerticalGraph}
             onClick={() => {
@@ -7893,7 +7962,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               setShowVerticalGraph(false);
             }}
           >
-            ?? Show by Account
+            <><Users size={16} style={{ marginRight: '0.4rem' }} /> Show by Account</>
           </ToggleButton>
           <ToggleButton 
             active={groupByBU && !showTop10 && !showRespondedComparison && !showVerticalGraph}
@@ -7904,7 +7973,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               setShowVerticalGraph(false);
             }}
           >
-            ?? Show by BU Only
+            <><Building2 size={16} style={{ marginRight: '0.4rem' }} /> Show by BU Only</>
           </ToggleButton>
           <ToggleButton 
             active={showTop10 && !showRespondedComparison && !showVerticalGraph}
@@ -7920,7 +7989,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               }
             }}
           >
-            ?? Top 10 account -NPS
+            <><Trophy size={16} style={{ marginRight: '0.4rem' }} /> Top 10 account -NPS</>
           </ToggleButton>
           <ToggleButton 
             active={showRespondedComparison}
@@ -7934,7 +8003,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               }
             }}
           >
-            ?? Responded Level Comparison
+            <><BarChart3 size={16} style={{ marginRight: '0.4rem' }} /> Responded Level Comparison</>
           </ToggleButton>
           {groupByBU && (
           <ToggleButton 
@@ -7948,66 +8017,63 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               }
             }}
           >
-            ?? Vertical Graph
+            <><TrendingUp size={16} style={{ marginRight: '0.4rem' }} /> Vertical Graph</>
           </ToggleButton>
           )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           {showRespondedComparison ? (
             <DownloadButton onClick={downloadRespondedLevelComparisonExcel}>
-              ?? Download Responded Comparison
+              <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Responded Comparison
             </DownloadButton>
           ) : (
           <DownloadButton onClick={downloadExcel}>
-            ?? Download Excel
+            <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Excel
           </DownloadButton>
           )}
           <TrendAnalysisButton type="button" onClick={handleViewAcsatTrendAnalysis} style={{ width: 'auto', minWidth: '220px' }}>
             <TrendingUp size={16} />
-            View ACSAT trend analysis
+            {showAcsatTrendAnalysis ? 'Hide ACSAT trend analysis' : 'View ACSAT trend analysis'}
           </TrendAnalysisButton>
-        </div>
-        
-        {acsatCycleStartDateFormatted && (
-          <div style={{ 
-            marginTop: '0.5rem', 
-            fontSize: '0.875rem', 
-            color: '#6b7280',
-            fontWeight: '500'
-          }}>
-            ?? CSAT Cycle Start Date: {acsatCycleStartDateFormatted}
           </div>
-        )}
-        
+        </div>
+
         {processedData.data.length > 0 && (
           <SuccessMessage>
-            ? Data loaded successfully! Showing {processedData.data.length} {showTop10 ? 'top 10 accounts' : (groupByBU ? 'business units' : 'customers')}
+            <CheckCircle2 size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Data loaded successfully! Showing {processedData.data.length} {showTop10 ? 'top 10 accounts' : (groupByBU ? 'business units' : 'customers')}
           </SuccessMessage>
         )}
 
         {!showRespondedComparison && (
         <NPSFormulaContainer>
-          <FormulaTitle>?? NPS Calculation Formula</FormulaTitle>
-          <FormulaText>
-            <strong>NPS = (#Promoters - # Detractors) � Responded � 100</strong>
-          </FormulaText>
-          
+          <div
+            onClick={() => setShowFormulaDetails(!showFormulaDetails)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
+          >
+            <FormulaTitle style={{ margin: 0 }}><Calculator size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> NPS = (#Promoters - # Detractors) ÷ Responded × 100</FormulaTitle>
+            <span style={{ fontSize: '0.75rem', color: '#667eea', fontWeight: 600 }}>
+              {showFormulaDetails ? '▲ Hide details' : '▼ Show details'}
+            </span>
+          </div>
+          {showFormulaDetails && (
           <FormulaBreakdown>
             <FormulaItem>
-              <FormulaItemTitle>?? Promoters</FormulaItemTitle>
+              <FormulaItemTitle><ThumbsUp size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Promoters</FormulaItemTitle>
               <FormulaItemText>Customers who gave ratings of 9 or 10 for NPS perspective</FormulaItemText>
             </FormulaItem>
             
             <FormulaItem>
-              <FormulaItemTitle>?? Detractors</FormulaItemTitle>
+              <FormulaItemTitle><ThumbsDown size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Detractors</FormulaItemTitle>
               <FormulaItemText>Customers who gave ratings less than 7 for NPS perspective</FormulaItemText>
             </FormulaItem>
             
             <FormulaItem>
-              <FormulaItemTitle>?? Total Surveys Sent</FormulaItemTitle>
+              <FormulaItemTitle><Mail size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Total Surveys Sent</FormulaItemTitle>
               <FormulaItemText>Count of CSAT SENT DATE from CSAT sent and received Report</FormulaItemText>
             </FormulaItem>
             
             <FormulaItem>
-              <FormulaItemTitle>?? Score Interpretation</FormulaItemTitle>
+              <FormulaItemTitle><Target size={16} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Score Interpretation</FormulaItemTitle>
               <FormulaItemText>
                 <span style={{color: '#155724', fontWeight: '600'}}>=50: Excellent</span> | 
                 <span style={{color: '#856404', fontWeight: '600'}}> 0-49: Good</span> | 
@@ -8015,41 +8081,63 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               </FormulaItemText>
             </FormulaItem>
           </FormulaBreakdown>
+          )}
         </NPSFormulaContainer>
         )}
       </Header>
 
-      {/* Search box - only show for account-wise view */}
-      {!showRespondedComparison && !groupByBU && processedData.data.length > 0 && (
-        <SearchContainer>
-          <SearchLabel>?? Search Customer:</SearchLabel>
-          <SearchInputContainer>
-            <SearchInput
-              type="text"
-              placeholder={showTop10 ? "Search by top 10 account name..." : "Enter customer name or ID..."}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between', margin: '0.5rem 0' }}>
+        {/* Search box - only show for account-wise view */}
+        {!showRespondedComparison && !groupByBU && processedData.data.length > 0 && (
+          <SearchContainer style={{ margin: 0 }}>
+            <SearchLabel><Search size={14} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> Search Customer:</SearchLabel>
+            <SearchInputContainer>
+              <SearchInput
+                type="text"
+                placeholder={showTop10 ? "Search by top 10 account name..." : "Enter customer name or ID..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <InlineClearButton onClick={() => setSearchTerm('')} title="Clear search">
+                  <X size={14} />
+                </InlineClearButton>
+              )}
+            </SearchInputContainer>
             {searchTerm && (
-              <InlineClearButton onClick={() => setSearchTerm('')} title="Clear search">
-                ?
-              </InlineClearButton>
+              <ClearButton onClick={() => setSearchTerm('')} title="Clear search">
+                <X size={14} style={{ marginRight: '0.3rem' }} /> Clear
+              </ClearButton>
             )}
-          </SearchInputContainer>
-          {searchTerm && (
-            <ClearButton onClick={() => setSearchTerm('')} title="Clear search">
-              ? Clear
-            </ClearButton>
-          )}
-        </SearchContainer>
-      )}
+          </SearchContainer>
+        )}
+
+        {/* NPS Legend - Moved above the table */}
+        {!showRespondedComparison && (
+        <LegendContainer style={{ margin: 0, flex: '1 1 auto' }}>
+          <LegendTitle>NPS Score Legend</LegendTitle>
+          <LegendItem>
+            <LegendColor color="#C6EFCE" />
+                <LegendText>Green: =75%</LegendText>
+          </LegendItem>
+          <LegendItem>
+            <LegendColor color="#FFA500" />
+            <LegendText>Orange: 0% to 74.99%</LegendText>
+          </LegendItem>
+          <LegendItem>
+            <LegendColor color="#FF0000" />
+            <LegendText>Red: &lt;0%</LegendText>
+          </LegendItem>
+        </LegendContainer>
+        )}
+      </div>
 
       {/* Search results counter */}
       {!groupByBU && searchTerm && processedData.data.length > 0 && (
-        <div style={{ 
-          textAlign: 'center', 
-          margin: '0.5rem 0', 
-          fontSize: '0.875rem', 
+        <div style={{
+          textAlign: 'center',
+          margin: '0.5rem 0',
+          fontSize: '0.875rem',
           color: '#6b7280',
           fontWeight: '500'
         }}>
@@ -8057,30 +8145,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         </div>
       )}
 
-      {/* NPS Legend - Moved above the table */}
-      {!showRespondedComparison && (
-      <LegendContainer>
-        <LegendTitle>NPS Score Legend</LegendTitle>
-        <LegendItem>
-          <LegendColor color="#C6EFCE" />
-              <LegendText>Green: =75%</LegendText>
-        </LegendItem>
-        <LegendItem>
-          <LegendColor color="#FFA500" />
-          <LegendText>Orange: 0% to 74.99%</LegendText>
-        </LegendItem>
-        <LegendItem>
-          <LegendColor color="#FF0000" />
-          <LegendText>Red: &lt;0%</LegendText>
-        </LegendItem>
-      </LegendContainer>
-      )}
-
       {/* Vertical Graph for BU-wise */}
       {showVerticalGraph && groupByBU && chartData.length > 0 && (
         <ChartContainer ref={chartRef}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? BU-wise NPS Distribution</ChartTitle>
+            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}><BarChart3 size={22} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> BU-wise NPS Distribution</ChartTitle>
             <button
               onClick={downloadChartImage}
               style={{
@@ -8100,7 +8169,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
             >
-              ?? Download Chart
+              <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Chart
             </button>
           </div>
           <ResponsiveContainer width="100%" height={650}>
@@ -8215,7 +8284,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {showVerticalGraph && groupByBU && orgLevelChartData.length > 0 && (
         <ChartContainer ref={orgLevelChartRef}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? Org Level - NPS Distribution</ChartTitle>
+            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}><BarChart3 size={22} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Org Level - NPS Distribution</ChartTitle>
             <button
               onClick={downloadOrgLevelChartImage}
               style={{
@@ -8235,7 +8304,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
             >
-              ?? Download Chart
+              <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Chart
             </button>
           </div>
           <ResponsiveContainer width="100%" height={650}>
@@ -8345,7 +8414,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {showTop10Chart && showTop10 && combinedTop10AndOtherChartData.length > 0 && (
         <ChartContainer ref={top10ChartRef}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? NPS Distribution</ChartTitle>
+            <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}><BarChart3 size={22} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> NPS Distribution</ChartTitle>
             <button
               onClick={downloadTop10ChartImage}
               style={{
@@ -8365,7 +8434,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
             >
-              ?? Download Chart
+              <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Chart
             </button>
           </div>
           {/* Combined Bar Chart for Top 10 and Other Accounts */}
@@ -8592,7 +8661,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {/* Summary Table for BU-wise NPS */}
       {showVerticalGraph && groupByBU && chartData.length > 0 && (
         <SummaryTableContainer>
-          <SummaryTableTitle>?? BU-wise NPS Summary</SummaryTableTitle>
+          <SummaryTableTitle><FileText size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> BU-wise NPS Summary</SummaryTableTitle>
           <SummaryTable>
             <SummaryTableHeader>
               <tr>
@@ -8645,12 +8714,12 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       {/* NPS Dashboard Summary */}
       {!showRespondedComparison && processedData.data.length > 0 && processedData.summary && (
         <SummaryContainer>
-          <SummaryTitle>?? NPS Dashboard Summary</SummaryTitle>
+          <SummaryTitle><BarChart3 size={20} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> NPS Dashboard Summary</SummaryTitle>
           <SummaryGrid>
             {/* Top 5 Accounts - Only show for account-wise data */}
             {!groupByBU && processedData.summary.top5Accounts.length > 0 && (
               <SummaryCard>
-                <SummaryCardTitle>?? Top 5 Accounts (Highest NPS)</SummaryCardTitle>
+                <SummaryCardTitle><Trophy size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Top 5 Accounts (Highest NPS)</SummaryCardTitle>
                 <TopAccountsList>
                   {processedData.summary.top5Accounts.map((account, index) => (
                     <TopAccountItem key={index}>
@@ -8666,7 +8735,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
 
             {/* Achieved NPS Score */}
             <SummaryCard>
-              <SummaryCardTitle>?? Achieved NPS Score</SummaryCardTitle>
+              <SummaryCardTitle><Target size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Achieved NPS Score</SummaryCardTitle>
               <AchievedNPSContainer>
                 <AchievedNPSValue npsScore={processedData.summary.achievedNPSScore}>
                   {processedData.summary.achievedNPSScore !== undefined && processedData.summary.achievedNPSScore !== null 
@@ -8691,7 +8760,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         {respondentChartData.length > 0 && (
           <ChartContainer ref={respondentChartRef} style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e5e7eb' }}>
-              <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>?? Respondent Category-wise NPS Distribution</ChartTitle>
+              <ChartTitle style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}><BarChart3 size={22} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Respondent Category-wise NPS Distribution</ChartTitle>
               <button
                 onClick={downloadRespondentChartImage}
                 style={{
@@ -8711,7 +8780,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
                 onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
               >
-                ?? Download Chart
+                <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Chart
               </button>
             </div>
             <ResponsiveContainer width="100%" height={650}>
@@ -8870,7 +8939,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         {respondentChartData.length > 0 && (
           <ChartContainer ref={donutChartRef} style={{ marginBottom: '2rem', padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}>?? Donut Chart - Respondent Category Distribution</ChartTitle>
+              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}><Donut size={20} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Donut Chart - Respondent Category Distribution</ChartTitle>
               <button
                 onClick={downloadDonutChartImage}
                 style={{
@@ -8890,7 +8959,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
                 onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
               >
-                ?? Download Chart
+                <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Chart
               </button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '2rem' }}>
@@ -9016,7 +9085,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         {respondentChartData.length > 0 && (
           <ChartContainer ref={pieChartRef} style={{ marginBottom: '2rem', padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}>?? Pie Chart - Respondent Category Distribution</ChartTitle>
+              <ChartTitle style={{ marginBottom: 0, textAlign: 'left' }}><PieChartIcon size={20} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Pie Chart - Respondent Category Distribution</ChartTitle>
               <button
                 onClick={downloadPieChartImage}
                 style={{
@@ -9036,7 +9105,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
                 onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
               >
-                ?? Download Chart
+                <Download size={16} style={{ marginRight: '0.4rem' }} /> Download Chart
               </button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '2rem' }}>
@@ -9161,16 +9230,16 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         <TableContainer>
           <div style={{ padding: '1.5rem', backgroundColor: '#f0f9ff', borderRadius: '8px', marginBottom: '1rem', border: '2px solid #3b82f6' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e3a8a', fontSize: '1.4rem', fontWeight: 'bold' }}>
-              ?? Responded Level Comparison - Individual Respondent Analysis
+<BarChart3 size={18} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Responded Level Comparison - Individual Respondent Analysis
             </h3>
             <p style={{ margin: '0', color: '#6b7280', fontSize: '0.95rem', lineHeight: '1.6' }}>
-              <strong>NPS Calculation for Each Respondent:</strong> (#Promoters - # Detractors) � Responded � 100
+              <strong>NPS Calculation for Each Respondent:</strong> (#Promoters - # Detractors) ÷ Responded × 100
             </p>
             <p style={{ margin: '0.5rem 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
-              ?? <strong>Promoters:</strong> Ratings of 9 or 10 for perspective "NPS" | <strong>Passives:</strong> Ratings of 7 or 8 for perspective "NPS" | <strong>Detractors:</strong> Ratings less than 7 for perspective "NPS"
+<Info size={14} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> <strong>Promoters:</strong> Ratings of 9 or 10 for perspective "NPS" | <strong>Passives:</strong> Ratings of 7 or 8 for perspective "NPS" | <strong>Detractors:</strong> Ratings less than 7 for perspective "NPS"
             </p>
             <p style={{ margin: '0.25rem 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
-              ?? Filtered by: CSAT SENT DATE and CSAT RECEIVED DATE = {acsatCycleStartDateFormatted} | <strong>Data Source:</strong> CSAT sent and received Report
+              ℹ️ Filtered by: CSAT SENT DATE and CSAT RECEIVED DATE = {acsatCycleStartDateFormatted} | <strong>Data Source:</strong> ACSAT Survey Status Report
             </p>
           </div>
           {respondentLevelData.length === 0 ? (
@@ -9335,9 +9404,9 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             <TableHeader>
               <tr>
                 <TableHeaderCell colSpan={groupByBU ? 2 : 3} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center' }}></TableHeaderCell>
-                <TableHeaderCell colSpan="3" style={{ backgroundColor: '#9FC5E8', color: '#000000', fontWeight: 'bold', textAlign: 'center' }}>Response Rate</TableHeaderCell>
-                <TableHeaderCell colSpan="4" style={{ backgroundColor: '#9FC5E8', color: '#000000', fontWeight: 'bold', textAlign: 'center' }}>Predicted NPS for the surveys responses received</TableHeaderCell>
-                <TableHeaderCell colSpan="5" style={{ backgroundColor: '#9FC5E8', color: '#000000', fontWeight: 'bold', textAlign: 'center' }}>Actual NPS</TableHeaderCell>
+                <TableHeaderCell colSpan="3" style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center' }}>Response Rate</TableHeaderCell>
+                <TableHeaderCell colSpan="4" style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center' }}>Predicted NPS for the surveys responses received</TableHeaderCell>
+                <TableHeaderCell colSpan="5" style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center' }}>Actual NPS</TableHeaderCell>
                 {showMainNpsTrendColumns && (
                   <TableHeaderCell
                     colSpan={npsMainTrendFileCount * NPS_MAIN_TREND_COLUMNS_PER_FILE}
@@ -9363,7 +9432,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Business Unit
                   {sortConfig.key === 'businessUnit' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9382,7 +9451,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                     Account Name
                     {sortConfig.key === 'customerName' && (
                       <span style={{ marginLeft: '0.5rem' }}>
-                        {sortConfig.direction === 'asc' ? '?' : '?'}
+                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
                       </span>
                     )}
                   </TableHeaderCell>
@@ -9401,7 +9470,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Polled
                   {sortConfig.key === 'sentCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9419,7 +9488,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Responded
                   {sortConfig.key === 'receivedCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9437,7 +9506,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   Response %
                   {sortConfig.key === 'responseRate' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9455,7 +9524,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   #Promoters
                   {sortConfig.key === 'predictedPromotersCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9473,7 +9542,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Passives
                   {sortConfig.key === 'predictedPassivesCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9491,7 +9560,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Detractors
                   {sortConfig.key === 'predictedDetractorsCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9509,7 +9578,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   NPS
                   {sortConfig.key === 'predictedNPSScore' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9527,7 +9596,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   #Promoters
                   {sortConfig.key === 'promotersCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9545,7 +9614,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Passives
                   {sortConfig.key === 'passivesCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9563,7 +9632,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   # Detractors
                   {sortConfig.key === 'detractorsCount' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9581,7 +9650,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   NPS
                   {sortConfig.key === 'npsScore' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9599,7 +9668,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                   NPS score
                   {sortConfig.key === 'npsAvgRating' && (
                     <span style={{ marginLeft: '0.5rem' }}>
-                      {sortConfig.direction === 'asc' ? '?' : '?'}
+                      {sortConfig.direction === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </TableHeaderCell>
@@ -9948,6 +10017,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                     <TableCell isNumeric={true} style={{ fontWeight: 'bold', fontStyle: 'italic', backgroundColor: '#FFEB9C' }}>
                       {'-'}
                     </TableCell>
+                    {renderMainNpsTrendComparisonCells(percentageRow, { bold: true, dashOnly: true, cellBackground: '#FFEB9C' })}
                   </TableRow>
                 );
               })()}
@@ -10013,6 +10083,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                     <TableCell isNumeric={true} style={{ fontWeight: 'bold' }}>
                       {otherAccount.receivedCount === 0 ? '-' : (otherAccount.npsAvgRating == null ? '-' : (Math.round(Number(otherAccount.npsAvgRating) * 100) / 100).toFixed(2))}
                     </TableCell>
+                    {renderMainNpsTrendComparisonCells(otherAccount, { bold: true, cellBackground: '#B4C6E7' })}
                   </TableRow>
                 );
               })()}
@@ -10083,6 +10154,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                     <TableCell isNumeric={true} style={{ fontWeight: 'bold', fontStyle: 'italic', backgroundColor: '#B4C6E7' }}>
                       {'-'}
                     </TableCell>
+                    {renderMainNpsTrendComparisonCells(otherAccountPercentageRow, { bold: true, dashOnly: true, cellBackground: '#B4C6E7' })}
                   </TableRow>
                 );
               })()}
@@ -10148,6 +10220,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                     <TableCell isNumeric={true} style={{ fontWeight: 'bold' }}>
                       {overallRow.receivedCount === 0 ? '-' : (overallRow.npsAvgRating == null ? '-' : (Math.round(Number(overallRow.npsAvgRating) * 100) / 100).toFixed(2))}
                     </TableCell>
+                    {renderMainNpsTrendComparisonCells(overallRow, { bold: true, useGrandTotalTrend: true, cellBackground: '#D9D2E9' })}
                   </TableRow>
                 );
               })()}
@@ -10217,6 +10290,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                     <TableCell isNumeric={true} style={{ fontWeight: 'bold', fontStyle: 'italic', backgroundColor: '#D9D2E9' }}>
                       {'-'}
                     </TableCell>
+                    {renderMainNpsTrendComparisonCells(overallPercentageRow, { bold: true, dashOnly: true, cellBackground: '#D9D2E9' })}
                   </TableRow>
                 );
               })()}
@@ -10255,14 +10329,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               <TrendingUp size={20} />
               ACSAT: Account Wise NPS Trend Analysis (from uploaded trend files)
             </div>
-            {trendAnalysisFiles?.length > 0 && (
+            {trendAnalysisFiles?.length > 1 && (
               <DownloadButton
                 type="button"
                 onClick={() => downloadNpsAccountWiseTrendExcel()}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
                 <Download size={16} />
-                Download Excel
+                Download All Files
               </DownloadButton>
             )}
           </div>
@@ -10312,13 +10386,13 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                         <TableHeader>
                           <tr>
                             <TableHeaderCell colSpan={3} style={{ backgroundColor: '#1e3a8a', color: '#ffffff' }} />
-                            <TableHeaderCell colSpan={3} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={3} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Response Rate
                             </TableHeaderCell>
-                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Predicted NPS for the surveys received
                             </TableHeaderCell>
-                            <TableHeaderCell colSpan={5} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={5} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Actual NPS
                             </TableHeaderCell>
                           </tr>
@@ -10447,14 +10521,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               <TrendingUp size={20} />
               ACSAT: Top 10 Account Wise NPS Trend Analysis (from uploaded trend files)
             </div>
-            {trendAnalysisFiles?.length > 0 && (
+            {trendAnalysisFiles?.length > 1 && (
               <DownloadButton
                 type="button"
                 onClick={() => downloadNpsTop10TrendExcel()}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
                 <Download size={16} />
-                Download Excel
+                Download All Files
               </DownloadButton>
             )}
           </div>
@@ -10504,13 +10578,13 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                         <TableHeader>
                           <tr>
                             <TableHeaderCell colSpan={3} style={{ backgroundColor: '#1e3a8a', color: '#ffffff' }} />
-                            <TableHeaderCell colSpan={3} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={3} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Response Rate
                             </TableHeaderCell>
-                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Predicted NPS for the surveys received
                             </TableHeaderCell>
-                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Actual NPS
                             </TableHeaderCell>
                           </tr>
@@ -10630,14 +10704,14 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
               <TrendingUp size={20} />
               ACSAT: BU Wise NPS Trend Analysis (from uploaded trend files)
             </div>
-            {trendAnalysisFiles?.length > 0 && (
+            {trendAnalysisFiles?.length > 1 && (
               <DownloadButton
                 type="button"
                 onClick={() => downloadNpsBuWiseTrendExcel()}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
                 <Download size={16} />
-                Download Excel
+                Download All Files
               </DownloadButton>
             )}
           </div>
@@ -10687,13 +10761,13 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                         <TableHeader>
                           <tr>
                             <TableHeaderCell colSpan={2} style={{ backgroundColor: '#1e3a8a', color: '#ffffff' }} />
-                            <TableHeaderCell colSpan={3} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={3} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Response Rate
                             </TableHeaderCell>
-                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={4} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Predicted NPS for the surveys received
                             </TableHeaderCell>
-                            <TableHeaderCell colSpan={5} style={{ backgroundColor: '#9FC5E8', color: '#000000', textAlign: 'center' }}>
+                            <TableHeaderCell colSpan={5} style={{ backgroundColor: '#1e3a8a', color: '#ffffff', textAlign: 'center' }}>
                               Actual NPS
                             </TableHeaderCell>
                           </tr>

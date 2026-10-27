@@ -2350,6 +2350,49 @@ namespace GAVS.AllocationSystem.Data
             return cssVerificationDetails;
         }
 
+        // ---- ITOps Admin Setup read stored procedures (V2_13) ----
+        // Each wraps one usp_ITOpsGet* proc (ITOperationMaturity_V2_13_ReadStoredProcedures.sql).
+        // Cross-database lookups (project/customer/employee name, all in Cldb -
+        // a different physical SQL Server) stay in the calling controller code,
+        // same as every other CSPdb/Cldb stitch in this codebase.
+
+        public List<ITOpsAssessmentCycleSpRow> ITOpsGetAssessmentCycles()
+        {
+            var dbContext = new CSPDbContext();
+            return dbContext.Database.SqlQuery<ITOpsAssessmentCycleSpRow>("[dbo].[usp_ITOpsGetAssessmentCycles]").ToList();
+        }
+
+        public List<ITOpsAssessmentTeamSpRow> ITOpsGetAssessmentTeam(int assessmentId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@AssessmentId", assessmentId);
+            return dbContext.Database.SqlQuery<ITOpsAssessmentTeamSpRow>("[dbo].[usp_ITOpsGetAssessmentTeam] @AssessmentId", param1).ToList();
+        }
+
+        public List<ITOpsDomainProjectMapDomainSpRow> ITOpsGetDomainProjectMapDomains(string projectId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@ProjectId", (object)projectId ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<ITOpsDomainProjectMapDomainSpRow>("[dbo].[usp_ITOpsGetDomainProjectMapDomains] @ProjectId", param1).ToList();
+        }
+
+        public List<ITOpsDomainProjectMapAssesseeSpRow> ITOpsGetDomainProjectMapAssessees(string projectId)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@ProjectId", (object)projectId ?? DBNull.Value);
+            return dbContext.Database.SqlQuery<ITOpsDomainProjectMapAssesseeSpRow>("[dbo].[usp_ITOpsGetDomainProjectMapAssessees] @ProjectId", param1).ToList();
+        }
+
+        public List<ITOpsCategoryForDomainSpRow> ITOpsGetCategoriesForDomain(int? domainId, int? categoryId, bool includeExpired)
+        {
+            var dbContext = new CSPDbContext();
+            var param1 = new SqlParameter("@DomainId", (object)domainId ?? DBNull.Value);
+            var param2 = new SqlParameter("@CategoryId", (object)categoryId ?? DBNull.Value);
+            var param3 = new SqlParameter("@IncludeExpired", includeExpired);
+            return dbContext.Database.SqlQuery<ITOpsCategoryForDomainSpRow>(
+                "[dbo].[usp_ITOpsGetCategoriesForDomain] @DomainId, @CategoryId, @IncludeExpired", param1, param2, param3).ToList();
+        }
+
         public List<AllProcessList> GetProcessModelListByProcessAreaIds(string processAreaIds)
         {
             var dbContext = new CSPDbContext();

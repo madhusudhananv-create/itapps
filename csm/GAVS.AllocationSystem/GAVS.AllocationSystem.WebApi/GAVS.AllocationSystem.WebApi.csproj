@@ -509,6 +509,17 @@
     <Content Include="UploadFile\Mails\AddAuditTaskForCSAT.htm" />
     <Content Include="UploadFile\Mails\AddInnovation.htm" />
     <Content Include="UploadFile\Mails\AddNewActionItem.htm" />
+    <Content Include="UploadFile\Mails\ITOpsSubmittedForReview.htm" />
+    <Content Include="UploadFile\Mails\ITOpsReviewDecision.htm" />
+    <Content Include="UploadFile\Mails\ITOpsFindingsNeedAction.htm" />
+    <Content Include="UploadFile\Mails\ITOpsFindingActionUpdate.htm" />
+    <Content Include="UploadFile\Mails\ITOpsFindingDecision.htm" />
+    <Content Include="UploadFile\Mails\ITOpsRoleGranted.htm" />
+    <Content Include="UploadFile\Mails\ITOpsRoleRevoked.htm" />
+    <Content Include="UploadFile\Mails\ITOpsMappingSubmitted.htm" />
+    <Content Include="UploadFile\Mails\ITOpsAssessmentsCreated.htm" />
+    <Content Include="UploadFile\Mails\ITOpsTeamAssigned.htm" />
+    <Content Include="UploadFile\Mails\ITOpsDomainRenamed.htm" />
     <Content Include="UploadFile\Mails\AddNewIssue.htm" />
     <Content Include="UploadFile\Mails\AuditScoreNotSubmitted.htm" />
     <Content Include="UploadFile\Mails\AuditNotCompleted.htm" />
@@ -590,6 +601,8 @@
     <Compile Include="Controllers\AllSysController.cs" />
     <Compile Include="Controllers\ApiControllerBase.cs" />
     <Compile Include="Controllers\AppreciationController.cs" />
+    <Compile Include="Controllers\ITOperationMaturityAdminController.cs" />
+    <Compile Include="Controllers\ITOperationMaturityController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\AssessmentFindingsController.cs" />
     <Compile Include="Controllers\BenchmarkKPIData.cs" />
