@@ -333,7 +333,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 csmMails += "," + additionlCC;
             string buCcMailQP = helper.GetCcQPMailsByBusinessUnit(project);
 
-            ccmail = helper.ConcatEmails(new List<string>() { csmMails, pm, qualitySpoc, cust.SPOC , buCcMailQP });
+            ccmail = helper.ConcatEmails(new List<string>() { csmMails, pm, am, qualitySpoc, cust.SPOC , buCcMailQP });
             string bcc = string.Empty;
             bcc = helper.GetDBConfig("CSS_BCC", "-1");
             Dictionary<string, string> EmailContentValues = new Dictionary<string, string>();
