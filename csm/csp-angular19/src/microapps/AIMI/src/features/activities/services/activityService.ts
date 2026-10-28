@@ -236,11 +236,16 @@ export const activityService = {
    * Asks the API to send the "Activities submitted" mail (what was added / updated /
    * deleted since the last submit). Best effort - a mail problem must never fail the submit.
    */
-  sendSubmitMail: async (projectId: string, practice: string): Promise<void> => {
+  sendSubmitMail: async (
+    projectId: string,
+    practice: string,
+    ccEmails: string[] = []
+  ): Promise<void> => {
     try {
       await aimiApiClient.post(ENDPOINTS.SEND_SUBMIT_MAIL, {
         PROJECT_ID: projectId,
         PRACTICE: practice,
+        CC_EMAILS: ccEmails.filter(Boolean).join(','),
       });
     } catch (error) {
       console.error('Error sending submit mail:', error);

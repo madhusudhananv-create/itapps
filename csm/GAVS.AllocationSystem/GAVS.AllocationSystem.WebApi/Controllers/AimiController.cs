@@ -301,7 +301,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (request == null || string.IsNullOrWhiteSpace(request.PROJECT_ID) || string.IsNullOrWhiteSpace(request.PRACTICE))
                 return BadRequest("PROJECT_ID and PRACTICE are required.");
 
-            SendAimiSubmitMailInternal(GetHeaderDetails_String("empId"), request.PROJECT_ID, request.PRACTICE);
+            SendAimiSubmitMailInternal(GetHeaderDetails_String("empId"), request.PROJECT_ID, request.PRACTICE, request.CC_EMAILS);
             return Ok();
         }
 
@@ -310,7 +310,7 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // never fail the submit itself, so it is written to AIMI_ERROR_LOG instead of being thrown. A mail that
         // was sent also gets its row in EMAIL_LOG from EmailProvider. The change flags are cleared only after a
         // successful send, so a failed mail is retried with the next submit.
-        private void SendAimiSubmitMailInternal(string empId, string projectId, string practice)
+        private void SendAimiSubmitMailInternal(string empId, string projectId, string practice, string extraCc = null)
         {
             try
             {
@@ -325,7 +325,24 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                     return;
                 }
                 var to = submitter.EMAIL_ID.Trim();
-                var cc = helper.ConcatEmails(new List<string> { helper.GetDBConfig("AIMI_admin_mail", "-1"), Constants.DEVX_MAIL });
+                // Project manager / DPE come from the project data the screen already has; keep only
+                // well-formed addresses and skip anyone already on To so nobody gets the mail twice.
+                // Delivery Partner = PROJECT.PROJ_DM_EMP_ID (same join the CSAT reports use); skipped if left the company
+                var projectRow = Cldb.PROJECT.GetAll().FirstOrDefault(x => x.PROJ_ID == projectId);
+                var dpEmpId = projectRow == null ? null : projectRow.PROJ_DM_EMP_ID;
+                var dp = string.IsNullOrWhiteSpace(dpEmpId) ? null
+                    : Cldb.EMP_INFO.GetAll().FirstOrDefault(x => x.EMP_ID == dpEmpId && x.DOR == null);
+                var dpEmail = dp == null ? "" : dp.EMAIL_ID;
+
+                var extraCcList = ((extraCc ?? "") + "," + dpEmail)
+                    .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .Where(x => x.Contains("@") && !x.Equals(to, StringComparison.OrdinalIgnoreCase))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                var ccList = new List<string> { helper.GetDBConfig("AIMI_admin_mail", "-1"), Constants.DEVX_MAIL };
+                ccList.AddRange(extraCcList);
+                var cc = helper.ConcatEmails(ccList);
 
                 Func<string, string> enc = s => System.Web.HttpUtility.HtmlEncode(s ?? "");
                 var added = changes.Where(c => c.CHANGE_TYPE == "Added").ToList();

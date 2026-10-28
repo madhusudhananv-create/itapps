@@ -306,17 +306,28 @@ export function Activities() {
   const handleActivitiesSubmit = useCallback(
     async (activities: ActivityData[]) => {
       try {
-        // Submit activities (this will handle Firestore saving)
+        // The project manager is copied on the "Activities submitted" mail
+        const projectData = getOriginalProjectData(
+          projectInfoFormData.businessUnit,
+          projectInfoFormData.account,
+          projectInfoFormData.project
+        );
         await submitActivities(
           activities,
           projectInfoFormData,
-          markActivitiesAsSaved
+          markActivitiesAsSaved,
+          [projectData?.pmMailId ?? '']
         );
       } catch (error) {
         console.error('Error submitting activities:', error);
       }
     },
-    [submitActivities, projectInfoFormData, markActivitiesAsSaved]
+    [
+      submitActivities,
+      projectInfoFormData,
+      markActivitiesAsSaved,
+      getOriginalProjectData,
+    ]
   );
 
   const handleActivitiesSaveDraft = useCallback(

@@ -157,6 +157,8 @@ namespace GAVS.AllocationSystem.Model.CSP.ViewModels
     {
         [JsonProperty("PROJECT_ID")] public string PROJECT_ID { get; set; }
         [JsonProperty("PRACTICE")] public string PRACTICE { get; set; }
+        // Extra CC recipients for this submit (project manager, DPE), comma separated
+        [JsonProperty("CC_EMAILS")] public string CC_EMAILS { get; set; }
     }
 
     [JsonObject(NamingStrategyType = typeof(DefaultNamingStrategy))]

@@ -99,7 +99,8 @@ export const useActivitySubmission = () => {
   const submitActivities = async (
     activities: ActivityData[],
     formData: FormData,
-    onSuccess?: (updatedActivities?: ActivityData[]) => void
+    onSuccess?: (updatedActivities?: ActivityData[]) => void,
+    ccEmails: string[] = []
   ) => {
     try {
       const { projectId, activities: updatedActivityData } =
@@ -107,7 +108,7 @@ export const useActivitySubmission = () => {
 
       // One mail per submit listing what was added / updated / deleted. Not awaited and
       // never throws, so a mail problem can't hold up or fail the submit.
-      void activityService.sendSubmitMail(projectId, formData.practice);
+      void activityService.sendSubmitMail(projectId, formData.practice, ccEmails);
 
       // Show success message
       setSubmitSuccess(true);
