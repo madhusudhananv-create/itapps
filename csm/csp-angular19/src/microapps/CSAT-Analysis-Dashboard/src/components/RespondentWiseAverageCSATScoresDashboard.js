@@ -54,20 +54,23 @@ const ButtonContainer = styled.div`
 `;
 
 const BackButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
   color: white;
-  border: 2px solid white;
-  border-radius: 8px;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  min-height: 28px;
-  &:hover { background: rgba(255, 255, 255, 0.35); }
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+  }
 `;
 
 const DownloadButton = styled.button`

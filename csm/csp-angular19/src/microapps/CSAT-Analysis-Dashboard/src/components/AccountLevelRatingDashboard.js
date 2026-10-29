@@ -5,7 +5,7 @@ import ExcelJS from 'exceljs';
 import { Download, TrendingUp, BarChart3, Users, Trophy, Search, Calendar, X } from 'lucide-react';
 import { useCSATContext } from '../context/CSATContext';
 import { showAcsatAlert } from '../utils/acsatAlert';
-import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER } from '../utils/top10Accounts';
+import { TOP10_ACCOUNT_ORDER, TOP10_SURVEY_ACCOUNT_ORDER, computeEffectiveTop10AccountNames, isEffectiveTop10AccountName, normalizeTop10AccountName } from '../utils/top10Accounts';
 
 // Short/nickname forms for the fixed Top 10 roster, used in the "not polled" footnote so the
 // caption stays readable instead of spelling out full legal account names.
@@ -2325,11 +2325,11 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
             }
             
             const cssSentCount = secondSheetData.filter(row => {
-              const rowBusinessUnit = row.BUSINESS_UNIT || row['BUSINESS UNIT'] || row['Business Unit'];
+              const rowBusinessUnit = normalizeBusinessUnitDisplay((row.BUSINESS_UNIT || row['BUSINESS UNIT'] || row['Business Unit'] || '').toString().trim());
               // Priority: Use "CSAT SENT DATE" column, fallback to "CSS SENT DATE" for backward compatibility
               const csatSentDate = row['CSAT SENT DATE'] || row['CSAT_SENT_DATE'] || row.CSS_SENT_DATE || row['CSS_SENT_DATE'] || row['CSS SENT DATE'];
               const yearQuarter = row['YEAR - QUARTER'] || row['YEAR_QUARTER'] || row['Year Quarter'];
-              
+
               const matchesBU = rowBusinessUnit === businessUnit;
               const hasValidDate = csatSentDate && isDateOnOrAfterCsatStart(csatSentDate, acsatCycleStartDateFormatted);
               const matchesYearQuarter = !acsatCycle || !yearQuarter || yearQuarter === acsatCycle;
@@ -2361,11 +2361,11 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
             }).length;
             
             const cssReceivedCount = secondSheetData.filter(row => {
-              const rowBusinessUnit = row.BUSINESS_UNIT || row['BUSINESS UNIT'] || row['Business Unit'];
+              const rowBusinessUnit = normalizeBusinessUnitDisplay((row.BUSINESS_UNIT || row['BUSINESS UNIT'] || row['Business Unit'] || '').toString().trim());
               // Priority: Use "CSAT RECEIVED DATE" column, fallback to "CSS RECEIVED DATE" for backward compatibility
               const csatReceivedDate = row['CSAT RECEIVED DATE'] || row['CSAT_RECEIVED_DATE'] || row.CSS_RECEIVED_DATE || row['CSS_RECEIVED_DATE'] || row['CSS RECEIVED DATE'];
               const yearQuarter = row['YEAR - QUARTER'] || row['YEAR_QUARTER'] || row['Year Quarter'];
-              
+
               const matchesBU = rowBusinessUnit === businessUnit;
               const statusVal = (row['STATUS'] ?? row['Status'] ?? '').toString().trim().toLowerCase();
               const isCompletedStatus = statusVal === 'completed';
@@ -2760,6 +2760,21 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     }
   }, [excelData, groupByBU, secondSheetData, acsatCycleStartDateFormatted, acsatCycle, showTop10]);
 
+  // Effective Top 10 for the currently loaded dataset: the 10 named survey accounts, with any account
+  // that has zero Polled backfilled from TOP10_BACKFILL_FALLBACK_ORDER (per utils/top10Accounts.js) —
+  // not the full 15-account roster. processedData.data (Top 10 view) is already restricted to the raw
+  // TYPE OF ACCOUNT = "Top 10" roster, so its 'Polled' column is the Polled-per-account source here.
+  const effectiveTop10AccountNames = useMemo(() => {
+    const polledByAccountName = {};
+    (processedData?.data || []).forEach((row) => {
+      const name = (row?.customerName ?? '').toString().trim();
+      if (!name) return;
+      const key = normalizeTop10AccountName(name);
+      polledByAccountName[key] = (polledByAccountName[key] || 0) + (row?.Polled || 0);
+    });
+    return computeEffectiveTop10AccountNames(polledByAccountName);
+  }, [processedData]);
+
   // Sort data based on sort configuration
   const sortedData = useMemo(() => {
     if (!processedData?.data) return null;
@@ -2802,9 +2817,15 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
   // Filter data based on search term
   const filteredData = useMemo(() => {
     if (!sortedData) return null;
-    
+
+    // Top 10 view: restrict displayed rows to the effective-10 roster (any roster account not
+    // actually backfilled rolls into "Other Accounts" instead of showing as its own row).
+    const top10Restricted = showTop10
+      ? sortedData.filter((row) => isEffectiveTop10AccountName(row.customerName, effectiveTop10AccountNames))
+      : sortedData;
+
     if (!searchTerm.trim()) {
-      const base = sortedData;
+      const base = top10Restricted;
       if (groupByBU) {
         const BU_ORDER = ['Healthcare', 'CIT', 'Tech', 'India & GCC', 'Sead'];
         return [...base].sort((a, b) => {
@@ -2844,7 +2865,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     
     if (showTop10) {
       // Search by Customer Name when in Top 10 view
-      return sortedData.filter(row => 
+      return top10Restricted.filter(row =>
         row.customerName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     } else if (groupByBU) {
@@ -2870,7 +2891,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
         row.customerName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-  }, [sortedData, searchTerm, groupByBU, showTop10]);
+  }, [sortedData, searchTerm, groupByBU, showTop10, effectiveTop10AccountNames]);
 
   // Calculate grand totals
   const grandTotals = useMemo(() => {
@@ -2907,11 +2928,13 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     // Get rawData with all filters already applied (from processedData)
     let rawDataForGrandTotal = processedData?.rawData || [];
     
-    // For Top 10 accounts view, filter by TYPE OF ACCOUNT = "Top 10"
+    // For Top 10 accounts view, restrict to accounts actually displayed (the effective-10 roster),
+    // not the full raw TYPE OF ACCOUNT = "Top 10" set — an unused backfill candidate belongs in
+    // Other Accounts, not the Top 10 Accounts grand total.
     if (showTop10) {
       rawDataForGrandTotal = rawDataForGrandTotal.filter(row => {
         const typeOfAccount = (row.typeOfAccount || '').toString().trim();
-        return typeOfAccount === 'Top 10';
+        return typeOfAccount === 'Top 10' && isEffectiveTop10AccountName(row.customerName, effectiveTop10AccountNames);
       });
     }
     
@@ -2957,7 +2980,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     }
     
     return totals;
-  }, [filteredData, processedData, showTop10]);
+  }, [filteredData, processedData, showTop10, effectiveTop10AccountNames]);
 
   // Compute Other Account totals (TYPE OF ACCOUNT != 'Top 10') for Top 10 view
   const otherAccountTotals = useMemo(() => {
@@ -3007,11 +3030,18 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
           typeOfAccount = row[typeOfAccountColumn].toString().trim();
         }
         
-        // Only include rows where TYPE OF ACCOUNT is NOT "Top 10"
-        if (typeOfAccount === 'Top 10') {
-          return; // Skip Top 10 accounts
+        // "Other Account" = NOT one of the accounts actually displayed in the Top 10 Accounts table
+        // (the effective-10 roster — original 10 survey slots, any zero-Polled slot backfilled). A
+        // raw TYPE OF ACCOUNT = "Top 10" row whose account isn't in the displayed effective-10 (e.g.
+        // an unused backfill candidate) rolls into Other Accounts here, so the displayed Top 10 rows
+        // always sum exactly to the Top 10 Accounts total, and Other Accounts + Top 10 Accounts =
+        // Overall with nothing dropped.
+        const customerName = row['CUSTOMER NAME'] || row['CUSTOMER_NAME'] || row['Customer Name'] ||
+                              row.CUST_NM || row['CUST_NM'] || '';
+        if (typeOfAccount === 'Top 10' && isEffectiveTop10AccountName(customerName, effectiveTop10AccountNames)) {
+          return; // Skip accounts actually displayed in the Top 10 Accounts table
         }
-        
+
         // Check if CSAT SENT DATE is valid (>= cycle start date)
         const sentDate = row['CSAT SENT DATE'] || row['CSAT_SENT_DATE'] || row.CSS_SENT_DATE || row['CSS_SENT_DATE'] || row['CSS SENT DATE'];
       const validSent = sentDate && isDateOnOrAfterCsatStart(sentDate, acsatCycleStartDateFormatted);
@@ -3044,7 +3074,11 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
     const perspectiveAverages = {};
     perspectives.forEach(p => {
       const ratings = rawData
-        .filter(r => (r.typeOfAccount || '').toString().trim() !== 'Top 10' && (r.perspective || '').toString().trim() === p)
+        .filter(r => {
+          const isTop10Type = (r.typeOfAccount || '').toString().trim() === 'Top 10';
+          const isOther = !isTop10Type || !isEffectiveTop10AccountName(r.customerName, effectiveTop10AccountNames);
+          return isOther && (r.perspective || '').toString().trim() === p;
+        })
         .map(r => parseFloat(r.rating))
         .filter(v => !isNaN(v));
       if (ratings.length > 0) {
@@ -3060,7 +3094,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
       cssReceivedCount,
       perspectives: perspectiveAverages
     };
-  }, [showTop10, processedData, secondSheetData, acsatCycle, acsatCycleStartDateFormatted]);
+  }, [showTop10, processedData, secondSheetData, acsatCycle, acsatCycleStartDateFormatted, effectiveTop10AccountNames]);
 
   // Overall = Top 10 + Other Accounts combined. Sent/Received are simple sums; each
   // perspective rating is a weighted average (by rating count), which equals averaging
@@ -3981,9 +4015,17 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
       }
 
       if (includeBuMainTrendCols) {
-        const perspectiveCount = ratingColumns.length;
-        ACSAT_MAIN_BU_PERSPECTIVES.forEach((perspective, trendColIndex) => {
-          const colIndex1Based = ratingColumnStartIndex + perspectiveCount + trendColIndex;
+        ACSAT_MAIN_BU_PERSPECTIVES.forEach((perspective) => {
+          const headerLabel = getBuWiseMainTrendColumnLabel(perspective);
+          let colIndex1Based = null;
+          for (let col = 1; col <= worksheet.columnCount; col++) {
+            const headerVal = headerRow.getCell(col)?.value;
+            if (headerVal === headerLabel) {
+              colIndex1Based = col;
+              break;
+            }
+          }
+          if (!colIndex1Based) return;
           const cell = addedRow.getCell(colIndex1Based);
           applyBuTrendDiffExcelCellStyle(
             cell,
@@ -4231,11 +4273,18 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
       }
 
       if (includeBuMainTrendCols) {
-        const cssColumnsCount = processedData.headers.cssColumns ? processedData.headers.cssColumns.length : 0;
-        const ratingColumnStartIndex = 2 + cssColumnsCount;
-        const perspectiveCount = (processedData.headers.perspectives || []).length;
-        ACSAT_MAIN_BU_PERSPECTIVES.forEach((perspective, trendColIndex) => {
-          const cell = grandTotalExcelRow.getCell(ratingColumnStartIndex + perspectiveCount + trendColIndex);
+        ACSAT_MAIN_BU_PERSPECTIVES.forEach((perspective) => {
+          const headerLabel = getBuWiseMainTrendColumnLabel(perspective);
+          let colIndex1Based = null;
+          for (let col = 1; col <= worksheet.columnCount; col++) {
+            const headerVal = headerRow.getCell(col)?.value;
+            if (headerVal === headerLabel) {
+              colIndex1Based = col;
+              break;
+            }
+          }
+          if (!colIndex1Based) return;
+          const cell = grandTotalExcelRow.getCell(colIndex1Based);
           applyBuTrendDiffExcelCellStyle(
             cell,
             formatBuTrendDiffDisplay(getBuWiseOrgPerspectiveTrendDiff(perspective))
@@ -4797,7 +4846,7 @@ function AccountLevelRatingDashboard({ excelData, acsatCycleStartDate, acsatCycl
                 style={{ cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => handleSort('businessUnit')}
               >
-                {processedData.headers.businessUnit || 'BUSINESS UNIT'}
+                Business Unit
                 {sortConfig.key === 'businessUnit' && (
                   <span style={{ marginLeft: '0.5rem' }}>
                     {sortConfig.direction === 'asc' ? '↑' : '↓'}

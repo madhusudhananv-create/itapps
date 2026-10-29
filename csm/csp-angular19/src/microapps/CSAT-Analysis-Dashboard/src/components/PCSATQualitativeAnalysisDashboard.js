@@ -30,19 +30,23 @@ const Title = styled.h1`
 `;
 
 const BackButton = styled.button`
-  background: #3b82f6;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
   color: white;
   border: none;
+  border-radius: 6px;
   padding: 0.4rem 0.9rem;
-  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
-  font-size: 0.85rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  &:hover { background: #2563eb; }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+  }
 `;
 
 const ContentContainer = styled.div`
