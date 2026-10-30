@@ -1,11 +1,28 @@
-import {
-  collection,
-  doc,
-  writeBatch,
-  serverTimestamp,
-  getDocs,
-} from 'firebase/firestore';
-import { db } from '@shared/config/firebaseConfig';
+import { aimiApiClient } from '@shared/services/aimiApiClient';
+
+// Restore of an AIMI backup (see backupUtils.ts) into SQL through the AllSys API - the same
+// upsert / delete endpoints the app itself uses, so every stored-proc rule still applies.
+//
+//  - projectInfo / practiceInfo: upserted per project (per project + practice). Rows already
+//    in SQL for those keys are overwritten; projects that are not in the file are left alone.
+//  - activities: the backup's activities are inserted as new rows first; only if every insert
+//    succeeded are the activities that were active before the restore soft-deleted
+//    (ISACTIVE = 0). A failure part-way therefore leaves duplicates, never a gap.
+//    Row ids and created dates are not preserved (rows get new ids and today's date).
+
+const ENDPOINTS = {
+  GET_ACTIVITIES: '/api/AllSys/GetAimiActivities',
+  UPSERT_ACTIVITY: '/api/AllSys/UpsertAimiActivity',
+  DELETE_ACTIVITY: '/api/AllSys/DeleteAimiActivity',
+  UPDATE_ACCEPTED_SCORE: '/api/AllSys/UpdateAimiAcceptedScore',
+  UPSERT_PROJECT_INFO: '/api/AllSys/UpsertAimiProjectInfo',
+  UPSERT_PRACTICE_INFO: '/api/AllSys/UpsertAimiPracticeInfo',
+};
+
+// Restore order: project / practice info first, then activities
+const RESTORE_ORDER = ['projectInfo', 'practiceInfo', 'activities'];
+
+const DELETE_CHUNK_SIZE = 200;
 
 interface RestoreDocument {
   id: string;
@@ -28,6 +45,12 @@ interface RestoreData {
   collections: Record<string, RestoreCollection>;
 }
 
+type Progress = { current: number; total: number };
+type CollectionResult = { success: number; errors: string[] };
+
+const errorText = (error: unknown): string =>
+  error instanceof Error ? error.message : 'Unknown error';
+
 /**
  * Parse and validate the uploaded JSON file
  */
@@ -43,177 +66,220 @@ export const parseRestoreFile = async (file: File): Promise<RestoreData> => {
 
     return data;
   } catch (error) {
+    throw new Error(`Failed to parse backup file: ${errorText(error)}`);
+  }
+};
+
+/**
+ * Only SQL-format backups (version 2.x, made by this screen) can be restored. Old Firebase
+ * backups have a different document shape and were loaded with scripts/firestoreToSql.js.
+ */
+const assertSqlBackup = (data: RestoreData): void => {
+  const version = data.metadata.version ?? '';
+  if (!version.startsWith('2.')) {
     throw new Error(
-      `Failed to parse backup file: ${error instanceof Error ? error.message : 'Unknown error'}`
+      'This backup was created from the old Firebase version and cannot be restored here. ' +
+        'Use a backup created from this screen (format version 2.x).'
     );
   }
 };
 
-/**
- * Convert ISO timestamp back to Firestore timestamp format
- */
-const convertToFirestoreTimestamp = (isoString: string | null): unknown => {
-  if (!isoString) return null;
+// ---- helpers ---------------------------------------------------------------
 
-  try {
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) {
-      return null;
-    }
-    return date;
-  } catch {
-    return null;
-  }
-};
+const toText = (value: unknown): string | null =>
+  value === undefined || value === null ? null : String(value);
 
-/**
- * Prepare document for Firestore (remove id and convert timestamps)
- */
-const prepareDocumentForFirestore = (
-  doc: RestoreDocument
-): Record<string, unknown> => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, ...data } = doc;
+const toNumber = (value: unknown): number | null =>
+  value === undefined || value === null || value === '' ? null : Number(value);
 
-  // Convert timestamp fields back to Date objects
-  const preparedData: Record<string, unknown> = { ...data };
+const toFlag = (value: unknown): boolean => value === true;
 
-  if (preparedData.createdAt) {
-    preparedData.createdAt = convertToFirestoreTimestamp(
-      preparedData.createdAt as string
-    );
-  }
+const stringList = (value: unknown): string[] =>
+  Array.isArray(value) ? value.map(String) : [];
 
-  if (preparedData.updatedAt) {
-    preparedData.updatedAt = convertToFirestoreTimestamp(
-      preparedData.updatedAt as string
-    );
-  }
+// ---- per-collection restore ------------------------------------------------
 
-  // Add server timestamp for new documents
-  preparedData.createdAt ??= serverTimestamp();
-  preparedData.updatedAt = serverTimestamp();
-
-  return preparedData;
-};
-
-/**
- * Clear all documents from a collection
- */
-const clearCollection = async (
-  collectionName: string
-): Promise<{ deleted: number; errors: string[] }> => {
-  const results = { deleted: 0, errors: [] as string[] };
-
-  try {
-    console.log(`🗑️ Clearing collection: ${collectionName}`);
-
-    // Get all documents in the collection
-    const querySnapshot = await getDocs(collection(db, collectionName));
-
-    if (querySnapshot.empty) {
-      console.log(`📭 Collection ${collectionName} is already empty`);
-      return results;
-    }
-
-    // Use batch deletes for better performance
-    const batch = writeBatch(db);
-    const batchSize = 500; // Firestore batch limit
-    let batchCount = 0;
-
-    querySnapshot.forEach((docSnapshot) => {
-      try {
-        batch.delete(docSnapshot.ref);
-        batchCount++;
-
-        // Commit batch when it reaches the limit
-        if (batchCount >= batchSize) {
-          batch.commit();
-          results.deleted += batchCount;
-          batchCount = 0;
-        }
-      } catch (error) {
-        const errorMsg = `Failed to delete document ${docSnapshot.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-        console.error(errorMsg);
-        results.errors.push(errorMsg);
-      }
-    });
-
-    // Commit any remaining documents
-    if (batchCount > 0) {
-      await batch.commit();
-      results.deleted += batchCount;
-    }
-
-    console.log(
-      `✅ Successfully deleted ${results.deleted} documents from ${collectionName}`
-    );
-  } catch (error) {
-    const errorMsg = `Failed to clear collection ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-    console.error(errorMsg);
-    results.errors.push(errorMsg);
-  }
-
-  return results;
-};
-
-/**
- * Restore a single collection
- */
-const restoreCollection = async (
-  collectionName: string,
+const restoreProjectInfo = async (
   documents: RestoreDocument[],
-  onProgress?: (progress: { current: number; total: number }) => void
-): Promise<{ success: number; errors: string[] }> => {
-  const results = { success: 0, errors: [] as string[] };
+  onProgress?: (progress: Progress) => void
+): Promise<CollectionResult> => {
+  const result: CollectionResult = { success: 0, errors: [] };
 
-  try {
-    console.log(`🔄 Starting restore for collection: ${collectionName}`);
+  for (let i = 0; i < documents.length; i++) {
+    const row = documents[i];
+    try {
+      if (!row.PROJECT_ID) throw new Error('PROJECT_ID is missing');
 
-    // Use batch writes for better performance
-    const batch = writeBatch(db);
-    const batchSize = 500; // Firestore batch limit
-    let batchCount = 0;
-
-    for (let i = 0; i < documents.length; i++) {
-      const document = documents[i];
-
-      try {
-        const preparedData = prepareDocumentForFirestore(document);
-        const docRef = doc(collection(db, collectionName), document.id);
-
-        // Use setDoc to preserve the original document ID
-        batch.set(docRef, preparedData);
-        batchCount++;
-
-        // Commit batch when it reaches the limit or at the end
-        if (batchCount >= batchSize || i === documents.length - 1) {
-          await batch.commit();
-          results.success += batchCount;
-          batchCount = 0;
-
-          // Report progress
-          if (onProgress) {
-            onProgress({ current: i + 1, total: documents.length });
-          }
-        }
-      } catch (error) {
-        const errorMsg = `Failed to restore document ${document.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-        console.error(errorMsg);
-        results.errors.push(errorMsg);
-      }
+      await aimiApiClient.post(ENDPOINTS.UPSERT_PROJECT_INFO, {
+        PROJECT_ID: toText(row.PROJECT_ID),
+        PEOPLE_USING_AI: toNumber(row.PEOPLE_USING_AI),
+        IS_PROJECT_NA: toFlag(row.IS_PROJECT_NA),
+        NA_COMMENTS: toText(row.NA_COMMENTS),
+        LICENSE_COUNT: toNumber(row.LICENSE_COUNT),
+        LICENSE_PROVIDER: toText(row.LICENSE_PROVIDER),
+        RUNOPS_AUTO_RESOLVED: toText(row.RUNOPS_AUTO_RESOLVED),
+        RUNOPS_MTTR_REDUCTION: toText(row.RUNOPS_MTTR_REDUCTION),
+        RUNOPS_AI_AGENTS: toText(row.RUNOPS_AI_AGENTS),
+        RUNOPS_AUTOMATED_WORKFLOWS: toText(row.RUNOPS_AUTOMATED_WORKFLOWS),
+        RUNOPS_MTTD: toText(row.RUNOPS_MTTD),
+        RUNOPS_MTTR: toText(row.RUNOPS_MTTR),
+        ENGINEER_AI_AGENTS: toText(row.ENGINEER_AI_AGENTS),
+        ENGINEER_DELIVERY_CYCLE_TIME: toText(row.ENGINEER_DELIVERY_CYCLE_TIME),
+        ENGINEER_CONTRACT_TEST_CASE_PASS_RATE: toText(
+          row.ENGINEER_CONTRACT_TEST_CASE_PASS_RATE
+        ),
+        ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE: toText(
+          row.ENGINEER_PERFORMANCE_DEFECTS_PRE_RELEASE
+        ),
+        COMMON_ADOPTION_WORKFORCE_CERTIFICATION: toText(
+          row.COMMON_ADOPTION_WORKFORCE_CERTIFICATION
+        ),
+        COMMON_ADOPTION_EFFORTS_SAVED: toText(row.COMMON_ADOPTION_EFFORTS_SAVED),
+        COMMON_DEPLOYMENT_ENGINEER: toText(row.COMMON_DEPLOYMENT_ENGINEER),
+        PRESENTATION_DONE: toFlag(row.PRESENTATION_DONE),
+        PROJECT_FY: toText(row.PROJECT_FY),
+      });
+      result.success++;
+    } catch (error) {
+      result.errors.push(
+        `Project info ${row.PROJECT_ID ?? row.id}: ${errorText(error)}`
+      );
     }
-
-    console.log(
-      `✅ Successfully restored ${results.success} documents to ${collectionName}`
-    );
-  } catch (error) {
-    const errorMsg = `Failed to restore collection ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-    console.error(errorMsg);
-    results.errors.push(errorMsg);
+    onProgress?.({ current: i + 1, total: documents.length });
   }
 
-  return results;
+  return result;
+};
+
+const restorePracticeInfo = async (
+  documents: RestoreDocument[],
+  onProgress?: (progress: Progress) => void
+): Promise<CollectionResult> => {
+  const result: CollectionResult = { success: 0, errors: [] };
+
+  for (let i = 0; i < documents.length; i++) {
+    const row = documents[i];
+    try {
+      if (!row.PROJECT_ID || !row.PRACTICE) {
+        throw new Error('PROJECT_ID and PRACTICE are required');
+      }
+      await aimiApiClient.post(ENDPOINTS.UPSERT_PRACTICE_INFO, {
+        PROJECT_ID: toText(row.PROJECT_ID),
+        PRACTICE: toText(row.PRACTICE),
+        CURRENT_PHASE: toText(row.CURRENT_PHASE),
+      });
+      result.success++;
+    } catch (error) {
+      result.errors.push(
+        `Practice info ${row.PROJECT_ID ?? row.id} / ${row.PRACTICE ?? ''}: ${errorText(error)}`
+      );
+    }
+    onProgress?.({ current: i + 1, total: documents.length });
+  }
+
+  return result;
+};
+
+const restoreActivities = async (
+  documents: RestoreDocument[],
+  onProgress?: (progress: Progress) => void
+): Promise<CollectionResult> => {
+  const result: CollectionResult = { success: 0, errors: [] };
+
+  // Activities that are active right now - removed only after the restore succeeded
+  const existing = await aimiApiClient.get<{ ID: number }[]>(
+    ENDPOINTS.GET_ACTIVITIES
+  );
+  const previousIds = existing.map((row) => row.ID);
+
+  // 1. Insert every activity from the backup as a new row
+  for (let i = 0; i < documents.length; i++) {
+    const row = documents[i];
+    try {
+      const missing = ['PROJECT_ID', 'PRACTICE', 'SDLC_PHASE', 'ACTIVITY'].filter(
+        (key) => !row[key]
+      );
+      if (missing.length > 0) throw new Error(`${missing.join(', ')} missing`);
+
+      await aimiApiClient.post(ENDPOINTS.UPSERT_ACTIVITY, {
+        ID: null,
+        PROJECT_ID: toText(row.PROJECT_ID),
+        PROJECT: toText(row.PROJECT),
+        ACCOUNT: toText(row.ACCOUNT),
+        BUSINESS_UNIT: toText(row.BUSINESS_UNIT),
+        PRACTICE: toText(row.PRACTICE),
+        SDLC_PHASE: toText(row.SDLC_PHASE),
+        ACTIVITY: toText(row.ACTIVITY),
+        APPLICABILITY: toText(row.APPLICABILITY),
+        AI_ADOPTION_SCORE: toNumber(row.AI_ADOPTION_SCORE),
+        WORK_DONE_BY_AI: toNumber(row.WORK_DONE_BY_AI),
+        HOURS_SAVED: toNumber(row.HOURS_SAVED),
+        REVENUE_GENERATED: toText(row.REVENUE_GENERATED),
+        BENEFIT_TO: toText(row.BENEFIT_TO),
+        COMMENTS: toText(row.COMMENTS),
+        STATUS: toText(row.STATUS),
+        AI_TOOLS: Array.isArray(row.AI_TOOLS) ? row.AI_TOOLS : [],
+        ACCELERATORS: stringList(row.ACCELERATORS),
+        QUALITATIVE_BENEFITS: stringList(row.QUALITATIVE_BENEFITS),
+      });
+      result.success++;
+    } catch (error) {
+      result.errors.push(
+        `Activity ${row.PROJECT_ID ?? row.id} / ${row.SDLC_PHASE ?? ''} / ${String(row.ACTIVITY ?? '').slice(0, 60)}: ${errorText(error)}`
+      );
+    }
+    onProgress?.({ current: i + 1, total: documents.length });
+  }
+
+  // 2. Accepted Score review (stored on the activity rows, one value set per project + practice)
+  const reviews = new Map<string, RestoreDocument>();
+  documents.forEach((row) => {
+    const hasReview =
+      row.ACCEPTED_SCORE !== null && row.ACCEPTED_SCORE !== undefined
+        ? true
+        : toFlag(row.SCORE_REVIEWED) || !!row.ACCEPTED_SCORE_COMMENT;
+    if (hasReview && row.PROJECT_ID && row.PRACTICE) {
+      reviews.set(`${row.PROJECT_ID}|${row.PRACTICE}`, row);
+    }
+  });
+  for (const row of reviews.values()) {
+    try {
+      await aimiApiClient.post(ENDPOINTS.UPDATE_ACCEPTED_SCORE, {
+        PROJECT_ID: toText(row.PROJECT_ID),
+        PRACTICE: toText(row.PRACTICE),
+        ACCEPTED_SCORE: toNumber(row.ACCEPTED_SCORE),
+        SCORE_REVIEWED: toFlag(row.SCORE_REVIEWED),
+        ACCEPTED_SCORE_COMMENT: toText(row.ACCEPTED_SCORE_COMMENT),
+      });
+    } catch (error) {
+      result.errors.push(
+        `Accepted score ${row.PROJECT_ID} / ${row.PRACTICE}: ${errorText(error)}`
+      );
+    }
+  }
+
+  // 3. Only now remove the previous activities - and only if nothing failed above, so a
+  //    problem never leaves the project with fewer activities than before.
+  if (result.errors.length === 0) {
+    try {
+      for (let i = 0; i < previousIds.length; i += DELETE_CHUNK_SIZE) {
+        await aimiApiClient.post(ENDPOINTS.DELETE_ACTIVITY, {
+          ID: null,
+          IDS: previousIds.slice(i, i + DELETE_CHUNK_SIZE),
+        });
+      }
+    } catch (error) {
+      result.errors.push(
+        `Could not remove the previous activities (the restored copies are in place, so activities may appear twice): ${errorText(error)}`
+      );
+    }
+  } else {
+    result.errors.push(
+      'The previous activities were NOT removed because some restores failed. Fix the errors above and run the restore again.'
+    );
+  }
+
+  return result;
 };
 
 /**
@@ -235,17 +301,18 @@ export const performRestore = async (
   totalErrors: number;
 }> => {
   try {
-    console.log('🚀 Starting restore process...');
-
-    // Parse the backup file
     const restoreData = await parseRestoreFile(file);
+    assertSqlBackup(restoreData);
 
-    const results: Record<string, { success: number; errors: string[] }> = {};
+    const results: Record<string, CollectionResult> = {};
     let totalRestored = 0;
     let totalErrors = 0;
 
-    // Restore each selected collection
-    for (const collectionName of selectedCollections) {
+    const toRestore = RESTORE_ORDER.filter((name) =>
+      selectedCollections.includes(name)
+    );
+
+    for (const collectionName of toRestore) {
       const collectionData = restoreData.collections[collectionName];
 
       if (!collectionData?.documents) {
@@ -268,71 +335,40 @@ export const performRestore = async (
         continue;
       }
 
-      // Step 1: Clear the existing collection
-      console.log(
-        `🗑️ Clearing existing data from collection: ${collectionName}`
-      );
-      const clearResults = await clearCollection(collectionName);
+      const report = (progress: Progress) =>
+        onProgress?.({ collection: collectionName, ...progress });
 
-      if (clearResults.errors.length > 0) {
-        console.warn(
-          `⚠️ Some errors occurred while clearing ${collectionName}:`,
-          clearResults.errors
-        );
-        // Continue with restore even if some deletions failed
+      try {
+        const collectionResult =
+          collectionName === 'projectInfo'
+            ? await restoreProjectInfo(collectionData.documents, report)
+            : collectionName === 'practiceInfo'
+              ? await restorePracticeInfo(collectionData.documents, report)
+              : await restoreActivities(collectionData.documents, report);
+
+        results[collectionName] = collectionResult;
+        totalRestored += collectionResult.success;
+        totalErrors += collectionResult.errors.length;
+      } catch (error) {
+        results[collectionName] = {
+          success: 0,
+          errors: [`Failed to restore ${collectionName}: ${errorText(error)}`],
+        };
+        totalErrors++;
       }
-
-      // Step 2: Restore the backup data
-      console.log(`📥 Restoring backup data to collection: ${collectionName}`);
-      const collectionResults = await restoreCollection(
-        collectionName,
-        collectionData.documents,
-        (progress) => {
-          if (onProgress) {
-            onProgress({
-              collection: collectionName,
-              current: progress.current,
-              total: progress.total,
-            });
-          }
-        }
-      );
-
-      // Combine clear and restore results
-      results[collectionName] = {
-        success: collectionResults.success,
-        errors: [...clearResults.errors, ...collectionResults.errors],
-      };
-
-      totalRestored += collectionResults.success;
-      totalErrors +=
-        clearResults.errors.length + collectionResults.errors.length;
     }
 
     const success = totalErrors === 0;
     const message = success
-      ? `Restore completed successfully! Restored ${totalRestored} documents across ${selectedCollections.length} collections.`
-      : `Restore completed with ${totalErrors} errors. Restored ${totalRestored} documents.`;
+      ? `Restore completed successfully! Restored ${totalRestored} records across ${toRestore.length} collections.`
+      : `Restore completed with ${totalErrors} errors. Restored ${totalRestored} records.`;
 
-    console.log('🎉 Restore process completed');
-    console.log(`📊 Total documents restored: ${totalRestored}`);
-    console.log(`❌ Total errors: ${totalErrors}`);
-
-    return {
-      success,
-      message,
-      results,
-      totalRestored,
-      totalErrors,
-    };
+    return { success, message, results, totalRestored, totalErrors };
   } catch (error) {
-    console.error('💥 Restore failed:', error);
+    console.error('Restore failed:', error);
     return {
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : 'Unknown error occurred during restore',
+      message: errorText(error),
       results: {},
       totalRestored: 0,
       totalErrors: 1,

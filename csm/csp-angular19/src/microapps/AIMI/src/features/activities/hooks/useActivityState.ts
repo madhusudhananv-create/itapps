@@ -47,7 +47,7 @@ export const useActivityState = ({
           benefitTo: activity.benefitTo,
           qualitativeBenefits: activity.qualitativeBenefits,
           comments: activity.comments,
-          //aiToolDetails: activity.aiToolDetails || {},
+          aiToolDetails: activity.aiToolDetails || {},
           status: activity.status || 'submitted',
           createdAt: new Date(activity.createdAt),
           updatedAt: activity.updatedAt
@@ -208,7 +208,7 @@ export const useActivityState = ({
             benefitTo: activity.benefitTo,
             qualitativeBenefits: activity.qualitativeBenefits,
             comments: activity.comments,
-            //aiToolDetails: activity.aiToolDetails || {},
+            aiToolDetails: activity.aiToolDetails || {},
             status: 'submitted',
             createdAt: activity.createdAt,
             projectId: projectInfo.projectId,
@@ -240,7 +240,7 @@ export const useActivityState = ({
             benefitTo: activity.benefitTo,
             qualitativeBenefits: activity.qualitativeBenefits,
             comments: activity.comments,
-            //aiToolDetails: activity.aiToolDetails || {},
+            aiToolDetails: activity.aiToolDetails || {},
             status: activity.status,
             createdAt: new Date(activity.createdAt),
             updatedAt: activity.updatedAt

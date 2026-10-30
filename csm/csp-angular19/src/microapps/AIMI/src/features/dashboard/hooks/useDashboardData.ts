@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import type { ActivityWithProjectInfo } from '@activities/types/activityTypes';
 import { activityStorageUtils } from '@activities/utils/activityStorageUtils';
 import {
-  calculateSummaryStatistics,
   calculateAIToolSDLCPhaseCorrelation,
   calculateQualitativeBenefitPracticeCorrelation,
   calculateWorkDoneHoursSavedCorrelation,
   calculateRevenueAdoptionCorrelation,
-  calculateAIToolMetrics,
-  getAIToolsBySDLCPhase,
-  analyzeQualitativeBenefits,
   calculateCorrelationInsights,
 } from '@shared/utils/statisticalAnalysisUtils';
+import {
+  getAimiDashboardSummary,
+  getAimiAIToolMetrics,
+  getAimiAIToolsBySDLCPhase,
+  getAimiQualitativeBenefitAnalysis,
+} from '@shared/services/aimiAnalyticsService';
 import type {
   SummaryStatistics,
   CorrelationData,
@@ -21,6 +23,11 @@ import type {
   CorrelationInsights,
 } from '@shared/types/dashboardTypes';
 
+// Summary stats / AI tool metrics / phase-tool grouping / qualitative benefit
+// analysis are now server-side aggregations (see aimiAnalyticsService.ts).
+// Correlation analysis (Pearson/chi-square) has no SQL equivalent, so it - and
+// the raw activity fetch it needs - stays exactly as it was, just now backed
+// by activityService's SQL calls instead of Firestore.
 export const useDashboardData = () => {
   const [activities, setActivities] = useState<ActivityWithProjectInfo[]>([]);
   const [summaryStats, setSummaryStats] = useState<SummaryStatistics>({
@@ -46,55 +53,53 @@ export const useDashboardData = () => {
     });
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadDashboardData = async () => {
+    try {
+      // Raw rows - only needed for the correlation calculations below.
+      const allActivities = await activityStorageUtils.getActivities();
+      setActivities(allActivities);
+
+      const [stats, toolMetrics, phaseTools, benefits] = await Promise.all([
+        getAimiDashboardSummary(),
+        getAimiAIToolMetrics(),
+        getAimiAIToolsBySDLCPhase(),
+        getAimiQualitativeBenefitAnalysis(),
+      ]);
+      setSummaryStats(stats);
+      setAIToolMetrics(toolMetrics);
+      setSdlcPhaseTools(phaseTools);
+      setQualitativeBenefits(benefits);
+
+      setCorrelations([
+        calculateAIToolSDLCPhaseCorrelation(allActivities),
+        calculateQualitativeBenefitPracticeCorrelation(allActivities),
+        calculateWorkDoneHoursSavedCorrelation(allActivities),
+        calculateRevenueAdoptionCorrelation(allActivities),
+      ]);
+      setCorrelationInsights(calculateCorrelationInsights(allActivities));
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
-    const loadDashboardData = async () => {
+    const load = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-
-        // Load activities from Firestore
-        const allActivities = await activityStorageUtils.getActivities();
-        setActivities(allActivities);
-
-        // Calculate summary statistics
-        const stats = calculateSummaryStatistics(allActivities);
-        setSummaryStats(stats);
-
-        // Calculate correlations
-        const correlationData = [
-          calculateAIToolSDLCPhaseCorrelation(allActivities),
-          calculateQualitativeBenefitPracticeCorrelation(allActivities),
-          calculateWorkDoneHoursSavedCorrelation(allActivities),
-          calculateRevenueAdoptionCorrelation(allActivities),
-        ];
-        setCorrelations(correlationData);
-
-        // Calculate AI tool metrics
-        const toolMetrics = calculateAIToolMetrics(allActivities);
-        setAIToolMetrics(toolMetrics);
-
-        // Get AI tools by SDLC phase
-        const phaseTools = getAIToolsBySDLCPhase(allActivities);
-        setSdlcPhaseTools(phaseTools);
-
-        // Analyze qualitative benefits
-        const benefits = analyzeQualitativeBenefits(allActivities);
-        setQualitativeBenefits(benefits);
-
-        // Calculate correlation insights
-        const insights = calculateCorrelationInsights(allActivities);
-        setCorrelationInsights(insights);
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
+        await loadDashboardData();
+      } catch {
+        // already logged in loadDashboardData
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadDashboardData();
+    load();
 
     // Listen for storage changes to refresh data
     const handleStorageChange = () => {
-      loadDashboardData();
+      load();
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -106,31 +111,7 @@ export const useDashboardData = () => {
 
   const refreshData = async () => {
     try {
-      const allActivities = await activityStorageUtils.getActivities();
-      setActivities(allActivities);
-
-      const stats = calculateSummaryStatistics(allActivities);
-      setSummaryStats(stats);
-
-      const correlationData = [
-        calculateAIToolSDLCPhaseCorrelation(allActivities),
-        calculateQualitativeBenefitPracticeCorrelation(allActivities),
-        calculateWorkDoneHoursSavedCorrelation(allActivities),
-        calculateRevenueAdoptionCorrelation(allActivities),
-      ];
-      setCorrelations(correlationData);
-
-      const toolMetrics = calculateAIToolMetrics(allActivities);
-      setAIToolMetrics(toolMetrics);
-
-      const phaseTools = getAIToolsBySDLCPhase(allActivities);
-      setSdlcPhaseTools(phaseTools);
-
-      const benefits = analyzeQualitativeBenefits(allActivities);
-      setQualitativeBenefits(benefits);
-
-      const insights = calculateCorrelationInsights(allActivities);
-      setCorrelationInsights(insights);
+      await loadDashboardData();
     } catch (error) {
       console.error('Error refreshing dashboard data:', error);
     }
