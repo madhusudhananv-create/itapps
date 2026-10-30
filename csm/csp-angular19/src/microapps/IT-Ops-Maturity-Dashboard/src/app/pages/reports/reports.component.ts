@@ -167,7 +167,7 @@ const PARAM_COLUMN_STYLES: Record<string, ColumnStyle> = {
   assessee: { renderer: 'wrap' },
   findingstatus: { renderer: 'finding-status-pill', sortKey: 'findingStatus' },
   assessorcomments: { renderer: 'wrap' },
-  assesseeacceptcomments: { renderer: 'wrap' },
+  assesseeacceptandactiontakencomments: { renderer: 'wrap' },
   assesseerejectcomments: { renderer: 'wrap' },
   assessordisputecomments: { renderer: 'wrap' },
   assessmentstatus: { renderer: 'status-pill' },
@@ -1002,7 +1002,7 @@ export class ReportsComponent implements OnInit {
   }
 
   findingPill(status: string | null): string {
-    if (status === 'Accepted' || status === 'Closed') return 'pill-good';
+    if (status === 'Accepted' || status === 'Accepted & In Progress' || status === 'Closed') return 'pill-good';
     if (status === 'Rejected') return 'pill-critical';
     if (status === 'Open') return 'pill-info';
     return 'pill-muted';

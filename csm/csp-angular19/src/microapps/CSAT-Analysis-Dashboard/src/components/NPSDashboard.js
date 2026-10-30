@@ -480,20 +480,22 @@ const Title = styled.h1`
 `;
 
 const BackButton = styled.button`
-  background: transparent;
-  color: ${NPS_INK};
-  border: 1px solid ${NPS_HAIRLINE};
-  padding: 0.4rem 0.9rem;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  color: white;
+  border: none;
   border-radius: 6px;
+  padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 
   &:hover {
-    border-color: #7c3aed;
-    background: #7c3aed;
-    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
   }
 `;
 
@@ -1530,8 +1532,20 @@ const computeOtherAccountTotalsFromSheets = (
   acsatCycleStartDateFormatted,
   blankTypeCustomerIds,
   otherNpsScoreSum,
-  otherNpsScoreCount
+  otherNpsScoreCount,
+  effectiveTop10AccountNames = []
 ) => {
+  // "Other" = blank/empty TYPE OF ACCOUNT, OR a raw TYPE OF ACCOUNT = "Top 10" account that isn't
+  // actually displayed in the Top 10 Accounts table (not in the effective-10 roster — e.g. an unused
+  // backfill candidate). Without the second half of this check, those extra roster accounts are
+  // excluded from both the Top 10 total (filtered to the displayed effective-10) and Other Accounts
+  // (filtered to blank-type only), vanishing from the Overall total entirely.
+  const isTop10RowNotDisplayed = (row) => {
+    const typeRaw = getTypeOfAccountFromRow(row);
+    if (!isTop10TypeOfAccount(typeRaw)) return false;
+    const customerName = getCustomerNameFromRow(row, getCustomerIdFromRow(row));
+    return !effectiveTop10AccountNames.some((name) => matchesTop10AccountName(customerName, name));
+  };
   let polled = 0;
   let responded = 0;
   let predictedPromoters = 0;
@@ -1547,7 +1561,7 @@ const computeOtherAccountTotalsFromSheets = (
 
   const isOtherFirstSheetRow = (row) => {
     if (firstSheetHasTypeCol) {
-      return isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row));
+      return isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row)) || isTop10RowNotDisplayed(row);
     }
     const idKey = getCustomerIdFromRow(row);
     return idKey ? blankTypeCustomerIds.has(String(idKey).trim()) : false;
@@ -1555,7 +1569,7 @@ const computeOtherAccountTotalsFromSheets = (
 
   if (Array.isArray(secondSheetData)) {
     secondSheetData.forEach((row) => {
-      if (!isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row))) return;
+      if (!isBlankOrEmptyTypeOfAccount(getTypeOfAccountFromRow(row)) && !isTop10RowNotDisplayed(row)) return;
 
       const sentDate = getCsatSentDateFromRow(row);
       const receivedDate = getCsatReceivedDateFromRow(row);
@@ -1607,9 +1621,10 @@ const computeOtherAccountTotalsFromSheets = (
     secondSheetRespondedCount > 0
       ? ((predictedPromoters - predictedDetractors) / secondSheetRespondedCount) * 100
       : 0;
+  const actualNpsRatingCount = actualPromoters + actualPassives + actualDetractors;
   const npsScore =
-    firstSheetRespondedCount > 0
-      ? ((actualPromoters - actualDetractors) / firstSheetRespondedCount) * 100
+    actualNpsRatingCount > 0
+      ? ((actualPromoters - actualDetractors) / actualNpsRatingCount) * 100
       : 0;
 
   return {
@@ -3945,20 +3960,25 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
                 overallNpsScoreCount += 1;
                 if (showTop10) {
                   const idKey = String(customerId).trim();
+                  // "Other" = blank/empty TYPE OF ACCOUNT, OR a raw TYPE OF ACCOUNT = "Top 10" account
+                  // that isn't actually displayed (not in the effective-10 roster) — otherwise those
+                  // extra roster accounts are excluded from both Top10 and Other NPS averages.
                   const isBlankTypeById = blankTypeCustomerIds.size > 0 ? blankTypeCustomerIds.has(idKey) : false;
-                  if (isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames, top10CustomerIds)) {
+                  const isRawTop10NotDisplayed = top10CustomerIds.has(idKey) &&
+                    !isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames);
+                  if (isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames)) {
                     top10NpsScoreSum += ratingNumForAvg;
                     top10NpsScoreCount += 1;
-                  } else if (isBlankTypeById) {
+                  } else if (isBlankTypeById || isRawTop10NotDisplayed) {
                     otherNpsScoreSum += ratingNumForAvg;
                     otherNpsScoreCount += 1;
                   }
                 }
               }
 
-              // Top 10 view: individual rows should include only Top 10 accounts
+              // Top 10 view: individual rows should include only the displayed effective-10 accounts
               if (showTop10) {
-                if (!isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames, top10CustomerIds)) return;
+                if (!isTop10NpsAccount(customerName, customerId, effectiveTop10AccountNames)) return;
               }
               customersWithNPSData.add(customerKey);
               if (!npsRecordsByCustomer[customerKey]) {
@@ -4001,18 +4021,25 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           // Try to find existing group by customer name if ID doesn't match
           let key = groupByBU ? businessUnit : customerId;
           let existingGroup = groupedData[key];
-          
-          // If no group found by ID, try to find by customer name
-          if (!existingGroup && !groupByBU) {
+
+          // If no group found by exact key (ID or Business Unit), fall back to a
+          // whitespace/case-normalized match by customer name (account-wise) or
+          // business unit (BU-wise). Without this, BU-wise had NO fallback at all,
+          // so any formatting mismatch between the two sheets left every group's
+          // npsRatingCount at 0, making Achieved NPS Score show 0.00.
+          if (!existingGroup) {
+            const normalizeJoinText = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+            const normalizedTarget = groupByBU ? normalizeJoinText(businessUnit) : normalizeJoinText(customerName);
             const matchingKey = Object.keys(groupedData).find(k => {
               const group = groupedData[k];
-              return group.customerName && group.customerName.toLowerCase() === customerName.toLowerCase();
+              const candidate = groupByBU ? group.businessUnit : group.customerName;
+              return candidate && normalizeJoinText(candidate) === normalizedTarget;
             });
-            
+
             if (matchingKey) {
               key = matchingKey;
               existingGroup = groupedData[key];
-              console.log('Found existing group by name for:', customerName, 'using key:', key);
+              console.log('Found existing group by normalized match for:', groupByBU ? businessUnit : customerName, 'using key:', key);
             }
           }
           
@@ -4258,7 +4285,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       // Convert to array and calculate response rate and NPS score
       let result = Object.values(groupedData).map(group => {
         const responseRate = group.sentCount > 0 ? (group.receivedCount / group.sentCount) * 100 : 0;
-        const npsScore = group.receivedCount > 0 ? ((group.promotersCount - group.detractorsCount) / group.receivedCount) * 100 : 0;
+        const npsScore = group.npsRatingCount > 0 ? ((group.promotersCount - group.detractorsCount) / group.npsRatingCount) * 100 : 0;
         const npsAvgRating = (group.npsRatingCount && Number(group.npsRatingCount) > 0)
           ? (Number(group.npsRatingSum || 0) / Number(group.npsRatingCount))
           : null;
@@ -4390,11 +4417,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           grandTotal.responseRate = (grandTotal.receivedCount / grandTotal.sentCount) * 100;
         }
 
-        // Calculate grand total NPS score
-        if (grandTotal.receivedCount > 0) {
+        // Calculate grand total NPS score (denominator = actual answered NPS ratings, not survey completions)
+        if (grandTotal.npsRatingCount > 0) {
           const totalPromoters = grandTotal.promotersCount;
           const totalDetractors = grandTotal.detractorsCount;
-          grandTotal.npsScore = ((totalPromoters - totalDetractors) / grandTotal.receivedCount) * 100;
+          grandTotal.npsScore = ((totalPromoters - totalDetractors) / grandTotal.npsRatingCount) * 100;
         }
 
         // Calculate grand total predicted NPS score using percentage formula
@@ -4498,8 +4525,11 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             passivesCount: receivedCount > 0 ? ((passivesCount / receivedCount) * 100).toFixed(1) + '%' : '0.0%',
             // Grand total Detractors % = #Detractors/Responded*100
             detractorsCount: receivedCount > 0 ? ((detractorsCount / receivedCount) * 100).toFixed(1) + '%' : '0.0%',
-            // Grand total NPS = Grand total Promoters % - Grand total Detractors %
-            npsScore: receivedCount > 0 ? (((promotersCount / receivedCount) * 100) - ((detractorsCount / receivedCount) * 100)).toFixed(2) : '0.00',
+            // Grand total NPS = Grand total Promoters % - Grand total Detractors % (denominator = actual answered NPS ratings)
+            npsScore: (() => {
+              const actualRespondentCount = promotersCount + passivesCount + detractorsCount;
+              return actualRespondentCount > 0 ? (((promotersCount / actualRespondentCount) * 100) - ((detractorsCount / actualRespondentCount) * 100)).toFixed(2) : '0.00';
+            })(),
             isOrgLevelPercentageRow: true
           };
           
@@ -4525,7 +4555,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             promotersCount: ((grandTotal.promotersCount / grandTotal.receivedCount) * 100).toFixed(1) + '%',
             passivesCount: ((grandTotal.passivesCount / grandTotal.receivedCount) * 100).toFixed(1) + '%',
             detractorsCount: ((grandTotal.detractorsCount / grandTotal.receivedCount) * 100).toFixed(1) + '%',
-            npsScore: (((grandTotal.promotersCount - grandTotal.detractorsCount) / grandTotal.receivedCount) * 100).toFixed(2),
+            npsScore: (((grandTotal.promotersCount - grandTotal.detractorsCount) / grandTotal.npsRatingCount) * 100).toFixed(2),
             isGrandTotalPercentageRow: true
           };
           result.push(grandTotalPercentageRow);
@@ -4574,9 +4604,13 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
         const grandTotalRow = result.find(row => row.isGrandTotal);
         const regularData = result.filter(row => !row.isGrandTotal);
 
-        // Filter regular data by predefined list + TYPE OF ACCOUNT = Top 10 from upload
+        // Restrict displayed rows to the effective-10 roster by name only. Do NOT pass
+        // top10CustomerIds here — those ids come from the raw TYPE OF ACCOUNT = "Top 10" column
+        // (the full 15-account roster), and the id-shortcut inside isTop10NpsAccount would bypass
+        // the effective-10 name filter entirely, showing every roster account instead of just the
+        // displayed effective 10 (the extra roster accounts belong in Other Accounts instead).
         const filteredRegularData = regularData.filter((row) =>
-          isTop10NpsAccount(row.customerName, row.customerId, effectiveTop10AccountNames, top10CustomerIds)
+          isTop10NpsAccount(row.customerName, row.customerId, effectiveTop10AccountNames)
         );
 
         filteredRegularData.sort((a, b) => {
@@ -4609,11 +4643,12 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             top10GrandTotal.responseRate = (top10GrandTotal.receivedCount / top10GrandTotal.sentCount) * 100;
           }
           
-          // Calculate NPS score
-          if (top10GrandTotal.receivedCount > 0) {
+          // Calculate NPS score (denominator = actual answered NPS ratings, not survey completions)
+          const top10NpsRatingCount = (top10GrandTotal.promotersCount || 0) + (top10GrandTotal.passivesCount || 0) + (top10GrandTotal.detractorsCount || 0);
+          if (top10NpsRatingCount > 0) {
             const totalPromoters = top10GrandTotal.promotersCount;
             const totalDetractors = top10GrandTotal.detractorsCount;
-            top10GrandTotal.npsScore = ((totalPromoters - totalDetractors) / top10GrandTotal.receivedCount) * 100;
+            top10GrandTotal.npsScore = ((totalPromoters - totalDetractors) / top10NpsRatingCount) * 100;
           }
           
           // Calculate predicted NPS score
@@ -4635,7 +4670,8 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
           acsatCycleStartDateFormatted,
           blankTypeCustomerIds,
           otherNpsScoreSum,
-          otherNpsScoreCount
+          otherNpsScoreCount,
+          effectiveTop10AccountNames
         );
 
         // Calculate percentage row for Top10 (relative to Top10 + Other Account totals)
@@ -5797,8 +5833,9 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
       const passives = respondent.passivesCount;
       const detractors = respondent.detractorsCount;
       
-      // Calculate NPS: (Promoters - Detractors) / Responded × 100
-      const nps = csatReceivedDateCount > 0 ? ((promoters - detractors) / csatReceivedDateCount) * 100 : 0;
+      // Calculate NPS: (Promoters - Detractors) / actual answered NPS ratings × 100 (not survey completions)
+      const npsRatingCount = promoters + passives + detractors;
+      const nps = npsRatingCount > 0 ? ((promoters - detractors) / npsRatingCount) * 100 : 0;
       
       if (index < 3) {
         console.log(`Respondent ${respondent.respondentName} NPS calculation:`, {
@@ -5853,9 +5890,10 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
     const totalDetractors = grandTotal.detractorsCount;
     const totalPassives = grandTotal.passivesCount;
     const totalReceivedCount = grandTotal.csatReceivedDateCount;
-    
-    grandTotal.npsScore = totalReceivedCount > 0 
-      ? ((totalPromoters - totalDetractors) / totalReceivedCount) * 100 
+    const totalNpsRatingCount = totalPromoters + totalPassives + totalDetractors;
+
+    grandTotal.npsScore = totalNpsRatingCount > 0
+      ? ((totalPromoters - totalDetractors) / totalNpsRatingCount) * 100
       : 0;
     
     grandTotal.promotersPercent = totalReceivedCount > 0 ? (totalPromoters / totalReceivedCount) * 100 : 0;
@@ -9392,7 +9430,7 @@ const NPSDashboard = ({ excelData, acsatCycleStartDate, acsatCycleStartDateForma
             <TableHeader>
               <tr>
                 <TableHeaderCell isFirstColumn style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center', width: '80px' }}>
-                  SNO
+                  Sr. No
                 </TableHeaderCell>
                 <TableHeaderCell style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: 'bold', textAlign: 'center', width: '200px' }}>
                   RESPONDENT CATEGORY

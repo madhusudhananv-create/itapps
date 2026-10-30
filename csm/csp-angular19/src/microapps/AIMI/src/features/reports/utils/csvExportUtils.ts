@@ -52,7 +52,9 @@ const CSV_HEADERS = [
   'Applicability',
   'AI Adoption Score',
   'AI Tools Used',
-  'Client Approved',
+  // 'Client Approved' has no value in the rows (clientApproved is commented out below), so its
+  // heading shifted every column after it one place to the right: "Hours Saved" was showing
+  // the Revenue Generated value. Keep the headings and the row values in the same order.
   'Accelerators Used',
   'Work Done by AI (%)',
   'Hours Saved',

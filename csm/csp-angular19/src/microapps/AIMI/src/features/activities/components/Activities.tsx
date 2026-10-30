@@ -187,7 +187,6 @@ export function Activities() {
     getAccounts,
     getProjects,
     getManagerForProject,
-    getCSMForAccount,
     getBUHeadForBusinessUnit,
     getProjectInfo,
     getOriginalProjectData,
@@ -410,11 +409,11 @@ export function Activities() {
           newData.engineerContractTestCasePassRate = '';
           newData.engineerPerformanceDefectsPreRelease = '';
           newData.projectFY = '';
-          // Auto-populate account manager when account is selected
-          if (value) {
-            const csm = getCSMForAccount(newData.businessUnit, value as string);
-            newData.accountManager = csm;
-          }
+          newData.acceptedScore = undefined;
+          newData.scoreReviewed = false;
+          newData.acceptedScoreComment = '';
+          // CSM is per project (an account can have projects with different CSMs), so it is
+          // filled in when the project is selected, not here.
         } else if (field === 'project') {
           // Auto-populate manager and projectId
           const manager = getManagerForProject(
@@ -431,6 +430,7 @@ export function Activities() {
             newData.project
           );
           newData.projectId = projectInfo?.projectId ?? '';
+          newData.accountManager = projectInfo?.csm ?? '';
 
           // Get original project data to set headcount
           const originalProjectData = getOriginalProjectData(
@@ -471,7 +471,6 @@ export function Activities() {
     },
     [
       getBUHeadForBusinessUnit,
-      getCSMForAccount,
       getManagerForProject,
       getProjectInfo,
       getOriginalProjectData,

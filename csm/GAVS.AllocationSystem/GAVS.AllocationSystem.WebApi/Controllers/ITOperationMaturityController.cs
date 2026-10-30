@@ -1456,6 +1456,19 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                                       && projectIdsForAccount.Contains(a.PROJECT_ID));
                 if (specific == null) return NotFound();
 
+                // VAPT-flagged (IDOR) - this is the exact
+                // "/assessment/<domain>?assessmentId=40" URL the report's POC swapped
+                // between accounts. The check above only confirms the assessment really
+                // belongs to the GIVEN custId, never that the CALLER is entitled to that
+                // custId/assessment at all - same own-scope gate as GetITOpsAssessmentParameters.
+                var getOrCreateEmpId = GetHeaderDetails_String("empId");
+                if (!IsITOpsSuperuser(getOrCreateEmpId) && !HasAnyITOpsAdminRole(getOrCreateEmpId))
+                {
+                    var ownScope = GetITOpsOwnScopeAssessmentIds(getOrCreateEmpId, new List<ITOPS_ASSESSMENT> { specific });
+                    if (!ownScope.Contains(specific.ID))
+                        return Content(HttpStatusCode.Forbidden, "You are not assigned to this assessment, so you cannot view it.");
+                }
+
                 var specificMaster = CSPdb.ITOPS_ASSESSMENT_MASTER.GetAll().FirstOrDefault(m => m.ID == specific.ASSESSMENT_MASTER_ID);
                 return Ok(BuildITOpsAssessmentInfo(specific, domain, custId, specificMaster));
             }
@@ -1868,6 +1881,21 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId && a.ISACTIVE);
             if (assessment == null)
                 return NotFound();
+
+            // VAPT-flagged (IDOR): this endpoint previously returned full parameter/score/
+            // finding data for ANY assessmentId to ANY authenticated caller, with no check
+            // that the caller is actually assessor/reviewer/assessee/allocated/GDH on it -
+            // the exact "swap assessmentId=40 for another user's" POC in the report. Same
+            // own-scope entitlement check the Dashboard/Reports screens already enforce
+            // (GetITOpsOwnScopeAssessmentIds), plus superuser/admin-role bypass like every
+            // other gate in this file.
+            var requestingEmpId = GetHeaderDetails_String("empId");
+            if (!IsITOpsSuperuser(requestingEmpId) && !HasAnyITOpsAdminRole(requestingEmpId))
+            {
+                var ownScope = GetITOpsOwnScopeAssessmentIds(requestingEmpId, new List<ITOPS_ASSESSMENT> { assessment });
+                if (!ownScope.Contains(assessmentId))
+                    return Content(HttpStatusCode.Forbidden, "You are not assigned to this assessment, so you cannot view it.");
+            }
 
             var today = DateTime.Today;
             var domain = CSPdb.ITOPS_DOMAIN.GetAll().FirstOrDefault(d => d.ID == assessment.DOMAIN_ID);
@@ -2804,6 +2832,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             if (request.ActualClosureDate == null)
                 return Content(HttpStatusCode.Conflict, "Enter the actual closure date before submitting.");
 
+            if (request.ActualClosureDate.Value.Date > DateTime.Today)
+                return Content(HttpStatusCode.Conflict, "The actual closure date cannot be in the future.");
+
             var empId = GetHeaderDetails_String("empId");
             finding.ACTION_TAKEN = request.ActionTaken.Trim();
             finding.LAST_MANAGEMENT_UPDATE = DateTime.Now;
@@ -3045,11 +3076,30 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // Assessor attached while scoring. Evidence uploaded before V2_35 ran has
         // FINDING_ID = NULL and so will not appear here even if it was conceptually a
         // finding attachment at the time (see V2_35's migration note).
+        // VAPT-flagged (IDOR): shared by all evidence read/download endpoints below - none
+        // of them checked that the caller is actually entitled to the assessment the
+        // evidence belongs to, only that the row/file existed.
+        private IHttpActionResult DenyIfNotITOpsEntitledToScore(int? scoreId, string empId, string what)
+        {
+            if (!scoreId.HasValue) return null;
+            if (IsITOpsSuperuser(empId) || HasAnyITOpsAdminRole(empId)) return null;
+            var assessmentId = GetITOpsAssessmentIdForScore(scoreId.Value);
+            if (!assessmentId.HasValue) return null;
+            var assessment = CSPdb.ITOPS_ASSESSMENT.GetAll().FirstOrDefault(a => a.ID == assessmentId.Value);
+            if (assessment == null) return null;
+            var ownScope = GetITOpsOwnScopeAssessmentIds(empId, new List<ITOPS_ASSESSMENT> { assessment });
+            if (ownScope.Contains(assessmentId.Value)) return null;
+            return Content(HttpStatusCode.Forbidden, "You are not assigned to this assessment, so you cannot " + what + ".");
+        }
+
         [GET("GetITOpsFindingEvidence")]
         [ActionName("GetITOpsFindingEvidence")]
         [HttpGet]
         public IHttpActionResult GetITOpsFindingEvidence(int findingId)
         {
+            var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
+            var denied = DenyIfNotITOpsEntitledToScore(finding?.SCORE_ID, GetHeaderDetails_String("empId"), "view this finding's evidence");
+            if (denied != null) return denied;
             return Ok(GetITOpsEvidenceForFinding(findingId));
         }
 
@@ -3065,6 +3115,8 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         [HttpGet]
         public IHttpActionResult GetITOpsScoreEvidence(int scoreId)
         {
+            var denied = DenyIfNotITOpsEntitledToScore(scoreId, GetHeaderDetails_String("empId"), "view this score's evidence");
+            if (denied != null) return denied;
             return Ok(GetITOpsEvidenceRows(e => e.ISACTIVE && e.SCORE_ID == scoreId && e.FINDING_ID == null));
         }
 
@@ -3114,6 +3166,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var finding = CSPdb.ITOPS_FINDING.GetAll().FirstOrDefault(f => f.ID == findingId && f.ISACTIVE);
             if (finding == null) return NotFound();
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsFindingAssessee(finding, empId, "attach evidence to this finding");
+            if (denied != null) return denied;
             return UploadITOpsEvidenceForScore(finding.SCORE_ID, findingId);
         }
 
@@ -3125,8 +3180,28 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var score = CSPdb.ITOPS_SCORE.GetAll().FirstOrDefault(s => s.ID == scoreId);
             if (score == null) return NotFound();
+            var empId = GetHeaderDetails_String("empId");
+            var denied = DenyIfNotITOpsAssessorOnAssessment(score.ASSESSMENT_ID, empId, "attach evidence to this score");
+            if (denied != null) return denied;
             return UploadITOpsEvidenceForScore(scoreId, findingId: null);
         }
+
+        // VAPT-flagged: evidence upload accepted any file type/size and was unlimited in
+        // count (.exe/.msi/double-extension files were accepted and distributed to other
+        // users with access to the same assessment). The UI only ever offered
+        // .pdf/.jpg/.jpeg/.png (see evidence-upload accept= attribute in both Angular
+        // components) - this enforces that same allowlist server-side, by extension AND
+        // by the file's actual magic-byte signature, so a renamed executable (e.g.
+        // "file.pdf.exe" or an .exe content byte-for-byte renamed to "file.pdf") is
+        // rejected either way, plus a per-score/finding count cap against upload-volume abuse.
+        private static readonly Dictionary<string, byte[][]> ITOpsAllowedEvidenceSignatures = new Dictionary<string, byte[][]>(StringComparer.OrdinalIgnoreCase)
+        {
+            [".pdf"] = new[] { new byte[] { 0x25, 0x50, 0x44, 0x46 } },                 // %PDF
+            [".jpg"] = new[] { new byte[] { 0xFF, 0xD8, 0xFF } },
+            [".jpeg"] = new[] { new byte[] { 0xFF, 0xD8, 0xFF } },
+            [".png"] = new[] { new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A } },
+        };
+        private const int ITOpsMaxEvidencePerItem = 20;
 
         private IHttpActionResult UploadITOpsEvidenceForScore(int scoreId, int? findingId)
         {
@@ -3134,6 +3209,11 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             var httpRequest = HttpContext.Current.Request;
             if (httpRequest.Files.Count == 0)
                 return Content(HttpStatusCode.Conflict, "No file was included in the upload.");
+
+            var existingCount = CSPdb.ITOPS_EVIDENCE.GetAll()
+                .Count(e => e.ISACTIVE && e.SCORE_ID == scoreId && e.FINDING_ID == findingId);
+            if (existingCount + httpRequest.Files.Count > ITOpsMaxEvidencePerItem)
+                return Content(HttpStatusCode.Conflict, $"Up to {ITOpsMaxEvidencePerItem} evidence files are allowed here - please remove some before adding more.");
 
             const long maxBytes = 10 * 1024 * 1024;
             var saved = new List<ITOPS_EVIDENCE>();
@@ -3143,6 +3223,20 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
                 var postedFile = httpRequest.Files[i];
                 if (postedFile.ContentLength > maxBytes)
                     return Content(HttpStatusCode.Conflict, $"\"{postedFile.FileName}\" exceeds the 10MB upload limit.");
+
+                var extension = Path.GetExtension(postedFile.FileName);
+                byte[][] allowedSignatures;
+                if (!ITOpsAllowedEvidenceSignatures.TryGetValue(extension ?? "", out allowedSignatures))
+                    return Content(HttpStatusCode.Conflict, $"\"{postedFile.FileName}\" is not an allowed file type. Only PDF, JPG and PNG are accepted.");
+
+                var header = new byte[allowedSignatures.Max(sig => sig.Length)];
+                postedFile.InputStream.Position = 0;
+                var headerBytesRead = postedFile.InputStream.Read(header, 0, header.Length);
+                postedFile.InputStream.Position = 0;
+                var signatureMatches = allowedSignatures.Any(sig =>
+                    headerBytesRead >= sig.Length && header.Take(sig.Length).SequenceEqual(sig));
+                if (!signatureMatches)
+                    return Content(HttpStatusCode.Conflict, $"\"{postedFile.FileName}\" does not look like a real {extension.TrimStart('.').ToUpperInvariant()} file.");
 
                 var serverFileName = Guid.NewGuid().ToString();
                 var filePath = HttpContext.Current.Server.MapPath("~/UploadFile/" + serverFileName);
@@ -3202,6 +3296,9 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         {
             var evidence = CSPdb.ITOPS_EVIDENCE.GetAll().FirstOrDefault(e => e.ID == evidenceId && e.ISACTIVE);
             if (evidence == null) return new HttpResponseMessage(HttpStatusCode.NotFound);
+
+            var denied = DenyIfNotITOpsEntitledToScore(evidence.SCORE_ID, GetHeaderDetails_String("empId"), "download this evidence");
+            if (denied != null) return new HttpResponseMessage(HttpStatusCode.Forbidden);
 
             var fileData = Cldb.FILE_DATA.GetAll().FirstOrDefault(f => f.ID == evidence.FILE_DATA_ID && f.ISACTIVE);
             if (fileData == null) return new HttpResponseMessage(HttpStatusCode.NotFound);

@@ -34,23 +34,22 @@ const Title = styled.h1`
 `;
 
 const BackButton = styled.button`
-  background: transparent;
-  color: #16233D;
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  color: white;
+  border: none;
   border-radius: 6px;
   padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 0.4rem;
 
   &:hover {
-    border-color: #7c3aed;
-    background: #7c3aed;
-    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
   }
 `;
 
@@ -1907,28 +1906,19 @@ const ACSATResponseRateDashboard = ({
         }
       }
       
-      // Check TYPE OF ACCOUNT - prefer column from second sheet, fallback to mapping from first sheet
-      let typeOfAccount = '';
-      let typeOfAccountSource = 'none';
-      if (typeOfAccountIndex !== -1 && row[typeOfAccountIndex] !== undefined && row[typeOfAccountIndex] !== null) {
-        // Use TYPE OF ACCOUNT column directly from second sheet
-        typeOfAccount = row[typeOfAccountIndex].toString().trim();
-        typeOfAccountSource = 'secondSheet';
-      } else if (customerName) {
-        // Fallback to mapping from first sheet
-        const customerNameStr = customerName.toString().trim();
-        typeOfAccount = (typeOfAccountMap[customerNameStr] || '').toString().trim();
-        typeOfAccountSource = 'firstSheetMapping';
-      }
-      
-      // Only include rows where TYPE OF ACCOUNT is NOT "Top 10"
-      // If TYPE OF ACCOUNT is empty/null/undefined, treat it as "Other Account"
-      if (typeOfAccount === 'Top 10') {
+      // "Other Account" = NOT one of the accounts actually displayed in the Top 10 Accounts table
+      // (the effective-10 roster — original 10 survey slots, any zero-Polled slot backfilled). Any
+      // Top10-roster account that ISN'T in the displayed effective-10 (e.g. an unused backfill
+      // candidate) rolls into Other Accounts here, so the displayed Top 10 rows always sum exactly
+      // to the Top 10 Accounts total, and Other Accounts + Top 10 Accounts = Overall with nothing
+      // dropped. Do NOT use the raw TYPE OF ACCOUNT column here — it marks the whole 15-account
+      // roster as "Top 10", which is broader than what's actually shown.
+      if (customerName && isEffectiveTop10AccountName(customerName, effectiveTop10AccountNames)) {
         debugStats.skippedTop10++;
         if (rowIndex < 5) {
-          console.log(`⏭️ Skipping row ${rowIndex + 1} - TYPE OF ACCOUNT is "Top 10" (source: ${typeOfAccountSource})`);
+          console.log(`⏭️ Skipping row ${rowIndex + 1} - in effective Top 10 display set`);
         }
-        return; // Skip Top 10 accounts
+        return; // Skip accounts actually displayed in the Top 10 Accounts table
       }
       
       // Check if CSAT SENT DATE is valid (>= cycle start date)
@@ -1941,8 +1931,6 @@ const ACSATResponseRateDashboard = ({
       if (rowIndex < 5) {
         console.log(`🔍 Other Account Row ${rowIndex + 1}:`, {
           customerName,
-          typeOfAccount,
-          typeOfAccountSource,
           yearQuarter,
           sentDate,
           sentDateValid,
@@ -1993,7 +1981,7 @@ const ACSATResponseRateDashboard = ({
       totalReceived,
       overallResponseRate
     };
-  }, [showTop10, rawSecondSheetData, typeOfAccountMap, acsatCycle, cycleStartDateFormatted]);
+  }, [showTop10, rawSecondSheetData, typeOfAccountMap, acsatCycle, cycleStartDateFormatted, effectiveTop10AccountNames]);
 
   // Overall row (Top 10 view only): Top 10 Accounts + Other Accounts combined grand total.
   const overallTotals = useMemo(() => {

@@ -335,6 +335,13 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
             {
                 request.Headers.Add("EmailId", rec.EMAILID);
                 Logger log = new Logger(request);
+                // VAPT-flagged: only the expiry timestamp was cleared here, leaving the
+                // captured AUTHKEY value itself still sitting in the row - any clock-skew
+                // or EF-caching edge case in the expiry comparison (TokenRepository.
+                // ValidateToken) could let a captured token keep validating past logout.
+                // Rotating the key itself makes the captured value permanently unmatchable,
+                // independent of any time comparison.
+                rec.AUTHKEY = Guid.NewGuid().ToString();
                 rec.EXPIRESON = DateTime.Now;
                 Cldb.Token.Update(rec);
                 Cldb.Commit(CanCommit);
