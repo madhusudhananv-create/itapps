@@ -334,6 +334,14 @@ export class MaturityAssessmentComponent implements OnInit {
     this.api.getFindingEvidence(findingId).subscribe((rows) => (this.evidenceByFindingId[findingId] = rows));
   }
 
+  /** "Accepted" alone is ambiguous once remediation is underway - shows "Accepted & In
+   *  Progress" once the owner/target/priority plan has been saved, same wording used
+   *  across domain-review and maturity-assessment's own status pill. */
+  findingStatusDisplay(param: MaturityParameter): string {
+    if (param.findingStatus === 'Accepted' && param.findingRemediationStatus === 'InProgress') return 'Accepted & In Progress';
+    return param.findingStatus ?? '';
+  }
+
   evidenceFor(param: MaturityParameter): ItOpsEvidenceRow[] {
     return param.findingId ? this.evidenceByFindingId[param.findingId] ?? [] : [];
   }

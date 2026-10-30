@@ -570,6 +570,19 @@ export class DomainReviewComponent implements OnInit {
     return param.findingId ? this.ownerCandidatesByFindingId[param.findingId] ?? [] : [];
   }
 
+  /** Caps the Actual Closure Date picker so remediation can't be backdated into the future. */
+  get todayIsoDate(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  /** "Accepted" alone is ambiguous once remediation is underway - shows "Accepted & In
+   *  Progress" once the owner/target/priority plan has been saved, same wording used
+   *  across domain-review and maturity-assessment's own status pill. */
+  findingStatusDisplay(param: MaturityParameter): string {
+    if (param.findingStatus === 'Accepted' && param.findingRemediationStatus === 'InProgress') return 'Accepted & In Progress';
+    return param.findingStatus ?? '';
+  }
+
   ownerOptionsFor(param: MaturityParameter): SearchableSelectOption[] {
     this.loadOwnerCandidates(param);
     const options = this.ownerCandidatesFor(param).map((c) => ({ value: c.empId, label: c.name }));

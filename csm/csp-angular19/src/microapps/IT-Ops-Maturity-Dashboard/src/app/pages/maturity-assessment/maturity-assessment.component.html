@@ -224,7 +224,7 @@
             <span class="finding-pill" [class.rejected]="param.findingStatus === 'Rejected'" [class.accepted]="param.findingStatus !== 'Rejected'" *ngIf="param.findingStatus && param.findingStatus !== 'Pending'">
               <svg *ngIf="param.findingStatus !== 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
               <svg *ngIf="param.findingStatus === 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
-              Finding {{ param.findingStatus }}
+              Finding {{ findingStatusDisplay(param) }}
             </span>
             <span class="finding-assessee" *ngIf="param.findingAssesseeName">Assessee: <strong>{{ param.findingAssesseeName }}</strong></span>
             <p class="finding-rejection-comment" *ngIf="param.findingRejectionComment">

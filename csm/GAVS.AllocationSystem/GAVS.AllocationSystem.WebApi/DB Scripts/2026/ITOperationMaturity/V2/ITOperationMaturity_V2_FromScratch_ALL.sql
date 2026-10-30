@@ -1140,13 +1140,15 @@ BEGIN
         asr.AssessorNames AS Assessor,
         rvr.ReviewerNames AS Reviewer,
         asse.AssesseeNames AS Assessee,
-        ISNULL(f.STATUS, 'N/A') AS FindingStatus,
+        CASE WHEN f.STATUS = 'Accepted' AND f.OWNER_EMP_ID IS NOT NULL AND f.TARGET_DATE IS NOT NULL
+             THEN 'Accepted & In Progress'
+             ELSE ISNULL(f.STATUS, 'N/A') END AS FindingStatus,
         -- Assessor's comment entered while scoring the parameter. ITOPS_FINDING.RECOMMENDED_ACTION
         -- is never written by the app (no code path sets it), so it always read NULL here -
         -- ITOPS_SCORE.NOTES is the actual mandatory assessor comment.
         s.NOTES AS AssessorComments,
         -- Assessee's own comment when accepting a finding (remediation progress/notes).
-        f.ACTION_TAKEN AS AssesseeAcceptComments,
+        f.ACTION_TAKEN AS [AssesseeAccept & ActionTakenComments],
         -- Assessee's justification when rejecting a finding.
         f.REJECTION_COMMENT AS AssesseeRejectComments,
         -- Assessor's reason for disputing (re-rejecting) the Assessee's rejection, reopening

@@ -195,7 +195,7 @@
               <svg *ngIf="param.findingStatus !== 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
               <svg *ngIf="param.findingStatus === 'Rejected'" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
               <ng-container *ngIf="isAssessee(); else notAssesseeLabel">{{ param.findingStatus === 'Rejected' ? "Finding rejected - awaiting assessor's decision" : (param.findingStatus === 'Closed' ? 'Finding closed' : 'Finding accepted - add action taken below') }}</ng-container>
-              <ng-template #notAssesseeLabel>Finding {{ param.findingStatus }}</ng-template>
+              <ng-template #notAssesseeLabel>Finding {{ findingStatusDisplay(param) }}</ng-template>
             </span>
 
             <p class="finding-rejection-comment" *ngIf="isAssessee() && param.findingRejectionComment">
@@ -338,7 +338,7 @@
             ></textarea>
 
             <label class="remediation-label" title="Date the remediation was actually completed - required to close this finding">Actual closure date</label>
-            <input class="remediation-date" type="date" [(ngModel)]="param.findingActualClosureDate" name="closure-{{ param.id }}" />
+            <input class="remediation-date" type="date" [(ngModel)]="param.findingActualClosureDate" [max]="todayIsoDate" name="closure-{{ param.id }}" />
 
             <div class="evidence-list" *ngIf="evidenceFor(param).length">
               <span class="evidence-chip" *ngFor="let ev of evidenceFor(param)">
