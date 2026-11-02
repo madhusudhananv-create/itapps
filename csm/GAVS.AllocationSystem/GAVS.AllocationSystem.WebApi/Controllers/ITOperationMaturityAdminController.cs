@@ -682,10 +682,25 @@ namespace GAVS.AllocationSystem.WebApi.Controllers
         // into the Dashboard/Reports grids and into email templates (ToEmailValues does a
         // raw string Replace, no HTML encoding). Rejecting markup at the handful of write
         // paths is simpler and more reliable than trying to HTML-encode every later read site.
+        // Matches an actual tag ("<script>", "</div>", "<img onerror=...>"), not a bare
+        // comparison operator ("CPU usage > 80%", "latency < 5ms" must stay allowed).
         private static readonly System.Text.RegularExpressions.Regex ITOpsMarkupPattern =
-            new System.Text.RegularExpressions.Regex("[<>]", System.Text.RegularExpressions.RegexOptions.Compiled);
+            new System.Text.RegularExpressions.Regex(@"<\s*/?\s*[a-zA-Z][^>]*>", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // VAPT-flagged (encoding bypass): the raw "<"/">" check alone missed a payload
+        // pre-encoded as "%3Cscript%3E...%3C%2Fscript%3E" or "&lt;script&gt;" - stored as
+        // literal text with no raw angle bracket in it, then rendered as a live tag wherever
+        // a later consumer URL- or HTML-decodes it for display. Decode both common encodings
+        // before matching so the check sees what the browser will eventually render.
+        private static string ITOpsDecodeForMarkupCheck(string value)
+        {
+            var decoded = value;
+            try { decoded = Uri.UnescapeDataString(decoded); } catch { /* not URL-encoded; keep as-is */ }
+            decoded = System.Net.WebUtility.HtmlDecode(decoded);
+            return decoded;
+        }
         private static bool ITOpsContainsMarkup(string value) =>
-            !string.IsNullOrEmpty(value) && ITOpsMarkupPattern.IsMatch(value);
+            !string.IsNullOrEmpty(value) &&
+            (ITOpsMarkupPattern.IsMatch(value) || ITOpsMarkupPattern.IsMatch(ITOpsDecodeForMarkupCheck(value)));
 
         /// <summary>Gate for a mutation owned by one specific role (superuser always allowed).</summary>
         private IHttpActionResult DenyIfNotITOpsRole(string roleCode, string what)

@@ -448,28 +448,43 @@ GO
 -- point at role IDs that are about to be deleted and IDENTITY will renumber on
 -- reinsert. Fine pre-go-live; if real grants already exist and must be kept,
 -- re-grant them after this runs instead of running this script.
+--
+-- UAT INCIDENT (02-Nov-2026): this block used to run unconditionally on every
+-- execution of this combined script, unlike the SUPERUSER/DASHBOARD_VIEWER/
+-- REPORT_VIEWER blocks further down which are already IF NOT EXISTS-guarded.
+-- A second accidental run against a DB that already had these 4 roles wiped
+-- every live grant (DELETE FROM ITOPS_ROLE_ASSIGNMENT) and re-seeded them,
+-- which is how UAT ended up with a CYCLE_ADMINISTRATOR row whose ID no longer
+-- matched what the app expected. Guarded the same way as the other roles so a
+-- re-run against Prod is a safe no-op instead of a destructive wipe.
+IF NOT EXISTS (SELECT 1 FROM ITOPS_ROLE WHERE ROLE_CODE = 'CYCLE_ADMINISTRATOR')
+BEGIN
+    DELETE FROM ITOPS_ROLE_ASSIGNMENT;
+    DELETE FROM ITOPS_ROLE;
 
-DELETE FROM ITOPS_ROLE_ASSIGNMENT;
-DELETE FROM ITOPS_ROLE;
+    -- Reset identity so the four roles come back as a clean 1-4 (optional but tidy).
+    DBCC CHECKIDENT ('ITOPS_ROLE', RESEED, 0);
 
--- Reset identity so the four roles come back as a clean 1-4 (optional but tidy).
-DBCC CHECKIDENT ('ITOPS_ROLE', RESEED, 0);
+    -- CREATED_DATE etc. set explicitly - they're nullable in the DB but required
+    -- non-null by the EF model, so a row missing them breaks every read of the
+    -- whole table (see V2_08_FixNullAuditFields.sql, which patches this exact
+    -- mistake on a DB this script already ran against without them). Stamped with
+    -- a real EMP_ID rather than a 'SYSTEM' literal, matching the app's own
+    -- UpdateAuditFieldsExt convention (ControllerHelper.cs) of always attributing
+    -- to the actual caller.
+    DECLARE @empId VARCHAR(50) = '104744';
 
--- CREATED_DATE etc. set explicitly - they're nullable in the DB but required
--- non-null by the EF model, so a row missing them breaks every read of the
--- whole table (see V2_08_FixNullAuditFields.sql, which patches this exact
--- mistake on a DB this script already ran against without them). Stamped with
--- a real EMP_ID rather than a 'SYSTEM' literal, matching the app's own
--- UpdateAuditFieldsExt convention (ControllerHelper.cs) of always attributing
--- to the actual caller.
-DECLARE @empId VARCHAR(50) = '104744';
-
-INSERT INTO ITOPS_ROLE (ROLE_CODE, ROLE_NAME, DESCRIPTION, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
-VALUES
-    ('CYCLE_ADMINISTRATOR', 'Cycle Administrator', 'Can create and maintain IT Operations Maturity assessment cycles (Configure Cycle).', 1, @empId, GETDATE(), @empId, GETDATE()),
-    ('DOMAIN_PROJECT_MAPPER', 'Scope Administrator', 'Can maintain the domain catalog and which technology domains apply to which projects (Configure Scope).', 1, @empId, GETDATE(), @empId, GETDATE()),
-    ('RUNOPS_INITIATOR', 'Assessment Coordinator', 'Can create assessment cycles and start IT Operations Maturity assessments for a project (Configure Assessment).', 1, @empId, GETDATE(), @empId, GETDATE()),
-    ('TEAM_ASSIGNMENT_COORDINATOR', 'Team Assignment Coordinator', 'Can assign assessors and reviewers per domain on an assessment (Assign Assessor / Reviewer).', 0, @empId, GETDATE(), @empId, GETDATE());
+    -- TEAM_ASSIGNMENT_COORDINATOR is deliberately seeded ISACTIVE = 0: the
+    -- "Assign Assessor / Reviewer" step is not part of the current Admin Setup
+    -- flow, so this role is kept out of GetITOpsRoles() (WHERE ISACTIVE) and
+    -- so out of grantable circulation, without deleting the row entirely.
+    INSERT INTO ITOPS_ROLE (ROLE_CODE, ROLE_NAME, DESCRIPTION, ISACTIVE, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE)
+    VALUES
+        ('CYCLE_ADMINISTRATOR', 'Cycle Administrator', 'Can create and maintain IT Operations Maturity assessment cycles (Configure Cycle).', 1, @empId, GETDATE(), @empId, GETDATE()),
+        ('DOMAIN_PROJECT_MAPPER', 'Scope Administrator', 'Can maintain the domain catalog and which technology domains apply to which projects (Configure Scope).', 1, @empId, GETDATE(), @empId, GETDATE()),
+        ('RUNOPS_INITIATOR', 'Assessment Coordinator', 'Can create assessment cycles and start IT Operations Maturity assessments for a project (Configure Assessment).', 1, @empId, GETDATE(), @empId, GETDATE()),
+        ('TEAM_ASSIGNMENT_COORDINATOR', 'Team Assignment Coordinator', 'Can assign assessors and reviewers per domain on an assessment (Assign Assessor / Reviewer).', 0, @empId, GETDATE(), @empId, GETDATE());
+END
 GO
 
 SELECT ID, ROLE_CODE, ROLE_NAME FROM ITOPS_ROLE ORDER BY ID;
